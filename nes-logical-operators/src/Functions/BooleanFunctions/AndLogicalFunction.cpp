@@ -92,13 +92,13 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
         newChildren.push_back(node.withInferredDataType(schema));
     }
     /// check if children dataType is correct
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", left.getDataType());
+        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", newChildren.at(0).getDataType());
     }
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", right.getDataType());
+        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", newChildren.at(1).getDataType());
     }
     return this->withChildren(newChildren);
 }
@@ -118,12 +118,6 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAnd
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
-    }
-    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN
-        || arguments.children[1].getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize(
-            "requires children of type bool, but got {} and {}", arguments.children[0].getDataType(), arguments.children[1].getDataType());
     }
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
 }

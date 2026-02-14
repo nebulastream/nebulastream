@@ -58,3 +58,25 @@ SELECT
 FROM stream INTO sink5Booleans;
 ----
 0,1,1,1,1
+
+# Check that OR works with raw boolean fields (regression test for withInferredDataType checking pre-inference types)
+CREATE LOGICAL SOURCE boolStream(flag1 BOOLEAN, flag2 BOOLEAN, value INT32);
+CREATE PHYSICAL SOURCE FOR boolStream TYPE File;
+ATTACH INLINE
+true,true,1
+true,false,2
+false,true,3
+false,false,4
+
+CREATE SINK sinkBoolOr(a BOOLEAN, b BOOLEAN, c BOOLEAN) TYPE File;
+
+SELECT
+    flag1 OR flag2 AS a,
+    flag1 OR (value == INT32(3)) AS b,
+    (value > INT32(3)) OR flag2 AS c
+FROM boolStream INTO sinkBoolOr;
+----
+1,1,1
+1,1,0
+1,1,1
+0,0,1
