@@ -120,156 +120,158 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-    /// Switch between datatypes to convert value to a nautilus val of the phyiscal type and convert it to a string
-    switch (fieldType.type)
-    {
-        case DataType::Type::BOOLEAN: {
-            const auto castedVal = value.cast<nautilus::val<bool>>();
-            return nautilus::invoke(
-                writeValAsString<bool>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
+    return SINGLE_RETURN_WRAPPER({
+        /// Switch between datatypes to convert value to a nautilus val of the phyiscal type and convert it to a string
+        switch (fieldType.type)
+        {
+            case DataType::Type::BOOLEAN: {
+                const auto castedVal = value.cast<nautilus::val<bool>>();
+                return nautilus::invoke(
+                    writeValAsString<bool>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::INT8: {
+                const auto castedVal = value.cast<nautilus::val<int8_t>>();
+                return nautilus::invoke(
+                    writeValAsString<int8_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::INT16: {
+                const auto castedVal = value.cast<nautilus::val<int16_t>>();
+                return nautilus::invoke(
+                    writeValAsString<int16_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::INT32: {
+                const auto castedVal = value.cast<nautilus::val<int32_t>>();
+                return nautilus::invoke(
+                    writeValAsString<int32_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::INT64: {
+                const auto castedVal = value.cast<nautilus::val<int64_t>>();
+                return nautilus::invoke(
+                    writeValAsString<int64_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::CHAR: {
+                const auto castedVal = value.cast<nautilus::val<char>>();
+                return nautilus::invoke(
+                    writeValAsString<char>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::UINT8: {
+                const auto castedVal = value.cast<nautilus::val<uint8_t>>();
+                return nautilus::invoke(
+                    writeValAsString<uint8_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::UINT16: {
+                const auto castedVal = value.cast<nautilus::val<uint16_t>>();
+                return nautilus::invoke(
+                    writeValAsString<uint16_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::UINT32: {
+                const auto castedVal = value.cast<nautilus::val<uint32_t>>();
+                return nautilus::invoke(
+                    writeValAsString<uint32_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::UINT64: {
+                const auto castedVal = value.cast<nautilus::val<uint64_t>>();
+                return nautilus::invoke(
+                    writeValAsString<uint64_t>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::FLOAT32: {
+                const auto castedVal = value.cast<nautilus::val<float>>();
+                return nautilus::invoke(
+                    writeValAsString<float>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            case DataType::Type::FLOAT64: {
+                const auto castedVal = value.cast<nautilus::val<double>>();
+                return nautilus::invoke(
+                    writeValAsString<double>,
+                    castedVal,
+                    address,
+                    remainingSize,
+                    nautilus::val<const DataType*>(&fieldType),
+                    allowChildren,
+                    recordBuffer.getReference(),
+                    bufferProvider);
+            }
+            default: {
+                throw QueryCompilerError("Not handled for type {}", fieldType);
+            }
         }
-        case DataType::Type::INT8: {
-            const auto castedVal = value.cast<nautilus::val<int8_t>>();
-            return nautilus::invoke(
-                writeValAsString<int8_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::INT16: {
-            const auto castedVal = value.cast<nautilus::val<int16_t>>();
-            return nautilus::invoke(
-                writeValAsString<int16_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::INT32: {
-            const auto castedVal = value.cast<nautilus::val<int32_t>>();
-            return nautilus::invoke(
-                writeValAsString<int32_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::INT64: {
-            const auto castedVal = value.cast<nautilus::val<int64_t>>();
-            return nautilus::invoke(
-                writeValAsString<int64_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::CHAR: {
-            const auto castedVal = value.cast<nautilus::val<char>>();
-            return nautilus::invoke(
-                writeValAsString<char>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::UINT8: {
-            const auto castedVal = value.cast<nautilus::val<uint8_t>>();
-            return nautilus::invoke(
-                writeValAsString<uint8_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::UINT16: {
-            const auto castedVal = value.cast<nautilus::val<uint16_t>>();
-            return nautilus::invoke(
-                writeValAsString<uint16_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::UINT32: {
-            const auto castedVal = value.cast<nautilus::val<uint32_t>>();
-            return nautilus::invoke(
-                writeValAsString<uint32_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::UINT64: {
-            const auto castedVal = value.cast<nautilus::val<uint64_t>>();
-            return nautilus::invoke(
-                writeValAsString<uint64_t>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::FLOAT32: {
-            const auto castedVal = value.cast<nautilus::val<float>>();
-            return nautilus::invoke(
-                writeValAsString<float>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        case DataType::Type::FLOAT64: {
-            const auto castedVal = value.cast<nautilus::val<double>>();
-            return nautilus::invoke(
-                writeValAsString<double>,
-                castedVal,
-                address,
-                remainingSize,
-                nautilus::val<const DataType*>(&fieldType),
-                allowChildren,
-                recordBuffer.getReference(),
-                bufferProvider);
-        }
-        default: {
-            return std::numeric_limits<uint64_t>::max();
-        }
-    }
+    });
 }
 }

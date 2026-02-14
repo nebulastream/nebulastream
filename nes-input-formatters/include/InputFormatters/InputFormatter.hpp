@@ -120,21 +120,14 @@ public:
     /// to the second phase, which uses the index to access specific records/fields
     [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
     {
-        return SINGLE_RETURN_WRAPPER({
-            /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
-            const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
-                indexLeadingSpanningTupleAndBufferProxy,
-                recordBuffer.getReference(),
-                nautilus::val<const InputFormatter*>(this),
-                arenaRef.getArena()));
-
-            if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
-            {
-                return nautilus::val<bool>{false};
-            }
-
-            return nautilus::val<bool>{true};
-        });
+        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
+        const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
+            indexLeadingSpanningTupleAndBufferProxy,
+            recordBuffer.getReference(),
+            nautilus::val<const InputFormatter*>(this),
+            arenaRef.getArena()));
+        nautilus::val<bool> isRepeat = *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat));
+        return !isRepeat;
     }
 
     /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer
@@ -154,18 +147,16 @@ public:
 
         /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
         /// such a buffer can only form one (leading) spanning tuple, so returning is safe
-        if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
+        if (nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter))))
         {
-            return;
+            /// a buffer that delimits tuples may contain multiple complete tuples
+            /// determining the offset of a tuple may require parsing the prior tuple
+            parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
+
+            /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
+            /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
+            parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult);
         }
-
-        /// a buffer that delimits tuples may contain multiple complete tuples
-        /// determining the offset of a tuple may require parsing the prior tuple
-        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
-
-        /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
-        /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
-        parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult);
     }
 
     std::ostream& toString(std::ostream& os) const

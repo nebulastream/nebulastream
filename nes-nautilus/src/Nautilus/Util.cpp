@@ -52,63 +52,67 @@ void logProxy(const char* message, const LogLevel logLevel)
 
 VarVal createNautilusMinValue(const DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
-        case DataType::Type::INT16:
-            return createNautilusConstValue(std::numeric_limits<int16_t>::min(), physicalType);
-        case DataType::Type::INT32:
-            return createNautilusConstValue(std::numeric_limits<int32_t>::min(), physicalType);
-        case DataType::Type::INT64:
-            return createNautilusConstValue(std::numeric_limits<int64_t>::min(), physicalType);
-        case DataType::Type::UINT8:
-            return createNautilusConstValue(std::numeric_limits<uint8_t>::min(), physicalType);
-        case DataType::Type::UINT16:
-            return createNautilusConstValue(std::numeric_limits<uint16_t>::min(), physicalType);
-        case DataType::Type::UINT32:
-            return createNautilusConstValue(std::numeric_limits<uint32_t>::min(), physicalType);
-        case DataType::Type::UINT64:
-            return createNautilusConstValue(std::numeric_limits<uint64_t>::min(), physicalType);
-        case DataType::Type::FLOAT32:
-            return createNautilusConstValue(std::numeric_limits<float>::min(), physicalType);
-        case DataType::Type::FLOAT64:
-            return createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
-        default: {
-            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+    return SINGLE_RETURN_WRAPPER({
+        switch (physicalType)
+        {
+            case DataType::Type::INT8:
+                return createNautilusConstValue(std::numeric_limits<int8_t>::min(), physicalType);
+            case DataType::Type::INT16:
+                return createNautilusConstValue(std::numeric_limits<int16_t>::min(), physicalType);
+            case DataType::Type::INT32:
+                return createNautilusConstValue(std::numeric_limits<int32_t>::min(), physicalType);
+            case DataType::Type::INT64:
+                return createNautilusConstValue(std::numeric_limits<int64_t>::min(), physicalType);
+            case DataType::Type::UINT8:
+                return createNautilusConstValue(std::numeric_limits<uint8_t>::min(), physicalType);
+            case DataType::Type::UINT16:
+                return createNautilusConstValue(std::numeric_limits<uint16_t>::min(), physicalType);
+            case DataType::Type::UINT32:
+                return createNautilusConstValue(std::numeric_limits<uint32_t>::min(), physicalType);
+            case DataType::Type::UINT64:
+                return createNautilusConstValue(std::numeric_limits<uint64_t>::min(), physicalType);
+            case DataType::Type::FLOAT32:
+                return createNautilusConstValue(std::numeric_limits<float>::min(), physicalType);
+            case DataType::Type::FLOAT64:
+                return createNautilusConstValue(std::numeric_limits<double>::min(), physicalType);
+            default: {
+                throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+            }
         }
-    }
-    throw UnknownDataType("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+        throw UnknownDataType("Physical Type: type {} is not a BasicPhysicalType", magic_enum::enum_name(physicalType));
+    });
 }
 
 VarVal createNautilusMaxValue(const DataType::Type physicalType)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8:
-            return createNautilusConstValue(std::numeric_limits<int8_t>::max(), physicalType);
-        case DataType::Type::INT16:
-            return createNautilusConstValue(std::numeric_limits<int16_t>::max(), physicalType);
-        case DataType::Type::INT32:
-            return createNautilusConstValue(std::numeric_limits<int32_t>::max(), physicalType);
-        case DataType::Type::INT64:
-            return createNautilusConstValue(std::numeric_limits<int64_t>::max(), physicalType);
-        case DataType::Type::UINT8:
-            return createNautilusConstValue(std::numeric_limits<uint8_t>::max(), physicalType);
-        case DataType::Type::UINT16:
-            return createNautilusConstValue(std::numeric_limits<uint16_t>::max(), physicalType);
-        case DataType::Type::UINT32:
-            return createNautilusConstValue(std::numeric_limits<uint32_t>::max(), physicalType);
-        case DataType::Type::UINT64:
-            return createNautilusConstValue(std::numeric_limits<uint64_t>::max(), physicalType);
-        case DataType::Type::FLOAT32:
-            return createNautilusConstValue(std::numeric_limits<float>::max(), physicalType);
-        case DataType::Type::FLOAT64:
-            return createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
-        default: {
-            throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+    return SINGLE_RETURN_WRAPPER({
+        switch (physicalType)
+        {
+            case DataType::Type::INT8:
+                return createNautilusConstValue(std::numeric_limits<int8_t>::max(), physicalType);
+            case DataType::Type::INT16:
+                return createNautilusConstValue(std::numeric_limits<int16_t>::max(), physicalType);
+            case DataType::Type::INT32:
+                return createNautilusConstValue(std::numeric_limits<int32_t>::max(), physicalType);
+            case DataType::Type::INT64:
+                return createNautilusConstValue(std::numeric_limits<int64_t>::max(), physicalType);
+            case DataType::Type::UINT8:
+                return createNautilusConstValue(std::numeric_limits<uint8_t>::max(), physicalType);
+            case DataType::Type::UINT16:
+                return createNautilusConstValue(std::numeric_limits<uint16_t>::max(), physicalType);
+            case DataType::Type::UINT32:
+                return createNautilusConstValue(std::numeric_limits<uint32_t>::max(), physicalType);
+            case DataType::Type::UINT64:
+                return createNautilusConstValue(std::numeric_limits<uint64_t>::max(), physicalType);
+            case DataType::Type::FLOAT32:
+                return createNautilusConstValue(std::numeric_limits<float>::max(), physicalType);
+            case DataType::Type::FLOAT64:
+                return createNautilusConstValue(std::numeric_limits<double>::max(), physicalType);
+            default: {
+                throw UnknownDataType("Physical Type: type {} is currently not implemented", magic_enum::enum_name(physicalType));
+            }
         }
-    }
+    });
 }
 
 }

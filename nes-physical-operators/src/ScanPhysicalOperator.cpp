@@ -45,6 +45,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
+    nautilus::tracing::suggestInvertedBranch();
     if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);

@@ -199,6 +199,7 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
 {
     return std::visit(
+        ///NOLINTNEXTLINE(nes-multi-return-val)
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
             /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char

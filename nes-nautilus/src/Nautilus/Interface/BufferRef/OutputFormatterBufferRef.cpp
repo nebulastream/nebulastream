@@ -24,6 +24,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -60,26 +61,29 @@ nautilus::val<uint64_t> OutputFormatterBufferRef::writeRecord(
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
     nautilus::val<uint64_t> writtenForThisRecord(0);
 
-    /// This value counts the amount of actual fields of the sink schema that we visited already.
-    /// Iterate through the vals of the record and pass them to the output formatter for formatting
-    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
-    {
-        const auto& [name, type, fieldOffset] = fields.at(i);
-        const auto fieldAddress = recordAddress + writtenForThisRecord;
-        const nautilus::val remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
-        const auto& value = rec.read(name);
-        const auto amountWritten = formatter->getFormattedValue(
-            value, name, type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
-
-        /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
-        /// Therefore, we signalize the emit operator to emit the current buffer
-        if (amountWritten == nautilus::val<uint64_t>(INVALID_WRITE_RETURN))
+    return SINGLE_RETURN_WRAPPER({
+        /// This value counts the amount of actual fields of the sink schema that we visited already.
+        /// Iterate through the vals of the record and pass them to the output formatter for formatting
+        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
-            return INVALID_WRITE_RETURN;
+            const auto& field = fields.at(i);
+            const auto fieldAddress = recordAddress + writtenForThisRecord;
+            const nautilus::val remainingBytes(bufferSize - bytesWritten - writtenForThisRecord);
+            const auto& value = rec.read(field.name);
+            const auto amountWritten = formatter->getFormattedValue(
+                value, field.name, field.type, i, fieldAddress, remainingBytes, isFirstRecordOfBuffer, recordBuffer, bufferProvider);
+
+            /// This signalizes that the buffer did not have enough remaining space to capture the formatted value.
+            /// Therefore, we signalize the emit operator to emit the current buffer
+            nautilus::tracing::suggestInvertedBranch();
+            if (amountWritten == nautilus::val<uint64_t>(INVALID_WRITE_RETURN))
+            {
+                return nautilus::val<uint64_t>(INVALID_WRITE_RETURN);
+            }
+            writtenForThisRecord += amountWritten;
         }
-        writtenForThisRecord += amountWritten;
-    }
-    return writtenForThisRecord;
+        return writtenForThisRecord;
+    });
 }
 
 nautilus::val<uint64_t> OutputFormatterBufferRef::writeRecordSafely(
@@ -88,11 +92,13 @@ nautilus::val<uint64_t> OutputFormatterBufferRef::writeRecordSafely(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    if (bytesWritten >= bufferSize)
-    {
-        return INVALID_WRITE_RETURN;
-    }
-    return writeRecord(bytesWritten, recordBuffer, rec, bufferProvider);
+    return SINGLE_RETURN_WRAPPER({
+        if (bytesWritten < bufferSize)
+        {
+            return writeRecord(bytesWritten, recordBuffer, rec, bufferProvider);
+        }
+        return nautilus::val<uint64_t>(INVALID_WRITE_RETURN);
+    });
 }
 
 std::vector<Record::RecordFieldIdentifier> OutputFormatterBufferRef::getAllFieldNames() const

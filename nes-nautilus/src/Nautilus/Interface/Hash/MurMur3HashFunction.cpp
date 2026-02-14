@@ -121,6 +121,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
 {
     return value
         .customVisit(
+            ///NOLINTNEXTLINE(nes-multi-return-val)
             [&]<typename T>(const T& val) -> VarVal
             {
                 if constexpr (std::is_same_v<T, VariableSizedData>)

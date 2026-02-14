@@ -98,11 +98,13 @@ nautilus::val<uint64_t> ColumnTupleBufferRef::writeRecordSafely(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    if (recordIndex >= capacity)
-    {
-        return INVALID_WRITE_RETURN;
-    }
-    return writeRecord(recordIndex, recordBuffer, rec, bufferProvider);
+    return SINGLE_RETURN_WRAPPER({
+        if (recordIndex >= capacity)
+        {
+            return nautilus::val<uint64_t>(INVALID_WRITE_RETURN);
+        }
+        return writeRecord(recordIndex, recordBuffer, rec, bufferProvider);
+    });
 }
 
 std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const

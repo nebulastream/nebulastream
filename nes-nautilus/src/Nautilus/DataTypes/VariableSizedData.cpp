@@ -18,12 +18,12 @@
 #include <ostream>
 #include <utility>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/SingleReturnWrapper.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
-#include <Nautilus/SingleReturnWrapper.hpp>
 
 namespace NES
 {
@@ -37,6 +37,7 @@ VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(othe
 {
 }
 
+//NOLINTNEXTLINE(nes-multi-return-val)
 VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
 {
     if (this == &other)
@@ -85,16 +86,16 @@ nautilus::val<bool> VariableSizedData::isValid() const
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
 {
-return SINGLE_RETURN_WRAPPER({
-    if (size != rhs.size)
-    {
-        return nautilus::val<bool>(false);
-    }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return nautilus::val<bool>(compareResult);
-});
+    return SINGLE_RETURN_WRAPPER({
+        if (size != rhs.size)
+        {
+            return nautilus::val<bool>(false);
+        }
+        const auto varSizedData = getContent();
+        const auto rhsVarSizedData = rhs.getContent();
+        const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
+        return nautilus::val<bool>(compareResult);
+    });
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
