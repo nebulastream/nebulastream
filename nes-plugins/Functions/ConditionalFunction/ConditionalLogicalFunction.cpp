@@ -88,13 +88,28 @@ LogicalFunction ConditionalLogicalFunction::withInferredDataType(const Schema& s
     {
         inferredChildren.push_back(child.withInferredDataType(schema));
     }
-    const auto& resultType = inferredChildren.back().getDataType();
 
-    /*
-     * TODO: verify the data types of the input functions
-     *       hint1: use the macro PRECONDITION(cond, msg) to verify and print a message
-     *       hint2: think about what types the different functions are allowed to return
-     */
+    /// Even indexes (0, 2, 4, ...) are conditions and must be BOOLEAN.
+    for (std::size_t i = 0; i + 1 < inferredChildren.size(); i += 2)
+    {
+        PRECONDITION(
+            inferredChildren.at(i).getDataType().isType(DataType::Type::BOOLEAN),
+            "ConditionalLogicalFunction: condition at index {} must be BOOLEAN, but was: {}",
+            i,
+            inferredChildren.at(i).getDataType());
+    }
+
+    /// Odd indexes (1, 3, 5, ...) are results and must have the same type as the default (last element).
+    const auto& resultType = inferredChildren.back().getDataType();
+    for (std::size_t i = 1; i + 1 < inferredChildren.size(); i += 2)
+    {
+        PRECONDITION(
+            inferredChildren.at(i).getDataType() == resultType,
+            "ConditionalLogicalFunction: result at index {} has type {}, but expected {} (matching default)",
+            i,
+            inferredChildren.at(i).getDataType(),
+            resultType);
+    }
 
     return withChildren(inferredChildren).withDataType(resultType);
 }
@@ -114,10 +129,14 @@ SerializableFunction ConditionalLogicalFunction::serialize() const
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConditionalLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    /*
-     * TODO: verify the number of children functions
-     *       hint: throw a CannotDeserialize on violations
-     */
+    /// Must have an odd number of children >= 3: at least one (condition, result) pair + default.
+    if (arguments.children.size() < 3 || arguments.children.size() % 2 == 0)
+    {
+        throw CannotDeserialize(
+            "ConditionalLogicalFunction requires an odd number of arguments >= 3 "
+            "(condition/result pairs + default), but got {}",
+            arguments.children.size());
+    }
     return ConditionalLogicalFunction(std::move(arguments.children));
 }
 }
