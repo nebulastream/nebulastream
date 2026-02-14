@@ -20,7 +20,7 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
-# TODO: activate the plugin
+activate_optional_plugin("Functions/ConditionalFunction" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

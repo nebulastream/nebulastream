@@ -12,4 +12,5 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
-# TODO: add the logical function as a plugin
+add_plugin(Conditional LogicalFunction nes-logical-operators ConditionalLogicalFunction.cpp)
+add_plugin(Conditional PhysicalFunction nes-physical-operators ConditionalPhysicalFunction.cpp)
