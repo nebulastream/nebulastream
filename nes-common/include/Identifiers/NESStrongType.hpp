@@ -91,6 +91,7 @@ public:
         }
         else if constexpr (std::is_convertible_v<StringType, std::string_view>)
         {
+            ///NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-array-to-pointer-decay)
             value = std::string_view(std::forward<StringType>(stringType));
         }
         else
