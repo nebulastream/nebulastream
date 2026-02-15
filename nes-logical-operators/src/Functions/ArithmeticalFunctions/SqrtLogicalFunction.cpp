@@ -36,12 +36,7 @@ SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataTyp
 
 bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
-    const auto* other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
-    if (other != nullptr)
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const

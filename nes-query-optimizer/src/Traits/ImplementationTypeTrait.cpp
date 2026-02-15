@@ -71,12 +71,7 @@ SerializableTrait JoinImplementationTypeTrait::serialize() const
 
 bool JoinImplementationTypeTrait::operator==(const JoinImplementationTypeTrait& other) const
 {
-    const auto* const casted = dynamic_cast<const JoinImplementationTypeTrait*>(&other);
-    if (casted == nullptr)
-    {
-        return false;
-    }
-    return implementationType == casted->implementationType;
+    return implementationType == other.implementationType;
 }
 
 size_t JoinImplementationTypeTrait::hash() const

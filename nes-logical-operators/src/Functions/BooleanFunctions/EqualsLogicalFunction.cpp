@@ -39,13 +39,9 @@ EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFuncti
 
 bool EqualsLogicalFunction::operator==(const EqualsLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 DataType EqualsLogicalFunction::getDataType() const

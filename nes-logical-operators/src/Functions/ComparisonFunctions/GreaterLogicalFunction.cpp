@@ -39,13 +39,9 @@ GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunc
 
 bool GreaterLogicalFunction::operator==(const GreaterLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const GreaterLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const

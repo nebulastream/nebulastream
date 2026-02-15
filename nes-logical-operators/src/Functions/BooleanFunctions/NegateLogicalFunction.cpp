@@ -39,11 +39,7 @@ NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
 
 bool NegateLogicalFunction::operator==(const NegateLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
-    {
-        return this->child == other->getChildren()[0];
-    }
-    return false;
+    return this->child == rhs.getChildren()[0];
 }
 
 std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const

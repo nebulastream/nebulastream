@@ -39,11 +39,7 @@ LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction r
 
 bool LessLogicalFunction::operator==(const LessLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const LessLogicalFunction*>(&rhs))
-    {
-        return this->left == other->left && this->right == other->right;
-    }
-    return false;
+    return this->left == rhs.left && this->right == rhs.right;
 }
 
 std::string LessLogicalFunction::explain(ExplainVerbosity verbosity) const

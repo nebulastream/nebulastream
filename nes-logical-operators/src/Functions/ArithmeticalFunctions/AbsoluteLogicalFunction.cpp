@@ -73,11 +73,7 @@ std::string_view AbsoluteLogicalFunction::getType() const
 
 bool AbsoluteLogicalFunction::operator==(const AbsoluteLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const

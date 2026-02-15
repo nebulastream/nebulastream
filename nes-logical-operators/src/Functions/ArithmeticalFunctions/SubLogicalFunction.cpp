@@ -36,11 +36,7 @@ SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const Logica
 
 bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const SubLogicalFunction*>(&rhs))
-    {
-        return left == other->left and right == other->right;
-    }
-    return false;
+    return left == rhs.left and right == rhs.right;
 }
 
 std::string SubLogicalFunction::explain(ExplainVerbosity verbosity) const
