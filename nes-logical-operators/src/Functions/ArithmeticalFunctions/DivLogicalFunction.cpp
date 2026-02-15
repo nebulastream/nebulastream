@@ -37,11 +37,7 @@ DivLogicalFunction::DivLogicalFunction(const LogicalFunction& left, LogicalFunct
 
 bool DivLogicalFunction::operator==(const DivLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const DivLogicalFunction*>(&rhs))
-    {
-        return left == other->left and right == other->right;
-    }
-    return false;
+    return left == rhs.left and right == rhs.right;
 }
 
 DataType DivLogicalFunction::getDataType() const

@@ -38,11 +38,7 @@ ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(
 
 bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 DataType ExpLogicalFunction::getDataType() const

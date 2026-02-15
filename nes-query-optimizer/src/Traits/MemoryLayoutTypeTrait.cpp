@@ -56,12 +56,7 @@ SerializableTrait MemoryLayoutTypeTrait::serialize() const
 
 bool MemoryLayoutTypeTrait::operator==(const MemoryLayoutTypeTrait& other) const
 {
-    const auto* const casted = dynamic_cast<const MemoryLayoutTypeTrait*>(&other);
-    if (casted == nullptr)
-    {
-        return false;
-    }
-    return memoryLayout == casted->memoryLayout;
+    return memoryLayout == other.memoryLayout;
 }
 
 size_t MemoryLayoutTypeTrait::hash() const

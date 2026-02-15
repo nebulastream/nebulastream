@@ -36,11 +36,7 @@ RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataT
 
 bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
-    {
-        return child == other->getChildren()[0];
-    }
-    return false;
+    return child == rhs.getChildren()[0];
 }
 
 std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const

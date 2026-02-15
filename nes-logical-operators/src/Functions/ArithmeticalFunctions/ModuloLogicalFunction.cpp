@@ -37,11 +37,7 @@ ModuloLogicalFunction::ModuloLogicalFunction(const LogicalFunction& left, const 
 
 bool ModuloLogicalFunction::operator==(const ModuloLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ModuloLogicalFunction*>(&rhs))
-    {
-        return left == other->left and right == other->right;
-    }
-    return false;
+    return left == rhs.left and right == rhs.right;
 }
 
 DataType ModuloLogicalFunction::getDataType() const

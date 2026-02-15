@@ -65,11 +65,7 @@ std::string_view ConstantValueLogicalFunction::getType() const
 
 bool ConstantValueLogicalFunction::operator==(const ConstantValueLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ConstantValueLogicalFunction*>(&rhs))
-    {
-        return constantValue == other->constantValue;
-    }
-    return false;
+    return constantValue == rhs.constantValue;
 }
 
 std::string ConstantValueLogicalFunction::explain(ExplainVerbosity verbosity) const

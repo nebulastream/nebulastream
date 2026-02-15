@@ -63,12 +63,7 @@ SerializableTrait OutputOriginIdsTrait::serialize() const
 
 bool OutputOriginIdsTrait::operator==(const OutputOriginIdsTrait& other) const
 {
-    const auto* const casted = dynamic_cast<const OutputOriginIdsTrait*>(&other);
-    if (casted == nullptr)
-    {
-        return false;
-    }
-    return this->originIds == casted->originIds;
+    return this->originIds == other.originIds;
 }
 
 size_t OutputOriginIdsTrait::hash() const

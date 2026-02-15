@@ -72,11 +72,7 @@ std::string_view CeilLogicalFunction::getType() const
 
 bool CeilLogicalFunction::operator==(const CeilLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const CeilLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const

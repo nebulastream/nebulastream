@@ -73,11 +73,7 @@ std::string_view FloorLogicalFunction::getType() const
 
 bool FloorLogicalFunction::operator==(const FloorLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const FloorLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
