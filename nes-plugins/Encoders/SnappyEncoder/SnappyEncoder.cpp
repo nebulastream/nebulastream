@@ -46,7 +46,7 @@ Encoder::EncodingResult SnappyEncoder::encodeBuffer(std::span<const std::byte> s
         std::string compressedData;
         const size_t compressedLength = snappy::Compress(reinterpret_cast<const char*>(subspan.data()), bytesToCompress, &compressedData);
         /// Calculate the checksum
-        const uint32_t unmaskedChecksum = crc32c::Crc32c(compressedData);
+        const uint32_t unmaskedChecksum = crc32c::Crc32c(reinterpret_cast<const char*>(subspan.data()), bytesToCompress);
         const uint32_t maskedChecksum = ((unmaskedChecksum >> 15) | (unmaskedChecksum << 17)) + 0xa282ead8;
 
         /// Resize dst to fit the new frame
