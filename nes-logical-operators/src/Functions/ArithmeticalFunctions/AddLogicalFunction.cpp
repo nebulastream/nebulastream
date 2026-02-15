@@ -80,14 +80,9 @@ std::string_view AddLogicalFunction::getType() const
 
 bool AddLogicalFunction::operator==(const AddLogicalFunction& rhs) const
 {
-    const auto* other = dynamic_cast<const AddLogicalFunction*>(&rhs);
-    if (other != nullptr)
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = right == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
