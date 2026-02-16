@@ -14,18 +14,127 @@ limitations under the License.
 
 #include "Functions/CastToUnixTimestampPhysicalFunction.hpp"
 
+#include <chrono>
+#include <cctype>
+#include <sstream>
+#include <string>
+#include <string_view>
 #include <utility>
+
+#include <date/date.h>
 
 #include "DataTypes/DataType.hpp"
 #include "ErrorHandling.hpp"
 #include "ExecutionContext.hpp"
 #include "Functions/PhysicalFunction.hpp"
 #include "Nautilus/DataTypes/VarVal.hpp"
+#include "Nautilus/DataTypes/VariableSizedData.hpp"
 #include "Nautilus/Interface/Record.hpp"
 #include "PhysicalFunctionRegistry.hpp"
 
 namespace NES
     {
+        namespace
+        {
+        std::string_view trim(std::string_view s)
+        {
+            while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front())))
+            {
+                s.remove_prefix(1);
+            }
+            while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back())))
+            {
+                s.remove_suffix(1);
+            }
+            return s;
+        }
+
+        uint64_t parseWebTimestampToUnixMs(std::string_view raw)
+        {
+            using Ms = std::chrono::milliseconds;
+            const auto s = trim(raw);
+
+            if (s.empty())
+            {
+                throw UnknownOperation("CastToUnixTs: empty timestamp");
+            }
+
+            // For formats WITH timezone/offset we can parse directly into sys_time.
+            date::sys_time<Ms> tp;
+
+            std::string abbrev;
+            std::chrono::minutes offset{0};
+
+            static constexpr const char* formats_with_tz[] = {
+                // ISO-8601 with numeric offset
+                "%FT%T%Ez",
+                "%FT%T.%f%Ez",
+
+                // ISO-8601 with Z
+                "%FT%TZ",
+                "%FT%T.%fZ",
+
+                // RFC 1123 / HTTP-date
+                "%a, %d %b %Y %T GMT",
+            };
+
+            static constexpr const char* formats_without_tz[] = {
+                // No timezone info -> interpret as UTC
+                "%F %T",
+                "%F %T.%f",
+
+                // ISO-8601 without timezone but with 'T'
+                "%FT%T",
+                "%FT%T.%f",
+            };
+
+            // 1) Try formats that carry timezone/offset info
+            for (const char* fmt : formats_with_tz)
+            {
+                std::istringstream iss(std::string{s});
+                abbrev.clear();
+                offset = std::chrono::minutes{0};
+
+                date::from_stream(iss, fmt, tp, &abbrev, &offset);
+
+                if (!iss.fail())
+                {
+                    const auto ms = tp.time_since_epoch().count();
+                    if (ms < 0)
+                    {
+                        throw UnknownOperation("CastToUnixTs: pre-epoch timestamp is not supported");
+                    }
+                    return static_cast<uint64_t>(ms);
+                }
+            }
+
+            // 2) Try formats without timezone info: parse as local_time, then treat as UTC
+            for (const char* fmt : formats_without_tz)
+            {
+                std::istringstream iss(std::string{s});
+                date::local_time<Ms> ltp;
+
+                date::from_stream(iss, fmt, ltp);
+
+                if (!iss.fail())
+                {
+                    // Interpret the local_time as UTC (i.e., no offset applied)
+                    tp = date::sys_time<Ms>{ltp.time_since_epoch()};
+
+                    const auto ms = tp.time_since_epoch().count();
+                    if (ms < 0)
+                    {
+                        throw UnknownOperation("CastToUnixTs: pre-epoch timestamp is not supported");
+                    }
+                    return static_cast<uint64_t>(ms);
+                }
+            }
+
+            throw UnknownOperation("CastToUnixTs: unsupported timestamp format: '{}'", std::string{s});
+        }
+
+        } // namespace
+
         CastToUnixTimestampPhysicalFunction::CastToUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType)
             : outputType(std::move(outputType)), childFunction(std::move(childFunction))
         {
@@ -35,13 +144,23 @@ namespace NES
         {
             const auto value = childFunction.execute(record, arena);
 
-            // Dummy: just use the generic cast mechanism for now.
-            // Real implementation will likely interpret input values (string/date/timestamp) and compute unix epoch.
-            return value.castToType(outputType.type);
+            const auto var = value.cast<VariableSizedData>();
+            const auto size = var.getContentSize(); // nautilus::val<uint32_t>
+            const auto ptr = var.getContent();      // nautilus::val<int8_t*>
+
+            const auto tsMs = nautilus::invoke(
+                +[](uint32_t sz, int8_t* p) -> uint64_t
+                {
+                    std::string_view sv(reinterpret_cast<const char*>(p), sz);
+                    return parseWebTimestampToUnixMs(sv);
+                },
+                size,
+                ptr);
+
+            return VarVal(tsMs).castToType(outputType.type);
         }
 
-        PhysicalFunctionRegistryReturnType
-        PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(
+        PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(
             PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
         {
             PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1,
