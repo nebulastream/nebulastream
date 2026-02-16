@@ -28,12 +28,14 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <nameof.hpp>
 
@@ -48,64 +50,8 @@ inline OperatorId getNextLogicalOperatorId()
 
 namespace detail
 {
-struct ErasedLogicalOperator;
-}
-
-template <typename Checked = NES::detail::ErasedLogicalOperator>
-struct TypedLogicalOperator;
-using LogicalOperator = TypedLogicalOperator<>;
-
-/// Concept defining the interface for all logical operators in the query plan.
-/// This concept defines the common interface that all logical operators must implement.
-/// Logical operators represent operations in the query plan and are used during query
-/// planning and optimization.
-template <typename T>
-concept LogicalOperatorConcept = requires(
-    const T& thisOperator,
-    ExplainVerbosity verbosity,
-    OperatorId operatorId,
-    std::vector<LogicalOperator> children,
-    TraitSet traitSet,
-    const T& rhs,
-    std::vector<Schema> inputSchemas) {
-    /// Returns a string representation of the operator
-    { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
-
-    /// Returns the children operators of this operator
-    { thisOperator.getChildren() } -> std::convertible_to<std::vector<LogicalOperator>>;
-
-    /// Creates a new operator with the given children
-    { thisOperator.withChildren(children) } -> std::convertible_to<T>;
-
-    /// Creates a new operator with the given traits
-    { thisOperator.withTraitSet(traitSet) } -> std::convertible_to<T>;
-
-    /// Compares this operator with another for equality
-    { thisOperator == rhs } -> std::convertible_to<bool>;
-
-    /// Returns the name of the operator, used during planning and optimization
-    { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
-
-    /// Serialize the operator to a Reflected object
-    { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
-
-    /// Returns the trait set of the operator
-    { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
-
-    /// Returns the input schemas of the operator
-    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<Schema>>;
-
-    /// Returns the output schema of the operator
-    { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
-
-    /// Creates a new operator with inferred schema based on input schemas
-    { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
-};
-
-namespace detail
-{
 /// @brief A type erased wrapper for logical operators
-struct ErasedLogicalOperator
+struct ErasedLogicalOperator : std::enable_shared_from_this<ErasedLogicalOperator>
 {
     virtual ~ErasedLogicalOperator() = default;
 
@@ -129,6 +75,9 @@ struct ErasedLogicalOperator
 private:
     template <typename T>
     friend struct NES::TypedLogicalOperator;
+    template <typename T>
+    requires(std::is_same_v<T, detail::ErasedLogicalOperator> || LogicalOperatorConcept<T>)
+    friend struct NES::WeakTypedLogicalOperator;
     ///If the operator inherits from DynamicBase (over Castable), then returns a pointer to the wrapped operator as DynamicBase,
     ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
@@ -286,7 +235,14 @@ struct TypedLogicalOperator
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
-    [[nodiscard]] bool operator==(const LogicalOperator& other) const { return self->equals(*other.self); }
+    [[nodiscard]] bool operator==(const LogicalOperator& other) const
+    {
+        if (self == other.self)
+        {
+            return true;
+        }
+        return self->equals(*other.self);
+    }
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
@@ -308,9 +264,107 @@ private:
     template <typename FriendChecked>
     friend struct TypedLogicalOperator;
 
+    template <typename WeakChecked>
+    requires(std::is_same_v<WeakChecked, detail::ErasedLogicalOperator> || LogicalOperatorConcept<WeakChecked>)
+    friend struct WeakTypedLogicalOperator;
+
     [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
     std::shared_ptr<const NES::detail::ErasedLogicalOperator> self;
+};
+
+namespace detail
+{
+template <typename Checked>
+struct SelfRef
+{
+    folly::Synchronized<std::optional<OperatorModel<Checked>*>> self;
+
+    explicit SelfRef(OperatorModel<Checked>* ptr) : self(ptr) { }
+};
+}
+
+template <typename Checked>
+requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> || LogicalOperatorConcept<Checked>)
+struct WeakTypedLogicalOperator
+{
+private:
+    using PtrType = std::conditional_t<
+        std::is_same_v<Checked, detail::ErasedLogicalOperator>,
+        std::weak_ptr<const detail::ErasedLogicalOperator>,
+        std::shared_ptr<detail::SelfRef<Checked>>>;
+
+public:
+    WeakTypedLogicalOperator() = default;
+
+    explicit WeakTypedLogicalOperator(const LogicalOperator& owningOperator) : self(owningOperator.self) { }
+
+    explicit WeakTypedLogicalOperator(PtrType weakPtr) : self(std::move(weakPtr)) { }
+
+    template <typename OtherChecked>
+    requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> && LogicalOperatorConcept<OtherChecked>)
+    explicit WeakTypedLogicalOperator(const std::shared_ptr<detail::SelfRef<OtherChecked>>& other)
+        : self(std::shared_ptr<detail::ErasedLogicalOperator>{
+              other, static_cast<detail::ErasedLogicalOperator*>(other->self.rlock()->value())})
+    {
+    }
+
+    std::optional<TypedLogicalOperator<Checked>> tryLock() const
+    {
+        if constexpr (std::is_same_v<Checked, detail::ErasedLogicalOperator>)
+        {
+            if (auto ptr = self.lock())
+            {
+                return TypedLogicalOperator<Checked>{ptr->shared_from_this()};
+            }
+            return std::nullopt;
+        }
+        else if constexpr (LogicalOperatorConcept<Checked>)
+        {
+            if (const auto ptrOpt = self->self.rlock(); ptrOpt->has_value())
+            {
+                return TypedLogicalOperator<Checked>{ptrOpt->value()->shared_from_this()};
+            }
+            return std::nullopt;
+        }
+        else
+        {
+            static_assert(false, "Non exhaustive tryLock for WeakOperators");
+            std::unreachable();
+        }
+    }
+
+    TypedLogicalOperator<Checked> lock() const
+    {
+        if constexpr (std::is_same_v<Checked, detail::ErasedLogicalOperator>)
+        {
+            auto count = self.use_count();
+            auto ptr = self.lock();
+            if (ptr)
+            {
+                return TypedLogicalOperator<Checked>{ptr->shared_from_this()};
+            }
+            PRECONDITION(false, "Operator has been destroyed");
+            std::unreachable();
+        }
+        else if constexpr (LogicalOperatorConcept<Checked>)
+        {
+            if (const auto ptrOpt = self->self.rlock(); ptrOpt->has_value())
+            {
+                return TypedLogicalOperator<Checked>{ptrOpt->value()->shared_from_this()};
+            }
+            PRECONDITION(false, "Operator has been destroyed");
+            std::unreachable();
+        }
+        else
+        {
+            static_assert(false, "Non exhaustive lock for WeakOperators");
+            std::unreachable();
+        }
+    }
+
+private:
+    PtrType self;
 };
 
 namespace detail
@@ -320,12 +374,32 @@ namespace detail
 template <LogicalOperatorConcept OperatorType>
 struct OperatorModel : ErasedLogicalOperator
 {
-    OperatorType impl;
     OperatorId id;
+    std::shared_ptr<SelfRef<OperatorType>> selfRef;
+    OperatorType impl;
 
-    explicit OperatorModel(OperatorType impl) : impl(std::move(impl)), id(getNextLogicalOperatorId()) { }
+    explicit OperatorModel(OperatorType impl)
+        : id(getNextLogicalOperatorId()), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(std::move(impl))
+    {
+        this->impl.self = WeakLogicalOperator{selfRef};
+    }
 
-    OperatorModel(OperatorType impl, const OperatorId existingId) : impl(std::move(impl)), id(existingId) { }
+    OperatorModel(OperatorType impl, const OperatorId existingId)
+        : id(existingId), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(std::move(impl))
+    {
+        this->impl.self = WeakLogicalOperator{selfRef};
+    }
+
+    OperatorModel(const OperatorModel& other) : id(other.id), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(other.impl)
+    {
+        impl.self = WeakLogicalOperator{selfRef};
+    }
+
+    OperatorModel(OperatorModel&& other) noexcept = delete;
+
+    OperatorModel& operator=(const OperatorModel& other) = delete;
+
+    ~OperatorModel() override { selfRef->self = std::nullopt; }
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity, id); }
 
@@ -377,7 +451,16 @@ private:
     {
         if constexpr (std::is_base_of_v<DynamicBase, OperatorType>)
         {
-            return static_cast<const DynamicBase*>(&impl);
+            if constexpr (requires() { static_cast<const DynamicBase*>(&impl); })
+            {
+                return static_cast<const DynamicBase*>(&impl);
+            }
+            else if constexpr (requires() {
+                                   { impl.getDynamicBase() } -> std::same_as<const DynamicBase*>;
+                               })
+            {
+                return impl.getDynamicBase();
+            }
         }
         else
         {
