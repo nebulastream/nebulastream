@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/CastToUnixTimestampLogicalFunction.hpp>
+#include <Functions/CastFromUnixTimestampLogicalFunction.hpp>
 
 #include <string>
 #include <string_view>
@@ -31,12 +31,12 @@
 namespace NES
 {
 
-CastToUnixTimestampLogicalFunction::CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child)
+CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child)
     : outputType(std::move(outputType)), child(std::move(child))
 {
 }
 
-SerializableFunction CastToUnixTimestampLogicalFunction::serialize() const
+SerializableFunction CastFromUnixTimestampLogicalFunction::serialize() const
 {
     SerializableFunction serializedFunction;
     serializedFunction.set_function_type(NAME);
@@ -45,63 +45,63 @@ SerializableFunction CastToUnixTimestampLogicalFunction::serialize() const
     return serializedFunction;
 }
 
-bool CastToUnixTimestampLogicalFunction::operator==(const CastToUnixTimestampLogicalFunction& rhs) const
+bool CastFromUnixTimestampLogicalFunction::operator==(const CastFromUnixTimestampLogicalFunction& rhs) const
 {
     return this->outputType == rhs.outputType && this->child == rhs.child;
 }
 
-DataType CastToUnixTimestampLogicalFunction::getDataType() const
+DataType CastFromUnixTimestampLogicalFunction::getDataType() const
 {
     return outputType;
 }
 
-CastToUnixTimestampLogicalFunction CastToUnixTimestampLogicalFunction::withDataType(const DataType& dataType) const
+CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.outputType = dataType;
     return copy;
 }
 
-LogicalFunction CastToUnixTimestampLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema&) const
 {
     auto copy = *this;
 
-    copy.outputType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    copy.outputType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
 
     return copy;
 }
 
-std::vector<LogicalFunction> CastToUnixTimestampLogicalFunction::getChildren() const
+std::vector<LogicalFunction> CastFromUnixTimestampLogicalFunction::getChildren() const
 {
     return {child};
 }
 
-CastToUnixTimestampLogicalFunction CastToUnixTimestampLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
-    PRECONDITION(children.size() == 1, "CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", children.size());
+    PRECONDITION(children.size() == 1, "CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
     copy.child = children[0];
     return copy;
 }
 
-std::string_view CastToUnixTimestampLogicalFunction::getType() const
+std::string_view CastFromUnixTimestampLogicalFunction::getType() const
 {
     return NAME;
 }
 
-std::string CastToUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
+std::string CastFromUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
 {
-    return fmt::format("Cast to unix timestamp (ms), outputType={}", outputType);
+    return fmt::format("Cast from unix timestamp (ms) to ISO-8601 UTC, outputType={}", outputType);
 }
 
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (arguments.children.size() != 1)
     {
-        throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+        throw CannotDeserialize("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
+    return CastFromUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
 }
 
 }

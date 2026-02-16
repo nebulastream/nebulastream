@@ -28,25 +28,25 @@
 namespace NES
 {
 
-/// Casts the input to a unix timestamp in milliseconds.
-class CastToUnixTimestampLogicalFunction final
+/// Converts a unix timestamp in milliseconds (UINT64) to an ISO-8601 UTC timestamp string (VARSIZED).
+class CastFromUnixTimestampLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "CastToUnixTs";
+    static constexpr std::string_view NAME = "CastFromUnixTs";
 
-    CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
+    CastFromUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
 
     [[nodiscard]] SerializableFunction serialize() const;
 
-    [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
+    [[nodiscard]] bool operator==(const CastFromUnixTimestampLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] CastToUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] CastFromUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
 
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
-    [[nodiscard]] CastToUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+    [[nodiscard]] CastFromUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -56,8 +56,8 @@ private:
     LogicalFunction child;
 };
 
-static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
+static_assert(LogicalFunctionConcept<CastFromUnixTimestampLogicalFunction>);
 
 }
 
-FMT_OSTREAM(NES::CastToUnixTimestampLogicalFunction);
+FMT_OSTREAM(NES::CastFromUnixTimestampLogicalFunction);

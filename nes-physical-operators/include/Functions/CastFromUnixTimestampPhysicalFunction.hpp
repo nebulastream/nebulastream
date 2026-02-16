@@ -23,10 +23,12 @@
 namespace NES
 {
 
-class CastToUnixTimestampPhysicalFunction : public PhysicalFunctionConcept
+/// Converts a unix timestamp in milliseconds (UINT64) to a human-readable UTC timestamp string (VARSIZED),
+/// formatted as: YYYY-MM-DDTHH:MM:SS.mmmZ
+class CastFromUnixTimestampPhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
-    explicit CastToUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
+    explicit CastFromUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
 private:
