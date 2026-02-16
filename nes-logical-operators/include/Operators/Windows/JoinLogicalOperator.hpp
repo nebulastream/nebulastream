@@ -26,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -74,6 +75,9 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] JoinLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+
+
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Join";

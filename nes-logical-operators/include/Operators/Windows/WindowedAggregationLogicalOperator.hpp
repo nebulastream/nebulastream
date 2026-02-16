@@ -27,6 +27,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Traits/Trait.hpp>
@@ -80,6 +81,9 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+
+
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";

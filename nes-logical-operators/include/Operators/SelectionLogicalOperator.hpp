@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -68,6 +69,8 @@ public:
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
     };
+
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Selection";

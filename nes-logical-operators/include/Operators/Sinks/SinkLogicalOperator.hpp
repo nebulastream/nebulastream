@@ -24,6 +24,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -72,6 +73,9 @@ struct SinkLogicalOperator final
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(SINK_NAME);
     };
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Sink";
