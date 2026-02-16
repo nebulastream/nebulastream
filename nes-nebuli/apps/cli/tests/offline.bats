@@ -168,11 +168,67 @@ JSONEOF
 }
 
 @test "nebucli dump with topology from stdin" {
-  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI dump"
+  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]
 }
 
 @test "nebucli dump with topology from stdin and adhoc query" {
-  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI dump 'SELECT * FROM stream INTO VOID_SINK'"
+  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump 'SELECT * FROM stream INTO VOID_SINK'"
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: -t flag takes priority over env and working directory" {
+  # Put a valid topology as topology.yaml in cwd — should be ignored
+  cp tests/good/select-gen-into-void.yaml topology.yaml
+  # Set env to a different valid topology — should be ignored
+  NES_TOPOLOGY_FILE=tests/good/select-gen-into-void.yaml run $NES_CLI -t tests/good/crazy-join.yaml dump
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: NES_TOPOLOGY_FILE takes priority over working directory" {
+  cp tests/good/select-gen-into-void.yaml topology.yaml
+  NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: topology.yaml in working directory" {
+  cp tests/good/crazy-join.yaml topology.yaml
+  run $NES_CLI dump
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: topology.yml in working directory" {
+  cp tests/good/crazy-join.yaml topology.yml
+  run $NES_CLI dump
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: topology.yaml preferred over topology.yml" {
+  cp tests/good/crazy-join.yaml topology.yaml
+  echo "invalid yaml: [" > topology.yml
+  run $NES_CLI dump
+  [ "$status" -eq 0 ]
+}
+
+@test "topology resolution: error when no topology found" {
+  run $NES_CLI -d dump
+  [ "$status" -eq 1 ]
+  grep "Could not find topology file" nes-cli.log
+}
+
+@test "topology resolution: -t with nonexistent file" {
+  run $NES_CLI -d -t nonexistent.yaml dump
+  [ "$status" -eq 1 ]
+  grep "does not exist" nes-cli.log
+}
+
+@test "topology resolution: -t - with empty stdin" {
+  run bash -c "echo -n '' | $NES_CLI -d -t - dump"
+  [ "$status" -eq 1 ]
+  grep "No topology data received from stdin" nes-cli.log
+}
+
+@test "topology resolution: -t - reads from stdin" {
+  run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]
 }
