@@ -13,11 +13,14 @@
 */
 
 #include <cstddef>
+#include <optional>
 #include <ranges>
 #include <sstream>
 
+#include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
@@ -27,6 +30,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -35,6 +39,8 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
 using namespace NES;
@@ -169,6 +175,7 @@ struct TestTrait final : DefaultTrait<TestTrait>
 
     [[nodiscard]] std::string_view getName() const override { return NAME; }
 };
+
 }
 
 template <>
@@ -237,3 +244,101 @@ TEST_F(LogicalPlanTest, OutputOperator)
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
 }
+
+namespace
+{
+/// Test operator that exposes the self reference for testing
+/// NOLINTBEGIN(readability-convert-member-functions-to-static)
+struct TestOperatorWithSelfAccess final
+{
+    explicit TestOperatorWithSelfAccess() = default;
+
+    [[nodiscard]] bool operator==(const TestOperatorWithSelfAccess& rhs) const { return this == &rhs; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withTraitSet(TraitSet traitSet) const
+    {
+        auto copy = *this;
+        copy.traitSet = std::move(traitSet);
+        return copy;
+    }
+
+    [[nodiscard]] TraitSet getTraitSet() const { return traitSet; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withChildren(std::vector<LogicalOperator> children) const
+    {
+        auto copy = *this;
+        copy.children = std::move(children);
+        return copy;
+    }
+
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return children; }
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {}; }
+
+    [[nodiscard]] Schema getOutputSchema() const { return Schema{}; }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity, OperatorId id) const
+    {
+        return "TestOperator(id=" + std::to_string(id.getRawValue()) + ")";
+    }
+
+    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withInferredSchema(const std::vector<Schema>&) const { return *this; }
+
+    [[nodiscard]] std::optional<LogicalOperator> getSelf() const { return self.tryLock(); }
+
+private:
+    static constexpr std::string_view NAME = "TestOperatorWithSelfAccess";
+    std::vector<LogicalOperator> children;
+    TraitSet traitSet;
+
+    template <LogicalOperatorConcept T>
+    friend struct NES::detail::OperatorModel;
+    WeakLogicalOperator self;
+};
+
+///NOLINTEND(readability-convert-member-functions-to-static)
+}
+
+template <>
+struct Reflector<TestOperatorWithSelfAccess>
+{
+    Reflected operator()(const TestOperatorWithSelfAccess&) const { return Reflected{}; };
+};
+
+template <>
+struct Unreflector<TestOperatorWithSelfAccess>
+{
+    TestOperatorWithSelfAccess operator()(const Reflected&) const { return TestOperatorWithSelfAccess{}; };
+};
+
+///NOLINTBEGIN(bugprone-unchecked-optional-access)
+TEST_F(LogicalPlanTest, WeakSelfReferenceReturnsCorrectOperator)
+{
+    const LogicalOperator testOp{TestOperatorWithSelfAccess{}};
+    const auto typedOp = testOp.getAs<TestOperatorWithSelfAccess>();
+    const auto selfOpt = typedOp->getSelf();
+
+    ASSERT_TRUE(selfOpt.has_value());
+    EXPECT_EQ(selfOpt->getId(), testOp.getId());
+    EXPECT_EQ(selfOpt.value(), testOp);
+}
+
+TEST_F(LogicalPlanTest, WeakSelfReferenceAfterCopy)
+{
+    const LogicalOperator originalOp{TestOperatorWithSelfAccess{}};
+    const LogicalOperator copiedOp = originalOp.withChildren({sourceOp});
+    const auto typedCopied = copiedOp.withChildren({}).getAs<TestOperatorWithSelfAccess>();
+
+    const auto selfOpt = typedCopied->getSelf();
+    ASSERT_TRUE(selfOpt.has_value());
+
+    EXPECT_EQ(typedCopied, selfOpt.value());
+    EXPECT_EQ(typedCopied.getId(), selfOpt.value().getId());
+
+    EXPECT_NE(originalOp, selfOpt.value());
+    EXPECT_NE(originalOp.getId(), selfOpt.value().getId());
+}
+
+///NOLINTEND(bugprone-unchecked-optional-access)
