@@ -36,37 +36,37 @@ bool SinkPhysicalOperator::operator==(const SinkPhysicalOperator& other) const
     return descriptor == other.descriptor;
 }
 
-std::optional<PhysicalOperator> SinkPhysicalOperator::getChild() const
+std::optional<PhysicalOperator> SinkPhysicalOperator::getChild()
 {
     return std::nullopt;
 }
 
-SinkPhysicalOperator SinkPhysicalOperator::withChild(PhysicalOperator) const
+SinkPhysicalOperator SinkPhysicalOperator::withChild(PhysicalOperator)
 {
     PRECONDITION(false, "Sink has no child.");
 }
 
-void SinkPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+void SinkPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx)
 {
     setupChild(ctx, compCtx);
 }
 
-void SinkPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+void SinkPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuffer)
 {
     openChild(ctx, recordBuffer);
 }
 
-void SinkPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+void SinkPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer)
 {
     closeChild(ctx, recordBuffer);
 }
 
-void SinkPhysicalOperator::terminate(ExecutionContext& ctx) const
+void SinkPhysicalOperator::terminate(ExecutionContext& ctx)
 {
     terminateChild(ctx);
 }
 
-void SinkPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
+void SinkPhysicalOperator::execute(ExecutionContext& ctx, Record& record)
 {
     executeChild(ctx, record);
 }
@@ -76,27 +76,28 @@ OperatorId SinkPhysicalOperator::getId() const
     return id;
 }
 
-void SinkPhysicalOperator::setupChild(ExecutionContext&, CompilationContext&) const
+void SinkPhysicalOperator::setupChild(ExecutionContext&, CompilationContext&)
 {
     INVARIANT(false, "Child operator is not set");
 }
 
-void SinkPhysicalOperator::openChild(ExecutionContext&, RecordBuffer&) const
+void SinkPhysicalOperator::openChild(ExecutionContext&, RecordBuffer&)
 {
     INVARIANT(false, "Child operator is not set");
 }
 
-void SinkPhysicalOperator::closeChild(ExecutionContext&, RecordBuffer&) const
+void SinkPhysicalOperator::closeChild(ExecutionContext&, RecordBuffer&)
 {
     INVARIANT(false, "Child operator is not set");
 }
 
-void SinkPhysicalOperator::executeChild(ExecutionContext&, Record&) const
+void SinkPhysicalOperator::executeChild(ExecutionContext&, Record&)
 {
-    INVARIANT(false, "Child operator is not set");;
+    INVARIANT(false, "Child operator is not set");
+    ;
 }
 
-void SinkPhysicalOperator::terminateChild(ExecutionContext&) const
+void SinkPhysicalOperator::terminateChild(ExecutionContext&)
 {
     INVARIANT(false, "Child operator is not set");
 }

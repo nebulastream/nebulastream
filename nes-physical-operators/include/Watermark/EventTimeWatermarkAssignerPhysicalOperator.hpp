@@ -29,7 +29,7 @@ public:
     explicit EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    EventTimeWatermarkAssignerPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] EventTimeWatermarkAssignerPhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;

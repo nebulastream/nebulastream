@@ -11,13 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <MapPhysicalOperator.hpp>
 
 #include <optional>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES

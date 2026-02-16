@@ -11,12 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 
 #include <optional>
 #include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Watermark/IngestionTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -80,7 +80,8 @@ OperatorId IngestionTimeWatermarkAssignerPhysicalOperator::getId() const
     return id;
 }
 
-void IngestionTimeWatermarkAssignerPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void IngestionTimeWatermarkAssignerPhysicalOperator::setupChild(
+    ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");
     child.value().setup(executionCtx, compilationContext);

@@ -48,7 +48,7 @@ public:
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    WindowBuildPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] WindowBuildPhysicalOperator withChild(PhysicalOperator child) const;
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.

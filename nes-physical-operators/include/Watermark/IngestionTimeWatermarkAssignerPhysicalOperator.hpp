@@ -35,6 +35,7 @@ public:
 
     OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
+
     bool operator==(const IngestionTimeWatermarkAssignerPhysicalOperator&) const { return true; };
 
 protected:

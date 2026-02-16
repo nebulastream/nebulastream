@@ -40,6 +40,6 @@ public:
 
     void execute(ExecutionContext& executionCtx, Record& record) const;
 
-    NLJBuildPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] NLJBuildPhysicalOperator withChild(const PhysicalOperator& child) const;
 };
 }

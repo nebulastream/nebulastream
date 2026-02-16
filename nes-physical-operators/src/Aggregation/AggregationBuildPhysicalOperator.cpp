@@ -169,7 +169,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     }
 }
 
-AggregationBuildPhysicalOperator AggregationBuildPhysicalOperator::withChild(PhysicalOperator child) const
+AggregationBuildPhysicalOperator AggregationBuildPhysicalOperator::withChild(const PhysicalOperator& child) const
 {
     auto copy = *this;
     copy.child = child;

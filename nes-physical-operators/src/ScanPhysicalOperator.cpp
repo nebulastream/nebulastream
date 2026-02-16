@@ -101,6 +101,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         executeChild(executionCtx, record);
     }
 }
+
 void ScanPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
     closeChild(ctx, recordBuffer);

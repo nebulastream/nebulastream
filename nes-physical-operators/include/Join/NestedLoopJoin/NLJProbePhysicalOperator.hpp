@@ -45,7 +45,7 @@ public:
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    NLJProbePhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] NLJProbePhysicalOperator withChild(PhysicalOperator child) const;
 
 
 protected:

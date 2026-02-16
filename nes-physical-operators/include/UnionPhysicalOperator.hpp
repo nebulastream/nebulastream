@@ -24,7 +24,7 @@ class UnionPhysicalOperator final
 public:
     explicit UnionPhysicalOperator() = default;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    UnionPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] UnionPhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
@@ -32,7 +32,7 @@ public:
     void terminate(ExecutionContext& ctx) const;
     void execute(ExecutionContext& ctx, Record& record) const;
 
-    OperatorId getId() const;
+    [[nodiscard]] OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
 protected:

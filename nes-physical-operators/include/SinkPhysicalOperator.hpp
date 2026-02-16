@@ -26,29 +26,29 @@ class SinkPhysicalOperator final
 public:
     explicit SinkPhysicalOperator(const SinkDescriptor& descriptor);
 
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    SinkPhysicalOperator withChild(PhysicalOperator) const;
+    static std::optional<PhysicalOperator> getChild();
+    static SinkPhysicalOperator withChild(PhysicalOperator);
 
-    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
-    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
-    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
-    void terminate(ExecutionContext& ctx) const;
-    void execute(ExecutionContext& ctx, Record& record) const;
+    static void setup(ExecutionContext& ctx, CompilationContext& compCtx);
+    static void open(ExecutionContext& ctx, RecordBuffer& recordBuffer);
+    static void close(ExecutionContext& ctx, RecordBuffer& recordBuffer);
+    static void terminate(ExecutionContext& ctx);
+    static void execute(ExecutionContext& ctx, Record& record);
 
     [[nodiscard]] SinkDescriptor getDescriptor() const;
 
     bool operator==(const SinkPhysicalOperator& other) const;
 
-    OperatorId getId() const;
+    [[nodiscard]] OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
 protected:
     /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext&, CompilationContext&) const;
-    void openChild(ExecutionContext&, RecordBuffer&) const;
-    void closeChild(ExecutionContext&, RecordBuffer&) const;
-    void executeChild(ExecutionContext&, Record&) const;
-    void terminateChild(ExecutionContext&) const;
+    static void setupChild(ExecutionContext&, CompilationContext&);
+    static void openChild(ExecutionContext&, RecordBuffer&);
+    static void closeChild(ExecutionContext&, RecordBuffer&);
+    static void executeChild(ExecutionContext&, Record&);
+    static void terminateChild(ExecutionContext&);
 
 private:
     SinkDescriptor descriptor;

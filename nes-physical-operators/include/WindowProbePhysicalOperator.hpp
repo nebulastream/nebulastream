@@ -32,7 +32,7 @@ public:
     explicit WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId, WindowMetaData windowMetaData);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    WindowProbePhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] WindowProbePhysicalOperator withChild(PhysicalOperator child) const;
 
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
@@ -44,7 +44,7 @@ public:
     void terminate(ExecutionContext& ctx) const;
     void execute(ExecutionContext& ctx, Record& record) const;
 
-    OperatorId getId() const;
+    [[nodiscard]] OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
 protected:

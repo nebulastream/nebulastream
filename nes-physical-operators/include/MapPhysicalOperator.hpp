@@ -30,7 +30,7 @@ public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    MapPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] MapPhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;

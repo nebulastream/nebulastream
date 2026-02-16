@@ -27,7 +27,7 @@ public:
     UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    UnionRenamePhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] UnionRenamePhysicalOperator withChild(PhysicalOperator child) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
@@ -35,7 +35,7 @@ public:
     void terminate(ExecutionContext& ctx) const;
     void execute(ExecutionContext& ctx, Record& record) const;
 
-    OperatorId getId() const;
+    [[nodiscard]] OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
 protected:
