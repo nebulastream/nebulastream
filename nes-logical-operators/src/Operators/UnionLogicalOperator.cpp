@@ -37,7 +37,9 @@
 namespace NES
 {
 
-UnionLogicalOperator::UnionLogicalOperator() = default;
+UnionLogicalOperator::UnionLogicalOperator(WeakLogicalOperator self) : ManagedByOperator(std::move(self))
+{
+}
 
 std::string_view UnionLogicalOperator::getName() const noexcept
 {
@@ -154,7 +156,7 @@ Reflected Reflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(cons
 TypedLogicalOperator<UnionLogicalOperator>
 Unreflector<TypedLogicalOperator<UnionLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
-    return TypedLogicalOperator<UnionLogicalOperator>{UnionLogicalOperator{}};
+    return TypedLogicalOperator<UnionLogicalOperator>{};
 }
 
 LogicalOperatorRegistryReturnType
@@ -164,13 +166,13 @@ LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorR
     {
         return ReflectionContext{}.unreflect<TypedLogicalOperator<UnionLogicalOperator>>(arguments.reflected);
     }
-    auto logicalOperator = UnionLogicalOperator();
+    auto logicalOperator = TypedLogicalOperator<UnionLogicalOperator>{};
     if (arguments.inputSchemas.empty())
     {
         throw CannotDeserialize("Union expects at least one child but got {} inputSchemas!", arguments.inputSchemas.size());
     }
-    auto logicalOp = logicalOperator.setInputSchemas(std::move(arguments.inputSchemas)).setOutputSchema(arguments.outputSchema);
-    return logicalOp;
+    auto withSchemas = logicalOperator->setInputSchemas(std::move(arguments.inputSchemas)).setOutputSchema(arguments.outputSchema);
+    return TypedLogicalOperator<UnionLogicalOperator>{withSchemas};
 }
 
 }

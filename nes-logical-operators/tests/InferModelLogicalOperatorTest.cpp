@@ -69,14 +69,14 @@ protected:
     }
 
     /// Default operator: 1 FLOAT32 input "in_0", 1 FLOAT32 output "prediction" — backed by tiny_1_to_1.onnx.
-    static InferModelLogicalOperator makeOp()
+    static TypedLogicalOperator<InferModelLogicalOperator> makeOp()
     {
-        return InferModelLogicalOperator{
+        return TypedLogicalOperator<InferModelLogicalOperator>{
             loadModel(
                 "tiny_1_to_1.onnx",
                 Schema{}.addField("in_0", DataType::Type::FLOAT32),
                 Schema{}.addField("prediction", DataType::Type::FLOAT32)),
-            {"value"}};
+            std::vector<std::string>{"value"}};
     }
 };
 
@@ -94,18 +94,18 @@ TEST_F(InferModelLogicalOperatorTest, BasicProperties)
     EXPECT_EQ(op.getName(), "InferModel");
 
     /// explain() short verbosity
-    auto description = op.explain(ExplainVerbosity::Short, OperatorId{1});
+    auto description = op->explain(ExplainVerbosity::Short, OperatorId{1});
     EXPECT_FALSE(description.empty());
     EXPECT_TRUE(description.find("INFER_MODEL") != std::string::npos);
 
     /// explain() debug verbosity includes opId and traitSet
-    auto debugDesc = op.explain(ExplainVerbosity::Debug, OperatorId{42});
+    auto debugDesc = op->explain(ExplainVerbosity::Debug, OperatorId{42});
     EXPECT_TRUE(debugDesc.find("42") != std::string::npos);
 
     /// Getters
-    EXPECT_EQ(op.getInputFieldNames(), std::vector<std::string>{"value"});
-    EXPECT_EQ(op.getModel().getSchema().inputs.getNumberOfFields(), 1U);
-    EXPECT_EQ(op.getModel().getSchema().outputs.getNumberOfFields(), 1U);
+    EXPECT_EQ(op->getInputFieldNames(), std::vector<std::string>{"value"});
+    EXPECT_EQ(op->getModel().getSchema().inputs.getNumberOfFields(), 1U);
+    EXPECT_EQ(op->getModel().getSchema().outputs.getNumberOfFields(), 1U);
 }
 
 /// withChildren/getChildren and withTraitSet/getTraitSet — immutable copy semantics
@@ -116,15 +116,16 @@ TEST_F(InferModelLogicalOperatorTest, ImmutableCopySemantics)
     /// Children round-trip
     EXPECT_TRUE(op.getChildren().empty());
     const InferModelLogicalOperator childOp{
+        WeakLogicalOperator{},
         loadModel("tiny_1_to_1.onnx", Schema{}.addField("in", DataType::Type::FLOAT32), Schema{}.addField("out", DataType::Type::FLOAT32)),
         {"x"}};
-    auto withChild = op.withChildren({LogicalOperator{childOp}});
+    auto withChild = op->withChildren({LogicalOperator{childOp}});
     ASSERT_EQ(withChild.getChildren().size(), 1U);
     EXPECT_TRUE(op.getChildren().empty());
 
     /// TraitSet round-trip
     const TraitSet emptySet = op.getTraitSet();
-    auto opWithTraits = op.withTraitSet(emptySet);
+    auto opWithTraits = op->withTraitSet(emptySet);
     EXPECT_EQ(opWithTraits.getTraitSet(), emptySet);
 
     /// Equality: two operators built against the same catalog entry and the same field names compare equal.
@@ -132,6 +133,7 @@ TEST_F(InferModelLogicalOperatorTest, ImmutableCopySemantics)
     auto op2 = op;
     EXPECT_EQ(op, op2);
     const InferModelLogicalOperator op3{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx",
             Schema{}.addField("in_0", DataType::Type::FLOAT32),
@@ -143,7 +145,7 @@ TEST_F(InferModelLogicalOperatorTest, ImmutableCopySemantics)
 /// InferModelNameLogicalOperator construction, getName, explain, and wrapping
 TEST_F(InferModelLogicalOperatorTest, NameVariantConstructionAndExplain)
 {
-    const InferModelNameLogicalOperator nameOp{"myModel", {"feature1", "feature2"}};
+    const InferModelNameLogicalOperator nameOp{WeakLogicalOperator{}, "myModel", {"feature1", "feature2"}};
 
     EXPECT_EQ(std::string{nameOp.getName()}, "InferModelName");
 
@@ -163,11 +165,11 @@ TEST_F(InferModelLogicalOperatorTest, ReflectionRoundTrip)
     const auto op = makeOp();
 
     const auto reflected = reflect(op);
-    const auto restored = ReflectionContext{}.unreflect<InferModelLogicalOperator>(reflected);
+    const auto restored = ReflectionContext{}.unreflect<TypedLogicalOperator<InferModelLogicalOperator>>(reflected);
 
     /// Verify preserved state
-    EXPECT_EQ(restored.getInputFieldNames(), op.getInputFieldNames());
-    EXPECT_EQ(restored.getModel(), op.getModel());
+    EXPECT_EQ(restored->getInputFieldNames(), op->getInputFieldNames());
+    EXPECT_EQ(restored->getModel(), op->getModel());
     EXPECT_EQ(restored.getName(), op.getName());
 }
 
@@ -176,6 +178,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceHappyPath)
 {
     /// Model: 1 FLOAT32 input, 2 FLOAT32 outputs (tiny_1_to_2.onnx has output shape [1,2])
     const InferModelLogicalOperator op{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_2.onnx",
             Schema{}.addField("in_0", DataType::Type::FLOAT32),
@@ -208,10 +211,11 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceErrors)
 {
     /// Empty input schemas
     auto op = makeOp();
-    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({}), NES::ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE((void)op->withInferredSchema({}), NES::ErrorCode::CannotInferSchema);
 
     /// Field count mismatch: model expects 2, operator has 1
     const InferModelLogicalOperator op1{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_2_to_1.onnx",
             Schema{}.addField("a", DataType::Type::FLOAT32).addField("b", DataType::Type::FLOAT32),
@@ -222,6 +226,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceErrors)
 
     /// Missing field in schema
     const InferModelLogicalOperator op2{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_2_to_1.onnx",
             Schema{}.addField("a", DataType::Type::FLOAT32).addField("b", DataType::Type::FLOAT32),
@@ -232,6 +237,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceErrors)
 
     /// Type mismatch: model expects Float32, schema has Int32
     const InferModelLogicalOperator op3{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx",
             Schema{}.addField("in_0", DataType::Type::FLOAT32),
@@ -245,6 +251,7 @@ TEST_F(InferModelLogicalOperatorTest, SchemaInferenceErrors)
 TEST_F(InferModelLogicalOperatorTest, VarsizedInputAccepted)
 {
     const InferModelLogicalOperator op{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx",
             Schema{}.addField("text", DataType::Type::VARSIZED),
@@ -259,6 +266,7 @@ TEST_F(InferModelLogicalOperatorTest, VarsizedInputAccepted)
 TEST_F(InferModelLogicalOperatorTest, VarsizedOutputAccepted)
 {
     const InferModelLogicalOperator op{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx",
             Schema{}.addField("input_blob", DataType::Type::VARSIZED),
@@ -278,6 +286,7 @@ TEST_F(InferModelLogicalOperatorTest, NullableInputHandling)
 {
     /// Single nullable field — rejected
     const InferModelLogicalOperator op1{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx",
             Schema{}.addField("in_0", DataType::Type::FLOAT32),
@@ -288,6 +297,7 @@ TEST_F(InferModelLogicalOperatorTest, NullableInputHandling)
 
     /// Multiple inputs, one nullable — rejected
     const InferModelLogicalOperator op2{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_2_to_1.onnx",
             Schema{}.addField("a", DataType::Type::FLOAT32).addField("b", DataType::Type::FLOAT32),
@@ -300,6 +310,7 @@ TEST_F(InferModelLogicalOperatorTest, NullableInputHandling)
 
     /// Multiple non-nullable inputs — accepted
     const InferModelLogicalOperator op3{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_2_to_1.onnx",
             Schema{}.addField("a", DataType::Type::FLOAT32).addField("b", DataType::Type::FLOAT32),
@@ -316,6 +327,7 @@ TEST_F(InferModelLogicalOperatorTest, NullableInputHandling)
 TEST_F(InferModelLogicalOperatorTest, NameCollisionReplacesFieldType)
 {
     const InferModelLogicalOperator op{
+        WeakLogicalOperator{},
         loadModel(
             "tiny_1_to_1.onnx", Schema{}.addField("in_0", DataType::Type::FLOAT32), Schema{}.addField("value", DataType::Type::FLOAT32)),
         {"input_field"}};

@@ -85,8 +85,8 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
                 throw InvalidConfigParameter("Failed to create inline sink descriptor");
             }
 
-            SinkLogicalOperator sinkOperator{sinkDescriptor.value()};
-            sinkOperator = sinkOperator.withChildren(sink.value().getChildren());
+            TypedLogicalOperator<SinkLogicalOperator> sinkOperator{sinkDescriptor.value()};
+            sinkOperator = sinkOperator->withChildren(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }
         else
