@@ -35,8 +35,9 @@
 namespace NES
 {
 
-InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelName, std::vector<std::string> inputFieldNames)
-    : modelName(std::move(modelName)), inputFieldNames(std::move(inputFieldNames))
+InferModelNameLogicalOperator::InferModelNameLogicalOperator(
+    WeakLogicalOperator self, std::string modelName, std::vector<std::string> inputFieldNames)
+    : ManagedByOperator(std::move(self)), modelName(std::move(modelName)), inputFieldNames(std::move(inputFieldNames))
 {
 }
 
@@ -117,25 +118,6 @@ std::vector<LogicalOperator> InferModelNameLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<InferModelNameLogicalOperator>::operator()(const InferModelNameLogicalOperator& op) const
-{
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{
-        .modelName = std::make_optional(op.getModelName()), .inputFieldNames = std::make_optional(op.getInputFieldNames())});
-}
-
-InferModelNameLogicalOperator
-Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto [modelNameOpt, inputFieldNamesOpt] = context.unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
-
-    if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
-    {
-        throw CannotDeserialize("Failed to deserialize InferModelNameLogicalOperator");
-    }
-
-    return InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value());
-}
-
 Reflected Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(
     const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const
 {
@@ -153,8 +135,7 @@ Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(con
         throw CannotDeserialize("Failed to deserialize TypedLogicalOperator<InferModelNameLogicalOperator>");
     }
 
-    return TypedLogicalOperator<InferModelNameLogicalOperator>{
-        InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value())};
+    return TypedLogicalOperator<InferModelNameLogicalOperator>{modelNameOpt.value(), inputFieldNamesOpt.value()};
 }
 
 /// generated registry interface requires by-value argument
@@ -164,7 +145,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelNameLogicalOperator(Logical
 {
     if (!arguments.reflected.isEmpty())
     {
-        return ReflectionContext{}.unreflect<InferModelNameLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<InferModelNameLogicalOperator>>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();

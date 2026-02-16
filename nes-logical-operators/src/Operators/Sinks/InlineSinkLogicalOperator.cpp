@@ -113,11 +113,16 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 }
 
 InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+    WeakLogicalOperator self,
     std::string type,
     const Schema& schema,
     std::unordered_map<std::string, std::string> config,
     std::unordered_map<std::string, std::string> formatConfig)
-    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config)), formatConfig(std::move(formatConfig))
+    : ManagedByOperator(std::move(self))
+    , schema(schema)
+    , sinkType(std::move(type))
+    , sinkConfig(std::move(config))
+    , formatConfig(std::move(formatConfig))
 {
 }
 
