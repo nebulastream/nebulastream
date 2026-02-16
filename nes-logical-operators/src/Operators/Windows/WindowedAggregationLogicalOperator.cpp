@@ -50,10 +50,14 @@ namespace NES
 {
 
 WindowedAggregationLogicalOperator::WindowedAggregationLogicalOperator(
+    WeakLogicalOperator self,
     std::vector<FieldAccessLogicalFunction> groupingKey,
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
     std::shared_ptr<Windowing::WindowType> windowType)
-    : aggregationFunctions(std::move(aggregationFunctions)), windowType(std::move(windowType)), groupingKey(std::move(groupingKey))
+    : ManagedByOperator(std::move(self))
+    , aggregationFunctions(std::move(aggregationFunctions))
+    , windowType(std::move(windowType))
+    , groupingKey(std::move(groupingKey))
 {
 }
 
@@ -291,8 +295,7 @@ TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogica
     }
 
 
-    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
-        WindowedAggregationLogicalOperator{keys, aggregationFunctions, windowType}};
+    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{keys, aggregationFunctions, windowType};
 }
 
 LogicalOperatorRegistryReturnType
