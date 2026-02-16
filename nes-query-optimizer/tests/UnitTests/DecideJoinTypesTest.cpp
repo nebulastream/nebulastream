@@ -16,7 +16,6 @@
 #include <vector>
 
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
@@ -32,7 +31,6 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -41,6 +39,7 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
+#include <WindowTypes/Types/WindowType.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
@@ -55,13 +54,15 @@ public:
 
     void SetUp() override { BaseUnitTest::SetUp(); }
 
+    static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
+
     /// Helper to create a simple source plan with a schema containing an "id" field
-    LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
+    static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
     {
         return LogicalPlanBuilder::createLogicalPlan(sourceType, schema, {}, {});
     }
 
-    Schema createSchema(const std::string& prefix)
+    static Schema createSchema(const std::string& prefix)
     {
         Schema schema;
         schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
@@ -70,10 +71,10 @@ public:
         return schema;
     }
 
-    std::shared_ptr<Windowing::WindowType> createTumblingWindow()
+    static std::shared_ptr<Windowing::WindowType> createTumblingWindow()
     {
         return std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(1000));
+            Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS));
     }
 };
 
