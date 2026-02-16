@@ -38,8 +38,9 @@
 namespace NES
 {
 
-InferModelLogicalOperator::InferModelLogicalOperator(RegisteredModel model, std::vector<std::string> inputFieldNames)
-    : model(std::move(model)), inputFieldNames(std::move(inputFieldNames))
+InferModelLogicalOperator::InferModelLogicalOperator(
+    WeakLogicalOperator self, RegisteredModel model, std::vector<std::string> inputFieldNames)
+    : ManagedByOperator(std::move(self)), model(std::move(model)), inputFieldNames(std::move(inputFieldNames))
 {
 }
 
@@ -185,17 +186,6 @@ std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogicalOperator& op) const
-{
-    return reflect(detail::ReflectedInferModelLogicalOperator{.model = reflect(op.getModel()), .inputFieldNames = op.getInputFieldNames()});
-}
-
-InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
-{
-    auto [model, inputFieldNames] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
-    return {context.unreflect<RegisteredModel>(model), std::move(inputFieldNames)};
-}
-
 Reflected
 Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
 {
@@ -207,8 +197,7 @@ TypedLogicalOperator<InferModelLogicalOperator>
 Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto [model, inputFieldNames] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
-    return TypedLogicalOperator<InferModelLogicalOperator>{
-        InferModelLogicalOperator(context.unreflect<RegisteredModel>(model), std::move(inputFieldNames))};
+    return TypedLogicalOperator<InferModelLogicalOperator>{context.unreflect<RegisteredModel>(model), std::move(inputFieldNames)};
 }
 
 /// generated registry interface requires by-value argument
@@ -218,7 +207,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelLogicalOperator(LogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return ReflectionContext{}.unreflect<InferModelLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<InferModelLogicalOperator>>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();

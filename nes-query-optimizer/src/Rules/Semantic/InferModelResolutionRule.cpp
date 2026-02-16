@@ -52,10 +52,9 @@ LogicalPlan InferModelResolutionRule::apply(LogicalPlan queryPlan) const
                 inputFieldNames.push_back(field.name);
             }
         }
-        auto inferModelOp = InferModelLogicalOperator(std::move(loaded), std::move(inputFieldNames));
+        auto inferModelOp = TypedLogicalOperator<InferModelLogicalOperator>{std::move(loaded), std::move(inputFieldNames)};
         /// Preserve children from the original operator
-        inferModelOp = inferModelOp.withChildren(op.getChildren());
-        auto replacement = LogicalOperator(inferModelOp);
+        auto replacement = LogicalOperator{inferModelOp->withChildren(op.getChildren())};
 
         auto replaceResult = replaceSubtree(queryPlan, inferModelNameOp.getId(), replacement);
         INVARIANT(replaceResult.has_value(), "Failed to replace InferModelNameLogicalOperator with InferModelLogicalOperator");

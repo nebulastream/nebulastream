@@ -36,12 +36,13 @@
 namespace NES
 {
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName) : logicalSourceName(std::move(logicalSourceName))
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName)
+    : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName))
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(std::string logicalSourceName, Schema schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::move(schema))
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema)
+    : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
 
