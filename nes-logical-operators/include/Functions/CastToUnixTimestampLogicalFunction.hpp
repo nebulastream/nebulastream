@@ -25,38 +25,38 @@ limitations under the License.
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
-    {
+{
 
-        /// Casts the input to a unix timestamp (dummy placeholder implementation)
-        class CastToUnixTimestampLogicalFunction final
-        {
-        public:
-            static constexpr std::string_view NAME = "CastToUnixTs";
+/// Casts the input to a unix timestamp in milliseconds.
+class CastToUnixTimestampLogicalFunction final
+{
+public:
+    static constexpr std::string_view NAME = "CastToUnixTs";
 
-            explicit CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
+    CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
 
-            [[nodiscard]] SerializableFunction serialize() const;
+    [[nodiscard]] SerializableFunction serialize() const;
 
-            [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
+    [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
 
-            [[nodiscard]] DataType getDataType() const;
-            [[nodiscard]] CastToUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] CastToUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
 
-            [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-            [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
-            [[nodiscard]] CastToUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] CastToUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-            [[nodiscard]] std::string_view getType() const;
-            [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-        private:
-            DataType outputType;
-            LogicalFunction child;
-        };
+private:
+    DataType outputType;
+    LogicalFunction child;
+};
 
-        static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
+static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
 
-    } // namespace NES
+} // namespace NES
 
-    FMT_OSTREAM(NES::CastToUnixTimestampLogicalFunction);
+FMT_OSTREAM(NES::CastToUnixTimestampLogicalFunction);

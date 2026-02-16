@@ -1,25 +1,21 @@
-# name: Concat
-# description: Checks that concat in projections works as expected
-# groups: [Function, Text, Projection]
-
-CREATE LOGICAL SOURCE nameStream(firstName VARSIZED, lastName VARSIZED);
-CREATE PHYSICAL SOURCE FOR nameStream TYPE File;
+CREATE LOGICAL SOURCE TSSTREAM(TSSTR VARSIZED, DUMMY UINT64);
+CREATE PHYSICAL SOURCE FOR TSSTREAM TYPE File;
 ATTACH INLINE
-Edgar,Codd
-Jim,Grey
-Michael,Stonebraker
+1970-01-01T00:00:00Z,0
+1970-01-01T00:00:01Z,0
+1970-01-01T00:00:01.234Z,0
+1970-01-01T01:00:00+01:00,0
+2021-12-14T15:05:03,0
+2026-02-16T12:00:00Z,0
 
-CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED) TYPE File;
+CREATE SINK TSOUTSINK(TSMS UINT64) TYPE File;
 
-SELECT CastToUnixTs(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
+SELECT CASTTOUNIXTS(`TSSTREAM$TSSTR`) AS TSMS FROM TSSTREAM INTO TSOUTSINK;
 ----
-EdgarCodd
-JimGrey
-MichaelStonebraker
-
-#SELECT CastToUnixTs(firstName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
-#----
-#EdgarCodd
-#JimGrey
-#MichaelStonebraker
+0
+1000
+1234
+0
+1639494303000
+1771243200000
 
