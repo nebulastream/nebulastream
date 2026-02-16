@@ -1,0 +1,27 @@
+{
+  "name": "NebulaStream",
+  "image": "nebulastream/nes-development:dd8c90d8faaf371c31fc17aea22e08ecdd9212751b185359f6e94733f1219821",
+  "features": {
+    "ghcr.io/devcontainers/features/common-utils:2": {
+      "username": "vscode",
+      "installZsh": false,
+      "installSudo": true
+    },
+    "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {},
+    "ghcr.io/devcontainers/features/github-cli:1": {}
+  },
+  "remoteUser": "vscode",
+  "updateRemoteUserUID": true,
+  "mounts": [
+    {
+      "type": "volume",
+      "source": "nes-ccache",
+      "target": "/ccache"
+    }
+  ],
+  "postCreateCommand": "sudo chown vscode:vscode /ccache && curl -fsSL https://claude.ai/install.sh | bash",
+  "containerEnv": {
+    "CCACHE_DIR": "/ccache",
+    "GITHUB_TOKEN": "${localEnv:GITHUB_TOKEN}"
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
+  "configurePresets": [
+    {
+      "name": "devcontainer-base",
+      "hidden": true,
+      "condition": {
+        "type": "notEquals",
+        "lhs": "$env{NES_PREBUILT_VCPKG_ROOT}",
+        "rhs": ""
+      },
+      "binaryDir": "${sourceDir}/cmake-build-${presetName}-$env{VCPKG_STDLIB}-$env{VCPKG_SANITIZER}",
+      "generator": "Ninja"
+    },
+    {
+      "name": "debug",
+      "displayName": "Debug",
+      "inherits": "devcontainer-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug"
+      }
+    },
+    {
+      "name": "relwithdebinfo",
+      "displayName": "RelWithDebInfo",
+      "inherits": "devcontainer-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo"
+      }
+    },
+    {
+      "name": "release",
+      "displayName": "Release",
+      "inherits": "devcontainer-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
+      "name": "benchmark",
+      "displayName": "Benchmark",
+      "inherits": "devcontainer-base",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Benchmark"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "RelWithDebInfo",
+      "configurePreset": "relwithdebinfo"
+    },
+    {
+      "name": "Release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "Benchmark",
+      "configurePreset": "benchmark"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "Debug",
+      "configurePreset": "debug"
+    },
+    {
+      "name": "RelWithDebInfo",
+      "configurePreset": "relwithdebinfo"
+    },
+    {
+      "name": "Release",
+      "configurePreset": "release"
+    },
+    {
+      "name": "Benchmark",
+      "configurePreset": "benchmark"
+    }
+  ]
+}
