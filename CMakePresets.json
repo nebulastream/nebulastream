@@ -18,7 +18,7 @@
       "generator": "Ninja"
     },
     {
-      "name": "debug",
+      "name": "Debug",
       "displayName": "Debug",
       "inherits": "devcontainer-base",
       "cacheVariables": {
@@ -26,7 +26,7 @@
       }
     },
     {
-      "name": "relwithdebinfo",
+      "name": "RelWithDebInfo",
       "displayName": "RelWithDebInfo",
       "inherits": "devcontainer-base",
       "cacheVariables": {
@@ -34,7 +34,7 @@
       }
     },
     {
-      "name": "release",
+      "name": "Release",
       "displayName": "Release",
       "inherits": "devcontainer-base",
       "cacheVariables": {
@@ -42,7 +42,7 @@
       }
     },
     {
-      "name": "benchmark",
+      "name": "Benchmark",
       "displayName": "Benchmark",
       "inherits": "devcontainer-base",
       "cacheVariables": {
