@@ -40,10 +40,11 @@
 namespace NES
 {
 
-class WindowedAggregationLogicalOperator final : public OriginIdAssigner
+class WindowedAggregationLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
     WindowedAggregationLogicalOperator(
+        WeakLogicalOperator self,
         std::vector<FieldAccessLogicalFunction> groupingKey,
         std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions,
         std::shared_ptr<Windowing::WindowType> windowType);

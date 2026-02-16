@@ -133,8 +133,9 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(traitInserted, "Failed to add memory layout");
 
     return Bridge{
-        SourceDescriptorLogicalOperator{networkSourceDescriptor}.withTraitSet(ts),
-        SinkLogicalOperator{networkSinkDescriptor.value()}.withTraitSet(ts).withInferredSchema({channel.upstreamOp.getOutputSchema()})};
+        TypedLogicalOperator<SourceDescriptorLogicalOperator>{networkSourceDescriptor} -> withTraitSet(ts),
+        TypedLogicalOperator<SinkLogicalOperator>{networkSinkDescriptor.value()} -> withTraitSet(ts).withInferredSchema(
+            {channel.upstreamOp.getOutputSchema()})};
 }
 
 LogicalOperator createNetworkChannel(
