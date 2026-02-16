@@ -1,4 +1,4 @@
-# name: function/logical/FunctionEqual.test
+# name: function/boolean/FunctionEqual.test
 # description: Simple function Equal tests
 # groups: [Function, FunctionEqual]
 

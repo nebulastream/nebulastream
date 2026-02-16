@@ -93,11 +93,13 @@ LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) co
     }
     /// check if children dataType is correct
     INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
+        children.at(0).getDataType().isType(DataType::Type::BOOLEAN),
+        "the dataType of left child must be boolean, but was: {}",
+        children.at(0).getDataType());
     INVARIANT(
-        right.getDataType().isType(DataType::Type::BOOLEAN),
+        children.at(1).getDataType().isType(DataType::Type::BOOLEAN),
         "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
+        children.at(1).getDataType());
     return this->withChildren(children);
 }
 
@@ -116,14 +118,6 @@ LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrL
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
-    }
-    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN
-        || arguments.children[1].getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize(
-            "OrLogicalFunction requires children of type bool, but got {} and {}",
-            arguments.children[0].getDataType(),
-            arguments.children[1].getDataType());
     }
     return OrLogicalFunction(arguments.children[0], arguments.children[1]);
 }
