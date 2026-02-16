@@ -26,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -108,6 +109,9 @@ public:
             = DescriptorConfig::createConfigParameterContainerMap(
                 JOIN_TYPE, JOIN_FUNCTION, WINDOW_INFOS, WINDOW_START_FIELD_NAME, WINDOW_END_FIELD_NAME);
     };
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Join";

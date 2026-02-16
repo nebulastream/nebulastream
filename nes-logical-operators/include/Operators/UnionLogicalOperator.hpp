@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -54,6 +55,9 @@ public:
     /// Set the schemas directly without inference used for operator registration
     [[nodiscard]] UnionLogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
     [[nodiscard]] UnionLogicalOperator setOutputSchema(const Schema& outputSchema) const;
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "Union";

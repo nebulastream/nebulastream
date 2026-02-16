@@ -26,6 +26,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Traits/Trait.hpp>
@@ -102,6 +103,9 @@ public:
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(WINDOW_AGGREGATIONS, WINDOW_INFOS, WINDOW_KEYS);
     };
+
+public:
+    WeakLogicalOperator self;
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
