@@ -39,92 +39,92 @@ protected:
 /// Two projections with the same explicit alias must be rejected with CannotInferSchema (code 2003).
 TEST_F(ProjectionLogicalOperatorTest, DuplicateExplicitAliasThrows)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op{
+        std::vector<ProjectionLogicalOperator::Projection>{
             {FieldIdentifier("x"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {FieldIdentifier("x"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
         },
-        ProjectionLogicalOperator::Asterisk(false));
+        ProjectionLogicalOperator::Asterisk(false)};
 
-    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({schema}), ErrorCode::CannotInferSchema);
+    ASSERT_EXCEPTION_ERRORCODE((void)op->withInferredSchema({schema}), ErrorCode::CannotInferSchema);
 }
 
 /// Two unaliased projections accessing the same field are allowed per standard SQL behavior.
 TEST_F(ProjectionLogicalOperatorTest, DuplicateUnaliasedFieldSucceeds)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
         },
         ProjectionLogicalOperator::Asterisk(false));
 
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// An explicit alias that collides with an unaliased field is allowed (only duplicate explicit aliases are rejected).
 TEST_F(ProjectionLogicalOperatorTest, AliasCollidingWithUnaliasedFieldSucceeds)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {FieldIdentifier("stream.a"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
         },
         ProjectionLogicalOperator::Asterisk(false));
 
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// Projections with distinct aliases must succeed.
 TEST_F(ProjectionLogicalOperatorTest, UniqueAliasesSucceeds)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {FieldIdentifier("x"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {FieldIdentifier("y"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
         },
         ProjectionLogicalOperator::Asterisk(false));
 
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// Asterisk plus an unaliased projection that duplicates an input field name is allowed.
 TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusDuplicateUnaliasedProjectionSucceeds)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
         },
         ProjectionLogicalOperator::Asterisk(true));
 
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// Known limitation: an explicit alias matching the auto-derived name is treated as auto-derived.
 /// SELECT stream.a AS stream.a, stream.b AS stream.a only detects the second alias as explicit.
 TEST_F(ProjectionLogicalOperatorTest, ExplicitAliasMatchingAutoDerivedNameTreatedAsAutoDerived)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {FieldIdentifier("stream.a"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {FieldIdentifier("stream.a"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
         },
         ProjectionLogicalOperator::Asterisk(false));
 
     /// Only one alias differs from the auto-derived name, so no duplicate is detected.
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// Asterisk plus a distinctly aliased projection must succeed.
 TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusNewAliasSucceeds)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {FieldIdentifier("new_a"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
         },
         ProjectionLogicalOperator::Asterisk(true));
 
-    EXPECT_NO_THROW((void)op.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)op->withInferredSchema({schema}));
 }
 
 /// Duplicate unaliased projections must survive a reflection round-trip (regression for serialization bug).
@@ -133,15 +133,15 @@ TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusNewAliasSucceeds)
 /// reject auto-derived duplicates.
 TEST_F(ProjectionLogicalOperatorTest, DuplicateUnaliasedFieldSurvivesReflectionRoundTrip)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {std::nullopt, LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
         },
         ProjectionLogicalOperator::Asterisk(false));
 
     /// First inference (simulates the optimization phase).
-    const auto inferred = TypedLogicalOperator<ProjectionLogicalOperator>(op.withInferredSchema({schema}));
+    const auto inferred = TypedLogicalOperator<ProjectionLogicalOperator>(op->withInferredSchema({schema}));
 
     /// Simulate serialization round-trip: reflect → unreflect.
     const auto reflected = NES::reflect(inferred);
@@ -154,8 +154,8 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateUnaliasedFieldSurvivesReflectionR
 /// Explicit aliases must still be detected as duplicates after a reflection round-trip.
 TEST_F(ProjectionLogicalOperatorTest, DuplicateExplicitAliasSurvivesReflectionRoundTrip)
 {
-    const ProjectionLogicalOperator op(
-        {
+    const TypedLogicalOperator<ProjectionLogicalOperator> op(
+        std::vector<ProjectionLogicalOperator::Projection>{
             {FieldIdentifier("x"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
             {FieldIdentifier("x"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
         },

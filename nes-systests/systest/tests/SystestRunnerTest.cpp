@@ -30,6 +30,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -186,8 +187,9 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
@@ -221,8 +223,9 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     const auto result = runQueries(
@@ -252,8 +255,9 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     auto runAfter = std::make_pair(std::string{"test_query"}, SystestQueryId(std::numeric_limits<uint64_t>::max()));
@@ -308,8 +312,9 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{
+        INVALID_QUERY_ID, {TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     auto query1 = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));

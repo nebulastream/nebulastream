@@ -103,6 +103,12 @@ concept LogicalOperatorConcept = requires(
     { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
 };
 
+template <typename WeakChecked>
+requires(std::is_same_v<WeakChecked, NES::detail::ErasedLogicalOperator> || LogicalOperatorConcept<WeakChecked>)
+struct WeakTypedLogicalOperator;
+
+using WeakLogicalOperator = WeakTypedLogicalOperator<NES::detail::ErasedLogicalOperator>;
+
 namespace detail
 {
 /// @brief A type erased wrapper for logical operators
@@ -130,6 +136,9 @@ struct ErasedLogicalOperator : std::enable_shared_from_this<ErasedLogicalOperato
 private:
     template <typename T>
     friend struct NES::TypedLogicalOperator;
+    template <typename T>
+    requires(std::is_same_v<T, detail::ErasedLogicalOperator> || LogicalOperatorConcept<T>)
+    friend struct NES::WeakTypedLogicalOperator;
     ///If the operator inherits from DynamicBase (over Castable), then returns a pointer to the wrapped operator as DynamicBase,
     ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
     [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
@@ -168,6 +177,12 @@ struct TypedLogicalOperator
     }
 
     explicit TypedLogicalOperator(std::shared_ptr<const NES::detail::ErasedLogicalOperator> op) : self(std::move(op)) { }
+
+    template <typename... Args>
+    requires(!std::is_same_v<Checked, detail::ErasedLogicalOperator>)
+    explicit TypedLogicalOperator(Args&&... args) : self(std::make_shared<detail::OperatorModel<Checked>>(std::forward<Args>(args)...))
+    {
+    }
 
     template <LogicalOperatorConcept T>
     requires(std::same_as<T, Checked>)
@@ -213,7 +228,8 @@ struct TypedLogicalOperator
         }
     }
 
-    TypedLogicalOperator() = delete;
+    /// I am not quite sure how do only allow "empty" ctors for concrete operators that take no arguments
+    /// TypedLogicalOperator() = delete;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
@@ -293,7 +309,14 @@ struct TypedLogicalOperator
 
     [[nodiscard]] OperatorId getId() const { return self->getOperatorId(); }
 
-    [[nodiscard]] bool operator==(const LogicalOperator& other) const { return self->equals(*other.self); }
+    [[nodiscard]] bool operator==(const LogicalOperator& other) const
+    {
+        if (self == other.self)
+        {
+            return true;
+        }
+        return self->equals(*other.self);
+    }
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
@@ -308,6 +331,10 @@ struct TypedLogicalOperator
         return self->withInferredSchema(std::move(inputSchemas));
     }
 
+    using WeakSelfRefType = WeakLogicalOperator;
+    template <LogicalOperatorConcept T>
+    using ModelType = detail::OperatorModel<T>;
+
 private:
     friend class QueryPlanSerializationUtil;
     friend class OperatorSerializationUtil;
@@ -315,9 +342,119 @@ private:
     template <typename FriendChecked>
     friend struct TypedLogicalOperator;
 
+    template <typename WeakChecked>
+    requires(std::is_same_v<WeakChecked, detail::ErasedLogicalOperator> || LogicalOperatorConcept<WeakChecked>)
+    friend struct WeakTypedLogicalOperator;
+
     [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
     std::shared_ptr<const NES::detail::ErasedLogicalOperator> self;
+};
+
+namespace detail
+{
+template <typename Checked>
+struct SelfRef
+{
+    std::optional<OperatorModel<Checked>*> self;
+
+    explicit SelfRef(OperatorModel<Checked>* ptr) : self(ptr) { }
+};
+}
+
+template <typename Checked>
+requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> || LogicalOperatorConcept<Checked>)
+struct WeakTypedLogicalOperator
+{
+private:
+    using PtrType = std::conditional_t<
+        std::is_same_v<Checked, detail::ErasedLogicalOperator>,
+        std::weak_ptr<const detail::ErasedLogicalOperator>,
+        std::shared_ptr<detail::SelfRef<Checked>>>;
+
+public:
+    WeakTypedLogicalOperator() = default;
+
+    explicit WeakTypedLogicalOperator(const LogicalOperator& owningOperator) : self(owningOperator.self) { }
+
+    explicit WeakTypedLogicalOperator(PtrType weakPtr) : self(std::move(weakPtr)) { }
+
+    ///Unwrap the (shared pointer to a pointer to an operator model) to (a shared pointer to the operator model).
+    ///In other words, this removes one layer of pointer indirection and makes it non-owning to avoid reference counting cycles.
+    ///It has to keep using the control block of the passed shared ptr, since the control block of the owning shared pointer is not accessible yet.
+    template <typename OtherChecked>
+    requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> && LogicalOperatorConcept<OtherChecked>)
+    explicit WeakTypedLogicalOperator(const std::shared_ptr<detail::SelfRef<OtherChecked>>& other)
+        : self(std::shared_ptr<detail::ErasedLogicalOperator>{other, static_cast<detail::ErasedLogicalOperator*>(other->self.value())})
+    {
+    }
+
+    [[nodiscard]] std::optional<TypedLogicalOperator<Checked>> tryLock() const
+    {
+        if constexpr (std::is_same_v<Checked, detail::ErasedLogicalOperator>)
+        {
+            if (auto ptr = self.lock())
+            {
+                return TypedLogicalOperator<Checked>{ptr->shared_from_this()};
+            }
+            return std::nullopt;
+        }
+        else if constexpr (LogicalOperatorConcept<Checked>)
+        {
+            if (const auto ptrOpt = self->self; ptrOpt->has_value())
+            {
+                return TypedLogicalOperator<Checked>{ptrOpt->value()->shared_from_this()};
+            }
+            return std::nullopt;
+        }
+        else
+        {
+            static_assert(false, "Non exhaustive tryLock for WeakOperators");
+            std::unreachable();
+        }
+    }
+
+    [[nodiscard]] TypedLogicalOperator<Checked> lock() const
+    {
+        if constexpr (std::is_same_v<Checked, detail::ErasedLogicalOperator>)
+        {
+            auto ptr = self.lock();
+            if (ptr)
+            {
+                return TypedLogicalOperator<Checked>{ptr->shared_from_this()};
+            }
+            PRECONDITION(false, "Operator has been destroyed");
+            std::unreachable();
+        }
+        else if constexpr (LogicalOperatorConcept<Checked>)
+        {
+            if (const auto ptrOpt = self->self; ptrOpt->has_value())
+            {
+                return TypedLogicalOperator<Checked>{ptrOpt->value()->shared_from_this()};
+            }
+            PRECONDITION(false, "Operator has been destroyed");
+            std::unreachable();
+        }
+        else
+        {
+            static_assert(false, "Non exhaustive lock for WeakOperators");
+            std::unreachable();
+        }
+    }
+
+private:
+    PtrType self;
+};
+
+class ManagedByOperator
+{
+protected:
+    WeakLogicalOperator self;
+
+    explicit ManagedByOperator(WeakLogicalOperator self) : self(std::move(self)) { }
+
+    template <LogicalOperatorConcept T>
+    friend struct detail::OperatorModel;
 };
 
 namespace detail
@@ -327,12 +464,40 @@ namespace detail
 template <LogicalOperatorConcept OperatorType>
 struct OperatorModel : ErasedLogicalOperator
 {
-    OperatorType impl;
     OperatorId id;
+    std::shared_ptr<SelfRef<OperatorType>> selfRef;
+    OperatorType impl;
 
-    explicit OperatorModel(OperatorType impl) : impl(std::move(impl)), id(getNextLogicalOperatorId()) { }
+    explicit OperatorModel(OperatorType impl)
+        : id(getNextLogicalOperatorId()), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(std::move(impl))
+    {
+        this->impl.self = WeakLogicalOperator{selfRef};
+    }
 
-    OperatorModel(OperatorType impl, const OperatorId existingId) : impl(std::move(impl)), id(existingId) { }
+    OperatorModel(OperatorType impl, const OperatorId existingId)
+        : id(existingId), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(std::move(impl))
+    {
+        this->impl.self = WeakLogicalOperator{selfRef};
+    }
+
+    template <typename... Args>
+    explicit OperatorModel(Args&&... args)
+        : id(getNextLogicalOperatorId())
+        , selfRef(std::make_shared<SelfRef<OperatorType>>(this))
+        , impl(WeakLogicalOperator{selfRef}, std::forward<Args>(args)...)
+    {
+    }
+
+    OperatorModel(const OperatorModel& other) : id(other.id), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(other.impl)
+    {
+        impl.self = WeakLogicalOperator{selfRef};
+    }
+
+    OperatorModel(OperatorModel&& other) noexcept = delete;
+
+    OperatorModel& operator=(const OperatorModel& other) = delete;
+
+    ~OperatorModel() override { selfRef->self = std::nullopt; }
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity, id); }
 
@@ -387,7 +552,16 @@ private:
     {
         if constexpr (std::is_base_of_v<DynamicBase, OperatorType>)
         {
-            return static_cast<const DynamicBase*>(&impl);
+            if constexpr (requires() { static_cast<const DynamicBase*>(&impl); })
+            {
+                return static_cast<const DynamicBase*>(&impl);
+            }
+            else if constexpr (requires() {
+                                   { impl.getDynamicBase() } -> std::same_as<const DynamicBase*>;
+                               })
+            {
+                return impl.getDynamicBase();
+            }
         }
         else
         {
@@ -397,6 +571,11 @@ private:
 };
 
 }
+
+#define SELF_REF \
+    template <LogicalOperatorConcept T> \
+    friend struct NES::detail::OperatorModel; \
+    WeakLogicalOperator self;
 
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
