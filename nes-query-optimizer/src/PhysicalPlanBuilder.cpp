@@ -73,6 +73,61 @@ struct SharedPtrEqual
     bool operator()(const PhysicalOpPtr& lhs, const PhysicalOpPtr& rhs) const { return lhs.get() == rhs.get(); }
 };
 
+/// Verifies post-flip invariants: roots are sources, leaves are sinks, edge count preserved, all nodes reachable.
+void verifyFlippedGraph(const std::vector<PhysicalOpPtr>& newRoots, const std::vector<PhysicalOpPtr>& allNodes, size_t edgeCountBefore)
+{
+    for (const auto& rootOperator : newRoots)
+    {
+        INVARIANT(
+            rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),
+            "Expects SourceOperators as roots after flip but got {}",
+            rootOperator->getPhysicalOperator());
+    }
+
+    size_t edgeCountAfter = 0;
+    for (const auto& node : allNodes)
+    {
+        edgeCountAfter += node->getChildren().size();
+    }
+    INVARIANT(edgeCountBefore == edgeCountAfter, "Edge count mismatch after flip: before={} after={}", edgeCountBefore, edgeCountAfter);
+
+    std::unordered_set<PhysicalOpPtr, SharedPtrHash, SharedPtrEqual> reachable;
+    std::queue<PhysicalOpPtr> bfsQueue;
+    for (const auto& root : newRoots)
+    {
+        bfsQueue.push(root);
+        reachable.insert(root);
+    }
+    while (!bfsQueue.empty())
+    {
+        auto current = bfsQueue.front();
+        bfsQueue.pop();
+        for (const auto& child : current->getChildren())
+        {
+            if (reachable.insert(child).second)
+            {
+                bfsQueue.push(child);
+            }
+        }
+    }
+    INVARIANT(
+        reachable.size() == allNodes.size(),
+        "Not all nodes reachable after flip: reachable={} total={}",
+        reachable.size(),
+        allNodes.size());
+
+    for (const auto& node : allNodes)
+    {
+        if (node->getChildren().empty())
+        {
+            INVARIANT(
+                node->getPhysicalOperator().tryGet<SinkPhysicalOperator>(),
+                "Expects SinkOperators as leaves after flip but got {}",
+                node->getPhysicalOperator());
+        }
+    }
+}
+
 PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 {
     PRECONDITION(rootOperators.size() == 1, "For now we can only flip graphs with a single root");
@@ -153,61 +208,7 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
         node->setChildren(reversedEdges[node]);
     }
 
-    /// Post-flip assertion: new roots must be SourcePhysicalOperators.
-    for (const auto& rootOperator : newRoots)
-    {
-        INVARIANT(
-            rootOperator->getPhysicalOperator().tryGet<SourcePhysicalOperator>(),
-            "Expects SourceOperators as roots after flip but got {}",
-            rootOperator->getPhysicalOperator());
-    }
-
-    /// Post-flip assertion: edge count is preserved.
-    size_t edgeCountAfter = 0;
-    for (const auto& node : allNodes)
-    {
-        edgeCountAfter += node->getChildren().size();
-    }
-    INVARIANT(edgeCountBefore == edgeCountAfter, "Edge count mismatch after flip: before={} after={}", edgeCountBefore, edgeCountAfter);
-
-    /// Post-flip assertion: all nodes reachable from new roots.
-    std::unordered_set<PhysicalOpPtr, SharedPtrHash, SharedPtrEqual> reachable;
-    std::queue<PhysicalOpPtr> bfsQueue;
-    for (const auto& root : newRoots)
-    {
-        bfsQueue.push(root);
-        reachable.insert(root);
-    }
-    while (!bfsQueue.empty())
-    {
-        auto current = bfsQueue.front();
-        bfsQueue.pop();
-        for (const auto& child : current->getChildren())
-        {
-            if (reachable.insert(child).second)
-            {
-                bfsQueue.push(child);
-            }
-        }
-    }
-    INVARIANT(
-        reachable.size() == allNodes.size(),
-        "Not all nodes reachable after flip: reachable={} total={}",
-        reachable.size(),
-        allNodes.size());
-
-    /// Post-flip assertion: leaf nodes (no children) must be SinkPhysicalOperators.
-    for (const auto& node : allNodes)
-    {
-        if (node->getChildren().empty())
-        {
-            INVARIANT(
-                node->getPhysicalOperator().tryGet<SinkPhysicalOperator>(),
-                "Expects SinkOperators as leaves after flip but got {}",
-                node->getPhysicalOperator());
-        }
-    }
-
+    verifyFlippedGraph(newRoots, allNodes, edgeCountBefore);
     return newRoots;
 }
 }

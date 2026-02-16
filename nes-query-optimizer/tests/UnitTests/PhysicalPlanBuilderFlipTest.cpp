@@ -13,9 +13,11 @@
 */
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <queue>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 #include <Util/Logger/LogLevel.hpp>
@@ -65,18 +67,20 @@ public:
         auto schema = createSchema();
         auto descriptor = sourceCatalog.getInlineSource("File", schema, {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
-        auto sourceOp = SourcePhysicalOperator(std::move(descriptor.value()), OriginId(nextOriginId++));
+        auto sourceOp = SourcePhysicalOperator(
+            std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
+            OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
 
     /// Creates a PhysicalOperatorWrapper holding a SinkPhysicalOperator.
-    std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper()
+    std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
         auto descriptor = sinkCatalog.getInlineSink(schema, "Print", {{"input_format", "CSV"}});
         EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value());
+        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
@@ -95,7 +99,7 @@ public:
             PipelineLocation::INTERMEDIATE);
     }
 
-    /// Counts total edges (parent→child links) in a plan by BFS from roots.
+    /// Counts total edges (parent->child links) in a plan by BFS from roots.
     static size_t countEdges(const PhysicalPlan& plan)
     {
         size_t edges = 0;
@@ -152,13 +156,13 @@ public:
     uint64_t nextOriginId = 1;
 };
 
-/// Sink → Source. After finalize(), verify source is root with sink as descendant.
+/// Sink -> Source. After finalize(), verify source is root with sink as descendant.
 TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
 {
     auto source = makeSourceWrapper();
     auto sink = makeSinkWrapper();
 
-    /// Build sink→source graph: sink is root, source is child.
+    /// Build sink->source graph: sink is root, source is child.
     sink->addChild(source);
 
     auto builder = PhysicalPlanBuilder(QueryId(1));
@@ -166,19 +170,19 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     auto plan = std::move(builder).finalize();
 
     /// After flip, source should be root.
-    ASSERT_EQ(plan.getRootOperators().size(), 1u);
+    ASSERT_EQ(plan.getRootOperators().size(), 1U);
     const auto& root = plan.getRootOperators()[0];
     EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
 
     /// Root's child should be the sink.
-    ASSERT_EQ(root->getChildren().size(), 1u);
+    ASSERT_EQ(root->getChildren().size(), 1U);
     EXPECT_TRUE(root->getChildren()[0]->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
 
     /// Sink (now a leaf) should have no children.
     EXPECT_TRUE(root->getChildren()[0]->getChildren().empty());
 }
 
-/// Sink → Union → [Source1, Source2]. Verify two source roots, both eventually reach sink.
+/// Sink -> Union -> [Source1, Source2]. Verify two source roots, both eventually reach sink.
 TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
 {
     auto source1 = makeSourceWrapper();
@@ -186,7 +190,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     auto unionOp = makeUnionWrapper();
     auto sink = makeSinkWrapper();
 
-    /// Build sink→source graph: sink → union → {source1, source2}.
+    /// Build sink->source graph: sink -> union -> {source1, source2}.
     unionOp->addChild(source1);
     unionOp->addChild(source2);
     sink->addChild(unionOp);
@@ -196,27 +200,27 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     auto plan = std::move(builder).finalize();
 
     /// After flip, there should be 2 source roots.
-    ASSERT_EQ(plan.getRootOperators().size(), 2u);
+    ASSERT_EQ(plan.getRootOperators().size(), 2U);
     for (const auto& root : plan.getRootOperators())
     {
         EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
     }
 
     /// All 4 nodes must be reachable.
-    EXPECT_EQ(countNodes(plan), 4u);
+    EXPECT_EQ(countNodes(plan), 4U);
 
     /// Both source roots should reach the sink (via union).
     for (const auto& root : plan.getRootOperators())
     {
-        ASSERT_EQ(root->getChildren().size(), 1u);
+        ASSERT_EQ(root->getChildren().size(), 1U);
         auto child = root->getChildren()[0];
         EXPECT_TRUE(child->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
-        ASSERT_EQ(child->getChildren().size(), 1u);
+        ASSERT_EQ(child->getChildren().size(), 1U);
         EXPECT_TRUE(child->getChildren()[0]->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
     }
 }
 
-/// Sink → Union1 → Union2 → Source. Verify correct depth after flip.
+/// Sink -> Union1 -> Union2 -> Source. Verify correct depth after flip.
 TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
 {
     auto source = makeSourceWrapper();
@@ -224,7 +228,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     auto union2 = makeUnionWrapper();
     auto sink = makeSinkWrapper();
 
-    /// Build sink→source chain: sink → union1 → union2 → source.
+    /// Build sink->source chain: sink -> union1 -> union2 -> source.
     union2->addChild(source);
     union1->addChild(union2);
     sink->addChild(union1);
@@ -233,20 +237,20 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
-    /// After flip: source → union2 → union1 → sink.
-    ASSERT_EQ(plan.getRootOperators().size(), 1u);
+    /// After flip: source -> union2 -> union1 -> sink.
+    ASSERT_EQ(plan.getRootOperators().size(), 1U);
     auto current = plan.getRootOperators()[0];
     EXPECT_TRUE(current->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
 
-    ASSERT_EQ(current->getChildren().size(), 1u);
+    ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
     EXPECT_TRUE(current->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
 
-    ASSERT_EQ(current->getChildren().size(), 1u);
+    ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
     EXPECT_TRUE(current->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
 
-    ASSERT_EQ(current->getChildren().size(), 1u);
+    ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
     EXPECT_TRUE(current->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
 
@@ -261,7 +265,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, EdgeCountPreserved)
     auto unionOp = makeUnionWrapper();
     auto sink = makeSinkWrapper();
 
-    /// Sink → Union → {Source1, Source2}: 3 edges total.
+    /// Sink -> Union -> {Source1, Source2}: 3 edges total.
     unionOp->addChild(source1);
     unionOp->addChild(source2);
     sink->addChild(unionOp);
