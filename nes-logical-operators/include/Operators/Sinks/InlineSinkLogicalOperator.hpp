@@ -30,10 +30,11 @@ namespace NES
 /// InlineSinkLogicalOperator objects represent sinks in the logical query plan that are defined within a query as opposed to
 /// sinks defined in separate create statements. The InlineSinkLogicalOperator objects contain all necessary configurations to
 /// build a SinkLogicalOperator within the InlineSinkBindingPhase of the optimizer.
-class InlineSinkLogicalOperator
+class InlineSinkLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit InlineSinkLogicalOperator(std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
+    explicit InlineSinkLogicalOperator(
+        WeakLogicalOperator self, std::string sinkType, const Schema& schema, std::unordered_map<std::string, std::string> config);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
 

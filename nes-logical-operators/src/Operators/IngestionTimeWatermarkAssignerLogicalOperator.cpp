@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 #include <fmt/format.h>
@@ -33,7 +34,10 @@
 namespace NES
 {
 
-IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator() = default;
+IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self)
+    : ManagedByOperator(std::move(self))
+{
+}
 
 std::string_view IngestionTimeWatermarkAssignerLogicalOperator::getName() const noexcept
 {
@@ -111,14 +115,14 @@ TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
 Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>::operator()(
     const Reflected&, const ReflectionContext&) const
 {
-    return TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{IngestionTimeWatermarkAssignerLogicalOperator{}};
+    return TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{};
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterIngestionTimeWatermarkAssignerLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto logicalOperator = IngestionTimeWatermarkAssignerLogicalOperator();
-    return logicalOperator.withInferredSchema(arguments.inputSchemas);
+    auto logicalOperator = TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>{};
+    return logicalOperator->withInferredSchema(arguments.inputSchemas);
 }
 
 }

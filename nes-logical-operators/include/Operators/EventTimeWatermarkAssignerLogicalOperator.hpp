@@ -35,10 +35,10 @@
 namespace NES
 {
 
-class EventTimeWatermarkAssignerLogicalOperator
+class EventTimeWatermarkAssignerLogicalOperator : public ManagedByOperator
 {
 public:
-    EventTimeWatermarkAssignerLogicalOperator(LogicalFunction onField, const Windowing::TimeUnit& unit);
+    EventTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit);
 
     LogicalFunction onField;
     Windowing::TimeUnit unit;

@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -36,10 +35,10 @@ namespace NES
 /// The logical source is then used as key to a multimap, with all descriptors that name the logical source as values.
 /// In the LogicalSourceExpansionRule, we take the keys from SourceNameLogicalOperator operators, get all corresponding (physical) source
 /// descriptors from the catalog, construct SourceDescriptorLogicalOperators from the descriptors and attach them to the query plan.
-class SourceDescriptorLogicalOperator final : public OriginIdAssigner
+class SourceDescriptorLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
-    explicit SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor);
+    explicit SourceDescriptorLogicalOperator(WeakLogicalOperator self, SourceDescriptor sourceDescriptor);
 
     [[nodiscard]] SourceDescriptor getSourceDescriptor() const;
 
@@ -58,7 +57,6 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
-
 
 private:
     static constexpr std::string_view NAME = "Source";

@@ -50,8 +50,9 @@
 namespace NES
 {
 
-JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
-    : joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
+JoinLogicalOperator::JoinLogicalOperator(
+    WeakLogicalOperator self, LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
+    : ManagedByOperator(std::move(self)), joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
 {
 }
 
@@ -206,7 +207,7 @@ Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const Reflect
 
     const auto windowType = unreflectWindowType(reflectedWindowType, context);
 
-    return TypedLogicalOperator<JoinLogicalOperator>{JoinLogicalOperator(joinFunction, windowType, joinType)};
+    return TypedLogicalOperator<JoinLogicalOperator>{joinFunction, windowType, joinType};
 }
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)

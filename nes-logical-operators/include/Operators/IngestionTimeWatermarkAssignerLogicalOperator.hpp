@@ -28,10 +28,10 @@
 namespace NES
 {
 
-class IngestionTimeWatermarkAssignerLogicalOperator final
+class IngestionTimeWatermarkAssignerLogicalOperator final : public ManagedByOperator
 {
 public:
-    IngestionTimeWatermarkAssignerLogicalOperator();
+    explicit IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self);
 
     [[nodiscard]] bool operator==(const IngestionTimeWatermarkAssignerLogicalOperator& rhs) const;
 
@@ -48,7 +48,6 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] IngestionTimeWatermarkAssignerLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
-
 
 protected:
     static constexpr std::string_view NAME = "IngestionTimeWatermarkAssigner";

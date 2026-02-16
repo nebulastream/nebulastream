@@ -51,7 +51,8 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
         }
 
         auto expandedSourceOperators = entries
-            | std::views::transform([](const auto& entry) { return LogicalOperator{SourceDescriptorLogicalOperator{entry}}; })
+            | std::views::transform([](const auto& entry) -> LogicalOperator
+                                    { return TypedLogicalOperator<SourceDescriptorLogicalOperator>{entry}; })
             | std::ranges::to<std::vector>();
 
         INVARIANT(getParents(queryPlan, sourceOp).size() == 1, "Source name operator must have exactly one parent");
@@ -60,7 +61,8 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             parent.getChildren().size() == 1 && parent.getChildren().front() == sourceOp,
             "Parent of source name operator must have exactly one child, the source itself");
 
-        auto newParent = parent.withChildren({UnionLogicalOperator{}.withChildren(std::move(expandedSourceOperators))});
+        auto newParent
+            = parent.withChildren({TypedLogicalOperator<UnionLogicalOperator>{} -> withChildren(std::move(expandedSourceOperators))});
         auto replaceResult = replaceSubtree(queryPlan, parent.getId(), newParent);
 
         INVARIANT(

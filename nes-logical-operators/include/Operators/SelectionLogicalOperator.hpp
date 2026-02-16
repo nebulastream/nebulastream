@@ -34,10 +34,10 @@ namespace NES
 {
 
 /// Selection operator, which contains an function as a predicate.
-class SelectionLogicalOperator
+class SelectionLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit SelectionLogicalOperator(LogicalFunction predicate);
+    explicit SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 

@@ -39,7 +39,8 @@
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(predicate))
+SelectionLogicalOperator::SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate)
+    : ManagedByOperator(std::move(self)), predicate(std::move(predicate))
 {
 }
 
@@ -140,7 +141,7 @@ TypedLogicalOperator<SelectionLogicalOperator>
 Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-    return TypedLogicalOperator<SelectionLogicalOperator>{SelectionLogicalOperator(predicate)};
+    return TypedLogicalOperator<SelectionLogicalOperator>{predicate};
 }
 
 LogicalOperatorRegistryReturnType

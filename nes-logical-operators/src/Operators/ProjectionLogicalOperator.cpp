@@ -59,8 +59,8 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 }
 }
 
-ProjectionLogicalOperator::ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk)
-    : projections(std::move(projections)), asterisk(asterisk.value)
+ProjectionLogicalOperator::ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<Projection> projections, Asterisk asterisk)
+    : ManagedByOperator(std::move(self)), projections(std::move(projections)), asterisk(asterisk.value)
 {
 }
 
@@ -262,8 +262,7 @@ Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>::operator()(const R
         parsedProjections.emplace_back(identifier, function);
     }
 
-    return TypedLogicalOperator<ProjectionLogicalOperator>{
-        ProjectionLogicalOperator{std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)}};
+    return TypedLogicalOperator<ProjectionLogicalOperator>{std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
 }
 
 LogicalOperatorRegistryReturnType

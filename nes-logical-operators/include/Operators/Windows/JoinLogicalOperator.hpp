@@ -38,7 +38,7 @@ namespace NES
 {
 class SerializableOperator;
 
-class JoinLogicalOperator final : public OriginIdAssigner
+class JoinLogicalOperator final : public OriginIdAssigner, public ManagedByOperator
 {
 public:
     enum class JoinType : uint8_t
@@ -47,7 +47,8 @@ public:
         CARTESIAN_PRODUCT
     };
 
-    explicit JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
+    explicit JoinLogicalOperator(
+        WeakLogicalOperator self, LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
     [[nodiscard]] Schema getLeftSchema() const;

@@ -39,10 +39,17 @@
 namespace NES
 {
 
-SinkLogicalOperator::SinkLogicalOperator(std::string sinkName) : sinkName(std::move(sinkName)) { };
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self) : ManagedByOperator(std::move(self))
+{
+}
 
-SinkLogicalOperator::SinkLogicalOperator(SinkDescriptor sinkDescriptor)
-    : sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, std::string sinkName)
+    : ManagedByOperator(std::move(self)), sinkName(std::move(sinkName))
+{
+}
+
+SinkLogicalOperator::SinkLogicalOperator(WeakLogicalOperator self, SinkDescriptor sinkDescriptor)
+    : ManagedByOperator(std::move(self)), sinkName(sinkDescriptor.getSinkName()), sinkDescriptor(std::move(sinkDescriptor))
 {
 }
 
@@ -217,8 +224,8 @@ Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflect
                 name);
         }
 
-        return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{descriptor.value()}};
+        return TypedLogicalOperator<SinkLogicalOperator>{descriptor.value()};
     }
-    return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{name}};
+    return TypedLogicalOperator<SinkLogicalOperator>{name};
 }
 }

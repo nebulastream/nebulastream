@@ -31,10 +31,11 @@ namespace NES
 /// sources defined in separate create statements. The InlineSourceLogicalOperator objects contain all necessary configurations to
 /// build a SourceDescriptorLogicalOperator within the InlineSourceBindingPhase of the optimizer.
 
-class InlineSourceLogicalOperator
+class InlineSourceLogicalOperator : public ManagedByOperator
 {
 public:
     explicit InlineSourceLogicalOperator(
+        WeakLogicalOperator self,
         std::string type,
         const Schema& schema,
         std::unordered_map<std::string, std::string> sourceConfig,
