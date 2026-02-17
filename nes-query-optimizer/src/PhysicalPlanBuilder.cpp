@@ -73,6 +73,7 @@ struct SharedPtrEqual
     bool operator()(const PhysicalOpPtr& lhs, const PhysicalOpPtr& rhs) const { return lhs.get() == rhs.get(); }
 };
 
+#ifndef NO_ASSERT
 /// Verifies post-flip invariants: roots are sources, leaves are sinks, edge count preserved, all nodes reachable.
 void verifyFlippedGraph(const std::vector<PhysicalOpPtr>& newRoots, const std::vector<PhysicalOpPtr>& allNodes, size_t edgeCountBefore)
 {
@@ -127,6 +128,7 @@ void verifyFlippedGraph(const std::vector<PhysicalOpPtr>& newRoots, const std::v
         }
     }
 }
+#endif
 
 PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 {
@@ -169,7 +171,9 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
     collectNodes(rootOperators[0], collectNodes);
 
     /// Count edges before clearing children.
+#ifndef NO_ASSERT
     size_t edgeCountBefore = 0;
+#endif
     std::unordered_map<PhysicalOpPtr, std::vector<PhysicalOpPtr>, SharedPtrHash, SharedPtrEqual> reversedEdges;
     std::unordered_map<PhysicalOpPtr, int, SharedPtrHash, SharedPtrEqual> inDegree;
     for (const auto& node : allNodes)
@@ -179,7 +183,9 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
         {
             reversedEdges.try_emplace(child, std::vector<PhysicalOpPtr>{});
             reversedEdges[child].push_back(node);
+#ifndef NO_ASSERT
             ++edgeCountBefore;
+#endif
         }
         /// clear
         node->setChildren(std::vector<PhysicalOpPtr>{});
@@ -208,7 +214,9 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
         node->setChildren(reversedEdges[node]);
     }
 
+#ifndef NO_ASSERT
     verifyFlippedGraph(newRoots, allNodes, edgeCountBefore);
+#endif
     return newRoots;
 }
 }
