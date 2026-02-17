@@ -17,4 +17,9 @@ function(add_nes_physical_operator_test)
 endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
+add_nes_physical_operator_test(DeltaPhysicalOperatorTest DeltaPhysicalOperatorTest.cpp)
+set_target_properties(DeltaPhysicalOperatorTest PROPERTIES
+        ENABLE_EXPORTS TRUE
+)
+target_link_libraries(DeltaPhysicalOperatorTest nes-executable nes-nautilus-test-util)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)

@@ -12,3 +12,6 @@
 
 add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
 target_link_libraries(statement-binder-test nes-sql-parser nes-nebuli)
+
+add_nes_unit_test(delta-parser-test "DeltaParserTest.cpp")
+target_link_libraries(delta-parser-test nes-sql-parser nes-nebuli)
