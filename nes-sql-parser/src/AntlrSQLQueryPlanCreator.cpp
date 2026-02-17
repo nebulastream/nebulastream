@@ -471,6 +471,11 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         return LogicalPlanBuilder::createLogicalPlan(helpers.top().getSource());
     }();
 
+    if (!helpers.top().getDeltaExpressions().empty())
+    {
+        queryPlan = LogicalPlanBuilder::addDelta(helpers.top().getDeltaExpressions(), queryPlan);
+    }
+
     for (auto whereExpr = helpers.top().getWhereClauses().rbegin(); whereExpr != helpers.top().getWhereClauses().rend(); ++whereExpr)
     {
         queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
@@ -914,6 +919,28 @@ void AntlrSQLQueryPlanCreator::enterInlineSource(AntlrSQLParser::InlineSourceCon
     const auto parameters = bindConfigOptions(context->parameters->namedConfigExpression());
 
     helpers.top().setInlineSource(type, parameters);
+}
+
+void AntlrSQLQueryPlanCreator::enterDeltaSource(AntlrSQLParser::DeltaSourceContext* context)
+{
+    /// If the delta input is a source name, set it. If it's a subquery, the inner query's
+    /// exitPrimaryQuery will push its plan into helpers.top().queryPlans automatically.
+    if (context->deltaInput()->source != nullptr)
+    {
+        helpers.top().setSource(bindIdentifier(context->deltaInput()->source));
+    }
+}
+
+void AntlrSQLQueryPlanCreator::exitDeltaSource(AntlrSQLParser::DeltaSourceContext* context)
+{
+    AntlrSQLBaseListener::exitDeltaSource(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitDeltaExpression(AntlrSQLParser::DeltaExpressionContext* context)
+{
+    auto fieldName = bindIdentifier(context->field);
+    auto aliasName = bindIdentifier(context->alias);
+    helpers.top().getDeltaExpressions().emplace_back(FieldIdentifier(aliasName), FieldAccessLogicalFunction(fieldName));
 }
 
 void AntlrSQLQueryPlanCreator::enterSetOperation(AntlrSQLParser::SetOperationContext*)
