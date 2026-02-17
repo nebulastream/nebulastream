@@ -28,17 +28,16 @@
 #include <utility>
 #include <vector>
 #include <simdjson.h>
-
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
-
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
+#include <val_enum.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -65,7 +64,12 @@ VarVal SIMDJSONFIF::parseStringIntoNautilusRecord(
     const DataType::NULLABLE isNullable)
 {
     const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena, const bool isNull)
+        +[](FieldIndex fieldIndex,
+            SIMDJSONFIF* fieldIndexFunction,
+            SIMDJSONMetaData* metaData,
+            Arena* arena,
+            const bool isNull,
+            const DataType::NULLABLE isNullable)
         {
             /// We use thread_local to ensure that result exists as long as the thread exist.
             /// We require this, as we return a pointer to the storage, due to use not being able to return two values in nautilus, i.e.,
@@ -90,21 +94,30 @@ VarVal SIMDJSONFIF::parseStringIntoNautilusRecord(
             const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
 
             /// Get the value from the document and convert it to a span of bytes
-            const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-            auto valueBytes = std::as_bytes(std::span(value));
+            const std::optional<std::string_view> value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName, isNullable);
+            if (not value.has_value())
+            {
+                /// If we can not access/parse the field and the field is nullable, we return the same as for a null value
+                constexpr auto sizeOfValue = 0;
+                const auto arenaPointer = arena->allocateMemory(sizeOfValue);
+                result = VarSizedResult{.varSizedPointer = arenaPointer, .size = sizeOfValue};
+                return &result;
+            }
+            auto valueBytes = std::as_bytes(std::span(value.value()));
 
             /// Get memory from arena that holds the bytes of the string
-            auto arenaPointer = arena->allocateMemory(value.size());
+            auto arenaPointer = arena->allocateMemory(value.value().size());
             std::ranges::copy(valueBytes, arenaPointer.begin());
 
-            result = VarSizedResult{.varSizedPointer = arenaPointer, .size = value.size()};
+            result = VarSizedResult{.varSizedPointer = arenaPointer, .size = value.value().size()};
             return &result;
         },
         fieldIdx,
         fieldIndexFunction,
         metaData,
         arenaRef.getArena(),
-        isNull);
+        isNull,
+        nautilus::val<DataType::NULLABLE>{isNullable});
     const VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer)),
         *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(VarSizedResult, size))};
@@ -136,7 +149,8 @@ void SIMDJSONFIF::writeValueToRecord(
                 }
 
                 /// Second, we need to check if the key is equal to one of the null values
-                if (accessSIMDJsonFieldOrThrow(currentDoc, fieldName).is_null())
+                auto nullValue = accessSIMDJsonFieldOrThrow(currentDoc, fieldName, DataType::NULLABLE::IS_NULLABLE);
+                if (not nullValue.has_value() or nullValue.value().is_null())
                 {
                     return true;
                 }

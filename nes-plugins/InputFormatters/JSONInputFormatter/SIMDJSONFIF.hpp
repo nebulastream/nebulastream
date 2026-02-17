@@ -28,6 +28,7 @@
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -39,6 +40,7 @@
 #include <static.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
+#include <val_enum.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -126,15 +128,24 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     [[nodiscard]] static nautilus::val<bool>
     applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction);
 
+    /// Tries to parse the value. If it can not parse the value and the field is nullable, we return nullopt to signal
+    /// to the callee that the value shall be NULL. Otherwise, we throw
     template <typename T>
-    static T parseSIMDJsonValueOrThrow(
+    static std::optional<T> parseSIMDJsonValueOrThrow(
         simdjson::simdjson_result<T> simdJsonValue,
         simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
         const std::string_view expectedType,
-        const std::string_view expectedField)
+        const std::string_view expectedField,
+        const DataType::NULLABLE isNullable)
     {
         if (not simdJsonValue.has_value())
         {
+            /// If we can not parse the value but the field is nullable, we return a nullopt to signal to the callee that the value
+            /// shall be NULL
+            if (isNullable == DataType::NULLABLE::IS_NULLABLE)
+            {
+                return {};
+            }
             throw FormattingError(
                 "SimdJson could not parse field value {} of type '{}' belonging to field '{}' with error: {}",
                 rawVal.raw_json().value(),
@@ -145,17 +156,33 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         return simdJsonValue.value();
     }
 
-    static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+    static std::optional<simdjson::simdjson_result<simdjson::ondemand::value>> accessSIMDJsonFieldOrThrow(
+        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference,
+        const std::string_view fieldName,
+        const DataType::NULLABLE isNullable)
     {
         const auto simdJsonResult = simdJsonReference[fieldName];
         if (not simdJsonResult.has_value())
         {
+            /// If we can not parse the value but the field is nullable, we return a nullopt to signal to the callee that the value
+            /// shall be NULL
+            if (isNullable == DataType::NULLABLE::IS_NULLABLE)
+            {
+                return {};
+            }
+
             throw FieldNotFound(
                 "SimdJson has not found the fieldName {} with error: {}", fieldName, magic_enum::enum_name(simdJsonResult.error()));
         }
         return simdJsonResult;
     }
+
+    template <typename T>
+    struct ParseResult
+    {
+        T value;
+        bool validValue;
+    };
 
     template <typename T>
     [[nodiscard]] VarVal parseNonStringValueIntoNautilusRecord(
@@ -165,62 +192,133 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<bool>& isNull,
         const DataType::NULLABLE isNullable) const
     {
-        auto nautilusValue = nautilus::invoke(
-            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, const bool isNull)
+        const auto parseResult = nautilus::invoke(
+            +[](FieldIndex fieldIndex,
+                SIMDJSONFIF* fieldIndexFunction,
+                const SIMDJSONMetaData* metaData,
+                const bool isNull,
+                const DataType::NULLABLE isNullable)
             {
+                /// We use the thread local to return multiple values.
+                /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
+                thread_local static ParseResult<T> result;
+
                 /// We handle null in the nautilus::invoke to reduce the amount of branches in nautilus code and reducing the tracing time.
                 if (isNull)
                 {
-                    return T{0};
+                    result.validValue = false;
+                    result.value = T{0};
+                    return &result;
                 }
 
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
-                auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+                auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName, isNullable);
+                if (not simdJsonResult.has_value())
+                {
+                    /// If we can not access/parse the field and the field is nullable, we return the same as for a null value
+                    result.validValue = false;
+                    result.value = T{0};
+                    return &result;
+                }
+
                 /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
                 if constexpr (std::same_as<T, bool>)
                 {
-                    const T value = parseSIMDJsonValueOrThrow(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_bool(), simdJsonResult.value(), "bool", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = value.value();
+                    return &result;
                 }
                 else if constexpr (std::same_as<T, char>)
                 {
                     const std::string_view valueSV = currentDoc[fieldName];
                     PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
-                    const T value = parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0];
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_string(), simdJsonResult.value(), "char", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = value.value()[0];
+                    return &result;
                 }
                 else if constexpr (std::signed_integral<T>)
                 {
-                    const auto value
-                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName));
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_int64(), simdJsonResult.value(), "integer", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = static_cast<T>(value.value());
+                    return &result;
                 }
                 else if constexpr (std::unsigned_integral<T>)
                 {
-                    const auto value
-                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName));
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_uint64(), simdJsonResult.value(), "unsigned", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = static_cast<T>(value.value());
+                    return &result;
                 }
                 else if constexpr (std::is_same_v<T, double>)
                 {
-                    const auto value
-                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "double", fieldName));
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_double(), simdJsonResult.value(), "double", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = static_cast<T>(value.value());
+                    return &result;
                 }
                 else if constexpr (std::is_same_v<T, float>)
                 {
-                    const auto value
-                        = static_cast<T>(parseSIMDJsonValueOrThrow(simdJsonResult.get_double(), simdJsonResult, "float", fieldName));
-                    return value;
+                    const auto value = parseSIMDJsonValueOrThrow(
+                        simdJsonResult.value().get_double(), simdJsonResult.value(), "float", fieldName, isNullable);
+                    if (not value.has_value())
+                    {
+                        result.validValue = false;
+                        result.value = T{0};
+                        return &result;
+                    }
+                    result.validValue = true;
+                    result.value = static_cast<T>(value.value());
+                    return &result;
                 }
             },
             fieldIdx,
             fieldIndexFunction,
             metaData,
-            isNull);
+            isNull,
+            nautilus::val<DataType::NULLABLE>{isNullable});
 
-        return VarVal{nautilusValue, isNullable, isNull};
+        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
+        const nautilus::val<bool> isValidValue = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, validValue));
+        return VarVal{nautilusValue, isNullable, isNull or not isValidValue};
     }
 
     static VarVal parseStringIntoNautilusRecord(
