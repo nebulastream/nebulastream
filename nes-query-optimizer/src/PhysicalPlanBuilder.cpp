@@ -75,7 +75,8 @@ struct SharedPtrEqual
 
 #ifndef NO_ASSERT
 /// Verifies post-flip invariants: roots are sources, leaves are sinks, edge count preserved, all nodes reachable.
-void verifyFlippedGraph(const std::vector<PhysicalOpPtr>& newRoots, const std::vector<PhysicalOpPtr>& allNodes, size_t edgeCountBefore)
+static void
+verifyFlippedGraph(const std::vector<PhysicalOpPtr>& newRoots, const std::vector<PhysicalOpPtr>& allNodes, size_t edgeCountBefore)
 {
     for (const auto& rootOperator : newRoots)
     {
@@ -134,39 +135,39 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 {
     PRECONDITION(rootOperators.size() == 1, "For now we can only flip graphs with a single root");
 
-    /// DFS coloring for cycle detection: WHITE=unvisited, GRAY=in current path, BLACK=fully processed.
-    enum class Color : uint8_t
+    /// DFS visit states for cycle detection.
+    enum class VisitState : uint8_t
     {
-        White,
-        Gray,
-        Black
+        Unvisited,
+        InProgress,
+        Completed
     };
 
-    std::unordered_map<PhysicalOpPtr, Color, SharedPtrHash, SharedPtrEqual> colorMap;
+    std::unordered_map<PhysicalOpPtr, VisitState, SharedPtrHash, SharedPtrEqual> visitStateMap;
     std::vector<PhysicalOpPtr> allNodes;
 
-    auto collectNodes = [&colorMap, &allNodes](const PhysicalOpPtr& node, auto&& self) -> void
+    auto collectNodes = [&visitStateMap, &allNodes](const PhysicalOpPtr& node, auto&& self) -> void
     {
         if (!node)
         {
             return;
         }
-        auto [it, inserted] = colorMap.try_emplace(node, Color::White);
-        if (it->second == Color::Gray)
+        auto [it, inserted] = visitStateMap.try_emplace(node, VisitState::Unvisited);
+        if (it->second == VisitState::InProgress)
         {
             INVARIANT(false, "Cycle detected in physical plan DAG during flip — node visited twice on the same DFS path");
         }
-        if (it->second == Color::Black)
+        if (it->second == VisitState::Completed)
         {
             return; /// already fully processed
         }
-        it->second = Color::Gray;
+        it->second = VisitState::InProgress;
         allNodes.push_back(node);
         for (const auto& child : node->getChildren())
         {
             self(child, self);
         }
-        it->second = Color::Black;
+        it->second = VisitState::Completed;
     };
     collectNodes(rootOperators[0], collectNodes);
 
