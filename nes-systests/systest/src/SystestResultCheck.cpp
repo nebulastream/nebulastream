@@ -217,8 +217,34 @@ FMT_OSTREAM(::ResultErrorString);
 
 namespace
 {
+/// We support bool being an integer (anything else than 0 is true) or "true" / "false"
+bool convertToBool(const std::string& str)
+{
+    if (NES::toLowerCase(str) == "true")
+    {
+        return true;
+    }
+    if (NES::toLowerCase(str) == "false")
+    {
+        return false;
+    }
+    const auto boolInt = std::stoi(str);
+    return static_cast<bool>(boolInt);
+}
+
 bool compareStringAsTypeWithError(const NES::DataType::Type type, const ExpectedResultField& left, const ActualResultField& right)
 {
+    /// If both string values are NULL, they are equal
+    if (NES::toLowerCase(left.getRawValue()) == "null" and NES::toLowerCase(right.getRawValue()) == "null")
+    {
+        return true;
+    }
+    if ((NES::toLowerCase(left.getRawValue()) == "null" and NES::toLowerCase(right.getRawValue()) != "null")
+        or (NES::toLowerCase(left.getRawValue()) != "null" and NES::toLowerCase(right.getRawValue()) == "null"))
+    {
+        return false;
+    }
+
     switch (type)
     {
         case NES::DataType::Type::INT8:
@@ -229,14 +255,18 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
         case NES::DataType::Type::UINT16:
         case NES::DataType::Type::UINT32:
         case NES::DataType::Type::UINT64:
-        case NES::DataType::Type::BOOLEAN:
         case NES::DataType::Type::CHAR:
         case NES::DataType::Type::VARSIZED:
             return left.getRawValue() == right.getRawValue();
+        case NES::DataType::Type::BOOLEAN: {
+            const auto leftBool = convertToBool(left.getRawValue());
+            const auto rightBool = convertToBool(right.getRawValue());
+            return leftBool == rightBool;
+        }
         case NES::DataType::Type::FLOAT32:
-            return NES::Systest::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
+            return NES::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FLOAT64:
-            return NES::Systest::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
+            return NES::compareStringAsTypeWithError<double>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::UNDEFINED:
             throw NES::UnknownDataType("Not supporting UNDEFINED in result check comparison");
     }
@@ -713,10 +743,9 @@ QueryCheckResult checkQuery(const NES::Systest::RunningQuery& runningQuery)
 }
 }
 
-namespace NES::Systest
+namespace NES
 {
-
-std::optional<std::string> checkResult(const RunningQuery& runningQuery)
+std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery)
 {
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
