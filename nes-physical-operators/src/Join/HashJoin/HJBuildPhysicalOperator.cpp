@@ -90,37 +90,50 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     }
 
     const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-            {
-                const ChainedHashMapRef hashMapRef{
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize};
-                for (const auto entry : hashMapRef)
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
+            std::function(
+                [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                    const auto state = entryRefReset.getValueMemArea();
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea) -> void
-                        {
-                            /// Calls the destructor of the PagedVector
-                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            pagedVector->~PagedVector();
-                        },
-                        state);
-                }
-            })));
+                    const ChainedHashMapRef hashMapRef{
+                        hashMap,
+                        copyOfHashMapOptions.fieldKeys,
+                        copyOfHashMapOptions.fieldValues,
+                        copyOfHashMapOptions.entriesPerPage,
+                        copyOfHashMapOptions.entrySize};
+                    for (const auto entry : hashMapRef)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        const auto state = entryRefReset.getValueMemArea();
+                        nautilus::invoke(
+                            +[](int8_t* pagedVectorMemArea) -> void
+                            {
+                                /// Calls the destructor of the PagedVector
+                                /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                                auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                                pagedVector->~PagedVector();
+                            },
+                            state);
+                    }
+                })));
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Convert lazy values into their parsed form
+    for (const auto& field : nautilus::static_iterable(schemaFields))
+    {
+        const VarVal val = record.read(field.name);
+        if (val.isLazyValue())
+        {
+            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, field.dataType.type);
+            record.write(field.name, parsedVal);
+        }
+    }
+
     /// Getting the operator handler from the local state
     auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
@@ -179,8 +192,9 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<TupleBufferRef>& bufferRef,
-    HashMapOptions hashMapOptions)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
+    HashMapOptions hashMapOptions,
+    std::vector<Schema::Field> schemaFields)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef, std::move(schemaFields))
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

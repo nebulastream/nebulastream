@@ -21,6 +21,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -85,8 +86,18 @@ nautilus::val<uint64_t> RowTupleBufferRef::writeRecord(
             continue;
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
-        const auto& value = rec.read(name);
-        storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        const VarVal& value = rec.read(name);
+        if (value.isLazyValue())
+        {
+            /// Parse the lazy value into the internal represention
+            const LazyValueRepresentation lazyVal = value.cast<LazyValueRepresentation>();
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
+            storeValue(type, recordBuffer, fieldAddress, parsedVal, bufferProvider);
+        }
+        else
+        {
+            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        }
     }
     return 1;
 }

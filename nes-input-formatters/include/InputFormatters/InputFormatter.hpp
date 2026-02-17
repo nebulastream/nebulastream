@@ -26,6 +26,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -99,10 +100,14 @@ class InputFormatter
 {
 public:
     explicit InputFormatter(
-        FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const ParserConfig& parserConfig)
+        FormatterType inputFormatIndexer,
+        std::shared_ptr<TupleBufferRef> memoryProvider,
+        const ParserConfig& parserConfig,
+        const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse)
         : inputFormatIndexer(std::move(inputFormatIndexer))
         , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
         , projections(memoryProvider->getAllFieldNames())
+        , fieldsToParse(fieldsToParse)
         , memoryProvider(std::move(memoryProvider))
         , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
     {
@@ -177,6 +182,7 @@ private:
     FormatterType inputFormatIndexer;
     typename FormatterType::IndexerMetaData indexerMetaData;
     std::vector<Record::RecordFieldIdentifier> projections;
+    std::unordered_set<Record::RecordFieldIdentifier> fieldsToParse;
     std::shared_ptr<TupleBufferRef> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder;
 
@@ -396,7 +402,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF);
+                projections, fieldsToParse, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF);
             executeChild(executionCtx, record);
         }
     }
@@ -414,7 +420,7 @@ private:
         while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
         {
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction);
+                projections, fieldsToParse, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction);
             executeChild(executionCtx, record);
             bufferRecordIdx += 1;
         }
@@ -441,7 +447,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF);
+                projections, fieldsToParse, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF);
             executeChild(executionCtx, record);
         }
     }

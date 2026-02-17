@@ -282,9 +282,9 @@ RewriteRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logical
     /// Creating the left and right hash join build operator
     auto handlerId = getNextOperatorHandlerId();
     const HJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, leftHashMapOptions};
+        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, leftHashMapOptions, newLeftInputSchema.getFields()};
     const HJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, rightHashMapOptions};
+        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, rightHashMapOptions, newRightInputSchema.getFields()};
 
     /// Creating the hash join probe
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);

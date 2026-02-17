@@ -20,6 +20,7 @@
 #include <cstdlib>
 #include <span>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -78,6 +79,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
+        const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse,
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
@@ -106,7 +108,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto sizeOfDelimiter = (i + 1 == metaData.getNumberOfFields()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            parseRawValueIntoRecord(
+                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), fieldsToParse);
         }
         return record;
     }
@@ -114,6 +117,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
         const std::vector<Record::RecordFieldIdentifier> projections,
+        const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse,
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
@@ -142,7 +146,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            parseRawValueIntoRecord(
+                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), fieldsToParse);
         }
         return record;
     }

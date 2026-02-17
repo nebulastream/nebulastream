@@ -50,9 +50,11 @@ PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctio
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Ceil function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Ceil function must have exactly one input type");
-    return CeilPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0],
-        physicalFunctionRegistryArguments.inputTypes[0],
-        physicalFunctionRegistryArguments.outputType);
+    return {
+        CeilPhysicalFunction(
+            physicalFunctionRegistryArguments.childFunctions[0],
+            physicalFunctionRegistryArguments.inputTypes[0],
+            physicalFunctionRegistryArguments.outputType),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 }

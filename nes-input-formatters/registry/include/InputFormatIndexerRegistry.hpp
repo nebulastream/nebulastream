@@ -38,8 +38,11 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTuple
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<TupleBufferRef> memoryProvider)
-        : inputFormatIndexerConfig(std::move(config)), memoryProvider(std::move(memoryProvider))
+    InputFormatIndexerRegistryArguments(
+        ParserConfig config,
+        std::shared_ptr<TupleBufferRef> memoryProvider,
+        std::unordered_set<Record::RecordFieldIdentifier> fieldsToParse)
+        : inputFormatIndexerConfig(std::move(config)), memoryProvider(std::move(memoryProvider)), fieldsToParse(std::move(fieldsToParse))
     {
     }
 
@@ -47,8 +50,8 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
-        auto inputFormatter
-            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+        auto inputFormatter = InputFormatter<IndexerType>(
+            std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig, std::move(fieldsToParse));
         return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
     }
 
@@ -59,6 +62,8 @@ private:
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
     ParserConfig inputFormatIndexerConfig;
     std::shared_ptr<TupleBufferRef> memoryProvider;
+    /// Describes the values that actually have to be parsed for the pipeline of the input formatter, instead of being stored in their lazy representation
+    std::unordered_set<Record::RecordFieldIdentifier> fieldsToParse;
 };
 
 class InputFormatIndexerRegistry : public BaseRegistry<

@@ -38,7 +38,7 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterNegatePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Negate function must have exactly one child function");
-    return NegatePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]);
+    return {NegatePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0]), physicalFunctionRegistryArguments.childFunctions};
 }
 
 }

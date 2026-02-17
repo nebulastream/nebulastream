@@ -18,9 +18,12 @@
 #include <cstdint>
 #include <functional>
 #include <unordered_map>
+#include <utility>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 
@@ -55,6 +58,56 @@ template <typename T>
 nautilus::val<T> readValueFromMemRef(const nautilus::val<int8_t*>& memRef)
 {
     return static_cast<nautilus::val<T>>(*static_cast<nautilus::val<T*>>(memRef));
+}
+
+/// Convert a lazy val into a parsed varval
+inline VarVal convertLazyToInternalRep(const LazyValueRepresentation& lazyVal, const DataType::Type& type)
+{
+    switch (type)
+    {
+        case DataType::Type::INT8: {
+            return lazyVal.parseToInternalRepresentation<int8_t>();
+        }
+        case DataType::Type::INT16: {
+            return lazyVal.parseToInternalRepresentation<int16_t>();
+        }
+        case DataType::Type::INT32: {
+            return lazyVal.parseToInternalRepresentation<int32_t>();
+        }
+        case DataType::Type::INT64: {
+            return lazyVal.parseToInternalRepresentation<int64_t>();
+        }
+        case DataType::Type::UINT8: {
+            return lazyVal.parseToInternalRepresentation<uint8_t>();
+        }
+        case DataType::Type::UINT16: {
+            return lazyVal.parseToInternalRepresentation<uint16_t>();
+        }
+        case DataType::Type::UINT32: {
+            return lazyVal.parseToInternalRepresentation<uint32_t>();
+        }
+        case DataType::Type::UINT64: {
+            return lazyVal.parseToInternalRepresentation<uint64_t>();
+        }
+        case DataType::Type::BOOLEAN: {
+            return lazyVal.parseToInternalRepresentation<bool>();
+        }
+        case DataType::Type::CHAR: {
+            return lazyVal.parseToInternalRepresentation<char>();
+        }
+        case DataType::Type::FLOAT32: {
+            return lazyVal.parseToInternalRepresentation<float>();
+        }
+        case DataType::Type::FLOAT64: {
+            return lazyVal.parseToInternalRepresentation<double>();
+        }
+        case DataType::Type::VARSIZED: {
+        }
+        case DataType::Type::UNDEFINED: {
+            INVARIANT(false, "Varsized and undefined values should never be represented as lazy values");
+        }
+    }
+    std::unreachable();
 }
 
 inline const std::unordered_map<DataType::Type, std::function<VarVal(const VarVal&, const nautilus::val<int8_t*>&)>> storeValueFunctionMap

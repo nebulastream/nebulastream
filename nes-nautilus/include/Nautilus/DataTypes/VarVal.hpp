@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
@@ -25,6 +26,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -33,7 +35,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<VariableSizedData, nautilus::val<T>...>;
+using var_val_helper = std::variant<LazyValueRepresentation, VariableSizedData, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -98,7 +100,6 @@ public:
         {
             return std::get<T1>(value);
         }
-
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
             {
@@ -107,6 +108,11 @@ public:
                 if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else if constexpr (
+                    std::is_same_v<removedCVRefT0, LazyValueRepresentation> || std::is_same_v<removedCVRefT1, LazyValueRepresentation>)
+                {
+                    throw UnknownOperation("Cannot cast LazyValueRepresentation to anything else.");
                 }
                 else
                 {
@@ -118,6 +124,8 @@ public:
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
+
+    [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<LazyValueRepresentation>(value); }
 
     template <typename T>
     VarVal customVisit(T t) const

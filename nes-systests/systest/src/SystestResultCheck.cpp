@@ -195,6 +195,24 @@ FMT_OSTREAM(::ResultErrorString);
 
 namespace
 {
+
+/// Transform the string into a bool string that represents it's value as a single character
+void convertToBinaryBool(std::string& boolString)
+{
+    if (boolString == "1" || boolString == "0")
+    {
+        return;
+    }
+    if (NES::toLowerCase(boolString) == "true")
+    {
+        boolString = "1";
+    }
+    else
+    {
+        boolString = "0";
+    }
+}
+
 bool compareStringAsTypeWithError(const NES::DataType::Type type, const ExpectedResultField& left, const ActualResultField& right)
 {
     switch (type)
@@ -207,10 +225,18 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
         case NES::DataType::Type::UINT16:
         case NES::DataType::Type::UINT32:
         case NES::DataType::Type::UINT64:
-        case NES::DataType::Type::BOOLEAN:
         case NES::DataType::Type::CHAR:
         case NES::DataType::Type::VARSIZED:
             return left.getRawValue() == right.getRawValue();
+        case NES::DataType::Type::BOOLEAN: {
+            /// Due to lazy value parsing, there is a chance that bools are either represented in their binary form 0/1 or in their written form false/true
+            /// To account for these cases, we convert both left and right to a definitive representation
+            std::string leftRaw = left.getRawValue();
+            std::string rightRaw = right.getRawValue();
+            convertToBinaryBool(leftRaw);
+            convertToBinaryBool(rightRaw);
+            return leftRaw == rightRaw;
+        }
         case NES::DataType::Type::FLOAT32:
             return NES::Systest::compareStringAsTypeWithError<float>(left.getRawValue(), right.getRawValue());
         case NES::DataType::Type::FLOAT64:
@@ -717,15 +743,17 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 
         if (not result1)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load first result file for differential query comparison: {}", runningQuery.systestQuery.resultFile()));
         }
 
         if (not result2)
         {
-            return annotateDifferentialError(fmt::format(
-                "Failed to load second result file for differential query comparison: {}",
-                runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Failed to load second result file for differential query comparison: {}",
+                    runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         if (result1->schema.getNumberOfFields() == 0)
@@ -736,8 +764,9 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
 
         if (result2->schema.getNumberOfFields() == 0)
         {
-            return annotateDifferentialError(fmt::format(
-                "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
+            return annotateDifferentialError(
+                fmt::format(
+                    "Second result file is empty or has no schema: {}", runningQuery.systestQuery.resultFileForDifferentialQuery()));
         }
 
         const QuerySchemasAndResults querySchemasAndResults = [&]()
@@ -778,12 +807,13 @@ std::optional<std::string> checkResult(const RunningQuery& runningQuery)
                 fmt::format("{}{}\n\nAll Results match", SchemaMismatchMessage, checkQueryResult.schemaErrorStream));
         }
         case QueryCheckResult::Type::SCHEMAS_MISMATCH_RESULTS_MISMATCH: {
-            return annotateDifferentialError(fmt::format(
-                "{}{}{}{}",
-                SchemaMismatchMessage,
-                checkQueryResult.schemaErrorStream,
-                ResultMismatchMessage,
-                checkQueryResult.resultErrorStream));
+            return annotateDifferentialError(
+                fmt::format(
+                    "{}{}{}{}",
+                    SchemaMismatchMessage,
+                    checkQueryResult.schemaErrorStream,
+                    ResultMismatchMessage,
+                    checkQueryResult.resultErrorStream));
         }
     }
     std::unreachable();
