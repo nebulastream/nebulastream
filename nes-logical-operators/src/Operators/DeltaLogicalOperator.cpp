@@ -91,22 +91,70 @@ std::string DeltaLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId
     return builder.str();
 }
 
-DataType DeltaLogicalOperator::toSignedType(DataType /* inputType */)
+DataType DeltaLogicalOperator::toSignedType(DataType inputType)
 {
-    /// TODO: implement type conversion for delta results.
-    /// The delta of two values can be negative, so unsigned types should be
-    /// converted to their signed counterparts. Floats are already signed.
-    /// Non-numeric types should throw CannotInferSchema.
-    throw CannotInferSchema("toSignedType not implemented");
+    switch (inputType.type)
+    {
+        case DataType::Type::UINT8:
+        case DataType::Type::INT8:
+            return DataType{DataType::Type::INT8};
+        case DataType::Type::UINT16:
+        case DataType::Type::INT16:
+            return DataType{DataType::Type::INT16};
+        case DataType::Type::UINT32:
+        case DataType::Type::INT32:
+            return DataType{DataType::Type::INT32};
+        case DataType::Type::UINT64:
+        case DataType::Type::INT64:
+            return DataType{DataType::Type::INT64};
+        case DataType::Type::FLOAT32:
+            return DataType{DataType::Type::FLOAT32};
+        case DataType::Type::FLOAT64:
+            return DataType{DataType::Type::FLOAT64};
+        default:
+            throw CannotInferSchema("Delta operator requires a numeric field type");
+    }
 }
 
-DeltaLogicalOperator DeltaLogicalOperator::withInferredSchema(std::vector<Schema> /* inputSchemas */) const
+DeltaLogicalOperator DeltaLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
-    /// TODO: implement schema inference for the delta operator.
-    /// 1. Validate that inputSchemas is non-empty and all schemas are equal.
-    /// 2. Infer each delta expression's data type from the input schema.
-    /// 3. Build the output schema: all input fields + delta fields (with signed types via toSignedType).
-    throw CannotInferSchema("withInferredSchema not implemented");
+    if (inputSchemas.empty())
+    {
+        throw CannotInferSchema("Delta should have at least one input");
+    }
+
+    const auto& firstSchema = inputSchemas[0];
+    for (const auto& schema : inputSchemas)
+    {
+        if (schema != firstSchema)
+        {
+            throw CannotInferSchema("All input schemas must be equal for Delta operator");
+        }
+    }
+
+    /// Infer delta expression types from the input schema
+    auto inferredExpressions = std::vector<DeltaExpression>{};
+    for (const auto& [alias, function] : deltaExpressions)
+    {
+        auto inferredFunction = function.withInferredDataType(firstSchema);
+        inferredExpressions.emplace_back(alias, inferredFunction);
+    }
+
+    auto copy = *this;
+    copy.deltaExpressions = std::move(inferredExpressions);
+    copy.inputSchema = firstSchema;
+
+    /// Build output schema: start with all input fields, then append each delta field
+    copy.outputSchema = Schema{};
+    copy.outputSchema.appendFieldsFromOtherSchema(firstSchema);
+
+    for (const auto& [alias, function] : copy.deltaExpressions)
+    {
+        auto signedType = toSignedType(function.getDataType());
+        copy.outputSchema = copy.outputSchema.addField(alias.getFieldName(), signedType);
+    }
+
+    return copy;
 }
 
 TraitSet DeltaLogicalOperator::getTraitSet() const
