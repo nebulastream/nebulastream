@@ -31,11 +31,11 @@
 #include <SystestState.hpp>
 #include <nameof.hpp>
 
-namespace NES::Systest
+namespace NES
 {
 
 /// Returns an error message or an empty optional if the query result is correct
-std::optional<std::string> checkResult(const RunningQuery& runningQuery);
+std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery);
 
 template <typename T>
 bool compareStringAsTypeWithError(const std::string& left, const std::string& right)
