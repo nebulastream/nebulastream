@@ -131,6 +131,7 @@ SourceDescriptor OperatorSerializationUtil::deserializeSourceDescriptor(const Se
     deserializedParserConfig.parserType = serializedParserConfig.type();
     deserializedParserConfig.tupleDelimiter = serializedParserConfig.tupledelimiter();
     deserializedParserConfig.fieldDelimiter = serializedParserConfig.fielddelimiter();
+    deserializedParserConfig.allowCommasInStrings = serializedParserConfig.allowcommasinstrings();
 
     /// Deserialize SourceDescriptor config. Convert from protobuf variant to SourceDescriptor::ConfigType.
     DescriptorConfig::Config sourceDescriptorConfig{};

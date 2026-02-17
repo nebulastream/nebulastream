@@ -46,6 +46,7 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    bool allowCommasInStrings{};
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
