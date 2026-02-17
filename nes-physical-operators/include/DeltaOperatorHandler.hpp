@@ -62,8 +62,8 @@ private:
     };
 
     folly::Synchronized<HandlerState> state;
-    [[maybe_unused]] size_t deltaFieldsEntrySize;
-    [[maybe_unused]] size_t fullRecordEntrySize;
+    size_t deltaFieldsEntrySize;
+    size_t fullRecordEntrySize;
 };
 
 }
