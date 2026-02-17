@@ -15,8 +15,8 @@
 #pragma once
 #include <string>
 #include <thread>
-
 #include <utility>
+#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <spdlog/spdlog.h>
 #include <ErrorHandling.hpp>
@@ -114,17 +114,28 @@ public:
     {
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
-        setThreadName(ThreadName);
+        if (WorkerNodeId.getRawValue() != WorkerId::INVALID)
+        {
+            setThreadName(ThreadName, WorkerNodeId.getRawValue());
+        }
     }
 
     ///Sets the currents thread's name.
     ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
-    static void setThreadName(const std::string_view threadName)
+    static void setThreadName(const std::string_view threadName, const std::string_view worker = "")
     {
         PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
         std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
         std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
         pthread_setname_np(pthread_self(), truncatedStringName.data());
+        if (!worker.empty())
+        {
+            __itt_thread_set_name(fmt::format("{}@{}", threadName, worker).c_str());
+        }
+        else
+        {
+            __itt_thread_set_name(std::string(threadName).c_str());
+        }
     }
 };
 }
