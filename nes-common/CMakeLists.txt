@@ -70,7 +70,7 @@ find_package(boost_url CONFIG REQUIRED)
 find_package(PkgConfig)
 pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
 
-target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid PRIVATE nes-logger-bindings)
+target_link_libraries(nes-common PUBLIC ittnotify nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid PRIVATE nes-logger-bindings)
 target_link_rust_lib(nes-common spdlog_bindings)
 
 add_subdirectory(rust/spdlog-bindings)
