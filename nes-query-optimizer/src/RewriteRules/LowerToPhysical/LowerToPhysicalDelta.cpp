@@ -24,6 +24,7 @@
 #include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <DeltaOperatorHandler.hpp>
 #include <DeltaPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
@@ -62,6 +63,7 @@ RewriteRuleResultSubgraph LowerToPhysicalDelta::apply(LogicalOperator logicalOpe
     }
 
     auto handlerId = getNextOperatorHandlerId();
+    auto handler = std::make_shared<DeltaOperatorHandler>(deltaFieldsEntrySize, fullRecordEntrySize);
 
     auto physicalOperator = DeltaPhysicalOperator(
         std::move(physicalExpressions),
@@ -81,7 +83,7 @@ RewriteRuleResultSubgraph LowerToPhysicalDelta::apply(LogicalOperator logicalOpe
         memoryLayoutType,
         memoryLayoutType,
         handlerId,
-        nullptr,
+        handler,
         PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
 
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.

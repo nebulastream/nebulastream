@@ -25,6 +25,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <nautilus/val.hpp>
+#include <DeltaOperatorHandler.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
@@ -70,6 +71,11 @@ void DeltaPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuff
         state->previousRecord.write(expr.targetField, createNautilusMinValue(expr.targetDataType.type));
     }
 
+    /// TODO: try to load the predecessor buffer's last delta field values from the handler. NO_TODO_CHECK
+    /// Use ctx.getGlobalOperatorHandler() and nautilus::invoke() to call the handler.
+    /// If found, deserialize the delta field values into previousRecord using deltaFieldLayout
+    /// and set isFirstRecord = false.
+
     openChild(ctx, recordBuffer);
 }
 
@@ -79,12 +85,17 @@ void DeltaPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 
     if (state->isFirstRecord)
     {
-        /// First record of this buffer: store current values and drop the record.
+        /// First record: store current values in previousRecord.
         for (const auto& expr : nautilus::static_iterable(deltaExpressions))
         {
             auto currentValue = expr.readFunction.execute(record, ctx.pipelineMemoryProvider.arena);
             state->previousRecord.exchange(expr.targetField, currentValue);
         }
+
+        /// TODO: serialize all record fields using fullRecordLayout and store as pending NO_TODO_CHECK
+        /// via the handler (storePendingAndCheckPredecessor). If the predecessor already
+        /// closed, compute delta against predecessor's last values and emit via executeChild.
+
         state->isFirstRecord = false;
     }
     else
@@ -102,6 +113,13 @@ void DeltaPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 
 void DeltaPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
+    /// TODO: implement cross-buffer handshake in close(). NO_TODO_CHECK
+    /// 1. If we processed at least one record (!isFirstRecord):
+    ///    a. Serialize previousRecord's delta field values using deltaFieldLayout.
+    ///    b. Store them via the handler (storeLastAndCheckPending).
+    ///    c. If the successor's pending first record is found, deserialize it using
+    ///       fullRecordLayout, compute delta (firstValue - lastValue), and emit via executeChild.
+
     closeChild(ctx, recordBuffer);
 }
 
