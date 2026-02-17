@@ -22,6 +22,7 @@
 #include <vector>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/DeltaLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -41,6 +42,7 @@ class AntlrSQLHelper
     std::string source;
     std::pair<std::string, ConfigMap> inlineSourceConfig;
     std::vector<Projection> projectionBuilder;
+    std::vector<DeltaLogicalOperator::DeltaExpression> deltaExpressionBuilder;
 
 public:
     /// Constructors
@@ -97,6 +99,7 @@ public:
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<Projection>& getProjections();
+    [[nodiscard]] std::vector<DeltaLogicalOperator::DeltaExpression>& getDeltaExpressions();
 
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);

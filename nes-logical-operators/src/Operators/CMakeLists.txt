@@ -22,4 +22,5 @@ add_plugin(Selection LogicalOperator nes-logical-operators SelectionLogicalOpera
 add_plugin(Projection LogicalOperator nes-logical-operators ProjectionLogicalOperator.cpp)
 add_plugin(Union LogicalOperator nes-logical-operators UnionLogicalOperator.cpp)
 add_plugin(IngestionTimeWatermarkAssigner LogicalOperator nes-logical-operators IngestionTimeWatermarkAssignerLogicalOperator.cpp)
+add_plugin(Delta LogicalOperator nes-logical-operators DeltaLogicalOperator.cpp)
 add_plugin(EventTimeWatermarkAssigner LogicalOperator nes-logical-operators EventTimeWatermarkAssignerLogicalOperator.cpp)
