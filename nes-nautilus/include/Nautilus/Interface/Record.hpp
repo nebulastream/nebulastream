@@ -37,6 +37,9 @@ public:
     nautilus::val<uint64_t> getNumberOfFields() const;
     [[nodiscard]] bool hasField(const RecordFieldIdentifier& fieldName) const;
 
+    /// Parse all values of this record and return a record that includes the parsed fields
+    void parseAllFields();
+
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const Record& record);
     friend nautilus::val<bool> operator==(const Record& lhs, const Record& rhs);
 

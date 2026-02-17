@@ -24,7 +24,6 @@
 
 namespace NES
 {
-
 VarVal ModPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
@@ -43,5 +42,4 @@ PhysicalFunctionGeneratedRegistrar::RegisterModPhysicalFunction(PhysicalFunction
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Mod function must have exactly two child functions");
     return ModPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
-
 }

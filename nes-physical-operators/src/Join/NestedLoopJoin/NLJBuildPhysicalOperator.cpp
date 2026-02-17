@@ -57,6 +57,9 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
+    /// Convert lazy values into their parsed form
+    record.parseAllFields();
+
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();

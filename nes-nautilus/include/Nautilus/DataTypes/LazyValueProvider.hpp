@@ -14,20 +14,20 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
+#include <string>
+#include <variant>
+#include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
+#include <val_ptr.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
-
-namespace NES
+namespace NES::LazyValueProvider
 {
 
-std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
-
-bool contains(const std::string& parserType);
+[[nodiscard]] std::shared_ptr<LazyValueRepresentation> provideLazyValueRepresentation(
+    const std::string& typeName,
+    const nautilus::val<int8_t*>& valueAddress,
+    const nautilus::val<uint64_t>& size,
+    const DataType::Type& type);
 }
