@@ -32,31 +32,65 @@ void DeltaOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
 }
 
-bool DeltaOperatorHandler::loadPredecessor(SequenceNumber /* seqNum */, std::byte* /* destPtr */)
+bool DeltaOperatorHandler::loadPredecessor(SequenceNumber seqNum, std::byte* destPtr)
 {
-    /// TODO: implement loadPredecessor(). NO_TODO_CHECK
-    /// Look up the predecessor's (seqNum - 1) last delta field values in lastTuples.
-    /// If found, copy them to destPtr and erase the entry. Return true if found.
+    const auto predecessorSeq = SequenceNumber(seqNum.getRawValue() - 1);
+    const auto lock = state.wlock();
+    auto it = lock->lastTuples.find(predecessorSeq);
+    if (it != lock->lastTuples.end())
+    {
+        std::memcpy(destPtr, it->second.get(), deltaFieldsEntrySize);
+        lock->lastTuples.erase(it);
+        return true;
+    }
     return false;
 }
 
-bool DeltaOperatorHandler::storeLastAndCheckPending(SequenceNumber /* seqNum */, const std::byte* /* srcPtr */, std::byte* /* destPtr */)
+bool DeltaOperatorHandler::storeLastAndCheckPending(SequenceNumber seqNum, const std::byte* srcPtr, std::byte* destPtr)
 {
-    /// TODO: implement storeLastAndCheckPending(). NO_TODO_CHECK
-    /// 1. Store this buffer's last delta field values (srcPtr) in lastTuples[seqNum].
-    /// 2. Check if the successor (seqNum + 1) has a pending first record in pendingFirstRecords.
-    ///    If found, copy to destPtr and erase. Return true if found.
-    return false;
+    const auto successorSeq = SequenceNumber(seqNum.getRawValue() + 1);
+    const auto lock = state.wlock();
+
+    /// Store this buffer's last delta field values.
+    auto lastEntry = std::make_unique<std::byte[]>(deltaFieldsEntrySize);
+    std::memcpy(lastEntry.get(), srcPtr, deltaFieldsEntrySize);
+    lock->lastTuples[seqNum] = std::move(lastEntry);
+
+    /// Check if the successor buffer has stored a pending first record.
+    bool found = false;
+    auto it = lock->pendingFirstRecords.find(successorSeq);
+    if (it != lock->pendingFirstRecords.end())
+    {
+        std::memcpy(destPtr, it->second.get(), fullRecordEntrySize);
+        lock->pendingFirstRecords.erase(it);
+        found = true;
+    }
+
+    return found;
 }
 
 bool DeltaOperatorHandler::storePendingAndCheckPredecessor(
-    SequenceNumber /* seqNum */, const std::byte* /* fullRecordSrc */, std::byte* /* predecessorDest */)
+    SequenceNumber seqNum, const std::byte* fullRecordSrc, std::byte* predecessorDest)
 {
-    /// TODO: implement storePendingAndCheckPredecessor(). NO_TODO_CHECK
-    /// 1. Check if the predecessor's (seqNum - 1) last values are in lastTuples.
-    ///    If found, copy to predecessorDest, erase, and return true immediately.
-    /// 2. Otherwise, store the full first record (fullRecordSrc) in pendingFirstRecords[seqNum]
-    ///    so the predecessor can resolve it in its close(). Return false.
+    const auto predecessorSeq = SequenceNumber(seqNum.getRawValue() - 1);
+    const auto lock = state.wlock();
+
+    /// Check if the predecessor's last values are already available
+    /// (predecessor closed before we processed our first record).
+    auto predIt = lock->lastTuples.find(predecessorSeq);
+    if (predIt != lock->lastTuples.end())
+    {
+        std::memcpy(predecessorDest, predIt->second.get(), deltaFieldsEntrySize);
+        lock->lastTuples.erase(predIt);
+        /// Don't store pending — we resolve immediately in traced code.
+        return true;
+    }
+
+    /// Predecessor not available yet. Store the full first record as pending
+    /// so the predecessor can resolve it in its close().
+    auto entry = std::make_unique<std::byte[]>(fullRecordEntrySize);
+    std::memcpy(entry.get(), fullRecordSrc, fullRecordEntrySize);
+    lock->pendingFirstRecords[seqNum] = std::move(entry);
     return false;
 }
 

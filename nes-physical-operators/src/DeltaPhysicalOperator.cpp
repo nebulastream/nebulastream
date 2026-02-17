@@ -44,6 +44,31 @@ public:
     Record previousRecord;
 };
 
+namespace
+{
+
+bool loadPredecessorProxy(OperatorHandler* handler, SequenceNumber seqNum, int8_t* destPtr)
+{
+    PRECONDITION(handler != nullptr, "handler should not be null");
+    return dynamic_cast<DeltaOperatorHandler*>(handler)->loadPredecessor(seqNum, reinterpret_cast<std::byte*>(destPtr));
+}
+
+bool storeLastAndCheckPendingProxy(OperatorHandler* handler, SequenceNumber seqNum, int8_t* srcPtr, int8_t* destPtr)
+{
+    PRECONDITION(handler != nullptr, "handler should not be null");
+    return dynamic_cast<DeltaOperatorHandler*>(handler)->storeLastAndCheckPending(
+        seqNum, reinterpret_cast<const std::byte*>(srcPtr), reinterpret_cast<std::byte*>(destPtr));
+}
+
+bool storePendingAndCheckPredecessorProxy(OperatorHandler* handler, SequenceNumber seqNum, int8_t* fullRecordSrc, int8_t* predecessorDest)
+{
+    PRECONDITION(handler != nullptr, "handler should not be null");
+    return dynamic_cast<DeltaOperatorHandler*>(handler)->storePendingAndCheckPredecessor(
+        seqNum, reinterpret_cast<const std::byte*>(fullRecordSrc), reinterpret_cast<std::byte*>(predecessorDest));
+}
+
+}
+
 DeltaPhysicalOperator::DeltaPhysicalOperator(
     std::vector<PhysicalDeltaExpression> deltaExpressions,
     OperatorHandlerId operatorHandlerId,
@@ -71,10 +96,23 @@ void DeltaPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer& recordBuff
         state->previousRecord.write(expr.targetField, createNautilusMinValue(expr.targetDataType.type));
     }
 
-    /// TODO: try to load the predecessor buffer's last delta field values from the handler. NO_TODO_CHECK
-    /// Use ctx.getGlobalOperatorHandler() and nautilus::invoke() to call the handler.
-    /// If found, deserialize the delta field values into previousRecord using deltaFieldLayout
-    /// and set isFirstRecord = false.
+    /// Try to load predecessor's last delta field values from the handler.
+    auto handlerPtr = ctx.getGlobalOperatorHandler(operatorHandlerId);
+    auto scratch = ctx.allocateMemory(nautilus::val<size_t>(deltaFieldsEntrySize));
+    auto found = nautilus::invoke(loadPredecessorProxy, handlerPtr, ctx.sequenceNumber, scratch);
+
+    if (found)
+    {
+        /// Deserialize delta field values from scratch into previousRecord.
+        auto ptr = scratch;
+        for (const auto& entry : nautilus::static_iterable(deltaFieldLayout))
+        {
+            auto val = VarVal::readVarValFromMemory(ptr, entry.type);
+            state->previousRecord.write(entry.fieldName, val);
+            ptr = ptr + nautilus::val<size_t>(DataType(entry.type).getSizeInBytes());
+        }
+        state->isFirstRecord = false;
+    }
 
     openChild(ctx, recordBuffer);
 }
@@ -92,19 +130,48 @@ void DeltaPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
             state->previousRecord.exchange(expr.targetField, currentValue);
         }
 
-        /// TODO: serialize all record fields using fullRecordLayout and store as pending NO_TODO_CHECK
-        /// via the handler (storePendingAndCheckPredecessor). If the predecessor already
-        /// closed, compute delta against predecessor's last values and emit via executeChild.
+        /// Serialize ALL record fields and try to store as pending.
+        /// Also checks if the predecessor already closed (three-way handshake).
+        auto handlerPtr = ctx.getGlobalOperatorHandler(operatorHandlerId);
+        auto fullScratch = ctx.allocateMemory(nautilus::val<size_t>(fullRecordEntrySize));
+        {
+            auto ptr = fullScratch;
+            for (const auto& entry : nautilus::static_iterable(fullRecordLayout))
+            {
+                record.read(entry.fieldName).writeToMemory(ptr);
+                ptr = ptr + nautilus::val<size_t>(DataType(entry.type).getSizeInBytes());
+            }
+        }
+        auto predScratch = ctx.allocateMemory(nautilus::val<size_t>(deltaFieldsEntrySize));
+        auto predecessorFound
+            = nautilus::invoke(storePendingAndCheckPredecessorProxy, handlerPtr, ctx.sequenceNumber, fullScratch, predScratch);
+
+        if (predecessorFound)
+        {
+            /// Predecessor closed before we processed our first record.
+            /// Compute delta against predecessor's last values and emit.
+            auto ptr = predScratch;
+            for (const auto& entry : nautilus::static_iterable(deltaFieldLayout))
+            {
+                auto predVal = VarVal::readVarValFromMemory(ptr, entry.type);
+                auto currentValue = state->previousRecord.read(entry.fieldName);
+                record.write(entry.fieldName, currentValue - predVal);
+                ptr = ptr + nautilus::val<size_t>(DataType(entry.type).getSizeInBytes());
+            }
+            executeChild(ctx, record);
+        }
 
         state->isFirstRecord = false;
     }
     else
     {
-        /// Subsequent records: compute delta, update previous values, and forward.
+        /// Subsequent records: compute delta, update previous values, and forward the record.
         for (const auto& expr : nautilus::static_iterable(deltaExpressions))
         {
+            /// Read the current value before creating/overwriting the target field.
             auto currentValue = expr.readFunction.execute(record, ctx.pipelineMemoryProvider.arena);
             auto previousValue = state->previousRecord.exchange(expr.targetField, currentValue);
+            /// Create the target field (needed for alias fields not present in the input record).
             record.write(expr.targetField, currentValue - previousValue);
         }
         executeChild(ctx, record);
@@ -113,12 +180,51 @@ void DeltaPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 
 void DeltaPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    /// TODO: implement cross-buffer handshake in close(). NO_TODO_CHECK
-    /// 1. If we processed at least one record (!isFirstRecord):
-    ///    a. Serialize previousRecord's delta field values using deltaFieldLayout.
-    ///    b. Store them via the handler (storeLastAndCheckPending).
-    ///    c. If the successor's pending first record is found, deserialize it using
-    ///       fullRecordLayout, compute delta (firstValue - lastValue), and emit via executeChild.
+    auto* state = dynamic_cast<DeltaState*>(ctx.getLocalState(id));
+
+    if (!state->isFirstRecord)
+    {
+        auto handlerPtr = ctx.getGlobalOperatorHandler(operatorHandlerId);
+
+        /// Serialize previousRecord's delta field values to scratch.
+        auto lastScratch = ctx.allocateMemory(nautilus::val<size_t>(deltaFieldsEntrySize));
+        {
+            auto ptr = lastScratch;
+            for (const auto& entry : nautilus::static_iterable(deltaFieldLayout))
+            {
+                state->previousRecord.read(entry.fieldName).writeToMemory(ptr);
+                ptr = ptr + nautilus::val<size_t>(DataType(entry.type).getSizeInBytes());
+            }
+        }
+
+        /// Allocate scratch for a potential pending first record from the successor.
+        auto pendingScratch = ctx.allocateMemory(nautilus::val<size_t>(fullRecordEntrySize));
+        auto found = nautilus::invoke(storeLastAndCheckPendingProxy, handlerPtr, ctx.sequenceNumber, lastScratch, pendingScratch);
+
+        if (found)
+        {
+            /// Deserialize all fields from the pending first record.
+            Record firstRecord;
+            {
+                auto ptr = pendingScratch;
+                for (const auto& entry : nautilus::static_iterable(fullRecordLayout))
+                {
+                    firstRecord.write(entry.fieldName, VarVal::readVarValFromMemory(ptr, entry.type));
+                    ptr = ptr + nautilus::val<size_t>(DataType(entry.type).getSizeInBytes());
+                }
+            }
+
+            /// Compute delta for each expression: firstValue - lastValue.
+            for (const auto& expr : nautilus::static_iterable(deltaExpressions))
+            {
+                auto firstValue = expr.readFunction.execute(firstRecord, ctx.pipelineMemoryProvider.arena);
+                auto previousValue = state->previousRecord.read(expr.targetField);
+                firstRecord.write(expr.targetField, firstValue - previousValue);
+            }
+
+            executeChild(ctx, firstRecord);
+        }
+    }
 
     closeChild(ctx, recordBuffer);
 }
