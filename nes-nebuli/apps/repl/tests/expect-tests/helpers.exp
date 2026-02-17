@@ -281,7 +281,7 @@ COPY nes-repl /usr/bin}
 
     # Create Docker volume and copy data into it
     set test_volume [exec docker volume create]
-    set volume_host_container [exec docker run -d --rm -v $test_volume:/data alpine sleep infinite]
+    set volume_host_container [exec docker run -q -d --rm -v $test_volume:/data alpine sleep infinite]
     exec docker cp . $volume_host_container:/data
     exec docker stop -t0 $volume_host_container
     set env(TEST_VOLUME) $test_volume
@@ -299,7 +299,7 @@ COPY nes-repl /usr/bin}
     proc sync_workdir {} {
         global env
         set test_volume $env(TEST_VOLUME)
-        set volume_host_container [exec docker run -d --rm -v $test_volume:/data alpine sleep infinite]
+        set volume_host_container [exec docker run -q -d --rm -v $test_volume:/data alpine sleep infinite]
         exec docker cp $volume_host_container:/data/. .
         exec docker stop -t0 $volume_host_container
     }
