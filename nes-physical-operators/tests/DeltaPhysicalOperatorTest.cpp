@@ -36,6 +36,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <DeltaOperatorHandler.hpp>
 #include <DeltaPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
@@ -131,6 +132,7 @@ public:
         auto deltaHandlerId = getNextOperatorHandlerId();
 
         auto layoutInfo = buildLayoutInfo(deltaExprs, inputSchema);
+        auto deltaHandler = std::make_shared<DeltaOperatorHandler>(layoutInfo.deltaFieldsEntrySize, layoutInfo.fullRecordEntrySize);
 
         auto scanBufRef = LowerSchemaProvider::lowerSchema(BufferSize, inputSchema, MemoryLayoutType::ROW_LAYOUT);
         auto emitBufRef = LowerSchemaProvider::lowerSchema(BufferSize, outputSchema, MemoryLayoutType::ROW_LAYOUT);
@@ -150,7 +152,7 @@ public:
 
         auto pipeline = std::make_shared<Pipeline>(PhysicalOperator(scanOp));
         pipeline->getOperatorHandlers().emplace(emitHandlerId, std::make_shared<EmitOperatorHandler>());
-        pipeline->getOperatorHandlers().emplace(deltaHandlerId, nullptr);
+        pipeline->getOperatorHandlers().emplace(deltaHandlerId, deltaHandler);
 
         auto options = nautilus::engine::Options{};
         options.setOption("engine.Compilation", isCompiled);
@@ -309,6 +311,107 @@ TEST_P(DeltaPhysicalOperatorTest, MultipleDeltaExpressions)
     EXPECT_EQ(outputView[0]["b"].as<int64_t>(), -20); /// 80 - 100
     EXPECT_EQ(outputView[1]["a"].as<int64_t>(), 10); /// 25 - 15
     EXPECT_EQ(outputView[1]["b"].as<int64_t>(), 10); /// 90 - 80
+}
+
+/// Two sequential buffers: the handler bridges state so only the first record of the stream is dropped.
+TEST_P(DeltaPhysicalOperatorTest, MultiBufferSequential)
+{
+    auto schema = Schema{}.addField("value", DataType::Type::INT64);
+    Testing::TestTupleBuffer ttb(schema);
+
+    /// Buffer 1 (seqNum=1): [10, 25]
+    auto buf1 = createInputBuffer(SequenceNumber(1));
+    {
+        auto view = ttb.open(buf1);
+        view.append(10);
+        view.append(25);
+    }
+
+    /// Buffer 2 (seqNum=2): [30, 50]
+    auto buf2 = createInputBuffer(SequenceNumber(2));
+    {
+        auto view = ttb.open(buf2);
+        view.append(30);
+        view.append(50);
+    }
+
+    std::vector<TupleBuffer> inputBuffers{buf1, buf2};
+    auto results = runPipeline(
+        schema, schema, {{PhysicalFunction(FieldAccessPhysicalFunction("value")), "value", {DataType::Type::INT64}}}, inputBuffers);
+
+    /// Expected: 3 output records total (4 input - 1 dropped first of stream)
+    /// Buffer 1: drop 10, emit delta(25-10)=15
+    /// Buffer 2: delta(30-25)=5, delta(50-30)=20
+    uint64_t totalRecords = 0;
+    std::vector<int64_t> allValues;
+    for (auto result : results)
+    {
+        auto view = ttb.open(result);
+        for (uint64_t i = 0; i < result.getNumberOfTuples(); ++i)
+        {
+            allValues.push_back(view[i]["value"].as<int64_t>());
+        }
+        totalRecords += result.getNumberOfTuples();
+    }
+
+    EXPECT_EQ(totalRecords, 3u);
+    ASSERT_EQ(allValues.size(), 3u);
+    EXPECT_EQ(allValues[0], 15); /// 25 - 10
+    EXPECT_EQ(allValues[1], 5); /// 30 - 25
+    EXPECT_EQ(allValues[2], 20); /// 50 - 30
+}
+
+/// Two buffers processed in reverse order: the pending-first-record handshake emits the deferred record.
+TEST_P(DeltaPhysicalOperatorTest, MultiBufferReverseOrder)
+{
+    auto schema = Schema{}.addField("value", DataType::Type::INT64);
+    Testing::TestTupleBuffer ttb(schema);
+
+    /// Buffer 1 (seqNum=1): [10, 25]
+    auto buf1 = createInputBuffer(SequenceNumber(1));
+    {
+        auto view = ttb.open(buf1);
+        view.append(10);
+        view.append(25);
+    }
+
+    /// Buffer 2 (seqNum=2): [30, 50]
+    auto buf2 = createInputBuffer(SequenceNumber(2));
+    {
+        auto view = ttb.open(buf2);
+        view.append(30);
+        view.append(50);
+    }
+
+    /// Process buffer 2 first, then buffer 1 (reverse order).
+    std::vector<TupleBuffer> inputBuffers{buf2, buf1};
+    auto results = runPipeline(
+        schema, schema, {{PhysicalFunction(FieldAccessPhysicalFunction("value")), "value", {DataType::Type::INT64}}}, inputBuffers);
+
+    /// Expected: 3 output records total
+    /// Buffer 2 processed first: drop 30 (pending), emit delta(50-30)=20
+    /// Buffer 1 processed second: drop 10 (first of stream), emit delta(25-10)=15,
+    ///   then in close: finds pending record 30 from buf2, emits delta(30-25)=5
+    uint64_t totalRecords = 0;
+    std::vector<int64_t> allValues;
+    for (auto result : results)
+    {
+        auto view = ttb.open(result);
+        for (uint64_t i = 0; i < result.getNumberOfTuples(); ++i)
+        {
+            allValues.push_back(view[i]["value"].as<int64_t>());
+        }
+        totalRecords += result.getNumberOfTuples();
+    }
+
+    EXPECT_EQ(totalRecords, 3u);
+    /// The values are the same set as sequential, but order depends on processing order.
+    /// From buf2: 20 (50-30)
+    /// From buf1: 15 (25-10), then 5 (30-25) emitted in close
+    ASSERT_EQ(allValues.size(), 3u);
+    EXPECT_EQ(allValues[0], 20); /// 50 - 30 (from buf2)
+    EXPECT_EQ(allValues[1], 15); /// 25 - 10 (from buf1)
+    EXPECT_EQ(allValues[2], 5); /// 30 - 25 (deferred from buf1's close)
 }
 
 }
