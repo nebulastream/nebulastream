@@ -143,10 +143,24 @@ relationPrimary
     | '(' relation ')' tableAlias             #aliasedRelation
     | inlineTable                             #inlineTableDefault2
     | inlineSource                            #inlineDefinedSource
+    | deltaSource                             #deltaDefinedSource
     ;
 
 inlineSource
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
+    ;
+
+deltaSource
+    : DELTA '(' deltaInput ',' deltaExpressions+=deltaExpression (',' deltaExpressions+=deltaExpression)* ')'
+    ;
+
+deltaInput
+    : source=identifier
+    | '(' query ')'
+    ;
+
+deltaExpression
+    : field=identifier AS alias=identifier
     ;
 
 schema: SCHEMA schemaDefinition
@@ -490,6 +504,7 @@ AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 JSON: 'JSON';
 TEXT: 'TEXT';
+DELTA: 'DELTA' | 'delta';
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************
 /// End of the keywords list

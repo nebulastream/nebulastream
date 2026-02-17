@@ -30,6 +30,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/RenameLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/DeltaLogicalOperator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -66,6 +67,12 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::unordered_map<std::string, std::string> parserConfig)
 {
     return LogicalPlan(InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)});
+}
+
+LogicalPlan LogicalPlanBuilder::addDelta(std::vector<DeltaLogicalOperator::DeltaExpression> deltaExpressions, const LogicalPlan& queryPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add delta operator to query plan");
+    return promoteOperatorToRoot(queryPlan, DeltaLogicalOperator(std::move(deltaExpressions)));
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(

@@ -1,0 +1,57 @@
+# name: operator/delta/Delta.test
+# description: Tests for the delta operator which computes the difference between consecutive values of a stream
+# groups: [Delta]
+
+CREATE LOGICAL SOURCE stream(ID UINT64, VALUE UINT64, TIMESTAMP UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,1000
+2,30,1001
+3,25,1002
+4,40,1003
+5,100,1004
+
+CREATE SINK outputDeltaOnly(delta_value INT64) TYPE File;
+CREATE SINK outputWithTimestamp(stream.timestamp UINT64, delta_value INT64) TYPE File;
+CREATE SINK outputAllAndDelta(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, delta_value INT64) TYPE File;
+CREATE SINK outputMultiDelta(stream.timestamp UINT64, delta_id INT64, delta_value INT64) TYPE File;
+
+# Simple delta projecting only the computed delta column
+SELECT delta_value FROM DELTA(stream, value AS delta_value) INTO outputDeltaOnly;
+----
+20
+-5
+15
+60
+
+# Delta with a pass-through column from the original stream
+SELECT timestamp, delta_value FROM DELTA(stream, value AS delta_value) INTO outputWithTimestamp;
+----
+1001,20
+1002,-5
+1003,15
+1004,60
+
+# Delta while passing through all original columns
+SELECT id, value, timestamp, delta_value FROM DELTA(stream, value AS delta_value) INTO outputAllAndDelta;
+----
+2,30,1001,20
+3,25,1002,-5
+4,40,1003,15
+5,100,1004,60
+
+# Delta on multiple columns with a pass-through column
+SELECT timestamp, delta_id, delta_value FROM DELTA(stream, id AS delta_id, value AS delta_value) INTO outputMultiDelta;
+----
+1001,1,20
+1002,1,-5
+1003,1,15
+1004,1,60
+
+# Nested delta: second-order difference (delta of delta) via subquery
+CREATE SINK outputNestedDelta(delta2 INT64) TYPE File;
+SELECT delta2 FROM DELTA((SELECT delta_value FROM DELTA(stream, value AS delta_value)), delta_value AS delta2) INTO outputNestedDelta;
+----
+-25
+20
+45
