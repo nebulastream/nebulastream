@@ -24,9 +24,9 @@ namespace NES
 class ProjectionPruning
 {
 public:
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator, const std::unordered_set<std::string>& neededFields);
+    LogicalOperator apply(const LogicalOperator& logicalOperator, const std::unordered_set<std::string>& neededFields) const;
 };
 }

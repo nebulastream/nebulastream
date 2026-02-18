@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Phases/PredicatePushdown.hpp>
+#include <LegacyOptimizer/PredicatePushdown.hpp>
 
 #include <ranges>
 #include <unordered_set>
@@ -108,14 +108,14 @@ Schema resolveOutputSchema(const LogicalOperator& op)
 }
 }
 
-LogicalPlan PredicatePushdown::apply(const LogicalPlan& queryPlan)
+void PredicatePushdown::apply(LogicalPlan& queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    queryPlan = LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator PredicatePushdown::apply(const LogicalOperator& logicalOperator)
+LogicalOperator PredicatePushdown::apply(const LogicalOperator& logicalOperator) const
 {
     /// First, recursively transform all children.
     auto children = logicalOperator.getChildren() | std::views::transform([this](const LogicalOperator& child) { return apply(child); })

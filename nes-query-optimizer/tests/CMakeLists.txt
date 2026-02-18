@@ -19,5 +19,3 @@ endfunction()
 
 add_nes_optimizer_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
 add_nes_optimizer_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)
-add_nes_optimizer_test(PredicatePushdownTest UnitTests/PredicatePushdownTest.cpp)
-add_nes_optimizer_test(ProjectionPruningTest UnitTests/ProjectionPruningTest.cpp)

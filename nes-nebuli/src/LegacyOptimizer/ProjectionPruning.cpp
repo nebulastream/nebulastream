@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Phases/ProjectionPruning.hpp>
+#include <LegacyOptimizer/ProjectionPruning.hpp>
 
 #include <ranges>
 #include <string>
@@ -111,7 +111,7 @@ bool hasSurplusFields(const Schema& childSchema, const std::unordered_set<std::s
 }
 }
 
-LogicalPlan ProjectionPruning::apply(const LogicalPlan& queryPlan)
+void ProjectionPruning::apply(LogicalPlan& queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
@@ -120,10 +120,10 @@ LogicalPlan ProjectionPruning::apply(const LogicalPlan& queryPlan)
     /// so we resolve the schema from its first child (the actual data-producing operator).
     PRECONDITION(!root.getChildren().empty(), "Root operator must have at least one child");
     const auto allFields = schemaFieldNames(resolveOutputSchema(root.getChildren()[0]));
-    return LogicalPlan{queryPlan.getQueryId(), {apply(root, allFields)}};
+    queryPlan = LogicalPlan{queryPlan.getQueryId(), {apply(root, allFields)}};
 }
 
-LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator, const std::unordered_set<std::string>& neededFields)
+LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator, const std::unordered_set<std::string>& neededFields) const
 {
     /// For source (leaf) operators, insert a pruning projection if there are surplus fields.
     if (isSourceOperator(logicalOperator))
