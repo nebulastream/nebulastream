@@ -151,15 +151,10 @@ PhysicalPlanBuilder::Roots PhysicalPlanBuilder::flip(const Roots& rootOperators)
 
     auto collectNodes = [&visitStateMap, &allNodes](const PhysicalOpPtr& node, auto&& self) -> void
     {
-        if (!node)
-        {
-            return;
-        }
         auto [it, inserted] = visitStateMap.try_emplace(node, VisitState::Unvisited);
-        if (it->second == VisitState::InProgress)
-        {
-            INVARIANT(false, "Cycle detected in physical plan DAG during flip — node visited twice on the same DFS path");
-        }
+        PRECONDITION(
+            it->second != VisitState::InProgress,
+            "Cycle detected in physical plan DAG during flip — node visited twice on the same DFS path");
         if (it->second == VisitState::Completed)
         {
             return; /// already fully processed
