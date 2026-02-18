@@ -130,7 +130,6 @@ public:
     [[nodiscard]] uint64_t numHashMapsPerInputStream() const;
     [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
     [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
-    [[nodiscard]] VariableSizedAccess::Index setHashMapBuffer(TupleBuffer hashMapBuffer, uint64_t pos);
 
 protected:
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;

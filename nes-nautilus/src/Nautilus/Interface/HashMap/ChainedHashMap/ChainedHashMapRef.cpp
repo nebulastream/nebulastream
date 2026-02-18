@@ -77,21 +77,6 @@ Record ChainedHashMapRef::ChainedEntryRef::getValue() const
     return memoryProviderValues.readRecord(entryRef);
 }
 
-uint64_t getNumberOfTuplesProxy(const ChainedHashMap* hashMap)
-{
-    return hashMap->getNumberOfTuples();
-}
-
-uint64_t getMaskProxy(const ChainedHashMap* hashMap)
-{
-    return hashMap->getMask();
-}
-
-ChainedHashMapEntry* getChainProxy(const ChainedHashMap* hashMap, uint64_t pos)
-{
-    return hashMap->getChain(pos);
-}
-
 nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() const
 {
     PRECONDITION(
@@ -347,7 +332,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
     const auto chainStart = invoke(
         +[](TupleBuffer* tupleBuffer, size_t entryStartPos)
         {
-            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
             return chm.getChain(entryStartPos);
         },
         tupleBuffer,

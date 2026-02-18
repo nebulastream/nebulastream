@@ -66,13 +66,13 @@ class ChainedHashMap final : public HashMap
 public:
     /// @brief Use init to initialize a ChainedHashMap view on a pre-allocated TupleBuffer
     /// Constructors are private
-    static ChainedHashMap init(TupleBuffer& tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
-    static ChainedHashMap init(TupleBuffer& tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
+    static ChainedHashMap init(TupleBuffer tupleBuffer, uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
+    static ChainedHashMap init(TupleBuffer tupleBuffer, uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
 
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
-    static ChainedHashMap load(TupleBuffer& tupleBuffer);
+    static ChainedHashMap load(TupleBuffer tupleBuffer);
 
-    std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize) const;
+    std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const override { return header().numTuples; }
@@ -98,19 +98,19 @@ public:
 
     [[nodiscard]] VariableSizedAccess::Index getStorageBufferIdx() const;
     [[nodiscard]] VariableSizedAccess::Index getVarSizedBufferIdx() const;
-    [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos) const;
+    [[nodiscard]] ChainedHashMapEntry* getChain(uint64_t pos);
 
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
     /// view and without using its access methods
-    [[nodiscard]] TupleBuffer* getBuffer() const { return std::addressof(buffer); }
+    [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
 
 protected:
-    void appendPage(AbstractBufferProvider* bufferProvider) const;
-    void allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize) const;
+    void appendPage(AbstractBufferProvider* bufferProvider);
+    void allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, size_t neededSize);
 
 private:
     /// private constructor that takes a pre-filled buffer
-    ChainedHashMap(TupleBuffer& buffer) : buffer(buffer) { }
+    ChainedHashMap(TupleBuffer buffer) : buffer(std::move(buffer)) { }
 
     friend class ChainedHashMapRef;
 
@@ -151,15 +151,17 @@ private:
     static_assert(std::is_trivially_destructible_v<Header>, "Header must be trivially destructible");
 
     /// Helper util methods for safe access
-    [[nodiscard]] Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
+    [[nodiscard]] Header& header() { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
-    [[nodiscard]] std::span<ChainedHashMapEntry*> chains() const
+    [[nodiscard]] const Header& header() const { return *buffer.getAvailableMemoryArea<const Header>().data(); }
+
+    [[nodiscard]] std::span<ChainedHashMapEntry*> chains()
     {
         auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
         return {reinterpret_cast<ChainedHashMapEntry**>(data + sizeof(Header)), getNumberOfChains() + 1};
     }
 
     /// the main tuple buffer containing everything
-    TupleBuffer& buffer;
+    TupleBuffer buffer;
 };
 }

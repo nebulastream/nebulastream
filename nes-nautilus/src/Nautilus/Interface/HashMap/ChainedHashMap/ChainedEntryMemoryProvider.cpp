@@ -123,7 +123,7 @@ void storeVarSized(
             const uint64_t varSizedDataSize)
         {
             constexpr size_t sizeOfIndex = sizeof(uint32_t);
-            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
             auto spaceForVarSizedData = chm.allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
             const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
             *reinterpret_cast<uint32_t*>(spaceForVarSizedData.data()) = varSizedDataSize;

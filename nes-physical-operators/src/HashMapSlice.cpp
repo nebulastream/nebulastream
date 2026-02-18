@@ -53,14 +53,15 @@ HashMapSlice::HashMapDirectory::HashMapDirectory(
             if (auto childBuffer = bufferProvider->getUnpooledBuffer(
                     ChainedHashMap::calculateBufferSizeFromBuckets(createNewHashMapSliceArgs.numberOfBuckets)))
             {
+                auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer.value());
+                hashMapsArray[i] = childBufferIndex;
+                auto loadedBuffer = mainBuffer.loadChildBuffer(childBufferIndex);
                 ChainedHashMap chm = ChainedHashMap::init(
-                    childBuffer.value(),
+                    loadedBuffer,
                     createNewHashMapSliceArgs.keySize,
                     createNewHashMapSliceArgs.valueSize,
                     createNewHashMapSliceArgs.numberOfBuckets,
                     createNewHashMapSliceArgs.pageSize);
-                auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer.value());
-                hashMapsArray[i] = childBufferIndex;
             }
             else
             {
@@ -88,14 +89,6 @@ TupleBuffer HashMapSlice::loadHashMapBuffer(const VariableSizedAccess::Index chi
 {
     TupleBuffer childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(childBufferIndex);
     return childBuffer;
-}
-
-VariableSizedAccess::Index HashMapSlice::setHashMapBuffer(TupleBuffer hashMapBuffer, const uint64_t pos)
-{
-    auto childBufferIndex = hashMapDirectory.mainBuffer.storeChildBuffer(hashMapBuffer);
-    auto hashMapsArray = hashMapDirectory.hashMaps();
-    hashMapsArray[pos] = childBufferIndex;
-    return childBufferIndex;
 }
 
 uint64_t HashMapSlice::numberOfHashMaps() const

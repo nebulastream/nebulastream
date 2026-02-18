@@ -56,7 +56,8 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
     return capacity;
 }
 
-ChainedHashMap ChainedHashMap::init(TupleBuffer& tupleBuffer, uint64_t entrySize, const uint64_t numberOfBuckets, uint64_t pageSize)
+ChainedHashMap
+ChainedHashMap::init(TupleBuffer tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
     const uint64_t entriesPerPage = pageSize / entrySize;
     const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
@@ -92,7 +93,7 @@ ChainedHashMap ChainedHashMap::init(TupleBuffer& tupleBuffer, uint64_t entrySize
 }
 
 ChainedHashMap ChainedHashMap::init(
-    TupleBuffer& tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+    TupleBuffer tupleBuffer, const uint64_t keySize, const uint64_t valueSize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
     const uint64_t entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const uint64_t entriesPerPage = pageSize / entrySize;
@@ -127,7 +128,7 @@ ChainedHashMap ChainedHashMap::init(
     return chm;
 }
 
-ChainedHashMap ChainedHashMap::load(TupleBuffer& tupleBuffer)
+ChainedHashMap ChainedHashMap::load(TupleBuffer tupleBuffer)
 {
     ChainedHashMap chm(tupleBuffer);
     const auto& hdr = chm.header();
@@ -148,7 +149,7 @@ ChainedHashMap ChainedHashMap::load(TupleBuffer& tupleBuffer)
     return chm;
 }
 
-void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize) const
+void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
     auto newPage = bufferProvider->getUnpooledBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
     if (!newPage)
@@ -181,7 +182,7 @@ void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvi
     }
 }
 
-std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize) const
+std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
     const uint64_t varSizedPagesNum = getNumberOfVarSizedPages();
 
@@ -207,7 +208,7 @@ std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProv
     return lastPage.getAvailableMemoryArea().subspan(allocationOffset);
 }
 
-void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider) const
+void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider)
 {
     /// create and initialize new page
     TupleBuffer newPage;
@@ -371,7 +372,7 @@ uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains)
     return 0;
 }
 
-ChainedHashMapEntry* ChainedHashMap::getChain(uint64_t pos) const
+ChainedHashMapEntry* ChainedHashMap::getChain(uint64_t pos)
 {
     auto chainsArray = chains();
     return chainsArray[pos];
