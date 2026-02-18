@@ -98,10 +98,6 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                 [copyOfHashMapOptions = hashMapOptions,
                  copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                 {
-                    if (hashMap == nullptr)
-                    {
-                        return;
-                    }
                     auto tupleBuffer = nautilus::invoke(
                         +[](HashMap* hm)
                         {

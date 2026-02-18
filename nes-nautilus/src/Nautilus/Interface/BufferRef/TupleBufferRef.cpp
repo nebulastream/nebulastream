@@ -51,13 +51,13 @@ TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider,
 {
     /// TODO #1368: This optimization leads to too many buffers being allocated
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
-    /// if (tupleBufferProvider.getBufferSize() > newBufferSize)
-    /// {
-    ///     if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
-    ///     {
-    ///         return newBuffer.value();
-    ///     }
-    /// }
+    if (tupleBufferProvider.getBufferSize() > newBufferSize)
+    {
+        if (auto newBuffer = tupleBufferProvider.getBufferNoBlocking(); newBuffer.has_value())
+        {
+            return newBuffer.value();
+        }
+    }
     const auto unpooledBuffer = tupleBufferProvider.getUnpooledBuffer(newBufferSize);
     if (not unpooledBuffer.has_value())
     {
@@ -103,7 +103,6 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
     const VariableSizedAccess::Index childIndex{numberOfChildBuffers - 1};
     auto lastChildBuffer = tupleBuffer.loadChildBuffer(childIndex);
     const auto usedMemorySize = lastChildBuffer.getNumberOfTuples();
-    /// std::cout << "usedMemorySize: " << usedMemorySize << ", lastBufferSize: " << lastChildBuffer.getBufferSize() << ", totalVarSizedLength: " << totalVarSizedLength << ", usedMemorySize + totalVarSizedLength : " << usedMemorySize + totalVarSizedLength << std::endl;
     if (usedMemorySize + totalVarSizedLength >= lastChildBuffer.getBufferSize())
     {
         auto newChildBuffer = getNewBufferForVarSized(bufferProvider, totalVarSizedLength);
@@ -111,7 +110,6 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
         const VariableSizedAccess::Index childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
         return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
-
     /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
     const VariableSizedAccess::Offset childOffset{usedMemorySize};
     copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);

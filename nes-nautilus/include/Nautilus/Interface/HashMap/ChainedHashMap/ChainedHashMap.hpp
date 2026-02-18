@@ -75,7 +75,7 @@ public:
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize) const;
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
 
-    [[nodiscard]] uint64_t numberOfTuples() const override { return header().numTuples; }
+    [[nodiscard]] uint64_t getNumberOfTuples() const override { return header().numTuples; }
 
     [[nodiscard]] const TupleBuffer getPage(uint64_t pageIndex) const;
     [[nodiscard]] const TupleBuffer getVarSizedPage(uint64_t pageIndex) const;
@@ -84,17 +84,17 @@ public:
     [[nodiscard]] uint64_t getNumberOfPages() const;
     [[nodiscard]] uint64_t getNumberOfVarSizedPages() const;
 
-    [[nodiscard]] uint64_t numberOfBuckets() const { return header().numBuckets; }
+    [[nodiscard]] uint64_t getNumberOfBuckets() const { return header().numBuckets; }
 
-    [[nodiscard]] uint64_t numberOfChains() const { return header().numChains; }
+    [[nodiscard]] uint64_t getNumberOfChains() const { return header().numChains; }
 
-    [[nodiscard]] uint64_t entrySize() const { return header().entrySize; }
+    [[nodiscard]] uint64_t getEntrySize() const { return header().entrySize; }
 
-    [[nodiscard]] uint64_t entriesPerPage() const { return header().entriesPerPage; }
+    [[nodiscard]] uint64_t getEntriesPerPage() const { return header().entriesPerPage; }
 
-    [[nodiscard]] uint64_t pageSize() const { return header().pageSize; }
+    [[nodiscard]] uint64_t getPageSize() const { return header().pageSize; }
 
-    [[nodiscard]] uint64_t mask() const { return header().mask; }
+    [[nodiscard]] uint64_t getMask() const { return header().mask; }
 
     [[nodiscard]] VariableSizedAccess::Index getStorageBufferIdx() const;
     [[nodiscard]] VariableSizedAccess::Index getVarSizedBufferIdx() const;
@@ -153,10 +153,10 @@ private:
     /// Helper util methods for safe access
     [[nodiscard]] Header& header() const { return *buffer.getAvailableMemoryArea<Header>().data(); }
 
-    [[nodiscard]] uint64_t* chains() const
+    [[nodiscard]] std::span<ChainedHashMapEntry*> chains() const
     {
         auto* data = buffer.getAvailableMemoryArea<uint8_t>().data();
-        return reinterpret_cast<uint64_t*>(data + sizeof(Header));
+        return {reinterpret_cast<ChainedHashMapEntry**>(data + sizeof(Header)), getNumberOfChains() + 1};
     }
 
     /// the main tuple buffer containing everything

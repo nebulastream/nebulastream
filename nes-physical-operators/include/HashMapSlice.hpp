@@ -131,7 +131,6 @@ public:
     [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
     [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
     [[nodiscard]] VariableSizedAccess::Index setHashMapBuffer(TupleBuffer hashMapBuffer, uint64_t pos);
-    [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 protected:
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;

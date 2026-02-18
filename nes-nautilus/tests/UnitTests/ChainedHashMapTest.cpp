@@ -81,7 +81,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesSingleInsert)
     auto hashMap = ChainedHashMap::init(hashMapBuffer.value(), keySize, valueSize, params.numberOfBuckets, params.pageSize);
 
     /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.numberOfTuples(), 0);
+    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
 
     /// We are inserting the records from the random key and value buffers into a map.
     /// Thus, we can check if the provided values are correct.
@@ -118,7 +118,7 @@ TEST_P(ChainedHashMapTest, fixedDataTypesUpdate)
     auto hashMap = ChainedHashMap::init(hashMapBuffer.value(), keySize, valueSize, params.numberOfBuckets, params.pageSize);
 
     /// Check if the hash map is empty.
-    ASSERT_EQ(hashMap.numberOfTuples(), 0);
+    ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
 
     /// Getting new values for updating the values in the hash map.
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);

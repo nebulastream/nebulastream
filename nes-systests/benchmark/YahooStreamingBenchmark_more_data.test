@@ -1,7 +1,6 @@
 # name: milestone/YahooStreamingBenchmark_more_data.test
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
 # groups: [milestone, benchmark, large, Aggregation]
-GlobalConfiguration worker.query_engine.number_of_worker_threads: [4]
 
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);

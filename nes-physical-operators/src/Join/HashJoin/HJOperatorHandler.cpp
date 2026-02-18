@@ -134,13 +134,13 @@ void HJOperatorHandler::emitSlicesToProbe(
                 ChainedHashMap chainedHashMap = ChainedHashMap::load(tupleBuffer);
                 HashMap* hashMap = &chainedHashMap;
 
-                if (hashMap->numberOfTuples() > 0)
+                if (hashMap->getNumberOfTuples() > 0)
                 {
                     /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                    rollingAverageNumberOfKeys.wlock()->add(hashMap->numberOfTuples());
+                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
 
                     allTupleBuffers.emplace_back(tupleBuffer);
-                    totalNumberOfTuples += hashMap->numberOfTuples();
+                    totalNumberOfTuples += hashMap->getNumberOfTuples();
                 }
             }
         }

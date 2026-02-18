@@ -84,9 +84,9 @@ ChainedHashMap ChainedHashMap::init(TupleBuffer& tupleBuffer, uint64_t entrySize
         Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1);
 
     /// Initialize chains array
-    auto* chainsArray = chm.chains();
-    std::fill_n(chainsArray, numberOfChains + 1, 0ULL);
-    chainsArray[numberOfChains] = reinterpret_cast<uint64_t>(&chainsArray[numberOfChains]);
+    auto chainsArray = chm.chains();
+    std::fill(chainsArray.begin(), chainsArray.end(), nullptr);
+    chainsArray[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]);
 
     return chm;
 }
@@ -120,9 +120,9 @@ ChainedHashMap ChainedHashMap::init(
         Header(numberOfBuckets, numberOfChains, pageSize, entrySize, entriesPerPage, numberOfChains - 1);
 
     /// Initialize chains array
-    auto* chainsArray = chm.chains();
-    std::fill_n(chainsArray, numberOfChains + 1, 0ULL);
-    chainsArray[numberOfChains] = reinterpret_cast<uint64_t>(&chainsArray[numberOfChains]);
+    auto chainsArray = chm.chains();
+    std::fill(chainsArray.begin(), chainsArray.end(), nullptr);
+    chainsArray[numberOfChains] = reinterpret_cast<ChainedHashMapEntry*>(&chainsArray[numberOfChains]);
 
     return chm;
 }
@@ -211,27 +211,27 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider) const
 {
     /// create and initialize new page
     TupleBuffer newPage;
-    if (bufferProvider->getBufferSize() == pageSize())
+    if (bufferProvider->getBufferSize() == getPageSize())
     {
         newPage = bufferProvider->getBufferBlocking();
     }
     else
     {
-        if (auto newPageUnpooled = bufferProvider->getUnpooledBuffer(pageSize()))
+        if (auto newPageUnpooled = bufferProvider->getUnpooledBuffer(getPageSize()))
         {
             newPage = newPageUnpooled.value();
         }
         else
         {
             throw CannotAllocateBuffer(
-                "Could not allocate memory for unpooled storage space page of ChainedHashMap of size {}", std::to_string(pageSize()));
+                "Could not allocate memory for unpooled storage space page of ChainedHashMap of size {}", std::to_string(getPageSize()));
         }
     }
     INVARIANT(
-        newPage.getBufferSize() == pageSize(),
+        newPage.getBufferSize() == getPageSize(),
         "Allocated page size {} does not match the expected page size {}",
         newPage.getBufferSize(),
-        pageSize());
+        getPageSize());
     std::ranges::fill(newPage.getAvailableMemoryArea(), std::byte{0});
 
     /// get or create storage buffer
@@ -261,14 +261,14 @@ void ChainedHashMap::appendPage(AbstractBufferProvider* bufferProvider) const
 AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider)
 {
     /// 1. Check if we need to allocate a new page
-    if (numberOfTuples() % entriesPerPage() == 0)
+    if (getNumberOfTuples() % getEntriesPerPage() == 0)
     {
         /// create new page and append it
         appendPage(bufferProvider);
     }
 
     /// 2. Finding the new entry
-    const auto pageIndex = numberOfTuples() / entriesPerPage();
+    const auto pageIndex = getNumberOfTuples() / getEntriesPerPage();
     INVARIANT(
         getNumberOfPages() > pageIndex,
         "Invalid page index {} as it is greater than the number of pages {}",
@@ -276,27 +276,27 @@ AbstractHashMapEntry* ChainedHashMap::insertEntry(const HashFunction::HashValue:
         getNumberOfPages());
     auto currPage = getPage(pageIndex);
     currPage.setNumberOfTuples(currPage.getNumberOfTuples() + 1);
-    const auto entryOffsetInBuffer = (numberOfTuples() - (pageIndex * entriesPerPage())) * entrySize();
+    const auto entryOffsetInBuffer = (getNumberOfTuples() - (pageIndex * getEntriesPerPage())) * getEntrySize();
 
     /// 3. Inserting the new entry
-    const auto entryPos = hash & mask();
-    INVARIANT(entryPos <= mask(), "Invalid entry position, as pos {} is greater than mask {}", entryPos, mask());
-    INVARIANT(entryPos < numberOfChains(), "Invalid entry position as pos {} is greater than capacity {}", entryPos, numberOfChains());
+    const auto entryPos = hash & getMask();
+    INVARIANT(entryPos <= getMask(), "Invalid entry position, as pos {} is greater than mask {}", entryPos, getMask());
+    INVARIANT(
+        entryPos < getNumberOfChains(), "Invalid entry position as pos {} is greater than capacity {}", entryPos, getNumberOfChains());
 
-    auto* chainsArray = chains();
+    auto chainsArray = chains();
     auto* const newEntry = new (currPage.getAvailableMemoryArea().subspan(entryOffsetInBuffer).data()) ChainedHashMapEntry(hash);
 
     /// 4. Updating the chain and the current size
-    auto* chainPtr = reinterpret_cast<ChainedHashMapEntry**>(&chainsArray[entryPos]);
-    if (*chainPtr == nullptr)
+    auto& chainPtr = chainsArray[entryPos];
+    if (chainPtr == nullptr)
     {
-        *chainPtr = newEntry;
+        chainPtr = newEntry;
     }
     else
     {
-        auto* oldValue = *chainPtr;
-        newEntry->next = oldValue;
-        *chainPtr = newEntry;
+        newEntry->next = chainPtr;
+        chainPtr = newEntry;
     }
     header().numTuples++;
 
@@ -373,8 +373,8 @@ uint64_t ChainedHashMap::calculateBufferSizeFromChains(uint64_t numberOfChains)
 
 ChainedHashMapEntry* ChainedHashMap::getChain(uint64_t pos) const
 {
-    const auto* chainsArray = chains();
-    return reinterpret_cast<ChainedHashMapEntry*>(chainsArray[pos]);
+    auto chainsArray = chains();
+    return chainsArray[pos];
 }
 
 }

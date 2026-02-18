@@ -69,7 +69,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             auto buffer = parent->loadChildBuffer(bufferIndex);
             const ChainedHashMap chm = ChainedHashMap::load(buffer);
             /// get a buffer and for the final hash map with the same config
-            auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.numberOfChains());
+            auto neededFinalBufferSize = ChainedHashMap::calculateBufferSizeFromChains(chm.getNumberOfChains());
             std::optional<TupleBuffer> finalHashMapTupleBuffer = bufferProvider->getUnpooledBuffer(neededFinalBufferSize);
             if (not finalHashMapTupleBuffer.has_value())
             {
@@ -77,7 +77,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             }
             /// initialize a view over the final hash map tuple buffer
             ChainedHashMap finalChainedHashMap
-                = ChainedHashMap::init(finalHashMapTupleBuffer.value(), chm.entrySize(), chm.numberOfBuckets(), chm.pageSize());
+                = ChainedHashMap::init(finalHashMapTupleBuffer.value(), chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
             /// pin and return the address
             return std::addressof(pec->pinBuffer(std::move(finalHashMapTupleBuffer.value())));
         },

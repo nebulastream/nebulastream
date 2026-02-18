@@ -79,12 +79,12 @@ Record ChainedHashMapRef::ChainedEntryRef::getValue() const
 
 uint64_t getNumberOfTuplesProxy(const ChainedHashMap* hashMap)
 {
-    return hashMap->numberOfTuples();
+    return hashMap->getNumberOfTuples();
 }
 
 uint64_t getMaskProxy(const ChainedHashMap* hashMap)
 {
-    return hashMap->mask();
+    return hashMap->getMask();
 }
 
 ChainedHashMapEntry* getChainProxy(const ChainedHashMap* hashMap, uint64_t pos)
@@ -317,7 +317,7 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
         +[](TupleBuffer* tupleBuffer)
         {
             const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
-            return chm.numberOfTuples();
+            return chm.getNumberOfTuples();
         },
         tupleBuffer);
     return {tupleBuffer, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
@@ -329,7 +329,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
         +[](TupleBuffer* tupleBuffer)
         {
             const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
-            return chm.numberOfTuples();
+            return chm.getNumberOfTuples();
         },
         tupleBuffer);
     if (numberOfTuples == 0)
@@ -340,7 +340,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunct
         +[](TupleBuffer* tupleBuffer)
         {
             const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
-            return chm.mask();
+            return chm.getMask();
         },
         tupleBuffer);
     const auto entryStartPos = hash & mask;

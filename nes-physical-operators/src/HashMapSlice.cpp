@@ -112,16 +112,4 @@ uint64_t HashMapSlice::numHashMapsPerInputStream() const
 {
     return hashMapDirectory.header().numHashmapsPerInputStream;
 }
-
-uint64_t HashMapSlice::getNumberOfTuples() const
-{
-    uint64_t runningSum = 0;
-    auto bufferMemoryArea = hashMapDirectory.mainBuffer.getAvailableMemoryArea<VariableSizedAccess::Index>();
-    for (uint64_t i = 0; i < numberOfHashMaps(); i++)
-    {
-        auto childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(bufferMemoryArea[i]);
-        runningSum += childBuffer.getNumberOfTuples();
-    }
-    return runningSum;
-}
 }
