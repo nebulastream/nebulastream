@@ -118,8 +118,8 @@ LogicalPlan PredicatePushdown::apply(const LogicalPlan& queryPlan)
 LogicalOperator PredicatePushdown::apply(const LogicalOperator& logicalOperator)
 {
     /// First, recursively transform all children.
-    auto children = logicalOperator.getChildren()
-        | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();
+    auto children = logicalOperator.getChildren() | std::views::transform([this](const LogicalOperator& child) { return apply(child); })
+        | std::ranges::to<std::vector>();
 
     /// If the current operator is not a Selection, just rebuild with transformed children.
     const auto selectionOp = logicalOperator.tryGetAs<SelectionLogicalOperator>();

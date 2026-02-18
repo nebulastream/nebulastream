@@ -106,8 +106,8 @@ LogicalOperator createPruningProjection(const LogicalOperator& child, const std:
 /// Returns true if the child has fields not in the needed set (i.e., pruning would be beneficial).
 bool hasSurplusFields(const Schema& childSchema, const std::unordered_set<std::string>& neededFields)
 {
-    return std::ranges::any_of(childSchema.getFieldNames(),
-                               [&neededFields](const std::string& name) { return !neededFields.contains(name); });
+    return std::ranges::any_of(
+        childSchema.getFieldNames(), [&neededFields](const std::string& name) { return !neededFields.contains(name); });
 }
 }
 
@@ -137,8 +137,7 @@ LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator,
     }
 
     /// For sink operators, propagate all needed fields to children.
-    if (logicalOperator.tryGetAs<InlineSinkLogicalOperator>().has_value()
-        || logicalOperator.tryGetAs<SinkLogicalOperator>().has_value())
+    if (logicalOperator.tryGetAs<InlineSinkLogicalOperator>().has_value() || logicalOperator.tryGetAs<SinkLogicalOperator>().has_value())
     {
         auto children = logicalOperator.getChildren()
             | std::views::transform([this, &neededFields](const LogicalOperator& child) { return apply(child, neededFields); })
@@ -155,8 +154,7 @@ LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator,
             expandedNeeded.insert(field);
         }
         auto children = logicalOperator.getChildren()
-            | std::views::transform(
-                  [this, &expandedNeeded](const LogicalOperator& child) { return apply(child, expandedNeeded); })
+            | std::views::transform([this, &expandedNeeded](const LogicalOperator& child) { return apply(child, expandedNeeded); })
             | std::ranges::to<std::vector>();
         return logicalOperator.withChildren(children);
     }
@@ -170,8 +168,7 @@ LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator,
             accessedFields.insert(fieldName);
         }
         auto children = logicalOperator.getChildren()
-            | std::views::transform(
-                  [this, &accessedFields](const LogicalOperator& child) { return apply(child, accessedFields); })
+            | std::views::transform([this, &accessedFields](const LogicalOperator& child) { return apply(child, accessedFields); })
             | std::ranges::to<std::vector>();
         return logicalOperator.withChildren(children);
     }
