@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <variant>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/ostream.h>
@@ -33,7 +34,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<VariableSizedData, nautilus::val<T>...>;
+using var_val_helper = std::variant<VariableSizedData, LazyValueRepresentation, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -104,7 +105,9 @@ public:
             {
                 using removedCVRefT0 = std::remove_cvref_t<T0>;
                 using removedCVRefT1 = std::remove_cvref_t<T1>;
-                if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
+                if constexpr (
+                    std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>
+                    || std::is_same_v<removedCVRefT0, LazyValueRepresentation> || std::is_same_v<removedCVRefT1, LazyValueRepresentation>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
                 }

@@ -15,6 +15,7 @@
 #include <memory>
 #include <optional>
 #include <type_traits>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
@@ -51,6 +52,14 @@ struct PhysicalFunction
     /// Constructs a PhysicalFunction from a concrete function type.
     /// @tparam FunctionType The type of the function. Must satisfy IsPhysicalFunction concept.
     /// @param fn The function to wrap.
+    /// @param children All child functions of this function
+    template <IsPhysicalFunction FunctionType>
+    PhysicalFunction(const FunctionType& fn, const std::vector<PhysicalFunction> children) /// NOLINT
+        : self(std::make_shared<Model<FunctionType>>(fn)), children(children)
+    {
+    }
+
+    /// For functions without children
     template <IsPhysicalFunction FunctionType>
     PhysicalFunction(const FunctionType& fn) /// NOLINT
         : self(std::make_shared<Model<FunctionType>>(fn))
@@ -99,6 +108,8 @@ struct PhysicalFunction
         return *this;
     }
 
+    [[nodiscard]] std::vector<PhysicalFunction> getChildren() const { return children; }
+
 private:
     struct Concept : PhysicalFunctionConcept
     {
@@ -118,5 +129,6 @@ private:
     };
 
     std::shared_ptr<Concept> self;
+    std::vector<PhysicalFunction> children;
 };
 }

@@ -39,7 +39,9 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterAddPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Add function must have exactly two child functions");
-    return AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return {
+        AddPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 
 }

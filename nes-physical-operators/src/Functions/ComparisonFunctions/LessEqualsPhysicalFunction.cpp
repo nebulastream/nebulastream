@@ -42,8 +42,10 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterLessEqualsPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "LessEquals function must have exactly two child functions");
-    return LessEqualsPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
+    return {
+        LessEqualsPhysicalFunction(
+            physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 
 }

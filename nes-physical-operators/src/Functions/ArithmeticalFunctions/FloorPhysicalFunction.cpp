@@ -50,10 +50,12 @@ PhysicalFunctionGeneratedRegistrar::RegisterFloorPhysicalFunction(PhysicalFuncti
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Floor function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Floor function must have exactly one input type");
-    return FloorPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0],
-        physicalFunctionRegistryArguments.inputTypes[0],
-        physicalFunctionRegistryArguments.outputType);
+    return {
+        FloorPhysicalFunction(
+            physicalFunctionRegistryArguments.childFunctions[0],
+            physicalFunctionRegistryArguments.inputTypes[0],
+            physicalFunctionRegistryArguments.outputType),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 
 }

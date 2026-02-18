@@ -53,7 +53,9 @@ PhysicalFunctionGeneratedRegistrar::RegisterAbsPhysicalFunction(PhysicalFunction
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Absolute function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Absolute function must have exactly one input type");
-    return AbsolutePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.inputTypes[0]);
+    return {
+        AbsolutePhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.inputTypes[0]),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 
 

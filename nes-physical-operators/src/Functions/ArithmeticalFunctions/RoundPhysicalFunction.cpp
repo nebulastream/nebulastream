@@ -50,10 +50,12 @@ PhysicalFunctionGeneratedRegistrar::RegisterRoundPhysicalFunction(PhysicalFuncti
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Round function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Round function must have exactly one input type");
-    return RoundPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0],
-        physicalFunctionRegistryArguments.inputTypes[0],
-        physicalFunctionRegistryArguments.outputType);
+    return {
+        RoundPhysicalFunction(
+            physicalFunctionRegistryArguments.childFunctions[0],
+            physicalFunctionRegistryArguments.inputTypes[0],
+            physicalFunctionRegistryArguments.outputType),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 
 }

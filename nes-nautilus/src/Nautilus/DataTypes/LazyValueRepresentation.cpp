@@ -12,4 +12,101 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
+
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+
+#include <ErrorHandling.hpp>
+#include <RawValueParser.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
+#include <val_ptr.hpp>
+
+namespace NES
+{
+LazyValueRepresentation::LazyValueRepresentation(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
+    : size(size), ptrToLazyValue(reference)
+{
+}
+
+LazyValueRepresentation::LazyValueRepresentation(const LazyValueRepresentation& other)
+    : size(other.size), ptrToLazyValue(other.ptrToLazyValue)
+{
+}
+
+LazyValueRepresentation::LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
+    : size(std::move(other.size)), ptrToLazyValue(std::move(other.ptrToLazyValue))
+{
+}
+
+LazyValueRepresentation& LazyValueRepresentation::operator=(const LazyValueRepresentation& other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    size = other.size;
+    ptrToLazyValue = other.ptrToLazyValue;
+    return *this;
+}
+
+nautilus::val<bool> LazyValueRepresentation::isValid() const
+{
+    PRECONDITION(size > 0 && ptrToVarSized != nullptr, "LazyValue has a size larger than 0 but a nullptr pointer to the data.");
+    PRECONDITION(size == 0 && ptrToVarSized == nullptr, "LazyValue has a size of 0 so there should be no pointer to the data.");
+    return size > 0 && ptrToLazyValue != nullptr;
+}
+
+nautilus::val<bool> operator==(const LazyValueRepresentation& lazyValue, const nautilus::val<bool>& other)
+{
+    return lazyValue.isValid() == other;
+}
+
+nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValueRepresentation& lazyValue)
+{
+    return lazyValue.isValid() == other;
+}
+
+LazyValueRepresentation& LazyValueRepresentation::operator=(LazyValueRepresentation&& other) noexcept
+{
+    if (this == &other)
+    {
+        return *this;
+    }
+
+    size = std::move(other.size);
+    ptrToLazyValue = std::move(other.ptrToLazyValue);
+    return *this;
+}
+
+nautilus::val<uint64_t> LazyValueRepresentation::getSize() const
+{
+    return size;
+}
+
+nautilus::val<int8_t*> LazyValueRepresentation::getContent() const
+{
+    return ptrToLazyValue;
+}
+
+[[nodiscard]] nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue)
+{
+    oss << "Size(" << lazyValue.size << "): ";
+    for (nautilus::val<uint32_t> i = 0; i < lazyValue.size; ++i)
+    {
+        const nautilus::val<int> byte = readValueFromMemRef<int8_t>((lazyValue.getContent() + i)) & nautilus::val<int>(0xff);
+        oss << nautilus::hex;
+        oss.operator<<(byte);
+        oss << " ";
+    }
+    return oss;
+}
+
+template <typename T>
+nautilus::val<T> LazyValueRepresentation::parseToInternalRepresentation()
+{
+    return parseIntoNautilusRecord<T>(ptrToLazyValue, size);
+}
+}

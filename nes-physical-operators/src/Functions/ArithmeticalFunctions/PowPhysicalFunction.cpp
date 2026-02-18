@@ -46,9 +46,11 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterPowPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Pow function must have exactly two child functions");
-    return PowPhysicalFunction(
-        physicalFunctionRegistryArguments.childFunctions[0],
-        physicalFunctionRegistryArguments.childFunctions[1],
-        physicalFunctionRegistryArguments.outputType);
+    return {
+        PowPhysicalFunction(
+            physicalFunctionRegistryArguments.childFunctions[0],
+            physicalFunctionRegistryArguments.childFunctions[1],
+            physicalFunctionRegistryArguments.outputType),
+        physicalFunctionRegistryArguments.childFunctions};
 }
 }
