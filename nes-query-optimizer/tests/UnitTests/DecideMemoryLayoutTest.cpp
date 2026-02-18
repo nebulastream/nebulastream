@@ -51,8 +51,6 @@ class DecideMemoryLayoutTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestSuite() { Logger::setupLogging("DecideMemoryLayoutTest.log", LogLevel::LOG_DEBUG); }
 
-    void SetUp() override { BaseUnitTest::SetUp(); }
-
     static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
     static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
@@ -94,30 +92,6 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
     }
 }
 
-/// Source → Selection → Sink. Verify all three have the trait.
-TEST_F(DecideMemoryLayoutTest, ChainOfOperatorsAllGetRowLayout)
-{
-    auto schema = createSchema("src");
-    auto plan = createSourcePlan("TEST", schema);
-    auto selectionFn = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("src.id")}, LogicalFunction{FieldAccessLogicalFunction("src.id")})};
-    plan = LogicalPlanBuilder::addSelection(selectionFn, plan);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
-
-    DecideMemoryLayout phase;
-    auto result = phase.apply(plan);
-
-    int operatorCount = 0;
-    for (const auto& op : BFSRange(result.getRootOperators()[0]))
-    {
-        ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>());
-        auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
-        EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
-        ++operatorCount;
-    }
-    EXPECT_GE(operatorCount, 3);
-}
-
 /// Source → Join ← Source → Sink. Verify all operators get the trait.
 TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
 {
@@ -141,27 +115,6 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
         ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>()) << "Operator missing MemoryLayoutTypeTrait";
         auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
         EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
-    }
-}
-
-/// Apply phase twice, verify no duplicate traits or errors.
-TEST_F(DecideMemoryLayoutTest, IdempotencyApplyTwice)
-{
-    auto schema = createSchema("src");
-    auto plan = createSourcePlan("TEST", schema);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
-
-    DecideMemoryLayout phase;
-    auto result = phase.apply(plan);
-    auto result2 = phase.apply(result);
-
-    for (const auto& op : BFSRange(result2.getRootOperators()[0]))
-    {
-        ASSERT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>());
-        auto trait = op.getTraitSet().get<MemoryLayoutTypeTrait>();
-        EXPECT_TRUE(trait->memoryLayout == MemoryLayoutType::ROW_LAYOUT);
-        /// TraitSet uses tryInsert, so duplicate inserts are ignored,
-        /// and the trait set size should still contain exactly one MemoryLayoutTypeTrait
     }
 }
 

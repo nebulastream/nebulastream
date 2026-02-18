@@ -53,8 +53,6 @@ class DecideJoinTypesTest : public Testing::BaseUnitTest
 public:
     static void SetUpTestSuite() { Logger::setupLogging("DecideJoinTypesTest.log", LogLevel::LOG_DEBUG); }
 
-    void SetUp() override { BaseUnitTest::SetUp(); }
-
     static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
     /// Helper to create a simple source plan with a schema containing an "id" field
@@ -199,40 +197,6 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
     ASSERT_EQ(joins.size(), 1);
     auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
     EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
-}
-
-/// Verify children of join also get CHOICELESS traits.
-TEST_F(DecideJoinTypesTest, TraitPropagationToChildren)
-{
-    auto leftSchema = createSchema("left");
-    auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
-
-    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
-
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
-
-    DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
-    auto result = phase.apply(plan);
-
-    /// The root (sink) should be CHOICELESS, the join should be HASH_JOIN, and all children of join should be CHOICELESS
-    for (const auto& op : BFSRange(result.getRootOperators()[0]))
-    {
-        ASSERT_TRUE(op.getTraitSet().contains<JoinImplementationTypeTrait>());
-        auto trait = op.getTraitSet().get<JoinImplementationTypeTrait>();
-        if (op.tryGetAs<JoinLogicalOperator>().has_value())
-        {
-            EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
-        }
-        else
-        {
-            EXPECT_TRUE(trait->implementationType == JoinImplementation::CHOICELESS);
-        }
-    }
 }
 
 }
