@@ -18,20 +18,24 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
 /// Performs leftPhysicalFunctionSub % rightPhysicalFunctionSub
-class LessEqualsPhysicalFunction final : public PhysicalFunctionConcept
+class LessEqualsPhysicalFunction final
 {
 public:
     LessEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction leftPhysicalFunction;
     PhysicalFunction rightPhysicalFunction;
 };
+
+static_assert(PhysicalFunctionConcept<LessEqualsPhysicalFunction>);
+
 }
