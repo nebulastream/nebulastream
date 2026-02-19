@@ -79,6 +79,7 @@ ReplayableQueryPlan bindReplayableQueryPlan(AntlrSQLParser::QueryContext* queryA
         Parsers::AntlrSQLQueryPlanCreator queryPlanCreator;
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryAst);
         auto queryPlan = queryPlanCreator.getQueryPlan();
+        queryPlan.setOriginalSql(queryAst->getText());
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
         return ReplayableQueryPlan{.plan = std::move(queryPlan), .replaySpecification = queryPlanCreator.getReplaySpecification()};
     }
