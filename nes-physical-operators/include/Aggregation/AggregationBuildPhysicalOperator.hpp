@@ -14,7 +14,7 @@
 
 #pragma once
 
-
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
@@ -35,7 +35,10 @@ HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator);
+    uint64_t keySize,
+    uint64_t valueSize,
+    uint64_t pageSize,
+    uint64_t numberOfBuckets);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
@@ -44,7 +47,10 @@ public:
         const AggregationOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
-        const AggregationBuildPhysicalOperator* buildOperator);
+        uint64_t keySize,
+        uint64_t valueSize,
+        uint64_t pageSize,
+        uint64_t numberOfBuckets);
 
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
