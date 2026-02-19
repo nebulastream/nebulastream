@@ -118,13 +118,18 @@ public:
     /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
-    [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
+    [[nodiscard]] nautilus::val<bool> indexBuffer(
+        const RecordBuffer& recordBuffer,
+        const ArenaRef& arenaRef,
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const uint64_t inputFormatterKey) const
     {
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
             indexLeadingSpanningTupleAndBufferProxy,
             recordBuffer.getReference(),
-            nautilus::val<const InputFormatter*>(this),
+            pipelineContext,
+            nautilus::val<uint64_t>(inputFormatterKey),
             arenaRef.getArena()));
 
         if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
@@ -140,7 +145,8 @@ public:
     void readBuffer(
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
-        const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild) const
+        const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
+        const uint64_t inputFormatterKey) const
     {
         /// @Note: the order below is important
         const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
@@ -163,7 +169,7 @@ public:
 
         /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
         /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
-        parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult);
+        parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult, inputFormatterKey);
     }
 
     std::ostream& toString(std::ostream& os) const
@@ -312,8 +318,22 @@ private:
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
 
-    static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
+    static InputFormatter* getRuntimeInputFormatter(const PipelineExecutionContext* pipelineContext, const uint64_t inputFormatterKey)
     {
+        PRECONDITION(pipelineContext != nullptr, "pipeline execution context is null");
+        auto* inputFormatter = static_cast<InputFormatter*>(pipelineContext->getRuntimeInputFormatterHandle(inputFormatterKey));
+        if (inputFormatter == nullptr)
+        {
+            throw CannotFormatSourceData("Missing runtime input formatter handle for key {}", inputFormatterKey);
+        }
+        return inputFormatter;
+    }
+
+    static bool indexTrailingSpanningTupleProxy(
+        const TupleBuffer* tupleBuffer, const PipelineExecutionContext* pipelineContext, const uint64_t inputFormatterKey, Arena* arenaRef)
+    {
+        auto* inputFormatter = getRuntimeInputFormatter(pipelineContext, inputFormatterKey);
+
         /// the buffer does not have a trailing SpanningTuple, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
         const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
         if (offsetOfLastTupleDelimiter == std::numeric_limits<uint64_t>::max())
@@ -336,9 +356,11 @@ private:
         return true;
     }
 
-    static IndexPhaseResult*
-    indexLeadingSpanningTupleAndBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
+    static IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
+        const TupleBuffer* tupleBuffer, const PipelineExecutionContext* pipelineContext, const uint64_t inputFormatterKey, Arena* arenaRef)
     {
+        auto* inputFormatter = getRuntimeInputFormatter(pipelineContext, inputFormatterKey);
+
         IndexPhaseResultBuilder::startBuildingIndex();
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
             = IndexPhaseResultBuilder::indexRawBuffer(*inputFormatter, *tupleBuffer);
@@ -435,12 +457,14 @@ private:
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
+        const uint64_t inputFormatterKey) const
     {
         const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
             indexTrailingSpanningTupleProxy,
             recordBuffer.getReference(),
-            nautilus::val<const InputFormatter*>(this),
+            executionCtx.pipelineContext,
+            nautilus::val<uint64_t>(inputFormatterKey),
             executionCtx.pipelineMemoryProvider.arena.getArena());
 
         if (hasTrailingSpanningTuple)
