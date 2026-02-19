@@ -146,6 +146,8 @@ struct TestPipelineExecutionContext : PipelineExecutionContext
     MOCK_METHOD(PipelineId, getPipelineId, (), (const, override));
     MOCK_METHOD((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&), getOperatorHandlers, (), (override));
     MOCK_METHOD(void, setOperatorHandlers, ((std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&)), (override));
+    MOCK_METHOD(void, setRuntimeInputFormatterHandle, (uint64_t, void*), (override));
+    MOCK_METHOD(void*, getRuntimeInputFormatterHandle, (uint64_t), (const, override));
     MOCK_METHOD(bool, emitBuffer, (const TupleBuffer&, ContinuationPolicy), (override));
 };
 

@@ -44,18 +44,16 @@ HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator)
+    const uint64_t keySize,
+    const uint64_t valueSize,
+    const uint64_t pageSize,
+    const uint64_t numberOfBuckets)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
-    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction},
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
+        {operatorHandler->cleanupStateNautilusFunction}, keySize, valueSize, pageSize, numberOfBuckets};
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
@@ -128,7 +126,14 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+        getAggHashMapProxy,
+        operatorHandler,
+        timestamp,
+        ctx.workerThreadId,
+        nautilus::val<uint64_t>(hashMapOptions.keySize),
+        nautilus::val<uint64_t>(hashMapOptions.valueSize),
+        nautilus::val<uint64_t>(hashMapOptions.pageSize),
+        nautilus::val<uint64_t>(hashMapOptions.numberOfBuckets));
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

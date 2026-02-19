@@ -34,10 +34,11 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
+    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections, uint64_t runtimeInputFormatterSlot)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
+    , runtimeInputFormatterSlot(runtimeInputFormatterSlot)
 {
 }
 
@@ -45,7 +46,8 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
-    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
+    if (not inputFormatterBufferRef->indexBuffer(
+            recordBuffer, executionCtx.pipelineMemoryProvider.arena, executionCtx.pipelineContext, runtimeInputFormatterSlot))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
@@ -56,7 +58,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 
     /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
-    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
+    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda, runtimeInputFormatterSlot);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -83,6 +85,16 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
         auto record = bufferRef->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
+}
+
+std::shared_ptr<TupleBufferRef> ScanPhysicalOperator::getBufferRef() const
+{
+    return bufferRef;
+}
+
+uint64_t ScanPhysicalOperator::getRuntimeInputFormatterSlot() const
+{
+    return runtimeInputFormatterSlot;
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

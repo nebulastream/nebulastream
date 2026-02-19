@@ -83,7 +83,7 @@ LogicalPlan DecideJoinTypes::apply(const LogicalPlan& queryPlan)
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
-    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
+    return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}, queryPlan.getOriginalSql()};
 }
 
 LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)

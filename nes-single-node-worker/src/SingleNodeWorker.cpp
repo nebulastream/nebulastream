@@ -76,6 +76,8 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
             configuration.workerConfiguration.dumpQueryCompilationIR.getValue(), configuration.workerConfiguration.dumpGraph.getValue());
         auto request = std::make_unique<QueryCompilation::QueryCompilationRequest>(queryPlan);
         request->dumpCompilationResult = dumpMode;
+        request->compilationCacheEnabled = configuration.workerConfiguration.enableCompilationCache.getValue();
+        request->compilationCacheDir = configuration.workerConfiguration.compilationCacheDir.getValue();
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successfull query compilation or exception, but got nothing");
         return nodeEngine->registerCompiledQueryPlan(std::move(result));

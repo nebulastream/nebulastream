@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-query-compiler
+        CompilationCache.cpp
         QueryCompiler.cpp
         PipelinedQueryPlan.cpp
 )

@@ -40,6 +40,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
+    serializableQueryPlan.set_originalsql(queryPlan.getOriginalSql());
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
@@ -181,6 +182,11 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         queryId = QueryId(serializedQueryPlan.queryid());
     }
-    return LogicalPlan(queryId, std::move(rootOperators));
+    std::string originalSql;
+    if (serializedQueryPlan.has_originalsql())
+    {
+        originalSql = serializedQueryPlan.originalsql();
+    }
+    return LogicalPlan(queryId, std::move(rootOperators), std::move(originalSql));
 }
 }
