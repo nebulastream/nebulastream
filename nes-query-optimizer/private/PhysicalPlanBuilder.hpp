@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -35,6 +36,7 @@ public:
     void addSinkRoot(std::shared_ptr<PhysicalOperatorWrapper> sink);
     void setExecutionMode(ExecutionMode mode);
     void setOperatorBufferSize(uint64_t bufferSize);
+    void setOriginalSql(std::string sql);
 
     /// R-value as finalize should be called once at the end, with a move() to 'build' the plan.
     [[nodiscard]] PhysicalPlan finalize() &&;
@@ -44,6 +46,7 @@ private:
     Roots sinks;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize{};
+    std::string originalSql;
 
     /// Used internally to flip the plan from sink->source tstatic o source->sink
     static Roots flip(const Roots& roots);

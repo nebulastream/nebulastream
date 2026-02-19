@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -50,10 +51,15 @@ void PhysicalPlanBuilder::setOperatorBufferSize(uint64_t bufferSize)
     operatorBufferSize = bufferSize;
 }
 
+void PhysicalPlanBuilder::setOriginalSql(std::string sql)
+{
+    originalSql = std::move(sql);
+}
+
 PhysicalPlan PhysicalPlanBuilder::finalize() &&
 {
     auto sources = flip(sinks);
-    return {queryId, std::move(sources), executionMode, operatorBufferSize};
+    return {queryId, std::move(sources), executionMode, operatorBufferSize, std::move(originalSql)};
 }
 
 using PhysicalOpPtr = std::shared_ptr<PhysicalOperatorWrapper>;

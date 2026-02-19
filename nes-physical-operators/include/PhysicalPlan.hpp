@@ -40,17 +40,19 @@ public:
     [[nodiscard]] const Roots& getRootOperators() const;
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
+    [[nodiscard]] const std::string& getOriginalSql() const;
 
 private:
     QueryId queryId;
     Roots rootOperators;
     ExecutionMode executionMode;
     uint64_t operatorBufferSize;
+    std::string originalSql;
 
     [[nodiscard]] std::string toString() const;
 
     friend class PhysicalPlanBuilder;
-    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize);
+    PhysicalPlan(QueryId id, Roots rootOperators, ExecutionMode executionMode, uint64_t operatorBufferSize, std::string originalSql);
 };
 }
 
