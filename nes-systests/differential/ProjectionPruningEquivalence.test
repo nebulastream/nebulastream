@@ -1,0 +1,34 @@
+# name: differential/ProjectionPruningEquivalence.test
+# description: Verify projection pruning preserves query semantics. Each pair separated by ==== must produce identical results: the left form relies on projection pruning to eliminate unneeded source columns, the right form explicitly projects only the needed columns (which does not require pruning).
+# groups: [Differential, Projection, ProjectionPruning, CompilationIntensive]
+
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE Generator SET(
+    1 AS `SOURCE`.SEED,
+    'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+    'SEQUENCE UINT64 1 3 1, SEQUENCE UINT64 10 30 10, SEQUENCE UINT64 1000 1002 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE SINK selectionSink(out_id UINT64) TYPE File;
+CREATE SINK selectionSink2(out_id UINT64, out_value UINT64) TYPE File;
+
+# Only one column needed from a three-column source: pruning inserts a projection at the source.
+SELECT id AS out_id FROM stream INTO selectionSink;
+====
+SELECT id AS out_id FROM (SELECT id FROM stream) INTO selectionSink;
+
+# Two columns needed from a three-column source.
+SELECT id AS out_id, value AS out_value FROM stream INTO selectionSink2;
+====
+SELECT id AS out_id, value AS out_value FROM (SELECT id, value FROM stream) INTO selectionSink2;
+
+# Filter uses a column absent from the output projection: pruning must retain the filter column
+# at the source so the predicate can still be evaluated.
+SELECT id AS out_id FROM stream WHERE value >= UINT64(20) INTO selectionSink;
+====
+SELECT id AS out_id FROM (SELECT id, value FROM stream) WHERE value >= UINT64(20) INTO selectionSink;
+
+# Timestamp column only needed for ordering, not in the output: pruning should drop it.
+SELECT id AS out_id, value AS out_value FROM stream WHERE id >= UINT64(2) INTO selectionSink2;
+====
+SELECT id AS out_id, value AS out_value FROM (SELECT id, value FROM stream) WHERE id >= UINT64(2) INTO selectionSink2;
