@@ -27,7 +27,7 @@ class Options;
 namespace NES
 {
 class PhysicalPlan;
-class Pipeline;
+struct Pipeline;
 }
 
 namespace NES::QueryCompilation

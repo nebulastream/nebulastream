@@ -16,6 +16,8 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <filesystem>
+#include <chrono>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -39,6 +41,31 @@ namespace NES::QueryCompilation
 {
 namespace
 {
+std::string createBinaryFingerprint()
+{
+    try
+    {
+        const auto executablePath = std::filesystem::canonical("/proc/self/exe");
+        const auto executableSize = std::filesystem::file_size(executablePath);
+        const auto lastWriteTime = std::filesystem::last_write_time(executablePath);
+        const auto lastWriteNs = std::chrono::duration_cast<std::chrono::nanoseconds>(lastWriteTime.time_since_epoch()).count();
+
+        std::ostringstream fingerprint;
+        fingerprint << executablePath << "|" << executableSize << "|" << lastWriteNs;
+        return fingerprint.str();
+    }
+    catch (...)
+    {
+        return "unknown_binary_fingerprint";
+    }
+}
+
+const std::string& getBinaryFingerprint()
+{
+    static const auto fingerprint = createBinaryFingerprint();
+    return fingerprint;
+}
+
 void appendOperatorSpecificCacheSignature(const PhysicalOperator& physicalOperator, std::ostringstream& signature)
 {
     if (const auto source = physicalOperator.tryGet<SourcePhysicalOperator>(); source.has_value())
@@ -175,6 +202,7 @@ std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipel
 
     std::ostringstream keyBuilder;
     keyBuilder << "nes:auto";
+    keyBuilder << "|binary=" << getBinaryFingerprint();
     if (!cacheKeySeed.empty())
     {
         keyBuilder << ":q=" << cacheKeySeed;
