@@ -212,13 +212,15 @@ LogicalOperator ProjectionPruning::apply(const LogicalOperator& logicalOperator,
         return logicalOperator.withChildren({leftChild, rightChild});
     }
 
-    /// For WindowedAggregation, do not prune (it defines its own output schema).
+    /// For WindowedAggregation, skip pruning entirely within its subtree. The outer neededFields
+    /// contains the aggregation's output field names (e.g. start, end, sumValue) which do not
+    /// correspond to the source field names (e.g. id, value, timestamp). Additionally, the
+    /// aggregation's subtree may include intermediate GROUP BY projections whose output schema
+    /// does not reflect all fields required by the aggregation (window time field, aggregation
+    /// inputs, GROUP BY keys). Pruning inside this subtree would incorrectly remove required fields.
     if (logicalOperator.tryGetAs<WindowedAggregationLogicalOperator>().has_value())
     {
-        auto children = logicalOperator.getChildren()
-            | std::views::transform([this, &neededFields](const LogicalOperator& child) { return apply(child, neededFields); })
-            | std::ranges::to<std::vector>();
-        return logicalOperator.withChildren(children);
+        return logicalOperator;
     }
 
     /// For Union, propagate same needed fields to both branches.
