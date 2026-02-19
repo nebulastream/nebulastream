@@ -33,8 +33,13 @@ PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
     ExecutionMode executionMode,
-    uint64_t operatorBufferSize)
-    : queryId(id), rootOperators(std::move(rootOperators)), executionMode(executionMode), operatorBufferSize(operatorBufferSize)
+    uint64_t operatorBufferSize,
+    std::string originalSql)
+    : queryId(id)
+    , rootOperators(std::move(rootOperators))
+    , executionMode(executionMode)
+    , operatorBufferSize(operatorBufferSize)
+    , originalSql(std::move(originalSql))
 {
     for (const auto& rootOperator : this->rootOperators)
     {
@@ -71,6 +76,11 @@ ExecutionMode PhysicalPlan::getExecutionMode() const
 uint64_t PhysicalPlan::getOperatorBufferSize() const
 {
     return operatorBufferSize;
+}
+
+const std::string& PhysicalPlan::getOriginalSql() const
+{
+    return originalSql;
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan)
