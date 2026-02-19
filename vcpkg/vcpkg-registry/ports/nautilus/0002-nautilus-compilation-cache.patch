@@ -361,17 +361,17 @@ index a9e8b9b..01e8078 100644
 +				std::filesystem::path constPtrRelocationMetadataPath;
 +				const auto constPtrRelocationMetadataState =
 +				    evaluateConstPtrRelocationMetadata(blobPath, constPtrRelocationMetadataPath);
-+				setBlobLoadOptions(compileOptions, blobPath);
-+				compileOptions.setOption(
-+				    "engine.Blob.ConstPtrRelocationPath",
-+				    constPtrRelocationMetadataState == ConstPtrRelocationMetadataState::AllPointersRelocatable
-+				        ? constPtrRelocationMetadataPath.string()
-+				        : std::string {});
-+				try {
-+					auto executable = backend->compile(std::shared_ptr<ir::IRGraph> {}, dumpHandler, compileOptions);
-+					executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
-+					return executable;
-+				} catch (const std::exception&) {
++				if (constPtrRelocationMetadataState == ConstPtrRelocationMetadataState::AllPointersRelocatable) {
++					setBlobLoadOptions(compileOptions, blobPath);
++					compileOptions.setOption("engine.Blob.ConstPtrRelocationPath", constPtrRelocationMetadataPath.string());
++					try {
++						auto executable = backend->compile(std::shared_ptr<ir::IRGraph> {}, dumpHandler, compileOptions);
++						executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
++						return executable;
++					} catch (const std::exception&) {
++						setBlobEmitOptions(compileOptions, blobPath);
++					}
++				} else {
 +					setBlobEmitOptions(compileOptions, blobPath);
 +				}
 +			} else {
