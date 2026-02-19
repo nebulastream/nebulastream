@@ -108,6 +108,17 @@ public:
         this->operatorHandlers = operatorHandlers;
     }
 
+    void setRuntimeInputFormatterHandle(const uint64_t operatorId, void* runtimeHandle) override
+    {
+        runtimeInputFormatterHandles.insert_or_assign(operatorId, runtimeHandle);
+    }
+
+    [[nodiscard]] void* getRuntimeInputFormatterHandle(const uint64_t operatorId) const override
+    {
+        const auto handleIterator = runtimeInputFormatterHandles.find(operatorId);
+        return handleIterator == runtimeInputFormatterHandles.end() ? nullptr : handleIterator->second;
+    }
+
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
 
     WorkerThreadId workerThreadId;
@@ -117,6 +128,7 @@ private:
     std::function<void()> repeatTaskCallback;
     std::shared_ptr<AbstractBufferProvider> bufferManager;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::unordered_map<uint64_t, void*> runtimeInputFormatterHandles;
     /// Different threads have different TestPipelineExecutionContexts. All threads share the same pointer to the result buffers.
     /// Each thread writes its own results in a dedicated slot. This keeps results in a single place and does not require awkward logic
     /// to get the result buffers out of the TestPipelineExecutionContexts.
