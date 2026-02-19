@@ -1,0 +1,1120 @@
+diff --git a/nautilus/src/nautilus/compiler/JITCompiler.cpp b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+index a9e8b9b..01e8078 100644
+--- a/nautilus/src/nautilus/compiler/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+@@ -6,15 +6,29 @@
+ #include "nautilus/exceptions/RuntimeException.hpp"
+ #include "nautilus/logging.hpp"
+ #include <chrono>
++#include <cerrno>
++#include <cstdint>
++#include <cstdlib>
++#include <dlfcn.h>
++#include <filesystem>
++#include <fstream>
+ #include <fmt/chrono.h>
+ #include <fmt/core.h>
+ #include <iomanip>
++#include <link.h>
++#include <optional>
+ #include <random>
+ #include <sstream>
+ #include <string>
++#include <string_view>
++#include <thread>
++#include <unordered_set>
++#include <vector>
+ 
+ #ifdef ENABLE_COMPILER
+ 
++#include "nautilus/compiler/ir/operations/ConstPtrOperation.hpp"
++#include "nautilus/compiler/ir/operations/FunctionOperation.hpp"
+ #include "nautilus/compiler/ir/util/GraphVizUtil.hpp"
+ #include "nautilus/tracing/TraceContext.hpp"
+ #include "nautilus/tracing/phases/SSACreationPhase.hpp"
+@@ -23,6 +37,302 @@
+ 
+ namespace nautilus::compiler {
+ 
++#if defined(ENABLE_COMPILER) && defined(ENABLE_TRACING)
++namespace {
++constexpr uint64_t kFNV1a64OffsetBasis = 1469598103934665603ULL;
++constexpr uint64_t kFNV1a64Prime = 1099511628211ULL;
++
++uint64_t fnv1a64Append(uint64_t hash, std::string_view data) {
++	for (const unsigned char c : data) {
++		hash ^= static_cast<uint64_t>(c);
++		hash *= kFNV1a64Prime;
++	}
++	return hash;
++}
++
++std::string hex64(uint64_t value) {
++	std::ostringstream ss;
++	ss << std::hex << std::setw(16) << std::setfill('0') << value;
++	return ss.str();
++}
++
++void appendCompilationBackendOptionsToHash(uint64_t& hash, std::string_view backendName, const engine::Options& options) {
++	hash = fnv1a64Append(hash, backendName);
++	hash = fnv1a64Append(hash, "\nmt=");
++	hash = fnv1a64Append(hash, options.getOptionOrDefault("mlir.enableMultithreading", true) ? "1" : "0");
++	hash = fnv1a64Append(hash, "\nintr=");
++	hash = fnv1a64Append(hash, options.getOptionOrDefault("mlir.enableIntrinsics", true) ? "1" : "0");
++	hash = fnv1a64Append(hash, "\ninline=");
++	hash = fnv1a64Append(hash, options.getOptionOrDefault("mlir.inline_invoke_calls", false) ? "1" : "0");
++	hash = fnv1a64Append(hash, "\n");
++}
++
++std::filesystem::path getBlobSymbolMapPath(const std::filesystem::path& blobPath) {
++	auto symbolMapPath = blobPath;
++	symbolMapPath += ".sym";
++	return symbolMapPath;
++}
++
++void setBlobLoadOptions(engine::Options& options, const std::filesystem::path& blobPath) {
++	options.setOption("engine.Blob.Mode", std::string("load"));
++	options.setOption("engine.Blob.Path", blobPath.string());
++	options.setOption("engine.Blob.SymbolMapPath", getBlobSymbolMapPath(blobPath).string());
++	options.setOption("engine.Blob.ConstPtrRelocationPath", std::string {});
++}
++
++void setBlobEmitOptions(engine::Options& options, const std::filesystem::path& blobPath) {
++	options.setOption("engine.Blob.Mode", std::string("emit"));
++	options.setOption("engine.Blob.Path", blobPath.string());
++	options.setOption("engine.Blob.SymbolMapPath", getBlobSymbolMapPath(blobPath).string());
++	options.setOption("engine.Blob.ConstPtrRelocationPath", std::string {});
++}
++
++enum class BlobCacheKeyMode { PointerSensitive, Stable };
++
++BlobCacheKeyMode parseBlobCacheKeyMode(const engine::Options& options) {
++	const auto mode = options.getOptionOrDefault<std::string>("engine.Blob.CacheKeyMode", std::string("ptr_sensitive"));
++	if (mode == "stable") {
++		return BlobCacheKeyMode::Stable;
++	}
++	return BlobCacheKeyMode::PointerSensitive;
++}
++
++std::string_view getBlobCacheFormatVersion(const BlobCacheKeyMode mode) {
++	if (mode == BlobCacheKeyMode::Stable) {
++		return "nautilus.mlirbc.cache.v3.stable\n";
++	}
++	return "nautilus.mlirbc.cache.v3.ptr_sensitive\n";
++}
++
++std::filesystem::path getBlobCachePathForExplicitKey(const std::filesystem::path& cacheRoot,
++                                                     std::string_view backendName,
++                                                     const engine::Options& options,
++                                                     std::string_view cacheKey,
++                                                     std::string_view functionTypeName) {
++	uint64_t hash = kFNV1a64OffsetBasis;
++	hash = fnv1a64Append(hash, "nautilus.mlirbc.cache.v5.explicit\n");
++	appendCompilationBackendOptionsToHash(hash, backendName, options);
++	hash = fnv1a64Append(hash, cacheKey);
++	hash = fnv1a64Append(hash, "\nfn_type=");
++	hash = fnv1a64Append(hash, functionTypeName);
++	return cacheRoot / (hex64(hash) + ".mlirbc");
++}
++
++constexpr std::string_view kBlobConstPtrRelocationVersion = "nautilus.mlirbc.constptr.v1";
++
++struct ConstPtrRelocationEntry {
++	uint64_t pointerValue;
++	std::string modulePath;
++	uint64_t moduleOffset = 0;
++	bool relocatable = false;
++};
++
++enum class ConstPtrRelocationMetadataState {
++	MissingOrInvalid,
++	ContainsNonRelocatablePointers,
++	AllPointersRelocatable,
++};
++
++std::filesystem::path getBlobConstPtrRelocationMetadataPath(const std::filesystem::path& blobPath) {
++	auto metadataPath = blobPath;
++	metadataPath += ".constptrmap";
++	return metadataPath;
++}
++
++std::string normalizeModulePath(std::string modulePath) {
++	if (modulePath.empty()) {
++		return modulePath;
++	}
++	std::error_code ec;
++	std::filesystem::path path(modulePath);
++	if (path.is_relative()) {
++		path = std::filesystem::absolute(path, ec);
++		ec.clear();
++	}
++	const auto canonicalPath = std::filesystem::weakly_canonical(path, ec);
++	if (!ec) {
++		return canonicalPath.string();
++	}
++	return path.lexically_normal().string();
++}
++
++std::string toHexUint64(const uint64_t value) {
++	std::ostringstream ss;
++	ss << "0x" << std::hex << value;
++	return ss.str();
++}
++
++bool tryParseHexUint64(std::string_view text, uint64_t& value) {
++	if (text.empty()) {
++		return false;
++	}
++	std::string owned(text);
++	char* end = nullptr;
++	errno = 0;
++	const auto parsed = std::strtoull(owned.c_str(), &end, 0);
++	if (errno != 0 || end == owned.c_str() || *end != '\0') {
++		return false;
++	}
++	value = parsed;
++	return true;
++}
++
++bool tryGetAddressModuleInfo(void* address, std::string& modulePath, uint64_t& moduleOffset) {
++	Dl_info info {};
++	if (dladdr(address, &info) == 0 || info.dli_fbase == nullptr || info.dli_fname == nullptr || info.dli_fname[0] == '\0') {
++		return false;
++	}
++	const auto moduleBaseAddress = reinterpret_cast<uintptr_t>(info.dli_fbase);
++	const auto symbolAddress = reinterpret_cast<uintptr_t>(address);
++	if (symbolAddress < moduleBaseAddress) {
++		return false;
++	}
++	modulePath = normalizeModulePath(info.dli_fname);
++	moduleOffset = symbolAddress - moduleBaseAddress;
++	return true;
++}
++
++std::vector<ConstPtrRelocationEntry> collectConstPtrRelocationEntries(const std::shared_ptr<ir::IRGraph>& irGraph) {
++	std::vector<ConstPtrRelocationEntry> entries;
++	std::unordered_set<uint64_t> seenPointers;
++	const auto& rootOperation = irGraph->getRootOperation();
++	for (const auto& basicBlock : rootOperation.getBasicBlocks()) {
++		for (const auto& operation : basicBlock->getOperations()) {
++			if (const auto* constPtrOp = operation->dynCast<ir::ConstPtrOperation>()) {
++				const auto pointerValue = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(constPtrOp->getValue()));
++				if (!seenPointers.emplace(pointerValue).second) {
++					continue;
++				}
++				if (pointerValue == 0) {
++					continue;
++				}
++				ConstPtrRelocationEntry entry {pointerValue, {}, 0, false};
++				std::string modulePath;
++				uint64_t moduleOffset = 0;
++				if (tryGetAddressModuleInfo(constPtrOp->getValue(), modulePath, moduleOffset)
++				    && modulePath.find('\t') == std::string::npos
++				    && modulePath.find('\n') == std::string::npos
++				    && modulePath.find('\r') == std::string::npos) {
++					entry.modulePath = std::move(modulePath);
++					entry.moduleOffset = moduleOffset;
++					entry.relocatable = true;
++				}
++				entries.emplace_back(std::move(entry));
++			}
++		}
++	}
++	return entries;
++}
++
++void writeBlobConstPtrRelocationMetadata(const std::filesystem::path& blobPath,
++                                         const std::vector<ConstPtrRelocationEntry>& relocationEntries) {
++	const auto metadataPath = getBlobConstPtrRelocationMetadataPath(blobPath);
++	const auto metadataDir = metadataPath.parent_path();
++	if (!metadataDir.empty()) {
++		std::error_code ec;
++		std::filesystem::create_directories(metadataDir, ec);
++	}
++
++	auto tmpPath = metadataPath;
++	const auto uniqueSuffix =
++	    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "."
++	    + std::to_string(std::hash<std::thread::id> {}(std::this_thread::get_id()));
++	tmpPath += ".tmp." + uniqueSuffix;
++
++	std::ofstream output(tmpPath.string(), std::ios::binary);
++	if (!output.is_open()) {
++		return;
++	}
++	output << kBlobConstPtrRelocationVersion << "\n";
++	for (const auto& entry : relocationEntries) {
++		output << toHexUint64(entry.pointerValue) << "\t";
++		if (entry.relocatable) {
++			output << entry.modulePath << "\t" << toHexUint64(entry.moduleOffset) << "\n";
++		} else {
++			output << "-\t-\n";
++		}
++	}
++	if (!output.good()) {
++		output.close();
++		std::error_code cleanupEc;
++		std::filesystem::remove(tmpPath, cleanupEc);
++		return;
++	}
++	output.close();
++
++	std::error_code renameEc;
++	std::filesystem::rename(tmpPath, metadataPath, renameEc);
++	if (renameEc) {
++		std::error_code cleanupEc;
++		std::filesystem::remove(tmpPath, cleanupEc);
++	}
++}
++
++ConstPtrRelocationMetadataState evaluateConstPtrRelocationMetadata(const std::filesystem::path& blobPath,
++                                                                   std::filesystem::path& metadataPath) {
++	metadataPath = getBlobConstPtrRelocationMetadataPath(blobPath);
++	if (!std::filesystem::exists(metadataPath)) {
++		return ConstPtrRelocationMetadataState::MissingOrInvalid;
++	}
++
++	std::ifstream input(metadataPath.string(), std::ios::binary);
++	if (!input.is_open()) {
++		return ConstPtrRelocationMetadataState::MissingOrInvalid;
++	}
++
++	std::string versionLine;
++	if (!std::getline(input, versionLine) || versionLine != kBlobConstPtrRelocationVersion) {
++		return ConstPtrRelocationMetadataState::MissingOrInvalid;
++	}
++
++	std::string line;
++	while (std::getline(input, line)) {
++		if (line.empty()) {
++			continue;
++		}
++		const auto firstSeparatorPos = line.find('\t');
++		const auto secondSeparatorPos
++		    = firstSeparatorPos == std::string::npos ? std::string::npos : line.find('\t', firstSeparatorPos + 1);
++		if (firstSeparatorPos == std::string::npos || secondSeparatorPos == std::string::npos
++		    || line.find('\t', secondSeparatorPos + 1) != std::string::npos) {
++			return ConstPtrRelocationMetadataState::MissingOrInvalid;
++		}
++		const std::string_view lineView(line);
++		const auto pointerHex = lineView.substr(0, firstSeparatorPos);
++		const auto modulePath = lineView.substr(firstSeparatorPos + 1, secondSeparatorPos - firstSeparatorPos - 1);
++		const auto moduleOffsetHex = lineView.substr(secondSeparatorPos + 1);
++		uint64_t pointerValue = 0;
++		if (!tryParseHexUint64(pointerHex, pointerValue)) {
++			return ConstPtrRelocationMetadataState::MissingOrInvalid;
++		}
++		if (modulePath == "-" || moduleOffsetHex == "-") {
++			return ConstPtrRelocationMetadataState::ContainsNonRelocatablePointers;
++		}
++		uint64_t moduleOffset = 0;
++		if (!tryParseHexUint64(moduleOffsetHex, moduleOffset)) {
++			return ConstPtrRelocationMetadataState::MissingOrInvalid;
++		}
++		(void) pointerValue;
++		(void) moduleOffset;
++	}
++	return ConstPtrRelocationMetadataState::AllPointersRelocatable;
++}
++
++void fnv1a64AppendConstPointerLiterals(uint64_t& hash, const std::shared_ptr<ir::IRGraph>& irGraph) {
++	const auto& rootOperation = irGraph->getRootOperation();
++	for (const auto& basicBlock : rootOperation.getBasicBlocks()) {
++		for (const auto& operation : basicBlock->getOperations()) {
++			if (const auto* constPtrOp = operation->dynCast<ir::ConstPtrOperation>()) {
++				const auto ptrValue = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(constPtrOp->getValue()));
++				hash = fnv1a64Append(hash, "\nconst_ptr=");
++				hash = fnv1a64Append(hash, hex64(ptrValue));
++			}
++		}
++	}
++}
++} // namespace
++#endif
++
+ JITCompiler::JITCompiler() : options(), backends(CompilationBackendRegistry::getInstance()) {
+ }
+ 
+@@ -63,6 +373,47 @@ std::string createCompilationUnitID() {
+ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function function) const {
+ 	const CompilationUnitID compilationId = createCompilationUnitID();
+ 	auto dumpHandler = DumpHandler(options, compilationId);
++	engine::Options compileOptions = options;
++	const auto backendName = getName();
++	const auto backend = backends->getBackend(backendName);
++	const auto cacheDir = options.getOptionOrDefault<std::string>("engine.Blob.CacheDir", std::string {});
++	const auto blobMode = options.getOptionOrDefault<std::string>("engine.Blob.Mode", std::string("off"));
++	const bool cacheEnabled = (!cacheDir.empty() && blobMode == "off" && backendName == "mlir");
++	const auto explicitCacheKey = options.getOptionOrDefault<std::string>("engine.Blob.CacheKey", std::string {});
++	const auto explicitCacheFunctionTypeName = std::string(function.target_type().name());
++	std::optional<std::filesystem::path> explicitBlobPath;
++
++	if (cacheEnabled && !explicitCacheKey.empty()) {
++		std::error_code ec;
++		std::filesystem::path cacheRoot(cacheDir);
++		std::filesystem::create_directories(cacheRoot, ec);
++		if (!ec) {
++			auto blobPath =
++			    getBlobCachePathForExplicitKey(cacheRoot, backendName, options, explicitCacheKey, explicitCacheFunctionTypeName);
++			explicitBlobPath = blobPath;
++			if (std::filesystem::exists(blobPath)) {
++				std::filesystem::path constPtrRelocationMetadataPath;
++				const auto constPtrRelocationMetadataState =
++				    evaluateConstPtrRelocationMetadata(blobPath, constPtrRelocationMetadataPath);
++				setBlobLoadOptions(compileOptions, blobPath);
++				compileOptions.setOption(
++				    "engine.Blob.ConstPtrRelocationPath",
++				    constPtrRelocationMetadataState == ConstPtrRelocationMetadataState::AllPointersRelocatable
++				        ? constPtrRelocationMetadataPath.string()
++				        : std::string {});
++				try {
++					auto executable = backend->compile(std::shared_ptr<ir::IRGraph> {}, dumpHandler, compileOptions);
++					executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
++					return executable;
++				} catch (const std::exception&) {
++					setBlobEmitOptions(compileOptions, blobPath);
++				}
++			} else {
++				setBlobEmitOptions(compileOptions, blobPath);
++			}
++		}
++	}
++
+ 	// derive trace from function
+ 	auto executionTrace = tracing::TraceContext::trace(function, options);
+ 	dumpHandler.dump("after_tracing", "trace", [&]() { return executionTrace->toString(); });
+@@ -74,14 +425,52 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 	// get nautilus ir from trace
+ 	auto irGenerationPhase = tracing::TraceToIRConversionPhase();
+ 	const auto ir = irGenerationPhase.apply(std::move(afterSSA), compilationId);
+-	dumpHandler.dump("after_ir_creation", "ir", [&]() { return ir->toString(); });
++
++	const bool dumpAll = options.getOptionOrDefault("dump.all", false);
++
++	std::string irText;
++	if (cacheEnabled || dumpAll) {
++		irText = ir->toString();
++	}
++	std::vector<ConstPtrRelocationEntry> explicitBlobConstPtrRelocationEntries;
++	if (explicitBlobPath.has_value()) {
++		explicitBlobConstPtrRelocationEntries = collectConstPtrRelocationEntries(ir);
++	}
++
++	dumpHandler.dump("after_ir_creation", "ir", [&]() { return irText.empty() ? ir->toString() : irText; });
++
++	if (cacheEnabled && explicitCacheKey.empty()) {
++		std::error_code ec;
++		std::filesystem::path cacheRoot(cacheDir);
++		std::filesystem::create_directories(cacheRoot, ec);
++		if (!ec) {
++			const auto cacheKeyMode = parseBlobCacheKeyMode(options);
++			uint64_t hash = kFNV1a64OffsetBasis;
++			hash = fnv1a64Append(hash, getBlobCacheFormatVersion(cacheKeyMode));
++			appendCompilationBackendOptionsToHash(hash, backendName, options);
++			hash = fnv1a64Append(hash, irText.empty() ? ir->toString() : irText);
++			if (cacheKeyMode == BlobCacheKeyMode::PointerSensitive) {
++				fnv1a64AppendConstPointerLiterals(hash, ir);
++			}
++
++			auto blobPath = cacheRoot / (hex64(hash) + ".mlirbc");
++			if (std::filesystem::exists(blobPath)) {
++				setBlobLoadOptions(compileOptions, blobPath);
++			} else {
++				setBlobEmitOptions(compileOptions, blobPath);
++			}
++		}
++	}
++
+ 	if (options.getOptionOrDefault("dump.graph", false)) {
+ 		ir::createGraphVizFromIr(ir, options, dumpHandler);
+ 	}
+ 	// lower to backend
+-	const auto backendName = getName();
+-	const auto backend = backends->getBackend(backendName);
+-	auto executable = backend->compile(ir, dumpHandler, options);
++	auto executable = backend->compile(ir, dumpHandler, compileOptions);
++	if (explicitBlobPath.has_value()
++	    && compileOptions.getOptionOrDefault<std::string>("engine.Blob.Mode", std::string("off")) == "emit") {
++		writeBlobConstPtrRelocationMetadata(*explicitBlobPath, explicitBlobConstPtrRelocationEntries);
++	}
+ 	executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
+ 	return executable;
+ }
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+index 49542a7..d2f27c2 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
++++ b/nautilus/src/nautilus/compiler/backends/mlir/CMakeLists.txt
+@@ -19,6 +19,8 @@ if (ENABLE_MLIR_BACKEND)
+             PRIVATE
+             MLIRExecutionEngine
+             MLIRFuncAllExtensions
++            MLIRBytecodeReader
++            MLIRBytecodeWriter
+             # Dialects
+             MLIRMathToLLVM
+             MLIRFuncToLLVM
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index d1c5c38..0dbc751 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -6,11 +6,32 @@
+ #include "nautilus/compiler/backends/mlir/MLIRExecutable.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
+ #include "nautilus/compiler/backends/mlir/MLIRPassManager.hpp"
++#include "nautilus/compiler/backends/mlir/ProxyFunctions.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRAssumeIntrinsics.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRBackendIntrinsic.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMathIntrinsics.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
++#include <cstdint>
++#include <chrono>
++#include <cerrno>
++#include <cstdlib>
++#include <filesystem>
++#include <fstream>
++#include <functional>
++#include <dlfcn.h>
++#include <link.h>
++#include <sstream>
++#include <string>
++#include <string_view>
++#include <thread>
++#include <unordered_map>
++#include <llvm/ADT/SmallVector.h>
++#include <llvm/Support/DynamicLibrary.h>
++#include <llvm/Support/MemoryBuffer.h>
++#include <llvm/Support/raw_ostream.h>
++#include <mlir/Bytecode/BytecodeReader.h>
++#include <mlir/Bytecode/BytecodeWriter.h>
+ #include <mlir/Dialect/Arith/IR/Arith.h>
+ #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
+ #include <mlir/Dialect/Func/Extensions/AllExtensions.h>
+@@ -24,6 +45,427 @@
+ #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+ #include <mlir/Transforms/Inliner.h>
+ namespace nautilus::compiler::mlir {
++namespace {
++constexpr std::string_view kBlobSymbolMapVersion = "nautilus.mlirbc.sym.v2";
++constexpr std::string_view kBlobConstPtrRelocationVersion = "nautilus.mlirbc.constptr.v1";
++
++std::filesystem::path getBlobSymbolMapPath(const engine::Options& options, const std::string& blobPath) {
++	const auto explicitSymbolMapPath = options.getOptionOrDefault<std::string>("engine.Blob.SymbolMapPath", std::string {});
++	if (!explicitSymbolMapPath.empty()) {
++		return std::filesystem::path(explicitSymbolMapPath);
++	}
++	if (blobPath.empty()) {
++		return {};
++	}
++	auto defaultPath = std::filesystem::path(blobPath);
++	defaultPath += ".sym";
++	return defaultPath;
++}
++
++std::string toHexPointer(void* address) {
++	std::ostringstream ss;
++	ss << "0x" << std::hex << reinterpret_cast<uintptr_t>(address);
++	return ss.str();
++}
++
++std::string toHexUint64(const uint64_t value) {
++	std::ostringstream ss;
++	ss << "0x" << std::hex << value;
++	return ss.str();
++}
++
++std::string normalizeModulePath(std::string modulePath) {
++	if (modulePath.empty()) {
++		return modulePath;
++	}
++	std::error_code ec;
++	std::filesystem::path path(modulePath);
++	if (path.is_relative()) {
++		path = std::filesystem::absolute(path, ec);
++		ec.clear();
++	}
++	const auto canonicalPath = std::filesystem::weakly_canonical(path, ec);
++	if (!ec) {
++		return canonicalPath.string();
++	}
++	return path.lexically_normal().string();
++}
++
++bool tryParseHexPointer(std::string_view text, void*& address) {
++	if (text.empty()) {
++		return false;
++	}
++	std::string owned(text);
++	char* end = nullptr;
++	errno = 0;
++	const auto parsed = std::strtoull(owned.c_str(), &end, 16);
++	if (errno != 0 || end == owned.c_str() || *end != '\0') {
++		return false;
++	}
++	address = reinterpret_cast<void*>(static_cast<uintptr_t>(parsed));
++	return true;
++}
++
++bool tryParseHexUint64(std::string_view text, uint64_t& value) {
++	if (text.empty()) {
++		return false;
++	}
++	std::string owned(text);
++	char* end = nullptr;
++	errno = 0;
++	const auto parsed = std::strtoull(owned.c_str(), &end, 0);
++	if (errno != 0 || end == owned.c_str() || *end != '\0') {
++		return false;
++	}
++	value = parsed;
++	return true;
++}
++
++std::string getCurrentExecutablePath() {
++	std::error_code ec;
++	const auto executablePath = std::filesystem::read_symlink("/proc/self/exe", ec);
++	if (ec) {
++		return {};
++	}
++	return normalizeModulePath(executablePath.string());
++}
++
++bool tryGetAddressModuleInfo(void* address, std::string& modulePath, uint64_t& moduleOffset) {
++	Dl_info info {};
++	if (dladdr(address, &info) == 0 || info.dli_fbase == nullptr || info.dli_fname == nullptr || info.dli_fname[0] == '\0') {
++		return false;
++	}
++	const auto moduleBaseAddress = reinterpret_cast<uintptr_t>(info.dli_fbase);
++	const auto symbolAddress = reinterpret_cast<uintptr_t>(address);
++	if (symbolAddress < moduleBaseAddress) {
++		return false;
++	}
++	modulePath = normalizeModulePath(info.dli_fname);
++	moduleOffset = symbolAddress - moduleBaseAddress;
++	return true;
++}
++
++struct ModuleBaseLookupContext {
++	std::string modulePath;
++	std::string executablePath;
++	uintptr_t moduleBaseAddress = 0;
++	bool found = false;
++};
++
++int findModuleBaseAddress(struct dl_phdr_info* info, size_t, void* data) {
++	auto* context = reinterpret_cast<ModuleBaseLookupContext*>(data);
++	if (info == nullptr || context == nullptr) {
++		return 0;
++	}
++	std::string loadedModulePath;
++	if (info->dlpi_name != nullptr && info->dlpi_name[0] != '\0') {
++		loadedModulePath = info->dlpi_name;
++	} else {
++		loadedModulePath = context->executablePath;
++	}
++	loadedModulePath = normalizeModulePath(loadedModulePath);
++	if (!loadedModulePath.empty() && loadedModulePath == context->modulePath) {
++		context->moduleBaseAddress = info->dlpi_addr;
++		context->found = true;
++		return 1;
++	}
++	return 0;
++}
++
++bool tryResolveAddressFromModuleOffset(std::string_view modulePathText, std::string_view moduleOffsetText, void*& address) {
++	if (modulePathText.empty() || moduleOffsetText.empty()) {
++		return false;
++	}
++	std::string moduleOffset(moduleOffsetText);
++	char* end = nullptr;
++	errno = 0;
++	const auto parsedOffset = std::strtoull(moduleOffset.c_str(), &end, 0);
++	if (errno != 0 || end == moduleOffset.c_str() || *end != '\0') {
++		return false;
++	}
++	std::string modulePath = normalizeModulePath(std::string(modulePathText));
++	if (modulePath.empty()) {
++		return false;
++	}
++	(void) dlopen(modulePath.c_str(), RTLD_NOW | RTLD_LOCAL | RTLD_NOLOAD);
++	ModuleBaseLookupContext lookupContext {
++	    modulePath,
++	    getCurrentExecutablePath(),
++	};
++	(void) dl_iterate_phdr(findModuleBaseAddress, &lookupContext);
++	if (!lookupContext.found) {
++		return false;
++	}
++	address = reinterpret_cast<void*>(lookupContext.moduleBaseAddress + static_cast<uintptr_t>(parsedOffset));
++	return true;
++}
++
++void* resolveSymbolAddress(const std::string& symbolName, NES::ProxyFunctions& proxyFunctions) {
++	void* address = nullptr;
++	if (tryParseHexPointer(symbolName, address)) {
++		return address;
++	}
++	try {
++		address = llvm::sys::DynamicLibrary::SearchForAddressOfSymbol(symbolName);
++	} catch (...) {
++		address = nullptr;
++	}
++	if (address == nullptr) {
++		address = proxyFunctions.getProxyFunctionAddress(symbolName);
++	}
++	return address;
++}
++
++bool tryLoadBlobSymbolMap(const std::filesystem::path& symbolMapPath, std::vector<std::string>& symbols, std::vector<void*>& addresses) {
++	if (symbolMapPath.empty() || !std::filesystem::exists(symbolMapPath)) {
++		return false;
++	}
++
++	std::ifstream input(symbolMapPath.string());
++	if (!input.is_open()) {
++		return false;
++	}
++
++	std::string versionLine;
++	if (!std::getline(input, versionLine)) {
++		return false;
++	}
++	if (versionLine != kBlobSymbolMapVersion) {
++		return false;
++	}
++
++	NES::ProxyFunctions proxyFunctions;
++	try {
++		(void) llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
++	} catch (...) {
++	}
++
++	std::vector<std::string> loadedSymbols;
++	std::vector<void*> loadedAddresses;
++	std::string line;
++	while (std::getline(input, line)) {
++		if (line.empty()) {
++			continue;
++		}
++		const auto firstSeparatorPos = line.find('\t');
++		if (firstSeparatorPos == std::string::npos) {
++			return false;
++		}
++		const auto secondSeparatorPos = line.find('\t', firstSeparatorPos + 1);
++		const auto thirdSeparatorPos = secondSeparatorPos == std::string::npos ? std::string::npos : line.find('\t', secondSeparatorPos + 1);
++		if (thirdSeparatorPos != std::string::npos && line.find('\t', thirdSeparatorPos + 1) != std::string::npos) {
++			return false;
++		}
++		const std::string_view lineView(line);
++		const auto symbolName = lineView.substr(0, firstSeparatorPos);
++		std::string_view fallbackAddressHex;
++		std::string_view modulePath;
++		std::string_view moduleOffsetHex;
++		if (secondSeparatorPos == std::string::npos) {
++			fallbackAddressHex = lineView.substr(firstSeparatorPos + 1);
++		} else {
++			fallbackAddressHex = lineView.substr(firstSeparatorPos + 1, secondSeparatorPos - firstSeparatorPos - 1);
++			if (thirdSeparatorPos == std::string::npos) {
++				return false;
++			}
++			modulePath = lineView.substr(secondSeparatorPos + 1, thirdSeparatorPos - secondSeparatorPos - 1);
++			moduleOffsetHex = lineView.substr(thirdSeparatorPos + 1);
++		}
++		void* resolvedAddress = nullptr;
++		void* parsedPointerSymbol = nullptr;
++		const bool isPointerSymbol = tryParseHexPointer(symbolName, parsedPointerSymbol);
++		const bool hasModuleLocation = !modulePath.empty() && !moduleOffsetHex.empty();
++		if (isPointerSymbol) {
++			if (!hasModuleLocation || !tryResolveAddressFromModuleOffset(modulePath, moduleOffsetHex, resolvedAddress)) {
++				return false;
++			}
++		} else {
++			if (hasModuleLocation) {
++				(void) tryResolveAddressFromModuleOffset(modulePath, moduleOffsetHex, resolvedAddress);
++			}
++			if (resolvedAddress == nullptr) {
++				resolvedAddress = resolveSymbolAddress(std::string(symbolName), proxyFunctions);
++			}
++			if (resolvedAddress == nullptr && !hasModuleLocation && !fallbackAddressHex.empty()) {
++				(void) tryParseHexPointer(fallbackAddressHex, resolvedAddress);
++			}
++			if (resolvedAddress == nullptr) {
++				return false;
++			}
++		}
++
++		loadedSymbols.emplace_back(symbolName);
++		loadedAddresses.emplace_back(resolvedAddress);
++	}
++
++	symbols = std::move(loadedSymbols);
++	addresses = std::move(loadedAddresses);
++	return true;
++}
++
++bool tryLoadBlobConstPtrRelocationMap(const std::filesystem::path& relocationPath,
++                                      std::unordered_map<uint64_t, uint64_t>& relocations) {
++	if (relocationPath.empty() || !std::filesystem::exists(relocationPath)) {
++		return false;
++	}
++
++	std::ifstream input(relocationPath.string());
++	if (!input.is_open()) {
++		return false;
++	}
++
++	std::string versionLine;
++	if (!std::getline(input, versionLine)) {
++		return false;
++	}
++	if (versionLine != kBlobConstPtrRelocationVersion) {
++		return false;
++	}
++
++	std::unordered_map<uint64_t, uint64_t> loadedRelocations;
++	std::string line;
++	while (std::getline(input, line)) {
++		if (line.empty()) {
++			continue;
++		}
++		const auto firstSeparatorPos = line.find('\t');
++		const auto secondSeparatorPos
++		    = firstSeparatorPos == std::string::npos ? std::string::npos : line.find('\t', firstSeparatorPos + 1);
++		if (firstSeparatorPos == std::string::npos || secondSeparatorPos == std::string::npos
++		    || line.find('\t', secondSeparatorPos + 1) != std::string::npos) {
++			return false;
++		}
++
++		const std::string_view lineView(line);
++		const auto pointerHex = lineView.substr(0, firstSeparatorPos);
++		const auto modulePath = lineView.substr(firstSeparatorPos + 1, secondSeparatorPos - firstSeparatorPos - 1);
++		const auto moduleOffsetHex = lineView.substr(secondSeparatorPos + 1);
++		uint64_t pointerValue = 0;
++		if (!tryParseHexUint64(pointerHex, pointerValue)) {
++			return false;
++		}
++		if (modulePath == std::string_view("-") || moduleOffsetHex == std::string_view("-")) {
++			if (pointerValue == 0) {
++				continue;
++			}
++			return false;
++		}
++
++		void* relocatedAddress = nullptr;
++		if (!tryResolveAddressFromModuleOffset(modulePath, moduleOffsetHex, relocatedAddress) || relocatedAddress == nullptr) {
++			return false;
++		}
++
++		const auto relocatedPointerValue = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(relocatedAddress));
++		const auto [it, inserted] = loadedRelocations.emplace(pointerValue, relocatedPointerValue);
++		if (!inserted && it->second != relocatedPointerValue) {
++			return false;
++		}
++	}
++
++	relocations = std::move(loadedRelocations);
++	return true;
++}
++
++bool tryApplyBlobConstPtrRelocations(::mlir::ModuleOp module, const std::unordered_map<uint64_t, uint64_t>& relocations) {
++	bool matchedAnyPointerLiteral = false;
++	for (auto intToPtrOp : module.getOps<::mlir::LLVM::IntToPtrOp>()) {
++		if (intToPtrOp->getNumOperands() != 1) {
++			continue;
++		}
++		auto sourceValue = intToPtrOp->getOperand(0);
++		auto sourceConstantOp = sourceValue.getDefiningOp<::mlir::arith::ConstantOp>();
++		if (!sourceConstantOp) {
++			continue;
++		}
++		auto sourceIntegerAttr = llvm::dyn_cast<::mlir::IntegerAttr>(sourceConstantOp.getValue());
++		if (!sourceIntegerAttr || sourceIntegerAttr.getType().getIntOrFloatBitWidth() != 64) {
++			continue;
++		}
++
++		const auto oldPointerValue = sourceIntegerAttr.getValue().getZExtValue();
++		if (oldPointerValue == 0) {
++			continue;
++		}
++		const auto relocationIt = relocations.find(oldPointerValue);
++		if (relocationIt == relocations.end()) {
++			continue;
++		}
++		matchedAnyPointerLiteral = true;
++
++		const auto relocatedPointerValue = relocationIt->second;
++		if (relocatedPointerValue == oldPointerValue) {
++			continue;
++		}
++
++		::mlir::OpBuilder builder(intToPtrOp);
++		builder.setInsertionPoint(intToPtrOp);
++		auto relocatedPointerConstant = builder.create<::mlir::arith::ConstantOp>(
++		    intToPtrOp.getLoc(),
++		    builder.getI64Type(),
++		    builder.getIntegerAttr(builder.getI64Type(), static_cast<int64_t>(relocatedPointerValue)));
++		intToPtrOp->setOperand(0, relocatedPointerConstant);
++	}
++
++	return relocations.empty() || matchedAnyPointerLiteral;
++}
++
++void writeBlobSymbolMap(const std::filesystem::path& symbolMapPath,
++                        const std::vector<std::string>& symbols,
++                        const std::vector<void*>& addresses) {
++	if (symbolMapPath.empty()) {
++		return;
++	}
++	if (symbols.size() != addresses.size()) {
++		throw RuntimeException("Mismatch between symbol and address vector sizes while writing symbol cache");
++	}
++
++	const auto symbolMapDir = symbolMapPath.parent_path();
++	if (!symbolMapDir.empty()) {
++		std::error_code ec;
++		std::filesystem::create_directories(symbolMapDir, ec);
++	}
++
++	auto tmpPath = symbolMapPath;
++	const auto uniqueSuffix =
++	    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "."
++	    + std::to_string(std::hash<std::thread::id> {}(std::this_thread::get_id()));
++	tmpPath += ".tmp." + uniqueSuffix;
++
++	std::ofstream out(tmpPath.string(), std::ios::binary);
++	if (!out.is_open()) {
++		throw RuntimeException("Failed to open symbol cache file for writing: " + tmpPath.string());
++	}
++	out << kBlobSymbolMapVersion << "\n";
++	for (size_t i = 0; i < symbols.size(); ++i) {
++		std::string modulePath;
++		uint64_t moduleOffset = 0;
++		if (tryGetAddressModuleInfo(addresses[i], modulePath, moduleOffset)
++		    && modulePath.find('\t') == std::string::npos
++		    && modulePath.find('\n') == std::string::npos
++		    && modulePath.find('\r') == std::string::npos) {
++			out << symbols[i] << "\t" << toHexPointer(addresses[i]) << "\t" << modulePath << "\t" << toHexUint64(moduleOffset) << "\n";
++			continue;
++		}
++		out << symbols[i] << "\t" << toHexPointer(addresses[i]) << "\n";
++	}
++	if (!out.good()) {
++		throw RuntimeException("Failed to write symbol cache file: " + tmpPath.string());
++	}
++	out.close();
++
++	std::error_code renameEc;
++	std::filesystem::rename(tmpPath, symbolMapPath, renameEc);
++	if (renameEc) {
++		if (std::filesystem::exists(symbolMapPath)) {
++			std::error_code cleanupEc;
++			std::filesystem::remove(tmpPath, cleanupEc);
++		} else {
++			throw RuntimeException("Failed to rename symbol cache file: " + renameEc.message());
++		}
++	}
++}
++} // namespace
+ 
+ MLIRCompilationBackend::MLIRCompilationBackend() {
+ 	// Initialize information about the local machine in LLVM.
+@@ -62,11 +504,107 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 		MLIRIntrinsicPluginRegistry::instance().registerAllIntrinsics(intrinsicManager);
+ 	}
+ 
+-	auto loweringProvider = std::make_unique<MLIRLoweringProvider>(context, options, intrinsicManager);
+-	auto mlirModule = loweringProvider->generateModuleFromIR(ir);
+-	if (*mlirModule == nullptr) {
+-		throw RuntimeException("verification of MLIR module failed!");
+-	};
++	std::vector<std::string> jitProxyFunctionSymbols;
++	std::vector<void*> jitProxyTargetAddresses;
++
++	std::string blobMode = options.getOptionOrDefault<std::string>("engine.Blob.Mode", std::string("off"));
++	const std::string blobPath = options.getOptionOrDefault<std::string>("engine.Blob.Path", std::string {});
++	const auto blobSymbolMapPath = getBlobSymbolMapPath(options, blobPath);
++	const auto blobConstPtrRelocationPath =
++	    options.getOptionOrDefault<std::string>("engine.Blob.ConstPtrRelocationPath", std::string {});
++
++	::mlir::OwningOpRef<::mlir::ModuleOp> mlirModule;
++	bool loadedFromBlob = false;
++	bool symbolMapLoadedFromFile = false;
++
++	if (blobMode == "load") {
++		if (blobPath.empty()) {
++			throw RuntimeException("engine.Blob.Path must be set when engine.Blob.Mode=load");
++			}
++			try {
++				auto bufferOrErr = llvm::MemoryBuffer::getFile(blobPath);
++				if (!bufferOrErr) {
++					throw RuntimeException("Failed to open MLIR bytecode file: " + blobPath);
++				}
++				auto bufferRef = (*bufferOrErr)->getMemBufferRef();
++
++				::mlir::ParserConfig pconfig(&context);
++				::mlir::Block tmpBlock;
++				if (failed(::mlir::readBytecodeFile(bufferRef, &tmpBlock, pconfig))) {
++				throw RuntimeException("Failed to read MLIR bytecode from: " + blobPath);
++			}
++			if (tmpBlock.getOperations().size() != 1) {
++				throw RuntimeException("Invalid MLIR bytecode: expected a single top-level operation");
++			}
++
++			auto moduleOp = llvm::dyn_cast<::mlir::ModuleOp>(&tmpBlock.front());
++			if (!moduleOp) {
++				throw RuntimeException("Loaded bytecode root op is not an MLIR ModuleOp: " + blobPath);
++			}
++			tmpBlock.front().remove();
++			mlirModule = moduleOp;
++			loadedFromBlob = true;
++			if (!blobConstPtrRelocationPath.empty()) {
++				std::unordered_map<uint64_t, uint64_t> constPtrRelocations;
++				if (!tryLoadBlobConstPtrRelocationMap(blobConstPtrRelocationPath, constPtrRelocations)
++				    || !tryApplyBlobConstPtrRelocations(*mlirModule, constPtrRelocations)) {
++					throw RuntimeException(
++					    "Failed to apply const-pointer relocation for blob load: " + blobConstPtrRelocationPath);
++				}
++			}
++
++			symbolMapLoadedFromFile = tryLoadBlobSymbolMap(blobSymbolMapPath, jitProxyFunctionSymbols, jitProxyTargetAddresses);
++			if (!symbolMapLoadedFromFile && ir == nullptr) {
++				throw RuntimeException("No symbol map available for blob load without tracing: " + blobSymbolMapPath.string());
++			}
++
++			if (!symbolMapLoadedFromFile) {
++				NES::ProxyFunctions proxyFunctions;
++				try {
++					(void) llvm::sys::DynamicLibrary::LoadLibraryPermanently(nullptr);
++				} catch (...) {
++				}
++				for (auto fn : mlirModule->getOps<::mlir::LLVM::LLVMFuncOp>()) {
++					if (fn.getLinkage() != ::mlir::LLVM::Linkage::External) {
++						continue;
++					}
++					auto name = fn.getName().str();
++					if (void* addr = resolveSymbolAddress(name, proxyFunctions); addr != nullptr) {
++						jitProxyFunctionSymbols.emplace_back(name);
++						jitProxyTargetAddresses.emplace_back(addr);
++					}
++				}
++			}
++		} catch (...) {
++			if (ir == nullptr) {
++				throw;
++			}
++				// Fall back to regular compilation if the cache is missing or corrupted.
++				loadedFromBlob = false;
++				symbolMapLoadedFromFile = false;
++				jitProxyFunctionSymbols.clear();
++				jitProxyTargetAddresses.clear();
++				blobMode = blobPath.empty() ? std::string("off") : std::string("emit");
++			}
++	}
++
++	const bool shouldRebuildSymbolMapFromIR = loadedFromBlob && !symbolMapLoadedFromFile && ir != nullptr;
++	if (!loadedFromBlob || shouldRebuildSymbolMapFromIR) {
++		if (ir == nullptr) {
++			throw RuntimeException("No IR available for lowering");
++		}
++		auto loweringProvider = std::make_unique<MLIRLoweringProvider>(context, options, intrinsicManager);
++		auto loweredMlirModule = loweringProvider->generateModuleFromIR(ir);
++		if (*loweredMlirModule == nullptr) {
++			throw RuntimeException("verification of MLIR module failed!");
++		};
++		jitProxyFunctionSymbols = loweringProvider->getJitProxyFunctionSymbols();
++		jitProxyTargetAddresses = loweringProvider->getJitProxyTargetAddresses();
++
++		if (!loadedFromBlob) {
++			mlirModule = std::move(loweredMlirModule);
++		}
++	}
+ 
+ 	// 2.a dump MLIR to console or a file
+ 	dumpHandler.dump("after_mlir_generation", "mlir", [&]() {
+@@ -79,17 +617,71 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 
+ 	// 2.b Take the MLIR module from the MLIRLoweringProvider and apply lowering
+ 	// and optimization passes.
+-	if (mlir::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {})) {
+-		throw RuntimeException("Could not lower and optimize MLIR module.");
++	if (!loadedFromBlob) {
++		if (mlir::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {})) {
++			throw RuntimeException("Could not lower and optimize MLIR module.");
++		}
+ 	}
+ 
++	{
++			if (blobMode != "off" && blobMode != "emit" && blobMode != "load") {
++				throw RuntimeException("Unsupported engine.Blob.Mode: " + blobMode);
++			}
++			if (blobMode == "emit") {
++				if (blobPath.empty()) {
++					throw RuntimeException("engine.Blob.Mode=emit requires engine.Blob.Path");
++				}
++
++				llvm::SmallVector<char, 0> bytecodeBuffer;
++				llvm::raw_svector_ostream bytecodeStream(bytecodeBuffer);
++				if (failed(::mlir::writeBytecodeToFile(mlirModule->getOperation(), bytecodeStream))) {
++					throw RuntimeException("Failed to emit MLIR bytecode.");
++				}
++
++				auto blobPathFs = std::filesystem::path(blobPath);
++				auto blobDir = blobPathFs.parent_path();
++				if (!blobDir.empty()) {
++					std::error_code ec;
++					std::filesystem::create_directories(blobDir, ec);
++				}
++
++				auto tmpPath = blobPathFs;
++				const auto uniqueSuffix = std::to_string(std::chrono::steady_clock::now().time_since_epoch().count())
++				                          + "." + std::to_string(std::hash<std::thread::id> {}(std::this_thread::get_id()));
++				tmpPath += ".tmp." + uniqueSuffix;
++				std::ofstream out(tmpPath.string(), std::ios::binary);
++				if (!out.is_open()) {
++					throw RuntimeException("Failed to open engine.Blob.Path for writing: " + tmpPath.string());
++				}
++				out.write(bytecodeBuffer.data(), static_cast<std::streamsize>(bytecodeBuffer.size()));
++				if (!out.good()) {
++					throw RuntimeException("Failed to write MLIR bytecode to: " + tmpPath.string());
++				}
++				out.close();
++
++				std::error_code ec;
++				std::filesystem::rename(tmpPath, blobPathFs, ec);
++				if (ec) {
++					// Another thread/process may already have published the same cache artifact.
++					// If the final file exists, treat this as benign and clean up our temp file.
++					if (std::filesystem::exists(blobPathFs)) {
++						std::error_code cleanupEc;
++						std::filesystem::remove(tmpPath, cleanupEc);
++					} else {
++						throw RuntimeException("Failed to rename MLIR bytecode cache file: " + ec.message());
++					}
++				}
++
++				writeBlobSymbolMap(blobSymbolMapPath, jitProxyFunctionSymbols, jitProxyTargetAddresses);
++			}
++		}
++
+ 	// 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+ 	auto optPipeline = LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHandler);
+ 
+ 	// 4. JIT compile LLVM IR module and return engine that provides access
+ 	// compiled execute function.
+-	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+-	                                            loweringProvider->getJitProxyTargetAddresses(), options);
++	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, jitProxyFunctionSymbols, jitProxyTargetAddresses, options);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+ 		auto result = engine->lookupPacked("execute");
+ 		if (!result) {
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/ProxyFunctions.hpp b/nautilus/src/nautilus/compiler/backends/mlir/ProxyFunctions.hpp
+index 339b6a3..24629f9 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/ProxyFunctions.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/ProxyFunctions.hpp
+@@ -1,4 +1,6 @@
+ 
++#pragma once
++
+ #include <cstdint>
+ #include <cstdio>
+ #include <string>

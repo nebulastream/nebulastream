@@ -15,6 +15,8 @@
 
 #include <QueryCompiler.hpp>
 
+#include <CompilationCache.hpp>
+
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
@@ -30,8 +32,12 @@ namespace NES::QueryCompilation
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
     auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan.getPlan(), defaultQueryExecution);
+    auto compilationCache
+        = CompilationCache(CompilationCache::Settings{request->compilationCacheEnabled, std::move(request->compilationCacheDir)});
+    compilationCache.prepareForQuery(queryPlan);
+
+    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, &compilationCache);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }
