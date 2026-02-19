@@ -1,0 +1,43 @@
+# name: function/CaseWhen.test
+# description: Tests for the CASE WHEN function
+# groups: [Function, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE intersection(intersection_id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
+CREATE PHYSICAL SOURCE FOR intersection TYPE File;
+ATTACH INLINE
+1,0.5,true,false
+2,0.1,false,true
+3,0.9,false,false
+4,0.6,false,false
+5,0.3,false,false
+6,0.1,true,true
+7,0.9,false,true
+8,0.6,false,true
+9,0.3,false,true
+10,0.95,true,false
+
+CREATE SINK simple_signal(intersection.intersection_id INT32, signal VARSIZED) TYPE File;
+
+# Minimal conditional: single condition with default (two-way branch)
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED("STOP"),
+                   VARSIZED("GO"))
+       AS signal
+FROM intersection
+INTO simple_signal;
+----
+1,STOP
+2,GO
+3,GO
+4,GO
+5,GO
+6,STOP
+7,GO
+8,GO
+9,GO
+10,STOP
+
+# TODO: write a systest that exercises all five branches (emergency, pedestrian+low density, NO_TODO_CHECK
+#       high density, medium density, and default).
+#       hint1: create a new SINK with the appropriate schema
+#       hint2: make sure to test priority ordering when multiple conditions could match
