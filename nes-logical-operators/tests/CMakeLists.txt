@@ -17,3 +17,6 @@ function(add_nes_logical_operators_test)
 endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
+add_nes_logical_operators_test(conditional-logical-function-test "ConditionalLogicalFunctionTest.cpp")
+target_include_directories(conditional-logical-function-test PRIVATE ${PROJECT_SOURCE_DIR}/nes-plugins/Functions/ConditionalFunction)
+target_link_libraries(conditional-logical-function-test nes-logical-operators-registry)
