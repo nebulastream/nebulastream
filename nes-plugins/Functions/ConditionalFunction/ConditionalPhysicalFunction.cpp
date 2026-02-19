@@ -42,10 +42,13 @@ ConditionalPhysicalFunction::ConditionalPhysicalFunction(std::vector<PhysicalFun
 
 VarVal ConditionalPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    /**
-     * TODO: evaluate this function for an incoming record. NO_TODO_CHECK
-     *       hint: for primitive types, use nautilus::static_val<size_t> instead of size_t.
-     */
+    for (nautilus::static_val<size_t> i = 0; i < whenThenFns.size(); ++i)
+    {
+        if (whenThenFns.at(i).first.execute(record, arena))
+        {
+            return whenThenFns.at(i).second.execute(record, arena);
+        }
+    }
     return elseFn.execute(record, arena);
 }
 
