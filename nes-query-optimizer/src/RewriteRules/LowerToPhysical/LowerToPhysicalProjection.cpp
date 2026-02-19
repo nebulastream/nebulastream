@@ -62,7 +62,7 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
         if (NES::toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return NES::ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider, {}), inputSchema.getFieldNames());
         }
     }
     return NES::ScanPhysicalOperator(memoryProvider, inputSchema.getFieldNames());
@@ -86,7 +86,7 @@ RewriteRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proje
     auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan,
-        outputSchema,
+        inputSchema,
         outputSchema,
         memoryLayoutType,
         memoryLayoutType,

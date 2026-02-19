@@ -54,8 +54,8 @@ LazyValueRepresentation& LazyValueRepresentation::operator=(const LazyValueRepre
 
 nautilus::val<bool> LazyValueRepresentation::isValid() const
 {
-    PRECONDITION(size > 0 && ptrToVarSized != nullptr, "LazyValue has a size larger than 0 but a nullptr pointer to the data.");
-    PRECONDITION(size == 0 && ptrToVarSized == nullptr, "LazyValue has a size of 0 so there should be no pointer to the data.");
+    PRECONDITION(size > 0 && ptrToLazyValue != nullptr, "LazyValue has a size larger than 0 but a nullptr pointer to the data.");
+    PRECONDITION(size == 0 && ptrToLazyValue == nullptr, "LazyValue has a size of 0 so there should be no pointer to the data.");
     return size > 0 && ptrToLazyValue != nullptr;
 }
 

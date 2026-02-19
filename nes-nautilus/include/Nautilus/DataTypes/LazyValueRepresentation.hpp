@@ -18,12 +18,15 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <ostream>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
+template <typename T>
 class LazyValueRepresentation;
+
 nautilus::val<bool> operator==(const LazyValueRepresentation& lazyValue, const nautilus::val<bool>& other);
 nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValueRepresentation& lazyValue);
 
@@ -37,6 +40,7 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValue
 /// This still potentially saves us parsing operations, as some records might be filtered out already.
 /// Similarly, these values do not need to be "reverse-parsed" into their string format in the OutputFormatter, which especially saves parsing
 /// costs in stateless queries with only one intermediate pipeline between source and sink.
+template <typename T>
 class LazyValueRepresentation
 {
 public:
@@ -50,12 +54,10 @@ public:
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
     /// Converts the lazy value into a nautilus::val of the underlying type T.
     /// Use this method if parsing of the value becomes necessary at some point in the pipelines.
-    template <typename T>
     [[nodiscard]] nautilus::val<T> parseToInternalRepresentation();
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
-    friend nautilus::val<std::ostream>&
-    operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);
+    friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);
     friend nautilus::val<bool> operator==(const LazyValueRepresentation& lazyValue, const nautilus::val<bool>& other);
     friend nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValueRepresentation& lazyValue);
 

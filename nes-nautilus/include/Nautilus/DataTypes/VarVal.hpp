@@ -26,6 +26,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
@@ -121,6 +122,17 @@ public:
 
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
+
+    [[nodiscard]] nautilus::val<bool> isLazyValue() const
+    {
+        return std::visit(
+            []<typename T0>(T0&&) -> nautilus::val<bool>
+            {
+                using removedCVRefT0 = std::remove_cvref_t<T0>;
+                return std::is_same_v<removedCVRefT0, LazyValueRepresentation>;
+            },
+            value);
+    }
 
     template <typename T>
     VarVal customVisit(T t) const
