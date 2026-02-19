@@ -91,6 +91,9 @@ If loading fails, Nautilus falls back to recompiling.
 ## Caveats
 
 - The cache is intended for reuse within the same build of NebulaStream + Nautilus.
+- The cache key also includes a binary fingerprint derived from the current executable path, file size, and modification
+  time.
+  This avoids using stale artifacts produced by a different binary.
 - `typeid(...).name()` is implementation-defined and may change between compilers/standard libraries, which affects key
   stability.
 - The cache directory is not automatically cleaned; remove it to evict entries.
