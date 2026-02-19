@@ -48,17 +48,15 @@ HashMap* getHashJoinHashMapProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator)
+    const uint64_t keySize,
+    const uint64_t valueSize,
+    const uint64_t pageSize,
+    const uint64_t numberOfBuckets)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
-    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(),
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
+        operatorHandler->getNautilusCleanupExec(), keySize, valueSize, pageSize, numberOfBuckets};
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(
@@ -133,7 +131,10 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         timestamp,
         ctx.workerThreadId,
         nautilus::val<JoinBuildSideType>(joinBuildSide),
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+        nautilus::val<uint64_t>(hashMapOptions.keySize),
+        nautilus::val<uint64_t>(hashMapOptions.valueSize),
+        nautilus::val<uint64_t>(hashMapOptions.pageSize),
+        nautilus::val<uint64_t>(hashMapOptions.numberOfBuckets));
     ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
