@@ -88,6 +88,17 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
+        void setRuntimeInputFormatterHandle(const uint64_t operatorId, void* runtimeHandle) override
+        {
+            runtimeInputFormatterHandles.insert_or_assign(operatorId, runtimeHandle);
+        }
+
+        [[nodiscard]] void* getRuntimeInputFormatterHandle(const uint64_t operatorId) const override
+        {
+            const auto handleIterator = runtimeInputFormatterHandles.find(operatorId);
+            return handleIterator == runtimeInputFormatterHandles.end() ? nullptr : handleIterator->second;
+        }
+
         MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
@@ -99,6 +110,7 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+        std::unordered_map<uint64_t, void*> runtimeInputFormatterHandles;
     };
 
 public:

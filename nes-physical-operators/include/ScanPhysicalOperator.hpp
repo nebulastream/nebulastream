@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -30,9 +31,14 @@ namespace NES
 class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    explicit ScanPhysicalOperator(
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::vector<Record::RecordFieldIdentifier> projections,
+        uint64_t runtimeInputFormatterSlot = 1);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    [[nodiscard]] std::shared_ptr<TupleBufferRef> getBufferRef() const;
+    [[nodiscard]] uint64_t getRuntimeInputFormatterSlot() const;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
@@ -41,6 +47,7 @@ private:
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
     bool isRawScan = false;
+    uint64_t runtimeInputFormatterSlot = 1;
 
     void rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
 };

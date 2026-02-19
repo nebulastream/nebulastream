@@ -83,6 +83,8 @@ public:
     [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
     [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
+    [[nodiscard]] virtual void* getRuntimeInputFormatterHandle() const { return nullptr; }
+
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the recordBuffer, as we store variable sized data in a childbuffer and therefore, we need access
