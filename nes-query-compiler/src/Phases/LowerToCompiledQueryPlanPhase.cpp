@@ -14,15 +14,13 @@
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
-#include <algorithm>
+#include <CompilationCache.hpp>
+
 #include <memory>
-#include <optional>
 #include <ranges>
-#include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
-#include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -129,6 +127,11 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
             break;
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
+
+    if (compilationCache != nullptr)
+    {
+        compilationCache->configureEngineOptionsForPipeline(options, pipeline);
+    }
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
@@ -156,6 +159,10 @@ std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperat
 std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
 {
     this->pipelineQueryPlan = pipelineQueryPlan;
+    if (compilationCache != nullptr)
+    {
+        compilationCache->resetPipelineOrdinals();
+    }
 
     /// Process all pipelines recursively.
     for (auto sourcePipelines = pipelineQueryPlan->getSourcePipelines(); const auto& pipeline : sourcePipelines)

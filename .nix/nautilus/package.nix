@@ -64,6 +64,7 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
+      ./patches/0002-nautilus-compilation-cache.patch
     ];
 
     nativeBuildInputs = [
