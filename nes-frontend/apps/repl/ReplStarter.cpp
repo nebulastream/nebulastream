@@ -256,28 +256,14 @@ int main(int argc, char** argv)
         auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                           .value_or(NES::SingleNodeWorkerConfiguration{});
 
-        /// Derive a routable Host from the gRPC bind address.
-        /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
-        const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri.getValue();
-        const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
-        const auto dataAddr = singleNodeWorkerConfig.data.getValue();
-        const NES::WorkerConfig workerConfig{
-            .host = NES::Host(grpcAddr),
-            .data = dataAddr,
-            .maxOperators = NES::Capacity(NES::CapacityKind::Unlimited{}),
-            .downstream = {},
-            .config = singleNodeWorkerConfig,
-        };
-        workerCatalog->addWorker(workerConfig.host, workerConfig.data, workerConfig.maxOperators, workerConfig.downstream);
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
+#ifdef EMBED_ENGINE
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost("localhost:9090")};
+        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost("localhost:9090")};
 #else
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
-        NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
+        NES::TopologyStatementHandler topologyStatementHandler{queryManager};
         auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);

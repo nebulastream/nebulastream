@@ -418,7 +418,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
         auto sourceConfigCopy = sourceConfig;
-        sourceConfigCopy.emplace("host", host);
+        sourceConfigCopy.emplace("host", "localhost:9090");
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
@@ -434,7 +434,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         }
 
         auto configCopy = config;
-        configCopy.emplace("host", host);
+        configCopy.emplace("host", "localhost:9090");
         statements.emplace_back(NES::CreateSinkStatement{
             .name = name, .sinkType = type, .schema = schema, .sinkConfig = configCopy, .formatConfig = parserConfig});
     }
@@ -515,6 +515,24 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
     std::cout << result.dump(4) << '\n';
 }
 
+NES::GrpcAddr grpcAddr{"localhost:8080"};
+
+NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse::ArgumentParser& program)
+{
+    if (program.is_used("-s"))
+    {
+        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(program.get("-s")), .config = {}});
+    }
+    /// NOLINTNEXTLINE(concurrency-mt-unsafe)
+    if (auto* env = std::getenv("NES_WORKER_GRPC_ADDR"))
+    {
+        NES_DEBUG("Found worker address in environment: {}", env);
+        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(env), .config = {}});
+    }
+
+    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = grpcAddr, .config = {}});
+}
+
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
@@ -538,7 +556,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
-    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
@@ -577,7 +595,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
-    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);

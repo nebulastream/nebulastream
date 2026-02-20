@@ -24,6 +24,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -56,7 +57,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     const auto lockedSinks = sinks.wlock();
     auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
 
-    /// TODO #1504: duplicate sinks are not registered
+    ///TODO: #1504 duplicate sinks are not registered
     lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
@@ -94,8 +95,8 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
         return std::nullopt;
     }
 
-    auto sinkDescriptor
-        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, host, formatConfig, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{
+        inlineSinkId.getRawValue(), schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

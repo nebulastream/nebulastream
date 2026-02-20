@@ -29,11 +29,13 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
+#include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>

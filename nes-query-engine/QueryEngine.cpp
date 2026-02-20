@@ -308,7 +308,7 @@ struct DefaultPEC final : PipelineExecutionContext
 class ThreadPool : public WorkEmitter, public QueryLifetimeController
 {
 public:
-    void addThread(Host workerId);
+    void addThread(Host host);
 
     bool emitWork(
         QueryId qid,
@@ -739,7 +739,7 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
-void ThreadPool::addThread(Host workerId)
+void ThreadPool::addThread(Host host)
 {
     pool.emplace_back(
         fmt::format("WorkerThread-{}", numberOfThreads_),
@@ -771,7 +771,7 @@ QueryEngine::QueryEngine(
     std::shared_ptr<QueryEngineStatisticListener> statListener,
     std::shared_ptr<AbstractQueryStatusListener> listener,
     std::shared_ptr<BufferManager> bm,
-    Host workerId)
+    Host host)
     : bufferManager(std::move(bm))
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
