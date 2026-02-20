@@ -18,6 +18,8 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -30,7 +32,11 @@
 namespace NES
 {
 MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : WindowAggregationLogicalFunction(field.getDataType(), field.getDataType(), field.getDataType(), field)
+    : WindowAggregationLogicalFunction(
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
+          field)
 {
 }
 
@@ -69,8 +75,9 @@ void MaxAggregationLogicalFunction::inferStamp(const Schema& schema)
         this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
-    this->setFinalAggregateStamp(this->getOnField().getDataType());
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()));
+    auto newFinalAggregationStamp = this->getOnField().getDataType();
+    this->setFinalAggregateStamp(newFinalAggregationStamp);
+    this->setAsField(this->getAsField().withDataType(newFinalAggregationStamp));
 }
 
 Reflected MaxAggregationLogicalFunction::reflect() const

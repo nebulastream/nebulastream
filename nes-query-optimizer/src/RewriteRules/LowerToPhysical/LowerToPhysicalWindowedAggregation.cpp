@@ -114,8 +114,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
     const auto& aggregationDescriptors = logicalOperator.getWindowAggregation();
     for (const auto& descriptor : aggregationDescriptors)
     {
-        auto physicalInputType = DataTypeProvider::provideDataType(descriptor->getInputStamp().type);
-        auto physicalFinalType = DataTypeProvider::provideDataType(descriptor->getFinalAggregateStamp().type);
+        auto physicalInputType = descriptor->getInputStamp();
+        auto physicalFinalType = descriptor->getFinalAggregateStamp();
 
         auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor->getOnField());
         const auto resultFieldIdentifier = descriptor->getAsField().getFieldName();
@@ -190,7 +190,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", nodeFunctionKey.getFieldName(), newInputSchema);
         }
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
-        keySize += DataTypeProvider::provideDataType(loweredFunctionType.type).getSizeInBytes();
+        keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto numberOfBuckets = conf.numberOfPartitions.getValue();

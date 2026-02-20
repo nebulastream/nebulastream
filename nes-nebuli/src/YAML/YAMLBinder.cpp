@@ -31,6 +31,7 @@
 #include <Sources/SourceCatalog.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <yaml-cpp/exceptions.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
@@ -39,13 +40,18 @@
 
 namespace
 {
-NES::DataType stringToFieldType(const std::string& fieldNodeType)
+NES::DataType stringToDataType(const std::string& fieldNodeType, const std::string& isNullableString)
 {
     try
     {
-        return NES::DataTypeProvider::provideDataType(fieldNodeType);
+        const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
+        if (not isNullable.has_value())
+        {
+            throw NES::QueryDescriptionNotParsable("Unknown nullable: {}", isNullableString);
+        }
+        return NES::DataTypeProvider::provideDataType(fieldNodeType, isNullable.value());
     }
-    catch (std::runtime_error& e)
+    catch (std::runtime_error&)
     {
         throw NES::SLTWrongSchema("Found invalid logical source configuration. {} is not a proper datatype.", fieldNodeType);
     }
@@ -61,7 +67,9 @@ struct convert<NES::CLI::SchemaField>
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
         rhs.name = node["name"].as<std::string>();
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        const auto nullableString = node["nullable"] ? node["nullable"].as<std::string>()
+                                                     : std::string{magic_enum::enum_name(NES::DataType::NULLABLE::IS_NULLABLE)};
+        rhs.type = stringToDataType(node["type"].as<std::string>(), nullableString);
         return true;
     }
 };
@@ -121,7 +129,8 @@ namespace NES::CLI
 {
 
 
-CLI::SchemaField::SchemaField(std::string name, const std::string& typeName) : SchemaField(std::move(name), stringToFieldType(typeName))
+CLI::SchemaField::SchemaField(std::string name, const std::string& typeName, const std::string& isNullable)
+    : SchemaField(std::move(name), stringToDataType(typeName, isNullable))
 {
 }
 

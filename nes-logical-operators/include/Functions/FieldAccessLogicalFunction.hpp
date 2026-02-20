@@ -94,7 +94,7 @@ namespace NES::detail
 struct ReflectedFieldAccessLogicalFunction
 {
     std::string fieldName;
-    DataType::Type dataType;
+    DataType dataType;
 };
 }
 

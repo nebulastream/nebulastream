@@ -3,7 +3,7 @@
 # groups: [Aggregation]
 
 
-CREATE LOGICAL SOURCE input(i UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE input(i UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR input TYPE File;
 ATTACH INLINE
 1,100
@@ -14,7 +14,7 @@ ATTACH INLINE
 2,325
 
 
-CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
+CREATE SINK out(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, input.i_count UINT64 NOT NULL, input.i_min UINT64 NOT NULL, input.i_max UINT64 NOT NULL, input.i_sum UINT64 NOT NULL, input.i_avg FLOAT64 NOT NULL, input.i_median FLOAT64 NOT NULL) TYPE File;
 
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
 FROM input WINDOW TUMBLING(timestamp, size 100 ms)

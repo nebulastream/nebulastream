@@ -2,7 +2,7 @@
 # description: Simple selection tests
 # groups: [Selection]
 
-CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -34,7 +34,7 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkWindow(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK sinkWindow(stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL)  TYPE File;
 
 # Filter equal
 SELECT * FROM stream WHERE value == UINT64(1) INTO sinkWindow;
