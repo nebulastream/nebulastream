@@ -19,6 +19,8 @@
 #include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
+#include <LegacyOptimizer/PredicatePushdown.hpp>
+#include <LegacyOptimizer/ProjectionPruning.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
@@ -39,6 +41,8 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
     constexpr auto originIdInferencePhase = OriginIdInferencePhase{};
     constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
     constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
+    constexpr auto predicatePushdown = PredicatePushdown{};
+    constexpr auto projectionPruning = ProjectionPruning{};
 
     inlineSinkBindingPhase.apply(newPlan);
     sinkBindingRule.apply(newPlan);
@@ -52,6 +56,12 @@ LogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
     redundantProjectionRemovalRule.apply(newPlan);
     NES_INFO("After Redundant Projection Removal:\n{}", newPlan);
+
+    predicatePushdown.apply(newPlan);
+    NES_INFO("After Predicate Pushdown:\n{}", newPlan);
+    projectionPruning.apply(newPlan);
+    NES_INFO("After Projection Pruning:\n{}", newPlan);
+    typeInference.apply(newPlan);
 
     originIdInferencePhase.apply(newPlan);
     typeInference.apply(newPlan);
