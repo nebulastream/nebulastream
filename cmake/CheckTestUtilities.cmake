@@ -12,7 +12,6 @@
 
 # Validate docker is available when ENABLE_DOCKER_TESTS is ON
 if (ENABLE_DOCKER_TESTS)
-    # Check if docker is available
     execute_process(
         COMMAND docker version
         RESULT_VARIABLE DOCKER_CHECK_RESULT
@@ -33,3 +32,23 @@ if (ENABLE_DOCKER_TESTS)
         message(STATUS "Docker tests enabled: using docker")
     endif()
 endif()
+
+# Check if bats is available for shell-based e2e tests
+find_program(BATS bats)
+if (BATS STREQUAL "BATS-NOTFOUND")
+    set(ENABLE_BATS_TESTS OFF CACHE BOOL "Runs testcases that require bats" FORCE)
+    message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
+else ()
+    set(ENABLE_BATS_TESTS ON CACHE BOOL "Runs testcases that require bats" FORCE)
+    message(STATUS "Bats tests enabled: using ${BATS}")
+endif ()
+
+# Check if expect is available for interactive e2e tests
+find_program(EXPECT expect)
+if (EXPECT STREQUAL "EXPECT-NOTFOUND")
+    set(ENABLE_EXPECT_TESTS OFF CACHE BOOL "Runs testcases that require expect" FORCE)
+    message(WARNING "Expect not found. Disabling Expect based e2e tests. You can install Expect via apt install expect")
+else ()
+    set(ENABLE_EXPECT_TESTS ON CACHE BOOL "Runs testcases that require expect" FORCE)
+    message(STATUS "Expect tests enabled: using ${EXPECT}")
+endif ()
