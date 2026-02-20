@@ -41,25 +41,11 @@ target_include_directories(nes-cli
 
 # These are E2E Tests for both the CLI tool and the repl.
 # Because the REPL has both a interactive and non-interactive mode, the REPL is tested in both ways.
-# We use bats to drive the non-interactive tests for the cli and repl and expect to drive the interactive test for the repl
-
+# We use bats to drive the non-interactive tests for the cli and repl and expect to drive the interactive test for the repl.
+# ENABLE_BATS_TESTS and ENABLE_EXPECT_TESTS are detected globally in cmake/CheckTestUtilities.cmake.
 # Tests are gated behind ENABLE_DOCKER_TESTS, which is now enabled by default.
 # These tests use docker CLI to run docker-compose from within the development container.
 # This also tests the embedded version of the repl, which does not require a docker compose setup.
-
-find_program(BATS bats)
-set(ENABLE_BATS_TESTS ON)
-if (${BATS} STREQUAL BATS-NOTFOUND)
-    set(ENABLE_BATS_TESTS OFF)
-    message(WARNING "Bats not found. Disabling Bats based e2e tests. You can install Bats via apt install bats")
-endif ()
-
-find_program(EXPECT expect)
-set(ENABLE_EXPECT_TESTS ON)
-if (${EXPECT} STREQUAL EXPECT-NOTFOUND)
-    set(ENABLE_EXPECT_TESTS OFF)
-    message(WARNING "Expect not found. Disabling Expect based e2e tests. You can install Expect via apt install expect")
-endif ()
 
 if (ENABLE_BATS_TESTS)
 
