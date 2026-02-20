@@ -35,7 +35,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<VariableSizedData, LazyValueRepresentation, nautilus::val<T>...>;
+using var_val_helper = std::variant<LazyValueRepresentation, VariableSizedData, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -100,17 +100,20 @@ public:
         {
             return std::get<T1>(value);
         }
-
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
             {
                 using removedCVRefT0 = std::remove_cvref_t<T0>;
                 using removedCVRefT1 = std::remove_cvref_t<T1>;
-                if constexpr (
-                    std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>
-                    || std::is_same_v<removedCVRefT0, LazyValueRepresentation> || std::is_same_v<removedCVRefT1, LazyValueRepresentation>)
+                NES_DEBUG("Did not work out");
+                if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
+                }
+                else if constexpr (
+                    std::is_same_v<removedCVRefT0, LazyValueRepresentation> || std::is_same_v<removedCVRefT1, LazyValueRepresentation>)
+                {
+                    throw UnknownOperation("Cannot cast LazyValueRepresentation to anything else.");
                 }
                 else
                 {

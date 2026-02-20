@@ -33,6 +33,8 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
+    [[nodiscard]] EventTimeFunction getTimeFunction() const { return timeFunction; }
+
 private:
     EventTimeFunction timeFunction;
     std::optional<PhysicalOperator> child;

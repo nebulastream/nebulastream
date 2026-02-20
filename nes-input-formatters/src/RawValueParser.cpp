@@ -47,6 +47,7 @@ void parseRawValueIntoRecord(
 {
     if (parseValue || physicalType == DataType::Type::VARSIZED)
     {
+        NES_DEBUG("Parse");
         switch (physicalType)
         {
             case DataType::Type::INT8: {
@@ -138,6 +139,7 @@ void parseRawValueIntoRecord(
     {
         throw NotImplemented("Cannot parse undefined type.");
     }
+    NES_DEBUG("No parse");
     /// We represent the value as the pointer to the raw value and it's size as we do not need it immediatly in it's parsed form
     if (physicalType == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
     {

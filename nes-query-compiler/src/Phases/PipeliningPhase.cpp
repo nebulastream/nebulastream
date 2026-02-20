@@ -14,6 +14,7 @@
 
 #include <Phases/PipeliningPhase.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -22,6 +23,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -33,6 +35,7 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
+#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -45,6 +48,7 @@
 #include <ScanPhysicalOperator.hpp>
 #include <SelectionPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <UnionRenamePhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -171,6 +175,8 @@ void findFieldAccesses(const PhysicalFunction& function, std::unordered_set<Reco
 }
 
 /// Function that searches an operator and it's children for field accesses. Will write every accessed field's identifier into accessedFields
+/// Will register the accessed fields starting from the last operator (pipeline breaker) and ending with op.
+/// Registering backwards is necessary because UnionRename operations affect the names of the accessed fields
 void searchOperatorForFieldAccesses(
     const std::shared_ptr<PhysicalOperatorWrapper>& op, std::unordered_set<Record::RecordFieldIdentifier>& accessedFields)
 {
@@ -179,6 +185,12 @@ void searchOperatorForFieldAccesses(
     {
         return;
     }
+
+    for (const auto& child : op->getChildren())
+    {
+        searchOperatorForFieldAccesses(child, accessedFields);
+    }
+
     if (const auto selection = op->getPhysicalOperator().tryGet<SelectionPhysicalOperator>())
     {
         const auto predicate = selection.value().getFunction();
@@ -193,9 +205,27 @@ void searchOperatorForFieldAccesses(
             findFieldAccesses(mapFunction, accessedFields);
         }
     }
-    for (const auto& child : op->getChildren())
+    else if (const auto eventTimeAssigner = op->getPhysicalOperator().tryGet<EventTimeWatermarkAssignerPhysicalOperator>())
     {
-        searchOperatorForFieldAccesses(child, accessedFields);
+        const auto eventTimeFunction = eventTimeAssigner->getTimeFunction();
+        const auto child = eventTimeFunction.getFunction();
+        findFieldAccesses(child, accessedFields);
+    }
+    else if (const auto unionRenameOp = op->getPhysicalOperator().tryGet<UnionRenamePhysicalOperator>())
+    {
+        /// One of the accessed field's names might have been changed due to a rename. Since we need the original names in our set, we need to adjust it.
+        const std::vector<std::string> inputs = unionRenameOp->getInputFields();
+        const std::vector<std::string> outputs = unionRenameOp->getOutputFields();
+        for (size_t i = 0; i < outputs.size(); ++i)
+        {
+            const std::string& newFieldName = outputs[i];
+            if (accessedFields.contains(newFieldName))
+            {
+                /// Remove this field name and replace with the original field name
+                accessedFields.erase(newFieldName);
+                accessedFields.insert(inputs[i]);
+            }
+        }
     }
 }
 

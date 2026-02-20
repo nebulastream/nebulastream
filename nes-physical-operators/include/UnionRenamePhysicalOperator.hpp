@@ -30,6 +30,15 @@ public:
     void setChild(PhysicalOperator child) override;
 
     void execute(ExecutionContext& ctx, Record& record) const override;
+    [[nodiscard]] std::vector<std::string> getInputFields() const
+    {
+        return inputFields;
+    }
+
+    [[nodiscard]] std::vector<std::string> getOutputFields() const
+    {
+        return outputFields;
+    }
 
 private:
     std::vector<std::string> inputFields;
