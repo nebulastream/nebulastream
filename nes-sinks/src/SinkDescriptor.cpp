@@ -42,8 +42,16 @@ namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+    std::variant<std::string, uint64_t> sinkName,
+    const Schema& schema,
+    const std::string_view sinkType,
+    WorkerId workerId,
+    DescriptorConfig::Config config)
+    : Descriptor(std::move(config))
+    , sinkName(std::move(sinkName))
+    , schema(std::make_shared<Schema>(schema))
+    , sinkType(sinkType)
+    , workerId(std::move(workerId))
 {
 }
 
@@ -85,6 +93,11 @@ bool SinkDescriptor::isInline() const
     return std::holds_alternative<uint64_t>(this->sinkName);
 }
 
+WorkerId SinkDescriptor::getWorkerId() const
+{
+    return workerId;
+}
+
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
@@ -95,9 +108,10 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {})",
+        "SinkDescriptor: (name: {}, type: {}, workerId: {}, Config: {})",
         sinkDescriptor.sinkName,
         sinkDescriptor.sinkType,
+        sinkDescriptor.workerId,
         sinkDescriptor.toStringConfig());
     return out;
 }
@@ -113,14 +127,15 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
         .sinkName = descriptor.sinkName,
         .schema = *descriptor.schema,
         .sinkType = descriptor.sinkType,
+        .workerId = descriptor.workerId,
         .config = descriptor.getReflectedConfig(),
     });
 }
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
+    auto [name, schema, type, workerId, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, workerId, Descriptor::unreflectConfig(config)};
 }
 
 }
