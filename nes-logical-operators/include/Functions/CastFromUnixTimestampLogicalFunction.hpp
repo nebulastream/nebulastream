@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -23,7 +24,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -34,9 +35,7 @@ class CastFromUnixTimestampLogicalFunction final
 public:
     static constexpr std::string_view NAME = "CastFromUnixTs";
 
-    CastFromUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
-
-    [[nodiscard]] SerializableFunction serialize() const;
+    explicit CastFromUnixTimestampLogicalFunction(LogicalFunction child);
 
     [[nodiscard]] bool operator==(const CastFromUnixTimestampLogicalFunction& rhs) const;
 
@@ -54,10 +53,33 @@ public:
 private:
     DataType outputType;
     LogicalFunction child;
+
+    friend Reflector<CastFromUnixTimestampLogicalFunction>;
+};
+
+template <>
+struct Reflector<CastFromUnixTimestampLogicalFunction>
+{
+    Reflected operator()(const CastFromUnixTimestampLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CastFromUnixTimestampLogicalFunction>
+{
+    CastFromUnixTimestampLogicalFunction operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalFunctionConcept<CastFromUnixTimestampLogicalFunction>);
 
-}
+} // namespace NES
+
+namespace NES::detail
+{
+struct ReflectedCastFromUnixTimestampLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+    // NOTE: intentionally NO outputType here (we infer it)
+};
+} // namespace NES::detail
 
 FMT_OSTREAM(NES::CastFromUnixTimestampLogicalFunction);

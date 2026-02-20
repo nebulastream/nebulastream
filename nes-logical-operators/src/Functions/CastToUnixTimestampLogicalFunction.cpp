@@ -22,7 +22,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
+// #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -31,8 +31,9 @@
 namespace NES
 {
 
-CastToUnixTimestampLogicalFunction::CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child)
-    : outputType(std::move(outputType)), child(std::move(child))
+CastToUnixTimestampLogicalFunction::CastToUnixTimestampLogicalFunction(LogicalFunction child)
+    : outputType(DataType{DataType::Type::UNDEFINED}),
+    child(std::move(child))
 {
 }
 
@@ -99,7 +100,7 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFu
     {
         throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
+    return CastToUnixTimestampLogicalFunction(arguments.children[0]);
 }
 
 }
