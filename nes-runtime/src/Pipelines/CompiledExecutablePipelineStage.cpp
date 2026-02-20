@@ -13,6 +13,7 @@
 */
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
+#include <atomic>
 #include <chrono>
 #include <functional>
 #include <memory>
@@ -35,6 +36,57 @@
 
 namespace NES
 {
+namespace
+{
+std::atomic<int64_t> totalCompilationTimeNanoseconds{0};
+std::atomic<uint64_t> compilationCount{0};
+std::atomic<int64_t> compilationWallTimeNanoseconds{0};
+std::atomic<uint64_t> activeCompilationCount{0};
+std::atomic<int64_t> compilationWallIntervalStartNanoseconds{0};
+
+int64_t getNanosecondsSinceEpoch(std::chrono::steady_clock::time_point timePoint)
+{
+    return std::chrono::duration_cast<std::chrono::nanoseconds>(timePoint.time_since_epoch()).count();
+}
+
+class CompilationWallTimeGuard
+{
+public:
+    explicit CompilationWallTimeGuard(int64_t compilationStartNanoseconds)
+        : compilationEndNanoseconds(0), hasCompilationEndNanoseconds(false)
+    {
+        const auto previousCompilationCount = activeCompilationCount.fetch_add(1);
+        if (previousCompilationCount == 0)
+        {
+            compilationWallIntervalStartNanoseconds.store(compilationStartNanoseconds);
+        }
+    }
+
+    void setCompilationEndNanoseconds(int64_t compilationEndNanoseconds)
+    {
+        this->compilationEndNanoseconds = compilationEndNanoseconds;
+        hasCompilationEndNanoseconds = true;
+    }
+
+    ~CompilationWallTimeGuard()
+    {
+        const auto previousCompilationCount = activeCompilationCount.fetch_sub(1);
+        if (previousCompilationCount != 1)
+        {
+            return;
+        }
+
+        const auto compilationIntervalStartNanoseconds = compilationWallIntervalStartNanoseconds.load();
+        const auto compilationIntervalEndNanoseconds
+            = hasCompilationEndNanoseconds ? compilationEndNanoseconds : getNanosecondsSinceEpoch(std::chrono::steady_clock::now());
+        compilationWallTimeNanoseconds.fetch_add(compilationIntervalEndNanoseconds - compilationIntervalStartNanoseconds);
+    }
+
+private:
+    int64_t compilationEndNanoseconds;
+    bool hasCompilationEndNanoseconds;
+};
+}
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
@@ -45,6 +97,30 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
 {
+}
+
+void CompiledExecutablePipelineStage::resetCompilationMetrics()
+{
+    totalCompilationTimeNanoseconds.store(0);
+    compilationCount.store(0);
+    compilationWallTimeNanoseconds.store(0);
+    activeCompilationCount.store(0);
+    compilationWallIntervalStartNanoseconds.store(0);
+}
+
+std::chrono::nanoseconds CompiledExecutablePipelineStage::getTotalCompilationTime()
+{
+    return std::chrono::nanoseconds(totalCompilationTimeNanoseconds.load());
+}
+
+std::chrono::nanoseconds CompiledExecutablePipelineStage::getCompilationWallTime()
+{
+    return std::chrono::nanoseconds(compilationWallTimeNanoseconds.load());
+}
+
+uint64_t CompiledExecutablePipelineStage::getCompilationCount()
+{
+    return compilationCount.load();
 }
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
@@ -119,7 +195,14 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
+    const auto compileStart = std::chrono::steady_clock::now();
+    CompilationWallTimeGuard compilationWallTimeGuard(getNanosecondsSinceEpoch(compileStart));
     compiledPipelineFunction = this->compilePipeline();
+    const auto compileEnd = std::chrono::steady_clock::now();
+    compilationWallTimeGuard.setCompilationEndNanoseconds(getNanosecondsSinceEpoch(compileEnd));
+    const auto compileDuration = std::chrono::duration_cast<std::chrono::nanoseconds>(compileEnd - compileStart);
+    totalCompilationTimeNanoseconds.fetch_add(compileDuration.count());
+    compilationCount.fetch_add(1);
 }
 
 }
