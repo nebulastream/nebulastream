@@ -24,8 +24,10 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -34,6 +36,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     std::string sinkName,
     const Schema& schema,
     const std::string_view sinkType,
+    Host host,
     std::unordered_map<std::string, std::string> config,
     const std::unordered_map<std::string, std::string>& formatConfig)
 {
@@ -51,7 +54,9 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, formatConfig, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
+
+    /// TODO #1504: duplicate sinks are not registered
     lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
@@ -73,6 +78,13 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     std::unordered_map<std::string, std::string> config,
     const std::unordered_map<std::string, std::string>& formatConfig) const
 {
+    if (!config.contains("host"))
+    {
+        throw InvalidConfigParameter("'host'");
+    }
+    const auto host = Host(config.at("host"));
+    config.erase("host");
+
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
 
     const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};
@@ -83,7 +95,7 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     }
 
     auto sinkDescriptor
-        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, formatConfig, std::move(descriptorConfigOpt.value())};
+        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, host, formatConfig, std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

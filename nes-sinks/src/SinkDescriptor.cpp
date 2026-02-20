@@ -27,6 +27,8 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Overloaded.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -43,12 +45,14 @@ SinkDescriptor::SinkDescriptor(
     std::variant<std::string, uint64_t> sinkName,
     const Schema& schema,
     const std::string_view sinkType,
+    Host host,
     const std::unordered_map<std::string, std::string>& formatConfig,
     DescriptorConfig::Config config)
     : Descriptor(std::move(config))
     , sinkName(std::move(sinkName))
     , schema(std::make_shared<Schema>(schema))
     , sinkType(sinkType)
+    , host(std::move(host))
     , formatConfig(formatConfig)
 {
 }
@@ -96,6 +100,11 @@ bool SinkDescriptor::isInline() const
     return std::holds_alternative<uint64_t>(this->sinkName);
 }
 
+Host SinkDescriptor::getHost() const
+{
+    return host;
+}
+
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
 {
@@ -106,9 +115,10 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {}, FormatConfig: {{{}}})",
+        "SinkDescriptor: (name: {}, type: {}, host: {}, Config: {}, FormatConfig: {{{}}})",
         sinkDescriptor.sinkName,
         sinkDescriptor.sinkType,
+        sinkDescriptor.host,
         sinkDescriptor.toStringConfig(),
         fmt::join(sinkDescriptor.formatConfig, ","));
     return out;
@@ -125,6 +135,7 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
         .sinkName = descriptor.sinkName,
         .schema = *descriptor.schema,
         .sinkType = descriptor.sinkType,
+        .host = descriptor.host,
         .formatConfig = descriptor.formatConfig,
         .config = descriptor.getReflectedConfig(),
     });
@@ -132,8 +143,8 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, formatConfig, Descriptor::unreflectConfig(config)};
+    auto [name, schema, type, host, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, host, formatConfig, Descriptor::unreflectConfig(config)};
 }
 
 }

@@ -112,7 +112,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
     SinkDescriptor dummySinkDescriptor
-        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"output_format", "CSV"}}, {}).value();
+        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", Host("localhost"), {{"output_format", "CSV"}}, {}).value();
     SystestQueryId dummyQueryId = NES::INVALID<NES::Systest::SystestQueryId>;
 };
 
@@ -162,7 +162,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 
@@ -197,7 +197,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 

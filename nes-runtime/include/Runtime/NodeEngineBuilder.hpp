@@ -15,6 +15,7 @@
 #pragma once
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/StatisticListener.hpp>
 #include <Runtime/NodeEngine.hpp>
 
@@ -28,7 +29,7 @@ public:
 
     explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
 
-    std::unique_ptr<NodeEngine> build(Host workerId);
+    std::unique_ptr<NodeEngine> build(const Host& host);
 
 private:
     WorkerConfiguration workerConfiguration;

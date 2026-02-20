@@ -46,4 +46,4 @@ private:
 
 /// This function is required to allow threads from rust to set thread local variables required for logger context.
 /// I.e., threads created by the tokio runtime need to be associated with a worker and a thread name
-void identifyThread(rust::str threadName, rust::str workerId);
+void identifyThread(rust::str threadName, rust::str host);

@@ -28,6 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -72,6 +73,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
+    [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -85,6 +87,7 @@ private:
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
+    Host host;
     ParserConfig parserConfig;
 
 
@@ -93,6 +96,7 @@ private:
         PhysicalSourceId physicalSourceId,
         LogicalSource logicalSource,
         std::string_view sourceType,
+        Host host,
         DescriptorConfig::Config config,
         ParserConfig parserConfig);
 
@@ -142,6 +146,7 @@ struct ReflectedSourceDescriptor
     uint64_t physicalSourceId = 0;
     LogicalSource logicalSource;
     std::string type;
+    Host host;
     ParserConfig parserConfig;
     Reflected config;
 };
