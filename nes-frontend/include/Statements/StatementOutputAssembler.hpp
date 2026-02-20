@@ -64,12 +64,12 @@ using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
-constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
-    "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
+    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, WorkerId>;
+constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
+    "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
 
-using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config>;
-constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config"};
+using SinkDescriptorOutputRowType = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, WorkerId>;
+constexpr std::array<std::string_view, 5> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config", "host"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -118,7 +118,8 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
                 *result.created.getLogicalSource().getSchema(),
                 result.created.getSourceType(),
                 result.created.getParserConfig(),
-                result.created.getConfig())});
+                result.created.getConfig(),
+                result.created.getWorkerId())});
     }
 };
 
@@ -132,7 +133,11 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.created.getSinkName(), *result.created.getSchema(), result.created.getSinkType(), result.created.getConfig())});
+                result.created.getSinkName(),
+                *result.created.getSchema(),
+                result.created.getSinkType(),
+                result.created.getConfig(),
+                result.created.getWorkerId())});
     }
 };
 
@@ -170,7 +175,8 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
                 *source.getLogicalSource().getSchema(),
                 source.getSourceType(),
                 source.getParserConfig(),
-                source.getConfig());
+                source.getConfig(),
+                source.getWorkerId());
         }
         return std::make_pair(sourceDescriptorOutputColumns, output);
     }
@@ -187,7 +193,7 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
         output.reserve(result.sinks.size());
         for (const auto& sink : result.sinks)
         {
-            output.emplace_back(sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig());
+            output.emplace_back(sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig(), sink.getWorkerId());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -219,7 +225,8 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
                 *result.dropped.getLogicalSource().getSchema(),
                 result.dropped.getSourceType(),
                 result.dropped.getParserConfig(),
-                result.dropped.getConfig())});
+                result.dropped.getConfig(),
+                result.dropped.getWorkerId())});
     }
 };
 
@@ -233,7 +240,11 @@ struct StatementOutputAssembler<DropSinkStatementResult>
         return std::make_pair(
             sinkDescriptorOutputColumns,
             std::vector{std::make_tuple(
-                result.dropped.getSinkName(), *result.dropped.getSchema(), result.dropped.getSinkType(), result.dropped.getConfig())});
+                result.dropped.getSinkName(),
+                *result.dropped.getSchema(),
+                result.dropped.getSinkType(),
+                result.dropped.getConfig(),
+                result.dropped.getWorkerId())});
     }
 };
 

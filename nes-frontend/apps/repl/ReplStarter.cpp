@@ -234,8 +234,13 @@ int main(int argc, char** argv)
 #endif
         }
 
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+#ifdef EMBED_ENGINE
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost("localhost:9090")};
+        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost("localhost:9090")};
+#else
+        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
+        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
+#endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
         auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
