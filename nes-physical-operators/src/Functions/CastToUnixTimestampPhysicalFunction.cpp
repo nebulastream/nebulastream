@@ -36,93 +36,77 @@ namespace NES
 {
 namespace
 {
-std::string_view trim(std::string_view s)
+
+uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timestamp)
 {
-    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.front())))
+    const auto timestampWithoutWhiteSpace = NES::trimWhiteSpaces(iso8601Timestamp);
+
+    if (timestampWithoutWhiteSpace.empty())
     {
-        s.remove_prefix(1);
+        throw FormattingError("CastToUnixTs: Can not convert empty timestamp {}", iso8601Timestamp);
     }
-    while (!s.empty() && std::isspace(static_cast<unsigned char>(s.back())))
-    {
-        s.remove_suffix(1);
-    }
-    return s;
-}
-
-uint64_t parseWebTimestampToUnixMs(std::string_view raw)
-{
-    using Ms = std::chrono::milliseconds;
-    const auto s = trim(raw);
-
-    if (s.empty())
-    {
-        throw UnknownOperation("CastToUnixTs: empty timestamp");
-    }
-
-    date::sys_time<Ms> tp;
-
-    std::string abbrev;
-    std::chrono::minutes offset{0};
 
     static constexpr const char* formats_with_tz[] = {
         "%FT%T%Ez",
         "%FT%T.%f%Ez",
-
         "%FT%TZ",
         "%FT%T.%fZ",
-
         "%a, %d %b %Y %T GMT",
     };
 
     static constexpr const char* formats_without_tz[] = {
         "%F %T",
         "%F %T.%f",
-
         "%FT%T",
         "%FT%T.%f",
     };
 
+    /// First, we try out formats containing a timezone
     for (const char* fmt : formats_with_tz)
     {
-        std::istringstream iss(std::string{s});
-        abbrev.clear();
-        offset = std::chrono::minutes{0};
-
+        std::istringstream iss(std::string{timestampWithoutWhiteSpace});
+        std::string abbrev;
+        std::chrono::minutes offset{0};
+        date::sys_time<std::chrono::milliseconds> tp;
         date::from_stream(iss, fmt, tp, &abbrev, &offset);
 
-        if (!iss.fail())
+        if (iss.fail())
         {
-            const auto ms = tp.time_since_epoch().count();
-            if (ms < 0)
-            {
-                throw UnknownOperation("CastToUnixTs: pre-epoch timestamp is not supported");
-            }
-            return static_cast<uint64_t>(ms);
+            throw FormattingError("Could not format {}", iso8601Timestamp);
         }
+
+        const auto parsedMilliSeconds = tp.time_since_epoch().count();
+        if (parsedMilliSeconds < 0)
+        {
+            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported");
+        }
+        return static_cast<uint64_t>(parsedMilliSeconds);
     }
 
-
+    /// Second, we try out formats containing no timezone
     for (const char* fmt : formats_without_tz)
     {
-        std::istringstream iss(std::string{s});
-        date::local_time<Ms> ltp;
-
+        std::istringstream iss(std::string{timestampWithoutWhiteSpace});
+        date::local_time<std::chrono::milliseconds> ltp;
         date::from_stream(iss, fmt, ltp);
 
-        if (!iss.fail())
+        if (iss.fail())
         {
-            tp = date::sys_time<Ms>{ltp.time_since_epoch()};
-
-            const auto ms = tp.time_since_epoch().count();
-            if (ms < 0)
-            {
-                throw UnknownOperation("CastToUnixTs: pre-epoch timestamp is not supported");
-            }
-            return static_cast<uint64_t>(ms);
+            throw FormattingError("Could not format {}", iso8601Timestamp);
         }
+
+        date::sys_time<std::chrono::milliseconds> tp;
+        tp = date::sys_time<std::chrono::milliseconds>{ltp.time_since_epoch()};
+
+        const auto parsedMilliSeconds = tp.time_since_epoch().count();
+        if (parsedMilliSeconds < 0)
+        {
+            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported");
+        }
+        return static_cast<uint64_t>(parsedMilliSeconds);
     }
 
-    throw UnknownOperation("CastToUnixTs: unsupported timestamp format: '{}'", std::string{s});
+    throw FormattingError("CastToUnixTs: unsupported timestamp format: '{}'", iso8601Timestamp);
 }
 
 }
@@ -140,16 +124,16 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     const auto size = var.getContentSize();
     const auto ptr = var.getContent();
 
-    const auto tsMs = nautilus::invoke(
-        +[](uint32_t sz, int8_t* p) -> uint64_t
+    const auto parsedMilliSeconds = nautilus::invoke(
+        +[](const uint32_t size, int8_t* p) -> uint64_t
         {
-            std::string_view sv(reinterpret_cast<const char*>(p), sz);
-            return parseWebTimestampToUnixMs(sv);
+            const std::string_view sv{reinterpret_cast<const char*>(p), size};
+            return parseISO8601TimestampToUnixMilliSeconds(sv);
         },
         size,
         ptr);
 
-    return VarVal(tsMs).castToType(outputType.type);
+    return VarVal{parsedMilliSeconds}.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterCastToUnixTsPhysicalFunction(
