@@ -69,6 +69,7 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const std::string_view sourceType,
+    Host host,
     std::unordered_map<std::string, std::string> descriptorConfig,
     const std::unordered_map<std::string, std::string>& parserConfig)
 {
@@ -94,7 +95,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
     }
 
-    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfigObject};
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), parserConfigObject};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
@@ -148,6 +149,13 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     std::unordered_map<std::string, std::string> parserConfigMap,
     std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
+    if (!sourceConfigMap.contains("host"))
+    {
+        throw InvalidConfigParameter("`host`");
+    }
+    auto host = Host(sourceConfigMap.at("host"));
+    sourceConfigMap.erase("host");
+
     auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
     if (!descriptorConfig.has_value())
     {
@@ -160,7 +168,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto name = physicalId.toString();
 
     const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, descriptorConfig.value(), parserConfig};
+    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, host, descriptorConfig.value(), parserConfig};
     return sourceDescriptor;
 }
 
