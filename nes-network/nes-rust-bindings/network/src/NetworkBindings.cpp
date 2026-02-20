@@ -28,7 +28,7 @@
 
 void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
     const std::string& connectionAddr,
-    const NES::Host& workerId,
+    const NES::Host& host,
     const NES::NetworkOptions& options)
 {
     const NetworkServiceOptions cxxOptions{
@@ -38,8 +38,8 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
         .sender_io_threads = options.senderIOThreads,
         .receiver_io_threads = options.receiverIOThreads,
     };
-    init_receiver_service(rust::String(connectionAddr), rust::String(workerId.getRawValue()), cxxOptions);
-    init_sender_service(rust::String(connectionAddr), rust::String(workerId.getRawValue()), cxxOptions);
+    init_receiver_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
+    init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
 }
 
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
@@ -82,8 +82,8 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
         = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
 }
 
-void identifyThread(const rust::str threadName, const rust::str workerId) /// NOLINT(misc-use-internal-linkage)
+void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT(misc-use-internal-linkage)
 {
     NES::Thread::ThreadName = static_cast<std::string>(threadName);
-    NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(workerId));
+    NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(host));
 }

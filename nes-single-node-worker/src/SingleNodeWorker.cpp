@@ -50,24 +50,24 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host workerId)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host host)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {
         std::stringstream configStr;
         ConfigValuePrinter printer(configStr);
         SingleNodeWorkerConfiguration(configuration).accept(printer);
-        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", workerId.getRawValue(), configStr.str());
+        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", host.getRawValue(), configStr.str());
     }
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
-            fmt::format("trace_{}_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", workerId.getRawValue(), std::chrono::system_clock::now(), ::getpid()));
+            fmt::format("trace_{}_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", host.getRawValue(), std::chrono::system_clock::now(), ::getpid()));
         googleTracePrinter->start();
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(workerId);
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 }
 
