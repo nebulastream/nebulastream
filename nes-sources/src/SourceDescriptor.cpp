@@ -23,6 +23,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -103,12 +104,14 @@ SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
     LogicalSource logicalSource,
     std::string_view sourceType,
+    Host host,
     DescriptorConfig::Config config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
+    , host(std::move(host))
     , parserConfig(std::move(parserConfig))
 {
 }
@@ -126,6 +129,11 @@ std::string SourceDescriptor::getSourceType() const
 ParserConfig SourceDescriptor::getParserConfig() const
 {
     return parserConfig;
+}
+
+Host SourceDescriptor::getHost() const
+{
+    return host;
 }
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
@@ -155,11 +163,13 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, "
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, parserConfig: {{type: {}, tupleDelimiter: "
+               "{}, "
                "stringDelimiter: {} }})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
+               descriptor.getHost(),
                descriptor.getParserConfig().parserType,
                escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
@@ -171,6 +181,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
+        .host = sourceDescriptor.host,
         .parserConfig = sourceDescriptor.parserConfig,
         .config = sourceDescriptor.getReflectedConfig()};
 
@@ -185,6 +196,7 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl)
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
         LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
         reflectedSourceDescriptor.type,
+        reflectedSourceDescriptor.host,
         Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
         std::move(reflectedSourceDescriptor.parserConfig)};
 }

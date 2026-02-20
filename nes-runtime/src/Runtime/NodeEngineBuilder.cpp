@@ -32,7 +32,7 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 {
 }
 
-std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host workerId)
+std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host host)
 {
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
@@ -40,7 +40,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host workerId)
     auto queryLog = std::make_shared<QueryLog>();
 
     auto queryEngine
-        = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, workerId);
+        = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
     auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
 
