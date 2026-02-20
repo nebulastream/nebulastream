@@ -121,6 +121,18 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Convert lazy values into their parsed form
+    for (const auto& [identifier, type] : std::views::zip(bufferRef->getAllFieldNames(), bufferRef->getAllDataTypes()))
+    {
+        const VarVal val = record.read(identifier);
+        if (val.isLazyValue())
+        {
+            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
+            record.write(identifier, parsedVal);
+        }
+    }
+
     /// Getting the operator handler from the local state
     auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();

@@ -57,6 +57,18 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
+    /// Convert lazy values into their parsed form
+    for (const auto& [identifier, type] : std::views::zip(bufferRef->getAllFieldNames(), bufferRef->getAllDataTypes()))
+    {
+        const VarVal val = record.read(identifier);
+        if (val.isLazyValue())
+        {
+            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
+            record.write(identifier, parsedVal);
+        }
+    }
+
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();

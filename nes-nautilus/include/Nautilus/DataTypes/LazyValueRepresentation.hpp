@@ -16,15 +16,17 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <cstdint>
 #include <ostream>
+
+#include <Util/Strings.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
-template <typename T>
 class LazyValueRepresentation;
 
 nautilus::val<bool> operator==(const LazyValueRepresentation& lazyValue, const nautilus::val<bool>& other);
@@ -40,7 +42,6 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValue
 /// This still potentially saves us parsing operations, as some records might be filtered out already.
 /// Similarly, these values do not need to be "reverse-parsed" into their string format in the OutputFormatter, which especially saves parsing
 /// costs in stateless queries with only one intermediate pipeline between source and sink.
-template <typename T>
 class LazyValueRepresentation
 {
 public:
@@ -52,9 +53,24 @@ public:
 
     [[nodiscard]] nautilus::val<uint64_t> getSize() const;
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
+
     /// Converts the lazy value into a nautilus::val of the underlying type T.
     /// Use this method if parsing of the value becomes necessary at some point in the pipelines.
-    [[nodiscard]] nautilus::val<T> parseToInternalRepresentation();
+    template <typename T>
+    [[nodiscard]] nautilus::val<T> parseToInternalRepresentation() const
+    {
+        /// This is exactly what parseIntoNautilusRecord in RawValueParser does but we cannot use it here since it would create a circular dependency of
+        /// RawValueParser -> Record -> VarVal -> LazyValueRepresentation -> ...
+        return nautilus::invoke(
+            +[](const uint64_t size, const char* ptr)
+            {
+                const auto fieldView = std::string_view(ptr, size);
+                return NES::from_chars_with_exception<T>(fieldView);
+            },
+            size,
+            ptrToLazyValue);
+    }
+
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);

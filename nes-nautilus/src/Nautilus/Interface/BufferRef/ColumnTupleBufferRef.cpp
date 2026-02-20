@@ -18,6 +18,9 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -86,8 +89,18 @@ nautilus::val<uint64_t> ColumnTupleBufferRef::writeRecord(
             continue;
         }
         auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
-        const auto& value = rec.read(name);
-        storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        const VarVal& value = rec.read(name);
+        if (value.isLazyValue())
+        {
+            /// Parse the lazy value into the internal represention
+            const LazyValueRepresentation lazyVal = value.cast<LazyValueRepresentation>();
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
+            storeValue(type, recordBuffer, fieldAddress, parsedVal, bufferProvider);
+        }
+        else
+        {
+            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        }
     }
     return 1;
 }

@@ -12,14 +12,11 @@
     limitations under the License.
 */
 
-#include <ostream>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 
+#include <ostream>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-
 #include <ErrorHandling.hpp>
-#include <RawValueParser.hpp>
-#include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
@@ -102,11 +99,5 @@ nautilus::val<int8_t*> LazyValueRepresentation::getContent() const
         oss << " ";
     }
     return oss;
-}
-
-template <typename T>
-nautilus::val<T> LazyValueRepresentation::parseToInternalRepresentation()
-{
-    return parseIntoNautilusRecord<T>(ptrToLazyValue, size);
 }
 }
