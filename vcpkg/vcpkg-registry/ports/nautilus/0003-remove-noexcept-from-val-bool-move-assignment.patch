@@ -1,0 +1,13 @@
+diff --git a/nautilus/include/nautilus/val_bool.hpp b/nautilus/include/nautilus/val_bool.hpp
+index c712628..5de0be2 100644
+--- a/nautilus/include/nautilus/val_bool.hpp
++++ b/nautilus/include/nautilus/val_bool.hpp
+@@ -297,7 +297,7 @@ public:
+ 	/// val<bool> b = false;
+ 	/// b = std::move(a);  // b now contains true
+ 	/// ```
+-	val<bool>& operator=(val<bool>&& other) noexcept {
++	val<bool>& operator=(val<bool>&& other) {
+ #ifdef ENABLE_TRACING
+ 		tracing::traceAssignment(state, other.state, Type::b);
+ #endif

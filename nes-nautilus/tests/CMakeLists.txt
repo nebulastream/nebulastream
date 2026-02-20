@@ -27,3 +27,6 @@ target_link_libraries(chained-hashmap-unit-tests nes-nautilus-test-util)
 
 add_nes_unit_test(chained-hashmap-unit-tests-custom-value "UnitTests/ChainedHashMapCustomValueTest.cpp")
 target_link_libraries(chained-hashmap-unit-tests-custom-value nes-nautilus-test-util)
+
+add_nes_unit_test(TestTupleBufferTest "TestTupleBufferTest.cpp")
+target_link_libraries(TestTupleBufferTest nes-nautilus-test-util)
