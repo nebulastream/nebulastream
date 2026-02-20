@@ -23,7 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableVariantDescriptor.pb.h>
+// #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -34,9 +34,9 @@ class CastToUnixTimestampLogicalFunction final
 public:
     static constexpr std::string_view NAME = "CastToUnixTs";
 
-    CastToUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child);
+    CastToUnixTimestampLogicalFunction(LogicalFunction child);
 
-    [[nodiscard]] SerializableFunction serialize() const;
+    // [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
 

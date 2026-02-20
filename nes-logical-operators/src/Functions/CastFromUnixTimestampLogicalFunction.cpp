@@ -14,35 +14,50 @@
 
 #include <Functions/CastFromUnixTimestampLogicalFunction.hpp>
 
-#include <string>
-#include <string_view>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
-#include <Util/PlanRenderer.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp> // IMPORTANT for LogicalFunction reflection
+#include <fmt/format.h>
+#include <rfl/from_generic.hpp>
+#include <rfl/to_generic.hpp>
 
 namespace NES
 {
 
-CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(DataType outputType, LogicalFunction child)
-    : outputType(std::move(outputType)), child(std::move(child))
+CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(LogicalFunction child)
+    : outputType(DataType{DataType::Type::UNDEFINED}), child(std::move(child))
 {
 }
 
-SerializableFunction CastFromUnixTimestampLogicalFunction::serialize() const
+Reflected Reflector<CastFromUnixTimestampLogicalFunction>::operator()(const CastFromUnixTimestampLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    DataTypeSerializationUtil::serializeDataType(outputType, serializedFunction.mutable_data_type());
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    return serializedFunction;
+    detail::ReflectedCastFromUnixTimestampLogicalFunction data{
+        .child = function.child,
+    };
+    return Reflected{rfl::to_generic(data)};
+}
+
+CastFromUnixTimestampLogicalFunction
+Unreflector<CastFromUnixTimestampLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto parsed = rfl::from_generic<detail::ReflectedCastFromUnixTimestampLogicalFunction>(*reflected);
+    if (!parsed.has_value())
+    {
+        throw CannotDeserialize("Failed to unreflect CastFromUnixTimestampLogicalFunction");
+    }
+
+    const auto& data = parsed.value();
+    if (!data.child.has_value())
+    {
+        throw CannotDeserialize("CastFromUnixTimestampLogicalFunction missing child");
+    }
+
+    // Reconstruct; output type will be inferred later
+    return CastFromUnixTimestampLogicalFunction(*data.child);
 }
 
 bool CastFromUnixTimestampLogicalFunction::operator==(const CastFromUnixTimestampLogicalFunction& rhs) const
@@ -101,7 +116,8 @@ LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(Logical
     {
         throw CannotDeserialize("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastFromUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
+    // return CastFromUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
+    return CastFromUnixTimestampLogicalFunction(arguments.children[0]);
 }
 
 }
