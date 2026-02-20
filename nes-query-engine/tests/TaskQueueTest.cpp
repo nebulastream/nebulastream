@@ -116,12 +116,12 @@ TEST_F(TaskQueueTest, BackpressureTest)
     /// WorkerThreads (mix nextTask and tryNextTask)
     std::vector<std::jthread> worker;
     worker.reserve(numberOfWorkers);
-    for (int workerId = 0; workerId < numberOfWorkers; ++workerId)
+    for (int host = 0; host < numberOfWorkers; ++host)
     {
         worker.emplace_back(
-            [&, workerId](const std::stop_token& stoken)
+            [&, host](const std::stop_token& stoken)
             {
-                std::mt19937 rng(workerId);
+                std::mt19937 rng(host);
                 std::uniform_int_distribution dist(0, 1);
 
                 /// Wait for all threads to be ready before starting
@@ -130,7 +130,7 @@ TEST_F(TaskQueueTest, BackpressureTest)
                 {
                     if (auto task = dist(rng) == 0 ? queue.getNextTaskBlocking(stoken) : queue.getNextTaskNonBlocking())
                     {
-                        consumedTasks.localCounters.at(workerId).add(*task);
+                        consumedTasks.localCounters.at(host).add(*task);
                     }
                 }
             });
@@ -189,14 +189,14 @@ TEST_F(TaskQueueTest, StressTest)
     /// infrequent bursts of writes.
     std::vector<std::jthread> worker;
     worker.reserve(numberOfWorkerThreads);
-    for (int workerId = 0; workerId < numberOfWorkerThreads; ++workerId)
+    for (int host = 0; host < numberOfWorkerThreads; ++host)
     {
         worker.emplace_back(
-            [&, workerId](const std::stop_token& stoken)
+            [&, host](const std::stop_token& stoken)
             {
                 /// Simulate occasional large joins using a geometric distribution, (a.k.a frequent zeros) which is scaled by a scalar.
                 /// 0,0,0,0,6000,0,0,0,0,10000,0....
-                auto numberOfFollowUpTasks = [rng = std::mt19937(workerId), distribution = std::geometric_distribution<size_t>()]() mutable
+                auto numberOfFollowUpTasks = [rng = std::mt19937(host), distribution = std::geometric_distribution<size_t>()]() mutable
                 {
                     /// There are no good reasons for these numbers, we don't have any statistics of what real work loads look like so
                     /// this is just a best effort guess.
@@ -217,9 +217,9 @@ TEST_F(TaskQueueTest, StressTest)
                         const size_t followUpTasks = numberOfFollowUpTasks();
                         for (size_t i = 0; i < followUpTasks; ++i)
                         {
-                            queue.addInternalTaskNonBlocking(Task{workerId + numberOfSources, count++, {}});
+                            queue.addInternalTaskNonBlocking(Task{host + numberOfSources, count++, {}});
                         }
-                        consumedTasks.localCounters.at(workerId).add(*task);
+                        consumedTasks.localCounters.at(host).add(*task);
                     }
                 }
                 tasksAdded.fetch_add(count, std::memory_order::relaxed);
