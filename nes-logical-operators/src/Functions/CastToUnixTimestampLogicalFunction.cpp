@@ -65,9 +65,7 @@ CastToUnixTimestampLogicalFunction CastToUnixTimestampLogicalFunction::withDataT
 LogicalFunction CastToUnixTimestampLogicalFunction::withInferredDataType(const Schema&) const
 {
     auto copy = *this;
-
     copy.outputType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
-
     return copy;
 }
 
