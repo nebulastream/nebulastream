@@ -65,13 +65,14 @@ using LogicalSourceOutputRowType = std::tuple<std::string, Schema>;
 constexpr std::array<std::string_view, 2> logicalSourceOutputColumns{"source_name", "schema"};
 
 using SourceDescriptorOutputRowType
-    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config>;
-constexpr std::array<std::string_view, 6> sourceDescriptorOutputColumns{
-    "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config"};
+    = std::tuple<PhysicalSourceId, std::string, Schema, std::string, ParserConfig, NES::DescriptorConfig::Config, Host>;
+constexpr std::array<std::string_view, 7> sourceDescriptorOutputColumns{
+    "physical_source_id", "source_name", "schema", "source_type", "parser_config", "source_config", "host"};
 
 using SinkDescriptorOutputRowType
-    = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, std::unordered_map<std::string, std::string>>;
-constexpr std::array<std::string_view, 5> sinkDescriptorOutputColumns{"sink_name", "schema", "sink_type", "sink_config", "format_config"};
+    = std::tuple<std::string, Schema, std::string, NES::DescriptorConfig::Config, Host, std::unordered_map<std::string, std::string>>;
+constexpr std::array<std::string_view, 6> sinkDescriptorOutputColumns{
+    "sink_name", "schema", "sink_type", "sink_config", "host", "format_config"};
 
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
@@ -120,7 +121,8 @@ struct StatementOutputAssembler<CreatePhysicalSourceStatementResult>
                 *result.created.getLogicalSource().getSchema(),
                 result.created.getSourceType(),
                 result.created.getParserConfig(),
-                result.created.getConfig())});
+                result.created.getConfig(),
+                result.created.getHost())});
     }
 };
 
@@ -138,6 +140,7 @@ struct StatementOutputAssembler<CreateSinkStatementResult>
                 *result.created.getSchema(),
                 result.created.getSinkType(),
                 result.created.getConfig(),
+                result.created.getHost(),
                 result.created.getOutputFormatterConfig())});
     }
 };
@@ -176,7 +179,8 @@ struct StatementOutputAssembler<ShowPhysicalSourcesStatementResult>
                 *source.getLogicalSource().getSchema(),
                 source.getSourceType(),
                 source.getParserConfig(),
-                source.getConfig());
+                source.getConfig(),
+                source.getHost());
         }
         return std::make_pair(sourceDescriptorOutputColumns, output);
     }
@@ -194,7 +198,12 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
         for (const auto& sink : result.sinks)
         {
             output.emplace_back(
-                sink.getSinkName(), *sink.getSchema(), sink.getSinkType(), sink.getConfig(), sink.getOutputFormatterConfig());
+                sink.getSinkName(),
+                *sink.getSchema(),
+                sink.getSinkType(),
+                sink.getConfig(),
+                sink.getHost(),
+                sink.getOutputFormatterConfig());
         }
         return std::make_pair(sinkDescriptorOutputColumns, output);
     }
@@ -226,7 +235,8 @@ struct StatementOutputAssembler<DropPhysicalSourceStatementResult>
                 *result.dropped.getLogicalSource().getSchema(),
                 result.dropped.getSourceType(),
                 result.dropped.getParserConfig(),
-                result.dropped.getConfig())});
+                result.dropped.getConfig(),
+                result.dropped.getHost())});
     }
 };
 
@@ -244,6 +254,7 @@ struct StatementOutputAssembler<DropSinkStatementResult>
                 *result.dropped.getSchema(),
                 result.dropped.getSinkType(),
                 result.dropped.getConfig(),
+                result.dropped.getHost(),
                 result.dropped.getOutputFormatterConfig())});
     }
 };
