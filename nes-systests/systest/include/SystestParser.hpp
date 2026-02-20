@@ -47,12 +47,6 @@ enum class TokenType : uint8_t
     DIFFERENTIAL
 };
 
-enum class TestDataIngestionType : uint8_t
-{
-    INLINE,
-    FILE
-};
-
 /// Assures that the number of parsed queries matches the number of parsed results
 class SystestQueryIdAssigner
 {
@@ -155,7 +149,7 @@ public:
     using ErrorExpectationCallback = std::function<void(const ErrorExpectation&, SystestQueryId correspondingQueryId)>;
     using DifferentialQueryBlockCallback
         = std::function<void(std::string, std::string, SystestQueryId correspondingQueryId, SystestQueryId diffQueryId)>;
-    using CreateCallback = std::function<void(std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>)>;
+    using CreateCallback = std::function<void(std::string, std::optional<TestData>)>;
     using ConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
     using GlobalConfigurationCallback = std::function<void(const std::vector<ConfigurationOverride>&)>;
 
@@ -187,7 +181,7 @@ private:
     [[nodiscard]] std::vector<std::string> expectTuples(bool ignoreFirst);
     [[nodiscard]] std::filesystem::path expectFilePath();
     [[nodiscard]] std::string expectQuery();
-    [[nodiscard]] std::pair<std::string, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>> expectCreateStatement();
+    [[nodiscard]] std::pair<std::string, std::optional<TestData>> expectCreateStatement();
     [[nodiscard]] std::string expectQuery(const std::unordered_set<TokenType>& stopTokens);
     [[nodiscard]] std::pair<std::string, std::string> expectDifferentialBlock();
     [[nodiscard]] ErrorExpectation expectError() const;

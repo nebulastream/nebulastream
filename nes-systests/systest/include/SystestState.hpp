@@ -25,6 +25,7 @@
 #include <iterator>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <thread>
@@ -102,8 +103,46 @@ struct hash<NES::Systest::ConfigurationOverride>
 namespace NES::Systest
 {
 
+enum class TestDataIngestionType : uint8_t
+{
+    INLINE,
+    FILE
+};
+
+enum class InlineActionType : uint8_t
+{
+    SendTuple,
+    DelayMs,
+    CrashWorker,
+    RestartWorker
+};
+
+struct InlineAction
+{
+    InlineActionType type = InlineActionType::SendTuple;
+    std::string tuple;
+    std::optional<uint64_t> payload;
+};
+
+struct InlineEventScript
+{
+    std::vector<InlineAction> actions;
+
+    [[nodiscard]] bool hasEvents() const
+    {
+        return std::ranges::any_of(actions, [](const InlineAction& action) { return action.type != InlineActionType::SendTuple; });
+    }
+};
+
+struct TestData
+{
+    TestDataIngestionType ingestionType{TestDataIngestionType::INLINE};
+    std::vector<std::string> tuples;
+    std::optional<InlineEventScript> inlineEventScript;
+};
 
 class SystestRunner;
+class InlineEventController;
 
 using TestName = std::string;
 using TestGroup = std::string;
@@ -204,6 +243,8 @@ struct SystestQuery
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+    std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
 };
 
 struct RunningQuery

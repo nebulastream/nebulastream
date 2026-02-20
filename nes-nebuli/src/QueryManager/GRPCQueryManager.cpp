@@ -40,7 +40,8 @@
 
 namespace NES
 {
-GRPCQueryManager::GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel) : stub(WorkerRPCService::NewStub(channel))
+GRPCQueryManager::GRPCQueryManager(const std::shared_ptr<grpc::Channel>& channel, const std::chrono::milliseconds deadline)
+    : stub(WorkerRPCService::NewStub(channel)), rpcDeadline(deadline)
 {
 }
 
@@ -49,6 +50,7 @@ std::expected<QueryId, Exception> GRPCQueryManager::registerQuery(const NES::Log
     try
     {
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + rpcDeadline);
         RegisterQueryReply reply;
         RegisterQueryRequest request;
         request.mutable_queryplan()->CopyFrom(NES::QueryPlanSerializationUtil::serializeQueryPlan(plan));
@@ -75,6 +77,7 @@ std::expected<void, Exception> GRPCQueryManager::start(const QueryId queryId) no
     try
     {
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + rpcDeadline);
         StartQueryRequest request;
         google::protobuf::Empty response;
         request.set_queryid(queryId.getRawValue());
@@ -102,6 +105,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryI
     try
     {
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + rpcDeadline);
         QueryStatusRequest request;
         request.set_queryid(queryId.getRawValue());
         QueryStatusReply response;
@@ -168,6 +172,7 @@ std::expected<void, Exception> GRPCQueryManager::unregister(const QueryId queryI
     try
     {
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + rpcDeadline);
         UnregisterQueryRequest request;
         google::protobuf::Empty response;
         request.set_queryid(queryId.getRawValue());
@@ -195,6 +200,7 @@ std::expected<void, Exception> GRPCQueryManager::stop(const QueryId queryId) noe
     try
     {
         grpc::ClientContext context;
+        context.set_deadline(std::chrono::system_clock::now() + rpcDeadline);
         StopQueryRequest request;
         request.set_queryid(queryId.getRawValue());
         request.set_terminationtype(StopQueryRequest::Graceful);

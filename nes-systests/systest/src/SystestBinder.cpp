@@ -59,6 +59,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <InlineEventServer.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
@@ -221,6 +222,14 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
+    void setInlineEvents(
+        std::unordered_map<SourceDescriptor, InlineEventScript> scripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> controllers)
+    {
+        inlineEventScripts = std::move(scripts);
+        inlineEventControllers = std::move(controllers);
+    }
+
     void optimizeQueries(const NES::LegacyOptimizer& optimizer)
     {
         if (!boundPlan.has_value())
@@ -299,7 +308,9 @@ public:
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
-                 .differentialQueryPlan = differentialQueryPlan});
+                 .differentialQueryPlan = differentialQueryPlan,
+                 .inlineEventScripts = inlineEventScripts,
+                 .inlineEventControllers = inlineEventControllers});
         }
         return queries;
     }
@@ -322,6 +333,8 @@ private:
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+    std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
     bool built = false;
 };
 
@@ -466,22 +479,22 @@ struct SystestBinder::Impl
     [[nodiscard]] PhysicalSourceConfig setUpSourceWithTestData(
         PhysicalSourceConfig& physicalSourceConfig,
         std::shared_ptr<std::vector<std::jthread>> sourceThreads,
-        std::pair<TestDataIngestionType, std::vector<std::string>> testData) const
+        const TestData& testData) const
     {
-        switch (testData.first)
+        switch (testData.ingestionType)
         {
             case TestDataIngestionType::INLINE: {
                 const auto testFile = generateSourceFilePath();
                 return SourceDataProvider::provideInlineDataSource(
-                    std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
+                    std::move(physicalSourceConfig), testData.tuples, std::move(sourceThreads), testFile);
             }
             case TestDataIngestionType::FILE: {
-                if (testData.second.size() != 1)
+                if (testData.tuples.size() != 1)
                 {
                     throw UnknownException("Invalid State");
                 }
 
-                const std::filesystem::path testFilePath = generateSourceFilePath(testData.second[0]);
+                const std::filesystem::path testFilePath = generateSourceFilePath(testData.tuples[0]);
                 return SourceDataProvider::provideFileDataSource(std::move(physicalSourceConfig), std::move(sourceThreads), testFilePath);
             }
             default:
@@ -489,11 +502,13 @@ struct SystestBinder::Impl
         }
     }
 
-    void createPhysicalSource(
+    std::optional<SourceDescriptor> createPhysicalSource(
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const CreatePhysicalSourceStatement& statement,
-        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
+        const std::optional<TestData>& testData,
+        std::unordered_map<SourceDescriptor, InlineEventScript>& inlineEventScripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>>& inlineEventControllers) const
     {
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.getLogicalSourceName(),
@@ -504,16 +519,39 @@ struct SystestBinder::Impl
         std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
 
-        if (testData.has_value())
+        std::shared_ptr<InlineEventController> inlineEventController;
+
+        if (testData.has_value() && testData->inlineEventScript && testData->inlineEventScript->hasEvents())
         {
-            physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
+            if (toUpperCase(statement.sourceType) != "TCP")
+            {
+                NES_WARNING("Inline events are only supported for TCP sources. Forcing TCP instead of {}.", statement.sourceType);
+            }
+            physicalSourceConfig.type = "TCP";
+
+            inlineEventController = std::make_shared<InlineEventController>(*testData->inlineEventScript);
+            physicalSourceConfig.sourceConfig.emplace("socket_port", std::to_string(inlineEventController->getPort()));
+            physicalSourceConfig.sourceConfig.emplace("socket_host", "localhost");
+            physicalSourceConfig.sourceConfig.try_emplace("flush_interval_ms", "10");
+        }
+        else if (testData.has_value())
+        {
+            physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, testData.value());
         }
 
 
         if (const auto created = sourceCatalog->addPhysicalSource(
                 statement.attachedTo, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
         {
-            return;
+            if (testData.has_value() && testData->inlineEventScript && testData->inlineEventScript->hasEvents())
+            {
+                inlineEventScripts.emplace(*created, *testData->inlineEventScript);
+                if (inlineEventController)
+                {
+                    inlineEventControllers.emplace(*created, inlineEventController);
+                }
+            }
+            return created;
         }
 
         throw InvalidQuerySyntax();
@@ -535,7 +573,9 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
-        std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
+        std::optional<TestData> testData,
+        std::unordered_map<SourceDescriptor, InlineEventScript>& inlineEventScripts,
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>>& inlineEventControllers) const
     {
         const auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
         const auto parseResult = managedParser->parseSingle();
@@ -556,7 +596,13 @@ struct SystestBinder::Impl
         }
         else if (std::holds_alternative<CreatePhysicalSourceStatement>(statement))
         {
-            createPhysicalSource(sourceCatalog, sourceThreads, std::get<CreatePhysicalSourceStatement>(statement), std::move(testData));
+            createPhysicalSource(
+                sourceCatalog,
+                sourceThreads,
+                std::get<CreatePhysicalSourceStatement>(statement),
+                testData,
+                inlineEventScripts,
+                inlineEventControllers);
         }
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
@@ -785,10 +831,11 @@ struct SystestBinder::Impl
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
-        uint64_t sourceIndex = 0;
         std::unordered_map<SystestQueryId, SystestQueryBuilder> plans{};
         std::shared_ptr<std::vector<std::jthread>> sourceThreads = std::make_shared<std::vector<std::jthread>>();
         const std::unordered_map<SourceDescriptor, std::filesystem::path> generatedDataPaths{};
+        std::unordered_map<SourceDescriptor, InlineEventScript> inlineEventScripts;
+        std::unordered_map<SourceDescriptor, std::shared_ptr<InlineEventController>> inlineEventControllers;
         std::vector configOverrides{ConfigurationOverride{}};
         std::vector globalConfigOverrides{ConfigurationOverride{}};
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
@@ -875,8 +922,18 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            [&, sourceCatalog](const std::string& query, std::optional<TestData> input)
+            {
+                createCallback(
+                    binder,
+                    sourceCatalog,
+                    sltSinkProvider,
+                    sourceThreads,
+                    query,
+                    std::move(input),
+                    inlineEventScripts,
+                    inlineEventControllers);
+            });
 
         try
         {
@@ -890,11 +947,12 @@ struct SystestBinder::Impl
         }
         return plans
             | std::ranges::views::transform(
-                   [&testFilePath, this, testFileName, &sourceThreads](auto& pair)
+                   [&testFilePath, this, testFileName, &sourceThreads, &inlineEventScripts, &inlineEventControllers](auto& pair)
                    {
                        pair.second.setPaths(testFilePath, workingDir);
                        pair.second.setName(std::string{testFileName});
                        pair.second.setAdditionalSourceThreads(sourceThreads);
+                       pair.second.setInlineEvents(inlineEventScripts, inlineEventControllers);
                        return pair.second;
                    })
             | std::ranges::to<std::vector>();

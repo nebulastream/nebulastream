@@ -16,3 +16,6 @@ add_source_files(nes-query-manager-grpc
 
 add_source_files(nes-query-manager-embedded
         EmbeddedWorkerQueryManager.cpp)
+
+add_source_files(nes-query-manager-forked
+        ForkedWorkerQueryManager.cpp)
