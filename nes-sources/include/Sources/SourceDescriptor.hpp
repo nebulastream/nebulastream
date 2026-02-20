@@ -71,6 +71,7 @@ public:
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] ParserConfig getParserConfig() const;
 
+    [[nodiscard]] WorkerId getWorkerId() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
@@ -84,6 +85,7 @@ private:
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
+    WorkerId workerId;
     ParserConfig parserConfig;
 
 
@@ -92,6 +94,7 @@ private:
         PhysicalSourceId physicalSourceId,
         LogicalSource logicalSource,
         std::string_view sourceType,
+        WorkerId workerId,
         DescriptorConfig::Config config,
         ParserConfig parserConfig);
 

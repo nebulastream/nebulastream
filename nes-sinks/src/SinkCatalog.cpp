@@ -26,12 +26,17 @@
 #include <DataTypes/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 
 std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
-    std::string sinkName, const Schema& schema, const std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    std::string sinkName,
+    const Schema& schema,
+    const std::string_view sinkType,
+    WorkerId workerId,
+    std::unordered_map<std::string, std::string> config)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
     {
@@ -46,7 +51,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     }
 
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(workerId), std::move(descriptorConfigOpt.value())};
     lockedSinks->emplace(std::move(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }
@@ -65,6 +70,13 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& 
 std::optional<SinkDescriptor>
 SinkCatalog::getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config) const
 {
+    if (!config.contains("host"))
+    {
+        throw MissingConfigParameter("'host'");
+    }
+    const auto workerId = WorkerId(config.at("host"));
+    config.erase("host");
+
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
 
     const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};
@@ -74,7 +86,7 @@ SinkCatalog::getInlineSink(const Schema& schema, std::string_view sinkType, std:
         return std::nullopt;
     }
 
-    auto sinkDescriptor = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, workerId, std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

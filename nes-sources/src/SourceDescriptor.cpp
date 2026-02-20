@@ -84,12 +84,14 @@ SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
     LogicalSource logicalSource,
     std::string_view sourceType,
+    WorkerId workerId,
     DescriptorConfig::Config config,
     ParserConfig parserConfig)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
+    , workerId(std::move(workerId))
     , parserConfig(std::move(parserConfig))
 {
 }
@@ -107,6 +109,11 @@ std::string SourceDescriptor::getSourceType() const
 ParserConfig SourceDescriptor::getParserConfig() const
 {
     return parserConfig;
+}
+
+WorkerId SourceDescriptor::getWorkerId() const
+{
+    return workerId;
 }
 
 PhysicalSourceId SourceDescriptor::getPhysicalSourceId() const
@@ -136,11 +143,13 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, parserConfig: {{type: {}, tupleDelimiter: {}, "
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, workerId: {}, parserConfig: {{type: {}, tupleDelimiter: "
+               "{}, "
                "stringDelimiter: {} }})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
+               descriptor.getWorkerId(),
                descriptor.getParserConfig().parserType,
                escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
                escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
@@ -152,6 +161,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
+        .workerId = sourceDescriptor.workerId,
         .parserConfig = sourceDescriptor.parserConfig,
         .config = sourceDescriptor.getReflectedConfig()};
 
@@ -166,6 +176,7 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl)
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
         LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
         reflectedSourceDescriptor.type,
+        reflectedSourceDescriptor.workerId,
         Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
         std::move(reflectedSourceDescriptor.parserConfig)};
 }
