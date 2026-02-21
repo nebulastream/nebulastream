@@ -121,7 +121,7 @@ VarVal CastToUnixTimestampPhysicalFunction::execute(const Record& record, ArenaR
     const auto value = childFunction.execute(record, arena);
 
     const auto var = value.cast<VariableSizedData>();
-    const auto size = var.getContentSize();
+    const auto size = var.getSize();
     const auto ptr = var.getContent();
 
     const auto parsedMilliSeconds = nautilus::invoke(

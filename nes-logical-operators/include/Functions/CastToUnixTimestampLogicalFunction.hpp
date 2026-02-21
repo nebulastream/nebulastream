@@ -23,7 +23,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-// #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -35,8 +34,6 @@ public:
     static constexpr std::string_view NAME = "CastToUnixTs";
 
     CastToUnixTimestampLogicalFunction(LogicalFunction child);
-
-    // [[nodiscard]] SerializableFunction serialize() const;
 
     [[nodiscard]] bool operator==(const CastToUnixTimestampLogicalFunction& rhs) const;
 
@@ -54,10 +51,35 @@ public:
 private:
     DataType outputType;
     LogicalFunction child;
+
+    friend Reflector<CastToUnixTimestampLogicalFunction>;
 };
 
 static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
 
+
+template <>
+struct Reflector<CastToUnixTimestampLogicalFunction>
+{
+    Reflected operator()(const CastToUnixTimestampLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<CastToUnixTimestampLogicalFunction>
+{
+    CastToUnixTimestampLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedCastToUnixTimestampLogicalFunction
+{
+    std::optional<LogicalFunction> child;
+};
 }
 
 FMT_OSTREAM(NES::CastToUnixTimestampLogicalFunction);

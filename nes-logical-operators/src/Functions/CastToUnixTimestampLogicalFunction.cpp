@@ -22,9 +22,9 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
-// #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
+
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -37,14 +37,6 @@ CastToUnixTimestampLogicalFunction::CastToUnixTimestampLogicalFunction(LogicalFu
 {
 }
 
-SerializableFunction CastToUnixTimestampLogicalFunction::serialize() const
-{
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    DataTypeSerializationUtil::serializeDataType(outputType, serializedFunction.mutable_data_type());
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    return serializedFunction;
-}
 
 bool CastToUnixTimestampLogicalFunction::operator==(const CastToUnixTimestampLogicalFunction& rhs) const
 {
@@ -93,9 +85,31 @@ std::string CastToUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
     return fmt::format("Cast to unix timestamp (ms), outputType={}", outputType);
 }
 
+
+Reflected Reflector<CastToUnixTimestampLogicalFunction>::operator()(const CastToUnixTimestampLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedCastToUnixTimestampLogicalFunction{.child = function.child});
+}
+
+CastToUnixTimestampLogicalFunction Unreflector<CastToUnixTimestampLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [function] = unreflect<detail::ReflectedCastToUnixTimestampLogicalFunction>(reflected);
+
+    if (!function.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize child of CastToUnixTimestampLogicalFunction");
+    }
+    return CastToUnixTimestampLogicalFunction(std::move(function.value()));
+}
+
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastToUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<CastToUnixTimestampLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastToUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());

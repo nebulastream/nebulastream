@@ -48,9 +48,10 @@ public:
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+    LogicalFunction child;
+
 private:
     DataType dataType;
-    LogicalFunction child;
 
     friend Reflector<NegateLogicalFunction>;
 };
