@@ -65,19 +65,12 @@ public:
 
     /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
     UIntOption receiverIOThreads
-        = {"receiver_io_threads",
-           "1",
-           "Number of IO threads for the receiver network runtime. 0 means use the number of available cores."};
+        = {"receiver_io_threads", "1", "Number of IO threads for the receiver network runtime. 0 means use the number of available cores."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {
-            &senderQueueSize,
-            &maxPendingAcks,
-            &receiverQueueSize,
-            &senderIOThreads,
-            &receiverIOThreads};
+        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads};
     }
 };
 }
