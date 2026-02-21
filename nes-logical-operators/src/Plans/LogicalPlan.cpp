@@ -35,9 +35,14 @@
 namespace NES
 {
 
-QueryId LogicalPlan::getQueryId() const
+const QueryId& LogicalPlan::getQueryId() const
 {
     return queryId;
+}
+
+void LogicalPlan::setQueryId(QueryId id)
+{
+    queryId = id;
 }
 
 std::string LogicalPlan::getOriginalSql() const
@@ -48,11 +53,6 @@ std::string LogicalPlan::getOriginalSql() const
 void LogicalPlan::setOriginalSql(const std::string& sql)
 {
     originalSql = sql;
-}
-
-void LogicalPlan::setQueryId(QueryId id)
-{
-    queryId = id;
 }
 
 std::vector<LogicalOperator> LogicalPlan::getRootOperators() const
@@ -87,24 +87,19 @@ LogicalPlan& LogicalPlan::operator=(LogicalPlan&& other) noexcept
 {
     if (this != &other)
     {
+        queryId = other.queryId;
         rootOperators = std::move(other.rootOperators);
         originalSql = std::move(other.originalSql);
-        queryId = other.queryId;
     }
     return *this;
 }
 
-LogicalPlan::LogicalPlan(LogicalOperator rootOperator) : queryId(INVALID_QUERY_ID)
-{
-    rootOperators.push_back(std::move(rootOperator));
-}
-
-LogicalPlan::LogicalPlan(const QueryId queryId, std::vector<LogicalOperator> rootOperators)
+LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators)
     : queryId(queryId), rootOperators(std::move(rootOperators))
 {
 }
 
-LogicalPlan::LogicalPlan(const QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql)
+LogicalPlan::LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql)
     : queryId(queryId), rootOperators(std::move(rootOperators)), originalSql(std::move(originalSql))
 {
 }

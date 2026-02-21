@@ -39,10 +39,12 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/UUID.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
@@ -50,6 +52,11 @@
 
 namespace
 {
+
+NES::QueryId randomQueryId()
+{
+    return NES::QueryId::createLocal(NES::LocalQueryId(NES::generateUUID()));
+}
 
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
@@ -133,7 +140,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
 TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{7};
+    const auto id = randomQueryId();
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
@@ -152,7 +159,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 
     const auto result
         = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
@@ -165,7 +172,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 {
     const testing::InSequence seq;
-    constexpr QueryId id{11};
+    const auto id = randomQueryId();
 
     auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
@@ -183,7 +190,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
