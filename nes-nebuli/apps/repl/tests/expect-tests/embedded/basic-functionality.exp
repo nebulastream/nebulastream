@@ -74,7 +74,7 @@ if {$returned_id ne $query_id} {
 # Check that query_status matches one of the expected states
 assert_jq_test $json {.[0].query_status | test("^Running|Registered|Started$")} "SHOW QUERIES - unexpected query status"
 
-send_sql {SHOW QUERIES WHERE ID = $query_id;}
+send_sql {SHOW QUERIES WHERE ID = '$query_id';}
 set json [expect_json "Timeout waiting for SHOW QUERIES WHERE response"]
 # Verify we get exactly the query we asked for
 set returned_id [jq $json {.[0].query_id}]
@@ -82,7 +82,7 @@ if {$returned_id ne $query_id} {
     fail "SHOW QUERIES WHERE - query_id mismatch" $query_id $returned_id
 }
 
-send_sql {DROP QUERY WHERE ID = $query_id;}
+send_sql {DROP QUERY WHERE ID = '$query_id';}
 set json [expect_json "Timeout waiting for DROP QUERY response"]
 # Check that the response contains the query ID
 set returned_id [jq $json {.[0].query_id}]

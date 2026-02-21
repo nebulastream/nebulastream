@@ -41,9 +41,11 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -294,11 +296,12 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 
 TEST_F(StatementBinderTest, BindDropQuery)
 {
-    const std::string queryString = "DROP QUERY WHERE ID = 12";
+    const std::string testUUID = "550e8400-e29b-41d4-a716-446655440000";
+    const auto queryString = fmt::format("DROP QUERY WHERE ID = '{}'", testUUID);
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), 12);
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id, QueryId::createLocal(LocalQueryId(testUUID)));
 
     const std::string queryString2 = "DROP QUERY 1";
     const auto statement2 = binder->parseAndBindSingle(queryString2);

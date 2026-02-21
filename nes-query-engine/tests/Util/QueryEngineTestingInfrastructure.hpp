@@ -60,6 +60,7 @@
 #include <MemoryTestUtils.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
+#include <QueryId.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 #include <TestSource.hpp>
@@ -504,9 +505,9 @@ struct TestingHarness
     std::unique_ptr<QueryEngine> qm;
     size_t numberOfThreads;
 
-    QueryId::Underlying queryIdCounter = INITIAL<QueryId>.getRawValue();
-    QueryId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
-    QueryId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
+    std::vector<QueryId> queryIds;
+    OriginId::Underlying lastOriginIdCounter = INITIAL<OriginId>.getRawValue();
+    PipelineId::Underlying lastPipelineIdCounter = INITIAL<PipelineId>.getRawValue();
 
     QueryPlanBuilder::identifier_t lastIdentifier = 0;
     std::unordered_map<QueryPlanBuilder::identifier_t, ExecutablePipelineStage*> stages;
@@ -541,11 +542,13 @@ struct TestingHarness
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
     void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);
 
+    /// Returns the QueryId assigned to the Nth query added via addNewQuery (0-indexed).
+    [[nodiscard]] QueryId queryId(size_t index) const { return queryIds.at(index); }
 
     /// Starts the query engine and initializes internal futures used to track query termination events.
     /// All expected query runtime events should be declared beforehand
     /// ```c++
-    ///  test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Running});
+    ///  test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Running});
     ///  test.start();
     /// ```
     void start();

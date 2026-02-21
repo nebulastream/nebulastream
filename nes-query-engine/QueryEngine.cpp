@@ -191,7 +191,6 @@ public:
     }
 
 private:
-    std::atomic<QueryId::Underlying> queryIdCounter = QueryId::INITIAL;
     std::recursive_mutex mutex;
     std::unordered_map<QueryId, State> queryStates;
 };

@@ -259,11 +259,11 @@ public:
             {
                 throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on id attribute");
             }
-            if (not std::holds_alternative<uint64_t>(value))
+            if (not std::holds_alternative<std::string>(value))
             {
-                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be an unsigned integer");
+                throw InvalidQuerySyntax("Filter value for SHOW QUERIES must be a string");
             }
-            return ShowQueriesStatement{.id = QueryId{std::get<uint64_t>(value)}, .format = format};
+            return ShowQueriesStatement{.id = QueryId::createLocal(LocalQueryId(std::get<std::string>(value))), .format = format};
         }
         return ShowQueriesStatement{.id = std::nullopt, .format = format};
     }
@@ -340,11 +340,11 @@ public:
             {
                 throw InvalidQuerySyntax("Filter for DROP QUERY must be on ID attribute");
             }
-            if (not std::holds_alternative<uint64_t>(value))
+            if (not std::holds_alternative<std::string>(value))
             {
-                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a number");
+                throw InvalidQuerySyntax("Filter value for DROP QUERY must be a string");
             }
-            const auto id = QueryId{std::get<uint64_t>(value)};
+            const auto id = QueryId::createLocal(LocalQueryId(std::get<std::string>(value)));
             return DropQueryStatement{id};
         }
         else if (const auto* const dropSinkAst = dropAst->dropSubject()->dropSink(); dropSinkAst != nullptr)
@@ -386,7 +386,7 @@ public:
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
-                std::optional<size_t> queryId;
+                std::optional<QueryId> queryId;
                 if (queryAst->optionsClause() != nullptr)
                 {
                     auto options = bindConfigOptions(queryAst->optionsClause()->options->namedConfigExpression());
@@ -395,11 +395,11 @@ public:
                         if (auto idIter = optionsIter->second.find("ID"); idIter != optionsIter->second.end())
                         {
                             auto* literal = std::get_if<Literal>(&idIter->second);
-                            if ((literal == nullptr) || !std::holds_alternative<size_t>(*literal))
+                            if ((literal == nullptr) || !std::holds_alternative<std::string>(*literal))
                             {
-                                throw InvalidQuerySyntax("Query id must be a number");
+                                throw InvalidQuerySyntax("Query id must be a string");
                             }
-                            queryId = std::get<size_t>(*literal);
+                            queryId = QueryId::createLocal(LocalQueryId(std::get<std::string>(*literal)));
                         }
                     }
                 }
