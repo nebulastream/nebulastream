@@ -29,6 +29,7 @@
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
+#include <SerializableQueryId.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <from_current.hpp>
 
@@ -40,7 +41,10 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
-    serializableQueryPlan.set_queryid(queryPlan.getQueryId().getRawValue());
+    if (queryPlan.getQueryId().isValid())
+    {
+        *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
+    }
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))
@@ -190,8 +194,20 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     auto queryId = INVALID_QUERY_ID;
     if (serializedQueryPlan.has_queryid())
     {
-        queryId = QueryId(serializedQueryPlan.queryid());
+        queryId = deserializeQueryId(serializedQueryPlan.queryid());
     }
     return LogicalPlan(queryId, std::move(rootOperators));
+}
+
+NES::SerializableQueryId QueryPlanSerializationUtil::serializeQueryId(const QueryId& queryId)
+{
+    NES::SerializableQueryId proto;
+    proto.set_local_query_id(queryId.getLocalQueryId().getRawValue());
+    return proto;
+}
+
+QueryId QueryPlanSerializationUtil::deserializeQueryId(const NES::SerializableQueryId& proto)
+{
+    return QueryId::createLocal(LocalQueryId(proto.local_query_id()));
 }
 }
