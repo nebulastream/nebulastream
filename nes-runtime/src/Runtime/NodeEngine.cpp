@@ -50,11 +50,13 @@ class QueryTracker
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    void registerQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> qep)
+    void registerQuery(std::unique_ptr<CompiledQueryPlan> qep, QueryId queryId)
     {
-        if (!queries.wlock()->try_emplace(std::move(queryId), std::make_unique<QueryState>(Idle{std::move(qep)})).second)
+        auto locked = queries.wlock();
+        auto [it, inserted] = locked->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
+        if (!inserted)
         {
-            throw QueryAlreadyRegistered("{}", queryId);
+            throw QueryAlreadyRegistered("Query with ID {} is already registered", queryId);
         }
     }
 
@@ -97,7 +99,7 @@ NodeEngine::NodeEngine(
 
 void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
-    queryTracker->registerQuery(queryId, std::move(compiledQueryPlan));
+    queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
     queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
 }
 
