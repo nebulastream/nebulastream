@@ -70,7 +70,7 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
     auto timestampAsISO8601 = arena.allocateVariableSizedData(nautilus::val<uint32_t>(iso8601FormatLength));
     nautilus::invoke(
         +[](const uint64_t ms, int8_t* payload) { writeZuluTimestamp(reinterpret_cast<char*>(payload), ms); }, timestampInMilliSeconds, timestampAsISO8601.getContent());
-    VarVal(nautilus::val<uint32_t>(iso8601FormatLength)).writeToMemory(timestampAsISO8601.getReference());
+    VarVal(nautilus::val<uint32_t>(iso8601FormatLength)).writeToMemory(timestampAsISO8601.getContent());
     return timestampAsISO8601;
 }
 
