@@ -45,6 +45,9 @@ nes-asp/data/*.csv
 scripts/__pycache__
 .ccache
 
+# Devcontainer secrets
+.devcontainer/.secrets.env
+
 # Ignore nix symlinks
 .nix/clang
 .nix/clang++
