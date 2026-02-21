@@ -25,6 +25,9 @@
 
 namespace NES
 {
+static __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
+static __itt_string_handle* blockingRead = __itt_string_handle_create("Blocking Read");
+static __itt_string_handle* blockingWrite = __itt_string_handle_create("Blocking Write");
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
@@ -70,17 +73,33 @@ public:
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
     {
+        /// fast path
+        if (stoken.stop_requested())
+        {
+            return false;
+        }
+
+        if (admission.write(std::forward<T>(task)))
+        {
+            tasksAvailable.release();
+            return true;
+        }
+
+        /// blocking write
+        __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingWrite);
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
             /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
+                __itt_task_end(taskQueueDomain);
                 /// tasksAvailable is only increased if write to admission queue was successful.
                 tasksAvailable.release();
                 return true;
             }
         }
+        __itt_task_end(taskQueueDomain);
         return false;
     }
 
@@ -99,6 +118,7 @@ public:
     /// the stop token.
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
+        __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingRead);
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())
@@ -106,6 +126,7 @@ public:
                 return std::nullopt;
             }
         }
+        __itt_task_end(taskQueueDomain);
 
         return readElementAssumingItExists();
     }

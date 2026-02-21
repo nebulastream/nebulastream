@@ -225,6 +225,10 @@ impl<R: AsyncRead + Unpin, W: AsyncWrite + Unpin> ChannelHandler<R, W> {
                         format!("Protocol Error. Unknown Seq {seq:?}").into(),
                     ));
                 };
+
+                static PACKET_ACK_RECEIVED_EVENT: std::sync::OnceLock<ittapi::Event> = std::sync::OnceLock::new();
+                let event = PACKET_ACK_RECEIVED_EVENT.get_or_init(|| ittapi::Event::new("PACKET_ACK"));
+                let _ = event.start();
                 trace!("Ack for {seq:?}");
             }
         }

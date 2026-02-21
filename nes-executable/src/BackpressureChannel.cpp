@@ -21,9 +21,8 @@
 #include <mutex>
 #include <stop_token>
 #include <utility>
-
+#include <ittnotify.h>
 #include <folly/Synchronized.h>
-
 #include <ErrorHandling.hpp>
 
 /// Represents the state of the backpressure channel guarded by a mutex and communicated to the listener via the condition variable.
@@ -74,6 +73,9 @@ bool BackpressureController::releasePressure()
     return false;
 }
 
+__itt_domain* backpressure = __itt_domain_create("engine.task");
+static __itt_string_handle* backpressureWait = __itt_string_handle_create("Backpressure Wait");
+
 void BackpressureListener::wait(const std::stop_token& stopToken) const
 {
     auto state = channel->stateMtx.lock();
@@ -83,6 +85,8 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
         return;
     }
 
+
+    __itt_task_begin(backpressure, __itt_null, __itt_null, backpressureWait);
     bool destroyed = false;
     /// Wait for the channel state to change
     channel->change.wait(
@@ -93,6 +97,7 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
             destroyed = *state == Channel::DESTROYED;
             return destroyed || *state == Channel::OPEN;
         });
+    __itt_task_end(backpressure);
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
 }

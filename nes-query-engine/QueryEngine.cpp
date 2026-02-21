@@ -30,6 +30,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <ittnotify.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -60,6 +61,12 @@ namespace NES
 
 namespace
 {
+__itt_domain* taskExecutionDomain = __itt_domain_create("engine.task");
+__itt_string_handle* executeTask = __itt_string_handle_create("Execute Task");
+__itt_string_handle* pipeline_id = __itt_string_handle_create("Pipeline Id");
+__itt_string_handle* local_query_id_low = __itt_string_handle_create("Local-QueryId (low)");
+__itt_string_handle* local_query_id_high = __itt_string_handle_create("Local-QueryId (high)");
+__itt_string_handle* global_query_id = __itt_string_handle_create("Global Query Id");
 
 /// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
 /// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
@@ -512,7 +519,17 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
+        static __itt_string_handle* key_number = __itt_string_handle_create("Test_Number");
+        static __itt_string_handle* key_string = __itt_string_handle_create("Test_String");
+        __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, executeTask);
+        // Test A: Integer (Simplest possible case)
+        uint64_t my_number = 42;
+        const char* my_string = "Hello VTune";
+        __itt_metadata_add_with_scope(taskExecutionDomain, __itt_scope_task, key_number, __itt_metadata_u64, 1, &my_number);
+        __itt_metadata_str_add_with_scope(
+            taskExecutionDomain, __itt_scope_task, key_string, my_string, 0); // 0 length = auto-detect null terminator
         pipeline->stage->execute(task.buf, pec);
+        __itt_task_end(taskExecutionDomain);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
