@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
 namespace NES
@@ -29,7 +30,7 @@ struct WorkerStatus
 {
     struct ActiveQuery
     {
-        QueryId queryId = INVALID<QueryId>;
+        QueryId queryId = INVALID_QUERY_ID;
         /// If the query is still starting, it does not have a started timestamp yet
         std::optional<std::chrono::system_clock::time_point> started;
     };
@@ -37,7 +38,7 @@ struct WorkerStatus
     /// Terminated Queries contain all queries that have either stopped or failed
     struct TerminatedQuery
     {
-        QueryId queryId = INVALID<QueryId>;
+        QueryId queryId = INVALID_QUERY_ID;
         /// If a query fails, it might not have a started timestamp if it failed during startup
         std::optional<std::chrono::system_clock::time_point> started;
         std::chrono::system_clock::time_point terminated;

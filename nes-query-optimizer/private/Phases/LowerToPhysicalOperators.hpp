@@ -13,20 +13,11 @@
 */
 
 #pragma once
-
 #include <Plans/LogicalPlan.hpp>
-#include <SerializableQueryId.pb.h>
-#include <SerializableQueryPlan.pb.h>
+#include <PhysicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
-namespace NES
+namespace NES::LowerToPhysicalOperators
 {
-class QueryPlanSerializationUtil
-{
-public:
-    static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
-    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
-
-    static NES::SerializableQueryId serializeQueryId(const QueryId& queryId);
-    static QueryId deserializeQueryId(const NES::SerializableQueryId& proto);
-};
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
 }

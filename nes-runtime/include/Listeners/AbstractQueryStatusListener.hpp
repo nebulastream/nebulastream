@@ -18,6 +18,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
