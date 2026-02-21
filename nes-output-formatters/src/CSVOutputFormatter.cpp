@@ -65,7 +65,6 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    NES_DEBUG("Reached");
     nautilus::val<uint64_t> written(0);
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
     if (fieldType.type != DataType::Type::VARSIZED)

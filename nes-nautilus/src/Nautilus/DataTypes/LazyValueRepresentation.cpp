@@ -14,9 +14,11 @@
 
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 
+#include <cstdint>
 #include <ostream>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <ErrorHandling.hpp>
+#include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 

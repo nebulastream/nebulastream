@@ -86,7 +86,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
-        NES_DEBUG("One field");
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         Record record;
@@ -100,8 +99,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
-            const nautilus::val<bool> parseValue(fieldsToParse.contains(fieldName));
-            NES_DEBUG("Found that it was {}", fieldsToParse.contains(fieldName));
             const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields() + 1);
             const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
             const auto recordOffsetEndAddress = indexBufferPtr + (numPriorFields + i + nautilus::static_val<uint64_t>(1));
@@ -112,7 +109,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             parseRawValueIntoRecord(
-                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), parseValue);
+                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), fieldsToParse);
         }
         return record;
     }
@@ -127,7 +124,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
-        NES_DEBUG("Two field");
         /// static loop over number of fields (which don't change)
         /// skips fields that are not part of projection and only traces invoke functions for fields that we need
         Record record;
@@ -140,7 +136,6 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             {
                 continue;
             }
-            const nautilus::val<bool> parseValue(fieldsToParse.contains(fieldName));
             const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields());
             nautilus::static_val<uint64_t> offsetPairStart = i * 2;
             nautilus::static_val<uint64_t> offsetPairEnd = offsetPairStart + 1;
@@ -152,7 +147,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             parseRawValueIntoRecord(
-                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), parseValue);
+                fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType(), fieldsToParse);
         }
         return record;
     }

@@ -50,22 +50,24 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef))
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::vector<Schema::Field> schemaFields)
+    : StreamJoinBuildPhysicalOperator(
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(schemaFields))
 {
 }
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Convert lazy values into their parsed form
-    for (const auto& [identifier, type] : std::views::zip(bufferRef->getAllFieldNames(), bufferRef->getAllDataTypes()))
+    for (const auto& field : nautilus::static_iterable(schemaFields))
     {
-        const VarVal val = record.read(identifier);
+        const VarVal val = record.read(field.name);
         if (val.isLazyValue())
         {
             const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
-            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
-            record.write(identifier, parsedVal);
+            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, field.dataType.type);
+            record.write(field.name, parsedVal);
         }
     }
 

@@ -19,6 +19,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -62,5 +63,5 @@ void parseRawValueIntoRecord(
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
     QuotationType quotationType,
-    const nautilus::val<bool>& parseValue);
+    const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse);
 }

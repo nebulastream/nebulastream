@@ -105,7 +105,6 @@ public:
             {
                 using removedCVRefT0 = std::remove_cvref_t<T0>;
                 using removedCVRefT1 = std::remove_cvref_t<T1>;
-                NES_DEBUG("Did not work out");
                 if constexpr (std::is_same_v<removedCVRefT0, VariableSizedData> || std::is_same_v<removedCVRefT1, VariableSizedData>)
                 {
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
@@ -126,16 +125,7 @@ public:
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
 
-    [[nodiscard]] nautilus::val<bool> isLazyValue() const
-    {
-        return std::visit(
-            []<typename T0>(T0&&) -> nautilus::val<bool>
-            {
-                using removedCVRefT0 = std::remove_cvref_t<T0>;
-                return std::is_same_v<removedCVRefT0, LazyValueRepresentation>;
-            },
-            value);
-    }
+    [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<LazyValueRepresentation>(value); }
 
     template <typename T>
     VarVal customVisit(T t) const

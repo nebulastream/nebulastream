@@ -124,16 +124,12 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
-
     nautilus::val<uint64_t> writtenBytes = 0;
-    NES_DEBUG("Entered format");
     if (value.isLazyValue())
     {
-        NES_DEBUG("Entered lazy mode");
         /// Lazy value representations do not have to be converted and can be written directly
         /// This potentially saves us parsing operations
         const LazyValueRepresentation lazyVal = value.cast<LazyValueRepresentation>();
-        NES_DEBUG("Got behind cast");
         if (lazyVal.getSize() > remainingSize)
         {
             nautilus::invoke(
@@ -163,7 +159,6 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     }
     else
     {
-        NES_DEBUG("Entered switch mode");
         /// Switch between datatypes to convert value to a nautilus val of the phyiscal type and convert it to a string
         switch (fieldType.type)
         {
