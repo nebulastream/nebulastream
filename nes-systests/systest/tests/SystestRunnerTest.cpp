@@ -185,8 +185,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
-    const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
+    const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{distributedPlan, {}, Schema{}}, {}, std::nullopt, dummyQueryId)},
@@ -220,8 +219,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
-    const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
+    const LogicalPlan plan(INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})});
 
     const auto result = runQueries(
         {makeQuery(

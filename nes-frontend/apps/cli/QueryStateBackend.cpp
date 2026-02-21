@@ -35,12 +35,12 @@ namespace NES::CLI
 {
 std::string PersistedQueryId::toString() const
 {
-    return queryId.getRawValue();
+    return queryId.getLocalQueryId().getRawValue();
 }
 
 PersistedQueryId PersistedQueryId::fromString(std::string_view input)
 {
-    return PersistedQueryId{DistributedQueryId(input)};
+    return PersistedQueryId{QueryId::createLocal(LocalQueryId(std::string(input)))};
 }
 
 QueryStateBackend::QueryStateBackend() : stateDirectory(getStateDirectory())
@@ -82,26 +82,15 @@ std::filesystem::path QueryStateBackend::getStateDirectory()
 
 std::filesystem::path QueryStateBackend::getQueryFilePath(const DistributedQueryId& distributedQueryId)
 {
-    return stateDirectory / fmt::format("{}.json", distributedQueryId.getRawValue());
+    return stateDirectory / fmt::format("{}.json", queryId.getLocalQueryId().getRawValue());
 }
 
 PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery)
 {
     auto filePath = getQueryFilePath(distributedQueryId);
     nlohmann::json jsonObject;
-    jsonObject["query_id"] = distributedQueryId.getRawValue();
-    /// Manually serialize the local queries mapping
-    nlohmann::json localQueriesJson = nlohmann::json::object();
-    for (const auto& [grpcAddr, queryId] : distributedQuery.iterate())
-    {
-        const std::string grpcKey = grpcAddr.getRawValue();
-        if (!localQueriesJson.contains(grpcKey))
-        {
-            localQueriesJson[grpcKey] = nlohmann::json::array();
-        }
-        localQueriesJson[grpcKey].push_back(queryId.getLocalQueryId().getRawValue());
-    }
-    jsonObject["local_queries"] = localQueriesJson;
+    jsonObject["query_id"] = queryId.getLocalQueryId().getRawValue();
+
     auto now = std::chrono::system_clock::now();
     jsonObject["created_at"] = fmt::format("{:%Y-%m-%dT%H:%M:%S%z}", now);
     std::ofstream file(filePath);
@@ -157,6 +146,8 @@ DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
         }
         localQueries.emplace(worker, std::move(queryIds));
     }
+
+    auto queryId = QueryId::createLocal(LocalQueryId(jsonObject["query_id"].get<std::string>()));
     NES_DEBUG("Loaded query state from: {}", filePath.string());
     return DistributedQuery(localQueries);
 }

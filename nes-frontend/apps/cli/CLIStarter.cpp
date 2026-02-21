@@ -479,6 +479,13 @@ void doStatus(
             result.insert(result.end(), results.begin(), results.end());
         }
 
+        /// Patch local query ids for persistent id
+        for (auto& query : result)
+        {
+            query["local_query_id"] = query["query_id"];
+            query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
+        }
+
         std::cout << result.dump(4) << '\n';
     }
 }
@@ -496,6 +503,13 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector
 
         nlohmann::json results(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
         result.insert(result.end(), results.begin(), results.end());
+    }
+
+    /// Patch local query ids for persistent id
+    for (auto& query : result)
+    {
+        query["local_query_id"] = query["query_id"];
+        query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
     }
 
     std::cout << result.dump(4) << '\n';

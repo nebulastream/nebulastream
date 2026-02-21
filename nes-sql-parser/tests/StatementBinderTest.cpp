@@ -325,7 +325,7 @@ TEST_F(StatementBinderTest, BindDropQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), testUUID);
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id, QueryId::createLocal(LocalQueryId(testUUID)));
 
     const std::string queryString2 = "DROP QUERY 1";
     const auto statement2 = binder->parseAndBindSingle(queryString2);

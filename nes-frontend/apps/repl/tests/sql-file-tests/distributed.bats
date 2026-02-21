@@ -197,8 +197,8 @@ assert_json_contains() {
   echo "${lines[6]}" | jq -e '(. | length) == 2'
   echo "${lines[6]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[7]}"
-  assert_json_contains "[]" "${lines[8]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
+  assert_json_contains "[]" "${lines[7]}"
 }
 
 @test "launch multiple queries" {

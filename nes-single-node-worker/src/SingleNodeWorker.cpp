@@ -37,7 +37,6 @@
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
-#include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -75,39 +74,14 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
-    if (!configuration.data.getValue().empty())
-    {
-        const auto& networkConfig = configuration.workerConfiguration.network;
-        initNetworkServices(
-            configuration.data.getValue(),
-            host,
-            NetworkOptions{
-                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
-                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
-                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
-                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
-                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
-            });
-    }
-}
-
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a local query ID, generate one if needed
-        /// but preserve the distributed query ID if present
-        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
+        /// Check if the plan already has a query ID
+        if (!plan.getQueryId().isValid())
         {
-            auto localId = LocalQueryId(generateUUID());
-            if (plan.getQueryId().isDistributed())
-            {
-                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
-            }
-            else
-            {
-                plan.setQueryId(QueryId::createLocal(localId));
-            }
+            plan.setQueryId(QueryId::createLocal(LocalQueryId(generateUUID())));
         }
 
         const LogContext context("queryId", plan.getQueryId());

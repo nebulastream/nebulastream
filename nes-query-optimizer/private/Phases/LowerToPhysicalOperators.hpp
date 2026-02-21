@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
-syntax = "proto3";
-package NES;
+#pragma once
+#include <Plans/LogicalPlan.hpp>
+#include <PhysicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
-message SerializableQueryId {
-    string local_query_id = 1;
+namespace NES::LowerToPhysicalOperators
+{
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf);
 }

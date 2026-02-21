@@ -61,15 +61,8 @@ std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(Logi
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {
-        NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.host);
-        /// The worker returns its assigned LocalQueryId, but we need to return the full QueryId
-        /// which includes the DistributedQueryId from the plan
-        auto workerQueryId = QueryPlanSerializationUtil::deserializeQueryId(reply.queryid());
-        if (localPlan.getQueryId().isDistributed())
-        {
-            return QueryId::create(workerQueryId.getLocalQueryId(), localPlan.getQueryId().getDistributedQueryId());
-        }
-        return workerQueryId;
+        NES_DEBUG("Registration of local query {} to node {} was successful.", localPlan.getQueryId(), workerConfig.grpc);
+        return QueryPlanSerializationUtil::deserializeQueryId(reply.queryid());
     }
     return std::unexpected{QueryRegistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
@@ -148,7 +141,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(queryId, *state, metrics);
+    return LocalQueryStatus(QueryPlanSerializationUtil::deserializeQueryId(response.queryid()), *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
