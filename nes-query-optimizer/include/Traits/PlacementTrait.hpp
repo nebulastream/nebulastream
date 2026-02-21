@@ -22,7 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableTrait.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -36,8 +36,6 @@ struct PlacementTrait final
 
     [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const;
-
     bool operator==(const PlacementTrait& other) const = default;
 
     [[nodiscard]] size_t hash() const;
@@ -45,8 +43,30 @@ struct PlacementTrait final
     [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
     [[nodiscard]] std::string_view getName() const;
+
+    friend Reflector<PlacementTrait>;
+};
+
+template <>
+struct Reflector<PlacementTrait>
+{
+    Reflected operator()(const PlacementTrait& trait) const;
+};
+
+template <>
+struct Unreflector<PlacementTrait>
+{
+    PlacementTrait operator()(const Reflected& reflected) const;
 };
 
 static_assert(TraitConcept<PlacementTrait>);
 
+}
+
+namespace NES::detail
+{
+struct ReflectedPlacementTrait
+{
+    std::string onNode;
+};
 }
