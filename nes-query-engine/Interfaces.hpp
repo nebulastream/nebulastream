@@ -19,6 +19,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 #include <Task.hpp>
 
 namespace NES

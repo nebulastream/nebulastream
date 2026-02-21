@@ -22,6 +22,7 @@
 #include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <CompiledQueryPlan.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {

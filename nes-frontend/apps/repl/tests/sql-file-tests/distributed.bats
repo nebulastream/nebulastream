@@ -200,7 +200,7 @@ assert_json_contains() {
   echo "${lines[5]}" | jq -e '(. | length) == 1'
   echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
 }
 
@@ -250,7 +250,7 @@ assert_json_contains() {
   # lines[2] is the SELECT query result with query_id
   QUERY_ID=$(echo ${lines[2]} | jq -r '.[0].query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[-1]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[-1]}"
 }
 
 @test "default on-exit behavior should keep queries alive" {

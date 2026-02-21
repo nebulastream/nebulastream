@@ -396,7 +396,7 @@ void doStatus(
         for (auto& query : result)
         {
             query["local_query_id"] = query["query_id"];
-            query["query_id"] = queries.at(query["query_id"]);
+            query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
         }
 
         std::cout << result.dump(4) << '\n';
@@ -422,7 +422,7 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     for (auto& query : result)
     {
         query["local_query_id"] = query["query_id"];
-        query["query_id"] = queries.at(query["query_id"]);
+        query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
     }
 
     std::cout << result.dump(4) << '\n';
