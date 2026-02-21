@@ -12,21 +12,15 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <Plans/LogicalPlan.hpp>
-#include <SerializableQueryId.pb.h>
-#include <SerializableQueryPlan.pb.h>
+#include <QueryId.hpp>
 
 namespace NES
 {
-class QueryPlanSerializationUtil
-{
-public:
-    static SerializableQueryPlan serializeQueryPlan(const LogicalPlan& queryPlan);
-    static LogicalPlan deserializeQueryPlan(const SerializableQueryPlan& serializedQueryPlan);
 
-    static NES::SerializableQueryId serializeQueryId(const QueryId& queryId);
-    static QueryId deserializeQueryId(const NES::SerializableQueryId& proto);
-};
+std::ostream& operator<<(std::ostream& os, const QueryId& queryId)
+{
+    os << queryId.localQueryId;
+    return os;
+}
+
 }

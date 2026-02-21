@@ -36,8 +36,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
-#include <folly/Synchronized.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -76,20 +76,14 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
 }
 
-/// This is a workaround to get again unique queryId after our initial worker refactoring.
-/// We might want to move this to the engine.
-static folly::Synchronized idGenerator{std::mt19937(std::random_device()())};
-
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
         /// Check if the plan already has a query ID
-        if (plan.getQueryId() == INVALID_QUERY_ID)
+        if (!plan.getQueryId().isValid())
         {
-            std::uniform_int_distribution<size_t> dist(QueryId::INITIAL, std::numeric_limits<int32_t>::max());
-            /// Generate a new query ID if the plan doesn't have one
-            plan.setQueryId(QueryId(dist(*idGenerator.wlock())));
+            plan.setQueryId(QueryId::createLocal(LocalQueryId(generateUUID())));
         }
 
         const LogContext context("queryId", plan.getQueryId());
