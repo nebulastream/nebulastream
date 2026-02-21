@@ -22,7 +22,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
-#include <Util/Strings.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
 #include <google/protobuf/empty.pb.h>
@@ -36,22 +35,42 @@ namespace NES
 {
 namespace
 {
+/// Sanitize a string for use as GRPC ASCII metadata value.
+/// GRPC metadata values must contain only printable ASCII (0x20-0x7E) and TAB (0x09).
+constexpr char PRINTABLE_ASCII_MIN = 0x20;
+constexpr char PRINTABLE_ASCII_MAX = 0x7E;
+constexpr char HORIZONTAL_TAB = 0x09;
+
+std::string sanitizeForGrpcMetadata(const std::string& value)
+{
+    std::string result;
+    result.reserve(value.size());
+    for (const char chr : value)
+    {
+        if ((chr >= PRINTABLE_ASCII_MIN && chr <= PRINTABLE_ASCII_MAX) || chr == HORIZONTAL_TAB)
+        {
+            result += chr;
+        }
+    }
+    return result;
+}
+
 grpc::Status handleError(const std::exception& exception, grpc::ServerContext* context)
 {
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
-    context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
-    return {grpc::INTERNAL, exception.what()};
+    context->AddTrailingMetadata("what", sanitizeForGrpcMetadata(exception.what()));
+    context->AddTrailingMetadata("trace", sanitizeForGrpcMetadata(cpptrace::from_current_exception().to_string(false)));
+    return {grpc::INTERNAL, sanitizeForGrpcMetadata(exception.what())};
 }
 
 grpc::Status handleError(const Exception& exception, grpc::ServerContext* context)
 {
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
-    context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
-    return {grpc::INTERNAL, exception.what()};
+    context->AddTrailingMetadata("what", sanitizeForGrpcMetadata(exception.what()));
+    context->AddTrailingMetadata("trace", sanitizeForGrpcMetadata(cpptrace::from_current_exception().to_string(false)));
+    return {grpc::INTERNAL, sanitizeForGrpcMetadata(exception.what())};
 }
 
 template <typename T>
