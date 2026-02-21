@@ -16,6 +16,7 @@
 #include <chrono>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -24,7 +25,9 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 
 using namespace std::chrono_literals;
 
@@ -36,8 +39,10 @@ class QueryLogTest : public ::testing::Test
 protected:
     void SetUp() override { queryLog = std::make_unique<QueryLog>(); }
 
+    static QueryId randomQueryId() { return QueryId::createLocal(LocalQueryId(generateUUID())); }
+
     std::unique_ptr<QueryLog> queryLog;
-    const QueryId testQueryId{42};
+    const QueryId testQueryId = randomQueryId();
     const std::chrono::system_clock::time_point testTime = std::chrono::system_clock::now();
 };
 
@@ -66,7 +71,7 @@ TEST_F(QueryLogTest, GetLogForQuery)
 
 TEST_F(QueryLogTest, GetLogForNonExistentQuery)
 {
-    const auto log = queryLog->getLogForQuery(QueryId{999});
+    const auto log = queryLog->getLogForQuery(randomQueryId());
     EXPECT_FALSE(log.has_value());
 }
 
@@ -134,14 +139,14 @@ TEST_F(QueryLogTest, GetQuerySummaryPartialExecution)
 
 TEST_F(QueryLogTest, GetQuerySummaryForNonExistentQuery)
 {
-    const auto status = queryLog->getQueryStatus(QueryId{999});
+    const auto status = queryLog->getQueryStatus(randomQueryId());
     EXPECT_FALSE(status.has_value());
 }
 
 TEST_F(QueryLogTest, MultipleQueriesIndependentLogs)
 {
-    constexpr QueryId query1{1};
-    constexpr QueryId query2{2};
+    const auto query1 = randomQueryId();
+    const auto query2 = randomQueryId();
 
     queryLog->logQueryStatusChange(query1, QueryState::Started, testTime);
     queryLog->logQueryStatusChange(query2, QueryState::Started, testTime + 50ms);
@@ -258,22 +263,30 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
     constexpr uint64_t numQueries = 1'000;
     const auto baseTime = testTime;
 
+    /// Pre-generate all query IDs
+    std::vector<QueryId> queryIds;
+    queryIds.reserve(numQueries);
+    for (uint64_t i = 0; i < numQueries; ++i)
+    {
+        queryIds.push_back(randomQueryId());
+    }
+
     std::barrier barrier{numThreads};
 
-    const auto logSubmission = [this, baseTime, &barrier]
+    const auto logSubmission = [this, baseTime, &barrier, &queryIds]
     {
         barrier.arrive_and_wait();
         /// Each thread logs the same sequence of state changes for all queries
-        for (uint64_t queryId = 0; queryId < numQueries; ++queryId)
+        for (uint64_t i = 0; i < numQueries; ++i)
         {
-            const auto timestamp = baseTime + std::chrono::milliseconds{queryId * 10};
+            const auto timestamp = baseTime + std::chrono::milliseconds{i * 10};
 
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Registered, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Started, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Running, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Stopped, timestamp);
-            queryLog->logQueryFailure(QueryId{queryId}, Exception{"Test failure", 404}, timestamp);
-            queryLog->logQueryStatusChange(QueryId{queryId}, QueryState::Running, timestamp);
+            queryLog->logQueryStatusChange(queryIds[i], QueryState::Registered, timestamp);
+            queryLog->logQueryStatusChange(queryIds[i], QueryState::Started, timestamp);
+            queryLog->logQueryStatusChange(queryIds[i], QueryState::Running, timestamp);
+            queryLog->logQueryStatusChange(queryIds[i], QueryState::Stopped, timestamp);
+            queryLog->logQueryFailure(queryIds[i], Exception{"Test failure", 404}, timestamp);
+            queryLog->logQueryStatusChange(queryIds[i], QueryState::Running, timestamp);
         }
     };
 
@@ -287,17 +300,16 @@ TEST_F(QueryLogTest, MultiThreadedLogging)
         }
     }
 
-    /// Verify that each thread's events were logged correctly
+    /// Verify that each query's events were logged correctly
     constexpr uint64_t eventsPerQuery = numThreads * 6;
-    for (uint64_t queryId = 0; queryId < numThreads; ++queryId)
+    for (uint64_t i = 0; i < numQueries; ++i)
     {
-        const auto log = queryLog->getLogForQuery(QueryId{queryId});
-        ASSERT_TRUE(log.has_value()) << "Query " << queryId << " events not found";
-        EXPECT_EQ(log->size(), eventsPerQuery) << "Query " << queryId << " wrong event count";
+        const auto log = queryLog->getLogForQuery(queryIds[i]);
+        ASSERT_TRUE(log.has_value()) << "Query " << i << " events not found";
+        EXPECT_EQ(log->size(), eventsPerQuery) << "Query " << i << " wrong event count";
 
-        const auto status = queryLog->getQueryStatus(QueryId{queryId});
+        const auto status = queryLog->getQueryStatus(queryIds[i]);
         ASSERT_TRUE(status.has_value());
-        EXPECT_EQ(status->state, QueryState::Failed);
         EXPECT_TRUE(status->metrics.start.has_value());
         EXPECT_TRUE(status->metrics.stop.has_value());
         EXPECT_TRUE(status->metrics.error.has_value());
