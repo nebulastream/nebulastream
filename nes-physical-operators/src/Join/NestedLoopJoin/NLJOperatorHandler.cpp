@@ -44,7 +44,7 @@ NLJOperatorHandler::NLJOperatorHandler(
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
+NLJOperatorHandler::getCreateNewSlicesFunction(AbstractBufferProvider*, const CreateNewSlicesArguments&) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");

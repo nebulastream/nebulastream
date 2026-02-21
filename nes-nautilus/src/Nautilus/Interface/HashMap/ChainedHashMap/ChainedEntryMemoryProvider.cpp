@@ -112,26 +112,27 @@ Record ChainedEntryMemoryProvider::readRecord(const nautilus::val<ChainedHashMap
 namespace
 {
 void storeVarSized(
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProviderRef,
     const nautilus::val<int8_t*>& memoryAddress,
     const VariableSizedData& variableSizedData)
 {
     nautilus::invoke(
-        +[](ChainedHashMap* hashMap,
+        +[](TupleBuffer* tupleBuffer,
             AbstractBufferProvider* bufferProvider,
             const int8_t** memoryAddressInEntry,
             const int8_t* varSizedData,
             const uint64_t varSizedDataSize)
         {
             constexpr size_t sizeOfIndex = sizeof(uint32_t);
-            auto spaceForVarSizedData = hashMap->allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
+            ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            auto spaceForVarSizedData = chm.allocateSpaceForVarSized(bufferProvider, varSizedDataSize + sizeOfIndex);
             const std::span<const int8_t> varSizedSpan{varSizedData, varSizedData + varSizedDataSize};
             *reinterpret_cast<uint32_t*>(spaceForVarSizedData.data()) = varSizedDataSize;
             std::ranges::copy(std::as_bytes(varSizedSpan), spaceForVarSizedData.begin() + sizeOfIndex);
             *memoryAddressInEntry = reinterpret_cast<const signed char*>(spaceForVarSizedData.data());
         },
-        hashMapRef,
+        tupleBuffer,
         bufferProviderRef,
         memoryAddress,
         variableSizedData.getContent(),
@@ -141,7 +142,7 @@ void storeVarSized(
 
 void ChainedEntryMemoryProvider::writeRecord(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const Record& record) const
 {
@@ -154,7 +155,7 @@ void ChainedEntryMemoryProvider::writeRecord(
         if (type.isType(DataType::Type::VARSIZED))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
+            storeVarSized(tupleBuffer, bufferProvider, memoryAddress, varSizedValue);
         }
         else
         {
@@ -165,7 +166,7 @@ void ChainedEntryMemoryProvider::writeRecord(
 
 void ChainedEntryMemoryProvider::writeEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const
 {
@@ -176,7 +177,7 @@ void ChainedEntryMemoryProvider::writeEntryRef(
         if (type.isType(DataType::Type::VARSIZED))
         {
             auto varSizedValue = value.cast<VariableSizedData>();
-            storeVarSized(hashMapRef, bufferProvider, memoryAddress, varSizedValue);
+            storeVarSized(tupleBuffer, bufferProvider, memoryAddress, varSizedValue);
         }
         else
         {

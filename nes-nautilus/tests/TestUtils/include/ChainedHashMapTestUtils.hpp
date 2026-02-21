@@ -91,25 +91,26 @@ public:
     /// Compiles the query that writes the values for all keys in keyBufferRef to outputBufferForKeys.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
     /// We are using findOrCreateEntry() of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, TupleBuffer*>
     compileFindAndWriteToOutputBuffer() const;
 
     /// Compiles a function that writes all keys and values to bufferOutput.
     /// To iterate over all key and values, we use the entry iterator. We assume that the bufferOutput is large enough to hold all values.
     /// We are using our EntryIterator of the chained hash map.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, HashMap*, AbstractBufferProvider*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*>
     compileFindAndWriteToOutputBufferWithEntryIterator() const;
 
 
     /// Compiles a function that finds the entry and updates the value.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
     /// We are using the findOrCreateEntry() of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, HashMap*> compileFindAndInsert() const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, AbstractBufferProvider*, TupleBuffer*>
+    compileFindAndInsert() const;
 
     /// Compiles a function that finds the entry and updates the value.
     /// This enables us to perform a comparison in the c++ code by comparing every value in the record buffer with the exact value.
     /// We are using the findOrCreateEntry() followed by a insertOrUpdateEntry() of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, TupleBuffer*>
     compileFindAndUpdate() const;
 
     /// Creates an exact map of the inputBuffers.

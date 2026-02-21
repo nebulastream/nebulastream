@@ -22,7 +22,7 @@ CREATE SINK q2CheckSum(bid.auctionId INT32, bid.price FLOAT64)  TYPE Checksum;
 CREATE SINK q5Checksum(bidbid.start UINT64, bidbid.end UINT64, bid.auctionId INT32, bid.num UINT64, bid.max_tmp UINT64)  TYPE Checksum;
 CREATE SINK q8CheckSum(personauction.start UINT64, personauction.end UINT64, person.id INT32, person.name VARSIZED)  TYPE Checksum;
 CREATE SINK q8VariantCheckSum(bidauction.start UINT64, bidauction.end UINT64, bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, bid.price FLOAT64, bid.timestamp UINT64, auction.id INT32, auction.initialbid INT32, auction.reserve INT32, auction.expires UINT64, auction.seller INT32, auction.category INT32)  TYPE Checksum;
-
+CREATE SINK q8testCheckSum(auction.timestamp UINT64, auction.id INT32, auction.initialbid INT32, auction.reserve INT32, auction.expires UINT64, auction.seller INT32, auction.category INT32) TYPE Checksum;
 
 # Query 0
 SELECT * FROM bid INTO bidCheckSum;
@@ -82,3 +82,14 @@ INNER JOIN
 ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
 ----
 182197843 1176742157900
+
+
+SELECT id, COUNT(email_address) AS num, start, end
+      FROM person
+      GROUP BY id WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC) INTO Checksum ();
+----
+42 42
+
+SELECT * from person WHERE  INTO Checksum ();
+----
+42 42

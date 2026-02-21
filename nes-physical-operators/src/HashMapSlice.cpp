@@ -21,61 +21,88 @@
 #include <numeric>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
+#include <antlr4-runtime/antlr4-common.h>
+#include <google/protobuf/stubs/port.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-HashMapSlice::HashMapSlice(
-    const SliceStart sliceStart,
-    const SliceEnd sliceEnd,
-    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
-    const uint64_t numberOfHashMaps,
-    const uint64_t numberOfInputStreams)
-    : Slice(sliceStart, sliceEnd)
-    , createNewHashMapSliceArgs(createNewHashMapSliceArgs)
-    , numberOfHashMapsPerInputStream(numberOfHashMaps)
-    , numberOfInputStreams(numberOfInputStreams)
+HashMapSlice::HashMapDirectory::HashMapDirectory(
+    AbstractBufferProvider* bufferProvider,
+    const uint64_t numHashMaps,
+    const uint64_t numInputStreams,
+    const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs)
 {
-    for (uint64_t i = 0; i < numberOfHashMaps * numberOfInputStreams; i++)
+    if (auto buffer = bufferProvider->getUnpooledBuffer(calculateMainBufferSize(numHashMaps, numInputStreams)))
     {
-        hashMaps.emplace_back(nullptr);
-    }
-}
-
-HashMapSlice::~HashMapSlice()
-{
-    INVARIANT(createNewHashMapSliceArgs.nautilusCleanup.size() == numberOfInputStreams, "We expect one cleanup function per input ");
-
-    /// As we assume that each hashmap of an input stream lie one after the other.
-    /// Thus, we need to call #numbnumberOfHashMaps times the same nautilusCleanup function and then move to the next one.
-    for (size_t i = 0; i < hashMaps.size(); i++)
-    {
-        if (hashMaps[i] and hashMaps[i]->getNumberOfTuples() > 0)
+        mainBuffer = std::move(buffer.value());
+        /// Initialize header
+        new (mainBuffer.getAvailableMemoryArea<Header>().data()) Header(numHashMaps * numInputStreams, numInputStreams, numHashMaps);
+        const auto& hdr = header();
+        /// Initialize hash map buffers
+        auto* hashMapsArray = hashMaps();
+        for (uint32_t i = 0; i < hdr.numHashMaps; i++)
         {
-            /// Calling the compiled nautilus function
-            createNewHashMapSliceArgs.nautilusCleanup[i / numberOfHashMapsPerInputStream]->operator()(hashMaps[i].get());
+            if (auto childBuffer = bufferProvider->getUnpooledBuffer(
+                    ChainedHashMap::calculateBufferSizeFromBuckets(createNewHashMapSliceArgs.numberOfBuckets)))
+            {
+                auto childBufferIndex = mainBuffer.storeChildBuffer(childBuffer.value());
+                hashMapsArray[i] = childBufferIndex;
+                auto loadedBuffer = mainBuffer.loadChildBuffer(childBufferIndex);
+                ChainedHashMap chm = ChainedHashMap::init(
+                    loadedBuffer,
+                    createNewHashMapSliceArgs.keySize,
+                    createNewHashMapSliceArgs.valueSize,
+                    createNewHashMapSliceArgs.numberOfBuckets,
+                    createNewHashMapSliceArgs.pageSize);
+            }
+            else
+            {
+                throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+            }
         }
     }
-
-    hashMaps.clear();
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available!");
+    }
 }
 
-uint64_t HashMapSlice::getNumberOfHashMaps() const
+size_t HashMapSlice::HashMapDirectory::calculateMainBufferSize(const uint64_t numHashMaps, const uint64_t numInputStreams)
 {
-    return hashMaps.size();
+    return 3 * sizeof(uint64_t) + (1 + numHashMaps * numInputStreams) * sizeof(VariableSizedAccess::Index);
 }
 
-uint64_t HashMapSlice::getNumberOfTuples() const
+VariableSizedAccess::Index HashMapSlice::getHashMapChildBufferIndex(const uint64_t pos) const
 {
-    return std::accumulate(
-        hashMaps.begin(),
-        hashMaps.end(),
-        0,
-        [](uint64_t runningSum, const auto& hashMap) { return runningSum + hashMap->getNumberOfTuples(); });
+    return hashMapDirectory.hashMaps()[pos];
+}
+
+TupleBuffer HashMapSlice::loadHashMapBuffer(const VariableSizedAccess::Index childBufferIndex) const
+{
+    TupleBuffer childBuffer = hashMapDirectory.mainBuffer.loadChildBuffer(childBufferIndex);
+    return childBuffer;
+}
+
+uint64_t HashMapSlice::numberOfHashMaps() const
+{
+    return hashMapDirectory.header().numHashMaps;
+}
+
+uint64_t HashMapSlice::numInputStreams() const
+{
+    return hashMapDirectory.header().numInputStreams;
+}
+
+uint64_t HashMapSlice::numHashMapsPerInputStream() const
+{
+    return hashMapDirectory.header().numHashmapsPerInputStream;
 }
 }

@@ -1,0 +1,16 @@
+# name: window/WindowAggregationProjection.test
+# description: Test projection over window operators
+# groups: [Aggregation, WindowOperators, Projection]
+
+# Source definitions
+CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+420,69,1000
+666,333,2000
+
+CREATE SINK sinkStream(stream.value_count UINT64, stream.id UINT64)  TYPE File;
+SELECT COUNT(value) as value_count, id FROM stream GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStream;
+----
+1,420
+1,666

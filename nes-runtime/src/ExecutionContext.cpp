@@ -83,6 +83,23 @@ nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
     return bufferPtr;
 }
 
+nautilus::val<TupleBuffer*> ExecutionContext::pinBuffer(nautilus::val<TupleBuffer*> tupleBuffer) const
+{
+    auto bufferPtr = nautilus::invoke(
+        +[](PipelineExecutionContext* pec, TupleBuffer* tupleBuffer)
+        {
+            PRECONDITION(pec, "pipeline execution context should not be null");
+            /// We allocate a new tuple buffer for the runtime.
+            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+            /// This increases the reference counter in the buffer.
+            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+            return std::addressof(pec->pinBuffer(std::move(*tupleBuffer)));
+        },
+        pipelineContext,
+        tupleBuffer);
+    return bufferPtr;
+}
+
 nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
 {
     return pipelineMemoryProvider.arena.allocateMemory(sizeInBytes);

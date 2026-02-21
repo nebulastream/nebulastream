@@ -29,7 +29,7 @@ namespace NES
 class HashMapRef
 {
 public:
-    explicit HashMapRef(const nautilus::val<HashMap*>& hashMapRef) : hashMapRef(hashMapRef) { }
+    explicit HashMapRef(const nautilus::val<TupleBuffer*>& tupleBuffer) : tupleBuffer(tupleBuffer) { }
 
     virtual ~HashMapRef() = default;
 
@@ -59,7 +59,7 @@ public:
     virtual nautilus::val<AbstractHashMapEntry*> findEntry(const nautilus::val<AbstractHashMapEntry*>& otherEntry) = 0;
 
 protected:
-    nautilus::val<HashMap*> hashMapRef;
+    nautilus::val<TupleBuffer*> tupleBuffer;
 };
 
 }

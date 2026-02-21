@@ -81,6 +81,10 @@ class TupleBuffer
     }
 
 public:
+    /// @brief Flag value for uninitialized child buffers.
+    inline static const VariableSizedAccess::Index INVALID_CHILD_BUFFER_INDEX_VALUE{
+        std::numeric_limits<VariableSizedAccess::Index::Underlying>::max()};
+
     /// @brief Default constructor creates an empty wrapper around nullptr without controlBlock (nullptr) and size 0.
     [[nodiscard]] TupleBuffer() noexcept = default;
 
