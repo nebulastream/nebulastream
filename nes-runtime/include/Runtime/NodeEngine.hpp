@@ -54,6 +54,7 @@ public:
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
     void stopQuery(QueryId queryId, QueryTerminationType terminationType);
+    void stopAllQueries(QueryTerminationType terminationType);
 
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 

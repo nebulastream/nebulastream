@@ -42,6 +42,11 @@ std::expected<void, Exception> EmbeddedWorkerQueryManager::stop(const QueryId qu
     return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
+std::expected<void, Exception> EmbeddedWorkerQueryManager::stopAll() noexcept
+{
+    return worker.stopAllQueries(QueryTerminationType::Graceful);
+}
+
 std::expected<void, Exception> EmbeddedWorkerQueryManager::unregister(const QueryId queryId) noexcept
 {
     return worker.unregisterQuery(queryId);

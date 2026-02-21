@@ -73,6 +73,18 @@ public:
         }
         return qep;
     }
+
+    std::vector<QueryId> getAllQueryIds() const
+    {
+        auto rlocked = queries.rlock();
+        std::vector<QueryId> ids;
+        ids.reserve(rlocked->size());
+        for (const auto& [id, state] : *rlocked)
+        {
+            ids.push_back(id);
+        }
+        return ids;
+    }
 };
 
 NodeEngine::~NodeEngine()
@@ -130,6 +142,16 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
     NES_INFO("Stop {}", queryId);
     systemEventListener->onEvent(StopQuerySystemEvent(queryId));
     queryEngine->stop(queryId);
+}
+
+void NodeEngine::stopAllQueries(QueryTerminationType terminationType)
+{
+    NES_INFO("Stoping all queries");
+    const std::vector<QueryId> runningQueries = queryTracker->getAllQueryIds();
+    for (const auto& queryId : runningQueries)
+    {
+        stopQuery(queryId, terminationType);
+    }
 }
 
 }
