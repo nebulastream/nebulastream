@@ -60,19 +60,25 @@ public:
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
     /// Optional, since not every sink type uses an INPUT_FORMAT parameter.
-    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
+    [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
+    [[nodiscard]] std::unordered_map<std::string, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+        std::variant<std::string, uint64_t> sinkName,
+        const Schema& schema,
+        std::string_view sinkType,
+        const std::unordered_map<std::string, std::string>& formatConfig,
+        DescriptorConfig::Config config);
 
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+    std::unordered_map<std::string, std::string> formatConfig;
 
     friend Reflector<SinkDescriptor>;
 
@@ -138,6 +144,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
+    std::unordered_map<std::string, std::string> formatConfig;
     Reflected config;
 };
 }

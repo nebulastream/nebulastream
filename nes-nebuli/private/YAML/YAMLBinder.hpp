@@ -50,6 +50,7 @@ struct Sink
     std::string name;
     std::vector<SchemaField> schema;
     std::string type;
+    std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> config;
 };
 
