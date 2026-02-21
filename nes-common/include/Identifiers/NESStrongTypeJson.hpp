@@ -65,4 +65,5 @@ struct adl_serializer<NES::NESStrongUUIDType<Tag>>
     ///NOLINTNEXTLINE(readability-identifier-naming)
     static void to_json(json& jsonObject, NES::NESStrongUUIDType<Tag> strongType) { jsonObject = strongType.getRawValue(); }
 };
+
 }

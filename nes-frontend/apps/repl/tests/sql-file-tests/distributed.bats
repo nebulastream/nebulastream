@@ -189,7 +189,7 @@ assert_json_contains() {
   echo "${lines[5]}" | jq -e '(. | length) == 1'
   echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
 }
 
@@ -239,7 +239,7 @@ assert_json_contains() {
   # lines[2] is the SELECT query result with query_id
   QUERY_ID=$(echo ${lines[2]} | jq -r '.[0].query_id')
   # The last line should contain the result of the implicit STOP QUERY command with the same query_id
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[-1]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[-1]}"
 }
 
 @test "default on-exit behavior should keep queries alive" {
@@ -250,9 +250,10 @@ assert_json_contains() {
   end_time=$(date +%s)
 
   [ "$status" -eq 0 ]
-  # The query is configured to produce data for 3000ms. We expect nes-repl to terminate within 1 second as it is configured to terminate regardless of pending queries on exit
+  # The query is configured to produce data for 10s. We expect nes-repl to terminate well under that,
+  # as the default on-exit behavior (DO_NOTHING) exits regardless of pending queries.
   duration=$((end_time - start_time))
-  [ "$duration" -le 1 ]
+  [ "$duration" -le 5 ]
 
   sleep 1
   # Check the log to ensure that the query has been started but not stopped

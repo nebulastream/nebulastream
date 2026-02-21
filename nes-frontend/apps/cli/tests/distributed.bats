@@ -214,8 +214,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -229,8 +229,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -247,8 +247,8 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
   [ "$status" -eq 0 ]
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -266,8 +266,8 @@ assert_json_contains() {
   run DOCKER_NES_CLI -t tests/good/crazy-join.yaml start
   echo $output
   [ "$status" -eq 0 ]
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -286,8 +286,8 @@ assert_json_contains() {
 
   run DOCKER_NES_CLI -t tests/good/crazy-join-one-fast-source.yaml start
   [ "$status" -eq 0 ]
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 3
@@ -401,7 +401,7 @@ EOF
   echo "# Using TEST_DIR: $output" >&3
   local_query_id=$(echo "$output" | jq -r '.[0].local_query_id')
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status
-  assert_json_contains "[{\"local_query_id\":$local_query_id, \"query_status\":\"Running\", \"started\": {}}]" "$output"
+  assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
 
 }
 
@@ -416,8 +416,8 @@ EOF
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1
@@ -431,8 +431,8 @@ EOF
   run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
-  [[ "$output" =~ ^[0-9]+$ ]]
+  # Output should be a query ID (UUID)
+  [[ "$output" =~ ^[0-9a-f-]+$ ]]
   QUERY_ID=$output
 
   sleep 1

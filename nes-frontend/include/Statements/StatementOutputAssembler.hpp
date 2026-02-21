@@ -83,7 +83,7 @@ using QueryStatusOutputRowType = std::tuple<
     std::optional<std::chrono::system_clock::time_point>>;
 constexpr std::array<std::string_view, 6> queryStatusOutputColumns{"query_id", "query_status", "error", "started", "running", "stopped"};
 using WorkerStatusOutputRowType = std::tuple<
-    size_t,
+    LocalQueryId,
     QueryState,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
@@ -307,12 +307,13 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
         output.reserve(status.activeQueries.size() + status.terminatedQueries.size());
         for (const auto& activeQuery : status.activeQueries)
         {
-            output.emplace_back(activeQuery.queryId.getRawValue(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
+            output.emplace_back(
+                activeQuery.queryId.getLocalQueryId(), QueryState::Running, std::nullopt, activeQuery.started, std::nullopt);
         }
         for (const auto& terminatedQuery : status.terminatedQueries)
         {
             output.emplace_back(
-                terminatedQuery.queryId.getRawValue(),
+                terminatedQuery.queryId.getLocalQueryId(),
                 terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
                 terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
                 terminatedQuery.started,

@@ -18,6 +18,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -32,7 +33,7 @@ struct EventBase
 
     ChronoClock::time_point timestamp = ChronoClock::now();
     WorkerThreadId threadId = INVALID<WorkerThreadId>;
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = INVALID_QUERY_ID;
 };
 
 struct TaskExecutionStart : EventBase
