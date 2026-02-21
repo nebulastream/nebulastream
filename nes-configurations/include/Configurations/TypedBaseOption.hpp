@@ -57,6 +57,8 @@ public:
 
     [[nodiscard]] const T& getDefaultValue() const;
 
+    void copyValueFrom(const BaseOption& source) override;
+
 protected:
     T value;
     T defaultValue;
@@ -70,19 +72,19 @@ public:
     {
         if constexpr (requires { std::to_string(defaultValue); })
         {
-            visitor.visitConcrete(name, description, std::to_string(defaultValue));
+            visitor.visitOption({name, description, std::to_string(defaultValue), std::to_string(value), explicitlySet});
         }
         else if constexpr (requires { defaultValue.toString(); })
         {
-            visitor.visitConcrete(name, description, defaultValue.toString());
+            visitor.visitOption({name, description, defaultValue.toString(), value.toString(), explicitlySet});
         }
         else if constexpr (std::same_as<std::string, T>)
         {
-            visitor.visitConcrete(name, description, defaultValue);
+            visitor.visitOption({name, description, defaultValue, value, explicitlySet});
         }
         else if constexpr (std::is_enum_v<T>)
         {
-            visitor.visitConcrete(name, description, magic_enum::enum_name(defaultValue));
+            visitor.visitOption({name, description, magic_enum::enum_name(defaultValue), magic_enum::enum_name(value), explicitlySet});
         }
         else
         {
@@ -127,6 +129,7 @@ template <class T>
 void TypedBaseOption<T>::setValue(T newValue)
 {
     this->value = newValue;
+    this->explicitlySet = true;
 }
 
 template <class T>
@@ -139,6 +142,15 @@ template <class T>
 void TypedBaseOption<T>::clear()
 {
     this->value = defaultValue;
+    this->explicitlySet = false;
+}
+
+template <class T>
+void TypedBaseOption<T>::copyValueFrom(const BaseOption& source)
+{
+    const auto& typed = dynamic_cast<const TypedBaseOption<T>&>(source);
+    this->value = typed.value;
+    this->explicitlySet = true;
 }
 
 template <class T>

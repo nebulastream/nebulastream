@@ -47,7 +47,6 @@ public:
 
     template <class X>
     friend std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option);
-    std::string toString() override;
 
 protected:
     virtual void parseFromYAMLNode(YAML::Node node) override;
@@ -96,17 +95,6 @@ private:
     }
 };
 
-template <class T>
-std::string ScalarOption<T>::toString()
-{
-    std::stringstream os;
-    os << "Name: " << this->name << "\n";
-    os << "Description: " << this->description << "\n";
-    os << "Value: " << this->value << "\n";
-    os << "Default Value: " << this->defaultValue << "\n";
-    return os.str();
-}
-
 template <class X>
 std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option)
 {
@@ -144,6 +132,7 @@ template <class T>
 ScalarOption<T>& ScalarOption<T>::operator=(const T& value)
 {
     this->value = value;
+    this->explicitlySet = true;
     return *this;
 }
 
@@ -164,6 +153,7 @@ void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 {
     this->isValid(node.as<std::string>());
     this->value = node.as<T>();
+    this->explicitlySet = true;
 }
 
 template <class T>
@@ -182,6 +172,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::unordered_map
     try
     {
         this->value = YAML::Load(value).as<T>();
+        this->explicitlySet = true;
     }
     catch (const std::exception& e)
     {

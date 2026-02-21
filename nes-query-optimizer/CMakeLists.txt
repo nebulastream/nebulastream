@@ -12,6 +12,11 @@
 
 include_directories(tests/include)
 
+# Add interface library
+add_library(nes-query-optimizer-interface INTERFACE)
+target_include_directories(nes-query-optimizer-interface INTERFACE interface)
+target_link_libraries(nes-query-optimizer-interface INTERFACE nes-configurations)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)

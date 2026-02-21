@@ -18,15 +18,19 @@
 #include <chrono>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <utility>
 #include <unistd.h>
+#include <Configurations/ConfigValuePrinter.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
@@ -36,6 +40,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <WorkerStatus.hpp>
 
 namespace NES
 {
@@ -47,6 +52,12 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, WorkerId workerId)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
+    {
+        std::stringstream configStr;
+        ConfigValuePrinter printer(configStr);
+        SingleNodeWorkerConfiguration(configuration).accept(printer);
+        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", workerId.getRawValue(), configStr.str());
+    }
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
@@ -148,6 +159,56 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Quer
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
+}
+
+WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
+{
+    const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
+    const auto summaries = nodeEngine->getQueryLog()->getStatus();
+    WorkerStatus status;
+    status.after = after;
+    status.until = until;
+    for (const auto& [queryId, state, metrics] : summaries)
+    {
+        switch (state)
+        {
+            case QueryState::Registered:
+                /// Ignore these for the worker status
+                break;
+            case QueryState::Started:
+                INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
+                if (metrics.start.value() >= after)
+                {
+                    status.activeQueries.emplace_back(queryId, std::nullopt);
+                }
+                break;
+            case QueryState::Running: {
+                INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
+                if (metrics.running.value() >= after)
+                {
+                    status.activeQueries.emplace_back(queryId, metrics.running.value());
+                }
+                break;
+            }
+            case QueryState::Stopped: {
+                INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
+                INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
+                if (metrics.stop.value() >= after)
+                {
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
+                }
+                break;
+            }
+            case QueryState::Failed: {
+                INVARIANT(metrics.stop.has_value(), "If query has failed, it should have a stopped timestamp");
+                if (metrics.stop.value() >= after)
+                {
+                    status.terminatedQueries.emplace_back(queryId, metrics.running, metrics.stop.value(), metrics.error);
+                }
+            }
+        }
+    }
+    return status;
 }
 
 std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const

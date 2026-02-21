@@ -15,6 +15,11 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 include_directories(tests/include)
 
+# Add interface library
+add_library(nes-runtime-interface INTERFACE)
+target_include_directories(nes-runtime-interface INTERFACE interface)
+target_link_libraries(nes-runtime-interface INTERFACE nes-configurations nes-query-engine-interface)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
