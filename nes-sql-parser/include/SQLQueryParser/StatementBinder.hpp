@@ -118,7 +118,7 @@ struct DropSinkStatement
 struct QueryStatement
 {
     LogicalPlan plan;
-    std::optional<size_t> id;
+    std::optional<QueryId> id;
 };
 
 struct ExplainQueryStatement

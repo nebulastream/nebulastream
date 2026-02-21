@@ -146,23 +146,23 @@ assert_json_contains() {
   mkdir -p "$XDG_STATE_HOME/nebucli"
 
   # Create a mock query state file
-  cat > "$XDG_STATE_HOME/nebucli/42.json" << 'JSONEOF'
+  cat > "$XDG_STATE_HOME/nebucli/550e8400-e29b-41d4-a716-446655440000.json" << 'JSONEOF'
 {
-    "query_id": 42,
+    "query_id": "550e8400-e29b-41d4-a716-446655440000",
     "created_at": "2026-01-16T16:00:00+0000"
 }
 JSONEOF
 
   # Verify JSON is valid
-  run jq . "$XDG_STATE_HOME/nebucli/42.json"
+  run jq . "$XDG_STATE_HOME/nebucli/550e8400-e29b-41d4-a716-446655440000.json"
   [ "$status" -eq 0 ]
 
   # Verify it contains query_id
-  run jq -e '.query_id == 42' "$XDG_STATE_HOME/nebucli/42.json"
+  run jq -e '.query_id == "550e8400-e29b-41d4-a716-446655440000"' "$XDG_STATE_HOME/nebucli/550e8400-e29b-41d4-a716-446655440000.json"
   [ "$status" -eq 0 ]
 
   # Verify it contains created_at
-  run jq -e '.created_at' "$XDG_STATE_HOME/nebucli/42.json"
+  run jq -e '.created_at' "$XDG_STATE_HOME/nebucli/550e8400-e29b-41d4-a716-446655440000.json"
   [ "$status" -eq 0 ]
 }
 
