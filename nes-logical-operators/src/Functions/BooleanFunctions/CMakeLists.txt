@@ -13,4 +13,5 @@
 add_plugin(And LogicalFunction nes-logical-operators AndLogicalFunction.cpp)
 add_plugin(Equals LogicalFunction nes-logical-operators EqualsLogicalFunction.cpp)
 add_plugin(Negate LogicalFunction nes-logical-operators NegateLogicalFunction.cpp)
+add_plugin(IsNull LogicalFunction nes-logical-operators IsNullCheckLogicalFunction.cpp)
 add_plugin(Or LogicalFunction nes-logical-operators OrLogicalFunction.cpp)
