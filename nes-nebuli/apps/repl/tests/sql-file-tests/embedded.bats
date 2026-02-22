@@ -119,3 +119,14 @@ assert_json_contains() {
   [ "$status" -ne 0 ]
   grep "invalid query syntax" nes-repl.log
 }
+
+@test "launch multiple queries" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/good/multiple_queries.sql
+  [ "$status" -eq 0 ]
+}
+
+@test "launch bad query should fail" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
+  [ "$status" -ne 0 ]
+  grep "invalid query syntax" nes-repl.log
+}

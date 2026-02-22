@@ -268,6 +268,53 @@ NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& parser)
         }
     }
 
+    /// Check if stdin is piped (not a terminal)
+    if (!isatty(STDIN_FILENO))
+    {
+        const auto filePath = parser.get<std::string>("-t");
+
+        /// Read topology from stdin
+        if (filePath == "-")
+        {
+            if (isatty(STDIN_FILENO))
+            {
+                throw NES::InvalidConfigParameter("Cannot read topology from stdin: stdin is a terminal");
+            }
+            try
+            {
+                std::stringstream buffer;
+                buffer << std::cin.rdbuf();
+                std::string yamlContent = buffer.str();
+                if (yamlContent.empty())
+                {
+                    throw NES::InvalidConfigParameter("No topology data received from stdin");
+                }
+                auto validYAML = YAML::Load(yamlContent);
+                NES_DEBUG("Using topology from stdin");
+                return validYAML.as<NES::CLI::QueryConfig>();
+            }
+            catch (YAML::Exception& e)
+            {
+                throw NES::InvalidConfigParameter("stdin is not a valid yaml: {} ({}:{})", e.what(), e.mark.line, e.mark.column);
+            }
+        }
+
+        if (!std::filesystem::exists(filePath))
+        {
+            throw NES::InvalidConfigParameter("Topology file specified with -t does not exist: {}", filePath);
+        }
+        try
+        {
+            auto validYAML = YAML::LoadFile(filePath);
+            NES_DEBUG("Using topology file: {}", filePath);
+            return validYAML.as<NES::CLI::QueryConfig>();
+        }
+        catch (YAML::Exception& e)
+        {
+            throw NES::InvalidConfigParameter("{} is not a valid yaml file: {} ({}:{})", filePath, e.what(), e.mark.line, e.mark.column);
+        }
+    }
+
     std::vector<std::string> options;
     ///NOLINTNEXTLINE(concurrency-mt-unsafe) This is only used at the start of the program on a single thread.
     if (auto* const env = std::getenv("NES_TOPOLOGY_FILE"))

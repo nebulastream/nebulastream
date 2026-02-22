@@ -94,6 +94,29 @@ public:
     static std::stop_token terminationToken() { return signalSource.get_token(); }
 };
 
+class SignalHandler
+{
+    static inline std::stop_source signalSource;
+
+public:
+    static void setup()
+    {
+        const auto previousHandler = std::signal(SIGTERM, [](int) { [[maybe_unused]] auto dontCare = signalSource.request_stop(); });
+        if (previousHandler == SIG_ERR)
+        {
+            NES_WARNING("Could not install signal handler for SIGTERM. Repl might not respond to termination signals.");
+        }
+        else
+        {
+            INVARIANT(
+                previousHandler == nullptr,
+                "The SignalHandler does not restore the pre existing signal handler and thus it expects no handler to exist");
+        }
+    }
+
+    static std::stop_token terminationToken() { return signalSource.get_token(); }
+};
+
 std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat format, const auto& statement)
 {
     NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statement)>> assembler{};
