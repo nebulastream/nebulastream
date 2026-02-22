@@ -50,12 +50,12 @@ class QueryTracker
     folly::Synchronized<std::unordered_map<QueryId, std::unique_ptr<QueryState>>> queries;
 
 public:
-    QueryId registerQuery(std::unique_ptr<CompiledQueryPlan> qep)
+    void registerQuery(QueryId queryId, std::unique_ptr<CompiledQueryPlan> qep)
     {
-        NES_INFO("Register {}", qep->queryId);
-        QueryId queryId = qep->queryId;
-        queries.wlock()->emplace(queryId, std::make_unique<QueryState>(Idle{std::move(qep)}));
-        return queryId;
+        if (!queries.wlock()->try_emplace(std::move(queryId), std::make_unique<QueryState>(Idle{std::move(qep)})).second)
+        {
+            throw QueryAlreadyRegistered("{}", queryId);
+        }
     }
 
     std::unique_ptr<CompiledQueryPlan> moveToExecuting(QueryId qid)
@@ -95,11 +95,10 @@ NodeEngine::NodeEngine(
 {
 }
 
-QueryId NodeEngine::registerCompiledQueryPlan(std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
+void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
-    auto queryId = queryTracker->registerQuery(std::move(compiledQueryPlan));
+    queryTracker->registerQuery(queryId, std::move(compiledQueryPlan));
     queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
-    return queryId;
 }
 
 void NodeEngine::startQuery(QueryId queryId)
