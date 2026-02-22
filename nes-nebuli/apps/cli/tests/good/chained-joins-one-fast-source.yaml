@@ -38,6 +38,7 @@ query: |
   INTO sink;
 sinks:
   - name: sink
+    host: worker-1:8080
     schema:
       - name: streamstream2stream3stream4stream5stream6stream7stream8$START
         type: UINT64
@@ -49,14 +50,6 @@ sinks:
     config:
       file_path: out.csv
       input_format: CSV
-  - name: VOID_SINK
-    schema:
-      - name: stream$timestamp
-        type: UINT64
-      - name: stream$id
-        type: UINT64
-    type: Void
-    config: { }
 
 logical:
   - name: stream
@@ -110,19 +103,22 @@ logical:
 
 physical:
   - logical: stream
+    host: worker-2:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
     type: Generator
     source_config:
       generator_rate_type: FIXED
-      generator_rate_config: emit_rate 10
+      # This source is really fast
+      generator_rate_config: emit_rate 10000
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream2
+    host: worker-3:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -136,6 +132,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream3
+    host: worker-4:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -149,6 +146,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream4
+    host: worker-5:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -162,6 +160,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream5
+    host: worker-6:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -175,6 +174,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream6
+    host: worker-7:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -188,6 +188,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream7
+    host: worker-8:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -201,6 +202,7 @@ physical:
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
   - logical: stream8
+    host: worker-9:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -213,3 +215,40 @@ physical:
       generator_schema: |
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
+
+workers:
+  - host: worker-1:9090
+    grpc: worker-1:8080
+    capacity: 10000
+  - host: worker-2:9090
+    grpc: worker-2:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-3:9090
+    grpc: worker-3:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-4:9090
+    grpc: worker-4:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-5:9090
+    grpc: worker-5:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-6:9090
+    grpc: worker-6:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-7:9090
+    grpc: worker-7:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-8:9090
+    grpc: worker-8:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]
+  - host: worker-9:9090
+    grpc: worker-9:8080
+    capacity: 10000
+    downstream: [ worker-1:8080 ]

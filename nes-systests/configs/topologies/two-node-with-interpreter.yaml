@@ -1,0 +1,25 @@
+workers:
+  - host: "sink-node:8080"
+    connection: "sink-node:9090"
+    capacity: 10000
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+
+  - host: "source-node:8080"
+    connection: "source-node:9090"
+    capacity: 4
+    downstream:
+      - "sink-node:8080"
+    config:
+      worker:
+        default_query_execution:
+          execution_mode: INTERPRETER
+
+allow_source_placement:
+  - "source-node:8080"
+
+allow_sink_placement:
+  - "sink-node:8080"
+  - "source-node:8080"

@@ -140,3 +140,18 @@ ExternalData_Add_Target(test-data)
 add_dependencies(nes-systest-lib test-data)
 
 add_tests_if_enabled(tests)
+
+if (ENABLE_DOCKER_TESTS AND ENABLE_BATS_TESTS)
+    add_test(
+            NAME systest-remote-test
+            COMMAND
+            env SYSTEST=$<TARGET_FILE:systest>
+            env NES_DIR=${CMAKE_SOURCE_DIR}
+            env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+            env DATADIR=${EXPANDED_TEST_DATA_PATH}
+            env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
+            env ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
+            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/remote-test/systest_remote_test.bats
+    )
+    set_tests_properties(systest-remote-test PROPERTIES LABELS "DockerCompose")
+endif ()

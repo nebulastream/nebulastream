@@ -40,6 +40,21 @@ pub mod ffi {
         last_chunk: bool,
     }
 
+    /// Configuration for network services (sender and receiver).
+    /// Passed once during initialization and applied to all channels on this worker.
+    struct NetworkServiceOptions {
+        /// Size of the sender software queue per channel (default: 1024).
+        sender_queue_size: u32,
+        /// Maximum number of in-flight buffers awaiting acknowledgment per channel (default: 64).
+        max_pending_acks: u32,
+        /// Size of the receiver data queue per channel (default: 10).
+        receiver_queue_size: u32,
+        /// Number of IO threads for the sender tokio runtime. 0 means use the number of available cores.
+        sender_io_threads: u32,
+        /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
+        receiver_io_threads: u32,
+    }
+
     unsafe extern "C++" {
         include!("NetworkBindings.hpp");
         type TupleBufferBuilder;
@@ -60,14 +75,23 @@ pub mod ffi {
         type ReceiverDataChannel;
 
         fn enable_memcom();
-        fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<()>;
+        fn init_receiver_service(
+            connection_addr: String,
+            worker_id: String,
+            options: &NetworkServiceOptions,
+        ) -> Result<()>;
         fn receiver_instance(connection_addr: String) -> Result<Box<ReceiverNetworkService>>;
-        fn init_sender_service(connection_addr: String, worker_id: String) -> Result<()>;
+        fn init_sender_service(
+            connection_addr: String,
+            worker_id: String,
+            options: &NetworkServiceOptions,
+        ) -> Result<()>;
         fn sender_instance(connection_addr: String) -> Result<Box<SenderNetworkService>>;
 
         fn register_receiver_channel(
             server: &mut ReceiverNetworkService,
             channel_identifier: String,
+            options: &NetworkServiceOptions,
         ) -> Result<Box<ReceiverDataChannel>>;
         fn receive_buffer(
             receiver_channel: &ReceiverDataChannel,
@@ -81,6 +105,7 @@ pub mod ffi {
             server: &SenderNetworkService,
             connection_identifier: String,
             channel_identifier: String,
+            options: &NetworkServiceOptions,
         ) -> Result<Box<SenderDataChannel>>;
 
         fn close_sender_channel(channel: Box<SenderDataChannel>);
@@ -106,8 +131,8 @@ enum SenderService {
 }
 #[derive(Default)]
 struct Services {
-    receivers: HashMap<ThisConnectionIdentifier, ReceiverService>,
-    senders: HashMap<ThisConnectionIdentifier, SenderService>,
+    receivers: HashMap<ThisConnectionIdentifier, (ReceiverService, usize)>,
+    senders: HashMap<ThisConnectionIdentifier, (SenderService, sender::SenderConfig)>,
 }
 
 static USE_MEMCOM: Mutex<bool> = Mutex::new(false);
@@ -124,10 +149,14 @@ static SERVICES: std::sync::LazyLock<Mutex<Services>> =
 
 pub struct ReceiverNetworkService {
     handle: ReceiverService,
+    /// Worker-level default for the receiver data queue size.
+    default_data_queue_size: usize,
 }
 
 struct SenderNetworkService {
     handle: SenderService,
+    /// Worker-level defaults for sender channel configuration.
+    default_config: sender::SenderConfig,
 }
 
 /// Wrapper around `SenderChannel` for C++ FFI.
@@ -149,10 +178,19 @@ struct ReceiverDataChannel {
     chan: Pin<Box<ReceiverChannel>>,
 }
 
-fn init_sender_service(this_connection_addr: String, worker_id: String) -> Result<(), String> {
+fn init_sender_service(
+    this_connection_addr: String,
+    worker_id: String,
+    options: &ffi::NetworkServiceOptions,
+) -> Result<(), String> {
     let this_connection = ThisConnectionIdentifier::from_str(this_connection_addr.as_str())
         .map_err(|e| e.to_string())?;
     let mut services = SERVICES.lock().unwrap();
+
+    let config = sender::SenderConfig {
+        sender_queue_size: options.sender_queue_size as usize,
+        max_pending_acks: options.max_pending_acks as usize,
+    };
 
     // Validate: TCP mode allows only one service per process
     let use_memcom = *USE_MEMCOM.lock().unwrap();
@@ -161,15 +199,17 @@ fn init_sender_service(this_connection_addr: String, worker_id: String) -> Resul
     }
 
     let old = services.senders.insert(this_connection.clone(), {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
+        let mut builder = tokio::runtime::Builder::new_multi_thread();
+        builder
             .thread_name("net-sender")
-            .worker_threads(1)
             .on_thread_start(move || ffi::identifyThread("net-sender", &worker_id))
             .enable_io()
-            .enable_time()
-            .build()
-            .expect("Failed to create tokio runtime");
-        if *USE_MEMCOM.lock().unwrap() {
+            .enable_time();
+        if options.sender_io_threads > 0 {
+            builder.worker_threads(options.sender_io_threads as usize);
+        }
+        let runtime = builder.build().expect("Failed to create tokio runtime");
+        let service = if *USE_MEMCOM.lock().unwrap() {
             SenderService::MemCom(sender::NetworkService::start(
                 runtime,
                 this_connection.clone(),
@@ -181,10 +221,11 @@ fn init_sender_service(this_connection_addr: String, worker_id: String) -> Resul
                 this_connection.clone(),
                 channel::TcpCommunication::new(),
             ))
-        }
+        };
+        (service, config)
     });
 
-    if let Some(old_service) = old {
+    if let Some((old_service, _)) = old {
         warn!("Recreating sender service for {this_connection}, shutting down old service");
         // Properly shutdown the old service to avoid resource leaks
         let shutdown_result = match old_service {
@@ -199,10 +240,16 @@ fn init_sender_service(this_connection_addr: String, worker_id: String) -> Resul
     Ok(())
 }
 
-fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<(), String> {
+fn init_receiver_service(
+    connection_addr: String,
+    worker_id: String,
+    options: &ffi::NetworkServiceOptions,
+) -> Result<(), String> {
     let this_connection =
         ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
     let mut services = SERVICES.lock().unwrap();
+
+    let data_queue_size = options.receiver_queue_size as usize;
 
     // Validate: TCP mode allows only one service per process
     let use_memcom = *USE_MEMCOM.lock().unwrap();
@@ -211,15 +258,17 @@ fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<(
     }
 
     let old = services.receivers.insert(this_connection.clone(), {
-        let runtime = tokio::runtime::Builder::new_multi_thread()
+        let mut builder = tokio::runtime::Builder::new_multi_thread();
+        builder
             .thread_name("net-receiver")
-            .worker_threads(1)
-            .enable_io()
-            .enable_time()
             .on_thread_start(move || ffi::identifyThread("net-receiver", &worker_id))
-            .build()
-            .expect("Failed to create tokio runtime");
-        if *USE_MEMCOM.lock().unwrap() {
+            .enable_io()
+            .enable_time();
+        if options.receiver_io_threads > 0 {
+            builder.worker_threads(options.receiver_io_threads as usize);
+        }
+        let runtime = builder.build().expect("Failed to create tokio runtime");
+        let service = if *USE_MEMCOM.lock().unwrap() {
             ReceiverService::MemCom(receiver::NetworkService::start(
                 runtime,
                 this_connection.clone(),
@@ -231,10 +280,11 @@ fn init_receiver_service(connection_addr: String, worker_id: String) -> Result<(
                 this_connection.clone(),
                 channel::TcpCommunication::new(),
             ))
-        }
+        };
+        (service, data_queue_size)
     });
 
-    if let Some(old_service) = old {
+    if let Some((old_service, _)) = old {
         warn!("Recreating receiver service for {this_connection}, shutting down old service");
         // Properly shutdown the old service to avoid resource leaks
         let shutdown_result = match old_service {
@@ -255,12 +305,13 @@ fn receiver_instance(
     let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
         .map_err(|e| e.to_string())?;
     let services = SERVICES.lock().unwrap();
-    let receiver = services
+    let (service, default_data_queue_size) = services
         .receivers
         .get(&this_connection)
         .ok_or("Receiver server has not been initialized yet.")?;
     Ok(Box::new(ReceiverNetworkService {
-        handle: receiver.clone(),
+        handle: service.clone(),
+        default_data_queue_size: *default_data_queue_size,
     }))
 }
 
@@ -270,25 +321,36 @@ fn sender_instance(
     let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
         .map_err(|e| e.to_string())?;
     let services = SERVICES.lock().unwrap();
-    let sender = services
+    let (service, default_config) = services
         .senders
         .get(&this_connection)
         .ok_or("Sender server has not been initialized yet.")?;
     Ok(Box::new(SenderNetworkService {
-        handle: sender.clone(),
+        handle: service.clone(),
+        default_config: default_config.clone(),
     }))
 }
 
 fn register_receiver_channel(
     receiver_service: &mut ReceiverNetworkService,
     channel_identifier: String,
+    options: &ffi::NetworkServiceOptions,
 ) -> Result<Box<ReceiverDataChannel>, String> {
+    // Channel-level override: 0 means use worker default
+    let data_queue_size = if options.receiver_queue_size > 0 {
+        options.receiver_queue_size as usize
+    } else {
+        receiver_service.default_data_queue_size
+    };
+
     // register_channel can fail if the receiver service has been shut down.
     // This should not happen in normal operation as the service is kept alive
     // for the lifetime of the worker.
     let queue = match &receiver_service.handle {
-        ReceiverService::MemCom(r) => r.register_channel(channel_identifier.clone()),
-        ReceiverService::Tcp(r) => r.register_channel(channel_identifier.clone()),
+        ReceiverService::MemCom(r) => {
+            r.register_channel(channel_identifier.clone(), data_queue_size)
+        }
+        ReceiverService::Tcp(r) => r.register_channel(channel_identifier.clone(), data_queue_size),
     }
     .map_err(|_| "The receiver channel was shutdown unexpectedly.")?;
 
@@ -358,16 +420,36 @@ fn close_receiver_channel(channel: Box<ReceiverDataChannel>) {
 /// # Arguments
 /// * `connection_addr` - The URL of the downstream worker (target) that will receive the data
 /// * `channel_id` - The identifier for this specific data channel
+/// * `options` - Per-channel overrides; fields set to 0 use the worker-level defaults
 fn register_sender_channel(
     sender_service: &SenderNetworkService,
     connection_addr: String,
     channel_id: String,
+    options: &ffi::NetworkServiceOptions,
 ) -> Result<Box<SenderDataChannel>, String> {
+    // Channel-level overrides: 0 means use worker default
+    let config = sender::SenderConfig {
+        sender_queue_size: if options.sender_queue_size > 0 {
+            options.sender_queue_size as usize
+        } else {
+            sender_service.default_config.sender_queue_size
+        },
+        max_pending_acks: if options.max_pending_acks > 0 {
+            options.max_pending_acks as usize
+        } else {
+            sender_service.default_config.max_pending_acks
+        },
+    };
+
     let connection_addr =
         ConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
     let data_queue = match &sender_service.handle {
-        SenderService::MemCom(s) => s.register_channel(connection_addr.clone(), channel_id.clone()),
-        SenderService::Tcp(s) => s.register_channel(connection_addr.clone(), channel_id.clone()),
+        SenderService::MemCom(s) => {
+            s.register_channel(connection_addr.clone(), channel_id.clone(), config)
+        }
+        SenderService::Tcp(s) => {
+            s.register_channel(connection_addr.clone(), channel_id.clone(), config)
+        }
     }
     .map_err(|_| "The NetworkingService was closed unexpectedly")?;
 

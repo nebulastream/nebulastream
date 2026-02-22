@@ -97,7 +97,7 @@ SHOW QUERIES;
 
 -- 5. Submit a query
 SELECT TS FROM ENDLESS INTO SOMESINK;
--- Returns: [{"global_query_id":"<query-id>"}]
+-- Returns: [{"query_id":"<query-id>"}]
 
 -- 6. View running queries
 SHOW QUERIES;
@@ -119,7 +119,7 @@ SHOW QUERIES;
 
 ```json
 {
-  "global_query_id": "amazing_stallion",
+  "query_id": "amazing_stallion",
   "query_status": "Running",
   "running": {
     "formatted": "2025-11-18 15:06:57.377000",
@@ -231,8 +231,10 @@ DROP QUERY WHERE ID='<query-id>';
 
 ## NES-CLI (One-Shot Topology Controller)
 
-NES-CLI is a stateless CLI tool for deploying and managing queries based on YAML topology files. Unlike the interactive
-REPL, `nes-cli` performs single operations and exits.
+NES-CLI is a "stateless" CLI tool for deploying and managing queries based on YAML topology files. Unlike the REPL, `nes-cli` performs single operations and exits. The CLI is stateless in the sense that source/sink catalogs and topology configuration are always loaded from YAML files—nothing is persisted between invocations.
+
+> [!NOTE]
+> **Implementation Detail:** To enable query management across CLI invocations, the CLI maintains an internal mapping of global query IDs to local query instances in `$XDG_STATE_HOME/nebucli/` (or `$HOME/.local/state/nebucli/`). This is an implementation detail and should not be relied upon.
 
 ### Basic Usage
 
@@ -265,32 +267,31 @@ nes-cli dump
 nes-cli start
 
 # Read topology from stdin
-cat topology.yaml | nes-cli dump
-cat topology.yaml | nes-cli start
-cat topology.yaml | nes-cli start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
-cat topology.yaml | nes-cli status <query-id>
-cat topology.yaml | nes-cli stop <query-id>
+cat topology.yaml | nes-cli -t - dump
+cat topology.yaml | nes-cli -t - start
+cat topology.yaml | nes-cli -t - start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+cat topology.yaml | nes-cli -t - status <query-id>
+cat topology.yaml | nes-cli -t - stop <query-id>
 
 # Works with Docker too
-cat topology.yaml | docker run -i nes-cli start
-cat topology.yaml | docker run -i nes-cli dump
-cat topology.yaml | docker run -i nes-cli stop <query-id>
-cat topology.yaml | docker run -i nes-cli status <query-id>
+cat topology.yaml | docker run -i nes-cli -t - start
+cat topology.yaml | docker run -i nes-cli -t - dump
+cat topology.yaml | docker run -i nes-cli -t - stop <query-id>
+cat topology.yaml | docker run -i nes-cli -t - status <query-id>
 ```
 
 **Flags:**
 
-- `-t <file>` - Topology file path (or use `NES_TOPOLOGY_FILE` environment variable, or pipe via stdin)
+- `-t <file>` - Topology file path, or `-` to read from stdin
 - `-d` - Debug mode with detailed logging
 
 **Topology File Resolution Order:**
 
 The CLI looks for the topology file in the following priority order:
-1. `-t <file>` flag - Explicitly specified file path (takes precedence over all other sources)
-2. **stdin** - If input is piped (detected via `isatty`) and no `-t` flag was provided
-3. `NES_TOPOLOGY_FILE` environment variable
-4. `topology.yaml` in current directory
-5. `topology.yml` in current directory
+1. `-t <file>` flag - Explicitly specified file path, or `-t -` to read from stdin
+2. `NES_TOPOLOGY_FILE` environment variable
+3. `topology.yaml` in current directory
+4. `topology.yml` in current directory
 
 ### Topology File Format
 
@@ -496,7 +497,7 @@ Returns JSON array with query status information:
 ```json
 [
   {
-    "global_query_id": "amazing_stallion",
+    "query_id": "amazing_stallion",
     "query_status": "Running"
   },
   {

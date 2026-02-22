@@ -22,6 +22,7 @@
 #include <optional>
 #include <random>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
@@ -41,10 +42,13 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void initNetworkServices(const std::string& connectionAddr, const NES::WorkerId& workerId, const NES::NetworkOptions& options);
 
 namespace NES
 {
@@ -74,16 +78,40 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+
+    if (!configuration.connection.getValue().empty())
+    {
+        const auto& networkConfig = configuration.workerConfiguration.network;
+        initNetworkServices(
+            configuration.connection.getValue(),
+            workerId,
+            NetworkOptions{
+                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
+                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
+                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
+                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
+                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+            });
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a query ID
-        if (!plan.getQueryId().isValid())
+        /// Check if the plan already has a local query ID, generate one if needed
+        /// but preserve the distributed query ID if present
+        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
         {
-            plan.setQueryId(QueryId::createLocal(LocalQueryId(generateUUID())));
+            auto localId = LocalQueryId(generateUUID());
+            if (plan.getQueryId().isDistributed())
+            {
+                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
+            }
+            else
+            {
+                plan.setQueryId(QueryId::createLocal(localId));
+            }
         }
 
         const LogContext context("queryId", plan.getQueryId());

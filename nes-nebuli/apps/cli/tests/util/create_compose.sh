@@ -49,6 +49,15 @@ if [ ! -f "$WORKERS_FILE" ]; then
   exit 1
 fi
 
+# Check if worker config is valid (not null, empty object, or whitespace)
+is_valid_config() {
+  local config="$1"
+  if [ "$config" = "null" ] || [ "$config" = "{}" ] || [ -z "$config" ]; then
+    return 1
+  fi
+  return 0
+}
+
 # Start building the compose file
 cat <<EOF
 services:
@@ -57,6 +66,7 @@ services:
     pull_policy: never
     environment:
       NES_WORKER_GRPC_ADDR: worker-node:8080
+      NES_TOPOLOGY_FILE: $WORKERS_FILE
       XDG_STATE_HOME: /workdir/.xdg-state
     stop_grace_period: 0s
     working_dir: /workdir
@@ -75,7 +85,43 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   GRPC=$(yq -r ".workers[$i].grpc" "$WORKERS_FILE")
   GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
 
-  # Generate service definition
+  # Check if worker has config
+  HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
+
+  if [ "$HAS_CONFIG" = "true" ]; then
+    CONFIG_CONTENT=$(yq ".workers[$i].config" "$WORKERS_FILE")
+
+    if is_valid_config "$CONFIG_CONTENT"; then
+      # Base64-encode the config to avoid YAML-in-YAML embedding issues.
+      CONFIG_B64=$(echo "$CONFIG_CONTENT" | base64 -w0)
+      # Generate service with config file creation.
+      # Override the entrypoint since the worker image uses ENTRYPOINT ["nes-single-node-worker"].
+      cat <<EOF
+  $HOST_NAME:
+    image: $WORKER_IMAGE
+    pull_policy: never
+    working_dir: /workdir/$HOST_NAME
+    healthcheck:
+      test: ["CMD", "/bin/grpc_health_probe", "-addr=$HOST_NAME:$GRPC_PORT", "-connect-timeout", "5s" ]
+      interval: 1s
+      timeout: 5s
+      retries: 3
+      start_period: 0s
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        set -e
+        mkdir -p /workdir/configs
+        echo '$CONFIG_B64' | base64 -d > /workdir/configs/$HOST_NAME.yaml
+        exec nes-single-node-worker --grpc=$HOST_NAME:$GRPC_PORT --connection=$HOST --worker.default_query_execution.execution_mode=INTERPRETER --configPath=/workdir/configs/$HOST_NAME.yaml
+    volumes:
+      - $TEST_VOLUME:/workdir
+EOF
+      continue
+    fi
+  fi
+
+  # Worker has no config or invalid config - use simple command
   cat <<EOF
   $HOST_NAME:
     image: $WORKER_IMAGE
@@ -89,6 +135,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
+      "--connection=$HOST",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:

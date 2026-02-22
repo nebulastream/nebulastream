@@ -14,3 +14,4 @@ add_subdirectory(LegacyOptimizer)
 add_subdirectory(QueryManager)
 
 add_source_files(nes-coordinator Statements/StatementHandler.cpp Statements/JsonOutputFormatter.cpp)
+add_source_files(nes-legacy-optimizer NetworkTopology.cpp WorkerCatalog.cpp DistributedQuery.cpp DistributedQueryIdGenerator.cpp)

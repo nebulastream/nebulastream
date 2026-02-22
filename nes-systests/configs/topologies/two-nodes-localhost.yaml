@@ -1,0 +1,16 @@
+workers:
+  - host: "localhost:8080"
+    connection: "localhost:9090"
+    capacity: 10000
+  - host: "localhost:8181"
+    connection: "localhost:9191"
+    capacity: 4
+    downstream:
+      - "localhost:8080"
+
+allow_source_placement:
+  - "localhost:8080"
+
+allow_sink_placement:
+  - "localhost:8080"
+  - "localhost:8181"
