@@ -19,3 +19,4 @@ endfunction()
 
 add_nes_optimizer_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
 add_nes_optimizer_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)
+add_nes_optimizer_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
