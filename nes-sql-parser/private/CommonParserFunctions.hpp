@@ -46,6 +46,7 @@ uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContex
 int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral);
 int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral);
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral);
+std::string bindStringLiteral(antlr4::Token* stringLiteral);
 
 Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
 
