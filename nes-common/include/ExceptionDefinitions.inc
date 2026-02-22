@@ -21,11 +21,9 @@
 
 /// 1XXX Configuration Errors
 EXCEPTION(InvalidConfigParameter, 1000, "invalid config parameter")
-EXCEPTION(MissingConfigParameter, 1001, "missing config parameter")
 EXCEPTION(CannotLoadConfig, 1002, "cannot load config")
 EXCEPTION(SLTUnexpectedToken, 1003, "unexpected token in sql logic test file")
 EXCEPTION(SLTWrongSchema, 1004, "schema is not equal to query result schema")
-EXCEPTION(CannotPersistConfig, 1005, "cannot persist config")
 EXCEPTION(InvalidUUID, 1006, "invalid UUID")
 
 /// 2XXX Errors during query registration and compilation
@@ -42,7 +40,6 @@ EXCEPTION(InvalidIdentifier, 2009, "invalid identifier")
 EXCEPTION(InvalidLiteral, 2010, "invalid literal")
 
 /// 21XX Errors during query optimization & compilation
-EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
 EXCEPTION(UnknownWindowType, 2101, "unknown window type")
 EXCEPTION(UnknownPhysicalType, 2102, "unknown physical type")
 EXCEPTION(UnknownJoinStrategy, 2103, "unknown join strategy")
@@ -51,69 +48,43 @@ EXCEPTION(UnknownFunctionType, 2105, "unknown function type")
 EXCEPTION(UnknownSinkType, 2106, "unknown sink type")
 EXCEPTION(UnknownSourceType, 2107, "unknown source type")
 EXCEPTION(UnknownSinkFormat, 2108, "unknown sink format")
-EXCEPTION(UnknownSourceFormat, 2109, "unknown source format")
-EXCEPTION(UnknownPhysicalOperator, 2110, "unknown physical operator")
-EXCEPTION(UnknownLogicalOperator, 2111, "unknown logical operator")
-EXCEPTION(UnknownUserDefinedFunctionType, 2112, "unknown user defined function type")
-EXCEPTION(UnknownTimeFunctionType, 2113, "unknown time function type")
 EXCEPTION(UnknownAggregationType, 2114, "unknown aggregation type")
-EXCEPTION(UnknownStatisticsType, 2115, "unknown statistics type")
-EXCEPTION(UnknownExpressionArgumentType, 2116, "unknown expression argument type")
-EXCEPTION(UnknownWatermarkStrategy, 2117, "unknown watermark strategy")
-EXCEPTION(UnknownInvocationType, 2118, "unknown invocation type")
-EXCEPTION(UnknownCompilationBackendType, 2119, "unknown compilation backend type")
 EXCEPTION(UnknownOperation, 2120, "tried to execute an unsupported operation")
 EXCEPTION(UnknownParserType, 2121, "unknown parser type")
 EXCEPTION(UnknownOptimizerRule, 2122, "unknown optimizer rule")
 EXCEPTION(UnknownDataType, 2123, "unknown data type")
+
+/// 22XX NebuLI / query binding errors
+EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
+EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")
+EXCEPTION(QueryInvalid, 2202, "query is invalid")
+EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not found in the query description")
+EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
+EXCEPTION(InvalidStatement, 2207, "invalid statement")
 EXCEPTION(UnknownSourceName, 2124, "unknown source name")
 EXCEPTION(SourceAlreadyExists, 2125, "source already exists")
 EXCEPTION(QueryCompilerError, 2126, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2127, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2128, "sink already exists")
 
-/// 22XX NebuLI
-EXCEPTION(QueryDescriptionNotReadable, 2200, "could not read query description")
-EXCEPTION(QueryDescriptionNotParsable, 2201, "could not parse query description")
-EXCEPTION(QueryInvalid, 2202, "query is invalid")
-EXCEPTION(LogicalSourceNotFoundInQueryDescription, 2203, "logical source was not found in the query description")
-EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 2204, "physical source was not found in the query description")
-EXCEPTION(OperatorNotFound, 2205, "operator not found")
-EXCEPTION(TypeInferenceException, 2206, "failed to apply type inference")
-EXCEPTION(InvalidStatement, 2207, "invalid statement")
-
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
-EXCEPTION(CannotStartNodeEngine, 3001, "cannot start node engine")
-EXCEPTION(CannotStopNodeEngine, 3002, "cannot stop node engine")
-EXCEPTION(CannotStartQueryEngine, 3003, "cannot start query engine")
-EXCEPTION(CannotStopQQueryEngine, 3004, "cannot stop query engine")
 EXCEPTION(QueryNotRegistered, 3005, "query not registered")
-EXCEPTION(CannotStartQuery, 3006, "cannot start query")
 /// Todo #500: place holder until we can cleanly handle malformed string values (NULL/Undefined or similar)
 /// MUST be used as the central exception to report malformed string values.
 EXCEPTION(CannotFormatMalformedStringValue, 3007, "cannot format malformed string value")
-EXCEPTION(CannotAccessBuffer, 3008, "cannot access buffer")
 EXCEPTION(CannotAllocateBuffer, 3009, "cannot allocate buffer")
-EXCEPTION(TooMuchWork, 3010, "too much tasks for the internal task queue")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3011, "skipping delayed task during shutdown")
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3012, "tuples too large for pipeline buffer size")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
-EXCEPTION(MalformatedTuple, 4001, "malformed tuple")
 EXCEPTION(RunningRoutineFailure, 4002, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
-EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
 EXCEPTION(CannotOpenSource, 4004, "failed to open a source")
 EXCEPTION(FormattingError, 4005, "error during formatting")
 EXCEPTION(CannotOpenSink, 4006, "failed to open a sink")
 
-/// 5XXX Network errors
-EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
-EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
-
-/// 6XXX API error
-EXCEPTION(BadApiRequest, 6000, "bad api request")
+/// 6XXX API errors
 EXCEPTION(QueryNotFound, 6001, "query is not registered")
 EXCEPTION(QueryRegistrationFailed, 6002, "query registration call failed")
 EXCEPTION(QueryStartFailed, 6003, "query start call failed")
@@ -123,10 +94,8 @@ EXCEPTION(QueryStatusFailed, 6006, "query status call failed")
 
 /// 9XXX Internal errors (e.g. bugs)
 EXCEPTION(FunctionNotImplemented, 9000, "function not implemented")
-EXCEPTION(DeprecatedFeatureUsed, 9001, "deprecated feature used")
 EXCEPTION(InvalidRefCountForBuffer, 9002, "invalid reference counter for buffer")
 EXCEPTION(InvalidDynamicCast, 9003, "Invalid dynamic cast")
-EXCEPTION(UnknownOperator, 9004, "unknown operator")
 EXCEPTION(NotImplemented, 9005, "not implemented")
 
 /// Special errors
