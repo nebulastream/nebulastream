@@ -202,7 +202,7 @@ void createSymlink(const std::filesystem::path& absoluteLogPath, const std::file
         return;
     }
 
-    if (exists(symlinkPath) || is_symlink(symlinkPath))
+    if (exists(symlinkPath, errorCode) || is_symlink(symlinkPath, errorCode))
     {
         std::filesystem::remove(symlinkPath, errorCode);
         if (errorCode)
