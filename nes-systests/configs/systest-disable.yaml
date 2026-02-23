@@ -1,0 +1,10 @@
+# Permanent exclusions for systest startup.
+# Examples:
+# disabled_test_files:
+#   - <relative/path/to/test>.test
+# exclude_groups:
+#   - <group name>
+#
+# - large scale tests are always skipped below
+exclude_groups:
+  - large
