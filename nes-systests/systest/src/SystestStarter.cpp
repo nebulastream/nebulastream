@@ -29,6 +29,7 @@
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
@@ -42,6 +43,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
+    const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
@@ -51,6 +53,10 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
         .nargs(argparse::nargs_pattern::at_least_one);
+    program.add_argument("--disableConfigFile")
+        .default_value(defaultDisableConfigPath)
+        .help("path to the default systest disable config file");
+    program.add_argument("--ignoreDisableConfigFile").help("ignore the disable config file").flag();
 
     /// list queries
     program.add_argument("-l", "--list").flag().help("list all discovered tests and test groups");
@@ -116,6 +122,34 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     }
 
     auto config = NES::SystestConfiguration();
+    const bool shouldLoadDisableConfig = not program.is_used("--ignoreDisableConfigFile");
+    const auto disableConfigFilePath = program.get<std::string>("--disableConfigFile");
+    if (shouldLoadDisableConfig)
+    {
+        if (not std::filesystem::is_regular_file(disableConfigFilePath))
+        {
+            if (program.is_used("--disableConfigFile"))
+            {
+                std::cerr << "Configured systest disable config file does not exist: " << disableConfigFilePath << '\n';
+                std::exit(EXIT_FAILURE);
+            }
+        }
+        else
+        {
+            try
+            {
+                const YAML::Node disableConfig = YAML::LoadFile(disableConfigFilePath);
+                config.excludeGroupsConfiguredInDisableConfig
+                    = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
+                config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
+            }
+            catch (const std::exception& err)
+            {
+                std::cerr << "Failed to read systest disable config file '" << disableConfigFilePath << "': " << err.what() << '\n';
+                std::exit(EXIT_FAILURE);
+            }
+        }
+    }
 
     if (program.is_used("-b"))
     {
@@ -257,6 +291,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
     if (program.is_used("--exclude-groups"))
     {
+        config.excludedGroupsProvidedOnCommandLine = true;
         auto excludedGroups = program.get<std::vector<std::string>>("--exclude-groups");
         for (const auto& excludedGroup : excludedGroups)
         {
