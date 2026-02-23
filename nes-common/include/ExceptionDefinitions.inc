@@ -79,7 +79,7 @@ EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipel
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")
-EXCEPTION(RunningRoutineFailure, 4001, "error in running routine of SourceThread") ///Todo #237: Improve error handling in sources
+EXCEPTION(RunningRoutineFailure, 4001, "error in running routine of SourceThread") /// TODO #237: Improve error handling in sources
 EXCEPTION(CannotOpenSource, 4002, "failed to open a source")
 EXCEPTION(FormattingError, 4003, "error during formatting")
 EXCEPTION(CannotOpenSink, 4004, "failed to open a sink")
