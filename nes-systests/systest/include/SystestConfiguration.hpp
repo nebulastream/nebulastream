@@ -54,6 +54,7 @@ public:
     BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};
     SequenceOption<StringOption> testGroups = {"test_groups", "test groups to run"};
     SequenceOption<StringOption> excludeGroups = {"exclude_groups", "test groups to exclude"};
+    SequenceOption<StringOption> disabledTestFiles = {"disabled_test_files", "test files to disable"};
     StringOption workerConfig = {"worker_config", "", "used worker config file (.yaml)"};
     StringOption queryCompilerConfig = {"query_compiler_config", "", "used query compiler config file (.yaml)"};
 
@@ -71,6 +72,9 @@ connections.  Valid values include dns:///localhost:1234,
 
     BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
+
+    bool excludeGroupsConfiguredInDisableConfig = false;
+    bool excludedGroupsProvidedOnCommandLine = false;
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
     std::optional<QueryOptimizerConfiguration> queryOptimizerConfig;
