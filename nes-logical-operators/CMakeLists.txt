@@ -24,5 +24,5 @@ target_include_directories(nes-logical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)
+create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction ReflectedLogicalOperator)
 add_tests_if_enabled(tests)

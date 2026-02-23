@@ -34,6 +34,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include <ReflectedLogicalOperatorRegistry.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 #include <Util/Reflection.hpp>
@@ -149,14 +150,15 @@ SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const
     return SelectionLogicalOperator(predicate.value());
 }
 
-LogicalOperatorRegistryReturnType
-LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
+LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<SelectionLogicalOperator>(arguments.reflected);
-    }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
     std::unreachable();
+}
+
+ReflectedLogicalOperatorRegistryReturnType
+ReflectedLogicalOperatorGeneratedRegistrar::RegisterSelectionReflectedLogicalOperator(ReflectedLogicalOperatorRegistryArguments arguments)
+{
+    return unreflect<SelectionLogicalOperator>(arguments);
 }
 }
