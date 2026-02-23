@@ -1,15 +1,15 @@
-# name: milestone/YahooStreamingBenchmark_more_data.test
+# name: milestone/YahooStreamingBenchmark_with_varsized.test
 # description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
 # groups: [milestone, benchmark, benchmark_small, Aggregation]
 
 # Source definitions
 CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
 CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
-ATTACH FILE small/ysb/ysb1k_more_data_100K.csv
+ATTACH FILE small/ysb/ysb1k_with_varsized_100K.csv
 
 CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
 CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
-ATTACH FILE small/ysb/ysb10k_more_data_100K.csv
+ATTACH FILE small/ysb/ysb10k_with_varsized_100K.csv
 
 CREATE SINK printSink(ysb1k.campaign UINT64)  TYPE File;
 CREATE SINK ysb1kChecksum(ysb1k.start UINT64, ysb1k.end UINT64, ysb1k.campaign_id VARSIZED, ysb1k.count_user_id UINT64)  TYPE Checksum;
