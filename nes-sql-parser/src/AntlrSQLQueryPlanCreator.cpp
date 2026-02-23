@@ -876,6 +876,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         default:
+            helpers.top().hasUnnamedAggregation = false;
             /// Check if the function is a constructor for a datatype
             if (const auto dataType = DataTypeProvider::tryProvideDataType(funcName); dataType.has_value())
             {
@@ -883,7 +884,6 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 {
                     throw InvalidQuerySyntax("Expected constant, got nothing at {}", context->getText());
                 }
-                helpers.top().hasUnnamedAggregation = false;
                 auto value = std::move(helpers.top().constantBuilder.back());
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
