@@ -21,6 +21,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <cstdlib>
+#include <thread>
 #include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
@@ -158,11 +159,14 @@ std::vector<RunningQuery> runQueries(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    K8sJSONSubmitter jsonSubmitter("default");
+    const bool k8sEnabled = std::getenv("NES_K8S_ENABLED") != nullptr;
+    std::optional<K8sJSONSubmitter> jsonSubmitter;
+    if (k8sEnabled) {
+        jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
+    }
     std::queue<SystestQuery> pending;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
     {
-        std::cout << K8sTopologyBuilder::toJsonString(*it) << "\n" << std::endl;
         pending.push(*it);
     }
 
@@ -177,7 +181,25 @@ std::vector<RunningQuery> runQueries(
         {
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
-            // yamlSubmitter.submitTopology(nextQuery);
+            if (jsonSubmitter.has_value())
+            {
+                auto topologyResult = K8sTopologyBuilder::buildWithSourceData(nextQuery);
+                jsonSubmitter->submitJson(topologyResult.topologyJson);
+                /// TODO: Replace this sleep with proper polling of the topology status (status.phase == "Ready").
+                std::cerr << "[K8s] Waiting for operator to reconcile topology...\n";
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                /// Patch the operator-created ConfigMap with the source file data.
+                if (!topologyResult.sourceFileData.empty()) {
+                    jsonSubmitter->patchSourceDataConfigMap(
+                        topologyResult.sourceDataConfigMapName,
+                        topologyResult.sourceFileData);
+                    /// ConfigMap volume mounts can take up to ~60-90s to propagate.
+                    /// Wait for the updated data to appear in the worker pods.
+                    std::cerr << "[K8s] Waiting 90s for ConfigMap data to propagate to worker pods...\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(90));
+                }
+                jsonSubmitter->submitJson(K8sQueryBuilder::build(nextQuery));
+            }
 
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
