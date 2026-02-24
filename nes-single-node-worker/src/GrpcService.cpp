@@ -39,7 +39,7 @@ grpc::Status handleError(const std::exception& exception, grpc::ServerContext* c
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
+    context->AddTrailingMetadata("trace", replaceAll(formatStacktrace(cpptrace::from_current_exception(), false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
 }
 
@@ -48,8 +48,17 @@ grpc::Status handleError(const Exception& exception, grpc::ServerContext* contex
     NES_ERROR("GRPC Request failed with exception: {}", exception.what());
     context->AddTrailingMetadata("code", std::to_string(exception.code()));
     context->AddTrailingMetadata("what", exception.what());
-    context->AddTrailingMetadata("trace", replaceAll(cpptrace::from_current_exception().to_string(false), "\n", ""));
+    context->AddTrailingMetadata("trace", replaceAll(formatStacktrace(cpptrace::from_current_exception(), false), "\n", ""));
     return {grpc::INTERNAL, exception.what()};
+}
+
+grpc::Status handleError(grpc::ServerContext* context)
+{
+    NES_ERROR("GRPC Request failed with unknown exception");
+    context->AddTrailingMetadata("code", std::to_string(ErrorCode::UnknownException));
+    context->AddTrailingMetadata("what", "unknown exception");
+    context->AddTrailingMetadata("trace", replaceAll(formatStacktrace(cpptrace::from_current_exception(), false), "\n", ""));
+    return {grpc::INTERNAL, "unknown exception"};
 }
 
 template <typename T>
@@ -61,178 +70,153 @@ T getValueOrThrow(std::expected<T, Exception> expected)
     }
     throw std::move(expected.error());
 }
+
+grpc::Status tryWithDefaultHandling(const std::function<grpc::Status()>& f, grpc::ServerContext* context)
+{
+    grpc::Status status{};
+    cpptrace::try_catch(
+        [&] { status = f(); },
+        [&](const Exception& e) { status = handleError(e, context); },
+        [&](const std::exception& e) { status = handleError(e, context); },
+        [&]() { status = handleError(context); });
+    return status;
+}
+
 }
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
     auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
-    CPPTRACE_TRY
-    {
-        auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
-        if (result.has_value())
+    return tryWithDefaultHandling(
+        [&]
         {
-            response->set_queryid(result->getRawValue());
-            return grpc::Status::OK;
-        }
-        return handleError(result.error(), context);
-    }
-    CPPTRACE_CATCH(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unknown exception"};
+            auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
+            if (result.has_value())
+            {
+                response->set_queryid(result->getRawValue());
+                return grpc::Status::OK;
+            }
+            return handleError(result.error(), context);
+        },
+        context);
 }
 
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
     const auto queryId = QueryId(request->queryid());
-    CPPTRACE_TRY
-    {
-        getValueOrThrow(delegate.unregisterQuery(queryId));
-        return grpc::Status::OK;
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unkown exception"};
+    return tryWithDefaultHandling(
+        [&]
+        {
+            getValueOrThrow(delegate.unregisterQuery(queryId));
+            return grpc::Status::OK;
+        },
+        context);
 }
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     const auto queryId = QueryId(request->queryid());
-    CPPTRACE_TRY
-    {
-        getValueOrThrow(delegate.startQuery(queryId));
-        return grpc::Status::OK;
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unknown exception"};
+    return tryWithDefaultHandling(
+        [&]
+        {
+            getValueOrThrow(delegate.startQuery(queryId));
+            return grpc::Status::OK;
+        },
+        context);
 }
 
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     const auto queryId = QueryId(request->queryid());
     const auto terminationType = static_cast<QueryTerminationType>(request->terminationtype());
-    CPPTRACE_TRY
-    {
-        getValueOrThrow(delegate.stopQuery(queryId, terminationType));
-        return grpc::Status::OK;
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unknown exception"};
+    return tryWithDefaultHandling(
+        [&]
+        {
+            getValueOrThrow(delegate.stopQuery(queryId, terminationType));
+            return grpc::Status::OK;
+        },
+        context);
 }
 
 grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const QueryStatusRequest* request, QueryStatusReply* reply)
 {
-    CPPTRACE_TRY
-    {
-        const auto queryId = QueryId{request->queryid()};
-        reply->set_queryid(queryId.getRawValue());
-        if (const auto queryStatus = delegate.getQueryStatus(queryId); queryStatus.has_value())
+    return tryWithDefaultHandling(
+        [&]
         {
-            const auto& [start, running, stop, error] = queryStatus->metrics;
-            reply->set_state(static_cast<::QueryState>(queryStatus->state));
-
-            if (start.has_value())
+            const auto queryId = QueryId{request->queryid()};
+            reply->set_queryid(queryId.getRawValue());
+            if (const auto queryStatus = delegate.getQueryStatus(queryId); queryStatus.has_value())
             {
-                reply->mutable_metrics()->set_startunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(start->time_since_epoch()).count());
-            }
+                const auto& [start, running, stop, error] = queryStatus->metrics;
+                reply->set_state(static_cast<::QueryState>(queryStatus->state));
 
-            if (running.has_value())
-            {
-                reply->mutable_metrics()->set_runningunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(running->time_since_epoch()).count());
-            }
+                if (start.has_value())
+                {
+                    reply->mutable_metrics()->set_startunixtimeinms(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(start->time_since_epoch()).count());
+                }
 
-            if (stop.has_value())
-            {
-                reply->mutable_metrics()->set_stopunixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(stop->time_since_epoch()).count());
-            }
+                if (running.has_value())
+                {
+                    reply->mutable_metrics()->set_runningunixtimeinms(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(running->time_since_epoch()).count());
+                }
 
-            if (error.has_value())
-            {
-                auto* errorProto = reply->mutable_metrics()->mutable_error();
-                errorProto->set_message(error->what());
-                errorProto->set_stacktrace(error->trace().to_string());
-                errorProto->set_code(error->code());
-                errorProto->set_location(std::string{error->where()->filename} + ":" + std::to_string(error->where()->line.value_or(0)));
+                if (stop.has_value())
+                {
+                    reply->mutable_metrics()->set_stopunixtimeinms(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(stop->time_since_epoch()).count());
+                }
+
+                if (error.has_value())
+                {
+                    auto* errorProto = reply->mutable_metrics()->mutable_error();
+                    errorProto->set_message(error->what());
+                    errorProto->set_stacktrace(error->trace().to_string());
+                    errorProto->set_code(error->code());
+                    errorProto->set_location(
+                        std::string{error->where()->filename} + ":" + std::to_string(error->where()->line.value_or(0)));
+                }
+                return grpc::Status::OK;
             }
-            return grpc::Status::OK;
-        }
-        return {grpc::NOT_FOUND, "Query does not exist"};
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unknown exception"};
+            return grpc::Status{grpc::NOT_FOUND, "Query does not exist"};
+        },
+        context);
 }
 
 grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
 {
-    CPPTRACE_TRY
-    {
-        auto queryId = QueryId(request->queryid());
-        auto log = delegate.getQueryLog(queryId);
-        if (log.has_value())
+    return tryWithDefaultHandling(
+        [&]
         {
-            for (const auto& entry : *log)
+            auto queryId = QueryId(request->queryid());
+            auto log = delegate.getQueryLog(queryId);
+            if (log.has_value())
             {
-                QueryLogEntry logEntry;
-                logEntry.set_state(static_cast<::QueryState>(entry.state));
-                logEntry.set_unixtimeinms(
-                    std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
-                if (entry.exception.has_value())
+                for (const auto& entry : *log)
                 {
-                    Error error;
-                    error.set_message(entry.exception.value().what());
-                    error.set_stacktrace(entry.exception.value().trace().to_string());
-                    error.set_code(entry.exception.value().code());
-                    error.set_location(
-                        std::string(entry.exception.value().where()->filename) + ":"
-                        + std::to_string(entry.exception.value().where()->line.value_or(0)));
-                    logEntry.mutable_error()->CopyFrom(error);
+                    QueryLogEntry logEntry;
+                    logEntry.set_state(static_cast<::QueryState>(entry.state));
+                    logEntry.set_unixtimeinms(
+                        std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
+                    if (entry.exception.has_value())
+                    {
+                        Error error;
+                        error.set_message(entry.exception.value().what());
+                        error.set_stacktrace(entry.exception.value().trace().to_string());
+                        error.set_code(entry.exception.value().code());
+                        error.set_location(
+                            std::string(entry.exception.value().where()->filename) + ":"
+                            + std::to_string(entry.exception.value().where()->line.value_or(0)));
+                        logEntry.mutable_error()->CopyFrom(error);
+                    }
+                    reply->add_entries()->CopyFrom(logEntry);
                 }
-                reply->add_entries()->CopyFrom(logEntry);
+                return grpc::Status::OK;
             }
-            return grpc::Status::OK;
-        }
-        return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unkown exception"};
+            return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
+        },
+        context);
 }
 
 }
