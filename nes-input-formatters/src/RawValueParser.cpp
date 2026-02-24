@@ -130,7 +130,7 @@ void parseRawValueIntoRecord(
 
 void parseLazyValueIntoRecord(
     const DataType::Type physicalType,
-    Nautilus::Record& record,
+    Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
@@ -138,64 +138,69 @@ void parseLazyValueIntoRecord(
     ArenaRef& arenaRef)
 {
     // Register a lazy materializer that performs the same logic as parseRawValueIntoRecord on first access
-    record.writeLazy(fieldName, [physicalType, fieldAddress, fieldSize, quotationType, &arenaRef]() -> Nautilus::VarVal {
-        switch (physicalType)
+    record.writeLazy(
+        fieldName,
+        [physicalType, fieldAddress, fieldSize, quotationType, &arenaRef]() -> VarVal
         {
-            case DataType::Type::INT8:
-                return parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize);
-            case DataType::Type::INT16:
-                return parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize);
-            case DataType::Type::INT32:
-                return parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize);
-            case DataType::Type::INT64:
-                return parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize);
-            case DataType::Type::UINT8:
-                return parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
-            case DataType::Type::UINT16:
-                return parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize);
-            case DataType::Type::UINT32:
-                return parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize);
-            case DataType::Type::UINT64:
-                return parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize);
-            case DataType::Type::FLOAT32:
-                return parseIntoNautilusRecord<float>(fieldAddress, fieldSize);
-            case DataType::Type::FLOAT64:
-                return parseIntoNautilusRecord<double>(fieldAddress, fieldSize);
-            case DataType::Type::CHAR:
-                switch (quotationType)
-                {
-                    case QuotationType::NONE: {
-                        return parseIntoNautilusRecord<char>(fieldAddress, fieldSize);
+            switch (physicalType)
+            {
+                case DataType::Type::INT8:
+                    return parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize);
+                case DataType::Type::INT16:
+                    return parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize);
+                case DataType::Type::INT32:
+                    return parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize);
+                case DataType::Type::INT64:
+                    return parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize);
+                case DataType::Type::UINT8:
+                    return parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize);
+                case DataType::Type::UINT16:
+                    return parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize);
+                case DataType::Type::UINT32:
+                    return parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize);
+                case DataType::Type::UINT64:
+                    return parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize);
+                case DataType::Type::FLOAT32:
+                    return parseIntoNautilusRecord<float>(fieldAddress, fieldSize);
+                case DataType::Type::FLOAT64:
+                    return parseIntoNautilusRecord<double>(fieldAddress, fieldSize);
+                case DataType::Type::CHAR:
+                    switch (quotationType)
+                    {
+                        case QuotationType::NONE: {
+                            return parseIntoNautilusRecord<char>(fieldAddress, fieldSize);
+                        }
+                        case QuotationType::DOUBLE_QUOTE: {
+                            return parseIntoNautilusRecord<char>(
+                                fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2));
+                        }
                     }
-                    case QuotationType::DOUBLE_QUOTE: {
-                        return parseIntoNautilusRecord<char>(fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2));
-                    }
-                }            case DataType::Type::BOOLEAN:
-                return parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
-            case DataType::Type::VARSIZED:
-                switch (quotationType)
-                {
-                    case QuotationType::NONE: {
-                        auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
-                        nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
-                        return varSized;
-                    }
-                    case QuotationType::DOUBLE_QUOTE: {
-                        const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
-                        const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
+                case DataType::Type::BOOLEAN:
+                    return parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
+                case DataType::Type::VARSIZED:
+                    switch (quotationType)
+                    {
+                        case QuotationType::NONE: {
+                            auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
+                            nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
+                            return varSized;
+                        }
+                        case QuotationType::DOUBLE_QUOTE: {
+                            const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
+                            const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
 
-                        auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
-                        nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
-                        return varSized;
+                            auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
+                            nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
+                            return varSized;
+                        }
                     }
-                }
-                std::unreachable();            case DataType::Type::VARSIZED_POINTER_REP:
-                throw NotImplemented("Cannot parse varsized pointer rep type.");
-            case DataType::Type::UNDEFINED:
-                throw NotImplemented("Cannot parse undefined type.");
-        }
-        std::unreachable();
-    });
+                case DataType::Type::VARSIZED_POINTER_REP:
+                    throw NotImplemented("Cannot parse varsized pointer rep type.");
+                case DataType::Type::UNDEFINED:
+                    throw NotImplemented("Cannot parse undefined type.");
+            }
+            std::unreachable();
+        });
 }
 
 }
