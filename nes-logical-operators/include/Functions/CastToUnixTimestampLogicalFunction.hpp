@@ -57,7 +57,6 @@ private:
 
 static_assert(LogicalFunctionConcept<CastToUnixTimestampLogicalFunction>);
 
-
 template <>
 struct Reflector<CastToUnixTimestampLogicalFunction>
 {

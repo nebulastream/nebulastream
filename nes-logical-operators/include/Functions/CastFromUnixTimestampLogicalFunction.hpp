@@ -71,15 +71,15 @@ struct Unreflector<CastFromUnixTimestampLogicalFunction>
 
 static_assert(LogicalFunctionConcept<CastFromUnixTimestampLogicalFunction>);
 
-} // namespace NES
+} /// namespace NES
 
 namespace NES::detail
 {
 struct ReflectedCastFromUnixTimestampLogicalFunction
 {
     std::optional<LogicalFunction> child;
-    // NOTE: intentionally NO outputType here (we infer it)
+    /// NOTE: intentionally NO outputType here (we infer it)
 };
-} // namespace NES::detail
+} /// namespace NES::detail
 
 FMT_OSTREAM(NES::CastFromUnixTimestampLogicalFunction);

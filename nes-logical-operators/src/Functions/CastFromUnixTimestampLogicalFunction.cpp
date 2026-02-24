@@ -18,12 +18,12 @@
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
-#include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <fmt/format.h>
 #include <rfl/from_generic.hpp>
 #include <rfl/to_generic.hpp>
+#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -101,11 +101,14 @@ CastFromUnixTimestampLogicalFunction Unreflector<CastFromUnixTimestampLogicalFun
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<CastFromUnixTimestampLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    // return CastFromUnixTimestampLogicalFunction(arguments.dataType, arguments.children[0]);
     return CastFromUnixTimestampLogicalFunction(arguments.children[0]);
 }
 

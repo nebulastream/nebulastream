@@ -25,6 +25,7 @@ namespace NES
 
 /// Converts a unix timestamp in milliseconds (UINT64) to a human-readable UTC timestamp string (VARSIZED),
 /// formatted as: YYYY-MM-DDTHH:MM:SS.mmmZ
+/// ISO-8601 UTC
 class CastFromUnixTimestampPhysicalFunction final : public PhysicalFunctionConcept
 {
 public:
