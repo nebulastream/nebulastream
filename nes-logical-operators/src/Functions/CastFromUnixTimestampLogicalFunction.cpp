@@ -20,7 +20,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <Serialization/LogicalFunctionReflection.hpp> // IMPORTANT for LogicalFunction reflection
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <fmt/format.h>
 #include <rfl/from_generic.hpp>
 #include <rfl/to_generic.hpp>
@@ -31,33 +31,6 @@ namespace NES
 CastFromUnixTimestampLogicalFunction::CastFromUnixTimestampLogicalFunction(LogicalFunction child)
     : outputType(DataType{DataType::Type::UNDEFINED}), child(std::move(child))
 {
-}
-
-Reflected Reflector<CastFromUnixTimestampLogicalFunction>::operator()(const CastFromUnixTimestampLogicalFunction& function) const
-{
-    detail::ReflectedCastFromUnixTimestampLogicalFunction data{
-        .child = function.child,
-    };
-    return Reflected{rfl::to_generic(data)};
-}
-
-CastFromUnixTimestampLogicalFunction
-Unreflector<CastFromUnixTimestampLogicalFunction>::operator()(const Reflected& reflected) const
-{
-    auto parsed = rfl::from_generic<detail::ReflectedCastFromUnixTimestampLogicalFunction>(*reflected);
-    if (!parsed.has_value())
-    {
-        throw CannotDeserialize("Failed to unreflect CastFromUnixTimestampLogicalFunction");
-    }
-
-    const auto& data = parsed.value();
-    if (!data.child.has_value())
-    {
-        throw CannotDeserialize("CastFromUnixTimestampLogicalFunction missing child");
-    }
-
-    // Reconstruct; output type will be inferred later
-    return CastFromUnixTimestampLogicalFunction(*data.child);
 }
 
 bool CastFromUnixTimestampLogicalFunction::operator==(const CastFromUnixTimestampLogicalFunction& rhs) const
@@ -107,6 +80,22 @@ std::string_view CastFromUnixTimestampLogicalFunction::getType() const
 std::string CastFromUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
 {
     return fmt::format("Cast from unix timestamp (ms) to ISO-8601 UTC, outputType={}", outputType);
+}
+
+Reflected Reflector<CastFromUnixTimestampLogicalFunction>::operator()(const CastFromUnixTimestampLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedCastFromUnixTimestampLogicalFunction{.child = function.child});
+}
+
+CastFromUnixTimestampLogicalFunction Unreflector<CastFromUnixTimestampLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [function] = unreflect<detail::ReflectedCastFromUnixTimestampLogicalFunction>(reflected);
+
+    if (!function.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize child of CastFromUnixTimestampLogicalFunction");
+    }
+    return CastFromUnixTimestampLogicalFunction(std::move(function.value()));
 }
 
 LogicalFunctionRegistryReturnType
