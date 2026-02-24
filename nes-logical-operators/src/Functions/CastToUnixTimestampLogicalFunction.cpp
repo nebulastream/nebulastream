@@ -24,7 +24,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
-
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
