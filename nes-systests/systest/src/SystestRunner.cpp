@@ -50,7 +50,7 @@
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
 #include "../../k8s/include/K8sQueryBuilder.hpp"
-#include "../../k8s/include/K8sTopologyBuilder.hpp
+#include "../../k8s/include/K8sTopologyBuilder.hpp"
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -165,6 +165,11 @@ std::vector<RunningQuery> runQueries(
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
 
     K8sJSONSubmitter jsonSubmitter("default");
+    const bool k8sEnabled = std::getenv("NES_K8S_ENABLED") != nullptr;
+    std::optional<K8sJSONSubmitter> jsonSubmitter;
+    if (k8sEnabled) {
+        jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
+    }
     std::queue<SystestQuery> pending;
     std::vector<SystestQuery> dependentQueries;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
@@ -175,7 +180,6 @@ std::vector<RunningQuery> runQueries(
         }
         else
         {
-            std::cout << K8sTopologyBuilder::toJsonString(*it) << "\n" << std::endl;
             pending.push(*it);
         }
     }
@@ -246,6 +250,25 @@ std::vector<RunningQuery> runQueries(
         {
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
+            if (jsonSubmitter.has_value())
+            {
+                auto topologyResult = K8sTopologyBuilder::buildWithSourceData(nextQuery);
+                jsonSubmitter->submitJson(topologyResult.topologyJson);
+                /// TODO: Replace this sleep with proper polling of the topology status (status.phase == "Ready").
+                std::cerr << "[K8s] Waiting for operator to reconcile topology...\n";
+                std::this_thread::sleep_for(std::chrono::seconds(10));
+                /// Patch the operator-created ConfigMap with the source file data.
+                if (!topologyResult.sourceFileData.empty()) {
+                    jsonSubmitter->patchSourceDataConfigMap(
+                        topologyResult.sourceDataConfigMapName,
+                        topologyResult.sourceFileData);
+                    /// ConfigMap volume mounts can take up to ~60-90s to propagate.
+                    /// Wait for the updated data to appear in the worker pods.
+                    std::cerr << "[K8s] Waiting 90s for ConfigMap data to propagate to worker pods...\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(90));
+                }
+                jsonSubmitter->submitJson(K8sQueryBuilder::build(nextQuery));
+            }
 
             INVARIANT(
                 canRunQuery(nextQuery),
