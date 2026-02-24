@@ -159,68 +159,58 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          version: v0.10.0
+          install: false
       - name: Build Base Image
-        uses: Wandalen/wretry.action@v3.8.0
+        uses: docker/build-push-action@v6
         with:
-          action: docker/build-push-action@v6
-          with: |
-            push: true
-            tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-            context: .
-            file: docker/dependency/Base.dockerfile
+          push: true
+          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+          context: .
+          file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
-        uses: Wandalen/wretry.action@v3.8.0
+        uses: docker/build-push-action@v6
         with:
-          action: docker/build-push-action@v6
-          with: |
-            push: true
-            tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            build-args: |
-              TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-              ARCH=${{matrix.arch}}
-              STDLIB=${{matrix.stdlib}}
-              SANITIZER=${{matrix.sanitizer}}
-              VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
-            context: .
-            file: docker/dependency/Dependency.dockerfile
-            secrets: |
-              VCPKG_CACHE_ACCESS_KEY=${{secrets.VCPKG_CACHE_ACCESS_KEY}}
-              VCPKG_CACHE_SECRET_KEY=${{secrets.VCPKG_CACHE_SECRET_KEY}}
-              VCPKG_CACHE_ENDPOINT=${{secrets.VCPKG_CACHE_ENDPOINT}}
-              VCPKG_CACHE_BUCKET=${{secrets.VCPKG_CACHE_BUCKET}}
-              VCPKG_CACHE_REGION=${{secrets.VCPKG_CACHE_REGION}}
+          push: true
+          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+          build-args: |
+            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+            ARCH=${{matrix.arch}}
+            STDLIB=${{matrix.stdlib}}
+            SANITIZER=${{matrix.sanitizer}}
+            VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
+          context: .
+          file: docker/dependency/Dependency.dockerfile
+          secrets: |
+            VCPKG_CACHE_ACCESS_KEY=${{secrets.VCPKG_CACHE_ACCESS_KEY}}
+            VCPKG_CACHE_SECRET_KEY=${{secrets.VCPKG_CACHE_SECRET_KEY}}
+            VCPKG_CACHE_ENDPOINT=${{secrets.VCPKG_CACHE_ENDPOINT}}
+            VCPKG_CACHE_BUCKET=${{secrets.VCPKG_CACHE_BUCKET}}
+            VCPKG_CACHE_REGION=${{secrets.VCPKG_CACHE_REGION}}
       - name: Build Development Image
-        uses: Wandalen/wretry.action@v3.8.0
+        uses: docker/build-push-action@v6
         with:
-          action: docker/build-push-action@v6
-          with: |
-            push: true
-            tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            context: .
-            file: docker/dependency/Development.dockerfile
+          push: true
+          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+          context: .
+          file: docker/dependency/Development.dockerfile
       - name: Build CI Image
-        uses: Wandalen/wretry.action@v3.8.0
+        uses: docker/build-push-action@v6
         with:
-          action: docker/build-push-action@v6
-          with: |
-            push: true
-            tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            context: .
-            file: docker/dependency/DevelopmentCI.dockerfile
+          push: true
+          tags: nebulastream/nes-ci:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+          context: .
+          file: docker/dependency/DevelopmentCI.dockerfile
       - name: Build benchmark image
-        uses: Wandalen/wretry.action/main@v3.8.0
         if: ${{matrix.sanitizer == 'none'}}
+        uses: docker/build-push-action@v6
         with:
-          action: docker/build-push-action@v6
-          with: |
-            push: true
-            tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
-            build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-none
-            context: .
-            file: docker/dependency/Benchmark.dockerfile
+          push: true
+          tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-none
+          context: .
+          file: docker/dependency/Benchmark.dockerfile
   merge-dev-images:
     # This Job merges platform specific images into a single multi-platform image
     name: "Merge Dev Images"
@@ -240,7 +230,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          version: v0.10.0
+          install: false
 
 
       - name: Combine Manifests
