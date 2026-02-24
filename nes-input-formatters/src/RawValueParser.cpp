@@ -194,8 +194,6 @@ void parseLazyValueIntoRecord(
                             return varSized;
                         }
                     }
-                case DataType::Type::VARSIZED_POINTER_REP:
-                    throw NotImplemented("Cannot parse varsized pointer rep type.");
                 case DataType::Type::UNDEFINED:
                     throw NotImplemented("Cannot parse undefined type.");
             }
