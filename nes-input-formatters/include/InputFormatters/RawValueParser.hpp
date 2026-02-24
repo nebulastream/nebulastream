@@ -30,6 +30,7 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <nautilus/common/FunctionAttributes.hpp>
 
 namespace NES
 {
