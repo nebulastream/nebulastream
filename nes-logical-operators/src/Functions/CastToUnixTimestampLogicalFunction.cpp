@@ -22,9 +22,9 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
-#include <Serialization/LogicalFunctionReflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
 
@@ -32,11 +32,9 @@ namespace NES
 {
 
 CastToUnixTimestampLogicalFunction::CastToUnixTimestampLogicalFunction(LogicalFunction child)
-    : outputType(DataType{DataType::Type::UNDEFINED}),
-    child(std::move(child))
+    : outputType(DataType{DataType::Type::UNDEFINED}), child(std::move(child))
 {
 }
-
 
 bool CastToUnixTimestampLogicalFunction::operator==(const CastToUnixTimestampLogicalFunction& rhs) const
 {
@@ -84,7 +82,6 @@ std::string CastToUnixTimestampLogicalFunction::explain(ExplainVerbosity) const
 {
     return fmt::format("Cast to unix timestamp (ms), outputType={}", outputType);
 }
-
 
 Reflected Reflector<CastToUnixTimestampLogicalFunction>::operator()(const CastToUnixTimestampLogicalFunction& function) const
 {

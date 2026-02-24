@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
 #include <utility>
 
 #include <date/date.h>
@@ -24,7 +25,6 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
 #include <val.hpp>
 
@@ -32,29 +32,40 @@ namespace NES
 {
 namespace
 {
-/// Using a iso8601 format that creates the following strings: 2026-02-20T15:30:45.123Z
+
+/// ISO-8601 UTC format: YYYY-MM-DDTHH:MM:SS.mmmZ (24 chars)
+constexpr uint64_t iso8601OutputLen = 24;
 constexpr std::string_view iso8601Format{"%04d-%02u-%02uT%02d:%02d:%02d.%03dZ"};
-constexpr auto iso8601FormatLength = iso8601Format.length();
 
-void writeZuluTimestamp(char* out, uint64_t milliSecondsSinceEpoch)
+void writeZuluTimestampExact(char* out24, uint64_t milliSecondsSinceEpoch)
 {
-    const date::sys_time tp{std::chrono::milliseconds{milliSecondsSinceEpoch}};
-    const auto tpSec = date::floor<std::chrono::seconds>(tp);
-    const auto msPart = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(tp - tpSec).count());
+    /// Convert epoch milliseconds to a UTC time_point
+    const date::sys_time utcTimePoint{std::chrono::milliseconds{milliSecondsSinceEpoch}};
 
-    const auto dayPoint = date::floor<date::days>(tpSec);
-    const date::year_month_day ymd{dayPoint};
-    const auto tod = date::make_time(tpSec - dayPoint);
+    /// Split into whole seconds + millisecond remainder
+    const auto utcSeconds = date::floor<std::chrono::seconds>(utcTimePoint);
+    const int millisecondPart = static_cast<int>(std::chrono::duration_cast<std::chrono::milliseconds>(utcTimePoint - utcSeconds).count());
 
-    const int year = static_cast<int>(ymd.year());
-    const unsigned month = static_cast<unsigned>(ymd.month());
-    const unsigned day = static_cast<unsigned>(ymd.day());
+    /// Split into calendar date + time-of-day (UTC)
+    const auto utcMidnight = date::floor<date::days>(utcSeconds);
+    const date::year_month_day utcDate{utcMidnight};
+    const auto utcTimeOfDay = date::make_time(utcSeconds - utcMidnight);
 
-    const int hh = static_cast<int>(tod.hours().count());
-    const int mm = static_cast<int>(tod.minutes().count());
-    const int ss = static_cast<int>(tod.seconds().count());
+    /// Extract time components
+    const int year = static_cast<int>(utcDate.year());
+    const unsigned month = unsigned{utcDate.month()};
+    const unsigned day = unsigned{utcDate.day()};
 
-    std::snprintf(out, iso8601FormatLength + 1, iso8601Format.data(), year, month, day, hh, mm, ss, msPart);
+    const int hh = static_cast<int>(utcTimeOfDay.hours().count());
+    const int mm = static_cast<int>(utcTimeOfDay.minutes().count());
+    const int ss = static_cast<int>(utcTimeOfDay.seconds().count());
+
+    /// snprintf needs a null-terminated buffer; output is fixed-length (24 bytes) without '\0'
+    char iso8601NullTerminated[iso8601OutputLen + 1];
+    std::snprintf(
+        iso8601NullTerminated, sizeof(iso8601NullTerminated), iso8601Format.data(), year, month, day, hh, mm, ss, millisecondPart);
+
+    std::memcpy(out24, iso8601NullTerminated, iso8601OutputLen);
 }
 }
 
@@ -66,12 +77,21 @@ CastFromUnixTimestampPhysicalFunction::CastFromUnixTimestampPhysicalFunction(Phy
 VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    const auto timestampInMilliSeconds = value.cast<nautilus::val<uint64_t>>();
-    auto timestampAsISO8601 = arena.allocateVariableSizedData(nautilus::val<uint32_t>(iso8601FormatLength));
+    const auto ms = value.cast<nautilus::val<uint64_t>>();
+
+    const auto isoTimestampLength = nautilus::val<uint32_t>(iso8601OutputLen);
+    auto timestampAsIso8601 = arena.allocateVariableSizedData(isoTimestampLength);
+    const auto payload = timestampAsIso8601.getContent();
+
     nautilus::invoke(
-        +[](const uint64_t ms, int8_t* payload) { writeZuluTimestamp(reinterpret_cast<char*>(payload), ms); }, timestampInMilliSeconds, timestampAsISO8601.getContent());
-    VarVal(nautilus::val<uint32_t>(iso8601FormatLength)).writeToMemory(timestampAsISO8601.getContent());
-    return timestampAsISO8601;
+        +[](uint64_t millis, int8_t* buf)
+        {
+            writeZuluTimestampExact(reinterpret_cast<char*>(buf), millis); /// writes 24 bytes
+        },
+        ms,
+        payload);
+
+    return timestampAsIso8601;
 }
 
 PhysicalFunctionRegistryReturnType

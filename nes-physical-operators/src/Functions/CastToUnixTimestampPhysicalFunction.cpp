@@ -43,7 +43,7 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
 
     if (timestampWithoutWhiteSpace.empty())
     {
-        throw FormattingError("CastToUnixTs: Can not convert empty timestamp {}", iso8601Timestamp);
+        throw FormattingError("CastToUnixTs: cannot convert empty timestamp: '{}'", iso8601Timestamp);
     }
 
     static constexpr const char* formats_with_tz[] = {
@@ -72,13 +72,19 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
 
         if (iss.fail())
         {
-            throw FormattingError("Could not format {}", iso8601Timestamp);
+            continue;
+        }
+
+        iss >> std::ws;
+        if (!iss.eof())
+        {
+            continue;
         }
 
         const auto parsedMilliSeconds = tp.time_since_epoch().count();
         if (parsedMilliSeconds < 0)
         {
-            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported");
+            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported: '{}'", iso8601Timestamp);
         }
         return static_cast<uint64_t>(parsedMilliSeconds);
     }
@@ -92,7 +98,13 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
 
         if (iss.fail())
         {
-            throw FormattingError("Could not format {}", iso8601Timestamp);
+            continue;
+        }
+
+        iss >> std::ws;
+        if (!iss.eof())
+        {
+            continue;
         }
 
         date::sys_time<std::chrono::milliseconds> tp;
@@ -101,7 +113,7 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
         const auto parsedMilliSeconds = tp.time_since_epoch().count();
         if (parsedMilliSeconds < 0)
         {
-            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported");
+            throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported: '{}'", iso8601Timestamp);
         }
         return static_cast<uint64_t>(parsedMilliSeconds);
     }
