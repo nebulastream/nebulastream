@@ -128,6 +128,20 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
+std::expected<void, Exception> SingleNodeWorker::stopAllQueries(QueryTerminationType type) noexcept
+{
+    CPPTRACE_TRY
+    {
+        nodeEngine->stopAllQueries(type);
+        return {};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
+}
+
 std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
 {
     CPPTRACE_TRY

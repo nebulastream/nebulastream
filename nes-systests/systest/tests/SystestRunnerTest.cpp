@@ -107,6 +107,7 @@ public:
     MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (const LogicalPlan&), (override));
     MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (noexcept, override));
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (noexcept, override));
+    MOCK_METHOD((std::expected<void, Exception>), stopAll, (), (noexcept, override));
     MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (noexcept, override));
     MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, noexcept, override));
 };

@@ -254,11 +254,16 @@ template <>
 struct StatementOutputAssembler<DropQueryStatementResult>
 {
     using OutputRowType = QueryIdOutputRowType;
-    static constexpr auto outputColumns = queryIdOutputColumns;
 
     auto convert(const DropQueryStatementResult& result)
     {
-        return std::make_pair(queryIdOutputColumns, std::vector{std::make_tuple(result.id)});
+        std::vector<OutputRowType> output;
+        output.reserve(result.ids.size());
+        for (const auto& id : result.ids)
+        {
+            output.emplace_back(id);
+        }
+        return std::make_pair(queryIdOutputColumns, std::move(output));
     }
 };
 

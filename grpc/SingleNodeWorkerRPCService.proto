@@ -48,6 +48,7 @@ message StopQueryRequest {
     enum QueryTerminationType {Graceful = 0; HardStop = 1; Failure = 2; Invalid = 3;};
     uint64 queryId = 2;
     QueryTerminationType terminationType = 3;
+    bool stop_all = 4;
 }
 
 enum QueryState {

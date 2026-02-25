@@ -106,6 +106,8 @@ int main(int argc, char** argv)
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").scan<'i', size_t>();
 
+        ArgumentParser stopAll("stop-all");
+
         ArgumentParser unregisterQuery("unregister");
         unregisterQuery.add_argument("queryId").scan<'i', size_t>();
 
@@ -116,10 +118,12 @@ int main(int argc, char** argv)
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
+        program.add_subparser(stopAll);
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump};
+        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{
+            registerQuery, startQuery, stopQuery, stopAll, unregisterQuery, dump};
 
         program.parse_args(argc, argv);
 
@@ -232,7 +236,6 @@ int main(int argc, char** argv)
             return 0;
         }
 
-
         bool handled = false;
         for (const auto& [name, fn] :
              std::initializer_list<std::pair<std::string_view, std::expected<void, NES::Exception> (NES::QueryManager::*)(NES::QueryId)>>{
@@ -246,6 +249,17 @@ int main(int argc, char** argv)
                 handled = true;
                 break;
             }
+        }
+
+        if (program.is_subcommand_used("stop-all"))
+        {
+            auto result = queryManager->stopAll();
+            if (!result.has_value())
+            {
+                std::cerr << std::format("Error: {}\n", result.error().what());
+                return 1;
+            }
+            handled = true;
         }
 
         if (handled)

@@ -217,4 +217,35 @@ std::expected<void, Exception> GRPCQueryManager::stop(const QueryId queryId) noe
         return std::unexpected{QueryStopFailed("Message from external exception: {} ", e.what())};
     }
 }
+
+std::expected<void, Exception> GRPCQueryManager::stopAll() noexcept
+{
+    try
+    {
+        grpc::ClientContext context;
+        StopQueryRequest request;
+        request.set_terminationtype(StopQueryRequest::Graceful);
+
+        request.set_stop_all(true);
+
+        google::protobuf::Empty response;
+        const auto status = stub->StopQuery(&context, request, &response);
+        if (status.ok())
+        {
+            NES_DEBUG("Stopping was successful.");
+            return {};
+        }
+
+        return std::unexpected{NES::QueryStopFailed(
+            "Status: {}\nMessage: {}\nDetail: {}",
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details())};
+    }
+    catch (std::exception& e)
+    {
+        return std::unexpected{QueryStopFailed("Message from external exception: {} ", e.what())};
+    }
+}
+
 }

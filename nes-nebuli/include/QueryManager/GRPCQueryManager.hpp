@@ -36,6 +36,7 @@ public:
     std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) noexcept override;
     std::expected<void, Exception> stop(QueryId queryId) noexcept override;
     std::expected<void, Exception> start(QueryId queryId) noexcept override;
+    std::expected<void, Exception> stopAll() noexcept override;
     std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
 };
