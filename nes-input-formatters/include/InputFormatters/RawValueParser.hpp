@@ -42,6 +42,7 @@ template <typename T>
 nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
     return nautilus::invoke(
+        nautilus::FunctionAttributes{nautilus::ModRefInfo::NoModRef, true, true},
         +[](const char* fieldAddress, const uint64_t fieldSize)
         {
             const auto fieldView = std::string_view(fieldAddress, fieldSize);
