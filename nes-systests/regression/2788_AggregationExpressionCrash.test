@@ -1,0 +1,26 @@
+# description: Regression test for issue #788 - aggregation expression crash (bad_variant_access)
+# groups: [regression]
+#
+# Aggregation functions like MEDIAN, SUM, etc. require a direct field access as their argument.
+# Passing an arithmetic expression (e.g. MEDIAN(i8 + 1)) previously caused a bad_variant_access crash.
+# After the fix, these cases throw InvalidQuerySyntax (error code 2000) with a helpful message.
+
+CREATE LOGICAL SOURCE stream(i8 INT8, i16 INT16, i32 INT32, i64 INT64, u8 UINT8, u16 UINT16, u32 UINT32, u64 UINT64, f32 FLOAT32, f64 FLOAT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,2,3,4,5,6,7,8,9,10,100
+2,3,4,5,6,7,8,9,10,11,125
+3,4,5,6,7,8,9,10,11,12,150
+
+CREATE SINK sinkErrSink(stream.i8_out FLOAT64) TYPE File;
+CREATE SINK sinkAggOut(stream.start UINT64, stream.end UINT64, out FLOAT64) TYPE File;
+
+# Arithmetic on aggregation result (MEDIAN(i8) + 1) -- must give a clear error, not crash.
+SELECT MEDIAN(i8) + 1 AS i8_out FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkErrSink;
+----
+ERROR 2000
+
+# Arithmetic expression as aggregation argument (MEDIAN(i8 + INT8(1))) -- must give a clear error, not crash.
+SELECT start, end, MEDIAN(i8 + INT8(1)) AS out FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggOut;
+----
+ERROR 2000
