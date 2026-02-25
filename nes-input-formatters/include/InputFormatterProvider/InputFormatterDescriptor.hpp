@@ -67,7 +67,7 @@ struct Reflector<InputFormatterDescriptor>
 template <>
 struct Unreflector<InputFormatterDescriptor>
 {
-    InputFormatterDescriptor operator()(const Reflected& rfl) const;
+    InputFormatterDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

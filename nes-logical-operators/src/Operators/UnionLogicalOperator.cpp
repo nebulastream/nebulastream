@@ -151,9 +151,9 @@ Reflected Reflector<UnionLogicalOperator>::operator()(const UnionLogicalOperator
     return reflect(true);
 }
 
-UnionLogicalOperator Unreflector<UnionLogicalOperator>::operator()(const Reflected&) const
+UnionLogicalOperator Unreflector<UnionLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
 {
-    return UnionLogicalOperator();
+    return UnionLogicalOperator{};
 }
 
 LogicalOperatorRegistryReturnType
@@ -161,7 +161,7 @@ LogicalOperatorGeneratedRegistrar::RegisterUnionLogicalOperator(LogicalOperatorR
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<UnionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<UnionLogicalOperator>(arguments.reflected);
     }
     auto logicalOperator = UnionLogicalOperator();
     if (arguments.inputSchemas.empty())

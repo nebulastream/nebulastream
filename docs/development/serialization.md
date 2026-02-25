@@ -18,7 +18,7 @@ a custom interface (see `Utils/Reflection.hpp` in nes-commons).
     template <>
     struct Unreflector<CLASS_NAME>
     {
-        CLASS_NAME operator()(const Reflected& rfl) const;
+        CLASS_NAME operator()(const Reflected& rfl, const ReflectionContext& context) const;
     };
     ```
 2. In the class source file, you need to implement the above-mentioned struct functions. In the 
@@ -44,9 +44,39 @@ a custom interface (see `Utils/Reflection.hpp` in nes-commons).
        return reflect(to_reflect);
    }
 
-   SelectionLogicalOperator Unreflector<CLASS_NAME>::operator()(const Reflected& rfl) const
+   SelectionLogicalOperator Unreflector<CLASS_NAME>::operator()(const Reflected& rfl, const ReflectionContext& context) const
    {
-       auto [arg1, arg2, ...] = unreflect</*type of above-defined to_reflect*/>(rfl);
+       auto [arg1, arg2, ...] = context.unreflect</*type of above-defined to_reflect*/>(rfl);
        return CLASS_NAME(arg1, arg2, ...);
    }
    ```
+3. You can pass objects from the start of the unreflection call-chain downwards through the ReflectionContext.
+   To receive it, declare a constructor for the `Unreflector` which takes the object as a parameter.
+   ```cpp
+   struct MyConfigType{
+      bool unnest;
+   };
+   
+   template <>
+   struct Unreflector<MyType>{
+   MyConfigType config;
+   explicit Unreflector(MyConfigType config): config(std::move(config)) { }
+   
+   MyType operator()(const Reflected& rfl, const ReflectionContext& context) const
+   {
+       auto [self, children] = context.unreflect<MyTypeHelper>(rfl);
+       if (config.unnest){
+           return MyType{self, children};
+       }
+       else{
+           return MyType{self};
+       }
+   }
+   
+   int main(){
+      auto context = ReflectionContext{MyConfigType{true}};
+      auto rfl = reflect(MyType{...});
+      auto my_type = context.unreflect<MyType>(rfl);
+   }
+   ```
+   See the ReflectionTest.cpp for more examples.

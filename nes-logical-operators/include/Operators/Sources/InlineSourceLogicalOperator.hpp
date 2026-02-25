@@ -83,7 +83,7 @@ struct Reflector<InlineSourceLogicalOperator>
 template <>
 struct Unreflector<InlineSourceLogicalOperator>
 {
-    InlineSourceLogicalOperator operator()(const Reflected&) const;
+    InlineSourceLogicalOperator operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);

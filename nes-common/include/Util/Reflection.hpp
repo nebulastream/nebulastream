@@ -13,151 +13,74 @@
 */
 
 #pragma once
-#include <concepts>
-#include <optional>
-#include <utility>
 
+///NOLINTBEGIN(misc-include-cleaner)
+#include <cstddef>
+#include <utility>
+#include <Util/Reflection/OptionalReflection.hpp>
+#include <Util/Reflection/PairReflection.hpp>
+#include <Util/Reflection/ReflectionCore.hpp>
+#include <Util/Reflection/UnorderedMapReflection.hpp>
+#include <Util/Reflection/VariantReflection.hpp>
+#include <Util/Reflection/VectorReflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <rfl/Generic.hpp>
-#include <rfl/Result.hpp>
-#include <rfl/from_generic.hpp>
-#include <rfl/internal/has_reflector.hpp>
-#include <rfl/to_generic.hpp>
-#include <ErrorHandling.hpp>
+#include <rfl/Tuple.hpp>
+#include <rfl/named_tuple_t.hpp>
+
+///NOLINTEND(misc-include-cleaner)
 
 namespace NES
 {
 
-/// Reflection enables the serialization of arbitrary objects (E.g. LogicalOperators, Logical Functions, Traits, ...) and their
-/// child objects into generic formats, such as JSON, without having to define all possible data types to serialize in a central
-/// location, such as the protobuf files. This allows that new logical operators or functions can be created and their serialization
-/// logic can be fully contained in their own classes, even if attributes of new data formats are being serialized.
+/// This header provides the complete reflection system including:
+/// - Core reflection functionality (ReflectionCore.hpp)
+/// - Reflector/Unreflector specializations for standard library types:
+///   - std::vector
+///   - std::optional
+///   - std::pair
+///   - std::variant
+///   - std::unordered_map
 ///
-/// For all reflectable classes must a Reflector struct be created to support the reflection of class instances into generic
-/// Reflected objects and an Unreflector struct to support the creation of a class instance based on a given Reflected object.
-///
-/// Reflected objects contain data structures where each child data type is itself reflectable, e.g. has a Reflector and Unreflector
-/// implementation. Most standard datatypes, such as bool, int, double, std::string, std::map, std::vector, std::nullopt_t, ... are
-/// reflectable by default.
-struct Reflected
+/// For forward declarations only, use ReflectionFwd.hpp
+/// For core functionality without container specializations, use ReflectionCore.hpp
+
+namespace detail
 {
-    Reflected() : value(std::nullopt) { }
-
-    ///NOLINTNEXTLINE(google-explicit-constructor)
-    Reflected(rfl::Generic value) : value(std::move(value)) { }
-
-    ///NOLINTNEXTLINE(google-explicit-constructor)
-    operator rfl::Generic() const { return value; }
-
-    const rfl::Generic& operator*() const { return value; }
-
-    const rfl::Generic* operator->() const { return &value; }
-
-    [[nodiscard]] bool isEmpty() const { return this->value.is_null(); }
-
-private:
-    rfl::Generic value;
-};
-
-template <typename T>
-[[nodiscard]] Reflected reflect(const T& data);
-
-template <typename T>
-[[nodiscard]] T unreflect(const Reflected& data);
-
-template <typename T>
-struct Reflector;
-
-template <typename T>
-requires requires(T data) {
-    { rfl::to_generic(data) } -> std::same_as<rfl::Generic>;
-} && (!requires(T data) {
-             { Reflector<T>{}(data) } -> std::same_as<Reflected>;
-         })
-Reflected reflect(const T& data)
+/// Helper to reflect a single field at compile-time
+/// Must be defined after all reflect() overloads so they're visible during instantiation
+template <typename T, size_t Index>
+auto reflect_field_at_index(const T& data)
 {
-    return Reflected{rfl::to_generic(data)};
+    using NamedTupleType = rfl::named_tuple_t<T>;
+    using FieldType = rfl::tuple_element_t<Index, typename NamedTupleType::Fields>;
+    const auto fieldName = typename FieldType::Name().str();
+
+    /// Get reference to the field using rfl's field introspection
+    auto view = rfl::to_view(data);
+    const auto& fieldValue = rfl::get<Index>(view);
+
+    return std::make_pair(fieldName, reflect(*fieldValue));
 }
 
+/// Reflect an aggregate type field-by-field to build a Generic::Object
+/// Must be defined after all reflect() overloads so they're visible during instantiation
 template <typename T>
-requires requires(T data) {
-    { Reflector<T>{}(data) } -> std::same_as<Reflected>;
-}
-Reflected reflect(const T& data)
+Reflected reflect_aggregate_impl(const T& data)
 {
-    return Reflector<T>{}(data);
-}
+    using NamedTupleType = rfl::named_tuple_t<T>;
+    constexpr size_t numFields = NamedTupleType::size();
 
+    rfl::Generic::Object obj;
 
-template <typename T>
-struct Unreflector;
-
-template <typename T>
-requires requires(rfl::Generic data) {
-    { rfl::from_generic<T>(data) } -> std::same_as<rfl::Result<T>>;
-} && (!requires(T data) {
-             { Unreflector<T>{}(data) } -> std::same_as<T>;
-         })
-T unreflect(const Reflected& data)
-{
-    auto optional = rfl::from_generic<T>(data);
-    if (!optional.has_value())
+    /// Reflect each field and add to the object
+    [&]<size_t... Is>(std::index_sequence<Is...>)
     {
-        throw CannotDeserialize("Failed to unreflect given data");
-    }
-    return optional.value();
+        ((obj[reflect_field_at_index<T, Is>(data).first] = *reflect_field_at_index<T, Is>(data).second), ...);
+    }(std::make_index_sequence<numFields>{});
+
+    return Reflected{rfl::Generic::Object{std::move(obj)}};
+}
 }
 
-template <>
-struct Reflector<Reflected>
-{
-    Reflected operator()(const Reflected& field) const { return field; }
-};
-
-template <>
-struct Unreflector<Reflected>
-{
-    Reflected operator()(const Reflected& field) const { return field; }
-};
-
-}
-
-namespace rfl
-{
-
-template <typename T>
-requires requires(T data, NES::Reflected reflected) {
-    { NES::Reflector<T>{}(data) } -> std::same_as<NES::Reflected>;
-    { NES::Unreflector<T>{}(reflected) } -> std::same_as<T>;
-}
-struct Reflector<T>
-{
-    using ReflType = rfl::Generic;
-
-    static rfl::Generic from(const T& value) { return NES::Reflector<T>{}(value); }
-
-    static T to(const rfl::Generic& generic) { return NES::Unreflector<T>{}(generic); }
-};
-
-/// Partial specialization in case one of the directions is trivial
-template <typename T>
-requires requires(T data) {
-    { NES::Reflector<T>{}(data) } -> std::same_as<NES::Reflected>;
-} && (!requires(NES::Reflected reflected) { NES::Unreflector<T>{}(reflected); })
-struct Reflector<T>
-{
-    using ReflType = rfl::Generic;
-
-    static rfl::Generic from(const T& value) { return NES::Reflector<T>{}(value); }
-};
-
-template <typename T>
-requires requires(NES::Reflected reflected) {
-    { NES::Unreflector<T>{}(reflected) } -> std::same_as<T>;
-} && (!requires(T data) { NES::Reflector<T>{}(data); })
-struct Reflector<T>
-{
-    using ReflType = rfl::Generic;
-
-    static T to(const rfl::Generic& generic) { return NES::Unreflector<T>{}(generic); }
-};
 }

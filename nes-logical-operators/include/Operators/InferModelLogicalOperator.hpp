@@ -88,7 +88,7 @@ struct Reflector<InferModelLogicalOperator>
 template <>
 struct Unreflector<InferModelLogicalOperator>
 {
-    InferModelLogicalOperator operator()(const Reflected& rfl) const;
+    InferModelLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InferModelLogicalOperator>);

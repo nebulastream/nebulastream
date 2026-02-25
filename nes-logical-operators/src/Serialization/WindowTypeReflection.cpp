@@ -46,19 +46,19 @@ Reflected reflectWindowType(const Windowing::WindowType& windowType)
     return reflect(detail::ReflectedWindowTypeReflection{.type = type, .config = reflectedWindow});
 }
 
-std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected)
+std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected, const ReflectionContext& context)
 {
-    auto [type, config] = unreflect<detail::ReflectedWindowTypeReflection>(reflected);
+    auto [type, config] = context.unreflect<detail::ReflectedWindowTypeReflection>(reflected);
 
     auto windowType = [&] -> std::shared_ptr<Windowing::WindowType>
     {
         if (type == "TumblingWindow")
         {
-            return std::make_shared<Windowing::TumblingWindow>(unreflect<Windowing::TumblingWindow>(config));
+            return std::make_shared<Windowing::TumblingWindow>(context.unreflect<Windowing::TumblingWindow>(config));
         }
         if (type == "SlidingWindow")
         {
-            return std::make_shared<Windowing::SlidingWindow>(unreflect<Windowing::SlidingWindow>(config));
+            return std::make_shared<Windowing::SlidingWindow>(context.unreflect<Windowing::SlidingWindow>(config));
         }
         throw CannotDeserialize("Cannot deserialize unknown window type {}", type);
     }();

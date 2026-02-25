@@ -48,12 +48,13 @@ Reflected Reflector<InputFormatterDescriptor>::operator()(const InputFormatterDe
     return reflect(descriptor);
 }
 
-InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const Reflected& rfl) const
+InputFormatterDescriptor Unreflector<InputFormatterDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflectedInputFormatterDescriptor = unreflect<detail::ReflectedInputFormatterDescriptor>(rfl);
+    auto reflectedInputFormatterDescriptor = context.unreflect<detail::ReflectedInputFormatterDescriptor>(rfl);
 
     return InputFormatterDescriptor{
-        reflectedInputFormatterDescriptor.inputFormatterType, Descriptor::unreflectConfig(reflectedInputFormatterDescriptor.config)};
+        reflectedInputFormatterDescriptor.inputFormatterType,
+        Descriptor::unreflectConfig(reflectedInputFormatterDescriptor.config, context)};
 }
 
 
