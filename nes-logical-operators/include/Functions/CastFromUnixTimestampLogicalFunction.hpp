@@ -66,7 +66,7 @@ struct Reflector<CastFromUnixTimestampLogicalFunction>
 template <>
 struct Unreflector<CastFromUnixTimestampLogicalFunction>
 {
-    CastFromUnixTimestampLogicalFunction operator()(const Reflected& reflected) const;
+    CastFromUnixTimestampLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<CastFromUnixTimestampLogicalFunction>);
@@ -77,7 +77,7 @@ namespace NES::detail
 {
 struct ReflectedCastFromUnixTimestampLogicalFunction
 {
-    std::optional<LogicalFunction> child;
+    LogicalFunction child;
     /// NOTE: intentionally NO outputType here (we infer it)
 };
 }

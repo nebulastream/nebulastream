@@ -206,9 +206,9 @@ Reflected Descriptor::getReflectedConfig() const
     return reflect(reflectedConfig);
 }
 
-DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl)
+DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl, const ReflectionContext& context)
 {
-    auto reflectedConfig = unreflect<ReflectedDescriptorConfig>(rfl);
+    auto reflectedConfig = context.unreflect<ReflectedDescriptorConfig>(rfl);
     DescriptorConfig::Config config;
 
     for (const auto& [key, pair] : reflectedConfig.config)
@@ -217,43 +217,43 @@ DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl)
 
         if (type == "int32_t")
         {
-            config[key] = unreflect<int32_t>(value);
+            config[key] = context.unreflect<int32_t>(value);
         }
         else if (type == "uint32_t")
         {
-            config[key] = unreflect<uint32_t>(value);
+            config[key] = context.unreflect<uint32_t>(value);
         }
         else if (type == "int64_t")
         {
-            config[key] = unreflect<int64_t>(value);
+            config[key] = context.unreflect<int64_t>(value);
         }
         else if (type == "uint64_t")
         {
-            config[key] = unreflect<uint64_t>(value);
+            config[key] = context.unreflect<uint64_t>(value);
         }
         else if (type == "bool")
         {
-            config[key] = unreflect<bool>(value);
+            config[key] = context.unreflect<bool>(value);
         }
         else if (type == "char")
         {
-            config[key] = unreflect<char>(value);
+            config[key] = context.unreflect<char>(value);
         }
         else if (type == "float")
         {
-            config[key] = unreflect<float>(value);
+            config[key] = context.unreflect<float>(value);
         }
         else if (type == "double")
         {
-            config[key] = unreflect<double>(value);
+            config[key] = context.unreflect<double>(value);
         }
         else if (type == "string")
         {
-            config[key] = unreflect<std::string>(value);
+            config[key] = context.unreflect<std::string>(value);
         }
         else if (type == "EnumWrapper")
         {
-            config[key] = unreflect<EnumWrapper>(value);
+            config[key] = context.unreflect<EnumWrapper>(value);
         }
         else
         {

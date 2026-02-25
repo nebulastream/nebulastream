@@ -96,7 +96,7 @@ size_t OutputOriginIdsTrait::size() const
 
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterOutputOriginIdsTrait(TraitRegistryArguments arguments)
 {
-    return unreflect<OutputOriginIdsTrait>(arguments.reflected);
+    return ReflectionContext{}.unreflect<OutputOriginIdsTrait>(arguments.reflected);
 }
 
 Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait) const
@@ -110,9 +110,9 @@ Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait
     return reflect(reflected);
 }
 
-OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected) const
+OutputOriginIdsTrait Unreflector<OutputOriginIdsTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [reflectedOriginIds] = unreflect<detail::ReflectedOutputOriginIdsTrait>(reflected);
+    auto [reflectedOriginIds] = context.unreflect<detail::ReflectedOutputOriginIdsTrait>(reflected);
 
     std::vector<OriginId> originIds;
     originIds.reserve(reflectedOriginIds.size());

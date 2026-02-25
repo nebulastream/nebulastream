@@ -33,7 +33,7 @@ namespace NES
 TraitRegistryReturnType
 TraitGeneratedRegistrar::RegisterPlacementTrait(TraitRegistryArguments arguments) /// NOLINT(performance-unnecessary-value-param)
 {
-    return unreflect<PlacementTrait>(arguments.reflected);
+    return ReflectionContext{}.unreflect<PlacementTrait>(arguments.reflected);
 }
 
 PlacementTrait::PlacementTrait(Host host) : onNode(std::move(host))
@@ -65,9 +65,9 @@ Reflected Reflector<PlacementTrait>::operator()(const PlacementTrait& trait) con
     return reflect(detail::ReflectedPlacementTrait{trait.onNode});
 }
 
-PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflected) const
+PlacementTrait Unreflector<PlacementTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onNode] = unreflect<detail::ReflectedPlacementTrait>(reflected);
+    auto [onNode] = context.unreflect<detail::ReflectedPlacementTrait>(reflected);
     return PlacementTrait{onNode};
 }
 
