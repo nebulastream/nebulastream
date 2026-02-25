@@ -102,7 +102,7 @@ struct Reflector<WindowedAggregationLogicalOperator>
 template <>
 struct Unreflector<WindowedAggregationLogicalOperator>
 {
-    WindowedAggregationLogicalOperator operator()(const Reflected& reflected) const;
+    WindowedAggregationLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);

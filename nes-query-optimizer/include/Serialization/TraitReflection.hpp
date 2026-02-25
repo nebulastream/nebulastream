@@ -60,9 +60,9 @@ struct Reflector<TypedTrait<detail::ErasedTrait>>
 template <>
 struct Unreflector<TypedTrait<>>
 {
-    TypedTrait<> operator()(const Reflected& rfl) const
+    TypedTrait<> operator()(const Reflected& rfl, const ReflectionContext& context) const
     {
-        auto [name, data] = unreflect<detail::ReflectedTrait>(rfl);
+        auto [name, data] = context.unreflect<detail::ReflectedTrait>(rfl);
 
         TraitRegistryArguments argument;
         argument.reflected = data;

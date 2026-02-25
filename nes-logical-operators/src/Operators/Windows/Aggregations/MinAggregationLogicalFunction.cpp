@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -94,9 +93,10 @@ Reflected Reflector<MinAggregationLogicalFunction>::operator()(const MinAggregat
     return reflect(detail::ReflectedMinAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-MinAggregationLogicalFunction Unreflector<MinAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+MinAggregationLogicalFunction
+Unreflector<MinAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedMinAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedMinAggregationLogicalFunction>(reflected);
     return MinAggregationLogicalFunction{onField, asField};
 }
 
@@ -105,7 +105,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMinAggregationLogicalFunct
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<WindowAggregationLogicalFunction>(unreflect<MinAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<WindowAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<MinAggregationLogicalFunction>(arguments.reflected));
     }
     if (arguments.fields.size() != 2)
     {

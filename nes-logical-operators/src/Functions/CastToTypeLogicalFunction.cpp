@@ -27,7 +27,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -99,7 +98,7 @@ Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogic
     std::unreachable();
 }
 
-CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&) const
+CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "CastToTypeLogicalFunction not expected to be unreflected");
     std::unreachable();

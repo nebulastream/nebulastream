@@ -63,7 +63,10 @@ struct Reflector<EnumWrapper>
 template <>
 struct Unreflector<EnumWrapper>
 {
-    EnumWrapper operator()(const Reflected& rfl) const { return EnumWrapper{unreflect<std::string>(rfl)}; }
+    EnumWrapper operator()(const Reflected& rfl, const ReflectionContext& context) const
+    {
+        return EnumWrapper{context.unreflect<std::string>(rfl)};
+    }
 };
 }
 
