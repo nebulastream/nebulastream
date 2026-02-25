@@ -162,6 +162,12 @@ DOCKER_NES_CLI() {
   tail -f /dev/null | docker compose exec -T nes-cli nes-cli "$@"
 }
 
+# Like DOCKER_NES_CLI but runs an arbitrary bash command inside the container.
+# Use this when you need to set up pipes inside the container (e.g., cat file | nes-cli -t -).
+DOCKER_BASH() {
+  tail -f /dev/null | docker compose exec -T nes-cli bash -c "$@"
+}
+
 assert_json_equal() {
   local expected="$1"
   local actual="$2"
@@ -585,35 +591,186 @@ EOF
 
 @test "launch query with topology from stdin" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start'"
+  run DOCKER_BASH 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start'
   [ "$status" -eq 0 ]
 }
 
 @test "launch and stop query with topology from stdin" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  run DOCKER_BASH 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start "select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK"'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1
 
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - stop $QUERY_ID'"
+  run DOCKER_BASH "cat tests/good/select-gen-into-void.yaml | nes-cli -t - stop $QUERY_ID"
   [ "$status" -eq 0 ]
+}
+
+@test "launch named query from commandline" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name my-test-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+
+  # Output should be exactly the user-chosen name
+  [ "$output" = "my-test-query" ]
+}
+
+@test "launch and stop named query" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name my-stop-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "my-stop-query" ]
+
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop my-stop-query
+  [ "$status" -eq 0 ]
+}
+
+@test "launch and monitor named query" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name my-monitor-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "my-monitor-query" ]
+
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status my-monitor-query
+  [ "$status" -eq 0 ]
+
+  QUERY_STATUS=$(echo "$output" | jq -r '.[] | select(.query_id == "my-monitor-query" and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+}
+
+@test "launch named query from topology yaml" {
+  setup_distributed tests/good/named-query.yaml
+  run DOCKER_NES_CLI -t tests/good/named-query.yaml start
+  [ "$status" -eq 0 ]
+
+  # Output should be exactly the name from the YAML
+  [ "$output" = "my-named-query" ]
+}
+
+@test "named query collision fails" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name collision-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "collision-query" ]
+
+  # Starting again with the same name should fail
+  run DOCKER_NES_CLI -d -t tests/good/select-gen-into-void.yaml start --name collision-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 1 ]
+}
+
+@test "--name with multiple queries fails" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -d -t tests/good/select-gen-into-void.yaml start --name bad-name 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK' 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 1 ]
+
+  sync_workdir
+  grep "only be used with a single query" nes-cli.log
+}
+
+@test "stop removes state file and allows name reuse" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name reuse-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "reuse-query" ]
+
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop reuse-query
+  [ "$status" -eq 0 ]
+
+  # Starting again with the same name should succeed after stopping
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name reuse-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "reuse-query" ]
+}
+
+@test "stop after worker restart removes state and allows name reuse" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name worker-restart-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "worker-restart-query" ]
+
+  sleep 1
+
+  # Kill the worker — the query is lost on the worker side
+  docker compose kill worker-1
+  docker compose up -d --wait worker-1
+
+  # Stop should succeed (logs warning but removes state file)
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop worker-restart-query
+  [ "$status" -eq 0 ]
+
+  # Name should be reusable
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name worker-restart-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "worker-restart-query" ]
+}
+
+@test "stop named query while worker is offline" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name offline-stop-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "offline-stop-query" ]
+
+  sleep 1
+
+  # Kill the worker and leave it offline
+  docker compose kill worker-1
+
+  # Stop should still succeed — logs a warning but removes the state file
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml stop offline-stop-query
+  [ "$status" -eq 0 ]
+
+  # Bring worker back and verify name is reusable
+  docker compose up -d --wait worker-1
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start --name offline-stop-query 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 0 ]
+  [ "$output" = "offline-stop-query" ]
+}
+
+@test "named query rejects invalid characters" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -d -t tests/good/select-gen-into-void.yaml start --name 'My Query!' 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 1 ]
+
+  sync_workdir
+  grep "Only lowercase letters, digits, and hyphens are allowed" nes-cli.log
+}
+
+@test "named query rejects underscores" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -d -t tests/good/select-gen-into-void.yaml start --name 'my_query' 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 1 ]
+
+  sync_workdir
+  grep "Only lowercase letters, digits, and hyphens are allowed" nes-cli.log
+}
+
+@test "named query rejects uppercase" {
+  setup_distributed tests/good/select-gen-into-void.yaml
+  run DOCKER_NES_CLI -d -t tests/good/select-gen-into-void.yaml start --name MyQuery 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'
+  [ "$status" -eq 1 ]
+
+  sync_workdir
+  grep "Only lowercase letters, digits, and hyphens are allowed" nes-cli.log
 }
 
 @test "query status with topology from stdin" {
   setup_distributed tests/good/select-gen-into-void.yaml
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start \"select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK\"'"
+  run DOCKER_BASH 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - start "select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK"'
   [ "$status" -eq 0 ]
 
-  # Output should be a query ID (numeric)
   QUERY_ID=$output
 
   sleep 1
 
-  run bash -c "docker compose exec -T nes-cli bash -c 'cat tests/good/select-gen-into-void.yaml | nes-cli -t - status $QUERY_ID'"
+  run DOCKER_BASH "cat tests/good/select-gen-into-void.yaml | nes-cli -t - status $QUERY_ID"
   [ "$status" -eq 0 ]
 
   QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')

@@ -290,6 +290,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
         if (statement.id)
         {
+            validateDistributedQueryName(statement.id->getRawValue());
             distributedPlan.setQueryId(*statement.id);
         }
 

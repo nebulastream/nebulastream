@@ -21,6 +21,7 @@
 #include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <stdexcept>
@@ -136,6 +137,12 @@ struct PhysicalSource
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
+struct NamedQuery
+{
+    std::optional<std::string> name;
+    std::string sql;
+};
+
 struct WorkerConfig
 {
     std::string host;
@@ -147,7 +154,7 @@ struct WorkerConfig
 
 struct QueryConfig
 {
-    std::vector<std::string> query;
+    std::vector<NamedQuery> query;
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
@@ -166,7 +173,7 @@ void flattenYAMLNode(const YAML::Node& node, const std::string& prefix, std::uno
         for (const auto& entry : node)
         {
             auto key = entry.first.as<std::string>();
-            auto childPrefix = prefix.empty() ? key : prefix + "." + key;
+            auto childPrefix = prefix.empty() ? key : prefix + "." + key; ///NOLINT(performance-inefficient-string-concatenation)
             flattenYAMLNode(entry.second, childPrefix, result);
         }
     }
@@ -250,6 +257,34 @@ struct convert<NES::CLI::WorkerConfig>
 };
 
 template <>
+struct convert<NES::CLI::NamedQuery>
+{
+    static bool decode(const Node& node, NES::CLI::NamedQuery& rhs)
+    {
+        if (node.IsScalar())
+        {
+            rhs.name = std::nullopt;
+            rhs.sql = node.as<std::string>();
+            return true;
+        }
+        if (node.IsMap())
+        {
+            rhs.sql = node["sql"].as<std::string>();
+            if (node["name"].IsDefined())
+            {
+                rhs.name = node["name"].as<std::string>();
+            }
+            else
+            {
+                rhs.name = std::nullopt;
+            }
+            return true;
+        }
+        return false;
+    }
+};
+
+template <>
 struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
@@ -262,11 +297,11 @@ struct convert<NES::CLI::QueryConfig>
         {
             if (node["query"].IsSequence())
             {
-                rhs.query = node["query"].as<std::vector<std::string>>();
+                rhs.query = node["query"].as<std::vector<NES::CLI::NamedQuery>>();
             }
             else
             {
-                rhs.query.emplace_back(node["query"].as<std::string>());
+                rhs.query.emplace_back(NES::CLI::NamedQuery{std::nullopt, node["query"].as<std::string>()});
             }
         }
         rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
@@ -357,23 +392,49 @@ NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& parser)
     throw NES::InvalidConfigParameter("Could not find topology file");
 }
 
-std::vector<std::string> loadQueries(
+std::vector<NES::CLI::NamedQuery> loadQueries(
     const argparse::ArgumentParser& /*parser*/, const argparse::ArgumentParser& subcommand, const NES::CLI::QueryConfig& topologyConfig)
 {
-    std::vector<std::string> queries;
+    std::vector<NES::CLI::NamedQuery> queries;
+    std::optional<std::string> cliName;
+    if (subcommand.is_used("--name"))
+    {
+        cliName = subcommand.get<std::string>("--name");
+    }
+
     if (subcommand.is_used("queries"))
     {
-        for (const auto& query : subcommand.get<std::vector<std::string>>("queries"))
+        auto rawQueries = subcommand.get<std::vector<std::string>>("queries");
+        if (cliName.has_value() && rawQueries.size() > 1)
         {
-            queries.emplace_back(query);
+            throw NES::InvalidConfigParameter(
+                "--name can only be used with a single query, but {} queries were provided", rawQueries.size());
+        }
+        for (auto& query : rawQueries)
+        {
+            queries.emplace_back(NES::CLI::NamedQuery{cliName, std::move(query)});
         }
         NES_DEBUG("loaded {} queries from commandline", queries.size());
     }
     else
     {
-        for (const auto& query : topologyConfig.query)
+        if (cliName.has_value() && topologyConfig.query.size() > 1)
         {
-            queries.emplace_back(query);
+            throw NES::InvalidConfigParameter(
+                "--name can only be used with a single query, but {} queries were provided in the topology file",
+                topologyConfig.query.size());
+        }
+        for (const auto& namedQuery : topologyConfig.query)
+        {
+            /// CLI --name overrides YAML name if present
+            if (cliName.has_value())
+            {
+                queries.emplace_back(NES::CLI::NamedQuery{cliName, namedQuery.sql});
+            }
+            else
+            {
+                queries.emplace_back(namedQuery);
+            }
         }
         NES_DEBUG("loaded {} queries from topology file", queries.size());
     }
@@ -461,19 +522,26 @@ void doStatus(
     }
 }
 
-void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector<NES::DistributedQueryId>& queries)
+void doStop(
+    NES::QueryStatementHandler& queryStatementHandler,
+    NES::CLI::QueryStateBackend& stateBackend,
+    const std::vector<NES::DistributedQueryId>& queries)
 {
     auto result = nlohmann::json::array();
     for (const auto& query : queries)
     {
         auto statementResult = queryStatementHandler(NES::DropQueryStatement{.id = query});
-        if (!statementResult)
+        if (statementResult)
         {
-            throw std::move(statementResult.error());
+            nlohmann::json results(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
+            result.insert(result.end(), results.begin(), results.end());
         }
-
-        nlohmann::json results(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value()));
-        result.insert(result.end(), results.begin(), results.end());
+        else
+        {
+            NES_WARNING("Could not stop query {} on worker: {}", query, statementResult.error().what());
+        }
+        /// Always remove local state, even if worker stop failed
+        stateBackend.remove(NES::CLI::PersistedQueryId{query});
     }
 
     std::cout << result.dump(4) << '\n';
@@ -511,7 +579,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     if (program.is_subcommand_used("stop"))
     {
-        doStop(queryHandler, queries);
+        doStop(queryHandler, stateBackend, queries);
     }
     else if (program.is_subcommand_used("status"))
     {
@@ -548,9 +616,14 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     {
         NES::CLI::QueryStateBackend stateBackend;
         NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
-        for (const auto& query : queries)
+        for (const auto& [name, sql] : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            auto statement = NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql));
+            if (name.has_value())
+            {
+                statement.id = NES::DistributedQueryId(*name);
+            }
+            auto result = queryStatementHandler(statement);
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -567,10 +640,10 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     else
     {
         NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
-        for (const auto& query : queries)
+        for (const auto& [name, sql] : queries)
         {
             auto result
-                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql)));
             if (result)
             {
                 std::cout << result->explainString << "\n";
@@ -597,6 +670,7 @@ int main(int argc, char** argv)
             "Resolution order: 1) -t flag, 2) NES_TOPOLOGY_FILE env, 3) topology.yaml/topology.yml in working directory");
 
         ArgumentParser startQuery("start");
+        startQuery.add_argument("--name", "-n").help("Name for the query (only valid with a single query)");
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
 
         ArgumentParser stopQuery("stop");

@@ -547,6 +547,57 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).workerManagementEndpoint, "localhost:9090");
 }
 
+TEST_F(StatementBinderTest, QueryWithValidName)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('my-query-1' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+    const auto& queryStatement = std::get<QueryStatement>(*statement);
+    ASSERT_TRUE(queryStatement.id.has_value());
+    ASSERT_EQ(queryStatement.id->getRawValue(), "my-query-1");
+}
+
+TEST_F(StatementBinderTest, QueryWithInvalidNameUppercase)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('MyQuery' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, QueryWithInvalidNameSpecialChars)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('my query!' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, QueryWithInvalidNameLeadingHyphen)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('-bad-name' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, QueryWithInvalidNameTrailingHyphen)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('bad-name-' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
+TEST_F(StatementBinderTest, QueryWithInvalidNameUnderscore)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream SET ('my_query' AS `QUERY`.ID)";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_FALSE(statement.has_value());
+    ASSERT_EQ(statement.error().code(), ErrorCode::InvalidQuerySyntax);
+}
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 }
 }

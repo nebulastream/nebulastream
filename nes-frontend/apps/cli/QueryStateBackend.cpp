@@ -22,10 +22,15 @@
 #include <string>
 #include <string_view>
 #include <system_error>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::CLI
@@ -93,6 +98,12 @@ PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQ
 {
     auto filePath = getQueryFilePath(distributedQueryId);
 
+    if (std::filesystem::exists(filePath))
+    {
+        throw InvalidConfigParameter(
+            "A query with id '{}' already exists locally. Use a different name or stop the existing query first.", distributedQueryId);
+    }
+
     nlohmann::json jsonObject;
     jsonObject["query_id"] = distributedQueryId.getRawValue();
 
@@ -100,7 +111,7 @@ PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQ
     nlohmann::json localQueriesJson = nlohmann::json::object();
     for (const auto& [grpcAddr, queryId] : distributedQuery.iterate())
     {
-        std::string grpcKey = grpcAddr.getRawValue();
+        const std::string grpcKey = grpcAddr.getRawValue();
         if (!localQueriesJson.contains(grpcKey))
         {
             localQueriesJson[grpcKey] = nlohmann::json::array();
@@ -165,7 +176,7 @@ DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
     std::unordered_map<WorkerId, std::vector<QueryId>> localQueries;
     for (const auto& [workerKey, localQueryIdsJson] : jsonObject["local_queries"].items())
     {
-        WorkerId worker(workerKey);
+        const WorkerId worker(workerKey);
         std::vector<QueryId> queryIds;
         for (const auto& localQueryIdStr : localQueryIdsJson)
         {

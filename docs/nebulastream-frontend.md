@@ -249,8 +249,14 @@ nes-cli -d -t topology.yaml dump  # With debug output
 # Start query from topology file
 nes-cli -t topology.yaml start
 
+# Start query with a user-chosen name
+nes-cli -t topology.yaml start --name my-query
+
 # Start ad-hoc query (override topology query)
 nes-cli -t topology.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
+
+# Start ad-hoc query with a name
+nes-cli -t topology.yaml start --name my-query 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 
 # Check query status
 nes-cli -t topology.yaml status <query-id>
@@ -284,6 +290,7 @@ cat topology.yaml | docker run -i nes-cli -t - status <query-id>
 
 - `-t <file>` - Topology file path, or `-` to read from stdin
 - `-d` - Debug mode with detailed logging
+- `--name <name>` / `-n <name>` - Assign a user-chosen name to the query (only valid with a single query). Names must follow URL-slug format: lowercase letters, digits, and hyphens only (e.g., `my-query-1`). Names must not start or end with a hyphen. When omitted, a name is auto-generated.
 
 **Topology File Resolution Order:**
 
@@ -301,6 +308,9 @@ and sinks. The `query` field can contain 0, 1, or multiple query statements:
 - **Omitted**: No queries in topology file (use ad-hoc query via command line argument)
 - **Single query**: `query: | SELECT ...` (string)
 - **Multiple queries**: `query: [...]` (array of strings)
+- **Named queries**: Each entry in the array can be a map with `name` and `sql` fields instead of a plain string
+
+Named and unnamed queries can be mixed in the same array. The `--name` CLI flag overrides any name set in the topology file.
 
 > [!NOTE]
 > Providing a query via the command line (e.g., `nes-cli -t topology.yaml start 'SELECT ...'`) will override any queries
@@ -390,6 +400,22 @@ workers:
   - host: worker-1:9090
     grpc: worker-1:8080
     capacity: 10000
+```
+
+**Example: Named Queries in Topology**
+
+```yaml
+query:
+  - name: my-named-query
+    sql: |
+      SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK
+  - SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK  # unnamed, auto-generated name
+```
+
+Queries can also be named via SQL using the `SET` clause:
+
+```sql
+SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK SET ('my-named-query' AS `QUERY`.ID);
 ```
 
 **Example: Ad-hoc Query (No Query in Topology)**
@@ -486,10 +512,12 @@ workers:
 
 ### Query Management
 
+Query IDs are either user-chosen names (e.g., `my-query`) or auto-generated names (e.g., `amazing_stallion`). Both can be used interchangeably in `status` and `stop` commands.
+
 **Checking Status:**
 
 ```bash
-nes-cli -t topology.yaml status <query-id>
+nes-cli -t topology.yaml status my-query
 ```
 
 Returns JSON array with query status information:
@@ -497,7 +525,7 @@ Returns JSON array with query status information:
 ```json
 [
   {
-    "query_id": "amazing_stallion",
+    "query_id": "my-query",
     "query_status": "Running"
   },
   {
@@ -521,8 +549,13 @@ Returns JSON array with query status information:
 
 ```bash
 # Stop single query
-nes-cli -t topology.yaml stop <query-id>
+nes-cli -t topology.yaml stop my-query
 
 # Stop multiple queries
-nes-cli -t topology.yaml stop <id1> <id2> <id3>
+nes-cli -t topology.yaml stop my-query-1 my-query-2 my-query-3
 ```
+
+**Name Collisions:**
+
+Starting a query with a name that is already in use locally (i.e., a state file exists for that name) will fail with an error. Stop the existing query first to free the name.
+Query names may not be unique if there are multiple users using the same worker instance; however, local IDs are.

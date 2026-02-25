@@ -43,6 +43,27 @@ namespace NES
 using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
 using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
+/// Validates that a user-chosen query name is a valid URL slug: lowercase letters, digits, and hyphens only.
+/// Must not be empty, and must not start or end with a hyphen.
+inline void validateDistributedQueryName(std::string_view name)
+{
+    if (name.empty())
+    {
+        throw InvalidQuerySyntax("Query name must not be empty");
+    }
+    if (name.front() == '-' || name.back() == '-')
+    {
+        throw InvalidQuerySyntax("Query name '{}' must not start or end with a hyphen", name);
+    }
+    for (char c : name)
+    {
+        if (!((c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '-'))
+        {
+            throw InvalidQuerySyntax("Query name '{}' is invalid. Only lowercase letters, digits, and hyphens are allowed", name);
+        }
+    }
+}
+
 enum class StatementOutputFormat : uint8_t
 {
     JSON,

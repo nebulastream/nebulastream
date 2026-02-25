@@ -378,6 +378,7 @@ struct Repl::Impl
             handleError(std::move(parseResult.error()));
             return false;
         }
+        NES_DEBUG("Statement parsed successfully, {} statement(s)", parseResult.value().size());
         auto toHandle = parseResult.value() | std::views::transform([this](const auto& stmt) { return binder.bind(stmt.get()); })
             | std::ranges::to<std::vector>();
 
@@ -442,6 +443,7 @@ struct Repl::Impl
                               << "\n";
             }
             std::flush(std::cout);
+            NES_DEBUG("Statement result written to stdout");
         }
         return true;
     }

@@ -452,7 +452,9 @@ public:
                             {
                                 throw InvalidQuerySyntax("Query id must be a string");
                             }
-                            queryId = DistributedQueryId(std::get<std::string>(*literal));
+                            const auto& queryName = std::get<std::string>(*literal);
+                            validateDistributedQueryName(queryName);
+                            queryId = DistributedQueryId(queryName);
                         }
                     }
                 }
