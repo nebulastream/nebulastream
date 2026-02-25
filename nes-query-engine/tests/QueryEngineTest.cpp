@@ -340,8 +340,11 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
         ctrl2->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER);
         ctrl2->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER);
         ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
-    }
 
+        /// Wait for the query to reach Running state before stopping, to prevent the shutdown
+        /// from racing the setup callback that reports the Running state.
+        ASSERT_TRUE(test.waitForQepRunning(QueryId(1), DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
 
     auto buffers = sinkCtrl->takeBuffers();
     test.stop();
