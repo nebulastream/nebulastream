@@ -58,16 +58,6 @@ nautilus::val<bool> LazyValueRepresentation::isValid() const
     return size > 0 && ptrToLazyValue != nullptr;
 }
 
-nautilus::val<bool> operator==(const LazyValueRepresentation& lazyValue, const nautilus::val<bool>& other)
-{
-    return lazyValue.isValid() == other;
-}
-
-nautilus::val<bool> operator==(const nautilus::val<bool>& other, const LazyValueRepresentation& lazyValue)
-{
-    return lazyValue.isValid() == other;
-}
-
 LazyValueRepresentation& LazyValueRepresentation::operator=(LazyValueRepresentation&& other) noexcept
 {
     if (this == &other)
