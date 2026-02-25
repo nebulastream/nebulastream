@@ -410,15 +410,22 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
     else if (helpers.top().isInAggFunction() and AntlrSQLParser::RuleNamedExpression == parentRuleIndex)
     {
-        auto aggFunc = helpers.top().windowAggs.back();
-        helpers.top().windowAggs.pop_back();
-        aggFunc->setAsField(FieldAccessLogicalFunction(bindIdentifier(context)));
-        helpers.top().windowAggs.push_back(aggFunc);
-        INVARIANT(
-            std::nullopt != helpers.top().functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>(),
-            "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
+        const auto expression = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
+        if (expression.tryGetAs<FieldAccessLogicalFunction>())
+        {
+            /// Simple case: MEDIAN(i8) AS out — use the alias as the aggregation output name.
+            auto aggFunc = helpers.top().windowAggs.back();
+            helpers.top().windowAggs.pop_back();
+            aggFunc->setAsField(FieldAccessLogicalFunction(bindIdentifier(context)));
+            helpers.top().windowAggs.push_back(aggFunc);
+            helpers.top().addProjection(std::nullopt, aggFunc->getAsField());
+        }
+        else
+        {
+            /// Expression case: MEDIAN(i8) + UINT64(1) AS out — project expression under alias.
+            helpers.top().addProjection(FieldIdentifier(bindIdentifier(context)), expression);
+        }
         helpers.top().hasUnnamedAggregation = false;
     }
     else if (helpers.top().isJoinRelation and AntlrSQLParser::RulePrimaryExpression == parentRuleIndex)
@@ -613,19 +620,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
     {
         helper.asterisk = true;
     }
-    /// The user did not specify a new name (... AS THE_NAME) for the aggregation function and we need to generate one.
+    /// The user did not specify a new name (... AS THE_NAME) for the aggregation function.
+    /// The aggregation's asField is already set in exitFunctionCall. Project the expression directly,
+    /// which may be a plain field access (MEDIAN(i8)) or an arithmetic expression (MEDIAN(i8) + UINT64(1)).
     else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().hasUnnamedAggregation)
     {
-        const auto accessFunction = helpers.top().functionBuilder.back();
+        const auto expression = helpers.top().functionBuilder.back();
         helpers.top().functionBuilder.pop_back();
-        const auto fieldAccessNode = accessFunction.getAs<FieldAccessLogicalFunction>();
-        const auto lastAggregation = helpers.top().windowAggs.back();
-        const auto newName = fmt::format("{}_{}", fieldAccessNode.get().getFieldName(), toUpperCase(lastAggregation->getName()));
-        const auto asField = FieldAccessLogicalFunction(newName);
-        lastAggregation->setAsField(asField);
-        helpers.top().windowAggs.pop_back();
-        helpers.top().windowAggs.push_back(lastAggregation);
-        helpers.top().addProjection(std::nullopt, asField);
+        helpers.top().addProjection(std::nullopt, expression);
         helpers.top().hasUnnamedAggregation = false;
     }
     AntlrSQLBaseListener::exitNamedExpression(context);
@@ -824,8 +826,6 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto funcName = toUpperCase(context->children[0]->getText());
     const auto tokenType = context->getStart()->getType();
 
-    helpers.top().hasUnnamedAggregation = true;
-
     /// Validates that the current aggregation argument is a direct field access.
     const auto checkAggregationArgument = [&](std::string_view name)
     {
@@ -844,37 +844,44 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         }
     };
 
+    auto isAggregation = false;
     switch (tokenType)
     {
         case AntlrSQLLexer::COUNT:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<CountAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         case AntlrSQLLexer::AVG:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<AvgAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         case AntlrSQLLexer::MAX:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MaxAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         case AntlrSQLLexer::MIN:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MinAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         case AntlrSQLLexer::SUM:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<SumAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         case AntlrSQLLexer::MEDIAN:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MedianAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+            isAggregation = true;
             break;
         default:
             /// Check if the function is a constructor for a datatype
@@ -900,6 +907,19 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             {
                 throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
             }
+    }
+
+    /// For aggregation functions, generate an auto-name for the result field and replace the raw
+    /// field access in functionBuilder with a reference to the aggregation output. This enables
+    /// post-aggregation arithmetic like MEDIAN(i8) + UINT64(1).
+    if (isAggregation)
+    {
+        helpers.top().hasUnnamedAggregation = true;
+        const auto& onField = helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get();
+        const auto autoName = fmt::format("{}_{}", onField.getFieldName(), funcName);
+        const auto asField = FieldAccessLogicalFunction(autoName);
+        helpers.top().windowAggs.back()->setAsField(asField);
+        helpers.top().functionBuilder.back() = LogicalFunction(asField);
     }
 }
 
