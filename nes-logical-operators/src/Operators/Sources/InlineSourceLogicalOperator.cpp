@@ -129,7 +129,7 @@ Reflected Reflector<InlineSourceLogicalOperator>::operator()(const InlineSourceL
     std::unreachable();
 }
 
-InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected&) const
+InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

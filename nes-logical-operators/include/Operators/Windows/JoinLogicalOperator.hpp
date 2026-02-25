@@ -98,7 +98,7 @@ struct Reflector<JoinLogicalOperator>
 template <>
 struct Unreflector<JoinLogicalOperator>
 {
-    JoinLogicalOperator operator()(const Reflected& reflected) const;
+    JoinLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
@@ -108,7 +108,7 @@ namespace NES::detail
 {
 struct ReflectedJoinLogicalOperator
 {
-    std::optional<LogicalFunction> joinFunction;
+    LogicalFunction joinFunction;
     Reflected windowType;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
 };

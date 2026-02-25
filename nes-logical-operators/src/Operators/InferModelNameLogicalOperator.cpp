@@ -123,9 +123,10 @@ Reflected Reflector<InferModelNameLogicalOperator>::operator()(const InferModelN
         .modelName = std::make_optional(op.getModelName()), .inputFieldNames = std::make_optional(op.getInputFieldNames())});
 }
 
-InferModelNameLogicalOperator Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl) const
+InferModelNameLogicalOperator
+Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [modelNameOpt, inputFieldNamesOpt] = unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
+    auto [modelNameOpt, inputFieldNamesOpt] = context.unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
 
     if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
     {
@@ -142,7 +143,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelNameLogicalOperator(Logical
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<InferModelNameLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<InferModelNameLogicalOperator>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();

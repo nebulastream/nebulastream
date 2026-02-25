@@ -60,9 +60,9 @@ Reflected Reflector<Windowing::TimeMeasure>::operator()(const Windowing::TimeMea
     return reflect(measure.getTime());
 }
 
-Windowing::TimeMeasure Unreflector<Windowing::TimeMeasure>::operator()(const Reflected& reflected) const
+Windowing::TimeMeasure Unreflector<Windowing::TimeMeasure>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    const auto milliseconds = unreflect<uint64_t>(reflected);
+    const auto milliseconds = context.unreflect<uint64_t>(reflected);
     return Windowing::TimeMeasure(milliseconds);
 }
 

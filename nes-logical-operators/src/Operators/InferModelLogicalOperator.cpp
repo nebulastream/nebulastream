@@ -192,16 +192,16 @@ Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogic
         .inputFieldNames = std::make_optional(op.getInputFieldNames())});
 }
 
-InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl) const
+InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflected = unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
+    auto reflected = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
 
     if (!reflected.model.has_value() || !reflected.inputFieldNames.has_value())
     {
         throw NES::CannotDeserialize("Failed to deserialize InferModelLogicalOperator");
     }
 
-    return InferModelLogicalOperator(Unreflector<RegisteredModel>{}(reflected.model.value()), std::move(reflected.inputFieldNames.value()));
+    return {context.unreflect<RegisteredModel>(reflected.model.value()), std::move(reflected.inputFieldNames.value())};
 }
 
 /// generated registry interface requires by-value argument
@@ -211,7 +211,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelLogicalOperator(LogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return Unreflector<InferModelLogicalOperator>{}(arguments.reflected);
+        return ReflectionContext{}.unreflect<InferModelLogicalOperator>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();

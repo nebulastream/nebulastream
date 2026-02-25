@@ -35,7 +35,6 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
 
 namespace NES
@@ -141,10 +140,10 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
     });
 }
 
-SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [name, schema, type, host, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, host, formatConfig, Descriptor::unreflectConfig(config)};
+    auto [name, schema, type, host, formatConfig, config] = context.unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, host, formatConfig, Descriptor::unreflectConfig(config, context)};
 }
 
 }

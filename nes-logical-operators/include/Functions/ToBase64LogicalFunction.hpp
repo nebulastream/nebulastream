@@ -58,8 +58,6 @@ private:
     friend Reflector<ToBase64LogicalFunction>;
 };
 
-static_assert(LogicalFunctionConcept<ToBase64LogicalFunction>);
-
 template <>
 struct Reflector<ToBase64LogicalFunction>
 {
@@ -69,8 +67,10 @@ struct Reflector<ToBase64LogicalFunction>
 template <>
 struct Unreflector<ToBase64LogicalFunction>
 {
-    ToBase64LogicalFunction operator()(const Reflected& reflected) const;
+    ToBase64LogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(LogicalFunctionConcept<ToBase64LogicalFunction>);
 }
 
 namespace NES::detail
