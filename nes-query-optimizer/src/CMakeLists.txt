@@ -10,11 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(RewriteRules)
 add_subdirectory(Traits)
 add_subdirectory(Phases)
 add_subdirectory(Serialization)
+add_subdirectory(LegacyOptimizer)
 
 add_source_files(nes-query-optimizer
-        PhysicalPlanBuilder.cpp
         QueryOptimizer.cpp)

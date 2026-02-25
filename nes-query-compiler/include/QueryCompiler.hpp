@@ -14,10 +14,12 @@
 #pragma once
 
 #include <memory>
+#include <utility>
 
+#include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
-#include <PhysicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -25,7 +27,7 @@ namespace NES::QueryCompilation
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
-    PhysicalPlan queryPlan;
+    LogicalPlan queryPlan;
 
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
@@ -37,8 +39,12 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    QueryCompiler();
+    explicit QueryCompiler(QueryExecutionConfiguration defaultQueryExecution) : defaultQueryExecution(std::move(defaultQueryExecution)) { };
+
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
+
+private:
+    QueryExecutionConfiguration defaultQueryExecution;
 };
 
 }

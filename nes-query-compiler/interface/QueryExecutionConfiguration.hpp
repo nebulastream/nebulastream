@@ -35,13 +35,6 @@ static constexpr auto DEFAULT_OPERATOR_BUFFER_SIZE = 4096;
 static constexpr auto DEFAULT_NUMBER_OF_RECORDS_PER_KEY = 10;
 static constexpr auto DEFAULT_MAX_NUMBER_OF_BUCKETS = 10'000.0;
 
-enum class StreamJoinStrategy : uint8_t
-{
-    NESTED_LOOP_JOIN,
-    HASH_JOIN,
-    OPTIMIZER_CHOOSES
-};
-
 class QueryExecutionConfiguration : public BaseConfiguration
 {
 public:
@@ -78,23 +71,11 @@ public:
            std::to_string(DEFAULT_OPERATOR_BUFFER_SIZE),
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
-    EnumOption<StreamJoinStrategy> joinStrategy
-        = {"join_strategy",
-           StreamJoinStrategy::OPTIMIZER_CHOOSES,
-           "Join Strategy"
-           "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {
-            &executionMode,
-            &pageSize,
-            &numberOfPartitions,
-            &joinStrategy,
-            &numberOfRecordsPerKey,
-            &maxNumberOfBuckets,
-            &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &numberOfRecordsPerKey, &maxNumberOfBuckets, &operatorBufferSize};
     }
 };
 

@@ -68,8 +68,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(workerId);
 
-    optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryExecution);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>();
+    optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryOptimization);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 }
 
 /// This is a workaround to get again unique queryId after our initial worker refactoring.

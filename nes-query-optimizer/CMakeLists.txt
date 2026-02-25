@@ -23,7 +23,7 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-nautilus nes-logical-operators nes-physical-operators nes-physical-operators-registry PRIVATE nes-input-formatter-provider)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators PRIVATE nes-input-formatter-provider)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
@@ -34,6 +34,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
-create_registries_for_component(RewriteRule Trait)
+create_registries_for_component(Trait)
 
 add_tests_if_enabled(tests)

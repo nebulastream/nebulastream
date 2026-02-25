@@ -14,7 +14,6 @@ add_subdirectory(src)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
-get_source(nes-legacy-optimizer LEGACYOPTIMIZER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 get_source(nes-yaml-binder YAML_BINDER_SOURCE_FILES)
 get_source(nes-query-manager-grpc QUERY_MANAGER_GRPC_SOURCE_FILES)
@@ -52,7 +51,7 @@ target_link_libraries(nes-nebuli-embedded-lib
 add_executable(nes-nebuli src/NebuLIStarter.cpp src/Repl.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
+target_link_libraries(nes-nebuli PUBLIC nes-nebuli-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx nes-query-optimizer)
 
 target_include_directories(nes-nebuli
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
@@ -64,7 +63,7 @@ target_include_directories(nes-nebuli
 add_executable(nes-nebuli-embedded src/NebuLIStarter.cpp src/Repl.cpp)
 # Nebuli loads a Query using `dlopen` this requires the executable to be dynamic
 set_property(TARGET nes-nebuli-embedded PROPERTY ENABLE_EXPORTS ON)
-target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx)
+target_link_libraries(nes-nebuli-embedded PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib argparse::argparse yaml-cpp::yaml-cpp replxx::replxx nes-query-optimizer)
 
 target_include_directories(nes-nebuli-embedded
         PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>
