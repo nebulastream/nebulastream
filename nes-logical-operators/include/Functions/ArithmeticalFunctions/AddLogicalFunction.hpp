@@ -23,8 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -63,7 +62,7 @@ struct Reflector<AddLogicalFunction>
 template <>
 struct Unreflector<AddLogicalFunction>
 {
-    AddLogicalFunction operator()(const Reflected& reflected) const;
+    AddLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<AddLogicalFunction>);
@@ -73,8 +72,8 @@ namespace NES::detail
 {
 struct ReflectedAddLogicalFunction
 {
-    std::optional<LogicalFunction> left;
-    std::optional<LogicalFunction> right;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
 

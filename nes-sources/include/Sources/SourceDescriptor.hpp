@@ -32,7 +32,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
 
@@ -121,7 +121,7 @@ struct Reflector<SourceDescriptor>
 template <>
 struct Unreflector<SourceDescriptor>
 {
-    SourceDescriptor operator()(const Reflected& rfl) const;
+    SourceDescriptor operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

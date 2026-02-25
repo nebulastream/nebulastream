@@ -31,7 +31,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -95,20 +94,13 @@ std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
 
 Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedEqualsLogicalFunction{
-        .left = std::make_optional<LogicalFunction>(function.left), .right = std::make_optional<LogicalFunction>(function.right)});
+    return reflect(detail::ReflectedEqualsLogicalFunction{.left = function.left, .right = function.right});
 }
 
-EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected) const
+EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedEqualsLogicalFunction>(reflected);
-
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("EqualsLogicalFunction doesn't have a child operator");
-    }
-
-    return EqualsLogicalFunction{left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedEqualsLogicalFunction>(reflected);
+    return EqualsLogicalFunction{left, right};
 }
 
 LogicalFunctionRegistryReturnType
@@ -116,7 +108,7 @@ LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunction
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<EqualsLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<EqualsLogicalFunction>(arguments.reflected);
     }
     if (arguments.children.size() != 2)
     {

@@ -118,7 +118,7 @@ Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogic
     std::unreachable();
 }
 
-InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&) const
+InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();

@@ -23,8 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -56,7 +55,20 @@ private:
     friend Reflector<ConcatLogicalFunction>;
 };
 
-static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);
+namespace detail
+{
+struct ReflectedConcatLogicalFunction
+{
+    LogicalFunction left;
+    LogicalFunction right;
+};
+}
+
+template <>
+struct Unreflector<ConcatLogicalFunction>
+{
+    ConcatLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
+};
 
 template <>
 struct Reflector<ConcatLogicalFunction>
@@ -64,20 +76,7 @@ struct Reflector<ConcatLogicalFunction>
     Reflected operator()(const ConcatLogicalFunction& function) const;
 };
 
-template <>
-struct Unreflector<ConcatLogicalFunction>
-{
-    ConcatLogicalFunction operator()(const Reflected& reflected) const;
-};
-}
-
-namespace NES::detail
-{
-struct ReflectedConcatLogicalFunction
-{
-    std::optional<LogicalFunction> left;
-    std::optional<LogicalFunction> right;
-};
+static_assert(LogicalFunctionConcept<ConcatLogicalFunction>);
 }
 
 FMT_OSTREAM(NES::ConcatLogicalFunction);

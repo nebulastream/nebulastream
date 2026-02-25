@@ -75,7 +75,7 @@ struct Reflector<InlineSinkLogicalOperator>
 template <>
 struct Unreflector<InlineSinkLogicalOperator>
 {
-    InlineSinkLogicalOperator operator()(const Reflected& reflected) const;
+    InlineSinkLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);

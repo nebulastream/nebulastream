@@ -25,7 +25,6 @@
 #include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -111,9 +110,10 @@ Reflected Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregat
     return reflect(detail::ReflectedAvgAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-AvgAggregationLogicalFunction Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+AvgAggregationLogicalFunction
+Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedAvgAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedAvgAggregationLogicalFunction>(reflected);
     return AvgAggregationLogicalFunction{onField, asField};
 }
 
@@ -122,7 +122,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunct
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<AvgAggregationLogicalFunction>(unreflect<AvgAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<AvgAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<AvgAggregationLogicalFunction>(arguments.reflected));
     }
 
     if (arguments.fields.size() != 2)

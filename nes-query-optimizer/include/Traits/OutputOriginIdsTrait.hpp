@@ -24,7 +24,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -63,7 +63,7 @@ struct Reflector<OutputOriginIdsTrait>
 template <>
 struct Unreflector<OutputOriginIdsTrait>
 {
-    OutputOriginIdsTrait operator()(const Reflected& reflected) const;
+    OutputOriginIdsTrait operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(TraitConcept<OutputOriginIdsTrait>);

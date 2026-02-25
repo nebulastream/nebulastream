@@ -222,4 +222,5 @@ CheckOptions:
   # Workaround for header bug around std::expected
   # It always tries to insert the libc++ implementation headers instead of the stdlib headers.
   # Also, it sometimes even tries to remove the stdlib headers as not needed, then inserts the libc++ headers.
-  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp'
+  # Reflection headers use transitive includes intentionally for clean API separation
+  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp;Reflection\.hpp;Reflection.*\.hpp'

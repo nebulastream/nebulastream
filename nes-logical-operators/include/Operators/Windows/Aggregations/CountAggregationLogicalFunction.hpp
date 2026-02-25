@@ -55,7 +55,7 @@ struct Reflector<CountAggregationLogicalFunction>
 template <>
 struct Unreflector<CountAggregationLogicalFunction>
 {
-    CountAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    CountAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 }

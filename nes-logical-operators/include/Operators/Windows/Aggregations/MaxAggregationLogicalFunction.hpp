@@ -49,7 +49,7 @@ struct Reflector<MaxAggregationLogicalFunction>
 template <>
 struct Unreflector<MaxAggregationLogicalFunction>
 {
-    MaxAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    MaxAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

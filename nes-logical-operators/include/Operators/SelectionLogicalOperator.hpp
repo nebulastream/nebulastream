@@ -87,7 +87,7 @@ struct Reflector<SelectionLogicalOperator>
 template <>
 struct Unreflector<SelectionLogicalOperator>
 {
-    SelectionLogicalOperator operator()(const Reflected& rfl) const;
+    SelectionLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
@@ -97,6 +97,6 @@ namespace NES::detail
 {
 struct ReflectedSelectionLogicalOperator
 {
-    std::optional<LogicalFunction> predicate;
+    LogicalFunction predicate;
 };
 }

@@ -80,7 +80,7 @@ struct Reflector<SourceNameLogicalOperator>
 template <>
 struct Unreflector<SourceNameLogicalOperator>
 {
-    SourceNameLogicalOperator operator()(const Reflected& reflected) const;
+    SourceNameLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);

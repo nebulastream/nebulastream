@@ -28,7 +28,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -83,7 +82,7 @@ struct Reflector<FieldAccessLogicalFunction>
 template <>
 struct Unreflector<FieldAccessLogicalFunction>
 {
-    FieldAccessLogicalFunction operator()(const Reflected& reflected) const;
+    FieldAccessLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<FieldAccessLogicalFunction>);

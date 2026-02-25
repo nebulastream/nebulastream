@@ -250,9 +250,9 @@ Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
     return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
 }
 
-Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
+Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [name, type] = unreflect<detail::ReflectedField>(rfl);
+    auto [name, type] = context.unreflect<detail::ReflectedField>(rfl);
     return Schema::Field{std::move(name), type};
 }
 
@@ -261,9 +261,9 @@ Reflected Reflector<Schema>::operator()(const Schema& schema) const
     return reflect(detail::ReflectedSchema{.fields = schema.getFields()});
 }
 
-Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
+Schema Unreflector<Schema>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [fields] = unreflect<detail::ReflectedSchema>(rfl);
+    auto [fields] = context.unreflect<detail::ReflectedSchema>(rfl);
     Schema schema{};
     for (const auto& field : fields)
     {

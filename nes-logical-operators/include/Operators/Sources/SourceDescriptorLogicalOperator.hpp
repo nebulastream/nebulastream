@@ -68,8 +68,6 @@ private:
     TraitSet traitSet;
 };
 
-static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
-
 template <>
 struct Reflector<SourceDescriptorLogicalOperator>
 {
@@ -79,8 +77,10 @@ struct Reflector<SourceDescriptorLogicalOperator>
 template <>
 struct Unreflector<SourceDescriptorLogicalOperator>
 {
-    SourceDescriptorLogicalOperator operator()(const Reflected& rfl) const;
+    SourceDescriptorLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
+
+static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
 
 
 }

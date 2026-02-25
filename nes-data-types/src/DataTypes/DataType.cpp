@@ -347,9 +347,9 @@ Reflected Reflector<DataType>::operator()(const DataType& field) const
     return reflect(field.type);
 }
 
-DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
+DataType Unreflector<DataType>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    const auto type = unreflect<DataType::Type>(rfl);
+    const auto type = context.unreflect<DataType::Type>(rfl);
     return DataTypeProvider::provideDataType(type);
 }
 

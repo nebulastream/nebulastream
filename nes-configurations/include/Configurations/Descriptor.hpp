@@ -28,7 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -336,7 +336,7 @@ struct Descriptor
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
 
     [[nodiscard]] Reflected getReflectedConfig() const;
-    static DescriptorConfig::Config unreflectConfig(const Reflected& rfl);
+    static DescriptorConfig::Config unreflectConfig(const Reflected& rfl, const ReflectionContext& context);
 
 protected:
     std::string toStringConfig() const;

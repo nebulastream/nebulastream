@@ -23,7 +23,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 #include <utility>
 #include <Util/Reflection.hpp>
@@ -95,9 +94,10 @@ Reflected Reflector<MedianAggregationLogicalFunction>::operator()(const MedianAg
     return reflect(detail::ReflectedMedianAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-MedianAggregationLogicalFunction Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+MedianAggregationLogicalFunction
+Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedMedianAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedMedianAggregationLogicalFunction>(reflected);
     return MedianAggregationLogicalFunction{onField, asField};
 }
 
@@ -106,7 +106,8 @@ AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGenerated
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<MedianAggregationLogicalFunction>(unreflect<MedianAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<MedianAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<MedianAggregationLogicalFunction>(arguments.reflected));
     }
     if (arguments.fields.size() != 2)
     {
