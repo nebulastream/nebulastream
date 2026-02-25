@@ -41,7 +41,6 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -241,7 +240,7 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
                 identifier = identifierOpt->getFieldName();
             }
         }
-        reflected.projections.emplace_back(identifier, std::make_optional(function));
+        reflected.projections.emplace_back(identifier, function);
     }
 
     reflected.asterisk = op.asterisk;
@@ -249,20 +248,17 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
     return reflect(reflected);
 }
 
-ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& reflected) const
+ProjectionLogicalOperator
+Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [asterisk, projections] = unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
+    auto [asterisk, projections] = context.unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
 
     std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
+    parsedProjections.reserve(projections.size());
 
     for (auto [identifier, function] : projections)
     {
-        if (!function.has_value())
-        {
-            throw CannotDeserialize("Failed to deserialize projection function");
-        }
-
-        parsedProjections.emplace_back(identifier, function.value());
+        parsedProjections.emplace_back(identifier, function);
     }
 
     return {std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
@@ -273,7 +269,7 @@ LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<ProjectionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<ProjectionLogicalOperator>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");

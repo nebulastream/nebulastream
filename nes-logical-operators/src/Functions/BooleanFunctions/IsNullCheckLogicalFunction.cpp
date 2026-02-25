@@ -88,9 +88,9 @@ Reflected Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLog
     return reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
 }
 
-IsNullCheckLogicalFunction Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected) const
+IsNullCheckLogicalFunction Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [function] = unreflect<detail::ReflectedIsNullCheckLogicalFunction>(reflected);
+    auto [function] = context.unreflect<detail::ReflectedIsNullCheckLogicalFunction>(reflected);
     if (!function.has_value())
     {
         throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
@@ -104,7 +104,7 @@ LogicalFunctionGeneratedRegistrar::RegisterIsNullLogicalFunction(const LogicalFu
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<IsNullCheckLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<IsNullCheckLogicalFunction>(arguments.reflected);
     }
 
     if (arguments.children.size() != 1)

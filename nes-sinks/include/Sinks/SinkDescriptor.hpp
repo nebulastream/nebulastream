@@ -30,7 +30,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -116,7 +116,7 @@ struct Reflector<SinkDescriptor>
 template <>
 struct Unreflector<SinkDescriptor>
 {
-    SinkDescriptor operator()(const Reflected& reflected) const;
+    SinkDescriptor operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 

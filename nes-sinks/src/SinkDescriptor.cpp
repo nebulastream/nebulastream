@@ -35,7 +35,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
 
 namespace NES
@@ -117,10 +116,10 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
     });
 }
 
-SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [name, schema, type, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
+    auto [name, schema, type, config] = context.unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config, context)};
 }
 
 }

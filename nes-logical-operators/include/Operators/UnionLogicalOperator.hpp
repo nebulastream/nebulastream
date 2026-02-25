@@ -71,7 +71,7 @@ struct Reflector<UnionLogicalOperator>
 template <>
 struct Unreflector<UnionLogicalOperator>
 {
-    UnionLogicalOperator operator()(const Reflected&) const;
+    UnionLogicalOperator operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);
