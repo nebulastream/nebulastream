@@ -158,6 +158,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         nautilus::val<const SIMDJSONMetaData*> metaData) const
     {
         return nautilus::invoke(
+            nautilus::FunctionAttributes{nautilus::ModRefInfo::NoModRef, true, true},
             +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
             {
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
