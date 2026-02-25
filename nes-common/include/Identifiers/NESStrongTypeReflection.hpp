@@ -34,9 +34,9 @@ struct Reflector<NESStrongType<T, Tag, Invalid, Initial>>
 template <typename T, typename Tag, T Invalid, T Initial>
 struct Unreflector<NESStrongType<T, Tag, Invalid, Initial>>
 {
-    NESStrongType<T, Tag, Invalid, Initial> operator()(const Reflected& data) const
+    NESStrongType<T, Tag, Invalid, Initial> operator()(const Reflected& data, const ReflectionContext& context) const
     {
-        return NESStrongType<T, Tag, Invalid, Initial>{unreflect<T>(data)};
+        return NESStrongType<T, Tag, Invalid, Initial>{context.unreflect<T>(data)};
     }
 };
 
@@ -49,9 +49,9 @@ struct Reflector<NESStrongStringType<Tag, Invalid>>
 template <typename Tag, StringLiteral Invalid>
 struct Unreflector<NESStrongStringType<Tag, Invalid>>
 {
-    NESStrongStringType<Tag, Invalid> operator()(const Reflected& data) const
+    NESStrongStringType<Tag, Invalid> operator()(const Reflected& data, const ReflectionContext& context) const
     {
-        return NESStrongStringType<Tag, Invalid>{unreflect<std::string>(data)};
+        return NESStrongStringType<Tag, Invalid>{context.unreflect<std::string>(data)};
     }
 };
 
@@ -64,7 +64,10 @@ struct Reflector<NESStrongUUIDType<Tag>>
 template <typename Tag>
 struct Unreflector<NESStrongUUIDType<Tag>>
 {
-    NESStrongUUIDType<Tag> operator()(const Reflected& data) const { return NESStrongUUIDType<Tag>{unreflect<std::string>(data)}; }
+    NESStrongUUIDType<Tag> operator()(const Reflected& data, const ReflectionContext& context) const
+    {
+        return NESStrongUUIDType<Tag>{context.unreflect<std::string>(data)};
+    }
 };
 
 }

@@ -22,7 +22,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -61,7 +60,7 @@ struct Reflector<CastToTypeLogicalFunction>
 template <>
 struct Unreflector<CastToTypeLogicalFunction>
 {
-    CastToTypeLogicalFunction operator()(const Reflected& reflected) const;
+    CastToTypeLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);

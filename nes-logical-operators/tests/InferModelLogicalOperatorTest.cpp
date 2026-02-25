@@ -160,15 +160,10 @@ TEST_F(InferModelLogicalOperatorTest, NameVariantConstructionAndExplain)
 /// Reflector/Unreflector round-trip: serialize and deserialize preserves operator state
 TEST_F(InferModelLogicalOperatorTest, ReflectionRoundTrip)
 {
-    auto op = makeOp();
+    const auto op = makeOp();
 
-    /// Reflect
-    const Reflector<InferModelLogicalOperator> reflector;
-    auto reflected = reflector(op);
-
-    /// Unreflect
-    const Unreflector<InferModelLogicalOperator> unreflector;
-    auto restored = unreflector(reflected);
+    const auto reflected = reflect(op);
+    const auto restored = ReflectionContext{}.unreflect<InferModelLogicalOperator>(reflected);
 
     /// Verify preserved state
     EXPECT_EQ(restored.getInputFieldNames(), op.getInputFieldNames());

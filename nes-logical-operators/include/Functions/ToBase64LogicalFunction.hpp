@@ -24,6 +24,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <antlr4-runtime/antlr4-common.h>
 
 namespace NES
 {
@@ -58,8 +59,6 @@ private:
     friend Reflector<ToBase64LogicalFunction>;
 };
 
-static_assert(LogicalFunctionConcept<ToBase64LogicalFunction>);
-
 template <>
 struct Reflector<ToBase64LogicalFunction>
 {
@@ -69,8 +68,10 @@ struct Reflector<ToBase64LogicalFunction>
 template <>
 struct Unreflector<ToBase64LogicalFunction>
 {
-    ToBase64LogicalFunction operator()(const Reflected& reflected) const;
+    ToBase64LogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
+static_assert(LogicalFunctionConcept<ToBase64LogicalFunction>);
 }
 
 namespace NES::detail
