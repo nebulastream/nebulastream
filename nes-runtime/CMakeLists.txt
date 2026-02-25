@@ -18,7 +18,7 @@ include_directories(tests/include)
 # Add interface library
 add_library(nes-runtime-interface INTERFACE)
 target_include_directories(nes-runtime-interface INTERFACE interface)
-target_link_libraries(nes-runtime-interface INTERFACE nes-configurations nes-query-engine-interface)
+target_link_libraries(nes-runtime-interface INTERFACE nes-configurations nes-query-engine-interface nes-query-compiler-interface)
 
 # Set Sources and Headers
 add_subdirectory(src)
@@ -26,7 +26,7 @@ get_source(nes-runtime NES_EXECUTION_ENGINE_SOURCE_FILES)
 
 # Add Library
 add_library(nes-runtime ${NES_EXECUTION_ENGINE_SOURCE_FILES})
-target_link_libraries(nes-runtime PUBLIC nes-common nes-logical-operators nes-physical-operators nes-data-types nes-memory nes-nautilus nes-sources nes-query-engine)
+target_link_libraries(nes-runtime PUBLIC nes-common nes-logical-operators nes-physical-operators nes-data-types nes-memory nes-nautilus nes-sources nes-query-engine nes-query-compiler-interface nes-query-optimizer-interface)
 target_include_directories(nes-runtime PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

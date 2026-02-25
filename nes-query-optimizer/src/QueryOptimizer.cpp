@@ -16,26 +16,26 @@
 
 #include <Phases/DecideJoinTypes.hpp>
 #include <Phases/DecideMemoryLayout.hpp>
-#include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
+#include <OptimizedPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
+
+OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
-    return optimize(plan, defaultQueryExecution);
+    return optimize(plan, defaultQueryOptimization);
 }
 
-PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution)
+OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
-    DecideJoinTypes joinTypeDecider(defaultQueryExecution.joinStrategy);
+    DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
-    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
-    return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
+    return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
 }
 
 }

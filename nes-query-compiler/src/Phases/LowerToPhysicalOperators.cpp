@@ -1,0 +1,141 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <Phases/LowerToPhysicalOperators.hpp>
+
+#include <algorithm>
+#include <memory>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Traits/ImplementationTypeTrait.hpp>
+#include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <ErrorHandling.hpp>
+#include <LoweringRuleRegistry.hpp>
+#include <PhysicalOperator.hpp>
+#include <PhysicalPlan.hpp>
+#include <PhysicalPlanBuilder.hpp>
+
+namespace NES::LowerToPhysicalOperators
+{
+
+namespace
+{
+std::unique_ptr<AbstractLoweringRule>
+resolveLoweringRule(const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument)
+{
+    const auto logicalOperatorName = logicalOperator.getName();
+    if (logicalOperatorName == "Join")
+    {
+        const auto traitSet = logicalOperator.getTraitSet();
+        const auto implementationTraitOpt = getTrait<JoinImplementationTypeTrait>(traitSet);
+        PRECONDITION(implementationTraitOpt.has_value(), "Join operator must have an implementation type trait");
+        switch (const auto& implementationTrait = implementationTraitOpt.value(); implementationTrait->implementationType)
+        {
+            case JoinImplementation::HASH_JOIN: {
+                if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string("HashJoin"), registryArgument))
+                {
+                    return std::move(ruleOptional.value());
+                }
+                throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+            }
+            case JoinImplementation::NESTED_LOOP_JOIN: {
+                if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string("NLJoin"), registryArgument))
+                {
+                    return std::move(ruleOptional.value());
+                }
+                throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+            }
+            case JoinImplementation::CHOICELESS: {
+                throw UnknownOptimizerRule("ImplementationTrait cannot be choiceless for join", logicalOperator.getName());
+            }
+        }
+    }
+    if (auto ruleOptional = LoweringRuleRegistry::instance().create(std::string(logicalOperatorName), registryArgument))
+    {
+        return std::move(ruleOptional.value());
+    }
+    throw UnknownOptimizerRule("Lowering rule for logical operator '{}' can't be resolved", logicalOperator.getName());
+}
+}
+
+LoweringRuleResultSubgraph::SubGraphRoot
+lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringRuleRegistryArguments& registryArgument)
+{
+    /// Try to resolve lowering rule for the current logical operator
+    const auto rule = resolveLoweringRule(logicalOperator, registryArgument);
+
+    /// We apply the rule and receive a subgraph
+    const auto [root, leafs] = rule->apply(logicalOperator);
+    INVARIANT(
+        leafs.size() == logicalOperator.getChildren().size(),
+        "Number of children after lowering must remain the same. {}, before:{}, after:{}",
+        logicalOperator,
+        logicalOperator.getChildren().size(),
+        leafs.size());
+    /// if the lowering result is empty we bypass the operator
+    if (not root)
+    {
+        if (not logicalOperator.getChildren().empty())
+        {
+            INVARIANT(
+                logicalOperator.getChildren().size() == 1,
+                "Empty lowering results of operators with multiple keys are not supported for {}",
+                logicalOperator);
+            return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
+        }
+        return {};
+    }
+    /// We embed the subgraph into the resulting plan of physical operator wrappers
+    auto children = logicalOperator.getChildren();
+    INVARIANT(
+        children.size() == leafs.size(),
+        "Leaf node size does not match logical plan {} vs physical plan: {} for {}",
+        children.size(),
+        leafs.size(),
+        logicalOperator);
+
+    std::ranges::for_each(
+        std::views::zip(children, leafs),
+        [&registryArgument](const auto& zippedPair)
+        {
+            const auto& [child, leaf] = zippedPair;
+            auto rootNodeOfLoweredChild = lowerOperatorRecursively(child, registryArgument);
+            leaf->addChild(rootNodeOfLoweredChild);
+        });
+    return root;
+}
+
+PhysicalPlan apply(const LogicalPlan& queryPlan, const QueryExecutionConfiguration& conf) /// NOLINT
+{
+    const auto registryArgument = LoweringRuleRegistryArguments{conf};
+    std::vector<std::shared_ptr<PhysicalOperatorWrapper>> newRootOperators;
+    newRootOperators.reserve(queryPlan.getRootOperators().size());
+    for (const auto& logicalRoot : queryPlan.getRootOperators())
+    {
+        newRootOperators.push_back(lowerOperatorRecursively(logicalRoot, registryArgument));
+    }
+
+    INVARIANT(not newRootOperators.empty(), "Plan must have at least one root operator");
+    auto physicalPlanBuilder = PhysicalPlanBuilder(queryPlan.getQueryId());
+    physicalPlanBuilder.addSinkRoot(newRootOperators[0]);
+    physicalPlanBuilder.setExecutionMode(conf.executionMode.getValue());
+    physicalPlanBuilder.setOperatorBufferSize(conf.operatorBufferSize.getValue());
+    return std::move(physicalPlanBuilder).finalize();
+}
+}

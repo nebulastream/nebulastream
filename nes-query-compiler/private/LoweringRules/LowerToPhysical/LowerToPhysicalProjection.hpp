@@ -13,23 +13,23 @@
 */
 
 #pragma once
-#include <Plans/LogicalPlan.hpp>
 
-#include <QueryOptimizerConfiguration.hpp>
+#include <utility>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypes
+struct LowerToPhysicalProjection : AbstractLoweringRule
 {
-public:
-    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+    explicit LowerToPhysicalProjection(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
 
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
-    StreamJoinStrategy joinStrategy;
+    QueryExecutionConfiguration conf;
 };
+
 }

@@ -10,10 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Traits)
-add_subdirectory(Phases)
-add_subdirectory(Serialization)
-add_subdirectory(LegacyOptimizer)
-
 add_source_files(nes-query-optimizer
-        QueryOptimizer.cpp OptimizedPlan.cpp)
+        InlineSinkBindingPhase.cpp
+        InlineSourceBindingPhase.cpp
+        SourceInferencePhase.cpp
+        LogicalSourceExpansionRule.cpp
+        RedundantUnionRemovalRule.cpp
+        RedundantProjectionRemovalRule.cpp
+        OriginIdInferencePhase.cpp
+        TypeInferencePhase.cpp
+        SinkBindingRule.cpp
+        LegacyOptimizer.cpp
+)

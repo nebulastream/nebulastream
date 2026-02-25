@@ -8,7 +8,7 @@ In NebulaStream, examples of such components include:
 - `DataTypes` (limited)
 - `Functions`
 - `Operators`
-- `RewriteRules`
+- `LoweringRules`
 - `Sinks`
 - ...
 

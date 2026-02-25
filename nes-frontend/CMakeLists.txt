@@ -14,7 +14,6 @@ add_subdirectory(src)
 
 get_source(nes-clients CLIENT_SOURCE_FILES)
 get_source(nes-catalogs CATALOG_SOURCE_FILES)
-get_source(nes-legacy-optimizer LEGACYOPTIMIZER_SOURCE_FILES)
 get_source(nes-coordinator COORDINATOR_SOURCE_FILES)
 get_source(nes-yaml-binder YAML_BINDER_SOURCE_FILES)
 get_source(nes-query-manager-grpc QUERY_MANAGER_GRPC_SOURCE_FILES)
