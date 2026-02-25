@@ -108,7 +108,7 @@ struct Reflector<ProjectionLogicalOperator>
 template <>
 struct Unreflector<ProjectionLogicalOperator>
 {
-    ProjectionLogicalOperator operator()(const Reflected& reflected) const;
+    ProjectionLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
@@ -120,7 +120,7 @@ namespace NES::detail
 struct ReflectedProjectionLogicalOperator
 {
     bool asterisk;
-    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
+    std::vector<std::pair<std::optional<std::string>, LogicalFunction>> projections;
 };
 
 }

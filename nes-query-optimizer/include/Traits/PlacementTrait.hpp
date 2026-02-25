@@ -56,7 +56,7 @@ struct Reflector<PlacementTrait>
 template <>
 struct Unreflector<PlacementTrait>
 {
-    PlacementTrait operator()(const Reflected& reflected) const;
+    PlacementTrait operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(TraitConcept<PlacementTrait>);

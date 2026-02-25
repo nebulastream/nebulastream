@@ -163,7 +163,7 @@ struct Reflector<ImportedModel>
 template <>
 struct Unreflector<ImportedModel>
 {
-    ImportedModel operator()(const Reflected& rfl) const;
+    ImportedModel operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

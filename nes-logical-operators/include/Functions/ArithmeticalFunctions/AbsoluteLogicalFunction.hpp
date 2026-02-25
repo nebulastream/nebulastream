@@ -24,7 +24,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -63,7 +62,7 @@ struct Reflector<AbsoluteLogicalFunction>
 template <>
 struct Unreflector<AbsoluteLogicalFunction>
 {
-    AbsoluteLogicalFunction operator()(const Reflected& reflected) const;
+    AbsoluteLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<AbsoluteLogicalFunction>);
@@ -74,7 +73,7 @@ namespace NES::detail
 {
 struct ReflectedAbsoluteLogicalFunction
 {
-    std::optional<LogicalFunction> child;
+    LogicalFunction child;
 };
 }
 
