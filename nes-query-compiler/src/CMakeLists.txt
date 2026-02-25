@@ -10,9 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+add_subdirectory(Phases)
+add_subdirectory(LoweringRules)
+
 add_source_files(nes-query-compiler
         QueryCompiler.cpp
         PipelinedQueryPlan.cpp
+        PhysicalPlanBuilder.cpp
 )
-
-add_subdirectory(Phases)

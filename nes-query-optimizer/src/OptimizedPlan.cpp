@@ -12,24 +12,17 @@
     limitations under the License.
 */
 
-#pragma once
-#include <Plans/LogicalPlan.hpp>
+#include <OptimizedPlan.hpp>
 
-#include <QueryOptimizerConfiguration.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 
-/// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypes
+const LogicalPlan& OptimizedPlan::getPlan() const
 {
-public:
-    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+    return this->plan;
+}
 
-    LogicalPlan apply(const LogicalPlan& queryPlan);
 
-private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
-    StreamJoinStrategy joinStrategy;
-};
 }

@@ -13,23 +13,29 @@
 */
 
 #pragma once
-#include <Plans/LogicalPlan.hpp>
 
-#include <QueryOptimizerConfiguration.hpp>
+#include <memory>
+#include <string>
+#include <LoweringRules/AbstractLoweringRule.hpp>
+#include <Util/Registry.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypes
+using LoweringRuleRegistryReturnType = std::unique_ptr<AbstractLoweringRule>;
+
+struct LoweringRuleRegistryArguments
 {
-public:
-    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+    QueryExecutionConfiguration conf;
+};
 
-    LogicalPlan apply(const LogicalPlan& queryPlan);
-
-private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
-    StreamJoinStrategy joinStrategy;
+class LoweringRuleRegistry
+    : public BaseRegistry<LoweringRuleRegistry, std::string, LoweringRuleRegistryReturnType, LoweringRuleRegistryArguments>
+{
 };
 }
+
+#define INCLUDED_FROM_REGISTRY_LOWERING_RULE
+#include <LoweringRuleGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_LOWERING_RULE

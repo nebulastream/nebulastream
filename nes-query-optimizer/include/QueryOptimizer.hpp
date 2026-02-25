@@ -16,8 +16,9 @@
 
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <PhysicalPlan.hpp>
-#include <QueryExecutionConfiguration.hpp>
+#include <OptimizedPlan.hpp>
+
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -25,14 +26,15 @@ namespace NES
 class QueryOptimizer final
 {
 public:
-    explicit QueryOptimizer(QueryExecutionConfiguration defaultQueryExecution)
-        : defaultQueryExecution(std::move(defaultQueryExecution)) { };
+    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
+        : defaultQueryOptimization(std::move(defaultQueryOptimization)) { };
+
     /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] PhysicalPlan optimize(const LogicalPlan& plan) const;
-    [[nodiscard]] static PhysicalPlan optimize(const LogicalPlan& plan, const QueryExecutionConfiguration& defaultQueryExecution);
+    [[nodiscard]] OptimizedPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] static OptimizedPlan optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization);
 
 private:
-    QueryExecutionConfiguration defaultQueryExecution;
+    QueryOptimizerConfiguration defaultQueryOptimization;
 };
 
 }

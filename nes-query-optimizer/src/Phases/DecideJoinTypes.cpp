@@ -32,7 +32,6 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {

@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Traits)
-add_subdirectory(Phases)
-add_subdirectory(Serialization)
-add_subdirectory(LegacyOptimizer)
+function(add_nes_compiler_test)
+    add_nes_unit_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-query-compiler nes-logical-operators nes-test-util)
+    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
+endfunction()
 
-add_source_files(nes-query-optimizer
-        QueryOptimizer.cpp OptimizedPlan.cpp)
+add_nes_compiler_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
