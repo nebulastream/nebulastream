@@ -32,7 +32,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
-#include <ProtobufHelper.hpp> /// NOLINT
 
 namespace NES
 {
@@ -121,16 +120,16 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
     return reflect(descriptor);
 }
 
-SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflectedSourceDescriptor = unreflect<detail::ReflectedSourceDescriptor>(rfl);
+    auto reflectedSourceDescriptor = context.unreflect<detail::ReflectedSourceDescriptor>(rfl);
 
     return SourceDescriptor{
         PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
         LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
         reflectedSourceDescriptor.type,
         reflectedSourceDescriptor.host,
-        Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
+        Descriptor::unreflectConfig(reflectedSourceDescriptor.config, context),
         reflectedSourceDescriptor.inputFormatterDescriptor};
 }
 }

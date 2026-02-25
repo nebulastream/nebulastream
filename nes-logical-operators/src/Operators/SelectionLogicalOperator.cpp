@@ -32,11 +32,9 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
-
-#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -134,19 +132,13 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
 
 Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
+    return reflect(detail::ReflectedSelectionLogicalOperator{op.getPredicate()});
 }
 
-SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [predicate] = unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-
-    if (!predicate.has_value())
-    {
-        throw CannotDeserialize("Failed to deserialize selection logical operator");
-    }
-
-    return SelectionLogicalOperator(predicate.value());
+    auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
+    return SelectionLogicalOperator(predicate);
 }
 
 LogicalOperatorRegistryReturnType
@@ -154,7 +146,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<SelectionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<SelectionLogicalOperator>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
     std::unreachable();

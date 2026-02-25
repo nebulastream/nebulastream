@@ -49,13 +49,13 @@ namespace NES::detail
 
 inline rfl::Generic toFrontendGeneric(const DataType& dataType)
 {
-    return rfl::to_generic(std::string(magic_enum::enum_name(dataType.type)));
+    return reflect(std::string(magic_enum::enum_name(dataType.type)));
 }
 
 inline rfl::Generic toFrontendGeneric(const Schema::Field& field)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["name"] = rfl::to_generic(field.name);
+    obj["name"] = reflect(field.name);
     obj["type"] = toFrontendGeneric(field.dataType);
     return obj;
 }
@@ -83,7 +83,7 @@ inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config)
     for (const auto& [key, val] : ordered)
     {
         rfl::Object<rfl::Generic> entry;
-        entry[key] = std::visit([](auto&& arg) -> rfl::Generic { return rfl::to_generic(arg); }, val);
+        entry[key] = std::visit([](auto&& arg) -> rfl::Generic { return reflect(arg); }, val);
         entries.emplace_back(std::move(entry));
     }
     return entries;
@@ -96,7 +96,7 @@ inline rfl::Generic toFrontendGeneric(const DescriptorConfig::Config& config)
 inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["type"] = rfl::to_generic(descriptor.getInputFormatterType());
+    obj["type"] = reflect(descriptor.getInputFormatterType());
     const auto ordered = descriptor.getConfig() | std::ranges::to<std::map<std::string, DescriptorConfig::ConfigType>>();
     for (const auto& [key, val] : ordered)
     {
@@ -109,11 +109,11 @@ inline rfl::Generic toFrontendGeneric(const InputFormatterDescriptor& descriptor
             {
                 if constexpr (std::is_same_v<std::decay_t<decltype(arg)>, char>)
                 {
-                    return rfl::to_generic(std::string(1, arg));
+                    return reflect(std::string(1, arg));
                 }
                 else
                 {
-                    return rfl::to_generic(arg);
+                    return reflect(arg);
                 }
             },
             val);
@@ -125,10 +125,19 @@ template <typename Clock, typename Duration>
 rfl::Generic toFrontendGeneric(const std::chrono::time_point<Clock, Duration>& timepoint)
 {
     rfl::Object<rfl::Generic> obj;
-    obj["since_epoch"] = rfl::to_generic(std::chrono::duration_cast<std::chrono::microseconds>(timepoint.time_since_epoch()).count());
-    obj["unit"] = rfl::to_generic(std::string("microseconds"));
-    obj["formatted"] = rfl::to_generic(fmt::format("{}", timepoint));
+    obj["since_epoch"] = reflect(std::chrono::duration_cast<std::chrono::microseconds>(timepoint.time_since_epoch()).count());
+    obj["unit"] = reflect(std::string("microseconds"));
+    obj["formatted"] = reflect(fmt::format("{}", timepoint));
     return obj;
+}
+
+/// Enums serialize as their name (e.g. `QueryStatus::Running` -> "Running") rather than the
+/// underlying integer value the default reflection chain would emit.
+template <typename T>
+requires std::is_enum_v<T>
+rfl::Generic toFrontendGeneric(const T& value)
+{
+    return reflect(std::string(magic_enum::enum_name(value)));
 }
 
 /// Fallback for any type without a specific overload. Routes through the existing reflection chain
@@ -137,7 +146,7 @@ rfl::Generic toFrontendGeneric(const std::chrono::time_point<Clock, Duration>& t
 template <typename T>
 rfl::Generic toFrontendGeneric(const T& value)
 {
-    return rfl::to_generic(value);
+    return reflect(value);
 }
 
 template <typename T>

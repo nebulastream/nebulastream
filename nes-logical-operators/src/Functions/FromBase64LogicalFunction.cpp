@@ -102,9 +102,10 @@ Reflected Reflector<FromBase64LogicalFunction>::operator()(const FromBase64Logic
     return reflect(detail::ReflectedFromBase64LogicalFunction{.child = function.child});
 }
 
-FromBase64LogicalFunction Unreflector<FromBase64LogicalFunction>::operator()(const Reflected& reflected) const
+FromBase64LogicalFunction
+Unreflector<FromBase64LogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedFromBase64LogicalFunction>(reflected);
+    auto [child] = context.unreflect<detail::ReflectedFromBase64LogicalFunction>(reflected);
 
     if (!child.has_value())
     {
@@ -118,7 +119,7 @@ LogicalFunctionGeneratedRegistrar::RegisterFROM_BASE64LogicalFunction(LogicalFun
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<FromBase64LogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<FromBase64LogicalFunction>(arguments.reflected);
     }
     if (arguments.children.empty())
     {
