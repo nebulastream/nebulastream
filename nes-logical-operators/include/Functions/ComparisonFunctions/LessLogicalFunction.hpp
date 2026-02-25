@@ -24,7 +24,6 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -64,7 +63,7 @@ struct Reflector<LessLogicalFunction>
 template <>
 struct Unreflector<LessLogicalFunction>
 {
-    LessLogicalFunction operator()(const Reflected& reflected) const;
+    LessLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<LessLogicalFunction>);
@@ -75,8 +74,8 @@ namespace NES::detail
 {
 struct ReflectedLessLogicalFunction
 {
-    std::optional<LogicalFunction> left;
-    std::optional<LogicalFunction> right;
+    LogicalFunction left;
+    LogicalFunction right;
 };
 }
 

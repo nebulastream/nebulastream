@@ -80,7 +80,7 @@ struct Reflector<MedianAggregationLogicalFunction>
 template <>
 struct Unreflector<MedianAggregationLogicalFunction>
 {
-    MedianAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    MedianAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

@@ -22,7 +22,7 @@
 #include <string>
 #include <type_traits>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -129,7 +129,7 @@ struct Reflector<DataType>
 template <>
 struct Unreflector<DataType>
 {
-    DataType operator()(const Reflected& rfl) const;
+    DataType operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

@@ -29,7 +29,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -94,20 +93,16 @@ Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFuncti
     return reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
 }
 
-NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected) const
+NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [function] = unreflect<detail::ReflectedNegateLogicalFunction>(reflected);
+    auto [function] = context.unreflect<detail::ReflectedNegateLogicalFunction>(reflected);
 
-    if (!function.has_value())
+    if (function.getDataType().type != DataType::Type::BOOLEAN)
     {
-        throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
-    }
-    if (function->getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize("requires child of type bool, but got {}", function->getDataType());
+        throw CannotDeserialize("requires child of type bool, but got {}", function.getDataType());
     }
 
-    return NegateLogicalFunction(std::move(function.value()));
+    return NegateLogicalFunction(std::move(function));
 }
 
 LogicalFunctionRegistryReturnType
@@ -115,7 +110,7 @@ LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunction
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<NegateLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<NegateLogicalFunction>(arguments.reflected);
     }
 
     if (arguments.children.size() != 1)

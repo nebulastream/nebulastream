@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -96,15 +95,10 @@ Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFuncti
     return reflect(detail::ReflectedConcatLogicalFunction{.left = function.left, .right = function.right});
 }
 
-ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected) const
+ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedConcatLogicalFunction>(reflected);
-
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("ConcatLogicalFunction is missing a child");
-    }
-    return ConcatLogicalFunction{left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedConcatLogicalFunction>(reflected);
+    return ConcatLogicalFunction{left, right};
 }
 
 LogicalFunctionRegistryReturnType
@@ -112,7 +106,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunction
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<ConcatLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<ConcatLogicalFunction>(arguments.reflected);
     }
     if (arguments.children.size() < 2)
     {

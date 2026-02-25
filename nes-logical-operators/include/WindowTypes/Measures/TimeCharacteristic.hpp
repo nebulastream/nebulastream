@@ -22,7 +22,7 @@
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES::Windowing
 {
@@ -83,7 +83,7 @@ struct Reflector<Windowing::TimeCharacteristic>
 template <>
 struct Unreflector<Windowing::TimeCharacteristic>
 {
-    Windowing::TimeCharacteristic operator()(const Reflected& reflected) const;
+    Windowing::TimeCharacteristic operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

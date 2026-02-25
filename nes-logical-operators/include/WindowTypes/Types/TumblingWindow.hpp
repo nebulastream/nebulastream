@@ -15,7 +15,7 @@
 #pragma once
 
 #include <string>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
@@ -57,7 +57,7 @@ struct Reflector<Windowing::TumblingWindow>
 template <>
 struct Unreflector<Windowing::TumblingWindow>
 {
-    Windowing::TumblingWindow operator()(const Reflected& reflected) const;
+    Windowing::TumblingWindow operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

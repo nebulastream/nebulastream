@@ -29,7 +29,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -97,9 +96,10 @@ Reflected Reflector<ConstantValueLogicalFunction>::operator()(const ConstantValu
         detail::ReflectedConstantValueLogicalFunction{.value = function.getConstantValue(), .type = function.getDataType().type});
 }
 
-ConstantValueLogicalFunction Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected) const
+ConstantValueLogicalFunction
+Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [value, type] = unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
+    auto [value, type] = context.unreflect<detail::ReflectedConstantValueLogicalFunction>(reflected);
     return ConstantValueLogicalFunction{DataType{type}, value};
 }
 
@@ -108,7 +108,7 @@ LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalF
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<ConstantValueLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<ConstantValueLogicalFunction>(arguments.reflected);
     }
 
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");

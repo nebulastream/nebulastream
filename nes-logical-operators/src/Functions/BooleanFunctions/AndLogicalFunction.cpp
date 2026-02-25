@@ -29,7 +29,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -106,22 +105,17 @@ Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& fu
     return reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
 }
 
-AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl) const
+AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedAndLogicalFunction>(rfl);
-
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("AndLogicalFunction is missing a child");
-    }
-    return {left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedAndLogicalFunction>(rfl);
+    return {left, right};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<AndLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<AndLogicalFunction>(arguments.reflected);
     }
 
     if (arguments.children.size() != 2)

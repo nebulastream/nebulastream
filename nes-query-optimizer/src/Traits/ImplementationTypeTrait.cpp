@@ -33,7 +33,7 @@ namespace NES
 /// Required for plugin registration, no implementation necessary
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterJoinImplementationTypeTrait(TraitRegistryArguments arguments)
 {
-    return unreflect<JoinImplementationTypeTrait>(arguments.reflected);
+    return ReflectionContext{}.unreflect<JoinImplementationTypeTrait>(arguments.reflected);
 }
 
 JoinImplementationTypeTrait::JoinImplementationTypeTrait(const JoinImplementation implementationType)
@@ -71,9 +71,10 @@ Reflected Reflector<JoinImplementationTypeTrait>::operator()(const JoinImplement
     return reflect(detail::ReflectedImplementationTypeTrait{trait.implementationType});
 }
 
-JoinImplementationTypeTrait Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected) const
+JoinImplementationTypeTrait
+Unreflector<JoinImplementationTypeTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [joinImplementationType] = unreflect<detail::ReflectedImplementationTypeTrait>(reflected);
+    auto [joinImplementationType] = context.unreflect<detail::ReflectedImplementationTypeTrait>(reflected);
     return JoinImplementationTypeTrait{joinImplementationType};
 }
 

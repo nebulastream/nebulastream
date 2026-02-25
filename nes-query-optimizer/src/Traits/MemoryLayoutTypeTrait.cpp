@@ -66,7 +66,7 @@ std::string_view MemoryLayoutTypeTrait::getName() const
 /// Required for plugin registration, no implementation necessary
 TraitRegistryReturnType TraitGeneratedRegistrar::RegisterMemoryLayoutTypeTrait(TraitRegistryArguments arguments)
 {
-    return unreflect<MemoryLayoutTypeTrait>(arguments.reflected);
+    return ReflectionContext{}.unreflect<MemoryLayoutTypeTrait>(arguments.reflected);
 }
 
 Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait) const
@@ -74,9 +74,9 @@ Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTra
     return reflect(detail::ReflectedMemoryLayoutTypeTrait{trait.memoryLayout});
 }
 
-MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected) const
+MemoryLayoutTypeTrait Unreflector<MemoryLayoutTypeTrait>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [memoryLayout] = unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
+    auto [memoryLayout] = context.unreflect<detail::ReflectedMemoryLayoutTypeTrait>(reflected);
     return MemoryLayoutTypeTrait{memoryLayout};
 }
 }
