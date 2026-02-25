@@ -825,53 +825,54 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     const auto tokenType = context->getStart()->getType();
 
     helpers.top().hasUnnamedAggregation = true;
+
+    /// Validates that the current aggregation argument is a direct field access.
+    const auto checkAggregationArgument = [&](std::string_view name)
+    {
+        if (helpers.top().functionBuilder.empty())
+        {
+            throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
+        }
+        if (!helpers.top().functionBuilder.back().tryGetAs<FieldAccessLogicalFunction>())
+        {
+            throw InvalidQuerySyntax(
+                "Aggregation function '{}' requires a direct field access as its argument, not an expression. "
+                "Apply arithmetic outside the aggregation, e.g. {}(field) + 1 instead of {}(field + 1).",
+                name,
+                name,
+                name);
+        }
+    };
+
     switch (tokenType)
     {
         case AntlrSQLLexer::COUNT:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<CountAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::AVG:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<AvgAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MAX:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MaxAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MIN:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MinAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::SUM:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<SumAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
         case AntlrSQLLexer::MEDIAN:
-            if (helpers.top().functionBuilder.empty())
-            {
-                throw InvalidQuerySyntax("Aggregation requires argument at {}", context->getText());
-            }
+            checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<MedianAggregationLogicalFunction>(
                 helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
             break;
