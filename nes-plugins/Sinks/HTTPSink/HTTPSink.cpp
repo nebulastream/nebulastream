@@ -80,7 +80,7 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     PRECONDITION(isOpen, "Sink was not opened");
 
     /// Format buffer
-    auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
+    const auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
 
     curl_slist* headers = nullptr;
     /// Set newline delimited json as content type
