@@ -35,6 +35,7 @@
     "argparse",
     "boost-asio",
     "cpptrace",
+    "curl",
     "fmt",
     "folly",
     "grpc",
