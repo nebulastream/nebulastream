@@ -41,6 +41,7 @@
     "boost-url",
     "cpptrace",
     "date",
+    "curl",
     "fmt",
     "folly",
     "grpc",
