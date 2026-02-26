@@ -15,7 +15,9 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <string_view>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -26,20 +28,42 @@
 namespace NES
 {
 
-class SumAggregationLogicalFunction : public WindowAggregationLogicalFunction
+class SumAggregationLogicalFunction
 {
 public:
-    SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const FieldAccessLogicalFunction& asField);
-    explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    ~SumAggregationLogicalFunction() override = default;
+    SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
+    explicit SumAggregationLogicalFunction(const FieldAccessLogicalFunction& asField);
+    ~SumAggregationLogicalFunction() = default;
 
-    void inferStamp(const Schema& schema) override;
-    [[nodiscard]] std::string_view getName() const noexcept override;
-    [[nodiscard]] Reflected reflect() const override;
+    [[nodiscard]] std::string_view getName() const noexcept;
+    [[nodiscard]] std::string toString() const;
+    [[nodiscard]] Reflected reflect() const;
+    [[nodiscard]] DataType getInputStamp() const;
+    [[nodiscard]] DataType getPartialAggregateStamp() const;
+    [[nodiscard]] DataType getFinalAggregateStamp() const;
+    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
+    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
+
+    [[nodiscard]] SumAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] SumAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
+    [[nodiscard]] SumAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
+    [[nodiscard]] SumAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
+
+    [[nodiscard]] bool operator==(const SumAggregationLogicalFunction& otherSumAggregationLogicalFunction) const;
 
 private:
     static constexpr std::string_view NAME = "Sum";
+
+    DataType inputStamp;
+    DataType partialAggregateStamp;
+    DataType finalAggregateStamp;
+    FieldAccessLogicalFunction onField;
+    FieldAccessLogicalFunction asField;
 };
+
+static_assert(WindowAggregationFunctionConcept<SumAggregationLogicalFunction>);
 
 template <>
 struct Reflector<SumAggregationLogicalFunction>
