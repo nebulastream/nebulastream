@@ -14,6 +14,8 @@
 
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -35,7 +37,7 @@ namespace NES
 {
 
 PowLogicalFunction::PowLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right) { };
 
 bool PowLogicalFunction::operator==(const PowLogicalFunction& rhs) const
 {
@@ -63,9 +65,12 @@ PowLogicalFunction PowLogicalFunction::withDataType(const DataType& dataType) co
 
 LogicalFunction PowLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    const auto newLeft = left.withInferredDataType(schema);
-    const auto newRight = right.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newLeft, newRight});
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 2, "PowLogicalFunction expects exactly two child function but has {}", newChildren.size());
+    auto newDataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> PowLogicalFunction::getChildren() const
@@ -78,6 +83,7 @@ PowLogicalFunction PowLogicalFunction::withChildren(const std::vector<LogicalFun
     auto copy = *this;
     copy.left = children[0];
     copy.right = children[1];
+    copy.dataType = DataType{copy.dataType.type, copy.left.getDataType().joinNullable(copy.right.getDataType())};
     return copy;
 };
 

@@ -14,6 +14,8 @@
 
 #include <Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -51,8 +53,12 @@ AbsoluteLogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& da
 
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    const auto newChild = child.withInferredDataType(schema);
-    return withDataType(newChild.getDataType()).withChildren({newChild});
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 1, "AbsoluteLogicalFunction expects exactly one child function but has {}", newChildren.size());
+    auto newDataType = newChildren[0].getDataType();
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const

@@ -24,12 +24,13 @@
 
 namespace NES
 {
-
 /// Stores the left and right basic types and the expected result for joining/casting both operations
 struct TypeConversionTestInput
 {
     DataType::Type left;
     DataType::Type right;
+    DataType::NULLABLE leftIsNullable;
+    DataType::NULLABLE rightIsNullable;
     DataType expectedResult;
 };
 
@@ -45,16 +46,19 @@ public:
 
 TEST_P(NumericTypeConversionTest, SimpleTest)
 {
-    auto [leftParam, rightParam, resultParam] = GetParam();
-    auto join = [](const DataType::Type left, const DataType::Type right)
-    { return DataTypeProvider::provideDataType(left).join(DataTypeProvider::provideDataType(right)); };
+    auto [leftParam, rightParam, leftNullable, rightNullable, resultParam] = GetParam();
+    auto join = [](const DataType::Type left,
+                   const DataType::Type right,
+                   const DataType::NULLABLE leftIsNullable,
+                   const DataType::NULLABLE rightIsNullable)
+    { return DataTypeProvider::provideDataType(left, leftIsNullable).join(DataTypeProvider::provideDataType(right, rightIsNullable)); };
 
-    const auto leftRight = join(leftParam, rightParam);
-    const auto rightLeft = join(rightParam, leftParam);
-    NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(leftParam), magic_enum::enum_name(rightParam), leftRight);
-    NES_INFO("Joining {} and {} results in {}", magic_enum::enum_name(rightParam), magic_enum::enum_name(leftParam), rightLeft);
-    EXPECT_TRUE(leftRight == resultParam);
-    EXPECT_TRUE(rightLeft == resultParam);
+    const auto leftRight = join(leftParam, rightParam, leftNullable, rightNullable);
+    const auto rightLeft = join(rightParam, leftParam, leftNullable, rightNullable);
+    NES_INFO("Joining {} and {} results in {}", DataType{leftParam, leftNullable}, DataType{rightParam, rightNullable}, leftRight);
+    NES_INFO("Joining {} and {} results in {}", DataType{rightParam, rightNullable}, DataType{leftParam, leftNullable}, rightLeft);
+    EXPECT_TRUE(leftRight == resultParam) << "Expected " << resultParam << " but got " << *leftRight;
+    EXPECT_TRUE(rightLeft == resultParam) << "Expected " << resultParam << " but got " << *rightLeft;
 }
 
 /// This tests the join operation for all possible combinations of basic types
@@ -63,81 +67,334 @@ INSTANTIATE_TEST_CASE_P(
     ThisIsARealTest,
     NumericTypeConversionTest,
     ::testing::Values<TypeConversionTestInput>(
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{DataType::Type::UINT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::UINT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
         TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+            DataType::Type::UINT8,
+            DataType::Type::UINT8,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::UINT16, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::UINT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT32)},
-        TypeConversionTestInput{DataType::Type::UINT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
+            DataType::Type::UINT8,
+            DataType::Type::UINT16,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+            DataType::Type::UINT8,
+            DataType::Type::UINT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::UINT32, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::UINT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
-        TypeConversionTestInput{DataType::Type::UINT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            DataType::Type::UINT8,
+            DataType::Type::UINT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+            DataType::Type::UINT8,
+            DataType::Type::INT8,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::UINT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT8, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{DataType::Type::INT8, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT16, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{DataType::Type::INT16, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::INT32, DataTypeProvider::provideDataType(DataType::Type::INT32)},
-        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{DataType::Type::INT32, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
-
-        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::INT64, DataTypeProvider::provideDataType(DataType::Type::INT64)},
-        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
-        TypeConversionTestInput{DataType::Type::INT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+            DataType::Type::UINT8,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT8,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT8,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT8,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT8,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
 
         TypeConversionTestInput{
-            DataType::Type::FLOAT32, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT32)},
+            DataType::Type::UINT16,
+            DataType::Type::UINT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::FLOAT64, DataType::Type::FLOAT32, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)},
+            DataType::Type::UINT16,
+            DataType::Type::UINT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
         TypeConversionTestInput{
-            DataType::Type::FLOAT64, DataType::Type::FLOAT64, DataTypeProvider::provideDataType(DataType::Type::FLOAT64)}),
+            DataType::Type::UINT16,
+            DataType::Type::UINT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT16,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT16,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT16,
+            DataType::Type::INT64,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT16,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT16,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::UINT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::UINT64,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT32,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::UINT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::UINT64,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::INT8,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT8,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::INT16,
+            DataType::Type::INT16,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT16,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT16,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT16,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT16,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::INT32,
+            DataType::Type::INT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT32,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT32,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT32,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::INT64,
+            DataType::Type::INT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT64,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::INT64,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+
+        TypeConversionTestInput{
+            DataType::Type::FLOAT32,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::FLOAT64,
+            DataType::Type::FLOAT32,
+            DataType::NULLABLE::IS_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::IS_NULLABLE)},
+        TypeConversionTestInput{
+            DataType::Type::FLOAT64,
+            DataType::Type::FLOAT64,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataType::NULLABLE::NOT_NULLABLE,
+            DataTypeProvider::provideDataType(DataType::Type::FLOAT64, DataType::NULLABLE::NOT_NULLABLE)}),
     [](const testing::TestParamInfo<NumericTypeConversionTest::ParamType>& info)
     {
         return fmt::format(
-            "{}_{}_{}",
+            "{}_{}_{}_{}_{}",
             magic_enum::enum_name(info.param.left),
             magic_enum::enum_name(info.param.right),
+            magic_enum::enum_name(info.param.leftIsNullable),
+            magic_enum::enum_name(info.param.rightIsNullable),
             magic_enum::enum_name(info.param.expectedResult.type));
     });
 }

@@ -2,14 +2,14 @@
 # description: Checks that concat in projections works as expected
 # groups: [Function, Text, Projection]
 
-CREATE LOGICAL SOURCE nameStream(firstName VARSIZED, lastName VARSIZED);
+CREATE LOGICAL SOURCE nameStream(firstName VARSIZED NOT NULL, lastName VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR nameStream TYPE File;
 ATTACH INLINE
 Edgar,Codd
 Jim,Grey
 Michael,Stonebraker
 
-CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED) TYPE File;
+CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED NOT NULL) TYPE File;
 
 SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----

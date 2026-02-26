@@ -4,24 +4,24 @@
 # groups: [milestone, benchmark, large, Aggregation, Join]
 
 # Source definition. We have removed some columns that are not needed in our queries
-CREATE LOGICAL SOURCE bid(timestamp UINT64, auctionId INT32, bidder INT32, price FLOAT64);
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR bid TYPE File;
 ATTACH FILE large/nexmark/bid_6GB.csv
 
-CREATE LOGICAL SOURCE auction(timestamp UINT64, id INT32, initialbid INT32, reserve INT32, expires UINT64, seller INT32, category INT32);
+CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR auction TYPE File;
 ATTACH FILE large/nexmark/auction_707MB.csv
 
-CREATE LOGICAL SOURCE person(id INT32, name VARSIZED, email_address VARSIZED, credit_card VARSIZED, city VARSIZED, state VARSIZED, timestamp UINT64, extra VARSIZED);
+CREATE LOGICAL SOURCE person(id INT32 NOT NULL, name VARSIZED NOT NULL, email_address VARSIZED NOT NULL, credit_card VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, timestamp UINT64 NOT NULL, extra VARSIZED);
 CREATE PHYSICAL SOURCE FOR person TYPE File;
 ATTACH FILE large/nexmark/person_840MB.csv
 
-CREATE SINK bidCheckSum(bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, bid.price FLOAT64)  TYPE Checksum;
-CREATE SINK q1CheckSum(bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, price FLOAT64)  TYPE Checksum;
-CREATE SINK q2CheckSum(bid.auctionId INT32, bid.price FLOAT64)  TYPE Checksum;
-CREATE SINK q5Checksum(bidbid.start UINT64, bidbid.end UINT64, bid.auctionId INT32, bid.num UINT64, bid.max_tmp UINT64)  TYPE Checksum;
-CREATE SINK q8CheckSum(personauction.start UINT64, personauction.end UINT64, person.id INT32, person.name VARSIZED)  TYPE Checksum;
-CREATE SINK q8VariantCheckSum(bidauction.start UINT64, bidauction.end UINT64, bid.timestamp UINT64, bid.auctionId INT32, bid.bidder INT32, bid.price FLOAT64, bid.timestamp UINT64, auction.id INT32, auction.initialbid INT32, auction.reserve INT32, auction.expires UINT64, auction.seller INT32, auction.category INT32)  TYPE Checksum;
+CREATE SINK bidCheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1CheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q2CheckSum(bid.auctionId INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q5Checksum(bidbid.start UINT64 NOT NULL, bidbid.end UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.num UINT64 NOT NULL, bid.max_tmp UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q8CheckSum(personauction.start UINT64 NOT NULL, personauction.end UINT64 NOT NULL, person.id INT32 NOT NULL, person.name VARSIZED NOT NULL)  TYPE Checksum;
+CREATE SINK q8VariantCheckSum(bidauction.start UINT64 NOT NULL, bidauction.end UINT64 NOT NULL, bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL, bid.timestamp UINT64 NOT NULL, auction.id INT32 NOT NULL, auction.initialbid INT32 NOT NULL, auction.reserve INT32 NOT NULL, auction.expires UINT64 NOT NULL, auction.seller INT32 NOT NULL, auction.category INT32 NOT NULL)  TYPE Checksum;
 
 
 # Query 0

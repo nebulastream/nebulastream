@@ -3,8 +3,8 @@
 # groups: [Window, Aggregation, Tumbling, Median]
 
 CREATE LOGICAL SOURCE health_sensor(
-    oxygen_level FLOAT64,
-    ts INT64
+    oxygen_level FLOAT64 NOT NULL,
+    ts INT64 NOT NULL
 );
 CREATE PHYSICAL SOURCE FOR health_sensor TYPE File;
 ATTACH INLINE
@@ -16,7 +16,7 @@ ATTACH INLINE
 96.5,120
 99.0,130
 
-CREATE SINK sink(`HEALTH_SENSOR$OXYGEN_LEVEL_MEDIAN` FLOAT64) TYPE File;
+CREATE SINK sink(`HEALTH_SENSOR$OXYGEN_LEVEL_MEDIAN` FLOAT64 NOT NULL) TYPE File;
 
 SELECT MEDIAN(oxygen_level)
 FROM health_sensor

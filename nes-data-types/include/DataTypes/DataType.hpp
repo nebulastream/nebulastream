@@ -47,6 +47,15 @@ struct DataType final
         VARSIZED,
     };
 
+    enum class NULLABLE : uint8_t
+    {
+        IS_NULLABLE,
+        NOT_NULLABLE
+    };
+
+    DataType(Type type, NULLABLE nullable);
+    DataType();
+
     template <class T>
     [[nodiscard]] bool isSameDataType() const
     {
@@ -105,10 +114,16 @@ struct DataType final
     bool operator!=(const DataType& other) const = default;
     friend std::ostream& operator<<(std::ostream& os, const DataType& dataType);
 
-    [[nodiscard]] uint32_t getSizeInBytes() const;
+    /// Provides the size needed for storing this data type containing any additional space, e.g., for null-handling
+    [[nodiscard]] uint32_t getSizeInBytesWithNull() const;
+
+    /// Provides the raw underlying size. This means the raw data type without any additional space, e.g., for null-handling
+    [[nodiscard]] uint32_t getSizeInBytesWithoutNull() const;
+
     /// Determines common data type for this and other data type. Returns @Type::UNDEFINED if it cannot find a common type.
     /// example usage a binary arithmetical function: 'const auto commonStamp = left->getStamp().join(right->getStamp());'
     [[nodiscard]] std::optional<DataType> join(const DataType& otherDataType) const;
+    [[nodiscard]] DataType::NULLABLE joinNullable(const DataType& otherDataType) const;
     [[nodiscard]] std::string formattedBytesToString(const void* data) const;
 
     [[nodiscard]] bool isType(Type type) const;
@@ -117,7 +132,8 @@ struct DataType final
     [[nodiscard]] bool isFloat() const;
     [[nodiscard]] bool isNumeric() const;
 
-    Type type{Type::UNDEFINED};
+    Type type;
+    bool nullable;
 };
 
 template <>
@@ -137,7 +153,10 @@ struct Unreflector<DataType>
 template <>
 struct std::hash<NES::DataType>
 {
-    size_t operator()(const NES::DataType& dataType) const noexcept { return static_cast<uint8_t>(dataType.type); }
+    size_t operator()(const NES::DataType& dataType) const noexcept
+    {
+        return (static_cast<uint16_t>(dataType.type) << 8) | static_cast<uint8_t>(dataType.nullable);
+    }
 };
 
 FMT_OSTREAM(NES::DataType);

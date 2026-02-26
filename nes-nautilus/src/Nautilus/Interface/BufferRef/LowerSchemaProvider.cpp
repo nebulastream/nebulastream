@@ -40,13 +40,13 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
             for (const auto& field : schema)
             {
                 fields.emplace_back(field.name, field.dataType, fieldOffset);
-                fieldOffset += field.dataType.getSizeInBytes();
+                fieldOffset += field.dataType.getSizeInBytesWithNull();
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
                 fields.end(),
                 0UL,
-                [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
+                [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytesWithNull(); });
             return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }
 
@@ -58,13 +58,13 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
             for (const auto& field : schema)
             {
                 fields.emplace_back(field.name, field.dataType, columnOffset);
-                columnOffset += (field.dataType.getSizeInBytes() * capacity);
+                columnOffset += (field.dataType.getSizeInBytesWithNull() * capacity);
             }
             const auto tupleSize = std::accumulate(
                 fields.begin(),
                 fields.end(),
                 0UL,
-                [](auto size, const ColumnTupleBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
+                [](auto size, const ColumnTupleBufferRef::Field& field) { return size + field.type.getSizeInBytesWithNull(); });
 
             return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
         }

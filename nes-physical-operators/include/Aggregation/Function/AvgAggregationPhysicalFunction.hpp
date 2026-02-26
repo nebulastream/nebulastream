@@ -46,7 +46,7 @@ public:
     ~AvgAggregationPhysicalFunction() override = default;
 
 private:
-    static constexpr DataType countType = DataType{DataType::Type::UINT64};
+    DataType countType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE};
 };
 
 }

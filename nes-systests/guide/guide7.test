@@ -3,9 +3,9 @@
 # groups: [Window, Aggregation, Sliding, Max]
 
 CREATE LOGICAL SOURCE bid(
-    ticker VARSIZED,
-    price  FLOAT64,
-    ts     INT64
+    ticker VARSIZED NOT NULL,
+    price  FLOAT64 NOT NULL,
+    ts     INT64 NOT NULL
 );
 CREATE PHYSICAL SOURCE FOR bid TYPE File;
 ATTACH INLINE
@@ -18,7 +18,7 @@ GOOG,1010.0,6
 GOOG,1005.0,7
 AAPL,151.0,8
 
-CREATE SINK sink(`BID$PRICE_MAX` FLOAT64) TYPE File;
+CREATE SINK sink(`BID$PRICE_MAX` FLOAT64 NOT NULL) TYPE File;
 
 SELECT
     MAX(price)

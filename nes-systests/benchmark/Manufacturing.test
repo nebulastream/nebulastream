@@ -3,11 +3,11 @@
 # groups: [milestone, benchmark, large]
 
 # Source definitions
-CREATE LOGICAL SOURCE manufacturing(creationTS UINT64, messageIndex UINT64, mf01 INT16, mf02 INT16, mf03 INT16, pc13 INT16, pc14 INT16, pc15 INT16, pc25 INT16, pc26 INT16, pc27 INT16, res INT16, bm05 INT16, bm06 INT16);
+CREATE LOGICAL SOURCE manufacturing(creationTS UINT64 NOT NULL, messageIndex UINT64 NOT NULL, mf01 INT16 NOT NULL, mf02 INT16 NOT NULL, mf03 INT16 NOT NULL, pc13 INT16 NOT NULL, pc14 INT16 NOT NULL, pc15 INT16 NOT NULL, pc25 INT16 NOT NULL, pc26 INT16 NOT NULL, pc27 INT16 NOT NULL, res INT16 NOT NULL, bm05 INT16 NOT NULL, bm06 INT16 NOT NULL);
 CREATE PHYSICAL SOURCE FOR manufacturing TYPE File;
 ATTACH FILE large/manufacturing/manufacturing_1G.csv
 
-CREATE SINK manufacturingChecksum(manufacturing.start UINT64, manufacturing.end UINT64, manufacturing.avg_mf01 FLOAT64, manufacturing.sum_mf02 INT16, manufacturing.min_mf03 INT16, manufacturing.count_mf01 UINT64, manufacturing.sum_mf01 INT16)  TYPE Checksum ;
+CREATE SINK manufacturingChecksum(manufacturing.start UINT64 NOT NULL, manufacturing.end UINT64 NOT NULL, manufacturing.avg_mf01 FLOAT64 NOT NULL, manufacturing.sum_mf02 INT16 NOT NULL, manufacturing.min_mf03 INT16 NOT NULL, manufacturing.count_mf01 UINT64 NOT NULL, manufacturing.sum_mf01 INT16 NOT NULL)  TYPE Checksum ;
 
 
 # Query 1 Windowed Aggregation with three different aggregation functions

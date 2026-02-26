@@ -14,6 +14,8 @@
 
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -83,22 +85,20 @@ std::string_view OrLogicalFunction::getType() const
 
 LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> children;
-    /// delegate dataType inference of children
-    for (auto& node : getChildren())
-    {
-        children.push_back(node.withInferredDataType(schema));
-    }
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
     /// check if children dataType is correct
     INVARIANT(
-        children.at(0).getDataType().isType(DataType::Type::BOOLEAN),
+        newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN),
         "the dataType of left child must be boolean, but was: {}",
-        children.at(0).getDataType());
+        newChildren.at(0).getDataType());
     INVARIANT(
-        children.at(1).getDataType().isType(DataType::Type::BOOLEAN),
+        newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN),
         "the dataType of right child must be boolean, but was: {}",
-        children.at(1).getDataType());
-    return this->withChildren(children);
+        newChildren.at(1).getDataType());
+    auto newDataType = this->getDataType();
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
 }
 
 Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const

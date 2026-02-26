@@ -2,7 +2,7 @@
 # description: Simple map tests with a mul function
 # groups: [Map]
 
-CREATE LOGICAL SOURCE stream(id INT64, value INT64, timestamp INT64);
+CREATE LOGICAL SOURCE stream(id INT64 NOT NULL, value INT64 NOT NULL, timestamp INT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -13,9 +13,9 @@ ATTACH INLINE
 6,20,20000
 7,21,21000
 
-CREATE SINK streamSink(id INT64, stream.value INT64, stream.timestamp INT64)  TYPE File;
-CREATE SINK streamSinkWithNew(stream.id INT64, stream.value INT64, stream.timestamp INT64, new INT64)  TYPE File;
-CREATE SINK streamSink3(id INT64, value INT64, stream.timestamp INT64)  TYPE File;
+CREATE SINK streamSink(id INT64 NOT NULL, stream.value INT64 NOT NULL, stream.timestamp INT64 NOT NULL)  TYPE File;
+CREATE SINK streamSinkWithNew(stream.id INT64 NOT NULL, stream.value INT64 NOT NULL, stream.timestamp INT64 NOT NULL, new INT64 NOT NULL)  TYPE File;
+CREATE SINK streamSink3(id INT64 NOT NULL, value INT64 NOT NULL, stream.timestamp INT64 NOT NULL)  TYPE File;
 
 
 # Map with mul function touches one field

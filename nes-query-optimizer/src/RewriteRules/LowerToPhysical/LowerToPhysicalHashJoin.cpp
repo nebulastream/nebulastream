@@ -207,7 +207,7 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
             const bool fieldReplaceSuccess = inputSchema.replaceTypeOfField(fieldExtension.newName, fieldExtension.newDataType);
             INVARIANT(fieldReplaceSuccess, "Expect to change the type of {} for {}", fieldExtension.newName, inputSchema);
         }
-        keySize += fieldExtension.newDataType.getSizeInBytes();
+        keySize += fieldExtension.newDataType.getSizeInBytesWithNull();
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(fieldAccessKey));
         fieldKeyNames.emplace_back(fieldExtension.newName);
     }

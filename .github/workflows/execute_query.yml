@@ -23,7 +23,7 @@ on:
         required: false
         type: string
         default: |
-            CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
+            CREATE LOGICAL SOURCE endless(val_1 UINT32 NOT NULL, ts UINT64 NOT NULL);
             CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
                 'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
                 'CSV' as PARSER.`TYPE`,
@@ -32,10 +32,10 @@ on:
                 'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
                 'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
                 'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
-            CREATE SINK someSink1(ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink2(ENDLESS.val_1 UINT32, ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink3(val_plus_1 UINT32) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+            CREATE SINK someSink1(ENDLESS.TS UINT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+            CREATE SINK someSink2(ENDLESS.val_1 UINT32 NOT NULL, ENDLESS.TS UINT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+            CREATE SINK someSink3(val_plus_1 UINT32 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+            CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64 NOT NULL) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
             SHOW QUERIES;
             SELECT TS FROM ENDLESS INTO SOMESINK1;
             SELECT * FROM ENDLESS INTO SOMESINK2;

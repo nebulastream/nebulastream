@@ -45,7 +45,7 @@ CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : Format(p
     {
         const auto physicalType = field.dataType;
         formattingContext.offsets.push_back(offset);
-        offset += physicalType.getSizeInBytes();
+        offset += physicalType.getSizeInBytesWithNull();
         formattingContext.physicalTypes.emplace_back(physicalType);
     }
     formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
