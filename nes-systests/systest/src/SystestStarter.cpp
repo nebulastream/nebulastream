@@ -44,7 +44,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");
-    const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
+    const auto defaultDisableConfigPath = (std::filesystem::path{TEST_CONFIGURATION_DIR}.parent_path() / "config.yaml").string();
 
     /// test discovery
     program.add_argument("-t", "--testLocation")
