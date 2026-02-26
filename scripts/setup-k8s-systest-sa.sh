@@ -48,9 +48,18 @@ rules:
   - apiGroups: ["nebulastream.com"]
     resources: ["nes-topologies", "nes-queries"]
     verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+  - apiGroups: ["nebulastream.com"]
+    resources: ["nes-topologies/status", "nes-queries/status"]
+    verbs: ["get", "list", "watch"]
   - apiGroups: [""]
     resources: ["configmaps"]
-    verbs: ["get", "list", "patch", "update"]
+    verbs: ["get", "list", "create", "patch", "update"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get"]
 EOF
 
 # --- ClusterRoleBinding ---

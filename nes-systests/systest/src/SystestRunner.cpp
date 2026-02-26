@@ -195,10 +195,71 @@ std::vector<RunningQuery> runQueries(
                         topologyResult.sourceFileData);
                     /// ConfigMap volume mounts can take up to ~60-90s to propagate.
                     /// Wait for the updated data to appear in the worker pods.
-                    std::cerr << "[K8s] Waiting 90s for ConfigMap data to propagate to worker pods...\n";
+                    std::cerr << "[K8s] Waiting 30s for ConfigMap data to propagate to worker pods...\n";
                     std::this_thread::sleep_for(std::chrono::seconds(90));
                 }
-                jsonSubmitter->submitJson(K8sQueryBuilder::build(nextQuery));
+
+                auto queryJson = K8sQueryBuilder::build(nextQuery);
+                std::string queryName = queryJson["metadata"]["name"].get<std::string>();
+                jsonSubmitter->submitJson(queryJson);
+
+                /// Poll for query completion in K8s, fetch pod logs, write result file.
+                std::cerr << "[K8s] Waiting for query '" << queryName << "' to complete...\n";
+                bool completed = jsonSubmitter->waitForQueryCompletion(queryName, 300);
+
+                auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
+                if (completed) {
+                    try {
+                        /// Fetch the worker pod logs (Print sink writes CSV to stdout).
+                        std::string podLogs = jsonSubmitter->fetchPodLogs("app=worker-1");
+                        /// Write the result to the local result file path
+                        /// so that checkResult() / loadQueryResult() work unchanged.
+                        K8sJSONSubmitter::writeResultFile(nextQuery, podLogs);
+                    } catch (const std::exception& e) {
+                        std::cerr << "[K8s] Failed to fetch/write results: " << e.what() << "\n";
+                    }
+
+                    /// Report result using the existing checkResult() path.
+                    reportResult(
+                        runningQuery,
+                        progressTracker,
+                        failed,
+                        [&]
+                        {
+                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
+                            {
+                                return fmt::format(
+                                    "expected error {} but query succeeded",
+                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
+                            }
+                            if (auto err = checkResult(*runningQuery))
+                            {
+                                return *err;
+                            }
+                            return std::string{};
+                        },
+                        queryPerformanceMessage);
+                } else {
+                    /// Query failed or timed out.
+                    processQueryWithError(
+                        runningQuery,
+                        progressTracker,
+                        failed,
+                        DistributedException(std::unordered_map<GrpcAddr, std::vector<Exception>>{
+                            {GrpcAddr("k8s"), std::vector{Exception{"K8s query '" + queryName + "' failed or timed out", 0}}}}),
+                        queryPerformanceMessage);
+                }
+
+                /// Clean up K8s resources.
+                try {
+                    jsonSubmitter->deleteCustomObject("NesQuery", queryName);
+                    jsonSubmitter->deleteCustomObject("NesTopology", topologyResult.topologyJson["metadata"]["name"].get<std::string>());
+                } catch (const std::exception& e) {
+                    std::cerr << "[K8s] Cleanup warning: " << e.what() << "\n";
+                }
+
+                /// K8s queries don't go through the local engine — skip the rest.
+                continue;
             }
 
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
