@@ -15,7 +15,10 @@ ATTACH INLINE
 
 
 CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
+CREATE SINK sinkAggResult(result FLOAT64) TYPE File;
+CREATE SINK sinkAggErr(input.start UINT64, input.end UINT64, out FLOAT64) TYPE File;
 
+# All aggregation functions with auto-generated column names.
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
 FROM input WINDOW TUMBLING(timestamp, size 100 ms)
 INTO out;
@@ -23,3 +26,29 @@ INTO out;
 100, 200, 2,1,2,3,1.5,1.5
 200, 300, 2,1,2,3,1.5,1.5
 300, 400, 2,1,2,3,1.5,1.5
+
+# Post-aggregation arithmetic: MEDIAN(i) + FLOAT64(1).
+# MEDIAN({1,2}) = 1.5, plus 1 = 2.5.
+SELECT MEDIAN(i) + FLOAT64(1) AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
+----
+2.5
+2.5
+2.5
+
+# Post-aggregation arithmetic: SUM(i) + FLOAT64(10).
+# SUM({1,2}) = 3, plus 10 = 13.
+SELECT SUM(i) + FLOAT64(10) AS result FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggResult;
+----
+13
+13
+13
+
+# Arithmetic expression as aggregation argument (MEDIAN(i + UINT64(1))) must give a clear error, not crash.
+SELECT start, end, MEDIAN(i + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
+----
+ERROR 2000
+
+# Untyped literal in post-aggregation arithmetic (MEDIAN(i) + 1) must give a clear error.
+SELECT start, end, MEDIAN(i) + 1 AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
+----
+ERROR 2000
