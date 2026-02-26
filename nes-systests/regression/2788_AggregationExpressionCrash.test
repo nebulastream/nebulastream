@@ -19,3 +19,8 @@ CREATE SINK sinkAggOut(stream.start UINT64, stream.end UINT64, out FLOAT64) TYPE
 SELECT start, end, MEDIAN(i8 + INT8(1)) AS out FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggOut;
 ----
 ERROR 2000
+
+# Arithmetic expression after an aggregation argument -- must give a clear error, not crash.
+SELECT start, end, MEDIAN(i8) + 1 AS out FROM stream WINDOW TUMBLING(ts, size 100 ms) INTO sinkAggOut;
+----
+ERROR 2000
