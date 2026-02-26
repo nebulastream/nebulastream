@@ -25,6 +25,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
@@ -50,7 +51,6 @@
 #include <BaseUnitTest.hpp>
 #include <NetworkTopology.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES::Test
 {
@@ -248,7 +248,7 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down DistributedPlanning class."); }
 };
 
-///NOLINTBEGIN(bugprone-unchecked-optional-access)
+///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-identifier-length)
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 {
     auto [opt, boundPlan] = loadAndBind("basic_single_node.yaml");
@@ -656,5 +656,5 @@ TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
     EXPECT_EQ(flatten(source2Plans.front()).size(), 2);
 }
 
-///NOLINTEND(bugprone-unchecked-optional-access)
+///NOLINTEND(bugprone-unchecked-optional-access, readability-identifier-length)
 }

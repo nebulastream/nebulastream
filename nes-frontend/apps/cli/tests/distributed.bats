@@ -13,7 +13,10 @@
 # limitations under the License.
 
 setup_file() {
-  # Clean up leaked networks from previous crashed runs
+  # Clean up leaked containers and networks from previous crashed runs
+  for net in $(docker network ls --filter label=nes-test=distributed-cli -q 2>/dev/null); do
+    docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+  done
   docker network prune -f --filter label=nes-test=distributed-cli 2>/dev/null || true
 
   # Validate environment variables
@@ -64,7 +67,11 @@ setup_file() {
   # Build Docker images with unique tags to avoid collisions when test suites run in parallel
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   export WORKER_IMAGE="nes-worker-cli-test-${suffix}"
-  docker build -t $WORKER_IMAGE -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
+  # Use minimal build context with only the required binary to avoid sending
+  # the entire build directory to the Docker daemon on each build.
+  local worker_ctx=$(mktemp -d)
+  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
+  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -82,8 +89,11 @@ setup_file() {
     COPY nes-single-node-worker /usr/bin
     ENTRYPOINT ["nes-single-node-worker"]
 EOF
+  rm -rf "$worker_ctx"
   export CLI_IMAGE="nes-cli-image-${suffix}"
-  docker build -t $CLI_IMAGE -f - $(dirname $(realpath $NES_CLI)) <<EOF
+  local cli_ctx=$(mktemp -d)
+  cp $(realpath $NES_CLI) "$cli_ctx/nes-cli"
+  docker build --load -t $CLI_IMAGE -f - "$cli_ctx" <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -96,6 +106,7 @@ EOF
 
     COPY nes-cli /usr/bin
 EOF
+  rm -rf "$cli_ctx"
 
   # Print environment info for debugging
   echo "# Using NES_CLI: $NES_CLI" >&3

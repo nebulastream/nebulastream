@@ -84,12 +84,12 @@ std::filesystem::path QueryStateBackend::getStateDirectory()
     return stateDir;
 }
 
-std::filesystem::path QueryStateBackend::getQueryFilePath(DistributedQueryId distributedQueryId)
+std::filesystem::path QueryStateBackend::getQueryFilePath(const DistributedQueryId& distributedQueryId)
 {
     return stateDirectory / fmt::format("{}.json", distributedQueryId.getRawValue());
 }
 
-PersistedQueryId QueryStateBackend::store(DistributedQueryId distributedQueryId, const DistributedQuery& distributedQuery)
+PersistedQueryId QueryStateBackend::store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery)
 {
     auto filePath = getQueryFilePath(distributedQueryId);
 

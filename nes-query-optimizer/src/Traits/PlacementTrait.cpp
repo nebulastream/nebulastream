@@ -20,18 +20,18 @@
 #include <string_view>
 #include <typeinfo>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp>
-#include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
-#include <ErrorHandling.hpp>
 #include <TraitRegisty.hpp>
 
 namespace NES
 {
 /// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterPlacementTrait(TraitRegistryArguments arguments)
+TraitRegistryReturnType
+TraitGeneratedRegistrar::RegisterPlacementTrait(TraitRegistryArguments arguments) /// NOLINT(performance-unnecessary-value-param)
 {
     return unreflect<PlacementTrait>(arguments.reflected);
 }
@@ -40,7 +40,7 @@ PlacementTrait::PlacementTrait(WorkerId workerId) : onNode(std::move(workerId))
 {
 }
 
-const std::type_info& PlacementTrait::getType() const
+const std::type_info& PlacementTrait::getType() const /// NOLINT(readability-convert-member-functions-to-static)
 {
     return typeid(PlacementTrait);
 }
@@ -55,7 +55,7 @@ std::string PlacementTrait::explain(ExplainVerbosity) const
     return fmt::format("PlacementTrait: {}", onNode.getRawValue());
 }
 
-std::string_view PlacementTrait::getName() const
+std::string_view PlacementTrait::getName() const /// NOLINT(readability-convert-member-functions-to-static)
 {
     return NAME;
 }

@@ -24,22 +24,25 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
 #include <Thread.hpp>
+#include <WorkerConfig.hpp>
 
 namespace
 {
-NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
+NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NOLINT(readability-function-cognitive-complexity)
 {
     using argparse::ArgumentParser;
     ArgumentParser program("systest");

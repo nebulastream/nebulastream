@@ -25,18 +25,18 @@
 namespace NES
 {
 
-template <typename T, typename Tag, T invalid, T initial>
-struct Reflector<NESStrongType<T, Tag, invalid, initial>>
+template <typename T, typename Tag, T Invalid, T Initial>
+struct Reflector<NESStrongType<T, Tag, Invalid, Initial>>
 {
-    Reflected operator()(const NESStrongType<T, Tag, invalid, initial>& data) const { return reflect(data.getRawValue()); }
+    Reflected operator()(const NESStrongType<T, Tag, Invalid, Initial>& data) const { return reflect(data.getRawValue()); }
 };
 
-template <typename T, typename Tag, T invalid, T initial>
-struct Unreflector<NESStrongType<T, Tag, invalid, initial>>
+template <typename T, typename Tag, T Invalid, T Initial>
+struct Unreflector<NESStrongType<T, Tag, Invalid, Initial>>
 {
-    NESStrongType<T, Tag, invalid, initial> operator()(const Reflected& data) const
+    NESStrongType<T, Tag, Invalid, Initial> operator()(const Reflected& data) const
     {
-        return NESStrongType<T, Tag, invalid, initial>{unreflect<T>(data)};
+        return NESStrongType<T, Tag, Invalid, Initial>{unreflect<T>(data)};
     }
 };
 

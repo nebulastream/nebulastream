@@ -22,6 +22,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -39,7 +40,6 @@
 #include <util/HighsInt.h>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
-#include <WorkerConfig.hpp>
 #include <scope_guard.hpp>
 
 namespace NES
@@ -107,7 +107,7 @@ constexpr void checkError(HighsInt status, void* highs)
 
     if (status == kHighsStatusWarning)
     {
-        if (highs)
+        if (highs != nullptr)
         {
             auto status = Highs_getModelStatus(highs);
             NES_WARNING("Highs Warning: {}", MODEL_STATUS_STRINGS.at(status));
@@ -133,9 +133,13 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
 
     for (const auto& sinkOperator : getOperatorByType<SinkLogicalOperator>(plan))
     {
-        if (auto placement = sinkOperator->getSinkDescriptor()->getWorkerId(); !topology.contains(placement))
+        const auto& sinkDescriptorOpt = sinkOperator->getSinkDescriptor();
+        if (sinkDescriptorOpt.has_value())
         {
-            errors.emplace_back(fmt::format("Sink '{}' was placed on non-existing worker '{}'", sinkOperator.getId(), placement));
+            if (auto placement = sinkDescriptorOpt->getWorkerId(); !topology.contains(placement))
+            {
+                errors.emplace_back(fmt::format("Sink '{}' was placed on non-existing worker '{}'", sinkOperator.getId(), placement));
+            }
         }
     }
 
@@ -148,57 +152,65 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
     NES_DEBUG("Performing Operator Placement on: {}", os.str());
 }
 
-std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlacement(
-    const LogicalPlan& logicalPlan, const NetworkTopology& topology, const std::unordered_map<NetworkTopology::NodeId, size_t>& capacity)
+/// Shared state for the ILP placement model
+struct PlacementModel
 {
-    auto* highs = Highs_create();
-    SCOPE_EXIT
-    {
-        Highs_destroy(highs);
-    };
-
-    checkError(Highs_setBoolOptionValue(highs, "output_flag", 0), highs);
-    checkError(Highs_changeObjectiveSense(highs, kHighsObjSenseMinimize), highs); /// minimize
-    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0), highs);
-    checkError(Highs_setDoubleOptionValue(highs, "time_limit", 5.0), highs); /// 1 second
-    checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01), highs); /// 1% optimality gap
-
+    void* highs;
     std::map<std::pair<OperatorId, NetworkTopology::NodeId>, int> operatorPlacementMatrix;
     std::vector<std::pair<OperatorId, NetworkTopology::NodeId>> reverseIndex;
-    ///         x₁   x₂   x₃  ... (variables/columns)
-    ///       ┌────┬────┬────┐
-    /// row 1 │ a₁₁│ a₁₂│ a₁₃│  ≤ b₁  (constraint 1)
-    /// row 2 │ a₂₁│ a₂₂│ a₂₃│  ≤ b₂  (constraint 2)
-    /// row 3 │ a₃₁│ a₃₂│ a₃₃│  ≤ b₃  (constraint 3)
-    ///       └────┴────┴────┘
+};
 
-    /// You have variables: placement[op1][node1], placement[op1][node2], etc.
-    /// Each of these becomes a COLUMN in the matrix
-    /// Each row is a constraint lowerBound <= x1*ar1 + x2*ar2 + ... + <= upperBound
-    /// Where lowerBound and upperBound for columns restrict the values of individual variables, i.e., placement of a operator on a node.
+/// Create HiGHS instance with solver options
+PlacementModel createPlacementModel()
+{
+    auto* highs = Highs_create();
+    checkError(Highs_setBoolOptionValue(highs, "output_flag", 0), highs);
+    checkError(Highs_changeObjectiveSense(highs, kHighsObjSenseMinimize), highs);
+    checkError(Highs_setBoolOptionValue(highs, "log_to_console", 0), highs);
+    checkError(Highs_setDoubleOptionValue(highs, "time_limit", 5.0), highs); /// NOLINT(readability-magic-numbers) 5 second time limit
+    checkError(Highs_setDoubleOptionValue(highs, "mip_rel_gap", 0.01), highs); /// NOLINT(readability-magic-numbers) 1% optimality gap
+    return PlacementModel{.highs = highs, .operatorPlacementMatrix = {}, .reverseIndex = {}};
+}
 
-    /// Example with 2 operators, 3 nodes = 6 variables = 6 columns:
-    ///   p[0][0] p[0][1] p[0][2] p[1][0] p[1][1] p[1][2]
-    ///      ↓       ↓       ↓       ↓       ↓       ↓
-    ///    col 0   col 1   col 2   col 3   col 4   col 5
-    ///
-    /// To make it easier to work with operatorPlacementMatrix implements a mapping from the placement matrix to the columns in the
-    /// constraint model. If an operator o is placed on a node n then placementMatrix[o][n] = true
+///         x₁   x₂   x₃  ... (variables/columns)
+///       ┌────┬────┬────┐
+/// row 1 │ a₁₁│ a₁₂│ a₁₃│  ≤ b₁  (constraint 1)
+/// row 2 │ a₂₁│ a₂₂│ a₂₃│  ≤ b₂  (constraint 2)
+/// row 3 │ a₃₁│ a₃₂│ a₃₃│  ≤ b₃  (constraint 3)
+///       └────┴────┴────┘
+///
+/// You have variables: placement[op1][node1], placement[op1][node2], etc.
+/// Each of these becomes a COLUMN in the matrix.
+/// Each row is a constraint lowerBound <= x1*ar1 + x2*ar2 + ... + <= upperBound
+/// Where lowerBound and upperBound for columns restrict the values of individual variables, i.e., placement of a operator on a node.
+///
+/// Example with 2 operators, 3 nodes = 6 variables = 6 columns:
+///   p[0][0] p[0][1] p[0][2] p[1][0] p[1][1] p[1][2]
+///      ↓       ↓       ↓       ↓       ↓       ↓
+///    col 0   col 1   col 2   col 3   col 4   col 5
+///
+/// operatorPlacementMatrix maps from (operator, node) to column index.
+/// If an operator o is placed on a node n then placementMatrix[o][n] = true
+void addPlacementVariables(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
+{
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
     {
         for (const NetworkTopology::NodeId& node : topology | std::views::keys)
         {
-            auto index = static_cast<int>(reverseIndex.size());
-            operatorPlacementMatrix[{op.getId(), node}] = index;
+            auto index = static_cast<int>(model.reverseIndex.size());
+            model.operatorPlacementMatrix[{op.getId(), node}] = index;
             /// By default we allow placement on every node. we allow values from (0,1) and limit the solution to integers which gives us
             /// exactly {0,1}. Thus if a variable is set to 0 `op` is not placed on `node` and vice versa.
-            checkError(Highs_addCol(highs, index, 0, 1, 0, nullptr, nullptr), highs);
-            checkError(Highs_changeColIntegrality(highs, index, kHighsVarTypeInteger), highs);
-            reverseIndex.emplace_back(op.getId(), node);
+            checkError(Highs_addCol(model.highs, index, 0, 1, 0, nullptr, nullptr), model.highs);
+            checkError(Highs_changeColIntegrality(model.highs, index, kHighsVarTypeInteger), model.highs);
+            model.reverseIndex.emplace_back(op.getId(), node);
         }
     }
+}
 
-    /// Constraint 1: Each operator assigned to exactly one node. a.k.a the sum of all rows (placementMatrix) is exactly 1
+/// Constraint: Each operator assigned to exactly one node
+void addExactlyOneNodeConstraint(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
+{
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
     {
         std::vector<int> index;
@@ -208,52 +220,66 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
 
         for (const NetworkTopology::NodeId& nodeId : topology | std::views::keys)
         {
-            index.push_back(operatorPlacementMatrix.at({op.getId(), nodeId}));
+            index.push_back(model.operatorPlacementMatrix.at({op.getId(), nodeId}));
             value.push_back(1.0);
         }
-        checkError(Highs_addRow(highs, 1.0, 1.0, static_cast<HighsInt>(index.size()), index.data(), value.data()), highs);
+        checkError(Highs_addRow(model.highs, 1.0, 1.0, static_cast<HighsInt>(index.size()), index.data(), value.data()), model.highs);
     }
+}
 
-    /// Constraint 2: Capacity constraints
+/// Constraint: Node capacity limits
+void addCapacityConstraints(
+    PlacementModel& model,
+    const LogicalPlan& logicalPlan,
+    const NetworkTopology& topology,
+    const std::unordered_map<NetworkTopology::NodeId, size_t>& capacity)
+{
     for (const auto& nodeId : topology | std::views::keys)
     {
         std::vector<int> index;
         std::vector<double> value;
         for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
         {
-            index.push_back(operatorPlacementMatrix.at({op.getId(), nodeId}));
+            index.push_back(model.operatorPlacementMatrix.at({op.getId(), nodeId}));
             value.push_back(static_cast<double>(operatorCapacityDemand(op)));
         }
         checkError(
             Highs_addRow(
-                highs, 0, static_cast<double>(capacity.at(nodeId)), static_cast<HighsInt>(index.size()), index.data(), value.data()),
-            highs);
+                model.highs, 0, static_cast<double>(capacity.at(nodeId)), static_cast<HighsInt>(index.size()), index.data(), value.data()),
+            model.highs);
     }
+}
 
-    /// Constraint 3: Fixed source placements. Adds constraint to the placement matrix for source operators.
+/// Constraint: Fix source operators to their host nodes
+void addSourcePlacementConstraints(PlacementModel& model, const LogicalPlan& logicalPlan)
+{
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
     {
         if (auto sourceOperator = op.tryGetAs<SourceDescriptorLogicalOperator>())
         {
             auto placement = sourceOperator->get().getSourceDescriptor().getWorkerId();
-            /// Fix placement of source on source host node.
-            const size_t var = operatorPlacementMatrix.at({op.getId(), placement});
-            checkError(Highs_changeColBounds(highs, static_cast<HighsInt>(var), 1.0, 1.0), highs);
+            const size_t var = model.operatorPlacementMatrix.at({op.getId(), placement});
+            checkError(Highs_changeColBounds(model.highs, static_cast<HighsInt>(var), 1.0, 1.0), model.highs);
         }
     }
+}
 
-    /// Constraint 4: Sink placement
+/// Constraint: Fix sink operator to its host node
+void addSinkPlacementConstraint(PlacementModel& model, const LogicalPlan& logicalPlan)
+{
     auto rootOperatorId = logicalPlan.getRootOperators().front().getId();
     auto sinkOperator = logicalPlan.getRootOperators().front().getAs<SinkLogicalOperator>().get();
     const auto& sinkDescriptorOpt = sinkOperator.getSinkDescriptor();
     INVARIANT(sinkDescriptorOpt, "BUG: sink operator must have a sink descriptor");
     auto sinkPlacement = sinkDescriptorOpt->getWorkerId();
 
-    /// Fix placement of sink on sink host node
-    const auto sinkVar = operatorPlacementMatrix.at({rootOperatorId, sinkPlacement});
-    checkError(Highs_changeColBounds(highs, sinkVar, 1.0, 1.0), highs);
+    const auto sinkVar = model.operatorPlacementMatrix.at({rootOperatorId, sinkPlacement});
+    checkError(Highs_changeColBounds(model.highs, sinkVar, 1.0, 1.0), model.highs);
+}
 
-    /// Constraint 5: Parent-child placement must respect network connectivity
+/// Constraint: Parent-child placement must respect network connectivity
+void addConnectivityConstraints(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
+{
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
     {
         for (const LogicalOperator& child : op.getChildren())
@@ -265,25 +291,25 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
                     if (nodeId1 != nodeId2 && topology.findPaths(nodeId1, nodeId2, NetworkTopology::Upstream).empty())
                     {
                         /// Cannot place parent at n1 and child at n2 if no path
-                        /// This constraint does not allow op to be placed at node1 and child to be placed at node2, because
-                        /// there is no path between the nodes.
                         std::array<int, 2> index{
-                            operatorPlacementMatrix.at({op.getId(), nodeId1}), operatorPlacementMatrix.at({child.getId(), nodeId2})};
+                            model.operatorPlacementMatrix.at({op.getId(), nodeId1}),
+                            model.operatorPlacementMatrix.at({child.getId(), nodeId2})};
                         std::array values{1.0, 1.0};
-                        checkError(Highs_addRow(highs, 0, 1.0, index.size(), index.data(), values.data()), highs);
+                        checkError(Highs_addRow(model.highs, 0, 1.0, index.size(), index.data(), values.data()), model.highs);
                     }
                 }
             }
         }
     }
+}
 
-    /// Optimization goal: minimize the sum of distances for all operator placements to the placement of its child sources
+/// Objective: minimize the sum of distances for all operator placements to their descendant sources
+void addDistanceObjective(PlacementModel& model, const LogicalPlan& logicalPlan, const NetworkTopology& topology)
+{
     for (const LogicalOperator& op : BFSRange(logicalPlan.getRootOperators().front()))
     {
         for (const auto& nodeId : topology | std::views::keys)
         {
-            /// This calculates the sum of distances (network hops) if `op` was placed on `nodeId` to all the sources that are descended
-            /// operators of `op`.
             size_t distanceFromSource = 0;
             for (const auto& child : BFSRange(op))
             {
@@ -301,26 +327,26 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
                 }
             }
 
-            const auto var = operatorPlacementMatrix.at({op.getId(), nodeId});
-            checkError(Highs_changeColCost(highs, var, static_cast<double>(distanceFromSource)), highs);
+            const auto var = model.operatorPlacementMatrix.at({op.getId(), nodeId});
+            checkError(Highs_changeColCost(model.highs, var, static_cast<double>(distanceFromSource)), model.highs);
         }
     }
+}
 
+/// Run the solver and extract the placement result
+std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> extractPlacement(PlacementModel& model)
+{
+    checkError(Highs_run(model.highs), model.highs);
 
-    /// Solve
-    checkError(Highs_run(highs), highs);
+    HighsInt primalStatus = 0;
+    checkError(Highs_getIntInfoValue(model.highs, "primal_solution_status", &primalStatus), model.highs);
 
-    HighsInt model_status = Highs_getModelStatus(highs);
-    HighsInt primal_status;
-    checkError(Highs_getIntInfoValue(highs, "primal_solution_status", &primal_status), highs);
-
-    const auto modelStatus = Highs_getModelStatus(highs);
+    const auto modelStatus = Highs_getModelStatus(model.highs);
     if (modelStatus == kHighsModelStatusOptimal || modelStatus == kHighsModelStatusTimeLimit || modelStatus == kHighsModelStatusInterrupt)
     {
-        std::vector<double> solution(reverseIndex.size());
-        checkError(Highs_getSolution(highs, solution.data(), nullptr, nullptr, nullptr), highs);
-        /// extract all chosen placement variables with 1
-        auto placement = std::views::zip(reverseIndex, solution)
+        std::vector<double> solution(model.reverseIndex.size());
+        checkError(Highs_getSolution(model.highs, solution.data(), nullptr, nullptr, nullptr), model.highs);
+        auto placement = std::views::zip(model.reverseIndex, solution)
             | std::views::filter([](const auto& placementAndSolution) { return std::get<1>(placementAndSolution) == 1.0; })
             | std::views::keys | std::ranges::to<std::unordered_map<OperatorId, NetworkTopology::NodeId>>();
 
@@ -332,6 +358,25 @@ std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlac
     }
 
     return std::nullopt;
+}
+
+std::optional<std::unordered_map<OperatorId, NetworkTopology::NodeId>> solvePlacement(
+    const LogicalPlan& logicalPlan, const NetworkTopology& topology, const std::unordered_map<NetworkTopology::NodeId, size_t>& capacity)
+{
+    auto model = createPlacementModel();
+    SCOPE_EXIT
+    {
+        Highs_destroy(model.highs);
+    };
+
+    addPlacementVariables(model, logicalPlan, topology);
+    addExactlyOneNodeConstraint(model, logicalPlan, topology);
+    addCapacityConstraints(model, logicalPlan, topology, capacity);
+    addSourcePlacementConstraints(model, logicalPlan);
+    addSinkPlacementConstraint(model, logicalPlan);
+    addConnectivityConstraints(model, logicalPlan, topology);
+    addDistanceObjective(model, logicalPlan, topology);
+    return extractPlacement(model);
 }
 }
 

@@ -32,9 +32,10 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
-#include <fmt/chrono.h>
+#include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -158,7 +159,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     auto query = queryResult.value();
     std::vector<Exception> exceptions;
 
-    std::chrono::system_clock::time_point queryStartTimestamp = std::chrono::system_clock::now();
+    const std::chrono::system_clock::time_point queryStartTimestamp = std::chrono::system_clock::now();
     for (const auto& [workerId, localQueryId] : query.iterate())
     {
         try
@@ -340,7 +341,7 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
     return {};
 }
 
-std::expected<void, std::vector<Exception>> QueryManager::unregister(DistributedQueryId queryId)
+std::expected<void, std::vector<Exception>> QueryManager::unregister(const DistributedQueryId& queryId)
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())

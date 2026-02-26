@@ -35,7 +35,6 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-#include <Configurations/Util.hpp>
 #include <Identifiers/NESStrongTypeYaml.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -43,14 +42,11 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/URI.hpp>
-#include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <nlohmann/json_fwd.hpp>
-#include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
@@ -61,7 +57,6 @@
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 #include <from_current.hpp>
 
 /// Rust FFI function that enables in-memory communication channels for embedded multi-worker mode.

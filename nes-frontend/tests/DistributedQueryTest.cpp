@@ -33,7 +33,7 @@
 #include <Util/UUID.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <WorkerConfig.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -49,7 +49,7 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down DistributedQueryTest class."); }
 };
 
-///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-magic-numbers)
+///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-magic-numbers, google-build-using-namespace)
 TEST_F(DistributedQueryTest, DefaultConstructor)
 {
     const DistributedQuery query;
@@ -405,5 +405,5 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusCoalesceQueryMetricsWithTimes
     EXPECT_EQ(coalescedMetrics.stop.value(), system_clock::time_point{microseconds(6000)});
 }
 
-///NOLINTEND(bugprone-unchecked-optional-access, readability-magic-numbers)
+///NOLINTEND(bugprone-unchecked-optional-access, readability-magic-numbers, google-build-using-namespace)
 }

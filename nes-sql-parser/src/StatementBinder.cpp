@@ -54,7 +54,6 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/URI.hpp>
-#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 
 #include <CommonParserFunctions.hpp>
@@ -138,7 +137,7 @@ public:
 
     CreateWorkerStatement bindCreateWorkerStatement(AntlrSQLParser::CreateWorkerDefinitionContext* workerDefAST) const
     {
-        auto configs = workerDefAST->optionsClause()
+        auto configs = (workerDefAST->optionsClause() != nullptr)
             ? bindConfigOptionsWithDuplicates(workerDefAST->optionsClause()->options->namedConfigExpression())
             : ConfigMultiMap{};
 
@@ -147,7 +146,7 @@ public:
             auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "CAPACITY"; });
             if (it != configs.end())
             {
-                Literal* literalOpt = std::get_if<Literal>(&it->second);
+                auto* literalOpt = std::get_if<Literal>(&it->second);
                 if (literalOpt && std::holds_alternative<uint64_t>(*literalOpt))
                 {
                     return static_cast<size_t>(std::get<uint64_t>(*literalOpt));

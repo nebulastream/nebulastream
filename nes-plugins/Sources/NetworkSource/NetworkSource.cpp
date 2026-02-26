@@ -14,6 +14,7 @@
 
 #include "NetworkSource.hpp"
 
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -97,7 +98,8 @@ SourceValidationRegistryReturnType RegisterNetworkSourceValidation(SourceValidat
     return NetworkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterNetworkSource(
+    SourceRegistryArguments sourceRegistryArguments) /// NOLINT(performance-unnecessary-value-param)
 {
     return std::make_unique<NetworkSource>(sourceRegistryArguments.sourceDescriptor);
 }

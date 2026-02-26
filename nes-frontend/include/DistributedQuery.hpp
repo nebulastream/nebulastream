@@ -14,13 +14,17 @@
 
 #pragma once
 
+#include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <optional>
 #include <ostream>
 #include <ranges>
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -31,7 +35,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
-#include <WorkerConfig.hpp>
+#include <QueryId.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -49,13 +53,13 @@ public:
 
     std::string& what() noexcept { return errorMessage; }
 
-    const std::unordered_map<WorkerId, std::vector<Exception>>& details() const { return errors; }
+    [[nodiscard]] const std::unordered_map<WorkerId, std::vector<Exception>>& details() const { return errors; }
 
     std::unordered_map<WorkerId, std::vector<Exception>>& details() { return errors; }
 
     [[nodiscard]] const char* what() const noexcept override { return errorMessage.c_str(); }
 
-    friend std::ostream& operator<<(std::ostream& os, const Exception& ex);
+    friend std::ostream& operator<<(std::ostream& os, const Exception& exc);
 };
 
 struct DistributedQueryMetrics
@@ -94,24 +98,24 @@ struct DistributedQueryStatus
     DistributedQueryId queryId{DistributedQueryId::INVALID};
 
     /// Reports a distributed query state based on the individual query states. See @DistributedQueryState for more information.
-    DistributedQueryState getGlobalQueryState() const;
+    [[nodiscard]] DistributedQueryState getGlobalQueryState() const;
 
     /// Reports the encountered exception per worker node. There might be multiple local queries running on a single worker, so there
     /// might be multiple errors per worker.
-    std::unordered_map<WorkerId, std::vector<Exception>> getExceptions() const;
+    [[nodiscard]] std::unordered_map<WorkerId, std::vector<Exception>> getExceptions() const;
 
     /// Combines all exceptions into a single exception. In the case where there are multiple
     /// exceptions, they are grouped into a single DistributedFailure exception which contains
     /// the individual exceptions. If there is just a single exception, the exception is returned
     /// directly.
-    std::optional<DistributedException> coalesceException() const;
+    [[nodiscard]] std::optional<DistributedException> coalesceException() const;
 
     /// Returns the combined query metrics object:
     /// start: minimum of all local start timestamps
     /// running: minimum of all local running timestamps
     /// stop: maximum of all local stop timestamps
     /// errors: coalesceException
-    DistributedQueryMetrics coalesceQueryMetrics() const;
+    [[nodiscard]] DistributedQueryMetrics coalesceQueryMetrics() const;
 };
 
 class DistributedQuery
@@ -177,21 +181,21 @@ public:
 
     std::vector<LogicalPlan>& operator[](const WorkerId& worker) { return decomposedPlan.localPlans.at(worker); }
 
-    size_t size() const
+    [[nodiscard]] size_t size() const
     {
         return std::ranges::fold_left(
             decomposedPlan.localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
     }
 
-    const LogicalPlan& getGlobalPlan() const { return globalPlan; }
+    [[nodiscard]] const LogicalPlan& getGlobalPlan() const { return globalPlan; }
 
     [[nodiscard]] const DistributedQueryId& getQueryId() const { return queryId; }
 
     void setQueryId(DistributedQueryId queryId) { this->queryId = std::move(queryId); }
 
-    auto begin() const { return decomposedPlan.localPlans.begin(); }
+    [[nodiscard]] auto begin() const { return decomposedPlan.localPlans.begin(); }
 
-    auto end() const { return decomposedPlan.localPlans.end(); }
+    [[nodiscard]] auto end() const { return decomposedPlan.localPlans.end(); }
 
 private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};

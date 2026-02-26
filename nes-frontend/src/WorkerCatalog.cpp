@@ -18,9 +18,11 @@
 #include <cstdint>
 #include <optional>
 #include <ranges>
+#include <string>
 #include <utility>
 #include <vector>
-
+#include <Identifiers/Identifiers.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -33,7 +35,16 @@ bool WorkerCatalog::addWorker(
     const std::vector<WorkerId>& downstream,
     SingleNodeWorkerConfiguration config)
 {
-    const bool added = workers.try_emplace(host, WorkerConfig{host, std::move(connection), capacity, downstream, std::move(config)}).second;
+    const bool added = workers
+                           .try_emplace(
+                               host,
+                               WorkerConfig{
+                                   .host = host,
+                                   .connection = std::move(connection),
+                                   .capacity = capacity,
+                                   .downstream = downstream,
+                                   .config = std::move(config)})
+                           .second;
     if (added)
     {
         topology.addNode(host, downstream);

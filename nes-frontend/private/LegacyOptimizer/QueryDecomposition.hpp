@@ -21,7 +21,6 @@
 #include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {

@@ -79,11 +79,11 @@ void NetworkTopology::addNode(const NodeId& id, const std::vector<NodeId>& downs
         if (current == id)
         {
             /// Undo: remove this node from downstream nodes' upstream lists and erase the node
-            for (const auto& dn : downstreamNodes)
+            for (const auto& downstream : downstreamNodes)
             {
-                if (dag.contains(dn))
+                if (dag.contains(downstream))
                 {
-                    std::erase(dag[dn].upstreamNodes, id);
+                    std::erase(dag[downstream].upstreamNodes, id);
                 }
             }
             dag.erase(id);

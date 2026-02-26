@@ -57,7 +57,6 @@
 #include <Repl.hpp>
 #include <Thread.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 #include <utils.hpp>
 
 #ifdef EMBED_ENGINE
@@ -127,7 +126,7 @@ int main(int argc, char** argv)
             = static_cast<int>(cpptrace::isatty(STDIN_FILENO)) != 0 and static_cast<int>(cpptrace::isatty(STDOUT_FILENO)) != 0;
 
         NES::Thread::initializeThread(NES::WorkerId("nes-repl"), "main");
-        NES::Logger::setupLogging("nes-repl.log", NES::LogLevel::LOG_ERROR, !interactiveMode);
+        NES::Logger::setupLogging("nes-repl.log", NES::LogLevel::LOG_ERROR, false);
         SignalHandler::setup();
 
         using argparse::ArgumentParser;

@@ -14,6 +14,7 @@
 
 #include <DistributedQuery.hpp>
 
+#include <algorithm>
 #include <initializer_list>
 #include <optional>
 #include <ostream>
@@ -31,7 +32,7 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
-#include <WorkerConfig.hpp>
+#include <QueryId.hpp>
 
 NES::DistributedException::DistributedException(std::unordered_map<WorkerId, std::vector<Exception>> errors) : errors(std::move(errors))
 {
@@ -45,12 +46,6 @@ NES::DistributedException::DistributedException(std::unordered_map<WorkerId, std
         }
     }
     errorMessage = builder.str();
-}
-
-std::ostream& operator<<(std::ostream& os, const NES::DistributedException& e)
-{
-    os << e.what();
-    return os;
 }
 
 NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() const
@@ -125,7 +120,7 @@ std::unordered_map<NES::WorkerId, std::vector<NES::Exception>> NES::DistributedQ
     {
         for (const auto& [localQueryId, result] : localStatusMap)
         {
-            if (result.has_value() && result->metrics.error)
+            if (result.has_value() && result->metrics.error.has_value())
             {
                 exceptions[grpc].emplace_back(result.value().metrics.error.value());
             }

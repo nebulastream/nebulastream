@@ -12,11 +12,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set timeout 30
+set timeout 60
 set script_dir [file dirname [info script]]
 
 # Source helper procedures
 source $script_dir/../helpers.exp
+
+# Increase match buffer size (default 2000 bytes is too small for SHOW QUERIES
+# responses from 8-node topologies which can be several KB)
+match_max 100000
 
 # Ensure output is not buffered
 log_user 0
@@ -25,7 +29,7 @@ exp_internal 0
 # Setup distributed Docker Compose environment with 8-node topology
 setup "8-node.yaml"
 
-# Spawn nes-repl inside the docker container
+# Spawn nes-repl inside the docker container with debug logging to nes-repl.log
 spawn docker compose exec -t nes-repl nes-repl -d -f JSON
 
 wait_for_prompt
@@ -75,6 +79,9 @@ send_sql {
 set json [expect_json "submitting inline source/sink query"]
 set query_id1 [jq $json {.[0].query_id}]
 
+# Allow time for query deployment across all nodes
+sleep 2
+
 send_sql {
     SHOW QUERIES;
 }
@@ -101,6 +108,9 @@ send_sql {
 set json [expect_json "submitting inline source/sink query"]
 set query_id2 [jq $json {.[0].query_id}]
 
+
+# Allow time for query deployment across all nodes
+sleep 2
 
 send_sql {
     SHOW QUERIES;

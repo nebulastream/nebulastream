@@ -37,15 +37,19 @@ namespace
 {
 /// Sanitize a string for use as GRPC ASCII metadata value.
 /// GRPC metadata values must contain only printable ASCII (0x20-0x7E) and TAB (0x09).
+constexpr char PRINTABLE_ASCII_MIN = 0x20;
+constexpr char PRINTABLE_ASCII_MAX = 0x7E;
+constexpr char HORIZONTAL_TAB = 0x09;
+
 std::string sanitizeForGrpcMetadata(const std::string& value)
 {
     std::string result;
     result.reserve(value.size());
-    for (const char c : value)
+    for (const char chr : value)
     {
-        if ((c >= 0x20 && c <= 0x7E) || c == 0x09)
+        if ((chr >= PRINTABLE_ASCII_MIN && chr <= PRINTABLE_ASCII_MAX) || chr == HORIZONTAL_TAB)
         {
-            result += c;
+            result += chr;
         }
     }
     return result;

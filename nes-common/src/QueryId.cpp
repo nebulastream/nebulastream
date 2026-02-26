@@ -15,6 +15,7 @@
 #include <QueryId.hpp>
 
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
@@ -26,17 +27,17 @@ QueryId::QueryId(LocalQueryId localQueryId, DistributedQueryId distributedQueryI
 
 QueryId QueryId::createLocal(LocalQueryId localQueryId)
 {
-    return QueryId(std::move(localQueryId), DistributedQueryId(DistributedQueryId::INVALID));
+    return {std::move(localQueryId), DistributedQueryId(DistributedQueryId::INVALID)};
 }
 
 QueryId QueryId::createDistributed(DistributedQueryId distributedQueryId)
 {
-    return QueryId(INVALID_LOCAL_QUERY_ID, std::move(distributedQueryId));
+    return {INVALID_LOCAL_QUERY_ID, std::move(distributedQueryId)};
 }
 
 QueryId QueryId::create(LocalQueryId localQueryId, DistributedQueryId distributedQueryId)
 {
-    return QueryId(std::move(localQueryId), std::move(distributedQueryId));
+    return {std::move(localQueryId), std::move(distributedQueryId)};
 }
 
 bool QueryId::isDistributed() const

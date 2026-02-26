@@ -33,7 +33,6 @@
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <DistributedQuery.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES
 {

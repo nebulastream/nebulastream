@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <ostream>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <nlohmann/json.hpp>
 
@@ -42,7 +45,7 @@ class QueryId
 public:
     QueryId() = delete;
 
-    static QueryId invalid() { return QueryId(INVALID_LOCAL_QUERY_ID, DistributedQueryId(DistributedQueryId::INVALID)); }
+    static QueryId invalid() { return {INVALID_LOCAL_QUERY_ID, DistributedQueryId(DistributedQueryId::INVALID)}; }
 
     static QueryId createLocal(LocalQueryId localQueryId);
     static QueryId createDistributed(DistributedQueryId distributedQueryId);
@@ -71,7 +74,7 @@ private:
     DistributedQueryId distributedQueryId;
 };
 
-inline const QueryId INVALID_QUERY_ID = QueryId::invalid();
+inline const QueryId INVALID_QUERY_ID = QueryId::invalid(); /// NOLINT(cert-err58-cpp)
 
 }
 
@@ -80,11 +83,12 @@ namespace std
 template <>
 struct hash<NES::QueryId>
 {
-    size_t operator()(const NES::QueryId& queryId) const noexcept
+    std::size_t operator()(const NES::QueryId& queryId) const noexcept
     {
-        size_t h1 = std::hash<NES::LocalQueryId>{}(queryId.getLocalQueryId());
-        size_t h2 = std::hash<NES::DistributedQueryId>{}(queryId.getDistributedQueryId());
-        return h1 ^ (h2 << 1);
+        const std::size_t h1 = std::hash<NES::LocalQueryId>{}(queryId.getLocalQueryId()); /// NOLINT(readability-identifier-length)
+        const std::size_t h2
+            = std::hash<NES::DistributedQueryId>{}(queryId.getDistributedQueryId()); /// NOLINT(readability-identifier-length)
+        return h1 ^ (static_cast<unsigned long>(h2) << 1U);
     }
 };
 }

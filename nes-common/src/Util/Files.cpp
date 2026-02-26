@@ -45,7 +45,7 @@ std::string getErrorMessage(int errorNumber)
 std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix, std::string_view suffix)
 {
     std::string fileTemplate = fmt::format("{}XXXXXX{}", prefix, suffix);
-    const auto file = mkstemps(fileTemplate.data(), static_cast<int>(suffix.size()));
+    const auto file = mkstemps(fileTemplate.data(), static_cast<int>(suffix.size())); /// NOLINT(misc-include-cleaner)
 
     if (file == -1)
     {

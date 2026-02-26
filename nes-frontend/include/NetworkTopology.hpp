@@ -69,8 +69,8 @@ public:
     void addNode(const Node::Id& id, const std::vector<Node::Id>& downstreamNodes);
     void removeNode(const Node::Id& id);
 
-    std::vector<NodeId> getUpstreamNodesOf(const NodeId& node) const;
-    std::vector<NodeId> getDownstreamNodesOf(const NodeId& node) const;
+    [[nodiscard]] std::vector<NodeId> getUpstreamNodesOf(const NodeId& node) const;
+    [[nodiscard]] std::vector<NodeId> getDownstreamNodesOf(const NodeId& node) const;
 
     /// Upstream --> from the DAG sink to the DAG source
     /// Downstream --> from the DAG source to the DAG sink
@@ -83,17 +83,17 @@ public:
     [[nodiscard]] static constexpr Direction reverse(Direction direction) { return direction == Upstream ? Downstream : Upstream; }
 
     /// Return the set of all possible paths from source to dest in the given direction
-    std::vector<Path> findPaths(const NodeId& src, const NodeId& dest, Direction direction) const;
+    [[nodiscard]] std::vector<Path> findPaths(const NodeId& src, const NodeId& dest, Direction direction) const;
 
-    size_t size() const { return dag.size(); }
+    [[nodiscard]] size_t size() const { return dag.size(); }
 
-    auto view() const { return dag; }
+    [[nodiscard]] auto view() const { return dag; }
 
-    auto begin() const { return dag.cbegin(); }
+    [[nodiscard]] auto begin() const { return dag.cbegin(); }
 
-    auto end() const { return dag.cend(); }
+    [[nodiscard]] auto end() const { return dag.cend(); }
 
-    bool contains(const NodeId& id) const { return dag.contains(id); }
+    [[nodiscard]] bool contains(const NodeId& id) const { return dag.contains(id); }
 };
 
 void renderTopology(const NetworkTopology& graph, std::ostream& os);

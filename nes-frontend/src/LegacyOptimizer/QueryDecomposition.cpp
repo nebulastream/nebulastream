@@ -23,6 +23,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <LegacyOptimizer/OperatorPlacement.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -33,13 +34,13 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/PlacementTrait.hpp>
-#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
+#include <QueryId.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -147,7 +148,7 @@ LogicalOperator decomposePlanRecursive(DecompositionContext& context, const Logi
 
 LogicalOperator assignOperator(DecompositionContext& context, const LogicalOperator& op, const LogicalOperator& child)
 {
-    const auto assignedChild = decomposePlanRecursive(context, child);
+    auto assignedChild = decomposePlanRecursive(context, child);
 
     const auto opNode = getPlacementFor(op);
     const auto childNode = getPlacementFor(child);
@@ -204,7 +205,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan)
         }
     }
 
-    return DistributedLogicalPlan(DecomposedLogicalPlan<WorkerId>{std::move(context.plansByNode)}, placedPlan);
+    return {DecomposedLogicalPlan<WorkerId>{std::move(context.plansByNode)}, placedPlan};
 }
 
 }

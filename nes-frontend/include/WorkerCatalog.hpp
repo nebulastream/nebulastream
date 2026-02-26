@@ -17,9 +17,12 @@
 #include <cstddef>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <NetworkTopology.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
@@ -41,11 +44,11 @@ public:
         std::string connection,
         size_t capacity,
         const std::vector<WorkerId>& downstream,
-        SingleNodeWorkerConfiguration config = {});
+        SingleNodeWorkerConfiguration config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<WorkerConfig> removeWorker(const WorkerId& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const WorkerId& hostAddr) const;
     [[nodiscard]] size_t size() const;
-    std::vector<WorkerConfig> getAllWorkers() const;
+    [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] NetworkTopology getTopology() const;
 
     /// Every change to the workerCatalog increments the version. This allows other components to check if the catalog has changed.

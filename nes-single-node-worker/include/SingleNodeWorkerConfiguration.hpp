@@ -15,8 +15,10 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
 

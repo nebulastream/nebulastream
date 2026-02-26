@@ -155,12 +155,12 @@ struct SystestQuery
         PlanInfo(
             DistributedLogicalPlan plan,
             std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sources,
-            Schema sinkSchema)
-            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(std::move(sinkSchema))
+            const Schema& sinkSchema)
+            : queryPlan(std::move(plan)), sourcesToFilePathsAndCounts(std::move(sources)), sinkOutputSchema(sinkSchema)
         {
         }
 
-        PlanInfo(DistributedLogicalPlan plan, Schema sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(std::move(sinkSchema)) { }
+        PlanInfo(DistributedLogicalPlan plan, const Schema& sinkSchema) : queryPlan(std::move(plan)), sinkOutputSchema(sinkSchema) { }
 
         PlanInfo(const PlanInfo& other) : queryPlan(other.queryPlan), sinkOutputSchema(other.sinkOutputSchema)
         {

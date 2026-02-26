@@ -109,7 +109,7 @@ public:
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
     std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
-    std::expected<void, std::vector<Exception>> unregister(DistributedQueryId query);
+    std::expected<void, std::vector<Exception>> unregister(const DistributedQueryId& query);
     [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;

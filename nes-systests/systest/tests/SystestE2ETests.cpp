@@ -21,6 +21,7 @@
 #include <fmt/format.h>
 #include <gtest/gtest.h>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <BaseUnitTest.hpp>
@@ -60,6 +61,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestE2ETest test class."); }
 
     static constexpr std::string_view EXTENSION = ".dummy";
+    static constexpr size_t DEFAULT_WORKER_CAPACITY = 1000;
 };
 
 /// Given a file with some correct and some incorrect queries, make sure that only the incorrect queries fail
@@ -72,7 +74,11 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
-            .host = WorkerId("localhost:8080"), .connection = "localhost:9090", .capacity = 1000, .downstream = {}, .config = {}}},
+            .host = WorkerId("localhost:8080"),
+            .connection = "localhost:9090",
+            .capacity = DEFAULT_WORKER_CAPACITY,
+            .downstream = {},
+            .config = {}}},
         .allowSourcePlacement = {WorkerId("localhost:8080")},
         .allowSinkPlacement = {WorkerId("localhost:8080")}};
 
@@ -103,7 +109,11 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
-            .host = WorkerId("localhost:8080"), .connection = "localhost:9090", .capacity = 1000, .downstream = {}, .config = {}}},
+            .host = WorkerId("localhost:8080"),
+            .connection = "localhost:9090",
+            .capacity = DEFAULT_WORKER_CAPACITY,
+            .downstream = {},
+            .config = {}}},
         .allowSourcePlacement = {WorkerId("localhost:8080")},
         .allowSinkPlacement = {WorkerId("localhost:8080")}};
 

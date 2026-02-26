@@ -36,7 +36,7 @@ constexpr std::array ATTRIBUTES = std::to_array<std::string_view>(
 /// Generate a unique Docker-style name for distributed query identifiers
 std::string generateHorseName()
 {
-    static std::mt19937 rng(static_cast<unsigned>(std::time(nullptr)));
+    static std::mt19937 rng(static_cast<unsigned>(std::time(nullptr))); /// NOLINT(cert-msc51-cpp)
     std::uniform_int_distribution<> randomBreed(0, HORSE_BREEDS.size() - 1);
     std::uniform_int_distribution<> randomAttribute(0, ATTRIBUTES.size() - 1);
 

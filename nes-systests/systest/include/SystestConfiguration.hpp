@@ -21,6 +21,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 

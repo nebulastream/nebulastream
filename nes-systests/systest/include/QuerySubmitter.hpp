@@ -31,7 +31,7 @@ class QuerySubmitter
 public:
     explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
     std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
-    void startQuery(DistributedQueryId query);
+    void startQuery(const DistributedQueryId& query);
     void stopQuery(const DistributedQueryId& query);
     void unregisterQuery(const DistributedQueryId& query);
     DistributedQueryStatus waitForQueryTermination(const DistributedQueryId& query);

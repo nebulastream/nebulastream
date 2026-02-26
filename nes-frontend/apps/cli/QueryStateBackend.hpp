@@ -44,7 +44,7 @@ public:
     QueryStateBackend();
 
     /// Store distributed query state, returns persisted query ID for user
-    PersistedQueryId store(DistributedQueryId distributedQueryId, const DistributedQuery& distributedQuery);
+    PersistedQueryId store(const DistributedQueryId& distributedQueryId, const DistributedQuery& distributedQuery);
 
     /// Load distributed query from persistent state
     DistributedQuery load(PersistedQueryId persistedId);
@@ -58,7 +58,7 @@ private:
     [[nodiscard]] std::filesystem::path getStateDirectory();
 
     /// Get the full path to a query state file
-    [[nodiscard]] std::filesystem::path getQueryFilePath(DistributedQueryId distributedQueryId);
+    [[nodiscard]] std::filesystem::path getQueryFilePath(const DistributedQueryId& distributedQueryId);
 
     /// Cached state directory path
     std::filesystem::path stateDirectory;

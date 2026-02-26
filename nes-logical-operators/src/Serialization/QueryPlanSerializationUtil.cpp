@@ -211,8 +211,8 @@ QueryId QueryPlanSerializationUtil::deserializeQueryId(const NES::SerializableQu
 {
     auto localId = LocalQueryId(proto.local_query_id());
     auto distributedId = DistributedQueryId(proto.distributed_query_id());
-    bool hasLocal = localId != INVALID_LOCAL_QUERY_ID;
-    bool hasDistributed = distributedId != DistributedQueryId(DistributedQueryId::INVALID);
+    const bool hasLocal = localId != INVALID_LOCAL_QUERY_ID;
+    const bool hasDistributed = distributedId != DistributedQueryId(DistributedQueryId::INVALID);
     if (hasLocal && hasDistributed)
     {
         return QueryId::create(localId, distributedId);

@@ -15,12 +15,14 @@
 #include <Statements/StatementHandler.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <expected>
 #include <memory>
 #include <ranges>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -37,6 +39,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 

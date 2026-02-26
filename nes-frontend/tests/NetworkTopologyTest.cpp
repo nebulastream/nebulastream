@@ -14,6 +14,7 @@
 
 #include <NetworkTopology.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -21,8 +22,8 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <WorkerConfig.hpp>
 
+/// NOLINTBEGIN(google-build-using-namespace, readability-identifier-length)
 namespace NES
 {
 
@@ -150,8 +151,7 @@ TEST_F(NetworkTopologyTest, CycleDetectionDirectCycle)
 {
     auto topology = NetworkTopology{};
     const auto a = WorkerId("a");
-    const auto b = WorkerId("b");
-    /// Add a with downstream=[b] before b exists (forward reference)
+    const auto b = WorkerId("b"); /// Add a with downstream=[b] before b exists (forward reference)
     topology.addNode(a, {b});
     /// Adding b with downstream=[a] would create: b → a → b (cycle)
     EXPECT_THROW(topology.addNode(b, {a}), Exception);
@@ -163,8 +163,7 @@ TEST_F(NetworkTopologyTest, CycleDetectionIndirectCycle)
     auto topology = NetworkTopology{};
     const auto a = WorkerId("a");
     const auto b = WorkerId("b");
-    const auto c = WorkerId("c");
-    /// Build: a → c (forward ref), b → a
+    const auto c = WorkerId("c"); /// Build: a → c (forward ref), b → a
     topology.addNode(a, {c});
     topology.addNode(b, {a});
     /// Adding c with downstream=[b] would create: c → b → a → c (cycle)
@@ -178,8 +177,7 @@ TEST_F(NetworkTopologyTest, NoCycleDag)
     const auto a = WorkerId("a");
     const auto b = WorkerId("b");
     const auto c = WorkerId("c");
-    const auto d = WorkerId("d");
-    /// Diamond: a → b, a → c, b → d, c → d (no cycle)
+    const auto d = WorkerId("d"); /// Diamond: a → b, a → c, b → d, c → d (no cycle)
     topology.addNode(d, {});
     topology.addNode(b, {d});
     topology.addNode(c, {d});
@@ -187,3 +185,5 @@ TEST_F(NetworkTopologyTest, NoCycleDag)
     EXPECT_THAT(topology, SizeIs(4));
 }
 }
+
+/// NOLINTEND(google-build-using-namespace, readability-identifier-length)

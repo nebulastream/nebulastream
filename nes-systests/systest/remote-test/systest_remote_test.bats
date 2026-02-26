@@ -13,7 +13,10 @@
 # limitations under the License.
 
 setup_file() {
-  # Clean up leaked networks from previous crashed runs
+  # Clean up leaked containers and networks from previous crashed runs
+  for net in $(docker network ls --filter label=nes-test=systest-remote -q 2>/dev/null); do
+    docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+  done
   docker network prune -f --filter label=nes-test=systest-remote 2>/dev/null || true
 
   # Validate SYSTEST environment variable once for all tests
@@ -70,7 +73,11 @@ setup_file() {
   # Build Docker images with unique tags to avoid collisions when test suites run in parallel
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   export WORKER_IMAGE="nes-worker-systest-${suffix}"
-  docker build -t $WORKER_IMAGE -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
+  # Use minimal build context with only the required binary to avoid sending
+  # the entire build directory to the Docker daemon on each build.
+  local worker_ctx=$(mktemp -d)
+  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
+  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -88,8 +95,11 @@ setup_file() {
     COPY nes-single-node-worker /usr/bin
     ENTRYPOINT ["nes-single-node-worker"]
 EOF
+  rm -rf "$worker_ctx"
   export SYSTEST_IMAGE="nes-systest-image-${suffix}"
-  docker build -t $SYSTEST_IMAGE -f - $(dirname $(realpath $SYSTEST)) <<EOF
+  local systest_ctx=$(mktemp -d)
+  cp $(realpath $SYSTEST) "$systest_ctx/systest"
+  docker build --load -t $SYSTEST_IMAGE -f - "$systest_ctx" <<EOF
     FROM ubuntu:24.04 AS app
     ENV LLVM_TOOLCHAIN_VERSION=19
     RUN apt update -y && apt install curl wget gpg -y
@@ -102,6 +112,7 @@ EOF
 
     COPY systest /usr/bin
 EOF
+  rm -rf "$systest_ctx"
   export CONTAINER_WORKDIR="/$(cat /proc/sys/kernel/random/uuid)"
   # Will contain the test data
   export TESTDATA_VOLUME=$(docker volume create)

@@ -54,7 +54,7 @@ class BackpressureHandler
 public:
     /// @param upperThreshold Number of buffered tuples at which backpressure is acquired.
     /// @param lowerThreshold Number of buffered tuples at which backpressure is released.
-    explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0);
+    explicit BackpressureHandler(size_t upperThreshold = 1, size_t lowerThreshold = 0); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<TupleBuffer> onFull(TupleBuffer buffer, BackpressureController& backpressureController);
     std::optional<TupleBuffer> onSuccess(BackpressureController& backpressureController);
     bool empty() const;
@@ -102,6 +102,7 @@ private:
     std::atomic_bool closed;
 };
 
+/// NOLINTBEGIN(cert-err58-cpp)
 struct ConfigParametersNetworkSink
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> CONNECTION{
@@ -154,5 +155,7 @@ struct ConfigParametersNetworkSink
             SENDER_QUEUE_SIZE,
             MAX_PENDING_ACKS);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }

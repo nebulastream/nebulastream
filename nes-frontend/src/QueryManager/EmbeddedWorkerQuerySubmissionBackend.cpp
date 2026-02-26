@@ -82,7 +82,7 @@ std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::wor
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)
 {
-    return [workerConfiguration](const WorkerConfig& config)
+    return [workerConfiguration](const WorkerConfig& config) /// NOLINT(bugprone-exception-escape)
     { return std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(config, workerConfiguration); };
 }
 

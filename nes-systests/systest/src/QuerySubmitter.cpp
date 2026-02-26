@@ -22,6 +22,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
@@ -30,7 +31,6 @@
 #include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -69,7 +69,7 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const
     return std::unexpected(exception);
 }
 
-void QuerySubmitter::startQuery(DistributedQueryId query)
+void QuerySubmitter::startQuery(const DistributedQueryId& query)
 {
     if (auto started = queryManager->start(query); !started.has_value())
     {

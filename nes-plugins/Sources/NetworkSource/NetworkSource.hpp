@@ -69,6 +69,7 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
 
+/// NOLINTBEGIN(cert-err58-cpp)
 struct ConfigParametersNetworkSource
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
@@ -90,5 +91,7 @@ struct ConfigParametersNetworkSource
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
 };
+
+/// NOLINTEND(cert-err58-cpp)
 
 }

@@ -40,7 +40,7 @@
 namespace NES
 {
 
-using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">;
+using DistributedQueryId = NESStrongStringType<struct DistributedQueryId_, "invalid">; /// NOLINT(misc-include-cleaner)
 using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
 enum class StatementOutputFormat : uint8_t

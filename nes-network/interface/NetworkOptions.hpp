@@ -24,11 +24,11 @@ namespace NES
 struct NetworkOptions
 {
     /// Size of the sender software queue per channel.
-    uint32_t senderQueueSize = 1024;
+    uint32_t senderQueueSize = 1024; /// NOLINT(readability-magic-numbers)
     /// Maximum number of in-flight buffers awaiting acknowledgment per channel.
-    uint32_t maxPendingAcks = 64;
+    uint32_t maxPendingAcks = 64; /// NOLINT(readability-magic-numbers)
     /// Size of the receiver data queue per channel.
-    uint32_t receiverQueueSize = 10;
+    uint32_t receiverQueueSize = 10; /// NOLINT(readability-magic-numbers)
     /// Number of IO threads for the sender tokio runtime. 0 means use the number of available cores.
     uint32_t senderIOThreads = 1;
     /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.

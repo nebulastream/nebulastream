@@ -39,6 +39,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -52,7 +53,6 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Common.hpp>
 #include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -63,11 +63,11 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
+#include <QueryId.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
 
 namespace NES::Systest
 {
@@ -86,7 +86,7 @@ public:
         const std::string& sinkType,
         const std::string_view sinkNameInFile,
         const Schema& schema,
-        const std::unordered_map<std::string, std::string>& config)
+        const std::unordered_map<std::string, std::string>& /*config*/)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,

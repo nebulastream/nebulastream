@@ -32,6 +32,7 @@
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeReflection.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Reflection.hpp>
