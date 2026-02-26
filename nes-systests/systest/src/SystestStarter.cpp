@@ -27,6 +27,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Signal.hpp>
+#include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <yaml-cpp/yaml.h>
@@ -283,6 +284,27 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     if (program.is_used("-g"))
     {
         auto expectedGroups = program.get<std::vector<std::string>>("-g");
+        /// Command-line groups override matching excluded groups from config files
+        const auto previouslyExcludedGroups = config.excludeGroups.getValues();
+        config.excludeGroups.clear();
+        for (const auto& excludedGroup : previouslyExcludedGroups)
+        {
+            const auto excludedGroupLower = NES::toLowerCase(excludedGroup.getValue());
+            bool overriddenByCommandLineGroup = false;
+            for (const auto& expectedGroup : expectedGroups)
+            {
+                if (excludedGroupLower == NES::toLowerCase(expectedGroup))
+                {
+                    overriddenByCommandLineGroup = true;
+                    break;
+                }
+            }
+            if (!overriddenByCommandLineGroup)
+            {
+                config.excludeGroups.add(excludedGroup.getValue());
+            }
+        }
+
         for (const auto& expectedGroup : expectedGroups)
         {
             config.testGroups.add(expectedGroup);

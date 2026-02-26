@@ -229,9 +229,8 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             if (isDisabledTestFile(testfile))
             {
                 std::cout << fmt::format(
-                    "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
+                    "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
                     testfile.getLogFilePath());
-                return {};
             }
             return TestFileMap{{testfile.file, testfile}};
         }
@@ -245,9 +244,8 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (isDisabledTestFile(testfile))
         {
             std::cout << fmt::format(
-                "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
+                "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
                 testfile.getLogFilePath());
-            return {};
         }
         return TestFileMap{{testfile.file, testfile}};
     }
