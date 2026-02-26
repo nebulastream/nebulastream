@@ -64,6 +64,7 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
+      ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
     ];
 
     nativeBuildInputs = [
