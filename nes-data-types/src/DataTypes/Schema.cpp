@@ -62,7 +62,7 @@ Schema Schema::addField(std::string name, const DataType::Type type)
     DataType dataType{type};
     sizeOfSchemaInBytes += dataType.getSizeInBytes();
     fields.emplace_back(std::move(name), std::move(dataType));
-    nameToField.emplace(fields.back().name, fields.size() - 1);
+    nameToField.insert_or_assign(fields.back().name, fields.size() - 1);
     return *this;
 }
 
@@ -182,7 +182,7 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     for (const auto& otherField : otherSchema.fields)
     {
         this->fields.emplace_back(otherField);
-        this->nameToField.emplace(otherField.name, this->fields.size() - 1);
+        this->nameToField.insert_or_assign(otherField.name, this->fields.size() - 1);
     }
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }

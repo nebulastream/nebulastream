@@ -17,6 +17,8 @@ ATTACH INLINE
 CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
 CREATE SINK sinkAggResult(result FLOAT64) TYPE File;
 CREATE SINK sinkAggErr(input.start UINT64, input.end UINT64, out FLOAT64) TYPE File;
+CREATE SINK sinkMedian(input.i_median FLOAT64) TYPE File;
+CREATE SINK sinkDupAlias(ID UINT64) TYPE File;
 
 # All aggregation functions with auto-generated column names.
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
@@ -43,6 +45,14 @@ SELECT SUM(i) + FLOAT64(10) AS result FROM input WINDOW TUMBLING(timestamp, size
 13
 13
 
+# Single MEDIAN aggregation with explicit alias.
+# MEDIAN({1,2}) per window = 1.5.
+SELECT MEDIAN(i) AS i_median FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkMedian;
+----
+1.5
+1.5
+1.5
+
 # Arithmetic expression as aggregation argument (MEDIAN(i + UINT64(1))) must give a clear error, not crash.
 SELECT start, end, MEDIAN(i + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
 ----
@@ -52,3 +62,23 @@ ERROR 2000
 SELECT start, end, MEDIAN(i) + 1 AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
 ----
 ERROR 2000
+
+# Duplicate unaliased projections (SELECT i, i) must give a clear error.
+SELECT i, i FROM input INTO sinkDupAlias;
+----
+ERROR 2003
+
+# Alias colliding with unaliased field (SELECT i, UINT64(5) AS i) must give a clear error.
+SELECT i, UINT64(5) AS i FROM input INTO sinkDupAlias;
+----
+ERROR 2003
+
+# Duplicate explicit aliases (SELECT i AS ID, timestamp AS ID) must give a clear error.
+SELECT i AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
+----
+ERROR 2003
+
+# Duplicate explicit aliases with arithmetic (SELECT i + UINT64(1) AS ID, timestamp AS ID) must give a clear error.
+SELECT i + UINT64(1) AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
+----
+ERROR 2003
