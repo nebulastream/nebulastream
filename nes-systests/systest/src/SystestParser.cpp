@@ -134,6 +134,7 @@ static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
 static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
 static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
+static constexpr std::string_view SequentialExecutionToken = "SEQUENTIAL_EXECUTION"sv;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
@@ -142,7 +143,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
      {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION},
-     {DifferentialToken, TokenType::DIFFERENTIAL}});
+     {DifferentialToken, TokenType::DIFFERENTIAL},
+     {SequentialExecutionToken, TokenType::SEQUENTIAL_EXECUTION}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -233,6 +235,7 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
 void SystestParser::parse()
 {
     SystestQueryIdAssigner queryIdAssigner{};
+    bool sequentialExecution = false;
     while (auto token = getNextToken())
     {
         switch (token.value())
@@ -251,7 +254,7 @@ void SystestParser::parse()
                 lastParsedQueryId = queryId;
                 if (onQueryCallback)
                 {
-                    onQueryCallback(query, queryId);
+                    onQueryCallback(query, queryId, sequentialExecution);
                 }
                 break;
             }
@@ -305,6 +308,10 @@ void SystestParser::parse()
                 {
                     onDifferentialQueryBlockCallback(std::move(leftQuery), std::move(rightQuery), mainQueryId, differentialQueryId);
                 }
+                break;
+            }
+            case TokenType::SEQUENTIAL_EXECUTION: {
+                sequentialExecution = not sequentialExecution;
                 break;
             }
             case TokenType::ERROR_EXPECTATION:

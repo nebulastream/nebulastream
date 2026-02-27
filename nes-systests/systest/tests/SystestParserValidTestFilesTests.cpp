@@ -59,7 +59,7 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
 
     SystestParser parser{};
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
-    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId) { queryCallbackCalled = true; });
+    parser.registerOnQueryCallback([&](const std::string&, SystestQueryId, bool) { queryCallbackCalled = true; });
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&)
         { createCallbackCalled = true; });
@@ -171,7 +171,7 @@ TEST_F(SystestParserValidTestFileTest, Comments1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&queryCallbackCalled, &expectedQueries](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        [&queryCallbackCalled, &expectedQueries](const std::string& query, const SystestQueryId currentQueryIdInTest, bool)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
@@ -291,7 +291,7 @@ TEST_F(SystestParserValidTestFileTest, FilterTestFile)
 
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest, bool)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
@@ -326,7 +326,7 @@ TEST_F(SystestParserValidTestFileTest, ErrorExpectationTest)
 
     SystestParser parser{};
     parser.registerOnQueryCallback(
-        [&queryCallbackCalled, &expectQuery](const std::string& query, SystestQueryId)
+        [&queryCallbackCalled, &expectQuery](const std::string& query, SystestQueryId, bool)
         {
             ASSERT_EQ(query, expectQuery);
             queryCallbackCalled = true;
@@ -402,7 +402,7 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
 
 
     parser.registerOnQueryCallback(
-        [&](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        [&](const std::string& query, const SystestQueryId currentQueryIdInTest, bool)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
