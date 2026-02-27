@@ -19,13 +19,16 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <DataTypes/DataType.hpp>
 
 namespace NES
 {
-LazyValueRepresentation::LazyValueRepresentation(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size)
-    : size(size), ptrToLazyValue(reference)
+LazyValueRepresentation::LazyValueRepresentation(
+    const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType::Type& type)
+    : size(size), ptrToLazyValue(reference), type(type)
 {
 }
 

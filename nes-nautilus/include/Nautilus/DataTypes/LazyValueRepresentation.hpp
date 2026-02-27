@@ -16,7 +16,9 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <cstdint>
 #include <ostream>
+#include <utility>
 
+#include <DataTypes/DataType.hpp>
 #include <Util/Strings.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -27,7 +29,6 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 namespace NES
 {
-class LazyValueRepresentation;
 /// Like the VariableSizedData type, values of this data type consist of a pointer to the location of the value and the size of the value.
 /// We use this type of representation for fields in a pipeline, which are of a fixed sized data type but do not need to be in their fixed sized,
 /// internal memory-representation. This is the case, if the field is not used in a predicate function of a filter or in a scalar mapping expression in the first intermediate pipeline.
@@ -41,11 +42,50 @@ class LazyValueRepresentation;
 class LazyValueRepresentation
 {
 public:
-    explicit LazyValueRepresentation(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size);
-    LazyValueRepresentation(const LazyValueRepresentation& other);
-    LazyValueRepresentation& operator=(const LazyValueRepresentation& other) noexcept;
-    LazyValueRepresentation(LazyValueRepresentation&& other) noexcept;
-    LazyValueRepresentation& operator=(LazyValueRepresentation&& other) noexcept;
+    explicit LazyValueRepresentation(
+        const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType::Type type)
+        : size(size), ptrToLazyValue(reference), type(type)
+    {
+    }
+
+    LazyValueRepresentation(const LazyValueRepresentation& other) = default;
+
+    LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
+        : size(std::move(other.size)), ptrToLazyValue(other.ptrToLazyValue), type(other.type)
+    {
+    }
+
+    LazyValueRepresentation& operator=(const LazyValueRepresentation& other) noexcept
+    {
+        if (this == &other)
+        {
+            return *this;
+        }
+
+        size = other.size;
+        ptrToLazyValue = other.ptrToLazyValue;
+        type = other.type;
+        return *this;
+    }
+
+    nautilus::val<bool> isValid() const
+    {
+        PRECONDITION(size > 0 && ptrToLazyValue != nullptr, "LazyValue has a size larger than 0 but a nullptr pointer to the data.");
+        PRECONDITION(size == 0 && ptrToLazyValue == nullptr, "LazyValue has a size of 0 so there should be no pointer to the data.");
+        return size > 0 && ptrToLazyValue != nullptr;
+    }
+
+    LazyValueRepresentation& operator=(LazyValueRepresentation&& other) noexcept
+    {
+        if (this == &other)
+        {
+            return *this;
+        }
+
+        size = std::move(other.size);
+        ptrToLazyValue = std::move(other.ptrToLazyValue);
+        return *this;
+    }
 
     [[nodiscard]] nautilus::val<uint64_t> getSize() const;
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
@@ -70,8 +110,10 @@ public:
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);
+
 private:
     nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToLazyValue;
+    DataType::Type type;
 };
 }
