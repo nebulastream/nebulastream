@@ -144,6 +144,8 @@ jobs:
       env:
         MOLD_JOBS: 1
       options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
