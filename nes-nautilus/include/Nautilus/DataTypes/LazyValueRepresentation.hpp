@@ -22,6 +22,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <Util/Strings.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -29,26 +30,63 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 namespace NES
 {
+class RecordBuffer;
+class AbstractBufferProvider;
+class VarVal;
+class LazyValueRepresentation;
+
+/// Implementations for binary functions with the VarVal as lhs.
+/// Will call an invoke of the corresponding reverse<opname> method of the LazyValueRepresentation
+VarVal operator+(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator-(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator*(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator/(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator%(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator==(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator!=(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator&&(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator||(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator<(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator>(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator<=(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator>=(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator&(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator|(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator^(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator<<(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator>>(const VarVal& other, const LazyValueRepresentation& rhs);
+
 /// Like the VariableSizedData type, values of this data type consist of a pointer to the location of the value and the size of the value.
-/// We use this type of representation for fields in a pipeline, which are of a fixed sized data type but do not need to be in their fixed sized,
-/// internal memory-representation. This is the case, if the field is not used in a predicate function of a filter or in a scalar mapping expression in the first intermediate pipeline.
+/// Additionally, it stores its underlying datatype as member.
+/// All field values are initially represented this way until the first emit operator.
+/// In an emit, a lazy value will be parsed into its underlying nautilus value.
+/// All logical functions are implemented for lazy values. Per default, the lazy value will be parsed and the function will be applied on the underlying values.
+/// Derived classes of lazyValueRepresentation, which correspond to an implicit type, may override certain functions to avoid parsing.
 /// By not parsing the value immediately into the internal format and instead just referring to the "raw string" value in the input-formatted buffer,
 /// we potentially avoid costly parsing operations.
-///
-/// Remaining values of this datatype can be converted into the internal format, if an intermediate pipeline further downstream requires them to be represented this way.
-/// This still potentially saves us parsing operations, as some records might be filtered out already.
-/// Similarly, these values do not need to be "reverse-parsed" into their string format in the OutputFormatter, which especially saves parsing
+/// These values do not need to be "reverse-parsed" into their string format in the OutputFormatter, which especially saves parsing
 /// costs in stateless queries with only one intermediate pipeline between source and sink.
 class LazyValueRepresentation
 {
 public:
+    /// In general, we should not allow tempering with the pointer of lazy values from outside.
+    /// For output formatting, this is necessary though, so we add the function as friend
+    friend nautilus::val<uint64_t> formatAndWriteVal(
+        const VarVal& value,
+        const DataType& fieldType,
+        const nautilus::val<int8_t*>& address,
+        const nautilus::val<uint64_t>& remainingSize,
+        const RecordBuffer& recordBuffer,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider);
+
     explicit LazyValueRepresentation(
-        const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType::Type type)
+        const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType::Type& type)
         : size(size), ptrToLazyValue(reference), type(type)
     {
     }
 
     LazyValueRepresentation(const LazyValueRepresentation& other) = default;
+    virtual ~LazyValueRepresentation() = default;
 
     LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
         : size(std::move(other.size)), ptrToLazyValue(other.ptrToLazyValue), type(other.type)
@@ -57,18 +95,19 @@ public:
 
     LazyValueRepresentation& operator=(const LazyValueRepresentation& other) noexcept
     {
-        if (this == &other)
+        if (this == &other || other.ptrToLazyValue == nullptr)
         {
             return *this;
         }
 
         size = other.size;
         ptrToLazyValue = other.ptrToLazyValue;
-        type = other.type;
         return *this;
     }
 
-    nautilus::val<bool> isValid() const
+    /// Method to check if the lazy value has any text behind it.
+    /// Usable for some bool function overrides
+    [[nodiscard]] nautilus::val<bool> isValid() const
     {
         PRECONDITION(size > 0 && ptrToLazyValue != nullptr, "LazyValue has a size larger than 0 but a nullptr pointer to the data.");
         PRECONDITION(size == 0 && ptrToLazyValue == nullptr, "LazyValue has a size of 0 so there should be no pointer to the data.");
@@ -82,38 +121,58 @@ public:
             return *this;
         }
 
-        size = std::move(other.size);
-        ptrToLazyValue = std::move(other.ptrToLazyValue);
+        size = other.size;
+        ptrToLazyValue = other.ptrToLazyValue;
         return *this;
     }
 
-    [[nodiscard]] nautilus::val<uint64_t> getSize() const;
-    [[nodiscard]] nautilus::val<int8_t*> getContent() const;
-
-    /// Converts the lazy value into a nautilus::val of the underlying type T.
-    /// Use this method if parsing of the value becomes necessary at some point in the pipelines.
-    template <typename T>
-    [[nodiscard]] nautilus::val<T> parseToInternalRepresentation() const
-    {
-        /// This is exactly what parseIntoNautilusRecord in RawValueParser does but we cannot use it here since it would create a circular dependency of
-        /// RawValueParser -> Record -> VarVal -> LazyValueRepresentation -> ...
-        return nautilus::invoke(
-            +[](const uint64_t size, const char* ptr)
-            {
-                const auto fieldView = std::string_view(ptr, size);
-                return NES::from_chars_with_exception<T>(fieldView);
-            },
-            size,
-            ptrToLazyValue);
-    }
-
-    [[nodiscard]] nautilus::val<bool> isValid() const;
+    /// Converts the lazy value into a VarVal of the underlying value, as dictated by the type member.
+    [[nodiscard]] VarVal parseValue() const;
 
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const LazyValueRepresentation& lazyValue);
 
-private:
+    /// Overridable logical function implementations. Per default, a lazy value must always be parsed so the function can be executed.
+    [[nodiscard]] virtual VarVal operator+(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseAdd(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator-(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseSub(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator*(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseMul(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator/(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseDiv(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator%(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseMod(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator==(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseEQ(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator!=(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseNEQ(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator&&(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseAND(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator||(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseOR(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator<(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseLT(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator>(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseGT(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator<=(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseLE(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator>=(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseGE(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator&(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseBAND(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator|(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseBOR(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator^(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseXOR(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator<<(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseSHL(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator>>(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal reverseSHR(const VarVal& other) const;
+    [[nodiscard]] virtual VarVal operator!() const;
+
+protected:
     nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToLazyValue;
-    DataType::Type type;
+    const DataType::Type type;
 };
 }
