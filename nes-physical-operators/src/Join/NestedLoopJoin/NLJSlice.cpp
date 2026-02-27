@@ -23,6 +23,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
+#include <nautilus/inline.hpp>
 
 namespace NES
 {
@@ -58,19 +59,19 @@ uint64_t NLJSlice::getNumberOfTuplesRight() const
         [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
 }
 
-PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+NAUTILUS_INLINE PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % leftPagedVectors.size();
     return leftPagedVectors[pos].get();
 }
 
-PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+NAUTILUS_INLINE PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
     const auto pos = workerThreadId % rightPagedVectors.size();
     return rightPagedVectors[pos].get();
 }
 
-PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+NAUTILUS_INLINE PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {
@@ -80,6 +81,13 @@ PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, co
             return getPagedVectorRefLeft(workerThreadId);
     }
     std::unreachable();
+}
+
+NAUTILUS_INLINE PagedVector*
+getPagedVectorRefProxy(const NLJSlice* nljSlice, WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide)
+{
+    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+    return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
 }
 
 void NLJSlice::combinePagedVectors()

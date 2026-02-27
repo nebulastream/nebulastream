@@ -30,6 +30,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nautilus/inline.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -43,7 +44,7 @@ NLJOperatorHandler::NLJOperatorHandler(
 {
 }
 
-std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
+NAUTILUS_INLINE std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
 NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const
 {
     PRECONDITION(
