@@ -86,7 +86,7 @@ jobs:
             WORKER_PID=$!
             
             sleep 5
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 < query.sql
+            build/nes-frontend/nes-frontend -d -s localhost:8080 < query.sql
             
             # wait and monitor
             echo "Waiting and monitoring worker..."
@@ -104,10 +104,10 @@ jobs:
             done
             
             # stopping all queries
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 2
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 3
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 4
+            build/nes-frontend/nes-frontend -d -s localhost:8080 stop 1
+            build/nes-frontend/nes-frontend -d -s localhost:8080 stop 2
+            build/nes-frontend/nes-frontend -d -s localhost:8080 stop 3
+            build/nes-frontend/nes-frontend -d -s localhost:8080 stop 4
             echo "Worker stayed alive!"
             
             # stop worker
