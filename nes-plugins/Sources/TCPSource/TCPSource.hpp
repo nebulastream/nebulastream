@@ -14,27 +14,21 @@
 
 #pragma once
 
-#include <array>
 #include <chrono>
-#include <cstddef>
 #include <cstdint>
 #include <memory>
-#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
-#include <string_view>
 #include <unordered_map>
-#include <netdb.h>
+#include <variant>
 #include <Configurations/Descriptor.hpp>
-#include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> /// For socket functions
-#include <sys/types.h>
+#include <TCPSocket.hpp>
 
 namespace NES
 {
@@ -64,106 +58,26 @@ struct ConfigParametersTCP
             }
             return portNumber;
         }};
-    static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
-        "socket_domain",
-        AF_INET,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
-        {
-            /// User specified value, set if input is valid, throw if not.
-            const auto& socketDomainString = config.at(DOMAIN);
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
-            {
-                return (AF_INET);
-            }
-            if (strcasecmp(socketDomainString.c_str(), "AF_INET6") == 0)
-            {
-                return AF_INET6;
-            }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
-            return std::nullopt;
-        }};
-    static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
-        "socket_type",
-        SOCK_STREAM,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
-        {
-            auto socketTypeString = config.at(TYPE);
-            for (auto& character : socketTypeString)
-            {
-                character = toupper(character);
-            }
-            if (socketTypeString == "SOCK_STREAM")
-            {
-                return SOCK_STREAM;
-            }
-            if (socketTypeString == "SOCK_DGRAM")
-            {
-                return SOCK_DGRAM;
-            }
-            if (socketTypeString == "SOCK_SEQPACKET")
-            {
-                return SOCK_SEQPACKET;
-            }
-            if (socketTypeString == "SOCK_RAW")
-            {
-                return SOCK_RAW;
-            }
-            if (socketTypeString == "SOCK_RDM")
-            {
-                return SOCK_RDM;
-            }
-            NES_ERROR(
-                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
-                "SOCK_RDM",
-                socketTypeString)
-            return std::nullopt;
-        }};
-    static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
-        "tuple_delimiter",
-        '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flush_interval_ms",
         0,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
-        "socket_buffer_size",
-        1024,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
-        "bytes_sed_for_socket_buffer_size_transfer",
+    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT_MS{
+        "connect_timeout_ms",
         0,
-        [](const std::unordered_map<std::string, std::string>& config)
-        { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
-        "connect_timeout_seconds",
-        10,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT_MS, config); }};
+    static inline const DescriptorConfig::ConfigParameter<bool> AUTO_RECONNECT{
+        "auto_reconnect",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(AUTO_RECONNECT, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            SourceDescriptor::parameterMap,
-            HOST,
-            PORT,
-            DOMAIN,
-            TYPE,
-            SEPARATOR,
-            FLUSH_INTERVAL_MS,
-            SOCKET_BUFFER_SIZE,
-            SOCKET_BUFFER_TRANSFER_SIZE,
-            CONNECT_TIMEOUT);
+            SourceDescriptor::parameterMap, HOST, PORT, FLUSH_INTERVAL_MS, CONNECT_TIMEOUT_MS, AUTO_RECONNECT);
 };
 
-class TCPSource : public Source
+class TCPSource final : public Source
 {
-    constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
-    /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
-    constexpr static ssize_t EOF_RECEIVED_BUFFER_SIZE = 0;
-    /// We implicitly add one microsecond to avoid operation from never timing out
-    /// (https://linux.die.net/man/7/socket)
-    constexpr static suseconds_t IMPLICIT_TIMEOUT_USEC = 1;
-    constexpr static size_t ERROR_MESSAGE_BUFFER_SIZE = 256;
-
 public:
     static const std::string& name()
     {
@@ -191,26 +105,30 @@ public:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
-    bool tryToConnect(const addrinfo* result, int flags);
-    bool fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes);
+    struct Connecting
+    {
+        std::chrono::milliseconds backoff{0};
+    };
 
-    int connection = -1;
-    int sockfd = -1;
+    struct Receiving
+    {
+        TCPSocket socket;
+    };
 
-    /// buffer for thread-safe strerror_r
-    std::array<char, ERROR_MESSAGE_BUFFER_SIZE> errBuffer;
+    struct EoS
+    {
+    };
+
+    using State = std::variant<Connecting, Receiving, EoS>;
+
+    State state = Connecting{};
 
     std::string socketHost;
-    std::string socketPort;
-    int socketType;
-    int socketDomain;
-    char tupleDelimiter;
-    size_t socketBufferSize;
-    size_t bytesUsedForSocketBufferSizeTransfer;
-    float flushIntervalInMs;
-    uint64_t generatedTuples{0};
+    uint16_t socketPort;
+    std::chrono::milliseconds flushInterval;
     uint64_t generatedBuffers{0};
-    u_int32_t connectionTimeout;
+    std::chrono::milliseconds connectionTimeout;
+    bool autoReconnect;
 };
 
 }
