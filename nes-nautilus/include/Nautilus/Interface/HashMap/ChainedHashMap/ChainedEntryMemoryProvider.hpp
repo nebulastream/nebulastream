@@ -55,12 +55,12 @@ public:
     [[nodiscard]] Record readRecord(const nautilus::val<ChainedHashMapEntry*>& entryRef) const;
     void writeRecord(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
-        const nautilus::val<ChainedHashMap*>& hashMapRef,
+        const nautilus::val<TupleBuffer*>& tupleBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const Record& record) const;
     void writeEntryRef(
         const nautilus::val<ChainedHashMapEntry*>& entryRef,
-        const nautilus::val<ChainedHashMap*>& hashMapRef,
+        const nautilus::val<TupleBuffer*>& tupleBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider,
         const nautilus::val<ChainedHashMapEntry*>& otherEntryRef) const;
 

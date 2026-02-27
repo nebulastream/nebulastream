@@ -67,6 +67,12 @@ void TestPipelineExecutionContext::repeatTask(const TupleBuffer&, std::chrono::m
     repeatTaskCallback();
 }
 
+TupleBuffer& TestPipelineExecutionContext::pinBuffer(TupleBuffer&& tupleBuffer)
+{
+    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+    return *pinnedBuffers.back();
+}
+
 void TestPipelineStage::execute(const TupleBuffer& tupleBuffer, PipelineExecutionContext& pec)
 {
     for (const auto& [_, taskFunction] : taskSteps)

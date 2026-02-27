@@ -1,0 +1,37 @@
+# name: join/JoinWithDifferentDataTypes.test
+# description: Test join operator and the join function performs the join operation with variable sized data
+# groups: [WindowOperators, Join]
+
+CREATE LOGICAL SOURCE generator_text1(random_word_s1 VARSIZED, ts UINT64);
+CREATE PHYSICAL SOURCE FOR generator_text1 TYPE GENERATOR SET(
+    'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
+    1 as `SOURCE`.SEED,
+    'RANDOMSTR 1 6, SEQUENCE UINT64 0 2 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE generator_text2(random_word_s2 VARSIZED, ts UINT64);
+CREATE PHYSICAL SOURCE FOR generator_text2 TYPE GENERATOR SET(
+    'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
+    1 as `SOURCE`.SEED,
+    'RANDOMSTR 1 6, SEQUENCE UINT64 0 2 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+# Sink must include all output fields from the windowed join:
+# - start and end from the window
+# - all fields from generator_text1 (random_word_s1, ts)
+# - all fields from generator_text2 (random_word_s2, ts)
+CREATE SINK generator_sink_inline(
+    generator_text1generator_text2.start UINT64,
+    generator_text1generator_text2.end UINT64,
+    generator_text1.random_word_s1 VARSIZED,
+    generator_text1.ts UINT64,
+    generator_text2.random_word_s2 VARSIZED,
+    generator_text2.ts UINT64
+) TYPE File;
+
+# Check if variable sized data support the equals operation for a tumbling stream with event time for multiple keys
+SELECT * FROM (SELECT * FROM generator_text1) JOIN (SELECT * FROM generator_text2) ON random_word_s1 == random_word_s2
+  WINDOW TUMBLING (ts, size 1 sec) INTO generator_sink_inline;
+----
+0,1000,/JL,1,/JL,1
+0,1000,rM,0,rM,0

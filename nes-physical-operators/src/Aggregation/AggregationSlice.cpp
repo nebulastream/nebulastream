@@ -20,41 +20,54 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
+#include <spdlog/spdlog.h>
+
 #include <ErrorHandling.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
 {
 AggregationSlice::AggregationSlice(
+    AbstractBufferProvider* bufferProvider,
     const SliceStart sliceStart,
     const SliceEnd sliceEnd,
     const CreateNewHashMapSliceArgs& createNewHashMapSliceArgs,
     const uint64_t numberOfHashMaps)
-    : HashMapSlice(sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
+    : HashMapSlice(bufferProvider, sliceStart, sliceEnd, createNewHashMapSliceArgs, numberOfHashMaps, 1)
 {
 }
 
 HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
-    return hashMaps[pos].get();
+    const auto pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    auto childBufferIndex = getHashMapChildBufferIndex(pos);
+    if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        return nullptr;
+    }
+    auto childBuffer = loadHashMapBuffer(childBufferIndex);
+    return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
-HashMap* AggregationSlice::getHashMapPtrOrCreate(const WorkerThreadId workerThreadId)
+std::optional<TupleBuffer> AggregationSlice::getHashMapTupleBuffer(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % hashMaps.size();
-    INVARIANT(pos < hashMaps.size(), "The worker thread id should be smaller than the number of hashmaps");
-
-    if (hashMaps.at(pos) == nullptr)
+    const auto pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    auto childBufferIndex = getHashMapChildBufferIndex(pos);
+    if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
     {
-        hashMaps.at(pos) = std::make_unique<ChainedHashMap>(
-            createNewHashMapSliceArgs.keySize,
-            createNewHashMapSliceArgs.valueSize,
-            createNewHashMapSliceArgs.numberOfBuckets,
-            createNewHashMapSliceArgs.pageSize);
+        return std::nullopt;
     }
-    return hashMaps[pos].get();
+    auto childBuffer = loadHashMapBuffer(childBufferIndex);
+    return childBuffer;
+}
+
+VariableSizedAccess::Index AggregationSlice::getWorkerHashMapIndex(const WorkerThreadId workerThreadId) const
+{
+    const uint64_t pos = workerThreadId % numberOfHashMaps();
+    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
+    return getHashMapChildBufferIndex(pos);
 }
 
 }

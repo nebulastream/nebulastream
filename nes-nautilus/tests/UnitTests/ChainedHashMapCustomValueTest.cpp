@@ -55,6 +55,7 @@ public:
     static constexpr TestUtils::MinMaxValue MIN_MAX_NUMBER_OF_BUCKETS = {.min = 1, .max = 2048};
     static constexpr TestUtils::MinMaxValue MIN_MAX_PAGE_SIZE = {.min = 512, .max = 10240};
     ExecutionMode backend;
+    std::shared_ptr<BufferManager> bufferManager;
 
     static void SetUpTestSuite()
     {
@@ -79,13 +80,8 @@ public:
 /// Test for inserting compound keys and custom values. We choose a PagedVector as the custom value. This is similar to a multimap.
 TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 {
-    /// Creating the destructor callback for each item, i.e. keys and PagedVector
-    auto destructorCallback = [&](const ChainedHashMapEntry* entry)
-    {
-        const auto* memArea = reinterpret_cast<const int8_t*>(entry) + sizeof(ChainedHashMapEntry) + keySize;
-        const auto* pagedVector = reinterpret_cast<const PagedVector*>(memArea);
-        pagedVector->~PagedVector();
-    };
+    /// Create buffer manager
+    bufferManager = BufferManager::create();
 
     /// Resetting the entriesPerPage, as we have a paged vector as the value.
     valueSize = sizeof(PagedVector);
@@ -93,8 +89,13 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     entriesPerPage = params.pageSize / (totalSizeOfEntry);
 
     /// Creating the hash map
-    auto hashMap = ChainedHashMap(keySize, valueSize, params.numberOfBuckets, params.pageSize);
-    hashMap.setDestructorCallback(destructorCallback);
+    std::optional<TupleBuffer> hashMapBuffer
+        = bufferManager->getUnpooledBuffer(ChainedHashMap::calculateBufferSizeFromBuckets(params.numberOfBuckets));
+    if (!hashMapBuffer)
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+    }
+    auto hashMap = ChainedHashMap::init(hashMapBuffer.value(), keySize, valueSize, params.numberOfBuckets, params.pageSize);
     ASSERT_EQ(hashMap.getNumberOfTuples(), 0);
 
     /// We are writing the keys and values to the paged vector. This does not make sense in a real world scenario, but it is a good way to test the hashmap
@@ -130,7 +131,11 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         {
             /// We are writing the values to the paged vector
             findAndInsertIntoPagedVector(
-                std::addressof(bufferKey), std::addressof(bufferValue), keyPositionInBuffer, bufferManager.get(), std::addressof(hashMap));
+                std::addressof(bufferKey),
+                std::addressof(bufferValue),
+                keyPositionInBuffer,
+                bufferManager.get(),
+                std::addressof(hashMapBuffer.value()));
 
 
             /// Writing the values to the exact map
@@ -180,7 +185,11 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 
         /// Calling the compiled method to write all values of the hash map for a specific key position to the output buffer.
         writeAllRecordsIntoOutputBuffer(
-            std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
+            std::addressof(buffer),
+            keyPositionInBuffer,
+            std::addressof(outputBuffer),
+            bufferManager.get(),
+            std::addressof(hashMapBuffer.value()));
         const auto writtenBytes = outputBuffer.getNumberOfTuples() * inputBufferRef->getTupleSize();
         ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
         ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
@@ -200,8 +209,6 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
             ++currentPosition;
         }
     }
-
-    hashMap.clear();
 }
 
 INSTANTIATE_TEST_CASE_P(

@@ -49,6 +49,7 @@ namespace
 {
 TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
+    /// TODO #1368: This optimization leads to too many buffers being allocated
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
     if (tupleBufferProvider.getBufferSize() > newBufferSize)
     {
@@ -109,7 +110,6 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
         const VariableSizedAccess::Index childBufferIndex{tupleBuffer.storeChildBuffer(newChildBuffer)};
         return VariableSizedAccess{childBufferIndex, VariableSizedAccess::Size{totalVarSizedLength}};
     }
-
     /// There is enough space in the lastChildBuffer, thus, we copy the var sized into it
     const VariableSizedAccess::Offset childOffset{usedMemorySize};
     copyVarSizedAndIncrementMetaData(lastChildBuffer, childOffset, varSizedValue);

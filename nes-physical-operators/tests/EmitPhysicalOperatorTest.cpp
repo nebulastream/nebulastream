@@ -62,6 +62,8 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 {
     struct MockedPipelineContext final : PipelineExecutionContext
     {
+        std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
+
         bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy) override
         {
             buffers.wlock()->emplace_back(buffer);
@@ -99,6 +101,12 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+
+        [[nodiscard]] TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+        {
+            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+            return *pinnedBuffers.back();
+        }
     };
 
 public:

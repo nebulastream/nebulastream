@@ -210,6 +210,7 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
 
 #ifndef NO_ASSERT
     bool wasRepeated = false;
@@ -288,6 +289,12 @@ struct DefaultPEC final : PipelineExecutionContext
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
+    }
+
+    TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+    {
+        pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+        return *pinnedBuffers.back();
     }
 };
 

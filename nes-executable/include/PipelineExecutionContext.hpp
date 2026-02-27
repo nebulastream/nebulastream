@@ -60,5 +60,9 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;
+
+    /// @brief Pins a buffer to the Pipeline Execution Context.
+    /// This is necessary when Nautilus needs to get a reference to a TupleBuffer directly, when no object instances persist at runtime (views).
+    [[nodiscard]] virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
 };
 }

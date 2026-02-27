@@ -40,25 +40,25 @@ namespace NES
 void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
     const Record& keys, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderKeys.writeRecord(entryRef, hashMapRef, bufferProvider, keys);
+    memoryProviderKeys.writeRecord(entryRef, tupleBuffer, bufferProvider, keys);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyKeysToEntry(
     const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderKeys.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
+    memoryProviderKeys.writeEntryRef(entryRef, tupleBuffer, bufferProvider, otherEntryRef.entryRef);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
     const Record& values, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderValues.writeRecord(entryRef, hashMapRef, bufferProvider, values);
+    memoryProviderValues.writeRecord(entryRef, tupleBuffer, bufferProvider, values);
 }
 
 void ChainedHashMapRef::ChainedEntryRef::copyValuesToEntry(
     const ChainedEntryRef& otherEntryRef, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    memoryProviderValues.writeEntryRef(entryRef, hashMapRef, bufferProvider, otherEntryRef.entryRef);
+    memoryProviderValues.writeEntryRef(entryRef, tupleBuffer, bufferProvider, otherEntryRef.entryRef);
 }
 
 VarVal ChainedHashMapRef::ChainedEntryRef::getKey(const Record::RecordFieldIdentifier& fieldIdentifier) const
@@ -75,11 +75,6 @@ Record ChainedHashMapRef::ChainedEntryRef::getKey() const
 Record ChainedHashMapRef::ChainedEntryRef::getValue() const
 {
     return memoryProviderValues.readRecord(entryRef);
-}
-
-void ChainedHashMapRef::ChainedEntryRef::updateEntryRef(const nautilus::val<ChainedHashMapEntry*>& entryRef)
-{
-    ChainedHashMapRef::ChainedEntryRef::entryRef = entryRef;
 }
 
 nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() const
@@ -140,20 +135,20 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::ChainedEntryRef::getNext(
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue)
-    : entryRef(entryRef), hashMapRef(hashMapRef), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
+    : entryRef(entryRef), tupleBuffer(tupleBuffer), memoryProviderKeys(std::move(fieldsKey)), memoryProviderValues(std::move(fieldsValue))
 {
 }
 
 ChainedHashMapRef::ChainedEntryRef::ChainedEntryRef(
     const nautilus::val<ChainedHashMapEntry*>& entryRef,
-    const nautilus::val<ChainedHashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     ChainedEntryMemoryProvider memoryProviderKeys,
     ChainedEntryMemoryProvider memoryProviderValues)
     : entryRef(entryRef)
-    , hashMapRef(hashMapRef)
+    , tupleBuffer(tupleBuffer)
     , memoryProviderKeys(std::move(memoryProviderKeys))
     , memoryProviderValues(std::move(memoryProviderValues))
 {
@@ -174,7 +169,7 @@ nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findKey(const Record& rec
     auto entry = findChain(hash);
     while (entry)
     {
-        const ChainedEntryRef entryRef(entry, hashMapRef, fieldKeys, fieldValues);
+        const ChainedEntryRef entryRef(entry, tupleBuffer, fieldKeys, fieldValues);
         if (compareKeys(entryRef, recordKey))
         {
             return entry;
@@ -193,7 +188,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findEntry(const nautilus
 {
     /// Finding the entry. If chainEntry is nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef{chainEntry, hashMapRef, fieldKeys, fieldValues};
+    const ChainedEntryRef otherEntryRef{chainEntry, tupleBuffer, fieldKeys, fieldValues};
     const auto entryRef = findEntry(otherEntryRef);
     return entryRef;
 }
@@ -222,7 +217,7 @@ nautilus::val<AbstractHashMapEntry*> ChainedHashMapRef::findOrCreateEntry(
     }
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
-    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), hashMapRef, fieldKeys, fieldValues};
+    const auto newEntryRef = ChainedEntryRef{insert(hashValue, bufferProvider), tupleBuffer, fieldKeys, fieldValues};
     newEntryRef.copyKeysToEntry(recordKey, bufferProvider);
 
 
@@ -244,7 +239,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 {
     /// Finding the entry. If entry contains nullptr, there does not exist a key with the same values.
     const auto chainEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(otherEntry);
-    const ChainedEntryRef otherEntryRef(chainEntry, hashMapRef, fieldKeys, fieldValues);
+    const ChainedEntryRef otherEntryRef(chainEntry, tupleBuffer, fieldKeys, fieldValues);
     if (const auto entryRef = findEntry(otherEntryRef))
     {
         auto castedEntry = static_cast<nautilus::val<AbstractHashMapEntry*>>(entryRef);
@@ -257,7 +252,7 @@ void ChainedHashMapRef::insertOrUpdateEntry(
 
     /// We have not found the entry, so we need to insert a new one and copy the keys into the entry.
     const auto newEntry = insert(otherEntryRef.getHash(), bufferProvider);
-    const ChainedEntryRef newEntryRef(newEntry, hashMapRef, fieldKeys, fieldValues);
+    const ChainedEntryRef newEntryRef(newEntry, tupleBuffer, fieldKeys, fieldValues);
     newEntryRef.copyKeysToEntry(otherEntryRef, bufferProvider);
     if (onInsert)
     {
@@ -272,47 +267,76 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() const
     const nautilus::val<uint64_t> indexOnPage = 0;
     const nautilus::val<uint64_t> pageIndex = 0;
     const auto currentEntry = nautilus::invoke(
-        +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
+        +[](TupleBuffer* tupleBuffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
         {
-            const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            const auto& page = chm.getPage(pageIndexVal);
             return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
         },
-        hashMapRef,
+        tupleBuffer,
         pageIndex,
         indexOnPage);
     const auto numberOfTuplesInCurrentPage = nautilus::invoke(
-        +[](const HashMap* hashMap, const uint64_t pageIndexVal)
-        { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
-        hashMapRef,
+        +[](TupleBuffer* tupleBuffer, const uint64_t pageIndexVal)
+        {
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getPage(pageIndexVal).getNumberOfTuples();
+        },
+        tupleBuffer,
         pageIndex);
     const auto numberOfPages = nautilus::invoke(
-        +[](const HashMap* hashMap) { return dynamic_cast<const ChainedHashMap*>(hashMap)->getNumberOfPages(); }, hashMapRef);
+        +[](TupleBuffer* tupleBuffer)
+        {
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getNumberOfPages();
+        },
+        tupleBuffer);
 
-    return {hashMapRef, currentEntry, entrySize, tupleIndex, indexOnPage, numberOfTuplesInCurrentPage, pageIndex, numberOfPages};
+    return {tupleBuffer, currentEntry, entrySize, tupleIndex, indexOnPage, numberOfTuplesInCurrentPage, pageIndex, numberOfPages};
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() const
 {
     /// The iterator pointing to the end() should NEVER be advanced. Therefore, we do not need to set a lot of its members
-    const auto numberOfTuples = readValueFromMemRef<uint64_t>(getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples));
-    return {hashMapRef, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
+    const auto numberOfTuples = invoke(
+        +[](TupleBuffer* tupleBuffer)
+        {
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getNumberOfTuples();
+        },
+        tupleBuffer);
+    return {tupleBuffer, nullptr, entrySize, numberOfTuples, -1, -1, -1, -1};
 }
 
 nautilus::val<ChainedHashMapEntry*> ChainedHashMapRef::findChain(const HashFunction::HashValue& hash) const
 {
-    const auto numberOfTuplesRef = getMemberRef(hashMapRef, &ChainedHashMap::numberOfTuples);
-    const auto numberOfTuples = readValueFromMemRef<uint64_t>(numberOfTuplesRef);
+    const auto numberOfTuples = invoke(
+        +[](TupleBuffer* tupleBuffer)
+        {
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getNumberOfTuples();
+        },
+        tupleBuffer);
     if (numberOfTuples == 0)
     {
         return nullptr;
     }
-
-    const auto maskRef = getMemberRef(hashMapRef, &ChainedHashMap::mask);
-    auto mask = readValueFromMemRef<uint64_t>(maskRef);
+    const auto mask = invoke(
+        +[](TupleBuffer* tupleBuffer)
+        {
+            const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getMask();
+        },
+        tupleBuffer);
     const auto entryStartPos = hash & mask;
-    const auto entriesRef = getMemberRef(hashMapRef, &ChainedHashMap::entries);
-    auto entries = readValueFromMemRef<ChainedHashMapEntry**>(entriesRef);
-    const nautilus::val<ChainedHashMapEntry*> chainStart = entries[entryStartPos];
+    const auto chainStart = invoke(
+        +[](TupleBuffer* tupleBuffer, size_t entryStartPos)
+        {
+            ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.getChain(entryStartPos);
+        },
+        tupleBuffer,
+        entryStartPos);
     return chainStart;
 }
 
@@ -320,9 +344,12 @@ nautilus::val<ChainedHashMapEntry*>
 ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
 {
     const auto newEntry = invoke(
-        +[](HashMap* hashMap, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
-        { return dynamic_cast<ChainedHashMap*>(hashMap)->insertEntry(hashValue, bufferProviderVal); },
-        hashMapRef,
+        +[](TupleBuffer* tupleBuffer, const HashFunction::HashValue::raw_type hashValue, AbstractBufferProvider* bufferProviderVal)
+        {
+            ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+            return chm.insertEntry(hashValue, bufferProviderVal);
+        },
+        tupleBuffer,
         hash,
         bufferProvider);
     return static_cast<nautilus::val<ChainedHashMapEntry*>>(newEntry);
@@ -341,12 +368,12 @@ nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryR
 }
 
 ChainedHashMapRef::ChainedHashMapRef(
-    const nautilus::val<HashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     std::vector<FieldOffsets> fieldsKey,
     std::vector<FieldOffsets> fieldsValue,
     const nautilus::val<uint64_t>& entriesPerPage,
     const nautilus::val<uint64_t>& entrySize)
-    : HashMapRef(hashMapRef)
+    : HashMapRef(tupleBuffer)
     , fieldKeys(std::move(fieldsKey))
     , fieldValues(std::move(fieldsValue))
     , entriesPerPage(entriesPerPage)
@@ -355,13 +382,13 @@ ChainedHashMapRef::ChainedHashMapRef(
 }
 
 ChainedHashMapRef::ChainedHashMapRef(const ChainedHashMapRef& other)
-    : ChainedHashMapRef(other.hashMapRef, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize)
+    : ChainedHashMapRef(other.tupleBuffer, other.fieldKeys, other.fieldValues, other.entriesPerPage, other.entrySize)
 {
 }
 
 ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 {
-    hashMapRef = other.hashMapRef;
+    tupleBuffer = other.tupleBuffer;
     fieldKeys = other.fieldKeys;
     fieldValues = other.fieldValues;
     entriesPerPage = other.entriesPerPage;
@@ -370,7 +397,7 @@ ChainedHashMapRef& ChainedHashMapRef::operator=(const ChainedHashMapRef& other)
 }
 
 ChainedHashMapRef::EntryIterator::EntryIterator(
-    const nautilus::val<HashMap*>& hashMapRef,
+    const nautilus::val<TupleBuffer*>& tupleBuffer,
     const nautilus::val<ChainedHashMapEntry*>& currentEntry,
     const nautilus::val<uint64_t>& entrySize,
     const nautilus::val<uint64_t>& tupleIndex,
@@ -378,7 +405,7 @@ ChainedHashMapRef::EntryIterator::EntryIterator(
     const nautilus::val<uint64_t>& numberOfTuplesInCurrentPage,
     const nautilus::val<uint64_t>& pageIndex,
     const nautilus::val<uint64_t>& numberOfPages)
-    : hashMapRef(hashMapRef)
+    : tupleBuffer(tupleBuffer)
     , currentEntry(currentEntry)
     , entrySize(entrySize)
     , tupleIndex(tupleIndex)
@@ -403,18 +430,22 @@ ChainedHashMapRef::EntryIterator& ChainedHashMapRef::EntryIterator::operator++()
         }
         ++pageIndex;
         currentEntry = nautilus::invoke(
-            +[](const HashMap* hashMap, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
+            +[](TupleBuffer* tupleBuffer, const uint64_t pageIndexVal, const uint64_t indexOnPageVal)
             {
-                const auto& page = dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal);
+                const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+                const auto& page = chm.getPage(pageIndexVal);
                 return page.getAvailableMemoryArea().subspan(indexOnPageVal * sizeof(ChainedHashMapEntry)).data();
             },
-            hashMapRef,
+            tupleBuffer,
             pageIndex,
             indexOnPage);
         numberOfTuplesInCurrentPage = nautilus::invoke(
-            +[](const HashMap* hashMap, const uint64_t pageIndexVal)
-            { return dynamic_cast<const ChainedHashMap*>(hashMap)->getPage(pageIndexVal).getNumberOfTuples(); },
-            hashMapRef,
+            +[](TupleBuffer* tupleBuffer, const uint64_t pageIndexVal)
+            {
+                const ChainedHashMap chm = ChainedHashMap::load(*tupleBuffer);
+                return chm.getPage(pageIndexVal).getNumberOfTuples();
+            },
+            tupleBuffer,
             pageIndex);
 
         return *this;
