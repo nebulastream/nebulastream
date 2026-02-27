@@ -29,6 +29,7 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -44,13 +45,13 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
-
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
@@ -119,6 +120,7 @@ int main(int argc, char** argv)
 {
     CPPTRACE_TRY
     {
+        NES::setupSignalHandlers();
         bool interactiveMode
             = static_cast<int>(cpptrace::isatty(STDIN_FILENO)) != 0 and static_cast<int>(cpptrace::isatty(STDOUT_FILENO)) != 0;
 
