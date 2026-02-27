@@ -189,6 +189,36 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
+    auto toLowerSet = [](const auto& vec)
+    {
+        return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
+            | std::views::transform(toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
+    };
+
+    const auto includedGroups = toLowerSet(config.testGroups.getValues());
+    const auto excludedGroups = toLowerSet(config.excludeGroups.getValues());
+    const auto disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues());
+    const auto isDisabledTestFile = [&](const TestFile& testFile)
+    {
+        const auto lowerPath = toLowerCase(testFile.file.string());
+        const auto lowerFileName = toLowerCase(testFile.file.filename().string());
+        return std::ranges::any_of(
+            disabledTestFiles,
+            [&](const auto& disabledTestFile)
+            {
+                if (disabledTestFile == lowerFileName || disabledTestFile == lowerPath)
+                {
+                    return true;
+                }
+                if ((disabledTestFile.find('/') != std::string::npos || disabledTestFile.find('\\') != std::string::npos)
+                    && lowerPath.ends_with(disabledTestFile))
+                {
+                    return true;
+                }
+                return false;
+            });
+    };
+
     if (not config.directlySpecifiedTestFiles.getValue().empty()) /// load specifc test file
     {
         auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
@@ -196,6 +226,12 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         if (config.testQueryNumbers.empty()) /// case: load all tests
         {
             const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+            if (isDisabledTestFile(testfile))
+            {
+                std::cout << fmt::format(
+                    "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
+                    testfile.getLogFilePath());
+            }
             return TestFileMap{{testfile.file, testfile}};
         }
         /// case: load a concrete set of tests
@@ -205,6 +241,12 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
 
         const auto testfile
             = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        if (isDisabledTestFile(testfile))
+        {
+            std::cout << fmt::format(
+                "Including file://{} because it was explicitly selected via --testLocation, overriding disabled_test_files\n",
+                testfile.getLogFilePath());
+        }
         return TestFileMap{{testfile.file, testfile}};
     }
 
@@ -212,21 +254,23 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
     auto testFileExtension = config.testFileExtension.getValue();
     auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
 
-    auto toLowerSet = [](const auto& vec)
-    {
-        return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
-            | std::views::transform(toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
-    };
-    auto includedGroupsVector = config.testGroups.getValues();
-    auto excludedGroupsVector = config.excludeGroups.getValues();
-    const auto includedGroups = toLowerSet(config.testGroups.getValues());
-    const auto excludedGroups = toLowerSet(config.excludeGroups.getValues());
-
     std::erase_if(
         testMap,
         [&](const auto& nameAndFile)
         {
             const auto& [name, testFile] = nameAndFile;
+            const auto excludedGroupsSourceSuffix = [&]()
+            {
+                if (config.excludedGroupsProvidedOnCommandLine)
+                {
+                    return std::string{" (from --exclude-groups)"};
+                }
+                if (config.excludeGroupsConfiguredInDisableConfig)
+                {
+                    return std::string{" (from disable config file)"};
+                }
+                return std::string{};
+            }();
             if (!includedGroups.empty())
             {
                 if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
@@ -239,7 +283,17 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
             {
                 std::cout << fmt::format(
-                    "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
+                    "Skipping file://{} because it is part of the {:} excluded groups{}\n",
+                    testFile.getLogFilePath(),
+                    excludedGroups,
+                    excludedGroupsSourceSuffix);
+                return true;
+            }
+            if (isDisabledTestFile(testFile))
+            {
+                std::cout << fmt::format(
+                    "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
+                    testFile.getLogFilePath());
                 return true;
             }
             return false;

@@ -187,6 +187,7 @@ The executable can run individual tests, all tests in a given file, or all test 
 You can select the test cases and define the behaviour via command line arguments. 
 The executable can run individual tests (`-t /path/to/test.test:1`), all tests in a given file (`-t /path/to/test.test`), or all test files that belong to a defined group (`-g group1 group2`, `-e excludedGroup`).
 Tests can be run with specific configuration settings (`-- --worker.number_of_buffers_in_global_buffer_manager=10000`).
+Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/../config.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries on a remote worker use the remote mode (`-s`).
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).
