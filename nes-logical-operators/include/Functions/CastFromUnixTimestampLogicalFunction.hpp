@@ -18,66 +18,68 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-class NegateLogicalFunction final
+/// Converts a unix timestamp in milliseconds (UINT64) to an ISO-8601 UTC timestamp string (VARSIZED).
+class CastFromUnixTimestampLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "Negate";
+    static constexpr std::string_view NAME = "CastFromUnixTs";
 
-    explicit NegateLogicalFunction(LogicalFunction child);
+    explicit CastFromUnixTimestampLogicalFunction(LogicalFunction child);
 
-    [[nodiscard]] bool operator==(const NegateLogicalFunction& rhs) const;
+    [[nodiscard]] bool operator==(const CastFromUnixTimestampLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] NegateLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] CastFromUnixTimestampLogicalFunction withDataType(const DataType& dataType) const;
+
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
-    [[nodiscard]] NegateLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+    [[nodiscard]] CastFromUnixTimestampLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
+private:
+    DataType outputType;
     LogicalFunction child;
 
-private:
-    DataType dataType;
-
-    friend Reflector<NegateLogicalFunction>;
+    friend Reflector<CastFromUnixTimestampLogicalFunction>;
 };
 
 template <>
-struct Reflector<NegateLogicalFunction>
+struct Reflector<CastFromUnixTimestampLogicalFunction>
 {
-    Reflected operator()(const NegateLogicalFunction& function) const;
+    Reflected operator()(const CastFromUnixTimestampLogicalFunction& function) const;
 };
 
 template <>
-struct Unreflector<NegateLogicalFunction>
+struct Unreflector<CastFromUnixTimestampLogicalFunction>
 {
-    NegateLogicalFunction operator()(const Reflected& reflected) const;
+    CastFromUnixTimestampLogicalFunction operator()(const Reflected& reflected) const;
 };
 
-static_assert(LogicalFunctionConcept<NegateLogicalFunction>);
+static_assert(LogicalFunctionConcept<CastFromUnixTimestampLogicalFunction>);
 
-}
+} /// namespace NES
 
 namespace NES::detail
 {
-struct ReflectedNegateLogicalFunction
+struct ReflectedCastFromUnixTimestampLogicalFunction
 {
     std::optional<LogicalFunction> child;
+    /// NOTE: intentionally NO outputType here (we infer it)
 };
-}
+} /// namespace NES::detail
 
-FMT_OSTREAM(NES::NegateLogicalFunction);
+FMT_OSTREAM(NES::CastFromUnixTimestampLogicalFunction);

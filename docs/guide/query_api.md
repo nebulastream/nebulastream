@@ -509,12 +509,16 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Base**
 
-| Function                 | Example                             |
-|--------------------------|-------------------------------------|
-| Access a field           | `SELECT x FROM s INTO sink`         |
-| Define a constant        | `SELECT INT32(42) FROM s INTO sink` |
-| Rename an input function | `SELECT x AS x1 FROM s INTO sink`   |
-| Cast an input function   | `SELECT x FROM s INTO sink`         |
+| Function                       | Example                                      |
+|--------------------------------|----------------------------------------------|
+| Access a field                 | `SELECT x FROM s INTO sink`                  |
+| Define a constant              | `SELECT INT32(42) FROM s INTO sink`          |
+| Rename an input function       | `SELECT x AS x1 FROM s INTO sink`            |
+| Cast an input function         | `SELECT x FROM s INTO sink`                  |
+| Casts string to unix timestamp | `SELECT CASTTOUNIXTS(ts) FROM s INTO sink`   |
+| Casts unix timestamp to string | `SELECT CASTFROMUNIXTS(ts) FROM s INTO sink` |
+
+
 
 #### **Arithmetical**
 

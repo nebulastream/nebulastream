@@ -46,7 +46,8 @@
     "nameof",
     "scope-guard",
     "boost-url",
-    "simdjson"
+    "simdjson",
+    "date"
   ],
   "overrides": [
     {
