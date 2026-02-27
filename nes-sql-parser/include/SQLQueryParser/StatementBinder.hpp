@@ -31,7 +31,7 @@
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sinks/SinkDescriptor.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -41,6 +41,8 @@
 
 namespace NES
 {
+
+using LogicalSourceName = NESStrongStringType<struct LogicalSourceName_, "invalid">;
 
 enum class StatementOutputFormat : uint8_t
 {
@@ -58,7 +60,7 @@ struct CreateLogicalSourceStatement
 
 struct CreatePhysicalSourceStatement
 {
-    LogicalSource attachedTo;
+    LogicalSourceName attachedTo;
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
@@ -85,7 +87,7 @@ struct ShowLogicalSourcesStatement
 /// referencing a dms object
 struct ShowPhysicalSourcesStatement
 {
-    std::optional<LogicalSource> logicalSource;
+    std::optional<LogicalSourceName> logicalSource;
     std::optional<uint32_t> id;
     std::optional<StatementOutputFormat> format;
 };
@@ -98,7 +100,7 @@ struct ShowSinksStatement
 
 struct DropLogicalSourceStatement
 {
-    LogicalSource source;
+    LogicalSourceName source;
 };
 
 struct DropPhysicalSourceStatement
@@ -111,7 +113,15 @@ struct DropSinkStatement
     std::string name;
 };
 
-using QueryStatement = LogicalPlan;
+struct QueryStatement
+{
+    LogicalPlan plan;
+};
+
+struct ExplainQueryStatement
+{
+    LogicalPlan plan;
+};
 
 struct ShowQueriesStatement
 {
@@ -124,7 +134,12 @@ struct DropQueryStatement
     QueryId id;
 };
 
+struct WorkerStatusStatement
+{
+};
+
 using Statement = std::variant<
+    WorkerStatusStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -134,6 +149,7 @@ using Statement = std::variant<
     DropPhysicalSourceStatement,
     DropSinkStatement,
     QueryStatement,
+    ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     DropQueryStatement>;
@@ -216,3 +232,5 @@ FMT_OSTREAM(NES::CreatePhysicalSourceStatement);
 FMT_OSTREAM(NES::DropLogicalSourceStatement);
 FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
+FMT_OSTREAM(NES::WorkerStatusStatement);
+FMT_OSTREAM(NES::ExplainQueryStatement);

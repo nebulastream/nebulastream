@@ -16,7 +16,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 /// Implementation of the MurMur3 hash function for nautilus types.

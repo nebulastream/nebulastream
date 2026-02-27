@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <string>
 #include <Identifiers/NESStrongType.hpp>
 
 namespace NES
@@ -68,8 +69,6 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
     return id.getRawValue() % containerSize;
 }
 
-/// Legacy
-using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
-static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
-static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
+using WorkerId = NESStrongStringType<struct WorkerId_, "INVALID">;
+
 }

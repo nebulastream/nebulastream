@@ -12,13 +12,18 @@
 
 include_directories(tests/include)
 
+# Add interface library
+add_library(nes-query-optimizer-interface INTERFACE)
+target_include_directories(nes-query-optimizer-interface INTERFACE interface)
+target_link_libraries(nes-query-optimizer-interface INTERFACE nes-configurations)
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-nautilus nes-logical-operators nes-physical-operators nes-physical-operators-registry)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-nautilus nes-logical-operators nes-physical-operators nes-physical-operators-registry PRIVATE nes-input-formatter-provider)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
@@ -30,3 +35,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 create_registries_for_component(RewriteRule Trait)
+
+add_tests_if_enabled(tests)

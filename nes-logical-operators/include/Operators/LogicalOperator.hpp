@@ -30,10 +30,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -49,7 +51,7 @@ namespace detail
 struct ErasedLogicalOperator;
 }
 
-template <typename Checked = detail::ErasedLogicalOperator>
+template <typename Checked = NES::detail::ErasedLogicalOperator>
 struct TypedLogicalOperator;
 using LogicalOperator = TypedLogicalOperator<>;
 
@@ -65,7 +67,6 @@ concept LogicalOperatorConcept = requires(
     std::vector<LogicalOperator> children,
     TraitSet traitSet,
     const T& rhs,
-    SerializableOperator& serializableOperator,
     std::vector<Schema> inputSchemas) {
     /// Returns a string representation of the operator
     { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
@@ -85,8 +86,8 @@ concept LogicalOperatorConcept = requires(
     /// Returns the name of the operator, used during planning and optimization
     { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
-    /// Serializes the operator to a protobuf message
-    thisOperator.serialize(serializableOperator);
+    /// Serialize the operator to a Reflected object
+    { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
 
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
@@ -103,33 +104,6 @@ concept LogicalOperatorConcept = requires(
 
 namespace detail
 {
-struct DynamicBase
-{
-    virtual ~DynamicBase() = default;
-};
-}
-
-/// If your operator inherits from some type T,
-/// you will also need to inherit from Castable<T> if you want to be able to cast with <tt>TypedLogicalOperator<Checked>::getAs<T>()</tt>.
-/// If you control T, you can also use it as a CRTP and inherit it directly @code class T : Castable<T> @endcode
-/// This class is only there to add a commonly accessible VTable so that we can cast the pointer to the operator.
-/// @tparam T the type to be able to cast to from LogicalOperator
-template <typename T>
-struct Castable : detail::DynamicBase
-{
-    const T& get() const { return *dynamic_cast<const T*>(this); }
-
-    const T* operator->() const { return dynamic_cast<const T*>(this); }
-
-    const T& operator*() const { return *dynamic_cast<const T*>(this); }
-
-private:
-    Castable() = default;
-    friend T;
-};
-
-namespace detail
-{
 /// @brief A type erased wrapper for logical operators
 struct ErasedLogicalOperator
 {
@@ -140,7 +114,7 @@ struct ErasedLogicalOperator
     [[nodiscard]] virtual LogicalOperator withChildren(std::vector<LogicalOperator> children) const = 0;
     [[nodiscard]] virtual LogicalOperator withTraitSet(TraitSet traitSet) const = 0;
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
-    virtual void serialize(SerializableOperator& sOp) const = 0;
+    [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
     [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
     [[nodiscard]] virtual Schema getOutputSchema() const = 0;
@@ -173,7 +147,7 @@ template <typename Checked>
 struct TypedLogicalOperator
 {
     template <LogicalOperatorConcept T>
-    requires std::same_as<Checked, detail::ErasedLogicalOperator>
+    requires std::same_as<Checked, NES::detail::ErasedLogicalOperator>
     TypedLogicalOperator(TypedLogicalOperator<T> other) : self(other.self) /// NOLINT(google-explicit-constructor)
     {
     }
@@ -182,57 +156,57 @@ struct TypedLogicalOperator
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
     template <LogicalOperatorConcept T>
-    TypedLogicalOperator(const T& op) : self(std::make_shared<detail::OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    TypedLogicalOperator(const T& op) : self(std::make_shared<NES::detail::OperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
 
     template <LogicalOperatorConcept T>
-    TypedLogicalOperator(const detail::OperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
-        : self(std::make_shared<detail::OperatorModel<T>>(op.impl, op.id))
+    TypedLogicalOperator(const NES::detail::OperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_shared<NES::detail::OperatorModel<T>>(op.impl, op.id))
     {
     }
 
-    explicit TypedLogicalOperator(std::shared_ptr<const detail::ErasedLogicalOperator> op) : self(std::move(op)) { }
+    explicit TypedLogicalOperator(std::shared_ptr<const NES::detail::ErasedLogicalOperator> op) : self(std::move(op)) { }
 
     ///@brief Alternative to operator*
     [[nodiscard]] const Checked& get() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<NES::detail::ErasedLogicalOperator, Checked>)
         {
-            return *std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self);
+            return *std::dynamic_pointer_cast<const NES::detail::ErasedLogicalOperator>(self);
         }
         else
         {
-            return std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self)->impl;
+            return std::dynamic_pointer_cast<const NES::detail::OperatorModel<Checked>>(self)->impl;
         }
     }
 
     const Checked& operator*() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<NES::detail::ErasedLogicalOperator, Checked>)
         {
-            return *std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self);
+            return *std::dynamic_pointer_cast<const NES::detail::ErasedLogicalOperator>(self);
         }
         else
         {
-            return std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self)->impl;
+            return std::dynamic_pointer_cast<const NES::detail::OperatorModel<Checked>>(self)->impl;
         }
     }
 
     const Checked* operator->() const
     {
-        if constexpr (std::is_same_v<detail::ErasedLogicalOperator, Checked>)
+        if constexpr (std::is_same_v<NES::detail::ErasedLogicalOperator, Checked>)
         {
-            return std::dynamic_pointer_cast<const detail::ErasedLogicalOperator>(self).get();
+            return std::dynamic_pointer_cast<const NES::detail::ErasedLogicalOperator>(self).get();
         }
         else
         {
-            auto casted = std::dynamic_pointer_cast<const detail::OperatorModel<Checked>>(self);
+            auto casted = std::dynamic_pointer_cast<const NES::detail::OperatorModel<Checked>>(self);
             return &casted->impl;
         }
     }
 
-    TypedLogicalOperator() = default;
+    TypedLogicalOperator() = delete;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
@@ -240,9 +214,9 @@ struct TypedLogicalOperator
     template <LogicalOperatorConcept T>
     std::optional<TypedLogicalOperator<T>> tryGetAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::OperatorModel<T>>(self))
         {
-            return TypedLogicalOperator<T>{std::static_pointer_cast<const detail::ErasedLogicalOperator>(model)};
+            return TypedLogicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedLogicalOperator>(model)};
         }
         return std::nullopt;
     }
@@ -271,11 +245,11 @@ struct TypedLogicalOperator
     template <LogicalOperatorConcept T>
     TypedLogicalOperator<T> getAs() const
     {
-        if (auto model = std::dynamic_pointer_cast<const detail::OperatorModel<T>>(self))
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::OperatorModel<T>>(self))
         {
-            return TypedLogicalOperator<T>{std::static_pointer_cast<const detail::ErasedLogicalOperator>(model)};
+            return TypedLogicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedLogicalOperator>(model)};
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 
@@ -294,7 +268,7 @@ struct TypedLogicalOperator
                 return std::shared_ptr<const Castable<T>>{self, ptr};
             }
         }
-        PRECONDITION(false, "requested type {} , but stored type is {}", typeid(T).name(), typeid(self).name());
+        PRECONDITION(false, "requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
         std::unreachable();
     }
 
@@ -316,8 +290,6 @@ struct TypedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
-    void serialize(SerializableOperator& serializableOperator) const { self->serialize(serializableOperator); }
-
     [[nodiscard]] TraitSet getTraitSet() const { return self->getTraitSet(); }
 
     [[nodiscard]] std::vector<Schema> getInputSchemas() const { return self->getInputSchemas(); }
@@ -338,7 +310,7 @@ private:
 
     [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
-    std::shared_ptr<const detail::ErasedLogicalOperator> self;
+    std::shared_ptr<const NES::detail::ErasedLogicalOperator> self;
 };
 
 namespace detail
@@ -365,12 +337,7 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
 
-    void serialize(SerializableOperator& sOp) const override
-    {
-        impl.serialize(sOp);
-        PRECONDITION(sOp.operator_id() == OperatorId::INVALID, "Operator id should not be serialized in operator implementation");
-        sOp.set_operator_id(id.getRawValue());
-    }
+    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 
@@ -424,16 +391,6 @@ private:
 inline std::ostream& operator<<(std::ostream& os, const LogicalOperator& op)
 {
     return os << op.explain(ExplainVerbosity::Short);
-}
-
-/// Adds additional traits to the given operator, returning a new operator
-/// If the same trait (with the same data) is already present, the new trait will not be added.
-template <IsTrait... TraitType>
-LogicalOperator addAdditionalTraits(const LogicalOperator& op, const TraitType&... traits)
-{
-    auto result = op.getTraitSet();
-    (result.tryInsert(traits), ...);
-    return op.withTraitSet(std::move(result));
 }
 
 }

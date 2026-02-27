@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <numeric>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
@@ -33,14 +34,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/FunctionSerializationUtil.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -52,7 +52,7 @@ std::string explainProjection(const ProjectionLogicalOperator::Projection& proje
 {
     std::stringstream builder;
     builder << projection.second.explain(verbosity);
-    if (projection.first)
+    if (projection.first && projection.first->getFieldName() != projection.second.explain(verbosity))
     {
         builder << " as " << projection.first->getFieldName();
     }
@@ -83,9 +83,9 @@ std::vector<std::string> ProjectionLogicalOperator::getAccessedFields() const
                {
                    return BFSRange(function)
                        | std::views::filter([](const LogicalFunction& function)
-                                            { return function.tryGet<FieldAccessLogicalFunction>().has_value(); })
+                                            { return function.tryGetAs<FieldAccessLogicalFunction>().has_value(); })
                        | std::views::transform([](const LogicalFunction& function)
-                                               { return function.get<FieldAccessLogicalFunction>().getFieldName(); });
+                                               { return function.getAs<FieldAccessLogicalFunction>()->getFieldName(); });
                })
         | std::views::join | std::ranges::to<std::vector>();
 }
@@ -110,10 +110,10 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     if (verbosity == ExplainVerbosity::Debug)
     {
         builder << "opId: " << id << ", ";
-    }
-    if (!outputSchema.getFieldNames().empty())
-    {
-        builder << "schema: " << outputSchema << ", ";
+        if (!outputSchema.getFieldNames().empty())
+        {
+            builder << "schema: " << outputSchema << ", ";
+        }
     }
 
     builder << "fields: [";
@@ -126,8 +126,13 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
         }
     }
     builder << fmt::format("{}", fmt::join(explainedProjections, ", "));
-    builder << fmt::format(", traitSet: {}", traitSet.explain(verbosity));
-    builder << "])";
+    builder << "]";
+
+    if (verbosity == ExplainVerbosity::Debug)
+    {
+        builder << fmt::format(", traitSet: {}", traitSet.explain(verbosity));
+    }
+    builder << ")";
     return builder.str();
 }
 
@@ -167,7 +172,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     copy.inputSchema = firstSchema;
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
-    auto initial = Schema{copy.outputSchema.memoryLayoutType};
+    auto initial = Schema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);
@@ -216,66 +221,51 @@ std::vector<LogicalOperator> ProjectionLogicalOperator::getChildren() const
     return children;
 }
 
-void ProjectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogicalOperator& op) const
 {
-    SerializableLogicalOperator proto;
+    detail::ReflectedProjectionLogicalOperator reflected;
 
-    proto.set_operator_type(NAME);
-
-    const auto inputs = getInputSchemas();
-    for (size_t i = 0; i < inputs.size(); ++i)
+    for (auto [identifierOpt, function] : op.getProjections())
     {
-        auto* inSch = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputs[i], inSch);
+        const std::optional<std::string> identifier
+            = (identifierOpt.has_value() ? std::make_optional(identifierOpt.value().getFieldName()) : std::nullopt);
+        reflected.projections.emplace_back(identifier, std::make_optional(function));
     }
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+    reflected.asterisk = op.asterisk;
 
-    for (const auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
+    return reflect(reflected);
+}
 
-    ProjectionList projList;
-    for (const auto& [name, fn] : getProjections())
+ProjectionLogicalOperator Unreflector<ProjectionLogicalOperator>::operator()(const Reflected& reflected) const
+{
+    auto [asterisk, projections] = unreflect<detail::ReflectedProjectionLogicalOperator>(reflected);
+
+    std::vector<ProjectionLogicalOperator::Projection> parsedProjections;
+
+    for (auto [identifier, function] : projections)
     {
-        auto& proj = *projList.add_projections();
-        if (name)
+        if (!function.has_value())
         {
-            proj.set_identifier(name->getFieldName());
+            throw CannotDeserialize("Failed to deserialize projection function");
         }
-        proj.mutable_function()->CopyFrom(fn.serialize());
-    }
-    (*serializableOperator.mutable_config())[ConfigParameters::PROJECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(projList);
-    (*serializableOperator.mutable_config())[ConfigParameters::ASTERISK] = descriptorConfigTypeToProto(asterisk);
 
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+        parsedProjections.emplace_back(identifier, function.value());
+    }
+
+    return {std::move(parsedProjections), ProjectionLogicalOperator::Asterisk(asterisk)};
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterProjectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    const auto functionVariant = arguments.config.at(ProjectionLogicalOperator::ConfigParameters::PROJECTION_FUNCTION_NAME);
-    const auto asterisk = std::get<bool>(arguments.config.at(ProjectionLogicalOperator::ConfigParameters::ASTERISK));
-
-    if (const auto* projection = std::get_if<ProjectionList>(&functionVariant))
+    if (!arguments.reflected.isEmpty())
     {
-        auto logicalOperator = ProjectionLogicalOperator(
-            projection->projections()
-                | std::views::transform(
-                    [](const auto& serialized)
-                    {
-                        return ProjectionLogicalOperator::Projection{
-                            FieldIdentifier(serialized.identifier()),
-                            FunctionSerializationUtil::deserializeFunction(serialized.function())};
-                    })
-                | std::ranges::to<std::vector>(),
-            ProjectionLogicalOperator::Asterisk(asterisk));
-
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
+        return unreflect<ProjectionLogicalOperator>(arguments.reflected);
     }
-    throw UnknownLogicalOperator();
+
+    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 
 }

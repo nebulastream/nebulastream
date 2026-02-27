@@ -32,9 +32,9 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -46,6 +46,7 @@ struct ParserConfig
     std::string parserType;
     std::string tupleDelimiter;
     std::string fieldDelimiter;
+    bool allowCommasInStrings{};
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
@@ -73,17 +74,19 @@ public:
 
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
 
-    [[nodiscard]] SerializableSourceDescriptor serialize() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     friend class SourceCatalog;
     friend OperatorSerializationUtil;
+    friend struct Unreflector<SourceDescriptor>;
+    friend struct Reflector<SourceDescriptor>;
 
     PhysicalSourceId physicalSourceId;
     LogicalSource logicalSource;
     std::string sourceType;
     ParserConfig parserConfig;
+
 
     /// Used by Sources to create a valid SourceDescriptor.
     explicit SourceDescriptor(
@@ -109,6 +112,18 @@ public:
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
 };
 
+template <>
+struct Reflector<SourceDescriptor>
+{
+    Reflected operator()(const SourceDescriptor& sourceDescriptor) const;
+};
+
+template <>
+struct Unreflector<SourceDescriptor>
+{
+    SourceDescriptor operator()(const Reflected& rfl) const;
+};
+
 }
 
 template <>
@@ -119,6 +134,18 @@ struct std::hash<NES::SourceDescriptor>
         return folly::hash::hash_combine(sourceDescriptor.getLogicalSource(), sourceDescriptor.getPhysicalSourceId());
     }
 };
+
+namespace NES::detail
+{
+struct ReflectedSourceDescriptor
+{
+    uint64_t physicalSourceId = 0;
+    LogicalSource logicalSource;
+    std::string type;
+    ParserConfig parserConfig;
+    Reflected config;
+};
+}
 
 FMT_OSTREAM(NES::SourceDescriptor);
 FMT_OSTREAM(NES::ParserConfig);

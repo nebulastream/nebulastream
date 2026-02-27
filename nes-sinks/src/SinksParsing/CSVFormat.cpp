@@ -22,13 +22,13 @@
 #include <sstream>
 #include <string>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
-#include <MemoryLayout/VariableSizedAccess.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -64,24 +64,36 @@ std::string CSVFormat::tupleBufferToFormattedCSVString(TupleBuffer tbuffer, cons
     for (size_t i = 0; i < numberOfTuples; i++)
     {
         auto tuple = buffer.subspan(i * formattingContext.schemaSizeInBytes, formattingContext.schemaSizeInBytes);
-        auto fields = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
+        auto fields
+            = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                          [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                  [&formattingContext, &tuple, &tbuffer, copyOfEscapeStrings = escapeStrings](const auto& index)
+                  {
+                      const auto physicalType = formattingContext.physicalTypes[index];
+                      if (physicalType.type == DataType::Type::VARSIZED)
+                      {
+                          const auto base = formattingContext.offsets[index];
+                          uint64_t index{};
+                          uint64_t offset{};
+                          uint64_t size{};
+                          auto indexAddress = &tuple[base + offsetof(VariableSizedAccess, index)];
+                          auto offsetAddress = &tuple[base + offsetof(VariableSizedAccess, offset)];
+                          auto sizeAddress = &tuple[base + offsetof(VariableSizedAccess, size)];
+                          std::memcpy(&index, indexAddress, sizeof(uint32_t));
+                          std::memcpy(&offset, offsetAddress, sizeof(uint32_t));
+                          std::memcpy(&size, sizeAddress, sizeof(uint64_t));
+                          const VariableSizedAccess variableSizedAccess{VariableSizedAccess{
+                              VariableSizedAccess::Index(index), VariableSizedAccess::Offset(offset), VariableSizedAccess::Size(size)}};
+
+                          auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          if (copyOfEscapeStrings)
                           {
-                              const auto physicalType = formattingContext.physicalTypes[index];
-                              if (physicalType.type == DataType::Type::VARSIZED)
-                              {
-                                  const VariableSizedAccess variableSizedAccess{
-                                      *std::bit_cast<const uint64_t*>(&tuple[formattingContext.offsets[index]])};
-                                  auto varSizedData = MemoryLayout::readVarSizedDataAsString(tbuffer, variableSizedAccess);
-                                  if (copyOfEscapeStrings)
-                                  {
-                                      return "\"" + varSizedData + "\"";
-                                  }
-                                  return varSizedData;
-                              }
-                              return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
-                          });
+                              return "\"" + varSizedData + "\"";
+                          }
+                          return varSizedData;
+                      }
+                      return physicalType.formattedBytesToString(&tuple[formattingContext.offsets[index]]);
+                  });
         ss << fmt::format("{}\n", fmt::join(fields, ","));
     }
     return ss.str();

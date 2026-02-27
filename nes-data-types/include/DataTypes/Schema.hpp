@@ -27,6 +27,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Reflection.hpp>
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 
@@ -36,13 +37,6 @@ namespace NES
 class Schema
 {
 public:
-    /// Enum to identify the memory layout in which we want to represent the schema physically.
-    enum class MemoryLayoutType : uint8_t
-    {
-        ROW_LAYOUT = 0,
-        COLUMNAR_LAYOUT = 1
-    };
-
     struct Field
     {
         Field() = default;
@@ -74,7 +68,6 @@ public:
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
     explicit Schema() = default;
-    explicit Schema(MemoryLayoutType memoryLayoutType);
     ~Schema() = default;
 
     [[nodiscard]] bool operator==(const Schema& other) const = default;
@@ -112,9 +105,6 @@ public:
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
 
-    /// Public members that we get and set.
-    MemoryLayoutType memoryLayoutType{MemoryLayoutType::ROW_LAYOUT};
-
     [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<Field>>().cbegin());
     [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<Field>>().cend());
 
@@ -128,6 +118,45 @@ private:
 
 /// Returns a copy of the input schema without any source qualifier on the schema fields
 Schema withoutSourceQualifier(const Schema& input);
+
+namespace detail
+{
+struct ReflectedField
+{
+    std::string name;
+    DataType type;
+};
+
+struct ReflectedSchema
+{
+    std::vector<Schema::Field> fields;
+};
+
+}
+
+template <>
+struct Reflector<Schema::Field>
+{
+    Reflected operator()(const Schema::Field& field) const;
+};
+
+template <>
+struct Unreflector<Schema::Field>
+{
+    Schema::Field operator()(const Reflected& rfl) const;
+};
+
+template <>
+struct Reflector<Schema>
+{
+    Reflected operator()(const Schema& schema) const;
+};
+
+template <>
+struct Unreflector<Schema>
+{
+    Schema operator()(const Reflected& rfl) const;
+};
 
 }
 

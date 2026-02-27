@@ -23,6 +23,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -36,26 +37,9 @@ CastToTypeLogicalFunction::CastToTypeLogicalFunction(const DataType dataType, Lo
 {
 }
 
-SerializableFunction CastToTypeLogicalFunction::serialize() const
+bool CastToTypeLogicalFunction::operator==(const CastToTypeLogicalFunction& rhs) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    DataTypeSerializationUtil::serializeDataType(castToType, serializedFunction.mutable_data_type());
-    return serializedFunction;
-}
-
-bool CastToTypeLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
-{
-    if (const auto* other = dynamic_cast<const CastToTypeLogicalFunction*>(&rhs))
-    {
-        return *this == *other;
-    }
-    return false;
-}
-
-bool operator==(const CastToTypeLogicalFunction& lhs, const CastToTypeLogicalFunction& rhs)
-{
-    return rhs.castToType == lhs.castToType;
+    return this->castToType == rhs.castToType;
 }
 
 DataType CastToTypeLogicalFunction::getDataType() const
@@ -63,7 +47,7 @@ DataType CastToTypeLogicalFunction::getDataType() const
     return castToType;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withDataType(const DataType& dataType) const
+CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.castToType = dataType;
@@ -80,7 +64,7 @@ std::vector<LogicalFunction> CastToTypeLogicalFunction::getChildren() const
     return {child};
 }
 
-LogicalFunction CastToTypeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+CastToTypeLogicalFunction CastToTypeLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "CastToTypeLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -105,7 +89,20 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     {
         throw CannotDeserialize("CastToTypeLogicalFunction requires exactly one child, but got {}", arguments.children.size());
     }
-    return CastToTypeLogicalFunction(arguments.dataType, arguments.children[0]);
+    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
+}
+
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&) const
+{
+    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be reflected");
+    std::unreachable();
+}
+
+CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&) const
+{
+    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be unreflected");
+    std::unreachable();
 }
 
 }

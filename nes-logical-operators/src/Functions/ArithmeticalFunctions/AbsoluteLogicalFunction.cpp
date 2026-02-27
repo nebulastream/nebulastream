@@ -22,7 +22,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -40,7 +42,7 @@ DataType AbsoluteLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
+AbsoluteLogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -49,12 +51,8 @@ LogicalFunction AbsoluteLogicalFunction::withDataType(const DataType& dataType) 
 
 LogicalFunction AbsoluteLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    return withDataType(newChild.getDataType()).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
@@ -62,7 +60,7 @@ std::vector<LogicalFunction> AbsoluteLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction AbsoluteLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+AbsoluteLogicalFunction AbsoluteLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "AbsoluteLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -75,13 +73,9 @@ std::string_view AbsoluteLogicalFunction::getType() const
     return NAME;
 }
 
-bool AbsoluteLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool AbsoluteLogicalFunction::operator==(const AbsoluteLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const AbsoluteLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -93,18 +87,27 @@ std::string AbsoluteLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("ABS({})", child.explain(verbosity));
 }
 
-SerializableFunction AbsoluteLogicalFunction::serialize() const
+Reflected Reflector<AbsoluteLogicalFunction>::operator()(const AbsoluteLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedAbsoluteLogicalFunction{.child = function.child});
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterAbsoluteLogicalFunction(LogicalFunctionRegistryArguments arguments)
+AbsoluteLogicalFunction Unreflector<AbsoluteLogicalFunction>::operator()(const Reflected& reflected) const
 {
+    auto [child] = unreflect<detail::ReflectedAbsoluteLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("AbsoluteLogicalFunction is missing its child");
+    }
+    return AbsoluteLogicalFunction(child.value());
+}
+
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAbsLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AbsoluteLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("AbsoluteLogicalFunction requires exactly one child, but got {}", arguments.children.size());

@@ -140,37 +140,38 @@ public:
                     = NES::StagedBuffer{NES::RawTupleBuffer{dummyBuffer}, 0, static_cast<uint32_t>(threadLocalSequenceNumber)};
                 if (tupleDelimiter)
                 {
-                    NES::SequenceShredderResult leadingSTResult
-                        = sequenceShredder.findLeadingSTWithDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
-                    while (not leadingSTResult.isInRange)
+                    NES::SequenceShredderResult leadingSpanningTupleResult = sequenceShredder.findLeadingSpanningTupleWithDelimiter(
+                        dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                    while (not leadingSpanningTupleResult.isInRange)
                     {
-                        leadingSTResult = sequenceShredder.findLeadingSTWithDelimiter(
+                        leadingSpanningTupleResult = sequenceShredder.findLeadingSpanningTupleWithDelimiter(
                             dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
-                    const auto trailingSTResult
-                        = sequenceShredder.findTrailingSTWithDelimiter(NES::SequenceNumber{threadLocalSequenceNumber});
-                    const auto spanStart = (leadingSTResult.spanningBuffers.hasSpanningTuple())
-                        ? leadingSTResult.spanningBuffers.getSpanningBuffers().front().getOffsetOfLastTupleDelimiter()
+                    const auto trailingSpanningTupleResult
+                        = sequenceShredder.findTrailingSpanningTupleWithDelimiter(NES::SequenceNumber{threadLocalSequenceNumber});
+                    const auto spanStart = (leadingSpanningTupleResult.spanningBuffers.hasSpanningTuple())
+                        ? leadingSpanningTupleResult.spanningBuffers.getSpanningBuffers().front().getByteOffsetOfLastTuple()
                         : threadLocalSequenceNumber;
-                    const auto spanEnd = (trailingSTResult.hasSpanningTuple())
-                        ? trailingSTResult.getSpanningBuffers().back().getOffsetOfLastTupleDelimiter()
+                    const auto spanEnd = (trailingSpanningTupleResult.hasSpanningTuple())
+                        ? trailingSpanningTupleResult.getSpanningBuffers().back().getByteOffsetOfLastTuple()
                         : threadLocalSequenceNumber;
                     const auto localCheckSum = spanEnd - spanStart;
                     threadLocalCheckSum.at(threadIdx) += localCheckSum;
                 }
                 else
                 {
-                    NES::SequenceShredderResult result
-                        = sequenceShredder.findSTWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                    NES::SequenceShredderResult result = sequenceShredder.findSpanningTupleWithoutDelimiter(
+                        dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     while (not result.isInRange)
                     {
-                        result = sequenceShredder.findSTWithoutDelimiter(dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
+                        result = sequenceShredder.findSpanningTupleWithoutDelimiter(
+                            dummyStagedBuffer, NES::SequenceNumber{threadLocalSequenceNumber});
                     }
                     if (result.spanningBuffers.getSpanningBuffers().size() > 1)
                     {
                         /// The 'offset of last tuple delimiter' contains the sequence number (see comment above)
-                        const auto spanStart = result.spanningBuffers.getSpanningBuffers().front().getOffsetOfLastTupleDelimiter();
-                        const auto spanEnd = result.spanningBuffers.getSpanningBuffers().back().getOffsetOfLastTupleDelimiter();
+                        const auto spanStart = result.spanningBuffers.getSpanningBuffers().front().getByteOffsetOfLastTuple();
+                        const auto spanEnd = result.spanningBuffers.getSpanningBuffers().back().getByteOffsetOfLastTuple();
                         const auto localCheckSum = spanEnd - spanStart;
                         threadLocalCheckSum.at(threadIdx) += localCheckSum;
                     }

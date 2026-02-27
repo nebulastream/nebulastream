@@ -21,7 +21,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -34,15 +36,11 @@ MulLogicalFunction::MulLogicalFunction(const LogicalFunction& left, const Logica
 {
 }
 
-bool MulLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool MulLogicalFunction::operator==(const MulLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const MulLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string MulLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -59,7 +57,7 @@ DataType MulLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction MulLogicalFunction::withDataType(const DataType& dataType) const
+MulLogicalFunction MulLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -81,7 +79,7 @@ std::vector<LogicalFunction> MulLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction MulLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+MulLogicalFunction MulLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "MulLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -96,18 +94,28 @@ std::string_view MulLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction MulLogicalFunction::serialize() const
+Reflected Reflector<MulLogicalFunction>::operator()(const MulLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedMulLogicalFunction{.left = function.left, .right = function.right});
+}
+
+MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedMulLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("MulLogicalFunction is missing a child");
+    }
+    return MulLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<MulLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());

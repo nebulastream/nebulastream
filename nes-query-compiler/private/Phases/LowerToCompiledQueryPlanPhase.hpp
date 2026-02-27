@@ -30,7 +30,7 @@ class LowerToCompiledQueryPlanPhase
 {
 public:
     explicit LowerToCompiledQueryPlanPhase(DumpMode dumpQueryCompilationIntermediateRepresentations)
-        : dumpQueryCompilationIntermediateRepresentations(dumpQueryCompilationIntermediateRepresentations)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations)
     {
     }
 
@@ -55,6 +55,6 @@ private:
     std::shared_ptr<PipelinedQueryPlan> pipelineQueryPlan;
 
     /// Config parameter
-    DumpMode dumpQueryCompilationIntermediateRepresentations;
+    DumpMode dumpQueryCompilationIR;
 };
 }

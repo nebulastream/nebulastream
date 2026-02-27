@@ -21,13 +21,12 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
-#include <SystestState.hpp>
 
 namespace NES::Systest
 {

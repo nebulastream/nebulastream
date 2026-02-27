@@ -26,6 +26,8 @@ using PhysicalFunctionRegistryReturnType = PhysicalFunction;
 struct PhysicalFunctionRegistryArguments
 {
     std::vector<PhysicalFunction> childFunctions;
+    std::vector<DataType> inputTypes;
+    DataType outputType;
 };
 
 class PhysicalFunctionRegistry

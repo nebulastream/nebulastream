@@ -30,7 +30,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -51,15 +51,16 @@ class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
     friend OperatorSerializationUtil;
+    friend Unreflector<SinkDescriptor>;
 
 public:
     ~SinkDescriptor() = default;
 
-
-    [[nodiscard]] SerializableSinkDescriptor serialize() const;
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
+    /// Optional, since not every sink type uses an INPUT_FORMAT parameter.
+    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
@@ -73,7 +74,15 @@ private:
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
 
+    friend Reflector<SinkDescriptor>;
+
 public:
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
+        "input_format",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
         "add_timestamp",
@@ -83,7 +92,7 @@ public:
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, ADD_TIMESTAMP);
 
     /// Well-known property for any sink that sends its data to a file
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -97,6 +106,20 @@ public:
 
     friend struct SinkLogicalOperator;
 };
+
+template <>
+struct Reflector<SinkDescriptor>
+{
+    Reflected operator()(const SinkDescriptor& descriptor) const;
+};
+
+template <>
+struct Unreflector<SinkDescriptor>
+{
+    SinkDescriptor operator()(const Reflected& reflected) const;
+};
+
+
 }
 
 template <>
@@ -107,5 +130,16 @@ struct std::hash<NES::SinkDescriptor>
         return std::hash<std::string>{}(sinkDescriptor.getSinkName());
     }
 };
+
+namespace NES::detail
+{
+struct ReflectedSinkDescriptor
+{
+    std::variant<std::string, uint64_t> sinkName;
+    Schema schema;
+    std::string sinkType;
+    Reflected config;
+};
+}
 
 FMT_OSTREAM(NES::SinkDescriptor);

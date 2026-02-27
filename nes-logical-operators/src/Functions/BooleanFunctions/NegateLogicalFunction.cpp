@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,17 +35,13 @@ namespace NES
 {
 
 NegateLogicalFunction::NegateLogicalFunction(LogicalFunction child)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(std::move(child)))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), child(std::move(child))
 {
 }
 
-bool NegateLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool NegateLogicalFunction::operator==(const NegateLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const NegateLogicalFunction*>(&rhs))
-    {
-        return this->child == other->getChildren()[0];
-    }
-    return false;
+    return this->child == rhs.getChildren()[0];
 }
 
 std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -66,7 +64,7 @@ DataType NegateLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
+NegateLogicalFunction NegateLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -78,7 +76,7 @@ std::vector<LogicalFunction> NegateLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction NegateLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+NegateLogicalFunction NegateLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "NegateLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -91,18 +89,35 @@ std::string_view NegateLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction NegateLogicalFunction::serialize() const
+Reflected Reflector<NegateLogicalFunction>::operator()(const NegateLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedNegateLogicalFunction{.child = function.child});
+}
+
+NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [function] = unreflect<detail::ReflectedNegateLogicalFunction>(reflected);
+
+    if (!function.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize child of NegateLogicalFunction");
+    }
+    if (function->getDataType().type != DataType::Type::BOOLEAN)
+    {
+        throw CannotDeserialize("requires child of type bool, but got {}", function->getDataType());
+    }
+
+    return NegateLogicalFunction(std::move(function.value()));
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<NegateLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());

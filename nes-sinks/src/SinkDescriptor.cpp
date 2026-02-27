@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <unordered_map>
@@ -26,13 +27,15 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <magic_enum/magic_enum.hpp>
+
+#include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
-#include <SerializableOperator.pb.h>
 #include <SinkValidationRegistry.hpp>
 
 namespace NES
@@ -47,6 +50,19 @@ SinkDescriptor::SinkDescriptor(
 std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
 {
     return schema;
+}
+
+std::optional<std::string_view> SinkDescriptor::getFormatType() const
+{
+    try
+    {
+        return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+    }
+    catch (std::out_of_range& e)
+    {
+        NES_WARNING("Sinks of the type {} do not have an INPUT_FORMAT parameter.", getSinkType());
+        return std::nullopt;
+    }
 }
 
 std::string SinkDescriptor::getSinkType() const
@@ -91,19 +107,20 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
     return lhs.sinkName == rhs.sinkName;
 }
 
-SerializableSinkDescriptor SinkDescriptor::serialize() const
+Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
 {
-    SerializableSinkDescriptor serializedSinkDescriptor;
-    serializedSinkDescriptor.set_sinkname(getSinkName());
-    SchemaSerializationUtil::serializeSchema(*schema, serializedSinkDescriptor.mutable_sinkschema());
-    serializedSinkDescriptor.set_sinktype(sinkType);
-    /// Iterate over SinkDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : getConfig())
-    {
-        auto* kv = serializedSinkDescriptor.mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
-    }
-    return serializedSinkDescriptor;
+    return reflect(detail::ReflectedSinkDescriptor{
+        .sinkName = descriptor.sinkName,
+        .schema = *descriptor.schema,
+        .sinkType = descriptor.sinkType,
+        .config = descriptor.getReflectedConfig(),
+    });
+}
+
+SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
+{
+    auto [name, schema, type, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
 }
 
 }

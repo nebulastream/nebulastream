@@ -22,22 +22,20 @@
 #include <ChainedHashMapTestUtils.hpp>
 #include <Engine.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 class ChainedHashMapCustomValueTestUtils : public TestUtils::ChainedHashMapTestUtils
 {
 public:
     /// Compiles a method that finds a key in the hash map and inserts all record from the value buffer into the paged vector
     /// We are using the findOrCreateEntry() method of the hash map interface.
-    [[nodiscard]] nautilus::engine::
-        CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, Interface::HashMap*>
-        compileFindAndInsertIntoPagedVector(const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, uint64_t, AbstractBufferProvider*, HashMap*>
+    compileFindAndInsertIntoPagedVector(const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const;
 
 
     /// Compiles a function that iterates over all keys and writes all values for one key to the output buffer.
     /// We use the findOrCreateEntry() method of the hash map interface.
-    [[nodiscard]] nautilus::engine::
-        CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, Interface::HashMap*>
-        compileWriteAllRecordsIntoOutputBuffer(const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const;
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+    compileWriteAllRecordsIntoOutputBuffer(const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const;
 };
 }

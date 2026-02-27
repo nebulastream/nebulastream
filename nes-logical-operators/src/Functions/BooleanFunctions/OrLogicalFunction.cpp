@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -32,21 +34,15 @@
 namespace NES
 {
 OrLogicalFunction::OrLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
-    , left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
 {
 }
 
-bool OrLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool OrLogicalFunction::operator==(const OrLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const OrLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string OrLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -59,7 +55,7 @@ DataType OrLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
+OrLogicalFunction OrLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -71,7 +67,7 @@ std::vector<LogicalFunction> OrLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction OrLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+OrLogicalFunction OrLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "OrLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -95,37 +91,40 @@ LogicalFunction OrLogicalFunction::withInferredDataType(const Schema& schema) co
     }
     /// check if children dataType is correct
     INVARIANT(
-        left.getDataType().isType(DataType::Type::BOOLEAN), "the dataType of left child must be boolean, but was: {}", left.getDataType());
+        children.at(0).getDataType().isType(DataType::Type::BOOLEAN),
+        "the dataType of left child must be boolean, but was: {}",
+        children.at(0).getDataType());
     INVARIANT(
-        right.getDataType().isType(DataType::Type::BOOLEAN),
+        children.at(1).getDataType().isType(DataType::Type::BOOLEAN),
         "the dataType of right child must be boolean, but was: {}",
-        right.getDataType());
+        children.at(1).getDataType());
     return this->withChildren(children);
 }
 
-SerializableFunction OrLogicalFunction::serialize() const
+Reflected Reflector<OrLogicalFunction>::operator()(const OrLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedOrLogicalFunction{.left = function.left, .right = function.right});
+}
+
+OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedOrLogicalFunction>(reflected);
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<OrLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
-    }
-    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN
-        || arguments.children[1].getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize(
-            "OrLogicalFunction requires children of type bool, but got {} and {}",
-            arguments.children[0].getDataType(),
-            arguments.children[1].getDataType());
     }
     return OrLogicalFunction(arguments.children[0], arguments.children[1]);
 }

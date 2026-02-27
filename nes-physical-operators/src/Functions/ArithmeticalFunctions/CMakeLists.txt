@@ -10,8 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_plugin(Abs PhysicalFunction nes-physical-operators AbsolutePhysicalFunction.cpp)
 add_plugin(Add PhysicalFunction nes-physical-operators AddPhysicalFunction.cpp)
+add_plugin(Ceil PhysicalFunction nes-physical-operators CeilPhysicalFunction.cpp)
 add_plugin(Div PhysicalFunction nes-physical-operators DivPhysicalFunction.cpp)
+add_plugin(Floor PhysicalFunction nes-physical-operators FloorPhysicalFunction.cpp)
 add_plugin(Mod PhysicalFunction nes-physical-operators ModPhysicalFunction.cpp)
 add_plugin(Mul PhysicalFunction nes-physical-operators MulPhysicalFunction.cpp)
+add_plugin(Pow PhysicalFunction nes-physical-operators PowPhysicalFunction.cpp)
+add_plugin(Round PhysicalFunction nes-physical-operators RoundPhysicalFunction.cpp)
 add_plugin(Sub PhysicalFunction nes-physical-operators SubPhysicalFunction.cpp)
+add_plugin(Sqrt PhysicalFunction nes-physical-operators SqrtPhysicalFunction.cpp)

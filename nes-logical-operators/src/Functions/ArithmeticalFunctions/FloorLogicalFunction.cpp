@@ -19,10 +19,13 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -38,7 +41,7 @@ DataType FloorLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) const
+FloorLogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -47,12 +50,9 @@ LogicalFunction FloorLogicalFunction::withDataType(const DataType& dataType) con
 
 LogicalFunction FloorLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    const auto childDataType = newChild.getDataType();
+    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
@@ -60,7 +60,7 @@ std::vector<LogicalFunction> FloorLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction FloorLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+FloorLogicalFunction FloorLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "FloorLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -73,13 +73,9 @@ std::string_view FloorLogicalFunction::getType() const
     return NAME;
 }
 
-bool FloorLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool FloorLogicalFunction::operator==(const FloorLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const FloorLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -91,18 +87,28 @@ std::string FloorLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("FLOOR({})", child.explain(verbosity));
 }
 
-SerializableFunction FloorLogicalFunction::serialize() const
+Reflected Reflector<FloorLogicalFunction>::operator()(const FloorLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedFloorLogicalFunction{.child = function.child});
+}
+
+FloorLogicalFunction Unreflector<FloorLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedFloorLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return FloorLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFloorLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<FloorLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

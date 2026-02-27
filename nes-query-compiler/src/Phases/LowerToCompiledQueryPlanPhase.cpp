@@ -24,7 +24,6 @@
 #include <vector>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <InputFormatters/InputFormatterProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
@@ -61,30 +60,17 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     /// Convert logical source descriptor to actual source descriptor
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
-    const std::vector<std::shared_ptr<ExecutablePipeline>> executableSuccessorPipelines;
-    auto inputFormatterTaskPipeline = provideInputFormatterTask(
-        *sourceOperator.getDescriptor().getLogicalSource().getSchema(), sourceOperator.getDescriptor().getParserConfig());
-
-    auto executableInputFormatterPipeline
-        = ExecutablePipeline::create(pipeline->getPipelineId(), std::move(inputFormatterTaskPipeline), executableSuccessorPipelines);
+    std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
 
     for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(executableInputFormatterPipeline, successor))
+        if (auto executableSuccessor = processSuccessor(sourceOperator.id, successor))
         {
-            executableInputFormatterPipeline->successors.emplace_back(*executableSuccessor);
+            executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
-
-    /// Insert the executable pipeline into the pipelineQueryPlan at position 1 (after the source)
-    pipelineQueryPlan->removePipeline(*pipeline);
-
-    std::vector<std::weak_ptr<ExecutablePipeline>> inputFormatterTasks;
-
-    pipelineToExecutableMap.emplace(getNextPipelineId(), executableInputFormatterPipeline);
-    inputFormatterTasks.emplace_back(executableInputFormatterPipeline);
-
-    sources.emplace_back(sourceOperator.getOriginId(), sourceOperator.id, sourceOperator.getDescriptor(), std::move(inputFormatterTasks));
+    sources.emplace_back(
+        sourceOperator.getOriginId(), sourceOperator.id, sourceOperator.getDescriptor(), std::move(executableSuccessorPipelines));
 }
 
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)
@@ -119,29 +105,30 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
         }
     }
     /// See: https://github.com/nebulastream/nautilus/blob/main/docs/options.md
-    switch (dumpQueryCompilationIntermediateRepresentations)
+    switch (dumpQueryCompilationIR.getDumpOption())
     {
-        case DumpMode::NONE:
+        case DumpMode::Options::NONE:
             options.setOption("dump.all", false);
             options.setOption("dump.console", false);
             options.setOption("dump.file", false);
             break;
-        case DumpMode::CONSOLE:
+        case DumpMode::Options::CONSOLE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", true);
             options.setOption("dump.file", false);
             break;
-        case DumpMode::FILE:
+        case DumpMode::Options::FILE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", false);
             options.setOption("dump.file", true);
             break;
-        case DumpMode::FILE_AND_CONSOLE:
+        case DumpMode::Options::FILE_AND_CONSOLE:
             options.setOption("dump.all", true);
             options.setOption("dump.console", true);
             options.setOption("dump.file", true);
             break;
     }
+    options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 

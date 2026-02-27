@@ -21,9 +21,7 @@
 #include <typeinfo>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <magic_enum/magic_enum.hpp>
-#include <SerializableTrait.pb.h>
-#include <SerializableVariantDescriptor.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -34,25 +32,46 @@ enum class JoinImplementation : uint8_t
     CHOICELESS
 };
 
-/// Struct that stores implementation types as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
-struct ImplementationTypeTrait final : public TraitConcept
+/// Struct that stores the join implementation type as traits. For now, we simply have a choice/implementation type for the joins (Hash-Join vs. NLJ)
+struct JoinImplementationTypeTrait final
 {
-    static constexpr std::string_view NAME = "ImplementationType";
+    static constexpr std::string_view NAME = "JoinImplementationType";
     JoinImplementation implementationType;
 
-    explicit ImplementationTypeTrait(JoinImplementation implementationType);
+    explicit JoinImplementationTypeTrait(JoinImplementation implementationType);
 
-    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] const std::type_info& getType() const;
 
-    [[nodiscard]] SerializableTrait serialize() const override;
+    bool operator==(const JoinImplementationTypeTrait& other) const;
 
-    bool operator==(const TraitConcept& other) const override;
+    [[nodiscard]] size_t hash() const;
 
-    [[nodiscard]] size_t hash() const override;
+    [[nodiscard]] std::string explain(ExplainVerbosity) const;
 
-    [[nodiscard]] std::string explain(ExplainVerbosity) const override;
+    [[nodiscard]] std::string_view getName() const;
 
-    [[nodiscard]] std::string_view getName() const override;
+    friend Reflector<JoinImplementationTypeTrait>;
 };
 
+template <>
+struct Reflector<JoinImplementationTypeTrait>
+{
+    Reflected operator()(const JoinImplementationTypeTrait& trait) const;
+};
+
+template <>
+struct Unreflector<JoinImplementationTypeTrait>
+{
+    JoinImplementationTypeTrait operator()(const Reflected& reflected) const;
+};
+
+static_assert(TraitConcept<JoinImplementationTypeTrait>);
+}
+
+namespace NES::detail
+{
+struct ReflectedImplementationTypeTrait
+{
+    JoinImplementation joinImplementationType;
+};
 }

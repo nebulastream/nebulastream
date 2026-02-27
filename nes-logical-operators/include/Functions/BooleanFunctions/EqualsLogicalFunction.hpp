@@ -14,43 +14,69 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-class EqualsLogicalFunction final : public LogicalFunctionConcept
+class EqualsLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Equals";
 
     EqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
+    [[nodiscard]] bool operator==(const EqualsLogicalFunction& rhs) const;
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] EqualsLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] EqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
-
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
-
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend struct Reflector<EqualsLogicalFunction>;
+};
+
+template <>
+struct Reflector<EqualsLogicalFunction>
+{
+    Reflected operator()(const EqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<EqualsLogicalFunction>
+{
+    EqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<EqualsLogicalFunction>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
 };
 }
 

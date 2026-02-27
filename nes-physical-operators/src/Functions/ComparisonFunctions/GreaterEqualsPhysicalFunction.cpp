@@ -34,7 +34,7 @@ VarVal GreaterEqualsPhysicalFunction::execute(const Record& record, ArenaRef& ar
 }
 
 GreaterEqualsPhysicalFunction::GreaterEqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction)
-    : leftPhysicalFunction(std::move(std::move(leftPhysicalFunction))), rightPhysicalFunction(std::move(std::move(rightPhysicalFunction)))
+    : leftPhysicalFunction(std::move(leftPhysicalFunction)), rightPhysicalFunction(std::move(rightPhysicalFunction))
 {
 }
 
@@ -42,7 +42,7 @@ PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterG
     PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(
-        physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two sub-functions");
+        physicalFunctionRegistryArguments.childFunctions.size() == 2, "GreaterEquals function must have exactly two child functions");
     return GreaterEqualsPhysicalFunction(
         physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }

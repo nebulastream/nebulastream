@@ -22,7 +22,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -41,7 +43,7 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
+AddLogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -63,7 +65,7 @@ std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+AddLogicalFunction AddLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "AddLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -78,16 +80,11 @@ std::string_view AddLogicalFunction::getType() const
     return NAME;
 }
 
-bool AddLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool AddLogicalFunction::operator==(const AddLogicalFunction& rhs) const
 {
-    const auto* other = dynamic_cast<const AddLogicalFunction*>(&rhs);
-    if (other != nullptr)
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = right == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -99,18 +96,27 @@ std::string AddLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} + {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-SerializableFunction AddLogicalFunction::serialize() const
+Reflected Reflector<AddLogicalFunction>::operator()(const AddLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedAddLogicalFunction{.left = function.left, .right = function.right});
+}
+
+AddLogicalFunction Unreflector<AddLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedAddLogicalFunction>(reflected);
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("AddLogicalFunction is missing child");
+    }
+    return AddLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AddLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("Function requires exactly two children, but got {}", arguments.children.size());

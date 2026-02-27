@@ -14,18 +14,24 @@
 
 #pragma once
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <span>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/VariableSizedAccess.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
+
 
 /// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferRef is closely coupled with a memory layout, and we support row and column layouts, currently.
@@ -33,12 +39,22 @@ namespace NES::Nautilus::Interface::BufferRef
 /// available, we fall back to an unpooled buffer.
 class TupleBufferRef
 {
+protected:
+    uint64_t capacity;
+    uint64_t bufferSize;
+    uint64_t tupleSize;
+
 public:
+    TupleBufferRef(uint64_t capacity, uint64_t bufferSize, uint64_t tupleSize);
     virtual ~TupleBufferRef();
 
-    static std::shared_ptr<TupleBufferRef> create(uint64_t bufferSize, const Schema& schema);
+    /// @brief Writes the variable sized data to the buffer
+    static VariableSizedAccess
+    writeVarSized(TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, std::span<const std::byte> varSizedValue);
 
-    [[nodiscard]] virtual std::shared_ptr<MemoryLayout> getMemoryLayout() const = 0;
+    /// @brief Reads the variable sized data and returns the pointer to the var sized data
+    /// @return Pointer to variable sized data
+    static std::span<std::byte> loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess);
 
     /// Reads a record from the given bufferAddress and recordIndex.
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
@@ -60,6 +76,12 @@ public:
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
         = 0;
+
+    [[nodiscard]] uint64_t getCapacity() const;
+    [[nodiscard]] uint64_t getBufferSize() const;
+    [[nodiscard]] uint64_t getTupleSize() const;
+    [[nodiscard]] virtual std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const = 0;
+    [[nodiscard]] virtual std::vector<DataType> getAllDataTypes() const = 0;
 
 protected:
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference

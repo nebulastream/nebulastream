@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,21 +35,15 @@ namespace NES
 {
 
 GreaterLogicalFunction::GreaterLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
-    , left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
 {
 }
 
-bool GreaterLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool GreaterLogicalFunction::operator==(const GreaterLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const GreaterLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string GreaterLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -60,7 +56,7 @@ DataType GreaterLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterLogicalFunction::withDataType(const DataType& dataType) const
+GreaterLogicalFunction GreaterLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -82,7 +78,7 @@ std::vector<LogicalFunction> GreaterLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+GreaterLogicalFunction GreaterLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "GreaterLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -96,19 +92,29 @@ std::string_view GreaterLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction GreaterLogicalFunction::serialize() const
+Reflected Reflector<GreaterLogicalFunction>::operator()(const GreaterLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedGreaterLogicalFunction{.left = function.left, .right = function.right});
+}
+
+GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedGreaterLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("GreaterLogicalFunction is missing a child");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<GreaterLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());

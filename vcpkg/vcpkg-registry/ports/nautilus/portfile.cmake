@@ -13,10 +13,11 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF 8e822c5ace0ebd4fd11a49cd6c0bf29b622d7956
-        SHA512 3f33d24d43772ec1a82e166403d86890e07441b8e970a7324365cc3d2c3d8af1b0892ae3af3a1c15c3e18bbd40ed1aa5ceeb738fe9c0e8bc172abe37f3f2ba7f
+		REF d75a6816436c824090c85191a0c1e39239cf2479
+        SHA512 68c6315bbab9a1fe8855977db2b4ff3ed8fed097cd73e3eef089eb4d487bb09f503c0f348ee36a340a65319617e573f9993cad582a6b5b9b4a53edc0b3dd17f0
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0002-increase-typed-value-ref-u16-to-u32.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
@@ -31,6 +32,7 @@ vcpkg_cmake_configure(
 		OPTIONS
 		-DENABLE_TESTS=OFF
 		-DENABLE_MLIR_BACKEND=ON
+		-DENABLE_LOGGING=OFF
 		-DENABLE_BC_BACKEND=OFF
 		-DENABLE_C_BACKEND=OFF
 		-DENABLE_STACKTRACE=OFF

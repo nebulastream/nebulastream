@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,21 +35,15 @@ namespace NES
 {
 
 GreaterEqualsLogicalFunction::GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }
 
-bool GreaterEqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool GreaterEqualsLogicalFunction::operator==(const GreaterEqualsLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const GreaterEqualsLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string GreaterEqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -60,7 +56,7 @@ DataType GreaterEqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -82,7 +78,7 @@ std::vector<LogicalFunction> GreaterEqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+GreaterEqualsLogicalFunction GreaterEqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "GreaterEqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -96,19 +92,28 @@ std::string_view GreaterEqualsLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction GreaterEqualsLogicalFunction::serialize() const
+Reflected Reflector<GreaterEqualsLogicalFunction>::operator()(const GreaterEqualsLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedGreaterEqualsLogicalFunction{.left = function.left, .right = function.right});
+}
+
+GreaterEqualsLogicalFunction Unreflector<GreaterEqualsLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedGreaterEqualsLogicalFunction>(reflected);
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<GreaterEqualsLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterEqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

@@ -18,8 +18,10 @@
 #include <ostream>
 #include <string>
 #include <utility>
+
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/core.h>
 #include <fmt/format.h>
@@ -134,10 +136,9 @@ uint32_t DataType::getSizeInBytes() const
         case Type::FLOAT32:
             return 4;
         case Type::VARSIZED:
-            /// Returning '8' for VARSIZED, because we store 'uint64_t' data that represent how to access the data, c.f., @class VariableSizedAccess
-            return 8;
-        case Type::VARSIZED_POINTER_REP:
-            return sizeof(int8_t*);
+            /// Returning '16' for VARSIZED, because we store 'uint64_t' 8-byte data that represent how to access the data, c.f., @class VariableSizedAccess
+            /// and 8 bytes for the size of the VARSIZED
+            return 16;
         case Type::INT64:
         case Type::UINT64:
         case Type::FLOAT64:
@@ -172,9 +173,9 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::UINT64:
             return std::to_string(*static_cast<const uint64_t*>(data));
         case Type::FLOAT32:
-            return Util::formatFloat(*static_cast<const float*>(data));
+            return formatFloat(*static_cast<const float*>(data));
         case Type::FLOAT64:
-            return Util::formatFloat(*static_cast<const double*>(data));
+            return formatFloat(*static_cast<const double*>(data));
         case Type::BOOLEAN:
             return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
         case Type::CHAR: {
@@ -184,14 +185,9 @@ std::string DataType::formattedBytesToString(const void* data) const
             }
             return std::string{*static_cast<const char*>(data)};
         }
-        case Type::VARSIZED_POINTER_REP:
         case Type::VARSIZED: {
-            /// Read the length of the VariableSizedDataType from the first StringLengthType bytes from the buffer and adjust the data pointer.
-            using StringLengthType = uint32_t;
-            const StringLengthType textLength = *static_cast<const uint32_t*>(data);
             const auto* textPointer = static_cast<const char*>(data);
-            textPointer += sizeof(StringLengthType); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
-            return {textPointer, textLength};
+            return textPointer;
         }
         case Type::UNDEFINED:
             return "invalid physical type";
@@ -274,11 +270,6 @@ DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZEDDataType(
     return DataType{.type = DataType::Type::VARSIZED};
 }
 
-DataTypeRegistryReturnType DataTypeGeneratedRegistrar::RegisterVARSIZED_POINTER_REPDataType(DataTypeRegistryArguments)
-{
-    return DataType{.type = DataType::Type::VARSIZED_POINTER_REP};
-}
-
 bool DataType::isInteger() const
 {
     return this->type == Type::UINT8 or this->type == Type::UINT16 or this->type == Type::UINT32 or this->type == Type::UINT64
@@ -349,6 +340,17 @@ std::optional<DataType> DataType::join(const DataType& otherDataType) const
     }
     NES_WARNING("Cannot join {} and {}", *this, otherDataType);
     return std::nullopt;
+}
+
+Reflected Reflector<DataType>::operator()(const DataType& field) const
+{
+    return reflect(field.type);
+}
+
+DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
+{
+    const auto type = unreflect<DataType::Type>(rfl);
+    return DataTypeProvider::provideDataType(type);
 }
 
 std::ostream& operator<<(std::ostream& os, const DataType& dataType)

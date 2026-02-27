@@ -25,6 +25,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -32,7 +33,7 @@ namespace NES
 
 /// This function node represents a constant value and a fixed data type.
 /// Thus, the dataType of this function is always fixed.
-class ConstantValueLogicalFunction final : public LogicalFunctionConcept
+class ConstantValueLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "ConstantValue";
@@ -41,19 +42,17 @@ public:
 
     [[nodiscard]] std::string getConstantValue() const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] bool operator==(const ConstantValueLogicalFunction& rhs) const;
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] ConstantValueLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] ConstantValueLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
-
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     struct ConfigParameters
     {
@@ -70,6 +69,29 @@ public:
 private:
     const std::string constantValue;
     DataType dataType;
+};
+
+template <>
+struct Reflector<ConstantValueLogicalFunction>
+{
+    Reflected operator()(const ConstantValueLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<ConstantValueLogicalFunction>
+{
+    ConstantValueLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<ConstantValueLogicalFunction>);
+}
+
+namespace NES::detail
+{
+struct ReflectedConstantValueLogicalFunction
+{
+    std::string value;
+    DataType::Type type;
 };
 }
 

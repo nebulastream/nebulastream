@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,19 +35,13 @@ namespace NES
 {
 
 LessLogicalFunction::LessLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }
 
-bool LessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool LessLogicalFunction::operator==(const LessLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const LessLogicalFunction*>(&rhs))
-    {
-        return this->left == other->left && this->right == other->right;
-    }
-    return false;
+    return this->left == rhs.left && this->right == rhs.right;
 }
 
 std::string LessLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -58,7 +54,7 @@ DataType LessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction LessLogicalFunction::withDataType(const DataType& dataType) const
+LessLogicalFunction LessLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -80,7 +76,7 @@ std::vector<LogicalFunction> LessLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction LessLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+LessLogicalFunction LessLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "LessLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -94,18 +90,30 @@ std::string_view LessLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction LessLogicalFunction::serialize() const
+Reflected Reflector<LessLogicalFunction>::operator()(const LessLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedLessLogicalFunction{.left = function.left, .right = function.right});
+}
+
+LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedLessLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("LessLogicalFunction is missing a child function");
+    }
+
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<LessLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());

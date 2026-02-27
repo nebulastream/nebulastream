@@ -25,18 +25,18 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <boost/core/demangle.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
-using namespace Nautilus;
 struct ExecutionContext;
 
 /// Unique ID generation for physical operators.
@@ -151,7 +151,7 @@ struct PhysicalOperator
         {
             return p->data;
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", typeid(OperatorType).name(), typeid(self).name());
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(OperatorType), NAMEOF_TYPE_EXPR(self));
     }
 
 private:
@@ -199,11 +199,7 @@ private:
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
-        [[nodiscard]] std::string toString() const override
-        {
-            const auto nameDemangled = boost::core::demangle(typeid(OperatorType).name());
-            return "PhysicalOperator(" + nameDemangled + ")";
-        }
+        [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };
 
     std::shared_ptr<const Concept> self;
@@ -226,12 +222,25 @@ public:
         INTERMEDIATE, /// neither of them, intermediate operator
     };
 
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema);
-    PhysicalOperatorWrapper(PhysicalOperator physicalOperator, Schema inputSchema, Schema outputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         Schema inputSchema,
         Schema outputSchema,
+        MemoryLayoutType inputMemoryLayoutType,
+        MemoryLayoutType outputMemoryLayoutType);
+    PhysicalOperatorWrapper(
+        PhysicalOperator physicalOperator,
+        Schema inputSchema,
+        Schema outputSchema,
+        MemoryLayoutType inputMemoryLayoutType,
+        MemoryLayoutType outputMemoryLayoutType,
+        PipelineLocation pipelineLocation);
+    PhysicalOperatorWrapper(
+        PhysicalOperator physicalOperator,
+        Schema inputSchema,
+        Schema outputSchema,
+        MemoryLayoutType inputMemoryLayoutType,
+        MemoryLayoutType outputMemoryLayoutType,
         std::optional<OperatorHandlerId> handlerId,
         std::optional<std::shared_ptr<OperatorHandler>> handler,
         PipelineLocation pipelineLocation);
@@ -239,6 +248,8 @@ public:
         PhysicalOperator physicalOperator,
         Schema inputSchema,
         Schema outputSchema,
+        MemoryLayoutType inputMemoryLayoutType,
+        MemoryLayoutType outputMemoryLayoutType,
         std::optional<OperatorHandlerId> handlerId,
         std::optional<std::shared_ptr<OperatorHandler>> handler,
         PipelineLocation pipelineLocation,
@@ -253,6 +264,9 @@ public:
     [[nodiscard]] const PhysicalOperator& getPhysicalOperator() const;
     [[nodiscard]] const std::optional<Schema>& getInputSchema() const;
     [[nodiscard]] const std::optional<Schema>& getOutputSchema() const;
+    [[nodiscard]] const std::optional<MemoryLayoutType>& getInputMemoryLayoutType() const;
+    [[nodiscard]] const std::optional<MemoryLayoutType>& getOutputMemoryLayoutType() const;
+
 
     void addChild(const std::shared_ptr<PhysicalOperatorWrapper>& child);
     void setChildren(const std::vector<std::shared_ptr<PhysicalOperatorWrapper>>& newChildren);
@@ -263,6 +277,8 @@ public:
 
 private:
     PhysicalOperator physicalOperator;
+    std::optional<MemoryLayoutType> inputMemoryLayoutType;
+    std::optional<MemoryLayoutType> outputMemoryLayoutType;
     std::optional<Schema> inputSchema;
     std::optional<Schema> outputSchema;
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children;

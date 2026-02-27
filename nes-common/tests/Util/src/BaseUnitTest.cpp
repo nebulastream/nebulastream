@@ -24,6 +24,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <cpptrace/from_current.hpp>
 #include <gtest/gtest.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -34,7 +35,7 @@ namespace Testing
 void BaseUnitTest::SetUp()
 {
     testing::Test::SetUp();
-    startWaitingThread(typeid(*this).name());
+    startWaitingThread(std::string(NAMEOF_TYPE_EXPR(*this)));
 }
 
 void BaseUnitTest::TearDown()
@@ -80,7 +81,7 @@ void TestWaitingHelper::startWaitingThread(std::string testName)
         [this, testName = std::move(testName)]() mutable
         {
             auto future = testCompletion->get_future();
-            switch (future.wait_for(std::chrono::minutes(WAIT_TIME_SETUP)))
+            switch (future.wait_for(WAIT_TIME_SETUP))
             {
                 case std::future_status::ready: {
                     CPPTRACE_TRY

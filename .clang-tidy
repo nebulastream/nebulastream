@@ -44,6 +44,7 @@ Checks: [
 
   "-boost-use-ranges", # we don't use boost
   "-bugprone-easily-swappable-parameters", # annoying-ish
+  "-fuchsia-trailing-return", # we do not have a problem with that
   "-fuchsia-default-arguments-calls", # we do not forbid default args
   "-fuchsia-overloaded-operator", # we can not overload the operator() anywhere
   "-fuchsia-statically-constructed-objects", # we allow statically constructed objects; constexpr is not always possible
@@ -110,12 +111,9 @@ WarningsAsErrors: '
   -bugprone-exception-escape,
   -bugprone-implicit-widening-of-multiplication-result,
   -bugprone-macro-parentheses,
-  -bugprone-multi-level-implicit-pointer-conversion,
-  -bugprone-throw-keyword-missing,
   -bugprone-unchecked-optional-access,
   -bugprone-unused-local-non-trivial-variable,
   -bugprone-unused-return-value,
-  -cert-err33-c,
   -cert-err58-cpp,
   -cert-msc50-cpp,
   -cert-msc51-cpp,
@@ -142,7 +140,6 @@ WarningsAsErrors: '
   -google-build-using-namespace,
   -google-default-arguments,
   -google-explicit-constructor,
-  -google-global-names-in-headers,
   -google-readability-braces-around-statements,
   -google-readability-casting,
   -google-runtime-int,
@@ -151,14 +148,12 @@ WarningsAsErrors: '
   -hicpp-signed-bitwise,
   -misc-const-correctness,
   -misc-include-cleaner,
-  -misc-throw-by-value-catch-by-reference,
   -misc-use-anonymous-namespace,
   -misc-use-internal-linkage,
   -modernize-concat-nested-namespaces,
   -modernize-pass-by-value,
   -modernize-return-braced-init-list,
   -modernize-type-traits,
-  -modernize-use-constraints,
   -modernize-use-default-member-init,
   -modernize-use-equals-default,
   -modernize-use-nodiscard,
@@ -167,7 +162,6 @@ WarningsAsErrors: '
   -performance-avoid-endl,
   -performance-enum-size,
   -performance-for-range-copy,
-  -performance-inefficient-string-concatenation,
   -performance-move-const-arg,
   -performance-no-int-to-ptr,
   -performance-unnecessary-copy-initialization,
@@ -187,7 +181,6 @@ WarningsAsErrors: '
   -readability-qualified-auto,
   -readability-redundant-inline-specifier,
   -readability-simplify-boolean-expr,
-  -readability-use-anyofallof,
 '
 
 HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
@@ -229,4 +222,4 @@ CheckOptions:
   # Workaround for header bug around std::expected
   # It always tries to insert the libc++ implementation headers instead of the stdlib headers.
   # Also, it sometimes even tries to remove the stdlib headers as not needed, then inserts the libc++ headers.
-  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h'
+  misc-include-cleaner.IgnoreHeaders: 'expected;__.*expected\.h;__.*unexpected\.h;LogicalFunctionReflection\.hpp;TraitReflection\.hpp'

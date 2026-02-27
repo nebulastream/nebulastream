@@ -13,11 +13,12 @@
 */
 
 #pragma once
+#include <memory>
 #include <string>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ScalarOption.hpp>
-#include <Util/URI.hpp>
+#include <Configurations/Validation/EndpointValidation.hpp>
 
 namespace NES
 {
@@ -26,18 +27,19 @@ class SingleNodeWorkerConfiguration final : public BaseConfiguration
 {
 public:
     /// GRPC Server Address URI. By default, it binds to any address and listens on port 8080
-    ScalarOption<NES::URI> grpcAddressUri
+    ScalarOption<std::string> grpcAddressUri
         = {"grpc",
-           "localhost:8080",
+           "[::]:8080",
            R"(The address to try to bind to the server in URI form. If
 the scheme name is omitted, "dns:///" is assumed. To bind to any address,
 please use IPv6 any, i.e., [::]:<port>, which also accepts IPv4
 connections.  Valid values include dns:///localhost:1234,
-192.168.1.1:31416, dns:///[::1]:27182, etc.)"};
+192.168.1.1:31416, dns:///[::1]:27182, etc.)",
+           {std::make_shared<EndpointValidation>(EndpointValidation::GRPC)}};
 
     /// Enable Google Event Trace logging (Chrome tracing format)
     BoolOption enableGoogleEventTrace
-        = {"enable_google_eventTrace",
+        = {"enable_event_trace",
            "false",
            "Enable Google Event Trace logging that generates Chrome tracing compatible JSON files for performance analysis."};
 

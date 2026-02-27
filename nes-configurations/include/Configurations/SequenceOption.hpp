@@ -48,9 +48,10 @@ public:
         auto option = T();
         option.setValue(value);
         options.push_back(option);
+        this->explicitlySet = true;
     };
 
-    std::string toString() override;
+    void copyValueFrom(const BaseOption& source) override;
 
     void accept(OptionVisitor&) override;
 
@@ -69,6 +70,7 @@ template <DerivedBaseOption T>
 void SequenceOption<T>::clear()
 {
     options.clear();
+    this->explicitlySet = false;
 }
 
 template <DerivedBaseOption T>
@@ -82,6 +84,7 @@ void SequenceOption<T>::parseFromYAMLNode(YAML::Node node)
             option.parseFromYAMLNode(child);
             options.push_back(option);
         }
+        this->explicitlySet = true;
     }
     else
     {
@@ -95,6 +98,7 @@ void SequenceOption<T>::parseFromString(std::string identifier, std::unordered_m
     auto option = T();
     option.parseFromString(identifier, inputParams);
     options.push_back(option);
+    this->explicitlySet = true;
 }
 
 template <DerivedBaseOption T>
@@ -107,7 +111,7 @@ void SequenceOption<T>::accept(OptionVisitor& visitor)
     }
     else
     {
-        visitor.visitConcrete(name, description + " (Multiple)");
+        visitor.visitOption({name, description + " (Multiple)", "", "", false});
     }
 }
 
@@ -136,12 +140,11 @@ bool SequenceOption<T>::empty() const
 }
 
 template <DerivedBaseOption T>
-std::string SequenceOption<T>::toString()
+void SequenceOption<T>::copyValueFrom(const BaseOption& source)
 {
-    std::stringstream os;
-    os << "Name: " << name << "\n";
-    os << "Description: " << description << "\n";
-    return os.str();
+    const auto& typed = dynamic_cast<const SequenceOption<T>&>(source);
+    this->options = typed.options;
+    this->explicitlySet = true;
 }
 
 }

@@ -28,15 +28,6 @@ description: |
       - Branch-specific tags: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME]-[STDLIB]-[SANITIZER]
       - Shortcuts: nebulastream/nes-[IMAGE_TYPE]:[BRANCH_NAME] (defaults to libstdcxx-none)
   
-   5. BUILD CACHE SYSTEM:
-      - Each image build utilizes Docker's BuildKit cache to speed up builds
-      - Cache images are stored in the registry with the following naming pattern:
-        nebulastream/nes-[IMAGE_TYPE]-cache:[BRANCH_NAME]-[ARCH]-[STDLIB]-[SANITIZER]
-      - Cache hierarchy:
-        1. Branch-specific cache: Used for PR and feature branch builds
-        2. Latest cache: Fallback when branch-specific cache isn't available
-      - Cache is exported in "max" mode to include all intermediate layers
-  
    The workflow creates multi-architecture manifests that combine x64 and arm64 images
    where available, and adds convenience tags for common configurations.
    This enables developers to easily select the appropriate image for their
@@ -134,8 +125,6 @@ jobs:
   build-dev-images:
     # We run the docker image build on separate machines and combine them into a single
     # multi-arch docker image in the docker-development-images job.
-    # The Docker build uses a cache based on previous branch-specific images or the
-    # main branch
     # This job builds a Base image which contains the llvm based toolchain and a recent
     # CMake version
     # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
@@ -144,6 +133,11 @@ jobs:
     needs: [ detect-dependency-changes, lock ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}", dep-builder ]
+    concurrency:
+      group: build-dev-image-lock-${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
+      # To reduce the amount of work, i.e., building the same deps multiple times, we only allow one job to continue.
+      # We do not cancel the in progress one, as it might have run for quite some time and is close to finishing.
+      cancel-in-progress: false
     strategy:
       fail-fast: false
       matrix:
@@ -165,16 +159,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          version: v0.10.0
+          install: false
       - name: Build Base Image
         uses: docker/build-push-action@v6
         with:
           push: true
           tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{inputs.branch-name}}-${{matrix.arch}}
-            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
           context: .
           file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
@@ -182,10 +172,6 @@ jobs:
         with:
           push: true
           tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           build-args: |
             TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
             ARCH=${{matrix.arch}}
@@ -194,15 +180,17 @@ jobs:
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
           context: .
           file: docker/dependency/Dependency.dockerfile
+          secrets: |
+            VCPKG_CACHE_ACCESS_KEY=${{secrets.VCPKG_CACHE_ACCESS_KEY}}
+            VCPKG_CACHE_SECRET_KEY=${{secrets.VCPKG_CACHE_SECRET_KEY}}
+            VCPKG_CACHE_ENDPOINT=${{secrets.VCPKG_CACHE_ENDPOINT}}
+            VCPKG_CACHE_BUCKET=${{secrets.VCPKG_CACHE_BUCKET}}
+            VCPKG_CACHE_REGION=${{secrets.VCPKG_CACHE_REGION}}
       - name: Build Development Image
         uses: docker/build-push-action@v6
         with:
           push: true
           tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}},mode=max
-          cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{inputs.branch-name}}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}-${{matrix.sanitizer}}
           context: .
           file: docker/dependency/Development.dockerfile
@@ -215,8 +203,8 @@ jobs:
           context: .
           file: docker/dependency/DevelopmentCI.dockerfile
       - name: Build benchmark image
-        uses: docker/build-push-action@v6
         if: ${{matrix.sanitizer == 'none'}}
+        uses: docker/build-push-action@v6
         with:
           push: true
           tags: nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}-${{matrix.stdlib}}
@@ -227,7 +215,7 @@ jobs:
     # This Job merges platform specific images into a single multi-platform image
     name: "Merge Dev Images"
     needs: [ build-dev-images, detect-dependency-changes ]
-    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true' && needs.build-dev-images.result == 'success'
     runs-on: [ self-hosted, linux, Build, x64 ]
     steps:
       - uses: actions/checkout@v4
@@ -242,7 +230,7 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
         with:
-          version: v0.10.0
+          install: false
 
 
       - name: Combine Manifests

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -35,12 +36,12 @@ std::shared_ptr<WindowType> SlidingWindow::of(TimeCharacteristic timeCharacteris
     return std::make_shared<SlidingWindow>(SlidingWindow(std::move(timeCharacteristic), std::move(size), std::move(slide)));
 }
 
-TimeMeasure SlidingWindow::getSize()
+TimeMeasure SlidingWindow::getSize() const
 {
     return size;
 }
 
-TimeMeasure SlidingWindow::getSlide()
+TimeMeasure SlidingWindow::getSlide() const
 {
     return slide;
 }
@@ -60,4 +61,20 @@ bool SlidingWindow::operator==(const WindowType& otherWindowType) const
     return false;
 }
 
+}
+
+namespace NES
+{
+
+Reflected Reflector<Windowing::SlidingWindow>::operator()(const Windowing::SlidingWindow& slidingWindow) const
+{
+    return reflect(detail::ReflectedSlidingWindow{
+        .size = slidingWindow.getSize(), .slide = slidingWindow.getSlide(), .timeCharacteristic = slidingWindow.getTimeCharacteristic()});
+}
+
+Windowing::SlidingWindow Unreflector<Windowing::SlidingWindow>::operator()(const Reflected& reflected) const
+{
+    auto [size, slide, timeCharacteristics] = unreflect<detail::ReflectedSlidingWindow>(reflected);
+    return {timeCharacteristics, size, slide};
+}
 }

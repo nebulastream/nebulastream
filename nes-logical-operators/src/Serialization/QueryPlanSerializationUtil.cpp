@@ -21,19 +21,19 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
-#include <Serialization/TraitSetSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <rfl/json/read.hpp>
+#include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
 #include <from_current.hpp>
 
 namespace NES
 {
-
 SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const LogicalPlan& queryPlan)
 {
     INVARIANT(queryPlan.getRootOperators().size() == 1, "Query plan should currently have only one root operator");
@@ -51,9 +51,9 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         }
         alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
-        auto* sOp = serializableQueryPlan.add_operators();
-        itr.serialize(*sOp);
-        TraitSetSerializationUtil::serialize(itr.getTraitSet(), sOp->mutable_trait_set());
+        auto reflectedOperator = OperatorSerializationUtil::serializeOperator(itr);
+        const auto serializedString = rfl::json::write(reflectedOperator);
+        serializableQueryPlan.add_reflectedoperators(serializedString);
     }
 
     /// Serialize the root operator ids
@@ -69,19 +69,29 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     /// 1) Deserialize all operators into a map
     std::unordered_map<OperatorId::Underlying, LogicalOperator> baseOps;
     std::unordered_map<OperatorId::Underlying, std::vector<OperatorId::Underlying>> baseChildren;
-    for (const auto& serializedOp : serializedQueryPlan.operators())
+    for (const auto& reflectedOp : serializedQueryPlan.reflectedoperators())
     {
         CPPTRACE_TRY
         {
-            const auto operatorId = serializedOp.operator_id();
-            auto [_, inserted] = baseOps.emplace(operatorId, OperatorSerializationUtil::deserializeOperator(serializedOp));
+            auto serializedOpt = rfl::json::read<ReflectedOperator>(reflectedOp);
+            if (!serializedOpt.has_value())
+            {
+                throw CannotDeserialize(serializedOpt.error().what());
+            }
+            const auto serialized = std::move(serializedOpt.value());
+            auto op = OperatorSerializationUtil::deserializeOperator(serialized);
+            op = op.withOperatorId(OperatorId{serialized.operatorId});
+
+            const auto operatorId = op->getOperatorId().getRawValue();
+
+            auto [_, inserted] = baseOps.emplace(operatorId, op);
             if (!inserted)
             {
                 throw CannotDeserialize("Duplicate operator id in {}", serializedQueryPlan.DebugString());
             }
             auto& opChildren = baseChildren[operatorId];
-            opChildren.reserve(serializedOp.children_ids_size());
-            for (auto child : serializedOp.children_ids())
+            opChildren.reserve(serialized.childrenIds.size());
+            for (auto child : serialized.childrenIds)
             {
                 opChildren.push_back(child);
             }
@@ -104,7 +114,7 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
         throw CannotDeserialize(
             "Deserialization of {} out of {} operators failed! Encountered Errors:{}",
             deserializeExceptions.size(),
-            serializedQueryPlan.operators_size(),
+            serializedQueryPlan.reflectedoperators_size(),
             msgs);
     }
 

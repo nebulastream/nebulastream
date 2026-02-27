@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,33 +23,59 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
-class GreaterEqualsLogicalFunction final : public LogicalFunctionConcept
+class GreaterEqualsLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "GreaterEquals";
 
     GreaterEqualsLogicalFunction(LogicalFunction left, LogicalFunction right);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] bool operator==(const GreaterEqualsLogicalFunction& rhs) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] GreaterEqualsLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] GreaterEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     LogicalFunction left, right;
     DataType dataType;
+
+    friend Reflector<GreaterEqualsLogicalFunction>;
+};
+
+template <>
+struct Reflector<GreaterEqualsLogicalFunction>
+{
+    Reflected operator()(const GreaterEqualsLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<GreaterEqualsLogicalFunction>
+{
+    GreaterEqualsLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<GreaterEqualsLogicalFunction>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedGreaterEqualsLogicalFunction
+{
+    std::optional<LogicalFunction> left;
+    std::optional<LogicalFunction> right;
 };
 }
 

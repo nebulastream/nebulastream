@@ -3,3 +3,18 @@
 
 deadlock:NES::RunningQueryPlan::start
 deadlock:NES::QueryCatalog::start
+
+# Suppress false positive race conditions in standard library's shared_ptr, weak_ptr, and future/promise implementations.
+# These use lock-free atomic operations for reference counting which TSAN reports as races when the stdlib
+# is not compiled with sanitizer instrumentation. These suppressions are specific to known safe patterns
+# and do not hide races in our code's usage of these standard library components.
+# TODO #808: These suppressions will be removed once we introduce a sanitized standard library.
+race:std::__future_base
+race:_Sp_counted_ptr_inplace
+race:_Sp_counted_base
+race:std::__libcpp_atomic_refcount_decrement
+race:weak_ptr
+race:__shared_count
+race:__shared_weak_count
+race:__assoc_state
+race:__assoc_sub_state

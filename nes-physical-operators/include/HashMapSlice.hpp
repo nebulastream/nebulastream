@@ -30,7 +30,7 @@ namespace NES
 
 struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
 {
-    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, Nautilus::Interface::HashMap*>;
+    using NautilusCleanupExec = nautilus::engine::CallableFunction<void, HashMap*>;
 
     CreateNewHashMapSliceArgs(
         std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
@@ -80,7 +80,7 @@ public:
     [[nodiscard]] uint64_t getNumberOfTuples() const;
 
 protected:
-    std::vector<std::unique_ptr<Nautilus::Interface::HashMap>> hashMaps;
+    std::vector<std::unique_ptr<HashMap>> hashMaps;
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
     uint64_t numberOfHashMapsPerInputStream;
     uint64_t numberOfInputStreams;

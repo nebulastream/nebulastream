@@ -20,12 +20,14 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -33,7 +35,7 @@ namespace NES
 
 /// @brief A FieldAccessFunction reads a specific field of the current record.
 /// It can be created typed or untyped.
-class FieldAccessLogicalFunction : public LogicalFunctionConcept
+class FieldAccessLogicalFunction
 {
 public:
     static constexpr std::string_view NAME = "FieldAccess";
@@ -42,23 +44,19 @@ public:
     FieldAccessLogicalFunction(DataType dataType, std::string fieldName);
 
     [[nodiscard]] std::string getFieldName() const;
-    [[nodiscard]] LogicalFunction withFieldName(std::string fieldName) const;
+    [[nodiscard]] FieldAccessLogicalFunction withFieldName(std::string fieldName) const;
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] bool operator==(const FieldAccessLogicalFunction& rhs) const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
-    friend bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
-    friend bool operator!=(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs);
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] FieldAccessLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] FieldAccessLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
-
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     struct ConfigParameters
     {
@@ -76,6 +74,28 @@ private:
     DataType dataType;
 };
 
+template <>
+struct Reflector<FieldAccessLogicalFunction>
+{
+    Reflected operator()(const FieldAccessLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<FieldAccessLogicalFunction>
+{
+    FieldAccessLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<FieldAccessLogicalFunction>);
+}
+
+namespace NES::detail
+{
+struct ReflectedFieldAccessLogicalFunction
+{
+    std::string fieldName;
+    DataType::Type dataType;
+};
 }
 
 FMT_OSTREAM(NES::FieldAccessLogicalFunction);

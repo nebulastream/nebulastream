@@ -24,6 +24,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
@@ -50,8 +51,6 @@ std::string Schema::Field::getUnqualifiedName() const
     }
     return name.substr(separatorPosition + 1);
 }
-
-Schema::Schema(const MemoryLayoutType memoryLayoutType) : memoryLayoutType(memoryLayoutType) { };
 
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
@@ -111,7 +110,6 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
 
     if (matchingFields.empty())
     {
-        NES_WARNING("Schema: field with name {} does not exist", fieldName);
         return std::nullopt;
     }
     if (matchingFields.size() > 1)
@@ -132,11 +130,7 @@ Schema::Field Schema::getFieldAt(const size_t index) const
 
 std::ostream& operator<<(std::ostream& os, const Schema& schema)
 {
-    os << fmt::format(
-        "Schema(fields({}), size in bytes: {}, layout type: {})",
-        fmt::join(schema.fields, ","),
-        schema.sizeOfSchemaInBytes,
-        magic_enum::enum_name(schema.memoryLayoutType));
+    os << fmt::format("Schema(fields({}), size in bytes: {})", fmt::join(schema.fields, ","), schema.sizeOfSchemaInBytes);
     return os;
 }
 
@@ -213,7 +207,6 @@ size_t Schema::getSizeOfSchemaInBytes() const
 Schema withoutSourceQualifier(const Schema& input)
 {
     Schema withoutPrefix{};
-    withoutPrefix.memoryLayoutType = input.memoryLayoutType;
     auto stripPrefix = [](const std::string& name)
     {
         if (const auto pos = name.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR); pos != std::string::npos)
@@ -250,6 +243,33 @@ auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin
 auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
 {
     return fields.cend();
+}
+
+Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
+{
+    return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
+}
+
+Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl) const
+{
+    auto [name, type] = unreflect<detail::ReflectedField>(rfl);
+    return Schema::Field{std::move(name), type};
+}
+
+Reflected Reflector<Schema>::operator()(const Schema& schema) const
+{
+    return reflect(detail::ReflectedSchema{.fields = schema.getFields()});
+}
+
+Schema Unreflector<Schema>::operator()(const Reflected& rfl) const
+{
+    auto [fields] = unreflect<detail::ReflectedSchema>(rfl);
+    Schema schema{};
+    for (const auto& field : fields)
+    {
+        schema.addField(field.name, field.dataType);
+    }
+    return schema;
 }
 
 }

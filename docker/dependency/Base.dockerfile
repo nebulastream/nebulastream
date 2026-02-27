@@ -5,9 +5,8 @@ FROM ubuntu:24.04
 
 ARG LLVM_TOOLCHAIN_VERSION=19
 ARG MOLD_VERSION=2.37.1
-ARG CMAKE_VERSION=3.31.6
+ARG CMAKE_VERSION=3.31.11-0kitware1ubuntu24.04.1
 ENV LLVM_TOOLCHAIN_VERSION=${LLVM_TOOLCHAIN_VERSION}
-ENV CMAKE_VERSION=${CMAKE_VERSION}
 
 RUN apt update -y && apt install \
     wget \
@@ -43,14 +42,12 @@ RUN wget https://github.com/rui314/mold/releases/download/v${MOLD_VERSION}/mold-
     && rm -rf mold-${MOLD_VERSION}-$(uname -m)-linux mold-${MOLD_VERSION}-$(uname -m)-linux.tar.gz \
     && mold --version
 
-# install recent version of cmake
-RUN wget https://github.com/Kitware/CMake/releases/download/v${CMAKE_VERSION}/cmake-${CMAKE_VERSION}.tar.gz \
-    && tar -xf cmake-${CMAKE_VERSION}.tar.gz \
-    && cd cmake-${CMAKE_VERSION} \
-    && ./configure --parallel=$(nproc) --prefix=/usr \
-    && make install -j $(nproc)\
-    && cd .. \
-    && rm -rf cmake-${CMAKE_VERSION}.tar.gz cmake-${CMAKE_VERSION} \
+# install cmake from kitware apt repository
+RUN curl -fsSL https://apt.kitware.com/keys/kitware-archive-latest.asc | gpg --dearmor -o /etc/apt/keyrings/kitware-archive-keyring.gpg \
+    && chmod a+r /etc/apt/keyrings/kitware-archive-keyring.gpg \
+    && echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/kitware-archive-keyring.gpg] https://apt.kitware.com/ubuntu/ $(. /etc/os-release && echo "$VERSION_CODENAME") main" > /etc/apt/sources.list.d/kitware.list \
+    && apt update -y \
+    && apt install cmake=${CMAKE_VERSION} cmake-data=${CMAKE_VERSION} -y \
     && cmake --version
 
 # default cmake generator is ninja

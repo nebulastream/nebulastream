@@ -24,12 +24,11 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -102,27 +101,16 @@ std::vector<LogicalOperator> IngestionTimeWatermarkAssignerLogicalOperator::getC
     return children;
 }
 
-void IngestionTimeWatermarkAssignerLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected
+Reflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const IngestionTimeWatermarkAssignerLogicalOperator& /*_*/) const
 {
-    SerializableLogicalOperator proto;
+    return Reflected{};
+}
 
-    proto.set_operator_type(NAME);
-
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+IngestionTimeWatermarkAssignerLogicalOperator
+Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& /*_*/) const
+{
+    return IngestionTimeWatermarkAssignerLogicalOperator{};
 }
 
 LogicalOperatorRegistryReturnType

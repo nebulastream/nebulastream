@@ -26,6 +26,7 @@
 #include <SerializableVariantDescriptor.pb.h>
 
 #include <utility>
+#include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 
 namespace NES
@@ -58,7 +59,7 @@ std::string_view MedianAggregationLogicalFunction::getName() const noexcept
 void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    this->setOnField(this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>());
+    this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
     if (not this->getOnField().getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", this->getOnField().getDataType());
@@ -72,37 +73,41 @@ void MedianAggregationLogicalFunction::inferStamp(const Schema& schema)
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName));
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     this->setInputStamp(this->getOnField().getDataType());
     this->setFinalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
-    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()).get<FieldAccessLogicalFunction>());
+    this->setAsField(this->getAsField().withDataType(getFinalAggregateStamp()));
 }
 
-SerializableAggregationFunction MedianAggregationLogicalFunction::serialize() const
+Reflected MedianAggregationLogicalFunction::reflect() const
 {
-    SerializableAggregationFunction serializedAggregationFunction;
-    serializedAggregationFunction.set_type(NAME);
+    return NES::reflect(this);
+}
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+Reflected Reflector<MedianAggregationLogicalFunction>::operator()(const MedianAggregationLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedMedianAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+}
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
-    return serializedAggregationFunction;
+MedianAggregationLogicalFunction Unreflector<MedianAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [onField, asField] = unreflect<detail::ReflectedMedianAggregationLogicalFunction>(reflected);
+    return MedianAggregationLogicalFunction{onField, asField};
 }
 
 AggregationLogicalFunctionRegistryReturnType AggregationLogicalFunctionGeneratedRegistrar::RegisterMedianAggregationLogicalFunction(
     AggregationLogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return std::make_shared<MedianAggregationLogicalFunction>(unreflect<MedianAggregationLogicalFunction>(arguments.reflected));
+    }
     if (arguments.fields.size() != 2)
     {
         throw CannotDeserialize("MedianAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());

@@ -22,24 +22,21 @@
 #include <optional>
 #include <ranges>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
-void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
+void PagedVector::appendPageIfFull(AbstractBufferProvider* bufferProvider, const uint64_t capacity, const uint64_t bufferSize)
 {
     PRECONDITION(bufferProvider != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout != nullptr, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getTupleSize() > 0, "EntrySize for a pagedVector has to be larger than 0!");
-    PRECONDITION(memoryLayout->getCapacity() > 0, "At least one tuple has to fit on a page!");
+    PRECONDITION(capacity > 0, "At least one tuple has to fit on a page!");
 
-    if (pages.getNumberOfPages() == 0 || pages.getNumberOfTuplesLastPage() >= memoryLayout->getCapacity())
+    if (pages.getNumberOfPages() == 0 || pages.getNumberOfTuplesLastPage() >= capacity)
     {
-        if (const auto page = bufferProvider->getUnpooledBuffer(memoryLayout->getBufferSize()); page.has_value())
+        if (const auto page = bufferProvider->getUnpooledBuffer(bufferSize); page.has_value())
         {
             pages.addPage(page.value());
         }

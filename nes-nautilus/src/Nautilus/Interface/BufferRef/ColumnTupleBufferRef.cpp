@@ -13,12 +13,13 @@
 */
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 
+#include <cstdint>
 #include <memory>
+#include <ranges>
 #include <utility>
 #include <vector>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -26,25 +27,26 @@
 #include <nautilus/val_ptr.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
 {
 
-ColumnTupleBufferRef::ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr)
-    : columnMemoryLayout(std::move(std::move(columnMemoryLayoutPtr))) { };
-
-std::shared_ptr<MemoryLayout> ColumnTupleBufferRef::getMemoryLayout() const
+ColumnTupleBufferRef::ColumnTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
+    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
 {
-    return columnMemoryLayout;
 }
 
-nautilus::val<int8_t*> ColumnTupleBufferRef::calculateFieldAddress(
-    const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, const uint64_t fieldIndex) const
+namespace
 {
-    auto fieldSize = columnMemoryLayout->getFieldSize(fieldIndex);
-    auto columnOffset = columnMemoryLayout->getColumnOffset(fieldIndex);
+nautilus::val<int8_t*> calculateFieldAddress(
+    const nautilus::val<int8_t*>& bufferAddress,
+    nautilus::val<uint64_t>& recordIndex,
+    const uint64_t fieldSize,
+    const uint64_t columnOffset)
+{
     const auto fieldOffset = recordIndex * fieldSize + columnOffset;
     auto fieldAddress = bufferAddress + fieldOffset;
     return fieldAddress;
+}
 }
 
 Record ColumnTupleBufferRef::readRecord(
@@ -52,20 +54,18 @@ Record ColumnTupleBufferRef::readRecord(
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
-    const auto& schema = columnMemoryLayout->getSchema();
-    /// read all fields
-    const auto bufferAddress = recordBuffer.getMemArea();
     Record record;
-    for (nautilus::static_val<uint64_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    const auto bufferAddress = recordBuffer.getMemArea();
+    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        const auto& fieldName = schema.getFieldAt(i).name;
-        if (!includesField(projections, fieldName))
+        const auto& [name, type, columnOffset] = fields.at(i);
+        if (not includesField(projections, name))
         {
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        auto value = loadValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress);
-        record.write(fieldName, value);
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
+        const auto& value = loadValue(type, recordBuffer, fieldAddress);
+        record.write(name, value);
     }
     return record;
 }
@@ -76,16 +76,29 @@ void ColumnTupleBufferRef::writeRecord(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    const auto& schema = columnMemoryLayout->getSchema();
     const auto bufferAddress = recordBuffer.getMemArea();
-
-    const nautilus::val<uint64_t> varSizedOffset = 0;
-    for (nautilus::static_val<size_t> i = 0; i < schema.getNumberOfFields(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, i);
-        const auto value = rec.read(schema.getFieldAt(i).name);
-        storeValue(columnMemoryLayout->getPhysicalType(i), recordBuffer, fieldAddress, value, bufferProvider);
+        const auto& [name, type, columnOffset] = fields.at(i);
+        if (not rec.hasField(name))
+        {
+            /// Skipping any fields that are not part of the record
+            continue;
+        }
+        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
+        const auto& value = rec.read(name);
+        storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
     }
+}
+
+std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const
+{
+    return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
+}
+
+std::vector<DataType> ColumnTupleBufferRef::getAllDataTypes() const
+{
+    return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
 }
 
 }

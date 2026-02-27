@@ -28,6 +28,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
@@ -36,6 +37,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT Descriptor equality operator does not compile without
 #include <SerializableVariantDescriptor.pb.h>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -49,7 +51,6 @@ concept HasParameterMap = requires(T configuration) {
 };
 }
 
-/// Todo #355 : refactor usages of Descriptor, specifically in Sources and Sinks, into general configuration
 /// Config: The design principle of the Descriptor config is that the entire definition of the configuration happens in one place.
 /// When defining a 'ConfigParameter', all information relevant for a configuration parameter are defined:
 /// - the type
@@ -61,22 +62,7 @@ concept HasParameterMap = requires(T configuration) {
 class DescriptorConfig
 {
 public:
-    using ConfigType = std::variant<
-        int32_t,
-        uint32_t,
-        int64_t,
-        uint64_t,
-        bool,
-        char,
-        float,
-        double,
-        std::string,
-        EnumWrapper,
-        FunctionList,
-        AggregationFunctionList,
-        WindowInfos,
-        ProjectionList,
-        UInt64List>;
+    using ConfigType = std::variant<int32_t, uint32_t, int64_t, uint64_t, bool, char, float, double, std::string, EnumWrapper>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
@@ -206,11 +192,9 @@ private:
     template <typename T, typename EnumType>
     static std::optional<T> stringParameterAs(std::string stringParameter)
     {
-        if constexpr (requires(std::string string) {
-                          NES::Util::from_chars<T>(string);
-                      }) /// TODO #1035: check if two Util namespaces are needed
+        if constexpr (requires(std::string string) { from_chars<T>(string); })
         {
-            return NES::Util::from_chars<T>(stringParameter);
+            return from_chars<T>(stringParameter);
         }
         else if constexpr (std::is_same_v<T, EnumWrapper>)
         {
@@ -302,6 +286,7 @@ struct Descriptor
     ~Descriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const Descriptor& descriptor);
+
     friend bool operator==(const Descriptor& lhs, const Descriptor& rhs) = default;
 
     /// Takes a key that is a tagged ConfigParameter, with a string key and a tagged type.
@@ -332,7 +317,7 @@ struct Descriptor
             const auto& value = config.at(configParameter);
             return std::get<typename ConfigParameter::Type>(value);
         }
-        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameter).name());
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, NAMEOF_TYPE(ConfigParameter));
         return std::nullopt;
     }
 
@@ -344,11 +329,14 @@ struct Descriptor
             const auto& value = config.at(configParameter);
             return std::get<ConfigParameterType>(value);
         }
-        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, typeid(ConfigParameterType).name());
+        NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, NAMEOF_TYPE(ConfigParameterType));
         return std::nullopt;
     }
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }
+
+    [[nodiscard]] Reflected getReflectedConfig() const;
+    static DescriptorConfig::Config unreflectConfig(const Reflected& rfl);
 
 protected:
     std::string toStringConfig() const;
@@ -360,6 +348,7 @@ private:
 
 SerializableVariantDescriptor descriptorConfigTypeToProto(const DescriptorConfig::ConfigType& var);
 DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVariantDescriptor& protoVar);
+
 
 }
 

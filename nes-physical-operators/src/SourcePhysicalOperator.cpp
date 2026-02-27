@@ -12,19 +12,20 @@
     limitations under the License.
 */
 
+#include <SourcePhysicalOperator.hpp>
+
 #include <memory>
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <PhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
 
 namespace NES
 {
 
 SourcePhysicalOperator::SourcePhysicalOperator(SourceDescriptor descriptor, OriginId id)
-    : originId(id), descriptor(std::move(std::move(descriptor))) { };
+    : originId(id), descriptor(std::move(descriptor)) { };
 
 SourceDescriptor SourcePhysicalOperator::getDescriptor() const
 {

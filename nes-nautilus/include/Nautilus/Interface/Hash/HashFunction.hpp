@@ -17,7 +17,7 @@
 #include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 /// Interface for hash function on Nautilus values.

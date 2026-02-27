@@ -11,7 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-    Util.cpp
+        Util.cpp
+        Arena.cpp
 )
 
 add_subdirectory(DataTypes)

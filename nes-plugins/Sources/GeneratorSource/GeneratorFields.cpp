@@ -14,7 +14,10 @@
 
 #include <GeneratorFields.hpp>
 
+#include <cstddef>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <iomanip>
 #include <ios>
 #include <ostream>
@@ -44,13 +47,13 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 {
     auto validateParameter = []<typename T>(std::string_view parameter, std::string_view name)
     {
-        const auto opt = Util::from_chars<T>(parameter);
+        const auto opt = from_chars<T>(parameter);
         if (!opt)
         {
             throw InvalidConfigParameter("Could not parse {} as SequenceField {}!", parameter, name);
         }
     };
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() != NUM_PARAMETERS_SEQUENCE_FIELD)
     {
         throw InvalidConfigParameter("Number of SequenceField parameters does not match! {}", rawSchemaLine);
@@ -140,8 +143,7 @@ void SequenceField::validate(std::string_view rawSchemaLine)
             break;
         }
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP: {
+        case DataType::Type::VARSIZED: {
             throw InvalidConfigParameter("Could not parse {} as SequenceField!", type);
         }
     }
@@ -150,9 +152,9 @@ void SequenceField::validate(std::string_view rawSchemaLine)
 template <typename T>
 void SequenceField::parse(std::string_view start, std::string_view end, std::string_view step)
 {
-    const auto startOpt = Util::from_chars<T>(start);
-    const auto endOpt = Util::from_chars<T>(end);
-    const auto stepOpt = Util::from_chars<T>(step);
+    const auto startOpt = from_chars<T>(start);
+    const auto endOpt = from_chars<T>(end);
+    const auto stepOpt = from_chars<T>(step);
 
     this->sequenceStart = *startOpt;
     this->sequenceEnd = *endOpt;
@@ -162,7 +164,7 @@ void SequenceField::parse(std::string_view start, std::string_view end, std::str
 
 SequenceField::SequenceField(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto start = parameters[2];
     const auto end = parameters[3];
@@ -223,15 +225,14 @@ SequenceField::SequenceField(std::string_view rawSchemaLine)
             break;
         }
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP: {
+        case DataType::Type::VARSIZED: {
             INVARIANT(false, "Unknown Type \"{}\" in: {}", type, rawSchemaLine);
         }
     }
     this->stop = false;
 }
 
-std::ostream& SequenceField::generate(std::ostream& os, std::default_random_engine& /*re*/)
+std::ostream& SequenceField::generate(std::ostream& os, std::mt19937& /*re*/)
 {
     std::visit(
         [&]<typename T>(T& pos)
@@ -265,8 +266,8 @@ namespace
 template <typename T, typename U = double>
 NormalDistributionField::DistributionVariant createDistribution(const std::string_view mean, const std::string_view stdDev)
 {
-    const auto parsedMean = Util::from_chars<T>(mean);
-    const auto parsedStdDev = Util::from_chars<U>(stdDev);
+    const auto parsedMean = from_chars<T>(mean);
+    const auto parsedStdDev = from_chars<U>(stdDev);
     INVARIANT(parsedMean.has_value(), "Could not parse mean from {}", mean);
     INVARIANT(parsedStdDev.has_value(), "Could not parse std dev from {}", stdDev);
 
@@ -283,7 +284,7 @@ NormalDistributionField::DistributionVariant createDistribution(const std::strin
 
 NormalDistributionField::NormalDistributionField(const std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     const auto type = parameters[1];
     const auto mean = parameters[2];
     const auto stddev = parameters[3];
@@ -331,13 +332,13 @@ NormalDistributionField::NormalDistributionField(const std::string_view rawSchem
         /// Getting a var sized from a normal_distribution is possible but we might want to do something different than solely converting
         /// the value to a string
         case DataType::Type::UNDEFINED:
-        case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP:
+        case DataType::Type::VARSIZED: {
             INVARIANT(false, "Output Type \"{}\" is not supported for normal or binomial distribution.", outputType);
+        }
     }
 }
 
-std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_random_engine& randEng)
+std::ostream& NormalDistributionField::generate(std::ostream& os, std::mt19937& randEng)
 {
     std::visit(
         [&os, &randEng, copyOfOutputType = outputType.type](auto& distribution)
@@ -358,7 +359,7 @@ std::ostream& NormalDistributionField::generate(std::ostream& os, std::default_r
 
 void NormalDistributionField::validate(std::string_view rawSchemaLine)
 {
-    const auto parameters = Util::splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
     if (parameters.size() < NUM_PARAMETERS_NORMAL_DISTRIBUTION_FIELD)
     {
         throw InvalidConfigParameter("Invalid NORMAL_DISTRIBUTION schema line: {}", rawSchemaLine);
@@ -375,8 +376,8 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
         throw InvalidConfigParameter(
             "Invalid Type in NORMAL_DISTRIBUTION, supported are only {}: {}", fmt::join(allDataTypes, ","), rawSchemaLine);
     }
-    const auto parsedMean = Util::from_chars<double>(mean);
-    const auto parsedStdDev = Util::from_chars<double>(stddev);
+    const auto parsedMean = from_chars<double>(mean);
+    const auto parsedStdDev = from_chars<double>(stddev);
     if (!parsedMean || !parsedStdDev)
     {
         throw InvalidConfigParameter("Can not parse mean or stddev in {}", rawSchemaLine);
@@ -385,6 +386,187 @@ void NormalDistributionField::validate(std::string_view rawSchemaLine)
     {
         throw InvalidConfigParameter("Stddev must be non-negative");
     }
+}
+
+WordListField::WordListField(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    INVARIANT(
+        not parameters.empty(),
+        "Invalid WORDLIST schema line: {}! Number of parameters should be {}",
+        rawSchemaLine,
+        NUM_PARAMETERS_WORDLIST_FIELD);
+
+    const auto path = std::filesystem::path(SYSTEST_DATA_DIR) / std::string(parameters[1]);
+    INVARIANT(std::filesystem::exists(path), "Invalid WORDLIST schema line: {}! Filepath {} does not exist!", rawSchemaLine, path);
+    std::ifstream wordListFile(std::string(path), std::ios::in);
+
+    std::string line;
+    while (std::getline(wordListFile, line))
+    {
+        if (not line.empty())
+        {
+            wordList.emplace_back(line);
+        }
+    }
+    wordListFile.close();
+}
+
+std::ostream& WordListField::generate(std::ostream& os, std::mt19937& randEng)
+{
+    const auto randomWordPos = randEng() % wordList.size();
+    const auto word = wordList[randomWordPos];
+    os << word;
+
+    return os;
+}
+
+void WordListField::validate(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() != NUM_PARAMETERS_WORDLIST_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema line: {}", rawSchemaLine);
+    }
+
+    const auto path = std::filesystem::path(SYSTEST_DATA_DIR) / std::string(parameters[1]);
+    if (not std::filesystem::exists(path))
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema! Path {} does not exist! Schema line: {}", path, rawSchemaLine);
+    }
+
+    std::ifstream wordListFile(std::string(path), std::ios::in);
+    if (not wordListFile.is_open() or wordListFile.fail())
+    {
+        throw InvalidConfigParameter("Failed to open file containing the word list at {}", path);
+    }
+
+    size_t wordCount = 0;
+    std::string line;
+    while (std::getline(wordListFile, line))
+    {
+        if (not line.empty())
+        {
+            wordCount++;
+        }
+    }
+
+    if (wordCount == 0)
+    {
+        throw InvalidConfigParameter("Invalid WORDLIST schema! File at {} contains no words!", path);
+    }
+    wordListFile.close();
+}
+
+RandomStrField::RandomStrField(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() < NUM_PARAMETERS_RANDOMSTR_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR_FIELD schema line: {}!", rawSchemaLine);
+    }
+
+    const auto parsedMinLength = from_chars<size_t>(parameters[1]);
+    INVARIANT(
+        parsedMinLength.has_value(),
+        "Invalid RANDOMSTR_FIELD schema line: {}! Could not parse a minLength from {}",
+        rawSchemaLine,
+        parameters[1]);
+    const auto parsedMaxLength = from_chars<size_t>(parameters[2]);
+    INVARIANT(
+        parsedMaxLength.has_value(),
+        "Invalid RANDOMSTR_FIELD schema line: {}! Could not parse a maxLength from {}",
+        rawSchemaLine,
+        parameters[2]);
+    INVARIANT(
+        parsedMinLength >= 0,
+        "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
+        parsedMinLength,
+        rawSchemaLine);
+    INVARIANT(
+        parsedMaxLength >= 0,
+        "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
+        parsedMaxLength,
+        rawSchemaLine);
+    INVARIANT(
+        parsedMinLength <= parsedMaxLength,
+        "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+        "{}",
+        parsedMinLength,
+        parsedMaxLength,
+        rawSchemaLine);
+
+    this->minLength = parsedMinLength.value();
+    this->maxLength = parsedMaxLength.value();
+}
+
+void RandomStrField::validate(std::string_view rawSchemaLine)
+{
+    const auto parameters = splitWithStringDelimiter<std::string_view>(rawSchemaLine, " ");
+    if (parameters.size() != NUM_PARAMETERS_RANDOMSTR_FIELD)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR schema line: {}", rawSchemaLine);
+    }
+    const auto minLength = parameters[1];
+    const auto maxLength = parameters[2];
+
+    const auto parsedMinLength = from_chars<size_t>(minLength);
+    const auto parsedMaxLength = from_chars<size_t>(maxLength);
+
+    if (not parsedMinLength)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MINLENGTH! Cannot parse MINLENGTH! Schema line: {}", rawSchemaLine);
+    }
+    if (not parsedMaxLength)
+    {
+        throw InvalidConfigParameter("Invalid RANDOMSTR parameter MAXLENGTH! Cannot parse MAXLENGTH! Schema line: {}", rawSchemaLine);
+    }
+
+    if (parsedMinLength <= 0)
+    {
+        throw InvalidConfigParameter(
+            "Invaild RANDOMSTR parameter MINLENGTH: {} <= 0! The MINLENGTH must be larger than 0! Schema line: {}",
+            parsedMinLength,
+            rawSchemaLine);
+    }
+    if (parsedMaxLength <= 0)
+    {
+        throw InvalidConfigParameter(
+            "Invaild RANDOMSTR parameter MAXLENGTH: {} <= 0! The MAXLENGTH must be larger than 0! Schema line: {}",
+            parsedMaxLength,
+            rawSchemaLine);
+    }
+
+    if (parsedMinLength > parsedMaxLength)
+    {
+        throw InvalidConfigParameter(
+            "Invalid RANDOMSTR parameters MINLENGTH: {} > MAXLENGTH: {}! The MINLENGTH can not be longer than the MAXLENGTH! Schema line: "
+            "{}",
+            parsedMinLength,
+            parsedMaxLength,
+            rawSchemaLine);
+    }
+}
+
+std::ostream& RandomStrField::generate(std::ostream& os, std::mt19937& randEng)
+{
+    const auto randomLength = [&randEng, this] { return this->minLength + (randEng() % (this->maxLength - this->minLength + 1)); }();
+    auto randomAlphabetChar = [&randEng]
+    {
+        const auto index = randEng() % BASE64_ALPHABET.size();
+        INVARIANT(
+            index < NES::GeneratorFields::RandomStrField::BASE64_ALPHABET.size(),
+            "Index into BASE64_ALPHABET {} cannot exceed this Alphabet's size {}!",
+            index,
+            NES::GeneratorFields::RandomStrField::BASE64_ALPHABET.size());
+        return BASE64_ALPHABET.at(index);
+    };
+
+    for (size_t i = 0; i < randomLength; i++)
+    {
+        os << randomAlphabetChar();
+    }
+    return os;
 }
 
 

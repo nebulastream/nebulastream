@@ -18,26 +18,44 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--asan|--tsan|--ubsan|--no-sanitizer]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined] [--name] [--no-vcpkg-cache]"
     echo "Options:"
+    echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx)"
     echo "  -l, --local          Build all Docker images locally"
     echo "  -r, --rootless       Force rootless Docker mode"
     echo "  --libstdcxx          Use libstdcxx standard library"
     echo "  --libcxx             Use libcxx standard library"
-    echo "  --address               Enable Address Sanitizer"
-    echo "  --thread               Enable Thread Sanitizer"
-    echo "  --undefined              Enable Undefined Behavior Sanitizer"
+    echo "  --address            Enable Address Sanitizer"
+    echo "  --thread             Enable Thread Sanitizer"
+    echo "  --undefined          Enable Undefined Behavior Sanitizer"
+    echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
+    echo "  --no-vcpkg-cache     Disable vcpkg binary caching (by default uses public read-only cache)"
+    echo ""
+    echo "Environment variables for S3-compatible vcpkg binary caching (local builds only):"
+    echo "  VCPKG_CACHE_ACCESS_KEY   S3 access key (enables authenticated readwrite cache)"
+    echo "  VCPKG_CACHE_SECRET_KEY   S3 secret key"
+    echo "  VCPKG_CACHE_ENDPOINT     S3 endpoint URL (e.g. https://<id>.r2.cloudflarestorage.com)"
+    echo "  VCPKG_CACHE_BUCKET       S3 bucket name (default: nes-vcpkg-cache)"
+    echo "  VCPKG_CACHE_REGION       S3 region (default: auto)"
+    echo "  VCPKG_CACHE_PUBLIC_URL   Public read-only cache URL (set automatically if no credentials provided)"
     exit 1
 }
 
 # If set we built rebuilt all docker images locally
+NON_INTERACTIVE=0
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
 SANITIZER="none"
+NAME_SUFFIX=""
+DISABLE_VCPKG_CACHE=0
 
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
+        -y|--yes)
+            NON_INTERACTIVE=1
+            shift
+            ;;
         -l|--local)
             BUILD_LOCAL=1
             shift
@@ -71,6 +89,20 @@ while [[ "$#" -gt 0 ]]; do
             SANITIZER="undefined"
             shift
             ;;
+        --no-vcpkg-cache)
+            DISABLE_VCPKG_CACHE=1
+            shift
+            ;;
+        --name)
+            if [[ -n "$2" && ! "$2" =~ ^- ]]; then
+                NAME_SUFFIX="$2"
+                echo "Using name suffix: ${NAME_SUFFIX}"
+                shift 2
+            else
+                echo "Error: --name requires a name argument"
+                usage
+            fi
+            ;;
         -h|--help)
             usage
             ;;
@@ -86,6 +118,10 @@ done
 
 # Check if the standard library is set, otherwise prompt the user
 if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
+  if [ "$NON_INTERACTIVE" = 1 ]; then
+    echo -e "${RED}Error: Non-interactive mode requires either --libstdcxx or --libcxx to be specified${NC}"
+    usage
+  fi
   echo "Please choose a standard library implementation:"
     echo "1. llvm libc++ "
     echo "2. gcc libstdc++ "
@@ -100,21 +136,58 @@ if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
     esac
 fi
 
+# If name suffix not set via command line, ask the user
+if [[ -z "$NAME_SUFFIX" ]]; then
+  if [ "$NON_INTERACTIVE" = 0 ]; then
+    read -p "Do you want to specify a name for the Docker image? [y/N] " -r
+    if [[ $REPLY =~ ^([yY][eE][sS]|[yY])$ ]]; then
+      read -p "Enter the name suffix for the tax (image will be nes-development:local-<suffix>): " -r NAME_SUFFIX
+      if [[ -z "$NAME_SUFFIX" ]]; then
+        echo "No name provided, using default image name"
+      else
+        echo "Using name suffix: ${NAME_SUFFIX}"
+      fi
+    fi
+  fi
+fi
+
+# Construct the final image name
+if [[ -n "$NAME_SUFFIX" ]]; then
+  FINAL_IMAGE_NAME="nebulastream/nes-development:local-${NAME_SUFFIX}"
+else
+  FINAL_IMAGE_NAME="nebulastream/nes-development:local"
+fi
+
 # Ask for confirmation of settings
+echo # Move to a new line after input
 echo "Build configuration:"
 echo "- Standard library: ${STDLIB}"
 echo "- Sanitizer: ${SANITIZER}"
-read -p "Is this configuration correct? [Y/n] " -r
-echo # Move to a new line after input
-input=${REPLY:-Y}
-if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
-  echo "Please re-run the script with the correct options."
-  exit 1
+echo "- Image name: ${FINAL_IMAGE_NAME}"
+if [ "$NON_INTERACTIVE" = 0 ]; then
+  read -p "Is this configuration correct? [Y/n] " -r
+  echo # Move to a new line after input
+  input=${REPLY:-Y}
+  if [[ ! $input =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    echo "Please re-run the script with the correct options."
+    exit 1
+  fi
+else
+  echo "Running in non-interactive mode, proceeding with configuration..."
 fi
 
 cd "$(git rev-parse --show-toplevel)"
 HASH=$(docker/dependency/hash_dependencies.sh)
-TAG=${HASH}-${STDLIB}-${SANITIZER}
+ARCH=$(uname -m)
+if [ "$ARCH" == "x86_64" ]; then
+   ARCH="x64"
+elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
+   ARCH="arm64"
+else
+  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
+  exit 1
+fi
+TAG=${HASH}-${ARCH}-${STDLIB}-${SANITIZER}
 
 # Docker on macOS appears to always enable the mapping from the container root user to the hosts current
 # user
@@ -139,14 +212,15 @@ if docker info -f "{{println .SecurityOptions}}" | grep -q rootless || [ "$FORCE
   USE_USERNAME=root
 fi
 
-ARCH=$(uname -m)
-if [ "$ARCH" == "x86_64" ]; then
-   ARCH="x64"
-elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-   ARCH="arm64"
-else
-  echo -e "${RED}Arch: $ARCH is not supported. Only x86_64 and aarch64|arm64 are handled. Arch is determined using 'uname -m'${NC}"
-  exit 1
+
+# Set default public vcpkg cache URL if no S3 credentials are set and caching is not disabled
+VCPKG_CACHE_DEFAULT_PUBLIC_URL="https://pub-5953001ad2a543df8a2121726cf1908b.r2.dev"
+if [[ "$DISABLE_VCPKG_CACHE" -eq 0 && -z "$VCPKG_CACHE_ACCESS_KEY" && -z "$VCPKG_CACHE_PUBLIC_URL" ]]; then
+  export VCPKG_CACHE_PUBLIC_URL="$VCPKG_CACHE_DEFAULT_PUBLIC_URL"
+fi
+if [[ "$DISABLE_VCPKG_CACHE" -eq 1 ]]; then
+  unset VCPKG_CACHE_PUBLIC_URL
+  unset VCPKG_CACHE_ACCESS_KEY
 fi
 
 if [ $BUILD_LOCAL -eq 1 ]; then
@@ -154,12 +228,30 @@ if [ $BUILD_LOCAL -eq 1 ]; then
   echo "This might take a while..."
   docker build -f docker/dependency/Base.dockerfile -t nebulastream/nes-development-base:local .
 
+  CACHE_ARGS=""
+  export VCPKG_CACHE_BUCKET="${VCPKG_CACHE_BUCKET:-nes-vcpkg-cache}"
+  export VCPKG_CACHE_REGION="${VCPKG_CACHE_REGION:-auto}"
+  if [[ -n "$VCPKG_CACHE_ACCESS_KEY" && -n "$VCPKG_CACHE_SECRET_KEY" && -n "$VCPKG_CACHE_ENDPOINT" ]]; then
+      echo "S3 credentials found. Building with authenticated readwrite cache (bucket: ${VCPKG_CACHE_BUCKET})..."
+      CACHE_ARGS="--secret id=VCPKG_CACHE_ACCESS_KEY,env=VCPKG_CACHE_ACCESS_KEY"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_SECRET_KEY,env=VCPKG_CACHE_SECRET_KEY"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_ENDPOINT,env=VCPKG_CACHE_ENDPOINT"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_BUCKET,env=VCPKG_CACHE_BUCKET"
+      CACHE_ARGS="$CACHE_ARGS --secret id=VCPKG_CACHE_REGION,env=VCPKG_CACHE_REGION"
+  elif [[ -n "$VCPKG_CACHE_PUBLIC_URL" ]]; then
+      echo "Using public read-only cache: ${VCPKG_CACHE_PUBLIC_URL}"
+      CACHE_ARGS="--build-arg VCPKG_CACHE_PUBLIC_URL=${VCPKG_CACHE_PUBLIC_URL}"
+  else
+      echo "No cache configured. Building without cloud cache..."
+  fi
+
   docker build -f docker/dependency/Dependency.dockerfile \
-          --build-arg VCPKG_DEPENDENCY_HASH=${HASH} \
+          --build-arg VCPKG_DEPENDENCY_HASH="${HASH}" \
           --build-arg TAG=local \
-          --build-arg STDLIB=${STDLIB} \
-          --build-arg ARCH=${ARCH} \
-          --build-arg SANITIZER=${SANITIZER} \
+          --build-arg STDLIB="${STDLIB}" \
+          --build-arg ARCH="${ARCH}" \
+          --build-arg SANITIZER="${SANITIZER}" \
+          $CACHE_ARGS \
           -t nebulastream/nes-development-dependency:local .
 
   docker build -f docker/dependency/Development.dockerfile \
@@ -167,7 +259,7 @@ if [ $BUILD_LOCAL -eq 1 ]; then
             -t nebulastream/nes-development:default .
 
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
-               -t nebulastream/nes-development:local \
+               -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \
@@ -182,7 +274,7 @@ Either build locally with the -l option, or open a PR (draft) and let the CI bui
 
   echo "Basing local development image on remote on nebulastream/nes-development:${TAG}"
   docker build -f docker/dependency/DevelopmentLocal.dockerfile \
-               -t nebulastream/nes-development:local \
+               -t ${FINAL_IMAGE_NAME} \
                --build-arg UID=${USE_UID} \
                --build-arg GID=${USE_GID} \
                --build-arg USERNAME=${USE_USERNAME} \

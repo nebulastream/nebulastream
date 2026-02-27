@@ -16,18 +16,19 @@
 
 #include <cstdint>
 #include <memory>
+#include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {
-using namespace Interface::BufferRef;
 
 /// Performs the second phase of the join. The tuples are joined via two nested loops.
 class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
@@ -39,20 +40,26 @@ public:
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
         std::shared_ptr<TupleBufferRef> leftMemoryProvider,
-        std::shared_ptr<TupleBufferRef> rightMemoryProvider);
+        std::shared_ptr<TupleBufferRef> rightMemoryProvider,
+        std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
+        std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 protected:
     void performNLJ(
-        const Interface::PagedVectorRef& outerPagedVector,
-        const Interface::PagedVectorRef& innerPagedVector,
-        Interface::BufferRef::TupleBufferRef& outerMemoryProvider,
-        Interface::BufferRef::TupleBufferRef& innerMemoryProvider,
+        const PagedVectorRef& outerPagedVector,
+        const PagedVectorRef& innerPagedVector,
+        TupleBufferRef& outerMemoryProvider,
+        TupleBufferRef& innerMemoryProvider,
+        const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
+        const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
     std::shared_ptr<TupleBufferRef> leftMemoryProvider;
     std::shared_ptr<TupleBufferRef> rightMemoryProvider;
+    std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
+    std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
 };
 }

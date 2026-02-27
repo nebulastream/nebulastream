@@ -28,9 +28,9 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
@@ -51,34 +51,40 @@
 #include <std/sstream.h>
 #include <ErrorHandling.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
-std::unique_ptr<Interface::HashFunction> NautilusTestUtils::getMurMurHashFunction()
+std::unique_ptr<HashFunction> NautilusTestUtils::getMurMurHashFunction()
 {
-    return std::make_unique<Interface::MurMur3HashFunction>();
+    return std::make_unique<MurMur3HashFunction>();
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
-    const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager, const uint64_t minSizeVarSizedData)
+    const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
+    const uint64_t numberOfTuples,
+    BufferManager& bufferManager,
+    const uint64_t minSizeVarSizedData)
 {
     /// We log the seed to gain reproducibility of the test
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
     const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
+    return createMonotonicallyIncreasingValues(
+        schema, memoryLayout, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
 
-std::vector<TupleBuffer>
-NautilusTestUtils::createMonotonicallyIncreasingValues(const Schema& schema, const uint64_t numberOfTuples, BufferManager& bufferManager)
+std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
+    const Schema& schema, const MemoryLayoutType& memoryLayout, const uint64_t numberOfTuples, BufferManager& bufferManager)
 {
     constexpr auto minSizeVarSizedData = 10;
-    return createMonotonicallyIncreasingValues(schema, numberOfTuples, bufferManager, minSizeVarSizedData);
+    return createMonotonicallyIncreasingValues(schema, memoryLayout, numberOfTuples, bufferManager, minSizeVarSizedData);
 }
 
 std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
     const uint64_t numberOfTuples,
     BufferManager& bufferManager,
     const uint64_t seed,
@@ -86,7 +92,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = Interface::BufferRef::TupleBufferRef::create(bufferManager.getBufferSize(), schema);
+    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -116,7 +122,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     /// We are using the buffer manager to get a buffer of a fixed size.
     /// Therefore, we have to iterate in a loop and fill multiple buffers until we have created the required numberofTuples.
     std::vector<TupleBuffer> buffers;
-    const auto capacity = memoryProviderInputBuffer->getMemoryLayout()->getCapacity();
+    const auto capacity = memoryProviderInputBuffer->getCapacity();
     INVARIANT(capacity > 0, "Capacity should be larger than 0");
 
     for (uint64_t i = 0; i < numberOfTuples; i = i + capacity)
@@ -152,7 +158,7 @@ Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType:
 Schema NautilusTestUtils::createSchemaFromBasicTypes(const std::vector<DataType::Type>& basicTypes, const uint64_t typeIdxOffset)
 {
     /// Creating a schema for the memory provider
-    auto schema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+    auto schema = Schema{};
     for (const auto& [typeIdx, type] : views::enumerate(basicTypes))
     {
         const auto nameOfField = Record::RecordFieldIdentifier("field" + std::to_string(typeIdx + typeIdxOffset));
@@ -166,7 +172,7 @@ void NautilusTestUtils::compileFillBufferFunction(
     ExecutionMode backend,
     nautilus::engine::Options& options,
     const Schema& schema,
-    const std::shared_ptr<Interface::BufferRef::TupleBufferRef>& memoryProviderInputBuffer)
+    const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer)
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// NOLINTBEGIN(performance-unnecessary-value-param)
@@ -189,7 +195,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 const auto fieldName = field.name;
                 if (not field.dataType.isType(DataType::Type::VARSIZED))
                 {
-                    const auto varValue = Nautilus::Util::createNautilusConstValue(value, physicalType.type);
+                    const auto varValue = createNautilusConstValue(value, physicalType.type);
                     record.write(fieldName, VarVal(value));
                     value += 1;
                 }
@@ -210,15 +216,15 @@ void NautilusTestUtils::compileFillBufferFunction(
                             std::generate_n(randomString.begin(), size, randchar);
 
                             /// Adding the random string to the buffer and returning the pointer to the data
-                            const auto combinedIdxOffset = MemoryLayout::writeVarSized<MemoryLayout::PREPEND_LENGTH_AS_UINT32>(
-                                *inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
-                            return MemoryLayout::loadAssociatedVarSizedValue(*inputBuffer, combinedIdxOffset).data();
+                            const auto varSizedAccess
+                                = TupleBufferRef::writeVarSized(*inputBuffer, *bufferProviderVal, std::as_bytes(std::span{randomString}));
+                            return TupleBufferRef::loadAssociatedVarSizedValue(*inputBuffer, varSizedAccess).data();
                         },
                         recordBuffer.getReference(),
                         bufferProvider,
                         sizeVarSizedDataVal);
 
-                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData)));
+                    record.write(fieldName, VarVal(VariableSizedData(pointerToVarSizedData, sizeVarSizedDataVal)));
                 }
                 else
                 {
@@ -243,7 +249,7 @@ void NautilusTestUtils::compileFillBufferFunction(
             std::move(compiledFunction));
 }
 
-std::string NautilusTestUtils::compareRecords(
+std::optional<std::string> NautilusTestUtils::compareRecords(
     const Record& recordLeft, const Record& recordRight, const std::vector<Record::RecordFieldIdentifier>& projection)
 {
     bool printErrorMessage = false;
@@ -264,7 +270,9 @@ std::string NautilusTestUtils::compareRecords(
         }
         ss << valueRight << ") ";
     }
-    return printErrorMessage ? ss.str().c_str().value : "";
+    const auto strPtr = nautilus::details::RawValueResolver<const char*>::getRawValue(ss.str().c_str());
+    const auto strSize = nautilus::details::RawValueResolver<uint64_t>::getRawValue(ss.str().size());
+    return printErrorMessage ? std::string{strPtr, strSize} : std::optional<std::string>{};
 }
 
 }

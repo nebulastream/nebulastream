@@ -94,11 +94,10 @@ rebuilds of the docker images.
 
 Only build a new set of Docker images if changes to the dependency are detected. Since we rely on a fixed baseline of
 vcpkg, changes to the dependencies are always explicit via the vcpkg manifest or the Docker images.
-Docker image caching: Every docker image built in the CI builds an additional cache image (suffixed with the
-`—cache:tag`). This prevents PRs from rerunning the CI to rebuild its docker images unnecessarily, as all docker builds
-have been cached in a previous CI run.
-Latest image caching: When the CI builds a new docker image, we also pass the cache image of the `latest` image. Thus,
-we could prevent rebuilds in the first invocation of the CI if only changes to the development were made.
+VCPKG binary caching: The dependency image build supports S3-compatible binary caching for vcpkg packages. When S3
+credentials are provided (via GitHub secrets or environment variables), packages are cached in readwrite mode. A public
+read-only cache endpoint is available as a fallback for local builds without credentials. This significantly reduces
+build times when only a few dependencies change between builds.
 
 ### Multiplatform Images
 
@@ -134,3 +133,7 @@ nautilus.
 ### Nautilus
 
 Nautilus is not currently on vcpkg.
+
+### Scope Guard
+
+[Scope Guard](https://github.com/Neargye/scope_guard) is not currently on vcpkg.

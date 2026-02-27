@@ -20,42 +20,77 @@
 #include <string_view>
 #include <utility>
 
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
-#include <InputFormatterTask.hpp>
+#include <InputFormatter.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
 
 namespace
 {
+
+
+void initializeIndexFunctionForTupleWithCommasInStrings(
+    NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
+    const std::string_view tuple,
+    const NES::FieldIndex startIdxOfTuple,
+    const NES::CSVMetaData& metaData)
+{
+    /// The start of the tuple is the offset of the first field of the tuple
+    fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
+    size_t fieldIdx = 1;
+
+    bool isQuoted = false;
+    for (const auto [i, character] : tuple | NES::views::enumerate)
+    {
+        if (not isQuoted and character == metaData.getFieldDelimiter())
+        {
+            constexpr size_t sizeOfFieldDelimiter = 1;
+            fieldOffsets.emplaceFieldOffset(startIdxOfTuple + i + sizeOfFieldDelimiter);
+            ++fieldIdx;
+        }
+        isQuoted = isQuoted xor (character == '"');
+    }
+
+    /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
+    fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
+    if (fieldIdx != metaData.getNumberOfFields())
+    {
+        throw NES::CannotFormatSourceData(
+            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema",
+            fieldIdx,
+            metaData.getNumberOfFields());
+    }
+}
 
 void initializeIndexFunctionForTuple(
     NES::FieldOffsets<NES::CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets,
     const std::string_view tuple,
     const NES::FieldIndex startIdxOfTuple,
-    const NES::ParserConfig& config,
-    size_t numberOfFieldsInSchema)
+    const NES::CSVMetaData& metaData)
 {
     /// The start of the tuple is the offset of the first field of the tuple
-    size_t fieldIdx = 0;
-    fieldOffsets.writeOffsetAt(startIdxOfTuple, fieldIdx++);
+    fieldOffsets.emplaceFieldOffset(startIdxOfTuple);
+    size_t fieldIdx = 1;
     /// Find field delimiters, until reaching the end of the tuple
     /// The position of the field delimiter (+ size of field delimiter) is the beginning of the next field
-    for (size_t nextFieldOffset = tuple.find(config.fieldDelimiter, 0); nextFieldOffset != std::string_view::npos;
-         nextFieldOffset = tuple.find(config.fieldDelimiter, nextFieldOffset))
+    for (size_t nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), 0); nextFieldOffset != std::string_view::npos;
+         nextFieldOffset = tuple.find(metaData.getFieldDelimiter(), nextFieldOffset))
     {
-        nextFieldOffset += config.fieldDelimiter.size();
-        fieldOffsets.writeOffsetAt(startIdxOfTuple + nextFieldOffset, fieldIdx);
+        nextFieldOffset += NES::CSVMetaData::SIZE_OF_FIELD_DELIMITER;
+        fieldOffsets.emplaceFieldOffset(startIdxOfTuple + nextFieldOffset);
         ++fieldIdx;
     }
     /// The last delimiter is the size of the tuple itself, which allows the next phase to determine the last field without any extra calculations
-    fieldOffsets.writeOffsetAt(startIdxOfTuple + tuple.size(), numberOfFieldsInSchema);
-    if (fieldIdx != numberOfFieldsInSchema)
+    fieldOffsets.emplaceFieldOffset(startIdxOfTuple + tuple.size());
+    if (fieldIdx != metaData.getNumberOfFields())
     {
         throw NES::CannotFormatSourceData(
-            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema", fieldIdx, numberOfFieldsInSchema);
+            "Number of parsed fields does not match number of fields in schema (parsed {} vs {} schema",
+            fieldIdx,
+            metaData.getNumberOfFields());
     }
 }
 }
@@ -63,18 +98,12 @@ void initializeIndexFunctionForTuple(
 namespace NES
 {
 
-CSVInputFormatIndexer::CSVInputFormatIndexer(ParserConfig config, const size_t numberOfFieldsInSchema)
-    : config(std::move(config)), numberOfFieldsInSchema(numberOfFieldsInSchema)
-{
-}
-
 void CSVInputFormatIndexer::indexRawBuffer(
-    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const
+    FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
-    fieldOffsets.startSetup(numberOfFieldsInSchema, this->config.fieldDelimiter.size());
+    fieldOffsets.startSetup(metaData.getNumberOfFields(), NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
 
-    const auto sizeOfTupleDelimiter = this->config.tupleDelimiter.size();
-    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(this->config.tupleDelimiter));
+    const auto offsetOfFirstTupleDelimiter = static_cast<FieldIndex>(rawBuffer.getBufferView().find(metaData.getTupleDelimiter()));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTupleDelimiter' to a value larger than the buffer size to tell
     /// the InputFormatIndexerTask that there was no tuple delimiter in the buffer and return
@@ -85,8 +114,8 @@ void CSVInputFormatIndexer::indexRawBuffer(
     }
 
     /// If the buffer contains at least one delimiter, check if it contains more and index all tuples between the tuple delimiters
-    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + sizeOfTupleDelimiter;
-    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
+    auto startIdxOfNextTuple = offsetOfFirstTupleDelimiter + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
+    size_t endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
 
     while (endIdxOfNextTuple != std::string::npos)
     {
@@ -96,28 +125,32 @@ void CSVInputFormatIndexer::indexRawBuffer(
         const auto nextTuple = rawBuffer.getBufferView().substr(startIdxOfNextTuple, sizeOfNextTuple);
 
         /// Determine the offsets to the individual fields of the next tuple, including the start of the first and the end of the last field
-        initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, this->config, this->numberOfFieldsInSchema);
-        fieldOffsets.writeOffsetsOfNextTuple(); ///NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        if (allowCommasInStrings)
+        {
+            initializeIndexFunctionForTupleWithCommasInStrings(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
+        }
+        else
+        {
+            initializeIndexFunctionForTuple(fieldOffsets, nextTuple, startIdxOfNextTuple, metaData);
+        }
 
         /// Update the start and the end index for the next tuple (if no more tuples in buffer, endIdx is 'std::string::npos')
-        startIdxOfNextTuple = endIdxOfNextTuple + sizeOfTupleDelimiter;
-        endIdxOfNextTuple = rawBuffer.getBufferView().find(this->config.tupleDelimiter, startIdxOfNextTuple);
+        startIdxOfNextTuple = endIdxOfNextTuple + NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER;
+        endIdxOfNextTuple = rawBuffer.getBufferView().find(metaData.getTupleDelimiter(), startIdxOfNextTuple);
     }
     /// Since 'endIdxOfNextTuple == std::string::npos', we use the startIdx to determine the offset of the last tuple
-    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - sizeOfTupleDelimiter);
+    const auto offsetOfLastTupleDelimiter = static_cast<FieldIndex>(startIdxOfNextTuple - NES::CSVMetaData::SIZE_OF_TUPLE_DELIMITER);
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
 InputFormatIndexerRegistryReturnType
 RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
-    return arguments.createInputFormatterTaskPipeline(
-        CSVInputFormatIndexer(arguments.inputFormatIndexerConfig, arguments.getNumberOfFieldsInSchema()), QuotationType::NONE);
+    return arguments.createInputFormatterWithIndexer(CSVInputFormatIndexer{arguments.getInputFormatterConfig().allowCommasInStrings});
 }
 
-std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj)
+std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer&)
 {
-    return os << fmt::format(
-               "CSVInputFormatIndexer(tupleDelimiter: {}, fieldDelimiter: {})", obj.config.tupleDelimiter, obj.config.fieldDelimiter);
+    return os << fmt::format("CSVInputFormatIndexer()");
 }
 }

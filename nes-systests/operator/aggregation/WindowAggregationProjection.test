@@ -1,6 +1,6 @@
 # name: window/WindowAggregationProjection.test
 # description: Test projection over window operators
-# groups: [Aggregation, WindowOperators, Projection]
+# groups: [Aggregation, WindowOperators, Projection, CompilationIntensive]
 
 # Source definitions
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);

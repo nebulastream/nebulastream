@@ -35,7 +35,7 @@ namespace NES
 class LogicalPlan
 {
 public:
-    LogicalPlan() = default;
+    LogicalPlan() = delete;
     explicit LogicalPlan(LogicalOperator rootOperator);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators);
     explicit LogicalPlan(QueryId queryId, std::vector<LogicalOperator> rootOperators, std::string originalSql);

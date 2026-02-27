@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -25,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -36,21 +38,12 @@ FieldAccessLogicalFunction::FieldAccessLogicalFunction(std::string fieldName)
     : fieldName(std::move(fieldName)), dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)) { };
 
 FieldAccessLogicalFunction::FieldAccessLogicalFunction(DataType dataType, std::string fieldName)
-    : fieldName(std::move(fieldName)), dataType(std::move(std::move(dataType))) { };
+    : fieldName(std::move(fieldName)), dataType(std::move(dataType)) { };
 
-bool FieldAccessLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool FieldAccessLogicalFunction::operator==(const FieldAccessLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const FieldAccessLogicalFunction*>(&rhs))
-    {
-        return *this == *other;
-    }
-    return false;
-}
-
-bool operator==(const FieldAccessLogicalFunction& lhs, const FieldAccessLogicalFunction& rhs)
-{
-    const bool fieldNamesMatch = rhs.fieldName == lhs.fieldName;
-    const bool dataTypesMatch = rhs.dataType == lhs.dataType;
+    const bool fieldNamesMatch = rhs.fieldName == this->fieldName;
+    const bool dataTypesMatch = rhs.dataType == this->dataType;
     return fieldNamesMatch and dataTypesMatch;
 }
 
@@ -64,7 +57,7 @@ std::string FieldAccessLogicalFunction::getFieldName() const
     return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withFieldName(std::string fieldName) const
 {
     auto copy = *this;
     copy.fieldName = std::move(fieldName);
@@ -99,7 +92,7 @@ DataType FieldAccessLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -111,7 +104,7 @@ std::vector<LogicalFunction> FieldAccessLogicalFunction::getChildren() const
     return {};
 };
 
-LogicalFunction FieldAccessLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
+FieldAccessLogicalFunction FieldAccessLogicalFunction::withChildren(const std::vector<LogicalFunction>&) const
 {
     return *this;
 };
@@ -121,35 +114,29 @@ std::string_view FieldAccessLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction FieldAccessLogicalFunction::serialize() const
+Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
+    return reflect(
+        detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType().type});
+}
 
-    const DescriptorConfig::ConfigType configVariant = getFieldName();
-    const SerializableVariantDescriptor variantDescriptor = descriptorConfigTypeToProto(configVariant);
-    (*serializedFunction.mutable_config())["FieldName"] = variantDescriptor;
+FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [name, type] = unreflect<detail::ReflectedFieldAccessLogicalFunction>(reflected);
 
-    DataTypeSerializationUtil::serializeDataType(dataType, serializedFunction.mutable_data_type());
-
-    return serializedFunction;
+    return FieldAccessLogicalFunction{DataType{type}, name};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (not arguments.config.contains("FieldName"))
+    if (!arguments.reflected.isEmpty())
     {
-        throw CannotDeserialize(
+        return unreflect<FieldAccessLogicalFunction>(arguments.reflected);
+    }
 
-            "FieldAccessLogicalFunction requires a FieldName in its config");
-    }
-    auto fieldName = get<std::string>(arguments.config["FieldName"]);
-    if (fieldName.empty())
-    {
-        throw CannotDeserialize("FieldName cannot be empty");
-    }
-    return FieldAccessLogicalFunction(arguments.dataType, fieldName);
+    PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 
 }

@@ -19,6 +19,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/Signal.hpp>
 #include <cpptrace/from_current.hpp>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
@@ -26,6 +27,7 @@
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 
 namespace
 {
@@ -56,6 +58,7 @@ int main(const int argc, const char* argv[])
 {
     CPPTRACE_TRY
     {
+        NES::setupSignalHandlers();
         NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
         if (std::signal(SIGINT, signalHandler) == SIG_ERR)
         {
@@ -75,10 +78,17 @@ int main(const int argc, const char* argv[])
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);
-            builder.AddListeningPort(configuration->grpcAddressUri.getValue().toString(), grpc::InsecureServerCredentials());
+            builder.AddListeningPort(configuration->grpcAddressUri.getValue(), grpc::InsecureServerCredentials());
             builder.RegisterService(&workerService);
+            grpc::EnableDefaultHealthCheckService(true);
 
             const auto server = builder.BuildAndStart();
+            if (!server)
+            {
+                NES_ERROR("Failed to start GRPC Server. Stopping worker...");
+                return 1;
+            }
+
             const auto hook = shutdownHook(*server);
             NES_INFO("Server listening on {}", configuration->grpcAddressUri.getValue());
             server->Wait();

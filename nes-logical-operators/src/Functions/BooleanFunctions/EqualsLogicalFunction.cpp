@@ -14,16 +14,20 @@
 
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -31,23 +35,16 @@
 
 namespace NES
 {
-
 EqualsLogicalFunction::EqualsLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
-    , dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
+    : left(std::move(left)), right(std::move(right)), dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
 {
 }
 
-bool EqualsLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool EqualsLogicalFunction::operator==(const EqualsLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const EqualsLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 DataType EqualsLogicalFunction::getDataType() const
@@ -55,7 +52,7 @@ DataType EqualsLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
+EqualsLogicalFunction EqualsLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -77,7 +74,7 @@ std::vector<LogicalFunction> EqualsLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+EqualsLogicalFunction EqualsLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "EqualsLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -96,21 +93,31 @@ std::string EqualsLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} = {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-SerializableFunction EqualsLogicalFunction::serialize() const
+Reflected Reflector<EqualsLogicalFunction>::operator()(const EqualsLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
+    return reflect(detail::ReflectedEqualsLogicalFunction{
+        .left = std::make_optional<LogicalFunction>(function.left), .right = std::make_optional<LogicalFunction>(function.right)});
+}
 
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
+EqualsLogicalFunction Unreflector<EqualsLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedEqualsLogicalFunction>(reflected);
 
-    return serializedFunction;
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("EqualsLogicalFunction doesn't have a child operator");
+    }
+
+    return EqualsLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterEqualsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<EqualsLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("EqualsLogicalFunction requires exactly two children, but got {}", arguments.children.size());

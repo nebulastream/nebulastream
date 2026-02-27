@@ -19,10 +19,13 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,14 +36,9 @@ namespace NES
 
 SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool SqrtLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
-    const auto* other = dynamic_cast<const SqrtLogicalFunction*>(&rhs);
-    if (other != nullptr)
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string SqrtLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -57,7 +55,7 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
+SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -66,12 +64,8 @@ LogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) cons
 
 LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
@@ -79,7 +73,7 @@ std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction SqrtLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+SqrtLogicalFunction SqrtLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "SqrtLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -92,17 +86,27 @@ std::string_view SqrtLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction SqrtLogicalFunction::serialize() const
+Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedSqrtLogicalFunction{.child = function.child});
+}
+
+SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedSqrtLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return SqrtLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<SqrtLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

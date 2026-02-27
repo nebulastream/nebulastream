@@ -23,7 +23,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,9 +35,7 @@ namespace NES
 {
 
 AndLogicalFunction::AndLogicalFunction(LogicalFunction left, LogicalFunction right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN))
-    , left(std::move(std::move(left)))
-    , right(std::move(std::move(right)))
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)), left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -44,7 +44,7 @@ DataType AndLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
+AndLogicalFunction AndLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -56,7 +56,7 @@ std::vector<LogicalFunction> AndLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction AndLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+AndLogicalFunction AndLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 2, "AndLogicalFunction requires exactly two children, but got {}", children.size());
     auto copy = *this;
@@ -70,15 +70,11 @@ std::string_view AndLogicalFunction::getType() const
     return NAME;
 }
 
-bool AndLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool AndLogicalFunction::operator==(const AndLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const AndLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -94,38 +90,43 @@ LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) c
         newChildren.push_back(node.withInferredDataType(schema));
     }
     /// check if children dataType is correct
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(0).getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", left.getDataType());
+        throw CannotDeserialize("the dataType of left child must be boolean, but was: {}", newChildren.at(0).getDataType());
     }
-    if (not left.getDataType().isType(DataType::Type::BOOLEAN))
+    if (not newChildren.at(1).getDataType().isType(DataType::Type::BOOLEAN))
     {
-        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", right.getDataType());
+        throw CannotDeserialize("the dataType of right child must be boolean, but was: {}", newChildren.at(1).getDataType());
     }
     return this->withChildren(newChildren);
 }
 
-SerializableFunction AndLogicalFunction::serialize() const
+Reflected Reflector<AndLogicalFunction>::operator()(const AndLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedAndLogicalFunction{.left = function.left, .right = function.right});
+}
+
+AndLogicalFunction Unreflector<AndLogicalFunction>::operator()(const Reflected& rfl) const
+{
+    auto [left, right] = unreflect<detail::ReflectedAndLogicalFunction>(rfl);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("AndLogicalFunction is missing a child");
+    }
+    return {left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAndLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<AndLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("AndLogicalFunction requires exactly two children, but got {}", arguments.children.size());
-    }
-    if (arguments.children[0].getDataType().type != DataType::Type::BOOLEAN
-        || arguments.children[1].getDataType().type != DataType::Type::BOOLEAN)
-    {
-        throw CannotDeserialize(
-            "requires children of type bool, but got {} and {}", arguments.children[0].getDataType(), arguments.children[1].getDataType());
     }
     return AndLogicalFunction(arguments.children[0], arguments.children[1]);
 }

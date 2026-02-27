@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Watermark/TimeFunction.hpp>
+
 #include <cstdint>
 #include <utility>
 #include <DataTypes/TimeUnit.hpp>
@@ -20,7 +22,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
-#include <Watermark/TimeFunction.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>
 
@@ -33,7 +34,7 @@ void EventTimeFunction::open(ExecutionContext&, RecordBuffer&) const
 }
 
 EventTimeFunction::EventTimeFunction(PhysicalFunction timestampFunction, const Windowing::TimeUnit& unit)
-    : unit(unit), timestampFunction(std::move(std::move(timestampFunction)))
+    : unit(unit), timestampFunction(std::move(timestampFunction))
 {
 }
 

@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -28,19 +29,19 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/FunctionSerializationUtil.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
+
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
 
-SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(std::move(predicate)))
+SelectionLogicalOperator::SelectionLogicalOperator(LogicalFunction predicate) : predicate(std::move(predicate))
 {
 }
 
@@ -131,50 +132,31 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-void SelectionLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
 {
-    SerializableLogicalOperator proto;
+    return reflect(detail::ReflectedSelectionLogicalOperator{std::make_optional(op.getPredicate())});
+}
 
-    proto.set_operator_type(NAME);
+SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl) const
+{
+    auto [predicate] = unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
 
-    for (const auto& input : getInputSchemas())
+    if (!predicate.has_value())
     {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(input, schProto);
+        throw CannotDeserialize("Failed to deserialize selection logical operator");
     }
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(outputSchema, outSch);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    FunctionList funcList;
-    auto* serializedFunction = funcList.add_functions();
-    serializedFunction->CopyFrom(getPredicate().serialize());
-    (*serializableOperator.mutable_config())[ConfigParameters::SELECTION_FUNCTION_NAME] = descriptorConfigTypeToProto(funcList);
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return SelectionLogicalOperator(predicate.value());
 }
 
 LogicalOperatorRegistryReturnType
 LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    auto functionVariant = arguments.config.at(SelectionLogicalOperator::ConfigParameters::SELECTION_FUNCTION_NAME);
-    if (std::holds_alternative<FunctionList>(functionVariant))
+    if (!arguments.reflected.isEmpty())
     {
-        const auto functions = std::get<FunctionList>(functionVariant).functions();
-
-        if (functions.size() != 1)
-        {
-            throw CannotDeserialize("Expected exactly one function but got {}", functions.size());
-        }
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-        auto logicalOperator = SelectionLogicalOperator(function);
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
+        return unreflect<SelectionLogicalOperator>(arguments.reflected);
     }
-    throw UnknownLogicalOperator();
+    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 }

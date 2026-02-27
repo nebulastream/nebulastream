@@ -30,8 +30,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/StatisticListener.hpp>
 #include <folly/MPMCQueue.h>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
+#include <Thread.hpp>
 
 template <typename Var1, typename Var2>
 struct FlattenVariant;
@@ -55,13 +54,10 @@ struct GoogleEventTracePrinter final : StatisticListener
     /// Constructs a GoogleEventTracePrinter that writes to the specified file path
     /// @param path The file path where the trace will be written
     explicit GoogleEventTracePrinter(const std::filesystem::path& path);
-    ~GoogleEventTracePrinter() override;
+    ~GoogleEventTracePrinter() override = default;
 
     /// Start the event processing thread. Must be called after construction.
     void start();
-
-    /// Flushes the trace file and closes it, blocking until all pending events are written
-    void flush();
 
 private:
     static constexpr size_t QUEUE_LENGTH = 1000;
@@ -83,19 +79,11 @@ private:
 
     static uint64_t timestampToMicroseconds(const std::chrono::system_clock::time_point& timestamp);
 
-    static nlohmann::json createTraceEvent(
-        const std::string& name, Category cat, Phase phase, uint64_t timestamp, uint64_t dur = 0, const nlohmann::json& args = {});
-
     /// Thread routine that processes events and writes to the trace file
     void threadRoutine(const std::stop_token& token);
-    void writeTraceHeader();
-    void writeTraceFooter();
 
-    std::ofstream file;
+    std::filesystem::path outputPath;
     folly::MPMCQueue<CombinedEventType> events{QUEUE_LENGTH};
-    std::jthread traceThread;
-    std::atomic<bool> headerWritten{false};
-    std::atomic<bool> footerWritten{false};
 
     /// Track active tasks for duration calculation
     std::unordered_map<TaskId, std::chrono::system_clock::time_point> activeTasks;
@@ -103,5 +91,8 @@ private:
     /// Track active queries and pipelines for cleanup
     std::unordered_map<QueryId, std::pair<std::chrono::system_clock::time_point, WorkerThreadId>> activeQueries;
     std::unordered_map<PipelineId, std::tuple<QueryId, std::chrono::system_clock::time_point, WorkerThreadId>> activePipelines;
+
+    /// Must be declared last so it's destroyed first, ensuring the thread stops before maps are destroyed
+    Thread traceThread;
 };
 }

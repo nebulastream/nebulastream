@@ -19,10 +19,13 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -33,13 +36,9 @@ namespace NES
 
 RoundLogicalFunction::RoundLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool RoundLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool RoundLogicalFunction::operator==(const RoundLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const RoundLogicalFunction*>(&rhs))
-    {
-        return child == other->getChildren()[0];
-    }
-    return false;
+    return child == rhs.getChildren()[0];
 }
 
 std::string RoundLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -56,7 +55,7 @@ DataType RoundLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
+RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -65,12 +64,9 @@ LogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType) con
 
 LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    const auto childDataType = newChild.getDataType();
+    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
@@ -78,7 +74,7 @@ std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction RoundLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+RoundLogicalFunction RoundLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "RoundLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -91,18 +87,28 @@ std::string_view RoundLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction RoundLogicalFunction::serialize() const
+Reflected Reflector<RoundLogicalFunction>::operator()(const RoundLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedRoundLogicalFunction{.child = function.child});
+}
+
+RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedRoundLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return RoundLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<RoundLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

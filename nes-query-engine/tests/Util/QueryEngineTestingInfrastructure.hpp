@@ -64,7 +64,7 @@
 #include <Task.hpp>
 #include <TestSource.hpp>
 
-namespace NES::Testing
+namespace NES
 {
 static constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 static constexpr size_t NUMBER_OF_TUPLES_PER_BUFFER = 23;
@@ -108,7 +108,7 @@ struct ExpectStats
     void apply(Name v) \
     { \
         EXPECT_CALL(*listener, onEvent(::testing::VariantWith<NES::Name>(::testing::_))).Times(::testing::Between(v.lower, v.upper)); \
-    } /// TODO #1035: remove namespace testing
+    }
     STAT_TYPE(QueryStart);
     STAT_TYPE(QueryStop);
     STAT_TYPE(QueryStopRequest);
@@ -323,6 +323,10 @@ protected:
 
 struct TestSinkController
 {
+    explicit TestSinkController(BackpressureController backpressureController) : backpressureController(std::move(backpressureController))
+    {
+    }
+
     /// Waits for *at least* `numberOfExpectedBuffers`
     testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
 
@@ -350,6 +354,8 @@ struct TestSinkController
     std::atomic<size_t> invocations = 0;
     std::atomic<size_t> repeatCount = 0;
     std::atomic<size_t> repeatCountDuringStop = 0;
+
+    BackpressureController backpressureController;
 
 private:
     folly::Synchronized<std::vector<TupleBuffer>, std::mutex> receivedBuffers;
@@ -428,7 +434,7 @@ private:
 };
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestSinkController>>
-createSinkPipeline(PipelineId id, std::shared_ptr<AbstractBufferProvider> bm);
+createSinkPipeline(PipelineId id, BackpressureController backpressureController, std::shared_ptr<AbstractBufferProvider> bm);
 
 std::tuple<std::shared_ptr<ExecutablePipeline>, std::shared_ptr<TestPipelineController>>
 createPipeline(PipelineId id, const std::vector<std::shared_ptr<ExecutablePipeline>>& successors);

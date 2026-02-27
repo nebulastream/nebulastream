@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -25,7 +24,7 @@
 #include <val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 /// Forward declaration of PagedVectorRefIter so that we can use it in PagedVectorRef
 class PagedVectorRefIter;
@@ -37,7 +36,7 @@ class PagedVectorRef
 public:
     /// Declaring PagedVectorRefIter a friend class such that we can access the private members
     friend class PagedVectorRefIter;
-    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef);
+    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef);
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -57,8 +56,7 @@ public:
 
 private:
     nautilus::val<PagedVector*> pagedVectorRef;
-    std::shared_ptr<BufferRef::TupleBufferRef> bufferRef;
-    nautilus::val<MemoryLayout*> memoryLayout;
+    std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 class PagedVectorRefIter
@@ -66,7 +64,7 @@ class PagedVectorRefIter
 public:
     explicit PagedVectorRefIter(
         PagedVectorRef pagedVector,
-        const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef,
+        const std::shared_ptr<TupleBufferRef>& bufferRef,
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const nautilus::val<TupleBuffer*>& curPage,
         const nautilus::val<uint64_t>& posOnPage,
@@ -84,10 +82,9 @@ private:
     std::vector<Record::RecordFieldIdentifier> projections;
     nautilus::val<uint64_t> pos;
     nautilus::val<uint64_t> numberOfTuplesInPagedVector;
-    /// TODO #1152 create a custom class for these indices
     nautilus::val<uint64_t> posOnPage;
     nautilus::val<TupleBuffer*> curPage;
-    std::shared_ptr<BufferRef::TupleBufferRef> bufferRef;
+    std::shared_ptr<TupleBufferRef> bufferRef;
 };
 
 }

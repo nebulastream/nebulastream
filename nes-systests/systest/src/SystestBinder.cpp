@@ -59,6 +59,7 @@
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -113,7 +114,7 @@ public:
 
     static inline const Schema checksumSchema = []
     {
-        auto checksumSinkSchema = Schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema checksumSinkSchema;
         checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         return checksumSinkSchema;
@@ -218,8 +219,7 @@ public:
         const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
-        if (Util::toUpperCase(
-                sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
+        if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
             == "CHECKSUM")
         {
             sinkOutputSchema = SLTSinkFactory::checksumSchema;
@@ -513,7 +513,7 @@ struct SystestBinder::Impl
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
         PhysicalSourceConfig physicalSourceConfig{
-            .logical = statement.attachedTo.getLogicalSourceName(),
+            .logical = statement.attachedTo.getRawValue(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
@@ -526,9 +526,14 @@ struct SystestBinder::Impl
             physicalSourceConfig = setUpSourceWithTestData(physicalSourceConfig, sourceThreads, std::move(testData.value()));
         }
 
+        const auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+        if (not logicalSource.has_value())
+        {
+            throw UnknownSourceName("{}", statement.attachedTo.getRawValue());
+        }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                statement.attachedTo, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
         {
             return;
         }
@@ -538,7 +543,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema{Schema::MemoryLayoutType::ROW_LAYOUT};
+        Schema schema;
         for (const auto& field : statement.schema.getFields())
         {
             schema.addField(field.name, field.dataType);
@@ -558,13 +563,13 @@ struct SystestBinder::Impl
         const auto parseResult = managedParser->parseSingle();
         if (not parseResult.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
         }
 
         const auto binding = binder.bind(parseResult.value().get());
         if (not binding.has_value())
         {
-            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", Util::replaceAll(query, "\n", " "));
+            throw InvalidQuerySyntax("failed to to parse the query \"{}\"", replaceAll(query, "\n", " "));
         }
 
         if (const auto& statement = binding.value(); std::holds_alternative<CreateLogicalSourceStatement>(statement))
@@ -644,9 +649,8 @@ struct SystestBinder::Impl
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
 
-        if (sinkOperator->getSinkType() == "FILE")
+        if (not(sinkConfig.contains("input_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
-            sinkConfig.erase("input_format");
             sinkConfig.emplace("input_format", "CSV");
         }
 
@@ -670,13 +674,13 @@ struct SystestBinder::Impl
         const std::string sinkName = sinkOperator->getSinkName();
 
         /// Replacing the sinkName with the created unique sink name
-        const auto sinkForQuery = Util::toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
+        const auto sinkForQuery = toUpperCase(sinkName + std::to_string(currentQueryNumberInTest.getRawValue()));
 
 
         /// Adding the sink to the sink config, such that we can create a fully specified query plan
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
-        auto sinkExpected = sltSinkProvider.createActualSink(Util::toUpperCase(sinkName), sinkForQuery, resultFile);
+        auto sinkExpected = sltSinkProvider.createActualSink(toUpperCase(sinkName), sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
@@ -762,7 +766,7 @@ struct SystestBinder::Impl
     }
 
     void differentialQueryBlocksCallback(
-        SystestQueryId& lastParsedQueryId,
+        SystestQueryId&,
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
         SLTSinkFactory& sltSinkProvider,

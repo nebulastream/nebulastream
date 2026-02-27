@@ -30,18 +30,18 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
-#include <Plans/LogicalPlan.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <Serialization/QueryPlanSerializationUtil.hpp>
-
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <Statements/StatementHandler.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -57,13 +57,11 @@
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
-#include <SingleNodeWorkerRPCService.grpc.pb.h>
-#include <StatementHandler.hpp>
 #include <utils.hpp>
 
 #ifdef EMBED_ENGINE
     #include <Configurations/Util.hpp>
-    #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
+    #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
 #endif
 
@@ -167,8 +165,8 @@ int main(int argc, char** argv)
 
         if (program.is_used("-s"))
         {
-            queryManager = std::make_shared<NES::GRPCQueryManager>(
-                CreateChannel(program.get<std::string>("-s"), grpc::InsecureChannelCredentials()));
+            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::GRPCQuerySubmissionBackend>(
+                NES::WorkerConfig{.grpc = NES::GrpcAddr(program.get<std::string>("-s")), .config = {}}));
         }
         else
         {
@@ -190,7 +188,9 @@ int main(int argc, char** argv)
             auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
                                               .value_or(NES::SingleNodeWorkerConfiguration{});
 
-            queryManager = std::make_shared<NES::EmbeddedWorkerQueryManager>(singleNodeWorkerConfig);
+            /// The embedded worker does not actually expose a grpc server so the grpc address is ignored. It has to be a valid URL.
+            queryManager = std::make_shared<NES::QueryManager>(std::make_unique<NES::EmbeddedWorkerQuerySubmissionBackend>(
+                NES::WorkerConfig{.grpc = NES::GrpcAddr("i-dont-exist:0"), .config = {}}, singleNodeWorkerConfig));
 #else
             NES_ERROR("No server address given. Please use the -s option to specify the server address or use nebuli-embedded to start a "
                       "single node worker.")
@@ -204,10 +204,12 @@ int main(int argc, char** argv)
         {
             NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
             NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
+            NES::TopologyStatementHandler topologyStatementHandler{queryManager};
             auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
             NES::Repl replClient(
                 std::move(sourceStatementHandler),
                 std::move(sinkStatementHandler),
+                std::move(topologyStatementHandler),
                 queryStatementHandler,
                 std::move(binder),
                 errorBehaviour,
@@ -217,7 +219,7 @@ int main(int argc, char** argv)
 
             if (program.is_used("-w"))
             {
-                for (const auto& query : queryStatementHandler->getRunningQueries())
+                for (const auto& query : queryManager->getRunningQueries())
                 {
                     auto status = queryManager->status(query);
                     while (status.has_value() && status.value().state != NES::QueryState::Stopped
@@ -255,20 +257,20 @@ int main(int argc, char** argv)
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");
-        NES::LogicalPlan boundPlan;
-        if (input == "-")
+        const NES::LogicalPlan boundPlan = [&]
         {
-            boundPlan = yamlBinder.parseAndBind(std::cin);
-        }
-        else
-        {
+            if (input == "-")
+            {
+                return yamlBinder.parseAndBind(std::cin);
+            }
             std::ifstream file{input};
             if (!file)
             {
-                throw NES::QueryDescriptionNotReadable(std::strerror(errno)); /// NOLINT(concurrency-mt-unsafe)
+                throw NES::QueryDescriptionNotReadable(NES::getErrorMessageFromERRNO());
             }
-            boundPlan = yamlBinder.parseAndBind(file);
-        }
+            return yamlBinder.parseAndBind(file);
+        }();
+
 
         const NES::LogicalPlan optimizedQueryPlan = optimizer->optimize(boundPlan);
 

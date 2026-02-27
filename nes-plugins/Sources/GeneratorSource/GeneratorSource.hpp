@@ -26,8 +26,10 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -56,11 +58,11 @@ public:
     GeneratorSource(GeneratorSource&&) = delete;
     GeneratorSource& operator=(GeneratorSource&&) = delete;
 
-    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
-    void open() override;
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
@@ -172,10 +174,11 @@ struct ConfigParametersGenerator
             }
 
 
-            for (const auto lines = Util::splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
+            for (const auto lines = splitOnMultipleDelimiters(schema, {',', '\n'}); auto line : lines)
             {
-                line = Util::trimWhiteSpaces(line);
-                const auto foundIdentifier = line.substr(0, line.find_first_of(' '));
+                line = trimWhiteSpaces(line);
+                const auto foundIdentifier
+                    = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(NES::toUpperCase(line.substr(0, line.find_first_of(' '))));
                 bool validatorExists = false;
                 for (const auto& [identifier, validator] : GeneratorFields::Validators)
                 {

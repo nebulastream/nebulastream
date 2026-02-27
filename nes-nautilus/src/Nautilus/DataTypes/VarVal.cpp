@@ -27,9 +27,10 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 VarVal::VarVal(const VarVal& other) : value(other.value)
@@ -137,10 +138,6 @@ VarVal VarVal::castToType(const DataType::Type type) const
         case DataType::Type::VARSIZED: {
             return cast<VariableSizedData>();
         }
-        case DataType::Type::VARSIZED_POINTER_REP:
-            throw UnknownDataType(
-                "Not supporting reading {} data type from memory. VARSIZED_POINTER_REP should is only supported in the ChainedHashMap!",
-                magic_enum::enum_name(type));
         case DataType::Type::CHAR:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
@@ -153,43 +150,42 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
     switch (type)
     {
         case DataType::Type::BOOLEAN: {
-            return {Util::readValueFromMemRef<bool>(memRef)};
+            return {readValueFromMemRef<bool>(memRef)};
         }
         case DataType::Type::INT8: {
-            return {Util::readValueFromMemRef<int8_t>(memRef)};
+            return {readValueFromMemRef<int8_t>(memRef)};
         }
         case DataType::Type::INT16: {
-            return {Util::readValueFromMemRef<int16_t>(memRef)};
+            return {readValueFromMemRef<int16_t>(memRef)};
         }
         case DataType::Type::INT32: {
-            return {Util::readValueFromMemRef<int32_t>(memRef)};
+            return {readValueFromMemRef<int32_t>(memRef)};
         }
         case DataType::Type::INT64: {
-            return {Util::readValueFromMemRef<int64_t>(memRef)};
+            return {readValueFromMemRef<int64_t>(memRef)};
         }
         case DataType::Type::CHAR: {
-            return {Util::readValueFromMemRef<char>(memRef)};
+            return {readValueFromMemRef<char>(memRef)};
         }
         case DataType::Type::UINT8: {
-            return {Util::readValueFromMemRef<uint8_t>(memRef)};
+            return {readValueFromMemRef<uint8_t>(memRef)};
         }
         case DataType::Type::UINT16: {
-            return {Util::readValueFromMemRef<uint16_t>(memRef)};
+            return {readValueFromMemRef<uint16_t>(memRef)};
         }
         case DataType::Type::UINT32: {
-            return {Util::readValueFromMemRef<uint32_t>(memRef)};
+            return {readValueFromMemRef<uint32_t>(memRef)};
         }
         case DataType::Type::UINT64: {
-            return {Util::readValueFromMemRef<uint64_t>(memRef)};
+            return {readValueFromMemRef<uint64_t>(memRef)};
         }
         case DataType::Type::FLOAT32: {
-            return {Util::readValueFromMemRef<float>(memRef)};
+            return {readValueFromMemRef<float>(memRef)};
         }
         case DataType::Type::FLOAT64: {
-            return {Util::readValueFromMemRef<double>(memRef)};
+            return {readValueFromMemRef<double>(memRef)};
         }
         case DataType::Type::VARSIZED:
-        case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::UNDEFINED:
             throw UnknownDataType("Not supporting reading {} data type from memory.", magic_enum::enum_name(type));
     }
@@ -225,5 +221,67 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         },
         varVal.value);
 }
+
+#define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
+    VarVal VarVal::operatorName(const VarVal& other) const \
+    { \
+        return std::visit( \
+            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
+            { \
+                if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
+                { \
+                    return detail::var_val_t(lhsVal op rhsVal); \
+                } \
+                else \
+                { \
+                    throw UnknownOperation("VarVal operation not implemented: {} " #op " {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS)); \
+                    return detail::var_val_t(lhsVal); \
+                } \
+            }, \
+            this->value, \
+            other.value); \
+    }
+#define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
+    VarVal VarVal::operatorName() const \
+    { \
+        return std::visit( \
+            [&]<typename RHS>(const RHS& rhsVal) \
+            { \
+                if constexpr (!requires(RHS rhs) { op rhs; }) \
+                { \
+                    throw UnknownOperation("VarVal operation not implemented: " #op "{}", NAMEOF_TYPE(RHS)); \
+                    return detail::var_val_t(rhsVal); \
+                } \
+                else \
+                { \
+                    detail::var_val_t result = op rhsVal; \
+                    return result; \
+                } \
+            }, \
+            this->value); \
+    }
+
+/// Defining operations on VarVal. In the macro, we use std::variant and std::visit to automatically call the already
+/// existing operations on the underlying nautilus::val<> data types.
+/// For the VarSizedDataType, we define custom operations in the class itself.
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator+, +);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator&&, &&);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator||, ||);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<, <);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>, >);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<=, <=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>=, >=);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator&, &);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator|, |);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator^, ^);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator<<, <<);
+DEFINE_OPERATOR_VAR_VAL_BINARY(operator>>, >>);
+DEFINE_OPERATOR_VAR_VAL_UNARY(operator!, !);
 
 }

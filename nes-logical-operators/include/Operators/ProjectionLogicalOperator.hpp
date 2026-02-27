@@ -28,7 +28,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableOperator.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -53,7 +53,6 @@ public:
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
 
     [[nodiscard]] bool operator==(const ProjectionLogicalOperator& rhs) const;
-    void serialize(SerializableOperator&) const;
 
     [[nodiscard]] ProjectionLogicalOperator withTraitSet(TraitSet traitSet) const;
     [[nodiscard]] TraitSet getTraitSet() const;
@@ -96,8 +95,32 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<ProjectionLogicalOperator>;
+};
+
+template <>
+struct Reflector<ProjectionLogicalOperator>
+{
+    Reflected operator()(const ProjectionLogicalOperator& op) const;
+};
+
+template <>
+struct Unreflector<ProjectionLogicalOperator>
+{
+    ProjectionLogicalOperator operator()(const Reflected& reflected) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedProjectionLogicalOperator
+{
+    bool asterisk;
+    std::vector<std::pair<std::optional<std::string>, std::optional<LogicalFunction>>> projections;
+};
 
 }

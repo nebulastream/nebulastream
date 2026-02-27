@@ -79,19 +79,3 @@ jobs:
           
           docker buildx imagetools create -t nebulastream/nes-benchmark:latest \
             nebulastream/nes-benchmark:${{ needs.get-dev-images.outputs.image-tag }}
-
-      - name: Update Cache Images
-        run: |
-          for image_tag in development-dependency development; do
-            for arch in x64 arm64; do
-              for stdlib in libcxx libstdcxx; do
-                if [[ "$arch" == "arm64" && "$stdlib" == "libstdcxx" ]]; then
-                  continue
-                fi
-                for sanitizer in none address thread undefined; do
-                  docker buildx imagetools create -t nebulastream/nes-$image_tag-cache:latest-$arch-$stdlib-$sanitizer \
-                    nebulastream/nes-$image_tag-cache:${{ github.head_ref }}-$arch-$stdlib-$sanitizer
-                done
-              done
-            done
-          done

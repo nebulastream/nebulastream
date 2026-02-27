@@ -215,7 +215,7 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
     auto toLowerSet = [](const auto& vec)
     {
         return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
-            | std::views::transform(Util::toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
+            | std::views::transform(toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
     };
     auto includedGroupsVector = config.testGroups.getValues();
     auto excludedGroupsVector = config.excludeGroups.getValues();
@@ -229,15 +229,14 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
             const auto& [name, testFile] = nameAndFile;
             if (!includedGroups.empty())
             {
-                if (std::ranges::none_of(
-                        testFile.groups, [&](const auto& group) { return includedGroups.contains(Util::toLowerCase(group)); }))
+                if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
                 {
                     std::cout << fmt::format(
                         "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
                     return true;
                 }
             }
-            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(Util::toLowerCase(group)); }))
+            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
             {
                 std::cout << fmt::format(
                     "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);

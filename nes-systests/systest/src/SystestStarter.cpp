@@ -26,6 +26,7 @@
 #include <Configurations/Util.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -33,6 +34,7 @@
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
 #include <SystestState.hpp>
+#include <Thread.hpp>
 
 namespace
 {
@@ -126,6 +128,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
             std::exit(-1); ///NOLINT(concurrency-mt-unsafe)
         }
         std::cout << "Running systests in benchmarking mode. Only one query is run at a time!\n";
+        std::cout << "Any included differential queries and queries expecting an error will be skipped.\n";
         config.numberConcurrentQueries = 1;
     }
 
@@ -268,7 +271,8 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
     if (program.is_used("-s"))
     {
-        config.grpcAddressUri.setValue(NES::URI(program.get<std::string>("-s")));
+        config.remoteTestExecution.setValue(true);
+        config.grpcAddressUri.setValue(program.get<std::string>("-s"));
     }
 
     if (program.is_used("-n"))
@@ -345,7 +349,9 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
 int main(int argc, const char** argv)
 {
-    auto startTime = std::chrono::high_resolution_clock::now();
+    NES::setupSignalHandlers();
+    const auto startTime = std::chrono::high_resolution_clock::now();
+    NES::Thread::initializeThread(NES::WorkerId("systest"), "main");
 
     auto config = parseConfiguration(argc, argv);
     NES::SystestExecutor executor(std::move(config));
@@ -354,11 +360,13 @@ int main(int argc, const char** argv)
     switch (result.returnType)
     {
         case SystestExecutorResult::ReturnType::SUCCESS: {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            std::cout << result.outputMessage << '\n';
-            std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+            const auto endTime = std::chrono::high_resolution_clock::now();
+            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+            fmt::print(
+                "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
+                result.outputMessage,
+                duration.count(),
+                std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
             return 0;
         }
         case SystestExecutorResult::ReturnType::FAILED: {
@@ -368,7 +376,7 @@ int main(int argc, const char** argv)
             NES_ERROR("{}", result.outputMessage);
             std::cout << result.outputMessage << '\n';
             std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::seconds>(duration).count() << " seconds)" << '\n';
+                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
             return result.errorCode.value();
         }
     }

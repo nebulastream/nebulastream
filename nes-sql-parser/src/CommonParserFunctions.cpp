@@ -22,18 +22,17 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
 #include <vector>
-
-#include <DataTypes/DataTypeProvider.hpp>
-#include <Util/Overloaded.hpp>
-#include <Util/Strings.hpp>
-
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Util/Overloaded.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -102,10 +101,10 @@ std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& co
 
     if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
     {
-        parserConfig
-            = parserConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        parserConfig = parserConfigIter->second
+            | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
     return parserConfig;
@@ -116,10 +115,10 @@ std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& co
     std::unordered_map<std::string, std::string> sourceOptions{};
     if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
     {
-        sourceOptions
-            = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        sourceOptions = sourceConfigIter->second
+            | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
 
@@ -131,10 +130,9 @@ std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& conf
     std::unordered_map<std::string, std::string> sinkOptions{};
     if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())
     {
-        sinkOptions
-            = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
-            | std::views::transform(
-                  [](auto& pair) { return std::make_pair(Util::toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+        sinkOptions = sourceConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            | std::views::transform([](auto& pair)
+                                    { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
             | std::ranges::to<std::unordered_map<std::string, std::string>>();
     }
 
@@ -169,71 +167,50 @@ std::optional<Schema> getSinkSchema(ConfigMap configOptions)
     return getSchema(std::move(configOptions), "SINK");
 }
 
+namespace
+{
+std::string bindString(std::string_view view)
+{
+    return std::string(view.substr(1, view.size() - 2));
+}
+}
+
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral)
 {
     PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
-    bool inEscapeSequence = false;
-    std::stringstream ss;
-    for (uint32_t i = 1; i < stringLiteral->getText().size() - 1; i++)
-    {
-        const char character = stringLiteral->getText()[i];
-        if (inEscapeSequence)
-        {
-            switch (character)
-            {
-                case 'n':
-                    ss << '\n';
-                    break;
-                case 'r':
-                    ss << '\r';
-                    break;
-                case 't':
-                    ss << '\t';
-                    break;
-                case '\\':
-                    ss << '\\';
-                default:
-                    throw InvalidLiteral(R"(invalid escape sequence '\{}' in literal "{}")", character, stringLiteral->getText());
-            }
-        }
-        else
-        {
-            if (character == '\\')
-            {
-                inEscapeSequence = true;
-            }
-            else
-            {
-                ss << character;
-            }
-        }
-    }
-    return ss.str();
+    return bindString(stringLiteral->getText());
+}
+
+std::string bindStringLiteral(antlr4::Token* stringLiteral)
+{
+    PRECONDITION(stringLiteral->getText().size() > 1, "String literal must have at least two characters for quotation marks");
+    PRECONDITION(stringLiteral->getType() == AntlrSQLParser::STRING, "Attempting to bind a non string token to a string literal");
+    return bindString(stringLiteral->getText());
 }
 
 int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral)
 {
-    return std::stoi(integerLiteral->getText());
+    return from_chars_with_exception<int64_t>(integerLiteral->getText());
 }
 
 int64_t bindIntegerLiteral(AntlrSQLParser::SignedIntegerLiteralContext* signedIntegerLiteral)
 {
-    return std::stoi(signedIntegerLiteral->getText());
+    return from_chars_with_exception<int64_t>(signedIntegerLiteral->getText());
 }
 
 uint64_t bindUnsignedIntegerLiteral(AntlrSQLParser::UnsignedIntegerLiteralContext* unsignedIntegerLiteral)
 {
-    return std::stoul(unsignedIntegerLiteral->getText());
+    return from_chars_with_exception<uint64_t>(unsignedIntegerLiteral->getText());
 }
 
 double bindDoubleLiteral(AntlrSQLParser::FloatLiteralContext* doubleLiteral)
 {
-    return std::stod(doubleLiteral->getText());
+    return from_chars_with_exception<double>(doubleLiteral->getText());
 }
 
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral)
 {
-    return booleanLiteral->getText() == "true" || booleanLiteral->getText() == "TRUE";
+    return from_chars_with_exception<bool>(booleanLiteral->getText());
 }
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST)

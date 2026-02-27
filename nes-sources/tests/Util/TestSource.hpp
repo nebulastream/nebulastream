@@ -95,8 +95,8 @@ private:
 class TestSource : public Source
 {
 public:
-    size_t fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-    void open() override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    void open(std::shared_ptr<AbstractBufferProvider>) override;
     void close() override;
 
 protected:
@@ -112,6 +112,6 @@ private:
 };
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
-getTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
+getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
 }

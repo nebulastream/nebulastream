@@ -8,32 +8,48 @@ non-containerized environment.
 
 ## Development Container
 
-The recent (based on the main branch) development image can be pulled from
-
-```shell
-docker pull nebulastream/nes-development:latest
-```
-> [!IMPORTANT]
-> If running on an arm64 / aarch64 architecture, ensure that containers you pull are built for a "linux/arm64" target.
-> Else builds may be very slow or fail while emulating the amd64 architecture.
-> If you are intentionally cross compiling for amd64 on an apple ARM processor with docker on colima and encounter crashes while building, you may need to disable rosetta.
-
-However, it is recommended to build a local development image, because it also installs the current user into the
-docker container, which prevents permission issues. Building a local image will fall back to a pre-built development
-image which matches the current set of dependencies (based on a hash). If you are using docker in rootless mode the
-user inside the container will be root.
-
-If no development image matches the current dependency hash, you can build the development environment locally (using
-the `-l` flag). If you want to use `libstdc++` instead of the default libc++, you can use the `--libstdcxx` flag.
-
-Currently, we do not provide any libstdc++ images for ARM, but you can build them locally.
+To set up a development container, always use the provided installation script:
 
 ```shell
 ./scripts/install-local-docker-environment.sh
 ```
 
+This script ensures that a suitable development image is available locally. It will automatically pull a pre-built image that matches the current dependency hash, or build one locally when needed. Local builds also install the current user inside the container, preventing permission issues.
+If you are using Docker in rootless mode, the user inside the container will be `root`.
+
+> [!WARNING]
+> The logic for detecting root mode is not perfect. If you encounter permission problems you may have to force root mode using the `-r` flag.
+
+> [!IMPORTANT]
+> If running on an arm64 / aarch64 architecture, ensure that any container images used are built for the `linux/arm64` target.
+> Otherwise, builds may be slow or fail due to architecture emulation.
+> If you are intentionally cross-compiling for amd64 on an Apple ARM processor using Docker on Colima and encounter crashes, you may need to disable Rosetta.
+
+If no pre-built image matches the current dependency hash, the script will build the development environment locally (equivalent to using the `-l` flag).
+Note that we currently do not provide pre-built libstdc++ images for ARM, but the script can build them locally when requested.
+If the dependency hash mismatches but you are certain that none of the files in docker/ or vcpkg/ have been modified, please submit a bug report, as the hash function may not be working correctly on your system.
+
+You may also select `libstdc++` instead of the default libc++ using the `--libstdcxx` flag.
+Using `libstdc++` leads to better resolution of debug symbols on Linux, using CLion.
+
+> [!NOTE]
+> We currently do not provide pre-built `libstdc++` development images for ARM architectures.  
+> However, you can build them locally by using the `-l` flag with the installation script.
+
+
 > [!NOTE]
 > All commands need to be run from the **root of the git repository**!
+
+> [!NOTE]
+> **Windows Line Endings**
+>
+> If you are working on Windows, some scripts may fail to run if they use Windows-style CRLF line endings.  
+> Ensure that the following files use **LF** line endings:
+>
+> - `./scripts/install-local-docker-environment.sh`
+> - `./docker/dependency/hash_dependency.sh`
+>
+> Scripts will not execute correctly under Git Bash or Cygwin if they contain CRLF line endings. You can switch line endings in most editors (e.g., VS Code, Notepad++, IntelliJ) via the status bar.
 
 The image contains an LLVM-based toolchain (with libc++), a recent CMake version, the mold linker and a pre-built
 development sdk based on the vcpkg manifest.
@@ -94,10 +110,22 @@ Since the development environment only provides a pre-built set of dependencies,
 containerized mode is impossible. If desired, a new development image can be built locally or via the CI.
 
 ### CCache
+Using ccache can significantly speed up recompilation times. For optimal performance, create a dedicated ccache volume that persists across container runs:
 
-If you want to use `CCache`, you need to mount your host machines' CCache directory (`ccache -p`) into the docker
-containers CCache directory.
+```shell
+docker volume create ccache
+```
+```shell
+docker run \
+    --workdir $(pwd) \
+    -v $(pwd):$(pwd) \
+    -v ccache:/ccache \
+    -e CCACHE_DIR=/ccache \
+    nebulastream/nes-development:local \
+    cmake -B build-docker
+```
 
+Alternatively, you can share your host machine's existing ccache directory by mounting it directly:
 ```shell
 docker run \
     --workdir $(pwd) \

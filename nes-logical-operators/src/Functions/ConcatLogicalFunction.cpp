@@ -22,7 +22,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -36,15 +38,11 @@ ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const 
 {
 }
 
-bool ConcatLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ConcatLogicalFunction::operator==(const ConcatLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ConcatLogicalFunction*>(&rhs))
-    {
-        const bool simpleMatch = left == other->left and right == other->right;
-        const bool commutativeMatch = left == other->right and right == other->left;
-        return simpleMatch or commutativeMatch;
-    }
-    return false;
+    const bool simpleMatch = left == rhs.left and right == rhs.right;
+    const bool commutativeMatch = left == rhs.right and right == rhs.left;
+    return simpleMatch or commutativeMatch;
 }
 
 std::string ConcatLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -57,7 +55,7 @@ DataType ConcatLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
+ConcatLogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -79,7 +77,7 @@ std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
     return {left, right};
 };
 
-LogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ConcatLogicalFunction ConcatLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     auto copy = *this;
     copy.left = children[0];
@@ -93,19 +91,29 @@ std::string_view ConcatLogicalFunction::getType() const
     return NAME;
 }
 
-SerializableFunction ConcatLogicalFunction::serialize() const
+Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(left.serialize());
-    serializedFunction.add_children()->CopyFrom(right.serialize());
-    DataTypeSerializationUtil::serializeDataType(getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedConcatLogicalFunction{.left = function.left, .right = function.right});
+}
+
+ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [left, right] = unreflect<detail::ReflectedConcatLogicalFunction>(reflected);
+
+    if (!left.has_value() || !right.has_value())
+    {
+        throw CannotDeserialize("ConcatLogicalFunction is missing a child");
+    }
+    return ConcatLogicalFunction{left.value(), right.value()};
 }
 
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ConcatLogicalFunction>(arguments.reflected);
+    }
     if (arguments.children.size() < 2)
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());

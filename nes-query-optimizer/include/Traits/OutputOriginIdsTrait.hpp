@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
@@ -23,23 +24,22 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <SerializableTrait.pb.h>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
 
-class OutputOriginIdsTrait final : public TraitConcept
+class OutputOriginIdsTrait final
 {
 public:
     static constexpr std::string_view NAME = "OutputOriginIds";
     explicit OutputOriginIdsTrait(std::vector<OriginId> originIds);
 
-    [[nodiscard]] const std::type_info& getType() const override;
-    [[nodiscard]] std::string_view getName() const override;
-    [[nodiscard]] SerializableTrait serialize() const override;
-    bool operator==(const TraitConcept& other) const override;
-    [[nodiscard]] size_t hash() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] std::string_view getName() const;
+    bool operator==(const OutputOriginIdsTrait& other) const;
+    [[nodiscard]] size_t hash() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
     [[nodiscard]] auto begin() const -> decltype(std::declval<std::vector<OriginId>>().cbegin());
     [[nodiscard]] auto end() const -> decltype(std::declval<std::vector<OriginId>>().cend());
@@ -50,6 +50,30 @@ public:
 
 private:
     std::vector<OriginId> originIds;
+
+    friend Reflector<OutputOriginIdsTrait>;
 };
 
+template <>
+struct Reflector<OutputOriginIdsTrait>
+{
+    Reflected operator()(const OutputOriginIdsTrait& trait) const;
+};
+
+template <>
+struct Unreflector<OutputOriginIdsTrait>
+{
+    OutputOriginIdsTrait operator()(const Reflected& reflected) const;
+};
+
+static_assert(TraitConcept<OutputOriginIdsTrait>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedOutputOriginIdsTrait
+{
+    std::vector<uint64_t> originIds;
+};
 }

@@ -19,7 +19,9 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -34,4 +36,12 @@ VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena)
     const auto value = childFunction.execute(record, arena);
     return value.castToType(castToType.type);
 }
+
+PhysicalFunctionRegistryReturnType
+PhysicalFunctionGeneratedRegistrar::RegisterCastPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+{
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Cast function must have exactly one child functions");
+    return CastFieldPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
+}
+
 }

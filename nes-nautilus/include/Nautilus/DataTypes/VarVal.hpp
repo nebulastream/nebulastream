@@ -27,65 +27,8 @@
 #include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
-#define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
-    VarVal operatorName(const VarVal& rhs) const \
-    { \
-        return std::visit( \
-            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
-            { \
-                if constexpr (requires(LHS l, RHS r) { l op r; }) \
-                { \
-                    return detail::var_val_t(lhsVal op rhsVal); \
-                } \
-                else \
-                { \
-                    throw UnknownOperation( \
-                        std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(LHS).name() + " " \
-                        + typeid(RHS).name()); \
-                    return detail::var_val_t(lhsVal); \
-                } \
-            }, \
-            this->value, \
-            rhs.value); \
-    }
-
-#define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
-    VarVal operatorName() const \
-    { \
-        return std::visit( \
-            [&]<typename RHS>(const RHS& rhsVal) \
-            { \
-                if constexpr (!requires(RHS r) { op r; }) \
-                { \
-                    throw UnknownOperation( \
-                        std::string("VarVal operation not implemented: ") + " " + #operatorName + " " + typeid(decltype(rhsVal)).name()); \
-                    return detail::var_val_t(rhsVal); \
-                } \
-                else \
-                { \
-                    detail::var_val_t result = op rhsVal; \
-                    return result; \
-                } \
-            }, \
-            this->value); \
-    }
-
-#define EVALUATE_FUNCTION(func) \
-    [&](const auto& val) \
-    { \
-        if constexpr (!requires { func(val); }) \
-        { \
-            throw UnknownOperation(std::string("VarVal function not implemented: ") + typeid(decltype(val)).name()); \
-            return Nautilus::detail::var_val_t(val); \
-        } \
-        else \
-        { \
-            Nautilus::detail::var_val_t result = func(val); \
-            return result; \
-        } \
-    }
 
 namespace detail
 {
@@ -182,28 +125,25 @@ public:
         return std::visit(t, value);
     }
 
-    /// Defining operations on VarVal. In the macro, we use std::variant and std::visit to automatically call the already
-    /// existing operations on the underlying nautilus::val<> data types.
-    /// For the VarSizedDataType, we define custom operations in the class itself.
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator+, +);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator&&, &&);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator||, ||);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator<, <);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator>, >);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator<=, <=);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator>=, >=);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator&, &);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator|, |);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator^, ^);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator<<, <<);
-    DEFINE_OPERATOR_VAR_VAL_BINARY(operator>>, >>);
-    DEFINE_OPERATOR_VAR_VAL_UNARY(operator!, !);
+    VarVal operator+(const VarVal& other) const;
+    VarVal operator-(const VarVal& other) const;
+    VarVal operator*(const VarVal& other) const;
+    VarVal operator/(const VarVal& other) const;
+    VarVal operator%(const VarVal& other) const;
+    VarVal operator==(const VarVal& other) const;
+    VarVal operator!=(const VarVal& other) const;
+    VarVal operator&&(const VarVal& other) const;
+    VarVal operator||(const VarVal& other) const;
+    VarVal operator<(const VarVal& other) const;
+    VarVal operator>(const VarVal& other) const;
+    VarVal operator<=(const VarVal& other) const;
+    VarVal operator>=(const VarVal& other) const;
+    VarVal operator&(const VarVal& other) const;
+    VarVal operator|(const VarVal& other) const;
+    VarVal operator^(const VarVal& other) const;
+    VarVal operator<<(const VarVal& other) const;
+    VarVal operator>>(const VarVal& other) const;
+    VarVal operator!() const;
 
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.

@@ -20,6 +20,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
@@ -36,17 +37,22 @@ RewriteRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalOp
     const auto source = logicalOperator.getAs<SourceDescriptorLogicalOperator>();
 
     const auto outputOriginIdsOpt = getTrait<OutputOriginIdsTrait>(source.getTraitSet());
-    PRECONDITION(
-        outputOriginIdsOpt.has_value() && std::ranges::size(outputOriginIdsOpt.value()) == 1,
-        "SourceDescriptorLogicalOperator should have exactly one origin id, but has {}",
-        std::ranges::size(*outputOriginIdsOpt));
-    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value()[0]);
+    PRECONDITION(outputOriginIdsOpt.has_value(), "OutputOriginIdsTrait missing in LowerToPhysicalSource");
+    auto physicalOperator = SourcePhysicalOperator(source->getSourceDescriptor(), outputOriginIdsOpt.value().get()[0]);
 
     const auto inputSchemas = logicalOperator.getInputSchemas();
     PRECONDITION(
         inputSchemas.size() == 1, "SourceDescriptorLogicalOperator should have exactly one schema, but has {}", inputSchemas.size());
+    const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
+    PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
+    const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
     const auto wrapper = std::make_shared<PhysicalOperatorWrapper>(
-        physicalOperator, inputSchemas[0], logicalOperator.getOutputSchema(), PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
+        physicalOperator,
+        inputSchemas[0],
+        logicalOperator.getOutputSchema(),
+        memoryLayoutType,
+        memoryLayoutType,
+        PhysicalOperatorWrapper::PipelineLocation::INTERMEDIATE);
     return {.root = wrapper, .leafs = {}};
 }
 

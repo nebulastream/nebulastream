@@ -17,19 +17,21 @@
 #include <memory>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 
-namespace NES::Nautilus::TestUtils
+namespace NES::TestUtils
 {
 
 
 void runStoreTest(
-    Interface::PagedVector& pagedVector,
+    PagedVector& pagedVector,
     const Schema& testSchema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<TupleBuffer>& allRecords,
@@ -37,8 +39,9 @@ void runStoreTest(
     AbstractBufferProvider& bufferManager);
 
 void runRetrieveTest(
-    Interface::PagedVector& pagedVector,
+    PagedVector& pagedVector,
     const Schema& testSchema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const std::vector<TupleBuffer>& allRecords,
@@ -48,6 +51,7 @@ void runRetrieveTest(
 void insertAndAppendAllPagesTest(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const Schema& schema,
+    const MemoryLayoutType& memoryLayout,
     uint64_t entrySize,
     uint64_t pageSize,
     const std::vector<std::vector<TupleBuffer>>& allRecordsAndVectors,

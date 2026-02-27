@@ -28,7 +28,6 @@
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Functions/RenameLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
@@ -79,10 +78,6 @@ LogicalPlan LogicalPlanBuilder::addProjection(
 LogicalPlan LogicalPlanBuilder::addSelection(LogicalFunction selectionFunction, const LogicalPlan& queryPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add selection operator to query plan");
-    if (selectionFunction.tryGet<RenameLogicalFunction>())
-    {
-        throw UnsupportedQuery("Selection predicate cannot have a FieldRenameFunction");
-    }
     return promoteOperatorToRoot(queryPlan, SelectionLogicalOperator(std::move(selectionFunction)));
 }
 
@@ -137,7 +132,7 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     std::unordered_set<LogicalFunction> visitedFunctions;
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this
     /// I am not sure why this is the case, but I will keep it for now. IMHO, the whole LogicalPlanBuilder should be refactored to be more readable and
-    /// also to be more maintainable. TODO #506
+    /// also to be more maintainable.
     for (const LogicalFunction& itr : BFSRange(joinFunction))
     {
         if (itr.getChildren().size() == 2)
@@ -153,12 +148,12 @@ LogicalPlan LogicalPlanBuilder::addJoin(
                     /// ensure that the child nodes are not binary
                     if ((leftChild.getChildren().size() == 1) && (rightChild.getChildren().size() == 1))
                     {
-                        if (leftChild.tryGet<ConstantValueLogicalFunction>() || rightChild.tryGet<ConstantValueLogicalFunction>())
+                        if (leftChild.tryGetAs<ConstantValueLogicalFunction>() || rightChild.tryGetAs<ConstantValueLogicalFunction>())
                         {
                             throw InvalidQuerySyntax("One of the join keys does only consist of a constant function. Use WHERE instead.");
                         }
-                        auto leftKeyFieldAccess = leftChild.get<FieldAccessLogicalFunction>();
-                        auto rightKeyFieldAccess = rightChild.get<FieldAccessLogicalFunction>();
+                        auto leftKeyFieldAccess = leftChild.getAs<FieldAccessLogicalFunction>();
+                        auto rightKeyFieldAccess = rightChild.getAs<FieldAccessLogicalFunction>();
                     }
                 }
             }
@@ -196,7 +191,7 @@ LogicalPlan
 LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
-    auto timeBasedWindowType = Util::as<Windowing::TimeBasedWindowType>(windowType);
+    auto timeBasedWindowType = as<Windowing::TimeBasedWindowType>(windowType);
 
     if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
         and getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())

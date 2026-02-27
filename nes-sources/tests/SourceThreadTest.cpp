@@ -41,6 +41,7 @@
 #include <MemoryTestUtils.hpp>
 #include <SourceThread.hpp>
 #include <TestSource.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -142,7 +143,7 @@ void verify_last_event(RecordingEmitFunction& recorder, std::source_location loc
     const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "verify_last_event");
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(::testing::Gt(0))) << "Expected source events to be emitted";
     auto& lastEvent = recorder.recordedEmits.lock()->back();
-    EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << typeid(T).name() << "` event";
+    EXPECT_TRUE(std::holds_alternative<T>(lastEvent)) << "Last event was not a `" << NAMEOF_TYPE(T) << "` event";
 }
 
 void verify_number_of_emits(
@@ -172,10 +173,16 @@ void verify_number_of_emits(
 TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 {
     auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     {
-        SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            std::move(backpressureListener),
+            INITIAL<OriginId>,
+            bm,
+
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -194,10 +201,12 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
 TEST_F(SourceThreadTest, NoOpDestruction)
 {
     auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     {
-        const SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        const SourceThread sourceThread(
+            backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -209,13 +218,14 @@ TEST_F(SourceThreadTest, NoOpDestruction)
 TEST_F(SourceThreadTest, FailureDuringRunning)
 {
     auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectError("I should fail");
     {
-        SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -237,11 +247,12 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
 TEST_F(SourceThreadTest, FailureDuringOpen)
 {
     auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
-        SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -263,13 +274,14 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
 TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
 {
     auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     RecordingEmitFunction recorder(*bm);
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -292,13 +304,13 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
 {
     auto bm = BufferManager::create();
     RecordingEmitFunction recorder(*bm);
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
     auto control = std::make_shared<TestSourceControl>();
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
-    control->injectEoS();
     {
-        SourceThread sourceThread(INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -318,5 +330,75 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
 }
+
+TEST_F(SourceThreadTest, ApplyBackbressure)
+{
+    auto bm = BufferManager::create();
+    RecordingEmitFunction recorder(*bm);
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    backpressureController.applyPressure();
+    auto control = std::make_shared<TestSourceControl>();
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectEoS();
+    {
+        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
+        wait_for_emits(recorder, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_FALSE(control->wasClosed());
+        wait_for_emits(recorder, 0);
+        backpressureController.releasePressure();
+        wait_for_emits(recorder, 4);
+        verify_non_blocking_stop(sourceThread);
+    }
+
+    verify_number_of_emits(recorder, 4);
+    verify_last_event<SourceReturnType::EoS>(recorder);
+    EXPECT_TRUE(control->wasOpened());
+    EXPECT_TRUE(control->wasClosed());
+    EXPECT_TRUE(control->wasDestroyed());
+}
+
+TEST_F(SourceThreadTest, StopDuringBackpressure)
+{
+    auto bm = BufferManager::create();
+    RecordingEmitFunction recorder(*bm);
+    auto [backpressureController, ingestion] = createBackpressureChannel();
+    backpressureController.applyPressure();
+    auto control = std::make_shared<TestSourceControl>();
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
+    control->injectEoS();
+    {
+        SourceThread sourceThread(ingestion, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
+        wait_for_emits(recorder, 0);
+        std::this_thread::sleep_for(std::chrono::milliseconds(500));
+        EXPECT_FALSE(control->wasClosed());
+        wait_for_emits(recorder, 0);
+        verify_non_blocking_stop(sourceThread);
+    }
+
+    verify_number_of_emits(recorder, 0);
+    EXPECT_TRUE(control->wasOpened());
+    EXPECT_TRUE(control->wasClosed());
+    EXPECT_TRUE(control->wasDestroyed());
+}
+
 
 }

@@ -22,6 +22,7 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
@@ -56,7 +57,7 @@ std::string_view AvgAggregationLogicalFunction::getName() const noexcept
 void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).get<FieldAccessLogicalFunction>();
+    auto newOnField = this->getOnField().withInferredDataType(schema);
     if (not newOnField.getDataType().isNumeric())
     {
         throw CannotDeserialize("aggregations on non numeric fields is not supported.");
@@ -67,60 +68,63 @@ void AvgAggregationLogicalFunction::inferStamp(const Schema& schema)
     {
         if (this->getOnField().getDataType().isSignedInteger())
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64)).get<FieldAccessLogicalFunction>();
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64));
         }
         else
         {
-            newOnField
-                = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)).get<FieldAccessLogicalFunction>();
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64));
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).get<FieldAccessLogicalFunction>();
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = newOnField.getFieldName();
+    const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>().get().getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + asFieldName));
     }
     else
     {
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName).get<FieldAccessLogicalFunction>());
+        this->setAsField(this->getAsField().withFieldName(attributeNameResolver + fieldName));
     }
     auto newAsField = this->getAsField().withDataType(getFinalAggregateStamp());
-    this->setAsField(newAsField.get<FieldAccessLogicalFunction>());
-    this->setOnField(newOnField);
+    this->setAsField(newAsField);
+    this->setOnField(newOnField.getAs<FieldAccessLogicalFunction>().get());
     this->setInputStamp(newOnField.getDataType());
 }
 
-SerializableAggregationFunction AvgAggregationLogicalFunction::serialize() const
+Reflected AvgAggregationLogicalFunction::reflect() const
 {
-    SerializableAggregationFunction serializedAggregationFunction;
-    serializedAggregationFunction.set_type(NAME);
+    return NES::reflect(this);
+}
 
-    auto onFieldFuc = SerializableFunction();
-    onFieldFuc.CopyFrom(this->getOnField().serialize());
+Reflected Reflector<AvgAggregationLogicalFunction>::operator()(const AvgAggregationLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedAvgAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+}
 
-    auto asFieldFuc = SerializableFunction();
-    asFieldFuc.CopyFrom(this->getAsField().serialize());
-
-    serializedAggregationFunction.mutable_as_field()->CopyFrom(asFieldFuc);
-    serializedAggregationFunction.mutable_on_field()->CopyFrom(onFieldFuc);
-    return serializedAggregationFunction;
+AvgAggregationLogicalFunction Unreflector<AvgAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [onField, asField] = unreflect<detail::ReflectedAvgAggregationLogicalFunction>(reflected);
+    return AvgAggregationLogicalFunction{onField, asField};
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterAvgAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return std::make_shared<AvgAggregationLogicalFunction>(unreflect<AvgAggregationLogicalFunction>(arguments.reflected));
+    }
+
     if (arguments.fields.size() != 2)
     {
         throw CannotDeserialize("AvgAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());

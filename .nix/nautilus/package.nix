@@ -7,18 +7,18 @@ let
 
   mlirBinary = pkgs.stdenvNoCC.mkDerivation rec {
     pname = "nes-mlir";
-    version = "20";
+    version = "21";
 
     src =
       if pkgs.stdenv.hostPlatform.isAarch64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-arm64-none-libstdcxx.tar.zstd";
-          sha256 = "3e74c024e865efac646abe09b2cadcf88530b9af799b2d6fd0a5e5e1e01e685e";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-with-fix-173075/nes-llvm-21-with-fix-173075-arm64-none-libstdcxx.tar.zstd";
+          sha256 = "d01f375f5943d25cecf109ceae78797a13ed48214ceddac4d3c8d608d74694bc";
         }
       else if pkgs.stdenv.hostPlatform.isx86_64 then
         pkgs.fetchurl {
-          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-20/nes-llvm-20-x64-none-libstdcxx.tar.zstd";
-          sha256 = "aef98d5bd61a8530392796e86a15a36d7fde9d553579cf64dfd465454e3fae7a";
+          url = "https://github.com/nebulastream/clang-binaries/releases/download/vmlir-21-with-fix-173075/nes-llvm-21-with-fix-173075-x64-none-libstdcxx.tar.zstd";
+          sha256 = "217c4004dab06cc00416733017bdf9f9fc23795c48942cbb08303ac9c0d696a1";
         }
       else
         throw "Unsupported system: ${pkgs.stdenv.hostPlatform.system}";
@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "598041b59644088ed431bb27a35e77f48c1e8bad";
-    hash = "sha512-/UXpeKTGNk+fd7ecSPP2RIJ8/hA7E602JnSi4K+s15YKYbKN+LaHSuAXgT3NaJqe3LqYD6NqaFUqMVGmf/6Q3g==";
+    rev = "d75a6816436c824090c85191a0c1e39239cf2479";
+    hash = "sha256-M0OOYKk/bCegCv2RpuvJ4Q9gSccpW78r3C9xtrGIHe0=";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -62,6 +62,10 @@ let
     version = "0.1";
 
     src = nautilusSrc;
+    patches = [
+      ./patches/0001-disable-ubsan-function-call-check.patch
+      ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
+    ];
 
     nativeBuildInputs = [
       pkgs.cmake
@@ -107,6 +111,7 @@ let
       "-DENABLE_MLIR_BACKEND=ON"
       "-DENABLE_C_BACKEND=ON"
       "-DENABLE_BC_BACKEND=OFF"
+      "-DENABLE_INLINING_PASS=OFF"
       "-DENABLE_TESTS=OFF"
       "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
       "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"

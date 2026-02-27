@@ -15,14 +15,22 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <ostream>
 #include <string_view>
+#include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <InputFormatters/InputFormatterTaskPipeline.hpp>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexer.hpp>
+#include <InputFormatterTupleBufferRef.hpp>
+#include <RawValueParser.hpp>
+#include <static.hpp>
 
 namespace NES
 {
@@ -31,32 +39,74 @@ constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
 {
-    explicit CSVMetaData(const ParserConfig& config, const Schema&) : tupleDelimiter(config.tupleDelimiter) { };
+    static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
+    static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
-    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return this->tupleDelimiter; }
+    explicit CSVMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
+        : tupleDelimiter(config.tupleDelimiter.front())
+        , fieldDelimiter(config.fieldDelimiter.front())
+        , fieldNames(tupleBufferRef.getAllFieldNames())
+        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+    {
+        PRECONDITION(
+            config.tupleDelimiter.size() == SIZE_OF_TUPLE_DELIMITER,
+            "Delimiters must be of size '1 byte', but the tuple delimiter was {} (size {})",
+            config.tupleDelimiter,
+            config.tupleDelimiter.size());
+        PRECONDITION(
+            config.fieldDelimiter.size() == SIZE_OF_FIELD_DELIMITER,
+            "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
+            config.fieldDelimiter,
+            config.fieldDelimiter.size());
+    };
+
+    [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return {&tupleDelimiter, SIZE_OF_TUPLE_DELIMITER}; }
+
+    [[nodiscard]] std::string_view getFieldDelimitingBytes() const { return {&fieldDelimiter, SIZE_OF_FIELD_DELIMITER}; }
+
+    [[nodiscard]] char getTupleDelimiter() const { return tupleDelimiter; }
+
+    [[nodiscard]] char getFieldDelimiter() const { return fieldDelimiter; }
+
+    static QuotationType getQuotationType() { return QuotationType::NONE; }
+
+    [[nodiscard]] const Record::RecordFieldIdentifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const
+    {
+        return fieldNames[i];
+    }
+
+    [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
+
+    [[nodiscard]] uint64_t getNumberOfFields() const
+    {
+        INVARIANT(fieldNames.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
+        return fieldNames.size();
+    }
 
 private:
-    std::string tupleDelimiter;
+    char tupleDelimiter;
+    char fieldDelimiter;
+    std::vector<Record::RecordFieldIdentifier> fieldNames;
+    std::vector<DataType> fieldDataTypes;
 };
 
 class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
 {
 public:
-    static constexpr bool IsFormattingRequired = true;
-    static constexpr bool HasSpanningTuple = true;
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
 
-    explicit CSVInputFormatIndexer(ParserConfig config, size_t numberOfFieldsInSchema);
+    explicit CSVInputFormatIndexer(const bool allowCommasInStrings) : allowCommasInStrings(allowCommasInStrings) { };
     ~CSVInputFormatIndexer() = default;
 
-    void indexRawBuffer(FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData&) const;
+
+    void indexRawBuffer(
+        FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 
 private:
-    ParserConfig config;
-    size_t numberOfFieldsInSchema;
+    bool allowCommasInStrings{};
 };
 
 }

@@ -19,7 +19,7 @@
 #include <nautilus/std/sstream.h>
 #include <nautilus/val.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 
 /// Forward declaring the class here, so that we can declare the operator==(const VariableSizedData, const nautilus::val<bool>) for it
@@ -27,31 +27,19 @@ class VariableSizedData;
 nautilus::val<bool> operator==(const VariableSizedData& varSizedData, const nautilus::val<bool>& other);
 nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableSizedData& varSizedData);
 
-/// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data
 /// This class should not be used as standalone. Rather it should be used via the VarVal class
 class VariableSizedData
 {
 public:
-    /// @param bufferBacked: If set to true the VariableSizedData object is backed by a tuple buffer.
-    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint32_t>& size);
-    explicit VariableSizedData(const nautilus::val<int8_t*>& pointerToVarSizedData);
+    explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size);
     VariableSizedData(const VariableSizedData& other);
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
 
-
-    /// Returns the size of the variable sized data object. This means the size of the size + data
-    [[nodiscard]] nautilus::val<uint32_t> getTotalSize() const;
-
-    /// Returns the size of the variable sized data content.
-    [[nodiscard]] nautilus::val<uint32_t> getContentSize() const;
+    [[nodiscard]] nautilus::val<uint64_t> getSize() const;
     /// Returns the content of the variable sized data, this means the pointer to the actual variable sized data.
-    /// In other words, this returns the pointer to the actual data, not the pointer to the size + data
     [[nodiscard]] nautilus::val<int8_t*> getContent() const;
-
-    /// Returns the pointer to the variable sized data, this means the pointer to the size + data
-    [[nodiscard]] nautilus::val<int8_t*> getReference() const;
 
     /// Declaring friend for it, so that we can access the members in it and do not have to declare getters for it
     friend nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const VariableSizedData& variableSizedData);
@@ -66,7 +54,7 @@ public:
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
 private:
-    nautilus::val<uint32_t> size;
+    nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToVarSized;
 };
 

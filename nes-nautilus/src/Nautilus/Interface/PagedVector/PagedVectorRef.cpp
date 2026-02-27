@@ -16,7 +16,6 @@
 #include <memory>
 #include <utility>
 #include <vector>
-#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -26,7 +25,7 @@
 #include <nautilus/val.hpp>
 #include <val_ptr.hpp>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
@@ -34,9 +33,10 @@ uint64_t getTotalNumberOfEntriesProxy(const PagedVector* pagedVector)
     return pagedVector->getTotalNumberOfEntries();
 }
 
-const TupleBuffer* createNewEntryProxy(PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const MemoryLayout* memoryLayout)
+const static TupleBuffer*
+createNewEntryProxy(PagedVector* pagedVector, AbstractBufferProvider* bufferProvider, const uint64_t capacity, const uint64_t bufferSize)
 {
-    pagedVector->appendPageIfFull(bufferProvider, memoryLayout);
+    pagedVector->appendPageIfFull(bufferProvider, capacity, bufferSize);
     return std::addressof(pagedVector->getLastPage());
 }
 
@@ -60,15 +60,19 @@ nautilus::val<uint64_t> PagedVectorRef::getNumberOfTuples() const
     return nautilus::invoke(getTotalNumberOfEntriesProxy, pagedVectorRef);
 }
 
-PagedVectorRef::PagedVectorRef(
-    const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef)
-    : pagedVectorRef(pagedVectorRef), bufferRef(bufferRef), memoryLayout(bufferRef->getMemoryLayout().get())
+PagedVectorRef::PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef)
+    : pagedVectorRef(pagedVectorRef), bufferRef(bufferRef)
 {
 }
 
 void PagedVectorRef::writeRecord(const Record& record, const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    auto recordBuffer = RecordBuffer(invoke(createNewEntryProxy, pagedVectorRef, bufferProvider, memoryLayout));
+    auto recordBuffer = RecordBuffer(invoke(
+        createNewEntryProxy,
+        pagedVectorRef,
+        bufferProvider,
+        nautilus::val<uint64_t>{bufferRef->getCapacity()},
+        nautilus::val<uint64_t>{bufferRef->getBufferSize()}));
     auto numTuplesOnPage = recordBuffer.getNumRecords();
     bufferRef->writeRecord(numTuplesOnPage, recordBuffer, record, bufferProvider);
     recordBuffer.setNumRecords(numTuplesOnPage + 1);
@@ -112,7 +116,7 @@ nautilus::val<bool> PagedVectorRef::operator==(const PagedVectorRef& other) cons
 
 PagedVectorRefIter::PagedVectorRefIter(
     PagedVectorRef pagedVector,
-    const std::shared_ptr<BufferRef::TupleBufferRef>& bufferRef,
+    const std::shared_ptr<TupleBufferRef>& bufferRef,
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const nautilus::val<TupleBuffer*>& curPage,
     const nautilus::val<uint64_t>& posOnPage,

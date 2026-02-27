@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -34,10 +35,8 @@
 #include <utility>
 #include <vector>
 #include <unistd.h>
-
-#include <Configurations/Util.hpp>
-#include <QueryManager/EmbeddedWorkerQueryManager.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -53,6 +52,7 @@
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
+#include <SystestProgressTracker.hpp>
 #include <SystestRunner.hpp>
 #include <SystestState.hpp>
 #include <from_current.hpp>
@@ -88,11 +88,11 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     const OverrideQueriesMap& queriesByOverride,
     std::mt19937& rng,
     const uint64_t numberConcurrentQueries,
-    const URI& grpcURI,
+    const std::string& grpcURI,
     Systest::SystestProgressTracker& progressTracker)
 {
-    auto queryManager = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(grpcURI.toString(), grpc::InsecureChannelCredentials()));
-    Systest::QuerySubmitter querySubmitter(std::move(queryManager));
+    Systest::QuerySubmitter querySubmitter(std::make_unique<QueryManager>(
+        std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(grpcURI), .config = {}})));
 
     while (true)
     {
@@ -138,7 +138,9 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
                 configCopy.overwriteConfigWithCommandLineInput({{key, value}});
             }
 
-            auto queryManager = std::make_unique<EmbeddedWorkerQueryManager>(configCopy);
+            auto queryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
+                WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configCopy));
+
             Systest::QuerySubmitter querySubmitter(std::move(queryManager));
 
             auto shuffledQueries = queriesForConfig;
@@ -178,7 +180,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
 
     std::mt19937 rng(std::random_device{}());
     const auto grpcURI = config.grpcAddressUri.getValue();
-    const bool runRemote = not grpcURI.empty();
+    const bool runRemote = config.remoteTestExecution.getValue();
 
     if (runRemote)
     {
@@ -305,7 +307,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
         std::vector<Systest::RunningQuery> failedQueries;
-        if (const auto grpcURI = config.grpcAddressUri.getValue(); not grpcURI.empty())
+        if (const auto grpcURI = config.grpcAddressUri.getValue(); config.remoteTestExecution.getValue())
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
@@ -326,9 +328,32 @@ SystestExecutorResult SystestExecutor::executeSystests()
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
+                std::vector<Systest::SystestQuery> benchmarkQueries;
+                benchmarkQueries.reserve(queries.size());
+
+                for (const auto& query : queries)
+                {
+                    if (query.differentialQueryPlan.has_value())
+                    {
+                        std::cout << "Skipping differential query for benchmarking: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
+
+                    if (std::holds_alternative<Systest::ExpectedError>(query.expectedResultsOrExpectedError))
+                    {
+                        std::cout << "Skipping query expecting error for benchmarking: " << query.testName << ":"
+                                  << query.queryIdInFile.toString() << "\n";
+                        continue;
+                    }
+
+                    benchmarkQueries.push_back(query);
+                }
+
                 progressTracker.reset();
-                progressTracker.setTotalQueries(queries.size());
-                auto failed = runQueriesAndBenchmark(queries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
+                progressTracker.setTotalQueries(benchmarkQueries.size());
+                auto failed = runQueriesAndBenchmark(benchmarkQueries, singleNodeWorkerConfiguration, benchmarkResults, progressTracker);
+
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 std::cout << benchmarkResults.dump(4);
                 const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";

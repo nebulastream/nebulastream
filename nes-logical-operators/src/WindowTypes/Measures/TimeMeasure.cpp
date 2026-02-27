@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <string>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 
 namespace NES::Windowing
@@ -48,6 +49,21 @@ bool TimeMeasure::operator<=(const TimeMeasure& other) const
 bool TimeMeasure::operator==(const TimeMeasure& other) const
 {
     return milliSeconds == other.milliSeconds;
+}
+
+}
+
+namespace NES
+{
+Reflected Reflector<Windowing::TimeMeasure>::operator()(const Windowing::TimeMeasure& measure) const
+{
+    return reflect(measure.getTime());
+}
+
+Windowing::TimeMeasure Unreflector<Windowing::TimeMeasure>::operator()(const Reflected& reflected) const
+{
+    const auto milliseconds = unreflect<uint64_t>(reflected);
+    return Windowing::TimeMeasure(milliseconds);
 }
 
 }

@@ -23,8 +23,9 @@
 #include <vector>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
-namespace NES::Util
+namespace NES
 {
 
 /// Removes leading and trailing whitespaces from the input string_view.
@@ -88,11 +89,11 @@ requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + inp
     }
     if (ec == std::errc::invalid_argument)
     {
-        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, typeid(T).name());
+        throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, NAMEOF_TYPE(T));
     }
     if (ec == std::errc::result_out_of_range)
     {
-        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, typeid(T).name());
+        throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, NAMEOF_TYPE(T));
     }
     throw CannotFormatMalformedStringValue("Unknown from_chars error.");
 }
@@ -131,6 +132,9 @@ std::string formatFloat(std::floating_point auto value);
 
 /// escape characters such as '\n', e.g., for logging
 std::string escapeSpecialCharacters(std::string_view input);
+
+/// Unescape escaped character sequences (e.g., "\\n" -> '\n', "\\t" -> '\t')
+std::string unescapeSpecialCharacters(std::string_view input);
 
 /// splits a string given a delimiter into multiple substrings stored in a T vector
 /// the delimiter is allowed to be a string rather than a char only.

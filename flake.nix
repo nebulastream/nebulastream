@@ -22,6 +22,8 @@
         nautilusPkg = nautilusPackages.nautilus;
 
         nlohmann_jsonPkg = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
+        nameofPkg = pkgs.callPackage ./.nix/nameof/package.nix { };
+        scope_guardPkg = pkgs.callPackage ./.nix/scope_guard/package.nix { };
         cpptracePkg = pkgs.callPackage ./.nix/cpptrace/package.nix { };
         argparsePkg = pkgs.callPackage ./.nix/argparse/package.nix { };
         libcuckooPkg = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
@@ -30,16 +32,36 @@
         spdlogPkg = pkgs.spdlog.override { fmt = fmtPkg; };
         follyPkg = import ./.nix/folly/package.nix { inherit pkgs; };
         antlr4Pkg = import ./.nix/antlr4/package.nix { inherit pkgs; };
+        simdjsonPkg =
+          let
+            version = "4.0.7";
+          in
+          pkgs.simdjson.overrideAttrs (_:
+            {
+              inherit version;
+              src = pkgs.fetchFromGitHub {
+                owner = "simdjson";
+                repo = "simdjson";
+                rev = "v${version}";
+                hash = "sha256-8pmFtMpML7tTXbH1E3aIpSTQkNF8TFcIPOm2nwnKxkA=";
+              };
+            });
+
+        reflect_cppPkg = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
 
         baseThirdPartyDeps = (with pkgs; [
           fmtPkg
           spdlogPkg
+          simdjsonPkg
+          follyPkg
+          antlr4Pkg
           grpc
           protobuf
           abseil-cpp
           yaml-cpp
           replxx
           magic-enum
+          libuuid
           boost
           openssl.dev
           zstd.dev
@@ -54,7 +76,8 @@
           tbb
           python3
           openjdk21
-        ]) ++ [ follyPkg antlr4Pkg ];
+          reflect_cppPkg
+        ]);
 
         antlr4Jar = pkgs.fetchurl {
           url = "https://www.antlr.org/download/antlr-${antlr4Pkg.version}-complete.jar";
@@ -119,6 +142,8 @@
           libcuckooPkg
           nautilusPkg
           nlohmann_jsonPkg
+          nameofPkg
+          scope_guardPkg
         ];
 
         cmakeInputs = [ mlirBinary libdwarfModule ] ++ thirdPartyDeps;

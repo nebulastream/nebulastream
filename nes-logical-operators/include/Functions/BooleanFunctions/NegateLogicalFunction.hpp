@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -22,35 +23,59 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
 
-class NegateLogicalFunction final : public LogicalFunctionConcept
+class NegateLogicalFunction final
 {
 public:
     static constexpr std::string_view NAME = "Negate";
 
     explicit NegateLogicalFunction(LogicalFunction child);
 
-    [[nodiscard]] SerializableFunction serialize() const override;
+    [[nodiscard]] bool operator==(const NegateLogicalFunction& rhs) const;
 
-    [[nodiscard]] bool operator==(const LogicalFunctionConcept& rhs) const override;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] NegateLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
-    [[nodiscard]] DataType getDataType() const override;
-    [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] NegateLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    [[nodiscard]] std::vector<LogicalFunction> getChildren() const override;
-    [[nodiscard]] LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const override;
-
-    [[nodiscard]] std::string_view getType() const override;
-    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
     DataType dataType;
     LogicalFunction child;
+
+    friend Reflector<NegateLogicalFunction>;
+};
+
+template <>
+struct Reflector<NegateLogicalFunction>
+{
+    Reflected operator()(const NegateLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<NegateLogicalFunction>
+{
+    NegateLogicalFunction operator()(const Reflected& reflected) const;
+};
+
+static_assert(LogicalFunctionConcept<NegateLogicalFunction>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedNegateLogicalFunction
+{
+    std::optional<LogicalFunction> child;
 };
 }
 

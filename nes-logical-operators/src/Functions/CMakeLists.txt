@@ -15,13 +15,10 @@ add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)
 
 add_source_files(nes-logical-operators
-        LogicalFunction.cpp
         LogicalFunctionProvider.cpp
 )
 
 add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
-add_plugin(FieldAssignment LogicalFunction nes-logical-operators FieldAssignmentLogicalFunction.cpp)
-add_plugin(Rename LogicalFunction nes-logical-operators RenameLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)

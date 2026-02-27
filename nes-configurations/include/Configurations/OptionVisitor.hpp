@@ -20,6 +20,15 @@ namespace NES
 {
 class BaseConfiguration;
 
+struct OptionInfo
+{
+    std::string name;
+    std::string description;
+    std::string_view defaultValue;
+    std::string_view currentValue;
+    bool isExplicitlySet = false;
+};
+
 class OptionVisitor
 {
 public:
@@ -27,8 +36,15 @@ public:
 
     OptionVisitor() { }
 
-    virtual void visitConcrete(std::string name, std::string description, std::string_view defaultValue = "") = 0;
+    virtual void visitOption(const OptionInfo& info) = 0;
+
     virtual void push() = 0;
     virtual void pop() = 0;
+
+    /// Called when entering/exiting a named configuration section.
+    /// Default implementation delegates to push()/pop() for backward compatibility.
+    virtual void pushSection(std::string_view /*sectionName*/) { push(); }
+
+    virtual void popSection() { pop(); }
 };
 }

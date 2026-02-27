@@ -20,17 +20,17 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
-#include <SerializableOperator.pb.h>
 
 namespace NES
 {
@@ -49,8 +49,12 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        created.tupleDelimiter = tupleDelimiter->second;
+        auto unescapedDelimiter = unescapeSpecialCharacters(tupleDelimiter->second);
+        PRECONDITION(
+            unescapedDelimiter.size() == 1,
+            "We currently do not support tuple delimiters larger than one byte. `{}`",
+            escapeSpecialCharacters(unescapedDelimiter));
+        created.tupleDelimiter = unescapedDelimiter;
     }
     else
     {
@@ -59,12 +63,28 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     }
     if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
     {
-        created.fieldDelimiter = fieldDelimiter->second;
+        auto unescapedDelimiter = unescapeSpecialCharacters(fieldDelimiter->second);
+        created.fieldDelimiter = unescapedDelimiter;
     }
     else
     {
         NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
         created.fieldDelimiter = ",";
+    }
+    if (const auto commaCheck = configMap.find("allow_commas_in_strings"); commaCheck != configMap.end())
+    {
+        const auto commaCheckParsed = from_chars<bool>(commaCheck->second);
+        if (not commaCheckParsed)
+        {
+            throw InvalidConfigParameter("no_commas_in_strings config argument must be parsable boolean, but was: {}", commaCheck->second);
+        }
+        created.allowCommasInStrings = commaCheckParsed.value();
+        ;
+    }
+    else
+    {
+        NES_DEBUG("Parser configuration did not contain: allow_commas_in_strings, using default: true");
+        created.allowCommasInStrings = true;
     }
     return created;
 }
@@ -72,7 +92,11 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
 std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
 {
     return os << fmt::format(
-               "ParserConfig(type: {}, tupleDelimiter: {}, fieldDelimiter: {})", obj.parserType, obj.tupleDelimiter, obj.fieldDelimiter);
+               "ParserConfig(type: {}, tupleDelimiter: '{}', fieldDelimiter: '{}', allowCommasInStrings: {})",
+               obj.parserType,
+               obj.tupleDelimiter,
+               obj.fieldDelimiter,
+               obj.allowCommasInStrings);
 }
 
 SourceDescriptor::SourceDescriptor(
@@ -137,32 +161,31 @@ std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
                descriptor.getParserConfig().parserType,
-               Util::escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
-               Util::escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
+               escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
+               escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
 }
 
-SerializableSourceDescriptor SourceDescriptor::serialize() const
+Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
 {
-    SerializableSourceDescriptor serializableSourceDescriptor;
-    SchemaSerializationUtil::serializeSchema(*logicalSource.getSchema(), serializableSourceDescriptor.mutable_sourceschema());
-    serializableSourceDescriptor.set_logicalsourcename(logicalSource.getLogicalSourceName());
-    serializableSourceDescriptor.set_sourcetype(sourceType);
+    const detail::ReflectedSourceDescriptor descriptor{
+        .physicalSourceId = sourceDescriptor.physicalSourceId.getRawValue(),
+        .logicalSource = sourceDescriptor.logicalSource,
+        .type = sourceDescriptor.sourceType,
+        .parserConfig = sourceDescriptor.parserConfig,
+        .config = sourceDescriptor.getReflectedConfig()};
 
-    serializableSourceDescriptor.set_physicalsourceid(physicalSourceId.getRawValue());
+    return reflect(descriptor);
+}
 
-    /// Serialize parser config.
-    auto* const serializedParserConfig = SerializableParserConfig().New();
-    serializedParserConfig->set_type(parserConfig.parserType);
-    serializedParserConfig->set_tupledelimiter(parserConfig.tupleDelimiter);
-    serializedParserConfig->set_fielddelimiter(parserConfig.fieldDelimiter);
-    serializableSourceDescriptor.set_allocated_parserconfig(serializedParserConfig);
+SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl) const
+{
+    auto reflectedSourceDescriptor = unreflect<detail::ReflectedSourceDescriptor>(rfl);
 
-    /// Iterate over SourceDescriptor config and serialize all key-value pairs.
-    for (const auto& [key, value] : getConfig())
-    {
-        auto* kv = serializableSourceDescriptor.mutable_config();
-        kv->emplace(key, descriptorConfigTypeToProto(value));
-    }
-    return serializableSourceDescriptor;
+    return SourceDescriptor{
+        PhysicalSourceId{reflectedSourceDescriptor.physicalSourceId},
+        LogicalSource{std::move(reflectedSourceDescriptor.logicalSource)},
+        reflectedSourceDescriptor.type,
+        Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
+        std::move(reflectedSourceDescriptor.parserConfig)};
 }
 }

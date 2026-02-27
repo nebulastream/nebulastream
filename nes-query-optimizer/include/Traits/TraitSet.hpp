@@ -20,9 +20,13 @@
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
+#include <vector>
+
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
+#include <nameof.hpp>
 
 namespace NES
 {
@@ -32,7 +36,7 @@ class TraitSet
 public:
     explicit TraitSet() = default;
 
-    template <IsTrait... TraitType>
+    template <TraitConcept... TraitType>
     explicit TraitSet(TraitType&&... traits)
     {
         traitMap = std::unordered_map<std::type_index, Trait>{
@@ -48,31 +52,31 @@ public:
     {
     }
 
-    template <IsTrait TraitType>
-    [[nodiscard]] std::optional<TraitType> tryGet() const
+    template <TraitConcept TraitType>
+    [[nodiscard]] std::optional<TypedTrait<TraitType>> tryGet() const
     {
         if (const auto found = traitMap.find(typeid(TraitType)); found != traitMap.end())
         {
-            return found->second.get<TraitType>();
+            return found->second.tryGetAs<TraitType>();
         }
         return std::nullopt;
     }
 
-    template <IsTrait TraitType>
-    [[nodiscard]] TraitType get() const
+    template <TraitConcept TraitType>
+    [[nodiscard]] TypedTrait<TraitType> get() const
     {
         const auto found = traitMap.find(typeid(TraitType));
-        INVARIANT(found != traitMap.end(), "Trait {} not found", typeid(TraitType).name());
-        return found->second.get<TraitType>();
+        INVARIANT(found != traitMap.end(), "Trait {} not found", NAMEOF_TYPE(TraitType));
+        return found->second.getAs<TraitType>();
     }
 
-    template <IsTrait TraitType>
+    template <TraitConcept TraitType>
     [[nodiscard]] bool contains() const
     {
         return traitMap.contains(typeid(TraitType));
     }
 
-    template <IsTrait TraitType>
+    template <TraitConcept TraitType>
     [[nodiscard]] bool tryInsert(TraitType trait)
     {
         const auto [iter, success] = traitMap.try_emplace(typeid(TraitType), std::move(trait));
@@ -91,12 +95,14 @@ public:
 
 private:
     std::unordered_map<std::type_index, Trait> traitMap;
+
+    friend Reflector<TraitSet>;
 };
 
 static_assert(std::ranges::input_range<TraitSet>);
 
 template <typename T>
-std::optional<T> getTrait(const TraitSet& traitSet)
+std::optional<TypedTrait<T>> getTrait(const TraitSet& traitSet)
 {
     return traitSet.tryGet<T>();
 }
@@ -113,10 +119,31 @@ bool hasTraits(const TraitSet& traitSet)
     return (hasTrait<TraitTypes>(traitSet) && ...);
 }
 
-template <IsTrait TraitType>
+template <TraitConcept TraitType>
 bool tryInsert(TraitSet& traitset, TraitType trait)
 {
     return traitset.tryInsert(std::move(trait));
 }
+
+template <>
+struct Reflector<TraitSet>
+{
+    Reflected operator()(const TraitSet& traitSet) const;
+};
+
+template <>
+struct Unreflector<TraitSet>
+{
+    TraitSet operator()(const Reflected& reflected) const;
+};
+
+}
+
+namespace NES::detail
+{
+struct ReflectedTraitSet
+{
+    std::vector<Trait> traits;
+};
 
 }

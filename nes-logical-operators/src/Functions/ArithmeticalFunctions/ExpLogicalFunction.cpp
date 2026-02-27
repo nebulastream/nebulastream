@@ -17,11 +17,17 @@
 #include <string>
 #include <string_view>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -32,13 +38,9 @@ namespace NES
 
 ExpLogicalFunction::ExpLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
 
-bool ExpLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool ExpLogicalFunction::operator==(const ExpLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const ExpLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 DataType ExpLogicalFunction::getDataType() const
@@ -46,7 +48,7 @@ DataType ExpLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
+ExpLogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -55,12 +57,11 @@ LogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) const
 
 LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return this->withChildren(newChildren);
+    /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
+    const auto newChild = child.withInferredDataType(schema);
+    const std::string eulerNumber = "2.7182818284590452353602874713527";
+    const ConstantValueLogicalFunction expConstantValue{DataTypeProvider::provideDataType(DataType::Type::FLOAT64), eulerNumber};
+    return PowLogicalFunction(expConstantValue, newChild).withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
 };
 
 std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
@@ -68,7 +69,7 @@ std::vector<LogicalFunction> ExpLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction ExpLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+ExpLogicalFunction ExpLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "ExpLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -90,17 +91,28 @@ std::string ExpLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("EXP({})", child.explain(verbosity));
 }
 
-SerializableFunction ExpLogicalFunction::serialize() const
+Reflected Reflector<ExpLogicalFunction>::operator()(const ExpLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
-    return serializedFunction;
+    return reflect(detail::ReflectedExpLogicalFunction{.child = function.child});
+}
+
+ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedExpLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return ExpLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<ExpLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

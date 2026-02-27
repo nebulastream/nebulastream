@@ -33,16 +33,14 @@
 
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
+#include <Statements/StatementHandler.hpp>
+#include <Statements/StatementOutputAssembler.hpp>
+#include <Statements/TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Logger.hpp>
-#include <YAML/YAMLBinder.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
-#include <JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
-#include <LegacyOptimizer.hpp>
-#include <StatementHandler.hpp>
-#include <StatementOutputAssembler.hpp>
-#include <TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <replxx.hxx>
 
 namespace NES
@@ -52,6 +50,7 @@ struct Repl::Impl
 {
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
+    TopologyStatementHandler topologyStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
 
@@ -73,6 +72,7 @@ struct Repl::Impl
     Impl(
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
+        TopologyStatementHandler topologyStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -80,6 +80,7 @@ struct Repl::Impl
         const bool interactiveMode)
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
+        , topologyStatementHandler(std::move(topologyStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
         , interactiveMode(interactiveMode)
@@ -218,6 +219,7 @@ struct Repl::Impl
         {
             exitCode = 1;
         }
+        NES_ERROR("Error encountered: {}", error.what());
         std::cout << fmt::format("Error encountered: {}", error.what());
     }
 
@@ -394,6 +396,10 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
+                else if constexpr (requires { topologyStatementHandler.apply(stmt); })
+                {
+                    return topologyStatementHandler.apply(stmt);
+                }
                 else if constexpr (requires { queryStatementHandler->apply(stmt); })
                 {
                     return queryStatementHandler->apply(stmt);
@@ -532,6 +538,7 @@ struct Repl::Impl
 Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
+    TopologyStatementHandler topologyStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
@@ -540,6 +547,7 @@ Repl::Repl(
     : impl(std::make_unique<Impl>(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
+          std::move(topologyStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,

@@ -24,7 +24,7 @@
 #include <static.hpp>
 #include <val.hpp>
 
-namespace NES::Nautilus
+namespace NES
 {
 Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : recordFields(fields)
 {
@@ -78,14 +78,27 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
     return recordFields.size();
 }
 
-bool Record::operator==(const Record& rhs) const
+bool Record::hasField(const RecordFieldIdentifier& fieldName) const
 {
-    return recordFields == rhs.recordFields;
+    return recordFields.contains(fieldName);
 }
 
-bool Record::operator!=(const Record& rhs) const
+nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
 {
-    return !(rhs == *this);
+    if (lhs.recordFields.size() != rhs.recordFields.size())
+    {
+        return false;
+    }
+
+    for (const auto& [fieldName, value] : nautilus::static_iterable(lhs.recordFields))
+    {
+        if (not rhs.hasField(fieldName) or value != rhs.read(fieldName))
+        {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 }

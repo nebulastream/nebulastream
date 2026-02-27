@@ -19,61 +19,25 @@
 #include <random>
 #include <sstream>
 #include <string>
+#include <nameof.hpp>
+
 #include <Util/Logger/Logger.hpp>
+#include <Util/UUID.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+
 #if defined(__linux__)
 #endif
 namespace NES::Testing
 {
-namespace detail::uuid
-{
-static std::random_device rd;
-static std::mt19937 gen(rd());
-static std::uniform_int_distribution<> dis(0, 15);
-static std::uniform_int_distribution<> dis2(8, 11);
 
-std::string generateUUID()
-{
-    std::stringstream ss;
-    ss << std::hex;
-    for (int i = 0; i < 8; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    for (int i = 0; i < 4; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-4";
-    for (int i = 0; i < 3; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    ss << dis2(gen);
-    for (int i = 0; i < 3; i++)
-    {
-        ss << dis(gen);
-    }
-    ss << "-";
-    for (int i = 0; i < 12; i++)
-    {
-        ss << dis(gen);
-    }
-    return ss.str();
-}
-}
-
-BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID())
+BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / UUIDToString(generateUUID()))
 {
 }
 
 void BaseIntegrationTest::SetUp()
 {
-    auto expected = false;
-    if (setUpCalled.compare_exchange_strong(expected, true))
+    if (auto expected = false; setUpCalled.compare_exchange_strong(expected, true))
     {
         Testing::BaseUnitTest::SetUp();
         if (!std::filesystem::exists(testResourcePath))
@@ -88,7 +52,7 @@ void BaseIntegrationTest::SetUp()
     }
     else
     {
-        NES_ERROR("SetUp called twice in {}", typeid(*this).name());
+        NES_ERROR("SetUp called twice in {}", NAMEOF_TYPE_EXPR(*this));
     }
 }
 
@@ -99,14 +63,13 @@ std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
 
 BaseIntegrationTest::~BaseIntegrationTest()
 {
-    INVARIANT(setUpCalled, "SetUp not called for test {}", typeid(*this).name());
-    INVARIANT(tearDownCalled, "TearDown not called for test {}", typeid(*this).name());
+    INVARIANT(setUpCalled, "SetUp not called for test {}", NAMEOF_TYPE_EXPR(*this));
+    INVARIANT(tearDownCalled, "TearDown not called for test {}", NAMEOF_TYPE_EXPR(*this));
 }
 
 void BaseIntegrationTest::TearDown()
 {
-    auto expected = false;
-    if (tearDownCalled.compare_exchange_strong(expected, true))
+    if (auto expected = false; tearDownCalled.compare_exchange_strong(expected, true))
     {
         std::filesystem::remove_all(testResourcePath);
         Testing::BaseUnitTest::TearDown();
@@ -114,7 +77,7 @@ void BaseIntegrationTest::TearDown()
     }
     else
     {
-        NES_ERROR("TearDown called twice in {}", typeid(*this).name());
+        NES_ERROR("TearDown called twice in {}", NAMEOF_TYPE_EXPR(*this));
     }
 }
 

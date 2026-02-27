@@ -14,23 +14,45 @@
 
 #pragma once
 
-#include <memory>
-#include <MemoryLayout/ColumnLayout.hpp>
-#include <MemoryLayout/MemoryLayout.hpp>
+#include <cstdint>
+#include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Nautilus::Interface::BufferRef
+namespace NES
+{
+class LowerSchemaProvider;
+}
+
+namespace NES
 {
 
 /// Implements BufferRef. Provides columnar memory access.
 class ColumnTupleBufferRef final : public TupleBufferRef
 {
+    struct Field
+    {
+        Record::RecordFieldIdentifier name;
+        DataType type;
+        uint64_t columnOffset;
+    };
+
+    std::vector<Field> fields;
+
+    /// Private constructor to prevent direct instantiation
+    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize);
+
+    /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
+    friend class NES::LowerSchemaProvider;
+
 public:
-    /// Creates a column memory provider based on a valid column memory layout pointer.
-    explicit ColumnTupleBufferRef(std::shared_ptr<ColumnLayout> columnMemoryLayoutPtr);
+    ColumnTupleBufferRef(const ColumnTupleBufferRef&) = default;
+    ColumnTupleBufferRef(ColumnTupleBufferRef&&) = default;
     ~ColumnTupleBufferRef() override = default;
 
-    [[nodiscard]] std::shared_ptr<MemoryLayout> getMemoryLayout() const override;
+    [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
+    [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
@@ -42,13 +64,6 @@ public:
         const RecordBuffer& recordBuffer,
         const Record& rec,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
-
-private:
-    nautilus::val<int8_t*>
-    calculateFieldAddress(const nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
-
-    /// It is fine that we are storing here a non nautilus value, as they are trace-time-constants.
-    std::shared_ptr<ColumnLayout> columnMemoryLayout;
 };
 
 }

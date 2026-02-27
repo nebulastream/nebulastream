@@ -34,19 +34,19 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/FunctionSerializationUtil.hpp>
-#include <Serialization/SchemaSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <Serialization/WindowTypeReflection.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableOperator.pb.h>
 #include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
@@ -90,7 +90,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> 
     const auto& rightInputSchema = inputSchemas[1];
 
     auto copy = *this;
-    copy.outputSchema = Schema{copy.outputSchema.memoryLayoutType};
+    copy.outputSchema = Schema{};
     copy.leftInputSchema = leftInputSchema;
     copy.rightInputSchema = rightInputSchema;
 
@@ -195,125 +195,35 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
-void JoinLogicalOperator::serialize(SerializableOperator& serializableOperator) const
+Reflected Reflector<JoinLogicalOperator>::operator()(const JoinLogicalOperator& op) const
 {
-    SerializableLogicalOperator proto;
+    return reflect(detail::ReflectedJoinLogicalOperator{
+        .joinFunction = op.getJoinFunction(), .windowType = reflectWindowType(*op.getWindowType()), .joinType = op.joinType});
+}
 
-    proto.set_operator_type(NAME);
-    for (const auto& inputSchema : getInputSchemas())
+JoinLogicalOperator Unreflector<JoinLogicalOperator>::operator()(const Reflected& reflected) const
+{
+    auto [joinFunction, reflectedWindowType, joinType] = unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
+
+    if (!joinFunction.has_value())
     {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
+        throw CannotDeserialize("Missing Join Function");
     }
 
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
+    const auto windowType = unreflectWindowType(reflectedWindowType);
 
-    for (const auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    WindowInfos windowInfo;
-    if (auto timeBasedWindow = std::dynamic_pointer_cast<Windowing::TimeBasedWindowType>(windowType))
-    {
-        auto timeChar = timeBasedWindow->getTimeCharacteristic();
-        auto timeCharProto = WindowInfos_TimeCharacteristic();
-        timeCharProto.set_type(WindowInfos_TimeCharacteristic_Type_Event_time);
-        timeCharProto.set_field(timeChar.field.name);
-        timeCharProto.set_multiplier(timeChar.getTimeUnit().getMillisecondsConversionMultiplier());
-        windowInfo.mutable_time_characteristic()->CopyFrom(timeCharProto);
-        if (auto tumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType))
-        {
-            auto* tumbling = windowInfo.mutable_tumbling_window();
-            tumbling->set_size(tumblingWindow->getSize().getTime());
-        }
-        else if (auto slidingWindow = std::dynamic_pointer_cast<Windowing::SlidingWindow>(windowType))
-        {
-            auto* sliding = windowInfo.mutable_sliding_window();
-            sliding->set_size(slidingWindow->getSize().getTime());
-            sliding->set_slide(slidingWindow->getSlide().getTime());
-        }
-    }
-
-    FunctionList list;
-    auto* serializedFunction = list.add_functions();
-    serializedFunction->CopyFrom(getJoinFunction().serialize());
-    const DescriptorConfig::ConfigType functionList = list;
-
-    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_FUNCTION] = descriptorConfigTypeToProto(functionList);
-    (*serializableOperator.mutable_config())[ConfigParameters::JOIN_TYPE] = descriptorConfigTypeToProto(EnumWrapper(joinType));
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_INFOS] = descriptorConfigTypeToProto(windowInfo);
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_START_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowStartFieldName);
-    (*serializableOperator.mutable_config())[ConfigParameters::WINDOW_END_FIELD_NAME]
-        = descriptorConfigTypeToProto(windowMetaData.windowEndFieldName);
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
+    return JoinLogicalOperator(joinFunction.value(), windowType, joinType);
 }
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
-    if (arguments.inputSchemas.size() != 2)
+    if (!arguments.reflected.isEmpty())
     {
-        throw CannotDeserialize("Expected two input schemas, but got {}", arguments.inputSchemas.size());
+        return unreflect<JoinLogicalOperator>(arguments.reflected);
     }
 
-    auto functionVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_FUNCTION);
-    auto joinTypeVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::JOIN_TYPE);
-    auto windowInfoVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_INFOS);
-    auto windowStartVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_START_FIELD_NAME);
-    auto windowEndVariant = arguments.config.at(JoinLogicalOperator::ConfigParameters::WINDOW_END_FIELD_NAME);
-
-    if (std::holds_alternative<FunctionList>(functionVariant) and std::holds_alternative<EnumWrapper>(joinTypeVariant)
-        and std::holds_alternative<std::string>(windowStartVariant) and std::holds_alternative<std::string>(windowEndVariant))
-    {
-        auto functions = std::get<FunctionList>(functionVariant).functions();
-        auto joinType = std::get<EnumWrapper>(joinTypeVariant);
-        auto windowStartFieldName = std::get<std::string>(windowStartVariant);
-        auto windowEndFieldName = std::get<std::string>(windowEndVariant);
-
-        if (functions.size() != 1)
-        {
-            throw CannotDeserialize("Expected exactly one function");
-        }
-        auto function = FunctionSerializationUtil::deserializeFunction(functions[0]);
-
-        std::shared_ptr<Windowing::WindowType> windowType;
-        if (std::holds_alternative<WindowInfos>(windowInfoVariant))
-        {
-            auto windowInfoProto = std::get<WindowInfos>(windowInfoVariant);
-            const auto& timeCharProto = windowInfoProto.time_characteristic();
-            if (windowInfoProto.has_tumbling_window())
-            {
-                auto timeChar = Windowing::TimeCharacteristic::createEventTime(
-                    FieldAccessLogicalFunction(timeCharProto.field()), Windowing::TimeUnit(timeCharProto.multiplier()));
-                windowType = std::make_shared<Windowing::TumblingWindow>(
-                    timeChar, Windowing::TimeMeasure(windowInfoProto.tumbling_window().size()));
-            }
-            else if (windowInfoProto.has_sliding_window())
-            {
-                auto timeChar = Windowing::TimeCharacteristic::createEventTime(
-                    FieldAccessLogicalFunction(timeCharProto.field()), Windowing::TimeUnit(timeCharProto.multiplier()));
-                windowType = Windowing::SlidingWindow::of(
-                    timeChar,
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().size()),
-                    Windowing::TimeMeasure(windowInfoProto.sliding_window().slide()));
-            }
-            else
-            {
-                throw CannotDeserialize("Neither tumling nor sliding window");
-            }
-        }
-        if (!windowType)
-        {
-            throw UnknownLogicalOperator();
-        }
-
-        auto logicalOperator = JoinLogicalOperator(function, windowType, joinType.asEnum<JoinLogicalOperator::JoinType>().value());
-        return logicalOperator.withInferredSchema(arguments.inputSchemas);
-    }
-    throw UnknownLogicalOperator();
+    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
 
 }

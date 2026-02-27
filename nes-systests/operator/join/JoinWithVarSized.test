@@ -1,6 +1,6 @@
-# name: join/JoinWithDifferentDataTypes.test
+# name: join/JoinWithVarSized.test
 # description: Test join operator and the join function performs the join operation with variable sized data
-# groups: [WindowOperators, Join]
+# groups: [WindowOperators, Join, CompilationIntensive]
 
 CREATE LOGICAL SOURCE stream1(key1_s1 VARSIZED, key2_s1 VARSIZED, i8_s1 INT8, i16_s1 INT16, i32_s1 INT32, i64_s1 INT64, u8_s1 UINT8, u16_s1 UINT16, u32_s1 UINT32, u64_s1 UINT64, f32_s1 FLOAT32, f64_s1 FLOAT64, ts UINT64);
 CREATE PHYSICAL SOURCE FOR stream1 TYPE File;

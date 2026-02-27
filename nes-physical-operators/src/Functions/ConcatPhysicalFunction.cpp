@@ -39,20 +39,19 @@ VarVal ConcatPhysicalFunction::execute(const Record& record, ArenaRef& arena) co
     const auto leftValue = leftPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
     const auto rightValue = rightPhysicalFunction.execute(record, arena).cast<VariableSizedData>();
 
-    const auto newSize = leftValue.getContentSize() + rightValue.getContentSize();
+    const auto newSize = leftValue.getSize() + rightValue.getSize();
     auto newVarSizeData = arena.allocateVariableSizedData(newSize);
 
     /// Writing the left value and then the right value to the new variable sized data
-    nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getContentSize());
-    nautilus::memcpy(newVarSizeData.getContent() + leftValue.getContentSize(), rightValue.getContent(), rightValue.getContentSize());
-    VarVal(nautilus::val<uint32_t>(newSize)).writeToMemory(newVarSizeData.getReference());
+    nautilus::memcpy(newVarSizeData.getContent(), leftValue.getContent(), leftValue.getSize());
+    nautilus::memcpy(newVarSizeData.getContent() + leftValue.getSize(), rightValue.getContent(), rightValue.getSize());
     return newVarSizeData;
 }
 
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterConcatPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
-    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two sub-functions");
+    PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Concat function must have exactly two child functions");
     return ConcatPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.childFunctions[1]);
 }
 }

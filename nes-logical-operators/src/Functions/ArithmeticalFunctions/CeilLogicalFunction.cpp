@@ -18,10 +18,13 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -37,7 +40,7 @@ DataType CeilLogicalFunction::getDataType() const
     return dataType;
 };
 
-LogicalFunction CeilLogicalFunction::withDataType(const DataType& dataType) const
+CeilLogicalFunction CeilLogicalFunction::withDataType(const DataType& dataType) const
 {
     auto copy = *this;
     copy.dataType = dataType;
@@ -46,12 +49,9 @@ LogicalFunction CeilLogicalFunction::withDataType(const DataType& dataType) cons
 
 LogicalFunction CeilLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
-    {
-        newChildren.push_back(child.withInferredDataType(schema));
-    }
-    return withChildren(newChildren);
+    const auto newChild = child.withInferredDataType(schema);
+    const auto childDataType = newChild.getDataType();
+    return withDataType(childDataType).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const
@@ -59,7 +59,7 @@ std::vector<LogicalFunction> CeilLogicalFunction::getChildren() const
     return {child};
 };
 
-LogicalFunction CeilLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+CeilLogicalFunction CeilLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
 {
     PRECONDITION(children.size() == 1, "CeilLogicalFunction requires exactly one child, but got {}", children.size());
     auto copy = *this;
@@ -72,13 +72,9 @@ std::string_view CeilLogicalFunction::getType() const
     return NAME;
 }
 
-bool CeilLogicalFunction::operator==(const LogicalFunctionConcept& rhs) const
+bool CeilLogicalFunction::operator==(const CeilLogicalFunction& rhs) const
 {
-    if (const auto* other = dynamic_cast<const CeilLogicalFunction*>(&rhs))
-    {
-        return child == other->child;
-    }
-    return false;
+    return child == rhs.child;
 }
 
 std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
@@ -90,18 +86,28 @@ std::string CeilLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("CEIL({})", child.explain(verbosity));
 }
 
-SerializableFunction CeilLogicalFunction::serialize() const
+Reflected Reflector<CeilLogicalFunction>::operator()(const CeilLogicalFunction& function) const
 {
-    SerializableFunction serializedFunction;
-    serializedFunction.set_function_type(NAME);
-    serializedFunction.add_children()->CopyFrom(child.serialize());
-    DataTypeSerializationUtil::serializeDataType(this->getDataType(), serializedFunction.mutable_data_type());
+    return reflect(detail::ReflectedCeilLogicalFunction{.child = function.child});
+}
 
-    return serializedFunction;
+CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected& reflected) const
+{
+    auto [child] = unreflect<detail::ReflectedCeilLogicalFunction>(reflected);
+    if (!child.has_value())
+    {
+        throw CannotDeserialize("Missing child function");
+    }
+    return CeilLogicalFunction(child.value());
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
+    if (!arguments.reflected.isEmpty())
+    {
+        return unreflect<CeilLogicalFunction>(arguments.reflected);
+    }
+
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

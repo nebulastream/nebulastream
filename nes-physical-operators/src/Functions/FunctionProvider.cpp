@@ -18,6 +18,7 @@
 #include <string_view>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
@@ -36,30 +37,28 @@ namespace NES::QueryCompilation
 PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction)
 {
     /// 1. Recursively lower the children of the function node.
-    std::vector<PhysicalFunction> childFunction;
+    std::vector<PhysicalFunction> childFunctions;
+    std::vector<DataType> inputTypes;
     for (const auto& child : logicalFunction.getChildren())
     {
-        childFunction.emplace_back(lowerFunction(child));
+        childFunctions.emplace_back(lowerFunction(child));
+        inputTypes.emplace_back(child.getDataType());
     }
 
     /// 2. The field access and constant value nodes are special as they require a different treatment,
     /// due to them not simply getting a childFunction as a parameter.
-    if (const auto fieldAccessFunction = logicalFunction.tryGet<FieldAccessLogicalFunction>())
+    if (const auto fieldAccessFunction = logicalFunction.tryGetAs<FieldAccessLogicalFunction>())
     {
-        return FieldAccessPhysicalFunction(fieldAccessFunction->getFieldName());
+        return FieldAccessPhysicalFunction(fieldAccessFunction->get().getFieldName());
     }
-    if (const auto constantValueFunction = logicalFunction.tryGet<ConstantValueLogicalFunction>())
+    if (const auto constantValueFunction = logicalFunction.tryGetAs<ConstantValueLogicalFunction>())
     {
-        return lowerConstantFunction(*constantValueFunction);
-    }
-    if (const auto castToTypeNode = logicalFunction.tryGet<CastToTypeLogicalFunction>())
-    {
-        INVARIANT(childFunction.size() == 1, "CastFieldPhysicalFunction expects exact one child!");
-        return CastFieldPhysicalFunction(childFunction[0], castToTypeNode->getDataType());
+        return lowerConstantFunction(constantValueFunction->get());
     }
 
     /// 3. Calling the registry to create an executable function.
-    auto executableFunctionArguments = PhysicalFunctionRegistryArguments(childFunction);
+    PhysicalFunctionRegistryArguments executableFunctionArguments{
+        .childFunctions = childFunctions, .inputTypes = inputTypes, .outputType = logicalFunction.getDataType()};
     if (const auto function
         = PhysicalFunctionRegistry::instance().create(std::string(logicalFunction.getType()), std::move(executableFunctionArguments)))
     {
@@ -71,14 +70,14 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
 namespace
 {
 template <typename T>
-requires requires(std::string_view input) { NES::Util::from_chars<T>(input); } /// TODO #1035: check if two Util namespaces are needed
+requires requires(std::string_view input) { from_chars<T>(input); }
 T parseConstantValue(std::string_view input)
 {
-    if (auto value = NES::Util::from_chars<T>(input))
+    if (auto value = from_chars<T>(input))
     {
         return *value;
     }
-    throw QueryCompilerError("Can not parse constant value \"{}\" into {}", input, typeid(T).name());
+    throw QueryCompilerError("Can not parse constant value \"{}\" into {}", input, NAMEOF_TYPE(T));
 }
 }
 
@@ -111,7 +110,6 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
             return ConstantBooleanValueFunction(parseConstantValue<bool>(stringValue));
         case DataType::Type::CHAR:
             return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
-        case DataType::Type::VARSIZED_POINTER_REP:
         case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };

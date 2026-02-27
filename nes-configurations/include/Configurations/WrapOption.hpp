@@ -42,7 +42,6 @@ class WrapOption : public TypedBaseOption<Type>
 {
 public:
     WrapOption(const std::string& name, const std::string& description);
-    std::string toString() override;
 
 protected:
     virtual void parseFromYAMLNode(YAML::Node node) override;
@@ -66,6 +65,7 @@ requires IsFactory<Type, Factory>
 void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams)
 {
     this->value = Factory::createFromString(identifier, inputParams);
+    this->explicitlySet = true;
 }
 
 template <class Type, class Factory>
@@ -73,13 +73,7 @@ requires IsFactory<Type, Factory>
 void WrapOption<Type, Factory>::parseFromYAMLNode(YAML::Node node)
 {
     this->value = Factory::createFromYaml(node);
-}
-
-template <class Type, class Factory>
-requires IsFactory<Type, Factory>
-std::string WrapOption<Type, Factory>::toString()
-{
-    return "";
+    this->explicitlySet = true;
 }
 
 }
