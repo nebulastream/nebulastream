@@ -34,6 +34,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
+#include <select.hpp>
 
 namespace NES
 {
@@ -330,14 +331,30 @@ ChainedHashMapRef::insert(const HashFunction::HashValue& hash, const nautilus::v
 
 nautilus::val<bool> ChainedHashMapRef::compareKeys(const ChainedEntryRef& entryRef, const Record& keys) const
 {
+    nautilus::val<bool> result{true};
     for (const auto& [fieldIdentifier, type, fieldOffset] : nautilus::static_iterable(fieldKeys))
     {
-        if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier))
+        /// We need to take the null values into account as they are a separate group.
+        /// Thus, a simple if (keys.read(fieldIdentifier) != entryRef.getKey(fieldIdentifier)) is not enough
+        const auto& keyValue = keys.read(fieldIdentifier);
+        const auto entryValue = entryRef.getKey(fieldIdentifier);
+        const auto nullsMatch = keyValue.isNull() == entryValue.isNull();
+        result = result and nullsMatch;
+
+        if (type.isType(DataType::Type::VARSIZED))
         {
-            return false;
+            result = nautilus::select(
+                keyValue.cast<VariableSizedData>() != entryValue.cast<VariableSizedData>(), nautilus::val<bool>{false}, result);
+        }
+        else
+        {
+            result = nautilus::select(
+                (keyValue.castToType(type.type) != entryValue.castToType(type.type)).cast<nautilus::val<bool>>(),
+                nautilus::val<bool>{false},
+                result);
         }
     }
-    return true;
+    return result;
 }
 
 ChainedHashMapRef::ChainedHashMapRef(

@@ -26,6 +26,8 @@
 #include <Nautilus/Util.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ExecutionContext.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -40,15 +42,33 @@ MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
 void MaxAggregationPhysicalFunction::lift(
     const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
 {
-    /// Reading the old max value from the aggregation state.
-    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType.type);
-
-    /// Updating the max value with the new value, if the new value is larger
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
-    if (value > max)
+
+    if (not inputType.nullable)
     {
-        value.writeToMemory(memAreaMax);
+        /// Reading the old max value from the aggregation state.
+        const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        const auto max = VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType);
+
+        /// Updating the max value with the new value, if the new value is smaller
+        const auto newMax = VarVal::select((value > max).cast<nautilus::val<bool>>(), value, max);
+        newMax.writeToMemory(memAreaMax);
+    }
+    else
+    {
+        /// Reading the old max value from the aggregation state. We need to skip the first byte as null
+        const auto isNull = readNull(aggregationState);
+        const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+        const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, isNull);
+
+        /// If value is null or max is smaller than value --> keep the current max
+        const auto valueOrMax = VarVal::select(value.isNull(), max, value);
+        const auto newMax = VarVal::select((valueOrMax > max).cast<nautilus::val<bool>>(), valueOrMax, max);
+        newMax.writeToMemory(memAreaMax);
+
+        /// Updating the null value
+        const auto newIsNull = isNull or value.isNull();
+        storeNull(aggregationState, newIsNull);
     }
 }
 
@@ -57,26 +77,57 @@ void MaxAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState2,
     PipelineMemoryProvider&)
 {
-    /// Reading the max value from the first aggregation state
-    const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
-    const auto max1 = VarVal::readVarValFromMemory(memAreaMax1, inputType.type);
-
-    /// Reading the max value from the second aggregation state
-    const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
-    const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType.type);
-
-    /// Updating the max value with the new value, if the new value is larger
-    if (max2 > max1)
+    if (not inputType.nullable)
     {
-        max2.writeToMemory(memAreaMax1);
+        /// Reading the old max value from the aggregation state.
+        const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+        const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+        const auto max1 = VarVal::readNonNullableVarValFromMemory(memAreaMax1, inputType);
+        const auto max2 = VarVal::readNonNullableVarValFromMemory(memAreaMax2, inputType);
+
+        /// Updating the max value with the new value, if the new value is smaller
+        const auto newMax = VarVal::select((max1 > max2).cast<nautilus::val<bool>>(), max1, max2);
+        newMax.writeToMemory(memAreaMax1);
+    }
+    else
+    {
+        /// Reading the old max value from the aggregation state. We need to skip the first byte as null
+        const auto isNull1 = readNull(aggregationState1);
+        const auto isNull2 = readNull(aggregationState2);
+        const auto memAreaMax1 = static_cast<nautilus::val<int8_t*>>(aggregationState1 + nautilus::val<uint64_t>{1});
+        const auto memAreaMax2 = static_cast<nautilus::val<int8_t*>>(aggregationState2 + nautilus::val<uint64_t>{1});
+        const auto max1 = VarVal::readVarValFromMemory(memAreaMax1, inputType, isNull1);
+        const auto max2 = VarVal::readVarValFromMemory(memAreaMax2, inputType, isNull2);
+
+        /// Updating the null value
+        const auto newIsNull = isNull1 or isNull2;
+        storeNull(aggregationState1, newIsNull);
+
+        /// If max1 or max2 is null, the result is null. Otherwise, it is the maximum of max1 and max2
+        const auto max1OrMax2 = VarVal::select((max1 > max2).cast<nautilus::val<bool>>(), max1, max2);
+        const auto newMax = VarVal::select(newIsNull, max1, max1OrMax2);
+        newMax.writeToMemory(memAreaMax1);
     }
 }
 
 Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
+    if (not inputType.nullable)
+    {
+        /// Reading the max value from the aggregation state
+        const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
+        const auto max = VarVal::readNonNullableVarValFromMemory(memAreaMax, inputType);
+
+        /// Creating a record with the max value
+        Record record;
+        record.write(resultFieldIdentifier, max);
+        return record;
+    }
+
     /// Reading the max value from the aggregation state
-    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType.type);
+    const auto isNull = readNull(aggregationState);
+    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{1});
+    const auto max = VarVal::readVarValFromMemory(memAreaMax, inputType, isNull);
 
     /// Creating a record with the max value
     Record record;
@@ -86,8 +137,15 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
 
 void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
 {
+    /// Resetting the null value
+    if (inputType.nullable)
+    {
+        storeNull(aggregationState, false);
+    }
+
     /// Resetting the max value to the minimum value
-    const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto memAreaMax
+        = static_cast<nautilus::val<int8_t*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
     const auto max = createNautilusMinValue(inputType.type);
     max.writeToMemory(memAreaMax);
 }

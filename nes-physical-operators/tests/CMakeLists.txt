@@ -17,4 +17,5 @@ function(add_nes_physical_operator_test)
 endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
+add_nes_physical_operator_test(AndOrPhysicalFunctionTest AndOrPhysicalFunctionTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)

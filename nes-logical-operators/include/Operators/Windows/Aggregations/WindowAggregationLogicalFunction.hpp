@@ -53,6 +53,9 @@ public:
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
 
+    /// @brief Specifies if the aggregation shall include null values in its computation.
+    [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
+
 
 protected:
     explicit WindowAggregationLogicalFunction(

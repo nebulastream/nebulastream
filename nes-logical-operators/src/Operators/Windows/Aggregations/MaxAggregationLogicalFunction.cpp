@@ -45,6 +45,11 @@ MaxAggregationLogicalFunction::MaxAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
+bool MaxAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 std::string_view MaxAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;

@@ -50,6 +50,11 @@ MinAggregationLogicalFunction::MinAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
+bool MinAggregationLogicalFunction::shallIncludeNullValues() const noexcept
+{
+    return true;
+}
+
 std::string_view MinAggregationLogicalFunction::getName() const noexcept
 {
     return NAME;

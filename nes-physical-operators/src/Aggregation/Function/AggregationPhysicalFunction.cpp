@@ -14,10 +14,14 @@
 
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 
+#include <cstdint>
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <val_bool.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -29,6 +33,19 @@ AggregationPhysicalFunction::AggregationPhysicalFunction(
     , inputFunction(std::move(inputFunction))
     , resultFieldIdentifier(std::move(resultFieldIdentifier))
 {
+}
+
+void AggregationPhysicalFunction::storeNull(const nautilus::val<AggregationState*>& aggregationState, const nautilus::val<bool>& isNull)
+{
+    const auto memAreaNull = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    VarVal{isNull}.writeToMemory(memAreaNull);
+}
+
+nautilus::val<bool> AggregationPhysicalFunction::readNull(const nautilus::val<AggregationState*>& aggregationState)
+{
+    const auto memAreaNull = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    auto isNull = readValueFromMemRef<bool>(memAreaNull);
+    return isNull;
 }
 
 AggregationPhysicalFunction::~AggregationPhysicalFunction() = default;

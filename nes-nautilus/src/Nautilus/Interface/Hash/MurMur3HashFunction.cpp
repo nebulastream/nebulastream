@@ -130,7 +130,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 }
                 else
                 {
-                    return VarVal(hash) ^ hashVarVal(static_cast<nautilus::val<uint64_t>>(val));
+                    return VarVal{hash} ^ hashVarVal(static_cast<nautilus::val<uint64_t>>(val));
                 }
             })
         .cast<HashValue>();
