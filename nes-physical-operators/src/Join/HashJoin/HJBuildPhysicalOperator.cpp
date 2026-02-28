@@ -59,16 +59,16 @@ HashMap* getHashJoinHashMapProxy(
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+    const auto hjSlices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(
-        hashMap.size() == 1,
+        hjSlices.size() == 1,
         "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
         "slicing, but got {}",
-        hashMap.size());
+        hjSlices.size());
 
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
+    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hjSlices[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
@@ -90,31 +90,32 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     }
 
     const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-            {
-                const ChainedHashMapRef hashMapRef{
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize};
-                for (const auto entry : hashMapRef)
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
+            std::function(
+                [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                    const auto state = entryRefReset.getValueMemArea();
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea) -> void
-                        {
-                            /// Calls the destructor of the PagedVector
-                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            pagedVector->~PagedVector();
-                        },
-                        state);
-                }
-            })));
+                    const ChainedHashMapRef hashMapRef{
+                        hashMap,
+                        copyOfHashMapOptions.fieldKeys,
+                        copyOfHashMapOptions.fieldValues,
+                        copyOfHashMapOptions.entriesPerPage,
+                        copyOfHashMapOptions.entrySize};
+                    for (const auto entry : hashMapRef)
+                    {
+                        const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                        const auto state = entryRefReset.getValueMemArea();
+                        nautilus::invoke(
+                            +[](int8_t* pagedVectorMemArea) -> void
+                            {
+                                /// Calls the destructor of the PagedVector
+                                /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                                auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                                pagedVector->~PagedVector();
+                            },
+                            state);
+                    }
+                })));
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
@@ -127,13 +128,19 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getHashJoinHashMapProxy,
-        operatorHandler,
+    const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
         timestamp,
-        ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+        [&]()
+        {
+            return nautilus::invoke(
+                getHashJoinHashMapProxy,
+                localState->getOperatorHandler(),
+                timestamp,
+                ctx.workerThreadId,
+                nautilus::val<JoinBuildSideType>(joinBuildSide),
+                nautilus::val<const HJBuildPhysicalOperator*>(this));
+        });
+
     ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
@@ -178,9 +185,11 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<TupleBufferRef>& bufferRef,
-    HashMapOptions hashMapOptions)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    HashMapOptions hashMapOptions,
+    SliceCacheConfiguration sliceCacheConfiguration)
+    : StreamJoinBuildPhysicalOperator(
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceCacheConfiguration))
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

@@ -58,6 +58,11 @@ set_property(TARGET systest PROPERTY ENABLE_EXPORTS ON)
 target_link_libraries(systest PUBLIC nes-systest-lib argparse::argparse)
 target_include_directories(systest PUBLIC $<INSTALL_INTERFACE:/include/nebulastream>)
 
+# We want to run different systests with and w/o slice caches for different no. entries
+# We simply run the tests for LRU and SECOND_CHANCE, as they have showcased the best trade-off between accuracy and throughput
+set(sliceCaches NONE LRU SECOND_CHANCE)
+
+
 # Add code coverage if enabled
 if (CODE_COVERAGE)
     target_code_coverage(systest COVERAGE_TARGET_NAME systest_interpreter_coverage PUBLIC AUTO ALL ARGS -n 20 --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_cc --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=INTERPRETER --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --enable_event_trace=true)

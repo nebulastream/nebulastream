@@ -18,6 +18,7 @@
 #include <memory>
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
@@ -31,12 +32,14 @@ namespace NES
 class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
-    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler) : operatorHandler(operatorHandler) { }
+    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, std::shared_ptr<SliceCache> sliceCache) : operatorHandler(operatorHandler), sliceCache(std::move(sliceCache)) { }
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
+    std::shared_ptr<SliceCache> getSliceCache() const { return sliceCache; }
 
 private:
     nautilus::val<OperatorHandler*> operatorHandler;
+    std::shared_ptr<SliceCache> sliceCache;
 };
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
@@ -44,7 +47,8 @@ private:
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction);
+    // or should we pass here the slice cache and then later on set the start via a setter method?
+    explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration);
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
@@ -68,6 +72,7 @@ protected:
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;
+    std::shared_ptr<SliceCache> sliceCache;
 };
 
 }

@@ -60,15 +60,20 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
 }
 
 /// The slice store needs to know in how many pipelines this operator appears, and consequently, how many terminations it will receive
-void registerActivePipeline(OperatorHandler* ptrOpHandler)
+void registerActivePipeline(OperatorHandler* ptrOpHandler, const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(bufferProvider != nullptr, "BufferProvider should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
+    opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider);
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
-    : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
+    OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
+    : operatorHandlerId(operatorHandlerId)
+    , timeFunction(std::move(timeFunction))
+    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
 {
 }
 
@@ -89,8 +94,23 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(registerActivePipeline, operatorHandlerMemRef);
+    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(
+        registerActivePipeline,
+        operatorHandler,
+        nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
+        executionCtx.pipelineMemoryProvider.bufferProvider);
+
+    const auto sliceCacheMemory = nautilus::invoke(
+        {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = true},
+        +[](const OperatorHandler* ptrOpHandler, const WorkerThreadId workerThreadId)
+        {
+            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+            auto* opHandler = dynamic_cast<const WindowBasedOperatorHandler*>(ptrOpHandler);
+            return opHandler->getSliceCache(workerThreadId);
+        },
+        operatorHandler);
+    sliceCache->setStartOfEntries(sliceCacheMemory);
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -100,7 +120,7 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
+    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, std::move(sliceCache)));
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
@@ -124,6 +144,7 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysic
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)
+    , sliceCacheConfiguration(other.sliceCacheConfiguration)
 {
 }
 }

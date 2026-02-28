@@ -25,6 +25,7 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
@@ -84,6 +85,8 @@ public:
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
+    SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
@@ -94,7 +97,8 @@ private:
             &joinStrategy,
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
-            &operatorBufferSize};
+            &operatorBufferSize,
+            &sliceCacheConfiguration};
     }
 };
 
