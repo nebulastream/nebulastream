@@ -64,20 +64,37 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
         auto fields
             = std::views::iota(static_cast<size_t>(0), formattingContext.offsets.size())
             | std::views::transform(
-                  [&formattingContext, &tuple, &tbuffer](const auto& index)
+                  [&formattingContext, &tuple, &tbuffer](const auto& index) -> std::string
                   {
                       auto type = formattingContext.physicalTypes[index];
-                      auto offset = formattingContext.offsets[index];
+                      auto fieldValueStart = tuple.subspan(formattingContext.offsets[index]);
+                      if (type.nullable)
+                      {
+                          /// Convert byte to bool: true if byte is non-zero, false otherwise
+                          const bool isNull = static_cast<bool>(std::to_integer<int>(fieldValueStart[0]));
+                          fieldValueStart = fieldValueStart.subspan(1);
+                          if (isNull)
+                          {
+                              /// We need to write null, as otherwise, we can not detect a single null in our output
+                              return "NULL";
+                          }
+                      }
                       if (type.type == DataType::Type::VARSIZED)
                       {
-                          auto* const variableSizedAccess = reinterpret_cast<VariableSizedAccess*>(&tuple[offset]);
-                          const auto value = TupleBufferRef::loadAssociatedVarSizedValue(tbuffer, *variableSizedAccess);
-                          return fmt::format(
-                              R"("{}":"{}")",
-                              formattingContext.names.at(index),
-                              std::string_view(reinterpret_cast<const char*>(value.data()), value.size()));
+                          const auto base = formattingContext.offsets[index] + type.nullable;
+                          const auto* indexPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, index)]);
+                          const auto* offsetPtr = std::bit_cast<const uint32_t*>(&tuple[base + offsetof(VariableSizedAccess, offset)]);
+                          const auto* sizePtr = std::bit_cast<const uint64_t*>(&tuple[base + offsetof(VariableSizedAccess, size)]);
+
+                          const VariableSizedAccess variableSizedAccess{
+                              VariableSizedAccess::Index(*indexPtr),
+                              VariableSizedAccess::Offset(*offsetPtr),
+                              VariableSizedAccess::Size(*sizePtr)};
+                          const auto varSizedData = readVarSizedDataAsString(tbuffer, variableSizedAccess);
+                          return fmt::format(R"("{}":"{}")", formattingContext.names.at(index), varSizedData);
                       }
-                      return fmt::format("\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(&tuple[offset]));
+                      return fmt::format(
+                          "\"{}\":{}", formattingContext.names.at(index), type.formattedBytesToString(fieldValueStart.data()));
                   });
 
         ss << fmt::format("{{{}}}\n", fmt::join(fields, ","));

@@ -42,6 +42,7 @@
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_concepts.hpp>
 
 namespace NES

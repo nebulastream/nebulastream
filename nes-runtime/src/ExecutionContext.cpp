@@ -71,13 +71,8 @@ nautilus::val<TupleBuffer*> ExecutionContext::allocateBuffer() const
         +[](PipelineExecutionContext* pec)
         {
             PRECONDITION(pec, "pipeline execution context should not be null");
-            /// We allocate a new tuple buffer for the runtime.
-            /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-            /// This increases the reference counter in the buffer.
-            /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
-            const auto buffer = pec->allocateTupleBuffer();
-            auto* tb = new TupleBuffer(buffer);
-            return tb;
+            auto newTupleBuffer = pec->allocateTupleBuffer();
+            return std::addressof(pec->pinBuffer(std::move(newTupleBuffer)));
         },
         pipelineContext);
     return bufferPtr;
@@ -97,9 +92,6 @@ void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
      * fusion, this should only happen occasionally.
      */
     pipelineCtx->emitBuffer(*tb);
-
-    /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
-    delete tb;
 }
 
 void ExecutionContext::emitBuffer(const RecordBuffer& buffer) const

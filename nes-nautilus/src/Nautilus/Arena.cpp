@@ -18,6 +18,7 @@
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 #include <cstddef>
@@ -66,7 +67,7 @@ std::span<std::byte> Arena::allocateMemory(const size_t sizeInBytes)
     return result;
 }
 
-nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& sizeInBytes)
+nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& sizeInBytes) const
 {
     /// If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
     /// We use the arena's allocateMemory function to allocate a new buffer and set the available space for the pointer to the last allocation size.
@@ -82,7 +83,7 @@ nautilus::val<int8_t*> ArenaRef::allocateMemory(const nautilus::val<size_t>& siz
     return currentArenaPtr;
 }
 
-VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint64_t>& sizeInBytes)
+VariableSizedData ArenaRef::allocateVariableSizedData(const nautilus::val<uint64_t>& sizeInBytes) const
 {
     const auto basePtr = allocateMemory(sizeInBytes);
     return VariableSizedData(basePtr, sizeInBytes);

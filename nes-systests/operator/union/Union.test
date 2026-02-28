@@ -1,6 +1,6 @@
 # name: union/Union.test
 # description: Simple union tests
-# groups: [Union, CompilationIntensive]
+# groups: [Union, CompilationIntensive] TODO #1272
 
 CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;

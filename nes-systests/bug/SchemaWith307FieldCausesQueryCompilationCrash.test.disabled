@@ -1,6 +1,6 @@
 # name: formatter/SingleTupleThatSpansThreeTBRaws.test
 # description: formatter tests
-# groups: [Formatter, Tuples, CompilationIntensive]
+# groups: [Formatter, Tuples, CompilationIntensive] TODO #1272
 
 # BUG: fails only in compiled mode
 # - fails with a schema that has 307 fields

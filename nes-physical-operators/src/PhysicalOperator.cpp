@@ -200,7 +200,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     std::optional<OperatorHandlerId> handlerId,
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     const PipelineLocation pipelineLocation)
-    : physicalOperator(std::move(std::move(physicalOperator)))
+    : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)
@@ -221,7 +221,7 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     std::optional<std::shared_ptr<OperatorHandler>> handler,
     const PipelineLocation pipelineLocation,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> children)
-    : physicalOperator(std::move(std::move(physicalOperator)))
+    : physicalOperator(std::move(physicalOperator))
     , inputMemoryLayoutType(inputMemoryLayoutType)
     , outputMemoryLayoutType(outputMemoryLayoutType)
     , inputSchema(inputSchema)

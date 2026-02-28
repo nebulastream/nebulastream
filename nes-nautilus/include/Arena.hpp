@@ -24,6 +24,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -54,9 +55,9 @@ struct ArenaRef
     explicit ArenaRef(const nautilus::val<Arena*>& arenaRef) : arenaRef(arenaRef), availableSpaceForPointer(0), spacePointer(nullptr) { }
 
     /// Allocates memory from the arena. If the available space for the pointer is smaller than the required size, we allocate a new buffer from the arena.
-    nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
+    [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes) const;
 
-    VariableSizedData allocateVariableSizedData(const nautilus::val<uint64_t>& sizeInBytes);
+    [[nodiscard]] VariableSizedData allocateVariableSizedData(const nautilus::val<uint64_t>& sizeInBytes) const;
 
     [[nodiscard]] nautilus::val<Arena*> getArena() const;
 
