@@ -86,8 +86,16 @@ ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldS
         }
     }
 
-    const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
-    result.value = NES::from_chars_with_exception<T>(fieldAsString);
+    try
+    {
+        const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
+        result.value = NES::from_chars_with_exception<T>(fieldAsString);
+    }
+    catch (...)
+    {
+        result.isNull = true;
+        result.value = T{0};
+    }
     return &result;
 }
 

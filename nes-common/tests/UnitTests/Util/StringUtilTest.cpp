@@ -116,6 +116,33 @@ TEST(FormatFloatTests, HandlesNegativeNumbers)
     EXPECT_EQ(formatFloat(-0.1000), "-0.1");
 }
 
+TEST(SafeStodThrowTests, HandlesValidNumbers)
+{
+    EXPECT_EQ(from_chars<double>("3.14"), 3.14);
+    EXPECT_EQ(from_chars<double>("-123.45"), -123.45);
+    EXPECT_EQ(from_chars<double>("  42  "), 42.0);
+}
+
+TEST(SafeStodThrowTests, ThrowsOnTrailingCharacters)
+{
+    EXPECT_FALSE(from_chars<double>("3.14abc").has_value());
+    EXPECT_FALSE(from_chars<double>("42_").has_value());
+}
+
+TEST(SafeStodThrowTests, ThrowsOnOutOfRange)
+{
+    EXPECT_FALSE(from_chars<double>("1e500").has_value());
+    EXPECT_FALSE(from_chars<double>("-1e500").has_value());
+}
+
+TEST(SafeStodThrowTests, ThrowsOnInvalidInput)
+{
+    EXPECT_FALSE(from_chars<double>("").has_value());
+    EXPECT_FALSE(from_chars<double>("   ").has_value());
+    EXPECT_FALSE(from_chars<double>("--1.0").has_value());
+    EXPECT_FALSE(from_chars<double>("3.14.15").has_value());
+}
+
 TEST(TrimWhiteSpacesTest, TrimLeadingSpacesOnly)
 {
     EXPECT_EQ(trimWhiteSpaces("   hello"), "hello");
@@ -205,8 +232,7 @@ TEST(FromCharsTest, ValidNegativeFloatInput)
 TEST(FromCharsTest, InvalidFloatInput)
 {
     auto result = from_chars<float>("3.14abc");
-    EXPECT_TRUE(result.has_value());
-    EXPECT_FLOAT_EQ(result.value(), 3.14F);
+    EXPECT_FALSE(result.has_value());
 }
 
 TEST(FromCharsTest, InfinityInput)

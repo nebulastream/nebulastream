@@ -82,19 +82,31 @@ T from_chars_with_exception(std::string_view input)
 requires(requires(T value) { std::from_chars<T>(input.data(), input.data() + input.size(), value); })
 {
     T value;
-    auto [_, ec] = std::from_chars<T>(input.data(), input.data() + input.size(), value);
-    if (ec == std::errc())
+    auto base = 10;
+    if (input.size() > 2 and input[0] == '0' and (input[1] == 'x' or input[1] == 'X'))
     {
-        return value;
+        /// If the string starts with 0x, we need to increment the input and set the base to 16
+        base = 16;
+        input = input.substr(2);
     }
-    if (ec == std::errc::invalid_argument)
+    auto [parsedTillPtr, errorCode] = std::from_chars<T>(input.data(), input.data() + input.size(), value, base);
+    if (errorCode == std::errc::invalid_argument)
     {
         throw CannotFormatMalformedStringValue("Value '{}', is not a valid value of type: {}.", input, NAMEOF_TYPE(T));
     }
-    if (ec == std::errc::result_out_of_range)
+    if (errorCode == std::errc::result_out_of_range)
     {
         throw CannotFormatMalformedStringValue("Value '{}', is too large for type: {}.", input, NAMEOF_TYPE(T));
     }
+    if (parsedTillPtr != input.data() + input.size())
+    {
+        throw CannotFormatMalformedStringValue("Could not parse all of value '{}' for type: {}.", input, NAMEOF_TYPE(T));
+    }
+    if (errorCode == std::errc())
+    {
+        return value;
+    }
+
     throw CannotFormatMalformedStringValue("Unknown from_chars error.");
 }
 
