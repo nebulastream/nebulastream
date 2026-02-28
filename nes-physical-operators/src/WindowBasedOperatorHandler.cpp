@@ -100,4 +100,12 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
+void WindowBasedOperatorHandler::allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
+{
+}
+
+int8_t* WindowBasedOperatorHandler::getSliceCache(WorkerThreadId workerThreadId) const
+{
+}
+
 }

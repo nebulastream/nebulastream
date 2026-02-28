@@ -86,6 +86,13 @@ public:
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
 
+    /// As each worker thread gets its own thread, we can only allocate space for the slice cache, once we know the no.
+    /// worker threads for this pipeline.
+    /// Also, this method is being called via a nautilus::invoke(), thus, we require a raw pointer
+    void allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider);
+
+    int8_t* getSliceCache(WorkerThreadId workerThreadId) const;
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
@@ -100,5 +107,9 @@ protected:
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+
+    /// One TupleBuffer equals one SliceCache. This is fine, as the slice caches are assumed to be quite small <1KB
+    /// We need a unique_ptr, as we expect a stable address for the tuple buffer/slice cache
+    std::map<WorkerThreadId, std::unique_ptr<TupleBuffer>> workerThreadToSliceCache;
 };
 }

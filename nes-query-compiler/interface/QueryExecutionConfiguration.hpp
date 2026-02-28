@@ -25,6 +25,7 @@
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
@@ -72,10 +73,13 @@ public:
            "Buffer size of a operator e.g. during scan",
            {std::make_shared<NumberValidation>()}};
 
+    SliceCacheConfiguration sliceCacheConfiguration = {"slice_cache", "Configuration for the slice cache"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &numberOfRecordsPerKey, &maxNumberOfBuckets, &operatorBufferSize};
+        return {&executionMode, &pageSize, &numberOfPartitions, &numberOfRecordsPerKey, &maxNumberOfBuckets, &operatorBufferSize,
+            &sliceCacheConfiguration};
     }
 };
 
