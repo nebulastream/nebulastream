@@ -111,15 +111,15 @@ cmake-build-debug/systest/systest -t nes-systests/function/arithmetical/Function
 Append worker configuration overrides after `--` (for example `-- --worker.default_query_execution.execution_mode=INTERPRETER`). See the [systest guide](docs/development/systests.md) for authoring custom `.test` files and the complete CLI reference.
 
 #### Start the client with a worker
-Build the client and worker binaries, start the worker in one terminal, and submit a short-lived query from another terminal using `nebuli`:
+Build the client and worker binaries, start the worker in one terminal, and submit a short-lived query from another terminal using `nes-repl`:
 
 ```shell
-cmake --build cmake-build-debug -j --target nes-single-node-worker nes-nebuli
+cmake --build cmake-build-debug -j --target nes-single-node-worker nes-repl
 
 # Terminal 1: start the worker (listens on localhost:8080 by default)
 cmake-build-debug/nes-single-node-worker/nes-single-node-worker
 
-# Terminal 2: prepare a tiny CSV and submit a query via nebuli
+# Terminal 2: prepare a tiny CSV and submit a query via nes-repl
 printf '1\n2\n3\n' > demo-input.csv
 
 cat > demo.sql <<'EOF'
@@ -129,10 +129,12 @@ CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK
 SELECT value FROM demo INTO result;
 EOF
 
-cmake-build-debug/nes-nebuli/nes-nebuli -s localhost:8080 -w < demo.sql
+cmake-build-debug/nes-frontend/apps/nes-repl -s localhost:8080 < demo.sql
 ```
 
-The generated CSV appears at `demo-output.csv`. Inspect or retire the query with additional `nebuli` subcommands such as `show`, `stop`, or `unregister` as needed.
+The generated CSV appears at `demo-output.csv`. Inspect or retire the query with additional `nes-cli` commands such as `status` or `stop` as needed.
+
+For further information about our frontends, check out the [Frontend Reference](docs/nebulastream-frontend.md).
 
 ## Documentation
 - Design proposals and architectural notes: [Design index](docs/design/README.md)

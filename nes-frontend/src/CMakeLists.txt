@@ -10,5 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_unit_test(statement-binder-test "StatementBinderTest.cpp")
-target_link_libraries(statement-binder-test nes-sql-parser nes-frontend-lib)
+add_subdirectory(LegacyOptimizer)
+add_subdirectory(QueryManager)
+
+add_source_files(nes-coordinator Statements/StatementHandler.cpp Statements/JsonOutputFormatter.cpp)

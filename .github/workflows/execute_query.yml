@@ -23,25 +23,25 @@ on:
         required: false
         type: string
         default: |
-            CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
-            CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
-                'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-                'CSV' as PARSER.`TYPE`,
-                1 AS `SOURCE`.SEED,
-                -1 AS `SOURCE`.MAX_RUNTIME_MS,
-                'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
-                'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-                'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
-            CREATE SINK someSink1(ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink2(ENDLESS.val_1 UINT32, ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink3(val_plus_1 UINT32) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
-            SHOW QUERIES;
-            SELECT TS FROM ENDLESS INTO SOMESINK1;
-            SELECT * FROM ENDLESS INTO SOMESINK2;
-            SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO SOMESINK3;
-            SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO SOMESINK4;
-            
+          CREATE LOGICAL SOURCE endless(val_1 UINT32, ts UINT64);
+          CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+              'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+              'CSV' as PARSER.`TYPE`,
+              1 AS `SOURCE`.SEED,
+              -1 AS `SOURCE`.MAX_RUNTIME_MS,
+              'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+              'EMIT_RATE 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+              'SEQUENCE UINT32 0 200000000 1, SEQUENCE UINT64 0 200000000 1' AS `SOURCE`.GENERATOR_SCHEMA);
+          CREATE SINK someSink1(ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink2(ENDLESS.val_1 UINT32, ENDLESS.TS UINT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink3(val_plus_1 UINT32) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          CREATE SINK someSink4(ENDLESS.agg_val_1 FLOAT64) TYPE File SET('/dev/null' as `SINK`.FILE_PATH, 'CSV' as `SINK`.INPUT_FORMAT);
+          SHOW QUERIES;
+          SELECT TS FROM ENDLESS INTO SOMESINK1;
+          SELECT * FROM ENDLESS INTO SOMESINK2;
+          SELECT val_1 + UINT32(1) AS val_plus_1 FROM ENDLESS INTO SOMESINK3;
+          SELECT AVG(val_1) AS agg_val_1 FROM ENDLESS WINDOW TUMBLING(ts, SIZE 1 SEC) INTO SOMESINK4;
+
 
 jobs:
   execute-query:
@@ -75,58 +75,42 @@ jobs:
           cat << 'EOF' > query.sql
           ${{ inputs.query_config }}
           EOF
-        
+          
           cat query.sql
       - name: Build and Test
+        shell: bash
         run: |
-            cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
-            cmake --build build -j -- -k 0
-            
-            build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
-            WORKER_PID=$!
-            
-            sleep 5
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 < query.sql
-            
-            # wait and monitor
-            echo "Waiting and monitoring worker..."
-            ELAPSED_SECONDS=0
-            MAX_SECONDS=${{ inputs.runtime_seconds }}
-            echo "Stress test runtime set to $MAX_SECONDS seconds"
-            while [ $ELAPSED_SECONDS -lt $MAX_SECONDS ]; do
-              if ! kill -0 $WORKER_PID 2>/dev/null; then
-                echo "Worker has exited unexpectedly!"
-                tail -n 50 worker.log
-                exit 1
-              fi
-              sleep 60
-              ELAPSED_SECONDS=$((ELAPSED_SECONDS + 60))
-            done
-            
-            # stopping all queries
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 1
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 2
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 3
-            build/nes-nebuli/nes-nebuli -d -s localhost:8080 stop 4
-            echo "Worker stayed alive!"
-            
-            # stop worker
-            kill $WORKER_PID
-            wait $WORKER_PID || true
-            tail -n 50 worker.log
+          cmake -GNinja -B build -DExternalData_OBJECT_STORES=/test-file-cache -DNES_LOG_LEVEL=DEBUG
+          cmake --build build -j -- -k 0
 
+          build/nes-single-node-worker/nes-single-node-worker > worker.log 2>&1 &
+          WORKER_PID=$!
+
+          sleep 5
+
+          timeout --foreground ${{inputs.runtime_seconds}} bash -c '{ cat query.sql; sleep ${{inputs.runtime_seconds}}; } | exec build/nes-frontend/apps/nes-repl --on-exit WAIT_FOR_QUERY_TERMINATION -s localhost:8080' || EXIT_CODE=$?
+
+          # verify that the timeout has terminated nebuli.
+          if [ "${EXIT_CODE:-0}" -ne 124 ]; then
+            echo "✗ FAILURE: Unexpected exit code: ${EXIT_CODE}"
+            exit 1
+          fi
+
+          # stop worker
+          kill $WORKER_PID
+          wait $WORKER_PID || true
       - name: Output Logs on failure
         if: failure()
         run: |
-          cat nebuli.log
+          cat nes-repl.log
           cat worker.log
 
       - name: Upload nebuli.log on failure
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: nebuli-log-${{ matrix.arch }}
-          path: nebuli.log
+          name: repl-log-${{ matrix.arch }}
+          path: nes-repl.log
 
       - name: Upload worker.log on failure
         if: failure()

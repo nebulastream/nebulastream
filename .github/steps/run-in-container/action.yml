@@ -18,6 +18,8 @@ runs:
       shell: bash
       run: |
         docker run \
-             -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache --workdir $(pwd) -u $(id -u):$(id -g) \
+             -v /var/run/docker.sock:/var/run/docker.sock \
+             --group-add $(stat -c '%g' /var/run/docker.sock) \
+             -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache -e HOME=$(pwd) --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'

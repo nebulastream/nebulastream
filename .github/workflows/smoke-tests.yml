@@ -33,6 +33,8 @@ jobs:
         MOLD_JOBS: 1
       # TODO #401 Investigate rootless docker containers
       options: --user root
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
     timeout-minutes: 40
     runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
@@ -70,7 +72,8 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+          # Exclude DockerCompose tests (distributed-cli, distributed-repl, systest-remote) as they are too slow for smoke tests.
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 -LE DockerCompose ${ADDTIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
