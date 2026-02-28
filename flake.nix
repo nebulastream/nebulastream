@@ -57,6 +57,7 @@
           antlr4Pkg
           grpc
           protobuf
+          highs
           abseil-cpp
           yaml-cpp
           replxx

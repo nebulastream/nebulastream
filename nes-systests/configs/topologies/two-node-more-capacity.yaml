@@ -1,0 +1,27 @@
+workers:
+  - host: "sink-node:8080"
+    connection: "sink-node:9090"
+    capacity: 10000
+    config:
+      worker:
+        number_of_buffers_in_global_buffer_manager: 2000000
+        query_engine:
+          number_of_worker_threads: 8
+
+  - host: "source-node:8080"
+    connection: "source-node:9090"
+    capacity: 8
+    downstream:
+      - "sink-node:8080"
+    config:
+      worker:
+        number_of_buffers_in_global_buffer_manager: 2000000
+        query_engine:
+          number_of_worker_threads: 4
+
+allow_source_placement:
+  - "source-node:8080"
+
+allow_sink_placement:
+  - "sink-node:8080"
+  - "source-node:8080"

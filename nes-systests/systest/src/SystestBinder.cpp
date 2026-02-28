@@ -36,10 +36,10 @@
 #include <utility>
 #include <variant>
 #include <vector>
-
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -53,16 +53,21 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
+#include <QueryId.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES::Systest
 {
@@ -72,9 +77,16 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<WorkerId> possibleSinkPlacements)
+        : sinkCatalog(std::move(sinkCatalog)), possibleSinkPlacements(std::move(possibleSinkPlacements))
+    {
+    }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
+    bool registerSink(
+        const std::string& sinkType,
+        const std::string_view sinkNameInFile,
+        const Schema& schema,
+        const std::unordered_map<std::string, std::string>& /*config*/)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
@@ -86,7 +98,15 @@ public:
                 {
                     config["input_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+
+                std::string host = possibleSinkPlacements.at(0).getRawValue();
+                if (auto hostIt = config.find("host"); hostIt != config.end())
+                {
+                    host = hostIt->second;
+                }
+
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, WorkerId(host), std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -99,6 +119,7 @@ public:
     std::optional<SinkDescriptor>
     getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
     {
+        config.try_emplace("host", possibleSinkPlacements.at(0).getRawValue());
         return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config));
     }
 
@@ -123,6 +144,7 @@ public:
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
+    std::vector<WorkerId> possibleSinkPlacements;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
@@ -172,12 +194,12 @@ public:
         return std::unexpected{TestException("No bound plan set")};
     }
 
-    void setOptimizedPlan(LogicalPlan optimizedPlan)
+    void setOptimizedPlan(DistributedLogicalPlan optimizedPlan)
     {
         this->optimizedPlan = std::move(optimizedPlan);
         std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>> sourceNamesToFilepathAndCountForQuery;
         std::ranges::for_each(
-            getOperatorByType<SourceDescriptorLogicalOperator>(*this->optimizedPlan),
+            getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
                 if (const auto path
@@ -205,7 +227,7 @@ public:
                 }
             });
         this->sourcesToFilePathsAndCounts.emplace(std::move(sourceNamesToFilepathAndCountForQuery));
-        const auto sinkOperatorOpt = this->optimizedPlan->getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
+        const auto sinkOperatorOpt = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).tryGetAs<SinkLogicalOperator>();
         INVARIANT(sinkOperatorOpt.has_value(), "The optimized plan should have a sink operator");
         INVARIANT(sinkOperatorOpt.value()->getSinkDescriptor().has_value(), "The sink operator should have a sink descriptor");
         if (toUpperCase(sinkOperatorOpt.value()->getSinkDescriptor().value().getSinkType()) /// NOLINT(bugprone-unchecked-optional-access)
@@ -215,7 +237,7 @@ public:
         }
         else
         {
-            sinkOutputSchema = this->optimizedPlan->getRootOperators().at(0).getOutputSchema();
+            sinkOutputSchema = this->optimizedPlan->getGlobalPlan().getRootOperators().at(0).getOutputSchema();
         }
     }
 
@@ -243,7 +265,7 @@ public:
             try
             {
                 auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
-                setDifferentialQueryPlan(std::move(optimizedDiff));
+                optimizedDifferentialQueryPlan = std::move(optimizedDiff);
             }
             catch (Exception& e)
             {
@@ -299,7 +321,7 @@ public:
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
-                 .differentialQueryPlan = differentialQueryPlan});
+                 .differentialQueryPlan = optimizedDifferentialQueryPlan});
         }
         return queries;
     }
@@ -315,21 +337,34 @@ private:
     std::optional<std::string> queryDefinition;
     std::optional<LogicalPlan> boundPlan;
     std::optional<Exception> exception;
-    std::optional<LogicalPlan> optimizedPlan;
+    std::optional<DistributedLogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
     std::optional<Schema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
     bool built = false;
 };
 
 struct SystestBinder::Impl
 {
-    explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
+    explicit Impl(
+        std::filesystem::path workingDir,
+        std::filesystem::path testDataDir,
+        std::filesystem::path configDir,
+        SystestClusterConfiguration clusterConfiguration)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , clusterConfiguration(std::move(clusterConfiguration))
     {
+        this->workerCatalog = std::make_shared<WorkerCatalog>();
+        for (const auto& [host, grpc, capacity, downstream, config] : this->clusterConfiguration.workers)
+        {
+            workerCatalog->addWorker(host, grpc, capacity, downstream, config);
+        }
     }
 
     static std::vector<ConfigurationOverride>
@@ -386,6 +421,7 @@ struct SystestBinder::Impl
         /// This method could also be removed with the checks and loop put in the SystestExecutor, but it's an aesthetic choice.
         std::vector<SystestQuery> queries;
         uint64_t loadedFiles = 0;
+
         for (const auto& testfile : discoveredTestFiles | std::views::values)
         {
             std::cout << "Loading queries from test file: file://" << testfile.getLogFilePath() << '\n' << std::flush;
@@ -411,11 +447,11 @@ struct SystestBinder::Impl
 
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
-        SLTSinkFactory sinkProvider{testfile.sinkCatalog};
+        SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -459,7 +495,17 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] static std::filesystem::path generateSourceFilePath() { return std::tmpnam(nullptr); }
+    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
+    {
+        auto sourceDir = workingDir / "sources";
+        if (not is_directory(sourceDir))
+        {
+            create_directory(sourceDir);
+            std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
+        }
+
+        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
+    }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
 
@@ -495,11 +541,19 @@ struct SystestBinder::Impl
         const CreatePhysicalSourceStatement& statement,
         std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> testData) const
     {
+        std::string host = clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
+        auto sourceConfigCopy = statement.sourceConfig;
+        if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
+        {
+            host = hostIt->second;
+            sourceConfigCopy.erase(hostIt);
+        }
+
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.getRawValue(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
-            .sourceConfig = statement.sourceConfig};
+            .sourceConfig = sourceConfigCopy};
 
         std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
@@ -516,7 +570,11 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource, physicalSourceConfig.type, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig))
+                *logicalSource,
+                physicalSourceConfig.type,
+                WorkerId(host),
+                physicalSourceConfig.sourceConfig,
+                physicalSourceConfig.parserConfig))
         {
             return;
         }
@@ -531,7 +589,7 @@ struct SystestBinder::Impl
         {
             schema.addField(field.name, field.dataType);
         }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
     }
 
     void createCallback(
@@ -596,6 +654,8 @@ struct SystestBinder::Impl
                 sourceConfig.erase("file_path");
                 sourceConfig.emplace("file_path", filePath);
             }
+
+            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -718,6 +778,7 @@ struct SystestBinder::Impl
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
+            plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
         }
@@ -773,6 +834,11 @@ struct SystestBinder::Impl
 
             setInlineSources(leftPlan);
             setInlineSources(rightPlan);
+
+            leftPlan.setQueryId(
+                QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
+            rightPlan.setQueryId(
+                QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}-differential", testFileName, currentQueryNumberInTest))));
 
             currentTest.setQueryDefinition(std::move(leftQuery));
             currentTest.setBoundPlan(std::move(leftPlan));
@@ -909,11 +975,17 @@ private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
+    SystestClusterConfiguration clusterConfiguration;
+
+    SharedPtr<WorkerCatalog> workerCatalog;
 };
 
 SystestBinder::SystestBinder(
-    const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir))
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir,
+    SystestClusterConfiguration clusterConfiguration)
+    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, std::move(clusterConfiguration)))
 {
 }
 

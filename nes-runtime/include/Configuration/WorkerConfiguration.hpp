@@ -23,6 +23,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/DumpMode.hpp>
+#include <NetworkConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
@@ -36,6 +37,7 @@ public:
 
     QueryEngineConfiguration queryEngine = {"query_engine", "Configuration for the query engine"};
     QueryExecutionConfiguration defaultQueryExecution = {"default_query_execution", "Default configuration for query executions"};
+    NetworkConfiguration network = {"network", "Default configuration for network sources and sinks"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
     UIntOption numberOfBuffersInGlobalBufferManager
@@ -65,6 +67,7 @@ private:
         return {
             &queryEngine,
             &defaultQueryExecution,
+            &network,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
             &dumpQueryCompilationIR,

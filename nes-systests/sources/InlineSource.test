@@ -60,3 +60,13 @@ FROM File(
 	'CSV' AS PARSER.`TYPE`,
 	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
 INTO file_output;
+
+SELECT ID, VALUE, TIMESTAMP
+FROM File(
+	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+	'IDontExist' AS `SOURCE`.`HOST`,
+	'CSV' AS PARSER.`TYPE`,
+	SCHEMA(id UINT64, value UINT64, timestamp UINT64) AS `SOURCE`.`SCHEMA`)
+INTO file_output;
+----
+ERROR 2300
