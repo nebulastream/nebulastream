@@ -43,6 +43,7 @@
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
+#include <common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -119,7 +120,7 @@ VariableSizedAccess TupleBufferRef::writeVarSized(
 }
 
 std::span<std::byte>
-TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess)
+TupleBufferRef::loadAssociatedVarSizedValue(const TupleBuffer& tupleBuffer, const VariableSizedAccess variableSizedAccess) noexcept
 {
     /// Loading the childbuffer containing the variable sized data.
     auto childBuffer = tupleBuffer.loadChildBuffer(variableSizedAccess.getIndex());
@@ -151,6 +152,7 @@ TupleBufferRef::loadValue(const DataType& physicalType, const RecordBuffer& reco
 
     auto variableSizedAccess = static_cast<nautilus::val<VariableSizedAccess*>>(varValRef);
     const auto varSizedPtr = invoke(
+        {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = true},
         +[](const TupleBuffer* tupleBuffer, const VariableSizedAccess* variableSizedAccessPtr)
         {
             INVARIANT(tupleBuffer != nullptr, "Tuplebuffer MUST NOT be null at this point");
