@@ -105,7 +105,7 @@ assert_json_contains() {
   echo "${lines[5]}" | jq -e '(. | length) == 1'
   echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
-  assert_json_equal "[{\"query_id\":${QUERY_ID}}]" "${lines[6]}"
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
 }
 

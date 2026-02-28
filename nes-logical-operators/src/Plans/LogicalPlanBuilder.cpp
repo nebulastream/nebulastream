@@ -55,7 +55,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 {
     NES_TRACE("LogicalPlanBuilder: create query plan for input source  {}", logicalSourceName);
     const DescriptorConfig::Config sourceDescriptorConfig{};
-    return LogicalPlan(SourceNameLogicalOperator(logicalSourceName));
+    return LogicalPlan(INVALID_QUERY_ID, {SourceNameLogicalOperator(logicalSourceName)});
 }
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
@@ -64,7 +64,9 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
 {
-    return LogicalPlan(InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)});
+    return LogicalPlan(
+        INVALID_QUERY_ID,
+        {InlineSourceLogicalOperator{std::move(inlineSourceType), schema, std::move(sourceConfig), std::move(parserConfig)}});
 }
 
 LogicalPlan LogicalPlanBuilder::addProjection(
