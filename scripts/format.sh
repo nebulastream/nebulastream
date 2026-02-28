@@ -135,7 +135,11 @@ do
     # check if corresponding header file exists
     if ! git ls-files | grep "$basename.hpp" > /dev/null
     then
-        log_warn "file has no corresponding header file: $file"
+        if [[ "$basename" =~ (test|Test|tests|Tests)$ ]]; then
+            log_warn "file has no corresponding header file: $file (fine for tests)"
+        else
+            log_warn "file has no corresponding header file: $file"
+        fi
         continue
     fi
     # error if the first include does not contain the basename
