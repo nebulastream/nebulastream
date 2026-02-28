@@ -10,23 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_common_test(nes-common-tests
-        "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
-        "UtilFunctionTest.cpp"
-        "StringUtilTest.cpp"
-        "RangesTest.cpp"
-        "LogLevelTest.cpp"
-        "BFSIteratorTest.cpp"
-        "RollingAverageTest.cpp"
-        "TypeTraitsTest.cpp"
+corrosion_add_cxxbridge(
+        nes-network-bindings
+        CRATE nes_rust_bindings
+        FILES ../network/lib.rs
 )
-target_link_libraries(nes-common-tests nes_rust_bindings)
-
-add_nes_test(nes-thread-test
-        "ThreadTest.cpp"
+target_sources(nes-network-bindings PRIVATE src/NetworkBindings.cpp)
+target_include_directories(nes-network-bindings
+        PRIVATE .
+        PUBLIC include
 )
-
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
-)
+target_link_libraries(nes-network-bindings PUBLIC nes-memory nes-common nes-network-interface)

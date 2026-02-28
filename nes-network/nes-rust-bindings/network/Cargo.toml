@@ -10,23 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_common_test(nes-common-tests
-        "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
-        "UtilFunctionTest.cpp"
-        "StringUtilTest.cpp"
-        "RangesTest.cpp"
-        "LogLevelTest.cpp"
-        "BFSIteratorTest.cpp"
-        "RollingAverageTest.cpp"
-        "TypeTraitsTest.cpp"
-)
-target_link_libraries(nes-common-tests nes_rust_bindings)
+[package]
+name = "network_bindings"
+version = "0.1.0"
+edition = "2024"
 
-add_nes_test(nes-thread-test
-        "ThreadTest.cpp"
-)
+[lib]
+path = "lib.rs"
 
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
-)
+[dependencies]
+# Generate C++ bindings
+cxx = "1.0"
+
+tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time"] }
+nes_network = { path = "../../network" }
+tracing = "0.1.41"

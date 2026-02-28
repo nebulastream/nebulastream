@@ -10,23 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_common_test(nes-common-tests
-        "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
-        "UtilFunctionTest.cpp"
-        "StringUtilTest.cpp"
-        "RangesTest.cpp"
-        "LogLevelTest.cpp"
-        "BFSIteratorTest.cpp"
-        "RollingAverageTest.cpp"
-        "TypeTraitsTest.cpp"
-)
-target_link_libraries(nes-common-tests nes_rust_bindings)
-
-add_nes_test(nes-thread-test
-        "ThreadTest.cpp"
-)
-
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
-)
+add_subdirectory(interface)
+add_subdirectory(nes-rust-bindings/network)
+add_subdirectory(nes-rust-bindings/spdlog)
