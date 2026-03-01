@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Util/ReflectionFwd.hpp>
 #include <Util/Strings.hpp>
 
 namespace NES
@@ -84,7 +85,10 @@ public:
 
 protected:
     /// A single registry will be constructed in the static instance() method. It is impossible to create a registry otherwise.
-    Registry() { Registrar::registerAll(*this); }
+    Registry() = default;
+
+    /// Initialize the registry by calling registerAll. Must be called after all members are initialized.
+    void initializeRegistry() { Registrar::registerAll(*this); }
 
 private:
     /// Only the Registrar can register new entries.
@@ -127,9 +131,71 @@ public:
     static ConcreteRegistry& instance()
     {
         static ConcreteRegistry instance;
+
+        /// Initialize after construction is complete using a helper struct
+        struct Initializer
+        {
+            explicit Initializer(ConcreteRegistry* reg) { reg->initializeRegistry(); }
+        };
+
+        static Initializer init(&instance);
         return instance;
     }
 
     friend ConcreteRegistry;
+    template <typename, typename, typename, typename, bool>
+    friend class BaseRegistryWithUnreflection;
+};
+
+/// Extended registry base class that adds support for dynamic dispatch unreflection.
+/// This allows deserialization by name without compile-time dependencies on concrete plugin types.
+/// Opt-in via enable_unreflection_for_registries() in CMake.
+template <typename ConcreteRegistry, typename KeyTypeT, typename ReturnTypeT, typename Arguments, bool CaseSensitive = false>
+class BaseRegistryWithUnreflection : public BaseRegistry<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments, CaseSensitive>
+{
+    using BaseType = BaseRegistry<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments, CaseSensitive>;
+    using RegistrarType = Registrar<ConcreteRegistry, KeyTypeT, ReturnTypeT, Arguments>;
+
+    BaseRegistryWithUnreflection() : unreflectorTable() { }
+
+    /// Helper to normalize key for case-insensitive lookup
+    [[nodiscard]] KeyTypeT normalizeKey(const KeyTypeT& key) const
+    {
+        if constexpr (
+            !CaseSensitive && std::convertible_to<KeyTypeT, std::string_view> && std::constructible_from<KeyTypeT, std::string_view>)
+        {
+            return KeyTypeT(toUpperCase(static_cast<std::string_view>(key)));
+        }
+        return key;
+    }
+
+public:
+    /// Function type for unreflection: takes Reflected data and ReflectionContext, returns the deserialized object
+    using UnreflectorFn = std::function<ReturnTypeT(const Reflected&, const ReflectionContext&)>;
+
+    /// Deserialize an object by name using dynamic dispatch.
+    /// This is the main entry point for unreflection without compile-time type knowledge.
+    [[nodiscard]] std::optional<ReturnTypeT> unreflect(const KeyTypeT& name, const Reflected& data, const ReflectionContext& context) const
+    {
+        if (const auto it = unreflectorTable.find(normalizeKey(name)); it != unreflectorTable.end())
+        {
+            return it->second(data, context);
+        }
+        return std::nullopt;
+    }
+
+private:
+    /// Register an unreflector function.
+    /// Called by generated registrar code. Follows the same pattern as addEntry for factory functions.
+    void addUnreflectorEntry(KeyTypeT name, UnreflectorFn unreflectorFunction)
+    {
+        unreflectorTable.emplace(normalizeKey(std::move(name)), std::move(unreflectorFunction));
+    }
+
+    /// Map from key to unreflector function pointer
+    std::unordered_map<KeyTypeT, UnreflectorFn> unreflectorTable;
+
+    friend ConcreteRegistry;
+    friend RegistrarType;
 };
 }

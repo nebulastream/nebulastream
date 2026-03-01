@@ -103,11 +103,6 @@ ExpLogicalFunction Unreflector<ExpLogicalFunction>::operator()(const Reflected& 
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterExpLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ExpLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

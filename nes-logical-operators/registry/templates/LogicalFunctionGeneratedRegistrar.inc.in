@@ -27,8 +27,11 @@
 namespace NES::LogicalFunctionGeneratedRegistrar
 {
 
-/// declarations of register functions for 'InputFormatters'
+/// declarations of register functions for 'LogicalFunctions'
 @REGISTER_FUNCTION_DECLARATIONS@
+
+/// declarations of unreflector functions (only generated if unreflection enabled)
+@UNREFLECTOR_FUNCTION_DECLARATIONS@
 }
 
 namespace NES
@@ -38,6 +41,11 @@ inline void Registrar<LogicalFunctionRegistry, std::string, LogicalFunctionRegis
 {
     using namespace NES::LogicalFunctionGeneratedRegistrar;
     @REGISTER_ALL_FUNCTION_CALLS@
+
+    /// Register unreflectors for dynamic dispatch deserialization (only if unreflection enabled)
+    /// Cast to concrete registry type to access unreflection-specific methods
+    auto& unreflectionRegistry = static_cast<LogicalFunctionRegistry&>(registry);
+    @UNREFLECTOR_REGISTER_CALLS@
 }
 
 }

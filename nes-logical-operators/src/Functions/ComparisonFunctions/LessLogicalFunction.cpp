@@ -102,11 +102,6 @@ LessLogicalFunction Unreflector<LessLogicalFunction>::operator()(const Reflected
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterLessLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<LessLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("LessLogicalFunction requires exactly two children, but got {}", arguments.children.size());

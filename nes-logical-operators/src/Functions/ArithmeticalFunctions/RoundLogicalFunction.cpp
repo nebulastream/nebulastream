@@ -100,10 +100,6 @@ RoundLogicalFunction Unreflector<RoundLogicalFunction>::operator()(const Reflect
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterRoundLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<RoundLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

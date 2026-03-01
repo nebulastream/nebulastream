@@ -34,6 +34,11 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
 
+# Configure Trait registry to use unreflection-only (no factory functions needed)
+enable_unreflection_for_registries(Trait)
+disable_factory_functions_for_registries(Trait)
+
+# Create all registries: RewriteRule uses normal factory functions, Trait uses unreflection-only
 create_registries_for_component(RewriteRule Trait)
 
 add_tests_if_enabled(tests)
