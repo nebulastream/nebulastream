@@ -54,12 +54,12 @@ LogicalOperator OperatorSerializationUtil::deserializeOperator(const ReflectedOp
     {
         if (serialized.type == "Source")
         {
-            return ReflectionContext{}.unreflect<SourceDescriptorLogicalOperator>(serialized.config);
+            return ReflectionContext{}.unreflect<TypedLogicalOperator<SourceDescriptorLogicalOperator>>(serialized.config);
         }
 
         if (serialized.type == "Sink")
         {
-            return ReflectionContext{}.unreflect<SinkLogicalOperator>(serialized.config);
+            return ReflectionContext{}.unreflect<TypedLogicalOperator<SinkLogicalOperator>>(serialized.config);
         }
 
         auto registryArgument

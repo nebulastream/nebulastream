@@ -57,18 +57,21 @@ protected:
     TraitSet traitSet;
     Schema inputSchema;
     Schema outputSchema;
+
+    friend Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>;
 };
 
 template <>
-struct Reflector<IngestionTimeWatermarkAssignerLogicalOperator>
+struct Reflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
-    Reflected operator()(const IngestionTimeWatermarkAssignerLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>
+struct Unreflector<TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>>
 {
-    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<IngestionTimeWatermarkAssignerLogicalOperator>
+    operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);

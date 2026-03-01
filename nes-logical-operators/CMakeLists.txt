@@ -24,5 +24,12 @@ target_include_directories(nes-logical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
+# Enable unreflection for LogicalFunction registry (dynamic dispatch deserialization)
+enable_unreflection_for_registries(LogicalFunction LogicalOperator)
+
+# Set wrapper type for LogicalOperator unreflection (uses TypedLogicalOperator wrapper)
+set_unreflection_wrapper_type(LogicalOperator "TypedLogicalOperator")
+
+# Create all registries (LogicalFunction will have unreflection support)
 create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)
 add_tests_if_enabled(tests)

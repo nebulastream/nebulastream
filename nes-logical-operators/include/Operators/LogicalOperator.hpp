@@ -62,6 +62,7 @@ using LogicalOperator = TypedLogicalOperator<>;
 template <typename T>
 concept LogicalOperatorConcept = requires(
     const T& thisOperator,
+    TypedLogicalOperator<T> wrapped,
     ExplainVerbosity verbosity,
     OperatorId operatorId,
     std::vector<LogicalOperator> children,
@@ -87,7 +88,7 @@ concept LogicalOperatorConcept = requires(
     { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
     /// Serialize the operator to a Reflected object
-    { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
+    { NES::reflect(wrapped) } -> std::same_as<Reflected>;
 
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
@@ -105,7 +106,7 @@ concept LogicalOperatorConcept = requires(
 namespace detail
 {
 /// @brief A type erased wrapper for logical operators
-struct ErasedLogicalOperator
+struct ErasedLogicalOperator : std::enable_shared_from_this<ErasedLogicalOperator>
 {
     virtual ~ErasedLogicalOperator() = default;
 
@@ -167,6 +168,12 @@ struct TypedLogicalOperator
     }
 
     explicit TypedLogicalOperator(std::shared_ptr<const NES::detail::ErasedLogicalOperator> op) : self(std::move(op)) { }
+
+    template <LogicalOperatorConcept T>
+    requires(std::same_as<T, Checked>)
+    explicit TypedLogicalOperator(std::shared_ptr<const NES::detail::OperatorModel<T>> op) : self(std::move(op))
+    {
+    }
 
     ///@brief Alternative to operator*
     [[nodiscard]] const Checked& get() const
@@ -337,7 +344,10 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
 
-    [[nodiscard]] Reflected reflect() const override { return NES::reflect(impl); }
+    [[nodiscard]] Reflected reflect() const override
+    {
+        return Reflector<TypedLogicalOperator<OperatorType>>{}(TypedLogicalOperator<OperatorType>{this->shared_from_this()});
+    }
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 

@@ -256,21 +256,22 @@ const WindowMetaData& WindowedAggregationLogicalOperator::getWindowMetaData() co
     return windowMetaData;
 }
 
-Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const WindowedAggregationLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
+    const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const
 {
     std::vector<std::pair<std::string, Reflected>> windowAggregations;
 
-    for (const auto& agg : op.getWindowAggregation())
+    for (const auto& agg : op->getWindowAggregation())
     {
         windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
 
     return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
+        .aggregations = windowAggregations, .keys = op->getGroupingKeys(), .windowType = reflectWindowType(*op->getWindowType())});
 }
 
-WindowedAggregationLogicalOperator
-Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+TypedLogicalOperator<WindowedAggregationLogicalOperator> Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>::operator()(
+    const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [aggregations, keys, windowTypeReflected] = context.unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
 
@@ -290,7 +291,8 @@ Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& ref
     }
 
 
-    return {keys, aggregationFunctions, windowType};
+    return TypedLogicalOperator<WindowedAggregationLogicalOperator>{
+        WindowedAggregationLogicalOperator{keys, aggregationFunctions, windowType}};
 }
 
 LogicalOperatorRegistryReturnType
@@ -298,7 +300,7 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
 {
     if (!arguments.reflected.isEmpty())
     {
-        return ReflectionContext{}.unreflect<WindowedAggregationLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<WindowedAggregationLogicalOperator>>(arguments.reflected);
     }
 
     PRECONDITION(false, "Expected arguments are missing");

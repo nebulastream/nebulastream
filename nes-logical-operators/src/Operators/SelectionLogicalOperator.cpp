@@ -130,15 +130,17 @@ std::vector<LogicalOperator> SelectionLogicalOperator::getChildren() const
     return children;
 }
 
-Reflected Reflector<SelectionLogicalOperator>::operator()(const SelectionLogicalOperator& op) const
+Reflected
+Reflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedSelectionLogicalOperator{op.getPredicate()});
+    return reflect(detail::ReflectedSelectionLogicalOperator{op->getPredicate()});
 }
 
-SelectionLogicalOperator Unreflector<SelectionLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+TypedLogicalOperator<SelectionLogicalOperator>
+Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto [predicate] = context.unreflect<detail::ReflectedSelectionLogicalOperator>(rfl);
-    return SelectionLogicalOperator(predicate);
+    return TypedLogicalOperator<SelectionLogicalOperator>{SelectionLogicalOperator(predicate)};
 }
 
 LogicalOperatorRegistryReturnType
@@ -146,7 +148,7 @@ LogicalOperatorGeneratedRegistrar::RegisterSelectionLogicalOperator(LogicalOpera
 {
     if (!arguments.reflected.isEmpty())
     {
-        return ReflectionContext{}.unreflect<SelectionLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<SelectionLogicalOperator>>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
     std::unreachable();

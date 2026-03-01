@@ -33,7 +33,6 @@
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -86,19 +85,19 @@ private:
     TraitSet traitSet;
     Schema leftInputSchema, rightInputSchema, outputSchema;
 
-    friend Reflector<JoinLogicalOperator>;
+    friend Reflector<TypedLogicalOperator<JoinLogicalOperator>>;
 };
 
 template <>
-struct Reflector<JoinLogicalOperator>
+struct Reflector<TypedLogicalOperator<JoinLogicalOperator>>
 {
-    Reflected operator()(const JoinLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<JoinLogicalOperator>
+struct Unreflector<TypedLogicalOperator<JoinLogicalOperator>>
 {
-    JoinLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<JoinLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);

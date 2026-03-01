@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Util/Reflection.hpp>
 #include <BaseUnitTest.hpp>
@@ -140,14 +141,14 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateUnaliasedFieldSurvivesReflectionR
         ProjectionLogicalOperator::Asterisk(false));
 
     /// First inference (simulates the optimization phase).
-    const auto inferred = op.withInferredSchema({schema});
+    const auto inferred = TypedLogicalOperator<ProjectionLogicalOperator>(op.withInferredSchema({schema}));
 
     /// Simulate serialization round-trip: reflect → unreflect.
     const auto reflected = NES::reflect(inferred);
-    const auto roundTripped = unreflect<ProjectionLogicalOperator>(reflected);
+    const auto roundTripped = ReflectionContext{}.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(reflected);
 
     /// Second inference (simulates deserialization re-inference) must not throw.
-    EXPECT_NO_THROW((void)roundTripped.withInferredSchema({schema}));
+    EXPECT_NO_THROW((void)roundTripped->withInferredSchema({schema}));
 }
 
 /// Explicit aliases must still be detected as duplicates after a reflection round-trip.
@@ -163,10 +164,10 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateExplicitAliasSurvivesReflectionRo
     /// First inference catches the duplicate — the test here is about the round-trip path.
     /// But the query would normally fail before reaching serialization. Simulate a hypothetical
     /// round-trip by reflecting the raw (pre-inference) operator and then re-inferring.
-    const auto reflected = NES::reflect(op);
-    const auto roundTripped = unreflect<ProjectionLogicalOperator>(reflected);
+    const auto reflected = NES::reflect(TypedLogicalOperator<ProjectionLogicalOperator>(op));
+    const auto roundTripped = ReflectionContext{}.unreflect<TypedLogicalOperator<ProjectionLogicalOperator>>(reflected);
 
-    EXPECT_THROW((void)roundTripped.withInferredSchema({schema}), Exception);
+    EXPECT_THROW((void)roundTripped->withInferredSchema({schema}), Exception);
 }
 
 }

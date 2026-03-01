@@ -64,18 +64,20 @@ private:
     Schema schema;
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
+
+    friend Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>;
 };
 
 template <>
-struct Reflector<InlineSinkLogicalOperator>
+struct Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
 {
-    Reflected operator()(const InlineSinkLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<InlineSinkLogicalOperator>
+struct Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>
 {
-    InlineSinkLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<InlineSinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSinkLogicalOperator>);
