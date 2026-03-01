@@ -27,7 +27,7 @@
 namespace NES::LogicalFunctionGeneratedRegistrar
 {
 
-/// declarations of register functions for 'InputFormatters'
+/// declarations of register functions for 'LogicalFunctions'
 @REGISTER_FUNCTION_DECLARATIONS@
 }
 

@@ -117,10 +117,6 @@ Unreflector<FromBase64LogicalFunction>::operator()(const Reflected& reflected, c
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterFROM_BASE64LogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<FromBase64LogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.empty())
     {
         throw CannotDeserialize("FROM_BASE64 requires one argument");

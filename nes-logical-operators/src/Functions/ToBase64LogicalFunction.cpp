@@ -116,10 +116,6 @@ ToBase64LogicalFunction Unreflector<ToBase64LogicalFunction>::operator()(const R
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterTO_BASE64LogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ToBase64LogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.empty())
     {
         throw CannotDeserialize("TO_BASE64 requires one argument");

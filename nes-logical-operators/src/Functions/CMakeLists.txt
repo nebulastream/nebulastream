@@ -26,3 +26,12 @@ add_plugin(TO_BASE64 LogicalFunction nes-logical-operators ToBase64LogicalFuncti
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)
 add_plugin(CastFromUnixTs LogicalFunction nes-logical-operators CastFromUnixTimestampLogicalFunction.cpp)
+
+add_unreflection_plugin(LogicalFunction ConstantValue)
+add_unreflection_plugin(LogicalFunction FieldAccess)
+add_unreflection_plugin(LogicalFunction Concat)
+add_unreflection_plugin(LogicalFunction FromBase64 KEY FROM_BASE64)
+add_unreflection_plugin(LogicalFunction ToBase64 KEY TO_BASE64)
+add_unreflection_plugin(LogicalFunction CastToType)
+add_unreflection_plugin(LogicalFunction CastToUnixTimestamp KEY CastToUnixTs)
+add_unreflection_plugin(LogicalFunction CastFromUnixTimestamp KEY CastFromUnixTs)
