@@ -24,7 +24,7 @@ namespace NES
 {
 
 Reflected reflectWindowType(const Windowing::WindowType& windowType);
-std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected);
+std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected, const ReflectionContext& context);
 
 }
 

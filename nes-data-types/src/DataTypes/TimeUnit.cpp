@@ -76,9 +76,9 @@ Reflected Reflector<Windowing::TimeUnit>::operator()(const Windowing::TimeUnit& 
     return reflect(timeUnit.getMillisecondsConversionMultiplier());
 }
 
-Windowing::TimeUnit Unreflector<Windowing::TimeUnit>::operator()(const Reflected& reflected) const
+Windowing::TimeUnit Unreflector<Windowing::TimeUnit>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    const auto multiplier = unreflect<uint64_t>(reflected);
+    const auto multiplier = context.unreflect<uint64_t>(reflected);
     return Windowing::TimeUnit{multiplier};
 }
 }

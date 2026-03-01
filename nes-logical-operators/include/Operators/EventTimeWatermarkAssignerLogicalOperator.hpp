@@ -76,7 +76,7 @@ struct Reflector<EventTimeWatermarkAssignerLogicalOperator>
 template <>
 struct Unreflector<EventTimeWatermarkAssignerLogicalOperator>
 {
-    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+    EventTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<EventTimeWatermarkAssignerLogicalOperator>);
@@ -86,7 +86,7 @@ namespace NES::detail
 {
 struct ReflectedEventTimeWatermarkAssignerLogicalOperator
 {
-    std::optional<LogicalFunction> onField;
+    LogicalFunction onField;
     Windowing::TimeUnit timeUnit;
 };
 }

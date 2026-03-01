@@ -24,7 +24,6 @@
 #include <Util/Reflection.hpp>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -83,9 +82,10 @@ Reflected Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregat
     return reflect(detail::ReflectedSumAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-SumAggregationLogicalFunction Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+SumAggregationLogicalFunction
+Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedSumAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedSumAggregationLogicalFunction>(reflected);
     return SumAggregationLogicalFunction{onField, asField};
 }
 
@@ -94,7 +94,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunct
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<SumAggregationLogicalFunction>(unreflect<SumAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<SumAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<SumAggregationLogicalFunction>(arguments.reflected));
     }
     if (arguments.fields.size() != 2)
     {

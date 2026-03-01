@@ -37,7 +37,6 @@
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -130,16 +129,10 @@ Reflected Reflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const
 }
 
 EventTimeWatermarkAssignerLogicalOperator
-Unreflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& reflected) const
+Unreflector<EventTimeWatermarkAssignerLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, timeUnit] = unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
-
-    if (!onField.has_value())
-    {
-        throw CannotDeserialize("EventTimeWatermarkAssignerLogicalOperator is missing onField function");
-    }
-
-    return EventTimeWatermarkAssignerLogicalOperator{onField.value(), timeUnit};
+    auto [onField, timeUnit] = context.unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
+    return EventTimeWatermarkAssignerLogicalOperator{onField, timeUnit};
 }
 
 LogicalOperatorRegistryReturnType
@@ -147,7 +140,7 @@ LogicalOperatorGeneratedRegistrar::RegisterEventTimeWatermarkAssignerLogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<EventTimeWatermarkAssignerLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<EventTimeWatermarkAssignerLogicalOperator>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");

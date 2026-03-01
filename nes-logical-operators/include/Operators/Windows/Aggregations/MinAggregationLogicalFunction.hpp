@@ -49,7 +49,7 @@ struct Reflector<MinAggregationLogicalFunction>
 template <>
 struct Unreflector<MinAggregationLogicalFunction>
 {
-    MinAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    MinAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

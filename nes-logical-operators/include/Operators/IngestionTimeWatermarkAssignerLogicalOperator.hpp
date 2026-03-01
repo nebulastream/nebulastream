@@ -68,7 +68,7 @@ struct Reflector<IngestionTimeWatermarkAssignerLogicalOperator>
 template <>
 struct Unreflector<IngestionTimeWatermarkAssignerLogicalOperator>
 {
-    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected) const;
+    IngestionTimeWatermarkAssignerLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<IngestionTimeWatermarkAssignerLogicalOperator>);

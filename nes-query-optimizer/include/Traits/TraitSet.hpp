@@ -134,7 +134,7 @@ struct Reflector<TraitSet>
 template <>
 struct Unreflector<TraitSet>
 {
-    TraitSet operator()(const Reflected& reflected) const;
+    TraitSet operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 }

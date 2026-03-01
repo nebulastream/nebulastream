@@ -52,7 +52,7 @@ struct Reflector<AvgAggregationLogicalFunction>
 template <>
 struct Unreflector<AvgAggregationLogicalFunction>
 {
-    AvgAggregationLogicalFunction operator()(const Reflected& reflected) const;
+    AvgAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }
 

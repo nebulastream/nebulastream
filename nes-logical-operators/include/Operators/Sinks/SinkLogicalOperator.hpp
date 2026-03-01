@@ -96,7 +96,7 @@ struct Reflector<SinkLogicalOperator>
 template <>
 struct Unreflector<SinkLogicalOperator>
 {
-    SinkLogicalOperator operator()(const Reflected& reflected) const;
+    SinkLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);

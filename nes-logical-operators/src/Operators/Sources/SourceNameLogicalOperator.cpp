@@ -134,7 +134,7 @@ Reflected Reflector<SourceNameLogicalOperator>::operator()(const SourceNameLogic
     std::unreachable();
 }
 
-SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected&) const
+SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();

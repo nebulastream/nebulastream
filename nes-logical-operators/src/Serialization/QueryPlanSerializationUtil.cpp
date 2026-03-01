@@ -26,6 +26,8 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Serialization/OperatorSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Reflection.hpp>
+#include <rfl/Generic.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <ErrorHandling.hpp>
@@ -52,7 +54,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
         alreadySerialized.insert(itr.getId());
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
         auto reflectedOperator = OperatorSerializationUtil::serializeOperator(itr);
-        const auto serializedString = rfl::json::write(reflectedOperator);
+        const auto serializedString = rfl::json::write(*reflect(reflectedOperator));
         serializableQueryPlan.add_reflectedoperators(serializedString);
     }
 
@@ -73,12 +75,13 @@ LogicalPlan QueryPlanSerializationUtil::deserializeQueryPlan(const SerializableQ
     {
         CPPTRACE_TRY
         {
-            auto serializedOpt = rfl::json::read<ReflectedOperator>(reflectedOp);
-            if (!serializedOpt.has_value())
+            auto parsed = rfl::json::read<rfl::Generic>(reflectedOp);
+
+            if (!parsed.has_value())
             {
-                throw CannotDeserialize(serializedOpt.error().what());
+                throw CannotDeserialize(parsed.error().what());
             }
-            const auto serialized = std::move(serializedOpt.value());
+            auto serialized = ReflectionContext{}.unreflect<ReflectedOperator>(Reflected{std::move(parsed).value()});
             auto op = OperatorSerializationUtil::deserializeOperator(serialized);
             op = op.withOperatorId(OperatorId{serialized.operatorId});
 

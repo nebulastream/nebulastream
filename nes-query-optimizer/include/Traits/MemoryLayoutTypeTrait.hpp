@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -56,7 +56,7 @@ struct Reflector<MemoryLayoutTypeTrait>
 template <>
 struct Unreflector<MemoryLayoutTypeTrait>
 {
-    MemoryLayoutTypeTrait operator()(const Reflected& reflected) const;
+    MemoryLayoutTypeTrait operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(TraitConcept<MemoryLayoutTypeTrait>);
