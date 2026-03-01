@@ -14,3 +14,8 @@ add_plugin(Greater LogicalFunction nes-logical-operators GreaterLogicalFunction.
 add_plugin(GreaterEquals LogicalFunction nes-logical-operators GreaterEqualsLogicalFunction.cpp)
 add_plugin(Less LogicalFunction nes-logical-operators LessLogicalFunction.cpp)
 add_plugin(LessEquals LogicalFunction nes-logical-operators LessEqualsLogicalFunction.cpp)
+
+add_unreflection_plugin(LogicalFunction Greater)
+add_unreflection_plugin(LogicalFunction GreaterEquals)
+add_unreflection_plugin(LogicalFunction Less)
+add_unreflection_plugin(LogicalFunction LessEquals)

@@ -187,21 +187,27 @@ std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
 
 Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogicalOperator& op) const
 {
-    return reflect(detail::ReflectedInferModelLogicalOperator{
-        .model = std::make_optional(Reflector<RegisteredModel>{}(op.getModel())),
-        .inputFieldNames = std::make_optional(op.getInputFieldNames())});
+    return reflect(detail::ReflectedInferModelLogicalOperator{.model = reflect(op.getModel()), .inputFieldNames = op.getInputFieldNames()});
 }
 
 InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto reflected = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
+    auto [model, inputFieldNames] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
+    return {context.unreflect<RegisteredModel>(model), std::move(inputFieldNames)};
+}
 
-    if (!reflected.model.has_value() || !reflected.inputFieldNames.has_value())
-    {
-        throw NES::CannotDeserialize("Failed to deserialize InferModelLogicalOperator");
-    }
+Reflected
+Reflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const
+{
+    return reflect(
+        detail::ReflectedInferModelLogicalOperator{.model = reflect(op->getModel()), .inputFieldNames = op->getInputFieldNames()});
+}
 
-    return {context.unreflect<RegisteredModel>(reflected.model.value()), std::move(reflected.inputFieldNames.value())};
+TypedLogicalOperator<InferModelLogicalOperator>
+Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto [model, inputFieldNames] = context.unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
+    return InferModelLogicalOperator{context.unreflect<RegisteredModel>(model), std::move(inputFieldNames)};
 }
 
 /// generated registry interface requires by-value argument

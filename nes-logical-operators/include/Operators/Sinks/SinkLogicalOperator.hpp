@@ -85,18 +85,19 @@ private:
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
+    friend Reflector<TypedLogicalOperator<SinkLogicalOperator>>;
 };
 
 template <>
-struct Reflector<SinkLogicalOperator>
+struct Reflector<TypedLogicalOperator<SinkLogicalOperator>>
 {
-    Reflected operator()(const SinkLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SinkLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SinkLogicalOperator>>
 {
-    SinkLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<SinkLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SinkLogicalOperator>);
