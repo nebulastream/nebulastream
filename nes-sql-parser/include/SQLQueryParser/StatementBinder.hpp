@@ -73,6 +73,7 @@ struct CreateSinkStatement
     std::string sinkType;
     Schema schema;
     std::unordered_map<std::string, std::string> sinkConfig;
+    std::unordered_map<std::string, std::string> formatConfig;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,

@@ -62,6 +62,7 @@ EXCEPTION(SourceAlreadyExists, 2031, "source already exists")
 EXCEPTION(QueryCompilerError, 2032, "query compiler / backend throwed an error")
 EXCEPTION(UnknownSinkName, 2033, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2034, "sink already exists")
+EXCEPTION(UnknownOutputFormatterType, 2035, "unknown output formatter type")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")

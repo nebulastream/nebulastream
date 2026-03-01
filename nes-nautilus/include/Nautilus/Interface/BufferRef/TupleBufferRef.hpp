@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <span>
 
@@ -27,6 +28,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -40,6 +42,7 @@ namespace NES
 class TupleBufferRef
 {
 protected:
+    static constexpr uint64_t WRITE_WOULD_OVERFLOW = std::numeric_limits<uint64_t>::max();
     uint64_t capacity;
     uint64_t bufferSize;
     uint64_t tupleSize;
@@ -70,7 +73,17 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    virtual void writeRecord(
+    /// Returns the number of records (or bytes in the case of OutputFormatter) that were written into the buffer
+    virtual nautilus::val<uint64_t> writeRecord(
+        nautilus::val<uint64_t>& recordIndex,
+        const RecordBuffer& recordBuffer,
+        const Record& rec,
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        = 0;
+
+    /// Write record, but checks if the recordIndex is out of bounds
+    /// Will return the max value for uint64_t, if the index is out of bounds
+    virtual nautilus::val<uint64_t> writeRecordSafely(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

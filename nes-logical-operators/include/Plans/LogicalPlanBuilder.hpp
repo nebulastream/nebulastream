@@ -86,7 +86,11 @@ public:
 
     static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addInlineSink(
-        std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
+        std::string type,
+        const Schema& schema,
+        std::unordered_map<std::string, std::string> sinkConfig,
+        std::unordered_map<std::string, std::string> formatConfig,
+        const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.
