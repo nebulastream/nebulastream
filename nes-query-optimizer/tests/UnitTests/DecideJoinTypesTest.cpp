@@ -41,7 +41,6 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
-#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {

@@ -25,12 +25,10 @@
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
-#include <QueryExecutionConfiguration.hpp>
 #include <RewriteRuleRegistry.hpp>
 
 namespace NES::LowerToPhysicalOperators

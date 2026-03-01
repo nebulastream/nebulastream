@@ -17,6 +17,5 @@ function(add_nes_optimizer_test)
     target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
 endfunction()
 
-add_nes_optimizer_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
-add_nes_optimizer_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)
-add_nes_optimizer_test(PhysicalPlanBuilderFlipTest UnitTests/PhysicalPlanBuilderFlipTest.cpp)
+add_nes_compiler_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
+add_nes_compiler_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)

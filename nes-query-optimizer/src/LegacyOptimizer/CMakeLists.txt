@@ -10,7 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-legacy-optimizer
+add_source_files(nes-query-optimizer
         InlineSinkBindingPhase.cpp
         InlineSourceBindingPhase.cpp
         SourceInferencePhase.cpp

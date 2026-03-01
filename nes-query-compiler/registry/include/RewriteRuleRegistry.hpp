@@ -13,23 +13,29 @@
 */
 
 #pragma once
-#include <Plans/LogicalPlan.hpp>
 
-#include <QueryOptimizerConfiguration.hpp>
+#include <memory>
+#include <string>
+#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <Util/Registry.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypes
+using RewriteRuleRegistryReturnType = std::unique_ptr<AbstractRewriteRule>;
+
+struct RewriteRuleRegistryArguments
 {
-public:
-    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+    QueryExecutionConfiguration conf;
+};
 
-    LogicalPlan apply(const LogicalPlan& queryPlan);
-
-private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
-    StreamJoinStrategy joinStrategy;
+class RewriteRuleRegistry
+    : public BaseRegistry<RewriteRuleRegistry, std::string, RewriteRuleRegistryReturnType, RewriteRuleRegistryArguments>
+{
 };
 }
+
+#define INCLUDED_FROM_REGISTRY_REWRITE_RULE
+#include <RewriteRuleGeneratedRegistrar.inc>
+#undef INCLUDED_FROM_REGISTRY_REWRITE_RULE
