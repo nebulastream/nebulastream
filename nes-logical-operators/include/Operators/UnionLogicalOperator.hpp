@@ -60,18 +60,20 @@ private:
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     TraitSet traitSet;
+
+    friend Reflector<TypedLogicalOperator<UnionLogicalOperator>>;
 };
 
 template <>
-struct Reflector<UnionLogicalOperator>
+struct Reflector<TypedLogicalOperator<UnionLogicalOperator>>
 {
-    Reflected operator()(const UnionLogicalOperator&) const;
+    Reflected operator()(const TypedLogicalOperator<UnionLogicalOperator>&) const;
 };
 
 template <>
-struct Unreflector<UnionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<UnionLogicalOperator>>
 {
-    UnionLogicalOperator operator()(const Reflected&, const ReflectionContext&) const;
+    TypedLogicalOperator<UnionLogicalOperator> operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(LogicalOperatorConcept<UnionLogicalOperator>);

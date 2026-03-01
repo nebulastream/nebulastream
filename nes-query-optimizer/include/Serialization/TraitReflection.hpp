@@ -19,7 +19,7 @@
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
-#include <TraitRegisty.hpp>
+#include <TraitRegistry.hpp>
 
 namespace NES::detail
 {
@@ -64,9 +64,7 @@ struct Unreflector<TypedTrait<>>
     {
         auto [name, data] = context.unreflect<detail::ReflectedTrait>(rfl);
 
-        TraitRegistryArguments argument;
-        argument.reflected = data;
-        auto trait = TraitRegistry::instance().create(name, argument);
+        auto trait = TraitRegistry::instance().unreflect(name, data, context);
         if (!trait.has_value())
         {
             throw CannotDeserialize("Failed to unreflect trait of type {}", name);
