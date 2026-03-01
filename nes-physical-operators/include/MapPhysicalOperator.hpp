@@ -33,8 +33,6 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
-    [[nodiscard]] PhysicalFunction getFunction() const { return mapFunction; }
-
 private:
     Record::RecordFieldIdentifier fieldToWriteTo;
     PhysicalFunction mapFunction;

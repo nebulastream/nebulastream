@@ -55,8 +55,7 @@ public:
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<TupleBufferRef>& bufferRef,
-        HashMapOptions hashMapOptions,
-        std::vector<Schema::Field> schemaFields);
+        HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

@@ -32,8 +32,6 @@ public:
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
-    [[nodiscard]] PhysicalFunction getFunction() const { return function; }
-
 private:
     const PhysicalFunction function;
     std::optional<PhysicalOperator> child;

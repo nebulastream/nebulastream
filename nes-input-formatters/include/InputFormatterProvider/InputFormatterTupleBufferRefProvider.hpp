@@ -15,20 +15,19 @@
 #pragma once
 
 #include <memory>
-#include <unordered_set>
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 
 namespace NES
 {
 
 std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider, std::unordered_set<Record::RecordFieldIdentifier> fieldsToParse);
+provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
 
 bool contains(const std::string& parserType);
 }

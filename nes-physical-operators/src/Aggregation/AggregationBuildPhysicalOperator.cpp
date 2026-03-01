@@ -123,16 +123,7 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Convert lazy values into their parsed form
-    for (const auto& field : nautilus::static_iterable(schemaFields))
-    {
-        const VarVal val = record.read(field.name);
-        if (val.isLazyValue())
-        {
-            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
-            const auto parsedVal = convertLazyToInternalRep(lazyVal, field.dataType.type);
-            record.write(field.name, parsedVal);
-        }
-    }
+    record.parseAllFields();
 
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
@@ -186,12 +177,10 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     std::unique_ptr<TimeFunction> timeFunction,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
-    HashMapOptions hashMapOptions,
-    std::vector<Schema::Field> schemaFields)
+    HashMapOptions hashMapOptions)
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapOptions(std::move(hashMapOptions))
-    , schemaFields(std::move(schemaFields))
 {
 }
 

@@ -28,12 +28,8 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
-    std::vector<Schema::Field> schemaFields)
-    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
-    , joinBuildSide(joinBuildSide)
-    , bufferRef(std::move(bufferRef))
-    , schemaFields(std::move(schemaFields))
+    std::shared_ptr<TupleBufferRef> bufferRef)
+    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction)), joinBuildSide(joinBuildSide), bufferRef(std::move(bufferRef))
 {
 }
 }

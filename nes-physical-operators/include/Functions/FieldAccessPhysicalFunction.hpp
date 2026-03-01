@@ -27,8 +27,6 @@ public:
     explicit FieldAccessPhysicalFunction(Record::RecordFieldIdentifier field);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
 
-    Record::RecordFieldIdentifier getFieldName() const { return field; }
-
 private:
     const Record::RecordFieldIdentifier field;
 };

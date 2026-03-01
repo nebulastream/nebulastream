@@ -100,6 +100,11 @@ public:
         {
             return std::get<T1>(value);
         }
+        if (std::is_same_v<T1, VariableSizedData> && std::holds_alternative<LazyValueRepresentation>(value))
+        {
+            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
+            return lazyVal.parseValue().cast<T1>();
+        }
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
             {
@@ -110,7 +115,8 @@ public:
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
                 }
                 else if constexpr (
-                    std::is_same_v<removedCVRefT0, LazyValueRepresentation> || std::is_same_v<removedCVRefT1, LazyValueRepresentation>)
+                    std::derived_from<removedCVRefT0, LazyValueRepresentation>
+                    || std::derived_from<removedCVRefT1, LazyValueRepresentation>)
                 {
                     throw UnknownOperation("Cannot cast LazyValueRepresentation to anything else.");
                 }
@@ -126,6 +132,31 @@ public:
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
 
     [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<LazyValueRepresentation>(value); }
+
+    /// If the underlying value is still a lazy value, create a new varval with the parsed value and return it
+    /// Will never manipulate this varval so it is thread safe
+    [[nodiscard]] VarVal getAsParsedUnderlyingValue() const
+    {
+        if (isLazyValue())
+        {
+            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
+            const VarVal parsedLazyVal = lazyVal.parseValue();
+            return parsedLazyVal;
+        }
+        return *this;
+    }
+
+    /// Will parse the underlying value into the nautilus val it represents, if it is still lazy, and replace its own value with it.
+    /// Use if you want to modify the VarVal itself and not create a new varval.
+    void parseUnderlyingVal()
+    {
+        if (isLazyValue())
+        {
+            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
+            const VarVal parsedLazyVal = lazyVal.parseValue();
+            value = parsedLazyVal.value;
+        }
+    }
 
     template <typename T>
     VarVal customVisit(T t) const

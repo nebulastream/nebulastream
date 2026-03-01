@@ -23,7 +23,6 @@
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
@@ -42,110 +41,22 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    const QuotationType quotationType,
-    const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse)
+    const QuotationType quotationType)
 {
-    if (fieldsToParse.contains(fieldName) || physicalType == DataType::Type::VARSIZED)
-    {
-        switch (physicalType)
-        {
-            case DataType::Type::INT8: {
-                record.write(fieldName, parseIntoNautilusRecord<int8_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::INT16: {
-                record.write(fieldName, parseIntoNautilusRecord<int16_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::INT32: {
-                record.write(fieldName, parseIntoNautilusRecord<int32_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::INT64: {
-                record.write(fieldName, parseIntoNautilusRecord<int64_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::UINT8: {
-                record.write(fieldName, parseIntoNautilusRecord<uint8_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::UINT16: {
-                record.write(fieldName, parseIntoNautilusRecord<uint16_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::UINT32: {
-                record.write(fieldName, parseIntoNautilusRecord<uint32_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::UINT64: {
-                record.write(fieldName, parseIntoNautilusRecord<uint64_t>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::FLOAT32: {
-                record.write(fieldName, parseIntoNautilusRecord<float>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::FLOAT64: {
-                record.write(fieldName, parseIntoNautilusRecord<double>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::CHAR: {
-                switch (quotationType)
-                {
-                    case QuotationType::NONE: {
-                        record.write(fieldName, parseIntoNautilusRecord<char>(fieldAddress, fieldSize));
-                        return;
-                    }
-                    case QuotationType::DOUBLE_QUOTE: {
-                        record.write(
-                            fieldName,
-                            parseIntoNautilusRecord<char>(
-                                fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2)));
-                        return;
-                    }
-                }
-                std::unreachable();
-            }
-            case DataType::Type::BOOLEAN: {
-                record.write(fieldName, parseIntoNautilusRecord<bool>(fieldAddress, fieldSize));
-                return;
-            }
-            case DataType::Type::VARSIZED: {
-                switch (quotationType)
-                {
-                    case QuotationType::NONE: {
-                        const VariableSizedData varSized(fieldAddress, fieldSize);
-                        record.write(fieldName, varSized);
-                        return;
-                    }
-                    case QuotationType::DOUBLE_QUOTE: {
-                        const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
-                        const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
-
-                        const VariableSizedData varSized(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
-                        record.write(fieldName, varSized);
-                        return;
-                    }
-                }
-                std::unreachable();
-            }
-            case DataType::Type::UNDEFINED:
-                throw NotImplemented("Cannot parse undefined type.");
-        }
-        std::unreachable();
-    }
+    /// Raw values will be transformed into a lazy representation of pointer, size and underlying datatype instead of being parsed immediatly.
+    /// Should a field be needed in its parsed form for the execution of a logical function, it will be parsed in the overridden function in LazyValueRepresentation
     if (physicalType == DataType::Type::UNDEFINED)
     {
         throw NotImplemented("Cannot parse undefined type.");
     }
-    /// We represent the value as the pointer to the raw value and it's size as we do not need it immediatly in it's parsed form
     if (physicalType == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
     {
-        const LazyValueRepresentation lazyVal(fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2));
+        const LazyValueRepresentation lazyVal(
+            fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2), physicalType);
         record.write(fieldName, lazyVal);
         return;
     }
-    const LazyValueRepresentation lazyVal(fieldAddress, fieldSize);
+    const LazyValueRepresentation lazyVal(fieldAddress, fieldSize, physicalType);
     record.write(fieldName, lazyVal);
 }
 

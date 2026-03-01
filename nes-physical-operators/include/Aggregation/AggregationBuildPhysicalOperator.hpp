@@ -50,8 +50,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
-        HashMapOptions hashMapOptions,
-        std::vector<Schema::Field> schemaFields);
+        HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
@@ -59,8 +58,6 @@ private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
-    /// Needed in order to convert the lazy represented values into the correct type
-    std::vector<Schema::Field> schemaFields;
 };
 
 }

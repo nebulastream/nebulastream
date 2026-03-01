@@ -69,16 +69,6 @@ VarVal operator>>(const VarVal& other, const LazyValueRepresentation& rhs);
 class LazyValueRepresentation
 {
 public:
-    /// In general, we should not allow tempering with the pointer of lazy values from outside.
-    /// For output formatting, this is necessary though, so we add the function as friend
-    friend nautilus::val<uint64_t> formatAndWriteVal(
-        const VarVal& value,
-        const DataType& fieldType,
-        const nautilus::val<int8_t*>& address,
-        const nautilus::val<uint64_t>& remainingSize,
-        const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider);
-
     explicit LazyValueRepresentation(
         const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size, const DataType::Type& type)
         : size(size), ptrToLazyValue(reference), type(type)
@@ -104,6 +94,10 @@ public:
         ptrToLazyValue = other.ptrToLazyValue;
         return *this;
     }
+
+    [[nodiscard]] nautilus::val<int8_t*> getContent() const { return ptrToLazyValue; }
+
+    [[nodiscard]] nautilus::val<uint64_t> getSize() const { return size; }
 
     /// Method to check if the lazy value has any text behind it.
     /// Usable for some bool function overrides

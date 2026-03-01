@@ -50,26 +50,15 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
-    std::vector<Schema::Field> schemaFields)
-    : StreamJoinBuildPhysicalOperator(
-          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(schemaFields))
+    std::shared_ptr<TupleBufferRef> bufferRef)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef))
 {
 }
 
 void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     /// Convert lazy values into their parsed form
-    for (const auto& field : nautilus::static_iterable(schemaFields))
-    {
-        const VarVal val = record.read(field.name);
-        if (val.isLazyValue())
-        {
-            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
-            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, field.dataType.type);
-            record.write(field.name, parsedVal);
-        }
-    }
+    record.parseAllFields();
 
     /// Getting the operator handler from the local state
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));

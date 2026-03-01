@@ -32,8 +32,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> memoryProvider,
-        std::vector<Schema::Field> schemaFields);
+        std::shared_ptr<TupleBufferRef> memoryProvider);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;
@@ -41,8 +40,6 @@ public:
 protected:
     const JoinBuildSideType joinBuildSide;
     const std::shared_ptr<TupleBufferRef> bufferRef;
-    /// Needed in order to convert the lazy represented values into the correct type
-    std::vector<Schema::Field> schemaFields;
 };
 
 }

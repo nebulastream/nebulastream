@@ -77,7 +77,6 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
     }
     else
     {
-        /// For varsized values, we cast to VariableSizedData and access the formatted string that way
         const auto varSizedValue = value.cast<VariableSizedData>();
         /// Calculate the size of the content that needs to be written
         const nautilus::val<uint64_t> amountToWrite

@@ -15,12 +15,10 @@
 #include <InputFormatterTupleBufferRefProvider.hpp>
 
 #include <memory>
-#include <unordered_set>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -28,13 +26,11 @@
 namespace NES
 {
 
-std::shared_ptr<InputFormatterTupleBufferRef> provideInputFormatterTupleBufferRef(
-    ParserConfig formatScanConfig,
-    std::shared_ptr<TupleBufferRef> memoryProvider,
-    std::unordered_set<Record::RecordFieldIdentifier> fieldsToParse)
+std::shared_ptr<InputFormatterTupleBufferRef>
+provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-            formatScanConfig.parserType, InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider), fieldsToParse)))
+            formatScanConfig.parserType, InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider))))
     {
         return std::move(inputFormatter.value());
     }

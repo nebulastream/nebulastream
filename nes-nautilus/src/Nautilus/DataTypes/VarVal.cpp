@@ -13,6 +13,7 @@
 */
 #include <Nautilus/DataTypes/VarVal.hpp>
 
+#include <concepts>
 #include <cstdint>
 #include <ostream>
 #include <string>
@@ -66,7 +67,7 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
     std::visit(
         [&]<typename ValType>(const ValType& val)
         {
-            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::is_same_v<ValType, LazyValueRepresentation>)
+            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, LazyValueRepresentation>)
             {
                 throw UnknownOperation(
                     std::string("VarVal T::operation=(val) not implemented for VariableSizedData and LazyValueRepresentation"));
@@ -89,7 +90,8 @@ VarVal::operator bool() const
                 /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
                 /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
                 /// As we will then compare val == 1, which will always be false.
-                return !(val == nautilus::val<bool>(false));
+                const VarVal result = !(val == nautilus::val<bool>(false));
+                return result.cast<nautilus::val<bool>>();
             }
             else
             {
@@ -227,11 +229,15 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     VarVal VarVal::operatorName(const VarVal& other) const \
     { \
         return std::visit( \
-            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
+            [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) -> VarVal \
             { \
+                if constexpr (std::is_same_v<LHS, LazyValueRepresentation> && std::is_same_v<RHS, LazyValueRepresentation>) \
+                { \
+                    return lhsVal.operatorName(rhsVal); \
+                } \
                 if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
-                    return detail::var_val_t(lhsVal op rhsVal); \
+                    return VarVal(lhsVal op rhsVal); \
                 } \
                 else \
                 { \
@@ -246,7 +252,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
     VarVal VarVal::operatorName() const \
     { \
         return std::visit( \
-            [&]<typename RHS>(const RHS& rhsVal) \
+            [&]<typename RHS>(const RHS& rhsVal) -> VarVal \
             { \
                 if constexpr (!requires(RHS rhs) { op rhs; }) \
                 { \
@@ -255,8 +261,7 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
                 } \
                 else \
                 { \
-                    detail::var_val_t result = op rhsVal; \
-                    return result; \
+                    return VarVal(op rhsVal); \
                 } \
             }, \
             this->value); \

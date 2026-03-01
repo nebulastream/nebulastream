@@ -15,6 +15,7 @@
 #include <Functions/ArithmeticalFunctions/CeilPhysicalFunction.hpp>
 
 #include <utility>
+
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -37,12 +38,13 @@ VarVal CeilPhysicalFunction::execute(const Record& record, ArenaRef& arena) cons
     const auto value = childFunction.execute(record, arena);
     /// If the input type is a float, we need to ceil the value and returned the ceiled value.
     /// If the input type is an integer, we do not need to do anything.
+    const auto parsedVal = value.getAsParsedUnderlyingValue();
     if (inputType.isFloat())
     {
-        const auto ceiledValue = nautilus::ceil(value.cast<nautilus::val<double>>());
+        const auto ceiledValue = nautilus::ceil(parsedVal.cast<nautilus::val<double>>());
         return VarVal{ceiledValue}.castToType(outputType.type);
     }
-    return value.castToType(outputType.type);
+    return parsedVal.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
@@ -50,11 +52,9 @@ PhysicalFunctionGeneratedRegistrar::RegisterCeilPhysicalFunction(PhysicalFunctio
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Ceil function must have exactly one child function");
     PRECONDITION(physicalFunctionRegistryArguments.inputTypes.size() == 1, "Ceil function must have exactly one input type");
-    return {
-        CeilPhysicalFunction(
-            physicalFunctionRegistryArguments.childFunctions[0],
-            physicalFunctionRegistryArguments.inputTypes[0],
-            physicalFunctionRegistryArguments.outputType),
-        physicalFunctionRegistryArguments.childFunctions};
+    return CeilPhysicalFunction(
+        physicalFunctionRegistryArguments.childFunctions[0],
+        physicalFunctionRegistryArguments.inputTypes[0],
+        physicalFunctionRegistryArguments.outputType);
 }
 }

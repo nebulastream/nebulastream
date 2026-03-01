@@ -123,16 +123,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     /// Convert lazy values into their parsed form
-    for (const auto& field : nautilus::static_iterable(schemaFields))
-    {
-        const VarVal val = record.read(field.name);
-        if (val.isLazyValue())
-        {
-            const LazyValueRepresentation lazyVal = val.cast<LazyValueRepresentation>();
-            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, field.dataType.type);
-            record.write(field.name, parsedVal);
-        }
-    }
+    record.parseAllFields();
 
     /// Getting the operator handler from the local state
     auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
@@ -192,9 +183,8 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     const std::shared_ptr<TupleBufferRef>& bufferRef,
-    HashMapOptions hashMapOptions,
-    std::vector<Schema::Field> schemaFields)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef, std::move(schemaFields))
+    HashMapOptions hashMapOptions)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

@@ -35,16 +35,15 @@ SqrtPhysicalFunction::SqrtPhysicalFunction(PhysicalFunction childFunction, DataT
 VarVal SqrtPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    return VarVal{nautilus::sqrt(value.cast<nautilus::val<double>>())}.castToType(outputType.type);
+    const auto parsedVal = value.getAsParsedUnderlyingValue();
+    return VarVal{nautilus::sqrt(parsedVal.cast<nautilus::val<double>>())}.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterSqrtPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Sqrt function must have exactly one child function");
-    return {
-        SqrtPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType),
-        physicalFunctionRegistryArguments.childFunctions};
+    return SqrtPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
 }

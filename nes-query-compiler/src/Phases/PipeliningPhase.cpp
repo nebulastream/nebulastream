@@ -66,8 +66,7 @@ PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
     const std::optional<Schema>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
-    const uint64_t configuredBufferSize,
-    const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse)
+    const uint64_t configuredBufferSize)
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
@@ -88,7 +87,7 @@ PhysicalOperator createScanOperator(
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(
-                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider, fieldsToParse), inputSchema->getFieldNames());
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema->getFieldNames());
         }
     }
     return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
@@ -99,15 +98,10 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
     const std::shared_ptr<Pipeline>& prevPipeline,
     OperatorPipelineMap& pipelineMap,
     const PhysicalOperatorWrapper& wrappedOpAfterScan,
-    const uint64_t configuredBufferSize,
-    const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse)
+    const uint64_t configuredBufferSize)
 {
     const auto newPipeline = std::make_shared<Pipeline>(createScanOperator(
-        *prevPipeline,
-        wrappedOpAfterScan.getInputSchema(),
-        wrappedOpAfterScan.getInputMemoryLayoutType(),
-        configuredBufferSize,
-        fieldsToParse));
+        *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -160,75 +154,6 @@ enum class PipelinePolicy : uint8_t
     ForceNew /// Enforces a new pipeline for the next operator
 };
 
-/// Writes all fields, that the PhysicalFunction accesses into accessedFields
-void findFieldAccesses(const PhysicalFunction& function, std::unordered_set<Record::RecordFieldIdentifier>& accessedFields)
-{
-    if (const auto fieldAccess = function.tryGet<FieldAccessPhysicalFunction>())
-    {
-        accessedFields.insert(fieldAccess.value().getFieldName());
-        return;
-    }
-    for (const auto& child : function.getChildren())
-    {
-        findFieldAccesses(child, accessedFields);
-    }
-}
-
-/// Function that searches an operator and it's children for field accesses. Will write every accessed field's identifier into accessedFields
-/// Will register the accessed fields starting from the last operator (pipeline breaker) and ending with op.
-/// Registering backwards is necessary because UnionRename operations affect the names of the accessed fields
-void searchOperatorForFieldAccesses(
-    const std::shared_ptr<PhysicalOperatorWrapper>& op, std::unordered_set<Record::RecordFieldIdentifier>& accessedFields)
-{
-    if (op->getPhysicalOperator().tryGet<SinkPhysicalOperator>()
-        || op->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT)
-    {
-        return;
-    }
-
-    for (const auto& child : op->getChildren())
-    {
-        searchOperatorForFieldAccesses(child, accessedFields);
-    }
-
-    if (const auto selection = op->getPhysicalOperator().tryGet<SelectionPhysicalOperator>())
-    {
-        const auto predicate = selection.value().getFunction();
-        findFieldAccesses(predicate, accessedFields);
-    }
-    else if (const auto mapOperation = op->getPhysicalOperator().tryGet<MapPhysicalOperator>())
-    {
-        /// If the sole purpose of the map function is to access the value then we do not have to parse the value
-        const auto mapFunction = mapOperation.value().getFunction();
-        if (not mapFunction.tryGet<FieldAccessPhysicalFunction>())
-        {
-            findFieldAccesses(mapFunction, accessedFields);
-        }
-    }
-    else if (const auto eventTimeAssigner = op->getPhysicalOperator().tryGet<EventTimeWatermarkAssignerPhysicalOperator>())
-    {
-        const auto eventTimeFunction = eventTimeAssigner->getTimeFunction();
-        const auto child = eventTimeFunction.getFunction();
-        findFieldAccesses(child, accessedFields);
-    }
-    else if (const auto unionRenameOp = op->getPhysicalOperator().tryGet<UnionRenamePhysicalOperator>())
-    {
-        /// One of the accessed field's names might have been changed due to a rename. Since we need the original names in our set, we need to adjust it.
-        const std::vector<std::string> inputs = unionRenameOp->getInputFields();
-        const std::vector<std::string> outputs = unionRenameOp->getOutputFields();
-        for (size_t i = 0; i < outputs.size(); ++i)
-        {
-            const std::string& newFieldName = outputs[i];
-            if (accessedFields.contains(newFieldName))
-            {
-                /// Remove this field name and replace with the original field name
-                accessedFields.erase(newFieldName);
-                accessedFields.insert(inputs[i]);
-            }
-        }
-    }
-}
-
 void buildPipelineRecursively(
     const std::shared_ptr<PhysicalOperatorWrapper>& opWrapper,
     const std::shared_ptr<PhysicalOperatorWrapper>& prevOpWrapper,
@@ -273,72 +198,26 @@ void buildPipelineRecursively(
         return;
     }
 
-    /// If prevOpWrapper is a nullptr, opWrapper is the direct child of a source. Thus, the creation of a defaut scan + input formatter is needed
-    /// In order to optimize the parsing of the values in the input formatter, we will now iterate through this operator and it's children until we reach a pipeline breaker,
-    /// which would be either the Sink or a custom Emit like a WindowBuild. If the operator executes a function in it's execute method (these are Selection and Map), we get
-    /// the names of the fields that are accessed by these functions. Only these fields need to be in their internal parsed schema in the first pipeline.
-    /// The list of these names is passed to the input formatter, so that the corresponding fields can be converted to their internal representation.
-    /// The remaining fields are converted to "lazy value representations".
-    std::unordered_set<Record::RecordFieldIdentifier> accessedFieldsInFirstPipeline{};
-    if (not prevOpWrapper)
-    {
-        searchOperatorForFieldAccesses(opWrapper, accessedFieldsInFirstPipeline);
-    }
-
     /// Case 1: Custom Scan
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
-        if (prevOpWrapper)
+        if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
-            if (prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
-            {
-                addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
-            }
-            auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
-            if (opWrapper->getHandler() && opWrapper->getHandlerId())
-            {
-                newPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
-            }
-            pipelineMap.emplace(opId, newPipeline);
-            currentPipeline->addSuccessor(newPipeline, currentPipeline);
-            const auto newPipelinePtr = currentPipeline->getSuccessors().back();
-            for (auto& child : opWrapper->getChildren())
-            {
-                buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
-            }
+            addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
-        else
+        auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
+        if (opWrapper->getHandler() && opWrapper->getHandlerId())
         {
-            /// This is a special case: This is a default scan operator that was created beforehand due to the existence of a projection.
-            /// However, the corresponding input formatter does not contain the set of fields that have to be parsed.
-            /// We replace this scan operator with a fresh one with the same properties
-            /// This is a bit hacky so at least this part should be replaced with a better solution later
-            auto newScan = createScanOperator(
-                *currentPipeline,
-                opWrapper->getInputSchema(),
-                opWrapper->getInputMemoryLayoutType(),
-                configuredBufferSize,
-                accessedFieldsInFirstPipeline);
-
-            const std::shared_ptr<PhysicalOperatorWrapper> scanWrap = std::make_shared<PhysicalOperatorWrapper>(
-                newScan,
-                opWrapper->getInputSchema().value(),
-                opWrapper->getOutputSchema().value(),
-                opWrapper->getInputMemoryLayoutType().value(),
-                opWrapper->getOutputMemoryLayoutType().value(),
-                std::nullopt,
-                std::nullopt,
-                PhysicalOperatorWrapper::PipelineLocation::SCAN);
-
-            auto newPipeline = std::make_shared<Pipeline>(scanWrap->getPhysicalOperator());
-            pipelineMap.emplace(scanWrap->getPhysicalOperator().getId(), newPipeline);
-            currentPipeline->addSuccessor(newPipeline, currentPipeline);
-            const auto newPipelinePtr = currentPipeline->getSuccessors().back();
-            for (auto& child : opWrapper->getChildren())
-            {
-                buildPipelineRecursively(child, scanWrap, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
-            }
+            newPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
         }
+        pipelineMap.emplace(opId, newPipeline);
+        currentPipeline->addSuccessor(newPipeline, currentPipeline);
+        const auto newPipelinePtr = currentPipeline->getSuccessors().back();
+        for (auto& child : opWrapper->getChildren())
+        {
+            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
+        }
+
         return;
     }
 
@@ -350,8 +229,7 @@ void buildPipelineRecursively(
         {
             /// If the current operator is an emit operator and the prev operator was also an emit operator, we need to add a scan before the
             /// current operator to create a new pipeline
-            auto newPipeline
-                = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize, accessedFieldsInFirstPipeline);
+            auto newPipeline = createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
             if (opWrapper->getHandler().has_value())
             {
                 /// Create an operator handler for the custom emit operator
@@ -397,11 +275,7 @@ void buildPipelineRecursively(
             if (not(sourceFormat == "NATIVE" and toUpperCase(sinkFormat) == "NATIVE"))
             {
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
-                    *currentPipeline,
-                    opWrapper->getInputSchema(),
-                    opWrapper->getInputMemoryLayoutType(),
-                    configuredBufferSize,
-                    accessedFieldsInFirstPipeline));
+                    *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
                 if (sinkFormat == "NATIVE")
@@ -475,12 +349,8 @@ void buildPipelineRecursively(
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         pipelineMap[opId] = newPipelinePtr;
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
-        newPipelinePtr->prependOperator(createScanOperator(
-            *currentPipeline,
-            opWrapper->getInputSchema(),
-            opWrapper->getInputMemoryLayoutType(),
-            configuredBufferSize,
-            accessedFieldsInFirstPipeline));
+        newPipelinePtr->prependOperator(
+            createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
@@ -493,7 +363,7 @@ void buildPipelineRecursively(
     {
         /// If the current operator is a fusible operator and the prev operator was an emit operator, we need to add a scan before the
         /// current operator to create a new pipeline.
-        createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize, accessedFieldsInFirstPipeline);
+        createNewPipelineWithScan(currentPipeline, pipelineMap, *opWrapper, configuredBufferSize);
     }
     else
     {

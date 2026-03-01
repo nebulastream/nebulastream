@@ -38,7 +38,9 @@ VarVal PowPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    return VarVal{nautilus::pow(leftValue.cast<nautilus::val<double>>(), rightValue.cast<nautilus::val<double>>())}.castToType(
+    const auto leftParsedValue = leftValue.getAsParsedUnderlyingValue();
+    const auto rightParsedValue = rightValue.getAsParsedUnderlyingValue();
+    return VarVal{nautilus::pow(leftParsedValue.cast<nautilus::val<double>>(), rightParsedValue.cast<nautilus::val<double>>())}.castToType(
         outputType.type);
 }
 
@@ -46,11 +48,9 @@ PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterPowPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 2, "Pow function must have exactly two child functions");
-    return {
-        PowPhysicalFunction(
-            physicalFunctionRegistryArguments.childFunctions[0],
-            physicalFunctionRegistryArguments.childFunctions[1],
-            physicalFunctionRegistryArguments.outputType),
-        physicalFunctionRegistryArguments.childFunctions};
+    return PowPhysicalFunction(
+        physicalFunctionRegistryArguments.childFunctions[0],
+        physicalFunctionRegistryArguments.childFunctions[1],
+        physicalFunctionRegistryArguments.outputType);
 }
 }

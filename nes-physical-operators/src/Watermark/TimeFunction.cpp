@@ -40,7 +40,9 @@ EventTimeFunction::EventTimeFunction(PhysicalFunction timestampFunction, const W
 
 nautilus::val<Timestamp> EventTimeFunction::getTs(ExecutionContext& ctx, Record& record) const
 {
-    const auto ts = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena).cast<nautilus::val<uint64_t>>();
+    const auto timeVal = this->timestampFunction.execute(record, ctx.pipelineMemoryProvider.arena);
+    const auto timeValParsed = timeVal.getAsParsedUnderlyingValue();
+    const auto ts = timeValParsed.cast<nautilus::val<uint64_t>>();
     const auto timeMultiplier = nautilus::val<uint64_t>(unit.getMillisecondsConversionMultiplier());
     const auto tsInMs = nautilus::val<Timestamp>(ts * timeMultiplier);
     ctx.currentTs = tsInMs;

@@ -34,16 +34,15 @@ CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunct
 VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    return value.castToType(castToType.type);
+    const auto parsedVal = value.getAsParsedUnderlyingValue();
+    return parsedVal.castToType(castToType.type);
 }
 
 PhysicalFunctionRegistryReturnType
 PhysicalFunctionGeneratedRegistrar::RegisterCastPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Cast function must have exactly one child functions");
-    return {
-        CastFieldPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType),
-        physicalFunctionRegistryArguments.childFunctions};
+    return CastFieldPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
 }

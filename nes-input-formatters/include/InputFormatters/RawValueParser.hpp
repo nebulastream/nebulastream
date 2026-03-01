@@ -19,18 +19,17 @@
 #include <span>
 #include <string>
 #include <string_view>
-#include <unordered_set>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/common/FunctionAttributes.hpp>
 #include <Arena.hpp>
 #include <val.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <nautilus/common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -45,6 +44,7 @@ template <typename T>
 nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
     return nautilus::invoke(
+        nautilus::FunctionAttributes{nautilus::ModRefInfo::NoModRef, true, true},
         +[](const char* fieldAddress, const uint64_t fieldSize)
         {
             const auto fieldView = std::string_view(fieldAddress, fieldSize);
@@ -63,6 +63,5 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    QuotationType quotationType,
-    const std::unordered_set<Record::RecordFieldIdentifier>& fieldsToParse);
+    QuotationType quotationType);
 }

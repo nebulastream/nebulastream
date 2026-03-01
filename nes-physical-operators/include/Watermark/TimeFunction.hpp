@@ -55,8 +55,6 @@ public:
         return std::make_unique<EventTimeFunction>(timestampFunction, unit);
     }
 
-    [[nodiscard]] PhysicalFunction getFunction() const { return timestampFunction; }
-
 private:
     Windowing::TimeUnit unit;
     PhysicalFunction timestampFunction;

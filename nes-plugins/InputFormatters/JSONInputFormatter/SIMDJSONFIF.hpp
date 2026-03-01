@@ -222,7 +222,6 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
-        const std::unordered_set<Record::RecordFieldIdentifier>&,
         const nautilus::val<int8_t*>&,
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,

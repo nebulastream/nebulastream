@@ -87,17 +87,8 @@ nautilus::val<uint64_t> RowTupleBufferRef::writeRecord(
         }
         auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
         const VarVal& value = rec.read(name);
-        if (value.isLazyValue())
-        {
-            /// Parse the lazy value into the internal represention
-            const LazyValueRepresentation lazyVal = value.cast<LazyValueRepresentation>();
-            const VarVal parsedVal = convertLazyToInternalRep(lazyVal, type.type);
-            storeValue(type, recordBuffer, fieldAddress, parsedVal, bufferProvider);
-        }
-        else
-        {
-            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
-        }
+        const VarVal parsedVal = value.getAsParsedUnderlyingValue();
+        storeValue(type, recordBuffer, fieldAddress, parsedVal, bufferProvider);
     }
     return 1;
 }
