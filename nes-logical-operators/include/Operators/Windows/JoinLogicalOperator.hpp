@@ -33,7 +33,6 @@
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
