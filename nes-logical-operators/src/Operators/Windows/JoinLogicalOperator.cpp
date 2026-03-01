@@ -36,7 +36,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Serialization/WindowTypeReflection.hpp>
-#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>

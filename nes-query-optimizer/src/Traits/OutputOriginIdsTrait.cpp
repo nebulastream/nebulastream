@@ -32,7 +32,7 @@
 #include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <TraitRegisty.hpp>
+#include <TraitRegistry.hpp>
 
 namespace NES
 {
@@ -92,11 +92,6 @@ const OriginId& OutputOriginIdsTrait::operator[](size_t index) const
 size_t OutputOriginIdsTrait::size() const
 {
     return originIds.size();
-}
-
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterOutputOriginIdsTrait(TraitRegistryArguments arguments)
-{
-    return ReflectionContext{}.unreflect<OutputOriginIdsTrait>(arguments.reflected);
 }
 
 Reflected Reflector<OutputOriginIdsTrait>::operator()(const OutputOriginIdsTrait& trait) const

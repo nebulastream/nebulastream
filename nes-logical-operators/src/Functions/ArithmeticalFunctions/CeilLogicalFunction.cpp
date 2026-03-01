@@ -98,11 +98,6 @@ CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<CeilLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("Function requires exactly one child, but got {}", arguments.children.size());

@@ -64,9 +64,7 @@ struct Unreflector<TypedLogicalFunction<>>
     {
         auto [name, data] = context.unreflect<detail::ReflectedLogicalFunction>(rfl);
 
-        LogicalFunctionRegistryArguments argument;
-        argument.reflected = data;
-        auto logicalFunction = LogicalFunctionRegistry::instance().create(name, argument);
+        auto logicalFunction = LogicalFunctionRegistry::instance().unreflect(name, data, context);
         if (!logicalFunction.has_value())
         {
             throw CannotDeserialize("Failed to unreflect logical function of type {}", name);

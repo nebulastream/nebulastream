@@ -104,10 +104,6 @@ ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Refle
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterConcatLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ConcatLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() < 2)
     {
         throw CannotDeserialize("ConcatLogicalFunction requires two children, but only got {}", arguments.children.size());

@@ -105,10 +105,6 @@ GreaterLogicalFunction Unreflector<GreaterLogicalFunction>::operator()(const Ref
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterGreaterLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<GreaterLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("GreaterLogicalFunction requires exactly two children, but got {}", arguments.children.size());
