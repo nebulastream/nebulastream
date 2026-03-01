@@ -127,14 +127,8 @@ Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected, 
     return FieldAccessLogicalFunction{DataType{type}, name};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFunctionRegistryArguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<FieldAccessLogicalFunction>(arguments.reflected);
-    }
-
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
     std::unreachable();
 }

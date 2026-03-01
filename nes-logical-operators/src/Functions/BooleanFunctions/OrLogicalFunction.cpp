@@ -113,10 +113,6 @@ OrLogicalFunction Unreflector<OrLogicalFunction>::operator()(const Reflected& re
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterOrLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<OrLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("OrLogicalFunction requires exactly two children, but got {}", arguments.children.size());
