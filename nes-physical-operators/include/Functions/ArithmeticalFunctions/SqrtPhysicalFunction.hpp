@@ -23,15 +23,17 @@
 namespace NES
 {
 
-class SqrtPhysicalFunction final : public PhysicalFunctionConcept
+class SqrtPhysicalFunction final
 {
 public:
     explicit SqrtPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType outputType;
 };
+
+static_assert(PhysicalFunctionConcept<SqrtPhysicalFunction>);
 
 }

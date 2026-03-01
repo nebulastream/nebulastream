@@ -17,20 +17,23 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-class CastFieldPhysicalFunction : public PhysicalFunctionConcept
+class CastFieldPhysicalFunction
 {
 public:
     explicit CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     DataType castToType;
     PhysicalFunction childFunction;
 };
+
+static_assert(PhysicalFunctionConcept<CastFieldPhysicalFunction>);
 
 }

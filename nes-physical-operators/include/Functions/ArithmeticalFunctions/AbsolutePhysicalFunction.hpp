@@ -23,15 +23,17 @@
 namespace NES
 {
 
-class AbsolutePhysicalFunction final : public PhysicalFunctionConcept
+class AbsolutePhysicalFunction final
 {
 public:
     explicit AbsolutePhysicalFunction(PhysicalFunction childFunction, DataType inputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType inputType;
 };
+
+static_assert(PhysicalFunctionConcept<AbsolutePhysicalFunction>);
 
 }
