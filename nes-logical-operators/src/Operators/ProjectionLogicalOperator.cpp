@@ -14,13 +14,13 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
-#include <cstddef>
 #include <numeric>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -170,6 +170,28 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     auto copy = *this;
     copy.projections = inferredProjections | std::ranges::to<std::vector>();
     copy.inputSchema = firstSchema;
+
+    /// Reject any duplicate output field names to avoid ambiguous schemas.
+    {
+        std::unordered_set<std::string> seenNames;
+        if (asterisk)
+        {
+            for (const auto& fieldName : copy.inputSchema.getFieldNames())
+            {
+                seenNames.insert(fieldName);
+            }
+        }
+        for (const auto& projection : copy.projections)
+        {
+            INVARIANT(projection.first.has_value(), "Projection ID must be resolved after type inference");
+            const auto& name = projection.first->getFieldName();
+            if (!seenNames.insert(name).second)
+            {
+                throw CannotInferSchema(
+                    "Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", name);
+            }
+        }
+    }
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
     auto initial = Schema{};
