@@ -66,18 +66,20 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
+
+    friend Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>;
 };
 
 template <>
-struct Reflector<SourceDescriptorLogicalOperator>
+struct Reflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
 {
-    Reflected operator()(const SourceDescriptorLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SourceDescriptorLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SourceDescriptorLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>
 {
-    SourceDescriptorLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    TypedLogicalOperator<SourceDescriptorLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);

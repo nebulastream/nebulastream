@@ -102,16 +102,13 @@ Unreflector<ConstantValueLogicalFunction>::operator()(const Reflected& reflected
     return ConstantValueLogicalFunction{dataType, value};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments arguments)
+/// NOLINTBEGIN(performance-unnecessary-value-param)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterConstantValueLogicalFunction(LogicalFunctionRegistryArguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ConstantValueLogicalFunction>(arguments.reflected);
-    }
-
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");
     std::unreachable();
 }
+
+/// NOLINTEND(performance-unnecessary-value-param)
 
 }

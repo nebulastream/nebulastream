@@ -112,10 +112,6 @@ Unreflector<CastFromUnixTimestampLogicalFunction>::operator()(const Reflected& r
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterCastFromUnixTsLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<CastFromUnixTimestampLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("CastFromUnixTimestampLogicalFunction requires exactly one child, but got {}", arguments.children.size());

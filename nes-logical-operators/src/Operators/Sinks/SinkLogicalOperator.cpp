@@ -197,12 +197,13 @@ SinkLogicalOperator SinkLogicalOperator::withSinkDescriptor(SinkDescriptor sinkD
     return newOperator;
 }
 
-Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const TypedLogicalOperator<SinkLogicalOperator>& op) const
 {
-    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op.getSinkDescriptor(), .sinkName = op.getSinkName()});
+    return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op->getSinkDescriptor(), .sinkName = op->getSinkName()});
 }
 
-SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+TypedLogicalOperator<SinkLogicalOperator>
+Unreflector<TypedLogicalOperator<SinkLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [descriptor, name] = context.unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
     if (descriptor.has_value())
@@ -216,8 +217,8 @@ SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected
                 name);
         }
 
-        return SinkLogicalOperator{descriptor.value()};
+        return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{descriptor.value()}};
     }
-    return SinkLogicalOperator{name};
+    return TypedLogicalOperator<SinkLogicalOperator>{SinkLogicalOperator{name}};
 }
 }

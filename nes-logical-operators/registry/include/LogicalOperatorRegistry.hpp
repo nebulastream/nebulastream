@@ -36,8 +36,11 @@ struct LogicalOperatorRegistryArguments
     Reflected reflected;
 };
 
-class LogicalOperatorRegistry
-    : public BaseRegistry<LogicalOperatorRegistry, std::string, LogicalOperatorRegistryReturnType, LogicalOperatorRegistryArguments>
+class LogicalOperatorRegistry : public BaseRegistryWithUnreflection<
+                                    LogicalOperatorRegistry,
+                                    std::string,
+                                    LogicalOperatorRegistryReturnType,
+                                    LogicalOperatorRegistryArguments>
 {
 };
 }
