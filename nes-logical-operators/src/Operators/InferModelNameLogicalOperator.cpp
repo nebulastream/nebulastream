@@ -137,6 +137,27 @@ Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl, con
     return InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value());
 }
 
+Reflected Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(
+    const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const
+{
+    return reflect(detail::ReflectedInferModelNameLogicalOperator{
+        .modelName = std::make_optional(op->getModelName()), .inputFieldNames = std::make_optional(op->getInputFieldNames())});
+}
+
+TypedLogicalOperator<InferModelNameLogicalOperator>
+Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+{
+    auto [modelNameOpt, inputFieldNamesOpt] = context.unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
+
+    if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize TypedLogicalOperator<InferModelNameLogicalOperator>");
+    }
+
+    return TypedLogicalOperator<InferModelNameLogicalOperator>{
+        InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value())};
+}
+
 /// generated registry interface requires by-value argument
 LogicalOperatorRegistryReturnType
 /// NOLINTNEXTLINE(performance-unnecessary-value-param)

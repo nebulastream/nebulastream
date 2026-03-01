@@ -80,6 +80,18 @@ struct Unreflector<InferModelNameLogicalOperator>
     InferModelNameLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
+template <>
+struct Reflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
+{
+    Reflected operator()(const TypedLogicalOperator<InferModelNameLogicalOperator>& op) const;
+};
+
+template <>
+struct Unreflector<TypedLogicalOperator<InferModelNameLogicalOperator>>
+{
+    TypedLogicalOperator<InferModelNameLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
 static_assert(LogicalOperatorConcept<InferModelNameLogicalOperator>);
 
 }

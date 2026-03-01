@@ -128,13 +128,15 @@ std::string SourceNameLogicalOperator::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-Reflected Reflector<SourceNameLogicalOperator>::operator()(const SourceNameLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const TypedLogicalOperator<SourceNameLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-SourceNameLogicalOperator Unreflector<SourceNameLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
+TypedLogicalOperator<SourceNameLogicalOperator>
+Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for SourceNameLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
