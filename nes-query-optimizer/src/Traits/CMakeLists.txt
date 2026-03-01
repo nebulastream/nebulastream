@@ -13,11 +13,12 @@
 add_source_files(nes-query-optimizer
         Trait.cpp
         TraitSet.cpp
-        ImplementationTypeTrait.cpp
+        JoinImplementationTypeTrait.cpp
+        MemoryLayoutTypeTrait.cpp
         OutputOriginIdsTrait.cpp
         PlacementTrait.cpp)
 
-add_plugin(JoinImplementationType Trait nes-query-optimizer ImplementationTypeTrait.cpp)
-add_plugin(MemoryLayoutType Trait nes-query-optimizer MemoryLayoutTypeTrait.cpp)
-add_plugin(OutputOriginIds Trait nes-query-optimizer OutputOriginIdsTrait.cpp)
-add_plugin(Placement Trait nes-query-optimizer PlacementTrait.cpp)
+add_unreflection_plugin(Trait JoinImplementationType)
+add_unreflection_plugin(Trait MemoryLayoutType)
+add_unreflection_plugin(Trait OutputOriginIds)
+add_unreflection_plugin(Trait Placement)

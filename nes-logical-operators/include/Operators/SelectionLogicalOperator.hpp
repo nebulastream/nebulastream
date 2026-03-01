@@ -76,18 +76,20 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<TypedLogicalOperator<SelectionLogicalOperator>>;
 };
 
 template <>
-struct Reflector<SelectionLogicalOperator>
+struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
-    Reflected operator()(const SelectionLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<SelectionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
-    SelectionLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    TypedLogicalOperator<SelectionLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);

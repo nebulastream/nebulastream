@@ -25,3 +25,11 @@ add_plugin(IngestionTimeWatermarkAssigner LogicalOperator nes-logical-operators 
 add_plugin(EventTimeWatermarkAssigner LogicalOperator nes-logical-operators EventTimeWatermarkAssignerLogicalOperator.cpp)
 add_plugin(InferModel LogicalOperator nes-logical-operators InferModelLogicalOperator.cpp)
 add_plugin(InferModelName LogicalOperator nes-logical-operators InferModelNameLogicalOperator.cpp)
+
+add_unreflection_plugin(LogicalOperator Selection)
+add_unreflection_plugin(LogicalOperator Projection)
+add_unreflection_plugin(LogicalOperator Union)
+add_unreflection_plugin(LogicalOperator IngestionTimeWatermarkAssigner)
+add_unreflection_plugin(LogicalOperator EventTimeWatermarkAssigner)
+add_unreflection_plugin(LogicalOperator InferModel)
+add_unreflection_plugin(LogicalOperator InferModelName)
