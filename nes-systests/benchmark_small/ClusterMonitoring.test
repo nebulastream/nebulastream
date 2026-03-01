@@ -1,0 +1,32 @@
+# name: milestone/ClusterMonitoring.test
+# description: Queries from ClusterMonitoring
+# groups: [milestone, benchmark, benchmark_small]
+
+# Source definitions
+CREATE LOGICAL SOURCE monitoringClusterData(creationTS UINT64, jobId UINT64, taskId UINT64, machineId INT64, eventType INT16, userId INT16, category INT16, priority INT16, cpu FLOAT64, ram FLOAT64, disk FLOAT64, constraints BOOLEAN);
+CREATE PHYSICAL SOURCE FOR monitoringClusterData TYPE File;
+ATTACH FILE small/cluster_monitoring/google-cluster-data-lightsaber_100K.csv
+
+
+CREATE SINK q1Checksum(monitoringClusterData.start UINT64, monitoringClusterData.end UINT64, monitoringClusterData.totalCpu FLOAT64, monitoringClusterData.jobId UINT64) TYPE Checksum;
+
+# These test is currently disabled, as we cannot ensure deterministic results for the queries
+# The problem is that the queries perform a floating point aggregation. Due to our out-of-order processing, the results may differ slightly.
+# This is fine for the query 2 but not for the query 1.
+# Query 1
+# SELECT start, end, SUM(cpu) AS totalCpu
+# FROM monitoringLightsaber
+# WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+# INTO q1Sink;
+#
+#
+
+# Query 2
+SELECT start, end, SUM(cpu) AS totalCpu, jobId
+FROM monitoringClusterData
+WHERE eventType == INT16(3)
+GROUP BY jobId
+WINDOW SLIDING(creationTS, SIZE 60 SEC, ADVANCE BY 1 SEC)
+INTO q1Checksum;
+----
+939 2095268

@@ -1,0 +1,46 @@
+# name: milestone/YahooStreamingBenchmark_with_varsized.test
+# description: YahooStreamingBenchmark queries (https://github.com/yahoo/streaming-benchmarks)
+# groups: [milestone, benchmark, large, Aggregation]
+
+# Source definitions
+CREATE LOGICAL SOURCE ysb1k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
+ATTACH FILE large/ysb/ysb1k_with_varsized_3GB.csv
+
+CREATE LOGICAL SOURCE ysb10k(user_id VARSIZED, page_id VARSIZED, campaign_id VARSIZED, ad_id VARSIZED, ad_type VARSIZED, event_type VARSIZED, event_time UINT64, ip_address VARSIZED);
+CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
+ATTACH FILE large/ysb/ysb10k_with_varsized_3GB.csv
+
+CREATE SINK printSink(ysb1k.campaign UINT64)  TYPE File;
+CREATE SINK ysb1kChecksum(ysb1k.start UINT64, ysb1k.end UINT64, ysb1k.campaign_id VARSIZED, ysb1k.count_user_id UINT64)  TYPE Checksum;
+CREATE SINK ysb10kChecksum(ysb10k.start UINT64, ysb10k.end UINT64, ysb10k.campaign_id VARSIZED, ysb10k.count_user_id UINT64)  TYPE Checksum;
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# YSB Query
+SELECT
+    start,
+    end,
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb1k
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO ysb1kChecksum;
+----
+68000, 278998939
+
+# Adapt the YSB Query to already have the campaign_id, as we currently do not support stream-batch joins
+# YSB Query
+SELECT
+    start,
+    end,
+    campaign_id,
+    COUNT(user_id) AS count_user_id
+FROM ysb10k
+WHERE event_type == VARSIZED("view")
+GROUP BY campaign_id
+WINDOW TUMBLING(event_time, SIZE 30 SEC)
+INTO ysb10kChecksum;
+----
+670000, 2725304985
