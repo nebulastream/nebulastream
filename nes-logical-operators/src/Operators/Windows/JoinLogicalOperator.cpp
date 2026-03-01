@@ -36,7 +36,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Serialization/WindowTypeReflection.hpp>
-#include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -194,26 +193,27 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
-Reflected Reflector<JoinLogicalOperator>::operator()(const JoinLogicalOperator& op) const
+Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
 {
     return reflect(detail::ReflectedJoinLogicalOperator{
-        .joinFunction = op.getJoinFunction(), .windowType = reflectWindowType(*op.getWindowType()), .joinType = op.joinType});
+        .joinFunction = op->getJoinFunction(), .windowType = reflectWindowType(*op->getWindowType()), .joinType = op->joinType});
 }
 
-JoinLogicalOperator Unreflector<JoinLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+TypedLogicalOperator<JoinLogicalOperator>
+Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [joinFunction, reflectedWindowType, joinType] = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
 
     const auto windowType = unreflectWindowType(reflectedWindowType, context);
 
-    return JoinLogicalOperator(joinFunction, windowType, joinType);
+    return TypedLogicalOperator<JoinLogicalOperator>{JoinLogicalOperator(joinFunction, windowType, joinType)};
 }
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return ReflectionContext{}.unreflect<JoinLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<TypedLogicalOperator<JoinLogicalOperator>>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");

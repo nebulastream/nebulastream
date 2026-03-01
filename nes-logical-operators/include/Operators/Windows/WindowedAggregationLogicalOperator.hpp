@@ -91,18 +91,20 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
+
+    friend Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>;
 };
 
 template <>
-struct Reflector<WindowedAggregationLogicalOperator>
+struct Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
 {
-    Reflected operator()(const WindowedAggregationLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<WindowedAggregationLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<WindowedAggregationLogicalOperator>
+struct Unreflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>
 {
-    WindowedAggregationLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<WindowedAggregationLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<WindowedAggregationLogicalOperator>);

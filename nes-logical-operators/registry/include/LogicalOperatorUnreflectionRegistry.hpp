@@ -14,24 +14,18 @@
 
 #pragma once
 
-#ifndef INCLUDED_FROM_REGISTRY_TRAIT
-#    error "This file should not be included directly! " \
-"Include instead include <TraitRegistry.hpp>"
-#endif
-
-namespace NES::TraitGeneratedRegistrar
-{
-
-/// declaration of register functions for 'Trait'
-@REGISTER_FUNCTION_DECLARATIONS@
-}
+#include <string>
+#include <Operators/LogicalOperator.hpp>
+#include <Util/UnreflectionRegistry.hpp>
 
 namespace NES
 {
-template <>
-inline void Registrar<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>::registerAll([[maybe_unused]] Registry<Registrar>& registry)
+
+using LogicalOperatorUnreflectionRegistryReturnType = LogicalOperator;
+
+class LogicalOperatorUnreflectionRegistry
+    : public UnreflectionRegistry<LogicalOperatorUnreflectionRegistry, std::string, LogicalOperatorUnreflectionRegistryReturnType>
 {
-    using namespace TraitGeneratedRegistrar;
-    @REGISTER_ALL_FUNCTION_CALLS@
-}
+};
+
 }

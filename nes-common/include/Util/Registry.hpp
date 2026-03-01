@@ -84,7 +84,10 @@ public:
 
 protected:
     /// A single registry will be constructed in the static instance() method. It is impossible to create a registry otherwise.
-    Registry() { Registrar::registerAll(*this); }
+    Registry() = default;
+
+    /// Initialize the registry by calling registerAll. Must be called after all members are initialized.
+    void initializeRegistry() { Registrar::registerAll(*this); }
 
 private:
     /// Only the Registrar can register new entries.
@@ -127,6 +130,14 @@ public:
     static ConcreteRegistry& instance()
     {
         static ConcreteRegistry instance;
+
+        /// Initialize after construction is complete using a helper struct
+        struct Initializer
+        {
+            explicit Initializer(ConcreteRegistry* reg) { reg->initializeRegistry(); }
+        };
+
+        static Initializer init(&instance);
         return instance;
     }
 

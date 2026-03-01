@@ -20,7 +20,6 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Util/Reflection.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES
@@ -31,7 +30,6 @@ using LogicalFunctionRegistryReturnType = LogicalFunction;
 struct LogicalFunctionRegistryArguments
 {
     std::vector<LogicalFunction> children;
-    Reflected reflected;
 };
 
 class LogicalFunctionRegistry

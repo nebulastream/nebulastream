@@ -29,7 +29,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
-#include <TraitRegisty.hpp>
 
 namespace NES
 {
@@ -61,12 +60,6 @@ std::string MemoryLayoutTypeTrait::explain(ExplainVerbosity) const
 std::string_view MemoryLayoutTypeTrait::getName() const
 {
     return NAME;
-}
-
-/// Required for plugin registration, no implementation necessary
-TraitRegistryReturnType TraitGeneratedRegistrar::RegisterMemoryLayoutTypeTrait(TraitRegistryArguments arguments)
-{
-    return ReflectionContext{}.unreflect<MemoryLayoutTypeTrait>(arguments.reflected);
 }
 
 Reflected Reflector<MemoryLayoutTypeTrait>::operator()(const MemoryLayoutTypeTrait& trait) const

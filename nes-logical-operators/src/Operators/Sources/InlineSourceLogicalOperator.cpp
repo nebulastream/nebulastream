@@ -123,13 +123,15 @@ InlineSourceLogicalOperator::InlineSourceLogicalOperator(
 {
 }
 
-Reflected Reflector<InlineSourceLogicalOperator>::operator()(const InlineSourceLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSourceLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
 }
 
-InlineSourceLogicalOperator Unreflector<InlineSourceLogicalOperator>::operator()(const Reflected&) const
+TypedLogicalOperator<InlineSourceLogicalOperator>
+Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>::operator()(const Reflected&) const
 {
     PRECONDITION(false, "no serialize for InlineSourceLogicalOperator defined. Serialization happens with SourceDescriptorLogicalOperator");
     std::unreachable();
