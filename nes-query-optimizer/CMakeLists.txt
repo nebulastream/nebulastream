@@ -17,23 +17,33 @@ add_library(nes-query-optimizer-interface INTERFACE)
 target_include_directories(nes-query-optimizer-interface INTERFACE interface)
 target_link_libraries(nes-query-optimizer-interface INTERFACE nes-configurations nes-network-interface)
 
+include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
+
+# Declare the library up front so create_unreflection_registry can attach the
+# WHOLE_ARCHIVE INTERFACE link, and so add_subdirectory(src) can add to its
+# target_sources.
+add_library(nes-query-optimizer STATIC)
+set_target_properties(nes-query-optimizer PROPERTIES LINKER_LANGUAGE CXX)
+target_include_directories(nes-query-optimizer
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+
+# Trait is unreflection-only — no factory registry on this side.
+create_unreflection_registry(Trait nes-query-optimizer
+        "\${PLUGIN_NAME}Trait"
+        "\${PLUGIN_NAME}Trait.hpp")
+
 # Set Sources and Headers
 add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
+target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 
-# Add Library
-add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 find_package(highs CONFIG REQUIRED)
 target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
-target_include_directories(nes-query-optimizer
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)
     # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
     target_compile_options(nes-query-optimizer PUBLIC "-fPIC")
 endif ()
-
-create_registries_for_component(Trait)
 
 add_tests_if_enabled(tests)

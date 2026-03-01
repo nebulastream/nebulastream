@@ -91,6 +91,18 @@ struct Unreflector<InferModelLogicalOperator>
     InferModelLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
+template <>
+struct Reflector<TypedLogicalOperator<InferModelLogicalOperator>>
+{
+    Reflected operator()(const TypedLogicalOperator<InferModelLogicalOperator>& op) const;
+};
+
+template <>
+struct Unreflector<TypedLogicalOperator<InferModelLogicalOperator>>
+{
+    TypedLogicalOperator<InferModelLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
+};
+
 static_assert(LogicalOperatorConcept<InferModelLogicalOperator>);
 
 }
@@ -99,7 +111,7 @@ namespace NES::detail
 {
 struct ReflectedInferModelLogicalOperator
 {
-    std::optional<Reflected> model;
-    std::optional<std::vector<std::string>> inputFieldNames;
+    Reflected model;
+    std::vector<std::string> inputFieldNames;
 };
 }

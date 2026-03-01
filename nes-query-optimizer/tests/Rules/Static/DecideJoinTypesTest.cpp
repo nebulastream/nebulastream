@@ -36,7 +36,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
-#include <Traits/ImplementationTypeTrait.hpp>
+#include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
