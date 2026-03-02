@@ -32,9 +32,13 @@ namespace NES
 class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
-    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, std::shared_ptr<SliceCache> sliceCache) : operatorHandler(operatorHandler), sliceCache(std::move(sliceCache)) { }
+    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, std::shared_ptr<SliceCache> sliceCache)
+        : operatorHandler(operatorHandler), sliceCache(std::move(sliceCache))
+    {
+    }
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
+
     std::shared_ptr<SliceCache> getSliceCache() const { return sliceCache; }
 
 private:
@@ -48,7 +52,8 @@ class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
     // or should we pass here the slice cache and then later on set the start via a setter method?
-    explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration);
+    explicit WindowBuildPhysicalOperator(
+        OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration);
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
