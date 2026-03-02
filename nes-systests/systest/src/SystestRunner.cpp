@@ -188,15 +188,16 @@ std::vector<RunningQuery> runQueries(
                 /// TODO: Replace this sleep with proper polling of the topology status (status.phase == "Ready").
                 std::cerr << "[K8s] Waiting for operator to reconcile topology...\n";
                 std::this_thread::sleep_for(std::chrono::seconds(10));
-                /// Patch the operator-created ConfigMap with the source file data.
+                /// Write source data files into a PVC via a short-lived writer pod.
+                /// The operator mounts this PVC into worker pods at /data.
                 if (!topologyResult.sourceFileData.empty()) {
-                    jsonSubmitter->patchSourceDataConfigMap(
-                        topologyResult.sourceDataConfigMapName,
+                    jsonSubmitter->ensurePVCExists(topologyResult.sourceDataPVCName);
+                    jsonSubmitter->writeSourceDataToPVC(
+                        topologyResult.sourceDataPVCName,
                         topologyResult.sourceFileData);
-                    /// ConfigMap volume mounts can take up to ~60-90s to propagate.
-                    /// Wait for the updated data to appear in the worker pods.
-                    std::cerr << "[K8s] Waiting 30s for ConfigMap data to propagate to worker pods...\n";
-                    std::this_thread::sleep_for(std::chrono::seconds(90));
+                    /// Brief wait for the volume mount to propagate to newly-created worker pods.
+                    std::cerr << "[K8s] Waiting 5s for PVC data to be available in worker pods...\n";
+                    std::this_thread::sleep_for(std::chrono::seconds(5));
                 }
 
                 auto queryJson = K8sQueryBuilder::build(nextQuery);

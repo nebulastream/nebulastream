@@ -30,6 +30,14 @@ public:
     void patchSourceDataConfigMap(const std::string& configMapName,
                                   const std::unordered_map<std::string, std::string>& fileData);
 
+    /// Create a PVC for source data if it does not already exist.
+    void ensurePVCExists(const std::string& pvcName, const std::string& storageSize = "1Gi");
+
+    /// Write source data files into a PVC via a short-lived writer pod.
+    /// This avoids the 1 MiB ConfigMap limit and the ~90s propagation delay.
+    void writeSourceDataToPVC(const std::string& pvcName,
+                              const std::unordered_map<std::string, std::string>& fileData);
+
     /// Fetch stdout logs from a worker pod identified by label selector.
     /// @param labelSelector e.g. "app=worker-1"
     /// @return the pod log contents as a string
@@ -52,6 +60,19 @@ public:
 
 private:
     void initClient();
+
+    /// Perform an HTTP request via curl using the client's auth/TLS settings.
+    /// Returns {httpCode, responseBody}. Throws on curl failure.
+    std::pair<long, std::string> curlRequest(const std::string& method,
+                                              const std::string& url,
+                                              const std::string& body = "",
+                                              const std::string& contentType = "application/json");
+
+    /// Delete a pod by name (best-effort, does not throw on failure).
+    void deletePod(const std::string& podName);
+
+    /// Base64-encode a string (for passing file contents to writer pods).
+    static std::string base64Encode(const std::string& input);
 
     std::string kubeNamespace;
     std::string basePath;
