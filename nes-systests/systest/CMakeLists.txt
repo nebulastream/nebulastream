@@ -12,6 +12,7 @@
 
 add_subdirectory(src)
 add_subdirectory(checksum)
+add_subdirectory(setsum)
 
 # Include necessary modules
 include(${CMAKE_SOURCE_DIR}/cmake/CodeCoverage.cmake)
@@ -40,7 +41,7 @@ message(STATUS "Systest testdata is located at ${EXPANDED_TEST_DATA_PATH}")
 get_source(nes-systest-lib SLT_SOURCE_FILES)
 
 add_library(nes-systest-lib STATIC ${SLT_SOURCE_FILES})
-target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib nes-sql-parser PRIVATE nes-input-formatters)
+target_link_libraries(nes-systest-lib PUBLIC nes-nebuli-embedded-lib nes-single-node-worker-lib nes-sql-parser setsum_sink_plugin setsum_sink_validation_plugin PRIVATE nes-input-formatters)
 target_include_directories(nes-systest-lib PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
 target_compile_definitions(nes-systest-lib PUBLIC
         PATH_TO_BINARY_DIR="${CMAKE_BINARY_DIR}"
