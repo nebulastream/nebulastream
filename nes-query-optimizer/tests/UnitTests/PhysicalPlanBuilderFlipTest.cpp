@@ -172,11 +172,11 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     /// After flip, source should be root.
     ASSERT_EQ(plan.getRootOperators().size(), 1U);
     const auto& root = plan.getRootOperators()[0];
-    EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+    EXPECT_TRUE(root->getPhysicalOperator().tryGetAs<SourcePhysicalOperator>());
 
     /// Root's child should be the sink.
     ASSERT_EQ(root->getChildren().size(), 1U);
-    EXPECT_TRUE(root->getChildren()[0]->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
+    EXPECT_TRUE(root->getChildren()[0]->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>());
 
     /// Sink (now a leaf) should have no children.
     EXPECT_TRUE(root->getChildren()[0]->getChildren().empty());
@@ -203,7 +203,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     ASSERT_EQ(plan.getRootOperators().size(), 2U);
     for (const auto& root : plan.getRootOperators())
     {
-        EXPECT_TRUE(root->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+        EXPECT_TRUE(root->getPhysicalOperator().tryGetAs<SourcePhysicalOperator>());
     }
 
     /// All 4 nodes must be reachable.
@@ -214,9 +214,9 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     {
         ASSERT_EQ(root->getChildren().size(), 1U);
         auto child = root->getChildren()[0];
-        EXPECT_TRUE(child->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
+        EXPECT_TRUE(child->getPhysicalOperator().tryGetAs<UnionPhysicalOperator>());
         ASSERT_EQ(child->getChildren().size(), 1U);
-        EXPECT_TRUE(child->getChildren()[0]->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
+        EXPECT_TRUE(child->getChildren()[0]->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>());
     }
 }
 
@@ -240,19 +240,19 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     /// After flip: source -> union2 -> union1 -> sink.
     ASSERT_EQ(plan.getRootOperators().size(), 1U);
     auto current = plan.getRootOperators()[0];
-    EXPECT_TRUE(current->getPhysicalOperator().tryGet<SourcePhysicalOperator>());
+    EXPECT_TRUE(current->getPhysicalOperator().tryGetAs<SourcePhysicalOperator>());
 
     ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
-    EXPECT_TRUE(current->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
+    EXPECT_TRUE(current->getPhysicalOperator().tryGetAs<UnionPhysicalOperator>());
 
     ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
-    EXPECT_TRUE(current->getPhysicalOperator().tryGet<UnionPhysicalOperator>());
+    EXPECT_TRUE(current->getPhysicalOperator().tryGetAs<UnionPhysicalOperator>());
 
     ASSERT_EQ(current->getChildren().size(), 1U);
     current = current->getChildren()[0];
-    EXPECT_TRUE(current->getPhysicalOperator().tryGet<SinkPhysicalOperator>());
+    EXPECT_TRUE(current->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>());
 
     EXPECT_TRUE(current->getChildren().empty());
 }

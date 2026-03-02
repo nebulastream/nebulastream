@@ -76,11 +76,6 @@ void UnionRenamePhysicalOperator::execute(ExecutionContext& ctx, Record& record)
     executeChild(ctx, outputRecord);
 }
 
-OperatorId UnionRenamePhysicalOperator::getId() const
-{
-    return id;
-}
-
 void UnionRenamePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

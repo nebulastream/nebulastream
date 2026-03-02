@@ -34,7 +34,6 @@ public:
     void terminate(ExecutionContext& ctx) const;
     void execute(ExecutionContext& ctx, Record& record) const;
 
-    OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
     [[nodiscard]] SourceDescriptor getDescriptor() const;

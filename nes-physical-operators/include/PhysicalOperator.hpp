@@ -82,8 +82,6 @@ concept PhysicalOperatorConceptBase
 
           /// Executes the operator on the given record.
           { op.execute(execCtx, record) } -> std::same_as<void>;
-
-          { op.getId() } -> std::convertible_to<OperatorId>;
       };
 
 template <typename T>
@@ -266,12 +264,16 @@ struct PhysicalOperatorModel : ErasedPhysicalOperator
 
     explicit PhysicalOperatorModel(PhysicalOperatorType pImpl) : impl(std::move(pImpl)), id(getNextPhysicalOperatorId())
     {
-        syncAndVerifyId();
+        if constexpr (requires { this->impl.id = this->id; }) {
+            this->impl.id = this->id;
+        }
     }
 
     PhysicalOperatorModel(PhysicalOperatorType pImpl, const OperatorId existingId) : impl(std::move(pImpl)), id(existingId)
     {
-        syncAndVerifyId();
+        if constexpr (requires { this->impl.id = this->id; }) {
+            this->impl.id = this->id;
+        }
     }
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return impl.getChild(); }
@@ -306,15 +308,6 @@ struct PhysicalOperatorModel : ErasedPhysicalOperator
 private:
     template <typename T>
     friend struct NES::TypedPhysicalOperator;
-
-    void syncAndVerifyId() {
-        if constexpr (requires { this->impl.id = this->id; }) {
-            this->impl.id = this->id;
-            if (this->impl.id != this->id) {
-                throw std::runtime_error("ID sync failed! Model ID and Impl ID mismatch.");
-            }
-        }
-    }
 
     [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {

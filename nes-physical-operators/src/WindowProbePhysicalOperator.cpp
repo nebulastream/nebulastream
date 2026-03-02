@@ -127,11 +127,6 @@ void WindowProbePhysicalOperator::execute(ExecutionContext& ctx, Record& record)
     executeChild(ctx, record);
 }
 
-OperatorId WindowProbePhysicalOperator::getId() const
-{
-    return id;
-}
-
 void WindowProbePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

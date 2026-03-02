@@ -117,11 +117,6 @@ void ScanPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     executeChild(ctx, record);
 }
 
-OperatorId ScanPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void ScanPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

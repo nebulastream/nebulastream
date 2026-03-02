@@ -126,7 +126,7 @@ void verifyFlippedGraph(
         if (node->getChildren().empty())
         {
             INVARIANT(
-                node->getPhysicalOperator().tryGet<SinkPhysicalOperator>(),
+                node->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>(),
                 "Expects SinkOperators as leaves after flip but got {}",
                 node->getPhysicalOperator());
         }

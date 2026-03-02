@@ -52,7 +52,6 @@ public:
         const nautilus::val<uint64_t>& numRecords,
         const nautilus::val<bool>& potentialLastChunk) const;
 
-    OperatorId getId() const;
     OperatorId id = INVALID_OPERATOR_ID;
 
 protected:

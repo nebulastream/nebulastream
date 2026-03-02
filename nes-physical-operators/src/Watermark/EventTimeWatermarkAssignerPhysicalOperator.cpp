@@ -75,11 +75,6 @@ EventTimeWatermarkAssignerPhysicalOperator EventTimeWatermarkAssignerPhysicalOpe
     return copy;
 }
 
-OperatorId EventTimeWatermarkAssignerPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void EventTimeWatermarkAssignerPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

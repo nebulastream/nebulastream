@@ -38,9 +38,6 @@ public:
     void terminate(ExecutionContext& ctx) const;
     void execute(ExecutionContext& ctx, Record& record) const;
 
-    OperatorId getId() const;
-    OperatorId id = INVALID_OPERATOR_ID;
-
 protected:
     /// Helper classes to propagate to the child
     void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;

@@ -63,11 +63,6 @@ void SelectionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) c
     }
 }
 
-OperatorId SelectionPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void SelectionPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

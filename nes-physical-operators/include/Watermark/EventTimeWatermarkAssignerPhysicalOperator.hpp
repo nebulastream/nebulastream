@@ -37,9 +37,6 @@ public:
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void terminate(ExecutionContext& ctx) const;
 
-    OperatorId getId() const;
-    OperatorId id = INVALID_OPERATOR_ID;
-
 protected:
     /// Helper classes to propagate to the child
     void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;

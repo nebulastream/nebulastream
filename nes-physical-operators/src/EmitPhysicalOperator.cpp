@@ -133,11 +133,6 @@ void EmitPhysicalOperator::emitRecordBuffer(
     ctx.emitBuffer(recordBuffer);
 }
 
-OperatorId EmitPhysicalOperator::getId() const
-{
-    return id;
-}
-
 EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
     : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
 {

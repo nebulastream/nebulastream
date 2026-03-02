@@ -60,11 +60,6 @@ void UnionPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     executeChild(ctx, record);
 }
 
-OperatorId UnionPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void UnionPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

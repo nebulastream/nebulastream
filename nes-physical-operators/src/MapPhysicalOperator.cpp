@@ -69,11 +69,6 @@ void MapPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     executeChild(ctx, record);
 }
 
-OperatorId MapPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void MapPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");

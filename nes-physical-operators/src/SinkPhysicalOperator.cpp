@@ -71,11 +71,6 @@ void SinkPhysicalOperator::execute(ExecutionContext& ctx, Record& record)
     executeChild(ctx, record);
 }
 
-OperatorId SinkPhysicalOperator::getId() const
-{
-    return id;
-}
-
 void SinkPhysicalOperator::setupChild(ExecutionContext&, CompilationContext&)
 {
     INVARIANT(false, "Child operator is not set");

@@ -39,9 +39,6 @@ public:
 
     bool operator==(const SinkPhysicalOperator& other) const;
 
-    [[nodiscard]] OperatorId getId() const;
-    OperatorId id = INVALID_OPERATOR_ID;
-
 protected:
     /// Helper classes to propagate to the child
     static void setupChild(ExecutionContext&, CompilationContext&);

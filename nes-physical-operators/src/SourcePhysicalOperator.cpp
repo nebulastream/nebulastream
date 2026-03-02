@@ -79,11 +79,6 @@ void SourcePhysicalOperator::execute(ExecutionContext& ctx, Record& record) cons
     executeChild(ctx, record);
 }
 
-OperatorId SourcePhysicalOperator::getId() const
-{
-    return id;
-}
-
 void SourcePhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(child.has_value(), "Child operator is not set");
