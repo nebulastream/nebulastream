@@ -127,7 +127,7 @@ int main(int argc, char** argv)
         bool interactiveMode
             = static_cast<int>(cpptrace::isatty(STDIN_FILENO)) != 0 and static_cast<int>(cpptrace::isatty(STDOUT_FILENO)) != 0;
 
-        NES::Thread::initializeThread(NES::WorkerId("nes-repl"), "main");
+        NES::Thread::initializeThread(NES::Host("nes-repl"), "main");
         NES::Logger::setupLogging("nes-repl.log", NES::LogLevel::LOG_ERROR, false);
         SignalHandler::setup();
 

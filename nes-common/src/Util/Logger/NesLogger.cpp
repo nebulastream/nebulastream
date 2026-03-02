@@ -30,7 +30,7 @@
 #include <Thread.hpp>
 
 /// Custom formatter flags that render the worker and thread id
-class WorkerIdFlag final : public spdlog::custom_flag_formatter
+class HostFlag final : public spdlog::custom_flag_formatter
 {
 public:
     void format(const spdlog::details::log_msg&, const std::tm&, spdlog::memory_buf_t& dest) override
@@ -39,7 +39,7 @@ public:
         dest.append(id.data(), id.data() + id.size());
     }
 
-    std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<WorkerIdFlag>(); }
+    std::unique_ptr<custom_flag_formatter> clone() const override { return spdlog::details::make_unique<HostFlag>(); }
 };
 
 class ThreadNameFlag final : public spdlog::custom_flag_formatter
@@ -119,7 +119,7 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
         consoleSink->set_color_mode(spdlog::color_mode::always);
 
         auto formatter = std::make_unique<spdlog::pattern_formatter>();
-        formatter->add_flag<WorkerIdFlag>('*');
+        formatter->add_flag<HostFlag>('*');
         formatter->add_flag<ThreadNameFlag>('G');
         formatter->set_pattern(SPDLOG_PATTERN);
         consoleSink->set_formatter(std::move(formatter));
@@ -129,7 +129,7 @@ Logger::Logger(const std::string& logFileName, const LogLevel level, const bool 
     auto fileSink = std::make_shared<spdlog::sinks::basic_file_sink_mt>(logFileName, true);
     fileSink->set_level(spdlogLevel);
     auto formatter = std::make_unique<spdlog::pattern_formatter>();
-    formatter->add_flag<WorkerIdFlag>('*');
+    formatter->add_flag<HostFlag>('*');
     formatter->add_flag<ThreadNameFlag>('G');
     formatter->set_pattern(SPDLOG_PATTERN);
     fileSink->set_formatter(std::move(formatter));

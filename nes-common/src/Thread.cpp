@@ -19,7 +19,7 @@
 
 namespace NES
 {
-thread_local WorkerId Thread::WorkerNodeId = WorkerId("Not A Worker");
+thread_local Host Thread::WorkerNodeId = Host("Not A Worker");
 thread_local std::string Thread::ThreadName = "unnamed";
 
 }

@@ -68,6 +68,6 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
     return id.getRawValue() % containerSize;
 }
 
-using WorkerId = NESStrongStringType<struct WorkerId_, "INVALID">;
+using Host = NESStrongStringType<struct Host_, "INVALID">;
 
 }
