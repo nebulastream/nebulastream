@@ -49,6 +49,7 @@ public:
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,
+        SliceCacheConfiguration sliceCacheConfiguration,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
