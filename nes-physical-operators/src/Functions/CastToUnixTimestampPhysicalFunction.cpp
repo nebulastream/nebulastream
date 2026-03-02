@@ -67,21 +67,22 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
         std::istringstream iss(std::string{timestampWithoutWhiteSpace});
         std::string abbrev;
         std::chrono::minutes offset{0};
-        date::sys_time<std::chrono::milliseconds> tp;
-        date::from_stream(iss, fmt, tp, &abbrev, &offset);
+        date::sys_time<std::chrono::milliseconds> parsedUtcTimePoint;
+        date::from_stream(iss, fmt, parsedUtcTimePoint, &abbrev, &offset);
 
         if (iss.fail())
         {
             continue;
         }
-
+        /// date::from_stream may leave trailing whitespace in the stream;
+        /// consume it so that only extra non-whitespace characters cause a parse failure.
         iss >> std::ws;
         if (!iss.eof())
         {
             continue;
         }
 
-        const auto parsedMilliSeconds = tp.time_since_epoch().count();
+        const auto parsedMilliSeconds = parsedUtcTimePoint.time_since_epoch().count();
         if (parsedMilliSeconds < 0)
         {
             throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported: '{}'", iso8601Timestamp);
@@ -93,24 +94,25 @@ uint64_t parseISO8601TimestampToUnixMilliSeconds(std::string_view iso8601Timesta
     for (const char* fmt : formats_without_tz)
     {
         std::istringstream iss(std::string{timestampWithoutWhiteSpace});
-        date::local_time<std::chrono::milliseconds> ltp;
-        date::from_stream(iss, fmt, ltp);
+        date::local_time<std::chrono::milliseconds> parsedLocalTimePoint;
+        date::from_stream(iss, fmt, parsedLocalTimePoint);
 
         if (iss.fail())
         {
             continue;
         }
-
+        /// date::from_stream may leave trailing whitespace in the stream;
+        /// consume it so that only extra non-whitespace characters cause a parse failure.
         iss >> std::ws;
         if (!iss.eof())
         {
             continue;
         }
 
-        date::sys_time<std::chrono::milliseconds> tp;
-        tp = date::sys_time<std::chrono::milliseconds>{ltp.time_since_epoch()};
+        date::sys_time<std::chrono::milliseconds> parsedUtcTimePoint;
+        parsedUtcTimePoint = date::sys_time<std::chrono::milliseconds>{parsedLocalTimePoint.time_since_epoch()};
 
-        const auto parsedMilliSeconds = tp.time_since_epoch().count();
+        const auto parsedMilliSeconds = parsedUtcTimePoint.time_since_epoch().count();
         if (parsedMilliSeconds < 0)
         {
             throw FormattingError("CastToUnixTs: pre-epoch timestamp is not supported: '{}'", iso8601Timestamp);

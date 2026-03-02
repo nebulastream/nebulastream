@@ -19,6 +19,7 @@
 #include <cstdio>
 #include <cstring>
 #include <utility>
+#include <array>
 
 #include <date/date.h>
 
@@ -37,7 +38,7 @@ namespace
 constexpr uint64_t iso8601OutputLen = 24;
 constexpr std::string_view iso8601Format{"%04d-%02u-%02uT%02d:%02d:%02d.%03dZ"};
 
-void writeZuluTimestampExact(char* out24, uint64_t milliSecondsSinceEpoch)
+void writeZuluTimestampExact(char* outTimestampIso8601Utc, uint64_t milliSecondsSinceEpoch)
 {
     /// Convert epoch milliseconds to a UTC time_point
     const date::sys_time utcTimePoint{std::chrono::milliseconds{milliSecondsSinceEpoch}};
@@ -53,19 +54,22 @@ void writeZuluTimestampExact(char* out24, uint64_t milliSecondsSinceEpoch)
 
     /// Extract time components
     const int year = static_cast<int>(utcDate.year());
-    const unsigned month = unsigned{utcDate.month()};
-    const unsigned day = unsigned{utcDate.day()};
+    const unsigned month = static_cast<unsigned>(utcDate.month());
+    const unsigned day = static_cast<unsigned>(utcDate.day());
 
     const int hh = static_cast<int>(utcTimeOfDay.hours().count());
     const int mm = static_cast<int>(utcTimeOfDay.minutes().count());
     const int ss = static_cast<int>(utcTimeOfDay.seconds().count());
 
-    /// snprintf needs a null-terminated buffer; output is fixed-length (24 bytes) without '\0'
-    char iso8601NullTerminated[iso8601OutputLen + 1];
+    /// snprintf needs a null-terminated buffer; output is fixed-length (24 bytes) without '\0' so +1 for snprintf
+    std::array<char, iso8601OutputLen + 1> iso8601NullTerminated{};
     std::snprintf(
-        iso8601NullTerminated, sizeof(iso8601NullTerminated), iso8601Format.data(), year, month, day, hh, mm, ss, millisecondPart);
+        iso8601NullTerminated.data(),
+        iso8601NullTerminated.size(),
+        iso8601Format.data(),
+        year, month, day, hh, mm, ss, millisecondPart);
 
-    std::memcpy(out24, iso8601NullTerminated, iso8601OutputLen);
+    std::memcpy(outTimestampIso8601Utc, iso8601NullTerminated.data(), iso8601OutputLen);
 }
 }
 
@@ -79,7 +83,8 @@ VarVal CastFromUnixTimestampPhysicalFunction::execute(const Record& record, Aren
     const auto value = childFunction.execute(record, arena);
     const auto ms = value.cast<nautilus::val<uint64_t>>();
 
-    const auto isoTimestampLength = nautilus::val<uint32_t>(iso8601OutputLen);
+    /// const auto isoTimestampLength = nautilus::val<uint32_t>(iso8601OutputLen);
+    const nautilus::val<uint32_t> isoTimestampLength{iso8601OutputLen};
     auto timestampAsIso8601 = arena.allocateVariableSizedData(isoTimestampLength);
     const auto payload = timestampAsIso8601.getContent();
 
