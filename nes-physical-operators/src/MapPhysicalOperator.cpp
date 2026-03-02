@@ -32,10 +32,10 @@ std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const
     return child;
 }
 
-MapPhysicalOperator MapPhysicalOperator::withChild(PhysicalOperator child) const
+MapPhysicalOperator MapPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

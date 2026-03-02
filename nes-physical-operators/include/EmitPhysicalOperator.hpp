@@ -37,7 +37,7 @@ public:
     explicit EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> bufferRef);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    [[nodiscard]] EmitPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] EmitPhysicalOperator withChild(PhysicalOperator newChild) const;
 
     void setup(ExecutionContext&, CompilationContext&) const { /*noop*/ }
 

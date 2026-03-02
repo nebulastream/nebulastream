@@ -77,10 +77,10 @@ std::optional<PhysicalOperator> WindowBuildPhysicalOperator::getChild() const
     return child;
 }
 
-WindowBuildPhysicalOperator WindowBuildPhysicalOperator::withChild(PhysicalOperator child) const
+WindowBuildPhysicalOperator WindowBuildPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

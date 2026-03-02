@@ -153,10 +153,10 @@ std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const
     return child;
 }
 
-EmitPhysicalOperator EmitPhysicalOperator::withChild(PhysicalOperator child) const
+EmitPhysicalOperator EmitPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

@@ -27,7 +27,7 @@ public:
     UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    [[nodiscard]] UnionRenamePhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] UnionRenamePhysicalOperator withChild(PhysicalOperator newChild) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;

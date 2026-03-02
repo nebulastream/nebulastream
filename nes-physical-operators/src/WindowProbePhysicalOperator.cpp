@@ -80,10 +80,10 @@ std::optional<PhysicalOperator> WindowProbePhysicalOperator::getChild() const
     return child;
 }
 
-WindowProbePhysicalOperator WindowProbePhysicalOperator::withChild(PhysicalOperator child) const
+WindowProbePhysicalOperator WindowProbePhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

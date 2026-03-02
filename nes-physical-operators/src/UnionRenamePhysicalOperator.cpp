@@ -39,10 +39,10 @@ std::optional<PhysicalOperator> UnionRenamePhysicalOperator::getChild() const
     return child;
 }
 
-UnionRenamePhysicalOperator UnionRenamePhysicalOperator::withChild(PhysicalOperator child) const
+UnionRenamePhysicalOperator UnionRenamePhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

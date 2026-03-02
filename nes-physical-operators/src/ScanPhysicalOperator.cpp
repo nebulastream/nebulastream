@@ -64,10 +64,10 @@ std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const
     return child;
 }
 
-ScanPhysicalOperator ScanPhysicalOperator::withChild(PhysicalOperator child) const
+ScanPhysicalOperator ScanPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

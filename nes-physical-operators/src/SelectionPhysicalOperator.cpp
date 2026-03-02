@@ -27,10 +27,10 @@ std::optional<PhysicalOperator> SelectionPhysicalOperator::getChild() const
     return child;
 }
 
-SelectionPhysicalOperator SelectionPhysicalOperator::withChild(PhysicalOperator child) const
+SelectionPhysicalOperator SelectionPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

@@ -136,14 +136,13 @@ struct TypedPhysicalOperator
     /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
     /// @param op The operator to wrap.
     template <PhysicalOperatorConceptBase T>
-    TypedPhysicalOperator(const T& op)
-        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
+    TypedPhysicalOperator(const T& op) : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op)) /// NOLINT(google-explicit-constructor)
     {
     }
 
     template <PhysicalOperatorConcept T>
     TypedPhysicalOperator(const NES::detail::PhysicalOperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
-        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op.impl))
+        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op.impl, op.id))
     {
     }
 
@@ -265,9 +264,14 @@ struct PhysicalOperatorModel : ErasedPhysicalOperator
     PhysicalOperatorType impl;
     const OperatorId id = INVALID_OPERATOR_ID;
 
-    explicit PhysicalOperatorModel(PhysicalOperatorType impl) : impl(std::move(impl)), id(getNextPhysicalOperatorId())
+    explicit PhysicalOperatorModel(PhysicalOperatorType pImpl) : impl(std::move(pImpl)), id(getNextPhysicalOperatorId())
     {
-        this->impl.id = this->id;
+        syncAndVerifyId();
+    }
+
+    PhysicalOperatorModel(PhysicalOperatorType pImpl, const OperatorId existingId) : impl(std::move(pImpl)), id(existingId)
+    {
+        syncAndVerifyId();
     }
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return impl.getChild(); }
@@ -302,6 +306,15 @@ struct PhysicalOperatorModel : ErasedPhysicalOperator
 private:
     template <typename T>
     friend struct NES::TypedPhysicalOperator;
+
+    void syncAndVerifyId() {
+        if constexpr (requires { this->impl.id = this->id; }) {
+            this->impl.id = this->id;
+            if (this->impl.id != this->id) {
+                throw std::runtime_error("ID sync failed! Model ID and Impl ID mismatch.");
+            }
+        }
+    }
 
     [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {

@@ -33,7 +33,7 @@ public:
     ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    [[nodiscard]] ScanPhysicalOperator withChild(PhysicalOperator child) const;
+    [[nodiscard]] ScanPhysicalOperator withChild(PhysicalOperator newChild) const;
 
     void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;

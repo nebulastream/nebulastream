@@ -27,10 +27,10 @@ std::optional<PhysicalOperator> UnionPhysicalOperator::getChild() const
     return child;
 }
 
-UnionPhysicalOperator UnionPhysicalOperator::withChild(PhysicalOperator child) const
+UnionPhysicalOperator UnionPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = std::move(child);
+    copy.child = std::move(newChild);
     return copy;
 }
 

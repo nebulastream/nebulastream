@@ -68,10 +68,10 @@ std::optional<PhysicalOperator> EventTimeWatermarkAssignerPhysicalOperator::getC
     return child;
 }
 
-EventTimeWatermarkAssignerPhysicalOperator EventTimeWatermarkAssignerPhysicalOperator::withChild(PhysicalOperator child) const
+EventTimeWatermarkAssignerPhysicalOperator EventTimeWatermarkAssignerPhysicalOperator::withChild(PhysicalOperator newChild) const
 {
     auto copy = *this;
-    copy.child = child;
+    copy.child = newChild;
     return copy;
 }
 
