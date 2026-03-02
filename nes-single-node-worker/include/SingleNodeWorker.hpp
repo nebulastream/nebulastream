@@ -46,7 +46,7 @@ class SingleNodeWorker
     SingleNodeWorkerConfiguration configuration;
 
 public:
-    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, WorkerId = WorkerId("SingleNodeWorker"));
+    explicit SingleNodeWorker(const SingleNodeWorkerConfiguration&, Host = Host("SingleNodeWorker"));
     ~SingleNodeWorker();
     /// Non-Copyable
     SingleNodeWorker(const SingleNodeWorker& other) = delete;
