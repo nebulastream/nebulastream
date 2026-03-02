@@ -21,7 +21,7 @@
 /**
  * Adds NESStrongType overloads for the yaml library.
  * This allows assignements of Yaml values with identifiers. This also directly enables Identifiers to be used within the
- * Configuration classes, e.g. `ScalarOption<WorkerId>`
+ * Configuration classes, e.g. `ScalarOption<Host>`
  */
 namespace YAML
 {
