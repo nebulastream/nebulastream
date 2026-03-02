@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstdint>
 #include <expected>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <string>
@@ -69,11 +70,13 @@ NES::LocalQueryStatus makeSummary(const NES::QueryId id, const NES::QueryState c
 
 NES::Systest::SystestQuery makeQuery(
     const std::expected<NES::Systest::SystestQuery::PlanInfo, NES::Exception> planInfoOrException,
-    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected)
+    std::variant<std::vector<std::string>, NES::Systest::ExpectedError> expected,
+    std::optional<std::pair<NES::Systest::TestName, NES::Systest::SystestQueryId>> runAfter,
+    NES::Systest::SystestQueryId queryId)
 {
     return NES::Systest::SystestQuery{
         .testName = "test_query",
-        .queryIdInFile = NES::INVALID<NES::Systest::SystestQueryId>,
+        .queryIdInFile = queryId,
         .testFilePath = SYSTEST_DATA_DIR "filter.dummy",
         .workingDir = NES::SystestConfiguration{}.workingDir.getValue(),
         .queryDefinition = "SELECT * FROM test",
@@ -81,7 +84,8 @@ NES::Systest::SystestQuery makeQuery(
         .expectedResultsOrExpectedError = std::move(expected),
         .additionalSourceThreads = std::make_shared<std::vector<std::jthread>>(),
         .configurationOverride = NES::Systest::ConfigurationOverride{},
-        .differentialQueryPlan = std::nullopt};
+        .differentialQueryPlan = std::nullopt,
+        .runAfter = std::move(runAfter)};
 }
 }
 
@@ -100,6 +104,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
     SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SystestQueryId dummyQueryId = NES::INVALID<NES::Systest::SystestQueryId>;
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -122,7 +127,7 @@ TEST_F(SystestRunnerTest, ExpectedErrorDuringParsing)
     const auto parseError = std::unexpected(Exception{"parse error", static_cast<uint64_t>(expectedCode)});
 
     const auto result = runQueries(
-        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt})},
+        {makeQuery(parseError, ExpectedError{.code = expectedCode, .message = std::nullopt}, std::nullopt, dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -154,8 +159,12 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
-    const auto result
-        = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
+    const auto result = runQueries(
+        {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {}, std::nullopt, dummyQueryId)},
+        1,
+        submitter,
+        progressTracker,
+        discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -186,7 +195,11 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
+        {makeQuery(
+            SystestQuery::PlanInfo{plan, Schema{}},
+            ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
+            std::nullopt,
+            dummyQueryId)},
         1,
         submitter,
         progressTracker,
@@ -194,6 +207,102 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
+}
+
+TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
+{
+    const testing::InSequence seq;
+    constexpr QueryId id{11};
+
+    auto mockManager = std::make_unique<MockQueryManager>();
+    SystestProgressTracker progressTracker;
+
+    QuerySubmitter submitter{std::move(mockManager)};
+    SourceCatalog sourceCatalog;
+    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    auto testPhysicalSource
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
+    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+
+    auto runAfter = std::make_pair(std::string{"test_query"}, SystestQueryId(std::numeric_limits<uint64_t>::max()));
+
+    EXPECT_ANY_THROW(
+        const auto result = runQueries(
+            {makeQuery(
+                SystestQuery::PlanInfo{plan, Schema{}},
+                ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
+                runAfter,
+                dummyQueryId)},
+            1,
+            submitter,
+            progressTracker,
+            discardPerformanceMessage));
+}
+
+TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
+{
+    const testing::InSequence seq;
+    constexpr QueryId queryId1{1};
+    constexpr QueryId queryId2{2};
+    constexpr QueryId queryId3{3};
+
+    auto mockManager = std::make_unique<MockQueryManager>();
+
+    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId1}));
+    EXPECT_CALL(*mockManager, start(queryId1));
+
+    EXPECT_CALL(*mockManager, status(queryId1))
+        .WillOnce(testing::Return(makeSummary(queryId1, QueryState::Stopped, nullptr)))
+        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+
+    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId2}));
+    EXPECT_CALL(*mockManager, start(queryId2));
+
+    EXPECT_CALL(*mockManager, status(queryId2))
+        .WillOnce(testing::Return(makeSummary(queryId2, QueryState::Stopped, nullptr)))
+        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+
+    EXPECT_CALL(*mockManager, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId3}));
+    EXPECT_CALL(*mockManager, start(queryId3));
+
+    EXPECT_CALL(*mockManager, status(queryId3))
+        .WillOnce(testing::Return(makeSummary(queryId3, QueryState::Stopped, nullptr)))
+        .WillRepeatedly(testing::Return(LocalQueryStatus{}));
+
+    SystestProgressTracker progressTracker;
+    QuerySubmitter submitter{std::move(mockManager)};
+
+    SourceCatalog sourceCatalog;
+    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    auto testPhysicalSource
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
+    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+
+    /// Three query with dependenceiy 1 -> 2 -> 3
+    auto query1 = makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));
+
+    auto query2 = makeQuery(
+        SystestQuery::PlanInfo{plan, Schema{}},
+        std::vector<std::string>{},
+        std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
+        SystestQueryId(2));
+
+    auto query3 = makeQuery(
+        SystestQuery::PlanInfo{plan, Schema{}},
+        std::vector<std::string>{},
+        std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
+        SystestQueryId(3));
+
+    const auto result = runQueries(
+        {query1, query2, query3},
+        4, /// Set higher number of concurrent queries to test if executed truely sequentially
+        submitter,
+        progressTracker,
+        discardPerformanceMessage);
 }
 
 /// NOLINTEND(bugprone-unchecked-optional-access)
