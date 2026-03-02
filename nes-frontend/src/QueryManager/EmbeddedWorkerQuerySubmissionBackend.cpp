@@ -43,8 +43,8 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
                  mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
                  mergedConfig.data.setValue(config.data);
 
-                 const LogContext logContext("create", config.host);
-                 return SingleNodeWorker(mergedConfig, config.host);
+                 const LogContext logContext("create", config.grpc);
+                 return SingleNodeWorker(mergedConfig, Host("embedded"));
              }()}
 {
 }

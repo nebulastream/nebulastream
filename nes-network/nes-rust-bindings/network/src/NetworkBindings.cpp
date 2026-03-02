@@ -28,7 +28,7 @@
 
 void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
     const std::string& connectionAddr,
-    const NES::Host& host,
+    const NES::Host& workerId,
     const NES::NetworkOptions& options)
 {
     const NetworkServiceOptions cxxOptions{
@@ -85,5 +85,5 @@ void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
 void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT(misc-use-internal-linkage)
 {
     NES::Thread::ThreadName = static_cast<std::string>(threadName);
-    NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(host));
+    NES::Thread::WorkerNodeId = NES::Host(static_cast<std::string>(workerId));
 }
