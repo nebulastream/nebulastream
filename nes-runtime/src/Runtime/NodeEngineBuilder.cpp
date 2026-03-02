@@ -32,7 +32,7 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 {
 }
 
-std::unique_ptr<NodeEngine> NodeEngineBuilder::build(WorkerId workerId)
+std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host workerId)
 {
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
