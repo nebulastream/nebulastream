@@ -263,11 +263,11 @@ template <PhysicalOperatorConcept PhysicalOperatorType>
 struct PhysicalOperatorModel : ErasedPhysicalOperator
 {
     PhysicalOperatorType impl;
-    OperatorId id;
+    const OperatorId id = INVALID_OPERATOR_ID;
 
     explicit PhysicalOperatorModel(PhysicalOperatorType impl) : impl(std::move(impl)), id(getNextPhysicalOperatorId())
     {
-        impl.id = this->id;
+        this->impl.id = this->id;
     }
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return impl.getChild(); }
