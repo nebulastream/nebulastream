@@ -145,12 +145,12 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
 
     root["spec"] = spec;
 
-    std::string configMapName = "sources-config";
+    std::string pvcName = "source-data-pvc";
 
     return TopologyBuildResult{
         .topologyJson = std::move(root),
         .sourceFileData = std::move(sourceFileData),
-        .sourceDataConfigMapName = std::move(configMapName),
+        .sourceDataPVCName = std::move(pvcName),
     };
 }
 

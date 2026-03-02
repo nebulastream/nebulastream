@@ -10,15 +10,14 @@ namespace NES::Systest
 struct SystestQuery;
 
 /// Result of building a topology CR, bundling the JSON with any source-file data
-/// that must be pushed into the operator-managed ConfigMap.
+/// that must be written into a PVC for worker pods to consume.
 struct TopologyBuildResult {
     nlohmann::json topologyJson;
     /// Map of filename → file contents for source data files.
-    /// The systest patches these into the ConfigMap "<topology-name>-source-data"
-    /// which the operator creates when reconciling the topology.
+    /// The systest writes these into a PVC via a short-lived writer pod.
     std::unordered_map<std::string, std::string> sourceFileData;
-    /// The ConfigMap name the operator is expected to create for source data.
-    std::string sourceDataConfigMapName;
+    /// The PVC name used for source data (mounted at /data in worker pods).
+    std::string sourceDataPVCName;
 };
 
 class K8sTopologyBuilder {

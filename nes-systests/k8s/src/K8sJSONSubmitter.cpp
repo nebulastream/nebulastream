@@ -16,7 +16,7 @@
 namespace NES::Systest {
 
 namespace {
-/// Helper to get an env var or return a default value.
+/// Helper to get an env var or return a default value
 std::string getEnvOr(const char* name, const std::string& defaultValue)
 {
     if (const char* val = std::getenv(name)) {
@@ -24,19 +24,6 @@ std::string getEnvOr(const char* name, const std::string& defaultValue)
     }
     return defaultValue;
 }
-
-/// Check that a file exists and is readable; throw with a helpful message if not.
-void requireReadableFile(const std::string& path, const char* description)
-{
-    std::ifstream f(path);
-    if (!f.good()) {
-        throw std::runtime_error(
-            std::string("Kubernetes SSL ") + description + " not readable at '" + path + "'. "
-            "If running inside a Docker container, consider using bearer token auth instead "
-            "(set NES_K8S_BEARER_TOKEN). See scripts/setup-k8s-systest-sa.sh.");
-    }
-}
-
 }
 
 K8sJSONSubmitter::K8sJSONSubmitter(std::string kubeNamespace,
@@ -57,8 +44,6 @@ K8sJSONSubmitter::K8sJSONSubmitter(std::string kubeNamespace,
 }
 
 K8sJSONSubmitter::~K8sJSONSubmitter() {
-    std::cerr << "[K8sJSONSubmitter::dtor] this=" << (void*)this
-              << " client=" << (void*)client << "\n";
     if (client != nullptr) {
         apiClient_free(client);
         client = nullptr;
@@ -76,8 +61,6 @@ K8sJSONSubmitter::K8sJSONSubmitter(K8sJSONSubmitter&& other) noexcept
     , client(other.client)
 {
     other.client = nullptr;
-    std::cerr << "[K8sJSONSubmitter::move-ctor] from=" << (void*)&other << " to=" << (void*)this
-              << " client=" << (void*)client << "\n";
 }
 
 K8sJSONSubmitter& K8sJSONSubmitter::operator=(K8sJSONSubmitter&& other) noexcept
@@ -115,7 +98,7 @@ void K8sJSONSubmitter::initClient()
     client->basePath = strdup(path);
 
     if (!bearerToken.empty()) {
-        /// Token-based auth: build the Authorization header on the client directly.
+        /// Token-based auth: build the Authorization header on the client directly
         std::string headerValue = "Bearer " + bearerToken;
         list_t* apiKeys = list_createList();
         keyValuePair_t* pair = keyValuePair_create(
@@ -125,7 +108,7 @@ void K8sJSONSubmitter::initClient()
         list_addElement(apiKeys, pair);
         client->apiKeys_BearerToken = apiKeys;
 
-        /// Optional: CA cert for TLS verification. Skip verification if unavailable.
+        /// Optional: CA cert for TLS verification. Skip verification if unavailable
         if (!caCert.empty()) {
             std::ifstream f(caCert);
             if (f.good()) {
@@ -138,9 +121,6 @@ void K8sJSONSubmitter::initClient()
         }
     } else if (!clientCert.empty() && !clientKey.empty() && !caCert.empty()) {
         /// Client certificate auth (mTLS): validate that all cert files exist.
-        requireReadableFile(clientCert, "client certificate");
-        requireReadableFile(clientKey,  "client key");
-        requireReadableFile(caCert,     "CA certificate");
         client->sslConfig = sslConfig_create(
             clientCert.c_str(),
             clientKey.c_str(),
@@ -151,18 +131,11 @@ void K8sJSONSubmitter::initClient()
             throw std::runtime_error("Failed to create SSL config for Kubernetes API client");
         }
     }
-
-    std::cerr << "[K8sJSONSubmitter::initClient] this=" << (void*)this << "\n";
-    std::cerr << "[K8sJSONSubmitter::initClient] client=" << (void*)client << "\n";
-    std::cerr << "[K8sJSONSubmitter::initClient] client->basePath=" << (client->basePath ? client->basePath : "NULL") << "\n";
-    std::cerr << "[K8sJSONSubmitter::initClient] client->sslConfig=" << (void*)client->sslConfig << "\n";
-    std::cerr << "[K8sJSONSubmitter::initClient] client->apiKeys_BearerToken=" << (void*)client->apiKeys_BearerToken << "\n";
-    std::cerr << "[K8sJSONSubmitter::initClient] bearerToken.empty()=" << bearerToken.empty() << "\n";
 }
 
 K8sJSONSubmitter K8sJSONSubmitter::createForMinikube(std::string kubeNamespace)
 {
-    /// Preferred: bearer token auth (works in Docker containers without file mounts).
+    /// Preferred: bearer token auth (works in Docker containers without file mounts)
     const char* tokenEnv = std::getenv("NES_K8S_BEARER_TOKEN");
     std::string apiServer = getEnvOr("NES_K8S_API_URL", "https://192.168.49.2:8443");
 
@@ -173,7 +146,7 @@ K8sJSONSubmitter K8sJSONSubmitter::createForMinikube(std::string kubeNamespace)
                                 "", "", std::move(caPath), std::move(token));
     }
 
-    /// Fallback: client certificate auth (requires ~/.minikube on the filesystem).
+    /// Fallback: client certificate auth (requires ~/.minikube on the filesystem)
     const char* home = std::getenv("HOME");
     if (home == nullptr) {
         throw std::runtime_error(
@@ -225,13 +198,6 @@ void K8sJSONSubmitter::submitJson(const nlohmann::json& root)
     }
     char* plural = (char*)pluralStr.c_str();
 
-    std::cerr << "[K8sJSONSubmitter::submitJson] this=" << (void*)this << "\n";
-    std::cerr << "[K8sJSONSubmitter::submitJson] plural=" << plural << "\n";
-    std::cerr << "[K8sJSONSubmitter::submitJson] client=" << (void*)client << "\n";
-    std::cerr << "[K8sJSONSubmitter::submitJson] client->basePath=" << (client->basePath ? client->basePath : "NULL") << "\n";
-    std::cerr << "[K8sJSONSubmitter::submitJson] client->sslConfig=" << (void*)client->sslConfig << "\n";
-    std::cerr << "[K8sJSONSubmitter::submitJson] client->apiKeys_BearerToken=" << (void*)client->apiKeys_BearerToken << "\n";
-
     object_t* result = CustomObjectsAPI_createNamespacedCustomObject(
         client,
         group,
@@ -264,88 +230,376 @@ void K8sJSONSubmitter::patchSourceDataConfigMap(const std::string& configMapName
                                                  const std::unordered_map<std::string, std::string>& fileData)
 {
     if (fileData.empty()) {
-        std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] No source data to patch, skipping.\n";
+        std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] No source data to write, skipping.\n";
         return;
     }
 
-    /// ConfigMaps are limited to 1 MiB total. Fail early with a clear message
-    /// instead of getting a cryptic 422 from the API server.
-    /// TODO: For large source files, switch to a PVC-based approach.
-    static constexpr std::size_t CONFIG_MAP_MAX_BYTES = 1024 * 1024;
-    std::size_t totalBytes = 0;
+    std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] ConfigMap='" << configMapName
+              << "' keys=" << fileData.size() << "\n";
+
+    /// Build the strategic-merge-patch JSON payload:
+    /// { "data": { "filename1": "contents1", "filename2": "contents2" } }
+    nlohmann::json patchBody;
+    patchBody["data"] = nlohmann::json::object();
     for (const auto& [filename, contents] : fileData) {
-        totalBytes += filename.size() + contents.size();
+        patchBody["data"][filename] = contents;
     }
-    if (totalBytes > CONFIG_MAP_MAX_BYTES) {
-        throw std::runtime_error(
-            "Source data (" + std::to_string(totalBytes) + " bytes) exceeds the 1 MiB ConfigMap limit. "
-            "Consider using a PersistentVolumeClaim instead of a ConfigMap for large source files.");
+    std::string patchStr = patchBody.dump();
+
+    /// Build the PATCH URL:
+    /// /api/v1/namespaces/<ns>/configmaps/<name>
+    std::string patchUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/configmaps/" + configMapName;
+
+    std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] PATCH " << patchUrl << "\n";
+
+    /// Use direct curl because the kubernetes C client's CoreV1API_patchNamespacedConfigMap
+    /// does not set the correct Content-Type for strategic merge patch.
+    CURL* curl = curl_easy_init();
+    if (curl == nullptr) {
+        throw std::runtime_error("Failed to init curl for ConfigMap patch");
     }
 
-    /// Build a strategic merge patch JSON: { "data": { "<filename>": "<contents>", ... } }
-    /// NOTE: We use read + replace instead of patch because the kubernetes C client
-    /// sends multiple Content-Type headers for PATCH requests, which causes a 400
-    /// from the K8s API server.
+    curl_easy_setopt(curl, CURLOPT_URL, patchUrl.c_str());
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PATCH");
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, patchStr.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(patchStr.size()));
 
-    /// Step 1: Read the existing ConfigMap (operator must have created it).
-    v1_config_map_t* existing = CoreV1API_readNamespacedConfigMap(
-        client,
-        (char*)configMapName.c_str(),
-        (char*)kubeNamespace.c_str(),
-        NULL  // pretty
-    );
-
-    if (existing == nullptr || client->response_code < 200 || client->response_code >= 300) {
-        auto msg = std::string("Failed to read ConfigMap '") + configMapName
-            + "' in namespace '" + kubeNamespace
-            + "'. HTTP response code: " + std::to_string(client->response_code)
-            + ". Make sure the operator has created this ConfigMap before the systest writes to it.";
-        if (existing != nullptr) {
-            v1_config_map_free(existing);
+    /// Set up SSL
+    if (client->sslConfig != nullptr) {
+        if (client->sslConfig->clientCertFile) {
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, client->sslConfig->clientCertFile);
         }
+        if (client->sslConfig->clientKeyFile) {
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, client->sslConfig->clientKeyFile);
+        }
+        if (client->sslConfig->CACertFile) {
+            curl_easy_setopt(curl, CURLOPT_CAINFO, client->sslConfig->CACertFile);
+        }
+        if (client->sslConfig->insecureSkipTlsVerify == 1) {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        } else {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
+        }
+    }
+
+    /// Set up headers: Content-Type for strategic merge patch + Authorization
+    struct curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, "Content-Type: application/strategic-merge-patch+json");
+    headers = curl_slist_append(headers, "Accept: application/json");
+
+    if (client->apiKeys_BearerToken != nullptr) {
+        listEntry_t* tokenEntry = nullptr;
+        list_ForEach(tokenEntry, client->apiKeys_BearerToken) {
+            keyValuePair_t* kv = static_cast<keyValuePair_t*>(tokenEntry->data);
+            if (kv->key != nullptr && kv->value != nullptr) {
+                std::string hdr = std::string(static_cast<char*>(kv->key)) + ": "
+                    + std::string(static_cast<char*>(kv->value));
+                headers = curl_slist_append(headers, hdr.c_str());
+            }
+        }
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    /// Capture response body
+    std::string responseBody;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+        +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
+            auto* body = static_cast<std::string*>(userdata);
+            body->append(ptr, size * nmemb);
+            return size * nmemb;
+        });
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+
+    CURLcode res = curl_easy_perform(curl);
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK) {
+        throw std::runtime_error("curl_easy_perform failed for ConfigMap patch: "
+            + std::string(curl_easy_strerror(res)));
+    }
+
+    std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] HTTP " << httpCode << "\n";
+
+    if (httpCode < 200 || httpCode >= 300) {
+        std::string msg = "Failed to patch ConfigMap '" + configMapName
+            + "' in namespace '" + kubeNamespace
+            + "'. HTTP response code: " + std::to_string(httpCode)
+            + ". Response: " + responseBody.substr(0, 500)
+            + ". Make sure the operator has created this ConfigMap before the systest patches it.";
         throw std::runtime_error(msg);
     }
 
-    /// Step 2: Merge our source file data into the ConfigMap's data field.
-    if (existing->data == nullptr) {
-        existing->data = list_createList();
+    std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] Successfully patched ConfigMap '"
+              << configMapName << "' with " << fileData.size() << " file(s).\n";
+}
+
+std::pair<long, std::string> K8sJSONSubmitter::curlRequest(const std::string& method,
+                                                            const std::string& url,
+                                                            const std::string& body,
+                                                            const std::string& contentType)
+{
+    CURL* curl = curl_easy_init();
+    if (curl == nullptr) {
+        throw std::runtime_error("Failed to init curl for " + method + " " + url);
     }
-    for (const auto& [filename, contents] : fileData) {
-        keyValuePair_t* pair = keyValuePair_create(
-            strdup(filename.c_str()),
-            strdup(contents.c_str())
-        );
-        list_addElement(existing->data, pair);
+
+    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, method.c_str());
+
+    if (!body.empty()) {
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, body.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(body.size()));
     }
 
-    /// Step 3: Replace (PUT) the ConfigMap with the merged data.
-    v1_config_map_t* result = CoreV1API_replaceNamespacedConfigMap(
-        client,
-        (char*)configMapName.c_str(),
-        (char*)kubeNamespace.c_str(),
-        existing,
-        NULL,  // pretty
-        NULL,  // dryRun
-        NULL,  // fieldManager
-        NULL   // fieldValidation
-    );
-
-    v1_config_map_free(existing);
-
-    if (result == nullptr || client->response_code < 200 || client->response_code >= 300) {
-        auto msg = std::string("Failed to replace ConfigMap '") + configMapName
-            + "' in namespace '" + kubeNamespace
-            + "'. HTTP response code: " + std::to_string(client->response_code)
-            + ". Make sure the operator has created this ConfigMap before the systest writes to it.";
-        if (result != nullptr) {
-            v1_config_map_free(result);
+    /// SSL
+    if (client->sslConfig != nullptr) {
+        if (client->sslConfig->clientCertFile)
+            curl_easy_setopt(curl, CURLOPT_SSLCERT, client->sslConfig->clientCertFile);
+        if (client->sslConfig->clientKeyFile)
+            curl_easy_setopt(curl, CURLOPT_SSLKEY, client->sslConfig->clientKeyFile);
+        if (client->sslConfig->CACertFile)
+            curl_easy_setopt(curl, CURLOPT_CAINFO, client->sslConfig->CACertFile);
+        if (client->sslConfig->insecureSkipTlsVerify == 1) {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+        } else {
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 1L);
+            curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 2L);
         }
-        throw std::runtime_error(msg);
     }
 
-    std::cerr << "[K8sJSONSubmitter::patchSourceDataConfigMap] Successfully updated ConfigMap '"
-              << configMapName << "' (HTTP " << client->response_code << ")\n";
-    v1_config_map_free(result);
+    /// Headers
+    struct curl_slist* headers = nullptr;
+    std::string ctHeader = "Content-Type: " + contentType;
+    headers = curl_slist_append(headers, ctHeader.c_str());
+    headers = curl_slist_append(headers, "Accept: application/json");
+
+    if (client->apiKeys_BearerToken != nullptr) {
+        listEntry_t* tokenEntry = nullptr;
+        list_ForEach(tokenEntry, client->apiKeys_BearerToken) {
+            keyValuePair_t* kv = static_cast<keyValuePair_t*>(tokenEntry->data);
+            if (kv->key != nullptr && kv->value != nullptr) {
+                std::string hdr = std::string(static_cast<char*>(kv->key)) + ": "
+                    + std::string(static_cast<char*>(kv->value));
+                headers = curl_slist_append(headers, hdr.c_str());
+            }
+        }
+    }
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+    /// Response capture
+    std::string responseBody;
+    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+        +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
+            auto* b = static_cast<std::string*>(userdata);
+            b->append(ptr, size * nmemb);
+            return size * nmemb;
+        });
+    curl_easy_setopt(curl, CURLOPT_WRITEDATA, &responseBody);
+
+    CURLcode res = curl_easy_perform(curl);
+    long httpCode = 0;
+    curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+
+    curl_slist_free_all(headers);
+    curl_easy_cleanup(curl);
+
+    if (res != CURLE_OK) {
+        throw std::runtime_error("curl " + method + " " + url + " failed: "
+            + std::string(curl_easy_strerror(res)));
+    }
+
+    return {httpCode, responseBody};
+}
+
+std::string K8sJSONSubmitter::base64Encode(const std::string& input)
+{
+    static constexpr const char* TABLE =
+        "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+    std::string out;
+    out.reserve(((input.size() + 2) / 3) * 4);
+
+    for (std::size_t i = 0; i < input.size(); i += 3) {
+        int b0 =                          (unsigned char)input[i];
+        int b1 = (i + 1 < input.size()) ? (unsigned char)input[i+1] : 0;
+        int b2 = (i + 2 < input.size()) ? (unsigned char)input[i+2] : 0;
+
+        out += TABLE[(b0 >> 2) & 0x3F];
+        out += TABLE[((b0 & 0x03) << 4) | ((b1 >> 4) & 0x0F)];
+        out += (i + 1 < input.size()) ? TABLE[((b1 & 0x0F) << 2) | ((b2 >> 6) & 0x03)] : '=';
+        out += (i + 2 < input.size()) ? TABLE[b2 & 0x3F] : '=';
+    }
+    return out;
+}
+
+void K8sJSONSubmitter::deletePod(const std::string& podName)
+{
+    std::string url = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + podName;
+    try {
+        auto [code, body] = curlRequest("DELETE", url);
+        std::cerr << "[K8sJSONSubmitter::deletePod] Deleted pod '" << podName
+                  << "' (HTTP " << code << ")\n";
+    } catch (const std::exception& e) {
+        std::cerr << "[K8sJSONSubmitter::deletePod] Warning: failed to delete pod '"
+                  << podName << "': " << e.what() << "\n";
+    }
+}
+
+void K8sJSONSubmitter::ensurePVCExists(const std::string& pvcName, const std::string& storageSize)
+{
+    /// Check if PVC already exists
+    std::string getUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/persistentvolumeclaims/" + pvcName;
+
+    auto [getCode, getBody] = curlRequest("GET", getUrl);
+    if (getCode >= 200 && getCode < 300) {
+        std::cerr << "[K8sJSONSubmitter::ensurePVCExists] PVC '" << pvcName << "' already exists.\n";
+        return;
+    }
+
+    /// Create PVC
+    nlohmann::json pvc;
+    pvc["apiVersion"] = "v1";
+    pvc["kind"] = "PersistentVolumeClaim";
+    pvc["metadata"]["name"] = pvcName;
+    pvc["metadata"]["namespace"] = kubeNamespace;
+    pvc["metadata"]["labels"]["topology"] = "nes";
+    pvc["spec"]["accessModes"] = nlohmann::json::array({"ReadWriteOnce"});
+    pvc["spec"]["resources"]["requests"]["storage"] = storageSize;
+    pvc["spec"]["storageClassName"] = "standard";
+
+    std::string createUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/persistentvolumeclaims";
+
+    auto [code, body] = curlRequest("POST", createUrl, pvc.dump());
+
+    if (code < 200 || code >= 300) {
+        throw std::runtime_error("Failed to create PVC '" + pvcName
+            + "'. HTTP " + std::to_string(code) + ". Response: " + body.substr(0, 500));
+    }
+
+    std::cerr << "[K8sJSONSubmitter::ensurePVCExists] Created PVC '" << pvcName
+              << "' (" << storageSize << ").\n";
+}
+
+void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
+                                             const std::unordered_map<std::string, std::string>& fileData)
+{
+    if (fileData.empty()) {
+        std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] No source data, skipping.\n";
+        return;
+    }
+
+    static constexpr const char* MOUNT_PATH = "/data";
+    static constexpr int POLL_INTERVAL_SEC = 2;
+    static constexpr int TIMEOUT_SEC = 120;
+
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Writing " << fileData.size()
+              << " file(s) to PVC '" << pvcName << "'...\n";
+
+    /// Build shell script that base64-decodes each file onto the PVC mount.
+    std::string script = "set -e\nmkdir -p " + std::string(MOUNT_PATH) + "\n";
+    for (const auto& [filename, contents] : fileData) {
+        std::string encoded = base64Encode(contents);
+        script += "echo '" + encoded + "' | base64 -d > "
+               + MOUNT_PATH + "/" + filename + "\n";
+    }
+    script += "echo '[writer-pod] All files written successfully.'\n";
+
+    /// Unique pod name
+    auto now = std::chrono::steady_clock::now().time_since_epoch().count();
+    std::string podName = "source-writer-" + std::to_string(now);
+
+    /// Build the Pod JSON
+    nlohmann::json pod;
+    pod["apiVersion"] = "v1";
+    pod["kind"] = "Pod";
+    pod["metadata"]["name"] = podName;
+    pod["metadata"]["namespace"] = kubeNamespace;
+    pod["metadata"]["labels"]["app"] = "source-writer";
+
+    nlohmann::json container;
+    container["name"] = "writer";
+    container["image"] = "busybox:1.36";
+    container["imagePullPolicy"] = "IfNotPresent";
+    container["command"] = nlohmann::json::array({"/bin/sh", "-c"});
+    container["args"] = nlohmann::json::array({script});
+    container["volumeMounts"] = nlohmann::json::array({
+        {{"name", "source-data"}, {"mountPath", MOUNT_PATH}}
+    });
+
+    pod["spec"]["containers"] = nlohmann::json::array({container});
+    pod["spec"]["restartPolicy"] = "Never";
+    pod["spec"]["terminationGracePeriodSeconds"] = 3;
+    pod["spec"]["volumes"] = nlohmann::json::array({
+        {{"name", "source-data"},
+         {"persistentVolumeClaim", {{"claimName", pvcName}}}}
+    });
+
+    /// Create the writer pod
+    std::string createUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/pods";
+
+    auto [createCode, createBody] = curlRequest("POST", createUrl, pod.dump());
+
+    if (createCode < 200 || createCode >= 300) {
+        throw std::runtime_error("Failed to create writer pod '" + podName
+            + "'. HTTP " + std::to_string(createCode)
+            + ". Response: " + createBody.substr(0, 500));
+    }
+
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Created writer pod '"
+              << podName << "', waiting for completion...\n";
+
+    /// Poll until Succeeded / Failed / Timeout
+    const int maxAttempts = TIMEOUT_SEC / POLL_INTERVAL_SEC;
+    for (int attempt = 0; attempt < maxAttempts; ++attempt) {
+        std::this_thread::sleep_for(std::chrono::seconds(POLL_INTERVAL_SEC));
+
+        std::string readUrl = std::string(client->basePath)
+            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + podName;
+
+        auto [readCode, readBody] = curlRequest("GET", readUrl);
+        if (readCode < 200 || readCode >= 300) {
+            continue; // transient failure
+        }
+
+        auto podJson = nlohmann::json::parse(readBody, nullptr, false);
+        if (podJson.is_discarded()) continue;
+
+        std::string phase;
+        if (podJson.contains("status") && podJson["status"].contains("phase")) {
+            phase = podJson["status"]["phase"].get<std::string>();
+        }
+
+        if (phase == "Succeeded") {
+            std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Writer pod completed successfully.\n";
+            deletePod(podName);
+            return;
+        }
+        if (phase == "Failed") {
+            deletePod(podName);
+            throw std::runtime_error("Writer pod '" + podName + "' failed. "
+                "Check logs: kubectl logs " + podName + " -n " + kubeNamespace);
+        }
+
+        std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Pod phase: "
+                  << (phase.empty() ? "Pending" : phase)
+                  << " (attempt " << (attempt + 1) << "/" << maxAttempts << ")\n";
+    }
+
+    deletePod(podName);
+    throw std::runtime_error("Timed out waiting for writer pod '" + podName
+        + "' after " + std::to_string(TIMEOUT_SEC) + "s.");
 }
 
 std::string K8sJSONSubmitter::fetchPodLogs(const std::string& labelSelector)
@@ -378,17 +632,17 @@ std::string K8sJSONSubmitter::fetchPodLogs(const std::string& labelSelector)
         throw std::runtime_error("No pods found matching selector '" + labelSelector + "'");
     }
 
-    /// Take the first matching pod.
+    /// Take the first matching pod
     listEntry_t* firstEntry = (listEntry_t*)podList->items->firstEntry;
     v1_pod_t* pod = (v1_pod_t*)firstEntry->data;
     std::string podName = pod->metadata->name;
     std::cerr << "[K8sJSONSubmitter::fetchPodLogs] Found pod: " << podName << "\n";
     v1_pod_list_free(podList);
 
-    /// Read the pod logs.
+    /// Read the pod logs
     /// We cannot use CoreV1API_readNamespacedPodLog because it sends
-    /// Accept: application/yaml which the logs endpoint rejects with HTTP 406.
-    /// Instead, build the URL and use a direct curl call through the apiClient.
+    /// Accept: application/yaml which the logs endpoint rejects with HTTP 406
+    /// Instead, build the URL and use a direct curl call through the apiClient
     std::string logUrl = std::string(client->basePath)
         + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + podName + "/log";
     std::cerr << "[K8sJSONSubmitter::fetchPodLogs] Fetching logs from: " << logUrl << "\n";
@@ -485,7 +739,7 @@ bool K8sJSONSubmitter::waitForQueryCompletion(const std::string& queryName, int 
         std::this_thread::sleep_for(std::chrono::seconds(pollIntervalSeconds));
         elapsed += pollIntervalSeconds;
 
-        /// ---- Strategy 1: Check the NesQuery CR status.phase ----
+        /// Check the NesQuery CR status.
         object_t* obj = CustomObjectsAPI_getNamespacedCustomObject(
             client,
             (char*)"nebulastream.com",
@@ -497,7 +751,7 @@ bool K8sJSONSubmitter::waitForQueryCompletion(const std::string& queryName, int 
 
         std::cerr << "[waitForQueryCompletion] --- poll cycle (elapsed: " << elapsed << "s) ---\n";
 
-        /// ---- Strategy 1: Check the NesQuery CR status.phase ----
+        /// Check the NesQuery CR status.phase
         /// NOTE: client->dataReceived is consumed by the CustomObjects API call,
         /// so we must use object_convertToJSON() to get the response back as JSON.
         if (obj != nullptr && client->response_code >= 200 && client->response_code < 300)
