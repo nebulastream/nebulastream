@@ -224,7 +224,7 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
             }
             return grpc::Status::OK;
         }
-        return grpc::Status(grpc::NOT_FOUND, "Query does not exist");
+        return {grpc::NOT_FOUND, "Query does not exist"};
     }
     CPPTRACE_CATCH(const Exception& e)
     {
