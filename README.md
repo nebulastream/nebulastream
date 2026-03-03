@@ -110,6 +110,25 @@ cmake-build-debug/systest/systest -t nes-systests/function/arithmetical/Function
 
 Append worker configuration overrides after `--` (for example `-- --worker.default_query_execution.execution_mode=INTERPRETER`). See the [systest guide](docs/development/systests.md) for authoring custom `.test` files and the complete CLI reference.
 
+#### Run distributed systest via Nix
+Use the dedicated flake app to build `nes-single-node-worker` + `systest`, start a local two-worker topology, run `systest --remote`, and tear workers down automatically:
+
+```shell
+nix run .#systest-remote
+```
+
+Run a single test in distributed mode:
+
+```shell
+nix run .#systest-remote -- --testLocation nes-systests/guide/guide1.test:1 --sequential
+```
+
+Optional environment overrides:
+- `NES_BUILD_DIR` (default: `./cmake-build-debug`)
+- `NES_BUILD_TYPE` (default: `Debug`)
+- `NES_TOPOLOGY_FILE` (default: `nes-systests/configs/topologies/two-nodes-localhost.yaml`)
+- `NES_SYSTEST_INLINE_EVENT_HOST` (default: `127.0.0.1`)
+
 #### Start the client with a worker
 Build the client and worker binaries, start the worker in one terminal, and submit a short-lived query from another terminal using `nes-repl`:
 
