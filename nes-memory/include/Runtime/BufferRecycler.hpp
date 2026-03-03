@@ -39,6 +39,8 @@ struct AllocationThreadInfo
 class BufferRecycler
 {
 public:
+    virtual ~BufferRecycler() = default;
+
     /// @brief Interface method for pooled buffer recycling
     /// @param buffer the buffer to recycle
     virtual void recyclePooledBuffer(detail::MemorySegment* buffer) = 0;
