@@ -24,7 +24,7 @@ namespace NES::Parsers
 {
 
 /// Getter and Setter for the map/list entries of each clause
-const std::string AntlrSQLHelper::getSource() const
+std::string AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
