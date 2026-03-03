@@ -208,8 +208,8 @@ bool BufferControlBlock::release()
     else
     {
         INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
+        return false;
     }
-    return false;
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

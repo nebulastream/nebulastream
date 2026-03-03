@@ -163,10 +163,7 @@ public:
         {
             return it->getRuntime();
         }
-        else
-        {
-            return -1;
-        }
+        return -1;
     }
 
     /**
@@ -179,11 +176,8 @@ public:
         {
             return runtime.count();
         }
-        else
-        {
-            NES_DEBUG("Timer: Trying get runtime while timer is running so will return zero");
-            return 0;
-        }
+        NES_DEBUG("Timer: Trying get runtime while timer is running so will return zero");
+        return 0;
     };
 
     /**
