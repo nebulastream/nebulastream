@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #pragma once
 #include "SystestState.hpp"
 
@@ -27,33 +41,21 @@ public:
 
     void submitJson(const nlohmann::json& yaml);
 
-    void patchSourceDataConfigMap(const std::string& configMapName,
-                                  const std::unordered_map<std::string, std::string>& fileData);
-
-    /// Create a PVC for source data if it does not already exist.
     void ensurePVCExists(const std::string& pvcName, const std::string& storageSize = "1Gi");
 
-    /// Write source data files into a PVC via a short-lived writer pod.
-    /// This avoids the 1 MiB ConfigMap limit and the ~90s propagation delay.
+    /// Write source data files into a PVC via a temporarily writer pod
     void writeSourceDataToPVC(const std::string& pvcName,
                               const std::unordered_map<std::string, std::string>& fileData);
 
-    /// Fetch stdout logs from a worker pod identified by label selector.
-    /// @param labelSelector e.g. "app=worker-1"
-    /// @return the pod log contents as a string
+    /// Fetch stdout logs from a worker pod identified by label selector
     std::string fetchPodLogs(const std::string& labelSelector);
 
-    /// Poll a NesQuery custom resource until it reaches a terminal phase.
-    /// @param queryName the metadata.name of the NesQuery CR
-    /// @param timeoutSeconds maximum time to wait
-    /// @return true if the query completed successfully, false on failure/timeout
     bool waitForQueryCompletion(const std::string& queryName, int timeoutSeconds = 300);
 
-    /// Delete a custom resource (topology or query) to clean up after a test.
+    /// Delete a custom resource (topology or query) to clean up after a test
     void deleteCustomObject(const std::string& kind, const std::string& name);
 
     /// Write query result from K8s pod logs to the local result file path
-    /// so that the existing checkResult() / loadQueryResult() logic works.
     static void writeResultFile(const SystestQuery& query, const std::string& podLogs);
 
     static K8sJSONSubmitter createForMinikube(std::string kubeNamespace = "default");
@@ -61,17 +63,22 @@ public:
 private:
     void initClient();
 
-    /// Perform an HTTP request via curl using the client's auth/TLS settings.
-    /// Returns {httpCode, responseBody}. Throws on curl failure.
+    /// Setup bearer token authentication
+    void setupBearerTokenAuth();
+
+    /// Setup mutual TLS authentication
+    void setupMTLSAuth();
+
+    /// Perform an HTTP request via curl using the client's auth/TLS settings
     std::pair<long, std::string> curlRequest(const std::string& method,
                                               const std::string& url,
                                               const std::string& body = "",
                                               const std::string& contentType = "application/json");
 
-    /// Delete a pod by name (best-effort, does not throw on failure).
+    /// Delete a pod by name
     void deletePod(const std::string& podName);
 
-    /// Base64-encode a string (for passing file contents to writer pods).
+    /// Base64-encode a string (for passing file contents to writer pods)
     static std::string base64Encode(const std::string& input);
 
     std::string kubeNamespace;

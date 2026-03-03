@@ -49,8 +49,6 @@
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
-#include "../../k8s/include/K8sQueryBuilder.hpp"
-#include "../../k8s/include/K8sTopologyBuilder.hpp"
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -58,6 +56,8 @@
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
 #include <WorkerCatalog.hpp>
+#include "../../k8s/include/K8sQueryBuilder.hpp"
+#include "../../k8s/include/K8sTopologyBuilder.hpp"
 
 #include "K8sJSONSubmitter.hpp"
 
@@ -164,7 +164,6 @@ std::vector<RunningQuery> runQueries(
     using SystestKey = std::pair<TestName, SystestQueryId>;
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
 
-    K8sJSONSubmitter jsonSubmitter("default");
     const bool k8sEnabled = std::getenv("NES_K8S_ENABLED") != nullptr;
     std::optional<K8sJSONSubmitter> jsonSubmitter;
     if (k8sEnabled) {
@@ -269,7 +268,9 @@ std::vector<RunningQuery> runQueries(
                     std::this_thread::sleep_for(std::chrono::seconds(5));
                 }
 
-                auto queryJson = K8sQueryBuilder::build(nextQuery);
+                auto queryJson = K8sQueryBuilder::build(nextQuery,
+                    topologyResult.topologyJson["metadata"]["name"].get<std::string>());
+                std::cerr << "[K8s DEBUG] Query JSON being submitted:\n" << queryJson.dump(2) << "\n";
                 std::string queryName = queryJson["metadata"]["name"].get<std::string>();
                 jsonSubmitter->submitJson(queryJson);
 
@@ -315,8 +316,9 @@ std::vector<RunningQuery> runQueries(
                         runningQuery,
                         progressTracker,
                         failed,
-                        DistributedException(std::unordered_map<GrpcAddr, std::vector<Exception>>{
-                            {GrpcAddr("k8s"), std::vector{Exception{"K8s query '" + queryName + "' failed or timed out", 0}}}}),
+                        DistributedException(
+                            std::unordered_map<Host, std::vector<Exception>>{
+                                {Host("k8s"), std::vector{Exception{"K8s query \'" + queryName + "\' failed or timed out", 0}}}}),
                         queryPerformanceMessage);
                 }
 

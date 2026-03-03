@@ -1,5 +1,5 @@
 # name: k8s-test/K8sSimple.test
-# description: Minimal test for K8s operator integration
+# description: Tests for K8s operator integration
 # groups: [K8s]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
@@ -16,3 +16,108 @@ SELECT id, value, timestamp FROM stream INTO file_output;
 1,4,45
 1,5,56
 
+CREATE LOGICAL SOURCE stream2(id UINT64, value UINT64);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH FILE small/stream3.csv
+
+CREATE SINK file_output_2(stream2.id UINT64, stream2.value UINT64) TYPE File;
+
+SELECT id, value FROM stream2 INTO file_output_2;
+----
+1,1000
+12,1001
+4,1002
+1,2000
+11,2001
+16,2002
+1,3000
+11,3001
+1,3003
+1,3200
+1,4000
+1,5000
+1,6000
+1,7000
+1,8000
+1,9000
+1,10000
+1,11000
+1,12000
+1,13000
+1,14000
+1,15000
+1,16000
+1,17000
+1,18000
+1,19000
+1,20000
+1,21000
+
+CREATE LOGICAL SOURCE filter_src(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR filter_src TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE SINK filter_sink(filter_src.id UINT64, filter_src.value UINT64, filter_src.timestamp UINT64) TYPE File;
+
+SELECT id, value, timestamp FROM filter_src WHERE value >= UINT64(3) INTO filter_sink;
+----
+1,3,34
+1,4,45
+1,5,56
+
+CREATE LOGICAL SOURCE arith_src(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR arith_src TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE SINK arith_sink(doubled UINT64) TYPE File;
+
+SELECT value * UINT64(2) AS doubled FROM arith_src INTO arith_sink;
+----
+2
+4
+6
+8
+10
+
+CREATE LOGICAL SOURCE star_src(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR star_src TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE SINK star_sink(`STAR_SRC$ID` UINT64, `STAR_SRC$VALUE` UINT64, `STAR_SRC$TIMESTAMP` UINT64) TYPE File;
+
+SELECT * FROM star_src INTO star_sink;
+----
+1,1,12
+1,2,23
+1,3,34
+1,4,45
+1,5,56
+
+CREATE LOGICAL SOURCE alias_src(id UINT64, value UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR alias_src TYPE File;
+ATTACH FILE small/stream8.csv
+
+CREATE SINK alias_sink(key UINT64, val UINT64) TYPE File;
+
+SELECT id AS key, value AS val FROM alias_src INTO alias_sink;
+----
+1,1
+1,2
+1,3
+1,4
+1,5
+
+CREATE LOGICAL SOURCE inline_src(x UINT64, y UINT64);
+CREATE PHYSICAL SOURCE FOR inline_src TYPE File;
+ATTACH INLINE
+10,100
+20,200
+30,300
+
+CREATE SINK inline_sink(inline_src.x UINT64, inline_src.y UINT64) TYPE File;
+
+SELECT x, y FROM inline_src INTO inline_sink;
+----
+10,100
+20,200
+30,300
