@@ -32,7 +32,7 @@ class VariableSizedData
 {
 public:
     explicit VariableSizedData(const nautilus::val<int8_t*>& reference, const nautilus::val<uint64_t>& size);
-    VariableSizedData(const VariableSizedData& other);
+    VariableSizedData(const VariableSizedData& other) = default;
     VariableSizedData& operator=(const VariableSizedData& other) noexcept;
     VariableSizedData(VariableSizedData&& other) noexcept;
     VariableSizedData& operator=(VariableSizedData&& other) noexcept;
