@@ -22,6 +22,6 @@ namespace NES
 /// Listener interface that can handle both query engine events and system events
 struct StatisticListener : QueryEngineStatisticListener, SystemEventListener
 {
-    virtual ~StatisticListener() = default;
+    ~StatisticListener() override = default;
 };
 }

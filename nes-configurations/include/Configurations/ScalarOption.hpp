@@ -49,7 +49,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option);
 
 protected:
-    virtual void parseFromYAMLNode(YAML::Node node) override;
+    void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
