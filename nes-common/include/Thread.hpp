@@ -124,7 +124,11 @@ public:
         PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
         std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
         std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
+#ifdef __APPLE__
+        pthread_setname_np(truncatedStringName.data());
+#else
         pthread_setname_np(pthread_self(), truncatedStringName.data());
+#endif
     }
 };
 }

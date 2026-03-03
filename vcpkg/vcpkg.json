@@ -34,7 +34,10 @@
     "grpc",
     "gtest",
     "libcuckoo",
-    "libuuid",
+    {
+      "name": "libuuid",
+      "platform": "linux"
+    },
     "magic-enum",
     "nlohmann-json",
     "nautilus",
