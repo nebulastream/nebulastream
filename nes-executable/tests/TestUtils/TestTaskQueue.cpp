@@ -40,10 +40,8 @@ bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, c
     }
     switch (continuationPolicy)
     {
-        case ContinuationPolicy::NEVER: {
-            resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
-            break;
-        }
+        case ContinuationPolicy::NEVER:
+            [[fallthrough]];
         case ContinuationPolicy::POSSIBLE: {
             resultBuffers->at(workerThreadId.getRawValue()).emplace_back(resultBuffer);
             break;
