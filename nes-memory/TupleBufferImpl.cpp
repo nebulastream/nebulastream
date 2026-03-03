@@ -32,10 +32,7 @@
     #include <cpptrace.hpp>
 #endif
 
-namespace NES
-{
-
-namespace detail
+namespace NES::detail
 {
 
 /// -----------------------------------------------------------------------------
@@ -324,6 +321,5 @@ bool BufferControlBlock::loadChildBuffer(
     size = child->size;
 
     return true;
-}
 }
 }
