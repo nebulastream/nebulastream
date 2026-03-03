@@ -14,13 +14,13 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
-#include <cstddef>
 #include <numeric>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -170,6 +170,27 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     auto copy = *this;
     copy.projections = inferredProjections | std::ranges::to<std::vector>();
     copy.inputSchema = firstSchema;
+
+    /// Reject duplicate explicit AS aliases to avoid ambiguous schemas.
+    /// Unaliased duplicates (e.g. SELECT id, id) are allowed per standard SQL behavior.
+    {
+        std::unordered_set<std::string> seenExplicitAliases;
+        for (const auto& [identifier, function] : copy.projections)
+        {
+            INVARIANT(identifier.has_value(), "Projection ID must be resolved after type inference");
+            const auto& name = identifier.value().getFieldName();
+            /// A projection has an explicit alias if its resolved name differs from the auto-derived name.
+            const auto autoDerivedName = function.explain(ExplainVerbosity::Short);
+            if (name == autoDerivedName)
+            {
+                continue;
+            }
+            if (!seenExplicitAliases.insert(name).second)
+            {
+                throw CannotInferSchema("Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", name);
+            }
+        }
+    }
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
     auto initial = Schema{};
