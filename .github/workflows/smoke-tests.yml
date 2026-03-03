@@ -70,7 +70,7 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
-          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDTIONAL_CTEST_ARGS}
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
