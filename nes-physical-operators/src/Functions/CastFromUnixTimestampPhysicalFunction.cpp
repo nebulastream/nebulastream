@@ -53,13 +53,13 @@ void writeZuluTimestampExact(char* outTimestampIso8601Utc, uint64_t milliSeconds
     const auto utcTimeOfDay = date::make_time(utcSeconds - utcMidnight);
 
     /// Extract time components
-    const int year = static_cast<int>(utcDate.year());
-    const unsigned month = static_cast<unsigned>(utcDate.month());
-    const unsigned day = static_cast<unsigned>(utcDate.day());
+    const auto year = static_cast<int>(utcDate.year());
+    const auto month = static_cast<unsigned>(utcDate.month());
+    const auto day = static_cast<unsigned>(utcDate.day());
 
-    const int hh = static_cast<int>(utcTimeOfDay.hours().count());
-    const int mm = static_cast<int>(utcTimeOfDay.minutes().count());
-    const int ss = static_cast<int>(utcTimeOfDay.seconds().count());
+    const auto hh = static_cast<int>(utcTimeOfDay.hours().count());
+    const auto mm = static_cast<int>(utcTimeOfDay.minutes().count());
+    const auto ss = static_cast<int>(utcTimeOfDay.seconds().count());
 
     /// snprintf needs a null-terminated buffer; output is fixed-length (24 bytes) without '\0' so +1 for snprintf
     std::array<char, iso8601OutputLen + 1> iso8601NullTerminated{};
