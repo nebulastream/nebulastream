@@ -37,8 +37,16 @@ std::string getErrorMessageFromERRNO()
 std::string getErrorMessage(int errorNumber)
 {
     std::array<char, 1024> backupBuffer{};
+#ifdef __APPLE__
+    /// POSIX strerror_r returns int and writes the message into the buffer
+    const int result = strerror_r(errorNumber, backupBuffer.data(), backupBuffer.size());
+    INVARIANT(result == 0, "strerror_r does not behave as expected");
+    return backupBuffer.data();
+#else
+    /// GNU strerror_r returns const char* (may or may not use the buffer)
     const char* errorMessage = strerror_r(errorNumber, backupBuffer.data(), backupBuffer.size());
     INVARIANT(errorMessage != nullptr, "strerror_r does not behave as expected");
     return errorMessage;
+#endif
 }
 }
