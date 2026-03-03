@@ -232,6 +232,17 @@ jobs:
         with:
           install: false
 
+      - name: Sanitize branch name for Docker tag
+        id: sanitize
+        if: ${{ inputs.branch-name != '' }}
+        shell: bash
+        run: |
+          BRANCH_NAME="${{ inputs.branch-name }}"
+          # Docker tags allow only [a-zA-Z0-9._-] and max 128 chars.
+          # Replace all invalid characters (e.g. '/') with '-', strip leading '.' or '-'.
+          SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)
+          echo "Sanitized branch name: '$BRANCH_NAME' -> '$SANITIZED'"
+          echo "branch-name=$SANITIZED" >> "$GITHUB_OUTPUT"
 
       - name: Combine Manifests
         shell: bash
@@ -263,57 +274,57 @@ jobs:
       - name: Combine Manifests for branch specific docker image
         if: ${{ inputs.branch-name != '' }}
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development-base:${{ inputs.branch-name }} \
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ steps.sanitize.outputs.branch-name }} \
             nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}
-          
+
           for image_tag in development-dependency development ci; do
             for sanitizer in none address thread undefined; do
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-$sanitizer \
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }}-libcxx-$sanitizer \
                 nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-          
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-$sanitizer \
+
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }}-libstdcxx-$sanitizer \
                 nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
             done
           done
-          
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libcxx \
+
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ steps.sanitize.outputs.branch-name }}-libcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-          
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }}-libstdcxx \
+
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ steps.sanitize.outputs.branch-name }}-libstdcxx \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx
 
       - name: Create shortcut images
         if: ${{ inputs.branch-name != '' }}
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.branch-name }} \
-            nebulastream/nes-development:${{ inputs.branch-name }}-libstdcxx-none
-          
-          docker buildx imagetools create -t nebulastream/nes-development:${{ inputs.branch-name }}-libcxx \
-            nebulastream/nes-development:${{ inputs.branch-name }}-libcxx-none
-          
+          docker buildx imagetools create -t nebulastream/nes-development:${{ steps.sanitize.outputs.branch-name }} \
+            nebulastream/nes-development:${{ steps.sanitize.outputs.branch-name }}-libstdcxx-none
+
+          docker buildx imagetools create -t nebulastream/nes-development:${{ steps.sanitize.outputs.branch-name }}-libcxx \
+            nebulastream/nes-development:${{ steps.sanitize.outputs.branch-name }}-libcxx-none
+
           for image_tag in development-dependency development ci; do
-          
-            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }} \
+
+            docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }} \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
-          
+
             docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }} \
               nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-none \
-          
+
             for sanitizer in none address thread undefined; do
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-$sanitizer \
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }}-$sanitizer \
                 nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-          
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libcxx-$sanitizer \
+
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }}-libcxx-$sanitizer \
                 nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx-$sanitizer \
-          
-              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ inputs.branch-name }}-libstdcxx-$sanitizer \
+
+              docker buildx imagetools create -t nebulastream/nes-$image_tag:${{ steps.sanitize.outputs.branch-name }}-libstdcxx-$sanitizer \
                 nebulastream/nes-$image_tag:${{ needs.detect-dependency-changes.outputs.tag }}-libstdcxx-$sanitizer
             done
           done
-          
+
           docker buildx imagetools create -t nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }} \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
-          
-          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ inputs.branch-name }} \
+
+          docker buildx imagetools create -t nebulastream/nes-benchmark:${{ steps.sanitize.outputs.branch-name }} \
             nebulastream/nes-benchmark:${{ needs.detect-dependency-changes.outputs.tag }}-libcxx \
           
