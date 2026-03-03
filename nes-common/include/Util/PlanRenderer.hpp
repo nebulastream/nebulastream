@@ -505,9 +505,9 @@ private:
                     case PARENT_MIDDLE_BRANCH:
                         [[fallthrough]];
                     case PARENT_LAST_BRANCH:
-                        /// What we want is already there
-                        break;
+                        [[fallthrough]];
                     default:
+                        /// What we want is already there
                         break;
                 }
                 break;
