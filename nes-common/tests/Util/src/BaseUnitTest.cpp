@@ -26,10 +26,7 @@
 #include <gtest/gtest.h>
 #include <nameof.hpp>
 
-namespace NES
-{
-
-namespace Testing
+namespace NES::Testing
 {
 
 void BaseUnitTest::SetUp()
@@ -121,6 +118,5 @@ std::string TestSourceNameHelper::operator*()
     return oss.str();
 }
 
-}
 }
 }
