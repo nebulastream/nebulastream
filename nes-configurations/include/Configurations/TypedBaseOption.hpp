@@ -162,7 +162,7 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     {
         return;
     }
-    for (auto validator : this->validators)
+    for (const auto& validator : this->validators)
     {
         if (!(validator->isValid(pValue)))
         {
@@ -173,7 +173,7 @@ void TypedBaseOption<T>::isValid(std::string pValue)
     if (!failureMessages.empty())
     {
         std::string exceptionMessage;
-        for (auto pair : failureMessages)
+        for (const auto& pair : failureMessages)
         {
             exceptionMessage += pair.second + "\n";
         }
