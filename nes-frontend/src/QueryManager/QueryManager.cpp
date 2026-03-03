@@ -92,20 +92,22 @@ std::expected<void, Exception> QueryManager::start(QueryId queryId)
                 return std::unexpected{QueryStartFailed(
                     "Checking status, while waiting for query state to change encountered an exception: {}", result.error().what())};
             }
-            /// Waiting until the query state changed. Even if the query status changes to failed we consider the start to be successful.
-            /// Subsequent status requests will find the query in a failed state.
             if (result->state != QueryState::Registered)
             {
                 NES_DEBUG(
-                    "Query {} started successfully after {}.",
+                    "Query {} started successfully after {:%H:%M:%S}.",
                     queryId,
                     std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - queryStartTimestamp));
                 return {};
             }
-            std::this_thread::sleep_for(statusPollInterval * std::pow(2, i));
+            const auto nextRetryIn = statusPollInterval * std::pow(2, i);
+            std::this_thread::sleep_for(nextRetryIn);
         }
 
-        return std::unexpected{QueryStartFailed("Query state remains `Registered` after {} retries", statusRetries)};
+        return std::unexpected{QueryStartFailed(
+            "Query state remains `Registered` after {} retries with a total retry time of {:%H:%M:%S}",
+            statusRetries,
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - queryStartTimestamp))};
     }
     catch (std::exception& e)
     {
