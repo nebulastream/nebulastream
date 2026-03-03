@@ -63,7 +63,7 @@ InlineEventController::InlineEventController(InlineEventScript script) : script(
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = 0; /// let the OS pick
 
     if (bind(listenFd.load(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
@@ -141,7 +141,7 @@ void InlineEventController::restart(const bool resetScriptProgress)
 
     sockaddr_in addr{};
     addr.sin_family = AF_INET;
-    addr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
+    addr.sin_addr.s_addr = htonl(INADDR_ANY);
     addr.sin_port = htons(port);
 
     if (bind(listenFd.load(), reinterpret_cast<sockaddr*>(&addr), sizeof(addr)) < 0)
@@ -227,7 +227,7 @@ void InlineEventController::runServer()
 
         if (action.type == InlineActionType::SendTuple && !workerReady)
         {
-            /// Drop tuples while the worker is down.
+            /// Drop tuples while the worker is down; keep progressing inline-script actions.
             ++actionIdx;
             nextActionIndex.store(actionIdx);
             continue;
@@ -248,10 +248,7 @@ void InlineEventController::runServer()
             {
                 deferredSendActions.pop_front();
             }
-            else
-            {
-                ++actionIdx;
-            }
+            ++actionIdx;
             nextActionIndex.store(actionIdx);
         };
 
@@ -259,7 +256,20 @@ void InlineEventController::runServer()
         {
             case InlineActionType::SendTuple: {
                 const std::string line = action.tuple + "\n";
-                if (::send(clientFd, line.data(), line.size(), 0) < 0)
+                bool sent = true;
+                size_t totalSent = 0;
+                while (totalSent < line.size())
+                {
+                    const auto bytesSent = ::send(clientFd, line.data() + totalSent, line.size() - totalSent, 0);
+                    if (bytesSent <= 0)
+                    {
+                        sent = false;
+                        break;
+                    }
+                    totalSent += static_cast<size_t>(bytesSent);
+                }
+
+                if (!sent)
                 {
                     ::shutdown(clientFd, SHUT_RDWR);
                     ::close(clientFd);

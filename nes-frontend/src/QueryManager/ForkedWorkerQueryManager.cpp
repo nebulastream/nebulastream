@@ -31,7 +31,6 @@
 #include <grpcpp/server_builder.h>
 
 #include <Util/Logger/Logger.hpp>
-#include <Util/URI.hpp>
 #include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 
@@ -41,14 +40,14 @@ namespace
 [[noreturn]] void runWorkerChild(NES::SingleNodeWorkerConfiguration configuration, int pipeFd)
 {
     /// Bind to any available port unless caller configured something else.
-    configuration.grpcAddressUri.setValue(NES::URI("localhost:0"));
+    configuration.grpcAddressUri.setValue("localhost:0");
 
     NES::GRPCServer workerService{NES::SingleNodeWorker(configuration)};
 
     grpc::ServerBuilder builder;
     builder.SetMaxMessageSize(-1);
     int selectedPort = 0;
-    builder.AddListeningPort(configuration.grpcAddressUri.getValue().toString(), grpc::InsecureServerCredentials(), &selectedPort);
+    builder.AddListeningPort(configuration.grpcAddressUri.getValue(), grpc::InsecureServerCredentials(), &selectedPort);
     builder.RegisterService(&workerService);
     grpc::EnableDefaultHealthCheckService(true);
 
@@ -110,7 +109,7 @@ void ForkedWorkerQueryManager::spawnChild(const SingleNodeWorkerConfiguration& c
     int pipeFds[2]{-1, -1};
     if (::pipe(pipeFds) != 0)
     {
-        throw CannotStartQueryEngine("Failed to create pipe for forked worker: {}", strerror(errno));
+        throw UnknownException("Failed to create pipe for forked worker: {}", strerror(errno));
     }
 
     const pid_t pid = ::fork();
@@ -118,7 +117,7 @@ void ForkedWorkerQueryManager::spawnChild(const SingleNodeWorkerConfiguration& c
     {
         ::close(pipeFds[0]);
         ::close(pipeFds[1]);
-        throw CannotStartQueryEngine("Failed to fork worker process: {}", strerror(errno));
+        throw UnknownException("Failed to fork worker process: {}", strerror(errno));
     }
 
     if (pid == 0)
@@ -135,18 +134,22 @@ void ForkedWorkerQueryManager::spawnChild(const SingleNodeWorkerConfiguration& c
     if (port <= 0)
     {
         shutdownChild(SIGKILL);
-        throw CannotStartQueryEngine("Forked worker failed to start gRPC server");
+        throw UnknownException("Forked worker failed to start gRPC server");
     }
 
     listeningPort = static_cast<uint16_t>(port);
-    resetGrpcClient(listeningPort);
+    resetGrpcClient(configuration, listeningPort);
 }
 
-void ForkedWorkerQueryManager::resetGrpcClient(const uint16_t port)
+void ForkedWorkerQueryManager::resetGrpcClient(const SingleNodeWorkerConfiguration& configuration, const uint16_t port)
 {
-    const auto address = fmt::format("localhost:{}", port);
-    grpcManager
-        = std::make_unique<GRPCQueryManager>(grpc::CreateChannel(address, grpc::InsecureChannelCredentials()), std::chrono::seconds{5});
+    const auto address = WorkerId(fmt::format("localhost:{}", port));
+    grpcManager = std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{
+        .host = std::move(address),
+        .connection = configuration.connection.getValue(),
+        .capacity = 10000,
+        .downstream = {},
+        .config = configuration});
 }
 
 void ForkedWorkerQueryManager::shutdownChild(const int signal) noexcept
@@ -161,29 +164,34 @@ void ForkedWorkerQueryManager::shutdownChild(const int signal) noexcept
     grpcManager.reset();
 }
 
-std::expected<QueryId, Exception> ForkedWorkerQueryManager::registerQuery(const LogicalPlan& plan)
+std::expected<QueryId, Exception> ForkedWorkerQueryManager::registerQuery(LogicalPlan plan)
 {
     return grpcManager->registerQuery(plan);
 }
 
-std::expected<void, Exception> ForkedWorkerQueryManager::start(const QueryId queryId) noexcept
+std::expected<void, Exception> ForkedWorkerQueryManager::start(QueryId queryId)
 {
     return grpcManager->start(queryId);
 }
 
-std::expected<void, Exception> ForkedWorkerQueryManager::stop(const QueryId queryId) noexcept
+std::expected<void, Exception> ForkedWorkerQueryManager::stop(QueryId queryId)
 {
     return grpcManager->stop(queryId);
 }
 
-std::expected<void, Exception> ForkedWorkerQueryManager::unregister(const QueryId queryId) noexcept
+std::expected<void, Exception> ForkedWorkerQueryManager::unregister(QueryId queryId)
 {
     return grpcManager->unregister(queryId);
 }
 
-std::expected<LocalQueryStatus, Exception> ForkedWorkerQueryManager::status(const QueryId queryId) const noexcept
+std::expected<LocalQueryStatus, Exception> ForkedWorkerQueryManager::status(QueryId queryId) const
 {
     return grpcManager->status(queryId);
+}
+
+std::expected<WorkerStatus, Exception> ForkedWorkerQueryManager::workerStatus(std::chrono::system_clock::time_point after) const
+{
+    return grpcManager->workerStatus(after);
 }
 
 void ForkedWorkerQueryManager::crashWorker() noexcept

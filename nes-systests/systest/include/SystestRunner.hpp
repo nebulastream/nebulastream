@@ -81,6 +81,11 @@ inline std::string discardPerformanceMessage(RunningQuery&)
 [[nodiscard]] std::vector<RunningQuery> runInlineEventQueriesWithWorkerRestart(
     const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, SystestProgressTracker& progressTracker);
 
+/// Run queries that include inline crash/restart events against a remote cluster.
+/// Restart events stop/unregister and re-register/start the distributed query through gRPC.
+[[nodiscard]] std::vector<RunningQuery> runInlineEventQueriesWithWorkerRestartRemote(
+    const std::vector<SystestQuery>& queries, const SystestClusterConfiguration& clusterConfig, SystestProgressTracker& progressTracker);
+
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(

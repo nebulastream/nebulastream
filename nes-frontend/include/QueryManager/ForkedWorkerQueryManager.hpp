@@ -17,7 +17,7 @@
 #include <expected>
 #include <memory>
 
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
@@ -26,7 +26,7 @@ namespace NES
 
 /// QueryManager that hosts the SingleNodeWorker in a forked child and talks to it over gRPC.
 /// The child process can be force-killed to simulate a hard crash without tearing down the parent.
-class ForkedWorkerQueryManager final : public QueryManager
+class ForkedWorkerQueryManager final : public QuerySubmissionBackend
 {
 public:
     explicit ForkedWorkerQueryManager(const SingleNodeWorkerConfiguration& configuration);
@@ -37,11 +37,12 @@ public:
     ForkedWorkerQueryManager(ForkedWorkerQueryManager&&) = delete;
     ForkedWorkerQueryManager& operator=(ForkedWorkerQueryManager&&) = delete;
 
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;
-    std::expected<void, Exception> start(QueryId queryId) noexcept override;
-    std::expected<void, Exception> stop(QueryId queryId) noexcept override;
-    std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
+    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan plan) override;
+    std::expected<void, Exception> start(QueryId queryId) override;
+    std::expected<void, Exception> stop(QueryId queryId) override;
+    std::expected<void, Exception> unregister(QueryId queryId) override;
+    [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const override;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
     /// Immediately kill the child worker (SIGKILL). No cleanup is attempted.
     void crashWorker() noexcept;
@@ -51,11 +52,11 @@ public:
 private:
     void spawnChild(const SingleNodeWorkerConfiguration& configuration);
     void shutdownChild(int signal) noexcept;
-    void resetGrpcClient(uint16_t port);
+    void resetGrpcClient(const SingleNodeWorkerConfiguration& configuration, uint16_t port);
 
     pid_t childPid{-1};
     uint16_t listeningPort{0};
-    std::unique_ptr<GRPCQueryManager> grpcManager;
+    std::unique_ptr<GRPCQuerySubmissionBackend> grpcManager;
 };
 
 }
