@@ -203,14 +203,21 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 
     hashMap.clear();
 }
+#ifdef ALL_HASHMAP_TESTS
+/// Running the test for 3 times for each key, value schema and backend.
+/// This entails three different random number of items, number of buckets and page size.
+constexpr auto noIterations = 3;
+#else
+/// Running the test for 1 time for each key, value schema and backend.
+/// This entails three different random number of items, number of buckets and page size.
+constexpr auto noIterations = 1;
+#endif
 
 INSTANTIATE_TEST_CASE_P(
     ChainedHashMapCustomValue,
     ChainedHashMapCustomValueTest,
     ::testing::Combine(
-        /// Running the test for 3 times for each key, value schema and backend.
-        /// This entails three different random number of items, number of buckets and page size.
-        ::testing::Range(0, 3),
+        ::testing::Range(0, noIterations),
         ::testing::ValuesIn<std::vector<DataType::Type>>(
             {{DataType::Type::UINT8},
              {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},

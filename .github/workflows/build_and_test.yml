@@ -59,7 +59,7 @@ jobs:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
-            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG
+            cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DALL_HASHMAP_TESTS=1
             cmake --build build -j  -- -k 0
       - uses: ./.github/steps/run-in-container
         name: Run Tests

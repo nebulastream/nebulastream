@@ -120,44 +120,52 @@ TEST_P(ChainedHashMapTest, update)
     /// Check if our entry iterator reads all the entries
     checkEntryIterator(hashMap, exactMap);
 }
+#ifdef ALL_HASHMAP_TESTS
+/// Running the test for 3 times for each key, value schema and backend.
+/// This entails three different random number of items, number of buckets and page size.
+constexpr auto noIterations = 3;
+static auto keyTypes = ::testing::ValuesIn<std::vector<DataType::Type>>(
+    {{DataType::Type::UINT8},
+     {DataType::Type::VARSIZED},
+     {DataType::Type::VARSIZED, DataType::Type::INT8},
+     {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
+     {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},
+     {DataType::Type::INT64,
+      DataType::Type::INT32,
+      DataType::Type::INT16,
+      DataType::Type::INT8,
+      DataType::Type::UINT64,
+      DataType::Type::UINT32,
+      DataType::Type::UINT16,
+      DataType::Type::UINT8}});
+static auto valTypes = ::testing::ValuesIn<std::vector<DataType::Type>>(
+    {{DataType::Type::INT8},
+     {DataType::Type::VARSIZED},
+     {DataType::Type::VARSIZED, DataType::Type::INT8},
+     {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
+     {DataType::Type::INT64,
+      DataType::Type::INT32,
+      DataType::Type::INT16,
+      DataType::Type::INT8,
+      DataType::Type::FLOAT32,
+      DataType::Type::UINT64,
+      DataType::Type::UINT32,
+      DataType::Type::UINT16,
+      DataType::Type::UINT8,
+      DataType::Type::FLOAT64}});
+#else
+/// Running the test for 1 time for each key, value schema and backend.
+/// This entails one random number of items, number of buckets and page size.
+constexpr auto noIterations = 1;
+static auto keyTypes = ::testing::ValuesIn<std::vector<DataType::Type>>({{DataType::Type::UINT8}, {DataType::Type::VARSIZED}});
+static auto valTypes = ::testing::ValuesIn<std::vector<DataType::Type>>({{DataType::Type::INT8}, {DataType::Type::VARSIZED}});
+#endif
 
 INSTANTIATE_TEST_CASE_P(
     ChainedHashMapTest,
     ChainedHashMapTest,
     ::testing::Combine(
-        /// Running the test for 3 times for each key, value schema and backend.
-        /// This entails three different random number of items, number of buckets and page size.
-        ::testing::Range(0, 3),
-        ::testing::ValuesIn<std::vector<DataType::Type>>(
-            {{DataType::Type::UINT8},
-             {DataType::Type::VARSIZED},
-             {DataType::Type::VARSIZED, DataType::Type::INT8},
-             {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
-             {DataType::Type::INT64, DataType::Type::UINT64, DataType::Type::INT8, DataType::Type::INT16, DataType::Type::INT32},
-             {DataType::Type::INT64,
-              DataType::Type::INT32,
-              DataType::Type::INT16,
-              DataType::Type::INT8,
-              DataType::Type::UINT64,
-              DataType::Type::UINT32,
-              DataType::Type::UINT16,
-              DataType::Type::UINT8}}),
-        ::testing::ValuesIn<std::vector<DataType::Type>>(
-            {{DataType::Type::INT8},
-             {DataType::Type::VARSIZED},
-             {DataType::Type::VARSIZED, DataType::Type::INT8},
-             {DataType::Type::VARSIZED, DataType::Type::INT8, DataType::Type::INT64},
-             {DataType::Type::INT64,
-              DataType::Type::INT32,
-              DataType::Type::INT16,
-              DataType::Type::INT8,
-              DataType::Type::FLOAT32,
-              DataType::Type::UINT64,
-              DataType::Type::UINT32,
-              DataType::Type::UINT16,
-              DataType::Type::UINT8,
-              DataType::Type::FLOAT64}}),
-        ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
+        ::testing::Range(0, noIterations), keyTypes, valTypes, ::testing::Values(ExecutionMode::COMPILER, ExecutionMode::INTERPRETER)),
     [](const testing::TestParamInfo<ChainedHashMapTest::ParamType>& info)
     {
         const auto iteration = std::get<0>(info.param);
@@ -179,4 +187,5 @@ INSTANTIATE_TEST_CASE_P(
         ss << magic_enum::enum_name(backend);
         return ss.str();
     });
+
 }
