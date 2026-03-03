@@ -101,7 +101,7 @@ public:
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(std::string sourceName);
-    [[nodiscard]] const std::string getSource() const;
+    [[nodiscard]] std::string getSource() const;
     void setInlineSource(const std::string& type, const ConfigMap& parameters);
     [[nodiscard]] std::pair<std::string, ConfigMap> getInlineSourceConfig();
     void addProjection(std::optional<FieldIdentifier>, LogicalFunction);
