@@ -97,6 +97,6 @@ void printQueryResultToStdOut(
     const RunningQuery& runningQuery,
     const std::string& errorMessage,
     SystestProgressTracker& progressTracker,
-    const std::string_view queryPerformanceMessage);
+    std::string_view queryPerformanceMessage);
 
 }
