@@ -103,6 +103,8 @@ struct TraitModel;
 template <typename Derived>
 struct DefaultTrait
 {
+    virtual ~DefaultTrait() = default;
+
     bool operator==(const DefaultTrait& other) const { return typeid(other) == typeid(Derived); }
 
     [[nodiscard]] size_t hash() const { return std::type_index(typeid(Derived)).hash_code(); }
