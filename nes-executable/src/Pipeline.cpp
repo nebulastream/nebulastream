@@ -75,11 +75,11 @@ std::string pipelineToString(const Pipeline& pipeline, uint16_t indent)
     return fmt::to_string(buf);
 }
 
-std::atomic_uint64_t nextId{INITIAL_PIPELINE_ID.getRawValue()};
 }
 
 PipelineId getNextPipelineId()
 {
+    static std::atomic_uint64_t nextId{INITIAL_PIPELINE_ID.getRawValue()};
     return PipelineId(nextId++);
 }
 
