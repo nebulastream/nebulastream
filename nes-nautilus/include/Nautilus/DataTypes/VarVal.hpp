@@ -82,7 +82,7 @@ public:
     {
     }
 
-    VarVal(const VarVal& other);
+    VarVal(const VarVal& other) = default;
     VarVal(VarVal&& other) noexcept;
     VarVal& operator=(const VarVal& other);
     VarVal& operator=(VarVal&& other); /// NOLINT, as we need to have the option of throwing

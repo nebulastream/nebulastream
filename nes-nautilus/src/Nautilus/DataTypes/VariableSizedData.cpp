@@ -32,10 +32,6 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData::VariableSizedData(const VariableSizedData& other) : size(other.size), ptrToVarSized(other.ptrToVarSized)
-{
-}
-
 VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
 {
     if (this == &other)
