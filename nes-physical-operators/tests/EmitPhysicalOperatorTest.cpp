@@ -211,7 +211,7 @@ public:
         ChunkNumber::Underlying chunkNumber,
         bool isLastChunk = false,
         OriginId originId = INITIAL<OriginId>,
-        size_t numberOfTuples = 0)
+        size_t numberOfTuples = 0) const
     {
         auto buffer = bm->getBufferBlocking();
         buffer.setNumberOfTuples(numberOfTuples);
