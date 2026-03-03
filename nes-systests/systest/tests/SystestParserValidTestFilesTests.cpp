@@ -540,5 +540,19 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
         { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
 }
 
+/// Checking, if text after the closing bracket of the groups is allowed and the file is being correctly excluded
+TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
+{
+    SystestConfiguration config{};
+    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
+    const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
+    const auto testMap = Systest::loadTestFileMap(config);
+    ASSERT_EQ(testMap.size(), 1);
+    const auto testFile = testMap.begin()->second;
+    const std::vector<std::string> expectedGroups = {"Aggregation", "WindowOperators", "CompilationIntensive"};
+    ASSERT_EQ(testFile.groups, expectedGroups);
+}
+
 
 }
