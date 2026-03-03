@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #include "K8sTopologyBuilder.hpp"
 #include <fstream>
 #include <sstream>
@@ -11,7 +25,7 @@ namespace NES::Systest
 {
 
 namespace {
-/// Read entire file into a string. Returns empty string on failure.
+/// Read entire file into a string. If the file can't be read, return an empty string.
 std::string readFileContents(const std::filesystem::path& path)
 {
     std::ifstream ifs(path);
@@ -23,8 +37,7 @@ std::string readFileContents(const std::filesystem::path& path)
     return oss.str();
 }
 
-/// Extract the sink name from a query definition string.
-/// Looks for "INTO <sink_name>" (case-insensitive) and returns the sink name.
+/// Extract the sink name from a query definition string and return it.
 std::string extractSinkName(const std::string& queryDefinition)
 {
     std::regex intoPattern(R"(\bINTO\s+(\w+))", std::regex::icase);
@@ -34,7 +47,7 @@ std::string extractSinkName(const std::string& queryDefinition)
     }
     return "unknown-sink";
 }
-} // anonymous namespace
+}
 
 std::size_t K8sTopologyBuilder::counter = 0;
 
@@ -44,6 +57,14 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     uint64_t queryId = counter;
     std::string topologyName = makeTopologyName(queryId);
 
+    if (q.configurationOverride.overrideParameters.empty()) {
+        std::cerr << "No config overrides present\n";
+    } else {
+        for (const auto& [key, value] : q.configurationOverride.overrideParameters) {
+            std::cerr << "Config override: " << key << " = " << value << std::endl;
+        }
+    }
+
     nlohmann::json root;
     root["apiVersion"] = "nebulastream.com/v1";
     root["kind"] = "NesTopology";
@@ -51,20 +72,20 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
 
     nlohmann::json spec;
 
-    // sinks
+    /// Sinks
     nlohmann::json sinks = nlohmann::json::array();
     nlohmann::json sink;
-    sink["name"] = extractSinkName(q.queryDefinition);
+    sink["name"] = toUpperCase(extractSinkName(q.queryDefinition));
     sink["type"] = "Print";
-    sink["config"]["inputFormat"] = "CSV";
+    sink["config"]["input_format"] = "CSV";
     if (q.planInfoOrException)
     {
         nlohmann::json schemaNode = nlohmann::json::array();
         for (const auto& fld : q.planInfoOrException->sinkOutputSchema)
         {
             nlohmann::json f;
-            f["name"] = toLowerCase(fld.name);
-            f["dataType"] = magic_enum::enum_name(fld.dataType.type);
+            f["name"] = fld.name;
+            f["type"] = magic_enum::enum_name(fld.dataType.type);
             schemaNode.push_back(f);
         }
         sink["schema"] = schemaNode;
@@ -73,7 +94,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     sinks.push_back(sink);
     spec["sinks"] = sinks;
 
-    // logical sources
+    /// Logical sources
     nlohmann::json logicalSources = nlohmann::json::array();
     if (q.planInfoOrException)
     {
@@ -81,13 +102,13 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
         {
             const SourceDescriptor& desc = pair.first;
             nlohmann::json ls;
-            ls["name"] = toLowerCase(desc.getLogicalSource().getLogicalSourceName());
+            ls["name"] = desc.getLogicalSource().getLogicalSourceName();
             nlohmann::json schemaNode = nlohmann::json::array();
             for (const auto& fld : desc.getLogicalSource().getSchema()->getFields())
             {
                 nlohmann::json f;
-                f["name"] = toLowerCase(fld.getUnqualifiedName());
-                f["dataType"] = magic_enum::enum_name(fld.dataType.type);
+                f["name"] = fld.getUnqualifiedName();
+                f["type"] = magic_enum::enum_name(fld.dataType.type);
                 schemaNode.push_back(f);
             }
             ls["schema"] = schemaNode;
@@ -96,10 +117,10 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     }
     if (logicalSources.size() > 0)
     {
-        spec["logicalSources"] = logicalSources;
+        spec["logical"] = logicalSources;
     }
 
-    // physical sources — reference filenames; actual data goes via ConfigMap patch
+    /// Physical sources
     nlohmann::json physicalSources = nlohmann::json::array();
     std::unordered_map<std::string, std::string> sourceFileData;
     if (q.planInfoOrException)
@@ -109,17 +130,16 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
             const SourceDescriptor& desc = pair.first;
             const SourceInputFile& sif = pair.second.first;
             nlohmann::json ps;
-            ps["logicalSource"] = toLowerCase(desc.getLogicalSource().getLogicalSourceName());
+            ps["logical"] = desc.getLogicalSource().getLogicalSourceName();
             ps["host"] = "worker-1";
-            ps["parserConfig"]["type"] = "CSV";
-            ps["type"] = "File";
+            ps["parser_config"]["type"] = desc.getParserConfig().parserType;
+            ps["type"] = desc.getSourceType();
 
-            /// Pod-local path where the operator should mount the source data ConfigMap.
+            /// Pod-local path where the operator should mount the source data PVC (PersistentVolumeClaim)
             std::string filename = sif.getRawValue().filename().string();
-            ps["sourceConfig"]["filePath"] = "/data/" + filename;
+            ps["source_config"]["file_path"] = "/data/" + filename;
 
-            /// Read the file contents — the systest will patch these into the
-            /// operator-managed ConfigMap after the topology is reconciled.
+            /// Systest will read these into the operator-managed PVC after the topology is reconciled
             std::string contents = readFileContents(sif.getRawValue());
             if (!contents.empty()) {
                 sourceFileData[filename] = std::move(contents);
@@ -130,18 +150,17 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     }
     if (!physicalSources.empty())
     {
-        spec["physicalSources"] = physicalSources;
+        spec["physical"] = physicalSources;
     }
 
-    // worker nodes
+    /// Worker nodes
     nlohmann::json workerNodes = nlohmann::json::array();
     nlohmann::json wn;
     wn["host"] = "worker-1";
-    wn["image"] = "nebulastream/worker:v2distributed";
+    wn["image"] = "nebulastream/worker:distributed-poc";
     wn["capacity"] = 100;
-    wn["worker.defaultQueryExecution.executionMode"] = "INTERPRETER"; //TODO: this part needs to be configurable (extract worker config)
     workerNodes.push_back(wn);
-    spec["workerNodes"] = workerNodes;
+    spec["workers"] = workerNodes;
 
     root["spec"] = spec;
 

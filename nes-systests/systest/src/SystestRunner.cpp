@@ -200,7 +200,9 @@ std::vector<RunningQuery> runQueries(
                     std::this_thread::sleep_for(std::chrono::seconds(5));
                 }
 
-                auto queryJson = K8sQueryBuilder::build(nextQuery);
+                auto queryJson = K8sQueryBuilder::build(nextQuery,
+                    topologyResult.topologyJson["metadata"]["name"].get<std::string>());
+                std::cerr << "[K8s DEBUG] Query JSON being submitted:\n" << queryJson.dump(2) << "\n";
                 std::string queryName = queryJson["metadata"]["name"].get<std::string>();
                 jsonSubmitter->submitJson(queryJson);
 
