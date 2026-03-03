@@ -74,11 +74,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/MultipleCorrectAndIncorrect", PATH_TO_BINARY_DIR));
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
-            .host = Host("localhost:8080"),
-            .data = "localhost:9090",
-            .capacity = DEFAULT_WORKER_CAPACITY,
-            .downstream = {},
-            .config = {}}},
+            .host = Host("localhost:8080"), .data = "localhost:9090", .capacity = DEFAULT_WORKER_CAPACITY, .downstream = {}, .config = {}}},
         .allowSourcePlacement = {Host("localhost:8080")},
         .allowSinkPlacement = {Host("localhost:8080")}};
 
@@ -109,11 +105,7 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.workingDir.setValue(fmt::format("{}/nes-systests/systest/{}", PATH_TO_BINARY_DIR, testFile));
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
-            .host = Host("localhost:8080"),
-            .data = "localhost:9090",
-            .capacity = DEFAULT_WORKER_CAPACITY,
-            .downstream = {},
-            .config = {}}},
+            .host = Host("localhost:8080"), .data = "localhost:9090", .capacity = DEFAULT_WORKER_CAPACITY, .downstream = {}, .config = {}}},
         .allowSourcePlacement = {Host("localhost:8080")},
         .allowSinkPlacement = {Host("localhost:8080")}};
 

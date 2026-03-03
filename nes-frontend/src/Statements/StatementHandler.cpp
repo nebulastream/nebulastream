@@ -196,8 +196,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
             hostPolicy);
     }();
 
-    if (const auto created
-        = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, Host(host), sinkConfig))
+    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, Host(host), sinkConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }

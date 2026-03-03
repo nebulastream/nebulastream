@@ -60,8 +60,7 @@ protected:
                       = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
                   auto dummySourceDescriptor
                       = sourceCatalog
-                            .addPhysicalSource(
-                                logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)
+                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)
                             .value();
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())

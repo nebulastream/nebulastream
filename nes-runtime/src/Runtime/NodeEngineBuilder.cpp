@@ -39,8 +39,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host host)
         workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
-    auto queryEngine
-        = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
+    auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
     auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
 

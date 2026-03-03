@@ -178,12 +178,11 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+    auto testPhysicalSource
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
-    DecomposedLogicalPlan decomposedPlan{
-        std::unordered_map<Host, std::vector<LogicalPlan>>{{Host("localhost:8080"), std::vector{plan}}}};
+    DecomposedLogicalPlan decomposedPlan{std::unordered_map<Host, std::vector<LogicalPlan>>{{Host("localhost:8080"), std::vector{plan}}}};
     const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};
 
     const auto result = runQueries(
@@ -211,12 +210,11 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
-        testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+    auto testPhysicalSource
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
-    DecomposedLogicalPlan decomposedPlan{
-        std::unordered_map<Host, std::vector<LogicalPlan>>{{Host("localhost:8080"), std::vector{plan}}}};
+    DecomposedLogicalPlan decomposedPlan{std::unordered_map<Host, std::vector<LogicalPlan>>{{Host("localhost:8080"), std::vector{plan}}}};
     const DistributedLogicalPlan distributedPlan{std::move(decomposedPlan), plan};
 
     const auto result = runQueries(

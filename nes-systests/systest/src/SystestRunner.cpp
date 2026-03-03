@@ -189,8 +189,7 @@ std::vector<RunningQuery> runQueries(
                         std::make_shared<RunningQuery>(nextQuery),
                         progressTracker,
                         failed,
-                        DistributedException(
-                            std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
+                        DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
                         queryPerformanceMessage);
                 }
             }
@@ -209,8 +208,7 @@ std::vector<RunningQuery> runQueries(
                         std::make_shared<RunningQuery>(nextQuery),
                         progressTracker,
                         failed,
-                        DistributedException(
-                            std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
+                        DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
                         queryPerformanceMessage);
                 }
             }

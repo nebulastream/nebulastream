@@ -93,8 +93,7 @@ std::optional<SourceDescriptor> SourceCatalog::addPhysicalSource(
         throw InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType);
     }
 
-    SourceDescriptor descriptor{
-        id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), parserConfigObject};
+    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), parserConfigObject};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);

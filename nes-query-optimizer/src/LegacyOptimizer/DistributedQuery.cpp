@@ -183,8 +183,7 @@ NES::DistributedQueryMetrics NES::DistributedQueryStatus::coalesceQueryMetrics()
     return metrics;
 }
 
-NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries)
-    : localQueries(std::move(localQueries))
+NES::DistributedQuery::DistributedQuery(std::unordered_map<Host, std::vector<QueryId>> localQueries) : localQueries(std::move(localQueries))
 {
 }
 

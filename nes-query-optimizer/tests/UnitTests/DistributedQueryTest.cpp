@@ -58,10 +58,9 @@ TEST_F(DistributedQueryTest, DefaultConstructor)
 
 TEST_F(DistributedQueryTest, ConstructorWithLocalQueries)
 {
-    const std::unordered_map<Host, std::vector<QueryId>> localQueries
-        = {{Host("worker-1:8080"),
-            {QueryId::createLocal(LocalQueryId(generateUUID())), QueryId::createLocal(LocalQueryId(generateUUID()))}},
-           {Host("worker-2:8080"), {QueryId::createLocal(LocalQueryId(generateUUID()))}}};
+    const std::unordered_map<Host, std::vector<QueryId>> localQueries = {
+        {Host("worker-1:8080"), {QueryId::createLocal(LocalQueryId(generateUUID())), QueryId::createLocal(LocalQueryId(generateUUID()))}},
+        {Host("worker-2:8080"), {QueryId::createLocal(LocalQueryId(generateUUID()))}}};
 
     const DistributedQuery query(localQueries);
 
@@ -119,11 +118,9 @@ TEST_F(DistributedQueryTest, EqualityOperator)
     auto qid2 = QueryId::createLocal(LocalQueryId(generateUUID()));
     auto qid3 = QueryId::createLocal(LocalQueryId(generateUUID()));
 
-    const std::unordered_map<Host, std::vector<QueryId>> localQueries1
-        = {{Host("worker-1:8080"), {qid1}}, {Host("worker-2:8080"), {qid2}}};
+    const std::unordered_map<Host, std::vector<QueryId>> localQueries1 = {{Host("worker-1:8080"), {qid1}}, {Host("worker-2:8080"), {qid2}}};
 
-    const std::unordered_map<Host, std::vector<QueryId>> localQueries2
-        = {{Host("worker-1:8080"), {qid1}}, {Host("worker-2:8080"), {qid2}}};
+    const std::unordered_map<Host, std::vector<QueryId>> localQueries2 = {{Host("worker-1:8080"), {qid1}}, {Host("worker-2:8080"), {qid2}}};
 
     const std::unordered_map<Host, std::vector<QueryId>> localQueries3 = {{Host("worker-3:8080"), {qid3}}};
 
@@ -232,8 +229,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateUnreachable)
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[Host("worker-1:8080")][QueryId::createLocal(qid1)]
         = LocalQueryStatus{.queryId = QueryId::createLocal(qid1), .state = QueryState::Running, .metrics = {}};
-    status.localStatusSnapshots[Host("worker-2:8080")][QueryId::createLocal(qid1)]
-        = std::unexpected(QueryStatusFailed("Connection error"));
+    status.localStatusSnapshots[Host("worker-2:8080")][QueryId::createLocal(qid1)] = std::unexpected(QueryStatusFailed("Connection error"));
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Unreachable);
 }
@@ -246,8 +242,7 @@ TEST_F(DistributedQueryTest, DistributedQueryStatusGlobalStateFailedWithUnreacha
     status.queryId = DistributedQueryId("test-distributed-query-1");
     status.localStatusSnapshots[Host("worker-1:8080")][QueryId::createLocal(qid1)]
         = LocalQueryStatus{.queryId = QueryId::createLocal(qid1), .state = QueryState::Failed, .metrics = {}};
-    status.localStatusSnapshots[Host("worker-2:8080")][QueryId::createLocal(qid1)]
-        = std::unexpected(QueryStatusFailed("Connection error"));
+    status.localStatusSnapshots[Host("worker-2:8080")][QueryId::createLocal(qid1)] = std::unexpected(QueryStatusFailed("Connection error"));
 
     EXPECT_EQ(status.getGlobalQueryState(), DistributedQueryState::Failed);
 }

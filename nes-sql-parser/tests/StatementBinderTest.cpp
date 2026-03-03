@@ -538,8 +538,9 @@ TEST_F(StatementBinderTest, ExplainStatement)
 
 TEST_F(StatementBinderTest, CreateWorkerStatementTest)
 {
-    const std::string statementString = "CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS `DATA`, 32 AS `CAPACITY`, 'localhost2:9090' AS "
-                                        "`DOWNSTREAM`, 'localhost1:9090' AS `DOWNSTREAM`)";
+    const std::string statementString
+        = "CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS `DATA`, 32 AS `CAPACITY`, 'localhost2:9090' AS "
+          "`DOWNSTREAM`, 'localhost1:9090' AS `DOWNSTREAM`)";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
     ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
