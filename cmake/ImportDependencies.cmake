@@ -122,6 +122,11 @@ if (NOT NES_SKIP_VCPKG)
     if (NOT USE_LIBCXX_IF_AVAILABLE)
         SET(VCPKG_STDLIB "local")
     endif ()
+    # On macOS, the system compiler always uses libc++ by default, so there is no need for
+    # separate -libcxx triplets. Always use the "local" (system default) stdlib triplets.
+    if (NES_OS STREQUAL "osx")
+        SET(VCPKG_STDLIB "local")
+    endif ()
 
     SET(VCPKG_TARGET_TRIPLET "${NES_ARCH}-${NES_OS}-${SANITIZER_OPTION}-${VCPKG_STDLIB}")
     SET(VCPKG_HOST_TRIPLET "${NES_ARCH}-${NES_OS}-none-${VCPKG_STDLIB}")
