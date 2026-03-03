@@ -37,24 +37,24 @@ class LazyValueRepresentation;
 
 /// Implementations for binary functions with the VarVal as lhs.
 /// Will call an invoke of the corresponding reverse<opname> method of the LazyValueRepresentation
-VarVal operator+(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator-(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator*(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator/(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator%(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator==(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator!=(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator&&(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator||(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator<(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator>(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator<=(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator>=(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator&(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator|(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator^(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator<<(const VarVal& other, const LazyValueRepresentation& rhs);
-VarVal operator>>(const VarVal& other, const LazyValueRepresentation& rhs);
+VarVal operator+(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator-(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator*(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator/(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator%(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator==(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator!=(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator&&(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator||(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator<(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator>(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator<=(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator>=(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator&(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator|(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator^(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator<<(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
+VarVal operator>>(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs);
 
 /// Like the VariableSizedData type, values of this data type consist of a pointer to the location of the value and the size of the value.
 /// Additionally, it stores its underlying datatype as member.
@@ -79,7 +79,7 @@ public:
     virtual ~LazyValueRepresentation() = default;
 
     LazyValueRepresentation(LazyValueRepresentation&& other) noexcept
-        : size(std::move(other.size)), ptrToLazyValue(other.ptrToLazyValue), type(other.type)
+        : size(other.size), ptrToLazyValue(other.ptrToLazyValue), type(other.type)
     {
     }
 
@@ -108,6 +108,7 @@ public:
         return size > 0 && ptrToLazyValue != nullptr;
     }
 
+
     LazyValueRepresentation& operator=(LazyValueRepresentation&& other) noexcept
     {
         if (this == &other)
@@ -119,6 +120,7 @@ public:
         ptrToLazyValue = other.ptrToLazyValue;
         return *this;
     }
+
 
     /// Converts the lazy value into a VarVal of the underlying value, as dictated by the type member.
     [[nodiscard]] VarVal parseValue() const;
@@ -167,6 +169,6 @@ public:
 protected:
     nautilus::val<uint64_t> size;
     nautilus::val<int8_t*> ptrToLazyValue;
-    const DataType::Type type;
+    DataType::Type type;
 };
 }

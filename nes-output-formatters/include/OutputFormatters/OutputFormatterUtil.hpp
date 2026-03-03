@@ -129,8 +129,8 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     {
         /// Lazy value representations do not have to be converted and can be written directly
         /// This potentially saves us parsing operations
-        const LazyValueRepresentation lazyVal = value.cast<LazyValueRepresentation>();
-        if (lazyVal.getSize() > remainingSize)
+        const auto lazyVal = value.cast<std::shared_ptr<LazyValueRepresentation>>();
+        if (lazyVal->getSize() > remainingSize)
         {
             nautilus::invoke(
                 +[](const int8_t* lazyVal,
@@ -143,8 +143,8 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
                     const std::string lazyValAsString(reinterpret_cast<const char*>(lazyVal), contentSize);
                     writeWithChildBuffers(lazyValAsString, remainingSpace, tupleBuffer, bufferProvider, address);
                 },
-                lazyVal.getContent(),
-                lazyVal.getSize(),
+                lazyVal->getContent(),
+                lazyVal->getSize(),
                 address,
                 remainingSize,
                 recordBuffer.getReference(),
@@ -153,8 +153,8 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
         }
         else
         {
-            nautilus::memcpy(address, lazyVal.getContent(), lazyVal.getSize());
-            writtenBytes += lazyVal.getSize();
+            nautilus::memcpy(address, lazyVal->getContent(), lazyVal->getSize());
+            writtenBytes += lazyVal->getSize();
         }
     }
     else

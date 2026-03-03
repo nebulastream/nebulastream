@@ -12,7 +12,7 @@ ATTACH INLINE
 
 
 # Filter equal
-SELECT id, value, a, b FROM stream WHERE id == UINT64(1) INTO FILE();
+SELECT id, value, a, b FROM stream WHERE UINT64(1) == id INTO FILE();
 ----
 1,3,9,9
 

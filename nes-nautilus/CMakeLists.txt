@@ -9,7 +9,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 include_directories(tests/include)
 
 # Set Sources and Headers
@@ -33,6 +33,7 @@ add_tests_if_enabled(tests)
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
 )
 
 # Link with the nautilus library
@@ -51,3 +52,5 @@ target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
         MLIRMathToLLVM
         MLIRSCFToControlFlow
 )
+
+create_registries_for_component(LazyValueRepresentation)

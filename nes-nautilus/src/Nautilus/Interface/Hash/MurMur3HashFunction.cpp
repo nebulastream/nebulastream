@@ -125,10 +125,16 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
         .customVisit(
             [&]<typename T>(const T& val) -> VarVal
             {
-                if constexpr (std::is_same_v<T, VariableSizedData> || std::derived_from<T, LazyValueRepresentation>)
+                if constexpr (std::is_same_v<T, VariableSizedData>)
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
+                }
+                else if constexpr (std::derived_from<T, std::shared_ptr<LazyValueRepresentation>>)
+                {
+                    const auto lazyVal = val;
+                    return hash ^ nautilus::invoke(hashBytes, lazyVal->getContent(), lazyVal->getSize());
+
                 }
                 else
                 {

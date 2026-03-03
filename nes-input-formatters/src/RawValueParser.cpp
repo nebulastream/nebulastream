@@ -23,7 +23,9 @@
 #include <utility>
 
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -51,12 +53,16 @@ void parseRawValueIntoRecord(
     }
     if (physicalType == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
     {
-        const LazyValueRepresentation lazyVal(
-            fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2), physicalType);
+        const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+            std::string(magic_enum::enum_name(physicalType)),
+            fieldAddress + nautilus::val<uint32_t>(1),
+            fieldSize - nautilus::val<uint32_t>(2),
+            physicalType);
         record.write(fieldName, lazyVal);
         return;
     }
-    const LazyValueRepresentation lazyVal(fieldAddress, fieldSize, physicalType);
+    const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+        std::string(magic_enum::enum_name(physicalType)), fieldAddress, fieldSize, physicalType);
     record.write(fieldName, lazyVal);
 }
 

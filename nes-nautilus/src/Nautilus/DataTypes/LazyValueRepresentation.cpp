@@ -95,9 +95,9 @@ VarVal LazyValueRepresentation::parseValue() const
 
 /// Macro to call the reverse function of the lazy value for every case of lhs = Varval, rhs = LazyValue
 #define DEFINE_CALL_REVERSE_OP(operatorSign, reverseFunc) \
-    VarVal operatorSign(const VarVal& other, const LazyValueRepresentation& rhs) \
+    VarVal operatorSign(const VarVal& other, const std::shared_ptr<LazyValueRepresentation>& rhs) \
     { \
-        return rhs.reverseFunc(other); \
+        return rhs->reverseFunc(other); \
     }
 
 /// Default implementation of operations on lazy values: The lazy value is parsed and the function is applied to the underlying varval

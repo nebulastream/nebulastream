@@ -95,7 +95,6 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
         target_link_libraries(${plugin_registry_component} PUBLIC ${plugin_library})
     endforeach ()
 
-    # add ';'s to the end of the generated function [declarations|calls], and add further formatting (new line and tab)
     string(REPLACE ";" ";\n" REGISTER_FUNCTION_DECLARATIONS "${REGISTER_FUNCTION_DECLARATIONS};")
     string(REPLACE ";" ";\n\t" REGISTER_ALL_FUNCTION_CALLS "${REGISTER_ALL_FUNCTION_CALLS};")
 

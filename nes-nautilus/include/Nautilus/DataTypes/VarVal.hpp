@@ -14,8 +14,10 @@
 
 #pragma once
 
+#include <concepts>
 #include <cstdint>
 #include <variant>
+
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
@@ -35,7 +37,7 @@ namespace NES
 namespace detail
 {
 template <typename... T>
-using var_val_helper = std::variant<LazyValueRepresentation, VariableSizedData, nautilus::val<T>...>;
+using var_val_helper = std::variant<std::shared_ptr<LazyValueRepresentation>, VariableSizedData, nautilus::val<T>...>;
 using var_val_t = var_val_helper<bool, uint8_t, uint16_t, uint32_t, uint64_t, int8_t, int16_t, int32_t, int64_t, float, double, char>;
 
 
@@ -100,10 +102,10 @@ public:
         {
             return std::get<T1>(value);
         }
-        if (std::is_same_v<T1, VariableSizedData> && std::holds_alternative<LazyValueRepresentation>(value))
+        if (std::is_same_v<T1, VariableSizedData> && std::holds_alternative<std::shared_ptr<LazyValueRepresentation>>(value))
         {
-            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
-            return lazyVal.parseValue().cast<T1>();
+            const auto lazyVal = std::get<std::shared_ptr<LazyValueRepresentation>>(value);
+            return lazyVal->parseValue().cast<T1>();
         }
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
@@ -115,8 +117,7 @@ public:
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
                 }
                 else if constexpr (
-                    std::derived_from<removedCVRefT0, LazyValueRepresentation>
-                    || std::derived_from<removedCVRefT1, LazyValueRepresentation>)
+                    std::is_same_v<removedCVRefT0, std::shared_ptr<LazyValueRepresentation>> || std::is_same_v<removedCVRefT1, std::shared_ptr<LazyValueRepresentation>>)
                 {
                     throw UnknownOperation("Cannot cast LazyValueRepresentation to anything else.");
                 }
@@ -131,7 +132,7 @@ public:
     /// Casts the underlying value to the provided type. castToType() or cast<T>() should be the only way how the underlying value can be accessed.
     [[nodiscard]] VarVal castToType(DataType::Type type) const;
 
-    [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<LazyValueRepresentation>(value); }
+    [[nodiscard]] bool isLazyValue() const { return std::holds_alternative<std::shared_ptr<LazyValueRepresentation>>(value); }
 
     /// If the underlying value is still a lazy value, create a new varval with the parsed value and return it
     /// Will never manipulate this varval so it is thread safe
@@ -139,8 +140,8 @@ public:
     {
         if (isLazyValue())
         {
-            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
-            const VarVal parsedLazyVal = lazyVal.parseValue();
+            const auto lazyVal = std::get<std::shared_ptr<LazyValueRepresentation>>(value);
+            const VarVal parsedLazyVal = lazyVal->parseValue();
             return parsedLazyVal;
         }
         return *this;
@@ -152,8 +153,8 @@ public:
     {
         if (isLazyValue())
         {
-            const LazyValueRepresentation lazyVal = std::get<LazyValueRepresentation>(value);
-            const VarVal parsedLazyVal = lazyVal.parseValue();
+            const auto lazyVal = std::get<std::shared_ptr<LazyValueRepresentation>>(value);
+            const VarVal parsedLazyVal = lazyVal->parseValue();
             value = parsedLazyVal.value;
         }
     }

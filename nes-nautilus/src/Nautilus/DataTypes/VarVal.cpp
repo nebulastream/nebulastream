@@ -67,7 +67,7 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
     std::visit(
         [&]<typename ValType>(const ValType& val)
         {
-            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, LazyValueRepresentation>)
+            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, std::shared_ptr<LazyValueRepresentation>>)
             {
                 throw UnknownOperation(
                     std::string("VarVal T::operation=(val) not implemented for VariableSizedData and LazyValueRepresentation"));
@@ -231,9 +231,9 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
         return std::visit( \
             [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) -> VarVal \
             { \
-                if constexpr (std::is_same_v<LHS, LazyValueRepresentation> && std::is_same_v<RHS, LazyValueRepresentation>) \
+                if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>) \
                 { \
-                    return lhsVal.operatorName(rhsVal); \
+                    return lhsVal->operatorName(rhsVal); \
                 } \
                 if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
