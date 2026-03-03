@@ -52,3 +52,11 @@ ERROR 2000
 SELECT start, end, MEDIAN(i) + 1 AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
 ----
 ERROR 2000
+
+# Window without aggregation: should produce start/end columns.
+CREATE SINK sinkWindowOnly(input.start UINT64, input.end UINT64) TYPE File;
+SELECT start, end FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkWindowOnly;
+----
+100, 200
+200, 300
+300, 400
