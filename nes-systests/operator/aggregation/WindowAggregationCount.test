@@ -1,0 +1,93 @@
+# name: window/WindowAggregationCount.test
+# description: Test COUNT(*) vs COUNT(column_name) with null value handling
+# groups: [Aggregation, WindowOperators, NullHandling]
+
+
+CREATE LOGICAL SOURCE stream(value INT32, ts UINT64 NOT NULL, id INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+10,10,1
+30,20,2
+,60,1
+40,110,2
+50,160,1
+,210,2
+
+
+CREATE SINK sinkCountStar(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBoth(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.rowCount UINT64 NOT NULL, stream.valueCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountStarKeyed(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.id INT32 NOT NULL, stream.rowCount UINT64 NOT NULL) TYPE File;
+CREATE SINK sinkCountBothKeyed(stream.start UINT64 NOT NULL, stream.end UINT64 NOT NULL, stream.id INT32 NOT NULL, stream.rowCount UINT64 NOT NULL, stream.valueCount UINT64 NOT NULL) TYPE File;
+
+
+# COUNT(*) counts all rows including those with null values - tumbling window
+SELECT start, end, COUNT(*) AS rowCount
+FROM stream WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountStar;
+----
+0,100,3
+100,200,2
+200,300,1
+
+
+# COUNT(*) vs COUNT(column_name) - tumbling window
+# COUNT(*) includes rows with null value, COUNT(value) does not
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM stream WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+100,200,2,2
+200,300,1,0
+
+
+# COUNT(*) with keyed tumbling window
+SELECT start, end, id, COUNT(*) AS rowCount
+FROM stream GROUP BY (id) WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountStarKeyed;
+----
+0,100,1,2
+0,100,2,1
+100,200,2,1
+100,200,1,1
+200,300,2,1
+
+
+# COUNT(*) vs COUNT(column_name) with keyed tumbling window
+SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM stream GROUP BY (id) WINDOW TUMBLING(ts, size 100 ms)
+INTO sinkCountBothKeyed;
+----
+0,100,1,2,1
+0,100,2,1,1
+100,200,2,1,1
+100,200,1,1,1
+200,300,2,1,0
+
+
+# COUNT(*) vs COUNT(column_name) - sliding window
+SELECT start, end, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+INTO sinkCountBoth;
+----
+0,100,3,2
+50,150,2,1
+100,200,2,2
+150,250,2,1
+200,300,1,0
+
+
+# COUNT(*) vs COUNT(column_name) with keyed sliding window
+SELECT start, end, id, COUNT(*) AS rowCount, COUNT(value) AS valueCount
+FROM stream GROUP BY (id) WINDOW SLIDING(ts, size 100 ms, advance by 50 ms)
+INTO sinkCountBothKeyed;
+----
+0,100,1,2,1
+0,100,2,1,1
+50,150,1,1,0
+50,150,2,1,1
+100,200,2,1,1
+100,200,1,1,1
+150,250,1,1,1
+150,250,2,1,0
+200,300,2,1,0
