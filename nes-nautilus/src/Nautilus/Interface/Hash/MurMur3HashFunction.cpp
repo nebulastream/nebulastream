@@ -13,8 +13,10 @@
 */
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 
+#include <concepts>
 #include <cstdint>
 #include <memory>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -127,6 +129,12 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
+                }
+                else if constexpr (std::derived_from<T, std::shared_ptr<LazyValueRepresentation>>)
+                {
+                    const auto lazyVal = val;
+                    return hash ^ nautilus::invoke(hashBytes, lazyVal->getContent(), lazyVal->getSize());
+
                 }
                 else
                 {

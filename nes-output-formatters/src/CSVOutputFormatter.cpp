@@ -123,12 +123,29 @@ void writeValue(
         case DataType::Type::FLOAT64:
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR: {
-            /// Convert the VarVal to a string and write it into the address.
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
+            if (value.isLazyValue())
+            {
+                const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                const auto amountWritten = nautilus::invoke(
+                    writeVarsized,
+                    fieldPointer,
+                    currentRemainingSize,
+                    nautilus::val<bool>{false},
+                    lazyValue->getContent(),
+                    lazyValue->getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
+            else
+            {
+                /// Convert the VarVal to a string and write it into the address.
+                const nautilus::val<uint64_t> amountWritten
+                    = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
         }
         case DataType::Type::UNDEFINED: {
             throw UnknownDataType("CSV-OutputFormatting for type UNDEFINED is not supported.");

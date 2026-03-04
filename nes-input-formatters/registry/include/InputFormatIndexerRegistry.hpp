@@ -49,8 +49,8 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
-        auto inputFormatter
-            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+        auto inputFormatter = InputFormatter<IndexerType>(
+            std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
     }
 

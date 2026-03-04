@@ -17,6 +17,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/DynamicBase.hpp>

@@ -70,9 +70,11 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
     std::visit(
         [&]<typename ValType>(const ValType& val)
         {
-            if constexpr (std::is_same_v<ValType, VariableSizedData>)
+            if constexpr (
+                std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, std::shared_ptr<LazyValueRepresentation>>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
+                throw UnknownOperation(
+                    std::string("VarVal T::operation=(val) not implemented for VariableSizedData and LazyValueRepresentation"));
             }
             else
             {
@@ -225,14 +227,20 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
     return std::visit(
         [&]<typename LHS, typename RHS>(const LHS& trueUnderlying, const RHS& falseUnderlying) -> VarVal
         {
-            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData>)
+            if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, std::shared_ptr<LazyValueRepresentation>>)
+            {
+                throw UnknownOperation("nautilus::select is not supported for LazyValueRepresentations");
+                std::unreachable();
+            }
+            if constexpr (
+                std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData>
+                && !std::same_as<LHS, std::shared_ptr<LazyValueRepresentation>>)
             {
                 return VarVal{
                     nautilus::select(condition, trueUnderlying, falseUnderlying),
                     trueValue.nullable or falseValue.nullable,
                     nautilus::select(condition, trueValue.null, falseValue.null)};
             }
-
             if constexpr (std::same_as<LHS, RHS> && std::same_as<LHS, VariableSizedData>)
             {
                 return VarVal{
@@ -295,7 +303,15 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
              leftIsNull = this->isNull(), \
              rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
             { \
-                if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
+                if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>) \
+                { \
+                    return lhsVal->operatorName(VarVal{rhsVal,rightIsNullable,rightIsNull}); \
+                } \
+                else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>) \
+                { \
+                    return VarVal{lhsVal,leftIsNullable,leftIsNull} op rhsVal; \
+                } \
+                else if constexpr (requires(LHS lhs, RHS rhs) { lhs op rhs; }) \
                 { \
                     if (leftIsNullable or rightIsNullable) \
                     { \
@@ -314,13 +330,18 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
             this->value, \
             other.value); \
     }
+
 #define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
     VarVal VarVal::operatorName() const \
     { \
         return std::visit( \
             [isNullable = isNullable(), isNull = isNull()]<typename RHS>(const RHS& rhsVal) \
             { \
-                if constexpr (!requires(RHS rhs) { op rhs; }) \
+                if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>) \
+                { \
+                    return VarVal{op rhsVal}; \
+                } \
+                else if constexpr (!requires(RHS rhs) { op rhs; }) \
                 { \
                     throw UnknownOperation("VarVal operation not implemented: " #op "{}", NAMEOF_TYPE(RHS)); \
                     return VarVal{detail::var_val_t(rhsVal), true, false}; \
@@ -349,7 +370,15 @@ VarVal VarVal::operator/(const VarVal& other) const
          leftIsNull = this->isNull(),
          rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
         {
-            if constexpr (requires(LHS l, RHS r) { l / r; })
+            if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>)
+            {
+                return lhsVal->operator/(VarVal{rhsVal,rightIsNullable,rightIsNull});
+            }
+            else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>)
+            {
+                return VarVal{lhsVal,leftIsNullable,leftIsNull} / rhsVal;
+            }
+            else if constexpr (requires(LHS l, RHS r) { l / r; })
             {
                 if (leftIsNullable or rightIsNullable)
                 {
@@ -387,7 +416,15 @@ VarVal VarVal::operator%(const VarVal& other) const
          leftIsNull = this->isNull(),
          rightIsNull = other.isNull()]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
         {
-            if constexpr (requires(LHS l, RHS r) { l % r; })
+            if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>)
+            {
+                return lhsVal->operator%(VarVal{rhsVal,rightIsNullable,rightIsNull});
+            }
+            else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>)
+            {
+                return VarVal{lhsVal,leftIsNullable,leftIsNull} % rhsVal;
+            }
+            else if constexpr (requires(LHS l, RHS r) { l % r; })
             {
                 if (leftIsNullable or rightIsNullable)
                 {

@@ -26,8 +26,10 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/common/FunctionAttributes.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <select.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -89,6 +91,42 @@ ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldS
     const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
     result.value = NES::from_chars_with_exception<T>(fieldAsString);
     return &result;
+}
+
+template <typename T>
+T parseRawValue(const char* fieldAddress, const uint64_t fieldSize)
+{
+    const auto fieldView = std::string_view(fieldAddress, fieldSize);
+    return NES::from_chars_with_exception<T>(fieldView);
+}
+
+/// Used by the LazyValueRepresentations to parse a lazy value into teh corresponding nautilus val
+/// nullable is given as arg, because it can be resolved during compile time. If nullable = false, we can avoid branching over isNull
+template <typename T>
+nautilus::val<T> parseIntoNautilusRecord(
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const nautilus::val<bool>& nullable,
+    const nautilus::val<bool>& isNull)
+{
+    if (nullable)
+    {
+        nautilus::val<T> value = 0;
+        if (!isNull)
+        {
+            value = nautilus::invoke(
+                nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+                parseRawValue<T>,
+                fieldAddress,
+                fieldSize);
+        }
+        return value;
+    }
+    return nautilus::invoke(
+        nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
+        parseRawValue<T>,
+        fieldAddress,
+        fieldSize);
 }
 
 template <typename T>
