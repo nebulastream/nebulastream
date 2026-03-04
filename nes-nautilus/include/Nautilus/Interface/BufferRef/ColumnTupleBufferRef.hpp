@@ -20,7 +20,10 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <val_arith.hpp>
+#include <val_concepts.hpp>
 
 namespace NES
 {
@@ -62,7 +65,7 @@ public:
         const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
 
-    void writeRecord(
+    WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

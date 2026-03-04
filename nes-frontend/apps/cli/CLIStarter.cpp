@@ -116,6 +116,7 @@ struct Sink
     std::vector<SchemaField> schema;
     std::string type;
     std::unordered_map<std::string, std::string> config;
+    std::unordered_map<std::string, std::string> parserConfig;
 };
 
 struct LogicalSource
@@ -163,6 +164,7 @@ struct convert<NES::CLI::Sink>
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         return true;
     }
 };
@@ -341,7 +343,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical), .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig});
     }
-    for (const auto& [name, schemaFields, type, config] : sinks)
+    for (const auto& [name, schemaFields, type, config, parserConfig] : sinks)
     {
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
@@ -349,7 +351,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             schema.addField(schemaField.name, schemaField.type);
         }
 
-        statements.emplace_back(NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config});
+        statements.emplace_back(
+            NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config, .formatConfig = parserConfig});
     }
     return statements;
 }
