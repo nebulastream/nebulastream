@@ -37,19 +37,20 @@ namespace NES
 class CountAggregationLogicalFunction
 {
 public:
-    explicit CountAggregationLogicalFunction(AggregationFieldAccess inputFunction);
+    explicit CountAggregationLogicalFunction(AggregationFieldAccess inputFunction, bool includeNullValues);
 
     [[nodiscard]] CountAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] static DataType getAggregateType();
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
-    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& other) const;
 
 private:
     AggregationFieldAccess inputFunction;
+    bool includeNullValues = false;
     static constexpr std::string_view NAME = "Count";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::UINT64;
 };
