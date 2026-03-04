@@ -22,6 +22,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES
@@ -71,6 +72,7 @@ connections.  Valid values include dns:///localhost:1234,
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
+    std::optional<QueryOptimizerConfiguration> queryOptimizerConfig;
 
 protected:
     std::vector<BaseOption*> getOptions() override;
