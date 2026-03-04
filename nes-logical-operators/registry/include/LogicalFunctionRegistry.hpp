@@ -31,11 +31,13 @@ using LogicalFunctionRegistryReturnType = LogicalFunction;
 struct LogicalFunctionRegistryArguments
 {
     std::vector<LogicalFunction> children;
-    Reflected reflected;
 };
 
-class LogicalFunctionRegistry
-    : public BaseRegistry<LogicalFunctionRegistry, std::string, LogicalFunctionRegistryReturnType, LogicalFunctionRegistryArguments>
+class LogicalFunctionRegistry : public BaseRegistryWithUnreflection<
+                                    LogicalFunctionRegistry,
+                                    std::string,
+                                    LogicalFunctionRegistryReturnType,
+                                    LogicalFunctionRegistryArguments>
 {
 };
 }

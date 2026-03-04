@@ -105,10 +105,6 @@ ModuloLogicalFunction Unreflector<ModuloLogicalFunction>::operator()(const Refle
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterModLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<ModuloLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("ModuloLogicalFunction requires exactly two children, but got {}", arguments.children.size());

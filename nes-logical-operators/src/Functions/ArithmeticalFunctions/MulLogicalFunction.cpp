@@ -106,10 +106,6 @@ MulLogicalFunction Unreflector<MulLogicalFunction>::operator()(const Reflected& 
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterMulLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<MulLogicalFunction>(arguments.reflected);
-    }
     if (arguments.children.size() != 2)
     {
         throw CannotDeserialize("MulLogicalFunction requires exactly two children, but got {}", arguments.children.size());

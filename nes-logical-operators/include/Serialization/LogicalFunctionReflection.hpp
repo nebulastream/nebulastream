@@ -17,8 +17,6 @@
 #include <string>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Reflection.hpp>
-#include <ErrorHandling.hpp>
-#include <LogicalFunctionRegistry.hpp>
 
 namespace NES::detail
 {
@@ -50,29 +48,13 @@ struct Reflector<TypedLogicalFunction<Checked>>
 template <>
 struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
 {
-    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function) const
-    {
-        return reflect(
-            detail::ReflectedLogicalFunction{.functionType = std::string{function.getType()}, .functionConfig = function->reflect()});
-    }
+    Reflected operator()(const TypedLogicalFunction<detail::ErasedLogicalFunction>& function) const;
 };
 
 template <>
 struct Unreflector<TypedLogicalFunction<>>
 {
-    TypedLogicalFunction<> operator()(const Reflected& rfl, const ReflectionContext& context) const
-    {
-        auto [name, data] = context.unreflect<detail::ReflectedLogicalFunction>(rfl);
-
-        LogicalFunctionRegistryArguments argument;
-        argument.reflected = data;
-        auto logicalFunction = LogicalFunctionRegistry::instance().create(name, argument);
-        if (!logicalFunction.has_value())
-        {
-            throw CannotDeserialize("Failed to unreflect logical function of type {}", name);
-        }
-        return logicalFunction.value();
-    }
+    TypedLogicalFunction<> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(requires(LogicalFunction logicalFunction) {

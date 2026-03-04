@@ -108,11 +108,6 @@ NegateLogicalFunction Unreflector<NegateLogicalFunction>::operator()(const Refle
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterNegateLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<NegateLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("NegateLogicalFunction requires exactly one child, but got {}", arguments.children.size());
