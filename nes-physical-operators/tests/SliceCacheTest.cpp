@@ -78,34 +78,51 @@ public:
         options.setOption("engine.Compilation", compilation);
         options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
-
-        if (useSliceCache)
-        {
-            sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntries, sizeof(SliceCacheEntrySecondChance));
-        }
-        else
-        {
-            sliceCache = std::make_unique<SliceCacheNone>();
-        }
-
-
     }
 
     void createRandomSliceCacheTestOperation()
     {
         SliceAssigner sliceAssigner(sliceCacheSize, sliceCacheSize);
-        // todo create here random SliceCacheTestOperation so that we can use them in each test
+        // todo create here random SliceCacheTestOperation and add them to operations so that we can use them in each test
+        // todo use randomness but print out the seed
+        // at the end of this method the vector operations should be shuffled
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
+
+
+class SecondChanceCache
+{
+    // todo implement a second chance/clock cache so that we can test if our nautilus cache implementation is correct. performance should not be a priority, rather simplicity.
+    // it should work similar to the SliceCacheSecondChance but DO NOT copy the implementation here. implement it from scratch with c++ datastructures and datatypes. again: performance should not be a priority, rather simplicity.
+    // this cache should expect a SliceCacheTestOperation and should return hit/miss and the pointer to the data structure
+    // this cache can expect to be provided numberOfEntries via a constructor
+
+};
+
+TEST_P(SliceCacheTest, testSliceCacheNone)
+{
+    sliceCache = std::make_unique<SliceCacheNone>();
+
+    // todo add code here that checks if the SliceCacheNone always returns the passed in newCacheItem of getDataStructureRef
+}
+
+TEST_P(SliceCacheTest, testSliceCacheSecondChance)
+{
+    sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntries, sizeof(SliceCacheEntrySecondChance));
+
+    // todo add code here that checks the correct workings of second chance. use here the SecondChanceCache to check for each SliceCacheTestOperation if the nautilus impl is correct.
+    // one idea to check for a miss is to check if the SliceCacheReplacement callback was called
+    // if the pointer was returned without the SliceCacheReplacement callback being called it was a hit
+    // also check if the returned pointer is equal to the SecondChanceCache
+}
 
 INSTANTIATE_TEST_CASE_P(
     SliceCacheTest,
     SliceCacheTest,
     ::testing::Combine(
         ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
-        ::testing::Values(false, true), /// Testing if SliceCache and NONE work as expected
         ::testing::Values(1, 5, 10, 15), /// Number of cache entries
         ::testing::Values(1, 10, 100, 1000) /// Size of slice
         ),
