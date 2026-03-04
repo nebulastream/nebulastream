@@ -19,15 +19,14 @@
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
-#include <Rules/Semantic/RedundantProjectionRemovalRule.hpp>
-#include <Rules/Semantic/RedundantUnionRemovalRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
+
 namespace NES
 {
-LogicalPlan SemanticAnalyser::optimize(const LogicalPlan& plan) const
+LogicalPlan SemanticAnalyser::analyse(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
@@ -37,24 +36,16 @@ LogicalPlan SemanticAnalyser::optimize(const LogicalPlan& plan) const
     const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
     constexpr auto typeInferenceRule = TypeInferenceRule{};
     constexpr auto originIdInferenceRule = OriginIdInferenceRule{};
-    constexpr auto redundantUnionRemovalRule = RedundantUnionRemovalRule{};
-    constexpr auto redundantProjectionRemovalRule = RedundantProjectionRemovalRule{};
 
     inlineSinkBindingRule.apply(newPlan);
     sinkBindingRule.apply(newPlan);
     inlineSourceBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
-    NES_INFO("After Source Expansion:\n{}", newPlan);
-    redundantUnionRemovalRule.apply(newPlan);
-    NES_INFO("After Redundant Union Removal:\n{}", newPlan);
     typeInferenceRule.apply(newPlan);
-
-    redundantProjectionRemovalRule.apply(newPlan);
-    NES_INFO("After Redundant Projection Removal:\n{}", newPlan);
-
     originIdInferenceRule.apply(newPlan);
     typeInferenceRule.apply(newPlan);
+
     return newPlan;
 }
 }

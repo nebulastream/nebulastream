@@ -237,8 +237,9 @@ int main(int argc, char** argv)
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
-        auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
+        auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

@@ -13,6 +13,3 @@
 add_subdirectory(Traits)
 add_subdirectory(Phases)
 add_subdirectory(Rules)
-
-add_source_files(nes-query-optimizer
-        OptimizedPlan.cpp)

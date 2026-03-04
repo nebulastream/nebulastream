@@ -186,8 +186,8 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> optimizer)
-    : queryManager(std::move(queryManager)), optimizer(std::move(optimizer))
+QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> semanticAnalyser, SharedPtr<const QueryOptimizer> queryOptimizer)
+    : queryManager(std::move(queryManager)), semanticAnalyser(std::move(semanticAnalyser)), queryOptimizer(std::move(queryOptimizer))
 {
 }
 
@@ -209,9 +209,10 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
         fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
 
-        const auto optimizedPlan = optimizer->optimize(statement.plan);
+        auto plan = semanticAnalyser->analyse(statement.plan);
+        plan = queryOptimizer->optimize(plan);
 
-        fmt::println(explainMessage, "Optimized Global Plan:\n{}", optimizedPlan);
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", plan);
 
         return ExplainQueryStatementResult{explainMessage.str()};
     }
@@ -226,13 +227,14 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto optimizedPlan = optimizer->optimize(statement.plan);
+        auto plan = semanticAnalyser->analyse(statement.plan);
+        plan = queryOptimizer->optimize(plan);
 
         if (statement.id)
         {
-            optimizedPlan.setQueryId(QueryId(*statement.id));
+            plan.setQueryId(QueryId(*statement.id));
         }
-        const auto queryResult = queryManager->registerQuery(optimizedPlan);
+        const auto queryResult = queryManager->registerQuery(plan);
         return queryResult
             .and_then(
                 [this](const auto& query)

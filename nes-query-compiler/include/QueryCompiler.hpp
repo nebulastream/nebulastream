@@ -18,7 +18,7 @@
 
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
-#include <OptimizedPlan.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation
@@ -27,7 +27,7 @@ namespace NES::QueryCompilation
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
-    OptimizedPlan queryPlan;
+    LogicalPlan queryPlan;
 
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;

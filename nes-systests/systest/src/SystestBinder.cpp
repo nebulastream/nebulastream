@@ -221,7 +221,7 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
-    void optimizeQueries(const NES::SemanticAnalyser& optimizer)
+    void optimizeQueries(const NES::SemanticAnalyser& semanticAnalyser)
     {
         if (!boundPlan.has_value())
         {
@@ -229,7 +229,7 @@ public:
         }
         try
         {
-            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+            setOptimizedPlan(semanticAnalyser.analyse(boundPlan.value()));
         }
         catch (Exception& e)
         {
@@ -242,7 +242,7 @@ public:
         {
             try
             {
-                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
+                auto optimizedDiff = semanticAnalyser.analyse(differentialQueryPlan.value());
                 setDifferentialQueryPlan(std::move(optimizedDiff));
             }
             catch (Exception& e)
@@ -415,7 +415,7 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const SemanticAnalyser optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const SemanticAnalyser semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -428,7 +428,7 @@ struct SystestBinder::Impl
             }
 
             foundQueries.insert(builder.getSystemTestQueryId());
-            builder.optimizeQueries(optimizer);
+            builder.optimizeQueries(semanticAnalyser);
             for (auto& query : std::move(builder).build())
             {
                 buildSystests.emplace_back(std::move(query));

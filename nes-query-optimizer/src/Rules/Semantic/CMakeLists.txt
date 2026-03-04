@@ -15,8 +15,6 @@ add_source_files(nes-query-optimizer
         InlineSourceBindingRule.cpp
         SourceInferenceRule.cpp
         LogicalSourceExpansionRule.cpp
-        RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp
         OriginIdInferenceRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Semantic/RedundantUnionRemovalRule.hpp>
+#include <Rules/Static/RedundantUnionRemovalRule.hpp>
 
 #include <ranges>
 #include <utility>

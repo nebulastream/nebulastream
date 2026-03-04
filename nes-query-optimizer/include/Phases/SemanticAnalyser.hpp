@@ -29,7 +29,7 @@ namespace NES
 class SemanticAnalyser
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] LogicalPlan analyse(const LogicalPlan& plan) const;
     SemanticAnalyser() = default;
 
     explicit SemanticAnalyser(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)

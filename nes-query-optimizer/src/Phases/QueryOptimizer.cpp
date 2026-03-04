@@ -15,27 +15,40 @@
 #include <Phases/QueryOptimizer.hpp>
 
 #include <Plans/LogicalPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
+
+#include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
-#include <OptimizedPlan.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
+#include <Rules/Static/RedundantUnionRemovalRule.hpp>
 
 namespace NES
 {
 
-OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
+LogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
     return optimize(plan, defaultQueryOptimization);
 }
 
-OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization)
+LogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
     DecideJoinTypesRule joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayoutRule memoryLayoutDecider;
-    auto optimizedPlan = joinTypeDecider.apply(plan);
-    return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
+    constexpr RedundantUnionRemovalRule redundantUnionRemovalRule{};
+    constexpr RedundantProjectionRemovalRule  redundantProjectionRemovalRule{};
+    constexpr TypeInferenceRule typeInferenceRule{};
+
+    auto optimizedPlan = LogicalPlan{plan};
+    redundantProjectionRemovalRule.apply(optimizedPlan);
+    redundantUnionRemovalRule.apply(optimizedPlan);
+    typeInferenceRule.apply(optimizedPlan);
+    optimizedPlan = joinTypeDecider.apply(optimizedPlan);
+    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
+
+    return optimizedPlan;
 }
 
 }

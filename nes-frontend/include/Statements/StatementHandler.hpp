@@ -21,6 +21,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
@@ -35,6 +36,7 @@
 #include <experimental/propagate_const>
 #include <ErrorHandling.hpp>
 #include <WorkerStatus.hpp>
+#include <Phases/QueryOptimizer.hpp>
 
 namespace NES
 {
@@ -178,10 +180,11 @@ public:
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
-    SharedPtr<const SemanticAnalyser> optimizer;
+    SharedPtr<const SemanticAnalyser> semanticAnalyser;
+    SharedPtr<const QueryOptimizer> queryOptimizer;
 
 public:
-    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> optimizer);
+    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> semanticAnalyser, SharedPtr<const QueryOptimizer> queryOptimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);

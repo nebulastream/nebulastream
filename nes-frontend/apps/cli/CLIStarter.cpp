@@ -469,8 +469,9 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
-    NES::QueryStatementHandler queryHandler{queryManager, optimizer};
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
+    NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
@@ -505,13 +506,14 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
@@ -530,7 +532,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result

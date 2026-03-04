@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Semantic/RedundantProjectionRemovalRule.hpp>
+#include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 
 #include <ranges>
 #include <utility>
