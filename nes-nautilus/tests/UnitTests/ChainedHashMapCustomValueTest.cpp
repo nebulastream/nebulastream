@@ -29,6 +29,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
+#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -156,7 +157,6 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     ASSERT_EQ(allKeyPositions.size(), inputBuffers.size()) << "The key positions should have the same size as the input buffers";
 
     /// Now we are searching for the entries and checking if the values are correct.
-    auto writeAllRecordsIntoOutputBuffer = compileWriteAllRecordsIntoOutputBuffer(projectionAllFields);
     for (auto [buffer, keyPositionInBuffer] : std::views::zip(inputBuffers, allKeyPositions))
     {
         /// Getting the record key from the input buffer, so that we can compare the values with the exact map.
@@ -177,6 +177,12 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
             ASSERT_TRUE(false);
         }
         auto outputBuffer = outputBufferOpt.value();
+
+        /// Create a buffer ref for the outputbuffer, as its size may differ from the pooled buffer size
+        const auto outputBufferRef
+            = LowerSchemaProvider::lowerSchema(outputBuffer.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+
+        auto writeAllRecordsIntoOutputBuffer = compileWriteAllRecordsIntoOutputBuffer(projectionAllFields, outputBufferRef);
 
         /// Calling the compiled method to write all values of the hash map for a specific key position to the output buffer.
         writeAllRecordsIntoOutputBuffer(
