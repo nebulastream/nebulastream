@@ -16,7 +16,9 @@
 
 #include <cstdint>
 #include <functional>
+#include <memory>
 #include <vector>
+#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -82,13 +84,13 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
-    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields) const
+    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields](
+        [this, projectionAllFields, tupleBufferRef](
             nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<uint64_t> keyPositionVal,
             nautilus::val<TupleBuffer*> outputBufferRef,
@@ -108,7 +110,7 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                inputBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                tupleBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }
