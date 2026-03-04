@@ -28,12 +28,10 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
-#include <magic_enum/magic_enum.hpp>
-
-#include <Util/Logger/Logger.hpp>
-#include <Util/Reflection.hpp>
+#include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
@@ -42,8 +40,16 @@ namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+    std::variant<std::string, uint64_t> sinkName,
+    const Schema& schema,
+    const std::string_view sinkType,
+    const std::unordered_map<std::string, std::string>& formatConfig,
+    DescriptorConfig::Config config)
+    : Descriptor(std::move(config))
+    , sinkName(std::move(sinkName))
+    , schema(std::make_shared<Schema>(schema))
+    , sinkType(sinkType)
+    , formatConfig(formatConfig)
 {
 }
 
@@ -52,16 +58,16 @@ std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
     return schema;
 }
 
-std::optional<std::string_view> SinkDescriptor::getFormatType() const
+std::string SinkDescriptor::getFormatType() const
 {
     try
     {
-        return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+        return getFromConfig(OUTPUT_FORMAT);
     }
     catch (std::out_of_range& e)
     {
-        NES_WARNING("Sinks of the type {} do not have an INPUT_FORMAT parameter.", getSinkType());
-        return std::nullopt;
+        /// If no output format is set, then the format will be native
+        return "Native";
     }
 }
 
@@ -80,6 +86,11 @@ std::string SinkDescriptor::getSinkName() const
         sinkName);
 }
 
+std::unordered_map<std::string, std::string> SinkDescriptor::getOutputFormatterConfig() const
+{
+    return formatConfig;
+}
+
 bool SinkDescriptor::isInline() const
 {
     return std::holds_alternative<uint64_t>(this->sinkName);
@@ -95,10 +106,11 @@ SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::un
 std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor)
 {
     out << fmt::format(
-        "SinkDescriptor: (name: {}, type: {}, Config: {})",
+        "SinkDescriptor: (name: {}, type: {}, Config: {}, FormatConfig: {{{}}})",
         sinkDescriptor.sinkName,
         sinkDescriptor.sinkType,
-        sinkDescriptor.toStringConfig());
+        sinkDescriptor.toStringConfig(),
+        fmt::join(sinkDescriptor.formatConfig, ","));
     return out;
 }
 
@@ -113,14 +125,15 @@ Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor
         .sinkName = descriptor.sinkName,
         .schema = *descriptor.schema,
         .sinkType = descriptor.sinkType,
+        .formatConfig = descriptor.formatConfig,
         .config = descriptor.getReflectedConfig(),
     });
 }
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const
 {
-    auto [name, schema, type, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
-    return SinkDescriptor{name, schema, type, Descriptor::unreflectConfig(config)};
+    auto [name, schema, type, formatConfig, config] = unreflect<detail::ReflectedSinkDescriptor>(reflected);
+    return SinkDescriptor{name, schema, type, formatConfig, Descriptor::unreflectConfig(config)};
 }
 
 }

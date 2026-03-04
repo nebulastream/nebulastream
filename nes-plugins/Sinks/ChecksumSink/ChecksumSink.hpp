@@ -26,7 +26,6 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/Format.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -58,13 +57,15 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
-    std::unique_ptr<Format> formatter;
 };
 
 struct ConfigParametersChecksum
 {
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::FILE_PATH, OUTPUT_FORMAT);
 };
 
 }

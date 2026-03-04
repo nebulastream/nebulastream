@@ -48,7 +48,8 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      input_format: CSV
+      output_format: CSV
+    parser_config: { }
   - name: VOID_SINK
     schema:
       - name: stream$timestamp
@@ -57,6 +58,7 @@ sinks:
         type: UINT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: stream
