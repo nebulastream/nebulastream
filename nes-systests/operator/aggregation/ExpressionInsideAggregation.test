@@ -1,0 +1,186 @@
+# name: operator/aggregation/ExpressionInsideAggregation.test
+# description: Tests complex expressions as arguments to aggregation functions
+# groups: [Aggregation]
+
+
+CREATE LOGICAL SOURCE input(a UINT64, b UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR input TYPE File;
+ATTACH INLINE
+1,10,100
+2,20,125
+3,30,200
+4,40,225
+5,50,300
+6,60,325
+
+
+# Nested arithmetic: SUM(a * b + UINT64(1)).
+# Window [100,200): a*b+1 = {11, 41}, SUM = 52.
+# Window [200,300): a*b+1 = {91, 161}, SUM = 252.
+# Window [300,400): a*b+1 = {251, 361}, SUM = 612.
+SELECT SUM(a * b + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+52
+252
+612
+
+# Two expression-aggregations in the same query: AVG(a + b) and AVG(a * b).
+# Window [100,200): a+b = {11, 22}, a*b = {10, 40}. AVG = 16.5, 25.
+# Window [200,300): a+b = {33, 44}, a*b = {90, 160}. AVG = 38.5, 125.
+# Window [300,400): a+b = {55, 66}, a*b = {250, 360}. AVG = 60.5, 305.
+SELECT AVG(a + b) AS out1, AVG(a * b) AS out2 FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+16.5, 25
+38.5, 125
+60.5, 305
+
+# Expression-aggregation mixed with plain field aggregation: MEDIAN(a * b), MAX(a).
+# Window [100,200): a*b = {10, 40}, a = {1, 2}. MEDIAN = 25, MAX = 2.
+# Window [200,300): a*b = {90, 160}, a = {3, 4}. MEDIAN = 125, MAX = 4.
+# Window [300,400): a*b = {250, 360}, a = {5, 6}. MEDIAN = 305, MAX = 6.
+SELECT start, end, MEDIAN(a * b) AS out1, MAX(a) AS out2 FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+100, 200, 25, 2
+200, 300, 125, 4
+300, 400, 305, 6
+
+# Plain field aggregation then expression-aggregation: MAX(a), MEDIAN(a * b).
+SELECT start, end, MAX(a) AS out1, MEDIAN(a * b) AS out2 FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+100, 200, 2, 25
+200, 300, 4, 125
+300, 400, 6, 305
+
+# Same expression in two different aggregation functions: SUM(a + b) and MIN(a + b).
+# Window [100,200): a+b = {11, 22}. SUM = 33, MIN = 11.
+# Window [200,300): a+b = {33, 44}. SUM = 77, MIN = 33.
+# Window [300,400): a+b = {55, 66}. SUM = 121, MIN = 55.
+SELECT SUM(a + b) AS out1, MIN(a + b) AS out2 FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+33, 11
+77, 33
+121, 55
+
+# COUNT with expression: COUNT(a + b).
+SELECT COUNT(a + b) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+2
+2
+2
+
+# Subtraction inside aggregation: AVG(b - a).
+# Window [100,200): b-a = {9, 18}. AVG = 13.5.
+# Window [200,300): b-a = {27, 36}. AVG = 31.5.
+# Window [300,400): b-a = {45, 54}. AVG = 49.5.
+SELECT AVG(b - a) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+13.5
+31.5
+49.5
+
+# --- Output schema naming tests ---
+# The following tests document the auto-generated column names when no AS alias is used.
+# Plain-field aggregations produce: input.field_AGG (e.g., input.a_SUM).
+# Expression-aggregations produce: _agg_input_N_AGG (e.g., _agg_input_0_SUM).
+# The expression-agg names lack the source prefix and leak the desugaring implementation detail.
+# Using an AS alias avoids this issue.
+
+# Output schema: single plain-field aggregation auto-names as input.a_SUM.
+CREATE SINK sinkPlainSingle(input.a_SUM UINT64) TYPE File;
+SELECT SUM(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainSingle;
+----
+3
+7
+11
+
+# Output schema: multiple plain-field aggregations auto-name as input.field_AGG.
+CREATE SINK sinkPlainMulti(input.a_SUM UINT64, input.b_MIN UINT64) TYPE File;
+SELECT SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainMulti;
+----
+3, 10
+7, 30
+11, 50
+
+# Output schema: multiple plain-field aggregations with start/end.
+CREATE SINK sinkPlainMultiStartEnd(input.start UINT64, input.end UINT64, input.a_SUM UINT64, input.b_MIN UINT64) TYPE File;
+SELECT start, end, SUM(a), MIN(b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkPlainMultiStartEnd;
+----
+100, 200, 3, 10
+200, 300, 7, 30
+300, 400, 11, 50
+
+# Output schema: single expression-aggregation auto-names as _agg_input_0_AVG (no source prefix).
+# Backticks preserve the lowercase name to match the auto-generated identifier.
+CREATE SINK sinkExprSingle(`_agg_input_0_AVG` FLOAT64) TYPE File;
+SELECT AVG(a + b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprSingle;
+----
+16.5
+38.5
+60.5
+
+# Output schema: multiple expression-aggregations auto-name as _agg_input_N_AGG.
+CREATE SINK sinkExprMulti(`_agg_input_0_SUM` UINT64, `_agg_input_1_MIN` UINT64) TYPE File;
+SELECT SUM(a + b), MIN(a * b) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprMulti;
+----
+33, 10
+77, 90
+121, 250
+
+# Output schema: mixed expression + plain-field aggregation.
+# Expression-agg gets _agg_input_0_MEDIAN (no prefix), plain-field gets input.a_MAX.
+CREATE SINK sinkMixed(input.start UINT64, input.end UINT64, `_agg_input_0_MEDIAN` FLOAT64, input.a_MAX UINT64) TYPE File;
+SELECT start, end, MEDIAN(a * b), MAX(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkMixed;
+----
+100, 200, 25, 2
+200, 300, 125, 4
+300, 400, 305, 6
+
+# Output schema: plain COUNT auto-names as input.a_COUNT.
+CREATE SINK sinkCount(input.a_COUNT UINT64) TYPE File;
+SELECT COUNT(a) FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkCount;
+----
+2
+2
+2
+
+# SQRT inside aggregation: SUM(SQRT(b)).
+# Window [100,200): SQRT(b) = {sqrt(10), sqrt(20)} ≈ {3.16228, 4.47214}. SUM ≈ 7.63441.
+# Window [200,300): SQRT(b) = {sqrt(30), sqrt(40)} ≈ {5.47723, 6.32456}. SUM ≈ 11.8018.
+# Window [300,400): SQRT(b) = {sqrt(50), sqrt(60)} ≈ {7.07107, 7.74597}. SUM ≈ 14.817.
+SELECT SUM(SQRT(b)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+7.63441361516796
+11.8017826619746
+14.8170429379704
+
+# SQRT combined with arithmetic inside aggregation: AVG(SQRT(a * b)).
+# Window [100,200): a*b = {10, 40}, SQRT = {3.16228, 6.32456}. AVG ≈ 4.74342.
+# Window [200,300): a*b = {90, 160}, SQRT = {9.48683, 12.6491}. AVG ≈ 11.0680.
+# Window [300,400): a*b = {250, 360}, SQRT = {15.8114, 18.9737}. AVG ≈ 17.3925.
+SELECT AVG(SQRT(a * b)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+4.74341649025257
+11.0679718105893
+17.3925402766498
+
+# SQRT expression-agg mixed with plain field agg: MIN(SQRT(b)), MAX(a).
+SELECT start, end, MIN(SQRT(b)) AS out1, MAX(a) AS out2 FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO File();
+----
+100, 200, 3.16227766016838, 2
+200, 300, 5.47722557505166, 4
+300, 400, 7.07106781186548, 6
+
+# Expression-aggregation inside a subquery.
+SELECT out FROM (SELECT AVG(a + b) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms)) INTO File();
+----
+16.5
+38.5
+60.5
+
+# Nested window aggregation: expression-agg in inner query, plain agg in outer query.
+# Inner: AVG(a+b) per 100ms window -> [100,200)=16.5, [200,300)=38.5, [300,400)=60.5.
+# Outer: SUM(out) per 200ms window on start -> [0,200)=16.5, [200,400)=38.5+60.5=99.
+SELECT SUM(out) AS total FROM (SELECT start, end, AVG(a + b) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms)) WINDOW TUMBLING(start, size 200 ms) INTO File();
+----
+16.5
+99
