@@ -38,8 +38,10 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
-    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION})
+    # On Linux the versioned binary (clang++-19) is the primary name; on macOS
+    # (Homebrew) only the unversioned symlinks (clang++, clang) exist in the keg.
+    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION} clang++)
+    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION} clang)
 
 
     set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})
