@@ -98,3 +98,60 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
+
+  build-and-test-macos:
+    name: "Build and test (macOS)"
+    runs-on: macos-14
+    timeout-minutes: 120
+    env:
+      LLVM_TOOLCHAIN_VERSION: 19
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Install dependencies
+        run: |
+          brew install llvm@19 ninja
+      - name: ccache
+        uses: hendrikmuhs/ccache-action@v1.2.18
+        with:
+          key: macos-arm64-Debug
+      - name: Cache vcpkg packages
+        uses: actions/cache@v4
+        with:
+          path: |
+            vcpkg-repository
+            build/vcpkg_installed
+          key: vcpkg-macos-arm64-${{ hashFiles('vcpkg/vcpkg.json', 'vcpkg/vcpkg-registry/**') }}
+          restore-keys: |
+            vcpkg-macos-arm64-
+      - name: Configure NebulaStream
+        run: |
+          export PATH="/opt/homebrew/opt/llvm@19/bin:$PATH"
+          cmake -GNinja -B build \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DNES_LOG_LEVEL=DEBUG
+      - name: Build NebulaStream
+        run: |
+          export PATH="/opt/homebrew/opt/llvm@19/bin:$PATH"
+          cmake --build build -j -- -k 0
+      - name: Run Tests
+        run: |
+          ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 1200 -LE DockerCompose
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: logs-macos-arm64-Debug
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload test results to Codecov
+        if: ${{ !cancelled() && !github.event.act }}
+        uses: codecov/codecov-action@v5
+        with:
+          report_type: test_results
+          slug: nebulastream/nebulastream
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: macos,arm64,none,Debug
+          files: build/junit.xml
