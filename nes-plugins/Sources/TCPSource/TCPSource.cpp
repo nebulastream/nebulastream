@@ -127,8 +127,13 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             close();
             /// if connection was unsuccessful, throw an exception with context using errno
+#ifdef __APPLE__
             strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+#else
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
+#endif
         }
 
         /// Set the timeout for the connect attempt
@@ -144,8 +149,13 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
             /// Timeout or error
             errno = ETIMEDOUT;
             close();
+#ifdef __APPLE__
             strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+#else
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
+#endif
         }
 
         /// Check if connect succeeded
@@ -155,8 +165,13 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         {
             errno = error;
             close();
+#ifdef __APPLE__
             strerror_r(errno, errBuffer.data(), errBuffer.size());
             throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, errBuffer.data());
+#else
+            const auto strerrorResult = strerror_r(errno, errBuffer.data(), errBuffer.size());
+            throw CannotOpenSource("Could not connect to: {}:{}. {}", socketHost, socketPort, strerrorResult);
+#endif
         }
     }
     return true;
