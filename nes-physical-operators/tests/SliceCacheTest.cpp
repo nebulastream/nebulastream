@@ -13,9 +13,9 @@
 */
 
 #include <cstdint>
-#include <cstdlib>
-#include <cstring>
 #include <random>
+#include <sstream>
+#include <vector>
 #include <SliceCache/SliceCache.hpp>
 #include <SliceCache/SliceCacheNone.hpp>
 #include <SliceCache/SliceCacheSecondChance.hpp>
@@ -25,7 +25,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
-
+#include <SliceStore/SliceAssigner.hpp>
 #include <BaseUnitTest.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
@@ -34,18 +34,28 @@
 namespace NES
 {
 
-enum class SliceCacheType : uint8_t
-{
-    NONE,
-    SECOND_CHANCE,
-};
 
-class SliceCacheTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<ExecutionMode, SliceCacheType, uint64_t>>
+class SliceCacheTest : public Testing::BaseUnitTest,
+                       public testing::WithParamInterface<std::tuple<ExecutionMode, bool, uint64_t, uint64_t>>
 {
 public:
+    struct SliceCacheTestOperation
+    {
+        uint64_t timestamp;
+        SliceStart sliceStart;
+        SliceEnd sliceEnd;
+        int8_t* expectedResult; /// Points to expectedResultHelper
+        std::unique_ptr<uint64_t> expectedResultHelper;
+    };
+
+    static constexpr bool mlirEnableMultithreading = false;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
+    bool useSliceCache;
+    uint64_t numberOfEntries;
+    uint64_t sliceCacheSize;
+    std::vector<SliceCacheTestOperation> operations;
 
     static void SetUpTestSuite()
     {
@@ -57,46 +67,52 @@ public:
     {
         BaseUnitTest::SetUp();
         backend = std::get<0>(GetParam());
+        useSliceCache = std::get<1>(GetParam());
+        numberOfEntries = std::get<2>(GetParam());
+        sliceCacheSize = std::get<3>(GetParam());
+
         /// Setting the correct options for the engine, depending on the enum value from the backend
         nautilus::engine::Options options;
         const bool compilation = (backend == ExecutionMode::COMPILER);
         NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
         options.setOption("engine.Compilation", compilation);
-        // options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
+        options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
 
-        const SliceCacheType sliceCacheType = std::get<1>(GetParam());
-        const uint64_t numberOfEntries = std::get<2>(GetParam());
-
-        switch (sliceCacheType)
+        if (useSliceCache)
         {
-            case SliceCacheType::NONE:
-                sliceCache = std::make_unique<SliceCacheNone>();
-            case SliceCacheType::SECOND_CHANCE:
-                sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntries, sizeof(SliceCacheEntrySecondChance));
+            sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntries, sizeof(SliceCacheEntrySecondChance));
         }
+        else
+        {
+            sliceCache = std::make_unique<SliceCacheNone>();
+        }
+
+
+    }
+
+    void createRandomSliceCacheTestOperation()
+    {
+        SliceAssigner sliceAssigner(sliceCacheSize, sliceCacheSize);
+        // todo create here random SliceCacheTestOperation so that we can use them in each test
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
-TEST_P(SliceCacheTest, getDataStructureRef)
-{
-}
-
 INSTANTIATE_TEST_CASE_P(
     SliceCacheTest,
     SliceCacheTest,
     ::testing::Combine(
-        ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER),
-        ::testing::Values(SliceCacheType::NONE, SliceCacheType::SECOND_CHANCE),
-        ::testing::Values(1, 5, 10, 15)),
+        ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
+        ::testing::Values(false, true), /// Testing if SliceCache and NONE work as expected
+        ::testing::Values(1, 5, 10, 15), /// Number of cache entries
+        ::testing::Values(1, 10, 100, 1000) /// Size of slice
+        ),
     [](const testing::TestParamInfo<SliceCacheTest::ParamType>& info)
     {
         std::stringstream ss;
-        ss << magic_enum::enum_name(std::get<0>(info.param));
-        ss << magic_enum::enum_name(std::get<1>(info.param));
-        ss << std::get<2>(info.param);
+        // todo add code here
         return ss.str();
     });
 }

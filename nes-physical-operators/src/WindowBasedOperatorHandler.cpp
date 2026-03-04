@@ -100,12 +100,26 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
-void WindowBasedOperatorHandler::allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
+void WindowBasedOperatorHandler::allocateSpaceForSliceCache(
+    const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
+    PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
+    const auto buffer = bufferProvider->getUnpooledBuffer(sliceCacheMemorySize);
+    if (not buffer.has_value())
+    {
+        throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
+    }
+    workerThreadToSliceCache[workerThreadId] = std::make_unique<TupleBuffer>(buffer.value());
 }
 
 int8_t* WindowBasedOperatorHandler::getSliceCache(WorkerThreadId workerThreadId) const
 {
+    PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
+    if (auto it = workerThreadToSliceCache.find(workerThreadId); it != workerThreadToSliceCache.end())
+    {
+        return it->second->getAvailableMemoryArea().data();
+    }
+    throw QueryNotRegistered("We should expect ")
 }
 
 }
