@@ -15,6 +15,7 @@
 #include <SliceCache/SliceCacheSecondChance.hpp>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <SliceCache/SliceCache.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -51,7 +52,7 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     auto secondChanceBit = getSecondChanceBit(replacementIndex);
     for (nautilus::val<uint64_t> i = 0; i < 2 * numberOfEntries; ++i)
     {
-        if (*secondChanceBit == true)
+        if (*secondChanceBit == false)
         {
             break;
         }
@@ -62,13 +63,14 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     *secondChanceBit = true;
 
     /// Replacing the slice and returning the data structure.
-    const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
     auto newCacheEntry = newCacheItem();
-    // nautilus::val<NES::Timestamp> newSliceStart = newCacheEntry.get(&SliceCacheEntry::sliceStart);
-    // nautilus::val<NES::Timestamp> newSliceEnd = newCacheEntry.get(&SliceCacheEntry::sliceEnd);
+    // talk with PMG, as it is not possible to use sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newCacheEntry.get(&SliceCacheEntry::sliceStart))
+    const nautilus::val<uint64_t> newSliceStart = newCacheEntry.get(&SliceCacheEntry::sliceStart);
+    const nautilus::val<uint64_t> newSliceEnd = newCacheEntry.get(&SliceCacheEntry::sliceEnd);
     nautilus::val<int8_t*> newDataStructure = newCacheEntry.get(&SliceCacheEntry::dataStructure);
-    // sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newSliceStart);
-    // sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceEnd, newSliceEnd);
+    sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newSliceStart);
+    sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceEnd, newSliceEnd);
     sliceCacheEntryToReplace.set(&SliceCacheEntry::dataStructure, newDataStructure);
     return newDataStructure;
 }

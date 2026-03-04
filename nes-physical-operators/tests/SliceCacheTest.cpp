@@ -20,17 +20,19 @@
 #include <SliceCache/SliceCache.hpp>
 #include <SliceCache/SliceCacheNone.hpp>
 #include <SliceCache/SliceCacheSecondChance.hpp>
+#include <SliceStore/SliceAssigner.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
-#include <SliceStore/SliceAssigner.hpp>
 #include <BaseUnitTest.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <options.hpp>
+#include <val_std.hpp>
+#include <val.hpp>
 
 namespace NES
 {
@@ -59,10 +61,7 @@ public:
 
     /// Constructs a cache with the given number of entries, all initially empty.
     /// Empty entries have sliceStart == sliceEnd == 0, so no timestamp can match them.
-    explicit SecondChanceCache(const uint64_t numberOfEntries)
-        : entries(numberOfEntries), clockHand(0)
-    {
-    }
+    explicit SecondChanceCache(const uint64_t numberOfEntries) : entries(numberOfEntries), clockHand(0) { }
 
     /// Looks up the slice containing the given timestamp using the clock (second-chance) algorithm.
     /// On a cache hit, sets the entry's second-chance bit and returns the cached data pointer.
@@ -112,9 +111,7 @@ private:
     uint64_t clockHand;
 };
 
-
-class SliceCacheTest : public Testing::BaseUnitTest,
-                       public testing::WithParamInterface<std::tuple<ExecutionMode, uint64_t, uint64_t>>
+class SliceCacheTest : public Testing::BaseUnitTest, public testing::WithParamInterface<std::tuple<ExecutionMode, uint64_t, uint64_t>>
 {
 public:
     struct SliceCacheTestOperation
@@ -195,7 +192,6 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
-
 TEST_P(SliceCacheTest, testSliceCacheNone)
 {
     sliceCache = std::make_unique<SliceCacheNone>();
@@ -205,13 +201,26 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     /// callback and return exactly what the callback provides
     for (const auto& op : operations)
     {
-        bool callbackCalled = false;
+        this here is not correct as we need to create a nautilus callable function and then pass the ops into the compiled
+            function bool callbackCalled
+            = false;
         const auto result = sliceCache->getDataStructureRef(
             nautilus::val<Timestamp>(Timestamp(op.timestamp)),
-            [&]() -> nautilus::val<int8_t*>
+            [&]() -> nautilus::val<SliceCacheEntry>
             {
-                callbackCalled = true;
-                return nautilus::val<int8_t*>(op.expectedResult);
+                // callbackCalled = true;
+                // SliceCacheEntry cacheEntry{};
+                // return nautilus::val<int8_t*>(op.expectedResult);
+                return nautilus::invoke(
+                    [&]()
+                    {
+                        callbackCalled = true;
+                        SliceCacheEntry cacheEntry
+                        {
+                            .sliceStart = op.sliceStart, .sliceEnd = op.sliceEnd, .dataStructure = op.expectedResult;
+                        };
+                        return cacheEntry;
+                    });
             });
 
         EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
@@ -233,43 +242,59 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
     std::vector<uint8_t> cacheMemory(cacheMemorySize, 0);
     sliceCache->setStartOfEntries(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(cacheMemory.data())));
 
+    bool callbackCalled = false;
+    auto sliceCacheCallableFunction = nautilusEngine->registerFunction(
+        [&](const nautilus::val<Timestamp>& timestamp,
+            const nautilus::val<Timestamp>& sliceStart,
+            const nautilus::val<Timestamp>& sliceEnd,
+            const nautilus::val<int8_t*> newDataStructurePtr) -> int8_t*
+        {
+            return sliceCache->getDataStructureRef(
+                timestamp,
+                [&]()-> nautilus::val<SliceCacheEntry>
+                {
+                    return nautilus::invoke(
+                        std::function([&](const Timestamp sliceStart, const Timestamp sliceEnd, int8_t* dataStructure)
+                        {
+                            callbackCalled = true;
+                            SliceCacheEntry cacheEntry{.sliceStart = sliceStart, .sliceEnd = sliceEnd, .dataStructure = dataStructure};
+                            return cacheEntry;
+                        }),
+                        sliceStart,
+                        sliceEnd,
+                        newDataStructurePtr);
+                });
+        });
+    // this is not correct as we need to create a nautilus callable function
+    // and then pass the ops into the compiled function.question is what should the nautilus callable function return
+
+
     /// Create a reference cache to independently verify the Nautilus implementation
     SecondChanceCache referenceCache(numberOfEntries);
 
     for (const auto& op : operations)
     {
         /// Track whether the replacement callback was invoked to distinguish hits from misses
-        bool callbackCalled = false;
-        const auto result = sliceCache->getDataStructureRef(
-            nautilus::val<Timestamp>(Timestamp(op.timestamp)),
-            [&]() -> nautilus::val<int8_t*>
-            {
-                callbackCalled = true;
-                return nautilus::val<int8_t*>(op.expectedResult);
-            });
+
 
         /// Perform the same lookup in the reference cache
-        const auto [refHit, refPtr] = referenceCache.lookup(
-            Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
+        const auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
 
         /// Verify hit/miss agreement between the Nautilus implementation and the reference cache
         if (refHit)
         {
-            EXPECT_FALSE(callbackCalled)
-                << "Expected cache hit for timestamp " << op.timestamp
-                << " but the replacement callback was called";
+            EXPECT_FALSE(callbackCalled) << "Expected cache hit for timestamp " << op.timestamp
+                                         << " but the replacement callback was called";
         }
         else
         {
-            EXPECT_TRUE(callbackCalled)
-                << "Expected cache miss for timestamp " << op.timestamp
-                << " but the replacement callback was not called";
+            EXPECT_TRUE(callbackCalled) << "Expected cache miss for timestamp " << op.timestamp
+                                        << " but the replacement callback was not called";
         }
 
         /// Verify the returned data pointer matches the reference cache's result
         const auto rawResult = nautilus::details::RawValueResolver<int8_t*>::getRawValue(result);
-        EXPECT_EQ(rawResult, refPtr)
-            << "Returned pointer does not match reference cache for timestamp " << op.timestamp;
+        EXPECT_EQ(rawResult, refPtr) << "Returned pointer does not match reference cache for timestamp " << op.timestamp;
     }
 }
 
@@ -284,9 +309,8 @@ INSTANTIATE_TEST_CASE_P(
     [](const testing::TestParamInfo<SliceCacheTest::ParamType>& info)
     {
         std::stringstream ss;
-        ss << magic_enum::enum_name(std::get<0>(info.param))
-           << "_Entries" << std::get<1>(info.param)
-           << "_SliceSize" << std::get<2>(info.param);
+        ss << magic_enum::enum_name(std::get<0>(info.param)) << "_Entries" << std::get<1>(info.param) << "_SliceSize"
+           << std::get<2>(info.param);
         return ss.str();
     });
 }
