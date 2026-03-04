@@ -177,8 +177,11 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         std::unordered_set<std::string> seenExplicitAliases;
         for (const auto& [identifier, function] : copy.projections)
         {
-            INVARIANT(identifier.has_value(), "Projection ID must be resolved after type inference");
-            const auto& name = identifier.value().getFieldName();
+            if (!identifier.has_value())
+            {
+                throw CannotInferSchema("Projection ID must be resolved after type inference");
+            }
+            const auto& name = identifier->getFieldName();
             /// A projection has an explicit alias if its resolved name differs from the auto-derived name.
             const auto autoDerivedName = function.explain(ExplainVerbosity::Short);
             if (name == autoDerivedName)
