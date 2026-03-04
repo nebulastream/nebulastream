@@ -213,3 +213,5 @@ physical:
       generator_schema: |
         SEQUENCE UINT64 0 100000 1000
         SEQUENCE UINT64 0 100 1
+optimizer:
+  join_strategy: HASH_JOIN

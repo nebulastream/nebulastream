@@ -31,7 +31,7 @@ namespace NES::QueryCompilation
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult);
-    auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan.getPlan(), defaultQueryExecution);
+    auto queryPlan = LowerToPhysicalOperators::apply(request->queryPlan, defaultQueryExecution);
     auto pipelinedQueryPlan = PipeliningPhase::apply(queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }

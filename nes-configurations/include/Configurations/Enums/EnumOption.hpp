@@ -70,7 +70,7 @@ protected:
             std::stringstream ss;
             for (const auto& name : magic_enum::enum_names<T>())
             {
-                ss << name;
+                ss << name << " ";
             }
             throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", node.as<std::string>(), ss.str());
         }
@@ -87,7 +87,7 @@ protected:
             std::stringstream ss;
             for (const auto& name : magic_enum::enum_names<T>())
             {
-                ss << name;
+                ss << name << " ";
             }
             throw InvalidConfigParameter("Enum for {} was not found. Valid options are {}", value, ss.str());
         }
