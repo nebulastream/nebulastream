@@ -60,13 +60,17 @@ void triggerAllWindowsProxy(OperatorHandler* ptrOpHandler, PipelineExecutionCont
 }
 
 /// The slice store needs to know in how many pipelines this operator appears, and consequently, how many terminations it will receive
-void registerActivePipeline(OperatorHandler* ptrOpHandler, const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
+void registerActivePipeline(
+    OperatorHandler* ptrOpHandler,
+    const uint64_t sliceCacheMemorySize,
+    AbstractBufferProvider* bufferProvider,
+    const WorkerThreadId workerThreadId)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(bufferProvider != nullptr, "BufferProvider should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
-    opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider);
+    opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider, workerThreadId);
 }
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
@@ -99,7 +103,8 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
         registerActivePipeline,
         operatorHandler,
         nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
-        executionCtx.pipelineMemoryProvider.bufferProvider);
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId);
 
     const auto sliceCacheMemory = nautilus::invoke(
         {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = true},

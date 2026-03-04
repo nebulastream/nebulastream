@@ -117,9 +117,9 @@ int8_t* WindowBasedOperatorHandler::getSliceCache(WorkerThreadId workerThreadId)
     PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
     if (auto it = workerThreadToSliceCache.find(workerThreadId); it != workerThreadToSliceCache.end())
     {
-        return it->second->getAvailableMemoryArea().data();
+        return reinterpret_cast<int8_t*>(it->second->getAvailableMemoryArea().data());
     }
-    throw QueryNotRegistered("We should expect ")
+    throw QueryNotRegistered("We expect to find a slice cache for the workerThreadId {} but did not!", workerThreadId);
 }
 
 }

@@ -46,7 +46,7 @@ public:
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
 
     // not happy with the naming of const SliceCacheReplacement& addNewItem
-    using SliceCacheReplacement = std::function<nautilus::val<int8_t*>()>;
+    using SliceCacheReplacement = std::function<nautilus::val<SliceCacheEntry>()>;
     virtual nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplacement& newCacheItem)
         = 0;
 
