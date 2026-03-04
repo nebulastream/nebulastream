@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdint>
 #include <random>
 #include <sstream>
@@ -34,9 +35,86 @@
 namespace NES
 {
 
+/// Reference implementation of a second-chance (clock) cache for verifying the Nautilus
+/// cache implementation. This uses standard C++ data structures and prioritizes simplicity
+/// and correctness over performance.
+class SecondChanceCache
+{
+public:
+    /// Represents a single cache entry with slice boundaries, a data pointer, and the second-chance bit
+    struct CacheEntry
+    {
+        SliceStart sliceStart{Timestamp(0)};
+        SliceEnd sliceEnd{Timestamp(0)};
+        int8_t* dataStructure = nullptr;
+        bool secondChanceBit = false;
+    };
+
+    /// Stores the result of a cache lookup, indicating whether it was a hit and the associated data pointer
+    struct LookupResult
+    {
+        bool hit;
+        int8_t* dataStructure;
+    };
+
+    /// Constructs a cache with the given number of entries, all initially empty.
+    /// Empty entries have sliceStart == sliceEnd == 0, so no timestamp can match them.
+    explicit SecondChanceCache(const uint64_t numberOfEntries)
+        : entries(numberOfEntries), clockHand(0)
+    {
+    }
+
+    /// Looks up the slice containing the given timestamp using the clock (second-chance) algorithm.
+    /// On a cache hit, sets the entry's second-chance bit and returns the cached data pointer.
+    /// On a cache miss, scans from the clock hand position to find a victim entry: entries with
+    /// their second-chance bit set get a reprieve (bit cleared, clock advances), while the first
+    /// entry with a cleared bit is evicted and replaced with the new slice data.
+    /// @param timestamp The event timestamp to look up
+    /// @param sliceStart The start of the slice that contains the timestamp (used on miss)
+    /// @param sliceEnd The end of the slice that contains the timestamp (used on miss)
+    /// @param newDataStructure The data pointer to store in the cache on a miss
+    /// @return A LookupResult with the hit/miss indicator and the data pointer
+    LookupResult lookup(const Timestamp timestamp, const SliceStart sliceStart, const SliceEnd sliceEnd, int8_t* newDataStructure)
+    {
+        /// Linear search through all entries for a slice containing the timestamp, i.e., sliceStart <= timestamp < sliceEnd
+        for (auto& entry : entries)
+        {
+            if (entry.sliceStart <= timestamp && timestamp < entry.sliceEnd)
+            {
+                entry.secondChanceBit = true;
+                return {true, entry.dataStructure};
+            }
+        }
+
+        /// Cache miss: scan from the clock hand to find a victim with secondChanceBit == false.
+        /// Entries with secondChanceBit == true get a second chance: their bit is cleared and the
+        /// clock hand advances past them.
+        while (entries[clockHand].secondChanceBit)
+        {
+            entries[clockHand].secondChanceBit = false;
+            clockHand = (clockHand + 1) % entries.size();
+        }
+
+        /// Replace the victim entry with the new slice data and mark it as recently used
+        auto& victim = entries[clockHand];
+        victim.sliceStart = sliceStart;
+        victim.sliceEnd = sliceEnd;
+        victim.dataStructure = newDataStructure;
+        victim.secondChanceBit = true;
+
+        /// The clock hand stays at the just-replaced position, matching the behavior of
+        /// SliceCacheSecondChance which does not advance replacementIndex after replacement
+        return {false, newDataStructure};
+    }
+
+private:
+    std::vector<CacheEntry> entries;
+    uint64_t clockHand;
+};
+
 
 class SliceCacheTest : public Testing::BaseUnitTest,
-                       public testing::WithParamInterface<std::tuple<ExecutionMode, bool, uint64_t, uint64_t>>
+                       public testing::WithParamInterface<std::tuple<ExecutionMode, uint64_t, uint64_t>>
 {
 public:
     struct SliceCacheTestOperation
@@ -52,7 +130,6 @@ public:
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
-    bool useSliceCache;
     uint64_t numberOfEntries;
     uint64_t sliceCacheSize;
     std::vector<SliceCacheTestOperation> operations;
@@ -67,9 +144,8 @@ public:
     {
         BaseUnitTest::SetUp();
         backend = std::get<0>(GetParam());
-        useSliceCache = std::get<1>(GetParam());
-        numberOfEntries = std::get<2>(GetParam());
-        sliceCacheSize = std::get<3>(GetParam());
+        numberOfEntries = std::get<1>(GetParam());
+        sliceCacheSize = std::get<2>(GetParam());
 
         /// Setting the correct options for the engine, depending on the enum value from the backend
         nautilus::engine::Options options;
@@ -80,42 +156,121 @@ public:
         nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
     }
 
+    /// Creates random SliceCacheTestOperations and stores them in the operations vector.
+    /// Uses a random seed (logged for reproducibility) to generate timestamps, computes
+    /// slice boundaries via the SliceAssigner, and shuffles the resulting operations.
     void createRandomSliceCacheTestOperation()
     {
         SliceAssigner sliceAssigner(sliceCacheSize, sliceCacheSize);
-        // todo create here random SliceCacheTestOperation and add them to operations so that we can use them in each test
-        // todo use randomness but print out the seed
-        // at the end of this method the vector operations should be shuffled
+
+        /// Use a random seed and log it so that test failures can be reproduced
+        std::random_device rd;
+        const auto seed = rd();
+        NES_INFO("SliceCacheTest random seed: {}", seed);
+        std::mt19937 gen(seed);
+
+        /// Generate timestamps in a range that produces more distinct slices than the cache
+        /// can hold, ensuring both cache hits and evictions will occur
+        const uint64_t maxTimestamp = sliceCacheSize * numberOfEntries * 4;
+        std::uniform_int_distribution<uint64_t> dist(0, maxTimestamp > 0 ? maxTimestamp - 1 : 0);
+
+        /// Create enough operations to thoroughly exercise the cache
+        const uint64_t numOperations = numberOfEntries * 10;
+        for (uint64_t i = 0; i < numOperations; ++i)
+        {
+            const auto ts = dist(gen);
+            const auto sliceStart = sliceAssigner.getSliceStartTs(Timestamp(ts));
+            const auto sliceEnd = sliceAssigner.getSliceEndTs(Timestamp(ts));
+
+            /// Each operation gets a unique data pointer backed by expectedResultHelper
+            auto expectedResultHelper = std::make_unique<uint64_t>(i);
+            auto* expectedResult = reinterpret_cast<int8_t*>(expectedResultHelper.get());
+            operations.push_back({ts, sliceStart, sliceEnd, expectedResult, std::move(expectedResultHelper)});
+        }
+
+        /// Shuffle operations to simulate random access patterns
+        std::shuffle(operations.begin(), operations.end(), gen);
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
 
-class SecondChanceCache
-{
-    // todo implement a second chance/clock cache so that we can test if our nautilus cache implementation is correct. performance should not be a priority, rather simplicity.
-    // it should work similar to the SliceCacheSecondChance but DO NOT copy the implementation here. implement it from scratch with c++ datastructures and datatypes. again: performance should not be a priority, rather simplicity.
-    // this cache should expect a SliceCacheTestOperation and should return hit/miss and the pointer to the data structure
-    // this cache can expect to be provided numberOfEntries via a constructor
-
-};
-
 TEST_P(SliceCacheTest, testSliceCacheNone)
 {
     sliceCache = std::make_unique<SliceCacheNone>();
+    createRandomSliceCacheTestOperation();
 
-    // todo add code here that checks if the SliceCacheNone always returns the passed in newCacheItem of getDataStructureRef
+    /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
+    /// callback and return exactly what the callback provides
+    for (const auto& op : operations)
+    {
+        bool callbackCalled = false;
+        const auto result = sliceCache->getDataStructureRef(
+            nautilus::val<Timestamp>(Timestamp(op.timestamp)),
+            [&]() -> nautilus::val<int8_t*>
+            {
+                callbackCalled = true;
+                return nautilus::val<int8_t*>(op.expectedResult);
+            });
+
+        EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
+
+        /// Verify the returned pointer matches what the callback provided
+        const auto rawResult = nautilus::details::RawValueResolver<int8_t*>::getRawValue(result);
+        EXPECT_EQ(rawResult, op.expectedResult) << "SliceCacheNone must return the callback's result";
+    }
 }
 
 TEST_P(SliceCacheTest, testSliceCacheSecondChance)
 {
     sliceCache = std::make_unique<SliceCacheSecondChance>(numberOfEntries, sizeof(SliceCacheEntrySecondChance));
+    createRandomSliceCacheTestOperation();
 
-    // todo add code here that checks the correct workings of second chance. use here the SecondChanceCache to check for each SliceCacheTestOperation if the nautilus impl is correct.
-    // one idea to check for a miss is to check if the SliceCacheReplacement callback was called
-    // if the pointer was returned without the SliceCacheReplacement callback being called it was a hit
-    // also check if the returned pointer is equal to the SecondChanceCache
+    /// Allocate and zero-initialize the cache memory buffer that the Nautilus cache operates on.
+    /// Zero-initialized entries have sliceStart == sliceEnd == 0, so no timestamp will match them.
+    const auto cacheMemorySize = numberOfEntries * sizeof(SliceCacheEntrySecondChance);
+    std::vector<uint8_t> cacheMemory(cacheMemorySize, 0);
+    sliceCache->setStartOfEntries(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(cacheMemory.data())));
+
+    /// Create a reference cache to independently verify the Nautilus implementation
+    SecondChanceCache referenceCache(numberOfEntries);
+
+    for (const auto& op : operations)
+    {
+        /// Track whether the replacement callback was invoked to distinguish hits from misses
+        bool callbackCalled = false;
+        const auto result = sliceCache->getDataStructureRef(
+            nautilus::val<Timestamp>(Timestamp(op.timestamp)),
+            [&]() -> nautilus::val<int8_t*>
+            {
+                callbackCalled = true;
+                return nautilus::val<int8_t*>(op.expectedResult);
+            });
+
+        /// Perform the same lookup in the reference cache
+        const auto [refHit, refPtr] = referenceCache.lookup(
+            Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
+
+        /// Verify hit/miss agreement between the Nautilus implementation and the reference cache
+        if (refHit)
+        {
+            EXPECT_FALSE(callbackCalled)
+                << "Expected cache hit for timestamp " << op.timestamp
+                << " but the replacement callback was called";
+        }
+        else
+        {
+            EXPECT_TRUE(callbackCalled)
+                << "Expected cache miss for timestamp " << op.timestamp
+                << " but the replacement callback was not called";
+        }
+
+        /// Verify the returned data pointer matches the reference cache's result
+        const auto rawResult = nautilus::details::RawValueResolver<int8_t*>::getRawValue(result);
+        EXPECT_EQ(rawResult, refPtr)
+            << "Returned pointer does not match reference cache for timestamp " << op.timestamp;
+    }
 }
 
 INSTANTIATE_TEST_CASE_P(
@@ -129,7 +284,9 @@ INSTANTIATE_TEST_CASE_P(
     [](const testing::TestParamInfo<SliceCacheTest::ParamType>& info)
     {
         std::stringstream ss;
-        // todo add code here
+        ss << magic_enum::enum_name(std::get<0>(info.param))
+           << "_Entries" << std::get<1>(info.param)
+           << "_SliceSize" << std::get<2>(info.param);
         return ss.str();
     });
 }

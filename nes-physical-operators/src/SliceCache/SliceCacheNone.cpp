@@ -19,6 +19,7 @@
 #include <SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_std.hpp>
 
 namespace NES
 {
@@ -32,6 +33,6 @@ nautilus::val<int8_t*>
 SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const SliceCacheReplacement& newCacheItem)
 {
     /// As this slice cache does nothing, we simply return the created new cache item
-    return newCacheItem();
+    return newCacheItem().get(&SliceCacheEntry::dataStructure);
 }
 }
