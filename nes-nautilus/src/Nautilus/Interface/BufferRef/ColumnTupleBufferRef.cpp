@@ -26,6 +26,7 @@
 #include <nautilus/static.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <val.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -70,25 +71,34 @@ Record ColumnTupleBufferRef::readRecord(
     return record;
 }
 
-void ColumnTupleBufferRef::writeRecord(
+TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    const auto bufferAddress = recordBuffer.getMemArea();
-    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+    nautilus::val<bool> successful{false};
+    nautilus::val<uint64_t> writtenRecords{0};
+    /// Check if index is in-bounds
+    if (recordIndex < capacity)
     {
-        const auto& [name, type, columnOffset] = fields.at(i);
-        if (not rec.hasField(name))
+        const auto bufferAddress = recordBuffer.getMemArea();
+        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
-            /// Skipping any fields that are not part of the record
-            continue;
+            const auto& [name, type, columnOffset] = fields.at(i);
+            if (not rec.hasField(name))
+            {
+                /// Skipping any fields that are not part of the record
+                continue;
+            }
+            auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
+            const auto& value = rec.read(name);
+            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, type.getSizeInBytes(), columnOffset);
-        const auto& value = rec.read(name);
-        storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        writtenRecords = 1;
+        successful = true;
     }
+    return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
 std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const
