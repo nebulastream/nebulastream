@@ -52,12 +52,16 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
         replacementIndex = (replacementIndex + 1) % numberOfEntries;
         secondChanceBit = getSecondChanceBit(replacementIndex);
     }
+    *secondChanceBit = true;
 
     /// Replacing the slice and returning the data structure.
     const nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
-    const auto dataStructure = newCacheItem();
-    *secondChanceBit = true;
-    return getDataStructure(replacementIndex);
+
+    use philipps nautilus patch to return a struct that stores the sliceStart, sliceEnd, and the new dataStructure
+    const auto newCacheEntry = newCacheItem();
+    setSliceStart(newCacheEntry.sliceStart);
+    setSliceEnd(newCacheEntry.sliceStart);
+    return newCacheEntry.dataStructure;
 }
 
 }

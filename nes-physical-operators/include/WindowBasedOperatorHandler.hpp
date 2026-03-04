@@ -89,7 +89,7 @@ public:
     /// As each worker thread gets its own thread, we can only allocate space for the slice cache, once we know the no.
     /// worker threads for this pipeline.
     /// Also, this method is being called via a nautilus::invoke(), thus, we require a raw pointer
-    void allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider);
+    void allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, WorkerThreadId workerThreadId);
 
     int8_t* getSliceCache(WorkerThreadId workerThreadId) const;
 
