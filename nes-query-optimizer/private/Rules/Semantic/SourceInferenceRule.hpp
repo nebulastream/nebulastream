@@ -13,32 +13,25 @@
 */
 
 #pragma once
+
 #include <memory>
 #include <utility>
-
 #include <Plans/LogicalPlan.hpp>
+#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
 
-namespace NES
-{
-class LegacyOptimizer
+class SourceInferenceRule
 {
 public:
-    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
-    LegacyOptimizer() = default;
+    explicit SourceInferenceRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    explicit LegacyOptimizer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
+    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
+    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
+    void apply(LogicalPlan& queryPlan) const;
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 }

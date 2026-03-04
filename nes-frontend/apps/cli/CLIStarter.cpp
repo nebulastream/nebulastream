@@ -35,6 +35,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
+#include <Phases/SemanticAnalyser.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -56,7 +57,6 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <QueryStateBackend.hpp>
 
 namespace
@@ -469,7 +469,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+    auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, optimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
@@ -505,7 +505,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+    auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))

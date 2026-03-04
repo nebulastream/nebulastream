@@ -13,26 +13,20 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
 
-/// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
-/// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
-
-class InlineSinkBindingPhase
+/// Decides what memory layout should be used per operator. For now, we use row-layout across all operators.
+class DecideMemoryLayoutRule
 {
 public:
-    explicit InlineSinkBindingPhase(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
-
-    void apply(LogicalPlan& queryPlan) const;
+    LogicalPlan apply(const LogicalPlan& queryPlan);
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    LogicalOperator apply(const LogicalOperator& logicalOperator);
 };
 
 }

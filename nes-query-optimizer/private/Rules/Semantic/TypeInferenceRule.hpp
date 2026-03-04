@@ -21,10 +21,10 @@ namespace NES
 {
 
 /// The type inference phase receives and query plan and infers all input and output schemata for all operators.
-class TypeInferencePhase
+class TypeInferenceRule
 {
 public:
-    TypeInferencePhase() = default;
+    TypeInferenceRule() = default;
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.

@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/SemanticAnalyser.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -32,7 +33,6 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -186,7 +186,7 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer)
+QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> optimizer)
     : queryManager(std::move(queryManager)), optimizer(std::move(optimizer))
 {
 }

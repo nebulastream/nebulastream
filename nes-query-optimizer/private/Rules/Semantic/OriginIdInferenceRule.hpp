@@ -29,10 +29,10 @@ class LogicalPlan;
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
 */
-class OriginIdInferencePhase
+class OriginIdInferenceRule
 {
 public:
-    explicit OriginIdInferencePhase() = default;
+    explicit OriginIdInferenceRule() = default;
 
     void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
 };

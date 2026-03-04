@@ -11,6 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-query-optimizer
-        SemanticAnalyser.cpp
-        QueryOptimizer.cpp
-)
+        DecideJoinTypesRule.cpp
+        DecideMemoryLayoutRule.cpp)

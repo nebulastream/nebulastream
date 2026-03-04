@@ -21,10 +21,10 @@ namespace NES
 {
 
 /// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypes
+class DecideJoinTypesRule
 {
 public:
-    explicit DecideJoinTypes(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
+    explicit DecideJoinTypesRule(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
 
     LogicalPlan apply(const LogicalPlan& queryPlan);
 

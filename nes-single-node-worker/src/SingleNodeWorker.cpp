@@ -29,6 +29,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
@@ -42,7 +43,6 @@
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
 #include <QueryCompiler.hpp>
-#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 

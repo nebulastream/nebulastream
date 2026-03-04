@@ -12,8 +12,7 @@
 
 add_subdirectory(Traits)
 add_subdirectory(Phases)
-add_subdirectory(Serialization)
-add_subdirectory(LegacyOptimizer)
+add_subdirectory(Rules)
 
 add_source_files(nes-query-optimizer
-        QueryOptimizer.cpp OptimizedPlan.cpp)
+        OptimizedPlan.cpp)

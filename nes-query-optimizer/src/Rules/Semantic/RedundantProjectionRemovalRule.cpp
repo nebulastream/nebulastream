@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
+#include <Rules/Semantic/RedundantProjectionRemovalRule.hpp>
 
 #include <ranges>
 #include <utility>

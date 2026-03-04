@@ -13,28 +13,32 @@
 */
 
 #pragma once
-
+#include <memory>
 #include <utility>
-#include <Plans/LogicalPlan.hpp>
-#include <OptimizedPlan.hpp>
 
-#include <QueryOptimizerConfiguration.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
+class SinkCatalog;
+class SourceCatalog;
+}
 
-class QueryOptimizer final
+namespace NES
+{
+class SemanticAnalyser
 {
 public:
-    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
-        : defaultQueryOptimization(std::move(defaultQueryOptimization)) { };
+    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    SemanticAnalyser() = default;
 
-    /// Takes the query plan as a logical plan and returns a fully physical plan
-    [[nodiscard]] OptimizedPlan optimize(const LogicalPlan& plan) const;
-    [[nodiscard]] static OptimizedPlan optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization);
+    explicit SemanticAnalyser(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    {
+    }
 
 private:
-    QueryOptimizerConfiguration defaultQueryOptimization;
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
-
 }

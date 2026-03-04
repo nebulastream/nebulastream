@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <LegacyOptimizer/InlineSourceBindingPhase.hpp>
+#include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
@@ -23,7 +23,7 @@
 namespace NES
 {
 
-LogicalOperator InlineSourceBindingPhase::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
+LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
 {
     std::vector<LogicalOperator> newChildren;
     for (const auto& child : current.getChildren())
@@ -52,7 +52,7 @@ LogicalOperator InlineSourceBindingPhase::bindInlineSourceLogicalOperators(const
     return current.withChildren(newChildren);
 }
 
-void InlineSourceBindingPhase::apply(LogicalPlan& queryPlan) const
+void InlineSourceBindingRule::apply(LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& root : queryPlan.getRootOperators())

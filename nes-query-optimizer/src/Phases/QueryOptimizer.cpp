@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
-#include <QueryOptimizer.hpp>
+#include <Phases/QueryOptimizer.hpp>
 
-#include <Phases/DecideJoinTypes.hpp>
-#include <Phases/DecideMemoryLayout.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/DecideJoinTypesRule.hpp>
+#include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <OptimizedPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
@@ -32,8 +32,8 @@ OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptim
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
-    DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
-    DecideMemoryLayout memoryLayoutDecider;
+    DecideJoinTypesRule joinTypeDecider(defaultQueryOptimization.joinStrategy);
+    DecideMemoryLayoutRule memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
     return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
 }

@@ -13,20 +13,27 @@
 */
 
 #pragma once
-#include <Operators/LogicalOperator.hpp>
+
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <OptimizedPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
-/// Decides what memory layout should be used per operator. For now, we use row-layout across all operators.
-class DecideMemoryLayout
+class QueryOptimizer final
 {
 public:
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
+        : defaultQueryOptimization(std::move(defaultQueryOptimization)) { };
+
+    /// Takes the query plan as a logical plan and returns a fully physical plan
+    [[nodiscard]] OptimizedPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] static OptimizedPlan optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization);
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
+    QueryOptimizerConfiguration defaultQueryOptimization;
 };
 
 }

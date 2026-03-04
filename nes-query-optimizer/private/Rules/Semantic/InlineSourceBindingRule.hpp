@@ -25,10 +25,10 @@ namespace NES
 /// The InlineSourceBindingPhase replaces all sources that are defined within the query itself (InlineSourceLogicalOperators), as opposed to
 /// sources that are created in separate CREATE statements, with physical sources based on the given inline source configuration.
 
-class InlineSourceBindingPhase
+class InlineSourceBindingRule
 {
 public:
-    explicit InlineSourceBindingPhase(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
     void apply(LogicalPlan& queryPlan) const;
 

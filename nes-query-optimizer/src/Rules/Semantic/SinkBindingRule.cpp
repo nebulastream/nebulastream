@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/SinkBindingRule.hpp>
+#include <Rules/Semantic/SinkBindingRule.hpp>
 
 #include <ranges>
 #include <vector>

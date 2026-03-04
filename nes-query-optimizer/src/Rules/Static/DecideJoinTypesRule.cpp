@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Phases/DecideJoinTypes.hpp>
+#include <Rules/Static/DecideJoinTypesRule.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -78,14 +78,14 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
 }
 }
 
-LogicalPlan DecideJoinTypes::apply(const LogicalPlan& queryPlan)
+LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan)
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
     return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
+LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator)
 {
     const auto children = logicalOperator.getChildren()
         | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();

@@ -31,6 +31,7 @@
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Phases/SemanticAnalyser.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -53,7 +54,6 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
 #include <utils.hpp>
@@ -237,7 +237,7 @@ int main(int argc, char** argv)
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
-        auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+        auto optimizer = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
