@@ -483,7 +483,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
     }
 
-    if (helpers.top().windowType != nullptr)
+    if (helpers.top().windowType != nullptr && helpers.top().joinKeyRelationHelper.empty())
     {
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
