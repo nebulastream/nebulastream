@@ -32,8 +32,8 @@ namespace NES
 class CountAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField, bool includeNullValues);
+    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, bool includeNullValues);
     ~CountAggregationLogicalFunction() = default;
 
     [[nodiscard]] std::string_view getName() const noexcept;
@@ -51,12 +51,13 @@ public:
     [[nodiscard]] CountAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] CountAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
+    [[nodiscard]] bool shallIncludeNullValues() const noexcept;
 
     [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& otherCountAggregationLogicalFunction) const;
 
 
 private:
+    bool includeNullValues = false;
     static constexpr std::string_view NAME = "Count";
 
     DataType inputStamp;
@@ -88,6 +89,7 @@ struct ReflectedCountAggregationLogicalFunction
 {
     std::optional<FieldAccessLogicalFunction> onField;
     std::optional<FieldAccessLogicalFunction> asField;
+    std::optional<bool> includeNullValues;
 };
 
 }
