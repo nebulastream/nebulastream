@@ -14,7 +14,6 @@
 
 #include <EmitPhysicalOperator.hpp>
 
-#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -29,6 +28,7 @@
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
 #include <EmitOperatorHandler.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
@@ -60,21 +60,27 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
 void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    /// emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= getMaxRecordsPerBuffer())
+
+    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
+    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
+    /// to the brim, i.e., have no more space left.
+    TupleBufferRef::WriteRecordResult writeResult
+        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
+    /// We emit and create a new record buffer
+    if (!writeResult.successful)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
-    }
 
-    /// We need to first check if the buffer has to be emitted and then write to it. Otherwise, it can happen that we will
-    /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
-    /// to the brim, i.e., have no more space left.
-    bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
-    emitState->outputIndex = emitState->outputIndex + 1;
+        /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
+        writeResult
+            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+    }
+    emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
 
 void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const

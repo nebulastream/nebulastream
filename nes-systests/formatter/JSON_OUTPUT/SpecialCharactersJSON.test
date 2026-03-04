@@ -1,0 +1,12 @@
+# name: SpecialCharactersJSON.test
+# description: Checks if the JSONOutputFormatter delimits special characters in chars and strings properly
+# groups: [JSON]
+
+CREATE LOGICAL SOURCE jsonSource(firstField VARSIZED, secondField CHAR);
+CREATE PHYSICAL SOURCE FOR jsonSource TYPE File;
+ATTACH INLINE;
+This sentence has "special" characters\,"
+
+SELECT * FROM jsonSource INTO FILE('JSON' as `SINK`.INPUT_FORMAT);
+----
+{"JSONSOURCE$FIRSTFIELD":"This sentence has \"special\" characters\\","JSONSOURCE$SECONDFIELD":"\""}

@@ -35,8 +35,9 @@ void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan) const
             const auto schema = sink.value()->getSchema();
             const auto type = sink.value()->getSinkType();
             const auto config = sink.value()->getSinkConfig();
+            const auto formatConfig = sink.value()->getFormatConfig();
 
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, config);
+            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, config, formatConfig);
 
             if (!sinkDescriptor.has_value())
             {

@@ -1,6 +1,6 @@
 # name: projection/Projection.test
 # description: Simple map tests with an add function
-# groups: [Projection]
+# groups: [Projection,JSON]
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
