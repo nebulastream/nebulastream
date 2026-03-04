@@ -28,7 +28,6 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
-#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
@@ -43,7 +42,6 @@ class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
-    UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
 

@@ -35,6 +35,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -56,7 +58,7 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
 
 namespace
@@ -139,6 +141,7 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::unordered_map<std::string, std::string> optimizer;
 };
 }
 
@@ -201,6 +204,11 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
+
+        if (node["optimizer"].IsDefined())
+        {
+            rhs.optimizer = node["optimizer"].as<std::unordered_map<std::string, std::string>>();
+        }
         rhs.query = {};
         if (node["query"].IsDefined())
         {
@@ -325,7 +333,7 @@ std::vector<std::string> loadQueries(
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical] = topologyConfig;
+    const auto& [query, sinks, logical, physical, optimizer] = topologyConfig;
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
@@ -355,6 +363,13 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config, .formatConfig = parserConfig});
     }
     return statements;
+}
+
+NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
+{
+    NES::QueryOptimizerConfiguration configuration;
+    configuration.overwriteConfigWithCommandLineInput(topologyConfig.optimizer);
+    return configuration;
 }
 
 void doStatus(
@@ -452,6 +467,7 @@ NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
+    auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
@@ -472,8 +488,9 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
-    NES::QueryStatementHandler queryHandler{queryManager, optimizer};
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration);
+    NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
@@ -496,6 +513,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto topologyConfig = getTopologyPath(program);
     auto statements = loadStatements(topologyConfig);
     auto queries = loadQueries(program, subcommand, topologyConfig);
+    auto queryOptimizerConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     if (queries.empty())
     {
         throw NES::InvalidConfigParameter("No queries");
@@ -508,13 +526,14 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
@@ -533,7 +552,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result
