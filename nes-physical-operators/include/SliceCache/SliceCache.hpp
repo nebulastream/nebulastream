@@ -32,8 +32,11 @@ struct SliceCacheEntry
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }
 
     virtual ~SliceCacheEntry() = default;
-    Timestamp sliceStart;
-    Timestamp sliceEnd;
+    // talk with PMG, if we can not also support classes that have a val<> wrapper
+    // Timestamp sliceStart;
+    // Timestamp sliceEnd;
+    Timestamp::Underlying sliceStart;
+    Timestamp::Underlying sliceEnd;
     int8_t* dataStructure;
 };
 
@@ -50,12 +53,13 @@ public:
     virtual nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplacement& newCacheItem)
         = 0;
 
-    nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
-    nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
     void setStartOfEntries(const nautilus::val<int8_t*>& startOfEntries);
     uint64_t getCacheMemorySize() const;
 
 protected:
+    nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
+    nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
+
     virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
 
     /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
