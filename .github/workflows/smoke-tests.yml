@@ -112,6 +112,7 @@ jobs:
       - name: Install dependencies
         run: |
           brew install llvm@19 ninja
+          echo "$(brew --prefix llvm@19)/bin" >> "$GITHUB_PATH"
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.18
         with:
@@ -127,13 +128,11 @@ jobs:
             vcpkg-macos-arm64-
       - name: Configure NebulaStream
         run: |
-          export PATH="/opt/homebrew/opt/llvm@19/bin:$PATH"
           cmake -GNinja -B build \
             -DCMAKE_BUILD_TYPE=Debug \
             -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: |
-          export PATH="/opt/homebrew/opt/llvm@19/bin:$PATH"
           cmake --build build -j -- -k 0
       - name: Run Tests
         run: |
