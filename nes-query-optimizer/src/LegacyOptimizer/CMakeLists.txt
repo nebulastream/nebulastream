@@ -21,4 +21,11 @@ add_source_files(nes-query-optimizer
         TypeInferencePhase.cpp
         SinkBindingRule.cpp
         LegacyOptimizer.cpp
+        BottomUpPlacement.cpp
+        OperatorPlacement.cpp
+        QueryDecomposition.cpp
+        NetworkTopology.cpp
+        DistributedQuery.cpp
+        DistributedQueryIdGenerator.cpp
+        WorkerCatalog.cpp
 )
