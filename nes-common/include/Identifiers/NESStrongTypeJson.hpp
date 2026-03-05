@@ -20,7 +20,7 @@
 /**
  * Adds NESStrongType overloads for the nlohmann json library.
  * This allows assignements of json values with identifiers.
- * To retrieve Identifiers from json `.get<WorkerId>()` is used instead of manually creating an Identifier using the raw value.
+ * To retrieve Identifiers from json `.get<Host>()` is used instead of manually creating an Identifier using the raw value.
  */
 namespace nlohmann
 {
