@@ -21,6 +21,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -60,6 +61,8 @@ private:
     std::vector<Schema> inputSchemas;
     Schema outputSchema;
     TraitSet traitSet;
+
+    SELF_REF
 };
 
 template <>

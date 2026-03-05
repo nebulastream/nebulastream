@@ -21,9 +21,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -59,13 +59,14 @@ public:
 
     [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
 
-
 private:
     static constexpr std::string_view NAME = "Source";
     SourceDescriptor sourceDescriptor;
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
+
+    SELF_REF
 };
 
 static_assert(LogicalOperatorConcept<SourceDescriptorLogicalOperator>);
