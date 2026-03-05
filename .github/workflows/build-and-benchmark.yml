@@ -21,11 +21,15 @@ jobs:
     container:
       image: nebulastream/nes-benchmark:${{ inputs.dev_image_tag }}
       volumes:
-        - ccache:/ccache
         - test-file-cache:/test-file-cache
       env:
-        CCACHE_DIR: /ccache
         MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
         CONBENCH_PROJECT_COMMIT: ${{ inputs.head_sha }}
         CONBENCH_URL: "https://bench.nebula.stream"
         CONBENCH_EMAIL: ${{ secrets.CONBENCH_USR }}
@@ -45,6 +49,5 @@ jobs:
           cmake --build build -j
       - name: run Benchmarks
         run: |
-          ./build/nes-systests/systest/systest -b -g benchmark -- --worker.number_of_buffers_in_global_buffer_manager=20000 
+          ./build/nes-systests/systest/systest -b -g benchmark -- --worker.number_of_buffers_in_global_buffer_manager=20000
           python3 ./scripts/benchmarking/benchmark.py --systest
-

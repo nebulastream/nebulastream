@@ -96,13 +96,17 @@ jobs:
     runs-on: [ self-hosted, linux, X64, Build ]
     name: "Build and tests: ${{matrix.cmake_args.name}}"
     container:
-      image: nebulastream/nes-development:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-ci:${{ needs.get-dev-images.outputs.image-tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       volumes:
-        - ccache:/ccache
         - /var/run/docker.sock:/var/run/docker.sock
       env:
-        CCACHE_DIR: /ccache
         MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
     timeout-minutes: 40
