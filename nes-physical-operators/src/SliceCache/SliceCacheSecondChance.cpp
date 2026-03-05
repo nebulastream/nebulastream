@@ -36,7 +36,7 @@ nautilus::val<bool*> SliceCacheSecondChance::getSecondChanceBit(const nautilus::
 }
 
 nautilus::val<int8_t*>
-SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplacement& newCacheItem)
+SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry)
 {
     /// First, we check if the timestamp is already in the cache.
     if (const auto dataStructurePos = searchInCache(timestamp); dataStructurePos != NOT_FOUND)
@@ -64,15 +64,10 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
 
     /// Replacing the slice and returning the data structure.
     nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
-    auto newCacheEntry = newCacheItem();
+    replaceEntry(sliceCacheEntryToReplace);
     // talk with PMG, as it is not possible to use sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newCacheEntry.get(&SliceCacheEntry::sliceStart))
-    const nautilus::val<uint64_t> newSliceStart = newCacheEntry.get(&SliceCacheEntry::sliceStart);
-    const nautilus::val<uint64_t> newSliceEnd = newCacheEntry.get(&SliceCacheEntry::sliceEnd);
-    nautilus::val<int8_t*> newDataStructure = newCacheEntry.get(&SliceCacheEntry::dataStructure);
-    sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newSliceStart);
-    sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceEnd, newSliceEnd);
-    sliceCacheEntryToReplace.set(&SliceCacheEntry::dataStructure, newDataStructure);
-    return newDataStructure;
+
+    return sliceCacheEntryToReplace.get(&SliceCacheEntry::dataStructure);
 }
 
 }

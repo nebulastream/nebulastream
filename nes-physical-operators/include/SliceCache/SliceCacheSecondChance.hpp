@@ -30,7 +30,7 @@ public:
     SliceCacheSecondChance(uint64_t numberOfEntries, uint64_t sizeOfEntry);
     ~SliceCacheSecondChance() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplacement& newCacheItem) override;
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
 
 private:
     nautilus::val<bool*> getSecondChanceBit(const nautilus::val<uint64_t>& pos);
