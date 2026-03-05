@@ -95,7 +95,7 @@ public:
     int implicitMapCountHelper = 0;
 
     /// Pre-aggregation projections for desugaring expressions inside aggregation functions.
-    /// E.g., AVG(i + UINT64(1)) becomes: Projection(*, i + UINT64(1) AS _agg_input_0) → AVG(_agg_input_0).
+    /// E.g., AVG(i + UINT64(1)) becomes: Projection(*, i + UINT64(1) AS _AGG_INPUT_0) → AVG(_AGG_INPUT_0).
     std::vector<Projection> preAggregationProjections;
     size_t aggExprCounter = 0;
 
