@@ -70,7 +70,8 @@ void reportResult(
     runningQuery->passed = msg.empty();
 
     std::string performanceMessage;
-    if (performanceMessageBuilder)
+    /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
+    if (performanceMessageBuilder and runningQuery->queryStatus.state == QueryState::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
@@ -462,24 +463,26 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
         WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto remoteQueryManager = std::make_unique<QueryManager>(
         std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI), .config = {}}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
 }
