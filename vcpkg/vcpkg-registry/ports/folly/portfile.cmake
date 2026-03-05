@@ -10,14 +10,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+## On macOS (case-insensitive filesystem), git apply cannot handle the patch because
+## it renames CMake/ to cmake/ (case-only directory change). git apply checks all hunks
+## upfront and sees the new cmake/ paths as "already existing" at the case-equivalent
+## CMake/ paths. We use `patch -p1` on macOS instead, which applies hunks sequentially.
+if(VCPKG_TARGET_IS_OSX)
+    set(_FOLLY_PATCHES "")
+else()
+    set(_FOLLY_PATCHES PATCHES 0001-Folly-Patch.patch)
+endif()
+
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO facebook/folly
-		REF c47d0c778950043cbbc6af7fde616e9aeaf054ca
+        REF c47d0c778950043cbbc6af7fde616e9aeaf054ca
         SHA512 d74db09cfc1407a16a5b77b2911a7e599c3dbc477c15173e4635b0721e496a10a8d5eaf6b045b28d4e56163a694f66a63bf0a107420193d27f18ff1068136e53
-        PATCHES
-		0001-Folly-Patch.patch
+        ${_FOLLY_PATCHES}
 )
+
+if(VCPKG_TARGET_IS_OSX)
+    vcpkg_execute_required_process(
+        COMMAND patch -p1 -f -E -i "${CMAKE_CURRENT_LIST_DIR}/0001-Folly-Patch.patch"
+        WORKING_DIRECTORY "${SOURCE_PATH}"
+        LOGNAME patch-folly-macos
+    )
+endif()
 
 vcpkg_cmake_configure(
     SOURCE_PATH "${SOURCE_PATH}"
