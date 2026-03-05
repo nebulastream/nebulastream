@@ -29,6 +29,6 @@ public:
     SliceCacheNone();
     ~SliceCacheNone() override = default;
     nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& newCacheItem) override;
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
 };
 }

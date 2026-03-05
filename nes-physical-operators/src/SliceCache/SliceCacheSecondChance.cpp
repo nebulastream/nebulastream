@@ -65,9 +65,8 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     /// Replacing the slice and returning the data structure.
     nautilus::val<SliceCacheEntry*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
     replaceEntry(sliceCacheEntryToReplace);
-    // talk with PMG, as it is not possible to use sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newCacheEntry.get(&SliceCacheEntry::sliceStart))
-
     return sliceCacheEntryToReplace.get(&SliceCacheEntry::dataStructure);
+    // talk with PMG, as it is not possible to use sliceCacheEntryToReplace.set(&SliceCacheEntry::sliceStart, newCacheEntry.get(&SliceCacheEntry::sliceStart))
 }
 
 }
