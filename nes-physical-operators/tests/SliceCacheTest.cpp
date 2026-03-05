@@ -125,6 +125,8 @@ public:
     };
 
     static constexpr bool mlirEnableMultithreading = false;
+    static constexpr uint64_t minNumberOfOperations = 1'000;
+    static constexpr uint64_t maxNumberOfOperations = 10'000;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
@@ -172,8 +174,9 @@ public:
         const uint64_t maxTimestamp = sliceCacheSize * numberOfEntries * 4;
         std::uniform_int_distribution<uint64_t> dist(0, maxTimestamp > 0 ? maxTimestamp - 1 : 0);
 
-        /// Create enough operations to thoroughly exercise the cache
-        const uint64_t numOperations = numberOfEntries * 10;
+        /// Create a random number of operations to thoroughly exercise the cache
+        std::uniform_int_distribution opCountDist(minNumberOfOperations, maxNumberOfOperations);
+        const uint64_t numOperations = opCountDist(gen);
         for (uint64_t i = 0; i < numOperations; ++i)
         {
             const auto timestamp = dist(gen);
@@ -187,44 +190,51 @@ public:
         }
 
         /// Shuffle operations to simulate random access patterns
-        std::shuffle(operations.begin(), operations.end(), gen);
+        std::ranges::shuffle(operations, gen);
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
+/// Proxy function for nautilus::invoke - sets the callback flag at runtime (not just trace time).
+/// Must be a free function (not a lambda) so that nautilus::invoke can obtain a valid function pointer.
+void setCallbackCalledProxy(bool* callbackFlag) { *callbackFlag = true; }
+
 TEST_P(SliceCacheTest, testSliceCacheNone)
 {
+    /// SliceCacheNone does not use numberOfEntries or sliceCacheSize, so only run once per execution mode.
+    if (numberOfEntries != 1 || sliceCacheSize != 1)
+    {
+        GTEST_SKIP() << "SliceCacheNone only needs to run for different execution modes";
+    }
+
     sliceCache = std::make_unique<SliceCacheNone>();
     createRandomSliceCacheTestOperation();
 
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
-    using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(nautilus::val<Timestamp>, nautilus::val<int8_t*>)>;
+    using CompiledCacheFunction =
+        std::function<nautilus::val<int8_t*>(nautilus::val<uint64_t>, nautilus::val<int8_t*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<Timestamp>& timestamp, nautilus::val<int8_t*> newDataStructurePtr) -> nautilus::val<int8_t*>
+        [&](const nautilus::val<uint64_t>& timestampRaw, const nautilus::val<int8_t*>& newDataStructurePtr) -> nautilus::val<int8_t*>
         {
+            // we should not need this variable here, as we actually have a val<Timestamp> wrapper
+            const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
-                    nautilus::invoke(
-                        std::function(
-                            [&](SliceCacheEntry* entry, int8_t* ptr)
-                            {
-                                callbackCalled = true;
-                                entry->dataStructure = ptr;
-                            }),
-                        entryToReplace,
-                        newDataStructurePtr);
+                    nautilus::invoke(setCallbackCalledProxy, nautilus::val<bool*>(&callbackCalled));
+                    auto entry = entryToReplace;
+                    entry.set(&SliceCacheEntry::dataStructure, newDataStructurePtr);
                 });
         }));
 
     for (const auto& op : operations)
     {
         callbackCalled = false;
-        const auto rawResult = sliceCacheCallableFunction(op.timestamp, op.expectedResult);
+        const auto rawResult = sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult);
 
         EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
 
