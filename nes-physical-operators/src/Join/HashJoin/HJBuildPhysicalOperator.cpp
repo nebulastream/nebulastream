@@ -43,7 +43,9 @@
 
 namespace NES
 {
-HashMap* getHashJoinHashMapProxy(
+
+void getHashJoinHashMapProxy(
+    SliceCacheEntry* entryToReplace,
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -70,7 +72,11 @@ HashMap* getHashJoinHashMapProxy(
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
     const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hjSlices[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+
+    /// Updating the slice cache entry
+    entryToReplace->sliceStart = hjSlice->getSliceStart().getRawValue();
+    entryToReplace->sliceEnd = hjSlice->getSliceEnd().getRawValue();
+    entryToReplace->dataStructure = reinterpret_cast<int8_t*>(hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide));
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -130,10 +136,12 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
         timestamp,
-        [&]()
+        [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
-            return nautilus::invoke(
+            // todo FunctionAttributes?
+            nautilus::invoke(
                 getHashJoinHashMapProxy,
+                entryToReplace,
                 localState->getOperatorHandler(),
                 timestamp,
                 ctx.workerThreadId,

@@ -30,9 +30,11 @@ SliceCacheNone::SliceCacheNone()
 }
 
 nautilus::val<int8_t*>
-SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const SliceCacheReplaceEntry& newCacheItem)
+SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const SliceCacheReplaceEntry& replaceEntry)
 {
-    /// As this slice cache does nothing, we simply return the created new cache item
-    return newCacheItem().get(&SliceCacheEntry::dataStructure);
+    /// As this slice cache does nothing, we simply return the replaced entry
+    nautilus::val<SliceCacheEntry> sliceCacheEntryToReplace;
+    replaceEntry(&sliceCacheEntryToReplace);
+    return sliceCacheEntryToReplace.get(&SliceCacheEntry::dataStructure);
 }
 }

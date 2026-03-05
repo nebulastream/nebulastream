@@ -17,9 +17,10 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Util.hpp>
 #include <Time/Timestamp.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <SliceCacheConfiguration.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
+#include <val_std.hpp>
 
 namespace NES
 {
@@ -39,6 +40,7 @@ struct SliceCacheEntry
 
     virtual ~SliceCacheEntry() = default;
     // talk with PMG, if we can not also support classes that have a val<> wrapper
+    // problem is also the val<Timestamp&> so the reference stuff
     // Timestamp sliceStart;
     // Timestamp sliceEnd;
     Timestamp::Underlying sliceStart;
@@ -55,9 +57,9 @@ public:
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
 
     // not happy with the naming of const SliceCacheReplacement& addNewItem
-    using SliceCacheReplaceEntry = std::function<void(nautilus::val<SliceCacheEntry*> entryToReplace)>;
-    virtual nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& newCacheItem)
-        = 0;
+    using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
+    virtual nautilus::val<int8_t*>
+    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) = 0;
 
     void setStartOfEntries(const nautilus::val<int8_t*>& startOfEntries);
     uint64_t getCacheMemorySize() const;

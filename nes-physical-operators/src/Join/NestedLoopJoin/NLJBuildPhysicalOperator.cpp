@@ -31,6 +31,9 @@
 #include <ExecutionContext.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
+#include <val.hpp>
+#include <val_ptr.hpp>
+#include <val_std.hpp>
 
 namespace NES
 {
@@ -67,10 +70,12 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     const auto timestamp = timeFunction->getTs(executionCtx, record);
     const auto nljPagedVectorMemRef = localState->getSliceCache()->getDataStructureRef(
         timestamp,
-        [&]()
+        [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
-            return nautilus::invoke(
-                +[](const NLJOperatorHandler* opHandler,
+            // todo FunctionAttributes?
+            nautilus::invoke(
+                +[](SliceCacheEntry* entryToReplace,
+                    const NLJOperatorHandler* opHandler,
                     const Timestamp timestampVal,
                     const WorkerThreadId workerThreadId,
                     const JoinBuildSideType joinBuildSide)
@@ -80,8 +85,14 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
                     const auto newSlices = opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction);
                     INVARIANT(newSlices.size() == 1, "We expect exactly one slice for the NLJ");
                     const auto newNLJSlice = std::dynamic_pointer_cast<NLJSlice>(newSlices[0]);
-                    return newNLJSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+
+                    /// Updating the slice cache entry
+                    entryToReplace->sliceStart = newNLJSlice->getSliceStart().getRawValue();
+                    entryToReplace->sliceEnd = newNLJSlice->getSliceEnd().getRawValue();
+                    entryToReplace->dataStructure
+                        = reinterpret_cast<int8_t*>(newNLJSlice->getPagedVectorRef(workerThreadId, joinBuildSide));
                 },
+                entryToReplace,
                 operatorHandler,
                 timestamp,
                 executionCtx.workerThreadId,
