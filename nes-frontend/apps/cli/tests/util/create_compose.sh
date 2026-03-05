@@ -107,7 +107,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       interval: 1s
       timeout: 5s
       retries: 3
-      start_period: 0s
+      start_period: 60s
     entrypoint: ["/bin/bash", "-c"]
     command:
       - |
@@ -133,7 +133,7 @@ EOF
       interval: 1s
       timeout: 5s
       retries: 3
-      start_period: 0s
+      start_period: 60s
     command: [
       "--grpc=$HOST_NAME:$HOST_PORT",
       "--data=$DATA",

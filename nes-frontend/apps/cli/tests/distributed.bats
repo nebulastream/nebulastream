@@ -144,7 +144,12 @@ teardown() {
 
 function setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  docker compose up -d --wait
+  local compose_output
+  compose_output=$(docker compose up -d --wait 2>&1)
+  local exit_code=$?
+  echo "# [docker compose up] (status=$exit_code):" >&3
+  while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+  return $exit_code
 }
 
 DOCKER_NES_CLI() {
@@ -255,12 +260,16 @@ assert_json_contains() {
   [[ "$output" =~ ^[a-z_]+$ ]]
   QUERY_ID=$output
 
-  sleep 1
-
-  run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
-  [ "$status" -eq 0 ]
+  for i in $(seq 1 20); do
+    sleep 1
+    run DOCKER_NES_CLI -t tests/good/distributed-query-deployment.yaml status "$QUERY_ID"
+    [ "$status" -eq 0 ]
+    QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+    if [ "$QUERY_STATUS" = "Running" ]; then
+      break
+    fi
+  done
   echo "${output}" | jq -e '(. | length) == 3' # 1 global + 2 local
-  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
 
