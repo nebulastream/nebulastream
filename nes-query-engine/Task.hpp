@@ -28,6 +28,7 @@
 #include <cpptrace/from_current.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutableQueryPlan.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -117,7 +118,7 @@ public:
 
     void fail(Exception exception);
 
-    QueryId queryId = INVALID<QueryId>;
+    QueryId queryId = INVALID_QUERY_ID;
     TaskCallback callback;
 
 private:

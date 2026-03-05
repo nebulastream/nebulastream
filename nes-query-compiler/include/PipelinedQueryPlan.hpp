@@ -20,6 +20,7 @@
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Pipeline.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
