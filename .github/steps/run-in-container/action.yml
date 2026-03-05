@@ -1,7 +1,7 @@
 name: Run Command in Container
 description: |
   Runs script or command directly in a development container. The container is mounted in the current working directory
-  and uses the current user.
+  and uses the current user. sccache environment variables are forwarded into the container.
 
 inputs:
   image_name:
@@ -35,6 +35,8 @@ runs:
              -v /var/run/docker.sock:/var/run/docker.sock \
              --group-add $(stat -c '%g' /var/run/docker.sock) \
              $DOCKER_LOGIN_ARGS \
-             -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache -e HOME=$(pwd) --workdir $(pwd) -u $(id -u):$(id -g) \
+             -v $(pwd):$(pwd) -e HOME=$(pwd) --workdir $(pwd) -u $(id -u):$(id -g) \
+             -e SCCACHE_BUCKET -e SCCACHE_ENDPOINT -e SCCACHE_REGION -e SCCACHE_S3_USE_SSL \
+             -e AWS_ACCESS_KEY_ID -e AWS_SECRET_ACCESS_KEY \
              ${{inputs.image_name}} \
               /usr/bin/bash -c "${DOCKER_LOGIN_CMD}"'${{inputs.run}}'

@@ -116,7 +116,7 @@ endif ()
 
 include(cmake/Sanitizers.cmake)
 include(cmake/CheckToolchain.cmake)
-include(cmake/UseCCache.cmake)
+include(cmake/UseCompilerCache.cmake)
 include(cmake/UseMold.cmake)
 include(cmake/CheckTestUtilities.cmake)
 
