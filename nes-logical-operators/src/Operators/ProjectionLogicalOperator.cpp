@@ -153,9 +153,11 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     }
 
     /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
-    /// We use the original projection.first to determine if the alias was explicitly provided (has_value()),
-    /// rather than comparing names after inference, which avoids false-negatives when an explicit alias
-    /// matches the auto-derived name.
+    /// An alias is considered explicit if: (1) the optional identifier is present, AND (2) its name differs from the
+    /// auto-derived name (function.explain(Short)). Condition (2) is needed because after a serialization round-trip
+    /// (reflect → JSON → unreflect), all identifiers may have has_value()=true (including auto-derived ones).
+    /// Comparing with the auto-derived name correctly distinguishes explicit aliases in both the initial inference
+    /// and post-deserialization re-inference.
     auto copy = *this;
     copy.projections.clear();
     copy.inputSchema = firstSchema;
@@ -163,8 +165,9 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     for (const auto& projection : projections)
     {
         auto inferredFunction = projection.second.withInferredDataType(firstSchema);
-        const bool hasExplicitAlias = projection.first.has_value();
-        auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(inferredFunction.explain(ExplainVerbosity::Short));
+        const auto autoDerivedName = inferredFunction.explain(ExplainVerbosity::Short);
+        const bool hasExplicitAlias = projection.first.has_value() && projection.first->getFieldName() != autoDerivedName;
+        auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(autoDerivedName);
         if (hasExplicitAlias && !seenExplicitAliases.insert(identifier.getFieldName()).second)
         {
             throw CannotInferSchema(
@@ -229,8 +232,20 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
 
     for (auto [identifierOpt, function] : op.getProjections())
     {
-        const std::optional<std::string> identifier
-            = (identifierOpt.has_value() ? std::make_optional(identifierOpt.value().getFieldName()) : std::nullopt);
+        /// Only serialize identifiers that were explicitly provided via AS aliases.
+        /// After withInferredSchema, ALL projections have identifiers (both explicit and auto-derived).
+        /// Auto-derived identifiers match function.explain(Short), so we use this to distinguish them.
+        /// This preserves the explicit/auto-derived distinction through the serialization round-trip,
+        /// preventing false-positive duplicate detection during re-inference after deserialization.
+        std::optional<std::string> identifier;
+        if (identifierOpt.has_value())
+        {
+            const auto autoDerived = function.explain(ExplainVerbosity::Short);
+            if (identifierOpt->getFieldName() != autoDerived)
+            {
+                identifier = identifierOpt->getFieldName();
+            }
+        }
         reflected.projections.emplace_back(identifier, std::make_optional(function));
     }
 
