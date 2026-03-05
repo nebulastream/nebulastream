@@ -851,7 +851,7 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
             /// and push a FieldAccess to the temp field back onto functionBuilder.
             auto expression = std::move(helpers.top().functionBuilder.back());
             helpers.top().functionBuilder.pop_back();
-            const auto tempName = fmt::format("_agg_input_{}", helpers.top().aggExprCounter++);
+            const auto tempName = toUpperCase(fmt::format("_agg_input_{}", helpers.top().aggExprCounter++));
             helpers.top().preAggregationProjections.emplace_back(FieldIdentifier(tempName), std::move(expression));
             helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(tempName));
         }
