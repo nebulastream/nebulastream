@@ -105,14 +105,11 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                     {
                         const ChainedHashMapRef::ChainedEntryRef entryRefReset(
                             entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
-                        if (!copyOfAggregationFunctions.empty())
+                        auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                         {
-                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                            {
-                                aggFunction->cleanup(state);
-                                state = state + aggFunction->getSizeOfStateInBytes();
-                            }
+                            aggFunction->cleanup(state);
+                            state = state + aggFunction->getSizeOfStateInBytes();
                         }
                     }
                 })));
@@ -151,31 +148,24 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         [&](const nautilus::val<AbstractHashMapEntry*>& entry)
         {
             /// If the entry for the provided keys does not exist, we need to create a new one and initialize the aggregation states
-            if (!aggregationPhysicalFunctions.empty())
+            const ChainedHashMapRef::ChainedEntryRef entryRefReset(entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+            for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
-                const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                    entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
-                auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
-                {
-                    aggFunction->reset(state, ctx.pipelineMemoryProvider);
-                    state = state + aggFunction->getSizeOfStateInBytes();
-                }
+                aggFunction->reset(state, ctx.pipelineMemoryProvider);
+                state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
         ctx.pipelineMemoryProvider.bufferProvider);
 
 
     /// Updating the aggregation states
-    if (!aggregationPhysicalFunctions.empty())
+    const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
+    auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
+    for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        const ChainedHashMapRef::ChainedEntryRef entryRef(hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues);
-        auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
-        for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
-        {
-            aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
-            state = state + aggFunction->getSizeOfStateInBytes();
-        }
+        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        state = state + aggFunction->getSizeOfStateInBytes();
     }
 }
 
