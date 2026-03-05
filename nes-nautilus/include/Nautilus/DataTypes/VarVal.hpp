@@ -102,10 +102,12 @@ public:
         {
             return std::get<T1>(value);
         }
-        if (std::is_same_v<T1, VariableSizedData> && std::holds_alternative<std::shared_ptr<LazyValueRepresentation>>(value))
+        /// Casting for lazy values is allowed but they need to be casted first
+        if (std::holds_alternative<std::shared_ptr<LazyValueRepresentation>>(value))
         {
             const auto lazyVal = std::get<std::shared_ptr<LazyValueRepresentation>>(value);
-            return lazyVal->parseValue().cast<T1>();
+            const VarVal parsedLazyVal = lazyVal->parseValue();
+            return parsedLazyVal.cast<T1>();
         }
         return std::visit(
             []<typename T0>(T0&& underlyingValue) -> T1
@@ -117,9 +119,10 @@ public:
                     throw UnknownOperation("Cannot cast VariableSizedData to anything else.");
                 }
                 else if constexpr (
-                    std::is_same_v<removedCVRefT0, std::shared_ptr<LazyValueRepresentation>> || std::is_same_v<removedCVRefT1, std::shared_ptr<LazyValueRepresentation>>)
+                    std::is_same_v<removedCVRefT0, std::shared_ptr<LazyValueRepresentation>>
+                    || std::is_same_v<removedCVRefT1, std::shared_ptr<LazyValueRepresentation>>)
                 {
-                    throw UnknownOperation("Cannot cast LazyValueRepresentation to anything else.");
+                    throw UnknownOperation("Cannot cast to LazyValueRepresentation.");
                 }
                 else
                 {

@@ -34,8 +34,7 @@ CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunct
 VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    const auto parsedVal = value.getAsParsedUnderlyingValue();
-    return parsedVal.castToType(castToType.type);
+    return value.castToType(castToType.type);
 }
 
 PhysicalFunctionRegistryReturnType

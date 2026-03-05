@@ -35,15 +35,14 @@ RoundPhysicalFunction::RoundPhysicalFunction(PhysicalFunction childFunction, Dat
 VarVal RoundPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
-    const auto parsedValue = value.getAsParsedUnderlyingValue();
     /// If the input type is a float, we need to round the value and return the rounded value.
     /// If the input type is an integer, we only need to cast to the output type.
     if (inputType.isFloat())
     {
-        const auto roundedValue = nautilus::round(parsedValue.cast<nautilus::val<double>>());
+        const auto roundedValue = nautilus::round(value.cast<nautilus::val<double>>());
         return VarVal{roundedValue}.castToType(outputType.type);
     }
-    return parsedValue.castToType(outputType.type);
+    return value.castToType(outputType.type);
 }
 
 PhysicalFunctionRegistryReturnType

@@ -38,9 +38,7 @@ VarVal PowPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto leftValue = leftPhysicalFunction.execute(record, arena);
     const auto rightValue = rightPhysicalFunction.execute(record, arena);
-    const auto leftParsedValue = leftValue.getAsParsedUnderlyingValue();
-    const auto rightParsedValue = rightValue.getAsParsedUnderlyingValue();
-    return VarVal{nautilus::pow(leftParsedValue.cast<nautilus::val<double>>(), rightParsedValue.cast<nautilus::val<double>>())}.castToType(
+    return VarVal{nautilus::pow(leftValue.cast<nautilus::val<double>>(), rightValue.cast<nautilus::val<double>>())}.castToType(
         outputType.type);
 }
 
