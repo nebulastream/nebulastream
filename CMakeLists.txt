@@ -56,13 +56,18 @@ else ()
 endif ()
 
 
-if (NES_LOG_WITH_STACKTRACE)
-    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
-endif ()
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/HostIdentification.cmake)
 include(cmake/Sanitizers.cmake)
+
+if (NES_LOG_WITH_STACKTRACE)
+    if (SANITIZER_OPTION STREQUAL "thread")
+        message(WARNING "NES_LOG_WITH_STACKTRACE is ON but is disabled because the thread sanitizer is active. "
+                "Stack trace resolution is prohibitively slow under TSAN and causes test timeouts.")
+    else ()
+        add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+    endif ()
+endif ()
 include(cmake/ImportDependencies.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
