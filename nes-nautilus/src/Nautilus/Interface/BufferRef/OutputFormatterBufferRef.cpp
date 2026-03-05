@@ -54,10 +54,14 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    nautilus::val<bool> successful{false};
+    nautilus::val<bool> successful{true};
     /// This will be incremented by the amount of bytes written for each field to calculate the field address
     nautilus::val<uint64_t> writtenForThisRecord{0};
-    if (bytesWritten < bufferSize)
+    if (bytesWritten >= bufferSize)
+    {
+        successful = false;
+    }
+    else
     {
         const auto bufferAddress = recordBuffer.getMemArea();
         const auto recordAddress = bufferAddress + bytesWritten;
@@ -73,7 +77,6 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
                 = formatter->writeFormattedValue(value, type, i, fieldAddress, remainingBytes, recordBuffer, bufferProvider);
             writtenForThisRecord += amountWritten;
         }
-        successful = true;
     }
     return {.successful = successful, .writtenRecords = writtenForThisRecord};
 }
