@@ -30,28 +30,13 @@ std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfigu
 {
     if (sliceCacheConfiguration.enableSliceCache.getValue())
     {
-        return std::make_unique<SliceCacheSecondChance>(sliceCacheConfiguration.numberOfEntries.getValue(), sizeof(SliceCacheEntrySecondChance));
+        return std::make_unique<SliceCacheSecondChance>(
+            sliceCacheConfiguration.numberOfEntries.getValue(), sizeof(SliceCacheEntrySecondChance));
     }
     return std::make_unique<SliceCacheNone>();
 }
 
-nautilus::val<Timestamp> SliceCache::getSliceStart(const nautilus::val<uint64_t>& pos)
-{
-    const auto sliceCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto timestampRef = getMemberRef(sliceCacheEntry, &SliceCacheEntry::sliceStart);
-    const auto sliceStart = readValueFromMemRef<Timestamp::Underlying>(timestampRef);
-    return nautilus::val<Timestamp>{sliceStart};
-}
-
-nautilus::val<Timestamp> SliceCache::getSliceEnd(const nautilus::val<uint64_t>& pos)
-{
-    const auto sliceCacheEntry = startOfEntries + pos * sizeOfEntry;
-    const auto timestampRef = getMemberRef(sliceCacheEntry, &SliceCacheEntry::sliceEnd);
-    const auto sliceEnd = readValueFromMemRef<Timestamp::Underlying>(timestampRef);
-    return nautilus::val<Timestamp>{sliceEnd};
-}
-
-void SliceCache::setStartOfEntries(const nautilus::val<int8_t*>& startOfEntries)
+void SliceCache::setStartOfEntries(const nautilus::val<SliceCacheEntry*>& startOfEntries)
 {
     this->startOfEntries = startOfEntries;
 }
@@ -61,35 +46,4 @@ uint64_t SliceCache::getCacheMemorySize() const
     return numberOfEntries * sizeOfEntry;
 }
 
-nautilus::val<int8_t*> SliceCache::getDataStructure(const nautilus::val<uint64_t>& pos)
-{
-    const auto sliceEntry = startOfEntries + pos * sizeOfEntry;
-    const auto dataStructureRef = getMemberRef(sliceEntry, &SliceCacheEntry::dataStructure);
-    auto dataStructure = readValueFromMemRef<int8_t*>(dataStructureRef);
-    return dataStructure;
-}
-
-nautilus::val<bool> SliceCache::foundSlice(const nautilus::val<uint64_t>& pos, const nautilus::val<Timestamp>& timestamp)
-{
-    const auto sliceStart = getSliceStart(pos);
-    const auto sliceEnd = getSliceEnd(pos);
-    if (sliceStart <= timestamp && timestamp < sliceEnd)
-    {
-        return true;
-    }
-    return false;
-}
-
-nautilus::val<uint64_t> SliceCache::searchInCache(const nautilus::val<Timestamp>& timestamp)
-{
-    /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
-    for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; i = i + 1)
-    {
-        if (foundSlice(i, timestamp))
-        {
-            return i;
-        }
-    }
-    return nautilus::val<uint64_t>{NOT_FOUND};
-}
 }

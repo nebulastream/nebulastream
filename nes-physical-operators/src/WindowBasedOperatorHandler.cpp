@@ -14,6 +14,7 @@
 
 #include <WindowBasedOperatorHandler.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -104,11 +105,14 @@ void WindowBasedOperatorHandler::allocateSpaceForSliceCache(
     const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
     PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
-    const auto buffer = bufferProvider->getUnpooledBuffer(sliceCacheMemorySize);
+    auto buffer = bufferProvider->getUnpooledBuffer(sliceCacheMemorySize);
     if (not buffer.has_value())
     {
         throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
     }
+
+    /// We set everything to 0, as there might be old data in the tuple buffer
+    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
     workerThreadToSliceCache[workerThreadId] = std::make_unique<TupleBuffer>(buffer.value());
 }
 

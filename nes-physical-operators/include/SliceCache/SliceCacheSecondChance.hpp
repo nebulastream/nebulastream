@@ -33,7 +33,15 @@ public:
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
 
 private:
-    nautilus::val<bool*> getSecondChanceBit(const nautilus::val<uint64_t>& pos);
+    /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
+    struct EntryFound
+    {
+        nautilus::val<uint64_t> pos;
+        nautilus::val<bool> foundInCache;
+    };
+
+    EntryFound searchInCache(const nautilus::val<Timestamp>& timestamp);
+
     /// Stores the index of the entry that should be replaced next
     nautilus::val<uint64_t> replacementIndex;
 };

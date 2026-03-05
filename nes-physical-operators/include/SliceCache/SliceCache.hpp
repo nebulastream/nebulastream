@@ -53,33 +53,17 @@ class SliceCache
 public:
     explicit SliceCache(uint64_t numberOfEntries, uint64_t sizeOfEntry);
     virtual ~SliceCache() = default;
-
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
-
-    // not happy with the naming of const SliceCacheReplacement& addNewItem
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) = 0;
-
-    void setStartOfEntries(const nautilus::val<int8_t*>& startOfEntries);
+    void setStartOfEntries(const nautilus::val<SliceCacheEntry*>& startOfEntries);
     uint64_t getCacheMemorySize() const;
 
 protected:
-    nautilus::val<Timestamp> getSliceStart(const nautilus::val<uint64_t>& pos);
-    nautilus::val<Timestamp> getSliceEnd(const nautilus::val<uint64_t>& pos);
-
-    virtual nautilus::val<int8_t*> getDataStructure(const nautilus::val<uint64_t>& pos);
-
-    /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
-    /// Due to nautilus not supporting optional or expect.
-    static constexpr uint64_t NOT_FOUND = UINT64_MAX;
-    nautilus::val<uint64_t> searchInCache(const nautilus::val<Timestamp>& timestamp);
-
-    /// Helper function to check if a timestamp is in the cache. We assume a timestamp is in the cache if it is in the range [sliceStart, sliceEnd).
-    nautilus::val<bool> foundSlice(const nautilus::val<uint64_t>& pos, const nautilus::val<Timestamp>& timestamp);
-
     /// Members for iterating over the cache
-    nautilus::val<int8_t*> startOfEntries;
+    // can I maybe not have this as a SliceCacheEntry*?
+    nautilus::val<SliceCacheEntry*> startOfEntries;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
 };
