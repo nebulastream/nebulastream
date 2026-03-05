@@ -116,6 +116,29 @@ TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusDuplicateUnaliasedProjectionSu
     EXPECT_NO_THROW(inferSchema(op, {schema}));
 }
 
+/// Explicit alias matching auto-derived name still counts as explicit (regression for false-negative).
+/// SELECT stream.a AS stream.a, stream.b AS stream.a must be rejected.
+TEST_F(ProjectionLogicalOperatorTest, ExplicitAliasMatchingAutoDerivedNameDetected)
+{
+    const ProjectionLogicalOperator op(
+        {
+            {FieldIdentifier("stream.a"), LogicalFunction(FieldAccessLogicalFunction("stream.a"))},
+            {FieldIdentifier("stream.a"), LogicalFunction(FieldAccessLogicalFunction("stream.b"))},
+        },
+        ProjectionLogicalOperator::Asterisk(false));
+
+    EXPECT_THROW(inferSchema(op, {schema}), Exception);
+    try
+    {
+        inferSchema(op, {schema});
+        FAIL() << "Expected Exception with CannotInferSchema code";
+    }
+    catch (const Exception& e)
+    {
+        EXPECT_EQ(e.code(), ErrorCode::CannotInferSchema);
+    }
+}
+
 /// Asterisk plus a distinctly aliased projection must succeed.
 TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusNewAliasSucceeds)
 {

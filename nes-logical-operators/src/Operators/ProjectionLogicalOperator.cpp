@@ -152,58 +152,36 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         }
     }
 
-    /// Propagate the type inference to all projection functions and resolve projection names.
-    auto inferredProjections = projections
-        | std::views::transform(
-                                   [&firstSchema](const Projection& projection)
-                                   {
-                                       auto inferredFunction = projection.second.withInferredDataType(firstSchema);
-                                       /// If projection has a name use it.
-                                       if (projection.first)
-                                       {
-                                           return Projection{*projection.first, inferredFunction};
-                                       }
-                                       /// Otherwise derive the name from the inferred function
-                                       return Projection{inferredFunction.explain(ExplainVerbosity::Short), inferredFunction};
-                                   });
-
+    /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
+    /// We use the original projection.first to determine if the alias was explicitly provided (has_value()),
+    /// rather than comparing names after inference, which avoids false-negatives when an explicit alias
+    /// matches the auto-derived name.
     auto copy = *this;
-    copy.projections = inferredProjections | std::ranges::to<std::vector>();
+    copy.projections.clear();
     copy.inputSchema = firstSchema;
-
-    /// Reject duplicate explicit AS aliases to avoid ambiguous schemas.
-    /// Unaliased duplicates (e.g. SELECT id, id) are allowed per standard SQL behavior.
+    std::unordered_set<std::string> seenExplicitAliases;
+    for (const auto& projection : projections)
     {
-        std::unordered_set<std::string> seenExplicitAliases;
-        for (const auto& [identifier, function] : copy.projections)
+        auto inferredFunction = projection.second.withInferredDataType(firstSchema);
+        const bool hasExplicitAlias = projection.first.has_value();
+        auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(inferredFunction.explain(ExplainVerbosity::Short));
+        if (hasExplicitAlias && !seenExplicitAliases.insert(identifier.getFieldName()).second)
         {
-            if (!identifier.has_value())
-            {
-                throw CannotInferSchema("Projection ID must be resolved after type inference");
-            }
-            const auto& name = identifier->getFieldName();
-            /// A projection has an explicit alias if its resolved name differs from the auto-derived name.
-            const auto autoDerivedName = function.explain(ExplainVerbosity::Short);
-            if (name == autoDerivedName)
-            {
-                continue;
-            }
-            if (!seenExplicitAliases.insert(name).second)
-            {
-                throw CannotInferSchema("Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", name);
-            }
+            throw CannotInferSchema(
+                "Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", identifier.getFieldName());
         }
+        copy.projections.emplace_back(std::move(identifier), std::move(inferredFunction));
     }
 
-    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
+    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema.
     auto initial = Schema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);
     }
     copy.outputSchema = std::accumulate(
-        inferredProjections.begin(),
-        inferredProjections.end(),
+        copy.projections.begin(),
+        copy.projections.end(),
         initial,
         [](Schema schema, const auto& projection)
         { return schema.addField(projection.first->getFieldName(), projection.second.getDataType()); });
