@@ -29,7 +29,13 @@ namespace NES
 struct SliceCacheEntry
 {
     /// As we are doing everything in Nautilus, we do not care about the initialization of these values
+    // might not be 100% true anymore
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }
+
+    SliceCacheEntry(const Timestamp::Underlying sliceStart, const Timestamp::Underlying sliceEnd, int8_t* dataStructure)
+        : sliceStart(sliceStart), sliceEnd(sliceEnd), dataStructure(dataStructure)
+    {
+    }
 
     virtual ~SliceCacheEntry() = default;
     // talk with PMG, if we can not also support classes that have a val<> wrapper
@@ -49,8 +55,8 @@ public:
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
 
     // not happy with the naming of const SliceCacheReplacement& addNewItem
-    using SliceCacheReplacement = std::function<nautilus::val<SliceCacheEntry>()>;
-    virtual nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplacement& newCacheItem)
+    using SliceCacheReplaceEntry = std::function<void(nautilus::val<SliceCacheEntry*> entryToReplace)>;
+    virtual nautilus::val<int8_t*> getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& newCacheItem)
         = 0;
 
     void setStartOfEntries(const nautilus::val<int8_t*>& startOfEntries);
