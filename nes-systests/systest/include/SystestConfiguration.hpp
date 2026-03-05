@@ -69,6 +69,7 @@ connections.  Valid values include dns:///localhost:1234,
 192.168.1.1:31416, dns:///[::1]:27182, etc.)",
            {std::make_shared<EndpointValidation>(EndpointValidation::GRPC)}};
 
+    BoolOption showQueryPerformance = {"show_query_performance", "false", "print per-query performance timing in the console output"};
     BoolOption endlessMode = {"query_compiler_config", "false", "continuously issue queries to the worker"};
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;

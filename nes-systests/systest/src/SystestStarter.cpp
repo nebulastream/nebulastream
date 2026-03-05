@@ -107,6 +107,8 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
         .default_value(false)
         .implicit_value(true);
 
+    program.add_argument("--show-query-performance").flag().help("print per-query performance timing in the console output");
+
     try
     {
         program.parse_args(argc, argv);
@@ -359,6 +361,11 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     if (program.is_used("--workingDir"))
     {
         config.workingDir = program.get<std::string>("--workingDir");
+    }
+
+    if (program.is_used("--show-query-performance"))
+    {
+        config.showQueryPerformance = true;
     }
 
     if (program.is_used("--endless"))
