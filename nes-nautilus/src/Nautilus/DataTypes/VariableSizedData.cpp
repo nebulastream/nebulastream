@@ -95,6 +95,17 @@ nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) 
     return !(*this == rhs);
 }
 
+nautilus::val<bool> VariableSizedData::operator<(const VariableSizedData& rhs) const
+{
+    const auto minSize = (size < rhs.size) ? size : rhs.size;
+    const auto cmpResult = nautilus::memcmp(getContent(), rhs.getContent(), minSize);
+    if (cmpResult != 0)
+    {
+        return {cmpResult < 0};
+    }
+    return {size < rhs.size};
+}
+
 nautilus::val<bool> VariableSizedData::operator!() const
 {
     return !isValid();

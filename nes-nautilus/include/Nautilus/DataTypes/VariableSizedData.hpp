@@ -50,6 +50,8 @@ public:
     /// content are byte-wise equal. To check the equality of the content, we compare the content byte-wise via a memcmp.
     nautilus::val<bool> operator==(const VariableSizedData&) const;
     nautilus::val<bool> operator!=(const VariableSizedData&) const;
+    /// Lexicographic comparison via memcmp on the shorter length, then by size.
+    nautilus::val<bool> operator<(const VariableSizedData&) const;
     nautilus::val<bool> operator!() const;
     [[nodiscard]] nautilus::val<bool> isValid() const;
 
