@@ -22,7 +22,8 @@ add_subdirectory(src)
 get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
-add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
+add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES}
+        include/Rules/Rule.hpp)
 target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators PRIVATE nes-input-formatter-provider)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
