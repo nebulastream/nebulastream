@@ -42,6 +42,7 @@ struct RecordingEntry
     std::string filePath;
     std::string structuralFingerprint;
     std::optional<uint64_t> retentionWindowMs;
+    RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
     std::vector<DistributedQueryId> ownerQueries;
 };
 
@@ -136,6 +137,7 @@ public:
         {
             it->second.retentionWindowMs = std::max(it->second.retentionWindowMs.value_or(0), *recording.retentionWindowMs);
         }
+        it->second.representation = recording.representation;
         for (const auto& owner : recording.ownerQueries)
         {
             if (!std::ranges::contains(it->second.ownerQueries, owner))

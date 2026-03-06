@@ -47,7 +47,9 @@ struct RecordingCandidateOption
 struct RecordingBoundaryCandidate
 {
     RecordingPlanEdge edge;
-    Host node{Host::INVALID};
+    Host upstreamNode{Host::INVALID};
+    Host downstreamNode{Host::INVALID};
+    std::vector<Host> routeNodes;
     std::vector<RecordingCandidateOption> options;
 
     [[nodiscard]] bool hasFeasibleOptions() const;

@@ -30,6 +30,33 @@ constexpr double MIN_REPLAY_BANDWIDTH_BYTES_PER_SECOND = 4.0 * 1024.0 * 1024.0;
 constexpr double COST_NORMALIZATION_BYTES = 4096.0;
 constexpr double COST_NORMALIZATION_COMPLEXITY = 256.0;
 
+double representationStorageMultiplier(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return 1.0;
+    }
+    std::unreachable();
+}
+
+double representationBandwidthMultiplier(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return 1.0;
+    }
+    std::unreachable();
+}
+
+double replayTimeMultiplier(const RecordingPlacementContext& placementContext)
+{
+    return 1.0 + (std::max<size_t>(placementContext.mergedOccurrenceCount, 1) - 1) * 0.35
+        + (std::max<size_t>(placementContext.activeReplayConsumerCount, 1) - 1) * 0.25 + placementContext.downstreamHopCount * 0.2
+        + placementContext.installedRecordingCount * 0.05;
+}
+
 std::optional<ReplaySpecification> withRetentionCoverage(
     const std::optional<ReplaySpecification>& replaySpecification, const std::optional<uint64_t> retentionWindowMs)
 {
@@ -43,14 +70,16 @@ std::optional<ReplaySpecification> withRetentionCoverage(
     return effectiveSpecification;
 }
 
-size_t estimateRecordingStorageBytes(const Schema& schema, const std::optional<ReplaySpecification>& replaySpecification)
+size_t estimateRecordingStorageBytes(
+    const Schema& schema, const std::optional<ReplaySpecification>& replaySpecification, const RecordingPlacementContext& placementContext)
 {
     const auto schemaBytes = std::max(schema.getSizeOfSchemaInBytes(), size_t{1});
     const auto retentionWindowMs = replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; })
                                        .value_or(static_cast<uint64_t>(DEFAULT_RETENTION_WINDOW_MS));
     const auto retentionFactor = std::max(1.0, static_cast<double>(retentionWindowMs) / DEFAULT_RETENTION_WINDOW_MS);
     return std::max(
-        static_cast<size_t>(std::ceil(schemaBytes * Replay::DEFAULT_ESTIMATED_RECORDING_ROWS * retentionFactor)),
+        static_cast<size_t>(
+            std::ceil(schemaBytes * Replay::DEFAULT_ESTIMATED_RECORDING_ROWS * retentionFactor * representationStorageMultiplier(placementContext.representation))),
         Replay::MIN_RECORDING_SIZE_BYTES);
 }
 
@@ -86,6 +115,7 @@ size_t estimatedIngressWriteBytesPerSecond(size_t estimatedStorageBytes, const s
 
 size_t estimatedReplayBandwidthBytesPerSecond(
     size_t estimatedStorageBytes,
+    const RecordingPlacementContext& placementContext,
     const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
     const std::optional<ReplaySpecification>& replaySpecification,
     bool reuseExistingRecording)
@@ -97,7 +127,10 @@ size_t estimatedReplayBandwidthBytesPerSecond(
 
     const auto contention = 1.0 + (static_cast<double>(activeQueryCount) * 0.25) + (static_cast<double>(recordingFileCount) * 0.05)
         + (static_cast<double>(liveWriteBytesPerSecond + candidateWriteBytesPerSecond) / DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND);
-    const auto effectiveBandwidth = std::max(MIN_REPLAY_BANDWIDTH_BYTES_PER_SECOND, DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND / contention);
+    const auto topologyPenalty = 1.0 + placementContext.totalRouteHopCount * 0.2 + placementContext.downstreamHopCount * 0.15;
+    const auto effectiveBandwidth = std::max(
+        MIN_REPLAY_BANDWIDTH_BYTES_PER_SECOND,
+        (DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND * representationBandwidthMultiplier(placementContext.representation)) / (contention * topologyPenalty));
     return static_cast<size_t>(std::floor(effectiveBandwidth));
 }
 
@@ -123,26 +156,30 @@ double storageUtilization(const WorkerConfig& worker, const std::optional<Worker
 
 RecordingCostEstimate RecordingCostModel::estimateNewRecording(
     const LogicalOperator& recordedSubplanRoot,
+    const RecordingPlacementContext& placementContext,
     const WorkerConfig& worker,
     const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
     const std::optional<ReplaySpecification>& replaySpecification) const
 {
-    const auto estimatedStorageBytes = estimateRecordingStorageBytes(recordedSubplanRoot.getOutputSchema(), replaySpecification);
+    const auto estimatedStorageBytes = estimateRecordingStorageBytes(recordedSubplanRoot.getOutputSchema(), replaySpecification, placementContext);
     const auto operatorCount = countOperators(recordedSubplanRoot);
     const auto schemaBytes = std::max(recordedSubplanRoot.getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
     const auto effectiveReplayBandwidthBytesPerSecond
-        = estimatedReplayBandwidthBytesPerSecond(estimatedStorageBytes, runtimeMetrics, replaySpecification, false);
+        = estimatedReplayBandwidthBytesPerSecond(estimatedStorageBytes, placementContext, runtimeMetrics, replaySpecification, false);
     const auto replayLatency = estimatedReplayLatency(estimatedStorageBytes, effectiveReplayBandwidthBytesPerSecond);
     const auto activeQueryCount = runtimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0);
     const auto liveWriteBytesPerSecond = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0);
+    const auto timeMultiplier = replayTimeMultiplier(placementContext);
 
     const auto maintenanceCost = (estimatedStorageBytes / COST_NORMALIZATION_BYTES) * retentionFactor(replaySpecification)
         * (1.0 + storageUtilization(worker, runtimeMetrics) + (activeQueryCount * 0.2)
-           + (static_cast<double>(liveWriteBytesPerSecond) / DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND));
-    const auto replayCost = (estimatedStorageBytes / COST_NORMALIZATION_BYTES)
-        * (DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND / effectiveReplayBandwidthBytesPerSecond);
-    const auto recomputeCost
-        = ((operatorCount * schemaBytes) / COST_NORMALIZATION_COMPLEXITY) * (1.0 + (activeQueryCount * 0.15));
+           + (static_cast<double>(liveWriteBytesPerSecond) / DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND) + placementContext.upstreamHopCount * 0.25
+           + (std::max<size_t>(placementContext.mergedOccurrenceCount, 1) - 1) * 0.1);
+    const auto replayCost = (estimatedStorageBytes / COST_NORMALIZATION_BYTES) * (DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND / effectiveReplayBandwidthBytesPerSecond)
+        * (1.0 + placementContext.downstreamHopCount * 0.2 + placementContext.installedRecordingCount * 0.05);
+    const auto recomputeCost = ((operatorCount * schemaBytes) / COST_NORMALIZATION_COMPLEXITY)
+        * (1.0 + (activeQueryCount * 0.15) + placementContext.totalRouteHopCount * 0.2
+           + (std::max<size_t>(placementContext.activeReplayConsumerCount, 1) - 1) * 0.25);
 
     return RecordingCostEstimate{
         .estimatedStorageBytes = estimatedStorageBytes,
@@ -152,6 +189,7 @@ RecordingCostEstimate RecordingCostModel::estimateNewRecording(
         .maintenanceCost = maintenanceCost,
         .replayCost = replayCost,
         .recomputeCost = recomputeCost,
+        .replayTimeMultiplier = timeMultiplier,
         .fitsBudget = estimatedStorageBytes <= availableRecordingStorageBytes(worker, runtimeMetrics),
         .satisfiesReplayLatency
         = replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; })
@@ -161,17 +199,18 @@ RecordingCostEstimate RecordingCostModel::estimateNewRecording(
 
 RecordingCostEstimate RecordingCostModel::estimateReplayReuse(
     const LogicalOperator& recordedSubplanRoot,
+    const RecordingPlacementContext& placementContext,
     const WorkerConfig& worker,
     const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
     const std::optional<ReplaySpecification>& replaySpecification,
     const std::optional<uint64_t> retainedWindowMs) const
 {
     const auto effectiveReplaySpecification = withRetentionCoverage(replaySpecification, retainedWindowMs);
-    auto estimate = estimateNewRecording(recordedSubplanRoot, worker, runtimeMetrics, effectiveReplaySpecification);
+    auto estimate = estimateNewRecording(recordedSubplanRoot, placementContext, worker, runtimeMetrics, effectiveReplaySpecification);
     estimate.maintenanceCost = 0.0;
     estimate.fitsBudget = true;
     estimate.estimatedReplayBandwidthBytesPerSecond
-        = estimatedReplayBandwidthBytesPerSecond(estimate.estimatedStorageBytes, runtimeMetrics, effectiveReplaySpecification, true);
+        = estimatedReplayBandwidthBytesPerSecond(estimate.estimatedStorageBytes, placementContext, runtimeMetrics, effectiveReplaySpecification, true);
     estimate.estimatedReplayLatency
         = estimatedReplayLatency(estimate.estimatedStorageBytes, estimate.estimatedReplayBandwidthBytesPerSecond);
     estimate.replayCost = (estimate.estimatedStorageBytes / COST_NORMALIZATION_BYTES)
@@ -187,14 +226,15 @@ RecordingCostEstimate RecordingCostModel::estimateReplayReuse(
 
 RecordingCostEstimate RecordingCostModel::estimateRecordingUpgrade(
     const LogicalOperator& recordedSubplanRoot,
+    const RecordingPlacementContext& placementContext,
     const WorkerConfig& worker,
     const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
     const std::optional<ReplaySpecification>& replaySpecification,
     const std::optional<uint64_t> existingRetentionWindowMs) const
 {
-    auto upgradedEstimate = estimateNewRecording(recordedSubplanRoot, worker, runtimeMetrics, replaySpecification);
+    auto upgradedEstimate = estimateNewRecording(recordedSubplanRoot, placementContext, worker, runtimeMetrics, replaySpecification);
     const auto existingCoverage = withRetentionCoverage(std::nullopt, existingRetentionWindowMs);
-    const auto existingEstimate = estimateNewRecording(recordedSubplanRoot, worker, runtimeMetrics, existingCoverage);
+    const auto existingEstimate = estimateNewRecording(recordedSubplanRoot, placementContext, worker, runtimeMetrics, existingCoverage);
 
     upgradedEstimate.maintenanceCost = std::max(0.0, upgradedEstimate.maintenanceCost - existingEstimate.maintenanceCost);
     return upgradedEstimate;

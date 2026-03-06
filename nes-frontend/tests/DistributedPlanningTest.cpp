@@ -541,7 +541,7 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
 
 TEST_F(DistributedPlanningTest, TimeTravelStoreUpgradesExistingRecordingWhenRetentionIncreases)
 {
-    auto [initialOptimizer, initialStatement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    auto [initialOptimizer, initialStatement] = loadAndBindExplainStatement("basic_time_travel_store_direct.yaml");
     const auto initialPlan = initialOptimizer->optimize(initialStatement.plan, initialStatement.replaySpecification, RecordingCatalog{});
     ASSERT_EQ(initialPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
     const auto initialRecording = initialPlan.getRecordingSelectionResult().selectedRecordings.front();
@@ -556,7 +556,7 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreUpgradesExistingRecordingWhenRete
             .retentionWindowMs = initialStatement.replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
             .ownerQueries = {DistributedQueryId("existing-query")}});
 
-    auto [upgradeOptimizer, upgradeStatement] = loadAndBindExplainStatement("basic_time_travel_store_with_options.yaml");
+    auto [upgradeOptimizer, upgradeStatement] = loadAndBindExplainStatement("basic_time_travel_store_direct_with_options.yaml");
     const auto upgradedPlan = upgradeOptimizer->optimize(upgradeStatement.plan, upgradeStatement.replaySpecification, catalog);
 
     ASSERT_EQ(upgradedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);

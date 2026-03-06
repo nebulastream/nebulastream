@@ -73,6 +73,30 @@ LogicalPlan createPlacedUnaryPlan(const Host& host)
     return plan.withRootOperators({addPlacementTraitRecursively(plan.getRootOperators().front(), host)});
 }
 
+LogicalOperator withPlacement(const LogicalOperator& current, const Host& host)
+{
+    auto traitSet = current.getTraitSet();
+    EXPECT_TRUE(traitSet.tryInsert(PlacementTrait(host)));
+    return current.withTraitSet(traitSet);
+}
+
+LogicalPlan createPlacedSourceToSinkPlan(const Host& sourceHost, const Host& sinkHost)
+{
+    auto plan = LogicalPlanBuilder::createLogicalPlan("TEST", createSchema(), {}, {});
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    auto sink = plan.getRootOperators().front();
+    EXPECT_EQ(sink.getChildren().size(), 1U);
+    if (sink.getChildren().size() != 1U)
+    {
+        return plan;
+    }
+    auto source = sink.getChildren().front();
+    source = withPlacement(source, sourceHost);
+    sink = withPlacement(sink, sinkHost).withChildren({source});
+    return plan.withRootOperators({sink});
+}
+
 class RecordingSelectionPhaseTest : public Testing::BaseUnitTest
 {
 public:
@@ -117,7 +141,9 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
             return candidate.edge.parentId == root.getId() && candidate.edge.childId == root.getChildren().front().getId();
         });
     ASSERT_NE(rootCandidate, candidateSet.candidates.end());
-    EXPECT_EQ(rootCandidate->node, host);
+    EXPECT_EQ(rootCandidate->upstreamNode, host);
+    EXPECT_EQ(rootCandidate->downstreamNode, host);
+    EXPECT_EQ(rootCandidate->routeNodes, std::vector<Host>({host}));
     ASSERT_EQ(rootCandidate->options.size(), 2U);
     EXPECT_TRUE(std::ranges::any_of(
         rootCandidate->options,
@@ -181,6 +207,42 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
             return option.decision == RecordingSelectionDecision::UpgradeExistingRecording && option.feasible
                 && option.selection.structuralFingerprint == structuralFingerprint && option.selection.recordingId != weakerRecordingId;
         }));
+}
+
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsForPlacedEdge)
+{
+    const auto sourceHost = Host("source-node:8080");
+    const auto intermediateHost = Host("intermediate-node:8080");
+    const auto sinkHost = Host("sink-node:8080");
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(sourceHost, "", 16, {intermediateHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(intermediateHost, "", 16, {sinkHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(sinkHost, "", 16, {}, {}, 1024 * 1024));
+
+    const auto plan = createPlacedSourceToSinkPlan(sourceHost, sinkHost);
+    const auto root = plan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
+        plan,
+        ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingCatalog{});
+
+    ASSERT_EQ(candidateSet.candidates.size(), 1U);
+    const auto& candidate = candidateSet.candidates.front();
+    EXPECT_EQ(candidate.upstreamNode, sourceHost);
+    EXPECT_EQ(candidate.downstreamNode, sinkHost);
+    EXPECT_EQ(candidate.routeNodes, std::vector<Host>({sourceHost, intermediateHost, sinkHost}));
+    ASSERT_EQ(candidate.options.size(), 3U);
+    EXPECT_EQ(
+        candidate.options
+            | std::views::transform([](const auto& option) { return option.selection.node; })
+            | std::ranges::to<std::vector>(),
+        std::vector<Host>({sourceHost, intermediateHost, sinkHost}));
+    EXPECT_TRUE(std::ranges::all_of(
+        candidate.options,
+        [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
 }
 }
 }

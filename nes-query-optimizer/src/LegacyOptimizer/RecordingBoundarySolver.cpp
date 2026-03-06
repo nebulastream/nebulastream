@@ -67,7 +67,9 @@ struct SelectedBoundarySignatureHash
 struct WeightedCandidateChoice
 {
     RecordingCandidateOption option;
-    double adjustedCost = 0.0;
+    double adjustedBoundaryCutCost = 0.0;
+    double replayRecomputeCost = 0.0;
+    double adjustedTotalCost = 0.0;
 };
 
 int decisionPreference(const RecordingSelectionDecision decision)
@@ -122,19 +124,25 @@ chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unorder
             continue;
         }
 
-        double adjustedCost = option.cost.totalCost();
+        double adjustedBoundaryCutCost = option.cost.boundaryCutCost;
         if (option.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
-            adjustedCost += shadowPrices.contains(candidate.node)
-                ? shadowPrices.at(candidate.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
+            adjustedBoundaryCutCost += shadowPrices.contains(option.selection.node)
+                ? shadowPrices.at(option.selection.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
                 : 0.0;
         }
+        const auto replayRecomputeCost = option.cost.replayRecomputeCost;
+        const auto adjustedTotalCost = adjustedBoundaryCutCost + replayRecomputeCost;
 
-        if (!bestChoice.has_value() || adjustedCost < bestChoice->adjustedCost - EPSILON
-            || (std::abs(adjustedCost - bestChoice->adjustedCost) <= EPSILON
+        if (!bestChoice.has_value() || adjustedTotalCost < bestChoice->adjustedTotalCost - EPSILON
+            || (std::abs(adjustedTotalCost - bestChoice->adjustedTotalCost) <= EPSILON
                 && decisionPreference(option.decision) < decisionPreference(bestChoice->option.decision)))
         {
-            bestChoice = WeightedCandidateChoice{.option = option, .adjustedCost = adjustedCost};
+            bestChoice = WeightedCandidateChoice{
+                .option = option,
+                .adjustedBoundaryCutCost = adjustedBoundaryCutCost,
+                .replayRecomputeCost = replayRecomputeCost,
+                .adjustedTotalCost = adjustedTotalCost};
         }
     }
     return bestChoice;
@@ -143,10 +151,11 @@ chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unorder
 std::string describeCandidate(const RecordingBoundaryCandidate& candidate)
 {
     return fmt::format(
-        "edge {} -> {} on {}",
+        "edge {} -> {} from {} to {}",
         candidate.edge.parentId.getRawValue(),
         candidate.edge.childId.getRawValue(),
-        candidate.node.getRawValue());
+        candidate.upstreamNode.getRawValue(),
+        candidate.downstreamNode.getRawValue());
 }
 
 std::string describeInfeasibleBoundary(const RecordingCandidateSet& candidateSet)
@@ -201,7 +210,11 @@ std::string makeSelectionSignature(const std::vector<SelectedRecordingBoundary>&
             "{}:{}:{}",
             selected.candidate.edge.parentId.getRawValue(),
             selected.candidate.edge.childId.getRawValue(),
-            static_cast<int>(selected.chosenOption.decision)));
+            fmt::format(
+                "{}:{}:{}",
+                static_cast<int>(selected.chosenOption.decision),
+                selected.chosenOption.selection.node.getRawValue(),
+                static_cast<int>(selected.chosenOption.selection.representation))));
     }
     std::ranges::sort(parts);
     return fmt::format("{}", fmt::join(parts, "|"));
@@ -217,15 +230,18 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
     std::unordered_map<Host, size_t> availableStorageBytesByHost;
     for (const auto& candidate : candidateSet.candidates)
     {
-        if (availableStorageBytesByHost.contains(candidate.node))
+        for (const auto& option : candidate.options)
         {
-            continue;
+            if (availableStorageBytesByHost.contains(option.selection.node))
+            {
+                continue;
+            }
+            const auto worker = workerCatalog->getWorker(option.selection.node);
+            PRECONDITION(worker.has_value(), "Recording boundary solving could not find worker {}", option.selection.node);
+            const auto runtimeMetrics = workerCatalog->getWorkerRuntimeMetrics(option.selection.node);
+            const auto usedBytes = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0);
+            availableStorageBytesByHost[option.selection.node] = usedBytes >= worker->recordingStorageBudget ? 0 : worker->recordingStorageBudget - usedBytes;
         }
-        const auto worker = workerCatalog->getWorker(candidate.node);
-        PRECONDITION(worker.has_value(), "Recording boundary solving could not find worker {}", candidate.node);
-        const auto runtimeMetrics = workerCatalog->getWorkerRuntimeMetrics(candidate.node);
-        const auto usedBytes = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0);
-        availableStorageBytesByHost[candidate.node] = usedBytes >= worker->recordingStorageBudget ? 0 : worker->recordingStorageBudget - usedBytes;
     }
 
     std::unordered_map<Host, double> shadowPrices;
@@ -240,7 +256,8 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             if (const auto bestChoice = chooseBestOption(candidate, shadowPrices); bestChoice.has_value())
             {
                 bestChoiceByEdge.emplace(candidate.edge, *bestChoice);
-                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedCost));
+                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedBoundaryCutCost));
+                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->replayRecomputeCost));
             }
         }
 
@@ -278,7 +295,12 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         for (const auto& edge : candidateSet.planEdges)
         {
             const auto arc = graph.addArc(graphNodesByOperator.at(edge.parentId), graphNodesByOperator.at(edge.childId));
-            capacities[arc] = bestChoiceByEdge.contains(edge) ? scaledCapacityFromCost(bestChoiceByEdge.at(edge).adjustedCost) : infiniteCapacity;
+            capacities[arc] = bestChoiceByEdge.contains(edge) ? scaledCapacityFromCost(bestChoiceByEdge.at(edge).adjustedBoundaryCutCost) : infiniteCapacity;
+            if (bestChoiceByEdge.contains(edge))
+            {
+                const auto recomputeArc = graph.addArc(graphNodesByOperator.at(edge.childId), terminalNode);
+                capacities[recomputeArc] = scaledCapacityFromCost(bestChoiceByEdge.at(edge).replayRecomputeCost);
+            }
         }
         for (const auto leafId : candidateSet.leafOperatorIds)
         {
@@ -299,6 +321,14 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             const auto parentOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.parentId)];
             const auto childOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.childId)];
             if (parentOnSourceSide && !childOnSourceSide && !bestChoiceByEdge.contains(edge))
+            {
+                cutUsesInfiniteEdge = true;
+                break;
+            }
+        }
+        for (const auto leafId : candidateSet.leafOperatorIds)
+        {
+            if (minCutPartition[graphNodesByOperator.at(leafId)])
             {
                 cutUsesInfiniteEdge = true;
                 break;
@@ -347,7 +377,7 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         {
             if (selected.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
             {
-                selectedStorageBytesByHost[selected.candidate.node] += selected.chosenOption.cost.estimatedStorageBytes;
+                selectedStorageBytesByHost[selected.chosenOption.selection.node] += selected.chosenOption.cost.estimatedStorageBytes;
             }
         }
 
@@ -366,15 +396,28 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
 
         if (!violatesBudget)
         {
-            const auto objectiveCost = std::accumulate(
+            const auto boundaryCost = std::accumulate(
                 selectedBoundary.begin(),
                 selectedBoundary.end(),
                 0.0,
                 [&](const double total, const SelectedRecordingBoundary& selected)
-                { return total + bestChoiceByEdge.at(selected.candidate.edge).adjustedCost; });
+                { return total + bestChoiceByEdge.at(selected.candidate.edge).adjustedBoundaryCutCost; });
+            const auto replayRecomputeCost = std::accumulate(
+                candidateSet.candidates.begin(),
+                candidateSet.candidates.end(),
+                0.0,
+                [&](const double total, const RecordingBoundaryCandidate& candidate)
+                {
+                    if (!bestChoiceByEdge.contains(candidate.edge))
+                    {
+                        return total;
+                    }
+                    return minCutPartition[graphNodesByOperator.at(candidate.edge.childId)] ? total + bestChoiceByEdge.at(candidate.edge).replayRecomputeCost
+                                                                                            : total;
+                });
             return RecordingBoundarySelection{
                 .selectedBoundary = std::move(selectedBoundary),
-                .objectiveCost = objectiveCost};
+                .objectiveCost = boundaryCost + replayRecomputeCost};
         }
 
         const auto selectionSignature = makeSelectionSignature(selectedBoundary);

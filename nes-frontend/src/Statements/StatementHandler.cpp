@@ -70,6 +70,16 @@ std::string recordingDecisionToString(RecordingSelectionDecision decision)
     std::unreachable();
 }
 
+std::string recordingRepresentationToString(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return "binary_store";
+    }
+    std::unreachable();
+}
+
 void appendCostBreakdown(
     std::stringstream& explainMessage,
     std::string_view prefix,
@@ -78,14 +88,18 @@ void appendCostBreakdown(
 {
     fmt::println(
         explainMessage,
-        "{} decision={} total_cost={:.2f} maintenance_cost={:.2f} replay_cost={:.2f} recompute_cost={:.2f}"
-        " storage_bytes={} replay_bandwidth={}B/s replay_latency={} ms operators={} fits_budget={} satisfies_latency={}",
+        "{} decision={} total_cost={:.2f} boundary_cut_cost={:.2f} replay_recompute_cost={:.2f} maintenance_cost={:.2f}"
+        " replay_cost={:.2f} recompute_cost={:.2f} replay_time_multiplier={:.2f} storage_bytes={} replay_bandwidth={}B/s"
+        " replay_latency={} ms operators={} fits_budget={} satisfies_latency={}",
         prefix,
         decisionLabel,
         costBreakdown.totalCost(),
+        costBreakdown.boundaryCutCost,
+        costBreakdown.replayRecomputeCost,
         costBreakdown.maintenanceCost,
         costBreakdown.replayCost,
         costBreakdown.recomputeCost,
+        costBreakdown.replayTimeMultiplier,
         costBreakdown.estimatedStorageBytes,
         costBreakdown.estimatedReplayBandwidthBytesPerSecond,
         costBreakdown.estimatedReplayLatencyMs,
@@ -125,9 +139,10 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
     {
         fmt::println(
             explainMessage,
-            "- recording_id={} node={} file={}",
+            "- recording_id={} node={} representation={} file={}",
             selection.recordingId.getRawValue(),
             selection.node,
+            recordingRepresentationToString(selection.representation),
             selection.filePath);
     }
 
@@ -141,8 +156,10 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
     {
         fmt::println(
             explainMessage,
-            "- recording_id={} decision={} reason={}",
+            "- recording_id={} node={} representation={} decision={} reason={}",
             explanation.selection.recordingId.getRawValue(),
+            explanation.selection.node,
+            recordingRepresentationToString(explanation.selection.representation),
             recordingDecisionToString(explanation.decision),
             explanation.reason);
         appendCostBreakdown(

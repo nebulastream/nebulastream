@@ -26,6 +26,11 @@ namespace NES
 
 using RecordingId = NESStrongStringType<struct RecordingId_, "invalid">;
 
+enum class RecordingRepresentation : uint8_t
+{
+    BinaryStore,
+};
+
 enum class RecordingSelectionDecision
 {
     CreateNewRecording,
@@ -43,6 +48,9 @@ struct RecordingCostBreakdown
     double maintenanceCost = 0.0;
     double replayCost = 0.0;
     double recomputeCost = 0.0;
+    double replayTimeMultiplier = 1.0;
+    double boundaryCutCost = 0.0;
+    double replayRecomputeCost = 0.0;
     bool fitsBudget = false;
     bool satisfiesReplayLatency = true;
 
@@ -56,6 +64,7 @@ struct RecordingSelection
     Host node{Host::INVALID};
     std::string filePath;
     std::string structuralFingerprint;
+    RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
 
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };

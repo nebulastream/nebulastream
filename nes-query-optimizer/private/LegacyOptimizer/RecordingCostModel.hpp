@@ -18,12 +18,27 @@
 #include <optional>
 
 #include <Operators/LogicalOperator.hpp>
+#include <RecordingSelectionResult.hpp>
 #include <Replay/ReplaySpecification.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
 namespace NES
 {
+
+struct RecordingPlacementContext
+{
+    Host sourcePlacement{Host::INVALID};
+    Host sinkPlacement{Host::INVALID};
+    Host recordingPlacement{Host::INVALID};
+    size_t upstreamHopCount = 0;
+    size_t downstreamHopCount = 0;
+    size_t totalRouteHopCount = 0;
+    size_t mergedOccurrenceCount = 1;
+    size_t activeReplayConsumerCount = 1;
+    size_t installedRecordingCount = 0;
+    RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
+};
 
 struct RecordingCostEstimate
 {
@@ -34,10 +49,13 @@ struct RecordingCostEstimate
     double maintenanceCost = 0.0;
     double replayCost = 0.0;
     double recomputeCost = 0.0;
+    double replayTimeMultiplier = 1.0;
     bool fitsBudget = false;
     bool satisfiesReplayLatency = true;
 
-    [[nodiscard]] double totalCost() const { return maintenanceCost + replayCost; }
+    [[nodiscard]] double boundaryCutCost() const { return maintenanceCost + (replayCost * replayTimeMultiplier); }
+    [[nodiscard]] double replayRecomputeCost() const { return recomputeCost * replayTimeMultiplier; }
+    [[nodiscard]] double totalCost() const { return boundaryCutCost() + replayRecomputeCost(); }
 };
 
 class RecordingCostModel
@@ -45,12 +63,14 @@ class RecordingCostModel
 public:
     [[nodiscard]] RecordingCostEstimate estimateNewRecording(
         const LogicalOperator& recordedSubplanRoot,
+        const RecordingPlacementContext& placementContext,
         const WorkerConfig& worker,
         const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
         const std::optional<ReplaySpecification>& replaySpecification) const;
 
     [[nodiscard]] RecordingCostEstimate estimateReplayReuse(
         const LogicalOperator& recordedSubplanRoot,
+        const RecordingPlacementContext& placementContext,
         const WorkerConfig& worker,
         const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
         const std::optional<ReplaySpecification>& replaySpecification,
@@ -58,6 +78,7 @@ public:
 
     [[nodiscard]] RecordingCostEstimate estimateRecordingUpgrade(
         const LogicalOperator& recordedSubplanRoot,
+        const RecordingPlacementContext& placementContext,
         const WorkerConfig& worker,
         const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
         const std::optional<ReplaySpecification>& replaySpecification,

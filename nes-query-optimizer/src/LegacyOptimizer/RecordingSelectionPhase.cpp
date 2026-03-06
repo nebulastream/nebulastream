@@ -25,6 +25,8 @@
 #include <LegacyOptimizer/RecordingCandidateSelectionPhase.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Traits/PlacementTrait.hpp>
+#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <fmt/format.h>
 
@@ -39,6 +41,34 @@ struct RecordingPlanEdgeHash
         return std::hash<uint64_t>{}(edge.parentId.getRawValue()) ^ (std::hash<uint64_t>{}(edge.childId.getRawValue()) << 1U);
     }
 };
+
+std::string recordingRepresentationDescription(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return "binary_store";
+    }
+    std::unreachable();
+}
+
+TraitSet traitSetWithPlacement(const TraitSet& original, const Host& placement)
+{
+    std::vector<Trait> traits;
+    traits.reserve(original.size());
+    for (const auto& [_, trait] : original)
+    {
+        if (trait.getTypeInfo() == typeid(PlacementTrait))
+        {
+            continue;
+        }
+        traits.push_back(trait);
+    }
+    auto rewrittenTraitSet = TraitSet{traits};
+    const auto addedPlacement = rewrittenTraitSet.tryInsert(PlacementTrait(placement));
+    INVARIANT(addedPlacement, "Expected to inject placement trait for replay store on {}", placement);
+    return rewrittenTraitSet;
+}
 
 LogicalOperator rewriteSelectedBoundary(
     const LogicalOperator& current,
@@ -58,11 +88,14 @@ LogicalOperator rewriteSelectedBoundary(
         }
 
         const auto& selection = storesToInsert.at(edge);
+        PRECONDITION(
+            selection.representation == RecordingRepresentation::BinaryStore,
+            "Unsupported replay recording representation selected for plan rewrite");
         rewrittenChildren.push_back(
             StoreLogicalOperator(
                 StoreLogicalOperator::validateAndFormatConfig(
                     {{"file_path", selection.filePath}, {"append", "false"}, {"header", "true"}}))
-                .withTraitSet(current.getTraitSet())
+                .withTraitSet(traitSetWithPlacement(current.getTraitSet(), selection.node))
                 .withInferredSchema({rewrittenChild.getOutputSchema()})
                 .withChildren({rewrittenChild}));
     }
@@ -79,11 +112,20 @@ std::string buildExplanationReason(
     switch (selectedBoundary.chosenOption.decision)
     {
         case RecordingSelectionDecision::CreateNewRecording:
-            return prefix + "create_new_recording was the lowest-cost feasible option on this cut edge";
+            return prefix + fmt::format(
+                                "create_new_recording on {} with representation {} was the lowest-cost feasible option on this cut edge",
+                                selectedBoundary.chosenOption.selection.node,
+                                recordingRepresentationDescription(selectedBoundary.chosenOption.selection.representation));
         case RecordingSelectionDecision::UpgradeExistingRecording:
-            return prefix + "upgrade_existing_recording was selected because a structurally compatible recording exists but does not satisfy the requested retention";
+            return prefix + fmt::format(
+                                "upgrade_existing_recording on {} with representation {} was selected because a structurally compatible recording exists but does not satisfy the requested retention",
+                                selectedBoundary.chosenOption.selection.node,
+                                recordingRepresentationDescription(selectedBoundary.chosenOption.selection.representation));
         case RecordingSelectionDecision::ReuseExistingRecording:
-            return prefix + "a structurally compatible recording in the recording catalog already satisfies the requested replay coverage, so reuse_existing_recording was the lowest-cost feasible option on this cut edge";
+            return prefix + fmt::format(
+                                "a structurally compatible recording on {} with representation {} already satisfies the requested replay coverage, so reuse_existing_recording was the lowest-cost feasible option on this cut edge",
+                                selectedBoundary.chosenOption.selection.node,
+                                recordingRepresentationDescription(selectedBoundary.chosenOption.selection.representation));
     }
     std::unreachable();
 }
