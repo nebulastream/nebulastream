@@ -16,3 +16,5 @@ add_source_files(nes-nautilus
         LazyValueRepresentation.cpp
         LazyValueProvider.cpp
 )
+
+add_plugin(VARSIZED LazyValueRepresentation nes-nautilus VARSIZEDLazyValueRepresentation.cpp)
