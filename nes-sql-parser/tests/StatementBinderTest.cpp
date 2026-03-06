@@ -541,6 +541,32 @@ TEST_F(StatementBinderTest, ShowSinks)
     ASSERT_EQ(filteredQuotedSinksResult.value().sinks.at(0).getSinkName(), "TESTSINK1");
 }
 
+TEST_F(StatementBinderTest, ShowRecordingStorage)
+{
+    const std::string allRecordingStorageQueryString = "SHOW RECORDING STORAGE FORMAT JSON";
+    const std::string filteredRecordingStorageQueryString = "SHOW RECORDING STORAGE WHERE NODE = 'localhost:8080'";
+    const std::string invalidFilterQueryString = "SHOW RECORDING STORAGE WHERE ID = 1";
+    const std::string invalidReservedKeywordFilterQueryString = "SHOW RECORDING STORAGE WHERE WORKER = 'localhost:8081'";
+
+    const auto allRecordingStorageStatementExp = binder->parseAndBindSingle(allRecordingStorageQueryString);
+    const auto filteredRecordingStorageStatementExp = binder->parseAndBindSingle(filteredRecordingStorageQueryString);
+    const auto invalidFilterStatementExp = binder->parseAndBindSingle(invalidFilterQueryString);
+    const auto invalidReservedKeywordFilterStatementExp = binder->parseAndBindSingle(invalidReservedKeywordFilterQueryString);
+
+    ASSERT_TRUE(allRecordingStorageStatementExp.has_value());
+    ASSERT_TRUE(filteredRecordingStorageStatementExp.has_value());
+    ASSERT_FALSE(invalidFilterStatementExp.has_value());
+    ASSERT_FALSE(invalidReservedKeywordFilterStatementExp.has_value());
+
+    auto allRecordingStorageStatement = std::get<ShowRecordingStorageStatement>(*allRecordingStorageStatementExp);
+    EXPECT_EQ(allRecordingStorageStatement.host, std::nullopt);
+    EXPECT_EQ(allRecordingStorageStatement.format, StatementOutputFormat::JSON);
+
+    auto filteredRecordingStorageStatement = std::get<ShowRecordingStorageStatement>(*filteredRecordingStorageStatementExp);
+    EXPECT_EQ(filteredRecordingStorageStatement.host, "localhost:8080");
+    EXPECT_EQ(filteredRecordingStorageStatement.format, std::nullopt);
+}
+
 TEST_F(StatementBinderTest, ExplainStatement)
 {
     const std::vector<std::string_view> validExplainStatement{

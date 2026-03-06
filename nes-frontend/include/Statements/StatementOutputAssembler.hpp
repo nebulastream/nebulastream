@@ -207,6 +207,23 @@ struct StatementOutputAssembler<ShowSinksStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<ShowRecordingStorageStatementResult>
+{
+    using OutputRowType = std::tuple<Host, size_t>;
+
+    auto convert(const ShowRecordingStorageStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.workers.size());
+        for (const auto& worker : result.workers)
+        {
+            output.emplace_back(worker.host, worker.recordingStorageBudget);
+        }
+        return std::make_pair(std::to_array<std::string_view>({"worker", "recording_storage_budget"}), output);
+    }
+};
+
+template <>
 struct StatementOutputAssembler<DropLogicalSourceStatementResult>
 {
     using OutputRowType = LogicalSourceOutputRowType;
@@ -433,6 +450,7 @@ static_assert(AssemblembleStatementResult<CreateSinkStatementResult>);
 static_assert(AssemblembleStatementResult<ShowLogicalSourcesStatementResult>);
 static_assert(AssemblembleStatementResult<ShowPhysicalSourcesStatementResult>);
 static_assert(AssemblembleStatementResult<ShowSinksStatementResult>);
+static_assert(AssemblembleStatementResult<ShowRecordingStorageStatementResult>);
 static_assert(AssemblembleStatementResult<DropLogicalSourceStatementResult>);
 static_assert(AssemblembleStatementResult<DropPhysicalSourceStatementResult>);
 static_assert(AssemblembleStatementResult<DropSinkStatementResult>);

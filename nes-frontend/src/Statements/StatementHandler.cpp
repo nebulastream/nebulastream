@@ -506,6 +506,28 @@ std::expected<SetRecordingStorageStatementResult, Exception> TopologyStatementHa
     return SetRecordingStorageStatementResult{.host = host, .recordingStorageBudget = statement.recordingStorageBudget};
 }
 
+std::expected<ShowRecordingStorageStatementResult, Exception>
+TopologyStatementHandler::operator()(const ShowRecordingStorageStatement& statement) const
+{
+    if (statement.host.has_value())
+    {
+        if (const auto worker = workerCatalog->getWorker(Host(*statement.host)); worker.has_value())
+        {
+            return ShowRecordingStorageStatementResult{
+                .workers = {{.host = worker->host, .recordingStorageBudget = worker->recordingStorageBudget}}};
+        }
+        return ShowRecordingStorageStatementResult{.workers = {}};
+    }
+
+    auto workers = workerCatalog->getAllWorkers()
+        | std::views::transform(
+              [](const WorkerConfig& worker)
+              { return RecordingStorageEntry{.host = worker.host, .recordingStorageBudget = worker.recordingStorageBudget}; })
+        | std::ranges::to<std::vector>();
+    std::ranges::sort(workers, {}, [](const RecordingStorageEntry& worker) { return worker.host.getRawValue(); });
+    return ShowRecordingStorageStatementResult{.workers = std::move(workers)};
+}
+
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
     if (not statement.id.has_value())

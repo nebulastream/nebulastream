@@ -99,6 +99,12 @@ struct ShowSinksStatement
     std::optional<StatementOutputFormat> format;
 };
 
+struct ShowRecordingStorageStatement
+{
+    std::optional<std::string> host;
+    std::optional<StatementOutputFormat> format;
+};
+
 struct DropLogicalSourceStatement
 {
     LogicalSourceName source;
@@ -174,6 +180,7 @@ using Statement = std::variant<
     CreateSinkStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
+    ShowRecordingStorageStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,

@@ -71,6 +71,17 @@ struct ShowSinksStatementResult
     std::vector<SinkDescriptor> sinks;
 };
 
+struct RecordingStorageEntry
+{
+    Host host;
+    size_t recordingStorageBudget{};
+};
+
+struct ShowRecordingStorageStatementResult
+{
+    std::vector<RecordingStorageEntry> workers;
+};
+
 struct DropLogicalSourceStatementResult
 {
     LogicalSourceName dropped;
@@ -136,6 +147,7 @@ using StatementResult = std::variant<
     CreateWorkerStatementResult,
     SetRecordingStorageStatementResult,
     WorkerStatusStatementResult,
+    ShowRecordingStorageStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
@@ -237,6 +249,7 @@ public:
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
     std::expected<SetRecordingStorageStatementResult, Exception> operator()(const SetRecordingStorageStatement& statement);
+    std::expected<ShowRecordingStorageStatementResult, Exception> operator()(const ShowRecordingStorageStatement& statement) const;
 };
 
 template <typename HandlerT>

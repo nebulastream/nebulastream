@@ -100,6 +100,7 @@ showFormat: TEXT | JSON;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
+    | RECORDING STORAGE #showRecordingStorageSubject
     | SINKS #showSinksSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;

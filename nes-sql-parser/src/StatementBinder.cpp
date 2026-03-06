@@ -341,6 +341,28 @@ public:
         return ShowSinksStatement{.name = std::nullopt, .format = format};
     }
 
+    ShowRecordingStorageStatement
+    bindShowRecordingStorageStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat)
+        const
+    {
+        const std::optional<StatementOutputFormat> format
+            = showFormat != nullptr ? std::make_optional(bindFormat(showFormat)) : std::nullopt;
+        if (showFilter != nullptr)
+        {
+            const auto [attr, value] = bindShowFilter(showFilter);
+            if (attr != "NODE")
+            {
+                throw InvalidQuerySyntax("Filter for SHOW RECORDING STORAGE must be on NODE attribute");
+            }
+            if (not std::holds_alternative<std::string>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for SHOW RECORDING STORAGE must be a string");
+            }
+            return ShowRecordingStorageStatement{.host = URI(std::get<std::string>(value)).toString(), .format = format};
+        }
+        return ShowRecordingStorageStatement{.host = std::nullopt, .format = format};
+    }
+
     ShowQueriesStatement
     bindShowQueriesStatement(const AntlrSQLParser::ShowFilterContext* showFilter, AntlrSQLParser::ShowFormatContext* showFormat) const
     {
@@ -380,6 +402,11 @@ public:
             queriesSubject != nullptr)
         {
             return bindShowQueriesStatement(showFilter, showAST->showFormat());
+        }
+        if (const auto* recordingStorageSubject = dynamic_cast<AntlrSQLParser::ShowRecordingStorageSubjectContext*>(showAST->showSubject());
+            recordingStorageSubject != nullptr)
+        {
+            return bindShowRecordingStorageStatement(showFilter, showAST->showFormat());
         }
         if (const auto* sinksSubject = dynamic_cast<AntlrSQLParser::ShowSinksSubjectContext*>(showAST->showSubject());
             sinksSubject != nullptr)

@@ -56,5 +56,37 @@ TEST_F(TopologyStatementHandlerTest, SetRecordingStorageRejectsUnknownWorker)
 
     ASSERT_FALSE(result.has_value());
 }
+
+TEST_F(TopologyStatementHandlerTest, ShowRecordingStorageListsAllWorkers)
+{
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(Host("localhost:8081"), {}, 8, {}, {}, 2048));
+    ASSERT_TRUE(workerCatalog->addWorker(Host("localhost:8080"), {}, 8, {}, {}, 1024));
+
+    TopologyStatementHandler handler(nullptr, workerCatalog);
+    const auto result = handler(ShowRecordingStorageStatement{.host = std::nullopt, .format = StatementOutputFormat::TEXT});
+
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    ASSERT_EQ(result->workers.size(), 2U);
+    EXPECT_EQ(result->workers[0].host, Host("localhost:8080"));
+    EXPECT_EQ(result->workers[0].recordingStorageBudget, 1024U);
+    EXPECT_EQ(result->workers[1].host, Host("localhost:8081"));
+    EXPECT_EQ(result->workers[1].recordingStorageBudget, 2048U);
+}
+
+TEST_F(TopologyStatementHandlerTest, ShowRecordingStorageFiltersWorker)
+{
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(Host("localhost:8080"), {}, 8, {}, {}, 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(Host("localhost:8081"), {}, 8, {}, {}, 2048));
+
+    TopologyStatementHandler handler(nullptr, workerCatalog);
+    const auto result = handler(ShowRecordingStorageStatement{.host = "localhost:8081", .format = std::nullopt});
+
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    ASSERT_EQ(result->workers.size(), 1U);
+    EXPECT_EQ(result->workers[0].host, Host("localhost:8081"));
+    EXPECT_EQ(result->workers[0].recordingStorageBudget, 2048U);
+}
 }
 }
