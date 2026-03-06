@@ -208,7 +208,7 @@ bool tryCall(const Statement& statement, HandlerT& handler)
             {
                 if (auto value = handler(typedStatement); !value)
                 {
-                    throw value.error();
+                    throw std::move(value.error());
                 }
                 return true;
             }
@@ -227,7 +227,7 @@ bool tryCall(const Statement& statement, HandlerT& handler, HandlerTs&... handle
             {
                 if (auto value = handler(typedStatement); !value)
                 {
-                    throw value.error();
+                    throw std::move(value.error());
                 }
                 return true;
             }

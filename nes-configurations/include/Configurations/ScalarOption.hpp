@@ -49,7 +49,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const ScalarOption<X>& option);
 
 protected:
-    virtual void parseFromYAMLNode(YAML::Node node) override;
+    void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::unordered_map<std::string, std::string>& inputParams) override;
 
 private:
@@ -63,15 +63,15 @@ private:
     template <typename Type>
     static Type convertFromString(const std::string& strValue)
     {
-        if constexpr (std::is_same<Type, std::string>::value)
+        if constexpr (std::is_same_v<Type, std::string>)
         {
             return strValue; /// No conversion needed
         }
-        else if constexpr (std::is_same<Type, float>::value)
+        else if constexpr (std::is_same_v<Type, float>)
         {
             return std::stof(strValue);
         }
-        else if constexpr (std::is_same<Type, uint64_t>::value)
+        else if constexpr (std::is_same_v<Type, uint64_t>)
         {
             return std::stoull(strValue);
         }
@@ -79,7 +79,7 @@ private:
         {
             return URI(strValue);
         }
-        else if constexpr (std::is_same<Type, bool>::value)
+        else if constexpr (std::is_same_v<Type, bool>)
         {
             /// Simple boolean conversion (true for "true", false otherwise)
             return strValue == "true";

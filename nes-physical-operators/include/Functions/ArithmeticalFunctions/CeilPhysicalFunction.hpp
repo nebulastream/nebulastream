@@ -22,16 +22,18 @@
 namespace NES
 {
 
-class CeilPhysicalFunction final : public PhysicalFunctionConcept
+class CeilPhysicalFunction final
 {
 public:
     explicit CeilPhysicalFunction(PhysicalFunction childFunction, DataType inputType, DataType outputType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
     PhysicalFunction childFunction;
     DataType inputType;
     DataType outputType;
 };
+
+static_assert(PhysicalFunctionConcept<CeilPhysicalFunction>);
 
 }

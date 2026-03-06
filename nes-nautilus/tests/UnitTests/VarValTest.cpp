@@ -333,7 +333,7 @@ void writeToFileProxy(const char* content)
 {
     std::ofstream ofs("actual.txt");
     ofs << content;
-    ofs << std::endl;
+    ofs << '\n';
 };
 
 TEST_F(VarValTest, ostreamTest)
@@ -357,15 +357,15 @@ TEST_F(VarValTest, ostreamTest)
         /// Writing the actual and the expected output to a file
         /// We have to do this, as it is not possible to access the underlying data of the nautilus::stringstream object
         nautilus::invoke(writeToFileProxy, strStreamVarVal.str().c_str());
-        std::ofstream ofs("expected.txt");
-        ofs << strStreamExpected.str() << std::endl;
-
+        std::ofstream ofs{"expected.txt"};
+        ofs << strStreamExpected.str() << '\n';
+        ofs.flush();
 
         /// Comparing the actual and the expected output
-        std::ifstream expectedFile("expected.txt");
-        std::ifstream actualFile("actual.txt");
-        std::string expected((std::istreambuf_iterator<char>(expectedFile)), std::istreambuf_iterator<char>());
-        std::string actual((std::istreambuf_iterator<char>(actualFile)), std::istreambuf_iterator<char>());
+        std::ifstream expectedFile{"expected.txt"};
+        std::ifstream actualFile{"actual.txt"};
+        std::string expected{std::istreambuf_iterator<char>{expectedFile}, std::istreambuf_iterator<char>()};
+        std::string actual{std::istreambuf_iterator<char>{actualFile}, std::istreambuf_iterator<char>()};
 
         EXPECT_EQ(expected, actual);
         return 0;

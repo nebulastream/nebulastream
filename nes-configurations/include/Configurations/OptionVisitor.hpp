@@ -34,7 +34,7 @@ class OptionVisitor
 public:
     virtual ~OptionVisitor() = default;
 
-    OptionVisitor() { }
+    OptionVisitor() = default;
 
     virtual void visitOption(const OptionInfo& info) = 0;
 

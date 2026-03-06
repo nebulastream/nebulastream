@@ -62,7 +62,7 @@ struct GoogleEventTracePrinter final : StatisticListener
 private:
     static constexpr size_t QUEUE_LENGTH = 1000;
 
-    enum class Category : int
+    enum class Category : int8_t
     {
         Query,
         Pipeline,
@@ -70,7 +70,7 @@ private:
         System
     };
 
-    enum class Phase : int
+    enum class Phase : int8_t
     {
         Begin,
         End,

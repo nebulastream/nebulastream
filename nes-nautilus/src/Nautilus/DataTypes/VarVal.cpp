@@ -33,10 +33,6 @@
 namespace NES
 {
 
-VarVal::VarVal(const VarVal& other) : value(other.value)
-{
-}
-
 VarVal::VarVal(VarVal&& other) noexcept : value(std::move(other.value))
 {
 }

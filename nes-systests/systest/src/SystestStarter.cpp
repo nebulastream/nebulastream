@@ -315,7 +315,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
         workerArgv.push_back("systest"); /// dummy option as arg expects first arg to be the program name
         for (auto& arg : confVec)
         {
-            workerArgv.push_back(const_cast<char*>(arg.c_str()));
+            workerArgv.push_back(arg.c_str());
         }
 
         config.singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(workerArgc, workerArgv.data());

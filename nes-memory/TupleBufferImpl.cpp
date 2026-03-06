@@ -32,10 +32,7 @@
     #include <cpptrace.hpp>
 #endif
 
-namespace NES
-{
-
-namespace detail
+namespace NES::detail
 {
 
 /// -----------------------------------------------------------------------------
@@ -211,8 +208,8 @@ bool BufferControlBlock::release()
     else
     {
         INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
+        return false;
     }
-    return false;
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -324,6 +321,5 @@ bool BufferControlBlock::loadChildBuffer(
     size = child->size;
 
     return true;
-}
 }
 }

@@ -391,7 +391,7 @@ void leak(std::unique_ptr<RunningQueryPlan> runningQueryPlan, std::shared_ptr<Te
 {
     ::testing::Mock::VerifyAndClearExpectations(listener.get());
     ::testing::Mock::AllowLeak(listener.get());
-    runningQueryPlan.release();
+    static_cast<void>(runningQueryPlan.release());
 }
 
 TEST_F(QueryPlanTest, RunningQueryNodeSetup)

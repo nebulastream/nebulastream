@@ -94,6 +94,11 @@ public:
     std::optional<int> minimumCount;
     int implicitMapCountHelper = 0;
 
+    /// Pre-aggregation projections for desugaring expressions inside aggregation functions.
+    /// E.g., AVG(i + UINT64(1)) becomes: Projection(*, i + UINT64(1) AS _AGG_INPUT_0) → AVG(_AGG_INPUT_0).
+    std::vector<Projection> preAggregationProjections;
+    size_t aggExprCounter = 0;
+
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<Projection>& getProjections();
@@ -101,7 +106,7 @@ public:
     void addWhereClause(LogicalFunction expressionNode);
     void addHavingClause(LogicalFunction expressionNode);
     void setSource(std::string sourceName);
-    [[nodiscard]] const std::string getSource() const;
+    [[nodiscard]] std::string getSource() const;
     void setInlineSource(const std::string& type, const ConfigMap& parameters);
     [[nodiscard]] std::pair<std::string, ConfigMap> getInlineSourceConfig();
     void addProjection(std::optional<FieldIdentifier>, LogicalFunction);

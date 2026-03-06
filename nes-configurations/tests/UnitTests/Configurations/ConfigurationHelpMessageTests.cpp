@@ -43,7 +43,7 @@ public:
 
 TEST_F(ConfigHelpMessageTest, ShouldGenerateHelpMessageForDifferentTypes)
 {
-    enum class TestEnum
+    enum class TestEnum : uint8_t
     {
         YES,
         NO
