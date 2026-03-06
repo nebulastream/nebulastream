@@ -847,12 +847,19 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
     auto isAggregation = false;
     switch (tokenType)
     {
-        case AntlrSQLLexer::COUNT:
+        case AntlrSQLLexer::COUNT: {
+            const auto includeNullValues = (tokenType == AntlrSQLLexer::COUNT) && (context->starArg != nullptr);
+            if (includeNullValues)
+            {
+                /// COUNT(*) — no field argument needed; use a dummy * field
+                helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction("*"));
+            }
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<CountAggregationLogicalFunction>(
-                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get()));
+                helpers.top().functionBuilder.back().getAs<FieldAccessLogicalFunction>().get(), includeNullValues));
             isAggregation = true;
             break;
+        }
         case AntlrSQLLexer::AVG:
             checkAggregationArgument(funcName);
             helpers.top().windowAggs.push_back(std::make_shared<AvgAggregationLogicalFunction>(

@@ -31,8 +31,8 @@ namespace NES
 class CountAggregationLogicalFunction : public WindowAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
+    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField, bool includeNullValues);
+    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, bool includeNullValues);
     ~CountAggregationLogicalFunction() override = default;
 
     void inferStamp(const Schema& schema) override;
@@ -41,6 +41,7 @@ public:
     [[nodiscard]] Reflected reflect() const override;
 
 private:
+    bool includeNullValues = false;
     static constexpr std::string_view NAME = "Count";
     static constexpr DataType::Type inputAggregateStampType = DataType::Type::UINT64;
     static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
@@ -67,5 +68,6 @@ struct ReflectedCountAggregationLogicalFunction
 {
     std::optional<FieldAccessLogicalFunction> onField;
     std::optional<FieldAccessLogicalFunction> asField;
+    std::optional<bool> includeNullValues;
 };
 }

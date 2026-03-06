@@ -281,7 +281,7 @@ WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperato
     for (const auto& [name, reflectedAggregation] : aggregations)
     {
         auto functionOpt = AggregationLogicalFunctionRegistry::instance().create(
-            name, AggregationLogicalFunctionRegistryArguments{.fields = {}, .reflected = reflectedAggregation});
+            name, AggregationLogicalFunctionRegistryArguments{.fields = {}, .includeNullValues = false, .reflected = reflectedAggregation});
         if (!functionOpt.has_value())
         {
             throw CannotDeserialize("Invalid Aggregation Function of type {}", name);

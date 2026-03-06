@@ -30,6 +30,7 @@ using AggregationLogicalFunctionRegistryReturnType = std::shared_ptr<WindowAggre
 struct AggregationLogicalFunctionRegistryArguments
 {
     std::vector<FieldAccessLogicalFunction> fields;
+    bool includeNullValues;
     Reflected reflected;
 };
 

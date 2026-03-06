@@ -31,30 +31,32 @@
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+/// COUNT(*) includes null values (counts all rows), COUNT(fieldName) does not
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, const bool includeNullValues)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
-          field)
+          onField)
+    , includeNullValues(includeNullValues)
 {
 }
 
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(
+    FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField, const bool includeNullValues)
     : WindowAggregationLogicalFunction(
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
           DataTypeProvider::provideDataType(DataType::Type::UNDEFINED),
-          std::move(field),
+          std::move(onField),
           std::move(asField))
+    , includeNullValues(includeNullValues)
 {
 }
 
 bool CountAggregationLogicalFunction::shallIncludeNullValues() const noexcept
 {
-    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
-    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
-    return false;
+    return includeNullValues;
 }
 
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
@@ -71,8 +73,16 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
-        /// We infer the data type from the schema for the on field
-        this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
+        if (includeNullValues)
+        {
+            const auto& firstField = schema.getFields().at(0);
+            this->setOnField(FieldAccessLogicalFunction(firstField.dataType, firstField.name));
+        }
+        else
+        {
+            /// We infer the data type from the schema for the on field
+            this->setOnField(this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get());
+        }
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -103,19 +113,20 @@ void CountAggregationLogicalFunction::inferStamp(const Schema& schema)
 
 Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return reflect(detail::ReflectedCountAggregationLogicalFunction{
+        .onField = function.getOnField(), .asField = function.getAsField(), .includeNullValues = function.shallIncludeNullValues()});
 }
 
 CountAggregationLogicalFunction Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
+    auto [onField, asField, includeNullValues] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
 
-    if (!onField.has_value() || !asField.has_value())
+    if (not onField.has_value() or not asField.has_value() or not includeNullValues.has_value())
     {
         throw CannotDeserialize("CountAggregationLogicalFunction is missing onField/asField function");
     }
 
-    return {onField.value(), asField.value()};
+    return {onField.value(), asField.value(), includeNullValues.value()};
 }
 
 AggregationLogicalFunctionRegistryReturnType
@@ -130,6 +141,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<CountAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1]);
+    return std::make_shared<CountAggregationLogicalFunction>(arguments.fields[0], arguments.fields[1], arguments.includeNullValues);
 }
 }
