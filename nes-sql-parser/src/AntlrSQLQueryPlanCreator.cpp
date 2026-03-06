@@ -122,6 +122,27 @@ Windowing::TimeMeasure buildTimeMeasure(const int size, const uint64_t timebase)
     }
 }
 
+uint64_t buildDurationInMilliseconds(const uint64_t size, const uint64_t timebase)
+{
+    switch (timebase)
+    {
+        case AntlrSQLLexer::MS:
+            return API::Milliseconds(size).getTime();
+        case AntlrSQLLexer::SEC:
+            return API::Seconds(size).getTime();
+        case AntlrSQLLexer::MINUTE:
+            return API::Minutes(size).getTime();
+        case AntlrSQLLexer::HOUR:
+            return API::Hours(size).getTime();
+        case AntlrSQLLexer::DAY:
+            return API::Days(size).getTime();
+        default:
+            const AntlrSQLLexer lexer(nullptr);
+            const std::string tokenName = std::string(lexer.getVocabulary().getSymbolicName(timebase));
+            throw InvalidQuerySyntax("Unknown time unit: {}", tokenName);
+    }
+}
+
 static LogicalFunction createFunctionFromOpBoolean(LogicalFunction leftFunction, LogicalFunction rightFunction, const uint64_t tokenType)
 {
     switch (tokenType)
@@ -1008,9 +1029,38 @@ void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseCo
     AntlrSQLBaseListener::exitGroupByClause(context);
 }
 
-void AntlrSQLQueryPlanCreator::enterTimeTravelClause(AntlrSQLParser::TimeTravelClauseContext* context)
+void AntlrSQLQueryPlanCreator::exitTimeTravelClause(AntlrSQLParser::TimeTravelClauseContext* context)
 {
-    helpers.top().replaySpecification = ReplaySpecification{};
-    AntlrSQLBaseListener::enterTimeTravelClause(context);
+    ReplaySpecification replayParameters{};
+
+    for (auto* parameter : context->parameter)
+    {
+        const auto durationMs = buildDurationInMilliseconds(from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
+
+        if (parameter->RETENTION() != nullptr)
+        {
+            if (replayParameters.retentionWindowMs.has_value())
+            {
+                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify RETENTION at most once");
+            }
+            replayParameters.retentionWindowMs = durationMs;
+            continue;
+        }
+
+        if (parameter->REPLAY_LATENCY() != nullptr)
+        {
+            if (replayParameters.replayLatencyLimitMs.has_value())
+            {
+                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify REPLAY_LATENCY at most once");
+            }
+            replayParameters.replayLatencyLimitMs = durationMs;
+            continue;
+        }
+
+        throw InvalidQuerySyntax("Unknown TIME_TRAVEL_STORE parameter: {}", parameter->getText());
+    }
+
+    helpers.top().replaySpecification = replayParameters;
+    AntlrSQLBaseListener::exitTimeTravelClause(context);
 }
 }

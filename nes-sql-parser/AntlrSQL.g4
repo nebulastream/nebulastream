@@ -312,7 +312,14 @@ inlineSink
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
     ;
 
-timeTravelClause: TIME_TRAVEL_STORE;
+timeTravelClause
+    : TIME_TRAVEL_STORE ('(' parameter+=timeTravelParameter (',' parameter+=timeTravelParameter)* ')')?
+    ;
+
+timeTravelParameter
+    : RETENTION amount=INTEGER_VALUE unit=timeUnit
+    | REPLAY_LATENCY amount=INTEGER_VALUE unit=timeUnit
+    ;
 
 nullNotnull
     : NOT? NULLTOKEN
@@ -456,6 +463,8 @@ RECOVER: 'RECOVER';
 RIGHT: 'RIGHT';
 RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';
+REPLAY_LATENCY: 'REPLAY_LATENCY' | 'replay_latency';
+RETENTION: 'RETENTION' | 'retention';
 SCHEMA: 'SCHEMA';
 SELECT: 'SELECT' | 'select';
 SETS: 'SETS';
