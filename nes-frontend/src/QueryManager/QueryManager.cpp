@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -162,6 +163,10 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 .node = selection.node,
                 .filePath = selection.filePath,
                 .ownerQueries = {id}});
+    }
+    if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
+    {
+        Replay::updateTimeTravelReadAlias(latestRecording->filePath);
     }
     return id;
 }
@@ -392,6 +397,14 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(const Distr
         return std::unexpected{exceptions};
     }
     state.recordingCatalog.removeQueryMetadata(queryId);
+    if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
+    {
+        Replay::updateTimeTravelReadAlias(latestRecording->filePath);
+    }
+    else
+    {
+        Replay::clearTimeTravelReadAlias();
+    }
     auto erased = state.queries.erase(queryId);
     INVARIANT(erased == 1, "Should not unregister query that has not been registered");
     return {};

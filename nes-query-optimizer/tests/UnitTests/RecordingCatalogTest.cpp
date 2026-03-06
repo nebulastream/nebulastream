@@ -70,4 +70,35 @@ TEST(RecordingCatalogTest, RemoveQueryMetadataRetainsSharedRecordingUntilLastOwn
     EXPECT_FALSE(catalog.getRecording(recordingId).has_value());
 }
 
+TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksMostRecentRecordingAndFallsBackAfterRemoval)
+{
+    RecordingCatalog catalog;
+    const auto recording1 = RecordingId("recording-1");
+    const auto recording2 = RecordingId("recording-2");
+    const auto query1 = DistributedQueryId("query-1");
+    const auto query2 = DistributedQueryId("query-2");
+
+    catalog.upsertQueryMetadata(query1, ReplayableQueryMetadata{});
+    catalog.upsertQueryMetadata(query2, ReplayableQueryMetadata{});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = recording1,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .ownerQueries = {query1}});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = recording2,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-2.bin",
+            .ownerQueries = {query2}});
+
+    ASSERT_TRUE(catalog.getTimeTravelReadRecording().has_value());
+    EXPECT_EQ(catalog.getTimeTravelReadRecording()->id, recording2);
+
+    catalog.removeQueryMetadata(query2);
+    ASSERT_TRUE(catalog.getTimeTravelReadRecording().has_value());
+    EXPECT_EQ(catalog.getTimeTravelReadRecording()->id, recording1);
+}
+
 }

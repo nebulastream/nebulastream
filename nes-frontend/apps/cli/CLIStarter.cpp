@@ -515,7 +515,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
-    NES::QueryStatementHandler queryHandler{queryManager, optimizer};
+    NES::QueryStatementHandler queryHandler{queryManager, optimizer, sourceCatalog};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
@@ -557,7 +557,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer, sourceCatalog};
         for (const auto& query : queries)
         {
             const auto parsedQuery = NES::AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);
@@ -578,7 +578,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer, sourceCatalog};
         for (const auto& query : queries)
         {
             const auto parsedQuery = NES::AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);

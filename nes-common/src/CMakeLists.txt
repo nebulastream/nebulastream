@@ -14,6 +14,7 @@ add_subdirectory(Sequencing)
 add_subdirectory(Util)
 
 add_source_files(nes-common
+        ReplayStorage.cpp
         Thread.cpp
         ErrorHandling.cpp
         QueryId.cpp)

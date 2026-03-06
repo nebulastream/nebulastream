@@ -15,13 +15,21 @@
 #pragma once
 
 #include <cstddef>
+#include <string>
 #include <string_view>
 
 namespace NES::Replay
 {
 
+inline constexpr std::string_view DEFAULT_RECORDING_DIRECTORY = "/tmp/REPLAY-NebulaStream/recordings";
 inline constexpr std::string_view DEFAULT_RECORDING_FILE_PATH = "/tmp/REPLAY-NebulaStream/store_read_out.bin";
 inline constexpr size_t DEFAULT_ESTIMATED_RECORDING_ROWS = 4096;
 inline constexpr size_t MIN_RECORDING_SIZE_BYTES = 4096;
+
+[[nodiscard]] std::string getRecordingFilePath(std::string_view recordingId);
+[[nodiscard]] std::string getTimeTravelReadAliasPath();
+[[nodiscard]] std::string resolveTimeTravelReadProbePath();
+void updateTimeTravelReadAlias(const std::string& recordingFilePath);
+void clearTimeTravelReadAlias();
 
 }

@@ -47,6 +47,7 @@ class RecordingCatalog
 {
     std::unordered_map<DistributedQueryId, ReplayableQueryMetadata> queryMetadata;
     std::unordered_map<RecordingId, RecordingEntry> recordings;
+    std::optional<RecordingId> timeTravelReadRecordingId;
 
 public:
     [[nodiscard]] const auto& getQueryMetadata() const { return queryMetadata; }
@@ -58,6 +59,14 @@ public:
             return found->second;
         }
         return std::nullopt;
+    }
+    [[nodiscard]] std::optional<RecordingEntry> getTimeTravelReadRecording() const
+    {
+        if (!timeTravelReadRecordingId.has_value())
+        {
+            return std::nullopt;
+        }
+        return getRecording(*timeTravelReadRecordingId);
     }
 
     void upsertQueryMetadata(DistributedQueryId queryId, ReplayableQueryMetadata metadata)
@@ -81,10 +90,15 @@ public:
                 ++it;
             }
         }
+        if (timeTravelReadRecordingId.has_value() && !recordings.contains(*timeTravelReadRecordingId))
+        {
+            timeTravelReadRecordingId = recordings.empty() ? std::nullopt : std::optional(recordings.begin()->first);
+        }
     }
 
     void upsertRecording(RecordingEntry recording)
     {
+        timeTravelReadRecordingId = recording.id;
         const auto [it, inserted] = recordings.try_emplace(recording.id, std::move(recording));
         if (inserted)
         {

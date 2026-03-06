@@ -370,8 +370,10 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreInsertsStoreBeforeSink)
 
     ASSERT_FALSE(plan.getRecordingSelectionResult().empty());
     ASSERT_EQ(plan.getRecordingSelectionResult().selectedRecordings.size(), 1);
-    EXPECT_EQ(plan.getRecordingSelectionResult().selectedRecordings.front().filePath, Replay::DEFAULT_RECORDING_FILE_PATH);
-    EXPECT_EQ(plan.getRecordingSelectionResult().selectedRecordings.front().node, Host("localhost:8080"));
+    const auto selectedRecording = plan.getRecordingSelectionResult().selectedRecordings.front();
+    EXPECT_EQ(selectedRecording.filePath, Replay::getRecordingFilePath(selectedRecording.recordingId.getRawValue()));
+    EXPECT_NE(selectedRecording.filePath, Replay::getTimeTravelReadAliasPath());
+    EXPECT_EQ(selectedRecording.node, Host("localhost:8080"));
 
     const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(localPlan).size(), 1);

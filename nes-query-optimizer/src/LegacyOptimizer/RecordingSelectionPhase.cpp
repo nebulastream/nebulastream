@@ -42,12 +42,6 @@ size_t estimateRecordingStorageBytes(const Schema& schema)
         schemaBytes * Replay::DEFAULT_ESTIMATED_RECORDING_ROWS,
         Replay::MIN_RECORDING_SIZE_BYTES);
 }
-
-DescriptorConfig::Config createDefaultStoreConfig()
-{
-    return StoreLogicalOperator::validateAndFormatConfig(
-        {{"file_path", std::string(Replay::DEFAULT_RECORDING_FILE_PATH)}, {"append", "false"}, {"header", "true"}});
-}
 }
 
 RecordingSelectionResult
@@ -84,6 +78,7 @@ RecordingSelectionPhase::apply(
     const auto& recordedChild = recordedChildren.front();
     const auto recordingFingerprint = createRecordingFingerprint(recordedChild, placement, replaySpecification);
     const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
+    const auto recordingFilePath = Replay::getRecordingFilePath(recordingId.getRawValue());
 
     if (const auto existingRecording = recordingCatalog.getRecording(recordingId); existingRecording.has_value())
     {
@@ -104,7 +99,9 @@ RecordingSelectionPhase::apply(
             worker->recordingStorageBudget);
     }
 
-    auto store = StoreLogicalOperator(createDefaultStoreConfig())
+    auto store = StoreLogicalOperator(
+                     StoreLogicalOperator::validateAndFormatConfig(
+                         {{"file_path", recordingFilePath}, {"append", "false"}, {"header", "true"}}))
                      .withTraitSet(newRoots.front().getTraitSet())
                      .withInferredSchema({recordedChild.getOutputSchema()})
                      .withChildren(recordedChildren);
@@ -116,6 +113,6 @@ RecordingSelectionPhase::apply(
         .selectedRecordings = {RecordingSelection{
             .recordingId = recordingId,
             .node = placement,
-            .filePath = std::string(Replay::DEFAULT_RECORDING_FILE_PATH)}}};
+            .filePath = recordingFilePath}}};
 }
 }

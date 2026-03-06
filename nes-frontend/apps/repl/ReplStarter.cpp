@@ -255,7 +255,7 @@ int main(int argc, char** argv)
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
         auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer, sourceCatalog);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

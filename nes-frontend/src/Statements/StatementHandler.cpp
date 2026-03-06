@@ -26,6 +26,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Replay/TimeTravelReadResolver.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -230,8 +231,9 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer)
-    : queryManager(std::move(queryManager)), optimizer(std::move(optimizer))
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer, SharedPtr<const SourceCatalog> sourceCatalog)
+    : queryManager(std::move(queryManager)), optimizer(std::move(optimizer)), sourceCatalog(std::move(sourceCatalog))
 {
 }
 
@@ -255,11 +257,13 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
 {
     CPPTRACE_TRY
     {
+        auto plan = statement.plan;
+        resolveTimeTravelReadSources(plan, sourceCatalog);
         std::stringstream explainMessage;
-        fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
-        fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
+        fmt::println(explainMessage, "Query:\n{}", plan.getOriginalSql());
+        fmt::println(explainMessage, "Initial Logical Plan:\n{}", plan);
 
-        const auto distributedPlan = optimizer->optimize(statement.plan, statement.replaySpecification, queryManager->getRecordingCatalog());
+        const auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
         fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
 
@@ -285,7 +289,9 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto distributedPlan = optimizer->optimize(statement.plan, statement.replaySpecification, queryManager->getRecordingCatalog());
+        auto plan = statement.plan;
+        resolveTimeTravelReadSources(plan, sourceCatalog);
+        auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
         if (statement.id)
         {

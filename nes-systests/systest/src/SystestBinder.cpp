@@ -46,14 +46,12 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Replay/ReplayStorage.hpp>
+#include <Replay/TimeTravelReadResolver.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/BinaryStoreSource.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Files.hpp>
@@ -766,61 +764,6 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] static LogicalOperator
-    replaceTimeTravelReadSource(const LogicalOperator& current, const std::shared_ptr<SourceCatalog>& sourceCatalog)
-    {
-        std::vector<LogicalOperator> newChildren;
-        for (const auto& child : current.getChildren())
-        {
-            newChildren.emplace_back(replaceTimeTravelReadSource(child, sourceCatalog));
-        }
-
-        if (const auto sourceOp = current.tryGetAs<SourceNameLogicalOperator>())
-        {
-            if (sourceOp.value()->getLogicalSourceName() == "TIME_TRAVEL_READ")
-            {
-                const std::string filePath = std::string(Replay::DEFAULT_RECORDING_FILE_PATH);
-
-                Schema schema;
-                {
-                    std::ifstream probe(filePath, std::ios::binary);
-                    if (probe.good())
-                    {
-                        schema = BinaryStoreSource::readSchemaFromFile(filePath);
-                    }
-                    else
-                    {
-                        for (const auto& ls : sourceCatalog->getAllLogicalSources())
-                        {
-                            for (const auto& field : *ls.getSchema())
-                            {
-                                schema.addField(field.getUnqualifiedName(), field.dataType);
-                            }
-                            break;
-                        }
-                    }
-                }
-
-                std::unordered_map<std::string, std::string> sourceConfig{{"file_path", filePath}};
-                std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
-                const InlineSourceLogicalOperator inlineOp{"BinaryStore", schema, std::move(sourceConfig), std::move(parserConfig)};
-                return inlineOp.withChildren(newChildren);
-            }
-        }
-
-        return current.withChildren(std::move(newChildren));
-    }
-
-    static void replaceTimeTravelReadSources(LogicalPlan& plan, const std::shared_ptr<SourceCatalog>& sourceCatalog)
-    {
-        std::vector<LogicalOperator> newRoots;
-        for (const auto& root : plan.getRootOperators())
-        {
-            newRoots.emplace_back(replaceTimeTravelReadSource(root, sourceCatalog));
-        }
-        plan = plan.withRootOperators(newRoots);
-    }
-
     void queryCallback(
         const std::string_view& testFileName,
         std::unordered_map<SystestQueryId, SystestQueryBuilder>& plans,
@@ -837,7 +780,7 @@ struct SystestBinder::Impl
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
 
-            replaceTimeTravelReadSources(plan, sourceCatalog);
+            resolveTimeTravelReadSources(plan, sourceCatalog);
 
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));

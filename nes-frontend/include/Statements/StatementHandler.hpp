@@ -38,6 +38,8 @@
 
 namespace NES
 {
+class SourceCatalog;
+
 /// Define the types and names of the output columns for each result type
 struct CreateLogicalSourceStatementResult
 {
@@ -205,10 +207,11 @@ class QueryStatementHandler final : public StatementHandler<QueryStatementHandle
 {
     SharedPtr<QueryManager> queryManager;
     SharedPtr<const LegacyOptimizer> optimizer;
-    SharedPtr<WorkerCatalog> workerCatalog;
+    SharedPtr<const SourceCatalog> sourceCatalog;
 
 public:
-    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer);
+    explicit QueryStatementHandler(
+        SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer, SharedPtr<const SourceCatalog> sourceCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
