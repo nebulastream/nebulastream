@@ -25,7 +25,6 @@ struct ReplaySpecification
 {
     std::optional<uint64_t> retentionWindowMs;
     std::optional<uint64_t> replayLatencyLimitMs;
-    bool allowRecomputeFallback = false;
 
     [[nodiscard]] bool operator==(const ReplaySpecification& other) const = default;
 };

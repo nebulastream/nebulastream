@@ -1057,16 +1057,6 @@ void AntlrSQLQueryPlanCreator::exitTimeTravelClause(AntlrSQLParser::TimeTravelCl
             continue;
         }
 
-        if (parameter->ALLOW_RECOMPUTE_FALLBACK() != nullptr)
-        {
-            if (replayParameters.allowRecomputeFallback)
-            {
-                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify ALLOW_RECOMPUTE_FALLBACK at most once");
-            }
-            replayParameters.allowRecomputeFallback = true;
-            continue;
-        }
-
         throw InvalidQuerySyntax("Unknown TIME_TRAVEL_STORE parameter: {}", parameter->getText());
     }
 

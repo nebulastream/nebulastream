@@ -64,8 +64,6 @@ std::string recordingDecisionToString(RecordingSelectionDecision decision)
             return "create_new_recording";
         case RecordingSelectionDecision::ReuseExistingRecording:
             return "reuse_existing_recording";
-        case RecordingSelectionDecision::SkipRecording:
-            return "skip_recording";
     }
     std::unreachable();
 }
@@ -117,19 +115,18 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
     if (selectedRecordings.empty())
     {
         fmt::println(explainMessage, "Selected recording boundary: none");
+        return;
     }
-    else
+
+    fmt::println(explainMessage, "Selected recording boundary:");
+    for (const auto& selection : selectedRecordings)
     {
-        fmt::println(explainMessage, "Selected recording boundary:");
-        for (const auto& selection : selectedRecordings)
-        {
-            fmt::println(
-                explainMessage,
-                "- recording_id={} node={} file={}",
-                selection.recordingId.getRawValue(),
-                selection.node,
-                selection.filePath);
-        }
+        fmt::println(
+            explainMessage,
+            "- recording_id={} node={} file={}",
+            selection.recordingId.getRawValue(),
+            selection.node,
+            selection.filePath);
     }
 
     if (selectionResult.explanations.empty())
@@ -143,7 +140,7 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
         fmt::println(
             explainMessage,
             "- recording_id={} decision={} reason={}",
-            explanation.selection.transform([](const auto& selection) { return selection.recordingId.getRawValue(); }).value_or("none"),
+            explanation.selection.recordingId.getRawValue(),
             recordingDecisionToString(explanation.decision),
             explanation.reason);
         appendCostBreakdown(

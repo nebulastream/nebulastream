@@ -16,7 +16,6 @@
 
 #include <cstddef>
 #include <cstdint>
-#include <optional>
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -31,7 +30,6 @@ enum class RecordingSelectionDecision
 {
     CreateNewRecording,
     ReuseExistingRecording,
-    SkipRecording,
 };
 
 struct RecordingCostBreakdown
@@ -70,8 +68,8 @@ struct RecordingSelectionAlternative
 
 struct RecordingSelectionExplanation
 {
-    std::optional<RecordingSelection> selection = std::nullopt;
-    RecordingSelectionDecision decision = RecordingSelectionDecision::SkipRecording;
+    RecordingSelection selection;
+    RecordingSelectionDecision decision = RecordingSelectionDecision::CreateNewRecording;
     std::string reason;
     RecordingCostBreakdown chosenCost;
     std::vector<RecordingSelectionAlternative> alternatives;
@@ -84,7 +82,7 @@ struct RecordingSelectionResult
     std::vector<RecordingSelection> selectedRecordings;
     std::vector<RecordingSelectionExplanation> explanations;
 
-    [[nodiscard]] bool empty() const { return selectedRecordings.empty() && explanations.empty(); }
+    [[nodiscard]] bool empty() const { return selectedRecordings.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;
 };
 

@@ -97,8 +97,7 @@ TEST_F(StatementBinderTest, BindQuery)
 TEST_F(StatementBinderTest, BindQueryWithTimeTravelStoreOptions)
 {
     const std::string queryString
-        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(RETENTION 5 MINUTE, REPLAY_LATENCY 10 SEC, "
-          "ALLOW_RECOMPUTE_FALLBACK)";
+        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(RETENTION 5 MINUTE, REPLAY_LATENCY 10 SEC)";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
@@ -107,7 +106,6 @@ TEST_F(StatementBinderTest, BindQueryWithTimeTravelStoreOptions)
     ASSERT_TRUE(queryStatement.replaySpecification.has_value());
     EXPECT_EQ(queryStatement.replaySpecification->retentionWindowMs, 5 * 60 * 1000);
     EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, 10 * 1000);
-    EXPECT_TRUE(queryStatement.replaySpecification->allowRecomputeFallback);
 }
 
 TEST_F(StatementBinderTest, BindQueryWithBareTimeTravelStore)
@@ -121,14 +119,12 @@ TEST_F(StatementBinderTest, BindQueryWithBareTimeTravelStore)
     ASSERT_TRUE(queryStatement.replaySpecification.has_value());
     EXPECT_EQ(queryStatement.replaySpecification->retentionWindowMs, std::nullopt);
     EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, std::nullopt);
-    EXPECT_FALSE(queryStatement.replaySpecification->allowRecomputeFallback);
 }
 
 TEST_F(StatementBinderTest, RejectQueryWithDuplicateTimeTravelStoreOptions)
 {
     const std::string queryString
-        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(ALLOW_RECOMPUTE_FALLBACK, "
-          "ALLOW_RECOMPUTE_FALLBACK)";
+        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(RETENTION 5 MINUTE, RETENTION 10 MINUTE)";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_FALSE(statement.has_value());
 }

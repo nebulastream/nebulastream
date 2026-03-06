@@ -319,7 +319,6 @@ timeTravelClause
 timeTravelParameter
     : RETENTION amount=INTEGER_VALUE unit=timeUnit
     | REPLAY_LATENCY amount=INTEGER_VALUE unit=timeUnit
-    | ALLOW_RECOMPUTE_FALLBACK
     ;
 
 nullNotnull
@@ -466,7 +465,6 @@ RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';
 REPLAY_LATENCY: 'REPLAY_LATENCY' | 'replay_latency';
 RETENTION: 'RETENTION' | 'retention';
-ALLOW_RECOMPUTE_FALLBACK: 'ALLOW_RECOMPUTE_FALLBACK' | 'allow_recompute_fallback';
 SCHEMA: 'SCHEMA';
 SELECT: 'SELECT' | 'select';
 SETS: 'SETS';

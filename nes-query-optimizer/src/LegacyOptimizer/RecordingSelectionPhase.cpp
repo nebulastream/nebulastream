@@ -17,7 +17,6 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
-#include <limits>
 #include <string>
 #include <utility>
 #include <vector>
@@ -47,15 +46,10 @@ std::string replayLatencyLimitDescription(const std::optional<ReplaySpecificatio
         .value_or("none");
 }
 
-bool allowRecomputeFallback(const std::optional<ReplaySpecification>& replaySpecification)
-{
-    return replaySpecification.transform([](const auto& spec) { return spec.allowRecomputeFallback; }).value_or(false);
-}
-
-RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate, double decisionCost)
+RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate)
 {
     return RecordingCostBreakdown{
-        .decisionCost = decisionCost,
+        .decisionCost = estimate.totalCost(),
         .estimatedStorageBytes = estimate.estimatedStorageBytes,
         .operatorCount = estimate.operatorCount,
         .estimatedReplayBandwidthBytesPerSecond = estimate.estimatedReplayBandwidthBytesPerSecond,
@@ -65,6 +59,64 @@ RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate, do
         .recomputeCost = estimate.recomputeCost,
         .fitsBudget = estimate.fitsBudget,
         .satisfiesReplayLatency = estimate.satisfiesReplayLatency};
+}
+
+std::string describeReplayReuseInfeasibility(
+    const Host& placement,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const std::optional<WorkerRuntimeMetrics>& workerRuntimeMetrics,
+    const RecordingCostEstimate& reuseCost)
+{
+    return fmt::format(
+        "reuse_existing_recording on {} would exceed the replay latency limit of {} ms (estimated latency {} ms,"
+        " replay cost {:.2f}, recompute cost {:.2f}, write pressure {} B/s)",
+        placement,
+        replayLatencyLimitDescription(replaySpecification),
+        reuseCost.estimatedReplayLatency.count(),
+        reuseCost.replayCost,
+        reuseCost.recomputeCost,
+        workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+}
+
+std::string describeNewRecordingInfeasibility(
+    const Host& placement,
+    const WorkerConfig& worker,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const std::optional<WorkerRuntimeMetrics>& workerRuntimeMetrics,
+    const RecordingCostEstimate& newRecordingCost)
+{
+    if (!newRecordingCost.fitsBudget)
+    {
+        return fmt::format(
+            "create_new_recording on {} requires an estimated {} bytes, but only {} bytes remain in the recording budget of {} bytes"
+            " (maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f}, worker currently reports {} bytes in replay storage"
+            " across {} recording files, {} active queries, and {} B/s replay write pressure)",
+            placement,
+            newRecordingCost.estimatedStorageBytes,
+            worker.recordingStorageBudget
+                - std::min(
+                    worker.recordingStorageBudget,
+                    workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0)),
+            worker.recordingStorageBudget,
+            newRecordingCost.maintenanceCost,
+            newRecordingCost.replayCost,
+            newRecordingCost.recomputeCost,
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingFileCount; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+    }
+
+    return fmt::format(
+        "create_new_recording on {} would exceed the replay latency limit of {} ms (estimated latency {} ms at {} B/s,"
+        " maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f})",
+        placement,
+        replayLatencyLimitDescription(replaySpecification),
+        newRecordingCost.estimatedReplayLatency.count(),
+        newRecordingCost.estimatedReplayBandwidthBytesPerSecond,
+        newRecordingCost.maintenanceCost,
+        newRecordingCost.replayCost,
+        newRecordingCost.recomputeCost);
 }
 }
 
@@ -114,25 +166,23 @@ RecordingSelectionPhase::apply(
 
     const auto buildAlternative = [](RecordingSelectionDecision decision, const RecordingCostEstimate& estimate)
     {
-        const auto decisionCost = decision == RecordingSelectionDecision::SkipRecording ? estimate.recomputeCost : estimate.totalCost();
-        return RecordingSelectionAlternative{.decision = decision, .cost = toCostBreakdown(estimate, decisionCost)};
+        return RecordingSelectionAlternative{.decision = decision, .cost = toCostBreakdown(estimate)};
     };
 
     const auto buildSelectionResult =
-        [](std::optional<RecordingSelection> selection,
-           RecordingSelectionDecision decision,
+        [](RecordingSelection selection,
+           const RecordingSelectionDecision decision,
            std::string reason,
            const RecordingCostEstimate& estimate,
            std::vector<RecordingSelectionAlternative> alternatives)
     {
-        const auto decisionCost = decision == RecordingSelectionDecision::SkipRecording ? estimate.recomputeCost : estimate.totalCost();
         return RecordingSelectionResult{
-            .selectedRecordings = selection.has_value() ? std::vector<RecordingSelection>{*selection} : std::vector<RecordingSelection>{},
+            .selectedRecordings = {selection},
             .explanations = {RecordingSelectionExplanation{
                 .selection = std::move(selection),
                 .decision = decision,
                 .reason = std::move(reason),
-                .chosenCost = toCostBreakdown(estimate, decisionCost),
+                .chosenCost = toCostBreakdown(estimate),
                 .alternatives = std::move(alternatives)}}};
     };
 
@@ -144,56 +194,11 @@ RecordingSelectionPhase::apply(
             .filePath = existingRecording->filePath};
         const auto reuseCost = costModel.estimateReplayReuse(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
         const auto reuseFeasible = reuseCost.satisfiesReplayLatency;
-        const auto recomputeFallbackAllowed = allowRecomputeFallback(replaySpecification);
-        std::vector<RecordingSelectionAlternative> skipAlternatives = {
-            buildAlternative(RecordingSelectionDecision::ReuseExistingRecording, reuseCost),
-            buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)};
-
-        if (recomputeFallbackAllowed)
-        {
-            auto bestRecordingDecisionCost = std::numeric_limits<double>::infinity();
-            if (reuseFeasible)
-            {
-                bestRecordingDecisionCost = std::min(bestRecordingDecisionCost, reuseCost.totalCost());
-            }
-            if (newRecordingFeasible)
-            {
-                bestRecordingDecisionCost = std::min(bestRecordingDecisionCost, newRecordingCost.totalCost());
-            }
-
-            if (!reuseFeasible && !newRecordingFeasible)
-            {
-                return buildSelectionResult(
-                    std::nullopt,
-                    RecordingSelectionDecision::SkipRecording,
-                    "no feasible recording candidate satisfied the current budget and latency constraints; recompute fallback selected",
-                    reuseCost,
-                    std::move(skipAlternatives));
-            }
-
-            if (reuseCost.recomputeCost <= bestRecordingDecisionCost)
-            {
-                return buildSelectionResult(
-                    std::nullopt,
-                    RecordingSelectionDecision::SkipRecording,
-                    fmt::format(
-                        "recompute cost {:.2f} beat reuse_existing_recording cost {:.2f} and create_new_recording cost {:.2f}",
-                        reuseCost.recomputeCost,
-                        reuseCost.totalCost(),
-                        newRecordingCost.totalCost()),
-                    reuseCost,
-                    std::move(skipAlternatives));
-            }
-        }
 
         if (reuseFeasible && (!newRecordingFeasible || reuseCost.totalCost() <= newRecordingCost.totalCost()))
         {
-            std::vector<RecordingSelectionAlternative> alternatives = {
+            const std::vector<RecordingSelectionAlternative> alternatives = {
                 buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)};
-            if (recomputeFallbackAllowed)
-            {
-                alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, reuseCost));
-            }
             return buildSelectionResult(
                 reuseSelection,
                 RecordingSelectionDecision::ReuseExistingRecording,
@@ -204,12 +209,8 @@ RecordingSelectionPhase::apply(
 
         if (newRecordingFeasible)
         {
-            std::vector<RecordingSelectionAlternative> alternatives = {
+            const std::vector<RecordingSelectionAlternative> alternatives = {
                 buildAlternative(RecordingSelectionDecision::ReuseExistingRecording, reuseCost)};
-            if (recomputeFallbackAllowed)
-            {
-                alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, newRecordingCost));
-            }
 
             auto store = StoreLogicalOperator(
                              StoreLogicalOperator::validateAndFormatConfig(
@@ -229,66 +230,20 @@ RecordingSelectionPhase::apply(
         }
 
         throw PlacementFailure(
-            "Replay reuse on {} would exceed the replay latency limit of {} ms (estimated latency {} ms, replay cost {:.2f},"
-            " recompute cost {:.2f}, write pressure {} B/s)",
+            "Replay selection on {} is infeasible: {} and {}",
             placement,
-            replayLatencyLimitDescription(replaySpecification),
-            reuseCost.estimatedReplayLatency.count(),
-            reuseCost.replayCost,
-            reuseCost.recomputeCost,
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
-    }
-
-    if (allowRecomputeFallback(replaySpecification)
-        && (!newRecordingFeasible || newRecordingCost.recomputeCost <= newRecordingCost.totalCost()))
-    {
-        return buildSelectionResult(
-            std::nullopt,
-            RecordingSelectionDecision::SkipRecording,
-            newRecordingFeasible
-                ? fmt::format(
-                      "recompute cost {:.2f} beat create_new_recording cost {:.2f}",
-                      newRecordingCost.recomputeCost,
-                      newRecordingCost.totalCost())
-                : "create_new_recording was not feasible under the current budget and latency constraints; recompute fallback selected",
-            newRecordingCost,
-            {buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)});
+            describeReplayReuseInfeasibility(placement, replaySpecification, workerRuntimeMetrics, reuseCost),
+            describeNewRecordingInfeasibility(placement, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost));
     }
 
     if (!newRecordingCost.fitsBudget)
     {
-        throw PlacementFailure(
-            "Replay recording on {} requires an estimated {} bytes, but only {} bytes remain in the recording budget of {} bytes"
-            " (maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f}, worker currently reports {} bytes in replay storage"
-            " across {} recording files, {} active queries, and {} B/s replay write pressure)",
-            placement,
-            newRecordingCost.estimatedStorageBytes,
-            worker->recordingStorageBudget
-                - std::min(
-                    worker->recordingStorageBudget,
-                    workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0)),
-            worker->recordingStorageBudget,
-            newRecordingCost.maintenanceCost,
-            newRecordingCost.replayCost,
-            newRecordingCost.recomputeCost,
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0),
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingFileCount; }).value_or(0),
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0),
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+        throw PlacementFailure("{}", describeNewRecordingInfeasibility(placement, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost));
     }
 
     if (!newRecordingCost.satisfiesReplayLatency)
     {
-        throw PlacementFailure(
-            "Replay recording on {} would exceed the replay latency limit of {} ms (estimated latency {} ms at {} B/s,"
-            " maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f})",
-            placement,
-            replayLatencyLimitDescription(replaySpecification),
-            newRecordingCost.estimatedReplayLatency.count(),
-            newRecordingCost.estimatedReplayBandwidthBytesPerSecond,
-            newRecordingCost.maintenanceCost,
-            newRecordingCost.replayCost,
-            newRecordingCost.recomputeCost);
+        throw PlacementFailure("{}", describeNewRecordingInfeasibility(placement, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost));
     }
 
     auto store = StoreLogicalOperator(
@@ -301,17 +256,11 @@ RecordingSelectionPhase::apply(
     newRoots.front() = newRoots.front().withChildren({std::move(store)});
     placedPlan = placedPlan.withRootOperators(newRoots);
 
-    std::vector<RecordingSelectionAlternative> alternatives;
-    if (allowRecomputeFallback(replaySpecification))
-    {
-        alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, newRecordingCost));
-    }
-
     return buildSelectionResult(
         newSelection,
         RecordingSelectionDecision::CreateNewRecording,
         "no exact-match recording fingerprint found in recording catalog",
         newRecordingCost,
-        std::move(alternatives));
+        {});
 }
 }
