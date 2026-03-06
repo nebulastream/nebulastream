@@ -138,6 +138,7 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
+    std::unordered_map<std::string, std::string> optimizer;
 };
 }
 
@@ -199,6 +200,15 @@ struct convert<NES::CLI::QueryConfig>
         rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
+
+        if (node["optimizer"].IsDefined())
+        {
+            rhs.optimizer = node["optimizer"].as<std::unordered_map<std::string, std::string>>();
+        }
+        else
+        {
+            rhs.optimizer = std::unordered_map<std::string, std::string>();
+        }
         rhs.query = {};
         if (node["query"].IsDefined())
         {
@@ -323,7 +333,7 @@ std::vector<std::string> loadQueries(
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical] = topologyConfig;
+    const auto& [query, sinks, logical, physical, _] = topologyConfig;
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
@@ -352,6 +362,13 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config});
     }
     return statements;
+}
+
+NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
+{
+    NES::QueryOptimizerConfiguration configuration;
+    configuration.overwriteConfigWithCommandLineInput(topologyConfig.optimizer);
+    return configuration;
 }
 
 void doStatus(
@@ -449,6 +466,7 @@ NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
 {
     const auto topologyConfig = getTopologyPath(program);
+    auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
@@ -470,7 +488,7 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
-    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration);
     NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
@@ -494,6 +512,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     auto topologyConfig = getTopologyPath(program);
     auto statements = loadStatements(topologyConfig);
     auto queries = loadQueries(program, subcommand, topologyConfig);
+    auto queryOptimizerConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     if (queries.empty())
     {
         throw NES::InvalidConfigParameter("No queries");
@@ -507,7 +526,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
-    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
