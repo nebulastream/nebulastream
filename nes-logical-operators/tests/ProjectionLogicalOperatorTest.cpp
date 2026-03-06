@@ -24,6 +24,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Util/Reflection.hpp>
+#include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -54,16 +55,7 @@ TEST_F(ProjectionLogicalOperatorTest, DuplicateExplicitAliasThrows)
         },
         ProjectionLogicalOperator::Asterisk(false));
 
-    EXPECT_THROW(inferSchema(op, {schema}), Exception);
-    try
-    {
-        inferSchema(op, {schema});
-        FAIL() << "Expected Exception with CannotInferSchema code";
-    }
-    catch (const Exception& e)
-    {
-        EXPECT_EQ(e.code(), ErrorCode::CannotInferSchema);
-    }
+    ASSERT_EXCEPTION_ERRORCODE(inferSchema(op, {schema}), ErrorCode::CannotInferSchema);
 }
 
 /// Two unaliased projections accessing the same field are allowed per standard SQL behavior.
@@ -117,11 +109,8 @@ TEST_F(ProjectionLogicalOperatorTest, AsteriskPlusDuplicateUnaliasedProjectionSu
     EXPECT_NO_THROW(inferSchema(op, {schema}));
 }
 
-/// When an explicit alias matches the auto-derived name (e.g., SELECT stream.a AS stream.a),
-/// it is treated as auto-derived. This is because after a serialization round-trip, all identifiers
-/// have has_value()=true, making it impossible to distinguish. Only aliases that differ from the
-/// auto-derived name are treated as explicit. SELECT stream.a AS stream.a, stream.b AS stream.a
-/// detects the second alias (stream.a != stream.b) but not the first (stream.a == stream.a).
+/// Known limitation: an explicit alias matching the auto-derived name is treated as auto-derived.
+/// SELECT stream.a AS stream.a, stream.b AS stream.a only detects the second alias as explicit.
 TEST_F(ProjectionLogicalOperatorTest, ExplicitAliasMatchingAutoDerivedNameTreatedAsAutoDerived)
 {
     const ProjectionLogicalOperator op(

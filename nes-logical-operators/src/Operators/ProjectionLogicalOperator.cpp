@@ -153,11 +153,9 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     }
 
     /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
-    /// An alias is considered explicit if: (1) the optional identifier is present, AND (2) its name differs from the
-    /// auto-derived name (function.explain(Short)). Condition (2) is needed because after a serialization round-trip
-    /// (reflect → JSON → unreflect), all identifiers may have has_value()=true (including auto-derived ones).
-    /// Comparing with the auto-derived name correctly distinguishes explicit aliases in both the initial inference
-    /// and post-deserialization re-inference.
+    /// An alias is explicit when its name differs from the auto-derived name (function.explain(Short)).
+    /// Known limitation: `SELECT a AS a, b AS a` will not detect the first alias as explicit because it
+    /// matches the auto-derived name.
     auto copy = *this;
     copy.projections.clear();
     copy.inputSchema = firstSchema;
@@ -232,11 +230,7 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
 
     for (auto [identifierOpt, function] : op.getProjections())
     {
-        /// Only serialize identifiers that were explicitly provided via AS aliases.
-        /// After withInferredSchema, ALL projections have identifiers (both explicit and auto-derived).
-        /// Auto-derived identifiers match function.explain(Short), so we use this to distinguish them.
-        /// This preserves the explicit/auto-derived distinction through the serialization round-trip,
-        /// preventing false-positive duplicate detection during re-inference after deserialization.
+        /// Only serialize identifiers that differ from the auto-derived name (i.e. explicit AS aliases).
         std::optional<std::string> identifier;
         if (identifierOpt.has_value())
         {
