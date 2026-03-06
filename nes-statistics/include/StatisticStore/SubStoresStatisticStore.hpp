@@ -17,7 +17,6 @@
 #include <StatisticStore/AbstractStatisticStore.hpp>
 #include <folly/Synchronized.h>
 
-
 namespace NES
 {
 

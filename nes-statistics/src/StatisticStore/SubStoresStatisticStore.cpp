@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -57,9 +57,7 @@ bool SubStoresStatisticStore::deleteStatistics(
     auto newIt = std::ranges::remove_if(
         *lockedStatisticStore,
         [startTs, endTs, statisticHash](const std::shared_ptr<Statistic>& statistic)
-        {
-            return statisticHash == statistic->getHash() and statistic->getStartTs() >= startTs and statistic->getEndTs() <= endTs;
-        });
+        { return statisticHash == statistic->getHash() and statistic->getStartTs() >= startTs and statistic->getEndTs() <= endTs; });
 
     const auto foundAnyStatistic = std::ranges::distance(newIt) > 0;
     if (foundAnyStatistic)
@@ -80,7 +78,10 @@ std::vector<std::shared_ptr<Statistic>> SubStoresStatisticStore::getStatistics(
         *lockedStatisticStore,
         std::back_inserter(foundStatistics),
         [startTs, endTs, statisticHash](const std::shared_ptr<Statistic>& statistic)
-        { return statistic and statistic->getHash() == statisticHash and statistic->getStartTs() >= startTs and statistic->getEndTs() <= endTs; });
+        {
+            return statistic and statistic->getHash() == statisticHash and statistic->getStartTs() >= startTs
+                and statistic->getEndTs() <= endTs;
+        });
     return foundStatistics;
 }
 

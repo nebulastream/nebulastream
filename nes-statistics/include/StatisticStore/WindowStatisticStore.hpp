@@ -35,8 +35,10 @@ class WindowStatisticStore final : public AbstractStatisticStore
         }
     };
 
-    struct StatisticKeyHash {
-        size_t operator()(const StatisticKey& key) const {
+    struct StatisticKeyHash
+    {
+        size_t operator()(const StatisticKey& key) const
+        {
             const auto h1 = std::hash<Statistic::StatisticHash>{}(key.statisticHash);
             const auto h2 = std::hash<Windowing::TimeMeasure>{}(key.startTs);
             return h1 ^ (h2 << 1);
@@ -45,7 +47,8 @@ class WindowStatisticStore final : public AbstractStatisticStore
 
     uint64_t numberOfExpectedConcurrentAccess;
     Windowing::TimeMeasure windowSize;
-    std::vector<folly::Synchronized<std::unordered_map<StatisticKey, std::vector<std::shared_ptr<Statistic>>, StatisticKeyHash>>> allStatistics;
+    std::vector<folly::Synchronized<std::unordered_map<StatisticKey, std::vector<std::shared_ptr<Statistic>>, StatisticKeyHash>>>
+        allStatistics;
 
     Windowing::TimeMeasure calculateWindowStartTime(Windowing::TimeMeasure statStartTime) const;
 

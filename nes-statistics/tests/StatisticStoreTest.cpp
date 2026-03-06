@@ -127,9 +127,8 @@ TEST_P(StatisticStoreTest, singleItem)
     const auto& dummyStatistic = statistics[0];
 
     /// Checking if insert and get works properly
-    ASSERT_TRUE(
-        std::visit(
-            [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); }, statisticStore));
+    ASSERT_TRUE(std::visit(
+        [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); }, statisticStore));
     auto getStatistics = std::visit(
         [&dummyStatistic](auto& store)
         { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
@@ -138,11 +137,10 @@ TEST_P(StatisticStoreTest, singleItem)
     EXPECT_TRUE(*getStatistics[0] == dummyStatistic);
 
     /// Now, we delete the statistic and then check that we can not retrieve it anymore
-    ASSERT_TRUE(
-        std::visit(
-            [&dummyStatistic](auto& store)
-            { return store.deleteStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
-            statisticStore));
+    ASSERT_TRUE(std::visit(
+        [&dummyStatistic](auto& store)
+        { return store.deleteStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
+        statisticStore));
     getStatistics = std::visit(
         [&dummyStatistic](auto& store)
         { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
@@ -173,10 +171,9 @@ TEST_P(StatisticStoreTest, multipleItem)
                 while ((nextPos = statisticsPos++) < allStatistics.size())
                 {
                     const auto& dummyStatistic = allStatistics[nextPos];
-                    ASSERT_TRUE(
-                        std::visit(
-                            [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); },
-                            statisticStore));
+                    ASSERT_TRUE(std::visit(
+                        [&dummyStatistic](auto& store) { return store.insertStatistic(dummyStatistic.getHash(), dummyStatistic); },
+                        statisticStore));
                     auto getStatistics = std::visit(
                         [&dummyStatistic](auto& store)
                         { return store.getStatistics(dummyStatistic.getHash(), dummyStatistic.getStartTs(), dummyStatistic.getEndTs()); },
@@ -230,11 +227,10 @@ TEST_P(StatisticStoreTest, multipleItem)
                     const auto& dummyStatistic = allStatistics[nextPos];
                     const auto startTs = dummyStatistic.getStartTs();
                     const auto endTs = dummyStatistic.getEndTs();
-                    ASSERT_TRUE(
-                        std::visit(
-                            [&dummyStatistic, &startTs, &endTs](auto& store)
-                            { return store.deleteStatistics(dummyStatistic.getHash(), startTs, endTs); },
-                            statisticStore))
+                    ASSERT_TRUE(std::visit(
+                        [&dummyStatistic, &startTs, &endTs](auto& store)
+                        { return store.deleteStatistics(dummyStatistic.getHash(), startTs, endTs); },
+                        statisticStore))
                         << "Could not delete: " << dummyStatistic;
 
                     auto getStatistics = std::visit(

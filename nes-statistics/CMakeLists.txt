@@ -14,7 +14,7 @@ add_subdirectory(src)
 get_source(nes-statistics NES_STATISTICS_SOURCE_FILES)
 
 add_library(nes-statistics ${NES_STATISTICS_SOURCE_FILES})
-target_link_libraries(nes-statistics PUBLIC nes-common nes-configurations nes-memory nes-systest-sources nes-logical-operators)
+target_link_libraries(nes-statistics PUBLIC nes-common nes-configurations nes-memory nes-logical-operators)
 
 target_include_directories(nes-statistics PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

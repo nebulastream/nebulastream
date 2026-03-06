@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -13,11 +13,11 @@ Licensed under the Apache License, Version 2.0 (the "License");
 */
 
 #pragma once
-#include <magic_enum/magic_enum.hpp>
 #include <vector>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
