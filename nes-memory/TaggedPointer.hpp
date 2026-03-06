@@ -102,7 +102,7 @@ public:
      */
     [[nodiscard]] void* pointer() const
     {
-        return reinterpret_cast<void*>(data & ((1ULL << 48) - 1)); /// NOLINT(performance-no-int-to-ptr, cppcoreguidelines-pro-type-reinterpret-cast) - intentional tagged pointer manipulation
+        return reinterpret_cast<void*>(data & ((1ULL << 48) - 1)); /// NOLINT(performance-no-int-to-ptr, cppcoreguidelines-pro-type-reinterpret-cast, hicpp-signed-bitwise) - intentional tagged pointer manipulation
     }
 
     /**

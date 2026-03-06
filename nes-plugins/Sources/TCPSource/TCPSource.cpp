@@ -109,7 +109,8 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         return false;
     }
 
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-vararg, hicpp-signed-bitwise) - POSIX API requires varargs
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
 
     /// set timeout for both blocking receive and send calls
     /// if timeout is set to zero, then the operation will never timeout
