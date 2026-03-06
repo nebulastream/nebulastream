@@ -60,7 +60,9 @@ MemorySegment::MemorySegment(uint8_t* ptr, const uint32_t size, std::function<vo
 {
     INVARIANT(this->ptr, "invalid pointer");
     INVARIANT(this->size, "invalid size={}", this->size);
+    /// NOLINTBEGIN(cppcoreguidelines-owning-memory) - ownership transferred to TaggedPointer
     controlBlock.reset(new BufferControlBlock(this, std::move(recycleFunction)), magic_enum::enum_integer(MemorySegmentType::Wrapped));
+    /// NOLINTEND(cppcoreguidelines-owning-memory) - ownership transferred to TaggedPointer
 }
 
 MemorySegment::~MemorySegment()
