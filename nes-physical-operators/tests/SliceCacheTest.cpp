@@ -199,11 +199,28 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
-/// Proxy function for nautilus::invoke - sets the callback flag at runtime (not just trace time).
+/// Proxy function for nautilus::invoke - sets the callback flag and the dataStructure field.
 /// Must be a free function (not a lambda) so that nautilus::invoke can obtain a valid function pointer.
-void setCallbackCalledProxy(bool* callbackFlag)
+/// Using a proxy avoids copying val<SliceCacheEntry*> (which would trigger traceCopy on a null-state
+/// val and create a free variable in the trace, causing "wrong number of arguments" errors).
+void replaceCacheEntryNoneProxy(bool* callbackFlag, SliceCacheEntry* entry, int8_t* dataStructure)
 {
     *callbackFlag = true;
+    entry->dataStructure = dataStructure;
+}
+
+/// Proxy for SecondChance: sets the callback flag, slice boundaries, and dataStructure.
+void replaceCacheEntrySecondChanceProxy(
+    bool* callbackFlag,
+    SliceCacheEntry* entry,
+    Timestamp::Underlying sliceStart,
+    Timestamp::Underlying sliceEnd,
+    int8_t* dataStructure)
+{
+    *callbackFlag = true;
+    entry->sliceStart = sliceStart;
+    entry->sliceEnd = sliceEnd;
+    entry->dataStructure = dataStructure;
 }
 
 TEST_P(SliceCacheTest, testSliceCacheNone)
@@ -217,29 +234,43 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     sliceCache = std::make_unique<SliceCacheNone>();
     createRandomSliceCacheTestOperation();
 
+    /// Allocate memory for the single dummy entry used by SliceCacheNone
+    std::vector<uint8_t> noneCacheMemory(sliceCache->getCacheMemorySize(), 0);
+    auto* const noneCacheMemoryPtr = reinterpret_cast<int8_t*>(noneCacheMemory.data());
+
+    /// Set startOfEntries OUTSIDE the traced lambda with the real memory pointer.
+    /// This matches the real system pattern (CompiledExecutablePipelineStage::start calls
+    /// setup() with real pointers before compilePipeline() traces the function).
+    /// During tracing, get()/set() use this->value (the real pointer) to compute field
+    /// addresses that are embedded as constants in the compiled code.
+    sliceCache->setStartOfEntries(noneCacheMemoryPtr);
+
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
-    using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(nautilus::val<uint64_t>, nautilus::val<int8_t*>)>;
+    using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(
+        nautilus::val<uint64_t>, nautilus::val<int8_t*>, nautilus::val<bool*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
-        [&](const nautilus::val<uint64_t>& timestampRaw, const nautilus::val<int8_t*>& newDataStructurePtr) -> nautilus::val<int8_t*>
+        [&](const nautilus::val<uint64_t>& timestampRaw,
+            const nautilus::val<int8_t*>& newDataStructurePtr,
+            const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<int8_t*>
         {
-            // we should not need this variable here, as we actually have a val<Timestamp> wrapper
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
-                    nautilus::invoke(setCallbackCalledProxy, nautilus::val<bool*>(&callbackCalled));
-                    auto entry = entryToReplace;
-                    entry.set(&SliceCacheEntry::dataStructure, newDataStructurePtr);
+                    /// Use nautilus::invoke with a proxy function to avoid copying the val
+                    /// (which would trigger traceCopy on a null-state val, creating a free variable).
+                    nautilus::invoke(replaceCacheEntryNoneProxy, callbackCalledPtr, entryToReplace, newDataStructurePtr);
                 });
         }));
 
     for (const auto& op : operations)
     {
         callbackCalled = false;
-        const auto rawResult = sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult);
+        const auto rawResult =
+            sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult, &callbackCalled);
 
         EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
 
@@ -255,33 +286,46 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
 
     /// Allocate and zero-initialize the cache memory buffer that the Nautilus cache operates on.
     /// Zero-initialized entries have sliceStart == sliceEnd == 0, so no timestamp will match them.
-    const auto cacheMemorySize = numberOfEntries * sizeof(SliceCacheEntrySecondChance);
+    /// getCacheMemorySize() includes extra space for the replacement index stored after the entries.
+    const auto cacheMemorySize = sliceCache->getCacheMemorySize();
     std::vector<uint8_t> cacheMemory(cacheMemorySize, 0);
-    sliceCache->setStartOfEntries(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(cacheMemory.data())));
+    auto* const cacheMemoryPtr = reinterpret_cast<int8_t*>(cacheMemory.data());
+
+    /// Set startOfEntries OUTSIDE the traced lambda with the real memory pointer.
+    /// This matches the real system pattern (CompiledExecutablePipelineStage::start calls
+    /// setup() with real pointers before compilePipeline() traces the function).
+    /// During tracing, get()/set() use this->value (the real pointer) to compute field
+    /// addresses that are embedded as constants in the compiled code.
+    sliceCache->setStartOfEntries(cacheMemoryPtr);
 
     bool callbackCalled = false;
     using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
         nautilus::val<Timestamp::Underlying>,
-        nautilus::val<int8_t*>)>;
+        nautilus::val<int8_t*>,
+        nautilus::val<bool*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
         [&](const nautilus::val<Timestamp::Underlying>& timestampRaw,
             const nautilus::val<Timestamp::Underlying>& sliceStartRaw,
             const nautilus::val<Timestamp::Underlying>& sliceEndRaw,
-            const nautilus::val<int8_t*>& newDataStructurePtr) -> nautilus::val<int8_t*>
+            const nautilus::val<int8_t*>& newDataStructurePtr,
+            const nautilus::val<bool*>& callbackCalledPtr) -> nautilus::val<int8_t*>
         {
-            // we should not need this variable here, as we actually have a val<Timestamp> wrapper
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
-                    nautilus::invoke(setCallbackCalledProxy, nautilus::val<bool*>(&callbackCalled));
-                    auto entry = entryToReplace;
-                    entry.set(&SliceCacheEntry::sliceStart, sliceStartRaw);
-                    entry.set(&SliceCacheEntry::sliceEnd, sliceEndRaw);
-                    entry.set(&SliceCacheEntry::dataStructure, newDataStructurePtr);
+                    /// Use nautilus::invoke with a proxy function to avoid copying the val
+                    /// (which would trigger traceCopy on a null-state val, creating a free variable).
+                    nautilus::invoke(
+                        replaceCacheEntrySecondChanceProxy,
+                        callbackCalledPtr,
+                        entryToReplace,
+                        sliceStartRaw,
+                        sliceEndRaw,
+                        newDataStructurePtr);
                 });
         }));
     /// Create a reference cache to independently verify the Nautilus implementation
@@ -292,7 +336,7 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
         /// Track whether the replacement callback was invoked to distinguish hits from misses
         callbackCalled = false;
         const auto rawResult = sliceCacheCallableFunction(
-            op.timestamp.getRawValue(), op.sliceStart.getRawValue(), op.sliceEnd.getRawValue(), op.expectedResult);
+            op.timestamp.getRawValue(), op.sliceStart.getRawValue(), op.sliceEnd.getRawValue(), op.expectedResult, &callbackCalled);
 
         /// Perform the same lookup in the reference cache
         const auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
@@ -318,8 +362,8 @@ INSTANTIATE_TEST_CASE_P(
     SliceCacheTest,
     SliceCacheTest,
     ::testing::Combine(
-        // ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
-        ::testing::Values(ExecutionMode::INTERPRETER), /// Nautilus execution backend
+        ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
+        // ::testing::Values(ExecutionMode::INTERPRETER), /// Nautilus execution backend
         ::testing::Values(1, 5, 10, 15, 50, 100), /// Number of cache entries
         ::testing::Values(1, 10, 100, 1000, 100'000) /// Size of slice
         ),

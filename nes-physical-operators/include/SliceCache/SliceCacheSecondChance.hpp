@@ -31,6 +31,10 @@ public:
     ~SliceCacheSecondChance() override = default;
     nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
+    /// Overrides to include space for the replacement index at the end of the cache entries.
+    uint64_t getCacheMemorySize() const override;
+    /// Overrides to also derive the replacement index pointer from the end of the cache entries.
+    void setStartOfEntries(int8_t* startOfEntries) override;
 
 private:
     /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX
@@ -40,10 +44,11 @@ private:
         nautilus::val<bool> foundInCache;
     };
 
-    EntryFound searchInCache(const nautilus::val<Timestamp>& timestamp);
+    EntryFound searchInCache(const nautilus::val<SliceCacheEntry*>& startOfEntries, const nautilus::val<Timestamp>& timestamp);
 
-    /// Stores the index of the entry that should be replaced next
-    nautilus::val<uint64_t> replacementIndex;
+    /// Raw pointer to the replacement index stored after the cache entries.
+    /// Like startOfEntriesRaw, stored as raw pointer so val can be created locally during tracing.
+    uint64_t* replacementIndexRaw;
 };
 
 }
