@@ -32,12 +32,13 @@ namespace NES
 {
 namespace
 {
-RecordingCandidateOption makeNewRecordingOption(std::string recordingId, double cost)
+RecordingCandidateOption makeNewRecordingOption(std::string recordingId, const Host& host, double cost, size_t estimatedStorageBytes = 1024)
 {
     return RecordingCandidateOption{
         .decision = RecordingSelectionDecision::CreateNewRecording,
-        .selection = RecordingSelection{.recordingId = RecordingId(std::move(recordingId)), .node = Host("worker-1:8080"), .filePath = {}},
-        .cost = RecordingCostBreakdown{.decisionCost = cost, .estimatedStorageBytes = 1024, .fitsBudget = true, .satisfiesReplayLatency = true},
+        .selection = RecordingSelection{.recordingId = RecordingId(std::move(recordingId)), .node = host, .filePath = {}},
+        .cost = RecordingCostBreakdown{
+            .decisionCost = cost, .estimatedStorageBytes = estimatedStorageBytes, .fitsBudget = true, .satisfiesReplayLatency = true},
         .feasible = true,
         .infeasibilityReason = {}};
 }
@@ -70,15 +71,15 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
         RecordingBoundaryCandidate{
             .edge = {.parentId = rootId, .childId = leftId},
             .node = host,
-            .options = {makeNewRecordingOption("root-left", 10.0)}},
+            .options = {makeNewRecordingOption("root-left", host, 10.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = leftId, .childId = leftLeafId},
             .node = host,
-            .options = {makeNewRecordingOption("left-leaf", 2.0)}},
+            .options = {makeNewRecordingOption("left-leaf", host, 2.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = rootId, .childId = rightLeafId},
             .node = host,
-            .options = {makeNewRecordingOption("root-right", 3.0)}}};
+            .options = {makeNewRecordingOption("root-right", host, 3.0)}}};
 
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
 
@@ -95,6 +96,50 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
                   })
             | std::ranges::to<std::vector>(),
         ::testing::UnorderedElementsAre(std::pair{leftId.getRawValue(), leftLeafId.getRawValue()}, std::pair{rootId.getRawValue(), rightLeafId.getRawValue()}));
+}
+
+TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoundaryUpstream)
+{
+    const auto constrainedHost = Host("worker-a:8080");
+    const auto fallbackHost = Host("worker-b:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(constrainedHost, {}, 16, {}, {}, 4096));
+    ASSERT_TRUE(workerCatalog->addWorker(fallbackHost, {}, 16, {}, {}, 16384));
+
+    const auto rootId = OperatorId(1);
+    const auto branchId = OperatorId(2);
+    const auto leftLeafId = OperatorId(3);
+    const auto rightLeafId = OperatorId(4);
+
+    RecordingCandidateSet candidateSet;
+    candidateSet.rootOperatorId = rootId;
+    candidateSet.leafOperatorIds = {leftLeafId, rightLeafId};
+    candidateSet.planEdges = {
+        RecordingPlanEdge{.parentId = rootId, .childId = branchId},
+        RecordingPlanEdge{.parentId = branchId, .childId = leftLeafId},
+        RecordingPlanEdge{.parentId = branchId, .childId = rightLeafId}};
+    candidateSet.candidates = {
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rootId, .childId = branchId},
+            .node = fallbackHost,
+            .options = {makeNewRecordingOption("root-branch", fallbackHost, 3.0, 4096)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = branchId, .childId = leftLeafId},
+            .node = constrainedHost,
+            .options = {makeNewRecordingOption("branch-left", constrainedHost, 1.0, 4096)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = branchId, .childId = rightLeafId},
+            .node = constrainedHost,
+            .options = {makeNewRecordingOption("branch-right", constrainedHost, 1.0, 4096)}}};
+
+    const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
+
+    ASSERT_EQ(selection.selectedBoundary.size(), 1U);
+    EXPECT_DOUBLE_EQ(selection.objectiveCost, 3.0);
+    EXPECT_EQ(selection.selectedBoundary.front().candidate.edge.parentId, rootId);
+    EXPECT_EQ(selection.selectedBoundary.front().candidate.edge.childId, branchId);
+    EXPECT_EQ(selection.selectedBoundary.front().candidate.node, fallbackHost);
+    EXPECT_EQ(selection.selectedBoundary.front().chosenOption.selection.recordingId, RecordingId("root-branch"));
 }
 }
 }
