@@ -423,7 +423,7 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkNodePlan).size(), 1);
 }
 
-TEST_F(DistributedPlanningTest, TimeTravelStoreInsertsStoreBeforeSink)
+TEST_F(DistributedPlanningTest, TimeTravelStoreMaterializesSelectedBoundary)
 {
     auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
     auto plan = opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{});
@@ -438,17 +438,20 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreInsertsStoreBeforeSink)
     EXPECT_EQ(selectedRecording.node, Host("localhost:8080"));
     EXPECT_EQ(selectionExplanation.selection, selectedRecording);
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::CreateNewRecording);
-    EXPECT_EQ(selectionExplanation.reason, "no exact-match recording fingerprint found in recording catalog");
+    EXPECT_NE(selectionExplanation.reason.find("selected by replay min-cut"), std::string::npos);
+    EXPECT_NE(selectionExplanation.reason.find("create_new_recording"), std::string::npos);
     EXPECT_TRUE(selectionExplanation.alternatives.empty());
     EXPECT_GT(selectionExplanation.chosenCost.totalCost(), 0.0);
 
-    const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
-    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(localPlan).size(), 1);
-    ASSERT_EQ(localPlan.getRootOperators().size(), 1);
-    const auto root = localPlan.getRootOperators().front();
-    ASSERT_TRUE(root.tryGetAs<SinkLogicalOperator>().has_value());
-    ASSERT_EQ(root.getChildren().size(), 1);
-    EXPECT_TRUE(root.getChildren().front().tryGetAs<StoreLogicalOperator>().has_value());
+    size_t totalStores = 0;
+    for (const auto& [worker, localPlans] : plan)
+    {
+        for (const auto& localPlan : localPlans)
+        {
+            totalStores += getOperatorByType<StoreLogicalOperator>(localPlan).size();
+        }
+    }
+    EXPECT_EQ(totalStores, 1);
 }
 
 TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRecordingBudget)
@@ -524,9 +527,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
     const auto& selectionExplanation = reusedPlan.getRecordingSelectionResult().explanations.front();
     EXPECT_EQ(selectionExplanation.selection, firstRecording);
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::ReuseExistingRecording);
-    EXPECT_EQ(
-        selectionExplanation.reason,
-        "exact-match recording fingerprint found in recording catalog and reuse_existing_recording was the lowest-cost feasible decision");
+    EXPECT_NE(selectionExplanation.reason.find("selected by replay min-cut"), std::string::npos);
+    EXPECT_NE(selectionExplanation.reason.find("reuse_existing_recording"), std::string::npos);
     ASSERT_EQ(selectionExplanation.alternatives.size(), 1);
     EXPECT_EQ(selectionExplanation.alternatives.front().decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_LT(selectionExplanation.chosenCost.totalCost(), selectionExplanation.alternatives.front().cost.totalCost());
@@ -573,9 +575,7 @@ TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecor
     EXPECT_NE(explainResult->explainString.find("node=localhost:8080"), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("Replay decision reasoning:"), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("decision=create_new_recording"), std::string::npos);
-    EXPECT_NE(
-        explainResult->explainString.find("reason=no exact-match recording fingerprint found in recording catalog"),
-        std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("reason=selected by replay min-cut"), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("chosen_cost:"), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("maintenance_cost="), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("replay_cost="), std::string::npos);

@@ -23,6 +23,8 @@ add_source_files(nes-query-optimizer
         LegacyOptimizer.cpp
         RecordingCostModel.cpp
         RecordingFingerprint.cpp
+        RecordingCandidateSelectionPhase.cpp
+        RecordingBoundarySolver.cpp
         RecordingSelectionPhase.cpp
         BottomUpPlacement.cpp
         OperatorPlacement.cpp

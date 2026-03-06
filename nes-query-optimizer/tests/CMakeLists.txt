@@ -23,3 +23,5 @@ add_nes_optimizer_test(distributed-query-status-test UnitTests/DistributedQueryT
 add_nes_optimizer_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
 add_nes_optimizer_test(recording-catalog-test UnitTests/RecordingCatalogTest.cpp)
 add_nes_optimizer_test(worker-catalog-test UnitTests/WorkerCatalogTest.cpp)
+add_nes_optimizer_test(recording-selection-phase-test UnitTests/RecordingSelectionPhaseTest.cpp)
+add_nes_optimizer_test(recording-boundary-solver-test UnitTests/RecordingBoundarySolverTest.cpp)
