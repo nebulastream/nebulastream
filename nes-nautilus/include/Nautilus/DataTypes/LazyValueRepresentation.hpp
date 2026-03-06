@@ -21,6 +21,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 
 #include <DataTypes/DataType.hpp>
 #include <Util/Strings.hpp>
+#include <nautilus/std/cstring.h>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
@@ -103,6 +104,8 @@ public:
 
     [[nodiscard]] nautilus::val<bool> getIsNull() const { return isNull; }
 
+    [[nodiscard]] DataType getType() const { return type; }
+
     /// Method to check if the lazy value has any text behind it.
     /// Usable for some bool function overrides
     [[nodiscard]] nautilus::val<bool> isValid() const
@@ -110,6 +113,16 @@ public:
         return !isNull && size > 0 && ptrToLazyValue != nullptr;
     }
 
+    /// Method to check if the lazy values content forms a representation of a boolean true
+    /// Usable for some bool function overrides
+    [[nodiscard]] nautilus::val<bool> isBooleanTrue() const
+    {
+        return (getSize() == 1 && nautilus::memcmp(getContent(), nautilus::val<const char*>("1"), 1) == 0)
+            || (size == 4
+                && (nautilus::memcmp(getContent(), nautilus::val<const char*>("true"), 4) == 0
+                    || nautilus::memcmp(getContent(), nautilus::val<const char*>("TRUE"), 4) == 0
+                    || nautilus::memcmp(getContent(), nautilus::val<const char*>("True"), 4) == 0));
+    }
 
     LazyValueRepresentation& operator=(LazyValueRepresentation&& other) noexcept
     {
@@ -123,7 +136,6 @@ public:
         isNull = other.isNull;
         return *this;
     }
-
 
     /// Converts the lazy value into a VarVal of the underlying value, as dictated by the type member.
     [[nodiscard]] VarVal parseValue() const;
