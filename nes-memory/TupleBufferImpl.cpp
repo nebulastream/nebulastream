@@ -187,7 +187,8 @@ bool BufferControlBlock::release()
         }
     }
 #endif
-    if (const uint32_t prevRefCnt = referenceCounter.fetch_sub(1); prevRefCnt == 1)
+    const uint32_t prevRefCnt = referenceCounter.fetch_sub(1);
+    if (prevRefCnt == 1)
     {
         for (auto&& child : children)
         {
@@ -205,11 +206,8 @@ bool BufferControlBlock::release()
         recycleCallback(owner, recycler.get());
         return true;
     }
-    else
-    {
-        INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
-        return false;
-    }
+    INVARIANT(prevRefCnt != 0, "releasing an already released buffer");
+    return false;
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

@@ -85,10 +85,7 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
         return this->withOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)))
             .withAsField(newAsField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
     }
-    else
-    {
-        throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
-    }
+    throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }
 
 Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
