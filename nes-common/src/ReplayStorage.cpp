@@ -15,11 +15,48 @@
 #include <Replay/ReplayStorage.hpp>
 
 #include <filesystem>
+#include <limits>
 #include <string>
 #include <system_error>
 
 namespace NES::Replay
 {
+
+namespace
+{
+template <typename Projection>
+size_t accumulateRecordingDirectory(Projection projection)
+{
+    const auto recordingDirectory = std::filesystem::path(DEFAULT_RECORDING_DIRECTORY);
+    std::error_code ec;
+    if (!std::filesystem::exists(recordingDirectory, ec) || ec)
+    {
+        return 0;
+    }
+
+    uintmax_t total = 0;
+    for (std::filesystem::recursive_directory_iterator iterator(
+             recordingDirectory, std::filesystem::directory_options::skip_permission_denied, ec),
+         end;
+         iterator != end;
+         iterator.increment(ec))
+    {
+        if (ec)
+        {
+            ec.clear();
+            continue;
+        }
+
+        total += projection(*iterator, ec);
+        if (ec)
+        {
+            ec.clear();
+        }
+    }
+
+    return static_cast<size_t>(std::min<uintmax_t>(total, std::numeric_limits<size_t>::max()));
+}
+}
 
 std::string getRecordingFilePath(std::string_view recordingId)
 {
@@ -48,6 +85,32 @@ std::string resolveTimeTravelReadProbePath()
         }
     }
     return aliasPath.string();
+}
+
+size_t getRecordingStorageBytes()
+{
+    return accumulateRecordingDirectory(
+        [](const std::filesystem::directory_entry& entry, std::error_code& ec) -> uintmax_t
+        {
+            if (!entry.is_regular_file(ec))
+            {
+                return 0;
+            }
+            return entry.file_size(ec);
+        });
+}
+
+size_t getRecordingFileCount()
+{
+    return accumulateRecordingDirectory(
+        [](const std::filesystem::directory_entry& entry, std::error_code& ec) -> uintmax_t
+        {
+            if (entry.is_regular_file(ec))
+            {
+                return 1;
+            }
+            return 0;
+        });
 }
 
 void updateTimeTravelReadAlias(const std::string& recordingFilePath)

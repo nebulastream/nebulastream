@@ -60,6 +60,7 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
 {
     if (const auto node = workers.extract(hostAddr); not node.empty())
     {
+        runtimeMetrics.erase(hostAddr);
         topology.removeNode(hostAddr);
         ++version;
         return std::move(node.mapped());
@@ -72,6 +73,15 @@ std::optional<WorkerConfig> WorkerCatalog::removeWorker(const Host& hostAddr)
     if (workers.contains(hostAddr))
     {
         return workers.at(hostAddr);
+    }
+    return std::nullopt;
+}
+
+std::optional<WorkerRuntimeMetrics> WorkerCatalog::getWorkerRuntimeMetrics(const Host& hostAddr) const
+{
+    if (runtimeMetrics.contains(hostAddr))
+    {
+        return runtimeMetrics.at(hostAddr);
     }
     return std::nullopt;
 }
@@ -89,6 +99,17 @@ NetworkTopology WorkerCatalog::getTopology() const
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
 {
     return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();
+}
+
+bool WorkerCatalog::updateWorkerRuntimeMetrics(const Host& hostAddr, WorkerRuntimeMetrics metrics)
+{
+    if (!workers.contains(hostAddr))
+    {
+        return false;
+    }
+
+    runtimeMetrics.insert_or_assign(hostAddr, std::move(metrics));
+    return true;
 }
 
 uint64_t WorkerCatalog::getVersion() const

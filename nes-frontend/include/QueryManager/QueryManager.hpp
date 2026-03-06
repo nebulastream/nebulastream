@@ -102,6 +102,7 @@ class QueryManager
     };
 
     QueryManagerState state;
+    std::shared_ptr<WorkerCatalog> workerCatalog;
     QueryManagerBackends backends;
 
 public:
@@ -115,6 +116,7 @@ public:
     [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
+    void refreshWorkerMetrics();
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
     [[nodiscard]] const RecordingCatalog& getRecordingCatalog() const { return state.recordingCatalog; }
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;

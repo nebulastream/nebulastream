@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -29,12 +30,23 @@ namespace NES
 {
 constexpr size_t INFINITE_CAPACITY = 100'000'000;
 
+struct WorkerRuntimeMetrics
+{
+    std::chrono::system_clock::time_point observedAt{};
+    size_t recordingStorageBytes = 0;
+    size_t recordingFileCount = 0;
+    size_t activeQueryCount = 0;
+
+    [[nodiscard]] bool operator==(const WorkerRuntimeMetrics& other) const = default;
+};
+
 /// Catalog of worker nodes in a distributed NebulaStream cluster.
 /// Maintains the network topology to enable path-finding for distributed
 /// query decomposition and placement validation.
 class WorkerCatalog
 {
     std::unordered_map<Host, WorkerConfig> workers;
+    std::unordered_map<Host, WorkerRuntimeMetrics> runtimeMetrics;
     NetworkTopology topology;
     uint64_t version = 0;
 
@@ -48,9 +60,11 @@ public:
         size_t recordingStorageBudget = INFINITE_CAPACITY); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
+    [[nodiscard]] std::optional<WorkerRuntimeMetrics> getWorkerRuntimeMetrics(const Host& hostAddr) const;
     [[nodiscard]] size_t size() const;
     [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] NetworkTopology getTopology() const;
+    bool updateWorkerRuntimeMetrics(const Host& hostAddr, WorkerRuntimeMetrics metrics);
 
     /// Every change to the workerCatalog increments the version. This allows other components to check if the catalog has changed.
     [[nodiscard]] uint64_t getVersion() const;

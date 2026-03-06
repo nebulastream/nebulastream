@@ -259,6 +259,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
     {
         auto plan = statement.plan;
         resolveTimeTravelReadSources(plan, sourceCatalog);
+        queryManager->refreshWorkerMetrics();
         std::stringstream explainMessage;
         fmt::println(explainMessage, "Query:\n{}", plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", plan);
@@ -291,6 +292,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     {
         auto plan = statement.plan;
         resolveTimeTravelReadSources(plan, sourceCatalog);
+        queryManager->refreshWorkerMetrics();
         auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
         if (statement.id)

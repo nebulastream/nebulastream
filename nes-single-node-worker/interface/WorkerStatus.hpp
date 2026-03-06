@@ -28,6 +28,13 @@ namespace NES
 
 struct WorkerStatus
 {
+    struct ReplayMetrics
+    {
+        size_t recordingStorageBytes = 0;
+        size_t recordingFileCount = 0;
+        size_t activeQueryCount = 0;
+    };
+
     struct ActiveQuery
     {
         QueryId queryId = INVALID_QUERY_ID;
@@ -51,6 +58,7 @@ struct WorkerStatus
     std::chrono::system_clock::time_point until;
     std::vector<ActiveQuery> activeQueries;
     std::vector<TerminatedQuery> terminatedQueries;
+    ReplayMetrics replayMetrics;
 };
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response);

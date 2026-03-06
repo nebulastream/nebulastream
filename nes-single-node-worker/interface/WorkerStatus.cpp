@@ -71,6 +71,10 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
         std::chrono::duration_cast<std::chrono::milliseconds>(status.after.time_since_epoch()).count());
     response->set_until_unix_timestamp_in_milli_seconds(
         std::chrono::duration_cast<std::chrono::milliseconds>(status.until.time_since_epoch()).count());
+    auto* replayMetricsGRPC = response->mutable_replay_metrics();
+    replayMetricsGRPC->set_recording_storage_bytes(status.replayMetrics.recordingStorageBytes);
+    replayMetricsGRPC->set_recording_file_count(status.replayMetrics.recordingFileCount);
+    replayMetricsGRPC->set_active_query_count(status.replayMetrics.activeQueryCount);
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -106,6 +110,11 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                             ? std::make_optional(Exception(terminatedQuery.error().message(), terminatedQuery.error().code()))
                             : std::nullopt};
                 })
-            | std::ranges::to<std::vector>()};
+            | std::ranges::to<std::vector>(),
+        .replayMetrics
+        = WorkerStatus::ReplayMetrics{
+            .recordingStorageBytes = response->replay_metrics().recording_storage_bytes(),
+            .recordingFileCount = response->replay_metrics().recording_file_count(),
+            .activeQueryCount = response->replay_metrics().active_query_count()}};
 }
 }

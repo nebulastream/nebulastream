@@ -84,12 +84,12 @@ QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
-    : state(std::move(state)), backends(std::move(workerCatalog), std::move(provider))
+    : state(std::move(state)), workerCatalog(copyPtr(workerCatalog)), backends(std::move(workerCatalog), std::move(provider))
 {
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
-    : backends(std::move(workerCatalog), std::move(provider))
+    : workerCatalog(copyPtr(workerCatalog)), backends(std::move(workerCatalog), std::move(provider))
 {
 }
 
@@ -306,6 +306,32 @@ std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std
         distributedStatus.workerStatus.try_emplace(wId, backend->workerStatus(after));
     }
     return distributedStatus;
+}
+
+void QueryManager::refreshWorkerMetrics()
+{
+    constexpr auto sinceEpoch = std::chrono::system_clock::time_point(std::chrono::milliseconds(0));
+    for (const auto& [host, backend] : backends)
+    {
+        const auto statusResult = backend->workerStatus(sinceEpoch);
+        if (!statusResult)
+        {
+            NES_WARNING("Could not refresh runtime metrics for worker {}: {}", host, statusResult.error());
+            continue;
+        }
+
+        const auto& status = statusResult.value();
+        if (!workerCatalog->updateWorkerRuntimeMetrics(
+                host,
+                WorkerRuntimeMetrics{
+                    .observedAt = status.until,
+                    .recordingStorageBytes = status.replayMetrics.recordingStorageBytes,
+                    .recordingFileCount = status.replayMetrics.recordingFileCount,
+                    .activeQueryCount = status.replayMetrics.activeQueryCount}))
+        {
+            NES_WARNING("Could not refresh runtime metrics for unknown worker {}", host);
+        }
+    }
 }
 
 std::vector<DistributedQueryId> QueryManager::getRunningQueries() const

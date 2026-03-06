@@ -102,6 +102,12 @@ message WorkerStatusRequest {
 }
 
 message WorkerStatusResponse {
+  message ReplayMetrics {
+    uint64 recording_storage_bytes = 1;
+    uint64 recording_file_count = 2;
+    uint64 active_query_count = 3;
+  }
+
   message ActiveQuery {
     NES.SerializableQueryId query_id = 1;
     optional uint64 started_unix_timestamp_in_milli_seconds = 2;
@@ -118,4 +124,5 @@ message WorkerStatusResponse {
   uint64 until_unix_timestamp_in_milli_seconds = 4;
   repeated ActiveQuery active_queries = 1;
   repeated TerminatedQuery terminated_queries = 2;
+  ReplayMetrics replay_metrics = 5;
 }

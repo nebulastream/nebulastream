@@ -229,6 +229,14 @@ struct Catalogs
     NES::SharedPtr<NES::WorkerCatalog> workerCatalog;
 };
 
+struct BoundExplainStatement
+{
+    std::unique_ptr<NES::LegacyOptimizer> optimizer;
+    NES::ExplainQueryStatement statement;
+    Catalogs catalogs;
+};
+
+BoundExplainStatement loadAndBindExplainStatementWithCatalogs(std::string_view testFileName);
 std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::ExplainQueryStatement> loadAndBindExplainStatement(std::string_view testFileName);
 
 std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::LogicalPlan> loadAndBind(std::string_view testFileName)
@@ -238,6 +246,12 @@ std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::LogicalPlan> loadAndBind(s
 }
 
 std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::ExplainQueryStatement> loadAndBindExplainStatement(std::string_view testFileName)
+{
+    auto boundStatement = loadAndBindExplainStatementWithCatalogs(testFileName);
+    return {std::move(boundStatement.optimizer), std::move(boundStatement.statement)};
+}
+
+BoundExplainStatement loadAndBindExplainStatementWithCatalogs(std::string_view testFileName)
 {
     auto sources = std::make_shared<NES::SourceCatalog>();
     auto sinks = std::make_shared<NES::SinkCatalog>();
@@ -252,7 +266,10 @@ std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::ExplainQueryStatement> loa
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
     renderTopology(workers->getTopology(), std::cout);
-    return {std::make_unique<NES::LegacyOptimizer>(sources, sinks, workers), std::get<NES::ExplainQueryStatement>(statements.back())};
+    return BoundExplainStatement{
+        .optimizer = std::make_unique<NES::LegacyOptimizer>(sources, sinks, workers),
+        .statement = std::get<NES::ExplainQueryStatement>(statements.back()),
+        .catalogs = Catalogs{.sourceCatalog = sources, .sinkCatalog = sinks, .workerCatalog = workers}};
 }
 
 }
@@ -388,6 +405,23 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRecordingBudge
 {
     auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store_budget_too_small.yaml");
     EXPECT_THROW((void)opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{}), Exception);
+}
+
+TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRemainingRecordingBudgetFromWorkerMetrics)
+{
+    auto boundStatement = loadAndBindExplainStatementWithCatalogs("basic_time_travel_store_runtime_metrics.yaml");
+    ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
+        Host("localhost:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::now(),
+            .recordingStorageBytes = 5000,
+            .recordingFileCount = 2,
+            .activeQueryCount = 1}));
+
+    EXPECT_THROW(
+        (void)boundStatement.optimizer->optimize(
+            boundStatement.statement.plan, boundStatement.statement.replaySpecification, RecordingCatalog{}),
+        Exception);
 }
 
 TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutReinsertingStore)

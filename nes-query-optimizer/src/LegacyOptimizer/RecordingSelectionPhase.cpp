@@ -42,6 +42,12 @@ size_t estimateRecordingStorageBytes(const Schema& schema)
         schemaBytes * Replay::DEFAULT_ESTIMATED_RECORDING_ROWS,
         Replay::MIN_RECORDING_SIZE_BYTES);
 }
+
+size_t availableRecordingStorageBytes(const WorkerConfig& worker, const std::optional<WorkerRuntimeMetrics>& runtimeMetrics)
+{
+    const auto usedRecordingStorageBytes = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0);
+    return usedRecordingStorageBytes >= worker.recordingStorageBudget ? 0 : worker.recordingStorageBudget - usedRecordingStorageBytes;
+}
 }
 
 RecordingSelectionResult
@@ -73,6 +79,7 @@ RecordingSelectionPhase::apply(
     const auto placement = getPlacementFor(newRoots.front());
     const auto worker = workerCatalog->getWorker(placement);
     PRECONDITION(worker.has_value(), "Replay recording selection could not find worker {}", placement);
+    const auto workerRuntimeMetrics = workerCatalog->getWorkerRuntimeMetrics(placement);
 
     const auto recordedChildren = newRoots.front().getChildren();
     const auto& recordedChild = recordedChildren.front();
@@ -90,13 +97,19 @@ RecordingSelectionPhase::apply(
     }
 
     const auto estimatedStorageBytes = estimateRecordingStorageBytes(recordedChild.getOutputSchema());
-    if (estimatedStorageBytes > worker->recordingStorageBudget)
+    const auto freeRecordingStorageBytes = availableRecordingStorageBytes(*worker, workerRuntimeMetrics);
+    if (estimatedStorageBytes > freeRecordingStorageBytes)
     {
         throw PlacementFailure(
-            "Replay recording on {} requires an estimated {} bytes, exceeding the recording storage budget of {} bytes",
+            "Replay recording on {} requires an estimated {} bytes, but only {} bytes remain in the recording budget of {} bytes"
+            " (worker currently reports {} bytes in replay storage across {} recording files and {} active queries)",
             placement,
             estimatedStorageBytes,
-            worker->recordingStorageBudget);
+            freeRecordingStorageBytes,
+            worker->recordingStorageBudget,
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingFileCount; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0));
     }
 
     auto store = StoreLogicalOperator(

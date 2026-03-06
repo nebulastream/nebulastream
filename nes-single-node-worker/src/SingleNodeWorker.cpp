@@ -31,6 +31,7 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -212,6 +213,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 /// Ignore these for the worker status
                 break;
             case QueryState::Started:
+                ++status.replayMetrics.activeQueryCount;
                 INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
                 if (metrics.start.value() >= after)
                 {
@@ -219,6 +221,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 }
                 break;
             case QueryState::Running: {
+                ++status.replayMetrics.activeQueryCount;
                 INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
                 if (metrics.running.value() >= after)
                 {
@@ -245,6 +248,8 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
             }
         }
     }
+    status.replayMetrics.recordingStorageBytes = Replay::getRecordingStorageBytes();
+    status.replayMetrics.recordingFileCount = Replay::getRecordingFileCount();
     return status;
 }
 

@@ -29,6 +29,8 @@ inline constexpr size_t MIN_RECORDING_SIZE_BYTES = 4096;
 [[nodiscard]] std::string getRecordingFilePath(std::string_view recordingId);
 [[nodiscard]] std::string getTimeTravelReadAliasPath();
 [[nodiscard]] std::string resolveTimeTravelReadProbePath();
+[[nodiscard]] size_t getRecordingStorageBytes();
+[[nodiscard]] size_t getRecordingFileCount();
 void updateTimeTravelReadAlias(const std::string& recordingFilePath);
 void clearTimeTravelReadAlias();
 
