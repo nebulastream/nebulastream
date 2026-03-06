@@ -35,7 +35,8 @@ namespace
 /// GRPC does not like it if it is accessed via the signal handler. Effectively, this creates a thread which waits for
 /// the shutdownBarrier to be released by the signal handler and then shuts the grpc server down, which unblocks the `Wait` call
 /// in the main function.
-std::binary_semaphore shutdownBarrier{0};
+std::binary_semaphore shutdownBarrier{
+    0}; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables) - required for signal handler communication
 
 void signalHandler(int signal)
 {

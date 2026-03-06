@@ -207,7 +207,7 @@ std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 namespace Logger
 {
 
-static detail::LoggerHolder helper;
+static detail::LoggerHolder helper; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables) - required for singleton logger access
 
 void setupLogging(const std::string& logFileName, LogLevel level, bool useStdout)
 {
