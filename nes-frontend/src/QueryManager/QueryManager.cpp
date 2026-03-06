@@ -105,7 +105,10 @@ std::expected<void, Exception> QueryManager::start(QueryId queryId)
             std::this_thread::sleep_for(statusPollInterval * std::pow(2, i));
         }
 
-        return std::unexpected{QueryStartFailed("Query state remains `Registered` after {} retries", statusRetries)};
+        return std::unexpected{QueryStartFailed(
+            "Query state remains `Registered` after {} retries for {:%H:%M:%S}",
+            statusRetries,
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - queryStartTimestamp))};
     }
     catch (std::exception& e)
     {
