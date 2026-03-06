@@ -53,3 +53,8 @@ scripts/__pycache__
 .nix/ctest
 .nix/ninja
 .nix/gdb
+
+
+# Ignore Claude specific files and all possible combinations of Claude.md
+.claude/
+[Cc][Ll][Aa][Uu][Dd][Ee].md
