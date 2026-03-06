@@ -52,6 +52,7 @@
             });
 
         reflect_cppPkg = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
+        lemonGraphPkg = pkgs.lemon-graph;
 
         baseThirdPartyDeps = (with pkgs; [
           fmtPkg
@@ -82,6 +83,7 @@
           glog
           gtest
           tbb
+          lemonGraphPkg
           python3
           openjdk21
           reflect_cppPkg
