@@ -27,3 +27,7 @@ target_include_directories(nes-physical-operators PUBLIC
 create_registries_for_component(PhysicalFunction AggregationPhysicalFunction)
 
 add_tests_if_enabled(tests)
+
+if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")
+        add_subdirectory(benchmarks)
+endif ()

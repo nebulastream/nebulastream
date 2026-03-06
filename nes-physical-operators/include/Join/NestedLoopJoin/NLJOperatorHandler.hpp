@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <atomic>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -26,6 +27,15 @@
 
 namespace NES
 {
+/// BloomFilter metrics for monitoring join performance
+struct BloomFilterMetrics
+{
+    std::atomic<uint64_t> bloomChecksTotal{0};
+    std::atomic<uint64_t> bloomMisses{0};
+    std::atomic<uint64_t> bloomHits{0};
+    std::atomic<uint64_t> bloomFalsePositives{0};
+};
+
 /// This task models the information for a join window trigger
 struct EmittedNLJWindowTrigger
 {
@@ -45,10 +55,13 @@ public:
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        bool bloomFilterEnabled = true);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
+    
+    [[nodiscard]] BloomFilterMetrics* getBloomFilterMetrics() const { return const_cast<BloomFilterMetrics*>(&bloomFilterMetrics); }
 
 private:
     void emitSlicesToProbe(
@@ -57,5 +70,8 @@ private:
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
+
+    bool bloomFilterEnabled;
+    BloomFilterMetrics bloomFilterMetrics;
 };
 }

@@ -1,0 +1,42 @@
+# name: BloomFilterNLJPerf_TrueLowSelectivity_NoBF
+# description: True low-selectivity (20%) NLJ performance test WITHOUT BloomFilter (baseline comparison)
+# groups: [Join, Benchmark, large]
+
+GlobalConfiguration worker.default_query_execution.join_strategy: [NESTED_LOOP_JOIN]
+
+# Outer stream: 50,000 tuples (ids 0..49999)
+CREATE LOGICAL SOURCE outer_stream(id UINT64, payload UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR outer_stream TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 100000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 50000 1, SEQUENCE UINT64 0 50000 1, SEQUENCE UINT64 0 50000 1'
+       AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+# Inner stream: 100,000 tuples (ids 40000..139999)
+# Overlap: ids 40000..49999 (10,000 tuples = 20% of outer)
+# WITHOUT BloomFilter: all 50K outer tuples check all 100K inner tuples
+CREATE LOGICAL SOURCE inner_stream(id2 UINT64, payload2 UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR inner_stream TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 100000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 40000 140000 1, SEQUENCE UINT64 0 100000 1, SEQUENCE UINT64 0 100000 1'
+       AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE SINK joinPerfSink(outer_streaminner_stream.start UINT64, outer_streaminner_stream.end UINT64, outer_streaminner_stream.match_count UINT64) TYPE File;
+
+# Single large tumbling window to keep one output row
+SELECT start, end, COUNT(id) AS match_count
+FROM (SELECT * FROM outer_stream)
+INNER JOIN (SELECT * FROM inner_stream)
+ON id = id2
+WINDOW TUMBLING (ts, size 1000000 ms)
+INTO joinPerfSink;
+----
+0 1000000 10000
+

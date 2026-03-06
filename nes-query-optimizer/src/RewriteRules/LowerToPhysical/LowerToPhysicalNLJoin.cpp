@@ -107,11 +107,18 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
+    // Extract join key field names for both sides - needed for BloomFilter hashing
+    auto leftJoinKeyFieldNames = getJoinFieldNames(leftInputSchema, logicalJoinFunction);
+    auto rightJoinKeyFieldNames = getJoinFieldNames(rightInputSchema, logicalJoinFunction);
+
+    // Read BloomFilter enabled flag from configuration
+    const bool bloomFilterEnabled = conf.nljBloomFilterEnabled.getValue();
+
     auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, leftJoinKeyFieldNames, bloomFilterEnabled);
 
     auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
+        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, rightJoinKeyFieldNames, bloomFilterEnabled);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(
@@ -121,12 +128,17 @@ RewriteRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalOp
         joinSchema,
         leftBufferRef,
         rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+        leftJoinKeyFieldNames,
+        rightJoinKeyFieldNames);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, 
+        outputOriginId, 
+        std::move(sliceAndWindowStore),
+        bloomFilterEnabled);
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),

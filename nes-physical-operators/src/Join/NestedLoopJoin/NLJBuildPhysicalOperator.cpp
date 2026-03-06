@@ -20,6 +20,8 @@
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -46,12 +48,22 @@ SliceEnd getNLJSliceEndProxy(const NLJSlice* nljSlice)
     return nljSlice->getSliceEnd();
 }
 
+void addJoinKeyHashToSliceProxy(NLJSlice* nljSlice, const uint64_t hash, const JoinBuildSideType joinBuildSide)
+{
+    PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
+    nljSlice->addToBloomFilter(hash, joinBuildSide);
+}
+
 NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef))
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    const std::vector<std::string>& joinKeyFieldNames,
+    const bool bloomFilterEnabled)
+    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef)),
+      joinKeyFieldNames(joinKeyFieldNames),
+      bloomFilterEnabled(bloomFilterEnabled)
 {
 }
 
@@ -87,5 +99,25 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     /// Write record to the pagedVector
     const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
+
+    /// Compute join-key hash for BloomFilter integration and store it in the slice.
+    /// Only create BloomFilter if enabled to avoid unnecessary overhead.
+    if (bloomFilterEnabled && !joinKeyFieldNames.empty())
+    {
+        std::vector<VarVal> joinKeyValues;
+        joinKeyValues.reserve(joinKeyFieldNames.size());
+
+        for (const auto& joinKeyFieldName : joinKeyFieldNames)
+        {
+            PRECONDITION(record.hasField(joinKeyFieldName), "Join key field should be present in record");
+            joinKeyValues.push_back(record.read(joinKeyFieldName));
+        }
+
+        MurMur3HashFunction murMur3HashFunction;
+        const HashFunction& hashFunction = murMur3HashFunction;
+        const auto joinKeyHash = hashFunction.calculate(joinKeyValues);
+
+        invoke(addJoinKeyHashToSliceProxy, sliceReference, joinKeyHash, nautilus::val<JoinBuildSideType>(joinBuildSide));
+    }
 }
 }

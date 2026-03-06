@@ -102,6 +102,50 @@ if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large_${joinStrategy}
             COMMAND systest -n 6 --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000 --worker.default_query_execution.join_strategy=${joinStrategy})
+
+    # BloomFilter-specific benchmarks with Nexmark JOIN queries
+    # Performance test with BloomFilter ENABLED on NLJ
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_NLJ_WithBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_nlj_with --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/Nexmark.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=true)
+
+    # Performance test with BloomFilter DISABLED on NLJ (for comparison)
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_NLJ_WithoutBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_nlj_without --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/Nexmark.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=false)
+
+    # Large-scale BloomFilter benchmarks with Nexmark multiple GB dataset
+    # WITH BloomFilter ENABLED
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_Large_WithBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_large_with --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/Nexmark_multiple_GB_of_Bids.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=true)
+
+    # WITHOUT BloomFilter (for comparison)
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_Large_WithoutBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_large_without --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/Nexmark_multiple_GB_of_Bids.test:05 -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=false)
+
+    # BloomFilter join benchmarks from benchmark_BF tests
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_LowSelectivity_WithBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_lowselect_with --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/BloomFilterNLJPerf_LowSelectivity.test -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=true)
+
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_LowSelectivity_WithoutBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_lowselect_without --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/BloomFilterNLJPerf_LowSelectivity_NoBF.test -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=false)
+
+    # True low-selectivity benchmarks with non-overlapping ID ranges
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_TrueLowSelectivity_WithBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_truelowselect_with --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/BloomFilterNLJPerf_TrueLowSelectivity.test -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=true)
+
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_TrueLowSelectivity_WithoutBF
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_truelowselect_without --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/BloomFilterNLJPerf_TrueLowSelectivity_NoBF.test -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=false)
+
+    ExternalData_Add_Test(test-data
+            NAME systest_large_benchmark_BF_NoOverlap
+            COMMAND systest -b --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_bf_nooverlap --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark_BF/BloomFilterNLJNoOverlap_Benchmark.test -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=2 --worker.number_of_buffers_in_global_buffer_manager=200000 --worker.default_query_execution.join_strategy=NESTED_LOOP_JOIN --worker.default_query_execution.nlj_bloomfilter_enabled=true)
 endif ()
 
 

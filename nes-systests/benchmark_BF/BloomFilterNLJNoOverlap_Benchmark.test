@@ -1,0 +1,38 @@
+# name: join/BloomFilterNLJNoOverlap_Benchmark.test
+# description: Benchmark NLJ with BloomFilter when there is no overlap (expect empty result)
+# groups: [Join, Benchmark, large]
+
+GlobalConfiguration worker.default_query_execution.join_strategy: [NESTED_LOOP_JOIN]
+
+# Outer stream: 1,000 tuples (ids 0..999)
+CREATE LOGICAL SOURCE outer_stream(id UINT64, payload UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR outer_stream TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 100000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 1000 1'
+       AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+# Inner stream: 1,000 tuples (ids 5000..5999) => NO OVERLAP
+CREATE LOGICAL SOURCE inner_stream(id2 UINT64, payload2 UINT64, ts UINT64);
+CREATE PHYSICAL SOURCE FOR inner_stream TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 100000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 5000 6000 1, SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 1000 1'
+       AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE SINK noOverlapSink(outer_streaminner_stream.start UINT64, outer_streaminner_stream.end UINT64, outer_streaminner_stream.match_count UINT64) TYPE File;
+
+# No matches expected; system outputs no rows for empty join
+SELECT start, end, COUNT(id) AS match_count
+FROM (SELECT * FROM outer_stream)
+INNER JOIN (SELECT * FROM inner_stream)
+ON id = id2
+WINDOW TUMBLING (ts, size 1000000 ms)
+INTO noOverlapSink;
+----

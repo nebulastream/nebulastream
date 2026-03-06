@@ -18,3 +18,14 @@ endfunction()
 
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
+
+# BloomFilter minimal categories: integration, correctness, performance
+add_nes_physical_operator_test(BloomFilterNLJTest Join/BloomFilterNLJTest.cpp)
+target_link_libraries(BloomFilterNLJTest nes-nautilus-test-util)
+add_nes_physical_operator_test(BloomFilterE2ETest Join/BloomFilterE2ETest.cpp)
+add_nes_physical_operator_test(NLJBloomFilterMetricsTest Join/NLJBloomFilterMetricsTest.cpp)
+
+# Performance
+add_nes_physical_operator_test(NLJBloomFilterPerformanceTest Join/NLJBloomFilterPerformanceTest.cpp)
+target_link_libraries(NLJBloomFilterPerformanceTest nes-nautilus-test-util)
+

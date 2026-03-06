@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstring>
 #include <functional>
 #include <memory>
 #include <utility>
@@ -38,8 +39,10 @@ namespace NES
 NLJOperatorHandler::NLJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    bool bloomFilterEnabled)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)),
+      bloomFilterEnabled(bloomFilterEnabled)
 {
 }
 
@@ -50,11 +53,12 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) 
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     return std::function(
         [numberOfWorkerThreads = numberOfWorkerThreads,
-         outputOriginId = outputOriginId](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+         outputOriginId = outputOriginId,
+         metricsPtr = const_cast<BloomFilterMetrics*>(&bloomFilterMetrics)](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE(
                 "Creating new NLJ slice for sliceStart {} and sliceEnd {} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
+            return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads, metricsPtr)};
         });
 }
 
@@ -68,8 +72,9 @@ void NLJOperatorHandler::emitSlicesToProbe(
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
     auto& nljSliceRight = dynamic_cast<NLJSlice&>(sliceRight);
 
-    nljSliceLeft.combinePagedVectors();
-    nljSliceRight.combinePagedVectors();
+    nljSliceLeft.combinePagedVectors(bloomFilterEnabled);
+    nljSliceRight.combinePagedVectors(bloomFilterEnabled);
+
     const auto totalNumberOfTuples = nljSliceLeft.getNumberOfTuplesLeft() + nljSliceRight.getNumberOfTuplesRight();
 
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();

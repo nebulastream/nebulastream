@@ -22,6 +22,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
 #include <Configurations/Validation/FloatValidation.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -83,6 +84,11 @@ public:
            StreamJoinStrategy::OPTIMIZER_CHOOSES,
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
+    BoolOption nljBloomFilterEnabled
+        = {"nlj_bloomfilter_enabled",
+           "true",
+           "Enable BloomFilter optimization for nested loop join probe.",
+           {std::make_shared<BooleanValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override
@@ -94,7 +100,8 @@ private:
             &joinStrategy,
             &numberOfRecordsPerKey,
             &maxNumberOfBuckets,
-            &operatorBufferSize};
+            &operatorBufferSize,
+            &nljBloomFilterEnabled};
     }
 };
 

@@ -13,4 +13,5 @@
 add_source_files(nes-nautilus
         HashFunction.cpp
         MurMur3HashFunction.cpp
+        BloomFilter.cpp
         )

@@ -26,7 +26,7 @@ option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
-option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
+option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 
 
@@ -62,6 +62,13 @@ set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/HostIdentification.cmake)
 include(cmake/Sanitizers.cmake)
 include(cmake/ImportDependencies.cmake)
+
+# Default to Release mode for optimal performance in benchmarks
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Choose the type of build." FORCE)
+    message(STATUS "CMAKE_BUILD_TYPE not specified, defaulting to Release for BloomFilter benchmarks")
+endif()
+
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
