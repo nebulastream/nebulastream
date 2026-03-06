@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <cstddef>
+#include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -24,6 +27,28 @@ namespace NES
 
 using RecordingId = NESStrongStringType<struct RecordingId_, "invalid">;
 
+enum class RecordingSelectionDecision
+{
+    CreateNewRecording,
+    ReuseExistingRecording,
+};
+
+struct RecordingCostBreakdown
+{
+    size_t estimatedStorageBytes = 0;
+    size_t operatorCount = 0;
+    size_t estimatedReplayBandwidthBytesPerSecond = 0;
+    uint64_t estimatedReplayLatencyMs = 0;
+    double maintenanceCost = 0.0;
+    double replayCost = 0.0;
+    double recomputeCost = 0.0;
+    bool fitsBudget = false;
+    bool satisfiesReplayLatency = true;
+
+    [[nodiscard]] double totalCost() const { return maintenanceCost + replayCost; }
+    [[nodiscard]] bool operator==(const RecordingCostBreakdown& other) const = default;
+};
+
 struct RecordingSelection
 {
     RecordingId recordingId{RecordingId::INVALID};
@@ -33,9 +58,22 @@ struct RecordingSelection
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };
 
+struct RecordingSelectionExplanation
+{
+    RecordingSelection selection;
+    RecordingSelectionDecision decision = RecordingSelectionDecision::CreateNewRecording;
+    std::string reason;
+    RecordingCostBreakdown chosenCost;
+    std::optional<RecordingSelectionDecision> alternativeDecision = std::nullopt;
+    std::optional<RecordingCostBreakdown> alternativeCost = std::nullopt;
+
+    [[nodiscard]] bool operator==(const RecordingSelectionExplanation& other) const = default;
+};
+
 struct RecordingSelectionResult
 {
     std::vector<RecordingSelection> selectedRecordings;
+    std::vector<RecordingSelectionExplanation> explanations;
 
     [[nodiscard]] bool empty() const { return selectedRecordings.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;

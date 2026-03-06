@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <string>
 #include <utility>
 
@@ -41,6 +42,20 @@ std::string replayLatencyLimitDescription(const std::optional<ReplaySpecificatio
     return replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; })
         .transform([](const auto latencyLimitMs) { return std::to_string(latencyLimitMs); })
         .value_or("none");
+}
+
+RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate)
+{
+    return RecordingCostBreakdown{
+        .estimatedStorageBytes = estimate.estimatedStorageBytes,
+        .operatorCount = estimate.operatorCount,
+        .estimatedReplayBandwidthBytesPerSecond = estimate.estimatedReplayBandwidthBytesPerSecond,
+        .estimatedReplayLatencyMs = static_cast<uint64_t>(std::max<int64_t>(estimate.estimatedReplayLatency.count(), 0)),
+        .maintenanceCost = estimate.maintenanceCost,
+        .replayCost = estimate.replayCost,
+        .recomputeCost = estimate.recomputeCost,
+        .fitsBudget = estimate.fitsBudget,
+        .satisfiesReplayLatency = estimate.satisfiesReplayLatency};
 }
 }
 
@@ -85,6 +100,7 @@ RecordingSelectionPhase::apply(
     if (const auto existingRecording = recordingCatalog.getRecording(recordingId); existingRecording.has_value())
     {
         const auto reuseCost = costModel.estimateReplayReuse(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
+        const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
         if (!reuseCost.satisfiesReplayLatency)
         {
             throw PlacementFailure(
@@ -102,7 +118,18 @@ RecordingSelectionPhase::apply(
             .selectedRecordings = {RecordingSelection{
                 .recordingId = existingRecording->id,
                 .node = existingRecording->node,
-                .filePath = existingRecording->filePath}}};
+                .filePath = existingRecording->filePath}},
+            .explanations = {RecordingSelectionExplanation{
+                .selection
+                = RecordingSelection{
+                    .recordingId = existingRecording->id,
+                    .node = existingRecording->node,
+                    .filePath = existingRecording->filePath},
+                .decision = RecordingSelectionDecision::ReuseExistingRecording,
+                .reason = "exact-match recording fingerprint found in recording catalog",
+                .chosenCost = toCostBreakdown(reuseCost),
+                .alternativeDecision = RecordingSelectionDecision::CreateNewRecording,
+                .alternativeCost = toCostBreakdown(newRecordingCost)}}};
     }
 
     const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
@@ -156,6 +183,15 @@ RecordingSelectionPhase::apply(
         .selectedRecordings = {RecordingSelection{
             .recordingId = recordingId,
             .node = placement,
-            .filePath = recordingFilePath}}};
+            .filePath = recordingFilePath}},
+        .explanations = {RecordingSelectionExplanation{
+            .selection
+            = RecordingSelection{
+                .recordingId = recordingId,
+                .node = placement,
+                .filePath = recordingFilePath},
+            .decision = RecordingSelectionDecision::CreateNewRecording,
+            .reason = "no exact-match recording fingerprint found in recording catalog",
+            .chosenCost = toCostBreakdown(newRecordingCost)}}};
 }
 }

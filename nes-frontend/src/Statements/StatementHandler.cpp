@@ -22,6 +22,7 @@
 #include <optional>
 #include <ranges>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <variant>
@@ -55,10 +56,47 @@ std::string formatOptionalMilliseconds(const std::optional<uint64_t>& durationMs
     return durationMs.transform([](const auto value) { return fmt::format("{} ms", value); }).value_or("none");
 }
 
+std::string recordingDecisionToString(RecordingSelectionDecision decision)
+{
+    switch (decision)
+    {
+        case RecordingSelectionDecision::CreateNewRecording:
+            return "create_new_recording";
+        case RecordingSelectionDecision::ReuseExistingRecording:
+            return "reuse_existing_recording";
+    }
+    std::unreachable();
+}
+
+void appendCostBreakdown(
+    std::stringstream& explainMessage,
+    std::string_view prefix,
+    const RecordingCostBreakdown& costBreakdown,
+    std::string_view decisionLabel)
+{
+    fmt::println(
+        explainMessage,
+        "{} decision={} total_cost={:.2f} maintenance_cost={:.2f} replay_cost={:.2f} recompute_cost={:.2f}"
+        " storage_bytes={} replay_bandwidth={}B/s replay_latency={} ms operators={} fits_budget={} satisfies_latency={}",
+        prefix,
+        decisionLabel,
+        costBreakdown.totalCost(),
+        costBreakdown.maintenanceCost,
+        costBreakdown.replayCost,
+        costBreakdown.recomputeCost,
+        costBreakdown.estimatedStorageBytes,
+        costBreakdown.estimatedReplayBandwidthBytesPerSecond,
+        costBreakdown.estimatedReplayLatencyMs,
+        costBreakdown.operatorCount,
+        costBreakdown.fitsBudget,
+        costBreakdown.satisfiesReplayLatency);
+}
+
 void appendReplayExplainSection(std::stringstream& explainMessage, const DistributedLogicalPlan& distributedPlan)
 {
     const auto& replaySpecification = distributedPlan.getReplaySpecification();
-    const auto& selectedRecordings = distributedPlan.getRecordingSelectionResult().selectedRecordings;
+    const auto& selectionResult = distributedPlan.getRecordingSelectionResult();
+    const auto& selectedRecordings = selectionResult.selectedRecordings;
     if (!replaySpecification.has_value() && selectedRecordings.empty())
     {
         return;
@@ -89,6 +127,35 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
             selection.recordingId.getRawValue(),
             selection.node,
             selection.filePath);
+    }
+
+    if (selectionResult.explanations.empty())
+    {
+        return;
+    }
+
+    fmt::println(explainMessage, "Replay decision reasoning:");
+    for (const auto& explanation : selectionResult.explanations)
+    {
+        fmt::println(
+            explainMessage,
+            "- recording_id={} decision={} reason={}",
+            explanation.selection.recordingId.getRawValue(),
+            recordingDecisionToString(explanation.decision),
+            explanation.reason);
+        appendCostBreakdown(
+            explainMessage,
+            "  chosen_cost:",
+            explanation.chosenCost,
+            recordingDecisionToString(explanation.decision));
+        if (explanation.alternativeDecision.has_value() && explanation.alternativeCost.has_value())
+        {
+            appendCostBreakdown(
+                explainMessage,
+                "  alternative_cost:",
+                *explanation.alternativeCost,
+                recordingDecisionToString(*explanation.alternativeDecision));
+        }
     }
 }
 }
