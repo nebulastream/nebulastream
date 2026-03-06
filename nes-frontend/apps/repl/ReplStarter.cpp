@@ -207,7 +207,8 @@ int main(int argc, char** argv)
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            sourceCatalog,
+            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindReplayableQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
 #ifdef EMBED_ENGINE
         enable_memcom();
@@ -233,10 +234,17 @@ int main(int argc, char** argv)
             .host = NES::Host(grpcAddr),
             .data = dataAddr,
             .capacity = 10000,
+            .recordingStorageBudget = NES::INFINITE_CAPACITY,
             .downstream = {},
             .config = singleNodeWorkerConfig,
         };
-        workerCatalog->addWorker(workerConfig.host, workerConfig.data, workerConfig.capacity, workerConfig.downstream);
+        workerCatalog->addWorker(
+            workerConfig.host,
+            workerConfig.data,
+            workerConfig.capacity,
+            workerConfig.downstream,
+            {},
+            workerConfig.recordingStorageBudget);
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};

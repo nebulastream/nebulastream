@@ -50,7 +50,6 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
-#include <Operators/StoreLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/MaxAggregationLogicalFunction.hpp>
@@ -61,6 +60,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
+#include <Replay/ReplaySpecification.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Strings.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -512,12 +512,9 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
             queryPlan = LogicalPlanBuilder::addSelection(*havingExpr, queryPlan);
         }
     }
-    /// inject store operator into the plan before sink if TIME_TRAVEL_STORE was provided
-    if (helpers.top().storeOptions.has_value())
+    if (helpers.size() == 1)
     {
-        auto opts = *helpers.top().storeOptions;
-        const auto cfg = StoreLogicalOperator::validateAndFormatConfig(std::move(opts));
-        queryPlan = LogicalPlanBuilder::addStore(cfg, queryPlan);
+        replaySpecification = helpers.top().replaySpecification;
     }
     helpers.pop();
     if (helpers.empty())
@@ -1013,9 +1010,7 @@ void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseCo
 
 void AntlrSQLQueryPlanCreator::enterTimeTravelClause(AntlrSQLParser::TimeTravelClauseContext* context)
 {
-    std::unordered_map<std::string, std::string> options;
-    options.emplace("file_path", "/tmp/REPLAY-NebulaStream/store_read_out.bin");
-
-    helpers.top().storeOptions = std::move(options);
+    helpers.top().replaySpecification = ReplaySpecification{};
+    AntlrSQLBaseListener::enterTimeTravelClause(context);
 }
 }

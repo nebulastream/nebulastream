@@ -25,6 +25,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplaySpecification.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
@@ -79,7 +80,7 @@ public:
     std::vector<LogicalFunction> joinKeyRelationHelper;
     std::vector<std::string> joinSourceRenames;
     JoinLogicalOperator::JoinType joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
-    std::optional<std::unordered_map<std::string, std::string>> storeOptions;
+    std::optional<ReplaySpecification> replaySpecification;
 
     /// Utility variables to keep state between enter/exit parser function calls.
     size_t opBoolean{}; ///anonymous token enum in AntlrSQLLexer.h

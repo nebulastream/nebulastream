@@ -37,6 +37,8 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <RecordingSelectionResult.hpp>
+#include <Replay/ReplaySpecification.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -162,10 +164,16 @@ struct DecomposedLogicalPlan
 class DistributedLogicalPlan
 {
 public:
-    DistributedLogicalPlan(DecomposedLogicalPlan<Host>&& decomposedPlan, LogicalPlan globalPlan)
+    DistributedLogicalPlan(
+        DecomposedLogicalPlan<Host>&& decomposedPlan,
+        LogicalPlan globalPlan,
+        std::optional<ReplaySpecification> replaySpecification = std::nullopt,
+        RecordingSelectionResult recordingSelectionResult = {})
         : queryId(globalPlan.getQueryId().getDistributedQueryId())
         , decomposedPlan(std::move(decomposedPlan))
         , globalPlan(std::move(globalPlan))
+        , replaySpecification(std::move(replaySpecification))
+        , recordingSelectionResult(std::move(recordingSelectionResult))
     {
         PRECONDITION(not this->decomposedPlan.localPlans.empty(), "Input plan should not be empty");
     }
@@ -191,8 +199,18 @@ public:
     [[nodiscard]] const LogicalPlan& getGlobalPlan() const { return globalPlan; }
 
     [[nodiscard]] const DistributedQueryId& getQueryId() const { return queryId; }
+    [[nodiscard]] const std::optional<ReplaySpecification>& getReplaySpecification() const { return replaySpecification; }
+    [[nodiscard]] const RecordingSelectionResult& getRecordingSelectionResult() const { return recordingSelectionResult; }
 
     void setQueryId(DistributedQueryId queryId) { this->queryId = std::move(queryId); }
+    void setReplaySpecification(std::optional<ReplaySpecification> replaySpecification)
+    {
+        this->replaySpecification = std::move(replaySpecification);
+    }
+    void setRecordingSelectionResult(RecordingSelectionResult recordingSelectionResult)
+    {
+        this->recordingSelectionResult = std::move(recordingSelectionResult);
+    }
 
     [[nodiscard]] auto begin() const { return decomposedPlan.localPlans.begin(); }
 
@@ -202,6 +220,8 @@ private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     DecomposedLogicalPlan<Host> decomposedPlan;
     LogicalPlan globalPlan;
+    std::optional<ReplaySpecification> replaySpecification;
+    RecordingSelectionResult recordingSelectionResult;
 };
 }
 

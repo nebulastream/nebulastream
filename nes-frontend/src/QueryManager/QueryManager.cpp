@@ -146,6 +146,23 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
+    this->state.recordingCatalog.upsertQueryMetadata(
+        id,
+        ReplayableQueryMetadata{
+            .globalPlan = plan.getGlobalPlan(),
+            .replaySpecification = plan.getReplaySpecification(),
+            .selectedRecordings
+            = plan.getRecordingSelectionResult().selectedRecordings
+                | std::views::transform([](const auto& selection) { return selection.recordingId; }) | std::ranges::to<std::vector>()});
+    for (const auto& selection : plan.getRecordingSelectionResult().selectedRecordings)
+    {
+        this->state.recordingCatalog.upsertRecording(
+            RecordingEntry{
+                .id = selection.recordingId,
+                .node = selection.node,
+                .filePath = selection.filePath,
+                .ownerQueries = {id}});
+    }
     return id;
 }
 
@@ -374,6 +391,7 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(const Distr
     {
         return std::unexpected{exceptions};
     }
+    state.recordingCatalog.removeQueryMetadata(queryId);
     auto erased = state.queries.erase(queryId);
     INVARIANT(erased == 1, "Should not unregister query that has not been registered");
     return {};

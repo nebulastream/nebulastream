@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <optional>
 #include <stack>
 #include <string>
 #include <utility>
@@ -22,6 +23,7 @@
 #include <AntlrSQLParser.h>
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplaySpecification.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
@@ -32,9 +34,11 @@ class AntlrSQLQueryPlanCreator final : public AntlrSQLBaseListener
     std::stack<AntlrSQLHelper> helpers;
     std::vector<std::variant<std::string, std::pair<std::string, ConfigMap>>> sinks;
     std::stack<LogicalPlan> queryPlans;
+    std::optional<ReplaySpecification> replaySpecification;
 
 public:
     [[nodiscard]] LogicalPlan getQueryPlan() const;
+    [[nodiscard]] const std::optional<ReplaySpecification>& getReplaySpecification() const { return replaySpecification; }
 
     /// Parsing listener methods (enter/exit pairs)
     void enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context) override;

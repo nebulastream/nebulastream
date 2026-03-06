@@ -30,6 +30,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplaySpecification.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -115,12 +117,14 @@ struct DropSinkStatement
 struct QueryStatement
 {
     LogicalPlan plan;
-    std::optional<DistributedQueryId> id;
+    std::optional<DistributedQueryId> id = std::nullopt;
+    std::optional<ReplaySpecification> replaySpecification = std::nullopt;
 };
 
 struct ExplainQueryStatement
 {
     LogicalPlan plan;
+    std::optional<ReplaySpecification> replaySpecification = std::nullopt;
 };
 
 struct ShowQueriesStatement
@@ -144,6 +148,7 @@ struct CreateWorkerStatement
     std::string host;
     std::string data;
     std::optional<size_t> capacity;
+    std::optional<size_t> recordingStorageBudget = std::nullopt;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
 };
@@ -197,7 +202,7 @@ class StatementBinder
 public:
     explicit StatementBinder(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
+        const std::function<AntlrSQLQueryParser::ReplayableQueryPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;

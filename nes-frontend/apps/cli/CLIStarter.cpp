@@ -141,6 +141,7 @@ struct WorkerConfig
     std::string host;
     std::string data;
     size_t capacity{};
+    size_t recordingStorageBudget = NES::INFINITE_CAPACITY;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
 };
@@ -235,6 +236,8 @@ struct convert<NES::CLI::WorkerConfig>
     static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
     {
         rhs.capacity = node["capacity"].IsDefined() ? node["capacity"].as<size_t>() : NES::INFINITE_CAPACITY;
+        rhs.recordingStorageBudget
+            = node["recording_storage_budget"].IsDefined() ? node["recording_storage_budget"].as<size_t>() : NES::INFINITE_CAPACITY;
         if (node["downstream"].IsDefined())
         {
             rhs.downstream = node["downstream"].as<std::vector<std::string>>();
@@ -385,10 +388,16 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     const auto& [query, sinks, logical, physical, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
-    for (const auto& [host, data, capacity, downstream, config] : workers)
+    for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : workers)
     {
         statements.emplace_back(
-            NES::CreateWorkerStatement{.host = host, .data = data, .capacity = capacity, .downstream = downstream, .config = config});
+            NES::CreateWorkerStatement{
+                .host = host,
+                .data = data,
+                .capacity = capacity,
+                .recordingStorageBudget = recordingStorageBudget,
+                .downstream = downstream,
+                .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -499,7 +508,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
+    const auto queryManager
+        = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{.queries = state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
@@ -550,7 +560,9 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
         for (const auto& query : queries)
         {
-            auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            const auto parsedQuery = NES::AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);
+            auto result = queryStatementHandler(
+                NES::QueryStatement{.plan = parsedQuery.plan, .replaySpecification = parsedQuery.replaySpecification});
             if (result)
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
@@ -569,8 +581,9 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         NES::QueryStatementHandler queryStatementHandler{queryManager, optimizer};
         for (const auto& query : queries)
         {
-            auto result
-                = queryStatementHandler(NES::ExplainQueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
+            const auto parsedQuery = NES::AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);
+            auto result = queryStatementHandler(
+                NES::ExplainQueryStatement{.plan = parsedQuery.plan, .replaySpecification = parsedQuery.replaySpecification});
             if (result)
             {
                 std::cout << result->explainString << "\n";

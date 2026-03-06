@@ -66,14 +66,14 @@ namespace NES
 class StatementBinder::Impl
 {
     std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::function<LogicalPlan(AntlrSQLParser::QueryContext*)> queryBinder;
+    std::function<AntlrSQLQueryParser::ReplayableQueryPlan(AntlrSQLParser::QueryContext*)> queryBinder;
 
 public:
     using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
 
     Impl(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
+        const std::function<AntlrSQLQueryParser::ReplayableQueryPlan(AntlrSQLParser::QueryContext*)>& queryBinder)
         : sourceCatalog(sourceCatalog), queryBinder(queryBinder)
     {
     }
@@ -156,6 +156,22 @@ public:
             return std::nullopt;
         }();
 
+        auto recordingStorageBudget = [&] -> std::optional<size_t>
+        {
+            auto it = std::ranges::find_if(
+                configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "RECORDING_STORAGE_BUDGET"; });
+            if (it != configs.end())
+            {
+                auto* literalOpt = std::get_if<Literal>(&it->second);
+                if (literalOpt && std::holds_alternative<uint64_t>(*literalOpt))
+                {
+                    return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
+                }
+                throw InvalidQuerySyntax("RECORDING_STORAGE_BUDGET must be an unsigned integer literal");
+            }
+            return std::nullopt;
+        }();
+
         auto data = [&] -> std::string
         {
             auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA"; });
@@ -194,6 +210,7 @@ public:
             .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
             .data = std::move(data),
             .capacity = capacity,
+            .recordingStorageBudget = recordingStorageBudget,
             .downstream = downStreams,
             .config = {}};
     }
@@ -450,7 +467,8 @@ public:
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {
                 INVARIANT(explainStatementAST->query() != nullptr, "Should be enforced by antlr");
-                return ExplainQueryStatement{queryBinder(explainStatementAST->query())};
+                auto parsedQuery = queryBinder(explainStatementAST->query());
+                return ExplainQueryStatement{.plan = std::move(parsedQuery.plan), .replaySpecification = parsedQuery.replaySpecification};
             }
             if (auto* const queryAst = statementAST->queryWithOptions(); queryAst != nullptr)
             {
@@ -471,7 +489,9 @@ public:
                         }
                     }
                 }
-                return QueryStatement{.plan = queryBinder(queryAst->query()), .id = queryId};
+                auto parsedQuery = queryBinder(queryAst->query());
+                return QueryStatement{
+                    .plan = std::move(parsedQuery.plan), .id = queryId, .replaySpecification = parsedQuery.replaySpecification};
             }
 
             throw InvalidStatement(statementAST->toString());
@@ -489,7 +509,7 @@ public:
 
 StatementBinder::StatementBinder(
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
+    const std::function<AntlrSQLQueryParser::ReplayableQueryPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
     : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
 }

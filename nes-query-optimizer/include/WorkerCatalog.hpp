@@ -44,7 +44,8 @@ public:
         std::string data,
         size_t capacity,
         const std::vector<Host>& downstream,
-        SingleNodeWorkerConfiguration config = {}); /// NOLINT(fuchsia-default-arguments-declarations)
+        SingleNodeWorkerConfiguration config = {},
+        size_t recordingStorageBudget = INFINITE_CAPACITY); /// NOLINT(fuchsia-default-arguments-declarations)
     std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
     [[nodiscard]] size_t size() const;

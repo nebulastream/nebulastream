@@ -361,9 +361,9 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : clusterConfig.workers)
     {
-        catalog->addWorker(host, data, capacity, downstream, config);
+        catalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
     }
 
     auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
@@ -502,9 +502,9 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : clusterConfig.workers)
     {
-        catalog->addWorker(host, data, capacity, downstream, config);
+        catalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
     }
 
     QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
@@ -518,9 +518,9 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
+    for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : clusterConfig.workers)
     {
-        catalog->addWorker(host, data, capacity, downstream, config);
+        catalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
     }
 
     /// Running the Systest against a remote worker setup cannot use configuration overrides as the worker configuration is not handled

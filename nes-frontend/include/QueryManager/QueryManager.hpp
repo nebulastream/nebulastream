@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <RecordingCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
 #include <DistributedQuery.hpp>
@@ -50,6 +51,7 @@ using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(con
 struct QueryManagerState
 {
     std::unordered_map<DistributedQueryId, DistributedQuery> queries;
+    RecordingCatalog recordingCatalog{};
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.
@@ -114,6 +116,7 @@ public:
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
+    [[nodiscard]] const RecordingCatalog& getRecordingCatalog() const { return state.recordingCatalog; }
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
 };
 

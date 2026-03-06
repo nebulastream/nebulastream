@@ -259,7 +259,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
         fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
 
-        const auto distributedPlan = optimizer->optimize(statement.plan);
+        const auto distributedPlan = optimizer->optimize(statement.plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
         fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
 
@@ -285,7 +285,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto distributedPlan = optimizer->optimize(statement.plan);
+        auto distributedPlan = optimizer->optimize(statement.plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
         if (statement.id)
         {
@@ -359,7 +359,8 @@ std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::
         statement.capacity.value_or(INFINITE_CAPACITY),
         statement.downstream | std::views::transform([](auto downstream) { return Host(std::move(downstream)); })
             | std::ranges::to<std::vector>(),
-        std::move(config));
+        std::move(config),
+        statement.recordingStorageBudget.value_or(INFINITE_CAPACITY));
     return CreateWorkerStatementResult{Host(statement.host)};
 }
 

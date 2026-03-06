@@ -299,6 +299,9 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NO
                 .host = worker["host"].as<NES::Host>(),
                 .data = worker["data"].as<std::string>(),
                 .capacity = worker["capacity"].as<size_t>(),
+                .recordingStorageBudget = worker["recording_storage_budget"].IsDefined()
+                    ? worker["recording_storage_budget"].as<size_t>()
+                    : NES::DEFAULT_RECORDING_STORAGE_BUDGET,
                 .downstream
                 = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
                 .config = config,

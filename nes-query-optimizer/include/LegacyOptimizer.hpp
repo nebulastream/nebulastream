@@ -16,9 +16,11 @@
 #include <memory>
 #include <utility>
 #include <DistributedQuery.hpp>
+#include <RecordingCatalog.hpp>
 #include <WorkerCatalog.hpp>
 
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplaySpecification.hpp>
 
 namespace NES
 {
@@ -32,6 +34,10 @@ class LegacyOptimizer
 {
 public:
     [[nodiscard]] DistributedLogicalPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] DistributedLogicalPlan optimize(
+        const LogicalPlan& plan,
+        const std::optional<ReplaySpecification>& replaySpecification,
+        const RecordingCatalog& recordingCatalog) const;
     LegacyOptimizer() = default;
 
     explicit LegacyOptimizer(

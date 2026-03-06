@@ -14,25 +14,31 @@
 
 #pragma once
 
-#include <cstddef>
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES
 {
 
-constexpr size_t DEFAULT_RECORDING_STORAGE_BUDGET = 100'000'000;
+using RecordingId = NESStrongStringType<struct RecordingId_, "invalid">;
 
-struct WorkerConfig
+struct RecordingSelection
 {
-    Host host; /// gRPC management endpoint, used as primary worker identity
-    std::string data; /// Data-plane address for network sources/sinks (set via --data)
-    size_t capacity;
-    size_t recordingStorageBudget = DEFAULT_RECORDING_STORAGE_BUDGET;
-    std::vector<Host> downstream;
-    SingleNodeWorkerConfiguration config;
+    RecordingId recordingId{RecordingId::INVALID};
+    Host node{Host::INVALID};
+    std::string filePath;
+
+    [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
+};
+
+struct RecordingSelectionResult
+{
+    std::vector<RecordingSelection> selectedRecordings;
+
+    [[nodiscard]] bool empty() const { return selectedRecordings.empty(); }
+    [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;
 };
 
 }

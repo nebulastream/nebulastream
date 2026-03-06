@@ -32,6 +32,13 @@ namespace NES
 {
 DistributedLogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 {
+    return optimize(plan, std::nullopt, RecordingCatalog{});
+}
+
+DistributedLogicalPlan LegacyOptimizer::optimize(
+    const LogicalPlan& plan, const std::optional<ReplaySpecification>& replaySpecification, const RecordingCatalog& recordingCatalog) const
+{
+    static_cast<void>(recordingCatalog);
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
     const auto inlineSinkBindingPhase = InlineSinkBindingPhase{sinkCatalog};
@@ -61,6 +68,8 @@ DistributedLogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 
 
     BottomUpOperatorPlacer(workerCatalog).apply(newPlan);
-    return QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
+    auto distributedPlan = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
+    distributedPlan.setReplaySpecification(replaySpecification);
+    return distributedPlan;
 }
 }

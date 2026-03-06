@@ -14,25 +14,19 @@
 
 #pragma once
 
-#include <cstddef>
-#include <string>
-#include <vector>
-#include <Identifiers/Identifiers.hpp>
-#include <SingleNodeWorkerConfiguration.hpp>
+#include <cstdint>
+#include <optional>
 
 namespace NES
 {
 
-constexpr size_t DEFAULT_RECORDING_STORAGE_BUDGET = 100'000'000;
-
-struct WorkerConfig
+/// Replay requirements attached to a query before the optimizer decides how to satisfy them.
+struct ReplaySpecification
 {
-    Host host; /// gRPC management endpoint, used as primary worker identity
-    std::string data; /// Data-plane address for network sources/sinks (set via --data)
-    size_t capacity;
-    size_t recordingStorageBudget = DEFAULT_RECORDING_STORAGE_BUDGET;
-    std::vector<Host> downstream;
-    SingleNodeWorkerConfiguration config;
+    std::optional<uint64_t> retentionWindowMs;
+    std::optional<uint64_t> replayLatencyLimitMs;
+
+    [[nodiscard]] bool operator==(const ReplaySpecification& other) const = default;
 };
 
 }

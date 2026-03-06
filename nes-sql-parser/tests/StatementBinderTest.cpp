@@ -76,7 +76,7 @@ public:
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
             [](auto&& queryContext)
-            { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
+            { return AntlrSQLQueryParser::bindReplayableQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
         sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
         sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
     }

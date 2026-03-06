@@ -18,6 +18,7 @@
 
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -27,11 +28,20 @@
 #include <CommonTokenStream.h>
 #include <ParserRuleContext.h>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplaySpecification.hpp>
 
 namespace NES::AntlrSQLQueryParser
 {
 
+struct ReplayableQueryPlan
+{
+    LogicalPlan plan;
+    std::optional<ReplaySpecification> replaySpecification;
+};
+
+ReplayableQueryPlan bindReplayableQueryPlan(AntlrSQLParser::QueryContext* queryAst);
 LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst);
+ReplayableQueryPlan createReplayableQueryPlanFromSQLString(std::string_view queryString);
 LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString);
 
 /// @brief Safe, heap allocated wrapper around an ANTLR chain instance. ASTs lifetime is owned by the chain that created them.

@@ -20,6 +20,7 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
 
 namespace NES
 {
@@ -43,8 +44,27 @@ public:
            "Join Strategy"
            "[NESTED_LOOP_JOIN|HASH_JOIN|OPTIMIZER_CHOOSES]."};
 
+    BoolOption enableRecordingSelection
+        = {"enable_recording_selection", "false", "Enable replay-aware recording selection in the distributed optimizer."};
+
+    FloatOption recordingMaintenanceCostWeight
+        = {"recording_maintenance_cost_weight", "1.0", "Weight used for recording maintenance cost estimation."};
+
+    FloatOption recordingReplayCostWeight = {"recording_replay_cost_weight", "1.0", "Weight used for replay scan cost estimation."};
+
+    FloatOption recordingRecomputeCostWeight
+        = {"recording_recompute_cost_weight", "1.0", "Weight used for replay recomputation cost estimation."};
+
 private:
-    std::vector<BaseOption*> getOptions() override { return {&joinStrategy}; }
+    std::vector<BaseOption*> getOptions() override
+    {
+        return {
+            &joinStrategy,
+            &enableRecordingSelection,
+            &recordingMaintenanceCostWeight,
+            &recordingReplayCostWeight,
+            &recordingRecomputeCostWeight};
+    }
 };
 
 }

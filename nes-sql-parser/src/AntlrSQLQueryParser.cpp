@@ -72,7 +72,7 @@ installErrorListenerAndHandler(std::string_view query, antlr4::Lexer& lexer, ant
 }
 }
 
-LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+ReplayableQueryPlan bindReplayableQueryPlan(AntlrSQLParser::QueryContext* queryAst)
 {
     try
     {
@@ -80,7 +80,7 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
         antlr4::tree::ParseTreeWalker::DEFAULT.walk(&queryPlanCreator, queryAst);
         auto queryPlan = queryPlanCreator.getQueryPlan();
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
-        return queryPlan;
+        return ReplayableQueryPlan{.plan = std::move(queryPlan), .replaySpecification = queryPlanCreator.getReplaySpecification()};
     }
     catch (antlr4::RuntimeException& antlrException)
     {
@@ -88,7 +88,12 @@ LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
     }
 }
 
-LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+LogicalPlan bindLogicalQueryPlan(AntlrSQLParser::QueryContext* queryAst)
+{
+    return bindReplayableQueryPlan(queryAst).plan;
+}
+
+ReplayableQueryPlan createReplayableQueryPlanFromSQLString(std::string_view queryString)
 {
     try
     {
@@ -103,12 +108,17 @@ LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
         auto queryPlan = queryPlanCreator.getQueryPlan();
         queryPlan.setOriginalSql(std::string(queryString));
         NES_DEBUG("Created the following query from antlr AST: \n{}", queryPlan);
-        return queryPlan;
+        return ReplayableQueryPlan{.plan = std::move(queryPlan), .replaySpecification = queryPlanCreator.getReplaySpecification()};
     }
     catch (antlr4::RuntimeException& antlrException)
     {
         throw InvalidQuerySyntax("Antlr exception during parsing: {} in {}", antlrException.what(), queryString);
     }
+}
+
+LogicalPlan createLogicalQueryPlanFromSQLString(std::string_view queryString)
+{
+    return createReplayableQueryPlanFromSQLString(queryString).plan;
 }
 
 std::shared_ptr<ManagedAntlrParser> ManagedAntlrParser::create(std::string_view input)

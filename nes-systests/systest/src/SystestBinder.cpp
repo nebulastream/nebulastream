@@ -363,9 +363,9 @@ struct SystestBinder::Impl
         , clusterConfiguration(std::move(clusterConfiguration))
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
-        for (const auto& [host, data, capacity, downstream, config] : this->clusterConfiguration.workers)
+        for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : this->clusterConfiguration.workers)
         {
-            workerCatalog->addWorker(host, data, capacity, downstream, config);
+            workerCatalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
         }
     }
 
@@ -926,7 +926,8 @@ struct SystestBinder::Impl
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
         const auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            sourceCatalog,
+            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindReplayableQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});
