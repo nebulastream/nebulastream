@@ -21,6 +21,7 @@ add_source_files(nes-query-optimizer
         TypeInferencePhase.cpp
         SinkBindingRule.cpp
         LegacyOptimizer.cpp
+        RecordingCostModel.cpp
         RecordingFingerprint.cpp
         RecordingSelectionPhase.cpp
         BottomUpPlacement.cpp

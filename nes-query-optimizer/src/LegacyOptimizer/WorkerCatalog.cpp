@@ -14,6 +14,7 @@
 
 #include <WorkerCatalog.hpp>
 
+#include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -106,6 +107,21 @@ bool WorkerCatalog::updateWorkerRuntimeMetrics(const Host& hostAddr, WorkerRunti
     if (!workers.contains(hostAddr))
     {
         return false;
+    }
+
+    if (const auto existingMetrics = getWorkerRuntimeMetrics(hostAddr); existingMetrics.has_value())
+    {
+        const auto elapsed = metrics.observedAt - existingMetrics->observedAt;
+        const auto elapsedMs = std::chrono::duration_cast<std::chrono::milliseconds>(elapsed).count();
+        if (elapsedMs > 0 && metrics.recordingStorageBytes >= existingMetrics->recordingStorageBytes)
+        {
+            const auto deltaBytes = metrics.recordingStorageBytes - existingMetrics->recordingStorageBytes;
+            metrics.recordingWriteBytesPerSecond = deltaBytes == 0 ? 0 : deltaBytes * 1000 / static_cast<size_t>(elapsedMs);
+        }
+        else
+        {
+            metrics.recordingWriteBytesPerSecond = 0;
+        }
     }
 
     runtimeMetrics.insert_or_assign(hostAddr, std::move(metrics));

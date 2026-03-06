@@ -15,10 +15,11 @@
 #include <LegacyOptimizer/RecordingSelectionPhase.hpp>
 
 #include <algorithm>
+#include <chrono>
 #include <string>
-#include <unordered_map>
 #include <utility>
 
+#include <LegacyOptimizer/RecordingCostModel.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
@@ -35,18 +36,11 @@ namespace NES
 
 namespace
 {
-size_t estimateRecordingStorageBytes(const Schema& schema)
+std::string replayLatencyLimitDescription(const std::optional<ReplaySpecification>& replaySpecification)
 {
-    const auto schemaBytes = std::max(schema.getSizeOfSchemaInBytes(), size_t{1});
-    return std::max(
-        schemaBytes * Replay::DEFAULT_ESTIMATED_RECORDING_ROWS,
-        Replay::MIN_RECORDING_SIZE_BYTES);
-}
-
-size_t availableRecordingStorageBytes(const WorkerConfig& worker, const std::optional<WorkerRuntimeMetrics>& runtimeMetrics)
-{
-    const auto usedRecordingStorageBytes = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0);
-    return usedRecordingStorageBytes >= worker.recordingStorageBudget ? 0 : worker.recordingStorageBudget - usedRecordingStorageBytes;
+    return replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; })
+        .transform([](const auto latencyLimitMs) { return std::to_string(latencyLimitMs); })
+        .value_or("none");
 }
 }
 
@@ -86,9 +80,24 @@ RecordingSelectionPhase::apply(
     const auto recordingFingerprint = createRecordingFingerprint(recordedChild, placement, replaySpecification);
     const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
     const auto recordingFilePath = Replay::getRecordingFilePath(recordingId.getRawValue());
+    const auto costModel = RecordingCostModel{};
 
     if (const auto existingRecording = recordingCatalog.getRecording(recordingId); existingRecording.has_value())
     {
+        const auto reuseCost = costModel.estimateReplayReuse(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
+        if (!reuseCost.satisfiesReplayLatency)
+        {
+            throw PlacementFailure(
+                "Replay reuse on {} would exceed the replay latency limit of {} ms (estimated latency {} ms, replay cost {:.2f},"
+                " recompute cost {:.2f}, write pressure {} B/s)",
+                placement,
+                replayLatencyLimitDescription(replaySpecification),
+                reuseCost.estimatedReplayLatency.count(),
+                reuseCost.replayCost,
+                reuseCost.recomputeCost,
+                workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+        }
+
         return RecordingSelectionResult{
             .selectedRecordings = {RecordingSelection{
                 .recordingId = existingRecording->id,
@@ -96,20 +105,41 @@ RecordingSelectionPhase::apply(
                 .filePath = existingRecording->filePath}}};
     }
 
-    const auto estimatedStorageBytes = estimateRecordingStorageBytes(recordedChild.getOutputSchema());
-    const auto freeRecordingStorageBytes = availableRecordingStorageBytes(*worker, workerRuntimeMetrics);
-    if (estimatedStorageBytes > freeRecordingStorageBytes)
+    const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
+    if (!newRecordingCost.fitsBudget)
     {
         throw PlacementFailure(
             "Replay recording on {} requires an estimated {} bytes, but only {} bytes remain in the recording budget of {} bytes"
-            " (worker currently reports {} bytes in replay storage across {} recording files and {} active queries)",
+            " (maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f}, worker currently reports {} bytes in replay storage"
+            " across {} recording files, {} active queries, and {} B/s replay write pressure)",
             placement,
-            estimatedStorageBytes,
-            freeRecordingStorageBytes,
+            newRecordingCost.estimatedStorageBytes,
+            worker->recordingStorageBudget
+                - std::min(
+                    worker->recordingStorageBudget,
+                    workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0)),
             worker->recordingStorageBudget,
+            newRecordingCost.maintenanceCost,
+            newRecordingCost.replayCost,
+            newRecordingCost.recomputeCost,
             workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingStorageBytes; }).value_or(0),
             workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingFileCount; }).value_or(0),
-            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0));
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0),
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+    }
+
+    if (!newRecordingCost.satisfiesReplayLatency)
+    {
+        throw PlacementFailure(
+            "Replay recording on {} would exceed the replay latency limit of {} ms (estimated latency {} ms at {} B/s,"
+            " maintenance cost {:.2f}, replay cost {:.2f}, recompute cost {:.2f})",
+            placement,
+            replayLatencyLimitDescription(replaySpecification),
+            newRecordingCost.estimatedReplayLatency.count(),
+            newRecordingCost.estimatedReplayBandwidthBytesPerSecond,
+            newRecordingCost.maintenanceCost,
+            newRecordingCost.replayCost,
+            newRecordingCost.recomputeCost);
     }
 
     auto store = StoreLogicalOperator(

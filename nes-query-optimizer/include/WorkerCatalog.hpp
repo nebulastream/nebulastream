@@ -36,6 +36,7 @@ struct WorkerRuntimeMetrics
     size_t recordingStorageBytes = 0;
     size_t recordingFileCount = 0;
     size_t activeQueryCount = 0;
+    size_t recordingWriteBytesPerSecond = 0;
 
     [[nodiscard]] bool operator==(const WorkerRuntimeMetrics& other) const = default;
 };

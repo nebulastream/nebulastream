@@ -54,4 +54,29 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsRejectsUnknownWorker)
     EXPECT_FALSE(catalog.getWorkerRuntimeMetrics(Host("missing-worker:8080")).has_value());
 }
 
+TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesRecordingWriteRateFromSuccessiveSnapshots)
+{
+    WorkerCatalog catalog;
+    ASSERT_TRUE(catalog.addWorker(Host("worker-1:8080"), "worker-1-data", INFINITE_CAPACITY, {}));
+
+    ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
+        Host("worker-1:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(1)),
+            .recordingStorageBytes = 1024,
+            .recordingFileCount = 1,
+            .activeQueryCount = 1}));
+    ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
+        Host("worker-1:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(3)),
+            .recordingStorageBytes = 5120,
+            .recordingFileCount = 2,
+            .activeQueryCount = 2}));
+
+    const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
+    ASSERT_TRUE(metrics.has_value());
+    EXPECT_EQ(metrics->recordingWriteBytesPerSecond, 2048);
+}
+
 }

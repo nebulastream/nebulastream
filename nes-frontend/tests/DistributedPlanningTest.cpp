@@ -424,6 +424,34 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRemainingRecor
         Exception);
 }
 
+TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWorkerWritePressureIsHigh)
+{
+    auto boundStatement = loadAndBindExplainStatementWithCatalogs("basic_time_travel_store.yaml");
+    ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
+        Host("localhost:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(1)),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 1,
+            .activeQueryCount = 2}));
+    ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
+        Host("localhost:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(2)),
+            .recordingStorageBytes = 64 * 1024 * 1024,
+            .recordingFileCount = 6,
+            .activeQueryCount = 8}));
+
+    EXPECT_THROW(
+        (void)boundStatement.optimizer->optimize(
+            boundStatement.statement.plan,
+            ReplaySpecification{
+                .retentionWindowMs = 60'000,
+                .replayLatencyLimitMs = 1},
+            RecordingCatalog{}),
+        Exception);
+}
+
 TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutReinsertingStore)
 {
     auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
