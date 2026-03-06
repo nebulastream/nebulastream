@@ -152,6 +152,12 @@ int main(int argc, char** argv)
             .help(
                 "Fail and return non-zero exit code on first error, ignore error and continue, or continue and return non-zero exit code");
         program.add_argument("-f").default_value("TEXT").choices("TEXT", "JSON").help("Output format");
+        /// query optimizer config
+        program.add_argument("--optimizer")
+            .default_value<std::vector<std::string>>({})
+            .append()
+            .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
+
 
 #ifdef EMBED_ENGINE
         /// single node worker config
@@ -199,6 +205,30 @@ int main(int argc, char** argv)
             return NES::ErrorBehaviour::FAIL_FAST;
         }();
 
+        NES::QueryOptimizerConfiguration queryOptimizerConfig;
+
+        if (program.is_used("--optimizer"))
+        {
+            auto optimizerConfigVec = program.get<std::vector<std::string>>("--optimizer");
+            std::unordered_map<std::string, std::string> optimizerRawConfig;
+
+            for (const auto& optimizerConfigString : optimizerConfigVec)
+            {
+                if (auto pos = optimizerConfigString.find("="); pos != std::string::npos)
+                {
+                    const std::string identifier = optimizerConfigString.substr(0, pos);
+                    const std::string value = optimizerConfigString.substr(pos + 1);
+                    optimizerRawConfig[identifier] = value;
+                } else
+                {
+                    NES_ERROR("Invalid optimizer argument. Requires argument like 'CONFIG=VALUE' but got '{}'", optimizerConfigString)
+                    return 1;
+                }
+
+                queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
+            }
+        }
+
 
         auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
         auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
@@ -238,7 +268,7 @@ int main(int argc, char** argv)
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
         auto semanticAnalyser = std::make_shared<NES::SemanticAnalyser>(sourceCatalog, sinkCatalog);
-        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{});
+        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
