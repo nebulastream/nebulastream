@@ -35,7 +35,9 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
+    /// NOLINTBEGIN(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
     VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
+    /// NOLINTEND(cppcoreguidelines-pro-type-const-cast) - VariableSizedData requires non-const pointer but data is not modified
     return result;
 }
 
