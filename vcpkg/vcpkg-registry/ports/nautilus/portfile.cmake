@@ -19,6 +19,7 @@ vcpkg_from_github(
 		0001-disable-ubsan-function-call-check.patch
 		0002-increase-typed-value-ref-u16-to-u32.patch
 		0003-add-struct-val-type-support.patch
+		0004-fix-get.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
