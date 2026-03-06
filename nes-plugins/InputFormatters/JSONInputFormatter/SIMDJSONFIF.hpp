@@ -40,6 +40,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -158,7 +159,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         nautilus::val<const SIMDJSONMetaData*> metaData) const
     {
         return nautilus::invoke(
-            nautilus::FunctionAttributes{nautilus::ModRefInfo::NoModRef, true, true},
+            nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
             +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
             {
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
