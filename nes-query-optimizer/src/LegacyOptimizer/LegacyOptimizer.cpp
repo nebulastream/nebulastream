@@ -21,6 +21,7 @@
 #include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
 #include <LegacyOptimizer/OriginIdInferencePhase.hpp>
 #include <LegacyOptimizer/QueryDecomposition.hpp>
+#include <LegacyOptimizer/RecordingSelectionPhase.hpp>
 #include <LegacyOptimizer/RedundantProjectionRemovalRule.hpp>
 #include <LegacyOptimizer/RedundantUnionRemovalRule.hpp>
 #include <LegacyOptimizer/SinkBindingRule.hpp>
@@ -68,8 +69,10 @@ DistributedLogicalPlan LegacyOptimizer::optimize(
 
 
     BottomUpOperatorPlacer(workerCatalog).apply(newPlan);
+    const auto recordingSelectionResult = RecordingSelectionPhase(workerCatalog).apply(newPlan, replaySpecification);
     auto distributedPlan = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
     distributedPlan.setReplaySpecification(replaySpecification);
+    distributedPlan.setRecordingSelectionResult(recordingSelectionResult);
     return distributedPlan;
 }
 }

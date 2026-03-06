@@ -31,8 +31,11 @@
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/StoreLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <RecordingCatalog.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -49,6 +52,7 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -78,6 +82,7 @@ struct WorkerConfig
 {
     std::string host;
     size_t capacity{};
+    std::optional<size_t> recordingStorageBudget;
     std::vector<std::string> downstream;
 };
 
@@ -134,6 +139,10 @@ struct convert<NES::Test::WorkerConfig>
     static bool decode(const Node& node, NES::Test::WorkerConfig& rhs)
     {
         rhs.capacity = node["capacity"].as<size_t>();
+        if (node["recording_storage_budget"].IsDefined())
+        {
+            rhs.recordingStorageBudget = node["recording_storage_budget"].as<size_t>();
+        }
         if (node["downstream"].IsDefined())
         {
             rhs.downstream = node["downstream"].as<std::vector<std::string>>();
@@ -166,10 +175,16 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     const auto& [query, sinks, logical, physical, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
-    for (const auto& [host, capacity, downstream] : workers)
+    for (const auto& worker : workers)
     {
         statements.emplace_back(
-            NES::CreateWorkerStatement{.host = host, .data = {}, .capacity = capacity, .downstream = downstream, .config = {}});
+            NES::CreateWorkerStatement{
+                .host = worker.host,
+                .data = {},
+                .capacity = worker.capacity,
+                .recordingStorageBudget = worker.recordingStorageBudget,
+                .downstream = worker.downstream,
+                .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -201,7 +216,9 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
         statements.emplace_back(
             NES::CreateSinkStatement{.name = NES::toUpperCase(name), .sinkType = "Void", .schema = schema, .sinkConfig = {{"host", host}}});
     }
-    statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
+    const auto replayableQuery = NES::AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);
+    statements.emplace_back(
+        NES::ExplainQueryStatement{.plan = replayableQuery.plan, .replaySpecification = replayableQuery.replaySpecification});
     return statements;
 }
 
@@ -212,7 +229,15 @@ struct Catalogs
     NES::SharedPtr<NES::WorkerCatalog> workerCatalog;
 };
 
+std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::ExplainQueryStatement> loadAndBindExplainStatement(std::string_view testFileName);
+
 std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::LogicalPlan> loadAndBind(std::string_view testFileName)
+{
+    auto [optimizer, statement] = loadAndBindExplainStatement(testFileName);
+    return {std::move(optimizer), statement.plan};
+}
+
+std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::ExplainQueryStatement> loadAndBindExplainStatement(std::string_view testFileName)
 {
     auto sources = std::make_shared<NES::SourceCatalog>();
     auto sinks = std::make_shared<NES::SinkCatalog>();
@@ -227,7 +252,7 @@ std::pair<std::unique_ptr<NES::LegacyOptimizer>, NES::LogicalPlan> loadAndBind(s
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
     renderTopology(workers->getTopology(), std::cout);
-    return {std::make_unique<NES::LegacyOptimizer>(sources, sinks, workers), std::get<NES::ExplainQueryStatement>(statements.back()).plan};
+    return {std::make_unique<NES::LegacyOptimizer>(sources, sinks, workers), std::get<NES::ExplainQueryStatement>(statements.back())};
 }
 
 }
@@ -336,6 +361,31 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
     EXPECT_EQ(sinkNodePlan.getRootOperators().size(), 1);
     EXPECT_EQ(sinkNodePlan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkName(), "SINK");
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkNodePlan).size(), 1);
+}
+
+TEST_F(DistributedPlanningTest, TimeTravelStoreInsertsStoreBeforeSink)
+{
+    auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    auto plan = opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{});
+
+    ASSERT_FALSE(plan.getRecordingSelectionResult().empty());
+    ASSERT_EQ(plan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+    EXPECT_EQ(plan.getRecordingSelectionResult().selectedRecordings.front().filePath, Replay::DEFAULT_RECORDING_FILE_PATH);
+    EXPECT_EQ(plan.getRecordingSelectionResult().selectedRecordings.front().node, Host("localhost:8080"));
+
+    const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(localPlan).size(), 1);
+    ASSERT_EQ(localPlan.getRootOperators().size(), 1);
+    const auto root = localPlan.getRootOperators().front();
+    ASSERT_TRUE(root.tryGetAs<SinkLogicalOperator>().has_value());
+    ASSERT_EQ(root.getChildren().size(), 1);
+    EXPECT_TRUE(root.getChildren().front().tryGetAs<StoreLogicalOperator>().has_value());
+}
+
+TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRecordingBudget)
+{
+    auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store_budget_too_small.yaml");
+    EXPECT_THROW((void)opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{}), Exception);
 }
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)

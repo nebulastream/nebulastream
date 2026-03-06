@@ -48,6 +48,7 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -778,7 +779,7 @@ struct SystestBinder::Impl
         {
             if (sourceOp.value()->getLogicalSourceName() == "TIME_TRAVEL_READ")
             {
-                const std::string filePath = "/tmp/REPLAY-NebulaStream/store_read_out.bin";
+                const std::string filePath = std::string(Replay::DEFAULT_RECORDING_FILE_PATH);
 
                 Schema schema;
                 {
