@@ -109,7 +109,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
         return false;
     }
 
-    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
+    fcntl(sockfd, F_SETFL, flags | O_NONBLOCK); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
 
     /// set timeout for both blocking receive and send calls
     /// if timeout is set to zero, then the operation will never timeout
@@ -197,7 +197,7 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     }
 
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
-    fcntl(sockfd, F_SETFL, flags);
+    fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
 
     NES_TRACE("TCPSource::open: Connected to server.");
 }
