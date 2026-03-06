@@ -125,10 +125,10 @@ public:
     };
 
     static constexpr bool mlirEnableMultithreading = false;
-    // static constexpr uint64_t minNumberOfOperations = 1'000;
-    // static constexpr uint64_t maxNumberOfOperations = 10'000;
-    static constexpr uint64_t minNumberOfOperations = 10;
-    static constexpr uint64_t maxNumberOfOperations = 11;
+    static constexpr uint64_t minNumberOfOperations = 10'000;
+    static constexpr uint64_t maxNumberOfOperations = 100'000;
+    // static constexpr uint64_t minNumberOfOperations = 10;
+    // static constexpr uint64_t maxNumberOfOperations = 11;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
@@ -165,44 +165,35 @@ public:
     {
         const SliceAssigner sliceAssigner{sliceSize, sliceSize};
 
-        // /// Use a random seed and log it so that test failures can be reproduced
-        // std::random_device rd;
-        // const auto seed = 3600187933; //rd();
-        // NES_INFO("SliceCacheTest random seed: {}", seed);
-        // std::mt19937 gen{seed};
-        //
-        // /// Generate timestamps in a range that produces more distinct slices than the cache
-        // /// can hold, ensuring both cache hits and evictions will occur
-        // const uint64_t maxTimestamp = sliceSize * numberOfEntries * 4;
-        // std::uniform_int_distribution<uint64_t> dist(0, maxTimestamp > 0 ? maxTimestamp - 1 : 0);
-        //
-        // /// Create a random number of operations to thoroughly exercise the cache
-        // std::uniform_int_distribution opCountDist(minNumberOfOperations, maxNumberOfOperations);
-        // const uint64_t numOperations = opCountDist(gen);
-        // for (uint64_t i = 0; i < numOperations; ++i)
-        // {
-        //     const auto timestamp = dist(gen);
-        //     const auto sliceStart = sliceAssigner.getSliceStartTs(Timestamp{timestamp});
-        //     const auto sliceEnd = sliceAssigner.getSliceEndTs(Timestamp{timestamp});
-        //
-        //     /// Each operation gets a unique data pointer backed by expectedResultHelper
-        //     auto expectedResultHelper = std::make_unique<uint64_t>(i);
-        //     auto* expectedResult = reinterpret_cast<int8_t*>(expectedResultHelper.get());
-        //     operations.push_back({Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult, std::move(expectedResultHelper)});
-        // }
-        //
-        // /// Shuffle operations to simulate random access patterns
-        // std::ranges::shuffle(operations, gen);
+        /// Use a random seed and log it so that test failures can be reproduced
+        std::random_device rd;
+        // const auto seed = 3600187933;
+        const auto seed = rd();
+        NES_INFO("SliceCacheTest random seed: {}", seed);
+        std::mt19937 gen{seed};
 
-        auto expectedResultHelper1 = std::make_unique<uint64_t>(0);
-        auto expectedResultHelper2 = std::make_unique<uint64_t>(1);
-        const auto timestamp = 3;
-        const auto sliceStart = sliceAssigner.getSliceStartTs(Timestamp{timestamp});
-        const auto sliceEnd = sliceAssigner.getSliceEndTs(Timestamp{timestamp});
-        auto* expectedResult1 = reinterpret_cast<int8_t*>(expectedResultHelper1.get());
-        auto* expectedResult2 = reinterpret_cast<int8_t*>(expectedResultHelper2.get());
-        operations.emplace_back(SliceCacheTestOperation{Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult1, std::move(expectedResultHelper1)});
-        operations.emplace_back(SliceCacheTestOperation{Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult2, std::move(expectedResultHelper2)});
+        /// Generate timestamps in a range that produces more distinct slices than the cache
+        /// can hold, ensuring both cache hits and evictions will occur
+        const uint64_t maxTimestamp = sliceSize * numberOfEntries * 4;
+        std::uniform_int_distribution<uint64_t> dist(0, maxTimestamp > 0 ? maxTimestamp - 1 : 0);
+
+        /// Create a random number of operations to thoroughly exercise the cache
+        std::uniform_int_distribution opCountDist(minNumberOfOperations, maxNumberOfOperations);
+        const uint64_t numOperations = opCountDist(gen);
+        for (uint64_t i = 0; i < numOperations; ++i)
+        {
+            const auto timestamp = dist(gen);
+            const auto sliceStart = sliceAssigner.getSliceStartTs(Timestamp{timestamp});
+            const auto sliceEnd = sliceAssigner.getSliceEndTs(Timestamp{timestamp});
+
+            /// Each operation gets a unique data pointer backed by expectedResultHelper
+            auto expectedResultHelper = std::make_unique<uint64_t>(i);
+            auto* expectedResult = reinterpret_cast<int8_t*>(expectedResultHelper.get());
+            operations.push_back({Timestamp{timestamp}, sliceStart, sliceEnd, expectedResult, std::move(expectedResultHelper)});
+        }
+
+        /// Shuffle operations to simulate random access patterns
+        std::ranges::shuffle(operations, gen);
     }
 
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
@@ -306,8 +297,6 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
         /// Perform the same lookup in the reference cache
         const auto [refHit, refPtr] = referenceCache.lookup(Timestamp{op.timestamp}, op.sliceStart, op.sliceEnd, op.expectedResult);
 
-        NES_INFO("Accessing timestamp {} resulted in {} and {}", op.timestamp, refHit ? "Hit" : "Miss", fmt::ptr(refPtr));
-
         /// Verify hit/miss agreement between the Nautilus implementation and the reference cache
         if (refHit)
         {
@@ -331,8 +320,8 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Combine(
         // ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
         ::testing::Values(ExecutionMode::INTERPRETER), /// Nautilus execution backend
-        ::testing::Values(1, 5, 10, 15), /// Number of cache entries
-        ::testing::Values(1, 10, 100, 1000) /// Size of slice
+        ::testing::Values(1, 5, 10, 15, 50, 100), /// Number of cache entries
+        ::testing::Values(1, 10, 100, 1000, 100'000) /// Size of slice
         ),
     [](const testing::TestParamInfo<SliceCacheTest::ParamType>& info)
     {

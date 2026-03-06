@@ -1,0 +1,44 @@
+Index: nautilus/include/nautilus/val_ptr.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+--- a/nautilus/include/nautilus/val_ptr.hpp	(revision 43b824d692399d4e44e3676cb2e299437111c8c2)
++++ b/nautilus/include/nautilus/val_ptr.hpp	(date 1772729308052)
+@@ -77,13 +77,13 @@
+ #define BINARY_AND_ASSIGN_OPERATOR(OP)                                                                                 \
+ 	template <class T>                                                                                                 \
+ 	    requires std::is_convertible_v<T, baseType>                                                                    \
+-	void operator OP## = (T other) noexcept {                                                                          \
++	void operator OP##=(T other) noexcept {                                                                            \
+ 		val<baseType> value {other};                                                                                   \
+ 		*this OP## = value;                                                                                            \
+ 	}                                                                                                                  \
+ 	template <class T>                                                                                                 \
+ 	    requires std::is_convertible_v<T, baseType>                                                                    \
+-	void operator OP## = (val<T> other) noexcept {                                                                     \
++	void operator OP##=(val<T> other) noexcept {                                                                       \
+ 		val<baseType> value {other};                                                                                   \
+ 		*this = *this OP value;                                                                                        \
+ 	}                                                                                                                  \
+@@ -209,8 +209,8 @@
+ template <typename T, typename F>
+ std::size_t field_offset(F T::* pm) {
+ 	alignas(T) std::byte storage[sizeof(T)] {};
+-	T* obj = std::launder(reinterpret_cast<T*>(storage));                       // ← reinterpret_cast: not constexpr
+-	return reinterpret_cast<char*>(&(obj->*pm)) - reinterpret_cast<char*>(obj); // ← same
++	T* obj = reinterpret_cast<T*>(storage);
++	return reinterpret_cast<char*>(&(obj->*pm)) - reinterpret_cast<char*>(obj);
+ }
+
+ template <is_ptr ValuePtrType>
+@@ -224,7 +224,7 @@
+ 	    requires std::is_class_v<T>
+ 	auto get(F T::* pm) {
+ 		auto offset = field_offset(pm);
+-		auto valuePtr = (*this) + offset;
++		auto valuePtr = val<F*>(reinterpret_cast<F*>(reinterpret_cast<uint8_t*>(this->value) + offset));
+ #ifdef ENABLE_TRACING
+ 		return val<F&>(valuePtr, this->state);
+ #else

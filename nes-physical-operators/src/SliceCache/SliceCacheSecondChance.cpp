@@ -52,10 +52,10 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     /// First, we check if the timestamp is already in the cache.
     if (const auto [pos, foundInCache] = searchInCache(timestamp); foundInCache)
     {
-        nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + pos * sizeOfEntry;
-        sliceCacheEntryToReplace.set(&SliceCacheEntrySecondChance::secondChanceBit, true);
         // not the nicest looking code
-        return nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex * sizeOfEntry}.get(&SliceCacheEntry::dataStructure);
+        nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + pos;
+        sliceCacheEntryToReplace.set(&SliceCacheEntrySecondChance::secondChanceBit, true);
+        return sliceCacheEntryToReplace.get(&SliceCacheEntry::dataStructure);
     }
 
     /// If this is not the case, we iterate through the cache until we have find a slice that has the second chance bit set to false.
@@ -63,7 +63,7 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     /// We must start at the current replacement index, as we have to replace the oldest entry.
     for (nautilus::val<uint64_t> i = 0; i < 2 * numberOfEntries; ++i)
     {
-        nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+        nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex;
         const nautilus::val<bool> secondChanceBit = sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit);
         if (secondChanceBit == nautilus::val<bool>{false})
         {
@@ -74,10 +74,10 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     }
 
     /// Replacing the slice and returning the data structure.
-    nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex * sizeOfEntry;
+    nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex;
     sliceCacheEntryToReplace.set(&SliceCacheEntrySecondChance::secondChanceBit, true);
-    replaceEntry(nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex * sizeOfEntry});
-    return nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex * sizeOfEntry}.get(&SliceCacheEntry::dataStructure);
+    replaceEntry(nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex});
+    return nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex}.get(&SliceCacheEntry::dataStructure);
     // talk with PMG, as it is not possible to use sliceCacheEntryToReplace.set(&SliceCacheEntrySecondChance::sliceStart, newCacheEntry.get(&SliceCacheEntrySecondChance::sliceStart))
 }
 
