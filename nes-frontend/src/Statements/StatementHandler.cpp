@@ -496,6 +496,16 @@ std::expected<DropWorkerStatementResult, Exception> TopologyStatementHandler::op
     return std::unexpected(UnknownWorker(": '{}'", statement.host));
 }
 
+std::expected<SetRecordingStorageStatementResult, Exception> TopologyStatementHandler::operator()(const SetRecordingStorageStatement& statement)
+{
+    const auto host = Host(statement.host);
+    if (!workerCatalog->setRecordingStorageBudget(host, statement.recordingStorageBudget))
+    {
+        return std::unexpected(UnknownWorker(": '{}'", statement.host));
+    }
+    return SetRecordingStorageStatementResult{.host = host, .recordingStorageBudget = statement.recordingStorageBudget};
+}
+
 std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::operator()(const ShowQueriesStatement& statement)
 {
     if (not statement.id.has_value())

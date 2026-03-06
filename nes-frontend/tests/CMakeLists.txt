@@ -22,3 +22,4 @@ endfunction()
 
 add_nes_test_nebuli(distributed-planning-test DistributedPlanningTest.cpp)
 add_nes_test_nebuli(query-manager-metrics-test QueryManagerMetricsTest.cpp)
+add_nes_test_nebuli(topology-statement-handler-test TopologyStatementHandlerTest.cpp)

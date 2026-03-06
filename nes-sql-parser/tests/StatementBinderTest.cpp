@@ -583,6 +583,16 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).data, "localhost:9090");
 }
 
+TEST_F(StatementBinderTest, SetRecordingStorageStatementTest)
+{
+    const std::string statementString = "SET RECORDING STORAGE AT 'localhost:8080' TO 4096";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<SetRecordingStorageStatement>(*statement));
+    ASSERT_EQ(std::get<SetRecordingStorageStatement>(*statement).host, "localhost:8080");
+    ASSERT_EQ(std::get<SetRecordingStorageStatement>(*statement).recordingStorageBudget, 4096U);
+}
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 }
 }

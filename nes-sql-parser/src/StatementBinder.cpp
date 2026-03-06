@@ -240,6 +240,14 @@ public:
         return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
     }
 
+    SetRecordingStorageStatement bindSetRecordingStorageStatement(
+        AntlrSQLParser::SetRecordingStorageDefinitionContext* setRecordingStorageAST) const
+    {
+        return SetRecordingStorageStatement{
+            .host = URI(bindStringLiteral(setRecordingStorageAST->hostaddr)).toString(),
+            .recordingStorageBudget = static_cast<size_t>(std::stoull(setRecordingStorageAST->storage->getText()))};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -448,6 +456,15 @@ public:
         throw InvalidStatement("Unrecognized DROP statement");
     }
 
+    Statement bindSetStatement(AntlrSQLParser::SetStatementContext* setAst) const
+    {
+        if (auto* const setRecordingStorageAst = setAst->setDefinition()->setRecordingStorageDefinition(); setRecordingStorageAst != nullptr)
+        {
+            return bindSetRecordingStorageStatement(setRecordingStorageAst);
+        }
+        throw InvalidStatement("Unrecognized SET statement");
+    }
+
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
         try
@@ -463,6 +480,10 @@ public:
             if (auto* dropAst = statementAST->dropStatement(); dropAst != nullptr)
             {
                 return bindDropStatement(dropAst);
+            }
+            if (auto* const setAst = statementAST->setStatement(); setAst != nullptr)
+            {
+                return bindSetStatement(setAst);
             }
             if (auto* const explainStatementAST = statementAST->explainStatement())
             {

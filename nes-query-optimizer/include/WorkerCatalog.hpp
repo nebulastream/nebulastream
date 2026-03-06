@@ -65,6 +65,7 @@ public:
     [[nodiscard]] size_t size() const;
     [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] NetworkTopology getTopology() const;
+    bool setRecordingStorageBudget(const Host& hostAddr, size_t recordingStorageBudget);
     bool updateWorkerRuntimeMetrics(const Host& hostAddr, WorkerRuntimeMetrics metrics);
 
     /// Every change to the workerCatalog increments the version. This allows other components to check if the catalog has changed.

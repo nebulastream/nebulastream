@@ -368,6 +368,19 @@ struct StatementOutputAssembler<DropWorkerStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<SetRecordingStorageStatementResult>
+{
+    using OutputRowType = std::tuple<Host, size_t>;
+
+    auto convert(const SetRecordingStorageStatementResult& result)
+    {
+        return std::make_pair(
+            std::to_array<std::string_view>({"worker", "recording_storage_budget"}),
+            std::vector{std::make_tuple(result.host, result.recordingStorageBudget)});
+    }
+};
+
+template <>
 struct StatementOutputAssembler<WorkerStatusStatementResult>
 {
     using OutputRowType = WorkerStatusOutputRowType;

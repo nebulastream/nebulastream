@@ -58,11 +58,14 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement;
+statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement | setStatement;
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
+setStatement: SET setDefinition;
+setDefinition: setRecordingStorageDefinition;
+setRecordingStorageDefinition: RECORDING STORAGE AT hostaddr=STRING TO storage=INTEGER_VALUE;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -415,6 +418,8 @@ AND: 'AND' | 'and';
 ANY: 'ANY';
 AS: 'AS' | 'as';
 ASC: 'ASC' | 'asc';
+RECORDING: 'RECORDING';
+STORAGE: 'STORAGE';
 AT: 'AT';
 BETWEEN: 'BETWEEN' | 'between';
 BY: 'BY' | 'by';

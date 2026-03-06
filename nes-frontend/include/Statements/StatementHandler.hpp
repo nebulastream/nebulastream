@@ -117,6 +117,12 @@ struct DropWorkerStatementResult
     Host host;
 };
 
+struct SetRecordingStorageStatementResult
+{
+    Host host;
+    size_t recordingStorageBudget{};
+};
+
 struct ExplainQueryStatementResult
 {
     std::string explainString;
@@ -128,6 +134,7 @@ using StatementResult = std::variant<
     CreateSinkStatementResult,
     DropWorkerStatementResult,
     CreateWorkerStatementResult,
+    SetRecordingStorageStatementResult,
     WorkerStatusStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
@@ -229,6 +236,7 @@ public:
     std::expected<WorkerStatusStatementResult, Exception> operator()(const WorkerStatusStatement& statement);
     std::expected<CreateWorkerStatementResult, Exception> operator()(const CreateWorkerStatement& statement);
     std::expected<DropWorkerStatementResult, Exception> operator()(const DropWorkerStatement& statement);
+    std::expected<SetRecordingStorageStatementResult, Exception> operator()(const SetRecordingStorageStatement& statement);
 };
 
 template <typename HandlerT>

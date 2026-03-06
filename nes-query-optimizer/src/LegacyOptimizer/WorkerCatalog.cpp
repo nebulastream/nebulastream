@@ -97,6 +97,17 @@ NetworkTopology WorkerCatalog::getTopology() const
     return topology; /// Copy constructor creates a snapshot
 }
 
+bool WorkerCatalog::setRecordingStorageBudget(const Host& hostAddr, const size_t recordingStorageBudget)
+{
+    if (!workers.contains(hostAddr))
+    {
+        return false;
+    }
+
+    workers.at(hostAddr).recordingStorageBudget = recordingStorageBudget;
+    return true;
+}
+
 std::vector<WorkerConfig> WorkerCatalog::getAllWorkers() const
 {
     return workers | std::views::values | std::ranges::to<std::vector<WorkerConfig>>();

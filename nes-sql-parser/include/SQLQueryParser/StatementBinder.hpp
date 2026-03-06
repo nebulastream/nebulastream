@@ -158,10 +158,17 @@ struct DropWorkerStatement
     std::string host;
 };
 
+struct SetRecordingStorageStatement
+{
+    std::string host;
+    size_t recordingStorageBudget{};
+};
+
 using Statement = std::variant<
     WorkerStatusStatement,
     CreateWorkerStatement,
     DropWorkerStatement,
+    SetRecordingStorageStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -258,3 +265,4 @@ FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
 FMT_OSTREAM(NES::CreateWorkerStatement);
 FMT_OSTREAM(NES::DropWorkerStatement);
+FMT_OSTREAM(NES::SetRecordingStorageStatement);
