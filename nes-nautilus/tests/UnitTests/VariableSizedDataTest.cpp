@@ -90,12 +90,12 @@ TEST_F(VariableSizedDataTest, CopyConstruction)
     const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
 
     /// Test, if we can copy the variable sized data object by copy operator=
-    const VarVal copiedVarSizedData = varSizedData;
+    const VarVal copiedVarSizedData = varSizedData; /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
     EXPECT_EQ(copiedVarSizedData.cast<VariableSizedData>().getSize(), sizeInBytes);
     EXPECT_TRUE(nautilus::memcmp(copiedVarSizedData.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
 
     /// Test, if we can copy the variable sized data object by copy constructor
-    const VarVal copiedVarSizedData2(varSizedData);
+    const VarVal copiedVarSizedData2(varSizedData); /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
     EXPECT_EQ(copiedVarSizedData2.cast<VariableSizedData>().getSize(), sizeInBytes);
     EXPECT_TRUE(nautilus::memcmp(copiedVarSizedData2.cast<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
 }
@@ -165,6 +165,7 @@ TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
         const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
         const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
 
+        /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional copy for testing
         const VarVal copiedVarSizedData = varSizedData;
         EXPECT_TRUE(copiedVarSizedData.cast<VariableSizedData>() == varSizedData.cast<VariableSizedData>());
         EXPECT_FALSE(copiedVarSizedData.cast<VariableSizedData>() != varSizedData.cast<VariableSizedData>());
