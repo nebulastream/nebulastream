@@ -20,7 +20,6 @@
 #include <optional>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Phases/QueryOptimizer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>

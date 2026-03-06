@@ -23,7 +23,6 @@
 #include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
-
 namespace NES
 {
 LogicalPlan SemanticAnalyser::analyse(const LogicalPlan& plan) const

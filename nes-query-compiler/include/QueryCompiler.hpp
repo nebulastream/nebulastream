@@ -16,9 +16,9 @@
 #include <memory>
 #include <utility>
 
+#include <Plans/LogicalPlan.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
-#include <Plans/LogicalPlan.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES::QueryCompilation

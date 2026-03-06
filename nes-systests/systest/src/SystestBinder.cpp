@@ -46,6 +46,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyser.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -61,9 +62,9 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
-#include "Phases/QueryOptimizer.hpp"
 
 namespace NES::Systest
 {
@@ -331,8 +332,15 @@ private:
 
 struct SystestBinder::Impl
 {
-    explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir, QueryOptimizerConfiguration queryOptimizerConfiguration)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir)), queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
+    explicit Impl(
+        std::filesystem::path workingDir,
+        std::filesystem::path testDataDir,
+        std::filesystem::path configDir,
+        QueryOptimizerConfiguration queryOptimizerConfiguration)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
     {
     }
 
@@ -918,7 +926,10 @@ private:
 };
 
 SystestBinder::SystestBinder(
-    const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir, const QueryOptimizerConfiguration& queryOptimizerConfiguration)
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir,
+    const QueryOptimizerConfiguration& queryOptimizerConfiguration)
     : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration))
 {
 }

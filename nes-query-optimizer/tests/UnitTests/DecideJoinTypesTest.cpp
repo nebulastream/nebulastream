@@ -20,6 +20,7 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 

@@ -23,6 +23,7 @@
 #include <utility>
 #include <vector>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyser.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -186,7 +187,10 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const SemanticAnalyser> semanticAnalyser, SharedPtr<const QueryOptimizer> queryOptimizer)
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager,
+    SharedPtr<const SemanticAnalyser> semanticAnalyser,
+    SharedPtr<const QueryOptimizer> queryOptimizer)
     : queryManager(std::move(queryManager)), semanticAnalyser(std::move(semanticAnalyser)), queryOptimizer(std::move(queryOptimizer))
 {
 }

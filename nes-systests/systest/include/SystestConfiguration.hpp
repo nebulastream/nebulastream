@@ -22,6 +22,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/SequenceOption.hpp>
 #include <Configurations/Validation/EndpointValidation.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 
 namespace NES

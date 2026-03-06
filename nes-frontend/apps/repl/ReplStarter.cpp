@@ -26,11 +26,13 @@
 #include <string>
 #include <thread>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyser.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
@@ -54,6 +56,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
 #include <utils.hpp>
@@ -219,7 +222,8 @@ int main(int argc, char** argv)
                     const std::string identifier = optimizerConfigString.substr(0, pos);
                     const std::string value = optimizerConfigString.substr(pos + 1);
                     optimizerRawConfig[identifier] = value;
-                } else
+                }
+                else
                 {
                     NES_ERROR("Invalid optimizer argument. Requires argument like 'CONFIG=VALUE' but got '{}'", optimizerConfigString)
                     return 1;

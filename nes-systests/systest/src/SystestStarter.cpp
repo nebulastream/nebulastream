@@ -21,6 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
@@ -30,6 +31,7 @@
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
@@ -325,8 +327,9 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
             }
             else
             {
-                std::cerr << "Invalid --optimizer argument. Requires argument like 'CONFIG=VALUE' but got '" << optimizerConfigString << "'\n";
-                std::exit(1);  ///NOLINT(concurrency-mt-unsafe)
+                std::cerr << "Invalid --optimizer argument. Requires argument like 'CONFIG=VALUE' but got '" << optimizerConfigString
+                          << "'\n";
+                std::exit(1); ///NOLINT(concurrency-mt-unsafe)
             }
         }
 

@@ -38,7 +38,7 @@ LogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptimiz
     DecideJoinTypesRule joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayoutRule memoryLayoutDecider;
     constexpr RedundantUnionRemovalRule redundantUnionRemovalRule{};
-    constexpr RedundantProjectionRemovalRule  redundantProjectionRemovalRule{};
+    constexpr RedundantProjectionRemovalRule redundantProjectionRemovalRule{};
     constexpr TypeInferenceRule typeInferenceRule{};
 
     auto optimizedPlan = LogicalPlan{plan};
