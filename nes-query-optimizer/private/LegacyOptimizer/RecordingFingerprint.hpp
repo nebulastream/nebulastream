@@ -24,6 +24,8 @@
 namespace NES
 {
 
+[[nodiscard]] std::string createStructuralRecordingFingerprint(const LogicalOperator& recordedSubplanRoot, const Host& placement);
+
 [[nodiscard]] std::string createRecordingFingerprint(
     const LogicalOperator& recordedSubplanRoot, const Host& placement, const std::optional<ReplaySpecification>& replaySpecification);
 

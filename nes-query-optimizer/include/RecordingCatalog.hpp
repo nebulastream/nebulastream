@@ -40,6 +40,8 @@ struct RecordingEntry
     RecordingId id{RecordingId::INVALID};
     Host node{Host::INVALID};
     std::string filePath;
+    std::string structuralFingerprint;
+    std::optional<uint64_t> retentionWindowMs;
     std::vector<DistributedQueryId> ownerQueries;
 };
 
@@ -67,6 +69,25 @@ public:
             return std::nullopt;
         }
         return getRecording(*timeTravelReadRecordingId);
+    }
+    [[nodiscard]] std::vector<RecordingEntry> getRecordingsByStructuralFingerprint(std::string_view fingerprint) const
+    {
+        auto matches = recordings | std::views::values
+            | std::views::filter([&](const RecordingEntry& recording) { return recording.structuralFingerprint == fingerprint; })
+            | std::ranges::to<std::vector>();
+        std::ranges::sort(
+            matches,
+            [](const RecordingEntry& left, const RecordingEntry& right)
+            {
+                const auto leftRetention = left.retentionWindowMs.value_or(0);
+                const auto rightRetention = right.retentionWindowMs.value_or(0);
+                if (leftRetention != rightRetention)
+                {
+                    return leftRetention < rightRetention;
+                }
+                return left.id.getRawValue() < right.id.getRawValue();
+            });
+        return matches;
     }
 
     void upsertQueryMetadata(DistributedQueryId queryId, ReplayableQueryMetadata metadata)
@@ -107,6 +128,14 @@ public:
 
         it->second.node = std::move(recording.node);
         it->second.filePath = std::move(recording.filePath);
+        if (!recording.structuralFingerprint.empty())
+        {
+            it->second.structuralFingerprint = std::move(recording.structuralFingerprint);
+        }
+        if (recording.retentionWindowMs.has_value())
+        {
+            it->second.retentionWindowMs = std::max(it->second.retentionWindowMs.value_or(0), *recording.retentionWindowMs);
+        }
         for (const auto& owner : recording.ownerQueries)
         {
             if (!std::ranges::contains(it->second.ownerQueries, owner))

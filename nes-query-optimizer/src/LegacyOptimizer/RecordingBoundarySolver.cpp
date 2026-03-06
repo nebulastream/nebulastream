@@ -70,6 +70,20 @@ struct WeightedCandidateChoice
     double adjustedCost = 0.0;
 };
 
+int decisionPreference(const RecordingSelectionDecision decision)
+{
+    switch (decision)
+    {
+        case RecordingSelectionDecision::ReuseExistingRecording:
+            return 0;
+        case RecordingSelectionDecision::UpgradeExistingRecording:
+            return 1;
+        case RecordingSelectionDecision::CreateNewRecording:
+            return 2;
+    }
+    std::unreachable();
+}
+
 [[nodiscard]] LemonCapacity checkedAddCapacity(const LemonCapacity total, const LemonCapacity increment)
 {
     if (increment > MAX_FLOW_CAPACITY - total)
@@ -109,7 +123,7 @@ chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unorder
         }
 
         double adjustedCost = option.cost.totalCost();
-        if (option.decision == RecordingSelectionDecision::CreateNewRecording)
+        if (option.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
             adjustedCost += shadowPrices.contains(candidate.node)
                 ? shadowPrices.at(candidate.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
@@ -118,8 +132,7 @@ chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unorder
 
         if (!bestChoice.has_value() || adjustedCost < bestChoice->adjustedCost - EPSILON
             || (std::abs(adjustedCost - bestChoice->adjustedCost) <= EPSILON
-                && option.decision == RecordingSelectionDecision::ReuseExistingRecording
-                && bestChoice->option.decision == RecordingSelectionDecision::CreateNewRecording))
+                && decisionPreference(option.decision) < decisionPreference(bestChoice->option.decision)))
         {
             bestChoice = WeightedCandidateChoice{.option = option, .adjustedCost = adjustedCost};
         }
@@ -332,7 +345,7 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         std::unordered_map<Host, size_t> selectedStorageBytesByHost;
         for (const auto& selected : selectedBoundary)
         {
-            if (selected.chosenOption.decision == RecordingSelectionDecision::CreateNewRecording)
+            if (selected.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
             {
                 selectedStorageBytesByHost[selected.candidate.node] += selected.chosenOption.cost.estimatedStorageBytes;
             }

@@ -53,7 +53,15 @@ public:
         const LogicalOperator& recordedSubplanRoot,
         const WorkerConfig& worker,
         const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
-        const std::optional<ReplaySpecification>& replaySpecification) const;
+        const std::optional<ReplaySpecification>& replaySpecification,
+        std::optional<uint64_t> retainedWindowMs) const;
+
+    [[nodiscard]] RecordingCostEstimate estimateRecordingUpgrade(
+        const LogicalOperator& recordedSubplanRoot,
+        const WorkerConfig& worker,
+        const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
+        const std::optional<ReplaySpecification>& replaySpecification,
+        std::optional<uint64_t> existingRetentionWindowMs) const;
 };
 
 }

@@ -92,12 +92,15 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
     replaySpecification.retentionWindowMs = 60'000;
 
     RecordingCatalog catalog;
+    const auto structuralFingerprint = createStructuralRecordingFingerprint(root.getChildren().front(), host);
     const auto reusableRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(root.getChildren().front(), host, replaySpecification));
     catalog.upsertRecording(
         RecordingEntry{
             .id = reusableRecordingId,
             .node = host,
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/existing.bin",
+            .structuralFingerprint = structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
             .ownerQueries = {DistributedQueryId("existing-query")}});
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, replaySpecification, catalog);
@@ -125,6 +128,58 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
         {
             return option.decision == RecordingSelectionDecision::ReuseExistingRecording && option.feasible
                 && option.selection.recordingId == reusableRecordingId;
+        }));
+}
+
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerRetentionRecording)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto plan = createPlacedUnaryPlan(host);
+    const auto root = plan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+
+    ReplaySpecification requestedReplaySpecification;
+    requestedReplaySpecification.retentionWindowMs = 300'000;
+    ReplaySpecification existingReplaySpecification;
+    existingReplaySpecification.retentionWindowMs = 60'000;
+
+    RecordingCatalog catalog;
+    const auto structuralFingerprint = createStructuralRecordingFingerprint(root.getChildren().front(), host);
+    const auto weakerRecordingId
+        = recordingIdFromFingerprint(createRecordingFingerprint(root.getChildren().front(), host, existingReplaySpecification));
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = weakerRecordingId,
+            .node = host,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/weaker.bin",
+            .structuralFingerprint = structuralFingerprint,
+            .retentionWindowMs = existingReplaySpecification.retentionWindowMs,
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, requestedReplaySpecification, catalog);
+    const auto rootCandidate = std::ranges::find_if(
+        candidateSet.candidates,
+        [&](const auto& candidate)
+        {
+            return candidate.edge.parentId == root.getId() && candidate.edge.childId == root.getChildren().front().getId();
+        });
+    ASSERT_NE(rootCandidate, candidateSet.candidates.end());
+
+    EXPECT_TRUE(std::ranges::any_of(
+        rootCandidate->options,
+        [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
+    EXPECT_FALSE(std::ranges::any_of(
+        rootCandidate->options,
+        [](const auto& option) { return option.decision == RecordingSelectionDecision::ReuseExistingRecording; }));
+    EXPECT_TRUE(std::ranges::any_of(
+        rootCandidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::UpgradeExistingRecording && option.feasible
+                && option.selection.structuralFingerprint == structuralFingerprint && option.selection.recordingId != weakerRecordingId;
         }));
 }
 }

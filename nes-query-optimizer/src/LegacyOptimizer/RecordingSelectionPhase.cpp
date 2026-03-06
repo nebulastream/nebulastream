@@ -80,8 +80,10 @@ std::string buildExplanationReason(
     {
         case RecordingSelectionDecision::CreateNewRecording:
             return prefix + "create_new_recording was the lowest-cost feasible option on this cut edge";
+        case RecordingSelectionDecision::UpgradeExistingRecording:
+            return prefix + "upgrade_existing_recording was selected because a structurally compatible recording exists but does not satisfy the requested retention";
         case RecordingSelectionDecision::ReuseExistingRecording:
-            return prefix + "exact-match recording fingerprint found in recording catalog and reuse_existing_recording was the lowest-cost feasible option on this cut edge";
+            return prefix + "a structurally compatible recording in the recording catalog already satisfies the requested replay coverage, so reuse_existing_recording was the lowest-cost feasible option on this cut edge";
     }
     std::unreachable();
 }
@@ -107,7 +109,7 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
 
     for (const auto& selectedBoundary : boundarySelection.selectedBoundary)
     {
-        if (selectedBoundary.chosenOption.decision == RecordingSelectionDecision::CreateNewRecording)
+        if (selectedBoundary.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
             storesToInsert.emplace(selectedBoundary.candidate.edge, selectedBoundary.chosenOption.selection);
         }

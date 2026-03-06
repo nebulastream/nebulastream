@@ -40,30 +40,30 @@ uint64_t fnv1a64(std::string_view input)
     return hash;
 }
 
-std::string encodeReplaySpecification(const std::optional<ReplaySpecification>& replaySpecification)
+std::string encodeRetentionCoverage(const std::optional<ReplaySpecification>& replaySpecification)
 {
-    if (!replaySpecification.has_value())
-    {
-        return "none";
-    }
-
-    return fmt::format(
-        "retention_ms={};replay_latency_ms={}",
-        replaySpecification->retentionWindowMs.value_or(0),
-        replaySpecification->replayLatencyLimitMs.value_or(0));
+    return fmt::format("retention_ms={}", replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }).value_or(0));
 }
+}
+
+std::string createStructuralRecordingFingerprint(const LogicalOperator& recordedSubplanRoot, const Host& placement)
+{
+    const auto recordedPlan = explain(LogicalPlan(INVALID_QUERY_ID, {recordedSubplanRoot}), ExplainVerbosity::Short);
+    const auto canonical = fmt::format(
+        "placement={}|schema={}|plan={}",
+        placement,
+        recordedSubplanRoot.getOutputSchema(),
+        recordedPlan);
+    return fmt::format("{:016x}", fnv1a64(canonical));
 }
 
 std::string createRecordingFingerprint(
     const LogicalOperator& recordedSubplanRoot, const Host& placement, const std::optional<ReplaySpecification>& replaySpecification)
 {
-    const auto recordedPlan = explain(LogicalPlan(INVALID_QUERY_ID, {recordedSubplanRoot}), ExplainVerbosity::Short);
     const auto canonical = fmt::format(
-        "placement={}|schema={}|replay={}|plan={}",
-        placement,
-        recordedSubplanRoot.getOutputSchema(),
-        encodeReplaySpecification(replaySpecification),
-        recordedPlan);
+        "structural={}|coverage={}",
+        createStructuralRecordingFingerprint(recordedSubplanRoot, placement),
+        encodeRetentionCoverage(replaySpecification));
     return fmt::format("{:016x}", fnv1a64(canonical));
 }
 

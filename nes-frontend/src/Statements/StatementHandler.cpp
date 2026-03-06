@@ -62,6 +62,8 @@ std::string recordingDecisionToString(RecordingSelectionDecision decision)
     {
         case RecordingSelectionDecision::CreateNewRecording:
             return "create_new_recording";
+        case RecordingSelectionDecision::UpgradeExistingRecording:
+            return "upgrade_existing_recording";
         case RecordingSelectionDecision::ReuseExistingRecording:
             return "reuse_existing_recording";
     }

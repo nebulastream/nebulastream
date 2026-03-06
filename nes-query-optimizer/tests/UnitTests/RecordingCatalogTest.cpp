@@ -30,12 +30,16 @@ TEST(RecordingCatalogTest, UpsertRecordingMergesOwnerQueriesForExistingRecording
             .id = recordingId,
             .node = Host("worker-1:8080"),
             .filePath = "/tmp/REPLAY-NebulaStream/store_read_out.bin",
+            .structuralFingerprint = {},
+            .retentionWindowMs = std::nullopt,
             .ownerQueries = {DistributedQueryId("query-1")}});
     catalog.upsertRecording(
         RecordingEntry{
             .id = recordingId,
             .node = Host("worker-1:8080"),
             .filePath = "/tmp/REPLAY-NebulaStream/store_read_out.bin",
+            .structuralFingerprint = {},
+            .retentionWindowMs = std::nullopt,
             .ownerQueries = {DistributedQueryId("query-2")}});
 
     const auto recording = catalog.getRecording(recordingId);
@@ -59,6 +63,8 @@ TEST(RecordingCatalogTest, RemoveQueryMetadataRetainsSharedRecordingUntilLastOwn
             .id = recordingId,
             .node = Host("worker-1:8080"),
             .filePath = "/tmp/REPLAY-NebulaStream/store_read_out.bin",
+            .structuralFingerprint = {},
+            .retentionWindowMs = std::nullopt,
             .ownerQueries = {query1, query2}});
 
     catalog.removeQueryMetadata(query1);
@@ -85,12 +91,16 @@ TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksMostRecentRecordingAndFa
             .id = recording1,
             .node = Host("worker-1:8080"),
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .structuralFingerprint = {},
+            .retentionWindowMs = std::nullopt,
             .ownerQueries = {query1}});
     catalog.upsertRecording(
         RecordingEntry{
             .id = recording2,
             .node = Host("worker-1:8080"),
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-2.bin",
+            .structuralFingerprint = {},
+            .retentionWindowMs = std::nullopt,
             .ownerQueries = {query2}});
 
     ASSERT_TRUE(catalog.getTimeTravelReadRecording().has_value());

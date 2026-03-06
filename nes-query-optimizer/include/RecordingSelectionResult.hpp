@@ -29,6 +29,7 @@ using RecordingId = NESStrongStringType<struct RecordingId_, "invalid">;
 enum class RecordingSelectionDecision
 {
     CreateNewRecording,
+    UpgradeExistingRecording,
     ReuseExistingRecording,
 };
 
@@ -54,6 +55,7 @@ struct RecordingSelection
     RecordingId recordingId{RecordingId::INVALID};
     Host node{Host::INVALID};
     std::string filePath;
+    std::string structuralFingerprint;
 
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };

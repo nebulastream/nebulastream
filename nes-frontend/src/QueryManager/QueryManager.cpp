@@ -162,6 +162,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 .id = selection.recordingId,
                 .node = selection.node,
                 .filePath = selection.filePath,
+                .structuralFingerprint = selection.structuralFingerprint,
+                .retentionWindowMs = plan.getReplaySpecification().and_then([](const auto& spec) { return spec.retentionWindowMs; }),
                 .ownerQueries = {id}});
     }
     if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())

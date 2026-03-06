@@ -518,6 +518,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
             .id = firstRecording.recordingId,
             .node = firstRecording.node,
             .filePath = firstRecording.filePath,
+            .structuralFingerprint = firstRecording.structuralFingerprint,
+            .retentionWindowMs = statement.replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
             .ownerQueries = {DistributedQueryId("existing-query")}});
 
     const auto reusedPlan = opt->optimize(statement.plan, statement.replaySpecification, catalog);
@@ -535,6 +537,40 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
 
     const LogicalPlan localPlan = reusedPlan[Host("localhost:8080")].front();
     EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());
+}
+
+TEST_F(DistributedPlanningTest, TimeTravelStoreUpgradesExistingRecordingWhenRetentionIncreases)
+{
+    auto [initialOptimizer, initialStatement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    const auto initialPlan = initialOptimizer->optimize(initialStatement.plan, initialStatement.replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(initialPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+    const auto initialRecording = initialPlan.getRecordingSelectionResult().selectedRecordings.front();
+
+    RecordingCatalog catalog;
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = initialRecording.recordingId,
+            .node = initialRecording.node,
+            .filePath = initialRecording.filePath,
+            .structuralFingerprint = initialRecording.structuralFingerprint,
+            .retentionWindowMs = initialStatement.replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    auto [upgradeOptimizer, upgradeStatement] = loadAndBindExplainStatement("basic_time_travel_store_with_options.yaml");
+    const auto upgradedPlan = upgradeOptimizer->optimize(upgradeStatement.plan, upgradeStatement.replaySpecification, catalog);
+
+    ASSERT_EQ(upgradedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+    ASSERT_EQ(upgradedPlan.getRecordingSelectionResult().explanations.size(), 1);
+    const auto& upgradedRecording = upgradedPlan.getRecordingSelectionResult().selectedRecordings.front();
+    const auto& selectionExplanation = upgradedPlan.getRecordingSelectionResult().explanations.front();
+
+    EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::UpgradeExistingRecording);
+    EXPECT_EQ(upgradedRecording.structuralFingerprint, initialRecording.structuralFingerprint);
+    EXPECT_NE(upgradedRecording.recordingId, initialRecording.recordingId);
+    EXPECT_NE(selectionExplanation.reason.find("upgrade_existing_recording"), std::string::npos);
+
+    const LogicalPlan localPlan = upgradedPlan[Host("localhost:8080")].front();
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(localPlan).size(), 1U);
 }
 
 TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecordingBoundary)

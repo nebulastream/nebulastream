@@ -36,7 +36,8 @@ RecordingCandidateOption makeNewRecordingOption(std::string recordingId, const H
 {
     return RecordingCandidateOption{
         .decision = RecordingSelectionDecision::CreateNewRecording,
-        .selection = RecordingSelection{.recordingId = RecordingId(std::move(recordingId)), .node = host, .filePath = {}},
+        .selection = RecordingSelection{
+            .recordingId = RecordingId(std::move(recordingId)), .node = host, .filePath = {}, .structuralFingerprint = {}},
         .cost = RecordingCostBreakdown{
             .decisionCost = cost, .estimatedStorageBytes = estimatedStorageBytes, .fitsBudget = true, .satisfiesReplayLatency = true},
         .feasible = true,
