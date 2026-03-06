@@ -100,10 +100,10 @@ public:
      * @brief returns the de-tagged pointer casted to void*
      * @return
      */
-    inline void* pointer() const
+    [[nodiscard]] void* pointer() const
     {
-        return reinterpret_cast<void*>(data & ((1ULL << 48) - 1));
-    } /// NOLINT(performance-no-int-to-ptr) - intentional tagged pointer manipulation
+        return reinterpret_cast<void*>(data & ((1ULL << 48) - 1)); /// NOLINT(performance-no-int-to-ptr, cppcoreguidelines-pro-type-reinterpret-cast) - intentional tagged pointer manipulation
+    }
 
     /**
      * @brief reset by mutating the internal pointer and the tag
