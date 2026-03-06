@@ -21,14 +21,15 @@
 #include <limits>
 #include <numeric>
 #include <optional>
-#include <queue>
 #include <ranges>
-#include <sstream>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <vector>
+
+#include <lemon/list_graph.h>
+#include <lemon/preflow.h>
 
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -44,6 +45,11 @@ constexpr double STORAGE_PENALTY_NORMALIZATION_BYTES = 4096.0;
 constexpr double SHADOW_PRICE_STEP = 1.0;
 constexpr size_t MAX_SHADOW_PRICE_ITERATIONS = 16;
 constexpr double EPSILON = 1e-9;
+constexpr double CAPACITY_SCALE = 1000.0;
+constexpr int64_t MAX_FLOW_CAPACITY = std::numeric_limits<int64_t>::max() / 4;
+
+using LemonGraph = lemon::ListDigraph;
+using LemonCapacity = int64_t;
 
 struct RecordingPlanEdgeHash
 {
@@ -64,123 +70,32 @@ struct WeightedCandidateChoice
     double adjustedCost = 0.0;
 };
 
-struct FlowEdge
+[[nodiscard]] LemonCapacity checkedAddCapacity(const LemonCapacity total, const LemonCapacity increment)
 {
-    int to = -1;
-    int reverse = -1;
-    double capacity = 0.0;
-};
+    if (increment > MAX_FLOW_CAPACITY - total)
+    {
+        throw PlacementFailure("Replay selection is infeasible: replay min-cut capacity sentinel overflowed");
+    }
+    return total + increment;
+}
 
-class DinicMaxFlow
+[[nodiscard]] LemonCapacity scaledCapacityFromCost(const double cost)
 {
-public:
-    explicit DinicMaxFlow(size_t nodeCount) : graph(nodeCount), level(nodeCount), progress(nodeCount) { }
+    PRECONDITION(std::isfinite(cost), "Replay selection requires finite min-cut capacities");
+    PRECONDITION(cost >= -EPSILON, "Replay selection requires non-negative min-cut capacities");
 
-    void addEdge(const int from, const int to, const double capacity)
+    if (cost <= EPSILON)
     {
-        const auto forwardIndex = static_cast<int>(graph[from].size());
-        const auto backwardIndex = static_cast<int>(graph[to].size());
-        graph[from].push_back(FlowEdge{.to = to, .reverse = backwardIndex, .capacity = capacity});
-        graph[to].push_back(FlowEdge{.to = from, .reverse = forwardIndex, .capacity = 0.0});
+        return 0;
     }
 
-    [[nodiscard]] double maxFlow(const int source, const int sink)
+    const auto scaled = std::ceil(cost * CAPACITY_SCALE);
+    if (scaled >= static_cast<double>(MAX_FLOW_CAPACITY))
     {
-        double flow = 0.0;
-        while (buildLevelGraph(source, sink))
-        {
-            std::ranges::fill(progress, 0);
-            while (true)
-            {
-                const auto pushed = sendFlow(source, sink, std::numeric_limits<double>::max());
-                if (pushed <= EPSILON)
-                {
-                    break;
-                }
-                flow += pushed;
-            }
-        }
-        return flow;
+        throw PlacementFailure("Replay selection is infeasible: replay min-cut capacity sentinel overflowed");
     }
-
-    [[nodiscard]] std::vector<bool> reachableFrom(const int source) const
-    {
-        std::vector<bool> reachable(graph.size(), false);
-        std::queue<int> queue;
-        queue.push(source);
-        reachable[source] = true;
-        while (!queue.empty())
-        {
-            const auto current = queue.front();
-            queue.pop();
-            for (const auto& edge : graph[current])
-            {
-                if (edge.capacity > EPSILON && !reachable[edge.to])
-                {
-                    reachable[edge.to] = true;
-                    queue.push(edge.to);
-                }
-            }
-        }
-        return reachable;
-    }
-
-private:
-    [[nodiscard]] bool buildLevelGraph(const int source, const int sink)
-    {
-        std::ranges::fill(level, -1);
-        std::queue<int> queue;
-        queue.push(source);
-        level[source] = 0;
-
-        while (!queue.empty())
-        {
-            const auto current = queue.front();
-            queue.pop();
-            for (const auto& edge : graph[current])
-            {
-                if (edge.capacity > EPSILON && level[edge.to] < 0)
-                {
-                    level[edge.to] = level[current] + 1;
-                    queue.push(edge.to);
-                }
-            }
-        }
-        return level[sink] >= 0;
-    }
-
-    double sendFlow(const int current, const int sink, const double pushed)
-    {
-        if (current == sink)
-        {
-            return pushed;
-        }
-
-        for (auto& edgeIndex = progress[current]; edgeIndex < static_cast<int>(graph[current].size()); ++edgeIndex)
-        {
-            auto& edge = graph[current][edgeIndex];
-            if (edge.capacity <= EPSILON || level[edge.to] != level[current] + 1)
-            {
-                continue;
-            }
-
-            const auto flow = sendFlow(edge.to, sink, std::min(pushed, edge.capacity));
-            if (flow <= EPSILON)
-            {
-                continue;
-            }
-
-            edge.capacity -= flow;
-            graph[edge.to][edge.reverse].capacity += flow;
-            return flow;
-        }
-        return 0.0;
-    }
-
-    std::vector<std::vector<FlowEdge>> graph;
-    std::vector<int> level;
-    std::vector<int> progress;
-};
+    return static_cast<LemonCapacity>(scaled);
+}
 
 std::optional<WeightedCandidateChoice>
 chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unordered_map<Host, double>& shadowPrices)
@@ -306,62 +221,84 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
     for (size_t iteration = 0; iteration < MAX_SHADOW_PRICE_ITERATIONS; ++iteration)
     {
         std::unordered_map<RecordingPlanEdge, WeightedCandidateChoice, RecordingPlanEdgeHash> bestChoiceByEdge;
-        double finiteCapacitySum = 0.0;
+        LemonCapacity totalFiniteCapacity = 0;
         for (const auto& candidate : candidateSet.candidates)
         {
             if (const auto bestChoice = chooseBestOption(candidate, shadowPrices); bestChoice.has_value())
             {
                 bestChoiceByEdge.emplace(candidate.edge, *bestChoice);
-                finiteCapacitySum += std::max(1.0, bestChoice->adjustedCost);
+                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedCost));
             }
         }
 
-        const auto infiniteCapacity = std::max(1.0, finiteCapacitySum + 1.0) * 1024.0;
+        // LEMON::Preflow cannot represent true infinity, so every mandatory edge uses a
+        // sentinel capacity that is strictly larger than any realizable all-finite cut.
+        const auto infiniteCapacity = checkedAddCapacity(std::max<LemonCapacity>(1, totalFiniteCapacity), 1);
 
-        std::unordered_map<OperatorId, int> nodeIndex;
-        auto assignIndex = [&nodeIndex](const OperatorId id)
+        LemonGraph graph;
+        std::unordered_map<OperatorId, LemonGraph::Node> graphNodesByOperator;
+        auto getOrCreateNode = [&](const OperatorId operatorId) -> LemonGraph::Node
         {
-            if (!nodeIndex.contains(id))
+            if (const auto it = graphNodesByOperator.find(operatorId); it != graphNodesByOperator.end())
             {
-                nodeIndex.emplace(id, static_cast<int>(nodeIndex.size()));
+                return it->second;
             }
+            const auto node = graph.addNode();
+            graphNodesByOperator.emplace(operatorId, node);
+            return node;
         };
 
-        assignIndex(candidateSet.rootOperatorId);
+        getOrCreateNode(candidateSet.rootOperatorId);
         for (const auto& edge : candidateSet.planEdges)
         {
-            assignIndex(edge.parentId);
-            assignIndex(edge.childId);
+            getOrCreateNode(edge.parentId);
+            getOrCreateNode(edge.childId);
         }
         for (const auto leafId : candidateSet.leafOperatorIds)
         {
-            assignIndex(leafId);
+            getOrCreateNode(leafId);
         }
-        const auto terminalIndex = static_cast<int>(nodeIndex.size());
 
-        DinicMaxFlow maxFlow(nodeIndex.size() + 1);
+        const auto terminalNode = graph.addNode();
+        LemonGraph::ArcMap<LemonCapacity> capacities(graph);
+
         for (const auto& edge : candidateSet.planEdges)
         {
-            const auto capacity = bestChoiceByEdge.contains(edge) ? bestChoiceByEdge.at(edge).adjustedCost : infiniteCapacity;
-            maxFlow.addEdge(nodeIndex.at(edge.parentId), nodeIndex.at(edge.childId), capacity);
+            const auto arc = graph.addArc(graphNodesByOperator.at(edge.parentId), graphNodesByOperator.at(edge.childId));
+            capacities[arc] = bestChoiceByEdge.contains(edge) ? scaledCapacityFromCost(bestChoiceByEdge.at(edge).adjustedCost) : infiniteCapacity;
         }
         for (const auto leafId : candidateSet.leafOperatorIds)
         {
-            maxFlow.addEdge(nodeIndex.at(leafId), terminalIndex, infiniteCapacity);
+            const auto arc = graph.addArc(graphNodesByOperator.at(leafId), terminalNode);
+            capacities[arc] = infiniteCapacity;
         }
 
-        const auto sourceIndex = nodeIndex.at(candidateSet.rootOperatorId);
-        [[maybe_unused]] const auto cutCost = maxFlow.maxFlow(sourceIndex, terminalIndex);
-        const auto reachable = maxFlow.reachableFrom(sourceIndex);
+        lemon::Preflow<LemonGraph, LemonGraph::ArcMap<LemonCapacity>>
+            preflow(graph, capacities, graphNodesByOperator.at(candidateSet.rootOperatorId), terminalNode);
+        preflow.runMinCut();
+
+        LemonGraph::NodeMap<bool> minCutPartition(graph);
+        preflow.minCutMap(minCutPartition);
 
         bool cutUsesInfiniteEdge = false;
+        for (const auto& edge : candidateSet.planEdges)
+        {
+            const auto parentOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.parentId)];
+            const auto childOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.childId)];
+            if (parentOnSourceSide && !childOnSourceSide && !bestChoiceByEdge.contains(edge))
+            {
+                cutUsesInfiniteEdge = true;
+                break;
+            }
+        }
+
         std::vector<SelectedRecordingBoundary> selectedBoundary;
         selectedBoundary.reserve(candidateSet.candidates.size());
         for (const auto& candidate : candidateSet.candidates)
         {
-            const auto parentReachable = reachable.at(nodeIndex.at(candidate.edge.parentId));
-            const auto childReachable = reachable.at(nodeIndex.at(candidate.edge.childId));
-            if (!(parentReachable && !childReachable))
+            const auto parentOnSourceSide = minCutPartition[graphNodesByOperator.at(candidate.edge.parentId)];
+            const auto childOnSourceSide = minCutPartition[graphNodesByOperator.at(candidate.edge.childId)];
+            if (!(parentOnSourceSide && !childOnSourceSide))
             {
                 continue;
             }
@@ -416,13 +353,15 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
 
         if (!violatesBudget)
         {
+            const auto objectiveCost = std::accumulate(
+                selectedBoundary.begin(),
+                selectedBoundary.end(),
+                0.0,
+                [&](const double total, const SelectedRecordingBoundary& selected)
+                { return total + bestChoiceByEdge.at(selected.candidate.edge).adjustedCost; });
             return RecordingBoundarySelection{
                 .selectedBoundary = std::move(selectedBoundary),
-                .objectiveCost = std::accumulate(
-                    bestChoiceByEdge.begin(),
-                    bestChoiceByEdge.end(),
-                    0.0,
-                    [](const double total, const auto& choice) { return total + choice.second.adjustedCost; })};
+                .objectiveCost = objectiveCost};
         }
 
         const auto selectionSignature = makeSelectionSignature(selectedBoundary);

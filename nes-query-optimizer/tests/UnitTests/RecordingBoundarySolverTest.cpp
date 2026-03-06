@@ -83,6 +83,7 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
 
     ASSERT_EQ(selection.selectedBoundary.size(), 2U);
+    EXPECT_DOUBLE_EQ(selection.objectiveCost, 5.0);
     EXPECT_THAT(
         selection.selectedBoundary
             | std::views::transform(

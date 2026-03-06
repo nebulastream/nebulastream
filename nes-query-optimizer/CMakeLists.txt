@@ -24,10 +24,15 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
 find_package(highs CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface PRIVATE nes-input-formatter-provider highs::highs)
+find_package(LEMON CONFIG REQUIRED)
+target_link_libraries(
+        nes-query-optimizer
+        PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface
+        PRIVATE nes-input-formatter-provider highs::highs ${LEMON_LIBRARIES})
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
+        PRIVATE ${LEMON_INCLUDE_DIRS})
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-query-optimizer REUSE_FROM nes-common)
