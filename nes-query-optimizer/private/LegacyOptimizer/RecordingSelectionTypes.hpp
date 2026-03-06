@@ -50,6 +50,9 @@ struct RecordingBoundaryCandidate
     Host upstreamNode{Host::INVALID};
     Host downstreamNode{Host::INVALID};
     std::vector<Host> routeNodes;
+    std::vector<RecordingPlanEdge> materializationEdges;
+    std::vector<std::string> beneficiaryQueries;
+    bool coversIncomingQuery = false;
     std::vector<RecordingCandidateOption> options;
 
     [[nodiscard]] bool hasFeasibleOptions() const;

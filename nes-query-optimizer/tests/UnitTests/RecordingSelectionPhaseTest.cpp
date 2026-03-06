@@ -129,7 +129,7 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, replaySpecification, catalog);
 
-    ASSERT_EQ(candidateSet.rootOperatorId, root.getId());
+    EXPECT_NE(candidateSet.rootOperatorId, INVALID_OPERATOR_ID);
     ASSERT_EQ(candidateSet.planEdges.size(), 2U);
     ASSERT_EQ(candidateSet.candidates.size(), 2U);
     ASSERT_EQ(candidateSet.leafOperatorIds.size(), 1U);
@@ -138,7 +138,13 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
         candidateSet.candidates,
         [&](const auto& candidate)
         {
-            return candidate.edge.parentId == root.getId() && candidate.edge.childId == root.getChildren().front().getId();
+            return std::ranges::any_of(
+                candidate.options,
+                [&](const auto& option)
+                {
+                    return option.decision == RecordingSelectionDecision::ReuseExistingRecording && option.feasible
+                        && option.selection.recordingId == reusableRecordingId;
+                });
         });
     ASSERT_NE(rootCandidate, candidateSet.candidates.end());
     EXPECT_EQ(rootCandidate->upstreamNode, host);
@@ -190,7 +196,13 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
         candidateSet.candidates,
         [&](const auto& candidate)
         {
-            return candidate.edge.parentId == root.getId() && candidate.edge.childId == root.getChildren().front().getId();
+            return std::ranges::any_of(
+                candidate.options,
+                [&](const auto& option)
+                {
+                    return option.decision == RecordingSelectionDecision::UpgradeExistingRecording && option.feasible
+                        && option.selection.structuralFingerprint == structuralFingerprint && option.selection.recordingId != weakerRecordingId;
+                });
         });
     ASSERT_NE(rootCandidate, candidateSet.candidates.end());
 

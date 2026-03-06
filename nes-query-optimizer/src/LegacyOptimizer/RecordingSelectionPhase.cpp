@@ -151,9 +151,16 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
 
     for (const auto& selectedBoundary : boundarySelection.selectedBoundary)
     {
+        if (!selectedBoundary.candidate.coversIncomingQuery)
+        {
+            continue;
+        }
         if (selectedBoundary.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
-            storesToInsert.emplace(selectedBoundary.candidate.edge, selectedBoundary.chosenOption.selection);
+            for (const auto& materializationEdge : selectedBoundary.candidate.materializationEdges)
+            {
+                storesToInsert.emplace(materializationEdge, selectedBoundary.chosenOption.selection);
+            }
         }
 
         selectionResult.selectedRecordings.push_back(selectedBoundary.chosenOption.selection);

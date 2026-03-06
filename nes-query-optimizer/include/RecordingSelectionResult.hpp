@@ -65,6 +65,8 @@ struct RecordingSelection
     std::string filePath;
     std::string structuralFingerprint;
     RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
+    std::vector<std::string> beneficiaryQueries;
+    bool coversIncomingQuery = true;
 
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };

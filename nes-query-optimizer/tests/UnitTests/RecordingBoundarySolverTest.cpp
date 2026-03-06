@@ -46,7 +46,9 @@ RecordingCandidateOption makeNewRecordingOption(
             .node = host,
             .filePath = {},
             .structuralFingerprint = {},
-            .representation = RecordingRepresentation::BinaryStore},
+            .representation = RecordingRepresentation::BinaryStore,
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true},
         .cost = RecordingCostBreakdown{
             .decisionCost = boundaryCutCost + replayRecomputeCost,
             .estimatedStorageBytes = estimatedStorageBytes,
@@ -89,18 +91,27 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-left", host, 10.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = leftId, .childId = leftLeafId},
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("left-leaf", host, 2.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = rootId, .childId = rightLeafId},
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-right", host, 3.0)}}};
 
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
@@ -146,18 +157,27 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
             .upstreamNode = fallbackHost,
             .downstreamNode = fallbackHost,
             .routeNodes = {fallbackHost},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-branch", fallbackHost, 3.0, 4096)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = branchId, .childId = leftLeafId},
             .upstreamNode = constrainedHost,
             .downstreamNode = constrainedHost,
             .routeNodes = {constrainedHost},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-left", constrainedHost, 1.0, 4096)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = branchId, .childId = rightLeafId},
             .upstreamNode = constrainedHost,
             .downstreamNode = constrainedHost,
             .routeNodes = {constrainedHost},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-right", constrainedHost, 1.0, 4096)}}};
 
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
@@ -194,18 +214,27 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-branch", host, 3.0, 1024, 10.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = branchId, .childId = leftLeafId},
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-left", host, 1.0)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = rootId, .childId = rightLeafId},
             .upstreamNode = host,
             .downstreamNode = host,
             .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-right", host, 1.5)}}};
 
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);

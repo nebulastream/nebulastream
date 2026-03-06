@@ -28,6 +28,7 @@
 #include <LegacyOptimizer/RecordingCostModel.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Replay/ReplayStorage.hpp>
 #include <WorkerCatalog.hpp>
@@ -73,6 +74,32 @@ struct RecordingPlanEdgeHash
     {
         return std::hash<uint64_t>{}(edge.parentId.getRawValue()) ^ (std::hash<uint64_t>{}(edge.childId.getRawValue()) << 1U);
     }
+};
+
+struct QueryReplayPlan
+{
+    std::optional<std::string> activeQueryId;
+    bool incoming = false;
+    std::optional<ReplaySpecification> replaySpecification;
+    LogicalPlan plan;
+};
+
+struct MergedBoundaryCandidateAccumulator
+{
+    RecordingBoundaryCandidate candidate;
+    LogicalOperator recordedSubplanRoot;
+    std::optional<uint64_t> requiredRetentionWindowMs;
+    std::optional<uint64_t> replayLatencyLimitMs;
+};
+
+struct MergedReplayGraphBuilder
+{
+    std::unordered_map<std::string, OperatorId> nodeIdsByFingerprint;
+    std::unordered_map<RecordingPlanEdge, MergedBoundaryCandidateAccumulator, RecordingPlanEdgeHash> candidatesByEdge;
+    std::unordered_set<OperatorId> rootOperatorIds;
+    std::unordered_set<OperatorId> leafOperatorIds;
+    MergedReplayContext replayContext;
+    uint64_t nextSyntheticOperatorId = 1;
 };
 
 std::string replayLatencyLimitDescription(const std::optional<ReplaySpecification>& replaySpecification)
@@ -258,212 +285,394 @@ std::vector<RoutePlacement> enumerateRoutePlacements(const Host& sourcePlacement
     return placements;
 }
 
-void collectMergedReplayOccurrences(
-    const LogicalOperator& current,
-    const NetworkTopology& topology,
-    std::unordered_map<std::string, size_t>& structuralOccurrences)
+LogicalOperator normalizeReplayFingerprintOperator(const LogicalOperator& current)
 {
-    for (const auto& child : current.getChildren())
+    if (current.tryGetAs<StoreLogicalOperator>().has_value())
     {
-        const auto routePlacements = enumerateRoutePlacements(getPlacementFor(child), getPlacementFor(current), topology);
-        for (const auto& placement : routePlacements)
-        {
-            ++structuralOccurrences[createStructuralRecordingFingerprint(child, placement.node)];
-        }
-        collectMergedReplayOccurrences(child, topology, structuralOccurrences);
+        const auto children = current.getChildren();
+        PRECONDITION(children.size() == 1, "Replay normalization expected store operators to have a single child");
+        return normalizeReplayFingerprintOperator(children.front());
     }
+
+    auto normalizedChildren
+        = current.getChildren() | std::views::transform(normalizeReplayFingerprintOperator) | std::ranges::to<std::vector>();
+    return current.withChildren(std::move(normalizedChildren));
 }
 
-MergedReplayContext buildMergedReplayContext(
-    const LogicalPlan& currentPlan, const RecordingCatalog& recordingCatalog, const WorkerCatalog& workerCatalog)
+LogicalOperator unwrapReplayOperator(const LogicalOperator& current)
 {
-    MergedReplayContext context;
-    const auto topology = workerCatalog.getTopology();
-
-    for (const auto& root : currentPlan.getRootOperators())
+    if (current.tryGetAs<StoreLogicalOperator>().has_value())
     {
-        collectMergedReplayOccurrences(root, topology, context.structuralOccurrences);
+        const auto children = current.getChildren();
+        PRECONDITION(children.size() == 1, "Replay normalization expected store operators to have a single child");
+        return unwrapReplayOperator(children.front());
     }
-    for (const auto& metadata : recordingCatalog.getQueryMetadata() | std::views::values)
+    return current;
+}
+
+std::vector<LogicalOperator> getReplayChildren(const LogicalOperator& current)
+{
+    std::vector<LogicalOperator> children;
+    children.reserve(current.getChildren().size());
+    for (const auto& child : current.getChildren())
     {
-        if (!metadata.globalPlan.has_value())
+        children.push_back(unwrapReplayOperator(child));
+    }
+    return children;
+}
+
+std::string structuralNodeFingerprint(const LogicalOperator& logicalOperator)
+{
+    const auto normalizedOperator = normalizeReplayFingerprintOperator(logicalOperator);
+    if (normalizedOperator.tryGetAs<SinkLogicalOperator>().has_value())
+    {
+        return fmt::format(
+            "placement={}|plan={}",
+            getPlacementFor(normalizedOperator),
+            explain(LogicalPlan(INVALID_QUERY_ID, {normalizedOperator}), ExplainVerbosity::Short));
+    }
+    return createStructuralRecordingFingerprint(normalizedOperator, getPlacementFor(normalizedOperator));
+}
+
+OperatorId getOrCreateSyntheticOperatorId(MergedReplayGraphBuilder& builder, const std::string& fingerprint)
+{
+    if (const auto it = builder.nodeIdsByFingerprint.find(fingerprint); it != builder.nodeIdsByFingerprint.end())
+    {
+        return it->second;
+    }
+
+    const auto syntheticId = OperatorId(builder.nextSyntheticOperatorId++);
+    builder.nodeIdsByFingerprint.emplace(fingerprint, syntheticId);
+    return syntheticId;
+}
+
+QueryReplayPlan makeIncomingReplayPlan(const LogicalPlan& placedPlan, const std::optional<ReplaySpecification>& replaySpecification)
+{
+    return QueryReplayPlan{
+        .activeQueryId = std::nullopt,
+        .incoming = true,
+        .replaySpecification = replaySpecification,
+        .plan = placedPlan};
+}
+
+std::vector<QueryReplayPlan> buildReplayPlans(
+    const LogicalPlan& incomingPlacedPlan,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const RecordingCatalog& recordingCatalog)
+{
+    std::vector<QueryReplayPlan> replayPlans;
+    replayPlans.push_back(makeIncomingReplayPlan(incomingPlacedPlan, replaySpecification));
+    for (const auto& [queryId, metadata] : recordingCatalog.getQueryMetadata())
+    {
+        if (!metadata.globalPlan.has_value() || !metadata.replaySpecification.has_value())
         {
             continue;
         }
-        for (const auto& root : metadata.globalPlan->getRootOperators())
-        {
-            collectMergedReplayOccurrences(root, topology, context.structuralOccurrences);
-        }
+        replayPlans.push_back(QueryReplayPlan{
+            .activeQueryId = queryId.getRawValue(),
+            .incoming = false,
+            .replaySpecification = metadata.replaySpecification,
+            .plan = *metadata.globalPlan});
     }
-    for (const auto& recording : recordingCatalog.getRecordings() | std::views::values)
-    {
-        ++context.installedRecordings[recording.structuralFingerprint];
-    }
-
-    return context;
+    return replayPlans;
 }
 
-RecordingBoundaryCandidate buildCandidate(
-    const LogicalOperator& parent,
-    const LogicalOperator& child,
-    const std::optional<ReplaySpecification>& replaySpecification,
-    const RecordingCatalog& recordingCatalog,
-    const MergedReplayContext& mergedReplayContext,
-    const WorkerCatalog& workerCatalog)
+void mergeReplayRequirements(MergedBoundaryCandidateAccumulator& accumulator, const std::optional<ReplaySpecification>& replaySpecification)
 {
-    const auto upstreamPlacement = getPlacementFor(child);
-    const auto downstreamPlacement = getPlacementFor(parent);
-    const auto costModel = RecordingCostModel{};
-    const auto requestedRetention = requestedRetentionWindowMs(replaySpecification);
-    const auto routePlacements = enumerateRoutePlacements(upstreamPlacement, downstreamPlacement, workerCatalog.getTopology());
-
-    RecordingBoundaryCandidate candidate{
-        .edge = {.parentId = parent.getId(), .childId = child.getId()},
-        .upstreamNode = upstreamPlacement,
-        .downstreamNode = downstreamPlacement,
-        .routeNodes = routePlacements | std::views::transform([](const auto& placement) { return placement.node; }) | std::ranges::to<std::vector>(),
-        .options = {}};
-
-    for (const auto& routePlacement : routePlacements)
+    if (const auto retentionWindowMs = replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }); retentionWindowMs.has_value())
     {
-        const auto worker = workerCatalog.getWorker(routePlacement.node);
-        PRECONDITION(worker.has_value(), "Replay recording selection could not find worker {}", routePlacement.node);
-        const auto workerRuntimeMetrics = workerCatalog.getWorkerRuntimeMetrics(routePlacement.node);
-
-        for (const auto representation : supportedRecordingRepresentations())
-        {
-            const auto structuralFingerprint = createStructuralRecordingFingerprint(child, routePlacement.node);
-            const auto structurallyCompatibleRecordings = recordingCatalog.getRecordingsByStructuralFingerprint(structuralFingerprint)
-                | std::views::filter([&](const RecordingEntry& entry) { return entry.representation == representation; })
-                | std::ranges::to<std::vector>();
-            const auto recordingFingerprint = createRecordingFingerprint(child, routePlacement.node, replaySpecification);
-            const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
-            const auto placementContext = RecordingPlacementContext{
-                .sourcePlacement = upstreamPlacement,
-                .sinkPlacement = downstreamPlacement,
-                .recordingPlacement = routePlacement.node,
-                .upstreamHopCount = routePlacement.upstreamHopCount,
-                .downstreamHopCount = routePlacement.downstreamHopCount,
-                .totalRouteHopCount = routePlacements.size() - 1,
-                .mergedOccurrenceCount = mergedReplayContext.mergedOccurrenceCount(structuralFingerprint),
-                .activeReplayConsumerCount = mergedReplayContext.activeReplayConsumerCount(structuralFingerprint),
-                .installedRecordingCount = mergedReplayContext.installedRecordingCount(structuralFingerprint),
-                .representation = representation};
-            const auto newSelection = RecordingSelection{
-                .recordingId = recordingId,
-                .node = routePlacement.node,
-                .filePath = Replay::getRecordingFilePath(recordingId.getRawValue()),
-                .structuralFingerprint = structuralFingerprint,
-                .representation = representation};
-
-            const auto newRecordingCost = costModel.estimateNewRecording(child, placementContext, *worker, workerRuntimeMetrics, replaySpecification);
-            candidate.options.push_back(RecordingCandidateOption{
-                .decision = RecordingSelectionDecision::CreateNewRecording,
-                .selection = newSelection,
-                .cost = toCostBreakdown(newRecordingCost),
-                .feasible = newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency,
-                .infeasibilityReason = (newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency)
-                    ? std::string{}
-                    : describeNewRecordingInfeasibility(
-                        routePlacement.node, representation, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost)});
-
-            std::optional<RecordingEntry> bestReuseRecording;
-            std::optional<RecordingEntry> bestUpgradeRecording;
-            for (const auto& existingRecording : structurallyCompatibleRecordings)
-            {
-                if (satisfiesRetentionCoverage(existingRecording.retentionWindowMs, requestedRetention))
-                {
-                    if (!bestReuseRecording.has_value()
-                        || existingRecording.retentionWindowMs.value_or(0) < bestReuseRecording->retentionWindowMs.value_or(0))
-                    {
-                        bestReuseRecording = existingRecording;
-                    }
-                    continue;
-                }
-
-                if (!bestUpgradeRecording.has_value()
-                    || existingRecording.retentionWindowMs.value_or(0) > bestUpgradeRecording->retentionWindowMs.value_or(0))
-                {
-                    bestUpgradeRecording = existingRecording;
-                }
-            }
-
-            if (bestReuseRecording.has_value())
-            {
-                const auto reuseCost = costModel.estimateReplayReuse(
-                    child, placementContext, *worker, workerRuntimeMetrics, replaySpecification, bestReuseRecording->retentionWindowMs);
-                candidate.options.push_back(RecordingCandidateOption{
-                    .decision = RecordingSelectionDecision::ReuseExistingRecording,
-                    .selection = RecordingSelection{
-                        .recordingId = bestReuseRecording->id,
-                        .node = bestReuseRecording->node,
-                        .filePath = bestReuseRecording->filePath,
-                        .structuralFingerprint = bestReuseRecording->structuralFingerprint,
-                        .representation = bestReuseRecording->representation},
-                    .cost = toCostBreakdown(reuseCost),
-                    .feasible = reuseCost.satisfiesReplayLatency,
-                    .infeasibilityReason = reuseCost.satisfiesReplayLatency
-                        ? std::string{}
-                        : describeReplayReuseInfeasibility(
-                            routePlacement.node, representation, replaySpecification, workerRuntimeMetrics, reuseCost)});
-            }
-
-            if (bestUpgradeRecording.has_value())
-            {
-                const auto upgradeCost = costModel.estimateRecordingUpgrade(
-                    child, placementContext, *worker, workerRuntimeMetrics, replaySpecification, bestUpgradeRecording->retentionWindowMs);
-                candidate.options.push_back(RecordingCandidateOption{
-                    .decision = RecordingSelectionDecision::UpgradeExistingRecording,
-                    .selection = newSelection,
-                    .cost = toCostBreakdown(upgradeCost),
-                    .feasible = upgradeCost.fitsBudget && upgradeCost.satisfiesReplayLatency,
-                    .infeasibilityReason = (upgradeCost.fitsBudget && upgradeCost.satisfiesReplayLatency)
-                        ? std::string{}
-                        : describeRecordingUpgradeInfeasibility(
-                            routePlacement.node,
-                            representation,
-                            *worker,
-                            replaySpecification,
-                            workerRuntimeMetrics,
-                            upgradeCost,
-                            bestUpgradeRecording->retentionWindowMs)});
-            }
-        }
+        accumulator.requiredRetentionWindowMs
+            = std::max(accumulator.requiredRetentionWindowMs.value_or(0), *retentionWindowMs);
     }
-
-    return candidate;
+    if (const auto replayLatencyLimitMs = replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; });
+        replayLatencyLimitMs.has_value())
+    {
+        accumulator.replayLatencyLimitMs = accumulator.replayLatencyLimitMs.has_value()
+            ? std::min(accumulator.replayLatencyLimitMs.value(), *replayLatencyLimitMs)
+            : std::optional(*replayLatencyLimitMs);
+    }
 }
 
-void collectCandidates(
+std::optional<ReplaySpecification> effectiveReplaySpecification(
+    const MergedBoundaryCandidateAccumulator& accumulator, const std::optional<ReplaySpecification>& defaultReplaySpecification)
+{
+    const auto incomingReplaySpecification = accumulator.candidate.coversIncomingQuery ? defaultReplaySpecification : std::nullopt;
+    auto specification = incomingReplaySpecification.value_or(ReplaySpecification{});
+    if (const auto defaultRetentionWindowMs = incomingReplaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; });
+        defaultRetentionWindowMs.has_value())
+    {
+        specification.retentionWindowMs = std::max(accumulator.requiredRetentionWindowMs.value_or(0), *defaultRetentionWindowMs);
+    }
+    else
+    {
+        specification.retentionWindowMs = accumulator.requiredRetentionWindowMs;
+    }
+    if (const auto defaultReplayLatencyLimitMs = incomingReplaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; });
+        defaultReplayLatencyLimitMs.has_value())
+    {
+        specification.replayLatencyLimitMs = accumulator.replayLatencyLimitMs.has_value()
+            ? std::min(accumulator.replayLatencyLimitMs.value(), *defaultReplayLatencyLimitMs)
+            : std::optional(*defaultReplayLatencyLimitMs);
+    }
+    else
+    {
+        specification.replayLatencyLimitMs = accumulator.replayLatencyLimitMs;
+    }
+
+    if (!specification.retentionWindowMs.has_value() && !specification.replayLatencyLimitMs.has_value())
+    {
+        return std::nullopt;
+    }
+    return specification;
+}
+
+void collectMergedGraph(
     const LogicalOperator& current,
-    const std::optional<ReplaySpecification>& replaySpecification,
-    const RecordingCatalog& recordingCatalog,
-    const MergedReplayContext& mergedReplayContext,
+    const QueryReplayPlan& queryReplayPlan,
     const WorkerCatalog& workerCatalog,
-    RecordingCandidateSet& candidateSet,
+    MergedReplayGraphBuilder& builder,
     std::unordered_set<RecordingPlanEdge, RecordingPlanEdgeHash>& visitedEdges,
     std::unordered_set<OperatorId>& visitedLeaves)
 {
-    const auto children = current.getChildren();
+    const auto currentFingerprint = structuralNodeFingerprint(current);
+    const auto currentSyntheticId = getOrCreateSyntheticOperatorId(builder, currentFingerprint);
+    const auto children = getReplayChildren(current);
     if (children.empty())
     {
         if (visitedLeaves.insert(current.getId()).second)
         {
-            candidateSet.leafOperatorIds.push_back(current.getId());
+            builder.leafOperatorIds.insert(currentSyntheticId);
         }
         return;
     }
 
     for (const auto& child : children)
     {
-        const RecordingPlanEdge edge{.parentId = current.getId(), .childId = child.getId()};
-        if (visitedEdges.insert(edge).second)
+        const RecordingPlanEdge actualEdge{.parentId = current.getId(), .childId = child.getId()};
+        if (!visitedEdges.insert(actualEdge).second)
         {
-            candidateSet.planEdges.push_back(edge);
-            candidateSet.candidates.push_back(buildCandidate(current, child, replaySpecification, recordingCatalog, mergedReplayContext, workerCatalog));
+            continue;
         }
-        collectCandidates(child, replaySpecification, recordingCatalog, mergedReplayContext, workerCatalog, candidateSet, visitedEdges, visitedLeaves);
+
+        const auto childFingerprint = structuralNodeFingerprint(child);
+        const auto childSyntheticId = getOrCreateSyntheticOperatorId(builder, childFingerprint);
+        const auto routePlacements = enumerateRoutePlacements(getPlacementFor(child), getPlacementFor(current), workerCatalog.getTopology());
+        for (const auto& placement : routePlacements)
+        {
+            ++builder.replayContext.structuralOccurrences[createStructuralRecordingFingerprint(
+                normalizeReplayFingerprintOperator(child), placement.node)];
+        }
+
+        const RecordingPlanEdge mergedEdge{.parentId = currentSyntheticId, .childId = childSyntheticId};
+        auto [candidateIt, inserted] = builder.candidatesByEdge.try_emplace(
+            mergedEdge,
+            MergedBoundaryCandidateAccumulator{
+                .candidate =
+                    RecordingBoundaryCandidate{
+                        .edge = mergedEdge,
+                        .upstreamNode = getPlacementFor(child),
+                        .downstreamNode = getPlacementFor(current),
+                        .routeNodes = routePlacements | std::views::transform([](const auto& placement) { return placement.node; }) | std::ranges::to<std::vector>(),
+                        .materializationEdges = {},
+                        .beneficiaryQueries = {},
+                        .coversIncomingQuery = false,
+                        .options = {}},
+                .recordedSubplanRoot = child,
+                .requiredRetentionWindowMs = std::nullopt,
+                .replayLatencyLimitMs = std::nullopt});
+        auto& candidate = candidateIt->second.candidate;
+        if (queryReplayPlan.incoming)
+        {
+            candidate.coversIncomingQuery = true;
+            if (!std::ranges::contains(candidate.materializationEdges, actualEdge))
+            {
+                candidate.materializationEdges.push_back(actualEdge);
+            }
+        }
+        else if (queryReplayPlan.activeQueryId.has_value() && !std::ranges::contains(candidate.beneficiaryQueries, *queryReplayPlan.activeQueryId))
+        {
+            candidate.beneficiaryQueries.push_back(*queryReplayPlan.activeQueryId);
+        }
+        mergeReplayRequirements(candidateIt->second, queryReplayPlan.replaySpecification);
+
+        collectMergedGraph(child, queryReplayPlan, workerCatalog, builder, visitedEdges, visitedLeaves);
     }
+}
+
+void collectMergedGraph(const QueryReplayPlan& queryReplayPlan, const WorkerCatalog& workerCatalog, MergedReplayGraphBuilder& builder)
+{
+    const auto roots = queryReplayPlan.plan.getRootOperators();
+    PRECONDITION(roots.size() == 1, "Replay recording selection requires a single sink root per query plan, but got {} roots", roots.size());
+    PRECONDITION(roots.front().tryGetAs<SinkLogicalOperator>().has_value(), "Replay recording selection requires sink roots");
+
+    const auto rootFingerprint = structuralNodeFingerprint(roots.front());
+    builder.rootOperatorIds.insert(getOrCreateSyntheticOperatorId(builder, rootFingerprint));
+
+    std::unordered_set<RecordingPlanEdge, RecordingPlanEdgeHash> visitedEdges;
+    std::unordered_set<OperatorId> visitedLeaves;
+    collectMergedGraph(*roots.begin(), queryReplayPlan, workerCatalog, builder, visitedEdges, visitedLeaves);
+}
+
+void populateInstalledRecordings(MergedReplayContext& replayContext, const RecordingCatalog& recordingCatalog)
+{
+    for (const auto& recording : recordingCatalog.getRecordings() | std::views::values)
+    {
+        ++replayContext.installedRecordings[recording.structuralFingerprint];
+    }
+}
+
+std::vector<RecordingBoundaryCandidate> buildCandidates(
+    const std::unordered_map<RecordingPlanEdge, MergedBoundaryCandidateAccumulator, RecordingPlanEdgeHash>& candidatesByEdge,
+    const std::optional<ReplaySpecification>& defaultReplaySpecification,
+    const RecordingCatalog& recordingCatalog,
+    const MergedReplayContext& mergedReplayContext,
+    const WorkerCatalog& workerCatalog)
+{
+    std::vector<RecordingBoundaryCandidate> candidates;
+    candidates.reserve(candidatesByEdge.size());
+    const auto costModel = RecordingCostModel{};
+
+    for (const auto& accumulator : candidatesByEdge | std::views::values)
+    {
+        auto candidate = accumulator.candidate;
+        std::ranges::sort(candidate.beneficiaryQueries);
+        const auto replaySpecification = effectiveReplaySpecification(accumulator, defaultReplaySpecification);
+        const auto requestedRetention = requestedRetentionWindowMs(replaySpecification);
+
+        const auto routePlacements = enumerateRoutePlacements(candidate.upstreamNode, candidate.downstreamNode, workerCatalog.getTopology());
+        for (const auto& routePlacement : routePlacements)
+        {
+            const auto worker = workerCatalog.getWorker(routePlacement.node);
+            PRECONDITION(worker.has_value(), "Replay recording selection could not find worker {}", routePlacement.node);
+            const auto workerRuntimeMetrics = workerCatalog.getWorkerRuntimeMetrics(routePlacement.node);
+
+            for (const auto representation : supportedRecordingRepresentations())
+            {
+                const auto normalizedRecordedSubplanRoot = normalizeReplayFingerprintOperator(accumulator.recordedSubplanRoot);
+                const auto structuralFingerprint = createStructuralRecordingFingerprint(normalizedRecordedSubplanRoot, routePlacement.node);
+                const auto structurallyCompatibleRecordings = recordingCatalog.getRecordingsByStructuralFingerprint(
+                                                                 structuralFingerprint)
+                    | std::views::filter([&](const RecordingEntry& entry) { return entry.representation == representation; })
+                    | std::ranges::to<std::vector>();
+                const auto recordingFingerprint
+                    = createRecordingFingerprint(normalizedRecordedSubplanRoot, routePlacement.node, replaySpecification);
+                const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
+                const auto placementContext = RecordingPlacementContext{
+                    .sourcePlacement = candidate.upstreamNode,
+                    .sinkPlacement = candidate.downstreamNode,
+                    .recordingPlacement = routePlacement.node,
+                    .upstreamHopCount = routePlacement.upstreamHopCount,
+                    .downstreamHopCount = routePlacement.downstreamHopCount,
+                    .totalRouteHopCount = routePlacements.size() - 1,
+                    .mergedOccurrenceCount = mergedReplayContext.mergedOccurrenceCount(structuralFingerprint),
+                    .activeReplayConsumerCount = mergedReplayContext.activeReplayConsumerCount(structuralFingerprint),
+                    .installedRecordingCount = mergedReplayContext.installedRecordingCount(structuralFingerprint),
+                    .representation = representation};
+                const auto selection = RecordingSelection{
+                    .recordingId = recordingId,
+                    .node = routePlacement.node,
+                    .filePath = Replay::getRecordingFilePath(recordingId.getRawValue()),
+                    .structuralFingerprint = structuralFingerprint,
+                    .representation = representation,
+                    .beneficiaryQueries = candidate.beneficiaryQueries,
+                    .coversIncomingQuery = candidate.coversIncomingQuery};
+
+                if (candidate.coversIncomingQuery)
+                {
+                    const auto newRecordingCost = costModel.estimateNewRecording(
+                        accumulator.recordedSubplanRoot, placementContext, *worker, workerRuntimeMetrics, replaySpecification);
+                    candidate.options.push_back(RecordingCandidateOption{
+                        .decision = RecordingSelectionDecision::CreateNewRecording,
+                        .selection = selection,
+                        .cost = toCostBreakdown(newRecordingCost),
+                        .feasible = newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency,
+                        .infeasibilityReason = (newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency)
+                            ? std::string{}
+                            : describeNewRecordingInfeasibility(
+                                routePlacement.node, representation, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost)});
+                }
+
+                std::optional<RecordingEntry> bestReuseRecording;
+                std::optional<RecordingEntry> bestUpgradeRecording;
+                for (const auto& existingRecording : structurallyCompatibleRecordings)
+                {
+                    if (satisfiesRetentionCoverage(existingRecording.retentionWindowMs, requestedRetention))
+                    {
+                        if (!bestReuseRecording.has_value()
+                            || existingRecording.retentionWindowMs.value_or(0) < bestReuseRecording->retentionWindowMs.value_or(0))
+                        {
+                            bestReuseRecording = existingRecording;
+                        }
+                        continue;
+                    }
+
+                    if (!bestUpgradeRecording.has_value()
+                        || existingRecording.retentionWindowMs.value_or(0) > bestUpgradeRecording->retentionWindowMs.value_or(0))
+                    {
+                        bestUpgradeRecording = existingRecording;
+                    }
+                }
+
+                if (bestReuseRecording.has_value())
+                {
+                    const auto reuseCost = costModel.estimateReplayReuse(
+                        accumulator.recordedSubplanRoot,
+                        placementContext,
+                        *worker,
+                        workerRuntimeMetrics,
+                        replaySpecification,
+                        bestReuseRecording->retentionWindowMs);
+                    candidate.options.push_back(RecordingCandidateOption{
+                        .decision = RecordingSelectionDecision::ReuseExistingRecording,
+                        .selection =
+                            RecordingSelection{
+                                .recordingId = bestReuseRecording->id,
+                                .node = bestReuseRecording->node,
+                                .filePath = bestReuseRecording->filePath,
+                                .structuralFingerprint = bestReuseRecording->structuralFingerprint,
+                                .representation = bestReuseRecording->representation,
+                                .beneficiaryQueries = candidate.beneficiaryQueries,
+                                .coversIncomingQuery = candidate.coversIncomingQuery},
+                        .cost = toCostBreakdown(reuseCost),
+                        .feasible = reuseCost.satisfiesReplayLatency,
+                        .infeasibilityReason = reuseCost.satisfiesReplayLatency
+                            ? std::string{}
+                            : describeReplayReuseInfeasibility(
+                                routePlacement.node, representation, replaySpecification, workerRuntimeMetrics, reuseCost)});
+                }
+
+                if (candidate.coversIncomingQuery && bestUpgradeRecording.has_value())
+                {
+                    const auto upgradeCost = costModel.estimateRecordingUpgrade(
+                        accumulator.recordedSubplanRoot,
+                        placementContext,
+                        *worker,
+                        workerRuntimeMetrics,
+                        replaySpecification,
+                        bestUpgradeRecording->retentionWindowMs);
+                    candidate.options.push_back(RecordingCandidateOption{
+                        .decision = RecordingSelectionDecision::UpgradeExistingRecording,
+                        .selection = selection,
+                        .cost = toCostBreakdown(upgradeCost),
+                        .feasible = upgradeCost.fitsBudget && upgradeCost.satisfiesReplayLatency,
+                        .infeasibilityReason = (upgradeCost.fitsBudget && upgradeCost.satisfiesReplayLatency)
+                            ? std::string{}
+                            : describeRecordingUpgradeInfeasibility(
+                                routePlacement.node,
+                                representation,
+                                *worker,
+                                replaySpecification,
+                                workerRuntimeMetrics,
+                                upgradeCost,
+                                bestUpgradeRecording->retentionWindowMs)});
+                }
+            }
+        }
+
+        candidates.push_back(std::move(candidate));
+    }
+
+    return candidates;
 }
 }
 
@@ -479,16 +688,37 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
 
     PRECONDITION(workerCatalog != nullptr, "Recording selection requires a valid worker catalog");
 
-    const auto roots = placedPlan.getRootOperators();
-    PRECONDITION(roots.size() == 1, "Replay recording selection requires a single sink root, but got {} roots", roots.size());
-    PRECONDITION(roots.front().tryGetAs<SinkLogicalOperator>().has_value(), "Replay recording selection requires a sink root");
+    auto replayPlans = buildReplayPlans(placedPlan, replaySpecification, recordingCatalog);
+    PRECONDITION(!replayPlans.empty(), "Replay recording selection requires at least one replayable query plan");
+
+    MergedReplayGraphBuilder builder;
+    for (const auto& replayPlan : replayPlans)
+    {
+        collectMergedGraph(replayPlan, *workerCatalog, builder);
+    }
+    populateInstalledRecordings(builder.replayContext, recordingCatalog);
 
     RecordingCandidateSet candidateSet{};
-    candidateSet.rootOperatorId = roots.front().getId();
-    std::unordered_set<RecordingPlanEdge, RecordingPlanEdgeHash> visitedEdges;
-    std::unordered_set<OperatorId> visitedLeaves;
-    const auto mergedReplayContext = buildMergedReplayContext(placedPlan, recordingCatalog, *workerCatalog);
-    collectCandidates(*roots.begin(), replaySpecification, recordingCatalog, mergedReplayContext, *workerCatalog, candidateSet, visitedEdges, visitedLeaves);
+    candidateSet.candidates = buildCandidates(builder.candidatesByEdge, replaySpecification, recordingCatalog, builder.replayContext, *workerCatalog);
+    candidateSet.planEdges = builder.candidatesByEdge | std::views::keys | std::ranges::to<std::vector>();
+    candidateSet.leafOperatorIds = builder.leafOperatorIds | std::ranges::to<std::vector>();
+
+    if (builder.rootOperatorIds.size() == 1)
+    {
+        candidateSet.rootOperatorId = *builder.rootOperatorIds.begin();
+    }
+    else
+    {
+        candidateSet.rootOperatorId = OperatorId(builder.nextSyntheticOperatorId++);
+        for (const auto rootOperatorId : builder.rootOperatorIds)
+        {
+            candidateSet.planEdges.push_back(RecordingPlanEdge{.parentId = candidateSet.rootOperatorId, .childId = rootOperatorId});
+        }
+    }
+
+    std::ranges::sort(candidateSet.planEdges, {}, [](const RecordingPlanEdge& edge) { return std::pair{edge.parentId.getRawValue(), edge.childId.getRawValue()}; });
+    std::ranges::sort(candidateSet.leafOperatorIds, {}, &OperatorId::getRawValue);
+    std::ranges::sort(candidateSet.candidates, {}, [](const RecordingBoundaryCandidate& candidate) { return std::pair{candidate.edge.parentId.getRawValue(), candidate.edge.childId.getRawValue()}; });
     return candidateSet;
 }
 }

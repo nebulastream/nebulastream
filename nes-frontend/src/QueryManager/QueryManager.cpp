@@ -157,6 +157,13 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 | std::views::transform([](const auto& selection) { return selection.recordingId; }) | std::ranges::to<std::vector>()});
     for (const auto& selection : plan.getRecordingSelectionResult().selectedRecordings)
     {
+        auto ownerQueries
+            = selection.beneficiaryQueries | std::views::transform([](const auto& queryId) { return DistributedQueryId(queryId); })
+            | std::ranges::to<std::vector>();
+        if (selection.coversIncomingQuery && !std::ranges::contains(ownerQueries, id))
+        {
+            ownerQueries.push_back(id);
+        }
         this->state.recordingCatalog.upsertRecording(
             RecordingEntry{
                 .id = selection.recordingId,
@@ -165,7 +172,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
                 .structuralFingerprint = selection.structuralFingerprint,
                 .retentionWindowMs = plan.getReplaySpecification().and_then([](const auto& spec) { return spec.retentionWindowMs; }),
                 .representation = selection.representation,
-                .ownerQueries = {id}});
+                .ownerQueries = std::move(ownerQueries)});
     }
     if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
     {
