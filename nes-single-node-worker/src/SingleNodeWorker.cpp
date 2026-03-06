@@ -78,8 +78,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 /// This is a workaround to get again unique queryId after our initial worker refactoring.
 /// We might want to move this to the engine.
-static folly::Synchronized idGenerator{std::mt19937(
-    std::random_device()())}; /// NOLINT(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace) - required for unique query ID generation
+/// NOLINTNEXTLINE(cppcoreguidelines-avoid-non-const-global-variables, misc-use-anonymous-namespace, cert-err58-cpp) - required for unique query ID generation
+static folly::Synchronized idGenerator{std::mt19937(std::random_device()())};
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
