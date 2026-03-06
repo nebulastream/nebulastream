@@ -19,14 +19,13 @@
 #include <unordered_map>
 #include <utility>
 
+#include <LegacyOptimizer/RecordingFingerprint.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Replay/ReplayStorage.hpp>
-#include <Util/UUID.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 #include <LegacyOptimizer/OperatorPlacement.hpp>
@@ -52,7 +51,10 @@ DescriptorConfig::Config createDefaultStoreConfig()
 }
 
 RecordingSelectionResult
-RecordingSelectionPhase::apply(LogicalPlan& placedPlan, const std::optional<ReplaySpecification>& replaySpecification) const
+RecordingSelectionPhase::apply(
+    LogicalPlan& placedPlan,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const RecordingCatalog& recordingCatalog) const
 {
     if (!replaySpecification.has_value())
     {
@@ -80,6 +82,18 @@ RecordingSelectionPhase::apply(LogicalPlan& placedPlan, const std::optional<Repl
 
     const auto recordedChildren = newRoots.front().getChildren();
     const auto& recordedChild = recordedChildren.front();
+    const auto recordingFingerprint = createRecordingFingerprint(recordedChild, placement, replaySpecification);
+    const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
+
+    if (const auto existingRecording = recordingCatalog.getRecording(recordingId); existingRecording.has_value())
+    {
+        return RecordingSelectionResult{
+            .selectedRecordings = {RecordingSelection{
+                .recordingId = existingRecording->id,
+                .node = existingRecording->node,
+                .filePath = existingRecording->filePath}}};
+    }
+
     const auto estimatedStorageBytes = estimateRecordingStorageBytes(recordedChild.getOutputSchema());
     if (estimatedStorageBytes > worker->recordingStorageBudget)
     {
@@ -100,7 +114,7 @@ RecordingSelectionPhase::apply(LogicalPlan& placedPlan, const std::optional<Repl
 
     return RecordingSelectionResult{
         .selectedRecordings = {RecordingSelection{
-            .recordingId = RecordingId{fmt::format("recording-{}", UUIDToString(generateUUID()))},
+            .recordingId = recordingId,
             .node = placement,
             .filePath = std::string(Replay::DEFAULT_RECORDING_FILE_PATH)}}};
 }

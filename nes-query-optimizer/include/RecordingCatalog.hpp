@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <optional>
+#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -50,6 +51,14 @@ class RecordingCatalog
 public:
     [[nodiscard]] const auto& getQueryMetadata() const { return queryMetadata; }
     [[nodiscard]] const auto& getRecordings() const { return recordings; }
+    [[nodiscard]] std::optional<RecordingEntry> getRecording(const RecordingId& recordingId) const
+    {
+        if (const auto found = recordings.find(recordingId); found != recordings.end())
+        {
+            return found->second;
+        }
+        return std::nullopt;
+    }
 
     void upsertQueryMetadata(DistributedQueryId queryId, ReplayableQueryMetadata metadata)
     {
@@ -76,7 +85,21 @@ public:
 
     void upsertRecording(RecordingEntry recording)
     {
-        recordings.insert_or_assign(recording.id, std::move(recording));
+        const auto [it, inserted] = recordings.try_emplace(recording.id, std::move(recording));
+        if (inserted)
+        {
+            return;
+        }
+
+        it->second.node = std::move(recording.node);
+        it->second.filePath = std::move(recording.filePath);
+        for (const auto& owner : recording.ownerQueries)
+        {
+            if (!std::ranges::contains(it->second.ownerQueries, owner))
+            {
+                it->second.ownerQueries.push_back(owner);
+            }
+        }
     }
 };
 

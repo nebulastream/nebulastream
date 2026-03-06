@@ -39,7 +39,6 @@ DistributedLogicalPlan LegacyOptimizer::optimize(const LogicalPlan& plan) const
 DistributedLogicalPlan LegacyOptimizer::optimize(
     const LogicalPlan& plan, const std::optional<ReplaySpecification>& replaySpecification, const RecordingCatalog& recordingCatalog) const
 {
-    static_cast<void>(recordingCatalog);
     auto newPlan = LogicalPlan{plan};
     const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
     const auto inlineSinkBindingPhase = InlineSinkBindingPhase{sinkCatalog};
@@ -69,7 +68,7 @@ DistributedLogicalPlan LegacyOptimizer::optimize(
 
 
     BottomUpOperatorPlacer(workerCatalog).apply(newPlan);
-    const auto recordingSelectionResult = RecordingSelectionPhase(workerCatalog).apply(newPlan, replaySpecification);
+    const auto recordingSelectionResult = RecordingSelectionPhase(workerCatalog).apply(newPlan, replaySpecification, recordingCatalog);
     auto distributedPlan = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(newPlan);
     distributedPlan.setReplaySpecification(replaySpecification);
     distributedPlan.setRecordingSelectionResult(recordingSelectionResult);

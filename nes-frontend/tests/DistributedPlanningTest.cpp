@@ -388,6 +388,29 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRecordingBudge
     EXPECT_THROW((void)opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{}), Exception);
 }
 
+TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutReinsertingStore)
+{
+    auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    const auto firstPlan = opt->optimize(statement.plan, statement.replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(firstPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+
+    RecordingCatalog catalog;
+    const auto firstRecording = firstPlan.getRecordingSelectionResult().selectedRecordings.front();
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = firstRecording.recordingId,
+            .node = firstRecording.node,
+            .filePath = firstRecording.filePath,
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    const auto reusedPlan = opt->optimize(statement.plan, statement.replaySpecification, catalog);
+    ASSERT_EQ(reusedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+    EXPECT_EQ(reusedPlan.getRecordingSelectionResult().selectedRecordings.front(), firstRecording);
+
+    const LogicalPlan localPlan = reusedPlan[Host("localhost:8080")].front();
+    EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());
+}
+
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 {
     auto [opt, boundPlan] = loadAndBind("three_nodes.yaml");

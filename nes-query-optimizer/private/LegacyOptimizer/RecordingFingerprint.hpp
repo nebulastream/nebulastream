@@ -14,27 +14,19 @@
 #pragma once
 
 #include <optional>
-#include <RecordingCatalog.hpp>
+#include <string>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <RecordingSelectionResult.hpp>
 #include <Replay/ReplaySpecification.hpp>
-#include <Util/Pointers.hpp>
 
 namespace NES
 {
-class WorkerCatalog;
-class LogicalPlan;
 
-class RecordingSelectionPhase
-{
-public:
-    explicit RecordingSelectionPhase(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
+[[nodiscard]] std::string createRecordingFingerprint(
+    const LogicalOperator& recordedSubplanRoot, const Host& placement, const std::optional<ReplaySpecification>& replaySpecification);
 
-    [[nodiscard]] RecordingSelectionResult apply(
-        LogicalPlan& placedPlan,
-        const std::optional<ReplaySpecification>& replaySpecification,
-        const RecordingCatalog& recordingCatalog) const;
+[[nodiscard]] RecordingId recordingIdFromFingerprint(std::string_view fingerprint);
 
-private:
-    SharedPtr<const WorkerCatalog> workerCatalog;
-};
 }
