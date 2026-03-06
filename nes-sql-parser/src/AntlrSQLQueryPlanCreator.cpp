@@ -910,15 +910,28 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
             }
-            else if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, helpers.top().functionBuilder))
-            {
-                /// Remove exactly the functions used to create the 'logicalFunction' from the back of the function builder
-                helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - logicalFunction.value().getChildren().size());
-                helpers.top().functionBuilder.push_back(*logicalFunction);
-            }
             else
             {
-                throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
+                const auto numArgs = context->argument.size();
+                if (numArgs > helpers.top().functionBuilder.size())
+                {
+                    throw InvalidQuerySyntax(
+                        "Function '{}' expects {} arguments but only {} are available",
+                        funcName,
+                        numArgs,
+                        helpers.top().functionBuilder.size());
+                }
+                auto argsBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numArgs);
+                std::vector<LogicalFunction> funcArgs(argsBegin, helpers.top().functionBuilder.end());
+                if (auto logicalFunction = LogicalFunctionProvider::tryProvide(funcName, std::move(funcArgs)))
+                {
+                    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numArgs);
+                    helpers.top().functionBuilder.push_back(*logicalFunction);
+                }
+                else
+                {
+                    throw InvalidQuerySyntax("Unknown (aggregation) function: {}, resolved to token type: {}", funcName, tokenType);
+                }
             }
     }
 
