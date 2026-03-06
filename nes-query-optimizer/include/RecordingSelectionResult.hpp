@@ -31,10 +31,12 @@ enum class RecordingSelectionDecision
 {
     CreateNewRecording,
     ReuseExistingRecording,
+    SkipRecording,
 };
 
 struct RecordingCostBreakdown
 {
+    double decisionCost = 0.0;
     size_t estimatedStorageBytes = 0;
     size_t operatorCount = 0;
     size_t estimatedReplayBandwidthBytesPerSecond = 0;
@@ -45,7 +47,7 @@ struct RecordingCostBreakdown
     bool fitsBudget = false;
     bool satisfiesReplayLatency = true;
 
-    [[nodiscard]] double totalCost() const { return maintenanceCost + replayCost; }
+    [[nodiscard]] double totalCost() const { return decisionCost; }
     [[nodiscard]] bool operator==(const RecordingCostBreakdown& other) const = default;
 };
 
@@ -58,14 +60,21 @@ struct RecordingSelection
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };
 
+struct RecordingSelectionAlternative
+{
+    RecordingSelectionDecision decision = RecordingSelectionDecision::CreateNewRecording;
+    RecordingCostBreakdown cost;
+
+    [[nodiscard]] bool operator==(const RecordingSelectionAlternative& other) const = default;
+};
+
 struct RecordingSelectionExplanation
 {
-    RecordingSelection selection;
-    RecordingSelectionDecision decision = RecordingSelectionDecision::CreateNewRecording;
+    std::optional<RecordingSelection> selection = std::nullopt;
+    RecordingSelectionDecision decision = RecordingSelectionDecision::SkipRecording;
     std::string reason;
     RecordingCostBreakdown chosenCost;
-    std::optional<RecordingSelectionDecision> alternativeDecision = std::nullopt;
-    std::optional<RecordingCostBreakdown> alternativeCost = std::nullopt;
+    std::vector<RecordingSelectionAlternative> alternatives;
 
     [[nodiscard]] bool operator==(const RecordingSelectionExplanation& other) const = default;
 };
@@ -75,7 +84,7 @@ struct RecordingSelectionResult
     std::vector<RecordingSelection> selectedRecordings;
     std::vector<RecordingSelectionExplanation> explanations;
 
-    [[nodiscard]] bool empty() const { return selectedRecordings.empty(); }
+    [[nodiscard]] bool empty() const { return selectedRecordings.empty() && explanations.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;
 };
 

@@ -436,11 +436,11 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreInsertsStoreBeforeSink)
     EXPECT_EQ(selectedRecording.filePath, Replay::getRecordingFilePath(selectedRecording.recordingId.getRawValue()));
     EXPECT_NE(selectedRecording.filePath, Replay::getTimeTravelReadAliasPath());
     EXPECT_EQ(selectedRecording.node, Host("localhost:8080"));
-    EXPECT_EQ(selectionExplanation.selection, selectedRecording);
+    ASSERT_TRUE(selectionExplanation.selection.has_value());
+    EXPECT_EQ(*selectionExplanation.selection, selectedRecording);
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_EQ(selectionExplanation.reason, "no exact-match recording fingerprint found in recording catalog");
-    EXPECT_FALSE(selectionExplanation.alternativeDecision.has_value());
-    EXPECT_FALSE(selectionExplanation.alternativeCost.has_value());
+    EXPECT_TRUE(selectionExplanation.alternatives.empty());
     EXPECT_GT(selectionExplanation.chosenCost.totalCost(), 0.0);
 
     const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
@@ -523,15 +523,57 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
     ASSERT_EQ(reusedPlan.getRecordingSelectionResult().explanations.size(), 1);
     EXPECT_EQ(reusedPlan.getRecordingSelectionResult().selectedRecordings.front(), firstRecording);
     const auto& selectionExplanation = reusedPlan.getRecordingSelectionResult().explanations.front();
-    EXPECT_EQ(selectionExplanation.selection, firstRecording);
+    ASSERT_TRUE(selectionExplanation.selection.has_value());
+    EXPECT_EQ(*selectionExplanation.selection, firstRecording);
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::ReuseExistingRecording);
-    EXPECT_EQ(selectionExplanation.reason, "exact-match recording fingerprint found in recording catalog");
-    ASSERT_TRUE(selectionExplanation.alternativeDecision.has_value());
-    EXPECT_EQ(*selectionExplanation.alternativeDecision, RecordingSelectionDecision::CreateNewRecording);
-    ASSERT_TRUE(selectionExplanation.alternativeCost.has_value());
-    EXPECT_LT(selectionExplanation.chosenCost.totalCost(), selectionExplanation.alternativeCost->totalCost());
+    EXPECT_EQ(
+        selectionExplanation.reason,
+        "exact-match recording fingerprint found in recording catalog and reuse_existing_recording was the lowest-cost feasible decision");
+    ASSERT_EQ(selectionExplanation.alternatives.size(), 1);
+    EXPECT_EQ(selectionExplanation.alternatives.front().decision, RecordingSelectionDecision::CreateNewRecording);
+    EXPECT_LT(selectionExplanation.chosenCost.totalCost(), selectionExplanation.alternatives.front().cost.totalCost());
 
     const LogicalPlan localPlan = reusedPlan[Host("localhost:8080")].front();
+    EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());
+}
+
+TEST_F(DistributedPlanningTest, TimeTravelStoreCanSkipRecordingWhenRecomputeFallbackIsAllowed)
+{
+    auto [seedOptimizer, seedStatement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    const auto seededPlan = seedOptimizer->optimize(seedStatement.plan, seedStatement.replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(seededPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+
+    RecordingCatalog catalog;
+    const auto seededRecording = seededPlan.getRecordingSelectionResult().selectedRecordings.front();
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = seededRecording.recordingId,
+            .node = seededRecording.node,
+            .filePath = seededRecording.filePath,
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    auto [opt, statement] = loadAndBindExplainStatement("basic_time_travel_store_allow_recompute_fallback.yaml");
+    const auto skippedPlan = opt->optimize(statement.plan, statement.replaySpecification, catalog);
+
+    EXPECT_TRUE(skippedPlan.getRecordingSelectionResult().selectedRecordings.empty());
+    ASSERT_EQ(skippedPlan.getRecordingSelectionResult().explanations.size(), 1);
+    const auto& selectionExplanation = skippedPlan.getRecordingSelectionResult().explanations.front();
+    EXPECT_FALSE(selectionExplanation.selection.has_value());
+    EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::SkipRecording);
+    EXPECT_NE(selectionExplanation.reason.find("recompute cost"), std::string::npos);
+    EXPECT_EQ(selectionExplanation.alternatives.size(), 2);
+
+    bool sawReuseAlternative = false;
+    bool sawCreateAlternative = false;
+    for (const auto& alternative : selectionExplanation.alternatives)
+    {
+        sawReuseAlternative = sawReuseAlternative || alternative.decision == RecordingSelectionDecision::ReuseExistingRecording;
+        sawCreateAlternative = sawCreateAlternative || alternative.decision == RecordingSelectionDecision::CreateNewRecording;
+    }
+    EXPECT_TRUE(sawReuseAlternative);
+    EXPECT_TRUE(sawCreateAlternative);
+
+    const LogicalPlan localPlan = skippedPlan[Host("localhost:8080")].front();
     EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());
 }
 
@@ -580,6 +622,50 @@ TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecor
     EXPECT_NE(explainResult->explainString.find("maintenance_cost="), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("replay_cost="), std::string::npos);
     EXPECT_NE(explainResult->explainString.find("recompute_cost="), std::string::npos);
+}
+
+TEST_F(DistributedPlanningTest, ExplainIncludesSkipRecordingDecisionWhenRecomputeFallbackWins)
+{
+    auto [seedOptimizer, seedStatement] = loadAndBindExplainStatement("basic_time_travel_store.yaml");
+    const auto seededPlan = seedOptimizer->optimize(seedStatement.plan, seedStatement.replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(seededPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+
+    RecordingCatalog catalog;
+    const auto seededRecording = seededPlan.getRecordingSelectionResult().selectedRecordings.front();
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = seededRecording.recordingId,
+            .node = seededRecording.node,
+            .filePath = seededRecording.filePath,
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    auto boundStatement = loadAndBindExplainStatementWithCatalogs("basic_time_travel_store_allow_recompute_fallback.yaml");
+    SharedPtr<const LegacyOptimizer> optimizer = std::make_shared<LegacyOptimizer>(
+        copyPtr(boundStatement.catalogs.sourceCatalog),
+        copyPtr(boundStatement.catalogs.sinkCatalog),
+        copyPtr(boundStatement.catalogs.workerCatalog));
+    SharedPtr<QueryManager> queryManager = std::make_shared<QueryManager>(
+        copyPtr(boundStatement.catalogs.workerCatalog),
+        [](const WorkerConfig&)
+        {
+            WorkerStatus status;
+            status.until = std::chrono::system_clock::time_point(std::chrono::milliseconds(1));
+            status.replayMetrics = WorkerStatus::ReplayMetrics{
+                .recordingStorageBytes = 0,
+                .recordingFileCount = 0,
+                .activeQueryCount = 0};
+            return std::make_unique<FakeExplainWorkerStatusBackend>(status);
+        },
+        QueryManagerState{.queries = {}, .recordingCatalog = catalog});
+
+    QueryStatementHandler handler(std::move(queryManager), std::move(optimizer), copyPtr(boundStatement.catalogs.sourceCatalog));
+    const auto explainResult = handler(boundStatement.statement);
+    ASSERT_TRUE(explainResult.has_value()) << explainResult.error().what();
+
+    EXPECT_NE(explainResult->explainString.find("Selected recording boundary: none"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("decision=skip_recording"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("alternative_cost: decision=reuse_existing_recording"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("alternative_cost: decision=create_new_recording"), std::string::npos);
 }
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)

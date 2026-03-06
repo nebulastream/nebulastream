@@ -17,8 +17,10 @@
 #include <algorithm>
 #include <chrono>
 #include <cstdint>
+#include <limits>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include <LegacyOptimizer/RecordingCostModel.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
@@ -29,6 +31,7 @@
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 #include <ErrorHandling.hpp>
+#include <fmt/format.h>
 
 #include <LegacyOptimizer/OperatorPlacement.hpp>
 
@@ -44,9 +47,15 @@ std::string replayLatencyLimitDescription(const std::optional<ReplaySpecificatio
         .value_or("none");
 }
 
-RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate)
+bool allowRecomputeFallback(const std::optional<ReplaySpecification>& replaySpecification)
+{
+    return replaySpecification.transform([](const auto& spec) { return spec.allowRecomputeFallback; }).value_or(false);
+}
+
+RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate, double decisionCost)
 {
     return RecordingCostBreakdown{
+        .decisionCost = decisionCost,
         .estimatedStorageBytes = estimate.estimatedStorageBytes,
         .operatorCount = estimate.operatorCount,
         .estimatedReplayBandwidthBytesPerSecond = estimate.estimatedReplayBandwidthBytesPerSecond,
@@ -96,43 +105,156 @@ RecordingSelectionPhase::apply(
     const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
     const auto recordingFilePath = Replay::getRecordingFilePath(recordingId.getRawValue());
     const auto costModel = RecordingCostModel{};
+    const auto newSelection = RecordingSelection{
+        .recordingId = recordingId,
+        .node = placement,
+        .filePath = recordingFilePath};
+    const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
+    const auto newRecordingFeasible = newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency;
+
+    const auto buildAlternative = [](RecordingSelectionDecision decision, const RecordingCostEstimate& estimate)
+    {
+        const auto decisionCost = decision == RecordingSelectionDecision::SkipRecording ? estimate.recomputeCost : estimate.totalCost();
+        return RecordingSelectionAlternative{.decision = decision, .cost = toCostBreakdown(estimate, decisionCost)};
+    };
+
+    const auto buildSelectionResult =
+        [](std::optional<RecordingSelection> selection,
+           RecordingSelectionDecision decision,
+           std::string reason,
+           const RecordingCostEstimate& estimate,
+           std::vector<RecordingSelectionAlternative> alternatives)
+    {
+        const auto decisionCost = decision == RecordingSelectionDecision::SkipRecording ? estimate.recomputeCost : estimate.totalCost();
+        return RecordingSelectionResult{
+            .selectedRecordings = selection.has_value() ? std::vector<RecordingSelection>{*selection} : std::vector<RecordingSelection>{},
+            .explanations = {RecordingSelectionExplanation{
+                .selection = std::move(selection),
+                .decision = decision,
+                .reason = std::move(reason),
+                .chosenCost = toCostBreakdown(estimate, decisionCost),
+                .alternatives = std::move(alternatives)}}};
+    };
 
     if (const auto existingRecording = recordingCatalog.getRecording(recordingId); existingRecording.has_value())
     {
+        const auto reuseSelection = RecordingSelection{
+            .recordingId = existingRecording->id,
+            .node = existingRecording->node,
+            .filePath = existingRecording->filePath};
         const auto reuseCost = costModel.estimateReplayReuse(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
-        const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
-        if (!reuseCost.satisfiesReplayLatency)
+        const auto reuseFeasible = reuseCost.satisfiesReplayLatency;
+        const auto recomputeFallbackAllowed = allowRecomputeFallback(replaySpecification);
+        std::vector<RecordingSelectionAlternative> skipAlternatives = {
+            buildAlternative(RecordingSelectionDecision::ReuseExistingRecording, reuseCost),
+            buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)};
+
+        if (recomputeFallbackAllowed)
         {
-            throw PlacementFailure(
-                "Replay reuse on {} would exceed the replay latency limit of {} ms (estimated latency {} ms, replay cost {:.2f},"
-                " recompute cost {:.2f}, write pressure {} B/s)",
-                placement,
-                replayLatencyLimitDescription(replaySpecification),
-                reuseCost.estimatedReplayLatency.count(),
-                reuseCost.replayCost,
-                reuseCost.recomputeCost,
-                workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
+            auto bestRecordingDecisionCost = std::numeric_limits<double>::infinity();
+            if (reuseFeasible)
+            {
+                bestRecordingDecisionCost = std::min(bestRecordingDecisionCost, reuseCost.totalCost());
+            }
+            if (newRecordingFeasible)
+            {
+                bestRecordingDecisionCost = std::min(bestRecordingDecisionCost, newRecordingCost.totalCost());
+            }
+
+            if (!reuseFeasible && !newRecordingFeasible)
+            {
+                return buildSelectionResult(
+                    std::nullopt,
+                    RecordingSelectionDecision::SkipRecording,
+                    "no feasible recording candidate satisfied the current budget and latency constraints; recompute fallback selected",
+                    reuseCost,
+                    std::move(skipAlternatives));
+            }
+
+            if (reuseCost.recomputeCost <= bestRecordingDecisionCost)
+            {
+                return buildSelectionResult(
+                    std::nullopt,
+                    RecordingSelectionDecision::SkipRecording,
+                    fmt::format(
+                        "recompute cost {:.2f} beat reuse_existing_recording cost {:.2f} and create_new_recording cost {:.2f}",
+                        reuseCost.recomputeCost,
+                        reuseCost.totalCost(),
+                        newRecordingCost.totalCost()),
+                    reuseCost,
+                    std::move(skipAlternatives));
+            }
         }
 
-        return RecordingSelectionResult{
-            .selectedRecordings = {RecordingSelection{
-                .recordingId = existingRecording->id,
-                .node = existingRecording->node,
-                .filePath = existingRecording->filePath}},
-            .explanations = {RecordingSelectionExplanation{
-                .selection
-                = RecordingSelection{
-                    .recordingId = existingRecording->id,
-                    .node = existingRecording->node,
-                    .filePath = existingRecording->filePath},
-                .decision = RecordingSelectionDecision::ReuseExistingRecording,
-                .reason = "exact-match recording fingerprint found in recording catalog",
-                .chosenCost = toCostBreakdown(reuseCost),
-                .alternativeDecision = RecordingSelectionDecision::CreateNewRecording,
-                .alternativeCost = toCostBreakdown(newRecordingCost)}}};
+        if (reuseFeasible && (!newRecordingFeasible || reuseCost.totalCost() <= newRecordingCost.totalCost()))
+        {
+            std::vector<RecordingSelectionAlternative> alternatives = {
+                buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)};
+            if (recomputeFallbackAllowed)
+            {
+                alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, reuseCost));
+            }
+            return buildSelectionResult(
+                reuseSelection,
+                RecordingSelectionDecision::ReuseExistingRecording,
+                "exact-match recording fingerprint found in recording catalog and reuse_existing_recording was the lowest-cost feasible decision",
+                reuseCost,
+                std::move(alternatives));
+        }
+
+        if (newRecordingFeasible)
+        {
+            std::vector<RecordingSelectionAlternative> alternatives = {
+                buildAlternative(RecordingSelectionDecision::ReuseExistingRecording, reuseCost)};
+            if (recomputeFallbackAllowed)
+            {
+                alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, newRecordingCost));
+            }
+
+            auto store = StoreLogicalOperator(
+                             StoreLogicalOperator::validateAndFormatConfig(
+                                 {{"file_path", recordingFilePath}, {"append", "false"}, {"header", "true"}}))
+                             .withTraitSet(newRoots.front().getTraitSet())
+                             .withInferredSchema({recordedChild.getOutputSchema()})
+                             .withChildren(recordedChildren);
+            newRoots.front() = newRoots.front().withChildren({std::move(store)});
+            placedPlan = placedPlan.withRootOperators(newRoots);
+
+            return buildSelectionResult(
+                newSelection,
+                RecordingSelectionDecision::CreateNewRecording,
+                "create_new_recording was the lowest-cost feasible decision for this replay request",
+                newRecordingCost,
+                std::move(alternatives));
+        }
+
+        throw PlacementFailure(
+            "Replay reuse on {} would exceed the replay latency limit of {} ms (estimated latency {} ms, replay cost {:.2f},"
+            " recompute cost {:.2f}, write pressure {} B/s)",
+            placement,
+            replayLatencyLimitDescription(replaySpecification),
+            reuseCost.estimatedReplayLatency.count(),
+            reuseCost.replayCost,
+            reuseCost.recomputeCost,
+            workerRuntimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0));
     }
 
-    const auto newRecordingCost = costModel.estimateNewRecording(recordedChild, *worker, workerRuntimeMetrics, replaySpecification);
+    if (allowRecomputeFallback(replaySpecification)
+        && (!newRecordingFeasible || newRecordingCost.recomputeCost <= newRecordingCost.totalCost()))
+    {
+        return buildSelectionResult(
+            std::nullopt,
+            RecordingSelectionDecision::SkipRecording,
+            newRecordingFeasible
+                ? fmt::format(
+                      "recompute cost {:.2f} beat create_new_recording cost {:.2f}",
+                      newRecordingCost.recomputeCost,
+                      newRecordingCost.totalCost())
+                : "create_new_recording was not feasible under the current budget and latency constraints; recompute fallback selected",
+            newRecordingCost,
+            {buildAlternative(RecordingSelectionDecision::CreateNewRecording, newRecordingCost)});
+    }
+
     if (!newRecordingCost.fitsBudget)
     {
         throw PlacementFailure(
@@ -179,19 +301,17 @@ RecordingSelectionPhase::apply(
     newRoots.front() = newRoots.front().withChildren({std::move(store)});
     placedPlan = placedPlan.withRootOperators(newRoots);
 
-    return RecordingSelectionResult{
-        .selectedRecordings = {RecordingSelection{
-            .recordingId = recordingId,
-            .node = placement,
-            .filePath = recordingFilePath}},
-        .explanations = {RecordingSelectionExplanation{
-            .selection
-            = RecordingSelection{
-                .recordingId = recordingId,
-                .node = placement,
-                .filePath = recordingFilePath},
-            .decision = RecordingSelectionDecision::CreateNewRecording,
-            .reason = "no exact-match recording fingerprint found in recording catalog",
-            .chosenCost = toCostBreakdown(newRecordingCost)}}};
+    std::vector<RecordingSelectionAlternative> alternatives;
+    if (allowRecomputeFallback(replaySpecification))
+    {
+        alternatives.push_back(buildAlternative(RecordingSelectionDecision::SkipRecording, newRecordingCost));
+    }
+
+    return buildSelectionResult(
+        newSelection,
+        RecordingSelectionDecision::CreateNewRecording,
+        "no exact-match recording fingerprint found in recording catalog",
+        newRecordingCost,
+        std::move(alternatives));
 }
 }

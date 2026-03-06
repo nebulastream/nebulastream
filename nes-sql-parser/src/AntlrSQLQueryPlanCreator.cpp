@@ -1035,15 +1035,14 @@ void AntlrSQLQueryPlanCreator::exitTimeTravelClause(AntlrSQLParser::TimeTravelCl
 
     for (auto* parameter : context->parameter)
     {
-        const auto durationMs = buildDurationInMilliseconds(from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
-
         if (parameter->RETENTION() != nullptr)
         {
             if (replayParameters.retentionWindowMs.has_value())
             {
                 throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify RETENTION at most once");
             }
-            replayParameters.retentionWindowMs = durationMs;
+            replayParameters.retentionWindowMs = buildDurationInMilliseconds(
+                from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
             continue;
         }
 
@@ -1053,7 +1052,18 @@ void AntlrSQLQueryPlanCreator::exitTimeTravelClause(AntlrSQLParser::TimeTravelCl
             {
                 throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify REPLAY_LATENCY at most once");
             }
-            replayParameters.replayLatencyLimitMs = durationMs;
+            replayParameters.replayLatencyLimitMs = buildDurationInMilliseconds(
+                from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
+            continue;
+        }
+
+        if (parameter->ALLOW_RECOMPUTE_FALLBACK() != nullptr)
+        {
+            if (replayParameters.allowRecomputeFallback)
+            {
+                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify ALLOW_RECOMPUTE_FALLBACK at most once");
+            }
+            replayParameters.allowRecomputeFallback = true;
             continue;
         }
 
