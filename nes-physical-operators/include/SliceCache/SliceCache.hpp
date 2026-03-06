@@ -57,13 +57,15 @@ public:
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual nautilus::val<int8_t*>
     getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) = 0;
-    void setStartOfEntries(const nautilus::val<SliceCacheEntry*>& startOfEntries);
-    uint64_t getCacheMemorySize() const;
+    virtual void setStartOfEntries(int8_t* startOfEntries);
+    virtual uint64_t getCacheMemorySize() const;
 
 protected:
-    /// Members for iterating over the cache
-    // can I maybe not have this as a SliceCacheEntry*?
-    nautilus::val<SliceCacheEntry*> startOfEntries;
+    /// Raw pointer to the start of the cache entries in the operator handler memory.
+    /// Stored as a raw pointer (not val<>) so that val wrappers can be created locally
+    /// inside each method during tracing. This ensures traceConstant(real_ptr) is called
+    /// inside the tracer, producing a proper traced constant with the real address.
+    int8_t* startOfEntriesRaw;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
 };

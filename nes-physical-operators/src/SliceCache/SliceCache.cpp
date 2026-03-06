@@ -22,7 +22,7 @@
 namespace NES
 {
 SliceCache::SliceCache(const uint64_t numberOfEntries, const uint64_t sizeOfEntry)
-    : startOfEntries(nullptr), numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
+    : startOfEntriesRaw(nullptr), numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
 {
 }
 
@@ -36,9 +36,9 @@ std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfigu
     return std::make_unique<SliceCacheNone>();
 }
 
-void SliceCache::setStartOfEntries(const nautilus::val<SliceCacheEntry*>& startOfEntries)
+void SliceCache::setStartOfEntries(int8_t* startOfEntries)
 {
-    this->startOfEntries = startOfEntries;
+    this->startOfEntriesRaw = startOfEntries;
 }
 
 uint64_t SliceCache::getCacheMemorySize() const
