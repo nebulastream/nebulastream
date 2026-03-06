@@ -12,4 +12,7 @@
 
 add_source_files(nes-query-optimizer
         DecideJoinTypes.cpp
-        DecideMemoryLayout.cpp)
+        DecideMemoryLayout.cpp
+        DecideFieldMappings.cpp
+        DecideFieldOrder.cpp
+)

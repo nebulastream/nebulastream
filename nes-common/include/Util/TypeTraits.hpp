@@ -40,4 +40,21 @@ struct IsOptional<std::optional<T>> : std::true_type
 
 template <typename T>
 concept Optional = IsOptional<T>::value;
+
+template <template <auto> class T, auto N>
+constexpr auto extractParameter(const T<N>&)
+{
+    return N;
+}
+
+// Type trait version to extract template parameter from a type
+template <typename T>
+struct ExtractParameter;
+
+template <template <auto> class T, auto N>
+struct ExtractParameter<T<N>>
+{
+    static constexpr auto value = N;
+};
+
 }

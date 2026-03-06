@@ -11,8 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-logical-operators
-        OperatorSerializationUtil.cpp
         QueryPlanSerializationUtil.cpp
-        WindowTypeReflection.cpp
+        OperatorMappingContext.cpp
+        ReflectedOperator.cpp
         LogicalFunctionReflection.cpp
+        WindowAggregationLogicalFunctionReflection.cpp
 )

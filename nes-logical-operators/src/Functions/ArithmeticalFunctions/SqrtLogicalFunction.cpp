@@ -20,8 +20,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/SqrtLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -29,11 +30,12 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : dataType(child.getDataType()), child(child) { };
+SqrtLogicalFunction::SqrtLogicalFunction(const LogicalFunction& child) : child(child) { };
 
 bool SqrtLogicalFunction::operator==(const SqrtLogicalFunction& rhs) const
 {
@@ -54,17 +56,16 @@ DataType SqrtLogicalFunction::getDataType() const
     return dataType;
 };
 
-SqrtLogicalFunction SqrtLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
+    copy.child = child.withInferredDataType(schema);
+    if (!copy.child.getDataType().isNumeric())
+    {
+        throw CannotInferStamp("Cannot apply sqrt function on non-numeric input function {}", copy.child);
+    }
+    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     return copy;
-};
-
-LogicalFunction SqrtLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChild = child.withInferredDataType(schema);
-    return withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64)).withChildren({newChild});
 };
 
 std::vector<LogicalFunction> SqrtLogicalFunction::getChildren() const

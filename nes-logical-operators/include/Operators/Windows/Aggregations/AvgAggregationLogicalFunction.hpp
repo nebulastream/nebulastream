@@ -17,11 +17,10 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
 #include <SerializableVariantDescriptor.pb.h>
+#include <Functions/LogicalFunction.hpp>
 
 namespace NES
 {
@@ -29,41 +28,21 @@ namespace NES
 class AvgAggregationLogicalFunction final
 {
 public:
-    AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField);
-    explicit AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    ~AvgAggregationLogicalFunction() = default;
+    explicit AvgAggregationLogicalFunction(AggregationFieldAccess inputFunction);
 
-    [[nodiscard]] static std::string_view getName() noexcept;
-    [[nodiscard]] std::string toString() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
-
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] AvgAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
+    [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] AvgAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] AvgAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] AvgAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] AvgAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
-    [[nodiscard]] AvgAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
-    [[nodiscard]] AvgAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
-    [[nodiscard]] bool operator==(const AvgAggregationLogicalFunction& otherAvgAggregationLogicalFunction) const;
+    [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    [[nodiscard]] bool operator==(const AvgAggregationLogicalFunction& other) const;
 
 private:
+    AggregationFieldAccess inputFunction;
     static constexpr std::string_view NAME = "Avg";
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::UNDEFINED;
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
-
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
 };
-
-static_assert(WindowAggregationFunctionConcept<AvgAggregationLogicalFunction>);
 
 template <>
 struct Reflector<AvgAggregationLogicalFunction>
@@ -76,14 +55,14 @@ struct Unreflector<AvgAggregationLogicalFunction>
 {
     AvgAggregationLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
+
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::AvgAggregationLogicalFunction>
 {
-struct ReflectedAvgAggregationLogicalFunction
-{
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
+    size_t operator()(const NES::AvgAggregationLogicalFunction& aggregationFunction) const noexcept;
 };
 
-}
+static_assert(NES::WindowAggregationFunctionConcept<NES::AvgAggregationLogicalFunction>);
+

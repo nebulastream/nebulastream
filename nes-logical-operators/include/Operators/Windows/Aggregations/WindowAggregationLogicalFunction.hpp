@@ -20,14 +20,18 @@
 #include <string>
 #include <string_view>
 #include <utility>
+
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <SerializableVariantDescriptor.pb.h>
 #include <nameof.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Functions/UnboundFieldAccessLogicalFunction.hpp"
+#include "Util/PlanRenderer.hpp"
 
 namespace NES
 {
@@ -40,42 +44,35 @@ template <typename Checked = NES::detail::ErasedWindowAggregationFunction>
 struct TypedWindowAggregationLogicalFunction;
 using WindowAggregationLogicalFunction = TypedWindowAggregationLogicalFunction<>;
 
+using AggregationFieldAccess
+    = std::variant<TypedLogicalFunction<FieldAccessLogicalFunction>, TypedLogicalFunction<UnboundFieldAccessLogicalFunction>>;
 /// Concept defining the interface for all logical operators in the query plan.
 /// This concept defines the common interface that all logical operators must implement.
 /// Logical operators represent operations in the query plan and are used during query
 /// planning and optimization.
 template <typename T>
 concept WindowAggregationFunctionConcept = requires(
-    const T& thisFunction, const Schema& schema, DataType dataType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
-    { thisFunction.getInputStamp() } -> std::convertible_to<DataType>;
+    const T& thisFunction,
+    const Schema<Field, Unordered>& schema,
+    DataType dataType,
+    AggregationFieldAccess fieldAccessLogicalFunction,
+    ExplainVerbosity verbosity,
+    const T& rhs) {
+    { thisFunction.getAggregateType() } -> std::convertible_to<DataType>;
 
-    { thisFunction.getPartialAggregateStamp() } -> std::convertible_to<DataType>;
+    { thisFunction.getInputFunction() } -> std::convertible_to<AggregationFieldAccess>;
 
-    { thisFunction.getFinalAggregateStamp() } -> std::convertible_to<DataType>;
+    { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
 
-    { thisFunction.getOnField() } -> std::convertible_to<FieldAccessLogicalFunction>;
-
-    { thisFunction.getAsField() } -> std::convertible_to<FieldAccessLogicalFunction>;
-
-    { thisFunction.withInputStamp(dataType) } -> std::convertible_to<T>;
-
-    { thisFunction.withPartialAggregateStamp(dataType) } -> std::convertible_to<T>;
-
-    { thisFunction.withFinalAggregateStamp(dataType) } -> std::convertible_to<T>;
-
-    { thisFunction.withOnField(fieldAccessLogicalFunction) } -> std::convertible_to<T>;
-
-    { thisFunction.withAsField(fieldAccessLogicalFunction) } -> std::convertible_to<T>;
-
-    { thisFunction.toString() } -> std::convertible_to<std::string>;
-
-    { thisFunction.withInferredStamp(schema) } -> std::convertible_to<T>;
+    { thisFunction.withInferredType(schema) } -> std::convertible_to<T>;
 
     { thisFunction.reflect() } -> std::convertible_to<Reflected>;
 
     { thisFunction.getName() } noexcept -> std::convertible_to<std::string_view>;
 
     { thisFunction == rhs } -> std::convertible_to<bool>;
+
+    { std::hash<T>{}(thisFunction) } -> std::convertible_to<std::size_t>;
 };
 
 namespace detail
@@ -86,21 +83,14 @@ struct ErasedWindowAggregationFunction
     virtual ~ErasedWindowAggregationFunction() = default;
 
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
-    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual Reflected reflect() const = 0;
+    [[nodiscard]] virtual size_t hash() const = 0;
     [[nodiscard]] virtual bool equals(const ErasedWindowAggregationFunction& other) const = 0;
-    [[nodiscard]] virtual DataType getInputStamp() const = 0;
-    [[nodiscard]] virtual DataType getPartialAggregateStamp() const = 0;
-    [[nodiscard]] virtual DataType getFinalAggregateStamp() const = 0;
-    [[nodiscard]] virtual FieldAccessLogicalFunction getOnField() const = 0;
-    [[nodiscard]] virtual FieldAccessLogicalFunction getAsField() const = 0;
+    [[nodiscard]] virtual DataType getAggregateType() const = 0;
+    [[nodiscard]] virtual AggregationFieldAccess getInputFunction() const = 0;
 
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const = 0;
+    [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const = 0;
 
     friend bool operator==(const ErasedWindowAggregationFunction& lhs, const ErasedWindowAggregationFunction& rhs)
     {
@@ -137,6 +127,9 @@ struct TypedWindowAggregationLogicalFunction
     /// @tparam T The type of the function. Must satisfy LogicalFunctionConcept concept.
     /// @param op The function to wrap.
     template <typename T>
+    requires requires(const T& function) {
+        { function.getAggregateType() } -> std::convertible_to<DataType>;
+    }
     TypedWindowAggregationLogicalFunction(const T& op) /// NOLINT(google-explicit-constructor)
         : self(std::make_shared<NES::detail::WindowAggregationFunctionModel<T>>(op))
     {
@@ -261,49 +254,18 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] std::string_view getName() const noexcept { return self->getName(); }
 
-    [[nodiscard]] std::string toString() const { return self->toString(); }
+    [[nodiscard]] std::string explain(const ExplainVerbosity verbosity) const { return self->explain(verbosity); }
 
     [[nodiscard]] Reflected reflect() const { return self->reflect(); }
 
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const
+    [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const
     {
-        return self->withInferredStamp(schema);
+        return self->withInferredType(schema);
     }
 
-    [[nodiscard]] DataType getInputStamp() const { return self->getInputStamp(); }
+    [[nodiscard]] DataType getAggregateType() const { return self->getAggregateType(); }
 
-    [[nodiscard]] DataType getPartialAggregateStamp() const { return self->getPartialAggregateStamp(); }
-
-    [[nodiscard]] DataType getFinalAggregateStamp() const { return self->getFinalAggregateStamp(); }
-
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const { return self->getOnField(); }
-
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const { return self->getAsField(); }
-
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const
-    {
-        return self->withInputStamp(std::move(inputStamp));
-    }
-
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const
-    {
-        return self->withPartialAggregateStamp(std::move(partialAggregateStamp));
-    }
-
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const
-    {
-        return self->withFinalAggregateStamp(std::move(finalAggregateStamp));
-    }
-
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const
-    {
-        return self->withOnField(std::move(onField));
-    }
-
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const
-    {
-        return self->withAsField(std::move(asField));
-    }
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const { return self->getInputFunction(); }
 
     [[nodiscard]] bool operator==(const TypedWindowAggregationLogicalFunction& other) const { return self->equals(*other.self); }
 
@@ -327,49 +289,20 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
 
     [[nodiscard]] std::string_view getName() const noexcept override { return impl.getName(); }
 
-    [[nodiscard]] std::string toString() const override { return impl.toString(); }
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const override { return impl.explain(verbosity); }
 
     [[nodiscard]] Reflected reflect() const override { return impl.reflect(); }
 
-    [[nodiscard]] WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const override
+    [[nodiscard]] size_t hash() const override { return std::hash<FunctionType>{}(impl); }
+
+    [[nodiscard]] WindowAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const override
     {
-        return impl.withInferredStamp(schema);
+        return impl.withInferredType(schema);
     }
 
-    [[nodiscard]] DataType getInputStamp() const override { return impl.getInputStamp(); }
+    [[nodiscard]] DataType getAggregateType() const override { return impl.getAggregateType(); }
 
-    [[nodiscard]] DataType getPartialAggregateStamp() const override { return impl.getPartialAggregateStamp(); }
-
-    [[nodiscard]] DataType getFinalAggregateStamp() const override { return impl.getFinalAggregateStamp(); }
-
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const override { return impl.getOnField(); }
-
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const override { return impl.getAsField(); }
-
-    [[nodiscard]] WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const override
-    {
-        return impl.withInputStamp(std::move(inputStamp));
-    }
-
-    [[nodiscard]] WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const override
-    {
-        return impl.withPartialAggregateStamp(std::move(partialAggregateStamp));
-    }
-
-    [[nodiscard]] WindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const override
-    {
-        return impl.withFinalAggregateStamp(std::move(finalAggregateStamp));
-    }
-
-    [[nodiscard]] WindowAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const override
-    {
-        return impl.withOnField(std::move(onField));
-    }
-
-    [[nodiscard]] WindowAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const override
-    {
-        return impl.withAsField(std::move(asField));
-    }
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const override { return impl.getInputFunction(); }
 
     [[nodiscard]] bool equals(const ErasedWindowAggregationFunction& other) const override
     {
@@ -398,4 +331,24 @@ private:
 };
 
 }
+
+TypedLogicalFunction<FieldAccessLogicalFunction> inferFieldAccess(AggregationFieldAccess field, const Schema<Field, Unordered>& schema);
 }
+
+template <NES::WindowAggregationFunctionConcept FunctionType>
+struct std::hash<NES::TypedWindowAggregationLogicalFunction<FunctionType>>
+{
+    size_t operator()(const NES::TypedWindowAggregationLogicalFunction<FunctionType>& aggregationFunction) const noexcept
+    {
+        return std::hash<FunctionType>{}(aggregationFunction.get());
+    }
+};
+
+template <>
+struct std::hash<NES::WindowAggregationLogicalFunction>
+{
+    size_t operator()(const NES::WindowAggregationLogicalFunction& aggregationFunction) const noexcept
+    {
+        return aggregationFunction->hash();
+    }
+};

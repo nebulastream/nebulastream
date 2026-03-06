@@ -16,8 +16,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -38,7 +38,7 @@ public:
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] CastToTypeLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] CastToTypeLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

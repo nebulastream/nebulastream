@@ -19,8 +19,9 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/SubLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -32,8 +33,7 @@
 namespace NES
 {
 
-SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right) { };
+SubLogicalFunction::SubLogicalFunction(const LogicalFunction& left, const LogicalFunction& right) : left(left), right(right) { };
 
 bool SubLogicalFunction::operator==(const SubLogicalFunction& rhs) const
 {
@@ -54,21 +54,17 @@ DataType SubLogicalFunction::getDataType() const
     return dataType;
 };
 
-SubLogicalFunction SubLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction SubLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction SubLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    std::vector<LogicalFunction> newChildren;
-    for (auto& child : getChildren())
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    copy.dataType = copy.left.getDataType().join(copy.right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED});
+    if (copy.dataType.isType(DataType::Type::UNDEFINED))
     {
-        newChildren.push_back(child.withInferredDataType(schema));
+        throw CannotInferStamp("Cannot apply subtraction to input function left: {}, right: {}", copy.left, copy.right);
     }
-    return this->withChildren(newChildren);
+    return copy;
 };
 
 std::vector<LogicalFunction> SubLogicalFunction::getChildren() const

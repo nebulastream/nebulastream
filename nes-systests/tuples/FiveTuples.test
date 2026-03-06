@@ -11,7 +11,7 @@ ATTACH INLINE
 4
 5
 
-CREATE SINK sinkFiveTuples(fiveTuples.field_1 UINT64)  TYPE File;
+CREATE SINK sinkFiveTuples(field_1 UINT64)  TYPE File;
 
 # Description: simply reads in five tuples with a single value and produces the same tuples
 SELECT field_1 FROM fiveTuples INTO sinkFiveTuples;

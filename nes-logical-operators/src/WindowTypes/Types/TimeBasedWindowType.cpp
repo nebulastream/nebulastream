@@ -15,44 +15,59 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 #include <utility>
-#include <DataTypes/Schema.hpp>
+
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Overloaded.hpp"
+#include "Util/Reflection.hpp"
 
 namespace NES::Windowing
 {
-
-TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristic timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic))
+TimeBasedWindowType::TimeBasedWindowType(std::variant<TumblingWindow, SlidingWindow> underlying) : underlying(std::move(underlying))
 {
 }
 
-bool TimeBasedWindowType::inferStamp(const Schema& schema)
+bool TimeBasedWindowType::operator==(const TimeBasedWindowType& otherWindowType) const = default;
+
+std::ostream& operator<<(std::ostream& os, const TimeBasedWindowType& windowType)
 {
-    if (timeCharacteristic.getType() == TimeCharacteristic::Type::EventTime)
-    {
-        auto fieldName = timeCharacteristic.field.name;
-        auto existingField = schema.getFieldByName(fieldName);
-        if (existingField)
-        {
-            if (not existingField.value().dataType.isInteger())
-            {
-                throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
-            }
-            timeCharacteristic.field.name = existingField.value().name;
-            return true;
-        }
-        if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
-        {
-            return true;
-        }
-        throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field " + fieldName);
-    }
-    return true;
+    std::visit([&](const auto& window) { os << window; }, windowType.underlying);
+    return os;
 }
 
-TimeCharacteristic TimeBasedWindowType::getTimeCharacteristic() const
+TimeMeasure TimeBasedWindowType::getSize() const
 {
-    return timeCharacteristic;
+    return std::visit([](const auto& window) { return window.getSize(); }, underlying);
 }
 
+TimeMeasure TimeBasedWindowType::getSlide() const
+{
+    return std::visit(
+        Overloaded{
+            [](const TumblingWindow& tumblingWindow) { return tumblingWindow.getSize(); },
+            [](const SlidingWindow& slidingWindow) { return slidingWindow.getSlide(); }},
+        underlying);
+}
+const std::variant<TumblingWindow, SlidingWindow>& TimeBasedWindowType::getUnderlying() const
+{
+    return underlying;
+}
+}
+
+namespace NES {
+
+Reflected Reflector<Windowing::TimeBasedWindowType>::operator()(const Windowing::TimeBasedWindowType& window) const
+{
+    return reflect(window.getUnderlying());
+}
+
+Windowing::TimeBasedWindowType Unreflector<Windowing::TimeBasedWindowType>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    return Windowing::TimeBasedWindowType{context.unreflect<std::variant<Windowing::TumblingWindow, Windowing::SlidingWindow>>(reflected)};
+}
+}
+
+std::size_t std::hash<NES::Windowing::TimeBasedWindowType>::operator()(const NES::Windowing::TimeBasedWindowType& window) const noexcept
+{
+    return std::hash<std::variant<NES::Windowing::TumblingWindow, NES::Windowing::SlidingWindow>>{}(window.getUnderlying());
 }

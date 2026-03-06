@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <../../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
@@ -25,7 +26,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Windowing/WindowMetaData.hpp>
 
 namespace NES
 {

@@ -7,7 +7,7 @@ CREATE PHYSICAL SOURCE FOR oneTuple TYPE File;
 ATTACH INLINE
 1
 
-CREATE SINK sinkOneTuple(oneTuple.field_1 UINT64)  TYPE File;
+CREATE SINK sinkOneTuple(field_1 UINT64)  TYPE File;
 
 # Description: check if we run into an error if we process a single tuple.
 SELECT field_1 FROM oneTuple INTO sinkOneTuple;

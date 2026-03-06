@@ -18,6 +18,7 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <fmt/ranges.h>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <std/ostream.h>
 #include <ErrorHandling.hpp>
@@ -34,11 +35,7 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
 {
     if (not recordFields.contains(recordFieldIdentifier))
     {
-        const std::string allFields = std::accumulate(
-            recordFields.begin(),
-            recordFields.end(),
-            std::string{},
-            [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
+        auto allFields = fmt::format("{}", fmt::join(std::views::keys(recordFields), ", "));
         throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
     }
     return recordFields.at(recordFieldIdentifier);

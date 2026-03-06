@@ -12,27 +12,15 @@
     limitations under the License.
 */
 
-#pragma once
 
-#include <WindowTypes/Types/WindowType.hpp>
+syntax = "proto3";
+package NES;
 
-#include <memory>
-#include <string>
-#include <Util/Reflection.hpp>
-
-namespace NES
-{
-
-Reflected reflectWindowType(const Windowing::WindowType& windowType);
-std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& reflected, const ReflectionContext& context);
-
+message SerializableIdentifier {
+  string value = 1;
+  bool caseSensitive = 2;
 }
 
-namespace NES::detail
-{
-struct ReflectedWindowTypeReflection
-{
-    std::string type;
-    Reflected config;
-};
+message SerializableIdentifierList {
+  repeated SerializableIdentifier identifiers = 1;
 }

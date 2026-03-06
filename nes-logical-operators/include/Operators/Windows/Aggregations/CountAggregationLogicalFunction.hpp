@@ -18,8 +18,8 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <Schema/Schema.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -32,43 +32,21 @@ namespace NES
 class CountAggregationLogicalFunction
 {
 public:
-    CountAggregationLogicalFunction(FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField);
-    explicit CountAggregationLogicalFunction(const FieldAccessLogicalFunction& onField);
-    ~CountAggregationLogicalFunction() = default;
+    explicit CountAggregationLogicalFunction(AggregationFieldAccess inputFunction);
 
+    [[nodiscard]] CountAggregationLogicalFunction withInferredType(const Schema<Field, Unordered>& schema) const;
     [[nodiscard]] std::string_view getName() const noexcept;
-    [[nodiscard]] std::string toString() const;
-    [[nodiscard]] DataType getInputStamp() const;
-    [[nodiscard]] DataType getPartialAggregateStamp() const;
-    [[nodiscard]] DataType getFinalAggregateStamp() const;
-    [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
-    [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
-
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] CountAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
-    [[nodiscard]] CountAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
-    [[nodiscard]] CountAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
-    [[nodiscard]] CountAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
-    [[nodiscard]] CountAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
-    [[nodiscard]] CountAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
-    [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& otherCountAggregationLogicalFunction) const;
-
+    [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] AggregationFieldAccess getInputFunction() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+    [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& other) const;
 
 private:
+    AggregationFieldAccess inputFunction;
     static constexpr std::string_view NAME = "Count";
-    static constexpr DataType::Type inputAggregateStampType = DataType::Type::UINT64;
-    static constexpr DataType::Type partialAggregateStampType = DataType::Type::FLOAT64;
-    static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
-
-    DataType inputStamp;
-    DataType partialAggregateStamp;
-    DataType finalAggregateStamp;
-    FieldAccessLogicalFunction onField;
-    FieldAccessLogicalFunction asField;
+    static constexpr DataType::Type finalAggregateStampType = DataType::Type::UINT64;
 };
-
-static_assert(WindowAggregationFunctionConcept<CountAggregationLogicalFunction>);
 
 template <>
 struct Reflector<CountAggregationLogicalFunction>
@@ -84,12 +62,11 @@ struct Unreflector<CountAggregationLogicalFunction>
 
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::CountAggregationLogicalFunction>
 {
-struct ReflectedCountAggregationLogicalFunction
-{
-    std::optional<FieldAccessLogicalFunction> onField;
-    std::optional<FieldAccessLogicalFunction> asField;
+    size_t operator()(const NES::CountAggregationLogicalFunction& aggregationFunction) const noexcept;
 };
 
-}
+static_assert(NES::WindowAggregationFunctionConcept<NES::CountAggregationLogicalFunction>);
+

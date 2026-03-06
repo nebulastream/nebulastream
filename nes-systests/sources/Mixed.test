@@ -17,7 +17,7 @@ ATTACH INLINE
 7,25,25000
 8,26,26000
 
-CREATE SINK mixed_sink(stream.id UINT64, stream.value UINT64, stream.timestamp UINT64)  TYPE File;
+CREATE SINK mixed_sink(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
 
 
 SELECT * FROM stream INTO mixed_sink;

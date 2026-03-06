@@ -35,7 +35,7 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkStream(stream.value_count UINT64, stream.value_Sum UINT64, stream.max_value UINT64)  TYPE File;
+CREATE SINK sinkStream(value_count UINT64, value_Sum UINT64, max_value UINT64)  TYPE File;
 SELECT COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStream;
 ----
 1,2,2
@@ -64,7 +64,7 @@ SELECT COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM str
 1,21,21
 1,20,20
 
-CREATE SINK sinkStreamStart(stream.start UINT64, stream.value_count UINT64, stream.value_Sum UINT64, stream.max_value UINT64)  TYPE File;
+CREATE SINK sinkStreamStart(start UINT64, value_count UINT64, value_Sum UINT64, max_value UINT64)  TYPE File;
 SELECT start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStreamStart;
 ----
 1000,1,1,1
@@ -93,7 +93,7 @@ SELECT start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value F
 20000,1,20,20
 21000,1,21,21
 
-CREATE SINK sinkStreamStartId(stream.id UINT64, stream.start UINT64, stream.value_count UINT64, stream.value_Sum UINT64, stream.max_value UINT64)  TYPE File;
+CREATE SINK sinkStreamStartId(id UINT64, start UINT64, value_count UINT64, value_Sum UINT64, max_value UINT64)  TYPE File;
 SELECT id, start, COUNT(value) as value_count, SUM(value), MAX(value) as max_value FROM stream WHERE id < UINT32(15) GROUP BY id WINDOW TUMBLING(timestamp, size 1 sec) INTO sinkStreamStartId;
 ----
 1,1000,1,1,1
@@ -123,7 +123,7 @@ SELECT id, start, COUNT(value) as value_count, SUM(value), MAX(value) as max_val
 1,20000,1,20,20
 
 
-CREATE SINK sinkStreamNested(stream.id UINT64, stream.count_id UINT64)  TYPE File;
+CREATE SINK sinkStreamNested(id UINT64, count_id UINT64)  TYPE File;
 
 SELECT id, COUNT(id) as count_id
 FROM (

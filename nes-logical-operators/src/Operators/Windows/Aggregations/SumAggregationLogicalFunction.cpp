@@ -17,34 +17,32 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <utility>
-#include <DataTypes/Schema.hpp>
+
 #include <Functions/FieldAccessLogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Reflection.hpp>
-#include <fmt/format.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <ErrorHandling.hpp>
+#include <fmt/format.h>
+#include <folly/hash/Hash.h>
+#include "DataTypes/DataType.hpp"
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
-
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
-    : inputStamp(onField.getDataType())
-    , partialAggregateStamp(onField.getDataType())
-    , finalAggregateStamp(onField.getDataType())
-    , onField(onField)
-    , asField(std::move(asField))
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAccess inputFunction)
+    : inputFunction(inputFunction)
+    , aggregateType(std::visit([](const auto& input) { return inferFromInput(input->getDataType()); }, inputFunction))
 {
 }
 
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& asField)
-    : inputStamp(asField.getDataType())
-    , partialAggregateStamp(asField.getDataType())
-    , finalAggregateStamp(asField.getDataType())
-    , onField(asField)
-    , asField(asField)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAccess inputFunction, const DataType aggregateType)
+    : inputFunction(std::move(inputFunction))
+    , aggregateType(aggregateType)
 {
 }
 
@@ -53,37 +51,53 @@ std::string_view SumAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
+DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
 {
-    /// We first infer the dataType of the input field and set the output dataType as the same.
-    auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-    if (not newOnField.getDataType().isNumeric())
+    if (inputType.isSignedInteger())
     {
-        throw CannotDeserialize("aggregations on non numeric fields is not supported, but got {}", newOnField.getDataType());
+        return DataTypeProvider::provideDataType(DataType::Type::INT64);
     }
-
-    ///Set fully qualified name for the as Field
-    const auto onFieldName = newOnField.getFieldName();
-    const auto asFieldName = this->getAsField().getFieldName();
-
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-
-    std::string newAsFieldName;
-    ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    if (inputType.isInteger())
     {
-        newAsFieldName = attributeNameResolver + asFieldName;
+        return DataTypeProvider::provideDataType(DataType::Type::UINT64);
     }
-    else
+    if (inputType.isFloat())
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
-        newAsFieldName = attributeNameResolver + fieldName;
+        return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
     }
-    auto newAsField = this->getAsField().withFieldName(newAsFieldName).withDataType(newOnField.getDataType());
-    return this->withOnField(newOnField)
-        .withInputStamp(newOnField.getDataType())
-        .withFinalAggregateStamp(newOnField.getDataType())
-        .withAsField(newAsField);
+    throw CannotInferStamp("aggregations on non numeric fields is not supported.", inputType.isNumeric());
+}
+
+SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredType(const Schema<Field, Unordered>& schema) const
+{
+    const auto newInputFunction = inferFieldAccess(inputFunction, schema);
+    const DataType outputType = inferFromInput(newInputFunction->getDataType());
+    return SumAggregationLogicalFunction{newInputFunction, outputType};
+}
+
+DataType SumAggregationLogicalFunction::getAggregateType() const
+{
+    return aggregateType;
+}
+
+AggregationFieldAccess SumAggregationLogicalFunction::getInputFunction() const
+{
+    return inputFunction;
+}
+
+std::string SumAggregationLogicalFunction::explain(ExplainVerbosity verbosity) const
+{
+    if (verbosity == ExplainVerbosity::Short)
+    {
+        return fmt::format("{}()", NAME);
+    }
+    auto inputExplain = std::visit([verbosity](const auto& input) { return input->explain(verbosity); }, inputFunction);
+    return fmt::format("{}({})", NAME, inputExplain);
+}
+
+bool SumAggregationLogicalFunction::operator==(const SumAggregationLogicalFunction& other) const
+{
+    return inputFunction == other.inputFunction && aggregateType == other.aggregateType;
 }
 
 Reflected SumAggregationLogicalFunction::reflect() const
@@ -93,99 +107,28 @@ Reflected SumAggregationLogicalFunction::reflect() const
 
 Reflected Reflector<SumAggregationLogicalFunction>::operator()(const SumAggregationLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedSumAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return reflect(function.getInputFunction());
 }
 
 SumAggregationLogicalFunction
 Unreflector<SumAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = context.unreflect<detail::ReflectedSumAggregationLogicalFunction>(reflected);
-    return SumAggregationLogicalFunction{onField, asField};
+    return SumAggregationLogicalFunction{context.unreflect<AggregationFieldAccess>(reflected)};
 }
 
 AggregationLogicalFunctionRegistryReturnType
 AggregationLogicalFunctionGeneratedRegistrar::RegisterSumAggregationLogicalFunction(AggregationLogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
+    if (arguments.on.size() != 1)
     {
-        return std::make_shared<WindowAggregationLogicalFunction>(
-            ReflectionContext{}.unreflect<SumAggregationLogicalFunction>(arguments.reflected));
+        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly one field, but got {}", arguments.on.size());
     }
-    if (arguments.fields.size() != 2)
-    {
-        throw CannotDeserialize("SumAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
-    }
-    return std::make_shared<WindowAggregationLogicalFunction>(SumAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+    return SumAggregationLogicalFunction{arguments.on.at(0)};
+}
 }
 
-std::string SumAggregationLogicalFunction::toString() const
+size_t std::hash<NES::SumAggregationLogicalFunction>::operator()(
+    const NES::SumAggregationLogicalFunction& aggregationFunction) const noexcept
 {
-    return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
-}
-
-DataType SumAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType SumAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType SumAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
-FieldAccessLogicalFunction SumAggregationLogicalFunction::getOnField() const
-{
-    return onField;
-}
-
-FieldAccessLogicalFunction SumAggregationLogicalFunction::getAsField() const
-{
-    return asField;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const
-{
-    auto copy = *this;
-    copy.onField = std::move(onField);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withAsField(FieldAccessLogicalFunction asField) const
-{
-    auto copy = *this;
-    copy.asField = std::move(asField);
-    return copy;
-}
-
-bool SumAggregationLogicalFunction::operator==(const SumAggregationLogicalFunction& otherSumAggregationLogicalFunction) const
-{
-    return this->getName() == otherSumAggregationLogicalFunction.getName() && this->onField == otherSumAggregationLogicalFunction.onField
-        && this->asField == otherSumAggregationLogicalFunction.asField;
-}
+    return folly::hash::hash_combine(aggregationFunction.getInputFunction(), aggregationFunction.getName());
 }

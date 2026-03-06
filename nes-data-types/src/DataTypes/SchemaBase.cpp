@@ -12,26 +12,13 @@
     limitations under the License.
 */
 
-#pragma once
+#include <ranges>
+#include <unordered_map>
+#include <DataTypes/SchemaBase.hpp>
 
-#include <string>
+#include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
-
-namespace NES::Windowing
+namespace NES
 {
-class WindowType
-{
-public:
-    explicit WindowType();
-
-    virtual ~WindowType() = default;
-
-    virtual std::string toString() const = 0;
-
-    virtual bool operator==(const WindowType& otherWindowType) const = 0;
-
-    virtual bool inferStamp(const Schema& schema) = 0;
-};
 
 }
