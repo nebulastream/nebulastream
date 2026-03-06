@@ -16,8 +16,10 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <expected>
 #include <memory>
+#include <optional>
 #include <ranges>
 #include <sstream>
 #include <unordered_map>
@@ -46,6 +48,50 @@
 
 namespace NES
 {
+namespace
+{
+std::string formatOptionalMilliseconds(const std::optional<uint64_t>& durationMs)
+{
+    return durationMs.transform([](const auto value) { return fmt::format("{} ms", value); }).value_or("none");
+}
+
+void appendReplayExplainSection(std::stringstream& explainMessage, const DistributedLogicalPlan& distributedPlan)
+{
+    const auto& replaySpecification = distributedPlan.getReplaySpecification();
+    const auto& selectedRecordings = distributedPlan.getRecordingSelectionResult().selectedRecordings;
+    if (!replaySpecification.has_value() && selectedRecordings.empty())
+    {
+        return;
+    }
+
+    fmt::println(explainMessage, "Replay Recording Selection:");
+    fmt::println(
+        explainMessage,
+        "Requested retention window: {}",
+        formatOptionalMilliseconds(replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; })));
+    fmt::println(
+        explainMessage,
+        "Requested replay latency limit: {}",
+        formatOptionalMilliseconds(replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; })));
+
+    if (selectedRecordings.empty())
+    {
+        fmt::println(explainMessage, "Selected recording boundary: none");
+        return;
+    }
+
+    fmt::println(explainMessage, "Selected recording boundary:");
+    for (const auto& selection : selectedRecordings)
+    {
+        fmt::println(
+            explainMessage,
+            "- recording_id={} node={} file={}",
+            selection.recordingId.getRawValue(),
+            selection.node,
+            selection.filePath);
+    }
+}
+}
 
 SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy)
     : sourceCatalog(sourceCatalog), hostPolicy(std::move(hostPolicy))
@@ -266,6 +312,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
 
         const auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
 
+        appendReplayExplainSection(explainMessage, distributedPlan);
         fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
 
         fmt::println(explainMessage, "Decomposed Plans:");

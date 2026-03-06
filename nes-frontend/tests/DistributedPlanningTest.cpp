@@ -14,7 +14,9 @@
 
 #include <LegacyOptimizer.hpp>
 
+#include <chrono>
 #include <cstddef>
+#include <expected>
 #include <filesystem>
 #include <iostream>
 #include <memory>
@@ -170,6 +172,47 @@ struct convert<NES::Test::QueryConfig>
 
 namespace
 {
+class FakeExplainWorkerStatusBackend final : public NES::QuerySubmissionBackend
+{
+    std::expected<NES::WorkerStatus, NES::Exception> workerStatusResult;
+
+public:
+    explicit FakeExplainWorkerStatusBackend(std::expected<NES::WorkerStatus, NES::Exception> workerStatusResult)
+        : workerStatusResult(std::move(workerStatusResult))
+    {
+    }
+
+    [[nodiscard]] std::expected<NES::QueryId, NES::Exception> registerQuery(NES::LogicalPlan) override
+    {
+        return std::unexpected(NES::QueryRegistrationFailed("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    std::expected<void, NES::Exception> start(NES::QueryId) override
+    {
+        return std::unexpected(NES::QueryStartFailed("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    std::expected<void, NES::Exception> stop(NES::QueryId) override
+    {
+        return std::unexpected(NES::QueryStopFailed("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    std::expected<void, NES::Exception> unregister(NES::QueryId) override
+    {
+        return std::unexpected(NES::QueryUnregistrationFailed("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    [[nodiscard]] std::expected<NES::LocalQueryStatus, NES::Exception> status(NES::QueryId) const override
+    {
+        return std::unexpected(NES::QueryStatusFailed("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    [[nodiscard]] std::expected<NES::WorkerStatus, NES::Exception> workerStatus(std::chrono::system_clock::time_point) const override
+    {
+        return workerStatusResult;
+    }
+};
+
 std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topologyConfig)
 {
     const auto& [query, sinks, logical, physical, workers] = topologyConfig;
@@ -473,6 +516,44 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
 
     const LogicalPlan localPlan = reusedPlan[Host("localhost:8080")].front();
     EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());
+}
+
+TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecordingBoundary)
+{
+    auto boundStatement = loadAndBindExplainStatementWithCatalogs("basic_time_travel_store_with_options.yaml");
+    SharedPtr<const LegacyOptimizer> optimizer = std::make_shared<LegacyOptimizer>(
+        copyPtr(boundStatement.catalogs.sourceCatalog),
+        copyPtr(boundStatement.catalogs.sinkCatalog),
+        copyPtr(boundStatement.catalogs.workerCatalog));
+    const auto expectedPlan
+        = optimizer->optimize(boundStatement.statement.plan, boundStatement.statement.replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(expectedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
+    const auto& selectedRecording = expectedPlan.getRecordingSelectionResult().selectedRecordings.front();
+
+    SharedPtr<QueryManager> queryManager = std::make_shared<QueryManager>(
+        copyPtr(boundStatement.catalogs.workerCatalog),
+        [](const WorkerConfig&)
+        {
+            WorkerStatus status;
+            status.until = std::chrono::system_clock::time_point(std::chrono::milliseconds(1));
+            status.replayMetrics = WorkerStatus::ReplayMetrics{
+                .recordingStorageBytes = 0,
+                .recordingFileCount = 0,
+                .activeQueryCount = 0};
+            return std::make_unique<FakeExplainWorkerStatusBackend>(status);
+        });
+
+    QueryStatementHandler handler(std::move(queryManager), std::move(optimizer), copyPtr(boundStatement.catalogs.sourceCatalog));
+    const auto explainResult = handler(boundStatement.statement);
+    ASSERT_TRUE(explainResult.has_value()) << explainResult.error().what();
+
+    EXPECT_NE(explainResult->explainString.find("Replay Recording Selection:"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("Requested retention window: 300000 ms"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("Requested replay latency limit: 10000 ms"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("Selected recording boundary:"), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find(selectedRecording.recordingId.getRawValue()), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find(selectedRecording.filePath), std::string::npos);
+    EXPECT_NE(explainResult->explainString.find("node=localhost:8080"), std::string::npos);
 }
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
