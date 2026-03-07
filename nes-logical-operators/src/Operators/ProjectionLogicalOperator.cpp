@@ -14,13 +14,13 @@
 
 #include <Operators/ProjectionLogicalOperator.hpp>
 
-#include <cstddef>
 #include <numeric>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -152,34 +152,37 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         }
     }
 
-    /// Propagate the type inference to all projection functions and resolve projection names.
-    auto inferredProjections = projections
-        | std::views::transform(
-                                   [&firstSchema](const Projection& projection)
-                                   {
-                                       auto inferredFunction = projection.second.withInferredDataType(firstSchema);
-                                       /// If projection has a name use it.
-                                       if (projection.first)
-                                       {
-                                           return Projection{*projection.first, inferredFunction};
-                                       }
-                                       /// Otherwise derive the name from the inferred function
-                                       return Projection{inferredFunction.explain(ExplainVerbosity::Short), inferredFunction};
-                                   });
-
+    /// Propagate type inference, resolve projection names, and reject duplicate explicit AS aliases in a single pass.
+    /// An alias is explicit when its name differs from the auto-derived name (function.explain(Short)).
+    /// Known limitation: `SELECT a AS a, b AS a` will not detect the first alias as explicit because it
+    /// matches the auto-derived name.
     auto copy = *this;
-    copy.projections = inferredProjections | std::ranges::to<std::vector>();
+    copy.projections.clear();
     copy.inputSchema = firstSchema;
+    std::unordered_set<std::string> seenExplicitAliases;
+    for (const auto& projection : projections)
+    {
+        auto inferredFunction = projection.second.withInferredDataType(firstSchema);
+        const auto autoDerivedName = inferredFunction.explain(ExplainVerbosity::Short);
+        const bool hasExplicitAlias = projection.first.has_value() && projection.first->getFieldName() != autoDerivedName;
+        auto identifier = hasExplicitAlias ? *projection.first : FieldIdentifier(autoDerivedName);
+        if (hasExplicitAlias && !seenExplicitAliases.insert(identifier.getFieldName()).second)
+        {
+            throw CannotInferSchema(
+                "Duplicate output field name '{}' in SELECT list. Use AS to give each column a unique name.", identifier.getFieldName());
+        }
+        copy.projections.emplace_back(std::move(identifier), std::move(inferredFunction));
+    }
 
-    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema
+    /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema.
     auto initial = Schema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);
     }
     copy.outputSchema = std::accumulate(
-        inferredProjections.begin(),
-        inferredProjections.end(),
+        copy.projections.begin(),
+        copy.projections.end(),
         initial,
         [](Schema schema, const auto& projection)
         { return schema.addField(projection.first->getFieldName(), projection.second.getDataType()); });
@@ -227,8 +230,16 @@ Reflected Reflector<ProjectionLogicalOperator>::operator()(const ProjectionLogic
 
     for (auto [identifierOpt, function] : op.getProjections())
     {
-        const std::optional<std::string> identifier
-            = (identifierOpt.has_value() ? std::make_optional(identifierOpt.value().getFieldName()) : std::nullopt);
+        /// Only serialize identifiers that differ from the auto-derived name (i.e. explicit AS aliases).
+        std::optional<std::string> identifier;
+        if (identifierOpt.has_value())
+        {
+            const auto autoDerived = function.explain(ExplainVerbosity::Short);
+            if (identifierOpt->getFieldName() != autoDerived)
+            {
+                identifier = identifierOpt->getFieldName();
+            }
+        }
         reflected.projections.emplace_back(identifier, std::make_optional(function));
     }
 
