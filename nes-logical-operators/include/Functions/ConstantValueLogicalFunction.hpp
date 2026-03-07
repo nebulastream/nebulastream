@@ -91,7 +91,7 @@ namespace NES::detail
 struct ReflectedConstantValueLogicalFunction
 {
     std::string value;
-    DataType::Type type;
+    DataType dataType;
 };
 }
 

@@ -4,8 +4,8 @@
 
 
 ## INLINE CSV
-CREATE SINK inlineCSVSink(inlineCSVSource.id UINT64, inlineCSVSource.value UINT64, inlineCSVSource.timestamp UINT64)  TYPE File;
-CREATE LOGICAL SOURCE inlineCSVSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE SINK inlineCSVSink(inlineCSVSource.id UINT64 NOT NULL, inlineCSVSource.value UINT64 NOT NULL, inlineCSVSource.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE LOGICAL SOURCE inlineCSVSource(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR inlineCSVSource TYPE File;
 ATTACH INLINE
 1,6,67
@@ -22,8 +22,8 @@ SELECT * FROM inlineCSVSource INTO inlineCSVSink;
 
 
 ## FILE CSV
-CREATE SINK fileCSVSink(fileCSVSource.id UINT64, fileCSVSource.value UINT64, fileCSVSource.timestamp UINT64)  TYPE File;
-CREATE LOGICAL SOURCE fileCSVSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE SINK fileCSVSink(fileCSVSource.id UINT64 NOT NULL, fileCSVSource.value UINT64 NOT NULL, fileCSVSource.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE LOGICAL SOURCE fileCSVSource(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR fileCSVSource TYPE File;
 ATTACH FILE small/stream8.csv
 
@@ -36,8 +36,8 @@ SELECT * FROM fileCSVSource INTO fileCSVSink;
 1,5,56
 
 ## INLINE PIPE
-CREATE SINK inlinePipeCSVSink(inlinePipeCSVSource.id UINT64, inlinePipeCSVSource.value UINT64, inlinePipeCSVSource.timestamp UINT64)  TYPE File;
-CREATE LOGICAL SOURCE inlinePipeCSVSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE SINK inlinePipeCSVSink(inlinePipeCSVSource.id UINT64 NOT NULL, inlinePipeCSVSource.value UINT64 NOT NULL, inlinePipeCSVSource.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE LOGICAL SOURCE inlinePipeCSVSource(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR inlinePipeCSVSource TYPE File SET('|' AS PARSER.FIELD_DELIMITER);
 ATTACH INLINE
 1|6|67
@@ -53,8 +53,8 @@ SELECT * FROM inlinePipeCSVSource INTO inlinePipeCSVSink;
 1,9,100
 
 ## FILE PIPE
-CREATE SINK filePipeCSVSink(filePipeCSVSource.id UINT64, filePipeCSVSource.value UINT64, filePipeCSVSource.timestamp UINT64)  TYPE File;
-CREATE LOGICAL SOURCE filePipeCSVSource(id UINT64, value UINT64, timestamp UINT64);
+CREATE SINK filePipeCSVSink(filePipeCSVSource.id UINT64 NOT NULL, filePipeCSVSource.value UINT64 NOT NULL, filePipeCSVSource.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE LOGICAL SOURCE filePipeCSVSource(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR filePipeCSVSource TYPE File SET('|' as PARSER.FIELD_DELIMITER);
 ATTACH FILE small/stream8_pipe.csv
 

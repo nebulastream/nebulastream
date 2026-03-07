@@ -99,7 +99,7 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
         for (const auto& field : nautilus::static_iterable(memoryProviderKeys.getAllFields()))
         {
             const auto offset = field.fieldOffset;
-            const auto fieldSize = field.type.getSizeInBytes();
+            const auto fieldSize = field.type.getSizeInBytesWithNull();
             if (valueMemAreaOffset < offset + fieldSize)
             {
                 valueMemAreaOffset = offset + fieldSize;
