@@ -1,0 +1,40 @@
+# name: operator/aggregation/WindowWithoutAggregation.test
+# description: Window clause without aggregation functions should collect tuples and emit start/end
+# groups: [Aggregation, Window]
+
+CREATE LOGICAL SOURCE integers(i UINT64, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR integers TYPE File;
+ATTACH INLINE
+1,100
+2,125
+1,200
+2,225
+1,300
+2,325
+
+CREATE LOGICAL SOURCE strings(name VARSIZED, category VARSIZED, timestamp UINT64);
+CREATE PHYSICAL SOURCE FOR strings TYPE File;
+ATTACH INLINE
+alice,catA,100
+bob,catB,125
+carol,catA,200
+dave,catB,225
+eve,catA,300
+frank,catB,325
+
+CREATE SINK sinkStartEnd(integers.start UINT64, integers.end UINT64) TYPE File;
+CREATE SINK sinkStrStartEnd(strings.start UINT64, strings.end UINT64) TYPE File;
+
+# Window-only with integer source: should produce start/end columns.
+SELECT start, end FROM integers WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStartEnd;
+----
+100, 200
+200, 300
+300, 400
+
+# Window-only with VARSIZED string source: should produce start/end columns.
+SELECT start, end FROM strings WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkStrStartEnd;
+----
+100, 200
+200, 300
+300, 400
