@@ -115,9 +115,9 @@ jobs:
           echo "$(brew --prefix llvm@19)/bin" >> "$GITHUB_PATH"
           # macOS clang provides built-in atomic support; create an empty stub
           # library to satisfy unconditional -latomic references from abseil/protobuf.
-          echo "" | clang -x c -c - -o /tmp/empty.o
-          sudo mkdir -p /usr/local/lib
-          sudo ar rcs /usr/local/lib/libatomic.a /tmp/empty.o
+          LLVM_PREFIX="$(brew --prefix llvm@19)"
+          echo "" | "${LLVM_PREFIX}/bin/clang" -x c -c - -o /tmp/empty.o
+          ar rcs "${LLVM_PREFIX}/lib/libatomic.a" /tmp/empty.o
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.18
         with:
