@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/SourceInferencePhase.hpp>
+#include <Rules/Semantic/SourceInferenceRule.hpp>
 
 #include <algorithm>
 #include <ranges>
@@ -27,7 +27,7 @@
 namespace NES
 {
 
-void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
+void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
 {
     auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
     auto sourceDescriptorOperators = getOperatorByType<SourceDescriptorLogicalOperator>(queryPlan);

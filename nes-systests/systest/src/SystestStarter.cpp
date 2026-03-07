@@ -21,6 +21,7 @@
 #include <sstream>
 #include <stdexcept>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Configurations/Util.hpp>
@@ -30,6 +31,7 @@
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestExecutor.hpp>
@@ -86,6 +88,12 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
 
     /// endless mode
     program.add_argument("--endless").flag().help("continuously issue queries to the worker");
+
+    /// query optimizer config
+    program.add_argument("--optimizer")
+        .default_value<std::vector<std::string>>({})
+        .append()
+        .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
 
     /// single node worker config
     program.add_argument("--")
@@ -303,6 +311,32 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
             std::cerr << config.queryCompilerConfig.getValue() << " is not a file.\n";
             std::exit(1); ///NOLINT(concurrency-mt-unsafe)
         }
+    }
+    if (program.is_used("--optimizer"))
+    {
+        auto optimizerConfigVec = program.get<std::vector<std::string>>("--optimizer");
+        std::unordered_map<std::string, std::string> optimizerRawConfig;
+
+        for (const auto& optimizerConfigString : optimizerConfigVec)
+        {
+            if (auto pos = optimizerConfigString.find("="); pos != std::string::npos)
+            {
+                const std::string identifier = optimizerConfigString.substr(0, pos);
+                const std::string value = optimizerConfigString.substr(pos + 1);
+                optimizerRawConfig[identifier] = value;
+            }
+            else
+            {
+                std::cerr << "Invalid --optimizer argument. Requires argument like 'CONFIG=VALUE' but got '" << optimizerConfigString
+                          << "'\n";
+                std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+            }
+        }
+
+        NES::QueryOptimizerConfiguration queryOptimizerConfig;
+        queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
+
+        config.queryOptimizerConfig = queryOptimizerConfig;
     }
 
     if (program.is_used("--"))

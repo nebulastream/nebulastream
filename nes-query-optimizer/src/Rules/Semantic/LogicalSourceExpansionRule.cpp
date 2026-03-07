@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 
 #include <ranges>
 #include <utility>

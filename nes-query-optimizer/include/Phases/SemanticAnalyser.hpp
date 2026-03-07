@@ -15,26 +15,30 @@
 #pragma once
 #include <memory>
 #include <utility>
-#include <Operators/LogicalOperator.hpp>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
+class SinkCatalog;
+class SourceCatalog;
+}
 
-/// The InlineSourceBindingPhase replaces all sources that are defined within the query itself (InlineSourceLogicalOperators), as opposed to
-/// sources that are created in separate CREATE statements, with physical sources based on the given inline source configuration.
-
-class InlineSourceBindingPhase
+namespace NES
+{
+class SemanticAnalyser
 {
 public:
-    explicit InlineSourceBindingPhase(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    [[nodiscard]] LogicalPlan analyse(const LogicalPlan& plan) const;
+    SemanticAnalyser() = default;
 
-    void apply(LogicalPlan& queryPlan) const;
+    explicit SemanticAnalyser(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    {
+    }
 
 private:
-    [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
-
 }

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <Rules/Semantic/TypeInferenceRule.hpp>
 
 #include <vector>
 #include <DataTypes/Schema.hpp>
@@ -44,7 +44,7 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferencePhase::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+void TypeInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.getRootOperators())

@@ -12,17 +12,21 @@
     limitations under the License.
 */
 
-#include <OptimizedPlan.hpp>
-
+#pragma once
+#include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 
-const LogicalPlan& OptimizedPlan::getPlan() const
+/// Decides what memory layout should be used per operator. For now, we use row-layout across all operators.
+class DecideMemoryLayoutRule
 {
-    return this->plan;
-}
+public:
+    LogicalPlan apply(const LogicalPlan& queryPlan);
 
+private:
+    LogicalOperator apply(const LogicalOperator& logicalOperator);
+};
 
 }

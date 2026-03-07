@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Phases/DecideMemoryLayout.hpp>
+#include <Rules/Static/DecideMemoryLayoutRule.hpp>
 
 #include <ranges>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -23,14 +23,14 @@
 
 namespace NES
 {
-LogicalPlan DecideMemoryLayout::apply(const LogicalPlan& queryPlan)
+LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan)
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
     return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator DecideMemoryLayout::apply(const LogicalOperator& logicalOperator)
+LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator)
 {
     /// Iterating over all operators and setting the memory layout trait to row
     const auto children = logicalOperator.getChildren()

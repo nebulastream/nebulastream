@@ -46,6 +46,8 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyser.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -60,7 +62,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
-#include <LegacyOptimizer.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -221,7 +223,7 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
-    void optimizeQueries(const NES::LegacyOptimizer& optimizer)
+    void optimizeQueries(const NES::SemanticAnalyser& semanticAnalyser, const NES::QueryOptimizer& queryOptimizer)
     {
         if (!boundPlan.has_value())
         {
@@ -229,7 +231,9 @@ public:
         }
         try
         {
-            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+            auto plan = semanticAnalyser.analyse(boundPlan.value());
+            plan = queryOptimizer.optimize(plan);
+            setOptimizedPlan(plan);
         }
         catch (Exception& e)
         {
@@ -242,8 +246,9 @@ public:
         {
             try
             {
-                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
-                setDifferentialQueryPlan(std::move(optimizedDiff));
+                auto plan = semanticAnalyser.analyse(differentialQueryPlan.value());
+                plan = queryOptimizer.optimize(plan);
+                setDifferentialQueryPlan(std::move(plan));
             }
             catch (Exception& e)
             {
@@ -327,8 +332,15 @@ private:
 
 struct SystestBinder::Impl
 {
-    explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
+    explicit Impl(
+        std::filesystem::path workingDir,
+        std::filesystem::path testDataDir,
+        std::filesystem::path configDir,
+        QueryOptimizerConfiguration queryOptimizerConfiguration)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
     {
     }
 
@@ -415,7 +427,8 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const SemanticAnalyser semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
+        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -428,7 +441,7 @@ struct SystestBinder::Impl
             }
 
             foundQueries.insert(builder.getSystemTestQueryId());
-            builder.optimizeQueries(optimizer);
+            builder.optimizeQueries(semanticAnalyser, queryOptimizer);
             for (auto& query : std::move(builder).build())
             {
                 buildSystests.emplace_back(std::move(query));
@@ -909,11 +922,15 @@ private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
+    QueryOptimizerConfiguration queryOptimizerConfiguration;
 };
 
 SystestBinder::SystestBinder(
-    const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir))
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir,
+    const QueryOptimizerConfiguration& queryOptimizerConfiguration)
+    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration))
 {
 }
 

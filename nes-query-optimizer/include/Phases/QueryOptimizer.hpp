@@ -13,26 +13,26 @@
 */
 
 #pragma once
-#include <memory>
+
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
-/// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
-/// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
-
-class InlineSinkBindingPhase
+class QueryOptimizer final
 {
 public:
-    explicit InlineSinkBindingPhase(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
+        : defaultQueryOptimization(std::move(defaultQueryOptimization)) { };
 
-    void apply(LogicalPlan& queryPlan) const;
+    /// Takes the query plan as a logical plan and returns a fully physical plan
+    [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] static LogicalPlan optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization);
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    QueryOptimizerConfiguration defaultQueryOptimization;
 };
 
 }

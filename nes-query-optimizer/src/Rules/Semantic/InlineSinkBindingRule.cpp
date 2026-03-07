@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <LegacyOptimizer/InlineSinkBindingPhase.hpp>
+#include <Rules/Semantic/InlineSinkBindingRule.hpp>
 
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
@@ -25,7 +25,7 @@ namespace NES
 {
 
 
-void InlineSinkBindingPhase::apply(LogicalPlan& queryPlan) const
+void InlineSinkBindingRule::apply(LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRootOperators;
     for (const auto& rootOperator : queryPlan.getRootOperators())
