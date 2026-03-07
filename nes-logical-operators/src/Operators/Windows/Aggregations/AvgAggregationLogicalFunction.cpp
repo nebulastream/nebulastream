@@ -50,6 +50,11 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLo
 {
 }
 
+bool AvgAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return true;
+}
+
 std::string_view AvgAggregationLogicalFunction::getName() noexcept
 {
     return NAME;
@@ -71,20 +76,20 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
         {
             newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
                 DataType::Type::INT64,
-                getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
         else
         {
             newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
                 DataType::Type::UINT64,
-                getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
     }
     else
     {
         newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
             DataType::Type::FLOAT64,
-            getOnField().getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+            newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
     }
 
     ///Set fully qualified name for the as Field

@@ -51,6 +51,7 @@ public:
     [[nodiscard]] CountAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] CountAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
 
     [[nodiscard]] bool operator==(const CountAggregationLogicalFunction& otherCountAggregationLogicalFunction) const;
 

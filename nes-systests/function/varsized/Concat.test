@@ -9,7 +9,16 @@ Edgar,Codd
 Jim,Grey
 Michael,Stonebraker
 
+CREATE LOGICAL SOURCE nameStreamWithMiddle(firstName VARSIZED NOT NULL, middleName VARSIZED NOT NULL, lastName VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR nameStreamWithMiddle TYPE File;
+ATTACH INLINE
+Edgar,Frank,Codd
+James,Nicholas,Grey
+Michael,Ralph,Stonebraker
+Rudolf,,Bayer
+
 CREATE SINK firstNameLastNameSink(firstNameLastName VARSIZED NOT NULL) TYPE File;
+CREATE SINK firstNameMiddleNameLastNameSink(firstNameMiddleNameLastName VARSIZED NOT NULL) TYPE File;
 
 SELECT CONCAT(firstName,lastName) AS firstNameLastName FROM nameStream INTO firstNameLastNameSink;
 ----
@@ -28,3 +37,19 @@ SELECT CONCAT(firstName, CONCAT(VARSIZED(" "), lastName)) AS firstNameLastName F
 Edgar Codd
 Jim Grey
 Michael Stonebraker
+
+# Testing concatination of an empty string
+SELECT CONCAT(CONCAT(firstName, middleName), lastName) AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
+----
+EdgarFrankCodd
+JamesNicholasGrey
+MichaelRalphStonebraker
+RudolfBayer
+
+# Testing concatination of an empty string
+SELECT CONCAT(firstName, CONCAT(middleName, lastName)) AS firstNameMiddleNameLastName FROM nameStreamWithMiddle INTO firstNameMiddleNameLastNameSink;
+----
+EdgarFrankCodd
+JamesNicholasGrey
+MichaelRalphStonebraker
+RudolfBayer

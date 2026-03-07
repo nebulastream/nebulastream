@@ -49,8 +49,7 @@ public:
     [[nodiscard]] MinAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;
     [[nodiscard]] MinAggregationLogicalFunction withOnField(FieldAccessLogicalFunction onField) const;
     [[nodiscard]] MinAggregationLogicalFunction withAsField(FieldAccessLogicalFunction asField) const;
-
-
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] bool operator==(const MinAggregationLogicalFunction& otherMinAggregationLogicalFunction) const;
 
 private:

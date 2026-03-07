@@ -1,7 +1,7 @@
 # name: comments.dummy
 # description: Test file used in SystestParserValidTestFileTest
 
-CREATE LOGICAL SOURCE window(id UINT64, value UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE window(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR window TYPE File;
 ATTACH INLINE
 1,1,1000
@@ -33,7 +33,7 @@ ATTACH INLINE
 1,20,20000
 1,21,21000
 
-CREATE SINK sinkWindow(id UINT64, value UINT64, timestamp UINT64)  TYPE File;
+CREATE SINK sinkWindow(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
 # Filter equal
 SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;
