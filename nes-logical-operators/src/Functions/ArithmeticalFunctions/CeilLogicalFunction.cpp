@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -91,21 +90,17 @@ Reflected Reflector<CeilLogicalFunction>::operator()(const CeilLogicalFunction& 
     return reflect(detail::ReflectedCeilLogicalFunction{.child = function.child});
 }
 
-CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected& reflected) const
+CeilLogicalFunction Unreflector<CeilLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedCeilLogicalFunction>(reflected);
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("Missing child function");
-    }
-    return CeilLogicalFunction(child.value());
+    auto [child] = context.unreflect<detail::ReflectedCeilLogicalFunction>(reflected);
+    return CeilLogicalFunction(child);
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCeilLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<CeilLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<CeilLogicalFunction>(arguments.reflected);
     }
 
     if (arguments.children.size() != 1)

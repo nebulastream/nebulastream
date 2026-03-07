@@ -29,7 +29,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -91,21 +90,17 @@ Reflected Reflector<PowLogicalFunction>::operator()(const PowLogicalFunction& fu
     return reflect(detail::ReflectedPowLogicalFunction{.left = function.left, .right = function.right});
 }
 
-PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& reflected) const
+PowLogicalFunction Unreflector<PowLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [left, right] = unreflect<detail::ReflectedPowLogicalFunction>(reflected);
-    if (!left.has_value() || !right.has_value())
-    {
-        throw CannotDeserialize("Missing child function");
-    }
-    return PowLogicalFunction{left.value(), right.value()};
+    auto [left, right] = context.unreflect<detail::ReflectedPowLogicalFunction>(reflected);
+    return PowLogicalFunction{left, right};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterPowLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<PowLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<PowLogicalFunction>(arguments.reflected);
     }
     if (arguments.children.size() != 2)
     {

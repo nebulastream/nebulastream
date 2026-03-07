@@ -65,9 +65,10 @@ Reflected Reflector<Windowing::TumblingWindow>::operator()(const Windowing::Tumb
         detail::ReflectedTumblingWindow{.size = tumblingWindow.getSize(), .timeCharacteristic = tumblingWindow.getTimeCharacteristic()});
 }
 
-Windowing::TumblingWindow Unreflector<Windowing::TumblingWindow>::operator()(const Reflected& reflected) const
+Windowing::TumblingWindow
+Unreflector<Windowing::TumblingWindow>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [size, timeCharacteristics] = unreflect<detail::ReflectedTumblingWindow>(reflected);
+    auto [size, timeCharacteristics] = context.unreflect<detail::ReflectedTumblingWindow>(reflected);
     return {timeCharacteristics, size};
 }
 }

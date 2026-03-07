@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -93,9 +92,10 @@ Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggr
     return reflect(detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-CountAggregationLogicalFunction Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+CountAggregationLogicalFunction
+Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
 
     if (!onField.has_value() || !asField.has_value())
     {
@@ -110,7 +110,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<WindowAggregationLogicalFunction>(unreflect<CountAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<WindowAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<CountAggregationLogicalFunction>(arguments.reflected));
     }
 
     if (arguments.fields.size() != 2)

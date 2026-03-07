@@ -58,9 +58,9 @@ Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSourc
     return reflect(std::pair{logicalSource.getLogicalSourceName(), *logicalSource.getSchema()});
 }
 
-LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl) const
+LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [logicalSourceName, schema] = unreflect<std::pair<std::string, Schema>>(rfl);
+    auto [logicalSourceName, schema] = context.unreflect<std::pair<std::string, Schema>>(rfl);
     return LogicalSource{std::move(logicalSourceName), schema};
 }
 }

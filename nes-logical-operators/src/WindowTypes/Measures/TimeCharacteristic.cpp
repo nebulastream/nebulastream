@@ -102,9 +102,10 @@ Reflected Reflector<Windowing::TimeCharacteristic>::operator()(const Windowing::
         .field = characteristic.field, .type = characteristic.getType(), .timeUnit = characteristic.getTimeUnit()});
 }
 
-Windowing::TimeCharacteristic Unreflector<Windowing::TimeCharacteristic>::operator()(const Reflected& reflected) const
+Windowing::TimeCharacteristic
+Unreflector<Windowing::TimeCharacteristic>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [field, type, timeUnit] = unreflect<ReflectedTimeCharacteristic>(reflected);
+    auto [field, type, timeUnit] = context.unreflect<ReflectedTimeCharacteristic>(reflected);
 
     return Windowing::TimeCharacteristic{type, field, timeUnit};
 }

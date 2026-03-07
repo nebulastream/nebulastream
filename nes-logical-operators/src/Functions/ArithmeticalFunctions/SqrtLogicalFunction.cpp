@@ -29,7 +29,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -91,21 +90,17 @@ Reflected Reflector<SqrtLogicalFunction>::operator()(const SqrtLogicalFunction& 
     return reflect(detail::ReflectedSqrtLogicalFunction{.child = function.child});
 }
 
-SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected) const
+SqrtLogicalFunction Unreflector<SqrtLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [child] = unreflect<detail::ReflectedSqrtLogicalFunction>(reflected);
-    if (!child.has_value())
-    {
-        throw CannotDeserialize("Missing child function");
-    }
-    return SqrtLogicalFunction(child.value());
+    auto [child] = context.unreflect<detail::ReflectedSqrtLogicalFunction>(reflected);
+    return SqrtLogicalFunction(child);
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterSqrtLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<SqrtLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<SqrtLogicalFunction>(arguments.reflected);
     }
     if (arguments.children.size() != 1)
     {

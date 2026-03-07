@@ -202,9 +202,9 @@ Reflected Reflector<SinkLogicalOperator>::operator()(const SinkLogicalOperator& 
     return reflect(detail::ReflectedSinkLogicalOperator{.sinkDescriptor = op.getSinkDescriptor(), .sinkName = op.getSinkName()});
 }
 
-SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& reflected) const
+SinkLogicalOperator Unreflector<SinkLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [descriptor, name] = unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
+    auto [descriptor, name] = context.unreflect<detail::ReflectedSinkLogicalOperator>(reflected);
     if (descriptor.has_value())
     {
         if (descriptor->getSinkName() != name)

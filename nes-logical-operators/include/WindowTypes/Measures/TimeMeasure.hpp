@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES::Windowing
 {
@@ -52,6 +52,6 @@ struct Reflector<Windowing::TimeMeasure>
 template <>
 struct Unreflector<Windowing::TimeMeasure>
 {
-    Windowing::TimeMeasure operator()(const Reflected& reflected) const;
+    Windowing::TimeMeasure operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 }

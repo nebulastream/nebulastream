@@ -15,7 +15,6 @@
 #pragma once
 
 #include <iostream>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
