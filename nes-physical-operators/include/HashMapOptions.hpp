@@ -56,7 +56,6 @@ struct HashMapOptions
     {
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
-        INVARIANT(valueSize > 0, "The value size must be greater than 0");
         INVARIANT(pageSize > 0, "The page size must be greater than 0");
         INVARIANT(numberOfBuckets > 0, "The number of buckets must be greater than 0");
         INVARIANT(

@@ -84,10 +84,6 @@ void ChainedHashMapRef::ChainedEntryRef::updateEntryRef(const nautilus::val<Chai
 
 nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() const
 {
-    PRECONDITION(
-        not(memoryProviderKeys.getAllFields().empty() and memoryProviderValues.getAllFields().empty()),
-        "At least keys or values need to be present to call this method!");
-
     /// We call this method solely, if we actually need the value memory area and not a VarVal.
     /// Therefore, we do not store the valueOffset in the ChainedEntryRef or the ChainedEntryMemoryProvider
     /// During tracing the offset is calculated and should be stored as a constant in the compiled code

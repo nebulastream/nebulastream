@@ -493,7 +493,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addProjection(helpers.top().preAggregationProjections, /*asterisk=*/true, queryPlan);
     }
 
-    if (helpers.top().isInAggFunction())
+    if (helpers.top().windowType != nullptr && helpers.top().joinKeyRelationHelper.empty())
     {
         queryPlan = LogicalPlanBuilder::addWindowAggregation(
             queryPlan, helpers.top().windowType, helpers.top().windowAggs, helpers.top().groupByFields);
