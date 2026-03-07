@@ -73,7 +73,7 @@ jobs:
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
           # Exclude DockerCompose tests (distributed-cli, distributed-repl, systest-remote) as they are too slow for smoke tests.
-          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 -LE DockerCompose ${ADDTIONAL_CTEST_ARGS}
+          ctest --test-dir build -j ${{steps.number-of-jobs.outputs.number_of_jobs}} --output-on-failure --output-junit /junit.xml --timeout 1200 -LE DockerCompose ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
