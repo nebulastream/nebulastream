@@ -54,13 +54,18 @@ std::string Schema::Field::getUnqualifiedName() const
 
 Schema Schema::addField(std::string name, const DataType& dataType)
 {
-    return addField(std::move(name), dataType.type);
+    return addField(std::move(name), dataType.type, dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 
 Schema Schema::addField(std::string name, const DataType::Type type)
 {
-    DataType dataType{type};
-    sizeOfSchemaInBytes += dataType.getSizeInBytes();
+    return addField(std::move(name), type, DataType::NULLABLE::NOT_NULLABLE);
+}
+
+Schema Schema::addField(std::string name, const DataType::Type type, const DataType::NULLABLE isNullable)
+{
+    DataType dataType{type, isNullable};
+    sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();
     fields.emplace_back(std::move(name), std::move(dataType));
     nameToField.emplace(fields.back().name, fields.size() - 1);
     return *this;
@@ -71,8 +76,8 @@ bool Schema::replaceTypeOfField(const std::string& name, DataType type)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
-        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytes();
-        sizeOfSchemaInBytes += type.getSizeInBytes();
+        sizeOfSchemaInBytes -= fields.at(fieldIdx->second).dataType.getSizeInBytesWithNull();
+        sizeOfSchemaInBytes += type.getSizeInBytesWithNull();
         fields.at(fieldIdx->second).dataType = std::move(type);
         return true;
     }

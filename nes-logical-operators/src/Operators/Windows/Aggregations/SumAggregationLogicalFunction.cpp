@@ -17,7 +17,8 @@
 #include <memory>
 #include <string>
 #include <string_view>
-#include <utility>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -30,23 +31,27 @@
 
 namespace NES
 {
-
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
-    : inputStamp(onField.getDataType())
-    , partialAggregateStamp(onField.getDataType())
-    , finalAggregateStamp(onField.getDataType())
-    , onField(onField)
-    , asField(std::move(asField))
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{field}
 {
 }
 
-SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& asField)
-    : inputStamp(asField.getDataType())
-    , partialAggregateStamp(asField.getDataType())
-    , finalAggregateStamp(asField.getDataType())
-    , onField(asField)
-    , asField(asField)
+SumAggregationLogicalFunction::SumAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{std::move(asField)}
 {
+}
+
+bool SumAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return true;
 }
 
 std::string_view SumAggregationLogicalFunction::getName() const noexcept
@@ -80,11 +85,11 @@ SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredStamp(c
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    auto newAsField = this->getAsField().withFieldName(newAsFieldName).withDataType(newOnField.getDataType());
-    return this->withOnField(newOnField)
-        .withInputStamp(newOnField.getDataType())
-        .withFinalAggregateStamp(newOnField.getDataType())
-        .withAsField(newAsField);
+    auto newFinalAggregationStamp = newOnField.getDataType();
+    return this->withInputStamp(newOnField.getDataType())
+        .withOnField(newOnField)
+        .withFinalAggregateStamp(newFinalAggregationStamp)
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
 Reflected SumAggregationLogicalFunction::reflect() const

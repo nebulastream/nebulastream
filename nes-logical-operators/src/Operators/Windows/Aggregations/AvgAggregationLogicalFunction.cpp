@@ -18,6 +18,7 @@
 #include <string>
 #include <string_view>
 #include <utility>
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -32,21 +33,26 @@
 namespace NES
 {
 AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp(field.getDataType())
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
-    , onField(field)
-    , asField(field)
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{field}
 {
 }
 
-AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& onField, FieldAccessLogicalFunction asField)
-    : inputStamp(onField.getDataType())
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
-    , onField(onField)
-    , asField(std::move(asField))
+AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(const FieldAccessLogicalFunction& field, FieldAccessLogicalFunction asField)
+    : inputStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , partialAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , finalAggregateStamp{DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)}
+    , onField{field}
+    , asField{std::move(asField)}
 {
+}
+
+bool AvgAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    return true;
 }
 
 std::string_view AvgAggregationLogicalFunction::getName() noexcept
@@ -68,20 +74,26 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
     {
         if (this->getOnField().getDataType().isSignedInteger())
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::INT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+                DataType::Type::INT64,
+                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
         else
         {
-            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64));
+            newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+                DataType::Type::UINT64,
+                newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
         }
     }
     else
     {
-        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(DataType::Type::FLOAT64));
+        newOnField = newOnField.withDataType(DataTypeProvider::provideDataType(
+            DataType::Type::FLOAT64,
+            newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
     }
 
     ///Set fully qualified name for the as Field
-    const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>().get().getFieldName();
+    const auto onFieldName = newOnField.getAs<FieldAccessLogicalFunction>()->getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
 
     const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
@@ -97,9 +109,12 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
         const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
-    auto newAsField = this->getAsField().withFieldName(newAsFieldName).withDataType(getFinalAggregateStamp());
-    return this->withAsField(newAsField)
-        .withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
+
+    const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
+        finalAggregateStampType, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return this->withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
+        .withFinalAggregateStamp(newFinalAggregateStamp)
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp))
         .withInputStamp(newOnField.getDataType());
 }
 

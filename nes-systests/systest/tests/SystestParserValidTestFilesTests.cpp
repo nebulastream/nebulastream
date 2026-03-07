@@ -25,8 +25,10 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -75,6 +77,120 @@ TEST_F(SystestParserValidTestFileTest, ValidTestFile)
     ASSERT_TRUE(createCallbackCalled) << "Create callback was never called";
     ASSERT_TRUE(queryResultMap.size() != 3) << "Result callback was never called";
 
+    ASSERT_TRUE(std::ranges::all_of(
+        expectedResults,
+        [&queryResultMap](const auto& expectedResult)
+        { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
+}
+
+TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
+{
+    const auto* const filename = SYSTEST_DATA_DIR "nullable.dummy";
+    const SystestParser::SystestLogicalSource expectedLogicalSource{
+        .name = "window",
+        .fields
+        = {{.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "id"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "value"},
+           {.type = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE), .name = "timestamp"}}};
+
+    const std::vector<std::string> expectedInlineData
+        = {{"1,1,1000",   "12,1,1001",  "4,1,1002",   "1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",
+            "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",   "1,6,6000",   "1,7,7000",
+            "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+            "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
+
+    const auto expectedQueries = std::to_array<std::string>(
+        {R"(SELECT * FROM window WHERE value == UINT64(1) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE id >= UINT64(10) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp <= UINT64(10000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE timestamp >= UINT64(5000) AND timestamp <= UINT64(15000) INTO sinkWindow;)",
+         R"(SELECT * FROM window WHERE value != UINT64(1) INTO sinkWindow;)"});
+
+    std::vector<std::vector<std::string>> expectedResults
+        = {{"1,1,1000", "12,1,1001", "4,1,1002"},
+           {"12,1,1001", "11,2,2001", "16,2,2002", "11,3,3001"},
+           {"1,1,1000",
+            "12,1,1001",
+            "4,1,1002",
+            "1,2,2000",
+            "11,2,2001",
+            "16,2,2002",
+            "1,3,3000",
+            "11,3,3001",
+            "1,3,3003",
+            "1,3,3200",
+            "1,4,4000",
+            "1,5,5000",
+            "1,6,6000",
+            "1,7,7000",
+            "1,8,8000",
+            "1,9,9000",
+            "1,10,10000"},
+           {"1,5,5000",
+            "1,6,6000",
+            "1,7,7000",
+            "1,8,8000",
+            "1,9,9000",
+            "1,10,10000",
+            "1,11,11000",
+            "1,12,12000",
+            "1,13,13000",
+            "1,14,14000",
+            "1,15,15000"},
+           {"1,2,2000",   "11,2,2001",  "16,2,2002",  "1,3,3000",   "11,3,3001",  "1,3,3003",   "1,3,3200",   "1,4,4000",   "1,5,5000",
+            "1,6,6000",   "1,7,7000",   "1,8,8000",   "1,9,9000",   "1,10,10000", "1,11,11000", "1,12,12000", "1,13,13000", "1,14,14000",
+            "1,15,15000", "1,16,16000", "1,17,17000", "1,18,18000", "1,19,19000", "1,20,20000", "1,21,21000"}};
+
+    bool createLogicalSourceCallbackCalled = false;
+    bool createPhysicalSourceCallbackCalled = false;
+    bool createSinkCallbackCalled = false;
+    bool queryCallbackCalled = false;
+
+    SystestParser parser{};
+    std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
+
+    parser.registerOnCreateCallback(
+        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        {
+            if (query.starts_with("CREATE LOGICAL SOURCE"))
+            {
+                createLogicalSourceCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+            if (query.starts_with("CREATE PHYSICAL SOURCE"))
+            {
+                createPhysicalSourceCallbackCalled = true;
+                EXPECT_TRUE(testData.has_value());
+                EXPECT_EQ(TestDataIngestionType::INLINE, testData.value().first);
+                EXPECT_EQ(expectedInlineData.size(), testData.value().second.size());
+                ASSERT_TRUE(testData.value().second == expectedInlineData);
+            }
+            if (query.starts_with("CREATE SINK"))
+            {
+                createSinkCallbackCalled = true;
+                EXPECT_FALSE(testData.has_value());
+            }
+        });
+
+    parser.registerOnQueryCallback(
+        [&queryCallbackCalled, &expectedQueries](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        {
+            queryCallbackCalled = true;
+            /// Query numbers start at QueryId::INITIAL, which is 1
+            ASSERT_LT(currentQueryIdInTest.getRawValue(), expectedQueries.size() + 1);
+            ASSERT_EQ(query, expectedQueries.at(currentQueryIdInTest.getRawValue() - 1));
+        });
+
+    parser.registerOnResultTuplesCallback([&](std::vector<std::string>&& resultTuples, const SystestQueryId correspondingQueryId)
+                                          { queryResultMap.emplace(correspondingQueryId, std::move(resultTuples)); });
+
+    ASSERT_TRUE(parser.loadFile(filename));
+    EXPECT_NO_THROW(parser.parse());
+    ASSERT_TRUE(queryCallbackCalled) << "Query callback was never called";
+    ASSERT_TRUE(createLogicalSourceCallbackCalled);
+    ASSERT_TRUE(createPhysicalSourceCallbackCalled);
+    ASSERT_TRUE(createSinkCallbackCalled);
+    ASSERT_TRUE(queryResultMap.size() == expectedResults.size());
     ASSERT_TRUE(std::ranges::all_of(
         expectedResults,
         [&queryResultMap](const auto& expectedResult)
@@ -424,6 +540,20 @@ TEST_F(SystestParserValidTestFileTest, CreateStatementFormat)
         expectedData,
         [&queryResultMap](const auto& expectedResult)
         { return std::ranges::contains(queryResultMap | std::views::values, expectedResult); }));
+}
+
+/// Checking, if text after the closing bracket of the groups is allowed and the file is being correctly excluded
+TEST_F(SystestParserValidTestFileTest, TextAfterClosingBracketOfGroups)
+{
+    SystestConfiguration config{};
+    config.testsDiscoverDir.setValue(SYSTEST_DATA_DIR);
+    const auto testFileName = fmt::format("comment_text_bracket{}", ".dummy");
+    config.directlySpecifiedTestFiles.setValue(fmt::format("{}/{}", SYSTEST_DATA_DIR, testFileName));
+    const auto testMap = Systest::loadTestFileMap(config);
+    ASSERT_EQ(testMap.size(), 1);
+    const auto testFile = testMap.begin()->second;
+    const std::vector<std::string> expectedGroups = {"Aggregation", "WindowOperators", "CompilationIntensive"};
+    ASSERT_EQ(testFile.groups, expectedGroups);
 }
 
 

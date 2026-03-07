@@ -124,15 +124,14 @@ std::vector<TestGroup> readGroups(const TestFile& testfile)
         {
             if (line.starts_with("# groups:"))
             {
-                std::string groupsStr = line.substr(9);
-                groupsStr.erase(std::ranges::remove(groupsStr, '[').begin(), groupsStr.end());
-                groupsStr.erase(std::ranges::remove(groupsStr, ']').begin(), groupsStr.end());
-                std::istringstream iss(groupsStr);
-                std::string group;
-                while (std::getline(iss, group, ','))
+                auto content = std::string_view(line).substr(9);
+                auto open = content.find('[');
+                auto close = content.find(']');
+                auto inner = content.substr(open + 1, close - open - 1);
+                for (auto part : inner | std::views::split(',') | std::views::transform([](auto r) { return std::string_view(r); })
+                         | std::views::transform([](auto sv) { return sv | std::views::filter([](char c) { return !std::isspace(c); }); }))
                 {
-                    std::erase_if(group, ::isspace);
-                    groups.emplace_back(group);
+                    groups.emplace_back(std::ranges::to<std::string>(part));
                 }
                 break;
             }
@@ -227,6 +226,12 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
         [&](const auto& nameAndFile)
         {
             const auto& [name, testFile] = nameAndFile;
+            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
+            {
+                std::cout << fmt::format(
+                    "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
+                return true;
+            }
             if (!includedGroups.empty())
             {
                 if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
@@ -235,12 +240,6 @@ TestFileMap loadTestFileMap(const SystestConfiguration& config)
                         "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
                     return true;
                 }
-            }
-            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
-            {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is part of the {:} excluded groups\n", testFile.getLogFilePath(), excludedGroups);
-                return true;
             }
             return false;
         });

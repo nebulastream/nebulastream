@@ -14,6 +14,8 @@
 
 #include <Functions/ArithmeticalFunctions/RoundLogicalFunction.hpp>
 
+#include <algorithm>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -64,9 +66,12 @@ RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType
 
 LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
 {
-    const auto newChild = child.withInferredDataType(schema);
-    const auto childDataType = newChild.getDataType();
-    return withDataType(childDataType).withChildren({newChild});
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 1, "RoundLogicalFunction expects exactly one child function but has {}", newChildren.size());
+    auto newDataType = newChildren[0].getDataType();
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
 };
 
 std::vector<LogicalFunction> RoundLogicalFunction::getChildren() const

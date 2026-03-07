@@ -33,21 +33,28 @@
 namespace NES
 {
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field)
-    : inputStamp(DataTypeProvider::provideDataType(inputAggregateStampType))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
+    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
     , onField(field)
     , asField(field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : inputStamp(DataTypeProvider::provideDataType(inputAggregateStampType))
-    , partialAggregateStamp(DataTypeProvider::provideDataType(partialAggregateStampType))
-    , finalAggregateStamp(DataTypeProvider::provideDataType(finalAggregateStampType))
+    : inputStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , partialAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
+    , finalAggregateStamp(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED))
     , onField(std::move(field))
     , asField(std::move(asField))
 {
+}
+
+bool CountAggregationLogicalFunction::shallIncludeNullValues() noexcept
+{
+    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
+    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
+    return false;
 }
 
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
@@ -64,6 +71,8 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
+        /// We infer the data type from the schema for the on field
+        auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -79,11 +88,16 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
             newAsFieldName = attributeNameResolver + fieldName;
         }
 
-        /// a count aggregation is always on an uint 64
+        /// a count aggregation is always on an uint 64 and never returns a NULL value
+        auto newInputStamp = DataTypeProvider::provideDataType(
+            DataType::Type::UINT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+        auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
-        return this->withOnField(this->getOnField().withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)))
-            .withAsField(newAsField.withDataType(DataTypeProvider::provideDataType(DataType::Type::UINT64)));
+        return this->withInputStamp(newInputStamp)
+            .withOnField(newOnField.withDataType(newInputStamp))
+            .withFinalAggregateStamp(newFinalAggregateStamp)
+            .withAsField(newAsField.withDataType(newFinalAggregateStamp));
     }
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }

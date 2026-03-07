@@ -68,7 +68,7 @@ jobs:
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
+            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
@@ -256,7 +256,7 @@ jobs:
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 2400 ${ADDTIONAL_CTEST_ARGS}
+            ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.

@@ -21,10 +21,14 @@ namespace NES::DataTypeProvider
 {
 
 std::optional<DataType> tryProvideDataType(const std::string& type);
+std::optional<DataType> tryProvideDataType(const std::string& type, DataType::NULLABLE isNullable);
 
 /// @param type name of the data type (must be the exact name: INT8, INT16, CHAR, BOOLEAN, ...)
+/// @param isNullable defines if the data type can be null
 /// Throws an UnknownPluginType, if the name does not match any type enum
 DataType provideDataType(const std::string& type);
+DataType provideDataType(const std::string& type, DataType::NULLABLE isNullable);
 DataType provideDataType(DataType::Type type);
+DataType provideDataType(DataType::Type type, DataType::NULLABLE isNullable);
 
 }

@@ -3,7 +3,7 @@
 # groups: [Aggregation]
 
 
-CREATE LOGICAL SOURCE input(i UINT64, timestamp UINT64);
+CREATE LOGICAL SOURCE input(i UINT64 NOT NULL, timestamp UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR input TYPE File;
 ATTACH INLINE
 1,100
@@ -14,12 +14,12 @@ ATTACH INLINE
 2,325
 
 
-CREATE SINK out(input.start UINT64, input.end UINT64, input.i_count UINT64, input.i_min UINT64, input.i_max UINT64, input.i_sum UINT64, input.i_avg FLOAT64, input.i_median FLOAT64) TYPE File;
-CREATE SINK sinkAggResult(result FLOAT64) TYPE File;
-CREATE SINK sinkAggErr(input.start UINT64, input.end UINT64, out FLOAT64) TYPE File;
-CREATE SINK sinkExprAgg(input.start UINT64, input.end UINT64, out FLOAT64) TYPE File;
-CREATE SINK sinkExprAggFloat(out FLOAT64) TYPE File;
-CREATE SINK sinkExprAggUint(out UINT64) TYPE File;
+CREATE SINK out(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, input.i_count UINT64 NOT NULL, input.i_min UINT64 NOT NULL, input.i_max UINT64 NOT NULL, input.i_sum UINT64 NOT NULL, input.i_avg FLOAT64 NOT NULL, input.i_median FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkAggResult(result FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkAggErr(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkExprAgg(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkExprAggFloat(out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkExprAggUint(out UINT64 NOT NULL) TYPE File;
 
 # All aggregation functions with auto-generated column names.
 SELECT start, end,COUNT(i), MIN(i), MAX(i), SUM(i), AVG(i), MEDIAN(i)
