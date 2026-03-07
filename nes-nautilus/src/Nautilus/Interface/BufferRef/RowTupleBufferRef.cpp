@@ -13,9 +13,11 @@
 */
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <string>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
@@ -26,6 +28,7 @@
 #include <nautilus/val_ptr.hpp>
 #include <static.hpp>
 #include <val.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
@@ -66,26 +69,35 @@ Record RowTupleBufferRef::readRecord(
     return record;
 }
 
-void RowTupleBufferRef::writeRecord(
+TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
 {
-    const auto bufferAddress = recordBuffer.getMemArea();
-    const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
-    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+    nautilus::val<bool> successful{false};
+    nautilus::val<uint64_t> writtenRecords{0};
+    /// Check if index is in-bounds
+    if (recordIndex < capacity)
     {
-        const auto& [name, type, fieldOffset] = fields.at(i);
-        if (not rec.hasField(name))
+        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
+        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
-            /// Skipping any fields that are not part of the record
-            continue;
+            const auto& [name, type, fieldOffset] = fields.at(i);
+            if (not rec.hasField(name))
+            {
+                /// Skipping any fields that are not part of the record
+                continue;
+            }
+            auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
+            const auto& value = rec.read(name);
+            storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
         }
-        auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
-        const auto& value = rec.read(name);
-        storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
+        writtenRecords = 1;
+        successful = true;
     }
+    return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
 std::vector<Record::RecordFieldIdentifier> RowTupleBufferRef::getAllFieldNames() const

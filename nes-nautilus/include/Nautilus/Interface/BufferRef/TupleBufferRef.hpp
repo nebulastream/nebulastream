@@ -27,6 +27,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <val_bool.hpp>
+#include <val_concepts.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -66,11 +68,20 @@ public:
         nautilus::val<uint64_t>& recordIndex) const
         = 0;
 
+    /// Returned by writeRecord
+    /// Will give information on whether the write operation was successful (record index was inbounds)
+    /// and the number of records (or bytes, in case of OutputFormatterBufferRef) that were written
+    struct WriteRecordResult
+    {
+        nautilus::val<bool> successful;
+        nautilus::val<uint64_t> writtenRecords;
+    };
+
     /// Writes a record from the given bufferAddress and recordIndex.
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
-    virtual void writeRecord(
+    virtual WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,

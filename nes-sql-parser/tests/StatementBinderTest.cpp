@@ -98,7 +98,7 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
                               "FROM input\n"
                               "INTO FILE(\n"
                               "'out.csv' AS `SINK`.FILE_PATH,\n"
-                              "'CSV' as `SINK`.INPUT_FORMAT,\n"
+                              "'CSV' as `SINK`.OUTPUT_FORMAT,\n"
                               "SCHEMA(id UINT64, text VARSIZED) AS `SINK`.`SCHEMA`)\n";
     const auto statement = binder->parseAndBindSingle(query);
     ASSERT_TRUE(statement.has_value());
@@ -113,7 +113,7 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
 
     ASSERT_EQ("FILE", inlineSinkOperator->getSinkType());
 
-    const std::unordered_map<std::string, std::string> expectedSinkConfig = {{"file_path", "out.csv"}, {"input_format", "CSV"}};
+    const std::unordered_map<std::string, std::string> expectedSinkConfig = {{"file_path", "out.csv"}, {"output_format", "CSV"}};
     ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
 
     Schema schema;
@@ -244,7 +244,7 @@ TEST_F(StatementBinderTest, BindCreateBindSourceWithInvalidConfigs)
 TEST_F(StatementBinderTest, BindCreateSink)
 {
     const std::string createSinkStatement = "CREATE SINK testSink (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS "
-                                            "`SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT)";
+                                            "`SINK`.FILE_PATH, 'CSV' AS `SINK`.OUTPUT_FORMAT)";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateSinkStatement>(*statement));
@@ -258,7 +258,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
+    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
     const auto statement2 = binder->parseAndBindSingle(dropSinkStatement);
@@ -276,7 +276,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
 TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 {
     const std::string createSinkStatement = "CREATE SINK testSink (testSource.attribute1 UINT32, testSource.attribute2 VARSIZED) TYPE File "
-                                            "SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT)";
+                                            "SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.OUTPUT_FORMAT)";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateSinkStatement>(*statement));
@@ -290,7 +290,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
+    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
 }
 
 TEST_F(StatementBinderTest, BindDropQuery)
@@ -462,9 +462,9 @@ TEST_F(StatementBinderTest, ShowSinks)
 {
     const std::vector<std::string_view> sinkStatements{
         "CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS "
-        "`SINK`.INPUT_FORMAT)",
+        "`SINK`.OUTPUT_FORMAT)",
         "CREATE SINK testSink2 (attribute1 UINT32, attribute2 INT32) TYPE File SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS "
-        "`SINK`.INPUT_FORMAT)"};
+        "`SINK`.OUTPUT_FORMAT)"};
 
     for (const auto& sinkStatement : sinkStatements)
     {
@@ -523,7 +523,7 @@ TEST_F(StatementBinderTest, ExplainStatement)
 
     const std::vector<std::string_view> badExplainStatement{
         "EXPLAIN CREATE SINK testSink1 (attribute1 UINT32, attribute2 VARSIZED) TYPE File SET ('/dev/null' AS `SINK`.FILE_PATH, 'CSV' AS "
-        "`SINK`.INPUT_FORMAT)",
+        "`SINK`.OUTPUT_FORMAT)",
         "EXPLAIN SHOW PHYSICAL SOURCES"};
 
     for (const auto& explain : badExplainStatement)

@@ -319,6 +319,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -363,6 +364,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -404,6 +406,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -451,6 +454,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
