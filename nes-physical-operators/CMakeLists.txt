@@ -19,7 +19,8 @@ get_source(nes-physical-operators NES_PHYSICAL_OPERATORS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-physical-operators ${NES_PHYSICAL_OPERATORS_SOURCE_FILES})
-target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus nes-input-formatter-provider)
+find_package(date CONFIG REQUIRED)
+target_link_libraries(nes-physical-operators PUBLIC nes-sources nes-sinks nes-nautilus nes-input-formatter-provider PRIVATE date::date date::date-tz)
 target_include_directories(nes-physical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
