@@ -85,7 +85,7 @@ public:
                 std::unordered_map<std::string, std::string> formatConfig{};
                 if (sinkType == "File")
                 {
-                    config["input_format"] = "CSV";
+                    config["output_format"] = "CSV";
                 }
                 else if (toUpperCase(sinkType) == "CHECKSUM")
                 {
@@ -642,9 +642,9 @@ struct SystestBinder::Impl
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
 
-        if (not(sinkConfig.contains("input_format")) and sinkOperator->getSinkType() != "CHECKSUM")
+        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
-            sinkConfig.emplace("input_format", "CSV");
+            sinkConfig.emplace("output_format", "CSV");
         }
         if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
         {

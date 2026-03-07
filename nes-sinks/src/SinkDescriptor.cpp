@@ -32,7 +32,6 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
-#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
@@ -63,7 +62,7 @@ std::string_view SinkDescriptor::getFormatType() const
 {
     try
     {
-        return magic_enum::enum_name(getFromConfig(INPUT_FORMAT));
+        return getFromConfig(OUTPUT_FORMAT);
     }
     catch (std::out_of_range& e)
     {

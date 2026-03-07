@@ -38,12 +38,10 @@ The cmake configuration mirrors the one described in our source guide.
 
 ## 3. Creation & Validation
 
-Creation and validation of the sinks mirrors sources, with one notable exception, which is formatting.
-Within sources, we do not deal with the conversion of the input format into our native tuple format.
-Instead, we are allowed to treat the input as a stream of bytes that we simply copy into the input buffer.
-As of now, sinks should contain the output formatter that does the reverse conversion as a member.
-If we forget this output formatting, we would write the native CPU representation of our tuples into the external system. 
-The constructor of the sink including the formatter looks like this:
+Creation and validation of the sinks mirrors sources. 
+The data in the buffers, the sink receives, was already converted into the output-format by the OutputFormatter-component,
+so the sink itself does not need to perform any data conversions.
+The constructor of the sink looks like this:
 ```c++
 MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
     : Sink()
@@ -52,20 +50,8 @@ MQTTSink::MQTTSink(const SinkDescriptor& sinkDescriptor)
     , topic(sinkDescriptor.getFromConfig(ConfigParametersMQTT::TOPIC))
     , qos(sinkDescriptor.getFromConfig(ConfigParametersMQTT::QOS))
 {
-    switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersMQTT::INPUT_FORMAT))
-    {
-        case Configurations::InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(sinkDescriptor.schema);
-            break;
-        case Configurations::InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(sinkDescriptor.schema);
-            break;
-        default:
-            throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));
-    }
 }
 ```
-Generally, it follows the source approach but has a special configuration parameter that we can parse to create the correct output formatter.
 
 ## 4. Implementation
 Sinks are implemented as their own pipelines that are invoked with a reference to a `TupleBuffer` and are expected to write this buffer into the target system/device.
@@ -110,8 +96,6 @@ void MQTTSink::start(Runtime::Execution::PipelineExecutionContext&)
 }
 ```
 
-An important difference between sources and sinks is that at the moment, encoding/formatting of buffers is done within the sink itself.
-For this reason, we ask the `formatter` to convert our result buffer from native in-memory representation into a string of CSV-encoded tuples that we can write to MQTT.
 The `PipelineExecutionContext` variable can be omitted for sinks. 
 Operators can use them to emit result buffers into successor pipelines, which is not necessary in the case of sinks.
 Our MQTT sink's `execute` method could be implemented like this:
@@ -124,14 +108,10 @@ void MQTTSink::execute(const TupleBuffer& inputBuffer, Runtime::Execution::Pipel
     {
         return;
     }
-
-    /// (2) Ask output formatter for formatted buffer, set quality of service for message
-    const mqtt::message_ptr message = mqtt::make_message(topic, formatter->getFormattedBuffer(inputBuffer));
-    message->set_qos(qos);
-
+    
     try
     {
-        /// (3) Do blocking publish
+        /// (2) Do blocking publish
         client->publish(message)->wait();
     }
     catch (...)

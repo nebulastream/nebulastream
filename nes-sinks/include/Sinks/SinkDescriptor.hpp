@@ -41,12 +41,6 @@ class SinkCatalog;
 namespace NES
 {
 
-enum class InputFormat : uint8_t
-{
-    CSV,
-    JSON
-};
-
 class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
@@ -59,7 +53,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
-    /// Will return "Native" as fallback, if the sink config does not use the INPUT_FORMAT parameter.
+    /// Will return "Native" as fallback, if the sink config does not use the OUTPUT_FORMAT parameter.
     [[nodiscard]] std::string_view getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
@@ -84,10 +78,10 @@ private:
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
-        "input_format",
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
@@ -98,7 +92,7 @@ public:
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
 
     /// Well-known property for any sink that sends its data to a file
     /// NOLINTNEXTLINE(cert-err58-cpp)
