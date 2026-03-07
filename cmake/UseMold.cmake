@@ -11,16 +11,19 @@
 # limitations under the License.
 
 # Linker
-option(NES_USE_MOLD_IF_AVAILABLE "Uses mold for linking if it is available" ON)
-find_program(MOLD_EXECUTABLE mold)
-if(MOLD_EXECUTABLE AND ${NES_USE_MOLD_IF_AVAILABLE})
-    message(STATUS "Using mold linker")
-    add_link_options("-fuse-ld=mold")
+# Mold and --no-undefined are Linux-only (not supported by macOS ld64)
+if (NOT CMAKE_SYSTEM_NAME STREQUAL "Darwin" AND NOT NES_OS STREQUAL "osx")
+    option(NES_USE_MOLD_IF_AVAILABLE "Uses mold for linking if it is available" ON)
+    find_program(MOLD_EXECUTABLE mold)
+    if(MOLD_EXECUTABLE AND ${NES_USE_MOLD_IF_AVAILABLE})
+        message(STATUS "Using mold linker")
+        add_link_options("-fuse-ld=mold")
 
-    # Currently, we expect all symbols to be present at build time. This shifts errors due to missing symbols
-    # from crashing the application at runtime to errors at link time.
-    add_link_options("-Wl,--no-undefined")
-elseif (${NES_USE_MOLD_IF_AVAILABLE})
-    message(STATUS "Mold is not available falling back to default linker")
+        # Currently, we expect all symbols to be present at build time. This shifts errors due to missing symbols
+        # from crashing the application at runtime to errors at link time.
+        add_link_options("-Wl,--no-undefined")
+    elseif (${NES_USE_MOLD_IF_AVAILABLE})
+        message(STATUS "Mold is not available falling back to default linker")
+    endif ()
 endif ()
 

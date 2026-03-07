@@ -13,7 +13,7 @@
 # HostIdentification should set all system relevant information and make them available for rest of the CMake
 # configuration. Currently it provides:
 # - `NES_ARCH`: either `x64` or `arm64`
-# - `NES_OS`: `linux`
+# - `NES_OS`: `linux` or `osx`
 
 find_program(UNAME uname REQUIRED)
 
@@ -32,6 +32,9 @@ execute_process(COMMAND ${UNAME} -s OUTPUT_VARIABLE UNAME_HOST_OS)
 if (UNAME_HOST_OS MATCHES "Linux")
     MESSAGE(STATUS "Found linux operating system")
     set(NES_OS "linux")
+elseif (UNAME_HOST_OS MATCHES "Darwin")
+    MESSAGE(STATUS "Found macOS operating system")
+    set(NES_OS "osx")
 else ()
-    message(FATAL_ERROR "Only linux is supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
+    message(FATAL_ERROR "Only Linux and macOS are supported. Use the nebulastream/nes-development:latest docker image, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
 endif ()

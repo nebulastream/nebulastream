@@ -18,13 +18,13 @@
 if (NOT _NES_TOOLCHAIN_FILE)
     set(_NES_TOOLCHAIN_FILE 1)
 
-    if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux")
+    if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Linux" OR CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
         set(CMAKE_CROSSCOMPILING OFF CACHE BOOL "")
     endif ()
     if (VCPKG_TARGET_ARCHITECTURE STREQUAL "x64")
         set(CMAKE_SYSTEM_PROCESSOR x86_64 CACHE STRING "")
     endif ()
-    set(CMAKE_SYSTEM_NAME Linux CACHE STRING "")
+    set(CMAKE_SYSTEM_NAME ${VCPKG_CMAKE_SYSTEM_NAME} CACHE STRING "")
 
     find_program(MOLD_EXECUTABLE NAMES mold)
     set(LINK_WITH_MOLD "")
@@ -38,8 +38,10 @@ if (NOT _NES_TOOLCHAIN_FILE)
     endif ()
 
     # If clang is available we use clang and look for libc++
-    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION})
-    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION})
+    # On Linux the versioned binary (clang++-19) is the primary name; on macOS
+    # (Homebrew) only the unversioned symlinks (clang++, clang) exist in the keg.
+    find_program(CLANGXX_EXECUTABLE REQUIRED NAMES clang++-$ENV{LLVM_TOOLCHAIN_VERSION} clang++)
+    find_program(CLANG_EXECUTABLE REQUIRED NAMES clang-$ENV{LLVM_TOOLCHAIN_VERSION} clang)
 
 
     set(CMAKE_CXX_COMPILER ${CLANGXX_EXECUTABLE})

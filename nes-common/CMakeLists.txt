@@ -67,10 +67,15 @@ find_package(yaml-cpp   CONFIG REQUIRED)
 find_package(folly      CONFIG REQUIRED)
 find_package(boost_url CONFIG REQUIRED)
 
-find_package(PkgConfig)
-pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
+target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url)
 
-target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog yaml-cpp::yaml-cpp folly::folly Boost::url PkgConfig::uuid)
+if (APPLE)
+    # macOS provides uuid natively via the system headers
+else ()
+    find_package(PkgConfig)
+    pkg_check_modules(uuid REQUIRED IMPORTED_TARGET GLOBAL uuid)
+    target_link_libraries(nes-common PUBLIC PkgConfig::uuid)
+endif ()
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
