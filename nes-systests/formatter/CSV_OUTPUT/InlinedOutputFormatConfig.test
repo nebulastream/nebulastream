@@ -11,14 +11,14 @@ is
 a
 test
 
-SELECT * FROM csvSource INTO File('CSV' as `SINK`.INPUT_FORMAT, TRUE as `PARSER`.ESCAPE_STRINGS);
+SELECT * FROM csvSource INTO File('CSV' as `SINK`.OUTPUT_FORMAT, TRUE as `PARSER`.ESCAPE_STRINGS);
 ----
 "This"
 "is"
 "a"
 "test"
 
-SELECT * FROM csvSource INTO File('CSV' as `SINK`.INPUT_FORMAT, FALSE as `PARSER`.ESCAPE_STRINGS);
+SELECT * FROM csvSource INTO File('CSV' as `SINK`.OUTPUT_FORMAT, FALSE as `PARSER`.ESCAPE_STRINGS);
 ----
 This
 is

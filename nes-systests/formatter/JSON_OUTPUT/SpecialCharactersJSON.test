@@ -7,6 +7,6 @@ CREATE PHYSICAL SOURCE FOR jsonSource TYPE File;
 ATTACH INLINE;
 This sentence has "special" characters\,"
 
-SELECT * FROM jsonSource INTO FILE('JSON' as `SINK`.INPUT_FORMAT);
+SELECT * FROM jsonSource INTO FILE('JSON' as `SINK`.OUTPUT_FORMAT);
 ----
 {"JSONSOURCE$FIRSTFIELD":"This sentence has \"special\" characters\\","JSONSOURCE$SECONDFIELD":"\""}

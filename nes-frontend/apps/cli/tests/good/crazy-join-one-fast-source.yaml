@@ -48,7 +48,7 @@ sinks:
     type: File
     config:
       file_path: out.csv
-      input_format: CSV
+      output_format: CSV
     parser_config: { }
 
 logical:
