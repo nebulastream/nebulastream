@@ -101,9 +101,9 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             // {
             //     std::cout << "required field: " << field << std::endl;
             // }
-            if (!requiredFields.empty() and not includesField(requiredFields, field.name))
+            if (!requiredFields.empty() and not includesField(requiredFields, fieldName))
             {
-                VarVal const stub = VarVal(nautilus::val<int>(42));
+                const VarVal stub = VarVal(nautilus::val<int>(42));
                 record.write(fieldName, stub);
                 continue;
             }
@@ -157,7 +157,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             if (not includesField(requiredFields, fieldName))
             {
                 parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
-            } else
+            }
+            else
             {
                 parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
             }

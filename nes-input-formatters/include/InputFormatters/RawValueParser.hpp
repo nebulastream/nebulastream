@@ -67,7 +67,7 @@ void parseRawValueIntoRecord(
 // the same logic as parseRawValueIntoRecord and stores the result in the Record.
 void parseLazyValueIntoRecord(
     DataType::Type physicalType,
-    Nautilus::Record& record,
+    Record& record,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
