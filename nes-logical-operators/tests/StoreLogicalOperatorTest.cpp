@@ -55,5 +55,22 @@ TEST_F(StoreLogicalOperatorTest, RejectsCompressedStoreWithoutHeader)
             {{"file_path", "/tmp/replay.store"}, {"compression", "Zstd"}, {"header", "false"}}),
         ErrorCode::InvalidConfigParameter);
 }
+
+TEST_F(StoreLogicalOperatorTest, AcceptsNumericRetentionWindow)
+{
+    auto config = StoreLogicalOperator::validateAndFormatConfig(
+        {{"file_path", "/tmp/replay.store"}, {"retention_window_ms", "60000"}});
+    Descriptor descriptor(std::move(config));
+
+    EXPECT_EQ(descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::RETENTION_WINDOW_MS), "60000");
+}
+
+TEST_F(StoreLogicalOperatorTest, RejectsNonNumericRetentionWindow)
+{
+    ASSERT_EXCEPTION_ERRORCODE(
+        StoreLogicalOperator::validateAndFormatConfig(
+            {{"file_path", "/tmp/replay.store"}, {"retention_window_ms", "not-a-number"}}),
+        ErrorCode::InvalidConfigParameter);
+}
 }
 }

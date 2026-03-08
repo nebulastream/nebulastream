@@ -387,6 +387,7 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
         .filePath = "/tmp/REPLAY-NebulaStream/recordings/incoming.bin",
         .structuralFingerprint = "incoming",
         .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = std::nullopt,
         .beneficiaryQueries = {},
         .coversIncomingQuery = true};
     const auto reusedSelection = RecordingSelection{
@@ -395,6 +396,7 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
         .filePath = "/tmp/REPLAY-NebulaStream/recordings/reused.bin",
         .structuralFingerprint = "reused",
         .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = std::nullopt,
         .beneficiaryQueries = {activeQueryId.getRawValue()},
         .coversIncomingQuery = false};
 

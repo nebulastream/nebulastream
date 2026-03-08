@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -70,6 +71,7 @@ struct RecordingSelection
     std::string filePath;
     std::string structuralFingerprint;
     RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
+    std::optional<uint64_t> retentionWindowMs;
     std::vector<std::string> beneficiaryQueries;
     bool coversIncomingQuery = true;
 

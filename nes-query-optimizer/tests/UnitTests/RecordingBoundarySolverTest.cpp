@@ -48,6 +48,7 @@ RecordingCandidateOption makeNewRecordingOption(
             .filePath = {},
             .structuralFingerprint = {},
             .representation = RecordingRepresentation::BinaryStore,
+            .retentionWindowMs = std::nullopt,
             .beneficiaryQueries = {},
             .coversIncomingQuery = true},
         .cost = RecordingCostBreakdown{

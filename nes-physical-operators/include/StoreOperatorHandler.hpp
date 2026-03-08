@@ -43,6 +43,7 @@ public:
         uint32_t fdatasyncInterval{0};
         Replay::BinaryStoreCompressionCodec compression{Replay::BinaryStoreCompressionCodec::None};
         int32_t compressionLevel{3};
+        std::optional<uint64_t> retentionWindowMs;
         std::string schemaText;
     };
 
@@ -62,8 +63,11 @@ private:
     void resetCurrentSegment();
     void updateCurrentSegmentWatermark(Timestamp watermark);
     void appendManifestEntry(uint64_t payloadOffset, uint64_t storedSizeBytes, uint64_t logicalSizeBytes);
+    void maybeGarbageCollectExpiredSegments(Timestamp currentWatermark);
+    void rewriteRecording(
+        const Replay::BinaryStoreManifest& originalManifest, const Replay::BinaryStoreManifest& retainedManifest);
     void initializeManifestState(bool truncateManifest);
-    void openFile();
+    void openFile(bool truncateExisting);
     void validateExistingFile() const;
     [[nodiscard]] uint64_t writeAtTail(const uint8_t* data, size_t len);
     void writeHeaderIfNeeded();

@@ -15,6 +15,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalStore.hpp>
 
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -25,6 +26,7 @@
 #include <PhysicalOperator.hpp>
 #include <StoreOperatorHandler.hpp>
 #include <StorePhysicalOperator.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
@@ -44,6 +46,12 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
     const auto fdatasyncInterval = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::FDATASYNC_INTERVAL);
     const auto compression = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION);
     const auto compressionLevel = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION_LEVEL);
+    const auto retentionWindowMsConfig = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::RETENTION_WINDOW_MS);
+    const auto retentionWindowMs = retentionWindowMsConfig.empty() ? std::optional<uint64_t>{} : from_chars<uint64_t>(retentionWindowMsConfig);
+    if (!retentionWindowMsConfig.empty() && !retentionWindowMs.has_value())
+    {
+        throw InvalidConfigParameter("Store retention_window_ms must be an unsigned integer");
+    }
 
     std::stringstream schemaStream;
     schemaStream << logicalOperator.getOutputSchema();
@@ -57,6 +65,7 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
         .fdatasyncInterval = fdatasyncInterval,
         .compression = compression,
         .compressionLevel = compressionLevel,
+        .retentionWindowMs = retentionWindowMs,
         .schemaText = schemaStream.str(),
     };
 

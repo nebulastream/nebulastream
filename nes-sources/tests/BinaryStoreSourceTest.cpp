@@ -18,6 +18,7 @@
 #include <cstring>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -127,7 +128,8 @@ public:
         const std::filesystem::path& filePath,
         const Replay::BinaryStoreCompressionCodec compression,
         const std::vector<Timestamp::Underlying>& watermarks,
-        const int32_t compressionLevel = 3) const
+        const int32_t compressionLevel = 3,
+        const std::optional<uint64_t> retentionWindowMs = std::nullopt) const
     {
         ASSERT_EQ(watermarks.size(), rows.size());
         auto bufferManager = BufferManager::create(512, 4);
@@ -141,6 +143,7 @@ public:
             .fdatasyncInterval = 0,
             .compression = compression,
             .compressionLevel = compressionLevel,
+            .retentionWindowMs = retentionWindowMs,
             .schemaText = schemaText(),
         });
 
@@ -260,6 +263,38 @@ TEST_F(BinaryStoreSourceTest, WritesCompressedStoreManifestWithSegmentWatermarks
     EXPECT_EQ(manifest.segments[0].getMinWatermark(), Timestamp(1000));
     EXPECT_EQ(manifest.segments[1].getMaxWatermark(), Timestamp(3000));
     EXPECT_EQ(manifest.segments[2].getMinWatermark(), Timestamp(3000));
+    EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
+}
+
+TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredRawStoreSegmentsByRetentionWindow)
+{
+    const auto filePath = tempDir / "raw-retention.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks, 3, 1500);
+
+    ASSERT_EQ(readRows(filePath), std::vector<TestRow>({rows[2], rows[3], rows[4]}));
+
+    const auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_EQ(manifest.segments.size(), 2U);
+    EXPECT_EQ(manifest.segments.front().payloadOffset, Replay::binaryStoreHeaderSize(static_cast<uint32_t>(schemaText().size())));
+    EXPECT_EQ(manifest.segments.front().getMinWatermark(), Timestamp(2000));
+    EXPECT_EQ(manifest.segments.back().getMaxWatermark(), Timestamp(3000));
+    EXPECT_EQ(*manifest.retainedStartWatermark(), Timestamp(2000));
+    EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
+}
+
+TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredCompressedStoreSegmentsByRetentionWindow)
+{
+    const auto filePath = tempDir / "compressed-retention.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::Zstd, watermarks, -3, 1500);
+
+    ASSERT_EQ(readRows(filePath), std::vector<TestRow>({rows[2], rows[3], rows[4]}));
+
+    const auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_EQ(manifest.segments.size(), 2U);
+    EXPECT_EQ(manifest.segments.front().payloadOffset, Replay::binaryStoreHeaderSize(static_cast<uint32_t>(schemaText().size())));
+    EXPECT_EQ(manifest.segments.front().getMinWatermark(), Timestamp(2000));
+    EXPECT_EQ(manifest.segments.back().getMaxWatermark(), Timestamp(3000));
+    EXPECT_EQ(*manifest.retainedStartWatermark(), Timestamp(2000));
     EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
 }
 }

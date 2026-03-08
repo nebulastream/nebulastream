@@ -165,6 +165,7 @@ TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdat
                     .filePath = "/tmp/REPLAY-NebulaStream/recordings/replacement.bin",
                     .structuralFingerprint = "replacement",
                     .representation = RecordingRepresentation::BinaryStore,
+                    .retentionWindowMs = std::nullopt,
                     .beneficiaryQueries = {},
                     .coversIncomingQuery = true},
             .decision = RecordingSelectionDecision::ReuseExistingRecording,

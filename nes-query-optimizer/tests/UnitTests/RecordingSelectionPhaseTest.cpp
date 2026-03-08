@@ -633,6 +633,7 @@ TEST_F(RecordingSelectionPhaseTest, ReplayPlanRewriterReusesExistingEventTimeWat
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/replay-store-1.bin",
             .structuralFingerprint = "selection-fingerprint",
             .representation = RecordingRepresentation::BinaryStore,
+            .retentionWindowMs = std::nullopt,
             .beneficiaryQueries = {},
             .coversIncomingQuery = true});
 
@@ -715,6 +716,7 @@ TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentati
     EXPECT_EQ(
         descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION_LEVEL),
         compressionLevelForRepresentation(bestCompressedRepresentation->first));
+    EXPECT_EQ(descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::RETENTION_WINDOW_MS), "600000");
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOnlyMergedBoundary)

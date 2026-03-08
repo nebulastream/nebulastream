@@ -675,6 +675,7 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
                     .filePath = Replay::getRecordingFilePath(recordingId.getRawValue()),
                     .structuralFingerprint = structuralFingerprint,
                     .representation = representation,
+                    .retentionWindowMs = replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
                     .beneficiaryQueries = candidate.beneficiaryQueries,
                     .coversIncomingQuery = candidate.coversIncomingQuery};
 
@@ -729,6 +730,7 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
                                 .filePath = bestReuseRecording->filePath,
                                 .structuralFingerprint = bestReuseRecording->structuralFingerprint,
                                 .representation = bestReuseRecording->representation,
+                                .retentionWindowMs = bestReuseRecording->retentionWindowMs,
                                 .beneficiaryQueries = candidate.beneficiaryQueries,
                                 .coversIncomingQuery = candidate.coversIncomingQuery},
                         .cost = toCostBreakdown(reuseCost),

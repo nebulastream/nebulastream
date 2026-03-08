@@ -107,9 +107,35 @@ public:
             3,
             [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(COMPRESSION_LEVEL, cfg); }};
 
+        static inline const DescriptorConfig::ConfigParameter<std::string> RETENTION_WINDOW_MS{
+            "retention_window_ms",
+            "",
+            [](const std::unordered_map<std::string, std::string>& cfg)
+            {
+                if (!cfg.contains(RETENTION_WINDOW_MS))
+                {
+                    return RETENTION_WINDOW_MS.defaultValue;
+                }
+                const auto& value = cfg.at(RETENTION_WINDOW_MS);
+                if (value.empty())
+                {
+                    return std::optional<std::string>{value};
+                }
+                return from_chars<uint64_t>(value).transform([&](uint64_t) { return value; });
+            }};
+
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(
-                FILE_PATH, APPEND, HEADER, CHUNK_MIN_BYTES, ASYNC_BACKEND, DIRECT_IO, FDATASYNC_INTERVAL, COMPRESSION, COMPRESSION_LEVEL);
+                FILE_PATH,
+                APPEND,
+                HEADER,
+                CHUNK_MIN_BYTES,
+                ASYNC_BACKEND,
+                DIRECT_IO,
+                FDATASYNC_INTERVAL,
+                COMPRESSION,
+                COMPRESSION_LEVEL,
+                RETENTION_WINDOW_MS);
     };
 
     static DescriptorConfig::Config validateAndFormatConfig(std::unordered_map<std::string, std::string> configPairs);

@@ -38,6 +38,10 @@ std::unordered_map<std::string, std::string> storeConfigForSelection(const Recor
         {"file_path", selection.filePath},
         {"append", "false"},
         {"header", "true"}};
+    if (selection.retentionWindowMs.has_value())
+    {
+        config.emplace("retention_window_ms", std::to_string(*selection.retentionWindowMs));
+    }
     switch (selection.representation)
     {
         case RecordingRepresentation::BinaryStore:
