@@ -28,7 +28,10 @@
 #include <Functions/LogicalFunction.hpp>
 #include <LegacyOptimizer/RecordingCandidateSelectionPhase.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
+#include <LegacyOptimizer/RecordingPlanRewriter.hpp>
 #include <LegacyOptimizer/RecordingSelectionPhase.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -84,6 +87,19 @@ LogicalPlan createPlacedUnaryPlan(const std::string& sourceName, const Host& hos
 LogicalPlan createPlacedUnaryPlan(const Host& host)
 {
     return createPlacedUnaryPlan("TEST", host);
+}
+
+LogicalPlan createPlacedUnaryPlanWithNestedEventTimeWatermark(const Host& host)
+{
+    auto plan = createPlacedUnaryPlan(host);
+    auto root = plan.getRootOperators().front();
+    auto child = root.getChildren().front();
+    child = EventTimeWatermarkAssignerLogicalOperator(LogicalFunction{FieldAccessLogicalFunction("id")}, Windowing::TimeUnit::Milliseconds())
+               .withTraitSet(child.getTraitSet())
+               .withInferredSchema({createSchema()})
+               .withChildren({child});
+    root = root.withChildren({child});
+    return plan.withRootOperators({root});
 }
 
 LogicalOperator withPlacement(const LogicalOperator& current, const Host& host)
@@ -578,6 +594,53 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
     ASSERT_NE(incomingSelection, selectionResult.networkExplanations.end());
     EXPECT_EQ(incomingSelection->decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(incomingPlan).size(), 1U);
+}
+
+TEST_F(RecordingSelectionPhaseTest, SelectionPhaseInjectsIngestionTimeWatermarkAssignerForReplayStoreWithoutExistingWatermark)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    auto incomingPlan = createPlacedUnaryPlan(host);
+    const ReplaySpecification replaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
+
+    const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, RecordingCatalog{});
+
+    ASSERT_EQ(selectionResult.selectedRecordings.size(), 1U);
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(incomingPlan).size(), 1U);
+    EXPECT_EQ(getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(incomingPlan).size(), 1U);
+    EXPECT_TRUE(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(incomingPlan).empty());
+}
+
+TEST_F(RecordingSelectionPhaseTest, ReplayPlanRewriterReusesExistingEventTimeWatermarkAssignerForReplayStore)
+{
+    const auto host = Host("worker-1:8080");
+    auto plan = createPlacedUnaryPlanWithNestedEventTimeWatermark(host);
+    const auto sink = plan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto assigner = sink.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+    ASSERT_EQ(assigner.getChildren().size(), 1U);
+    const auto selection = assigner.getChildren().front();
+
+    RecordingSelectionsByEdge storesToInsert;
+    storesToInsert.emplace(
+        RecordingRewriteEdge{.parentId = assigner.getId(), .childId = selection.getId()},
+        RecordingSelection{
+            .recordingId = RecordingId("replay-store-1"),
+            .node = host,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/replay-store-1.bin",
+            .structuralFingerprint = "selection-fingerprint",
+            .representation = RecordingRepresentation::BinaryStore,
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true});
+
+    plan = rewriteReplayBoundary(plan, storesToInsert);
+
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(plan).size(), 1U);
+    EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(plan).size(), 1U);
+    EXPECT_TRUE(getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(plan).empty());
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentationIntoStoreConfig)

@@ -20,6 +20,8 @@
 #include <utility>
 #include <vector>
 
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Replay/BinaryStoreFormat.hpp>
 #include <Traits/PlacementTrait.hpp>
@@ -91,15 +93,47 @@ LogicalOperator stripReplayStores(const LogicalOperator& current)
     return current.withChildren(std::move(strippedChildren));
 }
 
-LogicalOperator rewriteReplayBoundary(const LogicalOperator& current, const RecordingSelectionsByEdge& storesToInsert)
+bool hasReplayWatermarkAssignerOnCurrentPath(const LogicalOperator& current, const bool hasReplayWatermarkAssignerAncestor)
 {
+    return hasReplayWatermarkAssignerAncestor || current.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value()
+        || current.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value();
+}
+
+LogicalOperator makeReplayStore(
+    const LogicalOperator& current,
+    LogicalOperator rewrittenChild,
+    const RecordingSelection& selection,
+    const bool hasReplayWatermarkAssignerOnPath)
+{
+    const auto placementTraitSet = traitSetWithPlacement(current.getTraitSet(), selection.node);
+    auto replayStore = StoreLogicalOperator(StoreLogicalOperator::validateAndFormatConfig(storeConfigForSelection(selection)))
+                           .withTraitSet(placementTraitSet)
+                           .withInferredSchema({rewrittenChild.getOutputSchema()})
+                           .withChildren({std::move(rewrittenChild)});
+    if (hasReplayWatermarkAssignerOnPath)
+    {
+        return replayStore;
+    }
+
+    return IngestionTimeWatermarkAssignerLogicalOperator()
+        .withTraitSet(placementTraitSet)
+        .withInferredSchema({replayStore.getOutputSchema()})
+        .withChildren({replayStore});
+}
+
+LogicalOperator rewriteReplayBoundary(
+    const LogicalOperator& current,
+    const RecordingSelectionsByEdge& storesToInsert,
+    const bool hasReplayWatermarkAssignerAncestor)
+{
+    const auto hasReplayWatermarkAssignerOnPath = hasReplayWatermarkAssignerOnCurrentPath(current, hasReplayWatermarkAssignerAncestor);
     const auto originalChildren = current.getChildren();
     std::vector<LogicalOperator> rewrittenChildren;
     rewrittenChildren.reserve(originalChildren.size());
     for (const auto& child : originalChildren)
     {
         const RecordingRewriteEdge edge{.parentId = current.getId(), .childId = child.getId()};
-        auto rewrittenChild = rewriteReplayBoundary(child, storesToInsert);
+        auto rewrittenChild = rewriteReplayBoundary(child, storesToInsert, hasReplayWatermarkAssignerOnPath);
         if (!storesToInsert.contains(edge))
         {
             rewrittenChildren.push_back(std::move(rewrittenChild));
@@ -107,11 +141,8 @@ LogicalOperator rewriteReplayBoundary(const LogicalOperator& current, const Reco
         }
 
         const auto& selection = storesToInsert.at(edge);
-        rewrittenChildren.push_back(
-            StoreLogicalOperator(StoreLogicalOperator::validateAndFormatConfig(storeConfigForSelection(selection)))
-                .withTraitSet(traitSetWithPlacement(current.getTraitSet(), selection.node))
-                .withInferredSchema({rewrittenChild.getOutputSchema()})
-                .withChildren({rewrittenChild}));
+        rewrittenChildren.push_back(makeReplayStore(
+            current, std::move(rewrittenChild), selection, hasReplayWatermarkAssignerOnPath));
     }
     return current.withChildren(std::move(rewrittenChildren));
 }
@@ -132,7 +163,7 @@ LogicalPlan rewriteReplayBoundary(const LogicalPlan& plan, const RecordingSelect
     auto rewrittenRoots = plan.getRootOperators();
     for (auto& root : rewrittenRoots)
     {
-        root = rewriteReplayBoundary(root, storesToInsert);
+        root = rewriteReplayBoundary(root, storesToInsert, false);
     }
     return plan.withRootOperators(std::move(rewrittenRoots));
 }
