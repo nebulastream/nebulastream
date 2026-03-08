@@ -79,7 +79,7 @@ void initSliceCacheMemoryAndSetup(
     PRECONDITION(bufferProvider != nullptr, "bufferProvider should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider, workerThreadId);
-    sliceCache->setStartOfEntries(opHandler->getSliceCache(workerThreadId));
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(opHandler->getSliceCache(workerThreadId)));
 }
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(

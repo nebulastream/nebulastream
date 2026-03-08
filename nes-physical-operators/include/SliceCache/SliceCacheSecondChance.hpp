@@ -34,7 +34,7 @@ public:
     /// Overrides to include space for the replacement index at the end of the cache entries.
     uint64_t getCacheMemorySize() const override;
     /// Overrides to also derive the replacement index pointer from the end of the cache entries.
-    void setStartOfEntries(int8_t* startOfEntries) override;
+    void setStartOfEntries(SliceCacheEntry* startOfEntries) override;
 
 private:
     /// Helper function to search for a timestamp in the cache. If the timestamp is found, the position is returned, otherwise, we return UINT64_MAX

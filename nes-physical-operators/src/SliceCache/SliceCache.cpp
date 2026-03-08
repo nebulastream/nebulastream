@@ -36,7 +36,7 @@ std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfigu
     return std::make_unique<SliceCacheNone>();
 }
 
-void SliceCache::setStartOfEntries(int8_t* startOfEntries)
+void SliceCache::setStartOfEntries(SliceCacheEntry* startOfEntries)
 {
     this->startOfEntriesRaw = startOfEntries;
 }

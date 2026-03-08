@@ -34,7 +34,7 @@ SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const Slice
 {
     /// Create a val from the raw pointer inside the traced function. traceConstant(real_ptr)
     /// produces a proper traced constant with the real address for COMPILER mode.
-    nautilus::val<SliceCacheEntry*> startOfEntries{reinterpret_cast<SliceCacheEntry*>(startOfEntriesRaw)};
+    nautilus::val<SliceCacheEntry*> startOfEntries{startOfEntriesRaw};
     /// As this slice cache does nothing, we simply replace the single entry and return the data structure
     replaceEntry(startOfEntries);
     return startOfEntries.get(&SliceCacheEntry::dataStructure);

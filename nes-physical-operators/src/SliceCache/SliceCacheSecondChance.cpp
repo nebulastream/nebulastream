@@ -30,7 +30,7 @@ namespace NES
 /// mode when the val was produced by operator+ (value = nullptr). This helper uses traced arithmetic
 /// so the compiled code computes the address at runtime from the properly traced base pointer.
 template <typename T, typename F>
-nautilus::val<F> tracedGet(const nautilus::val<T*>& ptr, F T::*pm)
+nautilus::val<F> tracedGet(const nautilus::val<T*>& ptr, F T::* pm)
 {
     const auto offset = nautilus::val<uint64_t>{nautilus::field_offset(pm)};
     nautilus::val<int8_t*> fieldPtr = nautilus::val<int8_t*>{ptr} + offset;
@@ -39,7 +39,7 @@ nautilus::val<F> tracedGet(const nautilus::val<T*>& ptr, F T::*pm)
 
 /// Writes a struct field using traced pointer arithmetic instead of val<T*>::set().
 template <typename T, typename F>
-void tracedSet(const nautilus::val<T*>& ptr, F T::*pm, nautilus::val<F> value)
+void tracedSet(const nautilus::val<T*>& ptr, F T::* pm, nautilus::val<F> value)
 {
     const auto offset = nautilus::val<uint64_t>{nautilus::field_offset(pm)};
     nautilus::val<int8_t*> fieldPtr = nautilus::val<int8_t*>{ptr} + offset;
@@ -56,15 +56,15 @@ uint64_t SliceCacheSecondChance::getCacheMemorySize() const
     return SliceCache::getCacheMemorySize() + sizeof(uint64_t);
 }
 
-void SliceCacheSecondChance::setStartOfEntries(int8_t* startOfEntries)
+void SliceCacheSecondChance::setStartOfEntries(SliceCacheEntry* startOfEntries)
 {
     SliceCache::setStartOfEntries(startOfEntries);
     /// The replacement index is stored right after the cache entries in the same memory buffer.
-    replacementIndexRaw = reinterpret_cast<uint64_t*>(startOfEntries + numberOfEntries * sizeOfEntry);
+    replacementIndexRaw = reinterpret_cast<uint64_t*>(reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntries) + numberOfEntries);
 }
 
-SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
-    const nautilus::val<SliceCacheEntry*>& startOfEntries, const nautilus::val<Timestamp>& timestamp)
+SliceCacheSecondChance::EntryFound
+SliceCacheSecondChance::searchInCache(const nautilus::val<SliceCacheEntry*>& startOfEntries, const nautilus::val<Timestamp>& timestamp)
 {
     /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
     for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; ++i)
@@ -85,7 +85,7 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
 {
     /// Create val wrappers from raw pointers inside the traced function. traceConstant(real_ptr)
     /// produces proper traced constants with real addresses for COMPILER mode.
-    nautilus::val<SliceCacheEntry*> startOfEntries{reinterpret_cast<SliceCacheEntry*>(startOfEntriesRaw)};
+    const nautilus::val<SliceCacheEntry*> startOfEntries{startOfEntriesRaw};
     nautilus::val<uint64_t*> replacementIndexPtr{replacementIndexRaw};
 
     /// First, we check if the timestamp is already in the cache.

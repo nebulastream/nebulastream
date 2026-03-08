@@ -175,7 +175,7 @@ public:
         /// Generate timestamps in a range that produces more distinct slices than the cache
         /// can hold, ensuring both cache hits and evictions will occur
         const uint64_t maxTimestamp = sliceSize * numberOfEntries * 4;
-        std::uniform_int_distribution<uint64_t> dist(0, maxTimestamp > 0 ? maxTimestamp - 1 : 0);
+        std::uniform_int_distribution<uint64_t> dist{0, maxTimestamp > 0 ? maxTimestamp - 1 : 0};
 
         /// Create a random number of operations to thoroughly exercise the cache
         std::uniform_int_distribution opCountDist(minNumberOfOperations, maxNumberOfOperations);
@@ -199,10 +199,8 @@ public:
     static void TearDownTestSuite() { NES_INFO("Tear down SliceCacheTest class."); }
 };
 
-/// Proxy function for nautilus::invoke - sets the callback flag and the dataStructure field.
+/// Proxy function for nautilus::invoke that sets the callback flag and the dataStructure field.
 /// Must be a free function (not a lambda) so that nautilus::invoke can obtain a valid function pointer.
-/// Using a proxy avoids copying val<SliceCacheEntry*> (which would trigger traceCopy on a null-state
-/// val and create a free variable in the trace, causing "wrong number of arguments" errors).
 void replaceCacheEntryNoneProxy(bool* callbackFlag, SliceCacheEntry* entry, int8_t* dataStructure)
 {
     *callbackFlag = true;
@@ -237,13 +235,7 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     /// Allocate memory for the single dummy entry used by SliceCacheNone
     std::vector<uint8_t> noneCacheMemory(sliceCache->getCacheMemorySize(), 0);
     auto* const noneCacheMemoryPtr = reinterpret_cast<int8_t*>(noneCacheMemory.data());
-
-    /// Set startOfEntries OUTSIDE the traced lambda with the real memory pointer.
-    /// This matches the real system pattern (CompiledExecutablePipelineStage::start calls
-    /// setup() with real pointers before compilePipeline() traces the function).
-    /// During tracing, get()/set() use this->value (the real pointer) to compute field
-    /// addresses that are embedded as constants in the compiled code.
-    sliceCache->setStartOfEntries(noneCacheMemoryPtr);
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(noneCacheMemoryPtr));
 
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
@@ -290,13 +282,7 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
     const auto cacheMemorySize = sliceCache->getCacheMemorySize();
     std::vector<uint8_t> cacheMemory(cacheMemorySize, 0);
     auto* const cacheMemoryPtr = reinterpret_cast<int8_t*>(cacheMemory.data());
-
-    /// Set startOfEntries OUTSIDE the traced lambda with the real memory pointer.
-    /// This matches the real system pattern (CompiledExecutablePipelineStage::start calls
-    /// setup() with real pointers before compilePipeline() traces the function).
-    /// During tracing, get()/set() use this->value (the real pointer) to compute field
-    /// addresses that are embedded as constants in the compiled code.
-    sliceCache->setStartOfEntries(cacheMemoryPtr);
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(cacheMemoryPtr));
 
     bool callbackCalled = false;
     using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(
