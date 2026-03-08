@@ -21,6 +21,9 @@ add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction
 add_plugin(Cast PhysicalFunction nes-physical-operators CastFieldPhysicalFunction.cpp)
 add_plugin(CastToUnixTs PhysicalFunction nes-physical-operators CastToUnixTimestampPhysicalFunction.cpp)
 add_plugin(CastFromUnixTs PhysicalFunction nes-physical-operators CastFromUnixTimestampPhysicalFunction.cpp)
+add_plugin(Month_Of PhysicalFunction nes-physical-operators MonthOfPhysicalFunction.cpp)
+add_plugin(Year_Of PhysicalFunction nes-physical-operators YearOfPhysicalFunction.cpp)
+add_plugin(Day_Of PhysicalFunction nes-physical-operators DayOfPhysicalFunction.cpp)
 
 add_subdirectory(ArithmeticalFunctions)
 add_subdirectory(ComparisonFunctions)

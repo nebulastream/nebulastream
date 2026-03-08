@@ -23,12 +23,11 @@
 namespace NES
 {
 
-/// Converts a unix timestamp in milliseconds (UINT64) to a human-readable UTC timestamp string (VARSIZED),
-/// formatted as: YYYY-MM-DDTHH:MM:SS.mmmZ (ISO-8601 UTC)
-class CastFromUnixTimestampPhysicalFunction
+/// Extracts the day of the month (1-31) from a unix timestamp in milliseconds (UINT64), returns UINT64.
+class DayOfPhysicalFunction
 {
 public:
-    explicit CastFromUnixTimestampPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
+    explicit DayOfPhysicalFunction(PhysicalFunction childFunction, DataType outputType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
@@ -36,6 +35,6 @@ private:
     PhysicalFunction childFunction;
 };
 
-static_assert(PhysicalFunctionConcept<CastFromUnixTimestampPhysicalFunction>);
+static_assert(PhysicalFunctionConcept<DayOfPhysicalFunction>);
 
 }

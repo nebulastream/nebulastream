@@ -1,0 +1,122 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#include <Functions/YearOfLogicalFunction.hpp>
+
+#include <algorithm>
+#include <ranges>
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+#include <fmt/format.h>
+#include <ErrorHandling.hpp>
+#include <LogicalFunctionRegistry.hpp>
+
+namespace NES
+{
+
+YearOfLogicalFunction::YearOfLogicalFunction(LogicalFunction child)
+    : outputType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), child(std::move(child))
+{
+}
+
+bool YearOfLogicalFunction::operator==(const YearOfLogicalFunction& rhs) const
+{
+    return this->child == rhs.child;
+}
+
+DataType YearOfLogicalFunction::getDataType() const
+{
+    return outputType;
+}
+
+YearOfLogicalFunction YearOfLogicalFunction::withDataType(const DataType& dataType) const
+{
+    auto copy = *this;
+    copy.outputType = dataType;
+    return copy;
+}
+
+LogicalFunction YearOfLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
+{
+    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
+        | std::ranges::to<std::vector>();
+    INVARIANT(newChildren.size() == 1, "YearOfLogicalFunction expects exactly one child function but has {}", newChildren.size());
+    auto newDataType = newChildren[0].getDataType();
+    if (newDataType.type != DataType::Type::UNDEFINED && newDataType.type != DataType::Type::UINT64)
+    {
+        throw DifferentFieldTypeExpected("YEAR_OF expects a UINT64 input, but got {}", newDataType);
+    }
+
+    newDataType.type = DataType::Type::UINT64;
+    newDataType.nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
+    return withDataType(newDataType).withChildren(newChildren);
+}
+
+std::vector<LogicalFunction> YearOfLogicalFunction::getChildren() const
+{
+    return {child};
+}
+
+YearOfLogicalFunction YearOfLogicalFunction::withChildren(const std::vector<LogicalFunction>& children) const
+{
+    PRECONDITION(children.size() == 1, "YearOfLogicalFunction requires exactly one child, but got {}", children.size());
+    auto copy = *this;
+    copy.child = children[0];
+    return copy;
+}
+
+std::string_view YearOfLogicalFunction::getType()
+{
+    return NAME;
+}
+
+std::string YearOfLogicalFunction::explain(ExplainVerbosity) const
+{
+    return fmt::format("Extract year from unix timestamp (ms), outputType={}", outputType);
+}
+
+Reflected Reflector<YearOfLogicalFunction>::operator()(const YearOfLogicalFunction& function) const
+{
+    return reflect(detail::ReflectedYearOfLogicalFunction{.child = function.child});
+}
+
+YearOfLogicalFunction Unreflector<YearOfLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+{
+    auto [function] = context.unreflect<detail::ReflectedYearOfLogicalFunction>(reflected);
+    return YearOfLogicalFunction{std::move(function)};
+}
+
+LogicalFunctionRegistryReturnType
+LogicalFunctionGeneratedRegistrar::RegisterYear_OfLogicalFunction(LogicalFunctionRegistryArguments arguments)
+{
+    if (arguments.children.size() != 1)
+    {
+        throw CannotDeserialize("YearOfLogicalFunction requires exactly one child, but got {}", arguments.children.size());
+    }
+    return YearOfLogicalFunction{arguments.children[0]};
+}
+
+}

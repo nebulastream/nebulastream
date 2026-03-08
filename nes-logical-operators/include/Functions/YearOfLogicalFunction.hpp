@@ -1,0 +1,85 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
+
+namespace NES
+{
+
+/// Extracts the year from a unix timestamp in milliseconds (UINT64) and returns it as UINT64.
+class YearOfLogicalFunction final
+{
+public:
+    static constexpr std::string_view NAME = "Year_Of";
+
+    explicit YearOfLogicalFunction(LogicalFunction child);
+
+    [[nodiscard]] bool operator==(const YearOfLogicalFunction& rhs) const;
+
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] YearOfLogicalFunction withDataType(const DataType& dataType) const;
+
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
+
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] YearOfLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+
+    [[nodiscard]] static std::string_view getType();
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
+
+private:
+    DataType outputType;
+    LogicalFunction child;
+
+    friend Reflector<YearOfLogicalFunction>;
+};
+
+template <>
+struct Reflector<YearOfLogicalFunction>
+{
+    Reflected operator()(const YearOfLogicalFunction& function) const;
+};
+
+template <>
+struct Unreflector<YearOfLogicalFunction>
+{
+    YearOfLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
+};
+
+static_assert(LogicalFunctionConcept<YearOfLogicalFunction>);
+
+}
+
+namespace NES::detail
+{
+struct ReflectedYearOfLogicalFunction
+{
+    LogicalFunction child;
+};
+}
+
+FMT_OSTREAM(NES::YearOfLogicalFunction);

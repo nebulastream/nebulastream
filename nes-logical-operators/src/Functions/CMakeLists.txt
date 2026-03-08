@@ -24,4 +24,7 @@ add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cp
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)
 add_plugin(CastFromUnixTs LogicalFunction nes-logical-operators CastFromUnixTimestampLogicalFunction.cpp)
+add_plugin(Month_Of LogicalFunction nes-logical-operators MonthOfLogicalFunction.cpp)
+add_plugin(Year_Of LogicalFunction nes-logical-operators YearOfLogicalFunction.cpp)
+add_plugin(Day_Of LogicalFunction nes-logical-operators DayOfLogicalFunction.cpp)
 add_plugin(UnboundFieldAccess LogicalFunction nes-logical-operators UnboundFieldAccessLogicalFunction.cpp)
