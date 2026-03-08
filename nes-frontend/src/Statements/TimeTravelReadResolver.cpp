@@ -15,6 +15,7 @@
 #include <Replay/TimeTravelReadResolver.hpp>
 
 #include <fstream>
+#include <filesystem>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -45,8 +46,8 @@ LogicalOperator replaceTimeTravelReadSource(const LogicalOperator& current, cons
     {
         if (sourceOp.value()->getLogicalSourceName() == "TIME_TRAVEL_READ")
         {
-            const auto filePath = Replay::getTimeTravelReadAliasPath();
-            const auto schemaProbePath = Replay::resolveTimeTravelReadProbePath();
+            const auto concreteFilePath = Replay::resolveTimeTravelReadProbePath();
+            const auto schemaProbePath = concreteFilePath;
 
             Schema schema;
             {
@@ -68,7 +69,11 @@ LogicalOperator replaceTimeTravelReadSource(const LogicalOperator& current, cons
                 }
             }
 
-            std::unordered_map<std::string, std::string> sourceConfig{{"file_path", filePath}};
+            std::unordered_map<std::string, std::string> sourceConfig{{"file_path", concreteFilePath}};
+            if (Replay::binaryStoreManifestExists(concreteFilePath))
+            {
+                sourceConfig.emplace("recording_id", std::filesystem::path(concreteFilePath).stem().string());
+            }
             std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
             const InlineSourceLogicalOperator inlineOp{"BinaryStore", schema, std::move(sourceConfig), std::move(parserConfig)};
             return inlineOp.withChildren(newChildren);

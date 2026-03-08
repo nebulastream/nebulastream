@@ -56,9 +56,11 @@ struct BinaryStoreManifestEntry
     uint64_t logicalSizeBytes{0};
     Timestamp::Underlying minWatermark{Timestamp::INITIAL_VALUE};
     Timestamp::Underlying maxWatermark{Timestamp::INITIAL_VALUE};
+    uint64_t pinCount{0};
 
     [[nodiscard]] Timestamp getMinWatermark() const { return Timestamp(minWatermark); }
     [[nodiscard]] Timestamp getMaxWatermark() const { return Timestamp(maxWatermark); }
+    [[nodiscard]] bool isPinned() const { return pinCount > 0; }
     [[nodiscard]] bool operator==(const BinaryStoreManifestEntry& other) const = default;
 };
 

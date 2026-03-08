@@ -19,6 +19,7 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <optional>
 #include <regex>
 #include <stop_token>
 #include <string>
@@ -124,11 +125,25 @@ Schema parseSchemaText(const std::string& schemaText)
 
 BinaryStoreSource::BinaryStoreSource(const SourceDescriptor& sourceDescriptor)
     : filePath(
-          sourceDescriptor.getConfig().contains("file_path") ? std::get<std::string>(sourceDescriptor.getConfig().at("file_path"))
-                                                             : std::string())
+          sourceDescriptor.getConfig().contains("file_path")
+              ? std::get<std::string>(sourceDescriptor.getConfig().at("file_path"))
+              : Replay::getRecordingFilePath(std::get<std::string>(sourceDescriptor.getConfig().at("recording_id"))))
     , schema(*sourceDescriptor.getLogicalSource().getSchema())
 {
+    shouldPinReplaySegments = Replay::binaryStoreManifestExists(filePath) || sourceDescriptor.getConfig().contains("recording_id");
     initializeRowLayoutMetadata();
+}
+
+BinaryStoreSource::~BinaryStoreSource()
+{
+    try
+    {
+        close();
+    }
+    catch (const std::exception& exception)
+    {
+        NES_WARNING("BinaryStoreSource failed to release replay pins for {}: {}", filePath, exception.what());
+    }
 }
 
 void BinaryStoreSource::initializeRowLayoutMetadata()
@@ -168,38 +183,67 @@ void BinaryStoreSource::recordPhysicalBytesRead(const size_t bytes)
 
 void BinaryStoreSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
+    close();
     NES_DEBUG("BinaryStoreSource: opening {}", filePath);
-    inputFile = std::ifstream(filePath, std::ios::binary);
-    if (!inputFile)
+    if (shouldPinReplaySegments)
     {
-        throw CannotOpenSink("Could not open input file: {}: {}", filePath, std::strerror(errno));
+        pinnedSegmentIds = Replay::pinBinaryStoreSegments(filePath);
     }
+    try
+    {
+        inputFile = std::ifstream(filePath, std::ios::binary);
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Could not open input file: {}: {}", filePath, std::strerror(errno));
+        }
 
-    const auto header = readStoreHeaderPrefix(inputFile);
-    formatVersion = header.version;
-    compression = header.compression;
-    inputFile.seekg(static_cast<std::streamoff>(header.schemaLen), std::ios::cur);
-    if (!inputFile)
-    {
-        throw CannotOpenSink("Failed to skip schema bytes");
+        const auto header = readStoreHeaderPrefix(inputFile);
+        formatVersion = header.version;
+        compression = header.compression;
+        inputFile.seekg(static_cast<std::streamoff>(header.schemaLen), std::ios::cur);
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Failed to skip schema bytes");
+        }
+        dataStartOffset = static_cast<uint64_t>(inputFile.tellg());
+        segmentBuffer.clear();
+        segmentBufferOffset = 0;
+        endOfSegmentStream = false;
+        NES_DEBUG(
+            "BinaryStoreSource: formatVersion={} compression={} dataStartOffset={}",
+            formatVersion,
+            static_cast<uint32_t>(compression),
+            dataStartOffset);
     }
-    dataStartOffset = static_cast<uint64_t>(inputFile.tellg());
-    segmentBuffer.clear();
-    segmentBufferOffset = 0;
-    endOfSegmentStream = false;
-    NES_DEBUG(
-        "BinaryStoreSource: formatVersion={} compression={} dataStartOffset={}",
-        formatVersion,
-        static_cast<uint32_t>(compression),
-        dataStartOffset);
+    catch (...)
+    {
+        if (inputFile.is_open())
+        {
+            inputFile.close();
+        }
+        if (!pinnedSegmentIds.empty())
+        {
+            Replay::unpinBinaryStoreSegments(filePath, pinnedSegmentIds);
+            pinnedSegmentIds.clear();
+        }
+        throw;
+    }
 }
 
 void BinaryStoreSource::close()
 {
-    inputFile.close();
+    if (inputFile.is_open())
+    {
+        inputFile.close();
+    }
     segmentBuffer.clear();
     segmentBufferOffset = 0;
     endOfSegmentStream = false;
+    if (!pinnedSegmentIds.empty())
+    {
+        Replay::unpinBinaryStoreSegments(filePath, pinnedSegmentIds);
+        pinnedSegmentIds.clear();
+    }
 }
 
 bool BinaryStoreSource::loadNextSegment()
@@ -469,12 +513,19 @@ Schema BinaryStoreSource::readSchemaFromFile(const std::string& filePath)
 
 DescriptorConfig::Config BinaryStoreSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    if (config.find("file_path") == config.end())
+    if (config.find("file_path") == config.end() && config.find("recording_id") == config.end())
     {
-        throw InvalidConfigParameter("BinaryStoreSource requires 'file_path'");
+        throw InvalidConfigParameter("BinaryStoreSource requires 'file_path' or 'recording_id'");
     }
     DescriptorConfig::Config validated;
-    validated.emplace("file_path", DescriptorConfig::ConfigType(config.at("file_path")));
+    if (const auto filePathIt = config.find("file_path"); filePathIt != config.end())
+    {
+        validated.emplace("file_path", DescriptorConfig::ConfigType(filePathIt->second));
+    }
+    if (const auto recordingIdIt = config.find("recording_id"); recordingIdIt != config.end())
+    {
+        validated.emplace("recording_id", DescriptorConfig::ConfigType(recordingIdIt->second));
+    }
     validated.emplace("number_of_buffers_in_local_pool", DescriptorConfig::ConfigType(static_cast<int64_t>(-1)));
     validated.emplace("max_inflight_buffers", DescriptorConfig::ConfigType(SourceDescriptor::INVALID_MAX_INFLIGHT_BUFFERS));
     return validated;

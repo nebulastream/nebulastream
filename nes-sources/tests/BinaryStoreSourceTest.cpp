@@ -19,6 +19,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
@@ -39,6 +40,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 #include <BaseUnitTest.hpp>
@@ -94,6 +96,13 @@ public:
     {
         std::error_code errorCode;
         std::filesystem::remove_all(tempDir, errorCode);
+        for (const auto& path : managedRecordingPaths)
+        {
+            std::filesystem::remove(path, errorCode);
+            errorCode.clear();
+            std::filesystem::remove(Replay::getRecordingManifestPath(path.string()), errorCode);
+            errorCode.clear();
+        }
         BaseUnitTest::TearDown();
     }
 
@@ -124,6 +133,30 @@ public:
         return *physicalSource;
     }
 
+    SourceDescriptor createManagedBinaryStoreDescriptor(
+        const std::string& recordingId, const std::optional<std::filesystem::path>& filePath = std::nullopt) const
+    {
+        SourceCatalog catalog;
+        const auto logicalSource = catalog.addLogicalSource("replay", getSchema());
+        EXPECT_TRUE(logicalSource.has_value());
+        std::unordered_map<std::string, std::string> config{{"recording_id", recordingId}};
+        if (filePath.has_value())
+        {
+            config.emplace("file_path", filePath->string());
+        }
+        const auto physicalSource = catalog.addPhysicalSource(
+            *logicalSource, "BinaryStore", Host("localhost"), std::move(config), {{"type", "CSV"}});
+        EXPECT_TRUE(physicalSource.has_value());
+        return *physicalSource;
+    }
+
+    std::filesystem::path createManagedRecordingPath(const std::string& recordingId)
+    {
+        const auto path = std::filesystem::path(Replay::getRecordingFilePath(recordingId));
+        managedRecordingPaths.push_back(path);
+        return path;
+    }
+
     void writeRows(
         const std::filesystem::path& filePath,
         const Replay::BinaryStoreCompressionCodec compression,
@@ -152,6 +185,38 @@ public:
         {
             const auto& row = rows[i];
             handler.append(reinterpret_cast<const uint8_t*>(&row), sizeof(row), Timestamp(watermarks[i]));
+        }
+        handler.stop(QueryTerminationType::Graceful, context);
+    }
+
+    void appendRows(
+        const std::filesystem::path& filePath,
+        const Replay::BinaryStoreCompressionCodec compression,
+        const std::vector<TestRow>& rowsToWrite,
+        const std::vector<Timestamp::Underlying>& watermarksToWrite,
+        const int32_t compressionLevel = 3,
+        const std::optional<uint64_t> retentionWindowMs = std::nullopt) const
+    {
+        ASSERT_EQ(watermarksToWrite.size(), rowsToWrite.size());
+        auto bufferManager = BufferManager::create(512, 4);
+        MockPipelineContext context(bufferManager);
+        StoreOperatorHandler handler({
+            .filePath = filePath.string(),
+            .append = true,
+            .header = true,
+            .chunkMinBytes = 32,
+            .directIO = false,
+            .fdatasyncInterval = 0,
+            .compression = compression,
+            .compressionLevel = compressionLevel,
+            .retentionWindowMs = retentionWindowMs,
+            .schemaText = schemaText(),
+        });
+
+        handler.start(context, 0);
+        for (size_t i = 0; i < rowsToWrite.size(); ++i)
+        {
+            handler.append(reinterpret_cast<const uint8_t*>(&rowsToWrite[i]), sizeof(rowsToWrite[i]), Timestamp(watermarksToWrite[i]));
         }
         handler.stop(QueryTerminationType::Graceful, context);
     }
@@ -187,6 +252,7 @@ public:
     }
 
     std::filesystem::path tempDir;
+    std::vector<std::filesystem::path> managedRecordingPaths;
     const std::vector<TestRow> rows{{1, 10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}};
     const std::vector<Timestamp::Underlying> watermarks{1000, 1000, 2000, 3000, 3000};
 };
@@ -329,6 +395,67 @@ TEST_F(BinaryStoreSourceTest, DerivesReadyRecordingRuntimeStatusWhenRetentionIsC
     EXPECT_EQ(runtimeStatus.retentionWindowMs, std::optional<uint64_t>(500));
     EXPECT_EQ(runtimeStatus.retainedStartWatermark, std::optional<Timestamp>(Timestamp(2000)));
     EXPECT_EQ(runtimeStatus.fillWatermark, std::optional<Timestamp>(Timestamp(3000)));
+}
+
+TEST_F(BinaryStoreSourceTest, PinsManagedRecordingSegmentsWhileReplaySourceIsOpen)
+{
+    const auto recordingId = std::string("managed-open-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    auto bufferManager = BufferManager::create(512, 4);
+    BinaryStoreSource source(createManagedBinaryStoreDescriptor(recordingId));
+    source.open(bufferManager);
+
+    auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_FALSE(manifest.segments.empty());
+    EXPECT_TRUE(std::ranges::all_of(manifest.segments, [](const auto& segment) { return segment.pinCount == 1; }));
+
+    source.close();
+    manifest = Replay::readBinaryStoreManifest(filePath.string());
+    EXPECT_TRUE(std::ranges::all_of(manifest.segments, [](const auto& segment) { return segment.pinCount == 0; }));
+}
+
+TEST_F(BinaryStoreSourceTest, KeepsPinnedExpiredSegmentsDuringRollingRetentionGc)
+{
+    const auto recordingId = std::string("managed-retention-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    auto bufferManager = BufferManager::create(512, 4);
+    BinaryStoreSource source(createManagedBinaryStoreDescriptor(recordingId));
+    source.open(bufferManager);
+
+    appendRows(
+        filePath,
+        Replay::BinaryStoreCompressionCodec::None,
+        std::vector<TestRow>{{6, 60}},
+        std::vector<Timestamp::Underlying>{4000},
+        3,
+        1500);
+
+    auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    EXPECT_THAT(
+        manifest.segments | std::views::transform([](const auto& segment) { return segment.segmentId; }) | std::ranges::to<std::vector>(),
+        testing::Contains(0));
+    EXPECT_EQ(manifest.segments.front().pinCount, 1U);
+
+    source.close();
+
+    appendRows(
+        filePath,
+        Replay::BinaryStoreCompressionCodec::None,
+        std::vector<TestRow>{{7, 70}},
+        std::vector<Timestamp::Underlying>{4000},
+        3,
+        1500);
+
+    manifest = Replay::readBinaryStoreManifest(filePath.string());
+    EXPECT_THAT(
+        manifest.segments | std::views::transform([](const auto& segment) { return segment.segmentId; }) | std::ranges::to<std::vector>(),
+        testing::Not(testing::Contains(0)));
 }
 }
 }

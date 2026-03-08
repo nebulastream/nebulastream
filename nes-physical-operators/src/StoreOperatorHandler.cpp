@@ -23,6 +23,7 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <mutex>
 #include <optional>
 #include <string>
 #include <system_error>
@@ -173,7 +174,7 @@ void writeManifestFile(const std::string& manifestPath, const Replay::BinaryStor
     for (const auto& entry : manifest.segments)
     {
         manifestOutput << entry.segmentId << ' ' << entry.payloadOffset << ' ' << entry.storedSizeBytes << ' ' << entry.logicalSizeBytes
-                       << ' ' << entry.minWatermark << ' ' << entry.maxWatermark << '\n';
+                       << ' ' << entry.minWatermark << ' ' << entry.maxWatermark << ' ' << entry.pinCount << '\n';
     }
     if (!manifestOutput)
     {
@@ -360,24 +361,24 @@ void StoreOperatorHandler::appendManifestEntry(const uint64_t payloadOffset, con
     PRECONDITION(currentSegmentMinWatermark.has_value(), "Manifest entry requires a minimum watermark");
     PRECONDITION(currentSegmentMaxWatermark.has_value(), "Manifest entry requires a maximum watermark");
 
-    const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
-    std::ofstream manifestOutput(manifestPath, std::ios::app);
-    if (!manifestOutput)
-    {
-        throw CannotOpenSink("Could not open binary store manifest {}", manifestPath);
-    }
-
-    manifestOutput << nextSegmentId << ' ' << payloadOffset << ' ' << storedSizeBytes << ' ' << logicalSizeBytes << ' '
-                   << currentSegmentMinWatermark->getRawValue() << ' ' << currentSegmentMaxWatermark->getRawValue() << '\n';
-    if (!manifestOutput)
-    {
-        throw CannotOpenSink("Failed to append binary store manifest {}", manifestPath);
-    }
+    std::lock_guard lock(Replay::getReplayStorageMutex());
+    auto manifest = Replay::readBinaryStoreManifest(config.filePath);
+    manifest.retentionWindowMs = config.retentionWindowMs;
+    manifest.segments.push_back(Replay::BinaryStoreManifestEntry{
+        .segmentId = nextSegmentId,
+        .payloadOffset = payloadOffset,
+        .storedSizeBytes = storedSizeBytes,
+        .logicalSizeBytes = logicalSizeBytes,
+        .minWatermark = currentSegmentMinWatermark->getRawValue(),
+        .maxWatermark = currentSegmentMaxWatermark->getRawValue(),
+        .pinCount = 0});
+    Replay::writeBinaryStoreManifest(config.filePath, manifest);
     ++nextSegmentId;
 }
 
 void StoreOperatorHandler::maybeGarbageCollectExpiredSegments(const Timestamp currentWatermark)
 {
+    std::lock_guard lock(Replay::getReplayStorageMutex());
     if (!config.retentionWindowMs.has_value())
     {
         return;
@@ -396,7 +397,7 @@ void StoreOperatorHandler::maybeGarbageCollectExpiredSegments(const Timestamp cu
     retainedManifest.segments.reserve(manifest.segments.size());
     for (const auto& segment : manifest.segments)
     {
-        if (segment.getMaxWatermark() < cutoff)
+        if (segment.getMaxWatermark() < cutoff && !segment.isPinned())
         {
             continue;
         }
@@ -416,6 +417,7 @@ void StoreOperatorHandler::maybeGarbageCollectExpiredSegments(const Timestamp cu
 void StoreOperatorHandler::rewriteRecording(
     const Replay::BinaryStoreManifest& originalManifest, const Replay::BinaryStoreManifest& retainedManifest)
 {
+    std::lock_guard lock(Replay::getReplayStorageMutex());
     PRECONDITION(!originalManifest.segments.empty(), "Expected at least one segment before compaction");
 
     const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
@@ -494,6 +496,7 @@ void StoreOperatorHandler::rewriteRecording(
 
 void StoreOperatorHandler::initializeManifestState(const bool truncateManifest)
 {
+    std::lock_guard lock(Replay::getReplayStorageMutex());
     const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
     if (truncateManifest)
     {

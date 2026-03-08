@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <expected>
 #include <filesystem>
+#include <fstream>
 #include <optional>
 #include <string>
 #include <gmock/gmock.h>
@@ -27,11 +28,13 @@
 #include <DataTypes/Schema.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <LegacyOptimizer.hpp>
+#include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <QueryId.hpp>
 #include <Replay/ReplayStorage.hpp>
+#include <Replay/TimeTravelReadResolver.hpp>
 #include <RecordingSelectionResult.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -876,6 +879,39 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan.has_value());
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).size(), 1U);
     EXPECT_EQ(recordingCatalog.getQueryMetadata().size(), 2U);
+}
+
+TEST(QueryManagerMetricsTest, TimeTravelReadResolverTargetsConcreteRecordingFile)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto tempDir = std::filesystem::temp_directory_path()
+        / ("time-travel-read-resolver-test-" + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()));
+    std::filesystem::create_directories(tempDir);
+
+    const auto recordingFilePath = tempDir / "resolver-recording.bin";
+    const auto manifestPath = Replay::getRecordingManifestPath(recordingFilePath.string());
+    {
+        std::ofstream manifest(manifestPath);
+        ASSERT_TRUE(manifest.good());
+        manifest << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
+    }
+
+    Replay::updateTimeTravelReadAlias(recordingFilePath.string());
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    ASSERT_TRUE(sourceCatalog->addLogicalSource("fallback", createSchema()).has_value());
+
+    auto plan = LogicalPlanBuilder::createLogicalPlan("TIME_TRAVEL_READ");
+    resolveTimeTravelReadSources(plan, sourceCatalog);
+
+    const auto inlineSources = getOperatorByType<InlineSourceLogicalOperator>(plan);
+    ASSERT_THAT(inlineSources, testing::SizeIs(1));
+    const auto sourceConfig = inlineSources.front().get().getSourceConfig();
+    EXPECT_EQ(sourceConfig.at("file_path"), recordingFilePath.string());
+    EXPECT_EQ(sourceConfig.at("recording_id"), "resolver-recording");
+
+    std::error_code errorCode;
+    std::filesystem::remove_all(tempDir, errorCode);
 }
 
 }

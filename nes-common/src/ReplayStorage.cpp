@@ -19,11 +19,13 @@
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <mutex>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <system_error>
+#include <unordered_set>
 
 #include <ErrorHandling.hpp>
 #include <Util/Strings.hpp>
@@ -34,6 +36,7 @@ namespace NES::Replay
 namespace
 {
 std::atomic<uint64_t> replayReadBytes{0};
+std::recursive_mutex replayStorageMutex;
 
 bool isManifestFile(const std::filesystem::path& path)
 {
@@ -74,6 +77,36 @@ RecordingLifecycleState deriveRecordingLifecycleState(const BinaryStoreManifest&
         ? fillWatermark->getRawValue() - retainedStart->getRawValue()
         : 0;
     return retainedDurationMs >= *manifest.retentionWindowMs ? RecordingLifecycleState::Ready : RecordingLifecycleState::Filling;
+}
+
+void writeBinaryStoreManifestUnlocked(const std::string& manifestPath, const BinaryStoreManifest& manifest)
+{
+    std::ofstream manifestOutput(manifestPath, std::ios::trunc);
+    if (!manifestOutput)
+    {
+        throw CannotOpenSink("Could not create binary store manifest {}", manifestPath);
+    }
+
+    manifestOutput << BINARY_STORE_MANIFEST_MAGIC << '\n';
+    if (manifest.retentionWindowMs.has_value())
+    {
+        manifestOutput << BINARY_STORE_MANIFEST_METADATA_PREFIX << BINARY_STORE_MANIFEST_RETENTION_WINDOW_KEY << '='
+                       << *manifest.retentionWindowMs << '\n';
+    }
+    if (manifest.successorRecordingId.has_value())
+    {
+        manifestOutput << BINARY_STORE_MANIFEST_METADATA_PREFIX << BINARY_STORE_MANIFEST_SUCCESSOR_RECORDING_KEY << '='
+                       << *manifest.successorRecordingId << '\n';
+    }
+    for (const auto& entry : manifest.segments)
+    {
+        manifestOutput << entry.segmentId << ' ' << entry.payloadOffset << ' ' << entry.storedSizeBytes << ' ' << entry.logicalSizeBytes
+                       << ' ' << entry.minWatermark << ' ' << entry.maxWatermark << ' ' << entry.pinCount << '\n';
+    }
+    if (!manifestOutput)
+    {
+        throw CannotOpenSink("Failed to write binary store manifest {}", manifestPath);
+    }
 }
 
 void parseManifestMetadataLine(const std::string& line, BinaryStoreManifest& manifest, const std::string& manifestPath)
@@ -149,43 +182,8 @@ size_t accumulateRecordingDirectory(Projection projection)
 
     return static_cast<size_t>(std::min<uintmax_t>(total, std::numeric_limits<size_t>::max()));
 }
-}
 
-std::string getRecordingFilePath(std::string_view recordingId)
-{
-    return (std::filesystem::path(DEFAULT_RECORDING_DIRECTORY) / std::string(recordingId)).concat(".bin").string();
-}
-
-std::string getRecordingManifestPath(std::string_view recordingFilePath)
-{
-    return std::string(recordingFilePath) + std::string(BINARY_STORE_MANIFEST_SUFFIX);
-}
-
-std::string getTimeTravelReadAliasPath()
-{
-    return std::string(DEFAULT_RECORDING_FILE_PATH);
-}
-
-std::string resolveTimeTravelReadProbePath()
-{
-    const auto aliasPath = std::filesystem::path(getTimeTravelReadAliasPath());
-    std::error_code ec;
-    if (std::filesystem::is_symlink(aliasPath, ec))
-    {
-        auto target = std::filesystem::read_symlink(aliasPath, ec);
-        if (!ec)
-        {
-            if (target.is_relative())
-            {
-                return (aliasPath.parent_path() / target).lexically_normal().string();
-            }
-            return target.string();
-        }
-    }
-    return aliasPath.string();
-}
-
-BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath)
+BinaryStoreManifest readBinaryStoreManifestUnlocked(const std::string& recordingFilePath)
 {
     const auto manifestPath = getRecordingManifestPath(recordingFilePath);
     std::ifstream input(manifestPath);
@@ -222,10 +220,126 @@ BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath
         {
             throw CannotOpenSink("Invalid binary store manifest entry in {}", manifestPath);
         }
+        if (!(lineStream >> entry.pinCount))
+        {
+            lineStream.clear();
+            entry.pinCount = 0;
+        }
         manifest.segments.push_back(entry);
     }
 
     return manifest;
+}
+}
+
+std::recursive_mutex& getReplayStorageMutex()
+{
+    return replayStorageMutex;
+}
+
+std::string getRecordingFilePath(std::string_view recordingId)
+{
+    return (std::filesystem::path(DEFAULT_RECORDING_DIRECTORY) / std::string(recordingId)).concat(".bin").string();
+}
+
+std::string getRecordingManifestPath(std::string_view recordingFilePath)
+{
+    return std::string(recordingFilePath) + std::string(BINARY_STORE_MANIFEST_SUFFIX);
+}
+
+std::string getTimeTravelReadAliasPath()
+{
+    return std::string(DEFAULT_RECORDING_FILE_PATH);
+}
+
+std::string resolveTimeTravelReadProbePath()
+{
+    const auto aliasPath = std::filesystem::path(getTimeTravelReadAliasPath());
+    std::error_code ec;
+    if (std::filesystem::is_symlink(aliasPath, ec))
+    {
+        auto target = std::filesystem::read_symlink(aliasPath, ec);
+        if (!ec)
+        {
+            if (target.is_relative())
+            {
+                return (aliasPath.parent_path() / target).lexically_normal().string();
+            }
+            return target.string();
+        }
+    }
+    return aliasPath.string();
+}
+
+bool binaryStoreManifestExists(const std::string& recordingFilePath)
+{
+    const auto manifestPath = getRecordingManifestPath(recordingFilePath);
+    std::error_code errorCode;
+    return std::filesystem::is_regular_file(manifestPath, errorCode) && !errorCode;
+}
+
+BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath)
+{
+    std::lock_guard lock(replayStorageMutex);
+    return readBinaryStoreManifestUnlocked(recordingFilePath);
+}
+
+void writeBinaryStoreManifest(const std::string& recordingFilePath, const BinaryStoreManifest& manifest)
+{
+    std::lock_guard lock(replayStorageMutex);
+    writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
+}
+
+std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePath)
+{
+    std::lock_guard lock(replayStorageMutex);
+    auto manifest = readBinaryStoreManifestUnlocked(recordingFilePath);
+    if (manifest.segments.empty())
+    {
+        return {};
+    }
+
+    std::vector<uint64_t> pinnedSegmentIds;
+    pinnedSegmentIds.reserve(manifest.segments.size());
+    for (auto& segment : manifest.segments)
+    {
+        ++segment.pinCount;
+        pinnedSegmentIds.push_back(segment.segmentId);
+    }
+    writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
+    return pinnedSegmentIds;
+}
+
+void unpinBinaryStoreSegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    if (segmentIds.empty())
+    {
+        return;
+    }
+
+    std::lock_guard lock(replayStorageMutex);
+    auto manifest = readBinaryStoreManifestUnlocked(recordingFilePath);
+    if (manifest.segments.empty())
+    {
+        return;
+    }
+
+    const auto requestedSegmentIds = segmentIds | std::ranges::to<std::unordered_set<uint64_t>>();
+    bool changed = false;
+    for (auto& segment : manifest.segments)
+    {
+        if (!requestedSegmentIds.contains(segment.segmentId) || segment.pinCount == 0)
+        {
+            continue;
+        }
+        --segment.pinCount;
+        changed = true;
+    }
+
+    if (changed)
+    {
+        writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
+    }
 }
 
 RecordingRuntimeStatus readRecordingRuntimeStatus(const std::string& recordingFilePath)

@@ -16,6 +16,7 @@
 
 #include <atomic>
 #include <fstream>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -34,7 +35,7 @@ class BinaryStoreSource final : public Source
 public:
     static constexpr std::string_view NAME = "BinaryStore";
     explicit BinaryStoreSource(const SourceDescriptor& sourceDescriptor);
-    ~BinaryStoreSource() override = default;
+    ~BinaryStoreSource() override;
 
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
@@ -60,6 +61,8 @@ private:
     [[nodiscard]] bool isPayloadExhausted();
 
     std::string filePath;
+    bool shouldPinReplaySegments{false};
+    std::vector<uint64_t> pinnedSegmentIds;
     std::ifstream inputFile;
     uint64_t dataStartOffset{0};
     std::atomic<uint64_t> totalNumBytesRead{0};
