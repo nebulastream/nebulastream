@@ -10,8 +10,6 @@ on:
     secrets:
       ACCESS_TOKEN_DOCUMENTATION:
         required: true
-  # Keep manual trigger if you want ad-hoc runs; remove if undesired.
-  workflow_dispatch: {}
 
 jobs:
   build_website:
