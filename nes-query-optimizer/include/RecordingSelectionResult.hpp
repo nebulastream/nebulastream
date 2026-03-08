@@ -29,7 +29,9 @@ using RecordingId = NESStrongStringType<struct RecordingId_, "invalid">;
 enum class RecordingRepresentation : uint8_t
 {
     BinaryStore,
+    BinaryStoreZstdFast1,
     BinaryStoreZstd,
+    BinaryStoreZstdFast6,
 };
 
 enum class RecordingSelectionDecision

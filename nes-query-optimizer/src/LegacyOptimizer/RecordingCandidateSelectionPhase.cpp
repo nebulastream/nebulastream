@@ -125,15 +125,23 @@ std::string recordingRepresentationDescription(const RecordingRepresentation rep
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstdFast1:
+            return "binary_store_zstd_fast1";
         case RecordingRepresentation::BinaryStoreZstd:
             return "binary_store_zstd";
+        case RecordingRepresentation::BinaryStoreZstdFast6:
+            return "binary_store_zstd_fast6";
     }
     std::unreachable();
 }
 
 std::vector<RecordingRepresentation> supportedRecordingRepresentations()
 {
-    return {RecordingRepresentation::BinaryStore, RecordingRepresentation::BinaryStoreZstd};
+    return {
+        RecordingRepresentation::BinaryStore,
+        RecordingRepresentation::BinaryStoreZstdFast1,
+        RecordingRepresentation::BinaryStoreZstd,
+        RecordingRepresentation::BinaryStoreZstdFast6};
 }
 
 bool satisfiesRetentionCoverage(const std::optional<uint64_t> availableRetentionWindowMs, const std::optional<uint64_t> requestedRetentionWindowMs)

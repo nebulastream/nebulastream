@@ -51,8 +51,12 @@ std::string encodeRepresentation(const RecordingRepresentation representation)
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstdFast1:
+            return "binary_store_zstd_fast1";
         case RecordingRepresentation::BinaryStoreZstd:
             return "binary_store_zstd";
+        case RecordingRepresentation::BinaryStoreZstdFast6:
+            return "binary_store_zstd_fast6";
     }
     std::unreachable();
 }

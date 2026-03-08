@@ -49,8 +49,12 @@ std::string recordingRepresentationDescription(const RecordingRepresentation rep
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstdFast1:
+            return "binary_store_zstd_fast1";
         case RecordingRepresentation::BinaryStoreZstd:
             return "binary_store_zstd";
+        case RecordingRepresentation::BinaryStoreZstdFast6:
+            return "binary_store_zstd_fast6";
     }
     std::unreachable();
 }
@@ -65,9 +69,17 @@ std::unordered_map<std::string, std::string> storeConfigForSelection(const Recor
     {
         case RecordingRepresentation::BinaryStore:
             return config;
+        case RecordingRepresentation::BinaryStoreZstdFast1:
+            config.emplace("compression", "Zstd");
+            config.emplace("compression_level", std::to_string(Replay::BINARY_STORE_ZSTD_FAST1_COMPRESSION_LEVEL));
+            return config;
         case RecordingRepresentation::BinaryStoreZstd:
             config.emplace("compression", "Zstd");
             config.emplace("compression_level", std::to_string(Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL));
+            return config;
+        case RecordingRepresentation::BinaryStoreZstdFast6:
+            config.emplace("compression", "Zstd");
+            config.emplace("compression_level", std::to_string(Replay::BINARY_STORE_ZSTD_FAST6_COMPRESSION_LEVEL));
             return config;
     }
     std::unreachable();

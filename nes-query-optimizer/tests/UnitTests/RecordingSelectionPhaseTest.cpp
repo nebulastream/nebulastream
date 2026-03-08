@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <array>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -114,6 +115,39 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("RecordingSelectionPhaseTest.log", LogLevel::LOG_DEBUG); }
 };
 
+constexpr std::array<RecordingRepresentation, 4> allRepresentations()
+{
+    return {
+        RecordingRepresentation::BinaryStore,
+        RecordingRepresentation::BinaryStoreZstdFast1,
+        RecordingRepresentation::BinaryStoreZstd,
+        RecordingRepresentation::BinaryStoreZstdFast6};
+}
+
+constexpr std::array<RecordingRepresentation, 3> compressedRepresentations()
+{
+    return {
+        RecordingRepresentation::BinaryStoreZstdFast1,
+        RecordingRepresentation::BinaryStoreZstd,
+        RecordingRepresentation::BinaryStoreZstdFast6};
+}
+
+int32_t compressionLevelForRepresentation(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return 0;
+        case RecordingRepresentation::BinaryStoreZstdFast1:
+            return Replay::BINARY_STORE_ZSTD_FAST1_COMPRESSION_LEVEL;
+        case RecordingRepresentation::BinaryStoreZstd:
+            return Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL;
+        case RecordingRepresentation::BinaryStoreZstdFast6:
+            return Replay::BINARY_STORE_ZSTD_FAST6_COMPRESSION_LEVEL;
+    }
+    std::unreachable();
+}
+
 TEST_F(RecordingSelectionPhaseTest, RecordingFingerprintIncludesRepresentation)
 {
     const auto host = Host("worker-1:8080");
@@ -123,9 +157,15 @@ TEST_F(RecordingSelectionPhaseTest, RecordingFingerprintIncludesRepresentation)
 
     const ReplaySpecification replaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
     const auto recordedSubplanRoot = root.getChildren().front();
-    EXPECT_NE(
-        createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStore),
-        createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStoreZstd));
+    std::vector<std::string> fingerprints;
+    fingerprints.reserve(allRepresentations().size());
+    for (const auto representation : allRepresentations())
+    {
+        fingerprints.push_back(createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, representation));
+    }
+    std::ranges::sort(fingerprints);
+    const auto [firstDuplicate, duplicatesEnd] = std::ranges::unique(fingerprints);
+    EXPECT_EQ(firstDuplicate, duplicatesEnd);
 }
 
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOption)
@@ -176,7 +216,7 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
     EXPECT_EQ(rootCandidate->upstreamNode, host);
     EXPECT_EQ(rootCandidate->downstreamNode, host);
     EXPECT_EQ(rootCandidate->routeNodes, std::vector<Host>({host}));
-    ASSERT_EQ(rootCandidate->options.size(), 3U);
+    ASSERT_EQ(rootCandidate->options.size(), 5U);
     EXPECT_TRUE(std::ranges::any_of(
         rootCandidate->options,
         [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
@@ -187,13 +227,16 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
             return option.decision == RecordingSelectionDecision::ReuseExistingRecording && option.feasible
                 && option.selection.recordingId == reusableRecordingId;
         }));
-    EXPECT_TRUE(std::ranges::any_of(
-        rootCandidate->options,
-        [](const auto& option)
-        {
-            return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
-                && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
-        }));
+    for (const auto representation : compressedRepresentations())
+    {
+        EXPECT_TRUE(std::ranges::any_of(
+            rootCandidate->options,
+            [&](const auto& option)
+            {
+                return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
+                    && option.selection.representation == representation;
+            }));
+    }
 }
 
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerRetentionRecording)
@@ -253,13 +296,17 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
             return option.decision == RecordingSelectionDecision::UpgradeExistingRecording && option.feasible
                 && option.selection.structuralFingerprint == structuralFingerprint && option.selection.recordingId != weakerRecordingId;
         }));
-    EXPECT_TRUE(std::ranges::any_of(
-        rootCandidate->options,
-        [](const auto& option)
-        {
-            return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
-                && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
-        }));
+    ASSERT_EQ(rootCandidate->options.size(), 5U);
+    for (const auto representation : compressedRepresentations())
+    {
+        EXPECT_TRUE(std::ranges::any_of(
+            rootCandidate->options,
+            [&](const auto& option)
+            {
+                return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
+                    && option.selection.representation == representation;
+            }));
+    }
 }
 
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsWhenRouteFitsBottomUpLimit)
@@ -287,24 +334,21 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsWh
     EXPECT_EQ(candidate.upstreamNode, sourceHost);
     EXPECT_EQ(candidate.downstreamNode, sinkHost);
     EXPECT_EQ(candidate.routeNodes, std::vector<Host>({sourceHost, intermediateHost, sinkHost}));
-    ASSERT_EQ(candidate.options.size(), 6U);
+    ASSERT_EQ(candidate.options.size(), 12U);
     for (const auto& node : std::array<Host, 3>{sourceHost, intermediateHost, sinkHost})
     {
         EXPECT_EQ(
             std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == node; }),
-            2);
-        EXPECT_TRUE(std::ranges::any_of(
-            candidate.options,
-            [&](const auto& option)
-            {
-                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStore;
-            }));
-        EXPECT_TRUE(std::ranges::any_of(
-            candidate.options,
-            [&](const auto& option)
-            {
-                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
-            }));
+            allRepresentations().size());
+        for (const auto representation : allRepresentations())
+        {
+            EXPECT_TRUE(std::ranges::any_of(
+                candidate.options,
+                [&](const auto& option)
+                {
+                    return option.selection.node == node && option.selection.representation == representation;
+                }));
+        }
     }
     EXPECT_TRUE(std::ranges::all_of(
         candidate.options,
@@ -337,24 +381,21 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseLimitsRoutePlacementsToBottomU
     EXPECT_EQ(
         candidate.routeNodes,
         std::vector<Host>({sourceHost, firstIntermediateHost, secondIntermediateHost, thirdIntermediateHost, sinkHost}));
-    ASSERT_EQ(candidate.options.size(), 8U);
+    ASSERT_EQ(candidate.options.size(), 16U);
     for (const auto& node : std::array<Host, 4>{sourceHost, firstIntermediateHost, secondIntermediateHost, thirdIntermediateHost})
     {
         EXPECT_EQ(
             std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == node; }),
-            2);
-        EXPECT_TRUE(std::ranges::any_of(
-            candidate.options,
-            [&](const auto& option)
-            {
-                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStore;
-            }));
-        EXPECT_TRUE(std::ranges::any_of(
-            candidate.options,
-            [&](const auto& option)
-            {
-                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
-            }));
+            allRepresentations().size());
+        for (const auto representation : allRepresentations())
+        {
+            EXPECT_TRUE(std::ranges::any_of(
+                candidate.options,
+                [&](const auto& option)
+                {
+                    return option.selection.node == node && option.selection.representation == representation;
+                }));
+        }
     }
     EXPECT_EQ(
         std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == sinkHost; }),
@@ -435,7 +476,8 @@ TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentati
     const auto sizingCandidateSet
         = RecordingCandidateSelectionPhase(sizingCatalog).apply(createPlacedUnaryPlan(host), replaySpecification, RecordingCatalog{});
     std::optional<size_t> binaryStoreBytes;
-    std::optional<size_t> binaryStoreZstdBytes;
+    std::optional<std::pair<RecordingRepresentation, size_t>> bestCompressedRepresentation;
+    std::optional<size_t> secondBestCompressedBytes;
     for (const auto& candidate : sizingCandidateSet.candidates)
     {
         for (const auto& option : candidate.options)
@@ -449,20 +491,35 @@ TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentati
             {
                 binaryStoreBytes = std::min(binaryStoreBytes.value_or(option.cost.estimatedStorageBytes), option.cost.estimatedStorageBytes);
             }
-            if (option.selection.representation == RecordingRepresentation::BinaryStoreZstd)
+            if (option.selection.representation != RecordingRepresentation::BinaryStore)
             {
-                binaryStoreZstdBytes = std::min(binaryStoreZstdBytes.value_or(option.cost.estimatedStorageBytes), option.cost.estimatedStorageBytes);
+                if (!bestCompressedRepresentation.has_value() || option.cost.estimatedStorageBytes < bestCompressedRepresentation->second)
+                {
+                    if (bestCompressedRepresentation.has_value())
+                    {
+                        secondBestCompressedBytes = std::min(
+                            secondBestCompressedBytes.value_or(bestCompressedRepresentation->second), bestCompressedRepresentation->second);
+                    }
+                    bestCompressedRepresentation = std::pair{option.selection.representation, option.cost.estimatedStorageBytes};
+                }
+                else
+                {
+                    secondBestCompressedBytes
+                        = std::min(secondBestCompressedBytes.value_or(option.cost.estimatedStorageBytes), option.cost.estimatedStorageBytes);
+                }
             }
         }
     }
 
     ASSERT_TRUE(binaryStoreBytes.has_value());
-    ASSERT_TRUE(binaryStoreZstdBytes.has_value());
-    ASSERT_GT(*binaryStoreBytes, *binaryStoreZstdBytes);
+    ASSERT_TRUE(bestCompressedRepresentation.has_value());
+    ASSERT_TRUE(secondBestCompressedBytes.has_value());
+    ASSERT_GT(*binaryStoreBytes, bestCompressedRepresentation->second);
 
     const auto constrainedBudget
-        = *binaryStoreZstdBytes + std::max<size_t>(1, (*binaryStoreBytes - *binaryStoreZstdBytes) / 2);
+        = bestCompressedRepresentation->second + std::max<size_t>(1, (*secondBestCompressedBytes - bestCompressedRepresentation->second) / 2);
     ASSERT_LT(constrainedBudget, *binaryStoreBytes);
+    ASSERT_LT(constrainedBudget, *secondBestCompressedBytes);
 
     auto workerCatalog = std::make_shared<WorkerCatalog>();
     ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, constrainedBudget));
@@ -471,7 +528,7 @@ TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentati
     const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, RecordingCatalog{});
 
     ASSERT_EQ(selectionResult.selectedRecordings.size(), 1U);
-    EXPECT_EQ(selectionResult.selectedRecordings.front().representation, RecordingRepresentation::BinaryStoreZstd);
+    EXPECT_EQ(selectionResult.selectedRecordings.front().representation, bestCompressedRepresentation->first);
 
     const auto stores = getOperatorByType<StoreLogicalOperator>(incomingPlan);
     ASSERT_EQ(stores.size(), 1U);
@@ -479,7 +536,7 @@ TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentati
     EXPECT_EQ(descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION), Replay::BinaryStoreCompressionCodec::Zstd);
     EXPECT_EQ(
         descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION_LEVEL),
-        Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL);
+        compressionLevelForRepresentation(bestCompressedRepresentation->first));
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOnlyMergedBoundary)
