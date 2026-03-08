@@ -26,8 +26,12 @@ namespace NES::Replay
 
 enum class RecordingLifecycleState : uint8_t
 {
-    Filling = 0,
-    Ready = 1,
+    New = 0,
+    Installing = 1,
+    Filling = 2,
+    Ready = 3,
+    Draining = 4,
+    Deleted = 5,
 };
 
 struct RecordingRuntimeStatus

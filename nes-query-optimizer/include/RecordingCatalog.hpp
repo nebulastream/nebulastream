@@ -63,13 +63,18 @@ class RecordingCatalog
 {
     std::unordered_map<DistributedQueryId, ReplayableQueryMetadata> queryMetadata;
     std::unordered_map<RecordingId, RecordingEntry> recordings;
-    std::optional<RecordingId> timeTravelReadRecordingId;
+    std::optional<RecordingId> activeTimeTravelReadRecordingId;
+    std::optional<RecordingId> pendingTimeTravelReadRecordingId;
 
-    void refreshTimeTravelReadRecording()
+    void sanitizeTimeTravelReadRecordingIds()
     {
-        if (timeTravelReadRecordingId.has_value() && !recordings.contains(*timeTravelReadRecordingId))
+        if (activeTimeTravelReadRecordingId.has_value() && !recordings.contains(*activeTimeTravelReadRecordingId))
         {
-            timeTravelReadRecordingId = recordings.empty() ? std::nullopt : std::optional(recordings.begin()->first);
+            activeTimeTravelReadRecordingId.reset();
+        }
+        if (pendingTimeTravelReadRecordingId.has_value() && !recordings.contains(*pendingTimeTravelReadRecordingId))
+        {
+            pendingTimeTravelReadRecordingId.reset();
         }
     }
 
@@ -83,15 +88,12 @@ class RecordingCatalog
 
         auto& ownerQueries = recordingIt->second.ownerQueries;
         std::erase(ownerQueries, queryId);
-        if (ownerQueries.empty())
-        {
-            recordings.erase(recordingIt);
-        }
     }
 
 public:
     [[nodiscard]] const auto& getQueryMetadata() const { return queryMetadata; }
     [[nodiscard]] const auto& getRecordings() const { return recordings; }
+    [[nodiscard]] auto& getMutableRecordings() { return recordings; }
     [[nodiscard]] std::optional<RecordingEntry> getRecording(const RecordingId& recordingId) const
     {
         if (const auto found = recordings.find(recordingId); found != recordings.end())
@@ -102,12 +104,22 @@ public:
     }
     [[nodiscard]] std::optional<RecordingEntry> getTimeTravelReadRecording() const
     {
-        if (!timeTravelReadRecordingId.has_value())
+        if (!activeTimeTravelReadRecordingId.has_value())
         {
             return std::nullopt;
         }
-        return getRecording(*timeTravelReadRecordingId);
+        return getRecording(*activeTimeTravelReadRecordingId);
     }
+    [[nodiscard]] std::optional<RecordingId> getTimeTravelReadRecordingId() const { return activeTimeTravelReadRecordingId; }
+    [[nodiscard]] std::optional<RecordingEntry> getPendingTimeTravelReadRecording() const
+    {
+        if (!pendingTimeTravelReadRecordingId.has_value())
+        {
+            return std::nullopt;
+        }
+        return getRecording(*pendingTimeTravelReadRecordingId);
+    }
+    [[nodiscard]] std::optional<RecordingId> getPendingTimeTravelReadRecordingId() const { return pendingTimeTravelReadRecordingId; }
     [[nodiscard]] std::vector<RecordingEntry> getRecordingsByStructuralFingerprint(std::string_view fingerprint) const
     {
         auto matches = recordings | std::views::values
@@ -136,25 +148,16 @@ public:
     void removeQueryMetadata(const DistributedQueryId& queryId)
     {
         queryMetadata.erase(queryId);
-        for (auto it = recordings.begin(); it != recordings.end();)
+        for (auto& recording : recordings | std::views::values)
         {
-            auto& owners = it->second.ownerQueries;
+            auto& owners = recording.ownerQueries;
             std::erase(owners, queryId);
-            if (owners.empty())
-            {
-                it = recordings.erase(it);
-            }
-            else
-            {
-                ++it;
-            }
         }
-        refreshTimeTravelReadRecording();
+        sanitizeTimeTravelReadRecordingIds();
     }
 
     void upsertRecording(RecordingEntry recording)
     {
-        timeTravelReadRecordingId = recording.id;
         const auto [it, inserted] = recordings.try_emplace(recording.id, std::move(recording));
         if (inserted)
         {
@@ -208,22 +211,37 @@ public:
 
         metadata.selectedRecordings = std::move(deduplicatedSelectedRecordings);
         metadata.networkExplanations = std::move(networkExplanations);
-        refreshTimeTravelReadRecording();
+        sanitizeTimeTravelReadRecordingIds();
     }
 
     void setTimeTravelReadRecording(const std::optional<RecordingId>& recordingId)
     {
         if (recordingId.has_value() && recordings.contains(*recordingId))
         {
-            timeTravelReadRecordingId = recordingId;
+            activeTimeTravelReadRecordingId = recordingId;
             return;
         }
         if (!recordingId.has_value())
         {
-            timeTravelReadRecordingId = std::nullopt;
+            activeTimeTravelReadRecordingId = std::nullopt;
             return;
         }
-        refreshTimeTravelReadRecording();
+        sanitizeTimeTravelReadRecordingIds();
+    }
+
+    void setPendingTimeTravelReadRecording(const std::optional<RecordingId>& recordingId)
+    {
+        if (recordingId.has_value() && recordings.contains(*recordingId))
+        {
+            pendingTimeTravelReadRecordingId = recordingId;
+            return;
+        }
+        if (!recordingId.has_value())
+        {
+            pendingTimeTravelReadRecordingId = std::nullopt;
+            return;
+        }
+        sanitizeTimeTravelReadRecordingIds();
     }
 
     void reconcileWorkerRuntimeStatus(const Host& host, const std::vector<Replay::RecordingRuntimeStatus>& statuses)

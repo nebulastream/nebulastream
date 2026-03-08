@@ -14,7 +14,9 @@
 
 #include <LegacyOptimizer/RecordingPlanRewriter.hpp>
 
+#include <concepts>
 #include <cstdint>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -22,16 +24,24 @@
 
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Replay/BinaryStoreFormat.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Traits/PlacementTrait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 namespace
 {
+struct ReflectedDescriptorConfig
+{
+    std::unordered_map<std::string, std::pair<std::string, Reflected>> config;
+};
+
 std::unordered_map<std::string, std::string> storeConfigForSelection(const RecordingSelection& selection)
 {
     std::unordered_map<std::string, std::string> config{
@@ -150,6 +160,91 @@ LogicalOperator rewriteReplayBoundary(
     }
     return current.withChildren(std::move(rewrittenChildren));
 }
+
+Reflected reflectDescriptorConfig(const DescriptorConfig::Config& config)
+{
+    ReflectedDescriptorConfig reflectedConfig;
+    for (const auto& [key, value] : config)
+    {
+        std::visit(
+            [&]<typename T>(const T& typedValue)
+            {
+                using ValueType = std::decay_t<T>;
+                if constexpr (std::same_as<ValueType, int32_t>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("int32_t", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, uint32_t>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("uint32_t", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, int64_t>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("int64_t", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, uint64_t>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("uint64_t", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, bool>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("bool", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, char>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("char", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, float>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("float", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, double>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("double", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, std::string>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("string", reflect(typedValue));
+                }
+                else if constexpr (std::same_as<ValueType, EnumWrapper>)
+                {
+                    reflectedConfig.config[key] = std::make_pair("EnumWrapper", reflect(typedValue));
+                }
+            },
+            value);
+    }
+    return reflect(reflectedConfig);
+}
+
+SinkDescriptor makeVoidSinkDescriptor(const SinkDescriptor& sinkDescriptor)
+{
+    const auto config = SinkDescriptor::validateAndFormatConfig("Void", {});
+    PRECONDITION(config.has_value(), "Replay recording epoch expected to create a valid Void sink descriptor");
+    return unreflect<SinkDescriptor>(reflect(detail::ReflectedSinkDescriptor{
+        .sinkName = sinkDescriptor.getSinkName(),
+        .schema = *sinkDescriptor.getSchema(),
+        .sinkType = "Void",
+        .host = sinkDescriptor.getHost(),
+        .config = reflectDescriptorConfig(*config)}));
+}
+
+LogicalOperator replaceSinksWithVoid(const LogicalOperator& current)
+{
+    auto rewrittenChildren = current.getChildren();
+    for (auto& child : rewrittenChildren)
+    {
+        child = replaceSinksWithVoid(child);
+    }
+
+    if (const auto sink = current.tryGetAs<SinkLogicalOperator>(); sink.has_value())
+    {
+        const auto sinkDescriptor = sink->get().getSinkDescriptor();
+        PRECONDITION(sinkDescriptor.has_value(), "Replay recording epoch expected a sink-bound logical plan");
+        return sink->get().withSinkDescriptor(makeVoidSinkDescriptor(*sinkDescriptor)).withChildren(std::move(rewrittenChildren));
+    }
+
+    return current.withChildren(std::move(rewrittenChildren));
+}
 }
 
 LogicalPlan stripReplayStores(const LogicalPlan& plan)
@@ -168,6 +263,16 @@ LogicalPlan rewriteReplayBoundary(const LogicalPlan& plan, const RecordingSelect
     for (auto& root : rewrittenRoots)
     {
         root = rewriteReplayBoundary(root, storesToInsert, false);
+    }
+    return plan.withRootOperators(std::move(rewrittenRoots));
+}
+
+LogicalPlan replaceSinksWithVoid(const LogicalPlan& plan)
+{
+    auto rewrittenRoots = plan.getRootOperators();
+    for (auto& root : rewrittenRoots)
+    {
+        root = replaceSinksWithVoid(root);
     }
     return plan.withRootOperators(std::move(rewrittenRoots));
 }

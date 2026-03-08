@@ -44,6 +44,11 @@ public:
         const std::optional<ReplaySpecification>& replaySpecification,
         const RecordingSelectionResult& mergedSelectionResult,
         std::string_view queryId) const;
+    [[nodiscard]] DistributedLogicalPlan buildRecordingEpochWithFixedSelection(
+        const LogicalPlan& globalPlan,
+        const std::optional<ReplaySpecification>& replaySpecification,
+        const RecordingSelectionResult& mergedSelectionResult,
+        std::string_view queryId) const;
     LegacyOptimizer() = default;
 
     explicit LegacyOptimizer(

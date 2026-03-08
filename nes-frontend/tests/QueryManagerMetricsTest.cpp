@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <expected>
+#include <filesystem>
 #include <optional>
 #include <string>
 #include <gmock/gmock.h>
@@ -113,6 +114,12 @@ struct TrackingLifecycleBackendState
     std::unordered_map<DistributedQueryId, size_t> starts;
     std::unordered_map<DistributedQueryId, size_t> stops;
     std::unordered_map<DistributedQueryId, size_t> unregisters;
+    std::expected<WorkerStatus, Exception> workerStatusResult = []()
+    {
+        WorkerStatus status;
+        status.until = std::chrono::system_clock::now();
+        return std::expected<WorkerStatus, Exception>(status);
+    }();
 
     [[nodiscard]] LocalQueryId nextLocalQueryId()
     {
@@ -181,9 +188,7 @@ public:
 
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point) const override
     {
-        WorkerStatus status;
-        status.until = std::chrono::system_clock::now();
-        return status;
+        return state->workerStatusResult;
     }
 };
 
@@ -545,15 +550,164 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
         recordingCatalog.getQueryMetadata().at(activeQueryId).networkExplanations.front().decision,
         RecordingSelectionDecision::ReuseExistingRecording);
 
-    EXPECT_FALSE(recordingCatalog.getRecording(staleRecordingId).has_value());
+    ASSERT_TRUE(recordingCatalog.getRecording(staleRecordingId).has_value());
+    EXPECT_TRUE(recordingCatalog.getRecording(staleRecordingId)->ownerQueries.empty());
+    EXPECT_EQ(recordingCatalog.getRecording(staleRecordingId)->lifecycleState, std::optional(Replay::RecordingLifecycleState::Draining));
     ASSERT_TRUE(recordingCatalog.getRecording(reusedRecordingId).has_value());
     EXPECT_THAT(
         recordingCatalog.getRecording(reusedRecordingId)->ownerQueries,
         testing::UnorderedElementsAre(DistributedQueryId("other-query"), activeQueryId));
     ASSERT_TRUE(recordingCatalog.getRecording(incomingRecordingId).has_value());
     EXPECT_THAT(recordingCatalog.getRecording(incomingRecordingId)->ownerQueries, testing::ElementsAre(*registerResult));
-    ASSERT_TRUE(recordingCatalog.getTimeTravelReadRecording().has_value());
-    EXPECT_EQ(recordingCatalog.getTimeTravelReadRecording()->id, incomingRecordingId);
+    EXPECT_EQ(recordingCatalog.getRecording(incomingRecordingId)->lifecycleState, std::optional(Replay::RecordingLifecycleState::Installing));
+    EXPECT_FALSE(recordingCatalog.getTimeTravelReadRecording().has_value());
+}
+
+TEST(QueryManagerMetricsTest, RegisterQueryMarksNewRecordingInstallingUntilWorkerReportsReady)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto worker = Host("worker-1:8080");
+    const auto recordingId = RecordingId("incoming-recording");
+    const auto filePath = "/tmp/REPLAY-NebulaStream/recordings/incoming.bin";
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    QueryManager queryManager(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); });
+
+    const auto queryId = DistributedQueryId("incoming-query");
+    const auto incomingPlan = createReplayPlan(queryId, "INCOMING_SOURCE");
+    const auto selection = RecordingSelection{
+        .recordingId = recordingId,
+        .node = worker,
+        .filePath = filePath,
+        .structuralFingerprint = "incoming",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = std::nullopt,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto distributedPlan = DistributedLogicalPlan(
+        DecomposedLogicalPlan<Host>{{{worker, {incomingPlan}}}},
+        incomingPlan,
+        ReplaySpecification{.retentionWindowMs = 300'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingSelectionResult{
+            .networkExplanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .selectedRecordings = {selection},
+            .explanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .activeQueryPlanRewrites = {}});
+
+    const auto registerResult = queryManager.registerQuery(distributedPlan);
+    ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
+
+    const auto recording = queryManager.getRecordingCatalog().getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Installing));
+    EXPECT_FALSE(queryManager.getRecordingCatalog().getTimeTravelReadRecording().has_value());
+    EXPECT_FALSE(std::filesystem::exists(Replay::getTimeTravelReadAliasPath()));
+}
+
+TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnregisterDrainsIt)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto worker = Host("worker-1:8080");
+    const auto recordingId = RecordingId("incoming-recording");
+    const auto filePath = "/tmp/REPLAY-NebulaStream/recordings/incoming.bin";
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    QueryManager queryManager(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); });
+
+    const auto queryId = DistributedQueryId("incoming-query");
+    const auto incomingPlan = createReplayPlan(queryId, "INCOMING_SOURCE");
+    const auto selection = RecordingSelection{
+        .recordingId = recordingId,
+        .node = worker,
+        .filePath = filePath,
+        .structuralFingerprint = "incoming",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = std::nullopt,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto distributedPlan = DistributedLogicalPlan(
+        DecomposedLogicalPlan<Host>{{{worker, {incomingPlan}}}},
+        incomingPlan,
+        ReplaySpecification{.retentionWindowMs = 300'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingSelectionResult{
+            .networkExplanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .selectedRecordings = {selection},
+            .explanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .activeQueryPlanRewrites = {}});
+
+    const auto registerResult = queryManager.registerQuery(distributedPlan);
+    ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
+
+    WorkerStatus readyStatus;
+    readyStatus.until = std::chrono::system_clock::now();
+    readyStatus.replayMetrics = WorkerStatus::ReplayMetrics{
+        .recordingStorageBytes = 2048,
+        .recordingFileCount = 1,
+        .activeQueryCount = 1,
+        .replayReadBytes = 0,
+        .operatorStatistics = {},
+        .recordingStatuses = {Replay::RecordingRuntimeStatus{
+            .recordingId = recordingId.getRawValue(),
+            .filePath = filePath,
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retentionWindowMs = 300'000,
+            .retainedStartWatermark = Timestamp(1000),
+            .retainedEndWatermark = Timestamp(301'000),
+            .fillWatermark = Timestamp(301'000),
+            .segmentCount = 4,
+            .storageBytes = 2048,
+            .successorRecordingId = std::nullopt}}};
+    backendState->workerStatusResult = readyStatus;
+
+    queryManager.refreshWorkerMetrics();
+
+    auto recording = queryManager.getRecordingCatalog().getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Ready));
+    ASSERT_TRUE(queryManager.getRecordingCatalog().getTimeTravelReadRecording().has_value());
+    EXPECT_EQ(queryManager.getRecordingCatalog().getTimeTravelReadRecording()->id, recordingId);
+    EXPECT_TRUE(std::filesystem::is_symlink(Replay::getTimeTravelReadAliasPath()));
+    EXPECT_EQ(Replay::resolveTimeTravelReadProbePath(), filePath);
+
+    const auto unregisterResult = queryManager.unregister(*registerResult);
+    ASSERT_TRUE(unregisterResult.has_value());
+
+    recording = queryManager.getRecordingCatalog().getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_TRUE(recording->ownerQueries.empty());
+    EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Draining));
+    EXPECT_FALSE(queryManager.getRecordingCatalog().getTimeTravelReadRecording().has_value());
+    EXPECT_FALSE(std::filesystem::exists(Replay::getTimeTravelReadAliasPath()));
 }
 
 TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActiveOnlyRecordingCreation)
@@ -607,21 +761,37 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
         .plan = incomingPlan,
         .replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt}});
     ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto incomingQueryId = result->id;
 
-    EXPECT_EQ(backendState->registrations[activeQueryId], 2U);
-    EXPECT_EQ(backendState->starts[activeQueryId], 2U);
-    EXPECT_EQ(backendState->stops[activeQueryId], 1U);
-    EXPECT_EQ(backendState->unregisters[activeQueryId], 1U);
+    EXPECT_EQ(backendState->registrations[activeQueryId], 1U);
+    EXPECT_EQ(backendState->starts[activeQueryId], 1U);
+    EXPECT_EQ(backendState->stops[activeQueryId], 0U);
+    EXPECT_EQ(backendState->unregisters[activeQueryId], 0U);
+    EXPECT_EQ(backendState->registrations[incomingQueryId], 1U);
+    EXPECT_EQ(backendState->starts[incomingQueryId], 1U);
+    EXPECT_THAT(queryManager->queries(), testing::UnorderedElementsAre(activeQueryId, incomingQueryId));
 
     const auto& recordingCatalog = queryManager->getRecordingCatalog();
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().contains(activeQueryId));
     EXPECT_EQ(recordingCatalog.getQueryMetadata().at(activeQueryId).originalPlan->getQueryId().getDistributedQueryId(), activeQueryId);
-    EXPECT_FALSE(recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings.empty());
+    EXPECT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings.empty());
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan.has_value());
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).size(), 1U);
-    const auto activeRecordingId = recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings.front();
+
+    const auto internalQueryIds = recordingCatalog.getQueryMetadata() | std::views::keys
+        | std::views::filter([&](const auto& queryId) { return queryId != activeQueryId && queryId != incomingQueryId; })
+        | std::ranges::to<std::vector>();
+    ASSERT_THAT(internalQueryIds, testing::SizeIs(1));
+    const auto& internalQueryId = internalQueryIds.front();
+    EXPECT_FALSE(std::ranges::contains(queryManager->queries(), internalQueryId));
+    ASSERT_FALSE(recordingCatalog.getQueryMetadata().at(internalQueryId).selectedRecordings.empty());
+    const auto activeRecordingId = recordingCatalog.getQueryMetadata().at(internalQueryId).selectedRecordings.front();
     ASSERT_TRUE(recordingCatalog.getRecording(activeRecordingId).has_value());
-    EXPECT_THAT(recordingCatalog.getRecording(activeRecordingId)->ownerQueries, testing::ElementsAre(activeQueryId));
+    EXPECT_THAT(recordingCatalog.getRecording(activeRecordingId)->ownerQueries, testing::ElementsAre(internalQueryId));
+
+    const auto unregisterResult = queryManager->unregister(activeQueryId);
+    ASSERT_TRUE(unregisterResult.has_value());
+    EXPECT_EQ(backendState->unregisters[internalQueryId], 1U);
 }
 
 TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActiveOnlyRecordingReuse)
@@ -690,17 +860,22 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
     const auto incomingPlan = createReplayPlan(DistributedQueryId("incoming-query"), "INCOMING_SOURCE", "incoming_sink");
     const auto result = handler(QueryStatement{.plan = incomingPlan, .replaySpecification = replaySpecification});
     ASSERT_TRUE(result.has_value()) << result.error().what();
+    const auto incomingQueryId = result->id;
 
-    EXPECT_EQ(backendState->registrations[activeQueryId], 2U);
-    EXPECT_EQ(backendState->starts[activeQueryId], 2U);
-    EXPECT_EQ(backendState->stops[activeQueryId], 1U);
-    EXPECT_EQ(backendState->unregisters[activeQueryId], 1U);
+    EXPECT_EQ(backendState->registrations[activeQueryId], 1U);
+    EXPECT_EQ(backendState->starts[activeQueryId], 1U);
+    EXPECT_EQ(backendState->stops[activeQueryId], 0U);
+    EXPECT_EQ(backendState->unregisters[activeQueryId], 0U);
+    EXPECT_EQ(backendState->registrations[incomingQueryId], 1U);
+    EXPECT_EQ(backendState->starts[incomingQueryId], 1U);
+    EXPECT_THAT(queryManager->queries(), testing::UnorderedElementsAre(activeQueryId, incomingQueryId));
 
     const auto& recordingCatalog = queryManager->getRecordingCatalog();
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().contains(activeQueryId));
     EXPECT_THAT(recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings, testing::ElementsAre(activeRecording.recordingId));
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan.has_value());
-    EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).empty());
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).size(), 1U);
+    EXPECT_EQ(recordingCatalog.getQueryMetadata().size(), 2U);
 }
 
 }

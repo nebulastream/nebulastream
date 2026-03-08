@@ -104,8 +104,12 @@ message WorkerStatusRequest {
 message WorkerStatusResponse {
   message ReplayMetrics {
     enum RecordingLifecycleState {
-      RECORDING_LIFECYCLE_STATE_FILLING = 0;
-      RECORDING_LIFECYCLE_STATE_READY = 1;
+      RECORDING_LIFECYCLE_STATE_NEW = 0;
+      RECORDING_LIFECYCLE_STATE_INSTALLING = 1;
+      RECORDING_LIFECYCLE_STATE_FILLING = 2;
+      RECORDING_LIFECYCLE_STATE_READY = 3;
+      RECORDING_LIFECYCLE_STATE_DRAINING = 4;
+      RECORDING_LIFECYCLE_STATE_DELETED = 5;
     }
 
     message ReplayOperatorStatistics {

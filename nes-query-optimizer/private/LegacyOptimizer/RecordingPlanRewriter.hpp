@@ -32,4 +32,5 @@ using RecordingSelectionsByEdge = std::unordered_map<RecordingRewriteEdge, Recor
 
 [[nodiscard]] LogicalPlan stripReplayStores(const LogicalPlan& plan);
 [[nodiscard]] LogicalPlan rewriteReplayBoundary(const LogicalPlan& plan, const RecordingSelectionsByEdge& storesToInsert);
+[[nodiscard]] LogicalPlan replaceSinksWithVoid(const LogicalPlan& plan);
 }

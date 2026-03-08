@@ -37,10 +37,18 @@ serializeRecordingLifecycleState(const Replay::RecordingLifecycleState lifecycle
 {
     switch (lifecycleState)
     {
+        case Replay::RecordingLifecycleState::New:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_NEW;
+        case Replay::RecordingLifecycleState::Installing:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_INSTALLING;
         case Replay::RecordingLifecycleState::Filling:
             return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_FILLING;
         case Replay::RecordingLifecycleState::Ready:
             return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_READY;
+        case Replay::RecordingLifecycleState::Draining:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_DRAINING;
+        case Replay::RecordingLifecycleState::Deleted:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_DELETED;
     }
     std::unreachable();
 }
@@ -50,10 +58,18 @@ deserializeRecordingLifecycleState(const WorkerStatusResponse::ReplayMetrics::Re
 {
     switch (lifecycleState)
     {
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_NEW:
+            return Replay::RecordingLifecycleState::New;
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_INSTALLING:
+            return Replay::RecordingLifecycleState::Installing;
         case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_FILLING:
             return Replay::RecordingLifecycleState::Filling;
         case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_READY:
             return Replay::RecordingLifecycleState::Ready;
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_DRAINING:
+            return Replay::RecordingLifecycleState::Draining;
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_DELETED:
+            return Replay::RecordingLifecycleState::Deleted;
         default:
             break;
     }

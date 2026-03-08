@@ -18,10 +18,12 @@
 #include <cstdint>
 #include <expected>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <QueryManager/RecordingLifecycleManager.hpp>
 #include <RecordingCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
@@ -52,6 +54,15 @@ struct QueryManagerState
 {
     std::unordered_map<DistributedQueryId, DistributedQuery> queries;
     RecordingCatalog recordingCatalog{};
+    std::unordered_set<DistributedQueryId> internalQueries{};
+    std::unordered_map<DistributedQueryId, DistributedQueryId> activeRecordingEpochQueriesByBeneficiary{};
+    std::unordered_map<DistributedQueryId, DistributedQueryId> pendingRecordingEpochQueriesByBeneficiary{};
+};
+
+struct QueryRegistrationOptions
+{
+    bool internal = false;
+    bool includeInReplayPlanning = true;
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.
@@ -102,14 +113,29 @@ class QueryManager
     };
 
     QueryManagerState state;
+    RecordingLifecycleManager recordingLifecycleManager;
     std::shared_ptr<WorkerCatalog> workerCatalog;
     QueryManagerBackends backends;
+    [[nodiscard]] std::expected<DistributedQueryId, Exception>
+    registerQueryImpl(
+        const DistributedLogicalPlan& plan,
+        std::optional<LogicalPlan> originalPlan,
+        QueryRegistrationOptions options);
+    std::expected<void, std::vector<Exception>> unregisterQueryImpl(const DistributedQueryId& query, bool cascadeRecordingEpochQueries);
+    [[nodiscard]] bool recordingEpochQueryReady(const DistributedQueryId& queryId) const;
+    void retireRecordingEpochQuery(const DistributedQueryId& queryId);
+    void reconcileRecordingEpochQueries();
 
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
     [[nodiscard]] std::expected<DistributedQueryId, Exception>
-    registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan = std::nullopt);
+    registerQuery(
+        const DistributedLogicalPlan& plan,
+        std::optional<LogicalPlan> originalPlan = std::nullopt,
+        QueryRegistrationOptions options = {});
+    [[nodiscard]] std::expected<DistributedQueryId, Exception>
+    registerRecordingEpochQuery(const DistributedQueryId& beneficiaryQueryId, const DistributedLogicalPlan& plan);
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
     std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);

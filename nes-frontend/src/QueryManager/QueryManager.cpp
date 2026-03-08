@@ -29,7 +29,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Replay/ReplayStorage.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -131,13 +130,22 @@ QueryManager::QueryManagerBackends::QueryManagerBackends(SharedPtr<WorkerCatalog
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state)
-    : state(std::move(state)), workerCatalog(copyPtr(workerCatalog)), backends(std::move(workerCatalog), std::move(provider))
+    : state(std::move(state)),
+      recordingLifecycleManager(this->state.recordingCatalog),
+      workerCatalog(copyPtr(workerCatalog)),
+      backends(std::move(workerCatalog), std::move(provider))
 {
+    recordingLifecycleManager.reconcile();
+    reconcileRecordingEpochQueries();
 }
 
 QueryManager::QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider)
-    : workerCatalog(copyPtr(workerCatalog)), backends(std::move(workerCatalog), std::move(provider))
+    : recordingLifecycleManager(state.recordingCatalog),
+      workerCatalog(copyPtr(workerCatalog)),
+      backends(std::move(workerCatalog), std::move(provider))
 {
+    recordingLifecycleManager.reconcile();
+    reconcileRecordingEpochQueries();
 }
 
 void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
@@ -155,11 +163,46 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 }
 
 [[nodiscard]] std::expected<DistributedQueryId, Exception>
-QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan)
+QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan, QueryRegistrationOptions options)
+{
+    return registerQueryImpl(plan, std::move(originalPlan), options);
+}
+
+[[nodiscard]] std::expected<DistributedQueryId, Exception>
+QueryManager::registerRecordingEpochQuery(const DistributedQueryId& beneficiaryQueryId, const DistributedLogicalPlan& plan)
+{
+    if (!state.queries.contains(beneficiaryQueryId))
+    {
+        return std::unexpected(QueryRegistrationFailed("Cannot install a recording epoch for unknown query {}", beneficiaryQueryId));
+    }
+    if (state.pendingRecordingEpochQueriesByBeneficiary.contains(beneficiaryQueryId))
+    {
+        return std::unexpected(QueryRegistrationFailed(
+            "Cannot install a second pending recording epoch for query {}",
+            beneficiaryQueryId));
+    }
+
+    auto result = registerQueryImpl(
+        plan,
+        std::nullopt,
+        QueryRegistrationOptions{.internal = true, .includeInReplayPlanning = false});
+    if (!result)
+    {
+        return result;
+    }
+
+    state.pendingRecordingEpochQueriesByBeneficiary.insert_or_assign(beneficiaryQueryId, *result);
+    reconcileRecordingEpochQueries();
+    return result;
+}
+
+[[nodiscard]] std::expected<DistributedQueryId, Exception>
+QueryManager::registerQueryImpl(
+    const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan, const QueryRegistrationOptions options)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
-    auto id = plan.getQueryId();
+    auto id = options.internal ? DistributedQueryId(DistributedQueryId::INVALID) : plan.getQueryId();
     if (id == DistributedQueryId(DistributedQueryId::INVALID))
     {
         id = uniqueDistributedQueryId(state);
@@ -195,13 +238,17 @@ QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<Lo
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
+    if (options.internal)
+    {
+        this->state.internalQueries.insert(id);
+    }
     const auto& selectionResult = plan.getRecordingSelectionResult();
     this->state.recordingCatalog.upsertQueryMetadata(
         id,
         ReplayableQueryMetadata{
-            .originalPlan = std::move(originalPlan),
-            .globalPlan = plan.getGlobalPlan(),
-            .replaySpecification = plan.getReplaySpecification(),
+            .originalPlan = options.includeInReplayPlanning ? std::move(originalPlan) : std::nullopt,
+            .globalPlan = options.includeInReplayPlanning ? std::make_optional(plan.getGlobalPlan()) : std::nullopt,
+            .replaySpecification = options.includeInReplayPlanning ? plan.getReplaySpecification() : std::nullopt,
             .selectedRecordings = {},
             .networkExplanations = {}});
 
@@ -257,12 +304,10 @@ QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<Lo
 
     if (!selectionResult.selectedRecordings.empty())
     {
-        this->state.recordingCatalog.setTimeTravelReadRecording(selectionResult.selectedRecordings.back().recordingId);
+        recordingLifecycleManager.notePendingActivation(selectionResult.selectedRecordings.back().recordingId);
     }
-    if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
-    {
-        Replay::updateTimeTravelReadAlias(latestRecording->filePath);
-    }
+    recordingLifecycleManager.reconcile();
+    reconcileRecordingEpochQueries();
     return id;
 }
 
@@ -390,7 +435,9 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
 
 std::vector<DistributedQueryId> QueryManager::queries() const
 {
-    return state.queries | std::views::keys | std::ranges::to<std::vector>();
+    return state.queries | std::views::keys
+        | std::views::filter([this](const auto& id) { return !state.internalQueries.contains(id); })
+        | std::ranges::to<std::vector>();
 }
 
 std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std::chrono::system_clock::time_point after) const
@@ -439,11 +486,13 @@ void QueryManager::refreshWorkerMetrics()
         }
         state.recordingCatalog.reconcileWorkerRuntimeStatus(host, status.replayMetrics.recordingStatuses);
     }
+    recordingLifecycleManager.reconcile();
+    reconcileRecordingEpochQueries();
 }
 
 std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 {
-    return state.queries | std::views::keys
+    return queries()
         | std::views::transform(
                [this](const auto& id) -> std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>
                {
@@ -498,6 +547,12 @@ std::expected<void, std::vector<Exception>> QueryManager::stop(DistributedQueryI
 
 std::expected<void, std::vector<Exception>> QueryManager::unregister(const DistributedQueryId& queryId)
 {
+    return unregisterQueryImpl(queryId, true);
+}
+
+std::expected<void, std::vector<Exception>> QueryManager::unregisterQueryImpl(
+    const DistributedQueryId& queryId, const bool cascadeRecordingEpochQueries)
+{
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
     {
@@ -505,6 +560,23 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(const Distr
     }
     auto query = queryResult.value();
     std::vector<Exception> exceptions{};
+    std::vector<DistributedQueryId> managedRecordingEpochQueries;
+
+    if (cascadeRecordingEpochQueries && !state.internalQueries.contains(queryId))
+    {
+        if (const auto pendingIt = state.pendingRecordingEpochQueriesByBeneficiary.find(queryId);
+            pendingIt != state.pendingRecordingEpochQueriesByBeneficiary.end())
+        {
+            managedRecordingEpochQueries.push_back(pendingIt->second);
+            state.pendingRecordingEpochQueriesByBeneficiary.erase(pendingIt);
+        }
+        if (const auto activeIt = state.activeRecordingEpochQueriesByBeneficiary.find(queryId);
+            activeIt != state.activeRecordingEpochQueriesByBeneficiary.end())
+        {
+            managedRecordingEpochQueries.push_back(activeIt->second);
+            state.activeRecordingEpochQueriesByBeneficiary.erase(activeIt);
+        }
+    }
 
     for (const auto& [host, localQueryId] : query.iterate())
     {
@@ -530,17 +602,121 @@ std::expected<void, std::vector<Exception>> QueryManager::unregister(const Distr
         return std::unexpected{exceptions};
     }
     state.recordingCatalog.removeQueryMetadata(queryId);
-    if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
-    {
-        Replay::updateTimeTravelReadAlias(latestRecording->filePath);
-    }
-    else
-    {
-        Replay::clearTimeTravelReadAlias();
-    }
     auto erased = state.queries.erase(queryId);
     INVARIANT(erased == 1, "Should not unregister query that has not been registered");
+    state.internalQueries.erase(queryId);
+    std::erase_if(
+        state.pendingRecordingEpochQueriesByBeneficiary,
+        [&queryId](const auto& beneficiaryAndQuery) { return beneficiaryAndQuery.second == queryId; });
+    std::erase_if(
+        state.activeRecordingEpochQueriesByBeneficiary,
+        [&queryId](const auto& beneficiaryAndQuery) { return beneficiaryAndQuery.second == queryId; });
+    recordingLifecycleManager.reconcile();
+    reconcileRecordingEpochQueries();
+
+    for (const auto& managedQueryId : managedRecordingEpochQueries)
+    {
+        if (!state.queries.contains(managedQueryId))
+        {
+            continue;
+        }
+        if (auto result = unregisterQueryImpl(managedQueryId, false); !result)
+        {
+            std::ranges::copy(result.error(), std::back_inserter(exceptions));
+        }
+    }
+
+    if (!exceptions.empty())
+    {
+        return std::unexpected{exceptions};
+    }
     return {};
+}
+
+bool QueryManager::recordingEpochQueryReady(const DistributedQueryId& queryId) const
+{
+    const auto metadataIt = state.recordingCatalog.getQueryMetadata().find(queryId);
+    if (metadataIt == state.recordingCatalog.getQueryMetadata().end())
+    {
+        return false;
+    }
+
+    const auto& selectedRecordings = metadataIt->second.selectedRecordings;
+    return !selectedRecordings.empty()
+        && std::ranges::all_of(
+            selectedRecordings,
+            [this](const auto& recordingId)
+            {
+                const auto recording = state.recordingCatalog.getRecording(recordingId);
+                return recording.has_value() && recording->lifecycleState == Replay::RecordingLifecycleState::Ready;
+            });
+}
+
+void QueryManager::retireRecordingEpochQuery(const DistributedQueryId& queryId)
+{
+    if (!state.queries.contains(queryId))
+    {
+        return;
+    }
+
+    const auto statusResult = status(queryId);
+    if (!statusResult)
+    {
+        NES_WARNING(
+            "Could not inspect recording epoch query {} before retirement: {}",
+            queryId,
+            fmt::join(statusResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+    }
+    else if (
+        statusResult->getGlobalQueryState() == DistributedQueryState::Running
+        || statusResult->getGlobalQueryState() == DistributedQueryState::PartiallyStopped)
+    {
+        if (const auto stopResult = stop(queryId); !stopResult)
+        {
+            NES_WARNING(
+                "Could not stop retired recording epoch query {}: {}",
+                queryId,
+                fmt::join(stopResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+        }
+    }
+
+    if (const auto unregisterResult = unregisterQueryImpl(queryId, false); !unregisterResult)
+    {
+        NES_WARNING(
+            "Could not unregister retired recording epoch query {}: {}",
+            queryId,
+            fmt::join(unregisterResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+    }
+}
+
+void QueryManager::reconcileRecordingEpochQueries()
+{
+    const auto pendingEpochs = state.pendingRecordingEpochQueriesByBeneficiary | std::ranges::to<std::vector>();
+    for (const auto& [beneficiaryQueryId, pendingQueryId] : pendingEpochs)
+    {
+        if (!state.queries.contains(beneficiaryQueryId) || !state.queries.contains(pendingQueryId))
+        {
+            state.pendingRecordingEpochQueriesByBeneficiary.erase(beneficiaryQueryId);
+            continue;
+        }
+        if (!recordingEpochQueryReady(pendingQueryId))
+        {
+            continue;
+        }
+
+        const auto previousActiveIt = state.activeRecordingEpochQueriesByBeneficiary.find(beneficiaryQueryId);
+        const auto previousActiveQueryId = previousActiveIt != state.activeRecordingEpochQueriesByBeneficiary.end()
+            ? std::make_optional(previousActiveIt->second)
+            : std::nullopt;
+
+        state.activeRecordingEpochQueriesByBeneficiary.insert_or_assign(beneficiaryQueryId, pendingQueryId);
+        state.pendingRecordingEpochQueriesByBeneficiary.erase(beneficiaryQueryId);
+
+        if (previousActiveQueryId.has_value() && *previousActiveQueryId != pendingQueryId)
+        {
+            retireRecordingEpochQuery(*previousActiveQueryId);
+        }
+    }
 }
 
 }

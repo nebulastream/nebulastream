@@ -13,6 +13,7 @@
 add_source_files(nes-query-manager-grpc
         GRPCQuerySubmissionBackend.cpp
         QueryManager.cpp
+        RecordingLifecycleManager.cpp
 )
 
 add_source_files(nes-query-manager-embedded

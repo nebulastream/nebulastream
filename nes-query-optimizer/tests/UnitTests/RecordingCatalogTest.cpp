@@ -97,10 +97,12 @@ TEST(RecordingCatalogTest, RemoveQueryMetadataRetainsSharedRecordingUntilLastOwn
     EXPECT_THAT(remainingRecording->ownerQueries, testing::ElementsAre(query2));
 
     catalog.removeQueryMetadata(query2);
-    EXPECT_FALSE(catalog.getRecording(recordingId).has_value());
+    const auto drainingRecording = catalog.getRecording(recordingId);
+    ASSERT_TRUE(drainingRecording.has_value());
+    EXPECT_TRUE(drainingRecording->ownerQueries.empty());
 }
 
-TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksMostRecentRecordingAndFallsBackAfterRemoval)
+TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksExplicitActiveAndPendingSelection)
 {
     RecordingCatalog catalog;
     const auto recording1 = RecordingId("recording-1");
@@ -143,12 +145,19 @@ TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksMostRecentRecordingAndFa
             .storageBytes = std::nullopt,
             .successorRecordingId = std::nullopt});
 
-    ASSERT_TRUE(catalog.getTimeTravelReadRecording().has_value());
-    EXPECT_EQ(catalog.getTimeTravelReadRecording()->id, recording2);
+    EXPECT_FALSE(catalog.getTimeTravelReadRecording().has_value());
+    EXPECT_FALSE(catalog.getPendingTimeTravelReadRecording().has_value());
 
-    catalog.removeQueryMetadata(query2);
+    catalog.setPendingTimeTravelReadRecording(recording2);
+    ASSERT_TRUE(catalog.getPendingTimeTravelReadRecording().has_value());
+    EXPECT_EQ(catalog.getPendingTimeTravelReadRecording()->id, recording2);
+
+    catalog.setTimeTravelReadRecording(recording1);
     ASSERT_TRUE(catalog.getTimeTravelReadRecording().has_value());
     EXPECT_EQ(catalog.getTimeTravelReadRecording()->id, recording1);
+
+    catalog.setPendingTimeTravelReadRecording(std::nullopt);
+    EXPECT_FALSE(catalog.getPendingTimeTravelReadRecording().has_value());
 }
 
 TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdatesMetadata)
@@ -237,7 +246,8 @@ TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdat
             .chosenCost = {},
             .alternatives = {}}});
 
-    EXPECT_FALSE(catalog.getRecording(staleRecordingId).has_value());
+    ASSERT_TRUE(catalog.getRecording(staleRecordingId).has_value());
+    EXPECT_TRUE(catalog.getRecording(staleRecordingId)->ownerQueries.empty());
     ASSERT_TRUE(catalog.getRecording(sharedRecordingId).has_value());
     EXPECT_THAT(catalog.getRecording(sharedRecordingId)->ownerQueries, testing::UnorderedElementsAre(queryId, sharedQueryId));
     ASSERT_TRUE(catalog.getRecording(replacementRecordingId).has_value());

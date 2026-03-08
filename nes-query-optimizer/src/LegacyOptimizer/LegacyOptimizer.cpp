@@ -158,4 +158,22 @@ DistributedLogicalPlan LegacyOptimizer::redeployWithFixedSelection(
     distributedPlan.setRecordingSelectionResult(selectionResultForActiveQuery(mergedSelectionResult, queryId));
     return distributedPlan;
 }
+
+DistributedLogicalPlan LegacyOptimizer::buildRecordingEpochWithFixedSelection(
+    const LogicalPlan& globalPlan,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const RecordingSelectionResult& mergedSelectionResult,
+    const std::string_view queryId) const
+{
+    static_cast<void>(globalPlan);
+    const auto* queryPlanRewrite = queryPlanRewriteForActiveQuery(mergedSelectionResult, queryId);
+    PRECONDITION(queryPlanRewrite != nullptr, "Replay epoch rollout requires a selected base plan for active query {}", queryId);
+    auto rewrittenPlan = rewriteReplayBoundary(queryPlanRewrite->basePlan, storesToInsertForActiveQuery(mergedSelectionResult, queryId));
+    rewrittenPlan = replaceSinksWithVoid(rewrittenPlan);
+
+    auto distributedPlan = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(rewrittenPlan);
+    distributedPlan.setReplaySpecification(replaySpecification);
+    distributedPlan.setRecordingSelectionResult(selectionResultForActiveQuery(mergedSelectionResult, queryId));
+    return distributedPlan;
+}
 }
