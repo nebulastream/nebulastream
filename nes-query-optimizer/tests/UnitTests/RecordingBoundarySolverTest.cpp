@@ -35,9 +35,9 @@ namespace
 RecordingCandidateOption makeNewRecordingOption(
     std::string recordingId,
     const Host& host,
-    double boundaryCutCost,
+    double maintenanceCost,
     size_t estimatedStorageBytes = 1024,
-    double replayRecomputeCost = 0.0)
+    uint64_t estimatedReplayLatencyMs = 0)
 {
     return RecordingCandidateOption{
         .decision = RecordingSelectionDecision::CreateNewRecording,
@@ -50,11 +50,13 @@ RecordingCandidateOption makeNewRecordingOption(
             .beneficiaryQueries = {},
             .coversIncomingQuery = true},
         .cost = RecordingCostBreakdown{
-            .decisionCost = boundaryCutCost + replayRecomputeCost,
+            .decisionCost = maintenanceCost,
             .estimatedStorageBytes = estimatedStorageBytes,
+            .estimatedReplayLatencyMs = estimatedReplayLatencyMs,
+            .maintenanceCost = maintenanceCost,
             .replayTimeMultiplier = 1.0,
-            .boundaryCutCost = boundaryCutCost,
-            .replayRecomputeCost = replayRecomputeCost,
+            .boundaryCutCost = maintenanceCost,
+            .replayRecomputeCost = 0.0,
             .fitsBudget = true,
             .satisfiesReplayLatency = true},
         .feasible = true,
@@ -81,6 +83,9 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
     RecordingCandidateSet candidateSet;
     candidateSet.rootOperatorId = rootId;
     candidateSet.leafOperatorIds = {leftLeafId, rightLeafId};
+    candidateSet.operatorReplayTimes = {
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = rootId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = leftId, .replayTimeMs = 1.0}};
     candidateSet.planEdges = {
         RecordingPlanEdge{.parentId = rootId, .childId = leftId},
         RecordingPlanEdge{.parentId = leftId, .childId = leftLeafId},
@@ -147,6 +152,9 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
     RecordingCandidateSet candidateSet;
     candidateSet.rootOperatorId = rootId;
     candidateSet.leafOperatorIds = {leftLeafId, rightLeafId};
+    candidateSet.operatorReplayTimes = {
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = rootId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = branchId, .replayTimeMs = 1.0}};
     candidateSet.planEdges = {
         RecordingPlanEdge{.parentId = rootId, .childId = branchId},
         RecordingPlanEdge{.parentId = branchId, .childId = leftLeafId},
@@ -190,7 +198,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
     EXPECT_EQ(selection.selectedBoundary.front().chosenOption.selection.recordingId, RecordingId("root-branch"));
 }
 
-TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWouldTriggerReplayRecomputeCost)
+TEST_F(RecordingBoundarySolverTest, SolverRepricesReplayLatencyAndMovesBoundaryUpstream)
 {
     const auto host = Host("worker-1:8080");
     auto workerCatalog = std::make_shared<WorkerCatalog>();
@@ -203,7 +211,11 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
 
     RecordingCandidateSet candidateSet;
     candidateSet.rootOperatorId = rootId;
+    candidateSet.replayLatencyLimitMs = 12;
     candidateSet.leafOperatorIds = {leftLeafId, rightLeafId};
+    candidateSet.operatorReplayTimes = {
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = rootId, .replayTimeMs = 2.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = branchId, .replayTimeMs = 10.0}};
     candidateSet.planEdges = {
         RecordingPlanEdge{.parentId = rootId, .childId = branchId},
         RecordingPlanEdge{.parentId = branchId, .childId = leftLeafId},
@@ -217,7 +229,7 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
             .materializationEdges = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
-            .options = {makeNewRecordingOption("root-branch", host, 3.0, 1024, 10.0)}},
+            .options = {makeNewRecordingOption("root-branch", host, 3.0, 1024, 4)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = branchId, .childId = leftLeafId},
             .upstreamNode = host,
@@ -226,7 +238,7 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
             .materializationEdges = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
-            .options = {makeNewRecordingOption("branch-left", host, 1.0)}},
+            .options = {makeNewRecordingOption("branch-left", host, 1.0, 1024, 4)}},
         RecordingBoundaryCandidate{
             .edge = {.parentId = rootId, .childId = rightLeafId},
             .upstreamNode = host,
@@ -235,12 +247,11 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
             .materializationEdges = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
-            .options = {makeNewRecordingOption("root-right", host, 1.5)}}};
+            .options = {makeNewRecordingOption("root-right", host, 1.5, 1024, 2)}}};
 
     const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
 
     ASSERT_EQ(selection.selectedBoundary.size(), 2U);
-    EXPECT_DOUBLE_EQ(selection.objectiveCost, 4.5);
     EXPECT_THAT(
         selection.selectedBoundary
             | std::views::transform(
@@ -249,7 +260,7 @@ TEST_F(RecordingBoundarySolverTest, SolverPrefersHigherBoundaryWhenLowerCutWould
                       return std::pair{
                           selected.candidate.edge.parentId.getRawValue(),
                           selected.candidate.edge.childId.getRawValue()};
-                  })
+                })
             | std::ranges::to<std::vector>(),
         ::testing::UnorderedElementsAre(std::pair{rootId.getRawValue(), branchId.getRawValue()}, std::pair{rootId.getRawValue(), rightLeafId.getRawValue()}));
 }

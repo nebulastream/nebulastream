@@ -15,6 +15,8 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdint>
+#include <optional>
 #include <ranges>
 #include <string>
 #include <vector>
@@ -61,9 +63,19 @@ struct RecordingBoundaryCandidate
 
 struct RecordingCandidateSet
 {
+    struct OperatorReplayTime
+    {
+        OperatorId operatorId{INVALID_OPERATOR_ID};
+        double replayTimeMs = 0.0;
+
+        [[nodiscard]] bool operator==(const OperatorReplayTime& other) const = default;
+    };
+
     OperatorId rootOperatorId{INVALID_OPERATOR_ID};
+    std::optional<uint64_t> replayLatencyLimitMs;
     std::vector<OperatorId> leafOperatorIds;
     std::vector<RecordingPlanEdge> planEdges;
+    std::vector<OperatorReplayTime> operatorReplayTimes;
     std::vector<RecordingBoundaryCandidate> candidates;
 
     [[nodiscard]] bool empty() const { return candidates.empty(); }

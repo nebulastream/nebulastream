@@ -42,7 +42,6 @@ namespace NES
 namespace
 {
 constexpr double STORAGE_PENALTY_NORMALIZATION_BYTES = 4096.0;
-constexpr double SHADOW_PRICE_STEP = 1.0;
 constexpr size_t MAX_SHADOW_PRICE_ITERATIONS = 16;
 constexpr double EPSILON = 1e-9;
 constexpr double CAPACITY_SCALE = 1000.0;
@@ -67,9 +66,7 @@ struct SelectedBoundarySignatureHash
 struct WeightedCandidateChoice
 {
     RecordingCandidateOption option;
-    double adjustedBoundaryCutCost = 0.0;
-    double replayRecomputeCost = 0.0;
-    double adjustedTotalCost = 0.0;
+    double adjustedDataflowEdgeCost = 0.0;
 };
 
 int decisionPreference(const RecordingSelectionDecision decision)
@@ -84,6 +81,21 @@ int decisionPreference(const RecordingSelectionDecision decision)
             return 2;
     }
     std::unreachable();
+}
+
+[[nodiscard]] double weightedReplayScanTimeMs(const RecordingCandidateOption& option)
+{
+    return static_cast<double>(option.cost.estimatedReplayLatencyMs) * option.cost.replayTimeMultiplier;
+}
+
+[[nodiscard]] double warmStartLatencyPrice(const RecordingCandidateSet& candidateSet)
+{
+    return candidateSet.replayLatencyLimitMs.has_value() ? 1.0 / std::max<double>(*candidateSet.replayLatencyLimitMs, 1.0) : 0.0;
+}
+
+[[nodiscard]] double latencyPriceStep(const RecordingCandidateSet& candidateSet)
+{
+    return warmStartLatencyPrice(candidateSet);
 }
 
 [[nodiscard]] LemonCapacity checkedAddCapacity(const LemonCapacity total, const LemonCapacity increment)
@@ -113,8 +125,10 @@ int decisionPreference(const RecordingSelectionDecision decision)
     return static_cast<LemonCapacity>(scaled);
 }
 
-std::optional<WeightedCandidateChoice>
-chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unordered_map<Host, double>& shadowPrices)
+std::optional<WeightedCandidateChoice> chooseBestOption(
+    const RecordingBoundaryCandidate& candidate,
+    const std::unordered_map<Host, double>& storageShadowPrices,
+    const double replayTimePrice)
 {
     std::optional<WeightedCandidateChoice> bestChoice;
     for (const auto& option : candidate.options)
@@ -124,25 +138,19 @@ chooseBestOption(const RecordingBoundaryCandidate& candidate, const std::unorder
             continue;
         }
 
-        double adjustedBoundaryCutCost = option.cost.boundaryCutCost;
+        double adjustedDataflowEdgeCost = option.cost.maintenanceCost + (replayTimePrice * weightedReplayScanTimeMs(option));
         if (option.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
-            adjustedBoundaryCutCost += shadowPrices.contains(option.selection.node)
-                ? shadowPrices.at(option.selection.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
+            adjustedDataflowEdgeCost += storageShadowPrices.contains(option.selection.node)
+                ? storageShadowPrices.at(option.selection.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
                 : 0.0;
         }
-        const auto replayRecomputeCost = option.cost.replayRecomputeCost;
-        const auto adjustedTotalCost = adjustedBoundaryCutCost + replayRecomputeCost;
 
-        if (!bestChoice.has_value() || adjustedTotalCost < bestChoice->adjustedTotalCost - EPSILON
-            || (std::abs(adjustedTotalCost - bestChoice->adjustedTotalCost) <= EPSILON
+        if (!bestChoice.has_value() || adjustedDataflowEdgeCost < bestChoice->adjustedDataflowEdgeCost - EPSILON
+            || (std::abs(adjustedDataflowEdgeCost - bestChoice->adjustedDataflowEdgeCost) <= EPSILON
                 && decisionPreference(option.decision) < decisionPreference(bestChoice->option.decision)))
         {
-            bestChoice = WeightedCandidateChoice{
-                .option = option,
-                .adjustedBoundaryCutCost = adjustedBoundaryCutCost,
-                .replayRecomputeCost = replayRecomputeCost,
-                .adjustedTotalCost = adjustedTotalCost};
+            bestChoice = WeightedCandidateChoice{.option = option, .adjustedDataflowEdgeCost = adjustedDataflowEdgeCost};
         }
     }
     return bestChoice;
@@ -200,6 +208,14 @@ std::string describeBudgetViolation(
     return fmt::format("Replay selection is infeasible: selected recording boundary exceeds worker budgets ({})", fmt::join(violations, ", "));
 }
 
+std::string describeReplayLatencyViolation(const double selectedReplayTimeMs, const double replayLatencyLimitMs)
+{
+    return fmt::format(
+        "Replay selection is infeasible: selected replay time {:.2f} ms exceeds the replay latency limit of {:.2f} ms",
+        selectedReplayTimeMs,
+        replayLatencyLimitMs);
+}
+
 std::string makeSelectionSignature(const std::vector<SelectedRecordingBoundary>& selectedBoundary)
 {
     std::vector<std::string> parts;
@@ -244,25 +260,35 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         }
     }
 
-    std::unordered_map<Host, double> shadowPrices;
+    std::unordered_map<Host, double> storageShadowPrices;
     std::unordered_set<std::string, SelectedBoundarySignatureHash> seenSelections;
+    auto replayTimePrice = warmStartLatencyPrice(candidateSet);
 
     for (size_t iteration = 0; iteration < MAX_SHADOW_PRICE_ITERATIONS; ++iteration)
     {
         std::unordered_map<RecordingPlanEdge, WeightedCandidateChoice, RecordingPlanEdgeHash> bestChoiceByEdge;
+        std::unordered_map<OperatorId, double> replayEdgeCostByOperatorId;
         LemonCapacity totalFiniteCapacity = 0;
         for (const auto& candidate : candidateSet.candidates)
         {
-            if (const auto bestChoice = chooseBestOption(candidate, shadowPrices); bestChoice.has_value())
+            if (const auto bestChoice = chooseBestOption(candidate, storageShadowPrices, replayTimePrice); bestChoice.has_value())
             {
                 bestChoiceByEdge.emplace(candidate.edge, *bestChoice);
-                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedBoundaryCutCost));
-                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->replayRecomputeCost));
+                totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedDataflowEdgeCost));
             }
         }
+        for (const auto& operatorReplayTime : candidateSet.operatorReplayTimes)
+        {
+            const auto replayEdgeCost = replayTimePrice * operatorReplayTime.replayTimeMs;
+            replayEdgeCostByOperatorId.emplace(operatorReplayTime.operatorId, replayEdgeCost);
+            totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(replayEdgeCost));
+        }
 
-        // LEMON::Preflow cannot represent true infinity, so every mandatory edge uses a
-        // sentinel capacity that is strictly larger than any realizable all-finite cut.
+        if (bestChoiceByEdge.empty())
+        {
+            throw PlacementFailure("{}", describeInfeasibleBoundary(candidateSet));
+        }
+
         const auto infiniteCapacity = checkedAddCapacity(std::max<LemonCapacity>(1, totalFiniteCapacity), 1);
 
         LemonGraph graph;
@@ -289,27 +315,27 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             getOrCreateNode(leafId);
         }
 
-        const auto terminalNode = graph.addNode();
+        const auto superSource = graph.addNode();
         LemonGraph::ArcMap<LemonCapacity> capacities(graph);
 
-        for (const auto& edge : candidateSet.planEdges)
-        {
-            const auto arc = graph.addArc(graphNodesByOperator.at(edge.parentId), graphNodesByOperator.at(edge.childId));
-            capacities[arc] = bestChoiceByEdge.contains(edge) ? scaledCapacityFromCost(bestChoiceByEdge.at(edge).adjustedBoundaryCutCost) : infiniteCapacity;
-            if (bestChoiceByEdge.contains(edge))
-            {
-                const auto recomputeArc = graph.addArc(graphNodesByOperator.at(edge.childId), terminalNode);
-                capacities[recomputeArc] = scaledCapacityFromCost(bestChoiceByEdge.at(edge).replayRecomputeCost);
-            }
-        }
         for (const auto leafId : candidateSet.leafOperatorIds)
         {
-            const auto arc = graph.addArc(graphNodesByOperator.at(leafId), terminalNode);
+            const auto arc = graph.addArc(superSource, graphNodesByOperator.at(leafId));
             capacities[arc] = infiniteCapacity;
+        }
+        for (const auto& operatorReplayTime : candidateSet.operatorReplayTimes)
+        {
+            const auto arc = graph.addArc(superSource, graphNodesByOperator.at(operatorReplayTime.operatorId));
+            capacities[arc] = scaledCapacityFromCost(replayEdgeCostByOperatorId.at(operatorReplayTime.operatorId));
+        }
+        for (const auto& edge : candidateSet.planEdges)
+        {
+            const auto arc = graph.addArc(graphNodesByOperator.at(edge.childId), graphNodesByOperator.at(edge.parentId));
+            capacities[arc] = bestChoiceByEdge.contains(edge) ? scaledCapacityFromCost(bestChoiceByEdge.at(edge).adjustedDataflowEdgeCost) : infiniteCapacity;
         }
 
         lemon::Preflow<LemonGraph, LemonGraph::ArcMap<LemonCapacity>>
-            preflow(graph, capacities, graphNodesByOperator.at(candidateSet.rootOperatorId), terminalNode);
+            preflow(graph, capacities, superSource, graphNodesByOperator.at(candidateSet.rootOperatorId));
         preflow.runMinCut();
 
         LemonGraph::NodeMap<bool> minCutPartition(graph);
@@ -318,9 +344,9 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         bool cutUsesInfiniteEdge = false;
         for (const auto& edge : candidateSet.planEdges)
         {
-            const auto parentOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.parentId)];
-            const auto childOnSourceSide = minCutPartition[graphNodesByOperator.at(edge.childId)];
-            if (parentOnSourceSide && !childOnSourceSide && !bestChoiceByEdge.contains(edge))
+            const auto childOnRecordedSide = minCutPartition[graphNodesByOperator.at(edge.childId)];
+            const auto parentOnRecordedSide = minCutPartition[graphNodesByOperator.at(edge.parentId)];
+            if (childOnRecordedSide && !parentOnRecordedSide && !bestChoiceByEdge.contains(edge))
             {
                 cutUsesInfiniteEdge = true;
                 break;
@@ -328,7 +354,7 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         }
         for (const auto leafId : candidateSet.leafOperatorIds)
         {
-            if (minCutPartition[graphNodesByOperator.at(leafId)])
+            if (!minCutPartition[graphNodesByOperator.at(leafId)])
             {
                 cutUsesInfiniteEdge = true;
                 break;
@@ -339,9 +365,9 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         selectedBoundary.reserve(candidateSet.candidates.size());
         for (const auto& candidate : candidateSet.candidates)
         {
-            const auto parentOnSourceSide = minCutPartition[graphNodesByOperator.at(candidate.edge.parentId)];
-            const auto childOnSourceSide = minCutPartition[graphNodesByOperator.at(candidate.edge.childId)];
-            if (!(parentOnSourceSide && !childOnSourceSide))
+            const auto childOnRecordedSide = minCutPartition[graphNodesByOperator.at(candidate.edge.childId)];
+            const auto parentOnRecordedSide = minCutPartition[graphNodesByOperator.at(candidate.edge.parentId)];
+            if (!(childOnRecordedSide && !parentOnRecordedSide))
             {
                 continue;
             }
@@ -373,11 +399,20 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         }
 
         std::unordered_map<Host, size_t> selectedStorageBytesByHost;
+        double selectedReplayTimeMs = 0.0;
         for (const auto& selected : selectedBoundary)
         {
             if (selected.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
             {
                 selectedStorageBytesByHost[selected.chosenOption.selection.node] += selected.chosenOption.cost.estimatedStorageBytes;
+            }
+            selectedReplayTimeMs += weightedReplayScanTimeMs(selected.chosenOption);
+        }
+        for (const auto& operatorReplayTime : candidateSet.operatorReplayTimes)
+        {
+            if (!minCutPartition[graphNodesByOperator.at(operatorReplayTime.operatorId)])
+            {
+                selectedReplayTimeMs += operatorReplayTime.replayTimeMs;
             }
         }
 
@@ -388,42 +423,46 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             {
                 violatesBudget = true;
                 const auto overflowBytes = selectedBytes - availableStorageBytesByHost[host];
-                const auto overflowFactor
-                    = static_cast<double>(overflowBytes) / std::max<double>(availableStorageBytesByHost[host], 1.0);
-                shadowPrices[host] += SHADOW_PRICE_STEP + overflowFactor;
+                const auto overflowFactor = static_cast<double>(overflowBytes) / std::max<double>(availableStorageBytesByHost[host], 1.0);
+                storageShadowPrices[host] += 1.0 + overflowFactor;
             }
         }
 
-        if (!violatesBudget)
+        const auto violatesReplayLatency = candidateSet.replayLatencyLimitMs.has_value()
+            && selectedReplayTimeMs > static_cast<double>(*candidateSet.replayLatencyLimitMs);
+        if (violatesReplayLatency)
         {
-            const auto boundaryCost = std::accumulate(
+            const auto overflowMs = selectedReplayTimeMs - static_cast<double>(*candidateSet.replayLatencyLimitMs);
+            const auto overflowFactor = overflowMs / std::max<double>(*candidateSet.replayLatencyLimitMs, 1.0);
+            replayTimePrice += latencyPriceStep(candidateSet) * (1.0 + overflowFactor);
+        }
+
+        if (!violatesBudget && !violatesReplayLatency)
+        {
+            const auto maintenanceCost = std::accumulate(
                 selectedBoundary.begin(),
                 selectedBoundary.end(),
                 0.0,
-                [&](const double total, const SelectedRecordingBoundary& selected)
-                { return total + bestChoiceByEdge.at(selected.candidate.edge).adjustedBoundaryCutCost; });
-            const auto replayRecomputeCost = std::accumulate(
-                candidateSet.candidates.begin(),
-                candidateSet.candidates.end(),
-                0.0,
-                [&](const double total, const RecordingBoundaryCandidate& candidate)
-                {
-                    if (!bestChoiceByEdge.contains(candidate.edge))
-                    {
-                        return total;
-                    }
-                    return minCutPartition[graphNodesByOperator.at(candidate.edge.childId)] ? total + bestChoiceByEdge.at(candidate.edge).replayRecomputeCost
-                                                                                            : total;
-                });
+                [](const double total, const SelectedRecordingBoundary& selected)
+                { return total + selected.chosenOption.cost.maintenanceCost; });
             return RecordingBoundarySelection{
                 .selectedBoundary = std::move(selectedBoundary),
-                .objectiveCost = boundaryCost + replayRecomputeCost};
+                .objectiveCost = maintenanceCost + (replayTimePrice * selectedReplayTimeMs)};
         }
 
         const auto selectionSignature = makeSelectionSignature(selectedBoundary);
         if (!seenSelections.insert(selectionSignature).second)
         {
-            throw PlacementFailure("{}", describeBudgetViolation(selectedStorageBytesByHost, availableStorageBytesByHost));
+            if (violatesBudget)
+            {
+                throw PlacementFailure("{}", describeBudgetViolation(selectedStorageBytesByHost, availableStorageBytesByHost));
+            }
+            if (violatesReplayLatency && candidateSet.replayLatencyLimitMs.has_value())
+            {
+                throw PlacementFailure(
+                    "{}",
+                    describeReplayLatencyViolation(selectedReplayTimeMs, static_cast<double>(*candidateSet.replayLatencyLimitMs)));
+            }
         }
     }
 

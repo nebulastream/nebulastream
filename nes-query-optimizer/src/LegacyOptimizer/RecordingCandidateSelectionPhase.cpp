@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <chrono>
+#include <cmath>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -95,6 +96,7 @@ struct MergedBoundaryCandidateAccumulator
 struct MergedReplayGraphBuilder
 {
     std::unordered_map<std::string, OperatorId> nodeIdsByFingerprint;
+    std::unordered_map<OperatorId, LogicalOperator> operatorsBySyntheticId;
     std::unordered_map<RecordingPlanEdge, MergedBoundaryCandidateAccumulator, RecordingPlanEdgeHash> candidatesByEdge;
     std::unordered_set<OperatorId> rootOperatorIds;
     std::unordered_set<OperatorId> leafOperatorIds;
@@ -346,6 +348,30 @@ OperatorId getOrCreateSyntheticOperatorId(MergedReplayGraphBuilder& builder, con
     return syntheticId;
 }
 
+void rememberSyntheticOperator(MergedReplayGraphBuilder& builder, const OperatorId operatorId, const LogicalOperator& logicalOperator)
+{
+    builder.operatorsBySyntheticId.insert_or_assign(operatorId, normalizeReplayFingerprintOperator(logicalOperator));
+}
+
+double estimateOperatorReplayTimeMs(const LogicalOperator& logicalOperator)
+{
+    size_t schemaBytes = 1;
+    if (logicalOperator.tryGetAs<SinkLogicalOperator>().has_value())
+    {
+        const auto children = logicalOperator.getChildren();
+        if (!children.empty())
+        {
+            schemaBytes = std::max(children.front().getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
+        }
+    }
+    else
+    {
+        schemaBytes = std::max(logicalOperator.getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
+    }
+    const auto arityFactor = 1.0 + (logicalOperator.getChildren().size() * 0.5);
+    return std::max(1.0, std::ceil((static_cast<double>(schemaBytes) / 256.0) * arityFactor));
+}
+
 QueryReplayPlan makeIncomingReplayPlan(const LogicalPlan& placedPlan, const std::optional<ReplaySpecification>& replaySpecification)
 {
     return QueryReplayPlan{
@@ -436,6 +462,7 @@ void collectMergedGraph(
 {
     const auto currentFingerprint = structuralNodeFingerprint(current);
     const auto currentSyntheticId = getOrCreateSyntheticOperatorId(builder, currentFingerprint);
+    rememberSyntheticOperator(builder, currentSyntheticId, current);
     const auto children = getReplayChildren(current);
     if (children.empty())
     {
@@ -456,6 +483,7 @@ void collectMergedGraph(
 
         const auto childFingerprint = structuralNodeFingerprint(child);
         const auto childSyntheticId = getOrCreateSyntheticOperatorId(builder, childFingerprint);
+        rememberSyntheticOperator(builder, childSyntheticId, child);
         const auto routePlacements = enumerateRoutePlacements(getPlacementFor(child), getPlacementFor(current), workerCatalog.getTopology());
         for (const auto& placement : routePlacements)
         {
@@ -696,9 +724,20 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
     populateInstalledRecordings(builder.replayContext, recordingCatalog);
 
     RecordingCandidateSet candidateSet{};
+    candidateSet.replayLatencyLimitMs = replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; });
     candidateSet.candidates = buildCandidates(builder.candidatesByEdge, replaySpecification, recordingCatalog, builder.replayContext, *workerCatalog);
     candidateSet.planEdges = builder.candidatesByEdge | std::views::keys | std::ranges::to<std::vector>();
     candidateSet.leafOperatorIds = builder.leafOperatorIds | std::ranges::to<std::vector>();
+    candidateSet.operatorReplayTimes.reserve(builder.operatorsBySyntheticId.size());
+    for (const auto& [operatorId, logicalOperator] : builder.operatorsBySyntheticId)
+    {
+        if (builder.leafOperatorIds.contains(operatorId))
+        {
+            continue;
+        }
+        candidateSet.operatorReplayTimes.push_back(
+            RecordingCandidateSet::OperatorReplayTime{.operatorId = operatorId, .replayTimeMs = estimateOperatorReplayTimeMs(logicalOperator)});
+    }
 
     if (builder.rootOperatorIds.size() == 1)
     {
@@ -715,6 +754,7 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
 
     std::ranges::sort(candidateSet.planEdges, {}, [](const RecordingPlanEdge& edge) { return std::pair{edge.parentId.getRawValue(), edge.childId.getRawValue()}; });
     std::ranges::sort(candidateSet.leafOperatorIds, {}, &OperatorId::getRawValue);
+    std::ranges::sort(candidateSet.operatorReplayTimes, {}, [](const auto& entry) { return entry.operatorId.getRawValue(); });
     std::ranges::sort(candidateSet.candidates, {}, [](const RecordingBoundaryCandidate& candidate) { return std::pair{candidate.edge.parentId.getRawValue(), candidate.edge.childId.getRawValue()}; });
     return candidateSet;
 }

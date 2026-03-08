@@ -208,13 +208,13 @@ RecordingCostEstimate RecordingCostModel::estimateReplayReuse(
     const auto effectiveReplaySpecification = withRetentionCoverage(replaySpecification, retainedWindowMs);
     auto estimate = estimateNewRecording(recordedSubplanRoot, placementContext, worker, runtimeMetrics, effectiveReplaySpecification);
     estimate.maintenanceCost = 0.0;
-    estimate.fitsBudget = true;
     estimate.estimatedReplayBandwidthBytesPerSecond
         = estimatedReplayBandwidthBytesPerSecond(estimate.estimatedStorageBytes, placementContext, runtimeMetrics, effectiveReplaySpecification, true);
     estimate.estimatedReplayLatency
         = estimatedReplayLatency(estimate.estimatedStorageBytes, estimate.estimatedReplayBandwidthBytesPerSecond);
     estimate.replayCost = (estimate.estimatedStorageBytes / COST_NORMALIZATION_BYTES)
         * (DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND / estimate.estimatedReplayBandwidthBytesPerSecond);
+    estimate.fitsBudget = true;
     estimate.satisfiesReplayLatency
         = replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; })
               .transform(
