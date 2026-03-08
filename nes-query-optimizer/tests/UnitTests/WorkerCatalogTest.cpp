@@ -83,4 +83,33 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesRecordingWriteRateFromS
     EXPECT_EQ(metrics->recordingWriteBytesPerSecond, 2048);
 }
 
+TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesReplayReadRateFromSuccessiveSnapshots)
+{
+    WorkerCatalog catalog;
+    ASSERT_TRUE(catalog.addWorker(Host("worker-1:8080"), "worker-1-data", INFINITE_CAPACITY, {}));
+
+    ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
+        Host("worker-1:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(1)),
+            .recordingStorageBytes = 1024,
+            .recordingFileCount = 1,
+            .activeQueryCount = 1,
+            .replayReadBytes = 4096,
+            .replayOperatorStatistics = {}}));
+    ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
+        Host("worker-1:8080"),
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(3)),
+            .recordingStorageBytes = 1024,
+            .recordingFileCount = 2,
+            .activeQueryCount = 2,
+            .replayReadBytes = 12'288,
+            .replayOperatorStatistics = {}}));
+
+    const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
+    ASSERT_TRUE(metrics.has_value());
+    EXPECT_EQ(metrics->replayReadBytesPerSecond, 4096U);
+}
+
 }

@@ -252,6 +252,7 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
                 .recordingStorageBytes = 1337,
                 .recordingFileCount = 2,
                 .activeQueryCount = 4,
+                .replayReadBytes = 8192,
                 .operatorStatistics = {ReplayOperatorStatistics{
                     .nodeFingerprint = fingerprint,
                     .inputTuples = 128,
@@ -272,6 +273,7 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
             .recordingStorageBytes = 1337,
             .recordingFileCount = 2,
             .activeQueryCount = 4,
+            .replayReadBytes = 8192,
             .replayOperatorStatistics
             = {{fingerprint,
                 ReplayOperatorStatistics{
@@ -313,6 +315,7 @@ TEST(QueryManagerMetricsTest, WorkerStatusSerializationRoundTripsReplayOperatorS
         .recordingStorageBytes = 1024,
         .recordingFileCount = 3,
         .activeQueryCount = 2,
+        .replayReadBytes = 2048,
         .operatorStatistics = {ReplayOperatorStatistics{
             .nodeFingerprint = "selection@worker-1:8080",
             .inputTuples = 200,

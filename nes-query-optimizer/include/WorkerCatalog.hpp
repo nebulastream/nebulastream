@@ -39,6 +39,8 @@ struct WorkerRuntimeMetrics
     size_t recordingFileCount = 0;
     size_t activeQueryCount = 0;
     size_t recordingWriteBytesPerSecond = 0;
+    uint64_t replayReadBytes = 0;
+    size_t replayReadBytesPerSecond = 0;
     std::unordered_map<std::string, ReplayOperatorStatistics> replayOperatorStatistics;
 
     [[nodiscard]] bool operator==(const WorkerRuntimeMetrics& other) const = default;

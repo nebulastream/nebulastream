@@ -75,6 +75,7 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     replayMetricsGRPC->set_recording_storage_bytes(status.replayMetrics.recordingStorageBytes);
     replayMetricsGRPC->set_recording_file_count(status.replayMetrics.recordingFileCount);
     replayMetricsGRPC->set_active_query_count(status.replayMetrics.activeQueryCount);
+    replayMetricsGRPC->set_replay_read_bytes(status.replayMetrics.replayReadBytes);
     for (const auto& statistic : status.replayMetrics.operatorStatistics)
     {
         auto* operatorStatisticGRPC = replayMetricsGRPC->add_operator_statistics();
@@ -125,6 +126,7 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
             .recordingStorageBytes = response->replay_metrics().recording_storage_bytes(),
             .recordingFileCount = response->replay_metrics().recording_file_count(),
             .activeQueryCount = response->replay_metrics().active_query_count(),
+            .replayReadBytes = response->replay_metrics().replay_read_bytes(),
             .operatorStatistics
             = response->replay_metrics().operator_statistics()
                 | std::views::transform(

@@ -416,6 +416,7 @@ void QueryManager::refreshWorkerMetrics()
                     .recordingStorageBytes = status.replayMetrics.recordingStorageBytes,
                     .recordingFileCount = status.replayMetrics.recordingFileCount,
                     .activeQueryCount = status.replayMetrics.activeQueryCount,
+                    .replayReadBytes = status.replayMetrics.replayReadBytes,
                     .replayOperatorStatistics
                     = status.replayMetrics.operatorStatistics
                         | std::views::transform(

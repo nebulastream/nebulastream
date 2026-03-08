@@ -28,6 +28,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
@@ -159,6 +160,12 @@ void BinaryStoreSource::initializeRowLayoutMetadata()
     }
 }
 
+void BinaryStoreSource::recordPhysicalBytesRead(const size_t bytes)
+{
+    totalNumBytesRead += bytes;
+    Replay::recordReplayReadBytes(bytes);
+}
+
 void BinaryStoreSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     NES_DEBUG("BinaryStoreSource: opening {}", filePath);
@@ -230,6 +237,7 @@ bool BinaryStoreSource::loadNextSegment()
     {
         throw CannotOpenSink("Failed to read binary store segment payload");
     }
+    recordPhysicalBytesRead(encodedSegment.size());
 
     segmentBufferOffset = 0;
     if (compression == Replay::BinaryStoreCompressionCodec::None)
@@ -282,6 +290,7 @@ bool BinaryStoreSource::readPayload(char* dest, size_t len)
             inputFile.clear();
             return false;
         }
+        recordPhysicalBytesRead(len);
         return true;
     }
 
@@ -316,6 +325,7 @@ bool BinaryStoreSource::skipPayload(size_t len)
             inputFile.clear();
             return false;
         }
+        recordPhysicalBytesRead(len);
         return true;
     }
 
@@ -420,7 +430,6 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
     }
 
     NES_DEBUG("BinaryStoreSource: read {} bytes ({} tuples), eof={} fail={}", bytesRead, tuplesWritten, inputFile.eof(), inputFile.fail());
-    totalNumBytesRead += bytesRead;
 
     if (tuplesWritten == 0 && reachedEnd)
     {

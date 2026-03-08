@@ -53,6 +53,7 @@ protected:
 
 private:
     void initializeRowLayoutMetadata();
+    void recordPhysicalBytesRead(size_t bytes);
     bool loadNextSegment();
     bool readPayload(char* dest, size_t len);
     bool skipPayload(size_t len);

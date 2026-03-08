@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 
@@ -31,6 +32,9 @@ inline constexpr size_t MIN_RECORDING_SIZE_BYTES = 4096;
 [[nodiscard]] std::string resolveTimeTravelReadProbePath();
 [[nodiscard]] size_t getRecordingStorageBytes();
 [[nodiscard]] size_t getRecordingFileCount();
+[[nodiscard]] uint64_t getReplayReadBytes();
+void recordReplayReadBytes(size_t bytes);
+void clearReplayReadBytes();
 void updateTimeTravelReadAlias(const std::string& recordingFilePath);
 void clearTimeTravelReadAlias();
 

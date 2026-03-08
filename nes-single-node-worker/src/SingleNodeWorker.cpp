@@ -255,6 +255,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     }
     status.replayMetrics.recordingStorageBytes = Replay::getRecordingStorageBytes();
     status.replayMetrics.recordingFileCount = Replay::getRecordingFileCount();
+    status.replayMetrics.replayReadBytes = Replay::getReplayReadBytes();
     status.replayMetrics.operatorStatistics = replayStatisticsCollector->snapshot();
     return status;
 }

@@ -14,6 +14,7 @@
 
 #include <Replay/ReplayStorage.hpp>
 
+#include <atomic>
 #include <filesystem>
 #include <limits>
 #include <string>
@@ -24,6 +25,8 @@ namespace NES::Replay
 
 namespace
 {
+std::atomic<uint64_t> replayReadBytes{0};
+
 template <typename Projection>
 size_t accumulateRecordingDirectory(Projection projection)
 {
@@ -111,6 +114,21 @@ size_t getRecordingFileCount()
             }
             return 0;
         });
+}
+
+uint64_t getReplayReadBytes()
+{
+    return replayReadBytes.load();
+}
+
+void recordReplayReadBytes(const size_t bytes)
+{
+    replayReadBytes.fetch_add(bytes);
+}
+
+void clearReplayReadBytes()
+{
+    replayReadBytes.store(0);
 }
 
 void updateTimeTravelReadAlias(const std::string& recordingFilePath)

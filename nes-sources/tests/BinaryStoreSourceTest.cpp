@@ -29,6 +29,7 @@
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <Replay/BinaryStoreFormat.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -199,6 +200,17 @@ TEST_F(BinaryStoreSourceTest, ReadsSegmentedZstdBinaryStoreFiles)
 
     EXPECT_EQ(readRows(filePath), rows);
     EXPECT_EQ(BinaryStoreSource::readSchemaFromFile(filePath.string()), getSchema());
+}
+
+TEST_F(BinaryStoreSourceTest, TracksPhysicalReplayReadBytesForLegacyFiles)
+{
+    const auto filePath = tempDir / "legacy-metrics.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None);
+
+    Replay::clearReplayReadBytes();
+    EXPECT_EQ(readRows(filePath), rows);
+    EXPECT_EQ(Replay::getReplayReadBytes(), rows.size() * sizeof(TestRow));
+    Replay::clearReplayReadBytes();
 }
 }
 }

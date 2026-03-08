@@ -148,6 +148,16 @@ bool WorkerCatalog::updateWorkerRuntimeMetrics(const Host& hostAddr, WorkerRunti
         {
             metrics.recordingWriteBytesPerSecond = 0;
         }
+
+        if (elapsedMs > 0 && metrics.replayReadBytes >= existingMetrics->replayReadBytes)
+        {
+            const auto deltaBytes = metrics.replayReadBytes - existingMetrics->replayReadBytes;
+            metrics.replayReadBytesPerSecond = deltaBytes == 0 ? 0 : deltaBytes * 1000 / static_cast<size_t>(elapsedMs);
+        }
+        else
+        {
+            metrics.replayReadBytesPerSecond = 0;
+        }
     }
 
     runtimeMetrics.insert_or_assign(hostAddr, std::move(metrics));

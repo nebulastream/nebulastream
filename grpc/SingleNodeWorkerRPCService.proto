@@ -114,6 +114,7 @@ message WorkerStatusResponse {
     uint64 recording_storage_bytes = 1;
     uint64 recording_file_count = 2;
     uint64 active_query_count = 3;
+    uint64 replay_read_bytes = 5;
     repeated ReplayOperatorStatistics operator_statistics = 4;
   }
 

@@ -64,6 +64,18 @@ double representationBandwidthMultiplier(const RecordingRepresentation represent
     std::unreachable();
 }
 
+double replayReadBandwidthBaselineBytesPerSecond(
+    const RecordingPlacementContext& placementContext, const std::optional<WorkerRuntimeMetrics>& runtimeMetrics)
+{
+    const auto measuredReplayReadBytesPerSecond
+        = runtimeMetrics.transform([](const auto& metrics) { return metrics.replayReadBytesPerSecond; }).value_or(0);
+    if (measuredReplayReadBytesPerSecond > 0)
+    {
+        return static_cast<double>(measuredReplayReadBytesPerSecond);
+    }
+    return DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND * representationBandwidthMultiplier(placementContext.representation);
+}
+
 double replayTimeMultiplier(const RecordingPlacementContext& placementContext)
 {
     return 1.0 + (std::max<size_t>(placementContext.mergedOccurrenceCount, 1) - 1) * 0.35
@@ -135,22 +147,14 @@ double retentionFactor(const std::optional<ReplaySpecification>& replaySpecifica
 }
 
 size_t estimatedReplayBandwidthBytesPerSecond(
-    size_t candidateWriteBytesPerSecond,
     const RecordingPlacementContext& placementContext,
-    const std::optional<WorkerRuntimeMetrics>& runtimeMetrics,
-    bool reuseExistingRecording)
+    const std::optional<WorkerRuntimeMetrics>& runtimeMetrics)
 {
-    const auto activeQueryCount = runtimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0);
-    const auto recordingFileCount = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingFileCount; }).value_or(0);
-    const auto liveWriteBytesPerSecond = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0);
-    const auto effectiveCandidateWriteBytesPerSecond = reuseExistingRecording ? 0 : candidateWriteBytesPerSecond;
-
-    const auto contention = 1.0 + (static_cast<double>(activeQueryCount) * 0.25) + (static_cast<double>(recordingFileCount) * 0.05)
-        + (static_cast<double>(liveWriteBytesPerSecond + effectiveCandidateWriteBytesPerSecond) / DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND);
     const auto topologyPenalty = 1.0 + placementContext.totalRouteHopCount * 0.2 + placementContext.downstreamHopCount * 0.15;
+    const auto baselineReplayReadBytesPerSecond = replayReadBandwidthBaselineBytesPerSecond(placementContext, runtimeMetrics);
     const auto effectiveBandwidth = std::max(
         MIN_REPLAY_BANDWIDTH_BYTES_PER_SECOND,
-        (DEFAULT_REPLAY_BANDWIDTH_BYTES_PER_SECOND * representationBandwidthMultiplier(placementContext.representation)) / (contention * topologyPenalty));
+        baselineReplayReadBytesPerSecond / topologyPenalty);
     return static_cast<size_t>(std::floor(effectiveBandwidth));
 }
 
@@ -185,8 +189,7 @@ RecordingCostEstimate RecordingCostModel::estimateNewRecording(
     const auto operatorCount = countOperators(recordedSubplanRoot);
     const auto schemaBytes = std::max(recordedSubplanRoot.getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
     const auto candidateWriteBytesPerSecond = estimatedIngressWriteBytesPerSecond(recordedSubplanRoot.getOutputSchema(), placementContext);
-    const auto effectiveReplayBandwidthBytesPerSecond
-        = estimatedReplayBandwidthBytesPerSecond(candidateWriteBytesPerSecond, placementContext, runtimeMetrics, false);
+    const auto effectiveReplayBandwidthBytesPerSecond = estimatedReplayBandwidthBytesPerSecond(placementContext, runtimeMetrics);
     const auto replayLatency = estimatedReplayLatency(estimatedStorageBytes, effectiveReplayBandwidthBytesPerSecond);
     const auto activeQueryCount = runtimeMetrics.transform([](const auto& metrics) { return metrics.activeQueryCount; }).value_or(0);
     const auto liveWriteBytesPerSecond = runtimeMetrics.transform([](const auto& metrics) { return metrics.recordingWriteBytesPerSecond; }).value_or(0);
@@ -232,12 +235,7 @@ RecordingCostEstimate RecordingCostModel::estimateReplayReuse(
     const auto effectiveReplaySpecification = withRetentionCoverage(replaySpecification, retainedWindowMs);
     auto estimate = estimateNewRecording(recordedSubplanRoot, placementContext, worker, runtimeMetrics, effectiveReplaySpecification);
     estimate.maintenanceCost = 0.0;
-    estimate.estimatedReplayBandwidthBytesPerSecond
-        = estimatedReplayBandwidthBytesPerSecond(
-            estimatedIngressWriteBytesPerSecond(recordedSubplanRoot.getOutputSchema(), placementContext),
-            placementContext,
-            runtimeMetrics,
-            true);
+    estimate.estimatedReplayBandwidthBytesPerSecond = estimatedReplayBandwidthBytesPerSecond(placementContext, runtimeMetrics);
     estimate.estimatedReplayLatency
         = estimatedReplayLatency(estimate.estimatedStorageBytes, estimate.estimatedReplayBandwidthBytesPerSecond);
     estimate.replayCost = (estimate.estimatedStorageBytes / COST_NORMALIZATION_BYTES)
