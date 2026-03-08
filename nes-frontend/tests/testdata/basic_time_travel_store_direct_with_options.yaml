@@ -1,5 +1,5 @@
 query: |
-  SELECT * FROM mock_source INTO mock_sink TIME_TRAVEL_STORE(RETENTION 5 MINUTE, REPLAY_LATENCY 10 SEC)
+  SELECT * FROM mock_source INTO mock_sink REPLAYABLE WITH HISTORY OF 5 MINUTE AND REPLAY LATENCY 10 SEC
 
 sinks:
   - name: mock_sink

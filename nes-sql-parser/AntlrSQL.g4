@@ -65,7 +65,7 @@ createStatement: CREATE createDefinition;
 createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createWorkerDefinition;
 setStatement: SET setDefinition;
 setDefinition: setRecordingStorageDefinition;
-setRecordingStorageDefinition: RECORDING STORAGE AT hostaddr=STRING TO storage=INTEGER_VALUE;
+setRecordingStorageDefinition: (RECORDING | REPLAY) STORAGE AT hostaddr=STRING TO storage=INTEGER_VALUE;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -317,12 +317,31 @@ inlineSink
     ;
 
 timeTravelClause
+    : legacyTimeTravelClause
+    | replayableTimeTravelClause
+    ;
+
+legacyTimeTravelClause
     : TIME_TRAVEL_STORE ('(' parameter+=timeTravelParameter (',' parameter+=timeTravelParameter)* ')')?
+    ;
+
+replayableTimeTravelClause
+    : REPLAYABLE replayableSpecification?
+    ;
+
+replayableSpecification
+    : WITH parameter+=replayableParameter (AND parameter+=replayableParameter)*
     ;
 
 timeTravelParameter
     : RETENTION amount=INTEGER_VALUE unit=timeUnit
     | REPLAY_LATENCY amount=INTEGER_VALUE unit=timeUnit
+    ;
+
+replayableParameter
+    : HISTORY OF amount=INTEGER_VALUE unit=timeUnit
+    | REPLAY LATENCY amount=INTEGER_VALUE unit=timeUnit
+    | QUERY LATENCY OF amount=INTEGER_VALUE unit=timeUnit
     ;
 
 nullNotnull
@@ -443,6 +462,7 @@ FULL: 'FULL';
 GROUP: 'GROUP' | 'group';
 GROUPING: 'GROUPING';
 HAVING: 'HAVING' | 'having';
+HISTORY: 'HISTORY' | 'history';
 IF: 'IF';
 IN: 'IN' | 'in';
 INNER: 'INNER' | 'inner';
@@ -451,6 +471,7 @@ INTO: 'INTO' | 'into';
 IS: 'IS'  'is';
 JOIN: 'JOIN' | 'join';
 LAST: 'LAST';
+LATENCY: 'LATENCY' | 'latency';
 LEFT: 'LEFT';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
@@ -466,6 +487,8 @@ OR: 'OR' | 'or';
 ORDER: 'ORDER' | 'order';
 QUERY: 'QUERY';
 RECOVER: 'RECOVER';
+REPLAY: 'REPLAY' | 'replay';
+REPLAYABLE: 'REPLAYABLE' | 'replayable';
 RIGHT: 'RIGHT';
 RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';

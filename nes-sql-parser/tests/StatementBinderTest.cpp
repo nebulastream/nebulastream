@@ -94,10 +94,10 @@ TEST_F(StatementBinderTest, BindQuery)
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
 }
 
-TEST_F(StatementBinderTest, BindQueryWithTimeTravelStoreOptions)
+TEST_F(StatementBinderTest, BindQueryWithReplayableOptions)
 {
     const std::string queryString
-        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(RETENTION 5 MINUTE, REPLAY_LATENCY 10 SEC)";
+        = "SELECT a FROM inputStream INTO outputStream REPLAYABLE WITH HISTORY OF 5 MINUTE AND REPLAY LATENCY 10 SEC";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
@@ -108,9 +108,23 @@ TEST_F(StatementBinderTest, BindQueryWithTimeTravelStoreOptions)
     EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, 10 * 1000);
 }
 
-TEST_F(StatementBinderTest, BindQueryWithBareTimeTravelStore)
+TEST_F(StatementBinderTest, BindQueryWithReplayableQueryLatencyAlias)
 {
-    const std::string queryString = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE";
+    const std::string queryString
+        = "SELECT a FROM inputStream INTO outputStream REPLAYABLE WITH HISTORY OF 5 MINUTE AND QUERY LATENCY OF 10 SEC";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto queryStatement = std::get<QueryStatement>(*statement);
+    ASSERT_TRUE(queryStatement.replaySpecification.has_value());
+    EXPECT_EQ(queryStatement.replaySpecification->retentionWindowMs, 5 * 60 * 1000);
+    EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, 10 * 1000);
+}
+
+TEST_F(StatementBinderTest, BindQueryWithBareReplayableClause)
+{
+    const std::string queryString = "SELECT a FROM inputStream INTO outputStream REPLAYABLE";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
@@ -121,10 +135,10 @@ TEST_F(StatementBinderTest, BindQueryWithBareTimeTravelStore)
     EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, std::nullopt);
 }
 
-TEST_F(StatementBinderTest, RejectQueryWithDuplicateTimeTravelStoreOptions)
+TEST_F(StatementBinderTest, RejectQueryWithDuplicateReplayableOptions)
 {
     const std::string queryString
-        = "SELECT a FROM inputStream INTO outputStream TIME_TRAVEL_STORE(RETENTION 5 MINUTE, RETENTION 10 MINUTE)";
+        = "SELECT a FROM inputStream INTO outputStream REPLAYABLE WITH HISTORY OF 5 MINUTE AND HISTORY OF 10 MINUTE";
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_FALSE(statement.has_value());
 }
@@ -609,9 +623,9 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).data, "localhost:9090");
 }
 
-TEST_F(StatementBinderTest, SetRecordingStorageStatementTest)
+TEST_F(StatementBinderTest, SetReplayStorageStatementTest)
 {
-    const std::string statementString = "SET RECORDING STORAGE AT 'localhost:8080' TO 4096";
+    const std::string statementString = "SET REPLAY STORAGE AT 'localhost:8080' TO 4096";
     const auto statement = binder->parseAndBindSingle(statementString);
     ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
     ASSERT_TRUE(std::holds_alternative<SetRecordingStorageStatement>(*statement));

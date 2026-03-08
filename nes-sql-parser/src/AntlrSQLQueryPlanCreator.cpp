@@ -21,6 +21,7 @@
 #include <optional>
 #include <ranges>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <variant>
 
@@ -1033,31 +1034,72 @@ void AntlrSQLQueryPlanCreator::exitTimeTravelClause(AntlrSQLParser::TimeTravelCl
 {
     ReplaySpecification replayParameters{};
 
-    for (auto* parameter : context->parameter)
+    const auto assignRetention = [&](const uint64_t durationMs, std::string_view clauseName, std::string_view parameterName)
     {
-        if (parameter->RETENTION() != nullptr)
+        if (replayParameters.retentionWindowMs.has_value())
         {
-            if (replayParameters.retentionWindowMs.has_value())
-            {
-                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify RETENTION at most once");
-            }
-            replayParameters.retentionWindowMs = buildDurationInMilliseconds(
-                from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
-            continue;
+            throw InvalidQuerySyntax("{} may specify {} at most once", clauseName, parameterName);
         }
+        replayParameters.retentionWindowMs = durationMs;
+    };
 
-        if (parameter->REPLAY_LATENCY() != nullptr)
+    const auto assignReplayLatency = [&](const uint64_t durationMs, std::string_view clauseName, std::string_view parameterName)
+    {
+        if (replayParameters.replayLatencyLimitMs.has_value())
         {
-            if (replayParameters.replayLatencyLimitMs.has_value())
-            {
-                throw InvalidQuerySyntax("TIME_TRAVEL_STORE may specify REPLAY_LATENCY at most once");
-            }
-            replayParameters.replayLatencyLimitMs = buildDurationInMilliseconds(
-                from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
-            continue;
+            throw InvalidQuerySyntax("{} may specify {} at most once", clauseName, parameterName);
         }
+        replayParameters.replayLatencyLimitMs = durationMs;
+    };
 
-        throw InvalidQuerySyntax("Unknown TIME_TRAVEL_STORE parameter: {}", parameter->getText());
+    if (auto* legacyClause = context->legacyTimeTravelClause(); legacyClause != nullptr)
+    {
+        for (auto* parameter : legacyClause->parameter)
+        {
+            const auto durationMs = buildDurationInMilliseconds(
+                from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
+            if (parameter->RETENTION() != nullptr)
+            {
+                assignRetention(durationMs, "TIME_TRAVEL_STORE", "RETENTION");
+                continue;
+            }
+
+            if (parameter->REPLAY_LATENCY() != nullptr)
+            {
+                assignReplayLatency(durationMs, "TIME_TRAVEL_STORE", "REPLAY_LATENCY");
+                continue;
+            }
+
+            throw InvalidQuerySyntax("Unknown TIME_TRAVEL_STORE parameter: {}", parameter->getText());
+        }
+    }
+    else if (auto* replayableClause = context->replayableTimeTravelClause(); replayableClause != nullptr)
+    {
+        if (auto* specification = replayableClause->replayableSpecification(); specification != nullptr)
+        {
+            for (auto* parameter : specification->parameter)
+            {
+                const auto durationMs = buildDurationInMilliseconds(
+                    from_chars_with_exception<uint64_t>(parameter->amount->getText()), parameter->unit->getStop()->getType());
+                if (parameter->HISTORY() != nullptr)
+                {
+                    assignRetention(durationMs, "REPLAYABLE", "HISTORY");
+                    continue;
+                }
+
+                if (parameter->LATENCY() != nullptr)
+                {
+                    assignReplayLatency(durationMs, "REPLAYABLE", "REPLAY LATENCY");
+                    continue;
+                }
+
+                throw InvalidQuerySyntax("Unknown REPLAYABLE parameter: {}", parameter->getText());
+            }
+        }
+    }
+    else
+    {
+        throw InvalidQuerySyntax("Unknown replayability clause: {}", context->getText());
     }
 
     helpers.top().replaySpecification = replayParameters;
