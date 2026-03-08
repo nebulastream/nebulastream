@@ -415,7 +415,15 @@ void QueryManager::refreshWorkerMetrics()
                     .observedAt = status.until,
                     .recordingStorageBytes = status.replayMetrics.recordingStorageBytes,
                     .recordingFileCount = status.replayMetrics.recordingFileCount,
-                    .activeQueryCount = status.replayMetrics.activeQueryCount}))
+                    .activeQueryCount = status.replayMetrics.activeQueryCount,
+                    .replayOperatorStatistics
+                    = status.replayMetrics.operatorStatistics
+                        | std::views::transform(
+                            [](const auto& statistic)
+                            {
+                                return std::pair{statistic.nodeFingerprint, statistic};
+                            })
+                        | std::ranges::to<std::unordered_map<std::string, ReplayOperatorStatistics>>()}))
         {
             NES_WARNING("Could not refresh runtime metrics for unknown worker {}", host);
         }

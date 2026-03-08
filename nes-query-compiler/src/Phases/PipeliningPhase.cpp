@@ -95,6 +95,7 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
         *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
+    newPipeline->setReplayStatisticsFingerprint(wrappedOpAfterScan.getReplayStatisticsFingerprint());
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
     if (wrappedOpAfterScan.getHandler() && wrappedOpAfterScan.getHandlerId())
     {
@@ -156,6 +157,7 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
         auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
+        newPipeline->setReplayStatisticsFingerprint(opWrapper->getReplayStatisticsFingerprint());
         if (opWrapper->getHandler() && opWrapper->getHandlerId())
         {
             newPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
@@ -245,6 +247,7 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
         }
         const auto newPipeline = std::make_shared<Pipeline>(*sink);
+        newPipeline->setReplayStatisticsFingerprint(opWrapper->getReplayStatisticsFingerprint());
         if (opWrapper->getHandler() && opWrapper->getHandlerId())
         {
             newPipeline->getOperatorHandlers().emplace(opWrapper->getHandlerId().value(), opWrapper->getHandler().value());
@@ -267,6 +270,7 @@ void buildPipelineRecursively(
             addDefaultEmit(currentPipeline, *opWrapper, configuredBufferSize);
         }
         const auto newPipeline = std::make_shared<Pipeline>(opWrapper->getPhysicalOperator());
+        newPipeline->setReplayStatisticsFingerprint(opWrapper->getReplayStatisticsFingerprint());
         if (auto handlerId = opWrapper->getHandlerId())
         {
             newPipeline->getOperatorHandlers().emplace(*handlerId, opWrapper->getHandler().value());
@@ -325,6 +329,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
     for (const auto& rootWrapper : physicalPlan.getRootOperators())
     {
         auto rootPipeline = std::make_shared<Pipeline>(rootWrapper->getPhysicalOperator());
+        rootPipeline->setReplayStatisticsFingerprint(rootWrapper->getReplayStatisticsFingerprint());
         const auto opId = rootWrapper->getPhysicalOperator().getId();
         pipelineMap.emplace(opId, rootPipeline);
         pipelinedPlan->addPipeline(rootPipeline);

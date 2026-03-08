@@ -103,9 +103,18 @@ message WorkerStatusRequest {
 
 message WorkerStatusResponse {
   message ReplayMetrics {
+    message ReplayOperatorStatistics {
+      string node_fingerprint = 1;
+      uint64 input_tuples = 2;
+      uint64 output_tuples = 3;
+      uint64 task_count = 4;
+      uint64 execution_time_nanos = 5;
+    }
+
     uint64 recording_storage_bytes = 1;
     uint64 recording_file_count = 2;
     uint64 active_query_count = 3;
+    repeated ReplayOperatorStatistics operator_statistics = 4;
   }
 
   message ActiveQuery {

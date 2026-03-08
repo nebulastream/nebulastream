@@ -240,6 +240,16 @@ std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& Pipelin
     return operatorHandlers;
 }
 
+const std::optional<std::string>& Pipeline::getReplayStatisticsFingerprint() const
+{
+    return replayStatisticsFingerprint;
+}
+
+void Pipeline::setReplayStatisticsFingerprint(std::optional<std::string> replayStatisticsFingerprintValue)
+{
+    replayStatisticsFingerprint = std::move(replayStatisticsFingerprintValue);
+}
+
 void Pipeline::setExecutionMode(ExecutionMode mode)
 {
     executionMode = mode;

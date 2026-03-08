@@ -15,6 +15,8 @@
 #pragma once
 
 #include <memory>
+#include <optional>
+#include <string>
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -34,6 +36,7 @@ struct ExecutablePipeline
     PipelineId id;
     std::unique_ptr<ExecutablePipelineStage> stage;
     std::vector<std::weak_ptr<ExecutablePipeline>> successors;
+    std::optional<std::string> replayStatisticsFingerprint;
 };
 
 struct CompiledQueryPlan
@@ -56,6 +59,7 @@ struct CompiledQueryPlan
         /// The Sink representation in the `CompiledQueryPlan` is still an abstract sink representation. During Query Instantiation
         /// the descriptor is instantiated into concrete sink implementation.
         SinkDescriptor descriptor;
+        std::optional<std::string> replayStatisticsFingerprint;
 
         /// Sinks do not have any successors
         std::vector<std::variant<OperatorId, std::weak_ptr<ExecutablePipeline>>> predecessor;

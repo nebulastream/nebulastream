@@ -19,10 +19,12 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <NetworkTopology.hpp>
+#include <Replay/ReplayExecutionStatistics.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
 
@@ -37,6 +39,7 @@ struct WorkerRuntimeMetrics
     size_t recordingFileCount = 0;
     size_t activeQueryCount = 0;
     size_t recordingWriteBytesPerSecond = 0;
+    std::unordered_map<std::string, ReplayOperatorStatistics> replayOperatorStatistics;
 
     [[nodiscard]] bool operator==(const WorkerRuntimeMetrics& other) const = default;
 };
@@ -62,6 +65,7 @@ public:
     std::optional<WorkerConfig> removeWorker(const Host& hostAddr);
     [[nodiscard]] std::optional<WorkerConfig> getWorker(const Host& hostAddr) const;
     [[nodiscard]] std::optional<WorkerRuntimeMetrics> getWorkerRuntimeMetrics(const Host& hostAddr) const;
+    [[nodiscard]] std::optional<ReplayOperatorStatistics> getReplayOperatorStatistics(const Host& hostAddr, std::string_view nodeFingerprint) const;
     [[nodiscard]] size_t size() const;
     [[nodiscard]] std::vector<WorkerConfig> getAllWorkers() const;
     [[nodiscard]] NetworkTopology getTopology() const;

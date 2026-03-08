@@ -302,4 +302,14 @@ PhysicalOperatorWrapper::PipelineLocation PhysicalOperatorWrapper::getPipelineLo
     return pipelineLocation;
 }
 
+const std::optional<std::string>& PhysicalOperatorWrapper::getReplayStatisticsFingerprint() const
+{
+    return replayStatisticsFingerprint;
+}
+
+void PhysicalOperatorWrapper::setReplayStatisticsFingerprint(std::string replayStatisticsFingerprintValue)
+{
+    replayStatisticsFingerprint = std::move(replayStatisticsFingerprintValue);
+}
+
 }

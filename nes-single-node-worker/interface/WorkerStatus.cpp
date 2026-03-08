@@ -75,6 +75,15 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
     replayMetricsGRPC->set_recording_storage_bytes(status.replayMetrics.recordingStorageBytes);
     replayMetricsGRPC->set_recording_file_count(status.replayMetrics.recordingFileCount);
     replayMetricsGRPC->set_active_query_count(status.replayMetrics.activeQueryCount);
+    for (const auto& statistic : status.replayMetrics.operatorStatistics)
+    {
+        auto* operatorStatisticGRPC = replayMetricsGRPC->add_operator_statistics();
+        operatorStatisticGRPC->set_node_fingerprint(statistic.nodeFingerprint);
+        operatorStatisticGRPC->set_input_tuples(statistic.inputTuples);
+        operatorStatisticGRPC->set_output_tuples(statistic.outputTuples);
+        operatorStatisticGRPC->set_task_count(statistic.taskCount);
+        operatorStatisticGRPC->set_execution_time_nanos(statistic.executionTimeNanos);
+    }
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -115,6 +124,19 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
         = WorkerStatus::ReplayMetrics{
             .recordingStorageBytes = response->replay_metrics().recording_storage_bytes(),
             .recordingFileCount = response->replay_metrics().recording_file_count(),
-            .activeQueryCount = response->replay_metrics().active_query_count()}};
+            .activeQueryCount = response->replay_metrics().active_query_count(),
+            .operatorStatistics
+            = response->replay_metrics().operator_statistics()
+                | std::views::transform(
+                    [](const auto& statistic)
+                    {
+                        return ReplayOperatorStatistics{
+                            .nodeFingerprint = statistic.node_fingerprint(),
+                            .inputTuples = statistic.input_tuples(),
+                            .outputTuples = statistic.output_tuples(),
+                            .taskCount = statistic.task_count(),
+                            .executionTimeNanos = statistic.execution_time_nanos()};
+                    })
+                | std::ranges::to<std::vector>()}};
 }
 }

@@ -29,6 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
+#include <ReplayStatisticsCollector.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
@@ -42,6 +43,7 @@ namespace NES
 class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
+    SharedPtr<ReplayStatisticsCollector> replayStatisticsCollector;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;

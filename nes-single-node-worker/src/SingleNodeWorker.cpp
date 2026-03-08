@@ -59,7 +59,9 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : listener(std::make_shared<CompositeStatisticListener>())
+    , replayStatisticsCollector(std::make_shared<ReplayStatisticsCollector>())
+    , configuration(configuration)
 {
     {
         std::stringstream configStr;
@@ -74,6 +76,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         googleTracePrinter->start();
         listener->addListener(googleTracePrinter);
     }
+    listener->addQueryEngineListener(copyPtr(replayStatisticsCollector));
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
 
@@ -125,6 +128,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         request->dumpCompilationResult = dumpMode;
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
+        replayStatisticsCollector->registerCompiledQueryPlan(plan.getQueryId(), *result);
         nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
         return plan.getQueryId();
     }
@@ -170,6 +174,7 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
+        replayStatisticsCollector->unregisterQuery(queryId);
         nodeEngine->unregisterQuery(queryId);
         return {};
     }
@@ -250,6 +255,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     }
     status.replayMetrics.recordingStorageBytes = Replay::getRecordingStorageBytes();
     status.replayMetrics.recordingFileCount = Replay::getRecordingFileCount();
+    status.replayMetrics.operatorStatistics = replayStatisticsCollector->snapshot();
     return status;
 }
 

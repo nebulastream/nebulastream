@@ -274,6 +274,8 @@ public:
     [[nodiscard]] const std::optional<std::shared_ptr<OperatorHandler>>& getHandler() const;
     [[nodiscard]] const std::optional<OperatorHandlerId>& getHandlerId() const;
     [[nodiscard]] PipelineLocation getPipelineLocation() const;
+    [[nodiscard]] const std::optional<std::string>& getReplayStatisticsFingerprint() const;
+    void setReplayStatisticsFingerprint(std::string replayStatisticsFingerprint);
 
 private:
     PhysicalOperator physicalOperator;
@@ -286,6 +288,7 @@ private:
     std::optional<std::shared_ptr<OperatorHandler>> handler;
     std::optional<OperatorHandlerId> handlerId;
     PipelineLocation pipelineLocation;
+    std::optional<std::string> replayStatisticsFingerprint;
 };
 }
 

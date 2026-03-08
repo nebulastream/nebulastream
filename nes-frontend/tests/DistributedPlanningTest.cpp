@@ -469,7 +469,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRemainingRecor
             .observedAt = std::chrono::system_clock::now(),
             .recordingStorageBytes = 5000,
             .recordingFileCount = 2,
-            .activeQueryCount = 1}));
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -486,14 +487,16 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWork
             .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(1)),
             .recordingStorageBytes = 0,
             .recordingFileCount = 1,
-            .activeQueryCount = 2}));
+            .activeQueryCount = 2,
+            .replayOperatorStatistics = {}}));
     ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
         Host("localhost:8080"),
         WorkerRuntimeMetrics{
             .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(2)),
             .recordingStorageBytes = 64 * 1024 * 1024,
             .recordingFileCount = 6,
-            .activeQueryCount = 8}));
+            .activeQueryCount = 8,
+            .replayOperatorStatistics = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -594,7 +597,8 @@ TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecor
             status.replayMetrics = WorkerStatus::ReplayMetrics{
                 .recordingStorageBytes = 0,
                 .recordingFileCount = 0,
-                .activeQueryCount = 0};
+                .activeQueryCount = 0,
+                .operatorStatistics = {}};
             return std::make_unique<FakeExplainWorkerStatusBackend>(status);
         });
 

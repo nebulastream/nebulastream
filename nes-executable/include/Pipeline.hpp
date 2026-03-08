@@ -16,6 +16,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <string>
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -69,6 +70,8 @@ struct Pipeline
 
     [[nodiscard]] const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() const;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers();
+    [[nodiscard]] const std::optional<std::string>& getReplayStatisticsFingerprint() const;
+    void setReplayStatisticsFingerprint(std::optional<std::string> replayStatisticsFingerprint);
 
     void addSuccessor(const std::shared_ptr<Pipeline>& successor, const std::weak_ptr<Pipeline>& self);
 
@@ -84,6 +87,7 @@ private:
     PhysicalOperator rootOperator;
     const PipelineId pipelineId;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
+    std::optional<std::string> replayStatisticsFingerprint;
     std::vector<std::shared_ptr<Pipeline>> successorPipelines;
     std::vector<std::weak_ptr<Pipeline>> predecessorPipelines;
 };

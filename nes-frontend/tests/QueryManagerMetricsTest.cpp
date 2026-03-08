@@ -240,17 +240,24 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
     auto workerCatalog = std::make_shared<WorkerCatalog>();
     ASSERT_TRUE(workerCatalog->addWorker(Host("worker-1:8080"), "worker-1-data", INFINITE_CAPACITY, {}));
     const auto observedAt = std::chrono::system_clock::now();
+    const auto fingerprint = std::string("selection@worker-1:8080");
 
     QueryManager queryManager(
         workerCatalog,
-        [observedAt](const WorkerConfig&)
+        [observedAt, fingerprint](const WorkerConfig&)
         {
             WorkerStatus status;
             status.until = observedAt;
             status.replayMetrics = WorkerStatus::ReplayMetrics{
                 .recordingStorageBytes = 1337,
                 .recordingFileCount = 2,
-                .activeQueryCount = 4};
+                .activeQueryCount = 4,
+                .operatorStatistics = {ReplayOperatorStatistics{
+                    .nodeFingerprint = fingerprint,
+                    .inputTuples = 128,
+                    .outputTuples = 32,
+                    .taskCount = 4,
+                    .executionTimeNanos = 20'000'000}}};
             return std::make_unique<FakeWorkerStatusBackend>(status);
         });
 
@@ -264,7 +271,19 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
             .observedAt = observedAt,
             .recordingStorageBytes = 1337,
             .recordingFileCount = 2,
-            .activeQueryCount = 4}));
+            .activeQueryCount = 4,
+            .replayOperatorStatistics
+            = {{fingerprint,
+                ReplayOperatorStatistics{
+                    .nodeFingerprint = fingerprint,
+                    .inputTuples = 128,
+                    .outputTuples = 32,
+                    .taskCount = 4,
+                    .executionTimeNanos = 20'000'000}}}}));
+    const auto operatorStatistics = workerCatalog->getReplayOperatorStatistics(Host("worker-1:8080"), fingerprint);
+    ASSERT_TRUE(operatorStatistics.has_value());
+    EXPECT_DOUBLE_EQ(operatorStatistics->averageExecutionTimeMs(), 5.0);
+    EXPECT_DOUBLE_EQ(operatorStatistics->selectivity(), 0.25);
 }
 
 TEST(QueryManagerMetricsTest, RefreshWorkerMetricsKeepsCatalogUntouchedWhenBackendFails)
@@ -283,6 +302,31 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsKeepsCatalogUntouchedWhenBacke
     queryManager.refreshWorkerMetrics();
 
     EXPECT_FALSE(workerCatalog->getWorkerRuntimeMetrics(Host("worker-1:8080")).has_value());
+}
+
+TEST(QueryManagerMetricsTest, WorkerStatusSerializationRoundTripsReplayOperatorStatistics)
+{
+    WorkerStatus status;
+    status.after = std::chrono::system_clock::time_point(std::chrono::milliseconds(10));
+    status.until = std::chrono::system_clock::time_point(std::chrono::milliseconds(20));
+    status.replayMetrics = WorkerStatus::ReplayMetrics{
+        .recordingStorageBytes = 1024,
+        .recordingFileCount = 3,
+        .activeQueryCount = 2,
+        .operatorStatistics = {ReplayOperatorStatistics{
+            .nodeFingerprint = "selection@worker-1:8080",
+            .inputTuples = 200,
+            .outputTuples = 50,
+            .taskCount = 4,
+            .executionTimeNanos = 80'000'000}}};
+
+    WorkerStatusResponse response;
+    serializeWorkerStatus(status, &response);
+    const auto roundTrip = deserializeWorkerStatus(&response);
+
+    EXPECT_EQ(roundTrip.after, status.after);
+    EXPECT_EQ(roundTrip.until, status.until);
+    EXPECT_EQ(roundTrip.replayMetrics, status.replayMetrics);
 }
 
 TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromNetworkExplanations)

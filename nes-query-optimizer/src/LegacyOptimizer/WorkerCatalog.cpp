@@ -87,6 +87,21 @@ std::optional<WorkerRuntimeMetrics> WorkerCatalog::getWorkerRuntimeMetrics(const
     return std::nullopt;
 }
 
+std::optional<ReplayOperatorStatistics> WorkerCatalog::getReplayOperatorStatistics(const Host& hostAddr, std::string_view nodeFingerprint) const
+{
+    const auto metrics = getWorkerRuntimeMetrics(hostAddr);
+    if (!metrics.has_value())
+    {
+        return std::nullopt;
+    }
+
+    if (const auto it = metrics->replayOperatorStatistics.find(std::string(nodeFingerprint)); it != metrics->replayOperatorStatistics.end())
+    {
+        return it->second;
+    }
+    return std::nullopt;
+}
+
 size_t WorkerCatalog::size() const
 {
     return workers.size();

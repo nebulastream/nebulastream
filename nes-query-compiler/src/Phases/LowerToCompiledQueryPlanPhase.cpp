@@ -118,7 +118,11 @@ void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, 
     auto it = std::ranges::find(sinks, pipeline->getPipelineId(), &CompiledQueryPlan::Sink::id);
     if (it == sinks.end())
     {
-        sinks.emplace_back(pipeline->getPipelineId(), sinkOperator, std::vector<Predecessor>{});
+        sinks.emplace_back(CompiledQueryPlan::Sink{
+            .id = pipeline->getPipelineId(),
+            .descriptor = sinkOperator,
+            .replayStatisticsFingerprint = pipeline->getReplayStatisticsFingerprint(),
+            .predecessor = {}});
         it = sinks.end() - 1;
     }
     it->predecessor.emplace_back(predecessor);
@@ -179,6 +183,7 @@ std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperat
         return executable->second;
     }
     auto executablePipeline = ExecutablePipeline::create(PipelineId(pipeline->getPipelineId()), getStage(pipeline), {});
+    executablePipeline->replayStatisticsFingerprint = pipeline->getReplayStatisticsFingerprint();
 
     for (const auto& successor : pipeline->getSuccessors())
     {

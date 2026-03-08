@@ -76,7 +76,8 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
         throw NotImplemented("Currently our execution model expects exactly one sink per query plan");
     }
 
-    auto& [pipelineId, descriptor, predecessors] = compiledQueryPlan.sinks.front();
+    auto& [pipelineId, descriptor, replayStatisticsFingerprint, predecessors] = compiledQueryPlan.sinks.front();
+    static_cast<void>(replayStatisticsFingerprint);
 
     auto sink = ExecutablePipeline::create(pipelineId, lower(std::move(backpressureController), descriptor), {});
     compiledQueryPlan.pipelines.push_back(sink);

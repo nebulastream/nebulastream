@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <string>
@@ -31,6 +32,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <RecordingCatalog.hpp>
+#include <Replay/ReplayNodeFingerprint.hpp>
 #include <Replay/ReplaySpecification.hpp>
 #include <Traits/PlacementTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -355,6 +357,44 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOn
     ASSERT_NE(activeOnlySelection, selectionResult.networkExplanations.end());
     EXPECT_EQ(activeOnlySelection->selection.beneficiaryQueries, std::vector<std::string>({"active-query"}));
     EXPECT_EQ(activeOnlySelection->decision, RecordingSelectionDecision::CreateNewRecording);
+}
+
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsForOperatorReplayTimes)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto plan = createPlacedUnaryPlan(host);
+    const auto root = plan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+    const auto measuredOperator = root.getChildren().front();
+    const auto fingerprint = Replay::createStructuralReplayNodeFingerprint(measuredOperator);
+
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        host,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::now(),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 0,
+            .activeQueryCount = 0,
+            .replayOperatorStatistics
+            = {{fingerprint,
+                ReplayOperatorStatistics{
+                    .nodeFingerprint = fingerprint,
+                    .inputTuples = 128,
+                    .outputTuples = 64,
+                    .taskCount = 2,
+                    .executionTimeNanos = 34'000'000}}}}));
+
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
+        plan,
+        ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingCatalog{});
+
+    EXPECT_TRUE(std::ranges::any_of(
+        candidateSet.operatorReplayTimes,
+        [](const auto& replayTime) { return std::abs(replayTime.replayTimeMs - 17.0) < 0.001; }));
 }
 }
 }

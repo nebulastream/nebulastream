@@ -33,7 +33,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsStoresSnapshotWithoutChangingT
             .observedAt = observedAt,
             .recordingStorageBytes = 42,
             .recordingFileCount = 3,
-            .activeQueryCount = 1}));
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
     EXPECT_EQ(catalog.getVersion(), version);
 
     const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
@@ -44,7 +45,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsStoresSnapshotWithoutChangingT
             .observedAt = observedAt,
             .recordingStorageBytes = 42,
             .recordingFileCount = 3,
-            .activeQueryCount = 1}));
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
 }
 
 TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsRejectsUnknownWorker)
@@ -65,14 +67,16 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesRecordingWriteRateFromS
             .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(1)),
             .recordingStorageBytes = 1024,
             .recordingFileCount = 1,
-            .activeQueryCount = 1}));
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
     ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
         Host("worker-1:8080"),
         WorkerRuntimeMetrics{
             .observedAt = std::chrono::system_clock::time_point(std::chrono::seconds(3)),
             .recordingStorageBytes = 5120,
             .recordingFileCount = 2,
-            .activeQueryCount = 2}));
+            .activeQueryCount = 2,
+            .replayOperatorStatistics = {}}));
 
     const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
     ASSERT_TRUE(metrics.has_value());

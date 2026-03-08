@@ -31,6 +31,7 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayNodeFingerprint.hpp>
 #include <Replay/ReplayStorage.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -323,18 +324,7 @@ std::vector<LogicalOperator> getReplayChildren(const LogicalOperator& current)
     return children;
 }
 
-std::string structuralNodeFingerprint(const LogicalOperator& logicalOperator)
-{
-    const auto normalizedOperator = normalizeReplayFingerprintOperator(logicalOperator);
-    if (normalizedOperator.tryGetAs<SinkLogicalOperator>().has_value())
-    {
-        return fmt::format(
-            "placement={}|plan={}",
-            getPlacementFor(normalizedOperator),
-            explain(LogicalPlan(INVALID_QUERY_ID, {normalizedOperator}), ExplainVerbosity::Short));
-    }
-    return createStructuralRecordingFingerprint(normalizedOperator, getPlacementFor(normalizedOperator));
-}
+std::string structuralNodeFingerprint(const LogicalOperator& logicalOperator) { return Replay::createStructuralReplayNodeFingerprint(logicalOperator); }
 
 OperatorId getOrCreateSyntheticOperatorId(MergedReplayGraphBuilder& builder, const std::string& fingerprint)
 {
@@ -353,7 +343,7 @@ void rememberSyntheticOperator(MergedReplayGraphBuilder& builder, const Operator
     builder.operatorsBySyntheticId.insert_or_assign(operatorId, normalizeReplayFingerprintOperator(logicalOperator));
 }
 
-double estimateOperatorReplayTimeMs(const LogicalOperator& logicalOperator)
+double estimateHeuristicOperatorReplayTimeMs(const LogicalOperator& logicalOperator)
 {
     size_t schemaBytes = 1;
     if (logicalOperator.tryGetAs<SinkLogicalOperator>().has_value())
@@ -370,6 +360,16 @@ double estimateOperatorReplayTimeMs(const LogicalOperator& logicalOperator)
     }
     const auto arityFactor = 1.0 + (logicalOperator.getChildren().size() * 0.5);
     return std::max(1.0, std::ceil((static_cast<double>(schemaBytes) / 256.0) * arityFactor));
+}
+
+double estimateOperatorReplayTimeMs(const LogicalOperator& logicalOperator, const WorkerCatalog& workerCatalog)
+{
+    const auto replayStatistics = workerCatalog.getReplayOperatorStatistics(getPlacementFor(logicalOperator), structuralNodeFingerprint(logicalOperator));
+    if (replayStatistics.has_value() && replayStatistics->taskCount > 0)
+    {
+        return std::max(1.0, replayStatistics->averageExecutionTimeMs());
+    }
+    return estimateHeuristicOperatorReplayTimeMs(logicalOperator);
 }
 
 QueryReplayPlan makeIncomingReplayPlan(const LogicalPlan& placedPlan, const std::optional<ReplaySpecification>& replaySpecification)
@@ -736,7 +736,9 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
             continue;
         }
         candidateSet.operatorReplayTimes.push_back(
-            RecordingCandidateSet::OperatorReplayTime{.operatorId = operatorId, .replayTimeMs = estimateOperatorReplayTimeMs(logicalOperator)});
+            RecordingCandidateSet::OperatorReplayTime{
+                .operatorId = operatorId,
+                .replayTimeMs = estimateOperatorReplayTimeMs(logicalOperator, *workerCatalog)});
     }
 
     if (builder.rootOperatorIds.size() == 1)

@@ -22,6 +22,7 @@
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayNodeFingerprint.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -100,6 +101,10 @@ lowerOperatorRecursively(const LogicalOperator& logicalOperator, const LoweringR
             return lowerOperatorRecursively(logicalOperator.getChildren()[0], registryArgument);
         }
         return {};
+    }
+    if (const auto replayStatisticsFingerprint = Replay::createStructuralReplayNodeFingerprint(logicalOperator); !replayStatisticsFingerprint.empty())
+    {
+        root->setReplayStatisticsFingerprint(replayStatisticsFingerprint);
     }
     /// We embed the subgraph into the resulting plan of physical operator wrappers
     auto children = logicalOperator.getChildren();
