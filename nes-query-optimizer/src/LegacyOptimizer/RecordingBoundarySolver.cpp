@@ -142,7 +142,8 @@ std::optional<WeightedCandidateChoice> chooseBestOption(
         if (option.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
             adjustedDataflowEdgeCost += storageShadowPrices.contains(option.selection.node)
-                ? storageShadowPrices.at(option.selection.node) * (static_cast<double>(option.cost.estimatedStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
+                ? storageShadowPrices.at(option.selection.node)
+                    * (static_cast<double>(option.cost.incrementalStorageBytes) / STORAGE_PENALTY_NORMALIZATION_BYTES)
                 : 0.0;
         }
 
@@ -404,7 +405,7 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         {
             if (selected.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
             {
-                selectedStorageBytesByHost[selected.chosenOption.selection.node] += selected.chosenOption.cost.estimatedStorageBytes;
+                selectedStorageBytesByHost[selected.chosenOption.selection.node] += selected.chosenOption.cost.incrementalStorageBytes;
             }
             selectedReplayTimeMs += weightedReplayScanTimeMs(selected.chosenOption);
         }

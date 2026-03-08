@@ -154,6 +154,7 @@ RecordingCostBreakdown toCostBreakdown(const RecordingCostEstimate& estimate)
     return RecordingCostBreakdown{
         .decisionCost = estimate.totalCost(),
         .estimatedStorageBytes = estimate.estimatedStorageBytes,
+        .incrementalStorageBytes = estimate.incrementalStorageBytes,
         .operatorCount = estimate.operatorCount,
         .estimatedReplayBandwidthBytesPerSecond = estimate.estimatedReplayBandwidthBytesPerSecond,
         .estimatedReplayLatencyMs = static_cast<uint64_t>(std::max<int64_t>(estimate.estimatedReplayLatency.count(), 0)),
@@ -199,12 +200,13 @@ std::string describeRecordingUpgradeInfeasibility(
     if (!upgradeCost.fitsBudget)
     {
         return fmt::format(
-            "upgrade_existing_recording on {} with representation {} from retention {} ms to {} ms requires an estimated {} bytes, but only {} bytes remain"
-            " in the recording budget of {} bytes",
+            "upgrade_existing_recording on {} with representation {} from retention {} ms to {} ms requires an estimated {} additional bytes"
+            " ({} bytes retained total), but only {} bytes remain in the recording budget of {} bytes",
             placement,
             recordingRepresentationDescription(representation),
             existingRetentionWindowMs.value_or(0),
             requestedRetentionWindowMs(replaySpecification).value_or(0),
+            upgradeCost.incrementalStorageBytes,
             upgradeCost.estimatedStorageBytes,
             worker.recordingStorageBudget
                 - std::min(
@@ -395,6 +397,19 @@ double estimateOperatorReplayTimeMs(const LogicalOperator& logicalOperator, cons
         return std::max(1.0, replayStatistics->averageExecutionTimeMs());
     }
     return estimateHeuristicOperatorReplayTimeMs(logicalOperator);
+}
+
+size_t estimateRecordingIngressWriteBytesPerSecond(const LogicalOperator& logicalOperator, const WorkerCatalog& workerCatalog)
+{
+    const auto schemaBytes = std::max(logicalOperator.getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
+    const auto replayStatistics = workerCatalog.getReplayOperatorStatistics(getPlacementFor(logicalOperator), structuralNodeFingerprint(logicalOperator));
+    if (replayStatistics.has_value() && replayStatistics->executionTimeNanos > 0 && replayStatistics->outputTuples > 0)
+    {
+        const auto outputBytes = static_cast<double>(replayStatistics->outputTuples) * static_cast<double>(schemaBytes);
+        const auto executionSeconds = static_cast<double>(replayStatistics->executionTimeNanos) / 1'000'000'000.0;
+        return std::max<size_t>(1, static_cast<size_t>(std::ceil(outputBytes / executionSeconds)));
+    }
+    return 0;
 }
 
 QueryReplayPlan makeIncomingReplayPlan(const LogicalPlan& placedPlan, const std::optional<ReplaySpecification>& replaySpecification)
@@ -592,6 +607,8 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
         const auto replaySpecification = effectiveReplaySpecification(accumulator, defaultReplaySpecification);
         const auto requestedRetention = requestedRetentionWindowMs(replaySpecification);
         const auto normalizedRecordedSubplanRoot = normalizeReplayFingerprintOperator(accumulator.recordedSubplanRoot);
+        const auto estimatedIngressWriteBytesPerSecond
+            = estimateRecordingIngressWriteBytesPerSecond(accumulator.recordedSubplanRoot, workerCatalog);
 
         const auto routePlacements = enumerateRoutePlacements(candidate.upstreamNode, candidate.downstreamNode, workerCatalog.getTopology());
         const auto feasibleRoutePlacements = selectBottomUpRoutePlacements(routePlacements);
@@ -615,6 +632,7 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
                     .sourcePlacement = candidate.upstreamNode,
                     .sinkPlacement = candidate.downstreamNode,
                     .recordingPlacement = routePlacement.node,
+                    .estimatedIngressWriteBytesPerSecond = estimatedIngressWriteBytesPerSecond,
                     .upstreamHopCount = routePlacement.upstreamHopCount,
                     .downstreamHopCount = routePlacement.downstreamHopCount,
                     .totalRouteHopCount = routePlacements.size() - 1,

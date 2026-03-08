@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <string>
 #include <vector>
@@ -52,6 +53,7 @@ RecordingCandidateOption makeNewRecordingOption(
         .cost = RecordingCostBreakdown{
             .decisionCost = maintenanceCost,
             .estimatedStorageBytes = estimatedStorageBytes,
+            .incrementalStorageBytes = estimatedStorageBytes,
             .estimatedReplayLatencyMs = estimatedReplayLatencyMs,
             .maintenanceCost = maintenanceCost,
             .replayTimeMultiplier = 1.0,
@@ -61,6 +63,19 @@ RecordingCandidateOption makeNewRecordingOption(
             .satisfiesReplayLatency = true},
         .feasible = true,
         .infeasibilityReason = {}};
+}
+
+RecordingCandidateOption makeUpgradeRecordingOption(
+    std::string recordingId,
+    const Host& host,
+    double maintenanceCost,
+    size_t estimatedStorageBytes,
+    size_t incrementalStorageBytes)
+{
+    auto option = makeNewRecordingOption(std::move(recordingId), host, maintenanceCost, estimatedStorageBytes);
+    option.decision = RecordingSelectionDecision::UpgradeExistingRecording;
+    option.cost.incrementalStorageBytes = incrementalStorageBytes;
+    return option;
 }
 
 class RecordingBoundarySolverTest : public Testing::BaseUnitTest
@@ -263,6 +278,44 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesReplayLatencyAndMovesBoundaryU
                 })
             | std::ranges::to<std::vector>(),
         ::testing::UnorderedElementsAre(std::pair{rootId.getRawValue(), branchId.getRawValue()}, std::pair{rootId.getRawValue(), rightLeafId.getRawValue()}));
+}
+
+TEST_F(RecordingBoundarySolverTest, SolverBudgetsUpgradeByIncrementalStorageBytes)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 8192));
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        host,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::now(),
+            .recordingStorageBytes = 4096,
+            .recordingFileCount = 1,
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
+
+    const auto rootId = OperatorId(1);
+    const auto leafId = OperatorId(2);
+
+    RecordingCandidateSet candidateSet;
+    candidateSet.rootOperatorId = rootId;
+    candidateSet.leafOperatorIds = {leafId};
+    candidateSet.planEdges = {RecordingPlanEdge{.parentId = rootId, .childId = leafId}};
+    candidateSet.candidates = {RecordingBoundaryCandidate{
+        .edge = {.parentId = rootId, .childId = leafId},
+        .upstreamNode = host,
+        .downstreamNode = host,
+        .routeNodes = {host},
+        .materializationEdges = {},
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true,
+        .options = {makeUpgradeRecordingOption("upgrade", host, 1.0, 8192, 1024)}}};
+
+    const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
+
+    ASSERT_EQ(selection.selectedBoundary.size(), 1U);
+    EXPECT_EQ(selection.selectedBoundary.front().chosenOption.decision, RecordingSelectionDecision::UpgradeExistingRecording);
+    EXPECT_EQ(selection.selectedBoundary.front().chosenOption.cost.incrementalStorageBytes, 1024U);
 }
 }
 }

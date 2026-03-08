@@ -95,7 +95,7 @@ void appendCostBreakdown(
     fmt::println(
         explainMessage,
         "{} decision={} total_cost={:.2f} boundary_cut_cost={:.2f} replay_recompute_cost={:.2f} maintenance_cost={:.2f}"
-        " replay_cost={:.2f} recompute_cost={:.2f} replay_time_multiplier={:.2f} storage_bytes={} replay_bandwidth={}B/s"
+        " replay_cost={:.2f} recompute_cost={:.2f} replay_time_multiplier={:.2f} storage_bytes={} incremental_storage_bytes={} replay_bandwidth={}B/s"
         " replay_latency={} ms operators={} fits_budget={} satisfies_latency={}",
         prefix,
         decisionLabel,
@@ -107,6 +107,7 @@ void appendCostBreakdown(
         costBreakdown.recomputeCost,
         costBreakdown.replayTimeMultiplier,
         costBreakdown.estimatedStorageBytes,
+        costBreakdown.incrementalStorageBytes,
         costBreakdown.estimatedReplayBandwidthBytesPerSecond,
         costBreakdown.estimatedReplayLatencyMs,
         costBreakdown.operatorCount,

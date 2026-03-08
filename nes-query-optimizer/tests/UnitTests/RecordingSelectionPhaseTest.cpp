@@ -13,6 +13,7 @@
 */
 
 #include <array>
+#include <chrono>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -309,6 +310,120 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
     }
 }
 
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseBudgetsUpgradeByIncrementalStorageBytes)
+{
+    const auto host = Host("worker-1:8080");
+    const auto plan = createPlacedUnaryPlan(host);
+    const auto root = plan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+
+    ReplaySpecification requestedReplaySpecification;
+    requestedReplaySpecification.retentionWindowMs = 300'000;
+    ReplaySpecification existingReplaySpecification;
+    existingReplaySpecification.retentionWindowMs = 60'000;
+
+    const auto structuralFingerprint = createStructuralRecordingFingerprint(root.getChildren().front(), host);
+    const auto findRawCreateCost = [&](const RecordingCandidateSet& candidateSet, const ReplaySpecification& replaySpecification)
+    {
+        const auto candidate = std::ranges::find_if(
+            candidateSet.candidates,
+            [&](const auto& boundaryCandidate)
+            {
+                return std::ranges::any_of(
+                    boundaryCandidate.options,
+                    [&](const auto& option)
+                    {
+                        return option.decision == RecordingSelectionDecision::CreateNewRecording
+                            && option.selection.structuralFingerprint == structuralFingerprint
+                            && option.selection.representation == RecordingRepresentation::BinaryStore
+                            && option.selection.recordingId
+                                == recordingIdFromFingerprint(
+                                    createRecordingFingerprint(root.getChildren().front(), host, replaySpecification, RecordingRepresentation::BinaryStore));
+                    });
+            });
+        EXPECT_NE(candidate, candidateSet.candidates.end());
+        return candidate;
+    };
+
+    auto sizingCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(sizingCatalog->addWorker(host, {}, 16, {}, {}, 1'024 * 1'024));
+    const auto requestedCandidateSet = RecordingCandidateSelectionPhase(sizingCatalog).apply(plan, requestedReplaySpecification, RecordingCatalog{});
+    const auto existingCandidateSet = RecordingCandidateSelectionPhase(sizingCatalog).apply(plan, existingReplaySpecification, RecordingCatalog{});
+
+    const auto requestedCandidate = findRawCreateCost(requestedCandidateSet, requestedReplaySpecification);
+    const auto existingCandidate = findRawCreateCost(existingCandidateSet, existingReplaySpecification);
+    const auto requestedOption = std::ranges::find_if(
+        requestedCandidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording
+                && option.selection.structuralFingerprint == structuralFingerprint
+                && option.selection.representation == RecordingRepresentation::BinaryStore;
+        });
+    const auto existingOption = std::ranges::find_if(
+        existingCandidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording
+                && option.selection.structuralFingerprint == structuralFingerprint
+                && option.selection.representation == RecordingRepresentation::BinaryStore;
+        });
+    ASSERT_NE(requestedOption, requestedCandidate->options.end());
+    ASSERT_NE(existingOption, existingCandidate->options.end());
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, requestedOption->cost.estimatedStorageBytes));
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        host,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::now(),
+            .recordingStorageBytes = existingOption->cost.estimatedStorageBytes,
+            .recordingFileCount = 1,
+            .activeQueryCount = 1,
+            .replayOperatorStatistics = {}}));
+
+    RecordingCatalog catalog;
+    const auto weakerRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(
+        root.getChildren().front(), host, existingReplaySpecification, RecordingRepresentation::BinaryStore));
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = weakerRecordingId,
+            .node = host,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/weaker.bin",
+            .structuralFingerprint = structuralFingerprint,
+            .retentionWindowMs = existingReplaySpecification.retentionWindowMs,
+            .ownerQueries = {DistributedQueryId("existing-query")}});
+
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, requestedReplaySpecification, catalog);
+    const auto candidate = findRawCreateCost(candidateSet, requestedReplaySpecification);
+    const auto newRecording = std::ranges::find_if(
+        candidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording
+                && option.selection.structuralFingerprint == structuralFingerprint
+                && option.selection.representation == RecordingRepresentation::BinaryStore;
+        });
+    const auto upgrade = std::ranges::find_if(
+        candidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::UpgradeExistingRecording
+                && option.selection.structuralFingerprint == structuralFingerprint
+                && option.selection.representation == RecordingRepresentation::BinaryStore;
+        });
+    ASSERT_NE(newRecording, candidate->options.end());
+    ASSERT_NE(upgrade, candidate->options.end());
+
+    EXPECT_FALSE(newRecording->feasible);
+    EXPECT_TRUE(upgrade->feasible);
+    EXPECT_EQ(newRecording->cost.incrementalStorageBytes, newRecording->cost.estimatedStorageBytes);
+    EXPECT_EQ(upgrade->cost.estimatedStorageBytes, requestedOption->cost.estimatedStorageBytes);
+    EXPECT_EQ(
+        upgrade->cost.incrementalStorageBytes,
+        requestedOption->cost.estimatedStorageBytes - existingOption->cost.estimatedStorageBytes);
+}
+
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsWhenRouteFitsBottomUpLimit)
 {
     const auto sourceHost = Host("source-node:8080");
@@ -580,6 +695,7 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsFor
     ASSERT_EQ(root.getChildren().size(), 1U);
     const auto measuredOperator = root.getChildren().front();
     const auto fingerprint = Replay::createStructuralReplayNodeFingerprint(measuredOperator);
+    const auto structuralFingerprint = createStructuralRecordingFingerprint(measuredOperator, host);
 
     ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
         host,
@@ -605,6 +721,36 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsFor
     EXPECT_TRUE(std::ranges::any_of(
         candidateSet.operatorReplayTimes,
         [](const auto& replayTime) { return std::abs(replayTime.replayTimeMs - 17.0) < 0.001; }));
+
+    const auto candidate = std::ranges::find_if(
+        candidateSet.candidates,
+        [&](const auto& boundaryCandidate)
+        {
+            return std::ranges::any_of(
+                boundaryCandidate.options,
+                [&](const auto& option)
+                {
+                    return option.decision == RecordingSelectionDecision::CreateNewRecording
+                        && option.selection.structuralFingerprint == structuralFingerprint
+                        && option.selection.representation == RecordingRepresentation::BinaryStore;
+                });
+        });
+    ASSERT_NE(candidate, candidateSet.candidates.end());
+    const auto rawRecording = std::ranges::find_if(
+        candidate->options,
+        [&](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording
+                && option.selection.structuralFingerprint == structuralFingerprint
+                && option.selection.representation == RecordingRepresentation::BinaryStore;
+        });
+    ASSERT_NE(rawRecording, candidate->options.end());
+
+    const auto schemaBytes = std::max(measuredOperator.getOutputSchema().getSizeOfSchemaInBytes(), size_t{1});
+    const auto expectedWriteBytesPerSecond = static_cast<size_t>(std::ceil(static_cast<double>(64U * schemaBytes) / 0.034));
+    const auto expectedRetainedBytes = static_cast<size_t>(std::ceil(static_cast<double>(expectedWriteBytesPerSecond) * 60.0));
+    EXPECT_EQ(rawRecording->cost.estimatedStorageBytes, expectedRetainedBytes);
+    EXPECT_EQ(rawRecording->cost.incrementalStorageBytes, expectedRetainedBytes);
 }
 }
 }

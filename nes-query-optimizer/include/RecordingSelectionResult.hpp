@@ -45,6 +45,7 @@ struct RecordingCostBreakdown
 {
     double decisionCost = 0.0;
     size_t estimatedStorageBytes = 0;
+    size_t incrementalStorageBytes = 0;
     size_t operatorCount = 0;
     size_t estimatedReplayBandwidthBytesPerSecond = 0;
     uint64_t estimatedReplayLatencyMs = 0;

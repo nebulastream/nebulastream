@@ -31,6 +31,7 @@ struct RecordingPlacementContext
     Host sourcePlacement{Host::INVALID};
     Host sinkPlacement{Host::INVALID};
     Host recordingPlacement{Host::INVALID};
+    size_t estimatedIngressWriteBytesPerSecond = 0;
     size_t upstreamHopCount = 0;
     size_t downstreamHopCount = 0;
     size_t totalRouteHopCount = 0;
@@ -43,6 +44,7 @@ struct RecordingPlacementContext
 struct RecordingCostEstimate
 {
     size_t estimatedStorageBytes = 0;
+    size_t incrementalStorageBytes = 0;
     size_t operatorCount = 0;
     size_t estimatedReplayBandwidthBytesPerSecond = 0;
     std::chrono::milliseconds estimatedReplayLatency{0};
