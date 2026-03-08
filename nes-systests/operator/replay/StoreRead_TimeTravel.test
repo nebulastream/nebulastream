@@ -2,6 +2,7 @@
 # description: Store stream to binary via TIME TRAVEL STORE and read back via TIME_TRAVEL_READ
 # groups: [Store, Read]
 GlobalConfiguration worker.default_query_execution.execution_mode: INTERPRETER
+GlobalConfiguration worker.default_query_optimization.enable_recording_selection: true
 
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;

@@ -111,4 +111,77 @@ TEST(RecordingCatalogTest, TimeTravelReadRecordingTracksMostRecentRecordingAndFa
     EXPECT_EQ(catalog.getTimeTravelReadRecording()->id, recording1);
 }
 
+TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdatesMetadata)
+{
+    RecordingCatalog catalog;
+    const auto queryId = DistributedQueryId("query-1");
+    const auto sharedQueryId = DistributedQueryId("query-2");
+    const auto staleRecordingId = RecordingId("stale-recording");
+    const auto sharedRecordingId = RecordingId("shared-recording");
+    const auto replacementRecordingId = RecordingId("replacement-recording");
+
+    catalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .globalPlan = std::nullopt,
+            .replaySpecification = std::nullopt,
+            .selectedRecordings = {staleRecordingId, sharedRecordingId},
+            .networkExplanations = {}});
+    catalog.upsertQueryMetadata(sharedQueryId, ReplayableQueryMetadata{});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = staleRecordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/stale.bin",
+            .structuralFingerprint = "stale",
+            .retentionWindowMs = std::nullopt,
+            .ownerQueries = {queryId}});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = sharedRecordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/shared.bin",
+            .structuralFingerprint = "shared",
+            .retentionWindowMs = std::nullopt,
+            .ownerQueries = {queryId, sharedQueryId}});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = replacementRecordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/replacement.bin",
+            .structuralFingerprint = "replacement",
+            .retentionWindowMs = 60'000,
+            .ownerQueries = {queryId}});
+
+    catalog.reconcileQuerySelections(
+        queryId,
+        {sharedRecordingId, replacementRecordingId},
+        {RecordingSelectionExplanation{
+            .selection =
+                RecordingSelection{
+                    .recordingId = replacementRecordingId,
+                    .node = Host("worker-1:8080"),
+                    .filePath = "/tmp/REPLAY-NebulaStream/recordings/replacement.bin",
+                    .structuralFingerprint = "replacement",
+                    .representation = RecordingRepresentation::BinaryStore,
+                    .beneficiaryQueries = {},
+                    .coversIncomingQuery = true},
+            .decision = RecordingSelectionDecision::ReuseExistingRecording,
+            .reason = "",
+            .chosenCost = {},
+            .alternatives = {}}});
+
+    EXPECT_FALSE(catalog.getRecording(staleRecordingId).has_value());
+    ASSERT_TRUE(catalog.getRecording(sharedRecordingId).has_value());
+    EXPECT_THAT(catalog.getRecording(sharedRecordingId)->ownerQueries, testing::UnorderedElementsAre(queryId, sharedQueryId));
+    ASSERT_TRUE(catalog.getRecording(replacementRecordingId).has_value());
+    EXPECT_THAT(catalog.getRecording(replacementRecordingId)->ownerQueries, testing::ElementsAre(queryId));
+    ASSERT_TRUE(catalog.getQueryMetadata().contains(queryId));
+    EXPECT_THAT(
+        catalog.getQueryMetadata().at(queryId).selectedRecordings,
+        testing::ElementsAre(sharedRecordingId, replacementRecordingId));
+    ASSERT_EQ(catalog.getQueryMetadata().at(queryId).networkExplanations.size(), 1U);
+    EXPECT_EQ(catalog.getQueryMetadata().at(queryId).networkExplanations.front().selection.recordingId, replacementRecordingId);
+}
+
 }

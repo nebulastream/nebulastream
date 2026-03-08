@@ -182,7 +182,11 @@ public:
 
     void setQueryDefinition(std::string queryDefinition) { this->queryDefinition = std::move(queryDefinition); }
 
-    void setBoundPlan(LogicalPlan boundPlan) { this->boundPlan = std::move(boundPlan); }
+    void setBoundPlan(LogicalPlan boundPlan, std::optional<ReplaySpecification> replaySpecification = std::nullopt)
+    {
+        this->boundPlan = std::move(boundPlan);
+        this->replaySpecification = std::move(replaySpecification);
+    }
 
     void setException(const Exception& exception) { this->exception = exception; }
 
@@ -242,7 +246,12 @@ public:
         }
     }
 
-    void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
+    void setDifferentialQueryPlan(
+        LogicalPlan differentialQueryPlan, std::optional<ReplaySpecification> replaySpecification = std::nullopt)
+    {
+        this->differentialQueryPlan = std::move(differentialQueryPlan);
+        this->differentialReplaySpecification = std::move(replaySpecification);
+    }
 
     void optimizeQueries(const NES::LegacyOptimizer& optimizer)
     {
@@ -252,7 +261,7 @@ public:
         }
         try
         {
-            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+            setOptimizedPlan(optimizer.optimize(boundPlan.value(), replaySpecification, RecordingCatalog{}));
         }
         catch (Exception& e)
         {
@@ -265,7 +274,7 @@ public:
         {
             try
             {
-                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
+                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value(), differentialReplaySpecification, RecordingCatalog{});
                 optimizedDifferentialQueryPlan = std::move(optimizedDiff);
             }
             catch (Exception& e)
@@ -337,6 +346,7 @@ private:
     std::optional<std::filesystem::path> workingDir;
     std::optional<std::string> queryDefinition;
     std::optional<LogicalPlan> boundPlan;
+    std::optional<ReplaySpecification> replaySpecification;
     std::optional<Exception> exception;
     std::optional<DistributedLogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
@@ -345,6 +355,7 @@ private:
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<ReplaySpecification> differentialReplaySpecification;
     std::optional<DistributedLogicalPlan> optimizedDifferentialQueryPlan;
     bool built = false;
 };
@@ -778,14 +789,15 @@ struct SystestBinder::Impl
         currentBuilder.setConfigurationOverrides(configOverrides);
         try
         {
-            auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            auto replayablePlan = AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(query);
+            auto plan = std::move(replayablePlan.plan);
 
             resolveTimeTravelReadSources(plan, sourceCatalog);
 
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
             setInlineSources(plan);
-            currentBuilder.setBoundPlan(std::move(plan));
+            currentBuilder.setBoundPlan(std::move(plan), replayablePlan.replaySpecification);
         }
         catch (Exception& e)
         {
@@ -831,8 +843,10 @@ struct SystestBinder::Impl
 
         try
         {
-            auto leftPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(leftQuery);
-            auto rightPlan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(rightQuery);
+            auto leftReplayablePlan = AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(leftQuery);
+            auto rightReplayablePlan = AntlrSQLQueryParser::createReplayableQueryPlanFromSQLString(rightQuery);
+            auto leftPlan = std::move(leftReplayablePlan.plan);
+            auto rightPlan = std::move(rightReplayablePlan.plan);
 
             setSinks(leftPlan, currentTest, testFileName, sltSinkProvider, currentQueryNumberInTest);
             setSinks(rightPlan, currentTest, differentialTestResultFileName, sltSinkProvider, currentQueryNumberInTest);
@@ -846,8 +860,8 @@ struct SystestBinder::Impl
                 QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}-differential", testFileName, currentQueryNumberInTest))));
 
             currentTest.setQueryDefinition(std::move(leftQuery));
-            currentTest.setBoundPlan(std::move(leftPlan));
-            currentTest.setDifferentialQueryPlan(std::move(rightPlan));
+            currentTest.setBoundPlan(std::move(leftPlan), leftReplayablePlan.replaySpecification);
+            currentTest.setDifferentialQueryPlan(std::move(rightPlan), rightReplayablePlan.replaySpecification);
         }
         catch (Exception& e)
         {

@@ -54,6 +54,53 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
     }
     return uniqueId;
 }
+
+void appendUniqueRecordingId(std::vector<RecordingId>& recordingIds, const RecordingId& recordingId)
+{
+    if (!std::ranges::contains(recordingIds, recordingId))
+    {
+        recordingIds.push_back(recordingId);
+    }
+}
+
+std::vector<DistributedQueryId> affectedQueriesForSelection(const RecordingSelection& selection, const DistributedQueryId& incomingQueryId)
+{
+    auto affectedQueries
+        = selection.beneficiaryQueries | std::views::transform([](const auto& queryId) { return DistributedQueryId(queryId); })
+        | std::ranges::to<std::vector>();
+    if (selection.coversIncomingQuery && !std::ranges::contains(affectedQueries, incomingQueryId))
+    {
+        affectedQueries.push_back(incomingQueryId);
+    }
+    return affectedQueries;
+}
+
+bool shouldPersistRecordingDecision(const RecordingSelectionExplanation& explanation)
+{
+    if (explanation.decision == RecordingSelectionDecision::ReuseExistingRecording)
+    {
+        return true;
+    }
+    return explanation.selection.coversIncomingQuery;
+}
+
+std::optional<uint64_t> retentionWindowForSelectionExplanation(
+    const RecordingSelectionExplanation& explanation, const DistributedLogicalPlan& plan, const RecordingCatalog& recordingCatalog)
+{
+    switch (explanation.decision)
+    {
+        case RecordingSelectionDecision::CreateNewRecording:
+        case RecordingSelectionDecision::UpgradeExistingRecording:
+            if (explanation.selection.coversIncomingQuery)
+            {
+                return plan.getReplaySpecification().and_then([](const auto& replaySpecification) { return replaySpecification.retentionWindowMs; });
+            }
+            break;
+        case RecordingSelectionDecision::ReuseExistingRecording:
+            break;
+    }
+    return recordingCatalog.getRecording(explanation.selection.recordingId).and_then([](const auto& recording) { return recording.retentionWindowMs; });
+}
 }
 
 std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQueryId query) const
@@ -147,33 +194,61 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
+    const auto& selectionResult = plan.getRecordingSelectionResult();
     this->state.recordingCatalog.upsertQueryMetadata(
         id,
         ReplayableQueryMetadata{
             .globalPlan = plan.getGlobalPlan(),
             .replaySpecification = plan.getReplaySpecification(),
-            .selectedRecordings
-            = plan.getRecordingSelectionResult().selectedRecordings
-                | std::views::transform([](const auto& selection) { return selection.recordingId; }) | std::ranges::to<std::vector>(),
-            .networkExplanations = plan.getRecordingSelectionResult().networkExplanations});
-    for (const auto& selection : plan.getRecordingSelectionResult().selectedRecordings)
+            .selectedRecordings = {},
+            .networkExplanations = {}});
+
+    std::unordered_map<DistributedQueryId, std::vector<RecordingId>> selectedRecordingsByQuery;
+    std::unordered_map<DistributedQueryId, std::vector<RecordingSelectionExplanation>> networkExplanationsByQuery;
+
+    for (const auto& explanation : selectionResult.networkExplanations)
     {
-        auto ownerQueries
-            = selection.beneficiaryQueries | std::views::transform([](const auto& queryId) { return DistributedQueryId(queryId); })
-            | std::ranges::to<std::vector>();
-        if (selection.coversIncomingQuery && !std::ranges::contains(ownerQueries, id))
+        const auto ownerQueries = affectedQueriesForSelection(explanation.selection, id);
+        for (const auto& ownerQuery : ownerQueries)
         {
-            ownerQueries.push_back(id);
+            if (!state.recordingCatalog.getQueryMetadata().contains(ownerQuery))
+            {
+                continue;
+            }
+            appendUniqueRecordingId(selectedRecordingsByQuery[ownerQuery], explanation.selection.recordingId);
+            networkExplanationsByQuery[ownerQuery].push_back(explanation);
         }
+
+        if (!shouldPersistRecordingDecision(explanation))
+        {
+            continue;
+        }
+
         this->state.recordingCatalog.upsertRecording(
             RecordingEntry{
-                .id = selection.recordingId,
-                .node = selection.node,
-                .filePath = selection.filePath,
-                .structuralFingerprint = selection.structuralFingerprint,
-                .retentionWindowMs = plan.getReplaySpecification().and_then([](const auto& spec) { return spec.retentionWindowMs; }),
-                .representation = selection.representation,
-                .ownerQueries = std::move(ownerQueries)});
+                .id = explanation.selection.recordingId,
+                .node = explanation.selection.node,
+                .filePath = explanation.selection.filePath,
+                .structuralFingerprint = explanation.selection.structuralFingerprint,
+                .retentionWindowMs = retentionWindowForSelectionExplanation(explanation, plan, this->state.recordingCatalog),
+                .representation = explanation.selection.representation,
+                .ownerQueries = ownerQueries});
+    }
+
+    for (auto& [queryId, selectedRecordings] : selectedRecordingsByQuery)
+    {
+        auto explanationsIt = networkExplanationsByQuery.find(queryId);
+        auto explanations = explanationsIt != networkExplanationsByQuery.end() ? std::move(explanationsIt->second) : std::vector<RecordingSelectionExplanation>{};
+        if (explanationsIt != networkExplanationsByQuery.end())
+        {
+            networkExplanationsByQuery.erase(explanationsIt);
+        }
+        this->state.recordingCatalog.reconcileQuerySelections(queryId, std::move(selectedRecordings), std::move(explanations));
+    }
+
+    if (!selectionResult.selectedRecordings.empty())
+    {
+        this->state.recordingCatalog.setTimeTravelReadRecording(selectionResult.selectedRecordings.back().recordingId);
     }
     if (const auto latestRecording = state.recordingCatalog.getTimeTravelReadRecording(); latestRecording.has_value())
     {

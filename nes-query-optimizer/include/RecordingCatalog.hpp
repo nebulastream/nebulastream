@@ -53,6 +53,30 @@ class RecordingCatalog
     std::unordered_map<RecordingId, RecordingEntry> recordings;
     std::optional<RecordingId> timeTravelReadRecordingId;
 
+    void refreshTimeTravelReadRecording()
+    {
+        if (timeTravelReadRecordingId.has_value() && !recordings.contains(*timeTravelReadRecordingId))
+        {
+            timeTravelReadRecordingId = recordings.empty() ? std::nullopt : std::optional(recordings.begin()->first);
+        }
+    }
+
+    void removeOwnerFromRecording(const RecordingId& recordingId, const DistributedQueryId& queryId)
+    {
+        const auto recordingIt = recordings.find(recordingId);
+        if (recordingIt == recordings.end())
+        {
+            return;
+        }
+
+        auto& ownerQueries = recordingIt->second.ownerQueries;
+        std::erase(ownerQueries, queryId);
+        if (ownerQueries.empty())
+        {
+            recordings.erase(recordingIt);
+        }
+    }
+
 public:
     [[nodiscard]] const auto& getQueryMetadata() const { return queryMetadata; }
     [[nodiscard]] const auto& getRecordings() const { return recordings; }
@@ -113,10 +137,7 @@ public:
                 ++it;
             }
         }
-        if (timeTravelReadRecordingId.has_value() && !recordings.contains(*timeTravelReadRecordingId))
-        {
-            timeTravelReadRecordingId = recordings.empty() ? std::nullopt : std::optional(recordings.begin()->first);
-        }
+        refreshTimeTravelReadRecording();
     }
 
     void upsertRecording(RecordingEntry recording)
@@ -146,6 +167,51 @@ public:
                 it->second.ownerQueries.push_back(owner);
             }
         }
+    }
+
+    void reconcileQuerySelections(
+        const DistributedQueryId& queryId,
+        std::vector<RecordingId> selectedRecordings,
+        std::vector<RecordingSelectionExplanation> networkExplanations)
+    {
+        auto& metadata = queryMetadata.at(queryId);
+
+        std::vector<RecordingId> deduplicatedSelectedRecordings;
+        deduplicatedSelectedRecordings.reserve(selectedRecordings.size());
+        for (const auto& selectedRecording : selectedRecordings)
+        {
+            if (!std::ranges::contains(deduplicatedSelectedRecordings, selectedRecording))
+            {
+                deduplicatedSelectedRecordings.push_back(selectedRecording);
+            }
+        }
+
+        for (const auto& previouslySelectedRecording : metadata.selectedRecordings)
+        {
+            if (!std::ranges::contains(deduplicatedSelectedRecordings, previouslySelectedRecording))
+            {
+                removeOwnerFromRecording(previouslySelectedRecording, queryId);
+            }
+        }
+
+        metadata.selectedRecordings = std::move(deduplicatedSelectedRecordings);
+        metadata.networkExplanations = std::move(networkExplanations);
+        refreshTimeTravelReadRecording();
+    }
+
+    void setTimeTravelReadRecording(const std::optional<RecordingId>& recordingId)
+    {
+        if (recordingId.has_value() && recordings.contains(*recordingId))
+        {
+            timeTravelReadRecordingId = recordingId;
+            return;
+        }
+        if (!recordingId.has_value())
+        {
+            timeTravelReadRecordingId = std::nullopt;
+            return;
+        }
+        refreshTimeTravelReadRecording();
     }
 };
 
