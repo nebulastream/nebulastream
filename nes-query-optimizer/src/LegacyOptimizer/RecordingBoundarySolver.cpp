@@ -24,7 +24,6 @@
 #include <ranges>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 
@@ -58,11 +57,6 @@ struct RecordingPlanEdgeHash
     }
 };
 
-struct SelectedBoundarySignatureHash
-{
-    [[nodiscard]] size_t operator()(const std::string& value) const { return std::hash<std::string>{}(value); }
-};
-
 struct WeightedCandidateChoice
 {
     RecordingCandidateOption option;
@@ -88,6 +82,15 @@ int decisionPreference(const RecordingSelectionDecision decision)
     return static_cast<double>(option.cost.estimatedReplayLatencyMs) * option.cost.replayTimeMultiplier;
 }
 
+[[nodiscard]] double selectedBoundaryMaintenanceCost(const std::vector<SelectedRecordingBoundary>& selectedBoundary)
+{
+    return std::accumulate(
+        selectedBoundary.begin(),
+        selectedBoundary.end(),
+        0.0,
+        [](const double total, const SelectedRecordingBoundary& selected) { return total + selected.chosenOption.cost.maintenanceCost; });
+}
+
 [[nodiscard]] double warmStartLatencyPrice(const RecordingCandidateSet& candidateSet)
 {
     return candidateSet.replayLatencyLimitMs.has_value() ? 1.0 / std::max<double>(*candidateSet.replayLatencyLimitMs, 1.0) : 0.0;
@@ -96,6 +99,50 @@ int decisionPreference(const RecordingSelectionDecision decision)
 [[nodiscard]] double latencyPriceStep(const RecordingCandidateSet& candidateSet)
 {
     return warmStartLatencyPrice(candidateSet);
+}
+
+[[nodiscard]] double normalizedConstraintGap(const double used, const double limit)
+{
+    return (used - limit) / std::max(limit, 1.0);
+}
+
+[[nodiscard]] bool updateStorageShadowPrices(
+    std::unordered_map<Host, double>& storageShadowPrices,
+    const std::unordered_map<Host, size_t>& selectedStorageBytesByHost,
+    const std::unordered_map<Host, size_t>& availableStorageBytesByHost)
+{
+    bool pricesChanged = false;
+    for (const auto& [host, availableBytes] : availableStorageBytesByHost)
+    {
+        const auto selectedBytes = selectedStorageBytesByHost.contains(host) ? selectedStorageBytesByHost.at(host) : 0U;
+        auto& shadowPrice = storageShadowPrices[host];
+        const auto updatedPrice =
+            std::max(0.0, shadowPrice + normalizedConstraintGap(static_cast<double>(selectedBytes), static_cast<double>(availableBytes)));
+        if (std::abs(updatedPrice - shadowPrice) > EPSILON)
+        {
+            pricesChanged = true;
+        }
+        shadowPrice = updatedPrice;
+    }
+    return pricesChanged;
+}
+
+[[nodiscard]] bool updateReplayTimePrice(
+    const RecordingCandidateSet& candidateSet, const double selectedReplayTimeMs, double& replayTimePrice)
+{
+    if (!candidateSet.replayLatencyLimitMs.has_value())
+    {
+        return false;
+    }
+
+    const auto updatedPrice = std::max(
+        0.0,
+        replayTimePrice
+            + (latencyPriceStep(candidateSet)
+               * normalizedConstraintGap(selectedReplayTimeMs, static_cast<double>(*candidateSet.replayLatencyLimitMs))));
+    const auto pricesChanged = std::abs(updatedPrice - replayTimePrice) > EPSILON;
+    replayTimePrice = updatedPrice;
+    return pricesChanged;
 }
 
 [[nodiscard]] LemonCapacity checkedAddCapacity(const LemonCapacity total, const LemonCapacity increment)
@@ -217,25 +264,6 @@ std::string describeReplayLatencyViolation(const double selectedReplayTimeMs, co
         replayLatencyLimitMs);
 }
 
-std::string makeSelectionSignature(const std::vector<SelectedRecordingBoundary>& selectedBoundary)
-{
-    std::vector<std::string> parts;
-    parts.reserve(selectedBoundary.size());
-    for (const auto& selected : selectedBoundary)
-    {
-        parts.push_back(fmt::format(
-            "{}:{}:{}",
-            selected.candidate.edge.parentId.getRawValue(),
-            selected.candidate.edge.childId.getRawValue(),
-            fmt::format(
-                "{}:{}:{}",
-                static_cast<int>(selected.chosenOption.decision),
-                selected.chosenOption.selection.node.getRawValue(),
-                static_cast<int>(selected.chosenOption.selection.representation))));
-    }
-    std::ranges::sort(parts);
-    return fmt::format("{}", fmt::join(parts, "|"));
-}
 }
 
 RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandidateSet& candidateSet) const
@@ -262,8 +290,9 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
     }
 
     std::unordered_map<Host, double> storageShadowPrices;
-    std::unordered_set<std::string, SelectedBoundarySignatureHash> seenSelections;
     auto replayTimePrice = warmStartLatencyPrice(candidateSet);
+    std::optional<RecordingBoundarySelection> bestFeasibleSelection;
+    auto bestFeasibleMaintenanceCost = std::numeric_limits<double>::infinity();
 
     for (size_t iteration = 0; iteration < MAX_SHADOW_PRICE_ITERATIONS; ++iteration)
     {
@@ -423,37 +452,33 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             if (selectedBytes > availableStorageBytesByHost[host])
             {
                 violatesBudget = true;
-                const auto overflowBytes = selectedBytes - availableStorageBytesByHost[host];
-                const auto overflowFactor = static_cast<double>(overflowBytes) / std::max<double>(availableStorageBytesByHost[host], 1.0);
-                storageShadowPrices[host] += 1.0 + overflowFactor;
             }
         }
 
         const auto violatesReplayLatency = candidateSet.replayLatencyLimitMs.has_value()
             && selectedReplayTimeMs > static_cast<double>(*candidateSet.replayLatencyLimitMs);
-        if (violatesReplayLatency)
+        const auto maintenanceCost = selectedBoundaryMaintenanceCost(selectedBoundary);
+        const auto objectiveCost = maintenanceCost + (replayTimePrice * selectedReplayTimeMs);
+        if (!violatesBudget && !violatesReplayLatency
+            && (!bestFeasibleSelection.has_value() || maintenanceCost < bestFeasibleMaintenanceCost - EPSILON
+                || (std::abs(maintenanceCost - bestFeasibleMaintenanceCost) <= EPSILON
+                    && objectiveCost < bestFeasibleSelection->objectiveCost - EPSILON)))
         {
-            const auto overflowMs = selectedReplayTimeMs - static_cast<double>(*candidateSet.replayLatencyLimitMs);
-            const auto overflowFactor = overflowMs / std::max<double>(*candidateSet.replayLatencyLimitMs, 1.0);
-            replayTimePrice += latencyPriceStep(candidateSet) * (1.0 + overflowFactor);
+            bestFeasibleMaintenanceCost = maintenanceCost;
+            bestFeasibleSelection = RecordingBoundarySelection{
+                .selectedBoundary = selectedBoundary,
+                .objectiveCost = objectiveCost};
         }
 
-        if (!violatesBudget && !violatesReplayLatency)
+        const auto storagePricesChanged =
+            updateStorageShadowPrices(storageShadowPrices, selectedStorageBytesByHost, availableStorageBytesByHost);
+        const auto replayPriceChanged = updateReplayTimePrice(candidateSet, selectedReplayTimeMs, replayTimePrice);
+        if (!storagePricesChanged && !replayPriceChanged)
         {
-            const auto maintenanceCost = std::accumulate(
-                selectedBoundary.begin(),
-                selectedBoundary.end(),
-                0.0,
-                [](const double total, const SelectedRecordingBoundary& selected)
-                { return total + selected.chosenOption.cost.maintenanceCost; });
-            return RecordingBoundarySelection{
-                .selectedBoundary = std::move(selectedBoundary),
-                .objectiveCost = maintenanceCost + (replayTimePrice * selectedReplayTimeMs)};
-        }
-
-        const auto selectionSignature = makeSelectionSignature(selectedBoundary);
-        if (!seenSelections.insert(selectionSignature).second)
-        {
+            if (bestFeasibleSelection.has_value())
+            {
+                return *bestFeasibleSelection;
+            }
             if (violatesBudget)
             {
                 throw PlacementFailure("{}", describeBudgetViolation(selectedStorageBytesByHost, availableStorageBytesByHost));
@@ -465,6 +490,11 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
                     describeReplayLatencyViolation(selectedReplayTimeMs, static_cast<double>(*candidateSet.replayLatencyLimitMs)));
             }
         }
+    }
+
+    if (bestFeasibleSelection.has_value())
+    {
+        return *bestFeasibleSelection;
     }
 
     throw PlacementFailure("Replay selection is infeasible: replay min-cut did not converge within {} iterations", MAX_SHADOW_PRICE_ITERATIONS);

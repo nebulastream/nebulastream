@@ -317,5 +317,52 @@ TEST_F(RecordingBoundarySolverTest, SolverBudgetsUpgradeByIncrementalStorageByte
     EXPECT_EQ(selection.selectedBoundary.front().chosenOption.decision, RecordingSelectionDecision::UpgradeExistingRecording);
     EXPECT_EQ(selection.selectedBoundary.front().chosenOption.cost.incrementalStorageBytes, 1024U);
 }
+
+TEST_F(RecordingBoundarySolverTest, SolverKeepsLowestMaintenanceFeasibleCutAcrossIterations)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto rootId = OperatorId(1);
+    const auto branchId = OperatorId(2);
+    const auto leafId = OperatorId(3);
+
+    RecordingCandidateSet candidateSet;
+    candidateSet.rootOperatorId = rootId;
+    candidateSet.replayLatencyLimitMs = 4;
+    candidateSet.leafOperatorIds = {leafId};
+    candidateSet.operatorReplayTimes = {RecordingCandidateSet::OperatorReplayTime{.operatorId = branchId, .replayTimeMs = 4.0}};
+    candidateSet.planEdges = {
+        RecordingPlanEdge{.parentId = rootId, .childId = branchId},
+        RecordingPlanEdge{.parentId = branchId, .childId = leafId}};
+    candidateSet.candidates = {
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rootId, .childId = branchId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("root-branch", host, 1.4)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = branchId, .childId = leafId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("branch-leaf", host, 0.8)}}};
+
+    const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
+
+    ASSERT_EQ(selection.selectedBoundary.size(), 1U);
+    EXPECT_EQ(selection.selectedBoundary.front().candidate.edge.parentId, branchId);
+    EXPECT_EQ(selection.selectedBoundary.front().candidate.edge.childId, leafId);
+    EXPECT_EQ(selection.selectedBoundary.front().chosenOption.selection.recordingId, RecordingId("branch-leaf"));
+    EXPECT_DOUBLE_EQ(selection.objectiveCost, 0.8);
+}
 }
 }
