@@ -33,6 +33,7 @@ struct ReplayableQueryMetadata
     std::optional<LogicalPlan> globalPlan;
     std::optional<ReplaySpecification> replaySpecification;
     std::vector<RecordingId> selectedRecordings;
+    std::vector<RecordingSelectionExplanation> networkExplanations;
 };
 
 struct RecordingEntry

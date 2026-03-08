@@ -129,6 +129,23 @@ std::string buildExplanationReason(
     }
     std::unreachable();
 }
+
+RecordingSelectionExplanation buildSelectionExplanation(
+    const SelectedRecordingBoundary& selectedBoundary, const size_t candidateCount, const double objectiveCost)
+{
+    return RecordingSelectionExplanation{
+        .selection = selectedBoundary.chosenOption.selection,
+        .decision = selectedBoundary.chosenOption.decision,
+        .reason = buildExplanationReason(selectedBoundary, candidateCount, objectiveCost),
+        .chosenCost = selectedBoundary.chosenOption.cost,
+        .alternatives = selectedBoundary.alternatives
+            | std::views::transform(
+                  [](const auto& alternative)
+                  {
+                      return RecordingSelectionAlternative{.decision = alternative.decision, .cost = alternative.cost};
+                  })
+            | std::ranges::to<std::vector>()};
+}
 }
 
 RecordingSelectionResult RecordingSelectionPhase::apply(
@@ -146,11 +163,14 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
 
     std::unordered_map<RecordingPlanEdge, RecordingSelection, RecordingPlanEdgeHash> storesToInsert;
     RecordingSelectionResult selectionResult;
+    selectionResult.networkExplanations.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.selectedRecordings.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.explanations.reserve(boundarySelection.selectedBoundary.size());
 
     for (const auto& selectedBoundary : boundarySelection.selectedBoundary)
     {
+        auto explanation = buildSelectionExplanation(selectedBoundary, candidateSet.candidates.size(), boundarySelection.objectiveCost);
+        selectionResult.networkExplanations.push_back(explanation);
         if (!selectedBoundary.candidate.coversIncomingQuery)
         {
             continue;
@@ -164,18 +184,7 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
         }
 
         selectionResult.selectedRecordings.push_back(selectedBoundary.chosenOption.selection);
-        selectionResult.explanations.push_back(RecordingSelectionExplanation{
-            .selection = selectedBoundary.chosenOption.selection,
-            .decision = selectedBoundary.chosenOption.decision,
-            .reason = buildExplanationReason(selectedBoundary, candidateSet.candidates.size(), boundarySelection.objectiveCost),
-            .chosenCost = selectedBoundary.chosenOption.cost,
-            .alternatives = selectedBoundary.alternatives
-                | std::views::transform(
-                      [](const auto& alternative)
-                      {
-                          return RecordingSelectionAlternative{.decision = alternative.decision, .cost = alternative.cost};
-                      })
-                | std::ranges::to<std::vector>()});
+        selectionResult.explanations.push_back(std::move(explanation));
     }
 
     auto rewrittenRoots = placedPlan.getRootOperators();

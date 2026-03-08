@@ -154,7 +154,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
             .replaySpecification = plan.getReplaySpecification(),
             .selectedRecordings
             = plan.getRecordingSelectionResult().selectedRecordings
-                | std::views::transform([](const auto& selection) { return selection.recordingId; }) | std::ranges::to<std::vector>()});
+                | std::views::transform([](const auto& selection) { return selection.recordingId; }) | std::ranges::to<std::vector>(),
+            .networkExplanations = plan.getRecordingSelectionResult().networkExplanations});
     for (const auto& selection : plan.getRecordingSelectionResult().selectedRecordings)
     {
         auto ownerQueries

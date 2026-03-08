@@ -14,6 +14,7 @@
 
 #include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
@@ -24,7 +25,9 @@
 #include <Functions/LogicalFunction.hpp>
 #include <LegacyOptimizer/RecordingCandidateSelectionPhase.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
+#include <LegacyOptimizer/RecordingSelectionPhase.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <RecordingCatalog.hpp>
@@ -63,14 +66,19 @@ Schema createSchema()
     return schema;
 }
 
-LogicalPlan createPlacedUnaryPlan(const Host& host)
+LogicalPlan createPlacedUnaryPlan(const std::string& sourceName, const Host& host)
 {
-    auto plan = LogicalPlanBuilder::createLogicalPlan("TEST", createSchema(), {}, {});
+    auto plan = LogicalPlanBuilder::createLogicalPlan(sourceName, createSchema(), {}, {});
     const auto predicate = LogicalFunction{
         EqualsLogicalFunction(LogicalFunction{FieldAccessLogicalFunction("id")}, LogicalFunction{FieldAccessLogicalFunction("id")})};
     plan = LogicalPlanBuilder::addSelection(predicate, plan);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
     return plan.withRootOperators({addPlacementTraitRecursively(plan.getRootOperators().front(), host)});
+}
+
+LogicalPlan createPlacedUnaryPlan(const Host& host)
+{
+    return createPlacedUnaryPlan("TEST", host);
 }
 
 LogicalOperator withPlacement(const LogicalOperator& current, const Host& host)
@@ -255,6 +263,67 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsFo
     EXPECT_TRUE(std::ranges::all_of(
         candidate.options,
         [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
+}
+
+TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisions)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    auto incomingPlan = createPlacedUnaryPlan("INCOMING_SOURCE", host);
+    const auto activePlan = createPlacedUnaryPlan("ACTIVE_SOURCE", host);
+    const ReplaySpecification replaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
+
+    RecordingCatalog catalog;
+    const auto activeRoot = activePlan.getRootOperators().front();
+    ASSERT_EQ(activeRoot.getChildren().size(), 1U);
+    const auto activeSubplanRoot = activeRoot.getChildren().front();
+    const auto activeRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(activeSubplanRoot, host, replaySpecification));
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = activeRecordingId,
+            .node = host,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/active-existing.bin",
+            .structuralFingerprint = createStructuralRecordingFingerprint(activeSubplanRoot, host),
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .ownerQueries = {DistributedQueryId("active-query")}});
+    catalog.upsertQueryMetadata(
+        DistributedQueryId("active-query"),
+        ReplayableQueryMetadata{
+            .globalPlan = activePlan,
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {},
+            .networkExplanations = {}});
+
+    const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, catalog);
+
+    ASSERT_EQ(selectionResult.selectedRecordings.size(), 1U);
+    ASSERT_EQ(selectionResult.explanations.size(), 1U);
+    ASSERT_EQ(selectionResult.networkExplanations.size(), 2U);
+    EXPECT_EQ(
+        std::ranges::count_if(
+            selectionResult.networkExplanations,
+            [](const auto& explanation) { return explanation.selection.coversIncomingQuery; }),
+        1);
+    EXPECT_EQ(
+        std::ranges::count_if(
+            selectionResult.networkExplanations,
+            [](const auto& explanation) { return !explanation.selection.coversIncomingQuery; }),
+        1);
+    const auto activeOnlySelection = std::ranges::find_if(
+        selectionResult.networkExplanations,
+        [](const auto& explanation) { return !explanation.selection.coversIncomingQuery; });
+    ASSERT_NE(activeOnlySelection, selectionResult.networkExplanations.end());
+    EXPECT_EQ(activeOnlySelection->selection.beneficiaryQueries, std::vector<std::string>({"active-query"}));
+    EXPECT_EQ(activeOnlySelection->decision, RecordingSelectionDecision::ReuseExistingRecording);
+    EXPECT_EQ(activeOnlySelection->selection.recordingId, activeRecordingId);
+    const auto incomingSelection = std::ranges::find_if(
+        selectionResult.networkExplanations,
+        [](const auto& explanation) { return explanation.selection.coversIncomingQuery; });
+    ASSERT_NE(incomingSelection, selectionResult.networkExplanations.end());
+    EXPECT_EQ(incomingSelection->decision, RecordingSelectionDecision::CreateNewRecording);
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(incomingPlan).size(), 1U);
 }
 }
 }

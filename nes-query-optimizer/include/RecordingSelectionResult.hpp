@@ -92,10 +92,11 @@ struct RecordingSelectionExplanation
 
 struct RecordingSelectionResult
 {
+    std::vector<RecordingSelectionExplanation> networkExplanations;
     std::vector<RecordingSelection> selectedRecordings;
     std::vector<RecordingSelectionExplanation> explanations;
 
-    [[nodiscard]] bool empty() const { return selectedRecordings.empty(); }
+    [[nodiscard]] bool empty() const { return selectedRecordings.empty() && networkExplanations.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;
 };
 
