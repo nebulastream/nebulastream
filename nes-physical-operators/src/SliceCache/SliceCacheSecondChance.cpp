@@ -25,27 +25,6 @@
 namespace NES
 {
 
-/// Reads a struct field using traced pointer arithmetic instead of val<T*>::get().
-/// val<T*>::get() uses this->value (raw pointer) for address computation, which fails in COMPILER
-/// mode when the val was produced by operator+ (value = nullptr). This helper uses traced arithmetic
-/// so the compiled code computes the address at runtime from the properly traced base pointer.
-template <typename T, typename F>
-nautilus::val<F> tracedGet(const nautilus::val<T*>& ptr, F T::* pm)
-{
-    const auto offset = nautilus::val<uint64_t>{nautilus::field_offset(pm)};
-    nautilus::val<int8_t*> fieldPtr = nautilus::val<int8_t*>{ptr} + offset;
-    return *nautilus::val<F*>{fieldPtr};
-}
-
-/// Writes a struct field using traced pointer arithmetic instead of val<T*>::set().
-template <typename T, typename F>
-void tracedSet(const nautilus::val<T*>& ptr, F T::* pm, nautilus::val<F> value)
-{
-    const auto offset = nautilus::val<uint64_t>{nautilus::field_offset(pm)};
-    nautilus::val<int8_t*> fieldPtr = nautilus::val<int8_t*>{ptr} + offset;
-    *nautilus::val<F*>{fieldPtr} = value;
-}
-
 SliceCacheSecondChance::SliceCacheSecondChance(const uint64_t numberOfEntries, const uint64_t sizeOfEntry)
     : SliceCache(numberOfEntries, sizeOfEntry), replacementIndexRaw(nullptr)
 {
@@ -70,8 +49,8 @@ SliceCacheSecondChance::searchInCache(const nautilus::val<SliceCacheEntry*>& sta
     for (nautilus::val<uint64_t> i = 0; i < numberOfEntries; ++i)
     {
         nautilus::val<SliceCacheEntry*> sliceCacheEntry = startOfEntries + i;
-        const auto sliceStart = nautilus::val<Timestamp>{tracedGet(sliceCacheEntry, &SliceCacheEntry::sliceStart)};
-        const auto sliceEnd = nautilus::val<Timestamp>{tracedGet(sliceCacheEntry, &SliceCacheEntry::sliceEnd)};
+        const auto sliceStart = nautilus::val<Timestamp>{sliceCacheEntry.get(&SliceCacheEntry::sliceStart)};
+        const auto sliceEnd = nautilus::val<Timestamp>{sliceCacheEntry.get(&SliceCacheEntry::sliceEnd)};
         if (sliceStart <= timestamp && timestamp < sliceEnd)
         {
             return {i, true};
@@ -92,8 +71,8 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     if (const auto [pos, foundInCache] = searchInCache(startOfEntries, timestamp); foundInCache)
     {
         nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + pos;
-        tracedSet(sliceCacheEntryToReplace, &SliceCacheEntrySecondChance::secondChanceBit, nautilus::val<bool>{true});
-        return tracedGet(nautilus::val<SliceCacheEntry*>{sliceCacheEntryToReplace}, &SliceCacheEntry::dataStructure);
+        sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
+        return nautilus::val<SliceCacheEntry*>{sliceCacheEntryToReplace}.get(&SliceCacheEntry::dataStructure);
     }
 
     /// If this is not the case, we iterate through the cache until we have find a slice that has the second chance bit set to false.
@@ -103,21 +82,21 @@ SliceCacheSecondChance::getDataStructureRef(const nautilus::val<Timestamp>& time
     for (nautilus::val<uint64_t> i = 0; i < 2 * numberOfEntries; ++i)
     {
         nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex;
-        const nautilus::val<bool> secondChanceBit = tracedGet(sliceCacheEntryToReplace, &SliceCacheEntrySecondChance::secondChanceBit);
+        const nautilus::val<bool> secondChanceBit = sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit);
         if (secondChanceBit == nautilus::val<bool>{false})
         {
             break;
         }
-        tracedSet(sliceCacheEntryToReplace, &SliceCacheEntrySecondChance::secondChanceBit, nautilus::val<bool>{false});
+        sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{false};
         replacementIndex = (replacementIndex + 1) % numberOfEntries;
     }
     *replacementIndexPtr = replacementIndex;
 
     /// Replacing the slice and returning the data structure.
     nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = startOfEntries + replacementIndex;
-    tracedSet(sliceCacheEntryToReplace, &SliceCacheEntrySecondChance::secondChanceBit, nautilus::val<bool>{true});
+    sliceCacheEntryToReplace.get(&SliceCacheEntrySecondChance::secondChanceBit) = nautilus::val<bool>{true};
     replaceEntry(nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex});
-    return tracedGet(nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex}, &SliceCacheEntry::dataStructure);
+    return nautilus::val<SliceCacheEntry*>{startOfEntries + replacementIndex}.get(&SliceCacheEntry::dataStructure);
 }
 
 }
