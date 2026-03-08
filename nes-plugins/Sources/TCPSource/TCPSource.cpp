@@ -57,6 +57,7 @@ TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
     , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
     , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
+    , llmQueryId(sourceDescriptor.getFromConfig(ConfigParametersTCP::LLM_QUERY_ID))
     , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
     , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
     , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
@@ -77,6 +78,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     str << "\n  socketHost: " << socketHost;
     str << "\n  socketPort: " << socketPort;
     str << "\n  socketType: " << socketType;
+    str << "\n  llmQueryId: " << llmQueryId;
     str << "\n  socketDomain: " << socketDomain;
     str << "\n  tupleDelimiter: " << tupleDelimiter;
     str << "\n  socketBufferSize: " << socketBufferSize;
@@ -119,6 +121,9 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
     setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
+
+    // int flag = 1;
+    // setsockopt(sockfd, IPPROTO_TCP, TCP_NODELAY, &flag, sizeof(flag));
 
     /// if the TCPSource did not establish a connection, try with timeout
     if (connection < 0)
@@ -198,7 +203,9 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
     fcntl(sockfd, F_SETFL, flags);
+    std::string handshake =std::string(llmQueryId) + "\n";
 
+    send(sockfd, handshake.c_str(), handshake.size(), 0);
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
@@ -235,6 +242,8 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
     {
         const ssize_t bufferSizeReceived
             = read(sockfd, tupleBuffer.getAvailableMemoryArea().data() + numReceivedBytes, rawTBSize - numReceivedBytes);
+        NES_ERROR("TupleBuffer - size: {}", bufferSizeReceived);
+
         numReceivedBytes += bufferSizeReceived;
         if (bufferSizeReceived == INVALID_RECEIVED_BUFFER_SIZE)
         {

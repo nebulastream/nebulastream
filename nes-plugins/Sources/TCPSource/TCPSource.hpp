@@ -118,6 +118,11 @@ struct ConfigParametersTCP
                 socketTypeString)
             return std::nullopt;
         }};
+    static inline const DescriptorConfig::ConfigParameter<std::string> LLM_QUERY_ID{
+        "llm_query_id",
+        "LLM_1",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LLM_QUERY_ID, config); }};
+
     static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tuple_delimiter",
         '\n',
@@ -147,6 +152,7 @@ struct ConfigParametersTCP
             PORT,
             DOMAIN,
             TYPE,
+            LLM_QUERY_ID,
             SEPARATOR,
             FLUSH_INTERVAL_MS,
             SOCKET_BUFFER_SIZE,
@@ -203,6 +209,7 @@ private:
     std::string socketHost;
     std::string socketPort;
     int socketType;
+    std::string llmQueryId;
     int socketDomain;
     char tupleDelimiter;
     size_t socketBufferSize;

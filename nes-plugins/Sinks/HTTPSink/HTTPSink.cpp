@@ -30,6 +30,8 @@
 #include <SinksParsing/JSONFormat.hpp>
 #include <curl/curl.h>
 #include <curl/easy.h>
+#include <nlohmann/json.hpp>  // or your favorite JSON library
+using json = nlohmann::json;
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
 
@@ -72,6 +74,34 @@ void HTTPSink::start(PipelineExecutionContext&)
     curl = curl_easy_init();
     PRECONDITION(curl, "curl_easy_init failed");
     isOpen = true;
+
+    // Create the payload
+    json payload;
+    payload["query_id"] = "1";
+    payload["type"] = "SEM_MAP";
+    payload["config"] = {
+        {"prompt_template", "Classify sentiment of the following text:{HEARTRATES$DESCRIPTION}. Response only in JSON format. Example:{{\"sentiment\": \"negative\"}}"},
+        {"output_column", "sentiment"},
+        {"depends_on", json::array({"HEARTRATES$DESCRIPTION"})}
+    };
+    payload["model"] = "ollama";
+
+    // Convert to string (NDJSON = newline-delimited JSON, so one object per line)
+    std::string fBuffer = payload.dump() + "\n";
+
+    // Your existing curl code
+    curl_slist* headers = nullptr;
+    headers = curl_slist_append(headers, "Content-Type: application/x-ndjson");
+
+    std::string init_url = url + "/initialize";
+
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_URL, init_url.c_str());
+    curl_easy_setopt(curl, CURLOPT_POST, 1);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fBuffer.c_str());
+
+    curl_easy_perform(curl);
+    curl_slist_free_all(headers);
 }
 
 void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
@@ -86,9 +116,10 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     /// Set newline delimited json as content type
     headers = curl_slist_append(headers, "Content-Type: application/x-ndjson");
 
+    std::string data_url = url + "/process";
     /// Setup the url, headers and message
     curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
-    curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
+    curl_easy_setopt(curl, CURLOPT_URL, data_url.c_str());
     curl_easy_setopt(curl, CURLOPT_POST, 1);
     curl_easy_setopt(curl, CURLOPT_POSTFIELDS, fBuffer.c_str());
 
