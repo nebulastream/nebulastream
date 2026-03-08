@@ -17,6 +17,7 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <optional>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -53,13 +54,18 @@ public:
 
     void ensureHeader(PipelineExecutionContext& pec);
 
-    void append(const uint8_t* data, size_t len);
+    void append(const uint8_t* data, size_t len, Timestamp watermark);
 
 private:
     void flushPendingSegment();
+    void flushRawManifestSegment();
+    void resetCurrentSegment();
+    void updateCurrentSegmentWatermark(Timestamp watermark);
+    void appendManifestEntry(uint64_t payloadOffset, uint64_t storedSizeBytes, uint64_t logicalSizeBytes);
+    void initializeManifestState(bool truncateManifest);
     void openFile();
     void validateExistingFile() const;
-    void writeAtTail(const uint8_t* data, size_t len);
+    [[nodiscard]] uint64_t writeAtTail(const uint8_t* data, size_t len);
     void writeHeaderIfNeeded();
     static uint64_t fnv1a64(const char* data, size_t len);
 
@@ -69,6 +75,12 @@ private:
     Config config;
     std::vector<uint8_t> pendingSegment;
     std::mutex pendingSegmentMutex;
+    uint64_t nextSegmentId{0};
+    uint64_t currentSegmentOffset{0};
+    uint64_t currentSegmentStoredSizeBytes{0};
+    uint64_t currentSegmentLogicalSizeBytes{0};
+    std::optional<Timestamp> currentSegmentMinWatermark;
+    std::optional<Timestamp> currentSegmentMaxWatermark;
     uint64_t writesSinceSync{0};
     static constexpr uint64_t FNVOffsetBasis = 14695981039346656037ULL;
     static constexpr uint64_t FNVPrime = 1099511628211ULL;

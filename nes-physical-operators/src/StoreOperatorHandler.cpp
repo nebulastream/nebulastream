@@ -28,6 +28,7 @@
 #include <utility>
 
 #include <Runtime/QueryTerminationType.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <ErrorHandling.hpp>
 #include "Runtime/Execution/OperatorHandler.hpp"
 
@@ -110,6 +111,11 @@ uint32_t versionForCodec(const Replay::BinaryStoreCompressionCodec codec)
     return codec == Replay::BinaryStoreCompressionCodec::None ? Replay::BINARY_STORE_FORMAT_VERSION_RAW_ROWS
                                                               : Replay::BINARY_STORE_FORMAT_VERSION_SEGMENTED;
 }
+
+uint32_t chunkSizeBytes(const StoreOperatorHandler::Config& config)
+{
+    return std::max<uint32_t>(config.chunkMinBytes, 1);
+}
 }
 
 StoreOperatorHandler::StoreOperatorHandler(Config cfg) : config(std::move(cfg))
@@ -135,6 +141,7 @@ StoreOperatorHandler::StoreOperatorHandler(Config cfg) : config(std::move(cfg))
 void StoreOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
     openFile();
+    initializeManifestState(!config.append || tail.load(std::memory_order_relaxed) == 0);
     if (config.header)
     {
         writeHeaderIfNeeded();
@@ -145,10 +152,14 @@ void StoreOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
     if (fd >= 0)
     {
+        std::lock_guard lock(pendingSegmentMutex);
         if (config.compression != Replay::BinaryStoreCompressionCodec::None)
         {
-            std::lock_guard lock(pendingSegmentMutex);
             flushPendingSegment();
+        }
+        else
+        {
+            flushRawManifestSegment();
         }
         ::fsync(fd);
         ::close(fd);
@@ -164,7 +175,7 @@ void StoreOperatorHandler::ensureHeader(PipelineExecutionContext&)
     }
 }
 
-void StoreOperatorHandler::append(const uint8_t* data, size_t len)
+void StoreOperatorHandler::append(const uint8_t* data, size_t len, Timestamp watermark)
 {
     if (len == 0)
     {
@@ -174,14 +185,26 @@ void StoreOperatorHandler::append(const uint8_t* data, size_t len)
     {
         throw CannotOpenSink("StoreOperatorHandler not started; fd is invalid");
     }
+    std::lock_guard lock(pendingSegmentMutex);
     if (config.compression == Replay::BinaryStoreCompressionCodec::None)
     {
-        writeAtTail(data, len);
+        const auto payloadOffset = writeAtTail(data, len);
+        if (currentSegmentLogicalSizeBytes == 0)
+        {
+            currentSegmentOffset = payloadOffset;
+        }
+        currentSegmentStoredSizeBytes += len;
+        currentSegmentLogicalSizeBytes += len;
+        updateCurrentSegmentWatermark(watermark);
+        if (currentSegmentLogicalSizeBytes >= chunkSizeBytes(config))
+        {
+            flushRawManifestSegment();
+        }
         return;
     }
 
-    std::lock_guard lock(pendingSegmentMutex);
     pendingSegment.insert(pendingSegment.end(), data, data + len);
+    updateCurrentSegmentWatermark(watermark);
     if (pendingSegment.size() >= config.chunkMinBytes)
     {
         flushPendingSegment();
@@ -222,8 +245,98 @@ void StoreOperatorHandler::flushPendingSegment()
     segmentHeader->encodedSize = static_cast<uint32_t>(compressedSize);
     frame.resize(sizeof(Replay::BinaryStoreSegmentHeader) + compressedSize);
 
-    writeAtTail(frame.data(), frame.size());
+    const auto payloadOffset = writeAtTail(frame.data(), frame.size());
+    appendManifestEntry(payloadOffset, frame.size(), pendingSegment.size());
     pendingSegment.clear();
+    resetCurrentSegment();
+}
+
+void StoreOperatorHandler::flushRawManifestSegment()
+{
+    if (currentSegmentLogicalSizeBytes == 0)
+    {
+        return;
+    }
+    appendManifestEntry(currentSegmentOffset, currentSegmentStoredSizeBytes, currentSegmentLogicalSizeBytes);
+    resetCurrentSegment();
+}
+
+void StoreOperatorHandler::resetCurrentSegment()
+{
+    currentSegmentOffset = 0;
+    currentSegmentStoredSizeBytes = 0;
+    currentSegmentLogicalSizeBytes = 0;
+    currentSegmentMinWatermark.reset();
+    currentSegmentMaxWatermark.reset();
+}
+
+void StoreOperatorHandler::updateCurrentSegmentWatermark(const Timestamp watermark)
+{
+    currentSegmentMinWatermark = currentSegmentMinWatermark.has_value() ? std::min(*currentSegmentMinWatermark, watermark) : watermark;
+    currentSegmentMaxWatermark = currentSegmentMaxWatermark.has_value() ? std::max(*currentSegmentMaxWatermark, watermark) : watermark;
+}
+
+void StoreOperatorHandler::appendManifestEntry(const uint64_t payloadOffset, const uint64_t storedSizeBytes, const uint64_t logicalSizeBytes)
+{
+    PRECONDITION(currentSegmentMinWatermark.has_value(), "Manifest entry requires a minimum watermark");
+    PRECONDITION(currentSegmentMaxWatermark.has_value(), "Manifest entry requires a maximum watermark");
+
+    const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
+    std::ofstream manifestOutput(manifestPath, std::ios::app);
+    if (!manifestOutput)
+    {
+        throw CannotOpenSink("Could not open binary store manifest {}", manifestPath);
+    }
+
+    manifestOutput << nextSegmentId << ' ' << payloadOffset << ' ' << storedSizeBytes << ' ' << logicalSizeBytes << ' '
+                   << currentSegmentMinWatermark->getRawValue() << ' ' << currentSegmentMaxWatermark->getRawValue() << '\n';
+    if (!manifestOutput)
+    {
+        throw CannotOpenSink("Failed to append binary store manifest {}", manifestPath);
+    }
+    ++nextSegmentId;
+}
+
+void StoreOperatorHandler::initializeManifestState(const bool truncateManifest)
+{
+    const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
+    if (truncateManifest)
+    {
+        std::ofstream manifestOutput(manifestPath, std::ios::trunc);
+        if (!manifestOutput)
+        {
+            throw CannotOpenSink("Could not create binary store manifest {}", manifestPath);
+        }
+        manifestOutput << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
+        if (!manifestOutput)
+        {
+            throw CannotOpenSink("Failed to initialize binary store manifest {}", manifestPath);
+        }
+        nextSegmentId = 0;
+        resetCurrentSegment();
+        return;
+    }
+
+    if (!std::filesystem::exists(manifestPath))
+    {
+        std::ofstream manifestOutput(manifestPath);
+        if (!manifestOutput)
+        {
+            throw CannotOpenSink("Could not create binary store manifest {}", manifestPath);
+        }
+        manifestOutput << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
+        if (!manifestOutput)
+        {
+            throw CannotOpenSink("Failed to initialize binary store manifest {}", manifestPath);
+        }
+        nextSegmentId = 0;
+        resetCurrentSegment();
+        return;
+    }
+
+    const auto manifest = Replay::readBinaryStoreManifest(config.filePath);
+    nextSegmentId = manifest.segments.empty() ? 0 : manifest.segments.back().segmentId + 1;
+    resetCurrentSegment();
 }
 
 void StoreOperatorHandler::openFile()
@@ -307,7 +420,7 @@ void StoreOperatorHandler::validateExistingFile() const
     }
 }
 
-void StoreOperatorHandler::writeAtTail(const uint8_t* data, size_t len)
+uint64_t StoreOperatorHandler::writeAtTail(const uint8_t* data, size_t len)
 {
     const uint64_t off = tail.fetch_add(len, std::memory_order_relaxed);
     const ssize_t written = ::pwrite(fd, data, len, static_cast<off_t>(off));
@@ -324,6 +437,7 @@ void StoreOperatorHandler::writeAtTail(const uint8_t* data, size_t len)
             writesSinceSync = 0;
         }
     }
+    return off;
 }
 
 void StoreOperatorHandler::writeHeaderIfNeeded()

@@ -16,9 +16,13 @@
 
 #include <atomic>
 #include <filesystem>
+#include <fstream>
 #include <limits>
+#include <sstream>
 #include <string>
 #include <system_error>
+
+#include <ErrorHandling.hpp>
 
 namespace NES::Replay
 {
@@ -26,6 +30,11 @@ namespace NES::Replay
 namespace
 {
 std::atomic<uint64_t> replayReadBytes{0};
+
+bool isManifestFile(const std::filesystem::path& path)
+{
+    return path.extension() == BINARY_STORE_MANIFEST_SUFFIX;
+}
 
 template <typename Projection>
 size_t accumulateRecordingDirectory(Projection projection)
@@ -66,6 +75,11 @@ std::string getRecordingFilePath(std::string_view recordingId)
     return (std::filesystem::path(DEFAULT_RECORDING_DIRECTORY) / std::string(recordingId)).concat(".bin").string();
 }
 
+std::string getRecordingManifestPath(std::string_view recordingFilePath)
+{
+    return std::string(recordingFilePath) + std::string(BINARY_STORE_MANIFEST_SUFFIX);
+}
+
 std::string getTimeTravelReadAliasPath()
 {
     return std::string(DEFAULT_RECORDING_FILE_PATH);
@@ -90,12 +104,54 @@ std::string resolveTimeTravelReadProbePath()
     return aliasPath.string();
 }
 
+BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath)
+{
+    const auto manifestPath = getRecordingManifestPath(recordingFilePath);
+    std::ifstream input(manifestPath);
+    if (!input)
+    {
+        return {};
+    }
+
+    std::string header;
+    std::getline(input, header);
+    if (!input || header != BINARY_STORE_MANIFEST_MAGIC)
+    {
+        throw CannotOpenSink("Invalid binary store manifest header in {}", manifestPath);
+    }
+
+    BinaryStoreManifest manifest;
+    std::string line;
+    while (std::getline(input, line))
+    {
+        if (line.empty())
+        {
+            continue;
+        }
+
+        std::istringstream lineStream(line);
+        BinaryStoreManifestEntry entry;
+        if (!(lineStream >> entry.segmentId >> entry.payloadOffset >> entry.storedSizeBytes >> entry.logicalSizeBytes >> entry.minWatermark
+              >> entry.maxWatermark))
+        {
+            throw CannotOpenSink("Invalid binary store manifest entry in {}", manifestPath);
+        }
+        manifest.segments.push_back(entry);
+    }
+
+    return manifest;
+}
+
 size_t getRecordingStorageBytes()
 {
     return accumulateRecordingDirectory(
         [](const std::filesystem::directory_entry& entry, std::error_code& ec) -> uintmax_t
         {
             if (!entry.is_regular_file(ec))
+            {
+                return 0;
+            }
+            if (isManifestFile(entry.path()))
             {
                 return 0;
             }
@@ -110,6 +166,10 @@ size_t getRecordingFileCount()
         {
             if (entry.is_regular_file(ec))
             {
+                if (isManifestFile(entry.path()))
+                {
+                    return 0;
+                }
                 return 1;
             }
             return 0;

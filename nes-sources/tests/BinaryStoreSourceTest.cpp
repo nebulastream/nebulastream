@@ -126,8 +126,10 @@ public:
     void writeRows(
         const std::filesystem::path& filePath,
         const Replay::BinaryStoreCompressionCodec compression,
+        const std::vector<Timestamp::Underlying>& watermarks,
         const int32_t compressionLevel = 3) const
     {
+        ASSERT_EQ(watermarks.size(), rows.size());
         auto bufferManager = BufferManager::create(512, 4);
         MockPipelineContext context(bufferManager);
         StoreOperatorHandler handler({
@@ -143,9 +145,10 @@ public:
         });
 
         handler.start(context, 0);
-        for (const auto row : rows)
+        for (size_t i = 0; i < rows.size(); ++i)
         {
-            handler.append(reinterpret_cast<const uint8_t*>(&row), sizeof(row));
+            const auto& row = rows[i];
+            handler.append(reinterpret_cast<const uint8_t*>(&row), sizeof(row), Timestamp(watermarks[i]));
         }
         handler.stop(QueryTerminationType::Graceful, context);
     }
@@ -182,12 +185,13 @@ public:
 
     std::filesystem::path tempDir;
     const std::vector<TestRow> rows{{1, 10}, {2, 20}, {3, 30}, {4, 40}, {5, 50}};
+    const std::vector<Timestamp::Underlying> watermarks{1000, 1000, 2000, 3000, 3000};
 };
 
 TEST_F(BinaryStoreSourceTest, ReadsLegacyUncompressedBinaryStoreFiles)
 {
     const auto filePath = tempDir / "legacy.store";
-    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
 
     EXPECT_EQ(readRows(filePath), rows);
     EXPECT_EQ(BinaryStoreSource::readSchemaFromFile(filePath.string()), getSchema());
@@ -196,7 +200,7 @@ TEST_F(BinaryStoreSourceTest, ReadsLegacyUncompressedBinaryStoreFiles)
 TEST_F(BinaryStoreSourceTest, ReadsSegmentedZstdBinaryStoreFiles)
 {
     const auto filePath = tempDir / "compressed.store";
-    writeRows(filePath, Replay::BinaryStoreCompressionCodec::Zstd, -3);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::Zstd, watermarks, -3);
 
     EXPECT_EQ(readRows(filePath), rows);
     EXPECT_EQ(BinaryStoreSource::readSchemaFromFile(filePath.string()), getSchema());
@@ -205,12 +209,58 @@ TEST_F(BinaryStoreSourceTest, ReadsSegmentedZstdBinaryStoreFiles)
 TEST_F(BinaryStoreSourceTest, TracksPhysicalReplayReadBytesForLegacyFiles)
 {
     const auto filePath = tempDir / "legacy-metrics.store";
-    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
 
     Replay::clearReplayReadBytes();
     EXPECT_EQ(readRows(filePath), rows);
     EXPECT_EQ(Replay::getReplayReadBytes(), rows.size() * sizeof(TestRow));
     Replay::clearReplayReadBytes();
+}
+
+TEST_F(BinaryStoreSourceTest, WritesRawStoreManifestWithSegmentWatermarks)
+{
+    const auto filePath = tempDir / "raw-manifest.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    const auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_EQ(manifest.segments.size(), 3U);
+
+    EXPECT_EQ(manifest.segments[0].logicalSizeBytes, sizeof(TestRow) * 2);
+    EXPECT_EQ(manifest.segments[0].getMinWatermark(), Timestamp(1000));
+    EXPECT_EQ(manifest.segments[0].getMaxWatermark(), Timestamp(1000));
+
+    EXPECT_EQ(manifest.segments[1].logicalSizeBytes, sizeof(TestRow) * 2);
+    EXPECT_EQ(manifest.segments[1].getMinWatermark(), Timestamp(2000));
+    EXPECT_EQ(manifest.segments[1].getMaxWatermark(), Timestamp(3000));
+
+    EXPECT_EQ(manifest.segments[2].logicalSizeBytes, sizeof(TestRow));
+    EXPECT_EQ(manifest.segments[2].getMinWatermark(), Timestamp(3000));
+    EXPECT_EQ(manifest.segments[2].getMaxWatermark(), Timestamp(3000));
+
+    ASSERT_TRUE(manifest.retainedStartWatermark().has_value());
+    ASSERT_TRUE(manifest.fillWatermark().has_value());
+    EXPECT_EQ(*manifest.retainedStartWatermark(), Timestamp(1000));
+    EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
+}
+
+TEST_F(BinaryStoreSourceTest, WritesCompressedStoreManifestWithSegmentWatermarks)
+{
+    const auto filePath = tempDir / "compressed-manifest.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::Zstd, watermarks, -3);
+
+    const auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_EQ(manifest.segments.size(), 3U);
+
+    EXPECT_EQ(manifest.segments[0].logicalSizeBytes, sizeof(TestRow) * 2);
+    EXPECT_EQ(manifest.segments[1].logicalSizeBytes, sizeof(TestRow) * 2);
+    EXPECT_EQ(manifest.segments[2].logicalSizeBytes, sizeof(TestRow));
+
+    EXPECT_LT(manifest.segments[0].payloadOffset, manifest.segments[1].payloadOffset);
+    EXPECT_LT(manifest.segments[1].payloadOffset, manifest.segments[2].payloadOffset);
+    EXPECT_EQ(manifest.segments[0].getMinWatermark(), Timestamp(1000));
+    EXPECT_EQ(manifest.segments[1].getMaxWatermark(), Timestamp(3000));
+    EXPECT_EQ(manifest.segments[2].getMinWatermark(), Timestamp(3000));
+    EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
 }
 }
 }

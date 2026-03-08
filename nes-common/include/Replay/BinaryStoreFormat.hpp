@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <algorithm>
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <string_view>
+#include <vector>
+
+#include <Time/Timestamp.hpp>
 
 namespace NES::Replay
 {
@@ -30,11 +35,63 @@ enum class BinaryStoreCompressionCodec : uint32_t
 inline constexpr int32_t BINARY_STORE_ZSTD_FAST1_COMPRESSION_LEVEL = -1;
 inline constexpr int32_t DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL = -3;
 inline constexpr int32_t BINARY_STORE_ZSTD_FAST6_COMPRESSION_LEVEL = -6;
+inline constexpr std::string_view BINARY_STORE_MANIFEST_MAGIC = "NES_BINARY_STORE_MANIFEST_V1";
+inline constexpr std::string_view BINARY_STORE_MANIFEST_SUFFIX = ".manifest";
 
 struct BinaryStoreSegmentHeader
 {
     uint32_t decodedSize;
     uint32_t encodedSize;
+};
+
+struct BinaryStoreManifestEntry
+{
+    uint64_t segmentId{0};
+    uint64_t payloadOffset{0};
+    uint64_t storedSizeBytes{0};
+    uint64_t logicalSizeBytes{0};
+    Timestamp::Underlying minWatermark{Timestamp::INITIAL_VALUE};
+    Timestamp::Underlying maxWatermark{Timestamp::INITIAL_VALUE};
+
+    [[nodiscard]] Timestamp getMinWatermark() const { return Timestamp(minWatermark); }
+    [[nodiscard]] Timestamp getMaxWatermark() const { return Timestamp(maxWatermark); }
+    [[nodiscard]] bool operator==(const BinaryStoreManifestEntry& other) const = default;
+};
+
+struct BinaryStoreManifest
+{
+    std::vector<BinaryStoreManifestEntry> segments;
+
+    [[nodiscard]] std::optional<Timestamp> retainedStartWatermark() const
+    {
+        if (segments.empty())
+        {
+            return std::nullopt;
+        }
+        auto minWatermark = segments.front().minWatermark;
+        for (const auto& segment : segments)
+        {
+            minWatermark = std::min(minWatermark, segment.minWatermark);
+        }
+        return Timestamp(minWatermark);
+    }
+
+    [[nodiscard]] std::optional<Timestamp> retainedEndWatermark() const
+    {
+        if (segments.empty())
+        {
+            return std::nullopt;
+        }
+        auto maxWatermark = segments.front().maxWatermark;
+        for (const auto& segment : segments)
+        {
+            maxWatermark = std::max(maxWatermark, segment.maxWatermark);
+        }
+        return Timestamp(maxWatermark);
+    }
+
+    [[nodiscard]] std::optional<Timestamp> fillWatermark() const { return retainedEndWatermark(); }
+    [[nodiscard]] bool operator==(const BinaryStoreManifest& other) const = default;
 };
 
 inline constexpr std::array<char, 8> BINARY_STORE_MAGIC{'N', 'E', 'S', 'S', 'T', 'O', 'R', 'E'};

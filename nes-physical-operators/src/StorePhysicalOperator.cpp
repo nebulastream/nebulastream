@@ -139,16 +139,17 @@ void StorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& ex
     auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
     auto dataPtr = nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(row.data()));
     nautilus::invoke(
-        +[](OperatorHandler* h, int8_t* data, uint32_t len)
+        +[](OperatorHandler* h, int8_t* data, uint32_t len, Timestamp watermark)
         {
             if (auto* store = dynamic_cast<StoreOperatorHandler*>(h))
             {
-                store->append(reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(len));
+                store->append(reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(len), watermark);
             }
         },
         handler,
         dataPtr,
-        nautilus::val<uint32_t>(rowWidth));
+        nautilus::val<uint32_t>(rowWidth),
+        executionCtx.watermarkTs);
 }
 
 void StorePhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
