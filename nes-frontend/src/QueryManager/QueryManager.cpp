@@ -234,7 +234,14 @@ QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<Lo
                 .structuralFingerprint = explanation.selection.structuralFingerprint,
                 .retentionWindowMs = retentionWindowForSelectionExplanation(explanation, plan, this->state.recordingCatalog),
                 .representation = explanation.selection.representation,
-                .ownerQueries = ownerQueries});
+                .ownerQueries = ownerQueries,
+                .lifecycleState = std::nullopt,
+                .retainedStartWatermark = std::nullopt,
+                .retainedEndWatermark = std::nullopt,
+                .fillWatermark = std::nullopt,
+                .segmentCount = std::nullopt,
+                .storageBytes = std::nullopt,
+                .successorRecordingId = std::nullopt});
     }
 
     for (auto& [queryId, selectedRecordings] : selectedRecordingsByQuery)
@@ -424,10 +431,13 @@ void QueryManager::refreshWorkerMetrics()
                             {
                                 return std::pair{statistic.nodeFingerprint, statistic};
                             })
-                        | std::ranges::to<std::unordered_map<std::string, ReplayOperatorStatistics>>()}))
+                        | std::ranges::to<std::unordered_map<std::string, ReplayOperatorStatistics>>(),
+                    .recordingStatuses = status.replayMetrics.recordingStatuses}))
         {
             NES_WARNING("Could not refresh runtime metrics for unknown worker {}", host);
+            continue;
         }
+        state.recordingCatalog.reconcileWorkerRuntimeStatus(host, status.replayMetrics.recordingStatuses);
     }
 }
 

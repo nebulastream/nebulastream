@@ -280,6 +280,16 @@ TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredRawStoreSegmentsByRetentionW
     EXPECT_EQ(manifest.segments.back().getMaxWatermark(), Timestamp(3000));
     EXPECT_EQ(*manifest.retainedStartWatermark(), Timestamp(2000));
     EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
+
+    const auto runtimeStatus = Replay::readRecordingRuntimeStatus(filePath.string());
+    EXPECT_EQ(runtimeStatus.recordingId, "raw-retention");
+    EXPECT_EQ(runtimeStatus.lifecycleState, Replay::RecordingLifecycleState::Filling);
+    EXPECT_EQ(runtimeStatus.retentionWindowMs, std::optional<uint64_t>(1500));
+    EXPECT_EQ(runtimeStatus.retainedStartWatermark, std::optional<Timestamp>(Timestamp(2000)));
+    EXPECT_EQ(runtimeStatus.retainedEndWatermark, std::optional<Timestamp>(Timestamp(3000)));
+    EXPECT_EQ(runtimeStatus.fillWatermark, std::optional<Timestamp>(Timestamp(3000)));
+    EXPECT_EQ(runtimeStatus.segmentCount, 2U);
+    EXPECT_EQ(runtimeStatus.storageBytes, std::filesystem::file_size(filePath));
 }
 
 TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredCompressedStoreSegmentsByRetentionWindow)
@@ -296,6 +306,29 @@ TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredCompressedStoreSegmentsByRet
     EXPECT_EQ(manifest.segments.back().getMaxWatermark(), Timestamp(3000));
     EXPECT_EQ(*manifest.retainedStartWatermark(), Timestamp(2000));
     EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
+
+    const auto runtimeStatus = Replay::readRecordingRuntimeStatus(filePath.string());
+    EXPECT_EQ(runtimeStatus.recordingId, "compressed-retention");
+    EXPECT_EQ(runtimeStatus.lifecycleState, Replay::RecordingLifecycleState::Filling);
+    EXPECT_EQ(runtimeStatus.retentionWindowMs, std::optional<uint64_t>(1500));
+    EXPECT_EQ(runtimeStatus.retainedStartWatermark, std::optional<Timestamp>(Timestamp(2000)));
+    EXPECT_EQ(runtimeStatus.retainedEndWatermark, std::optional<Timestamp>(Timestamp(3000)));
+    EXPECT_EQ(runtimeStatus.fillWatermark, std::optional<Timestamp>(Timestamp(3000)));
+    EXPECT_EQ(runtimeStatus.segmentCount, 2U);
+    EXPECT_EQ(runtimeStatus.storageBytes, std::filesystem::file_size(filePath));
+}
+
+TEST_F(BinaryStoreSourceTest, DerivesReadyRecordingRuntimeStatusWhenRetentionIsCovered)
+{
+    const auto filePath = tempDir / "ready-retention.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks, 3, 500);
+
+    const auto runtimeStatus = Replay::readRecordingRuntimeStatus(filePath.string());
+    EXPECT_EQ(runtimeStatus.recordingId, "ready-retention");
+    EXPECT_EQ(runtimeStatus.lifecycleState, Replay::RecordingLifecycleState::Ready);
+    EXPECT_EQ(runtimeStatus.retentionWindowMs, std::optional<uint64_t>(500));
+    EXPECT_EQ(runtimeStatus.retainedStartWatermark, std::optional<Timestamp>(Timestamp(2000)));
+    EXPECT_EQ(runtimeStatus.fillWatermark, std::optional<Timestamp>(Timestamp(3000)));
 }
 }
 }

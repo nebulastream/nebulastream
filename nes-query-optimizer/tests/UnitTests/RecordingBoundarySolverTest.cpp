@@ -113,6 +113,7 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-left", host, 10.0)}},
@@ -122,6 +123,7 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("left-leaf", host, 2.0)}},
@@ -131,6 +133,7 @@ TEST_F(RecordingBoundarySolverTest, SolverConsumesCandidateSetAndReturnsMinimumC
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-right", host, 3.0)}}};
@@ -182,6 +185,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
             .downstreamNode = fallbackHost,
             .routeNodes = {fallbackHost},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-branch", fallbackHost, 3.0, 4096)}},
@@ -191,6 +195,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
             .downstreamNode = constrainedHost,
             .routeNodes = {constrainedHost},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-left", constrainedHost, 1.0, 4096)}},
@@ -200,6 +205,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesBudgetViolatingCutAndMovesBoun
             .downstreamNode = constrainedHost,
             .routeNodes = {constrainedHost},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-right", constrainedHost, 1.0, 4096)}}};
@@ -243,6 +249,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesReplayLatencyAndMovesBoundaryU
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-branch", host, 3.0, 1024, 4)}},
@@ -252,6 +259,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesReplayLatencyAndMovesBoundaryU
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-left", host, 1.0, 1024, 4)}},
@@ -261,6 +269,7 @@ TEST_F(RecordingBoundarySolverTest, SolverRepricesReplayLatencyAndMovesBoundaryU
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-right", host, 1.5, 1024, 2)}}};
@@ -293,7 +302,8 @@ TEST_F(RecordingBoundarySolverTest, SolverBudgetsUpgradeByIncrementalStorageByte
             .recordingStorageBytes = 4096,
             .recordingFileCount = 1,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     const auto rootId = OperatorId(1);
     const auto leafId = OperatorId(2);
@@ -308,6 +318,7 @@ TEST_F(RecordingBoundarySolverTest, SolverBudgetsUpgradeByIncrementalStorageByte
         .downstreamNode = host,
         .routeNodes = {host},
         .materializationEdges = {},
+        .activeQueryMaterializationTargets = {},
         .beneficiaryQueries = {},
         .coversIncomingQuery = true,
         .options = {makeUpgradeRecordingOption("upgrade", host, 1.0, 8192, 1024)}}};
@@ -344,6 +355,7 @@ TEST_F(RecordingBoundarySolverTest, SolverKeepsLowestMaintenanceFeasibleCutAcros
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("root-branch", host, 1.4)}},
@@ -353,6 +365,7 @@ TEST_F(RecordingBoundarySolverTest, SolverKeepsLowestMaintenanceFeasibleCutAcros
             .downstreamNode = host,
             .routeNodes = {host},
             .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
             .beneficiaryQueries = {},
             .coversIncomingQuery = true,
             .options = {makeNewRecordingOption("branch-leaf", host, 0.8)}}};

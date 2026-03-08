@@ -26,15 +26,27 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsStoresSnapshotWithoutChangingT
     ASSERT_TRUE(catalog.addWorker(Host("worker-1:8080"), "worker-1-data", INFINITE_CAPACITY, {}));
     const auto version = catalog.getVersion();
     const auto observedAt = std::chrono::system_clock::now();
+    const auto recordingStatus = Replay::RecordingRuntimeStatus{
+        .recordingId = "recording-1",
+        .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+        .lifecycleState = Replay::RecordingLifecycleState::Ready,
+        .retentionWindowMs = 60'000,
+        .retainedStartWatermark = Timestamp(1000),
+        .retainedEndWatermark = Timestamp(61'000),
+        .fillWatermark = Timestamp(61'000),
+        .segmentCount = 3,
+        .storageBytes = 4096,
+        .successorRecordingId = std::nullopt};
 
     EXPECT_TRUE(catalog.updateWorkerRuntimeMetrics(
         Host("worker-1:8080"),
         WorkerRuntimeMetrics{
             .observedAt = observedAt,
             .recordingStorageBytes = 42,
-            .recordingFileCount = 3,
+            .recordingFileCount = 1,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {recordingStatus}}));
     EXPECT_EQ(catalog.getVersion(), version);
 
     const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
@@ -44,9 +56,10 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsStoresSnapshotWithoutChangingT
         (WorkerRuntimeMetrics{
             .observedAt = observedAt,
             .recordingStorageBytes = 42,
-            .recordingFileCount = 3,
+            .recordingFileCount = 1,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {recordingStatus}}));
 }
 
 TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsRejectsUnknownWorker)
@@ -68,7 +81,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesRecordingWriteRateFromS
             .recordingStorageBytes = 1024,
             .recordingFileCount = 1,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
     ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
         Host("worker-1:8080"),
         WorkerRuntimeMetrics{
@@ -76,7 +90,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesRecordingWriteRateFromS
             .recordingStorageBytes = 5120,
             .recordingFileCount = 2,
             .activeQueryCount = 2,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
     ASSERT_TRUE(metrics.has_value());
@@ -96,7 +111,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesReplayReadRateFromSucce
             .recordingFileCount = 1,
             .activeQueryCount = 1,
             .replayReadBytes = 4096,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
     ASSERT_TRUE(catalog.updateWorkerRuntimeMetrics(
         Host("worker-1:8080"),
         WorkerRuntimeMetrics{
@@ -105,7 +121,8 @@ TEST(WorkerCatalogTest, UpdateWorkerRuntimeMetricsDerivesReplayReadRateFromSucce
             .recordingFileCount = 2,
             .activeQueryCount = 2,
             .replayReadBytes = 12'288,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     const auto metrics = catalog.getWorkerRuntimeMetrics(Host("worker-1:8080"));
     ASSERT_TRUE(metrics.has_value());

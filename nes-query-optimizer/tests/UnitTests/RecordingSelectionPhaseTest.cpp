@@ -208,7 +208,15 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/existing.bin",
             .structuralFingerprint = structuralFingerprint,
             .retentionWindowMs = replaySpecification.retentionWindowMs,
-            .ownerQueries = {DistributedQueryId("existing-query")}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, replaySpecification, catalog);
 
@@ -283,7 +291,15 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/weaker.bin",
             .structuralFingerprint = structuralFingerprint,
             .retentionWindowMs = existingReplaySpecification.retentionWindowMs,
-            .ownerQueries = {DistributedQueryId("existing-query")}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, requestedReplaySpecification, catalog);
     const auto rootCandidate = std::ranges::find_if(
@@ -396,7 +412,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseBudgetsUpgradeByIncrementalSto
             .recordingStorageBytes = existingOption->cost.estimatedStorageBytes,
             .recordingFileCount = 1,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     RecordingCatalog catalog;
     const auto weakerRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(
@@ -408,7 +425,15 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseBudgetsUpgradeByIncrementalSto
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/weaker.bin",
             .structuralFingerprint = structuralFingerprint,
             .retentionWindowMs = existingReplaySpecification.retentionWindowMs,
-            .ownerQueries = {DistributedQueryId("existing-query")}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(plan, requestedReplaySpecification, catalog);
     const auto candidate = findRawCreateCost(candidateSet, requestedReplaySpecification);
@@ -556,7 +581,15 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/active-existing.bin",
             .structuralFingerprint = createStructuralRecordingFingerprint(activeSubplanRoot, host),
             .retentionWindowMs = replaySpecification.retentionWindowMs,
-            .ownerQueries = {DistributedQueryId("active-query")}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("active-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
     catalog.upsertQueryMetadata(
         DistributedQueryId("active-query"),
         ReplayableQueryMetadata{
@@ -783,7 +816,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsFor
                     .inputTuples = 128,
                     .outputTuples = 64,
                     .taskCount = 2,
-                    .executionTimeNanos = 34'000'000}}}}));
+                    .executionTimeNanos = 34'000'000}}},
+            .recordingStatuses = {}}));
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
         plan,
@@ -839,7 +873,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesMeasuredReplayReadBandwidt
             .recordingFileCount = 0,
             .activeQueryCount = 0,
             .replayReadBytes = 0,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
     constexpr size_t measuredReplayReadBytesPerSecond = 5 * 1024 * 1024;
     ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
         host,
@@ -849,7 +884,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesMeasuredReplayReadBandwidt
             .recordingFileCount = 0,
             .activeQueryCount = 0,
             .replayReadBytes = measuredReplayReadBytesPerSecond * 2,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     const auto plan = createPlacedUnaryPlan(host);
     const auto root = plan.getRootOperators().front();

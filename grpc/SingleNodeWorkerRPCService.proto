@@ -103,6 +103,11 @@ message WorkerStatusRequest {
 
 message WorkerStatusResponse {
   message ReplayMetrics {
+    enum RecordingLifecycleState {
+      RECORDING_LIFECYCLE_STATE_FILLING = 0;
+      RECORDING_LIFECYCLE_STATE_READY = 1;
+    }
+
     message ReplayOperatorStatistics {
       string node_fingerprint = 1;
       uint64 input_tuples = 2;
@@ -111,11 +116,25 @@ message WorkerStatusResponse {
       uint64 execution_time_nanos = 5;
     }
 
+    message RecordingStatus {
+      string recording_id = 1;
+      string file_path = 2;
+      RecordingLifecycleState lifecycle_state = 3;
+      optional uint64 retention_window_ms = 4;
+      optional uint64 retained_start_watermark = 5;
+      optional uint64 retained_end_watermark = 6;
+      optional uint64 fill_watermark = 7;
+      uint64 segment_count = 8;
+      uint64 storage_bytes = 9;
+      optional string successor_recording_id = 10;
+    }
+
     uint64 recording_storage_bytes = 1;
     uint64 recording_file_count = 2;
     uint64 active_query_count = 3;
     uint64 replay_read_bytes = 5;
     repeated ReplayOperatorStatistics operator_statistics = 4;
+    repeated RecordingStatus recording_statuses = 6;
   }
 
   message ActiveQuery {

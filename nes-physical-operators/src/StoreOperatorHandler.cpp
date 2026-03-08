@@ -160,6 +160,16 @@ void writeManifestFile(const std::string& manifestPath, const Replay::BinaryStor
     }
 
     manifestOutput << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
+    if (manifest.retentionWindowMs.has_value())
+    {
+        manifestOutput << Replay::BINARY_STORE_MANIFEST_METADATA_PREFIX << Replay::BINARY_STORE_MANIFEST_RETENTION_WINDOW_KEY << '='
+                       << *manifest.retentionWindowMs << '\n';
+    }
+    if (manifest.successorRecordingId.has_value())
+    {
+        manifestOutput << Replay::BINARY_STORE_MANIFEST_METADATA_PREFIX << Replay::BINARY_STORE_MANIFEST_SUCCESSOR_RECORDING_KEY << '='
+                       << *manifest.successorRecordingId << '\n';
+    }
     for (const auto& entry : manifest.segments)
     {
         manifestOutput << entry.segmentId << ' ' << entry.payloadOffset << ' ' << entry.storedSizeBytes << ' ' << entry.logicalSizeBytes
@@ -381,6 +391,8 @@ void StoreOperatorHandler::maybeGarbageCollectExpiredSegments(const Timestamp cu
 
     const auto cutoff = retentionCutoff(currentWatermark, *config.retentionWindowMs);
     Replay::BinaryStoreManifest retainedManifest;
+    retainedManifest.retentionWindowMs = manifest.retentionWindowMs;
+    retainedManifest.successorRecordingId = manifest.successorRecordingId;
     retainedManifest.segments.reserve(manifest.segments.size());
     for (const auto& segment : manifest.segments)
     {
@@ -434,6 +446,8 @@ void StoreOperatorHandler::rewriteRecording(
         copyFileRange(input, output, 0, dataStartOffset);
 
         Replay::BinaryStoreManifest compactedManifest;
+        compactedManifest.retentionWindowMs = retainedManifest.retentionWindowMs;
+        compactedManifest.successorRecordingId = retainedManifest.successorRecordingId;
         compactedManifest.segments.reserve(retainedManifest.segments.size());
         auto nextPayloadOffset = dataStartOffset;
         for (const auto& segment : retainedManifest.segments)
@@ -483,16 +497,12 @@ void StoreOperatorHandler::initializeManifestState(const bool truncateManifest)
     const auto manifestPath = Replay::getRecordingManifestPath(config.filePath);
     if (truncateManifest)
     {
-        std::ofstream manifestOutput(manifestPath, std::ios::trunc);
-        if (!manifestOutput)
-        {
-            throw CannotOpenSink("Could not create binary store manifest {}", manifestPath);
-        }
-        manifestOutput << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
-        if (!manifestOutput)
-        {
-            throw CannotOpenSink("Failed to initialize binary store manifest {}", manifestPath);
-        }
+        writeManifestFile(
+            manifestPath,
+            Replay::BinaryStoreManifest{
+                .retentionWindowMs = config.retentionWindowMs,
+                .successorRecordingId = std::nullopt,
+                .segments = {}});
         nextSegmentId = 0;
         resetCurrentSegment();
         return;
@@ -500,22 +510,23 @@ void StoreOperatorHandler::initializeManifestState(const bool truncateManifest)
 
     if (!std::filesystem::exists(manifestPath))
     {
-        std::ofstream manifestOutput(manifestPath);
-        if (!manifestOutput)
-        {
-            throw CannotOpenSink("Could not create binary store manifest {}", manifestPath);
-        }
-        manifestOutput << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
-        if (!manifestOutput)
-        {
-            throw CannotOpenSink("Failed to initialize binary store manifest {}", manifestPath);
-        }
+        writeManifestFile(
+            manifestPath,
+            Replay::BinaryStoreManifest{
+                .retentionWindowMs = config.retentionWindowMs,
+                .successorRecordingId = std::nullopt,
+                .segments = {}});
         nextSegmentId = 0;
         resetCurrentSegment();
         return;
     }
 
-    const auto manifest = Replay::readBinaryStoreManifest(config.filePath);
+    auto manifest = Replay::readBinaryStoreManifest(config.filePath);
+    if (manifest.retentionWindowMs != config.retentionWindowMs)
+    {
+        manifest.retentionWindowMs = config.retentionWindowMs;
+        writeManifestFile(manifestPath, manifest);
+    }
     nextSegmentId = manifest.segments.empty() ? 0 : manifest.segments.back().segmentId + 1;
     resetCurrentSegment();
 }

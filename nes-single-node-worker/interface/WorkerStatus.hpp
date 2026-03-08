@@ -21,6 +21,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Replay/ReplayExecutionStatistics.hpp>
+#include <Replay/RecordingRuntimeStatus.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
@@ -37,6 +38,7 @@ struct WorkerStatus
         size_t activeQueryCount = 0;
         uint64_t replayReadBytes = 0;
         std::vector<ReplayOperatorStatistics> operatorStatistics;
+        std::vector<Replay::RecordingRuntimeStatus> recordingStatuses;
 
         [[nodiscard]] bool operator==(const ReplayMetrics& other) const = default;
     };

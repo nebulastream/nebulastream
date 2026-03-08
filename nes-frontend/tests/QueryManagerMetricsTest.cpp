@@ -242,16 +242,27 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
     ASSERT_TRUE(workerCatalog->addWorker(Host("worker-1:8080"), "worker-1-data", INFINITE_CAPACITY, {}));
     const auto observedAt = std::chrono::system_clock::now();
     const auto fingerprint = std::string("selection@worker-1:8080");
+    const auto recordingStatus = Replay::RecordingRuntimeStatus{
+        .recordingId = "recording-1",
+        .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+        .lifecycleState = Replay::RecordingLifecycleState::Ready,
+        .retentionWindowMs = 60'000,
+        .retainedStartWatermark = Timestamp(1000),
+        .retainedEndWatermark = Timestamp(61'000),
+        .fillWatermark = Timestamp(61'000),
+        .segmentCount = 2,
+        .storageBytes = 1337,
+        .successorRecordingId = std::nullopt};
 
     QueryManager queryManager(
         workerCatalog,
-        [observedAt, fingerprint](const WorkerConfig&)
+        [observedAt, fingerprint, recordingStatus](const WorkerConfig&)
         {
             WorkerStatus status;
             status.until = observedAt;
             status.replayMetrics = WorkerStatus::ReplayMetrics{
                 .recordingStorageBytes = 1337,
-                .recordingFileCount = 2,
+                .recordingFileCount = 1,
                 .activeQueryCount = 4,
                 .replayReadBytes = 8192,
                 .operatorStatistics = {ReplayOperatorStatistics{
@@ -259,7 +270,8 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
                     .inputTuples = 128,
                     .outputTuples = 32,
                     .taskCount = 4,
-                    .executionTimeNanos = 20'000'000}}};
+                    .executionTimeNanos = 20'000'000}},
+                .recordingStatuses = {recordingStatus}};
             return std::make_unique<FakeWorkerStatusBackend>(status);
         });
 
@@ -272,7 +284,7 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
         (WorkerRuntimeMetrics{
             .observedAt = observedAt,
             .recordingStorageBytes = 1337,
-            .recordingFileCount = 2,
+            .recordingFileCount = 1,
             .activeQueryCount = 4,
             .replayReadBytes = 8192,
             .replayOperatorStatistics
@@ -282,7 +294,8 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
                     .inputTuples = 128,
                     .outputTuples = 32,
                     .taskCount = 4,
-                    .executionTimeNanos = 20'000'000}}}}));
+                    .executionTimeNanos = 20'000'000}}},
+            .recordingStatuses = {recordingStatus}}));
     const auto operatorStatistics = workerCatalog->getReplayOperatorStatistics(Host("worker-1:8080"), fingerprint);
     ASSERT_TRUE(operatorStatistics.has_value());
     EXPECT_DOUBLE_EQ(operatorStatistics->averageExecutionTimeMs(), 5.0);
@@ -322,7 +335,18 @@ TEST(QueryManagerMetricsTest, WorkerStatusSerializationRoundTripsReplayOperatorS
             .inputTuples = 200,
             .outputTuples = 50,
             .taskCount = 4,
-            .executionTimeNanos = 80'000'000}}};
+            .executionTimeNanos = 80'000'000}},
+        .recordingStatuses = {Replay::RecordingRuntimeStatus{
+            .recordingId = "recording-1",
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .lifecycleState = Replay::RecordingLifecycleState::Filling,
+            .retentionWindowMs = 60'000,
+            .retainedStartWatermark = Timestamp(1000),
+            .retainedEndWatermark = Timestamp(2000),
+            .fillWatermark = Timestamp(2000),
+            .segmentCount = 1,
+            .storageBytes = 1024,
+            .successorRecordingId = std::nullopt}}};
 
     WorkerStatusResponse response;
     serializeWorkerStatus(status, &response);
@@ -331,6 +355,71 @@ TEST(QueryManagerMetricsTest, WorkerStatusSerializationRoundTripsReplayOperatorS
     EXPECT_EQ(roundTrip.after, status.after);
     EXPECT_EQ(roundTrip.until, status.until);
     EXPECT_EQ(roundTrip.replayMetrics, status.replayMetrics);
+}
+
+TEST(QueryManagerMetricsTest, RefreshWorkerMetricsMirrorsPerRecordingStatusIntoRecordingCatalog)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto recordingId = RecordingId("recording-1");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    QueryManagerState state;
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = worker,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .structuralFingerprint = "recording-1",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("query-1")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+
+    QueryManager queryManager(
+        workerCatalog,
+        [](const WorkerConfig&)
+        {
+            WorkerStatus status;
+            status.until = std::chrono::system_clock::now();
+            status.replayMetrics = WorkerStatus::ReplayMetrics{
+                .recordingStorageBytes = 2048,
+                .recordingFileCount = 1,
+                .activeQueryCount = 0,
+                .replayReadBytes = 0,
+                .operatorStatistics = {},
+                .recordingStatuses = {Replay::RecordingRuntimeStatus{
+                    .recordingId = "recording-1",
+                    .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+                    .lifecycleState = Replay::RecordingLifecycleState::Ready,
+                    .retentionWindowMs = 60'000,
+                    .retainedStartWatermark = Timestamp(1000),
+                    .retainedEndWatermark = Timestamp(61'000),
+                    .fillWatermark = Timestamp(61'000),
+                    .segmentCount = 3,
+                    .storageBytes = 2048,
+                    .successorRecordingId = std::nullopt}}};
+            return std::make_unique<FakeWorkerStatusBackend>(status);
+        },
+        std::move(state));
+
+    queryManager.refreshWorkerMetrics();
+
+    const auto recording = queryManager.getRecordingCatalog().getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Ready));
+    EXPECT_EQ(recording->retentionWindowMs, std::optional<uint64_t>(60'000));
+    EXPECT_EQ(recording->retainedStartWatermark, std::optional<Timestamp>(Timestamp(1000)));
+    EXPECT_EQ(recording->retainedEndWatermark, std::optional<Timestamp>(Timestamp(61'000)));
+    EXPECT_EQ(recording->fillWatermark, std::optional<Timestamp>(Timestamp(61'000)));
+    EXPECT_EQ(recording->segmentCount, std::optional<size_t>(3));
+    EXPECT_EQ(recording->storageBytes, std::optional<size_t>(2048));
 }
 
 TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromNetworkExplanations)
@@ -369,7 +458,15 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/stale.bin",
             .structuralFingerprint = "stale",
             .retentionWindowMs = 60'000,
-            .ownerQueries = {activeQueryId}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {activeQueryId},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
     state.recordingCatalog.upsertRecording(
         RecordingEntry{
             .id = reusedRecordingId,
@@ -377,7 +474,15 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
             .filePath = "/tmp/REPLAY-NebulaStream/recordings/reused.bin",
             .structuralFingerprint = "reused",
             .retentionWindowMs = 60'000,
-            .ownerQueries = {DistributedQueryId("other-query")}});
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("other-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     QueryManager queryManager(workerCatalog, [](const WorkerConfig&) { return std::make_unique<FakeLifecycleBackend>(); }, std::move(state));
 
@@ -567,7 +672,14 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
             .structuralFingerprint = activeRecording.structuralFingerprint,
             .retentionWindowMs = replaySpecification.retentionWindowMs,
             .representation = activeRecording.representation,
-            .ownerQueries = {activeQueryId}});
+            .ownerQueries = {activeQueryId},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     auto queryManager = std::make_shared<QueryManager>(
         workerCatalog,

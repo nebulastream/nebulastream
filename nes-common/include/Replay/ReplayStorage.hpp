@@ -18,8 +18,10 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include <Replay/BinaryStoreFormat.hpp>
+#include <Replay/RecordingRuntimeStatus.hpp>
 
 namespace NES::Replay
 {
@@ -34,6 +36,8 @@ inline constexpr size_t MIN_RECORDING_SIZE_BYTES = 4096;
 [[nodiscard]] std::string getTimeTravelReadAliasPath();
 [[nodiscard]] std::string resolveTimeTravelReadProbePath();
 [[nodiscard]] BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath);
+[[nodiscard]] RecordingRuntimeStatus readRecordingRuntimeStatus(const std::string& recordingFilePath);
+[[nodiscard]] std::vector<RecordingRuntimeStatus> getRecordingRuntimeStatuses();
 [[nodiscard]] size_t getRecordingStorageBytes();
 [[nodiscard]] size_t getRecordingFileCount();
 [[nodiscard]] uint64_t getReplayReadBytes();

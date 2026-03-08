@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <optional>
 #include <ranges>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
@@ -29,6 +30,36 @@
 
 namespace NES
 {
+namespace
+{
+WorkerStatusResponse::ReplayMetrics::RecordingLifecycleState
+serializeRecordingLifecycleState(const Replay::RecordingLifecycleState lifecycleState)
+{
+    switch (lifecycleState)
+    {
+        case Replay::RecordingLifecycleState::Filling:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_FILLING;
+        case Replay::RecordingLifecycleState::Ready:
+            return WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_READY;
+    }
+    std::unreachable();
+}
+
+Replay::RecordingLifecycleState
+deserializeRecordingLifecycleState(const WorkerStatusResponse::ReplayMetrics::RecordingLifecycleState lifecycleState)
+{
+    switch (lifecycleState)
+    {
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_FILLING:
+            return Replay::RecordingLifecycleState::Filling;
+        case WorkerStatusResponse::ReplayMetrics::RECORDING_LIFECYCLE_STATE_READY:
+            return Replay::RecordingLifecycleState::Ready;
+        default:
+            break;
+    }
+    throw CannotDeserialize("Unknown recording lifecycle state {}", static_cast<int>(lifecycleState));
+}
+}
 
 void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* response)
 {
@@ -85,6 +116,35 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
         operatorStatisticGRPC->set_task_count(statistic.taskCount);
         operatorStatisticGRPC->set_execution_time_nanos(statistic.executionTimeNanos);
     }
+    for (const auto& recordingStatus : status.replayMetrics.recordingStatuses)
+    {
+        auto* recordingStatusGRPC = replayMetricsGRPC->add_recording_statuses();
+        recordingStatusGRPC->set_recording_id(recordingStatus.recordingId);
+        recordingStatusGRPC->set_file_path(recordingStatus.filePath);
+        recordingStatusGRPC->set_lifecycle_state(serializeRecordingLifecycleState(recordingStatus.lifecycleState));
+        if (recordingStatus.retentionWindowMs.has_value())
+        {
+            recordingStatusGRPC->set_retention_window_ms(*recordingStatus.retentionWindowMs);
+        }
+        if (recordingStatus.retainedStartWatermark.has_value())
+        {
+            recordingStatusGRPC->set_retained_start_watermark(recordingStatus.retainedStartWatermark->getRawValue());
+        }
+        if (recordingStatus.retainedEndWatermark.has_value())
+        {
+            recordingStatusGRPC->set_retained_end_watermark(recordingStatus.retainedEndWatermark->getRawValue());
+        }
+        if (recordingStatus.fillWatermark.has_value())
+        {
+            recordingStatusGRPC->set_fill_watermark(recordingStatus.fillWatermark->getRawValue());
+        }
+        recordingStatusGRPC->set_segment_count(recordingStatus.segmentCount);
+        recordingStatusGRPC->set_storage_bytes(recordingStatus.storageBytes);
+        if (recordingStatus.successorRecordingId.has_value())
+        {
+            recordingStatusGRPC->set_successor_recording_id(*recordingStatus.successorRecordingId);
+        }
+    }
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -138,6 +198,34 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                             .outputTuples = statistic.output_tuples(),
                             .taskCount = statistic.task_count(),
                             .executionTimeNanos = statistic.execution_time_nanos()};
+                    })
+                | std::ranges::to<std::vector>(),
+            .recordingStatuses
+            = response->replay_metrics().recording_statuses()
+                | std::views::transform(
+                    [](const auto& recordingStatus)
+                    {
+                        return Replay::RecordingRuntimeStatus{
+                            .recordingId = recordingStatus.recording_id(),
+                            .filePath = recordingStatus.file_path(),
+                            .lifecycleState = deserializeRecordingLifecycleState(recordingStatus.lifecycle_state()),
+                            .retentionWindowMs = recordingStatus.has_retention_window_ms()
+                                ? std::make_optional(recordingStatus.retention_window_ms())
+                                : std::nullopt,
+                            .retainedStartWatermark = recordingStatus.has_retained_start_watermark()
+                                ? std::make_optional(Timestamp(recordingStatus.retained_start_watermark()))
+                                : std::nullopt,
+                            .retainedEndWatermark = recordingStatus.has_retained_end_watermark()
+                                ? std::make_optional(Timestamp(recordingStatus.retained_end_watermark()))
+                                : std::nullopt,
+                            .fillWatermark = recordingStatus.has_fill_watermark()
+                                ? std::make_optional(Timestamp(recordingStatus.fill_watermark()))
+                                : std::nullopt,
+                            .segmentCount = recordingStatus.segment_count(),
+                            .storageBytes = recordingStatus.storage_bytes(),
+                            .successorRecordingId = recordingStatus.has_successor_recording_id()
+                                ? std::make_optional(recordingStatus.successor_recording_id())
+                                : std::nullopt};
                     })
                 | std::ranges::to<std::vector>()}};
 }

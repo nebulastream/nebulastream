@@ -18,6 +18,7 @@
 #include <array>
 #include <cstdint>
 #include <optional>
+#include <string>
 #include <string_view>
 #include <vector>
 
@@ -37,6 +38,9 @@ inline constexpr int32_t DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL = -3;
 inline constexpr int32_t BINARY_STORE_ZSTD_FAST6_COMPRESSION_LEVEL = -6;
 inline constexpr std::string_view BINARY_STORE_MANIFEST_MAGIC = "NES_BINARY_STORE_MANIFEST_V1";
 inline constexpr std::string_view BINARY_STORE_MANIFEST_SUFFIX = ".manifest";
+inline constexpr std::string_view BINARY_STORE_MANIFEST_METADATA_PREFIX = "meta ";
+inline constexpr std::string_view BINARY_STORE_MANIFEST_RETENTION_WINDOW_KEY = "retention_window_ms";
+inline constexpr std::string_view BINARY_STORE_MANIFEST_SUCCESSOR_RECORDING_KEY = "successor_recording_id";
 
 struct BinaryStoreSegmentHeader
 {
@@ -60,6 +64,8 @@ struct BinaryStoreManifestEntry
 
 struct BinaryStoreManifest
 {
+    std::optional<uint64_t> retentionWindowMs;
+    std::optional<std::string> successorRecordingId;
     std::vector<BinaryStoreManifestEntry> segments;
 
     [[nodiscard]] std::optional<Timestamp> retainedStartWatermark() const

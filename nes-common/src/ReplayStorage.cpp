@@ -14,15 +14,19 @@
 
 #include <Replay/ReplayStorage.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#include <optional>
+#include <ranges>
 #include <sstream>
 #include <string>
 #include <system_error>
 
 #include <ErrorHandling.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES::Replay
 {
@@ -34,6 +38,83 @@ std::atomic<uint64_t> replayReadBytes{0};
 bool isManifestFile(const std::filesystem::path& path)
 {
     return path.extension() == BINARY_STORE_MANIFEST_SUFFIX;
+}
+
+bool isCompactionTemporaryFile(const std::filesystem::path& path)
+{
+    constexpr std::string_view suffix = ".gc.tmp";
+    const auto pathString = path.string();
+    return pathString.size() >= suffix.size() && pathString.ends_with(suffix);
+}
+
+bool isRecordingPayloadFile(const std::filesystem::path& path)
+{
+    return !isManifestFile(path) && !isCompactionTemporaryFile(path);
+}
+
+RecordingLifecycleState deriveRecordingLifecycleState(const BinaryStoreManifest& manifest)
+{
+    if (manifest.segments.empty())
+    {
+        return RecordingLifecycleState::Filling;
+    }
+    if (!manifest.retentionWindowMs.has_value())
+    {
+        return RecordingLifecycleState::Ready;
+    }
+
+    const auto retainedStart = manifest.retainedStartWatermark();
+    const auto fillWatermark = manifest.fillWatermark();
+    if (!retainedStart.has_value() || !fillWatermark.has_value())
+    {
+        return RecordingLifecycleState::Filling;
+    }
+
+    const auto retainedDurationMs = fillWatermark->getRawValue() >= retainedStart->getRawValue()
+        ? fillWatermark->getRawValue() - retainedStart->getRawValue()
+        : 0;
+    return retainedDurationMs >= *manifest.retentionWindowMs ? RecordingLifecycleState::Ready : RecordingLifecycleState::Filling;
+}
+
+void parseManifestMetadataLine(const std::string& line, BinaryStoreManifest& manifest, const std::string& manifestPath)
+{
+    if (!line.starts_with(BINARY_STORE_MANIFEST_METADATA_PREFIX))
+    {
+        return;
+    }
+
+    const auto assignment = line.substr(BINARY_STORE_MANIFEST_METADATA_PREFIX.size());
+    const auto separatorPosition = assignment.find('=');
+    if (separatorPosition == std::string::npos)
+    {
+        throw CannotOpenSink("Invalid binary store manifest metadata in {}", manifestPath);
+    }
+
+    const auto key = assignment.substr(0, separatorPosition);
+    const auto value = assignment.substr(separatorPosition + 1);
+    if (key == BINARY_STORE_MANIFEST_RETENTION_WINDOW_KEY)
+    {
+        if (value.empty())
+        {
+            manifest.retentionWindowMs.reset();
+            return;
+        }
+        const auto retentionWindowMs = from_chars<uint64_t>(value);
+        if (!retentionWindowMs.has_value())
+        {
+            throw CannotOpenSink("Invalid binary store retention metadata in {}", manifestPath);
+        }
+        manifest.retentionWindowMs = *retentionWindowMs;
+        return;
+    }
+
+    if (key == BINARY_STORE_MANIFEST_SUCCESSOR_RECORDING_KEY)
+    {
+        manifest.successorRecordingId = value.empty() ? std::nullopt : std::make_optional(value);
+        return;
+    }
+
+    throw CannotOpenSink("Unknown binary store manifest metadata key {} in {}", key, manifestPath);
 }
 
 template <typename Projection>
@@ -128,6 +209,11 @@ BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath
         {
             continue;
         }
+        if (line.starts_with(BINARY_STORE_MANIFEST_METADATA_PREFIX))
+        {
+            parseManifestMetadataLine(line, manifest, manifestPath);
+            continue;
+        }
 
         std::istringstream lineStream(line);
         BinaryStoreManifestEntry entry;
@@ -142,6 +228,74 @@ BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath
     return manifest;
 }
 
+RecordingRuntimeStatus readRecordingRuntimeStatus(const std::string& recordingFilePath)
+{
+    const auto manifest = readBinaryStoreManifest(recordingFilePath);
+    const auto recordingPath = std::filesystem::path(recordingFilePath);
+    std::error_code errorCode;
+    const auto storageBytes = std::filesystem::is_regular_file(recordingPath, errorCode) && !errorCode
+        ? static_cast<size_t>(std::filesystem::file_size(recordingPath, errorCode))
+        : 0U;
+
+    return RecordingRuntimeStatus{
+        .recordingId = recordingPath.stem().string(),
+        .filePath = recordingFilePath,
+        .lifecycleState = deriveRecordingLifecycleState(manifest),
+        .retentionWindowMs = manifest.retentionWindowMs,
+        .retainedStartWatermark = manifest.retainedStartWatermark(),
+        .retainedEndWatermark = manifest.retainedEndWatermark(),
+        .fillWatermark = manifest.fillWatermark(),
+        .segmentCount = manifest.segments.size(),
+        .storageBytes = storageBytes,
+        .successorRecordingId = manifest.successorRecordingId};
+}
+
+std::vector<RecordingRuntimeStatus> getRecordingRuntimeStatuses()
+{
+    std::vector<RecordingRuntimeStatus> statuses;
+    const auto recordingDirectory = std::filesystem::path(DEFAULT_RECORDING_DIRECTORY);
+    std::error_code errorCode;
+    if (!std::filesystem::exists(recordingDirectory, errorCode) || errorCode)
+    {
+        return statuses;
+    }
+
+    for (std::filesystem::recursive_directory_iterator iterator(
+             recordingDirectory, std::filesystem::directory_options::skip_permission_denied, errorCode),
+         end;
+         iterator != end;
+         iterator.increment(errorCode))
+    {
+        if (errorCode)
+        {
+            errorCode.clear();
+            continue;
+        }
+        if (!iterator->is_regular_file(errorCode) || errorCode)
+        {
+            errorCode.clear();
+            continue;
+        }
+        if (!isRecordingPayloadFile(iterator->path()))
+        {
+            continue;
+        }
+        statuses.push_back(readRecordingRuntimeStatus(iterator->path().string()));
+    }
+
+    std::ranges::sort(
+        statuses,
+        [](const RecordingRuntimeStatus& left, const RecordingRuntimeStatus& right)
+        {
+            if (left.recordingId != right.recordingId)
+            {
+                return left.recordingId < right.recordingId;
+            }
+            return left.filePath < right.filePath;
+        });
+    return statuses;
+}
+
 size_t getRecordingStorageBytes()
 {
     return accumulateRecordingDirectory(
@@ -151,7 +305,7 @@ size_t getRecordingStorageBytes()
             {
                 return 0;
             }
-            if (isManifestFile(entry.path()))
+            if (!isRecordingPayloadFile(entry.path()))
             {
                 return 0;
             }
@@ -166,7 +320,7 @@ size_t getRecordingFileCount()
         {
             if (entry.is_regular_file(ec))
             {
-                if (isManifestFile(entry.path()))
+                if (!isRecordingPayloadFile(entry.path()))
                 {
                     return 0;
                 }

@@ -470,7 +470,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRemainingRecor
             .recordingStorageBytes = 5000,
             .recordingFileCount = 2,
             .activeQueryCount = 1,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -488,7 +489,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWork
             .recordingStorageBytes = 0,
             .recordingFileCount = 1,
             .activeQueryCount = 2,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
     ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
         Host("localhost:8080"),
         WorkerRuntimeMetrics{
@@ -496,7 +498,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWork
             .recordingStorageBytes = 64 * 1024 * 1024,
             .recordingFileCount = 6,
             .activeQueryCount = 8,
-            .replayOperatorStatistics = {}}));
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -523,7 +526,15 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
             .filePath = firstRecording.filePath,
             .structuralFingerprint = firstRecording.structuralFingerprint,
             .retentionWindowMs = statement.replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
-            .ownerQueries = {DistributedQueryId("existing-query")}});
+            .representation = firstRecording.representation,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     const auto reusedPlan = opt->optimize(statement.plan, statement.replaySpecification, catalog);
     ASSERT_EQ(reusedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1);
@@ -557,7 +568,15 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreUpgradesExistingRecordingWhenRete
             .filePath = initialRecording.filePath,
             .structuralFingerprint = initialRecording.structuralFingerprint,
             .retentionWindowMs = initialStatement.replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }),
-            .ownerQueries = {DistributedQueryId("existing-query")}});
+            .representation = initialRecording.representation,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
 
     auto [upgradeOptimizer, upgradeStatement] = loadAndBindExplainStatement("basic_time_travel_store_direct_with_options.yaml");
     const auto upgradedPlan = upgradeOptimizer->optimize(upgradeStatement.plan, upgradeStatement.replaySpecification, catalog);
@@ -598,7 +617,8 @@ TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecor
                 .recordingStorageBytes = 0,
                 .recordingFileCount = 0,
                 .activeQueryCount = 0,
-                .operatorStatistics = {}};
+                .operatorStatistics = {},
+                .recordingStatuses = {}};
             return std::make_unique<FakeExplainWorkerStatusBackend>(status);
         });
 

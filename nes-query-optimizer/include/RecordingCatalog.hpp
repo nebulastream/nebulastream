@@ -15,15 +15,19 @@
 #pragma once
 
 #include <algorithm>
+#include <cstddef>
 #include <optional>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <unordered_map>
 #include <vector>
 #include <DistributedQuery.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RecordingSelectionResult.hpp>
+#include <Replay/RecordingRuntimeStatus.hpp>
 #include <Replay/ReplaySpecification.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES
 {
@@ -46,6 +50,13 @@ struct RecordingEntry
     std::optional<uint64_t> retentionWindowMs;
     RecordingRepresentation representation = RecordingRepresentation::BinaryStore;
     std::vector<DistributedQueryId> ownerQueries;
+    std::optional<Replay::RecordingLifecycleState> lifecycleState;
+    std::optional<Timestamp> retainedStartWatermark;
+    std::optional<Timestamp> retainedEndWatermark;
+    std::optional<Timestamp> fillWatermark;
+    std::optional<size_t> segmentCount;
+    std::optional<size_t> storageBytes;
+    std::optional<RecordingId> successorRecordingId;
 };
 
 class RecordingCatalog
@@ -213,6 +224,62 @@ public:
             return;
         }
         refreshTimeTravelReadRecording();
+    }
+
+    void reconcileWorkerRuntimeStatus(const Host& host, const std::vector<Replay::RecordingRuntimeStatus>& statuses)
+    {
+        std::unordered_set<std::string> reportedRecordingIds;
+        reportedRecordingIds.reserve(statuses.size());
+        for (const auto& status : statuses)
+        {
+            reportedRecordingIds.insert(status.recordingId);
+            if (status.recordingId.empty())
+            {
+                continue;
+            }
+
+            const auto it = recordings.find(RecordingId(status.recordingId));
+            if (it == recordings.end())
+            {
+                continue;
+            }
+
+            auto& recording = it->second;
+            recording.node = host;
+            recording.filePath = status.filePath;
+            if (status.retentionWindowMs.has_value())
+            {
+                recording.retentionWindowMs = status.retentionWindowMs;
+            }
+            recording.lifecycleState = status.lifecycleState;
+            recording.retainedStartWatermark = status.retainedStartWatermark;
+            recording.retainedEndWatermark = status.retainedEndWatermark;
+            recording.fillWatermark = status.fillWatermark;
+            recording.segmentCount = status.segmentCount;
+            recording.storageBytes = status.storageBytes;
+            recording.successorRecordingId = status.successorRecordingId.has_value()
+                ? std::make_optional(RecordingId(*status.successorRecordingId))
+                : std::nullopt;
+        }
+
+        for (auto& recording : recordings | std::views::values)
+        {
+            if (recording.node != host)
+            {
+                continue;
+            }
+            if (reportedRecordingIds.contains(recording.id.getRawValue()))
+            {
+                continue;
+            }
+            recording.lifecycleState.reset();
+            recording.retainedStartWatermark.reset();
+            recording.retainedEndWatermark.reset();
+            recording.fillWatermark.reset();
+            recording.segmentCount.reset();
+            recording.storageBytes.reset();
+            recording.successorRecordingId.reset();
+        }
     }
 };
 

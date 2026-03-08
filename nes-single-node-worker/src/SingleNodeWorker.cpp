@@ -253,8 +253,12 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
             }
         }
     }
-    status.replayMetrics.recordingStorageBytes = Replay::getRecordingStorageBytes();
-    status.replayMetrics.recordingFileCount = Replay::getRecordingFileCount();
+    status.replayMetrics.recordingStatuses = Replay::getRecordingRuntimeStatuses();
+    for (const auto& recordingStatus : status.replayMetrics.recordingStatuses)
+    {
+        status.replayMetrics.recordingStorageBytes += recordingStatus.storageBytes;
+    }
+    status.replayMetrics.recordingFileCount = status.replayMetrics.recordingStatuses.size();
     status.replayMetrics.replayReadBytes = Replay::getReplayReadBytes();
     status.replayMetrics.operatorStatistics = replayStatisticsCollector->snapshot();
     return status;
