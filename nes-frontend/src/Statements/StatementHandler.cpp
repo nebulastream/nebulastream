@@ -203,12 +203,6 @@ collectActiveReplayRedeployQueries(const RecordingSelectionResult& selectionResu
         {
             continue;
         }
-        if (explanation.decision != RecordingSelectionDecision::CreateNewRecording
-            && explanation.decision != RecordingSelectionDecision::UpgradeExistingRecording)
-        {
-            continue;
-        }
-
         for (const auto& beneficiaryQuery : explanation.selection.beneficiaryQueries)
         {
             const auto queryId = DistributedQueryId(beneficiaryQuery);
@@ -285,7 +279,6 @@ std::expected<void, Exception> startRedeployedQueryIfNeeded(
 std::expected<std::vector<ActiveQueryRedeployment>, Exception> buildActiveReplayRedeployments(
     SharedPtr<QueryManager>& queryManager,
     const SharedPtr<const LegacyOptimizer>& optimizer,
-    const SharedPtr<const SourceCatalog>& sourceCatalog,
     const RecordingSelectionResult& selectionResult,
     const DistributedQueryId& incomingQueryId)
 {
@@ -299,7 +292,7 @@ std::expected<std::vector<ActiveQueryRedeployment>, Exception> buildActiveReplay
         }
 
         const auto& metadata = metadataIt->second;
-        if (!metadata.originalPlan.has_value() || !metadata.replaySpecification.has_value())
+        if (!metadata.originalPlan.has_value() || !metadata.globalPlan.has_value() || !metadata.replaySpecification.has_value())
         {
             continue;
         }
@@ -313,9 +306,8 @@ std::expected<std::vector<ActiveQueryRedeployment>, Exception> buildActiveReplay
                 fmt::join(statusResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", ")));
         }
 
-        auto originalPlan = *metadata.originalPlan;
-        resolveTimeTravelReadSources(originalPlan, sourceCatalog);
-        auto redeployedPlan = optimizer->optimize(originalPlan, metadata.replaySpecification, queryManager->getRecordingCatalog());
+        auto redeployedPlan = optimizer->redeployWithFixedSelection(
+            *metadata.globalPlan, metadata.replaySpecification, selectionResult, queryId.getRawValue());
         redeployedPlan.setQueryId(queryId);
 
         redeployments.push_back(ActiveQueryRedeployment{
@@ -630,8 +622,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
         }
 
         const auto queryId = *queryResult;
-        const auto redeployments = buildActiveReplayRedeployments(
-            queryManager, optimizer, sourceCatalog, distributedPlan.getRecordingSelectionResult(), queryId);
+        const auto redeployments = buildActiveReplayRedeployments(queryManager, optimizer, distributedPlan.getRecordingSelectionResult(), queryId);
         if (!redeployments)
         {
             (void)queryManager->unregister(queryId);

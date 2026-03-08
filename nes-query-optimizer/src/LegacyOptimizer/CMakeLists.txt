@@ -25,6 +25,7 @@ add_source_files(nes-query-optimizer
         RecordingFingerprint.cpp
         RecordingCandidateSelectionPhase.cpp
         RecordingBoundarySolver.cpp
+        RecordingPlanRewriter.cpp
         RecordingSelectionPhase.cpp
         BottomUpPlacement.cpp
         OperatorPlacement.cpp

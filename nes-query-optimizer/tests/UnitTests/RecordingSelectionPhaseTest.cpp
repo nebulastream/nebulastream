@@ -682,6 +682,13 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOn
     ASSERT_NE(activeOnlySelection, selectionResult.networkExplanations.end());
     EXPECT_EQ(activeOnlySelection->selection.beneficiaryQueries, std::vector<std::string>({"active-query"}));
     EXPECT_EQ(activeOnlySelection->decision, RecordingSelectionDecision::CreateNewRecording);
+
+    ASSERT_EQ(selectionResult.activeQueryPlanRewrites.size(), 1U);
+    EXPECT_EQ(selectionResult.activeQueryPlanRewrites.front().queryId, "active-query");
+    ASSERT_EQ(selectionResult.activeQueryPlanRewrites.front().insertions.size(), 1U);
+    EXPECT_EQ(selectionResult.activeQueryPlanRewrites.front().insertions.front().selection, activeOnlySelection->selection);
+    ASSERT_FALSE(selectionResult.activeQueryPlanRewrites.front().insertions.front().materializationEdges.empty());
+
 }
 
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsForOperatorReplayTimes)

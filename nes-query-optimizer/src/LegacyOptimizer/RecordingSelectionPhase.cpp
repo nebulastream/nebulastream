@@ -14,20 +14,15 @@
 
 #include <LegacyOptimizer/RecordingSelectionPhase.hpp>
 
-#include <cstdint>
 #include <ranges>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <LegacyOptimizer/RecordingBoundarySolver.hpp>
 #include <LegacyOptimizer/RecordingCandidateSelectionPhase.hpp>
-#include <Operators/StoreLogicalOperator.hpp>
+#include <LegacyOptimizer/RecordingPlanRewriter.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Replay/BinaryStoreFormat.hpp>
-#include <Traits/PlacementTrait.hpp>
-#include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 #include <fmt/format.h>
 
@@ -35,14 +30,6 @@ namespace NES
 {
 namespace
 {
-struct RecordingPlanEdgeHash
-{
-    [[nodiscard]] size_t operator()(const RecordingPlanEdge& edge) const
-    {
-        return std::hash<uint64_t>{}(edge.parentId.getRawValue()) ^ (std::hash<uint64_t>{}(edge.childId.getRawValue()) << 1U);
-    }
-};
-
 std::string recordingRepresentationDescription(const RecordingRepresentation representation)
 {
     switch (representation)
@@ -57,77 +44,6 @@ std::string recordingRepresentationDescription(const RecordingRepresentation rep
             return "binary_store_zstd_fast6";
     }
     std::unreachable();
-}
-
-std::unordered_map<std::string, std::string> storeConfigForSelection(const RecordingSelection& selection)
-{
-    std::unordered_map<std::string, std::string> config{
-        {"file_path", selection.filePath},
-        {"append", "false"},
-        {"header", "true"}};
-    switch (selection.representation)
-    {
-        case RecordingRepresentation::BinaryStore:
-            return config;
-        case RecordingRepresentation::BinaryStoreZstdFast1:
-            config.emplace("compression", "Zstd");
-            config.emplace("compression_level", std::to_string(Replay::BINARY_STORE_ZSTD_FAST1_COMPRESSION_LEVEL));
-            return config;
-        case RecordingRepresentation::BinaryStoreZstd:
-            config.emplace("compression", "Zstd");
-            config.emplace("compression_level", std::to_string(Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL));
-            return config;
-        case RecordingRepresentation::BinaryStoreZstdFast6:
-            config.emplace("compression", "Zstd");
-            config.emplace("compression_level", std::to_string(Replay::BINARY_STORE_ZSTD_FAST6_COMPRESSION_LEVEL));
-            return config;
-    }
-    std::unreachable();
-}
-
-TraitSet traitSetWithPlacement(const TraitSet& original, const Host& placement)
-{
-    std::vector<Trait> traits;
-    traits.reserve(original.size());
-    for (const auto& [_, trait] : original)
-    {
-        if (trait.getTypeInfo() == typeid(PlacementTrait))
-        {
-            continue;
-        }
-        traits.push_back(trait);
-    }
-    auto rewrittenTraitSet = TraitSet{traits};
-    const auto addedPlacement = rewrittenTraitSet.tryInsert(PlacementTrait(placement));
-    INVARIANT(addedPlacement, "Expected to inject placement trait for replay store on {}", placement);
-    return rewrittenTraitSet;
-}
-
-LogicalOperator rewriteSelectedBoundary(
-    const LogicalOperator& current,
-    const std::unordered_map<RecordingPlanEdge, RecordingSelection, RecordingPlanEdgeHash>& storesToInsert)
-{
-    const auto originalChildren = current.getChildren();
-    std::vector<LogicalOperator> rewrittenChildren;
-    rewrittenChildren.reserve(originalChildren.size());
-    for (const auto& child : originalChildren)
-    {
-        const RecordingPlanEdge edge{.parentId = current.getId(), .childId = child.getId()};
-        auto rewrittenChild = rewriteSelectedBoundary(child, storesToInsert);
-        if (!storesToInsert.contains(edge))
-        {
-            rewrittenChildren.push_back(std::move(rewrittenChild));
-            continue;
-        }
-
-        const auto& selection = storesToInsert.at(edge);
-        rewrittenChildren.push_back(
-            StoreLogicalOperator(StoreLogicalOperator::validateAndFormatConfig(storeConfigForSelection(selection)))
-                .withTraitSet(traitSetWithPlacement(current.getTraitSet(), selection.node))
-                .withInferredSchema({rewrittenChild.getOutputSchema()})
-                .withChildren({rewrittenChild}));
-    }
-    return current.withChildren(std::move(rewrittenChildren));
 }
 
 std::string buildExplanationReason(
@@ -189,38 +105,64 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
     const auto candidateSet = RecordingCandidateSelectionPhase(copyPtr(workerCatalog)).apply(placedPlan, replaySpecification, recordingCatalog);
     const auto boundarySelection = RecordingBoundarySolver(copyPtr(workerCatalog)).solve(candidateSet);
 
-    std::unordered_map<RecordingPlanEdge, RecordingSelection, RecordingPlanEdgeHash> storesToInsert;
+    RecordingSelectionsByEdge storesToInsert;
     RecordingSelectionResult selectionResult;
     selectionResult.networkExplanations.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.selectedRecordings.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.explanations.reserve(boundarySelection.selectedBoundary.size());
+    selectionResult.activeQueryPlanRewrites = candidateSet.activeQueryPlans
+        | std::views::transform(
+              [](const auto& activeQueryPlan)
+              {
+                  return QueryRecordingPlanRewrite{
+                      .queryId = activeQueryPlan.queryId,
+                      .basePlan = activeQueryPlan.plan,
+                      .insertions = {}};
+              })
+        | std::ranges::to<std::vector>();
 
     for (const auto& selectedBoundary : boundarySelection.selectedBoundary)
     {
         auto explanation = buildSelectionExplanation(selectedBoundary, candidateSet.candidates.size(), boundarySelection.objectiveCost);
         selectionResult.networkExplanations.push_back(explanation);
-        if (!selectedBoundary.candidate.coversIncomingQuery)
-        {
-            continue;
-        }
         if (selectedBoundary.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
             for (const auto& materializationEdge : selectedBoundary.candidate.materializationEdges)
             {
-                storesToInsert.emplace(materializationEdge, selectedBoundary.chosenOption.selection);
+                storesToInsert.emplace(
+                    RecordingRewriteEdge{.parentId = materializationEdge.parentId, .childId = materializationEdge.childId},
+                    selectedBoundary.chosenOption.selection);
+            }
+            for (const auto& activeQueryTarget : selectedBoundary.candidate.activeQueryMaterializationTargets)
+            {
+                const auto rewriteIt = std::ranges::find(
+                    selectionResult.activeQueryPlanRewrites, activeQueryTarget.queryId, &QueryRecordingPlanRewrite::queryId);
+                PRECONDITION(
+                    rewriteIt != selectionResult.activeQueryPlanRewrites.end(),
+                    "Replay selection expected a rewrite target for active query {}",
+                    activeQueryTarget.queryId);
+                rewriteIt->insertions.push_back(QueryRecordingPlanInsertion{
+                    .selection = selectedBoundary.chosenOption.selection,
+                    .materializationEdges =
+                        activeQueryTarget.materializationEdges
+                        | std::views::transform(
+                              [](const auto& edge)
+                              {
+                                  return RecordingRewriteEdge{.parentId = edge.parentId, .childId = edge.childId};
+                              })
+                        | std::ranges::to<std::vector>()});
             }
         }
 
+        if (!selectedBoundary.candidate.coversIncomingQuery)
+        {
+            continue;
+        }
         selectionResult.selectedRecordings.push_back(selectedBoundary.chosenOption.selection);
         selectionResult.explanations.push_back(std::move(explanation));
     }
 
-    auto rewrittenRoots = placedPlan.getRootOperators();
-    for (auto& root : rewrittenRoots)
-    {
-        root = rewriteSelectedBoundary(root, storesToInsert);
-    }
-    placedPlan = placedPlan.withRootOperators(rewrittenRoots);
+    placedPlan = rewriteReplayBoundary(placedPlan, storesToInsert);
     return selectionResult;
 }
 }

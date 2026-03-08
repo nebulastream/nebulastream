@@ -20,6 +20,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
@@ -75,6 +76,31 @@ struct RecordingSelection
     [[nodiscard]] bool operator==(const RecordingSelection& other) const = default;
 };
 
+struct RecordingRewriteEdge
+{
+    OperatorId parentId{INVALID_OPERATOR_ID};
+    OperatorId childId{INVALID_OPERATOR_ID};
+
+    [[nodiscard]] bool operator==(const RecordingRewriteEdge& other) const = default;
+};
+
+struct QueryRecordingPlanInsertion
+{
+    RecordingSelection selection;
+    std::vector<RecordingRewriteEdge> materializationEdges;
+
+    [[nodiscard]] bool operator==(const QueryRecordingPlanInsertion& other) const = default;
+};
+
+struct QueryRecordingPlanRewrite
+{
+    std::string queryId;
+    LogicalPlan basePlan;
+    std::vector<QueryRecordingPlanInsertion> insertions;
+
+    [[nodiscard]] bool operator==(const QueryRecordingPlanRewrite& other) const = default;
+};
+
 struct RecordingSelectionAlternative
 {
     RecordingSelectionDecision decision = RecordingSelectionDecision::CreateNewRecording;
@@ -99,6 +125,7 @@ struct RecordingSelectionResult
     std::vector<RecordingSelectionExplanation> networkExplanations;
     std::vector<RecordingSelection> selectedRecordings;
     std::vector<RecordingSelectionExplanation> explanations;
+    std::vector<QueryRecordingPlanRewrite> activeQueryPlanRewrites;
 
     [[nodiscard]] bool empty() const { return selectedRecordings.empty() && networkExplanations.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;

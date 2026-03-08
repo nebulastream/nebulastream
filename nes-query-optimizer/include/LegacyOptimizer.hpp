@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <DistributedQuery.hpp>
 #include <RecordingCatalog.hpp>
@@ -38,6 +39,11 @@ public:
         const LogicalPlan& plan,
         const std::optional<ReplaySpecification>& replaySpecification,
         const RecordingCatalog& recordingCatalog) const;
+    [[nodiscard]] DistributedLogicalPlan redeployWithFixedSelection(
+        const LogicalPlan& globalPlan,
+        const std::optional<ReplaySpecification>& replaySpecification,
+        const RecordingSelectionResult& mergedSelectionResult,
+        std::string_view queryId) const;
     LegacyOptimizer() = default;
 
     explicit LegacyOptimizer(

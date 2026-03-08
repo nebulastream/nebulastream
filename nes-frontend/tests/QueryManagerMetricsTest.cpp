@@ -26,6 +26,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <LegacyOptimizer.hpp>
+#include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <QueryId.hpp>
@@ -423,7 +424,8 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
                 .decision = RecordingSelectionDecision::CreateNewRecording,
                 .reason = "incoming create",
                 .chosenCost = {},
-                .alternatives = {}}}});
+                .alternatives = {}}},
+            .activeQueryPlanRewrites = {}});
 
     const auto registerResult = queryManager.registerQuery(distributedPlan);
     ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
@@ -508,9 +510,83 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
     ASSERT_TRUE(recordingCatalog.getQueryMetadata().contains(activeQueryId));
     EXPECT_EQ(recordingCatalog.getQueryMetadata().at(activeQueryId).originalPlan->getQueryId().getDistributedQueryId(), activeQueryId);
     EXPECT_FALSE(recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings.empty());
+    ASSERT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan.has_value());
+    EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).size(), 1U);
     const auto activeRecordingId = recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings.front();
     ASSERT_TRUE(recordingCatalog.getRecording(activeRecordingId).has_value());
     EXPECT_THAT(recordingCatalog.getRecording(activeRecordingId)->ownerQueries, testing::ElementsAre(activeQueryId));
+}
+
+TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActiveOnlyRecordingReuse)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto worker = Host("worker-1:8080");
+    const auto activeQueryId = DistributedQueryId("active-query");
+    const auto activeLocalQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), activeQueryId);
+    const auto replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}, {}, 1024 * 1024));
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    addSourceAndSinkCatalogEntries(sourceCatalog, sinkCatalog, worker, "ACTIVE_SOURCE", "active_sink");
+    addSourceAndSinkCatalogEntries(sourceCatalog, sinkCatalog, worker, "INCOMING_SOURCE", "incoming_sink");
+
+    auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
+    const auto activeOriginalPlan = createReplayPlan(activeQueryId, "ACTIVE_SOURCE", "active_sink");
+    const auto activeOptimizedPlan = optimizer->optimize(activeOriginalPlan, replaySpecification, RecordingCatalog{});
+    ASSERT_EQ(activeOptimizedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1U);
+    ASSERT_EQ(getOperatorByType<StoreLogicalOperator>(activeOptimizedPlan.getGlobalPlan()).size(), 1U);
+    const auto activeRecording = activeOptimizedPlan.getRecordingSelectionResult().selectedRecordings.front();
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    backendState->statuses.insert_or_assign(
+        activeLocalQueryId, LocalQueryStatus{.queryId = activeLocalQueryId, .state = QueryState::Running});
+    backendState->registrations[activeQueryId] = 1;
+    backendState->starts[activeQueryId] = 1;
+
+    QueryManagerState state;
+    state.queries.emplace(activeQueryId, DistributedQuery({{worker, {activeLocalQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        activeQueryId,
+        ReplayableQueryMetadata{
+            .originalPlan = activeOriginalPlan,
+            .globalPlan = activeOptimizedPlan.getGlobalPlan(),
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {activeRecording.recordingId},
+            .networkExplanations = activeOptimizedPlan.getRecordingSelectionResult().networkExplanations});
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = activeRecording.recordingId,
+            .node = activeRecording.node,
+            .filePath = activeRecording.filePath,
+            .structuralFingerprint = activeRecording.structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = activeRecording.representation,
+            .ownerQueries = {activeQueryId}});
+
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, optimizer, sourceCatalog);
+
+    const auto incomingPlan = createReplayPlan(DistributedQueryId("incoming-query"), "INCOMING_SOURCE", "incoming_sink");
+    const auto result = handler(QueryStatement{.plan = incomingPlan, .replaySpecification = replaySpecification});
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+
+    EXPECT_EQ(backendState->registrations[activeQueryId], 2U);
+    EXPECT_EQ(backendState->starts[activeQueryId], 2U);
+    EXPECT_EQ(backendState->stops[activeQueryId], 1U);
+    EXPECT_EQ(backendState->unregisters[activeQueryId], 1U);
+
+    const auto& recordingCatalog = queryManager->getRecordingCatalog();
+    ASSERT_TRUE(recordingCatalog.getQueryMetadata().contains(activeQueryId));
+    EXPECT_THAT(recordingCatalog.getQueryMetadata().at(activeQueryId).selectedRecordings, testing::ElementsAre(activeRecording.recordingId));
+    ASSERT_TRUE(recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan.has_value());
+    EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(*recordingCatalog.getQueryMetadata().at(activeQueryId).globalPlan).empty());
 }
 
 }

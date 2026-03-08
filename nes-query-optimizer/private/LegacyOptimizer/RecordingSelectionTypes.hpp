@@ -22,6 +22,7 @@
 #include <vector>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Plans/LogicalPlan.hpp>
 #include <RecordingSelectionResult.hpp>
 
 namespace NES
@@ -48,11 +49,20 @@ struct RecordingCandidateOption
 
 struct RecordingBoundaryCandidate
 {
+    struct QueryMaterializationTarget
+    {
+        std::string queryId;
+        std::vector<RecordingPlanEdge> materializationEdges;
+
+        [[nodiscard]] bool operator==(const QueryMaterializationTarget& other) const = default;
+    };
+
     RecordingPlanEdge edge;
     Host upstreamNode{Host::INVALID};
     Host downstreamNode{Host::INVALID};
     std::vector<Host> routeNodes;
     std::vector<RecordingPlanEdge> materializationEdges;
+    std::vector<QueryMaterializationTarget> activeQueryMaterializationTargets;
     std::vector<std::string> beneficiaryQueries;
     bool coversIncomingQuery = false;
     std::vector<RecordingCandidateOption> options;
@@ -63,6 +73,14 @@ struct RecordingBoundaryCandidate
 
 struct RecordingCandidateSet
 {
+    struct ActiveQueryPlan
+    {
+        std::string queryId;
+        LogicalPlan plan;
+
+        [[nodiscard]] bool operator==(const ActiveQueryPlan& other) const = default;
+    };
+
     struct OperatorReplayTime
     {
         OperatorId operatorId{INVALID_OPERATOR_ID};
@@ -76,6 +94,7 @@ struct RecordingCandidateSet
     std::vector<OperatorId> leafOperatorIds;
     std::vector<RecordingPlanEdge> planEdges;
     std::vector<OperatorReplayTime> operatorReplayTimes;
+    std::vector<ActiveQueryPlan> activeQueryPlans;
     std::vector<RecordingBoundaryCandidate> candidates;
 
     [[nodiscard]] bool empty() const { return candidates.empty(); }

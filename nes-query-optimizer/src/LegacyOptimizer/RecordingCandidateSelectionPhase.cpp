@@ -28,6 +28,7 @@
 #include <LegacyOptimizer/OperatorPlacement.hpp>
 #include <LegacyOptimizer/RecordingCostModel.hpp>
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
+#include <LegacyOptimizer/RecordingPlanRewriter.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -438,7 +439,7 @@ std::vector<QueryReplayPlan> buildReplayPlans(
             .activeQueryId = queryId.getRawValue(),
             .incoming = false,
             .replaySpecification = metadata.replaySpecification,
-            .plan = *metadata.globalPlan});
+            .plan = stripReplayStores(*metadata.globalPlan)});
     }
     return replayPlans;
 }
@@ -542,6 +543,7 @@ void collectMergedGraph(
                         .downstreamNode = getPlacementFor(current),
                         .routeNodes = routePlacements | std::views::transform([](const auto& placement) { return placement.node; }) | std::ranges::to<std::vector>(),
                         .materializationEdges = {},
+                        .activeQueryMaterializationTargets = {},
                         .beneficiaryQueries = {},
                         .coversIncomingQuery = false,
                         .options = {}},
@@ -560,6 +562,22 @@ void collectMergedGraph(
         else if (queryReplayPlan.activeQueryId.has_value() && !std::ranges::contains(candidate.beneficiaryQueries, *queryReplayPlan.activeQueryId))
         {
             candidate.beneficiaryQueries.push_back(*queryReplayPlan.activeQueryId);
+        }
+        if (queryReplayPlan.activeQueryId.has_value())
+        {
+            auto targetIt = std::ranges::find(
+                candidate.activeQueryMaterializationTargets,
+                *queryReplayPlan.activeQueryId,
+                &RecordingBoundaryCandidate::QueryMaterializationTarget::queryId);
+            if (targetIt == candidate.activeQueryMaterializationTargets.end())
+            {
+                candidate.activeQueryMaterializationTargets.push_back(
+                    RecordingBoundaryCandidate::QueryMaterializationTarget{.queryId = *queryReplayPlan.activeQueryId, .materializationEdges = {actualEdge}});
+            }
+            else if (!std::ranges::contains(targetIt->materializationEdges, actualEdge))
+            {
+                targetIt->materializationEdges.push_back(actualEdge);
+            }
         }
         mergeReplayRequirements(candidateIt->second, queryReplayPlan.replaySpecification);
 
@@ -604,6 +622,17 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
     {
         auto candidate = accumulator.candidate;
         std::ranges::sort(candidate.beneficiaryQueries);
+        for (auto& target : candidate.activeQueryMaterializationTargets)
+        {
+            std::ranges::sort(
+                target.materializationEdges,
+                {},
+                [](const RecordingPlanEdge& edge) { return std::pair{edge.parentId.getRawValue(), edge.childId.getRawValue()}; });
+        }
+        std::ranges::sort(
+            candidate.activeQueryMaterializationTargets,
+            {},
+            &RecordingBoundaryCandidate::QueryMaterializationTarget::queryId);
         const auto replaySpecification = effectiveReplaySpecification(accumulator, defaultReplaySpecification);
         const auto requestedRetention = requestedRetentionWindowMs(replaySpecification);
         const auto normalizedRecordedSubplanRoot = normalizeReplayFingerprintOperator(accumulator.recordedSubplanRoot);
@@ -769,6 +798,16 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
 
     RecordingCandidateSet candidateSet{};
     candidateSet.replayLatencyLimitMs = replaySpecification.and_then([](const auto& spec) { return spec.replayLatencyLimitMs; });
+    candidateSet.activeQueryPlans = replayPlans
+        | std::views::filter([](const QueryReplayPlan& replayPlan) { return replayPlan.activeQueryId.has_value(); })
+        | std::views::transform(
+              [](const QueryReplayPlan& replayPlan)
+              {
+                  return RecordingCandidateSet::ActiveQueryPlan{
+                      .queryId = *replayPlan.activeQueryId,
+                      .plan = replayPlan.plan};
+              })
+        | std::ranges::to<std::vector>();
     candidateSet.candidates = buildCandidates(builder.candidatesByEdge, replaySpecification, recordingCatalog, builder.replayContext, *workerCatalog);
     candidateSet.planEdges = builder.candidatesByEdge | std::views::keys | std::ranges::to<std::vector>();
     candidateSet.leafOperatorIds = builder.leafOperatorIds | std::ranges::to<std::vector>();
@@ -801,6 +840,7 @@ RecordingCandidateSet RecordingCandidateSelectionPhase::apply(
     std::ranges::sort(candidateSet.planEdges, {}, [](const RecordingPlanEdge& edge) { return std::pair{edge.parentId.getRawValue(), edge.childId.getRawValue()}; });
     std::ranges::sort(candidateSet.leafOperatorIds, {}, &OperatorId::getRawValue);
     std::ranges::sort(candidateSet.operatorReplayTimes, {}, [](const auto& entry) { return entry.operatorId.getRawValue(); });
+    std::ranges::sort(candidateSet.activeQueryPlans, {}, &RecordingCandidateSet::ActiveQueryPlan::queryId);
     std::ranges::sort(candidateSet.candidates, {}, [](const RecordingBoundaryCandidate& candidate) { return std::pair{candidate.edge.parentId.getRawValue(), candidate.edge.childId.getRawValue()}; });
     return candidateSet;
 }
