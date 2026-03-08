@@ -44,6 +44,18 @@ std::string encodeRetentionCoverage(const std::optional<ReplaySpecification>& re
 {
     return fmt::format("retention_ms={}", replaySpecification.and_then([](const auto& spec) { return spec.retentionWindowMs; }).value_or(0));
 }
+
+std::string encodeRepresentation(const RecordingRepresentation representation)
+{
+    switch (representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstd:
+            return "binary_store_zstd";
+    }
+    std::unreachable();
+}
 }
 
 std::string createStructuralRecordingFingerprint(const LogicalOperator& recordedSubplanRoot, const Host& placement)
@@ -58,11 +70,15 @@ std::string createStructuralRecordingFingerprint(const LogicalOperator& recorded
 }
 
 std::string createRecordingFingerprint(
-    const LogicalOperator& recordedSubplanRoot, const Host& placement, const std::optional<ReplaySpecification>& replaySpecification)
+    const LogicalOperator& recordedSubplanRoot,
+    const Host& placement,
+    const std::optional<ReplaySpecification>& replaySpecification,
+    const RecordingRepresentation representation)
 {
     const auto canonical = fmt::format(
-        "structural={}|coverage={}",
+        "structural={}|representation={}|coverage={}",
         createStructuralRecordingFingerprint(recordedSubplanRoot, placement),
+        encodeRepresentation(representation),
         encodeRetentionCoverage(replaySpecification));
     return fmt::format("{:016x}", fnv1a64(canonical));
 }

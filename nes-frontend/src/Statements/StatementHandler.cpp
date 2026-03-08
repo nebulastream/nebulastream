@@ -76,6 +76,8 @@ std::string recordingRepresentationToString(const RecordingRepresentation repres
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstd:
+            return "binary_store_zstd";
     }
     std::unreachable();
 }

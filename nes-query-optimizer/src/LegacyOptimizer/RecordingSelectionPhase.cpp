@@ -25,6 +25,7 @@
 #include <LegacyOptimizer/RecordingCandidateSelectionPhase.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/BinaryStoreFormat.hpp>
 #include <Traits/PlacementTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
@@ -48,6 +49,26 @@ std::string recordingRepresentationDescription(const RecordingRepresentation rep
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstd:
+            return "binary_store_zstd";
+    }
+    std::unreachable();
+}
+
+std::unordered_map<std::string, std::string> storeConfigForSelection(const RecordingSelection& selection)
+{
+    std::unordered_map<std::string, std::string> config{
+        {"file_path", selection.filePath},
+        {"append", "false"},
+        {"header", "true"}};
+    switch (selection.representation)
+    {
+        case RecordingRepresentation::BinaryStore:
+            return config;
+        case RecordingRepresentation::BinaryStoreZstd:
+            config.emplace("compression", "Zstd");
+            config.emplace("compression_level", std::to_string(Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL));
+            return config;
     }
     std::unreachable();
 }
@@ -88,13 +109,8 @@ LogicalOperator rewriteSelectedBoundary(
         }
 
         const auto& selection = storesToInsert.at(edge);
-        PRECONDITION(
-            selection.representation == RecordingRepresentation::BinaryStore,
-            "Unsupported replay recording representation selected for plan rewrite");
         rewrittenChildren.push_back(
-            StoreLogicalOperator(
-                StoreLogicalOperator::validateAndFormatConfig(
-                    {{"file_path", selection.filePath}, {"append", "false"}, {"header", "true"}}))
+            StoreLogicalOperator(StoreLogicalOperator::validateAndFormatConfig(storeConfigForSelection(selection)))
                 .withTraitSet(traitSetWithPlacement(current.getTraitSet(), selection.node))
                 .withInferredSchema({rewrittenChild.getOutputSchema()})
                 .withChildren({rewrittenChild}));

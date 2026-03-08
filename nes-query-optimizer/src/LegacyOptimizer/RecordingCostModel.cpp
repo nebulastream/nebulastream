@@ -36,6 +36,8 @@ double representationStorageMultiplier(const RecordingRepresentation representat
     {
         case RecordingRepresentation::BinaryStore:
             return 1.0;
+        case RecordingRepresentation::BinaryStoreZstd:
+            return 0.45;
     }
     std::unreachable();
 }
@@ -46,6 +48,8 @@ double representationBandwidthMultiplier(const RecordingRepresentation represent
     {
         case RecordingRepresentation::BinaryStore:
             return 1.0;
+        case RecordingRepresentation::BinaryStoreZstd:
+            return 0.35;
     }
     std::unreachable();
 }

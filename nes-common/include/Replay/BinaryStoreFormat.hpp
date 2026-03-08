@@ -27,6 +27,8 @@ enum class BinaryStoreCompressionCodec : uint32_t
     Zstd = 1,
 };
 
+inline constexpr int32_t DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL = -3;
+
 struct BinaryStoreSegmentHeader
 {
     uint32_t decodedSize;

@@ -42,6 +42,8 @@ namespace NES
 {
 namespace
 {
+constexpr size_t DEFAULT_RECORDING_BOTTOM_UP_PLACEMENT_LIMIT = 4;
+
 struct RoutePlacement
 {
     Host node{Host::INVALID};
@@ -123,13 +125,15 @@ std::string recordingRepresentationDescription(const RecordingRepresentation rep
     {
         case RecordingRepresentation::BinaryStore:
             return "binary_store";
+        case RecordingRepresentation::BinaryStoreZstd:
+            return "binary_store_zstd";
     }
     std::unreachable();
 }
 
 std::vector<RecordingRepresentation> supportedRecordingRepresentations()
 {
-    return {RecordingRepresentation::BinaryStore};
+    return {RecordingRepresentation::BinaryStore, RecordingRepresentation::BinaryStoreZstd};
 }
 
 bool satisfiesRetentionCoverage(const std::optional<uint64_t> availableRetentionWindowMs, const std::optional<uint64_t> requestedRetentionWindowMs)
@@ -284,6 +288,19 @@ std::vector<RoutePlacement> enumerateRoutePlacements(const Host& sourcePlacement
             .node = route.at(index),
             .upstreamHopCount = index,
             .downstreamHopCount = route.size() - index - 1});
+    }
+    return placements;
+}
+
+std::vector<RoutePlacement> selectBottomUpRoutePlacements(
+    const std::vector<RoutePlacement>& routePlacements, const size_t placementLimit = DEFAULT_RECORDING_BOTTOM_UP_PLACEMENT_LIMIT)
+{
+    const auto boundedPlacementCount = std::min(routePlacements.size(), placementLimit);
+    std::vector<RoutePlacement> placements;
+    placements.reserve(boundedPlacementCount);
+    for (size_t index = 0; index < boundedPlacementCount; ++index)
+    {
+        placements.push_back(routePlacements.at(index));
     }
     return placements;
 }
@@ -485,7 +502,7 @@ void collectMergedGraph(
         const auto childSyntheticId = getOrCreateSyntheticOperatorId(builder, childFingerprint);
         rememberSyntheticOperator(builder, childSyntheticId, child);
         const auto routePlacements = enumerateRoutePlacements(getPlacementFor(child), getPlacementFor(current), workerCatalog.getTopology());
-        for (const auto& placement : routePlacements)
+        for (const auto& placement : selectBottomUpRoutePlacements(routePlacements))
         {
             ++builder.replayContext.structuralOccurrences[createStructuralRecordingFingerprint(
                 normalizeReplayFingerprintOperator(child), placement.node)];
@@ -566,9 +583,11 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
         std::ranges::sort(candidate.beneficiaryQueries);
         const auto replaySpecification = effectiveReplaySpecification(accumulator, defaultReplaySpecification);
         const auto requestedRetention = requestedRetentionWindowMs(replaySpecification);
+        const auto normalizedRecordedSubplanRoot = normalizeReplayFingerprintOperator(accumulator.recordedSubplanRoot);
 
         const auto routePlacements = enumerateRoutePlacements(candidate.upstreamNode, candidate.downstreamNode, workerCatalog.getTopology());
-        for (const auto& routePlacement : routePlacements)
+        const auto feasibleRoutePlacements = selectBottomUpRoutePlacements(routePlacements);
+        for (const auto& routePlacement : feasibleRoutePlacements)
         {
             const auto worker = workerCatalog.getWorker(routePlacement.node);
             PRECONDITION(worker.has_value(), "Replay recording selection could not find worker {}", routePlacement.node);
@@ -576,14 +595,13 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
 
             for (const auto representation : supportedRecordingRepresentations())
             {
-                const auto normalizedRecordedSubplanRoot = normalizeReplayFingerprintOperator(accumulator.recordedSubplanRoot);
                 const auto structuralFingerprint = createStructuralRecordingFingerprint(normalizedRecordedSubplanRoot, routePlacement.node);
                 const auto structurallyCompatibleRecordings = recordingCatalog.getRecordingsByStructuralFingerprint(
                                                                  structuralFingerprint)
                     | std::views::filter([&](const RecordingEntry& entry) { return entry.representation == representation; })
                     | std::ranges::to<std::vector>();
                 const auto recordingFingerprint
-                    = createRecordingFingerprint(normalizedRecordedSubplanRoot, routePlacement.node, replaySpecification);
+                    = createRecordingFingerprint(normalizedRecordedSubplanRoot, routePlacement.node, replaySpecification, representation);
                 const auto recordingId = recordingIdFromFingerprint(recordingFingerprint);
                 const auto placementContext = RecordingPlacementContext{
                     .sourcePlacement = candidate.upstreamNode,

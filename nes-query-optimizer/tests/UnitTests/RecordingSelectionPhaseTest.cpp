@@ -32,6 +32,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <RecordingCatalog.hpp>
+#include <Replay/BinaryStoreFormat.hpp>
 #include <Replay/ReplayNodeFingerprint.hpp>
 #include <Replay/ReplaySpecification.hpp>
 #include <Traits/PlacementTrait.hpp>
@@ -113,6 +114,20 @@ public:
     static void SetUpTestSuite() { Logger::setupLogging("RecordingSelectionPhaseTest.log", LogLevel::LOG_DEBUG); }
 };
 
+TEST_F(RecordingSelectionPhaseTest, RecordingFingerprintIncludesRepresentation)
+{
+    const auto host = Host("worker-1:8080");
+    const auto plan = createPlacedUnaryPlan(host);
+    const auto root = plan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+
+    const ReplaySpecification replaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
+    const auto recordedSubplanRoot = root.getChildren().front();
+    EXPECT_NE(
+        createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStore),
+        createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStoreZstd));
+}
+
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOption)
 {
     const auto host = Host("worker-1:8080");
@@ -127,7 +142,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
 
     RecordingCatalog catalog;
     const auto structuralFingerprint = createStructuralRecordingFingerprint(root.getChildren().front(), host);
-    const auto reusableRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(root.getChildren().front(), host, replaySpecification));
+    const auto reusableRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(
+        root.getChildren().front(), host, replaySpecification, RecordingRepresentation::BinaryStore));
     catalog.upsertRecording(
         RecordingEntry{
             .id = reusableRecordingId,
@@ -160,7 +176,7 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
     EXPECT_EQ(rootCandidate->upstreamNode, host);
     EXPECT_EQ(rootCandidate->downstreamNode, host);
     EXPECT_EQ(rootCandidate->routeNodes, std::vector<Host>({host}));
-    ASSERT_EQ(rootCandidate->options.size(), 2U);
+    ASSERT_EQ(rootCandidate->options.size(), 3U);
     EXPECT_TRUE(std::ranges::any_of(
         rootCandidate->options,
         [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
@@ -170,6 +186,13 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsPlacedEdgeSetAndReuseOp
         {
             return option.decision == RecordingSelectionDecision::ReuseExistingRecording && option.feasible
                 && option.selection.recordingId == reusableRecordingId;
+        }));
+    EXPECT_TRUE(std::ranges::any_of(
+        rootCandidate->options,
+        [](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
+                && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
         }));
 }
 
@@ -191,7 +214,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
     RecordingCatalog catalog;
     const auto structuralFingerprint = createStructuralRecordingFingerprint(root.getChildren().front(), host);
     const auto weakerRecordingId
-        = recordingIdFromFingerprint(createRecordingFingerprint(root.getChildren().front(), host, existingReplaySpecification));
+        = recordingIdFromFingerprint(createRecordingFingerprint(
+            root.getChildren().front(), host, existingReplaySpecification, RecordingRepresentation::BinaryStore));
     catalog.upsertRecording(
         RecordingEntry{
             .id = weakerRecordingId,
@@ -229,9 +253,16 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseReturnsUpgradeOptionForWeakerR
             return option.decision == RecordingSelectionDecision::UpgradeExistingRecording && option.feasible
                 && option.selection.structuralFingerprint == structuralFingerprint && option.selection.recordingId != weakerRecordingId;
         }));
+    EXPECT_TRUE(std::ranges::any_of(
+        rootCandidate->options,
+        [](const auto& option)
+        {
+            return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible
+                && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
+        }));
 }
 
-TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsForPlacedEdge)
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsWhenRouteFitsBottomUpLimit)
 {
     const auto sourceHost = Host("source-node:8080");
     const auto intermediateHost = Host("intermediate-node:8080");
@@ -256,15 +287,78 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseEnumeratesAllRoutePlacementsFo
     EXPECT_EQ(candidate.upstreamNode, sourceHost);
     EXPECT_EQ(candidate.downstreamNode, sinkHost);
     EXPECT_EQ(candidate.routeNodes, std::vector<Host>({sourceHost, intermediateHost, sinkHost}));
-    ASSERT_EQ(candidate.options.size(), 3U);
-    EXPECT_EQ(
-        candidate.options
-            | std::views::transform([](const auto& option) { return option.selection.node; })
-            | std::ranges::to<std::vector>(),
-        std::vector<Host>({sourceHost, intermediateHost, sinkHost}));
+    ASSERT_EQ(candidate.options.size(), 6U);
+    for (const auto& node : std::array<Host, 3>{sourceHost, intermediateHost, sinkHost})
+    {
+        EXPECT_EQ(
+            std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == node; }),
+            2);
+        EXPECT_TRUE(std::ranges::any_of(
+            candidate.options,
+            [&](const auto& option)
+            {
+                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStore;
+            }));
+        EXPECT_TRUE(std::ranges::any_of(
+            candidate.options,
+            [&](const auto& option)
+            {
+                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
+            }));
+    }
     EXPECT_TRUE(std::ranges::all_of(
         candidate.options,
         [](const auto& option) { return option.decision == RecordingSelectionDecision::CreateNewRecording && option.feasible; }));
+}
+
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseLimitsRoutePlacementsToBottomUpNDefault)
+{
+    const auto sourceHost = Host("source-node:8080");
+    const auto firstIntermediateHost = Host("intermediate-node-1:8080");
+    const auto secondIntermediateHost = Host("intermediate-node-2:8080");
+    const auto thirdIntermediateHost = Host("intermediate-node-3:8080");
+    const auto sinkHost = Host("sink-node:8080");
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(sourceHost, "", 16, {firstIntermediateHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(firstIntermediateHost, "", 16, {secondIntermediateHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(secondIntermediateHost, "", 16, {thirdIntermediateHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(thirdIntermediateHost, "", 16, {sinkHost}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(sinkHost, "", 16, {}, {}, 1024 * 1024));
+
+    const auto plan = createPlacedSourceToSinkPlan(sourceHost, sinkHost);
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
+        plan,
+        ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingCatalog{});
+
+    ASSERT_EQ(candidateSet.candidates.size(), 1U);
+    const auto& candidate = candidateSet.candidates.front();
+    EXPECT_EQ(
+        candidate.routeNodes,
+        std::vector<Host>({sourceHost, firstIntermediateHost, secondIntermediateHost, thirdIntermediateHost, sinkHost}));
+    ASSERT_EQ(candidate.options.size(), 8U);
+    for (const auto& node : std::array<Host, 4>{sourceHost, firstIntermediateHost, secondIntermediateHost, thirdIntermediateHost})
+    {
+        EXPECT_EQ(
+            std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == node; }),
+            2);
+        EXPECT_TRUE(std::ranges::any_of(
+            candidate.options,
+            [&](const auto& option)
+            {
+                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStore;
+            }));
+        EXPECT_TRUE(std::ranges::any_of(
+            candidate.options,
+            [&](const auto& option)
+            {
+                return option.selection.node == node && option.selection.representation == RecordingRepresentation::BinaryStoreZstd;
+            }));
+    }
+    EXPECT_EQ(
+        std::ranges::count_if(candidate.options, [&](const auto& option) { return option.selection.node == sinkHost; }),
+        0);
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisions)
@@ -281,7 +375,8 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
     const auto activeRoot = activePlan.getRootOperators().front();
     ASSERT_EQ(activeRoot.getChildren().size(), 1U);
     const auto activeSubplanRoot = activeRoot.getChildren().front();
-    const auto activeRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(activeSubplanRoot, host, replaySpecification));
+    const auto activeRecordingId = recordingIdFromFingerprint(
+        createRecordingFingerprint(activeSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStore));
     catalog.upsertRecording(
         RecordingEntry{
             .id = activeRecordingId,
@@ -327,6 +422,64 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
     ASSERT_NE(incomingSelection, selectionResult.networkExplanations.end());
     EXPECT_EQ(incomingSelection->decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(incomingPlan).size(), 1U);
+}
+
+TEST_F(RecordingSelectionPhaseTest, SelectionPhaseRewritesCompressedRepresentationIntoStoreConfig)
+{
+    const auto host = Host("worker-1:8080");
+    const ReplaySpecification replaySpecification{.retentionWindowMs = 600'000, .replayLatencyLimitMs = std::nullopt};
+
+    auto sizingCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(sizingCatalog->addWorker(host, {}, 16, {}, {}, 1'024 * 1'024));
+
+    const auto sizingCandidateSet
+        = RecordingCandidateSelectionPhase(sizingCatalog).apply(createPlacedUnaryPlan(host), replaySpecification, RecordingCatalog{});
+    std::optional<size_t> binaryStoreBytes;
+    std::optional<size_t> binaryStoreZstdBytes;
+    for (const auto& candidate : sizingCandidateSet.candidates)
+    {
+        for (const auto& option : candidate.options)
+        {
+            if (option.decision != RecordingSelectionDecision::CreateNewRecording)
+            {
+                continue;
+            }
+
+            if (option.selection.representation == RecordingRepresentation::BinaryStore)
+            {
+                binaryStoreBytes = std::min(binaryStoreBytes.value_or(option.cost.estimatedStorageBytes), option.cost.estimatedStorageBytes);
+            }
+            if (option.selection.representation == RecordingRepresentation::BinaryStoreZstd)
+            {
+                binaryStoreZstdBytes = std::min(binaryStoreZstdBytes.value_or(option.cost.estimatedStorageBytes), option.cost.estimatedStorageBytes);
+            }
+        }
+    }
+
+    ASSERT_TRUE(binaryStoreBytes.has_value());
+    ASSERT_TRUE(binaryStoreZstdBytes.has_value());
+    ASSERT_GT(*binaryStoreBytes, *binaryStoreZstdBytes);
+
+    const auto constrainedBudget
+        = *binaryStoreZstdBytes + std::max<size_t>(1, (*binaryStoreBytes - *binaryStoreZstdBytes) / 2);
+    ASSERT_LT(constrainedBudget, *binaryStoreBytes);
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, constrainedBudget));
+
+    auto incomingPlan = createPlacedUnaryPlan(host);
+    const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, RecordingCatalog{});
+
+    ASSERT_EQ(selectionResult.selectedRecordings.size(), 1U);
+    EXPECT_EQ(selectionResult.selectedRecordings.front().representation, RecordingRepresentation::BinaryStoreZstd);
+
+    const auto stores = getOperatorByType<StoreLogicalOperator>(incomingPlan);
+    ASSERT_EQ(stores.size(), 1U);
+    const Descriptor descriptor{DescriptorConfig::Config(stores.front()->getConfig())};
+    EXPECT_EQ(descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION), Replay::BinaryStoreCompressionCodec::Zstd);
+    EXPECT_EQ(
+        descriptor.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION_LEVEL),
+        Replay::DEFAULT_BINARY_STORE_ZSTD_COMPRESSION_LEVEL);
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOnlyMergedBoundary)
