@@ -123,6 +123,7 @@ TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdat
     catalog.upsertQueryMetadata(
         queryId,
         ReplayableQueryMetadata{
+            .originalPlan = std::nullopt,
             .globalPlan = std::nullopt,
             .replaySpecification = std::nullopt,
             .selectedRecordings = {staleRecordingId, sharedRecordingId},

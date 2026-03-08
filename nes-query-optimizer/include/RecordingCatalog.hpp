@@ -30,6 +30,7 @@ namespace NES
 
 struct ReplayableQueryMetadata
 {
+    std::optional<LogicalPlan> originalPlan;
     std::optional<LogicalPlan> globalPlan;
     std::optional<ReplaySpecification> replaySpecification;
     std::vector<RecordingId> selectedRecordings;

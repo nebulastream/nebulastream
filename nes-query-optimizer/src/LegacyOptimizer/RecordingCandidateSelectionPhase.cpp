@@ -577,20 +577,17 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
                     .beneficiaryQueries = candidate.beneficiaryQueries,
                     .coversIncomingQuery = candidate.coversIncomingQuery};
 
-                if (candidate.coversIncomingQuery)
-                {
-                    const auto newRecordingCost = costModel.estimateNewRecording(
-                        accumulator.recordedSubplanRoot, placementContext, *worker, workerRuntimeMetrics, replaySpecification);
-                    candidate.options.push_back(RecordingCandidateOption{
-                        .decision = RecordingSelectionDecision::CreateNewRecording,
-                        .selection = selection,
-                        .cost = toCostBreakdown(newRecordingCost),
-                        .feasible = newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency,
-                        .infeasibilityReason = (newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency)
-                            ? std::string{}
-                            : describeNewRecordingInfeasibility(
-                                routePlacement.node, representation, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost)});
-                }
+                const auto newRecordingCost = costModel.estimateNewRecording(
+                    accumulator.recordedSubplanRoot, placementContext, *worker, workerRuntimeMetrics, replaySpecification);
+                candidate.options.push_back(RecordingCandidateOption{
+                    .decision = RecordingSelectionDecision::CreateNewRecording,
+                    .selection = selection,
+                    .cost = toCostBreakdown(newRecordingCost),
+                    .feasible = newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency,
+                    .infeasibilityReason = (newRecordingCost.fitsBudget && newRecordingCost.satisfiesReplayLatency)
+                        ? std::string{}
+                        : describeNewRecordingInfeasibility(
+                            routePlacement.node, representation, *worker, replaySpecification, workerRuntimeMetrics, newRecordingCost)});
 
                 std::optional<RecordingEntry> bestReuseRecording;
                 std::optional<RecordingEntry> bestUpgradeRecording;
@@ -641,7 +638,7 @@ std::vector<RecordingBoundaryCandidate> buildCandidates(
                                 routePlacement.node, representation, replaySpecification, workerRuntimeMetrics, reuseCost)});
                 }
 
-                if (candidate.coversIncomingQuery && bestUpgradeRecording.has_value())
+                if (bestUpgradeRecording.has_value())
                 {
                     const auto upgradeCost = costModel.estimateRecordingUpgrade(
                         accumulator.recordedSubplanRoot,

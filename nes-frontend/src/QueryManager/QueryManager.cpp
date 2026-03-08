@@ -154,7 +154,8 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     }
 }
 
-[[nodiscard]] std::expected<DistributedQueryId, Exception> QueryManager::registerQuery(const DistributedLogicalPlan& plan)
+[[nodiscard]] std::expected<DistributedQueryId, Exception>
+QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
 
@@ -198,6 +199,7 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
     this->state.recordingCatalog.upsertQueryMetadata(
         id,
         ReplayableQueryMetadata{
+            .originalPlan = std::move(originalPlan),
             .globalPlan = plan.getGlobalPlan(),
             .replaySpecification = plan.getReplaySpecification(),
             .selectedRecordings = {},

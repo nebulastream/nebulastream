@@ -108,7 +108,8 @@ class QueryManager
 public:
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider, QueryManagerState state);
     QueryManager(SharedPtr<WorkerCatalog> workerCatalog, BackendProvider provider);
-    [[nodiscard]] std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
+    [[nodiscard]] std::expected<DistributedQueryId, Exception>
+    registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan = std::nullopt);
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
     std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);

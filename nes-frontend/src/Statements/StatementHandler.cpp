@@ -177,6 +177,189 @@ void appendReplayExplainSection(std::stringstream& explainMessage, const Distrib
         }
     }
 }
+
+struct ActiveQueryRedeployment
+{
+    DistributedQueryId queryId;
+    LogicalPlan originalPlan;
+    DistributedLogicalPlan redeployedPlan;
+    bool shouldRestart;
+};
+
+std::vector<DistributedQueryId>
+collectActiveReplayRedeployQueries(const RecordingSelectionResult& selectionResult, const DistributedQueryId& incomingQueryId)
+{
+    std::vector<DistributedQueryId> queryIds;
+    for (const auto& explanation : selectionResult.networkExplanations)
+    {
+        if (explanation.selection.coversIncomingQuery)
+        {
+            continue;
+        }
+        if (explanation.decision != RecordingSelectionDecision::CreateNewRecording
+            && explanation.decision != RecordingSelectionDecision::UpgradeExistingRecording)
+        {
+            continue;
+        }
+
+        for (const auto& beneficiaryQuery : explanation.selection.beneficiaryQueries)
+        {
+            const auto queryId = DistributedQueryId(beneficiaryQuery);
+            if (queryId == incomingQueryId || std::ranges::contains(queryIds, queryId))
+            {
+                continue;
+            }
+            queryIds.push_back(queryId);
+        }
+    }
+    return queryIds;
+}
+
+std::expected<void, Exception> stopQueryIfRunning(SharedPtr<QueryManager>& queryManager, const DistributedQueryId& queryId)
+{
+    const auto statusResult = queryManager->status(queryId);
+    if (!statusResult)
+    {
+        return std::unexpected(QueryStatusFailed(
+            "Could not inspect query {} before replay redeployment: {}",
+            queryId,
+            fmt::join(statusResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", ")));
+    }
+
+    const auto globalState = statusResult->getGlobalQueryState();
+    if (globalState != DistributedQueryState::Running && globalState != DistributedQueryState::PartiallyStopped)
+    {
+        return {};
+    }
+
+    return queryManager->stop(queryId)
+        .transform_error(
+            [&queryId](const auto& errors)
+            {
+                return QueryStopFailed(
+                    "Could not stop query {} for replay redeployment: {}",
+                    queryId,
+                    fmt::join(errors | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+            });
+}
+
+std::expected<void, Exception> unregisterQueryForRedeployment(SharedPtr<QueryManager>& queryManager, const DistributedQueryId& queryId)
+{
+    return queryManager->unregister(queryId)
+        .transform_error(
+            [&queryId](const auto& errors)
+            {
+                return QueryUnregistrationFailed(
+                    "Could not unregister query {} for replay redeployment: {}",
+                    queryId,
+                    fmt::join(errors | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+            });
+}
+
+std::expected<void, Exception> startRedeployedQueryIfNeeded(
+    SharedPtr<QueryManager>& queryManager, const DistributedQueryId& queryId, const bool shouldRestart)
+{
+    if (!shouldRestart)
+    {
+        return {};
+    }
+
+    return queryManager->start(queryId)
+        .transform_error(
+            [&queryId](const auto& errors)
+            {
+                return QueryStartFailed(
+                    "Could not restart query {} after replay redeployment: {}",
+                    queryId,
+                    fmt::join(errors | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
+            });
+}
+
+std::expected<std::vector<ActiveQueryRedeployment>, Exception> buildActiveReplayRedeployments(
+    SharedPtr<QueryManager>& queryManager,
+    const SharedPtr<const LegacyOptimizer>& optimizer,
+    const SharedPtr<const SourceCatalog>& sourceCatalog,
+    const RecordingSelectionResult& selectionResult,
+    const DistributedQueryId& incomingQueryId)
+{
+    std::vector<ActiveQueryRedeployment> redeployments;
+    for (const auto& queryId : collectActiveReplayRedeployQueries(selectionResult, incomingQueryId))
+    {
+        const auto metadataIt = queryManager->getRecordingCatalog().getQueryMetadata().find(queryId);
+        if (metadataIt == queryManager->getRecordingCatalog().getQueryMetadata().end())
+        {
+            continue;
+        }
+
+        const auto& metadata = metadataIt->second;
+        if (!metadata.originalPlan.has_value() || !metadata.replaySpecification.has_value())
+        {
+            continue;
+        }
+
+        auto statusResult = queryManager->status(queryId);
+        if (!statusResult)
+        {
+            return std::unexpected(QueryStatusFailed(
+                "Could not inspect query {} before replay redeployment planning: {}",
+                queryId,
+                fmt::join(statusResult.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", ")));
+        }
+
+        auto originalPlan = *metadata.originalPlan;
+        resolveTimeTravelReadSources(originalPlan, sourceCatalog);
+        auto redeployedPlan = optimizer->optimize(originalPlan, metadata.replaySpecification, queryManager->getRecordingCatalog());
+        redeployedPlan.setQueryId(queryId);
+
+        redeployments.push_back(ActiveQueryRedeployment{
+            .queryId = queryId,
+            .originalPlan = *metadata.originalPlan,
+            .redeployedPlan = std::move(redeployedPlan),
+            .shouldRestart = statusResult->getGlobalQueryState() == DistributedQueryState::Running
+                || statusResult->getGlobalQueryState() == DistributedQueryState::PartiallyStopped});
+    }
+    return redeployments;
+}
+
+std::expected<void, Exception> applyActiveReplayRedeployments(
+    SharedPtr<QueryManager>& queryManager, std::vector<ActiveQueryRedeployment> redeployments)
+{
+    for (auto& redeployment : redeployments)
+    {
+        if (auto stopped = stopQueryIfRunning(queryManager, redeployment.queryId); !stopped)
+        {
+            return std::unexpected(stopped.error());
+        }
+
+        if (auto unregistered = unregisterQueryForRedeployment(queryManager, redeployment.queryId); !unregistered)
+        {
+            return std::unexpected(unregistered.error());
+        }
+
+        const auto registerResult = queryManager->registerQuery(redeployment.redeployedPlan, redeployment.originalPlan);
+        if (!registerResult)
+        {
+            return std::unexpected(QueryRegistrationFailed(
+                "Could not register query {} after replay redeployment: {}",
+                redeployment.queryId,
+                registerResult.error().what()));
+        }
+
+        if (*registerResult != redeployment.queryId)
+        {
+            return std::unexpected(QueryRegistrationFailed(
+                "Replay redeployment registered query {} under unexpected id {}",
+                redeployment.queryId,
+                *registerResult));
+        }
+
+        if (auto restarted = startRedeployedQueryIfNeeded(queryManager, redeployment.queryId, redeployment.shouldRestart); !restarted)
+        {
+            return std::unexpected(restarted.error());
+        }
+    }
+    return {};
+}
 }
 
 SourceStatementHandler::SourceStatementHandler(const std::shared_ptr<SourceCatalog>& sourceCatalog, HostPolicy hostPolicy)
@@ -433,22 +616,40 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
             distributedPlan.setQueryId(*statement.id);
         }
 
-        const auto queryResult = queryManager->registerQuery(distributedPlan);
-        return queryResult
-            .and_then(
-                [this](const auto& query)
-                {
-                    return queryManager->start(query)
-                        .transform([&query] { return query; })
-                        .transform_error(
-                            [](auto vecOfErrors)
-                            {
-                                return QueryStartFailed(
-                                    "Could not start query: {}",
-                                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
-                            });
-                })
-            .transform([](auto query) { return QueryStatementResult{std::move(query)}; });
+        const auto queryResult = queryManager->registerQuery(distributedPlan, statement.plan);
+        if (!queryResult)
+        {
+            return std::unexpected(queryResult.error());
+        }
+
+        const auto queryId = *queryResult;
+        const auto redeployments = buildActiveReplayRedeployments(
+            queryManager, optimizer, sourceCatalog, distributedPlan.getRecordingSelectionResult(), queryId);
+        if (!redeployments)
+        {
+            (void)queryManager->unregister(queryId);
+            return std::unexpected(redeployments.error());
+        }
+
+        if (const auto redeploymentResult = applyActiveReplayRedeployments(queryManager, *redeployments); !redeploymentResult)
+        {
+            (void)queryManager->unregister(queryId);
+            return std::unexpected(redeploymentResult.error());
+        }
+
+        const auto startResult = queryManager->start(queryId).transform_error(
+            [](auto vecOfErrors)
+            {
+                return QueryStartFailed(
+                    "Could not start query: {}",
+                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+            });
+        if (!startResult)
+        {
+            (void)queryManager->unregister(queryId);
+            return std::unexpected(startResult.error());
+        }
+        return QueryStatementResult{queryId};
     }
     CPPTRACE_CATCH(...)
     {
