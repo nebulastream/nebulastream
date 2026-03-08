@@ -14,11 +14,14 @@
 
 #pragma once
 
+#include <atomic>
 #include <fstream>
 #include <string>
+#include <vector>
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Replay/BinaryStoreFormat.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -49,11 +52,26 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
+    void initializeRowLayoutMetadata();
+    bool loadNextSegment();
+    bool readPayload(char* dest, size_t len);
+    bool skipPayload(size_t len);
+    [[nodiscard]] bool isPayloadExhausted();
+
     std::string filePath;
     std::ifstream inputFile;
     uint64_t dataStartOffset{0};
     std::atomic<uint64_t> totalNumBytesRead{0};
     Schema schema;
+    uint32_t formatVersion{Replay::BINARY_STORE_FORMAT_VERSION_RAW_ROWS};
+    Replay::BinaryStoreCompressionCodec compression{Replay::BinaryStoreCompressionCodec::None};
+    std::vector<uint8_t> segmentBuffer;
+    size_t segmentBufferOffset{0};
+    bool endOfSegmentStream{false};
+    std::vector<uint64_t> fieldOffsets;
+    std::vector<uint64_t> fieldSizes;
+    uint32_t rowWidthBytes{0};
+    bool hasVarSizedFields{false};
 };
 
 }

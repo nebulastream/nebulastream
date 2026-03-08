@@ -14,7 +14,7 @@ add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable PkgConfig::ZSTD)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

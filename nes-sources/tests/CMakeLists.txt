@@ -22,3 +22,5 @@ endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)
+add_nes_source_test(binary-store-source-test BinaryStoreSourceTest.cpp)
+target_link_libraries(binary-store-source-test nes-physical-operators)

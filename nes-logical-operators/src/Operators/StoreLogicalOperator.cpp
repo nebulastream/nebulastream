@@ -128,13 +128,30 @@ DescriptorConfig::Config StoreLogicalOperator::validateAndFormatConfig(std::unor
 {
     auto cfg = DescriptorConfig::validateAndFormat<ConfigParameters>(std::move(configPairs), std::string(NAME));
 
+    const auto compression = Descriptor{DescriptorConfig::Config(cfg)}.getFromConfig(ConfigParameters::COMPRESSION);
+    const bool header = std::get<bool>(cfg.at(ConfigParameters::HEADER));
     const bool directIO = std::get<bool>(cfg.at(ConfigParameters::DIRECT_IO));
+    const auto chunkMin = std::get<uint32_t>(cfg.at(ConfigParameters::CHUNK_MIN_BYTES));
     if (directIO)
     {
-        const auto chunkMin = std::get<uint32_t>(cfg.at(ConfigParameters::CHUNK_MIN_BYTES));
         if (chunkMin % 4096 != 0)
         {
             throw InvalidConfigParameter(fmt::format("For direct_io=true, chunk_min_bytes must be 4096-byte aligned, got {}", chunkMin));
+        }
+    }
+    if (compression != Replay::BinaryStoreCompressionCodec::None)
+    {
+        if (!header)
+        {
+            throw InvalidConfigParameter("Compressed store files require header=true");
+        }
+        if (directIO)
+        {
+            throw InvalidConfigParameter("Compressed store files do not support direct_io=true");
+        }
+        if (chunkMin == 0)
+        {
+            throw InvalidConfigParameter("Compressed store files require chunk_min_bytes > 0");
         }
     }
     return cfg;

@@ -24,6 +24,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Replay/BinaryStoreFormat.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -96,9 +97,19 @@ public:
             0u,
             [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(FDATASYNC_INTERVAL, cfg); }};
 
+        static inline const DescriptorConfig::ConfigParameter<EnumWrapper, Replay::BinaryStoreCompressionCodec> COMPRESSION{
+            "compression",
+            EnumWrapper(Replay::BinaryStoreCompressionCodec::None),
+            [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(COMPRESSION, cfg); }};
+
+        static inline const DescriptorConfig::ConfigParameter<int32_t> COMPRESSION_LEVEL{
+            "compression_level",
+            3,
+            [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(COMPRESSION_LEVEL, cfg); }};
+
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(
-                FILE_PATH, APPEND, HEADER, CHUNK_MIN_BYTES, ASYNC_BACKEND, DIRECT_IO, FDATASYNC_INTERVAL);
+                FILE_PATH, APPEND, HEADER, CHUNK_MIN_BYTES, ASYNC_BACKEND, DIRECT_IO, FDATASYNC_INTERVAL, COMPRESSION, COMPRESSION_LEVEL);
     };
 
     static DescriptorConfig::Config validateAndFormatConfig(std::unordered_map<std::string, std::string> configPairs);

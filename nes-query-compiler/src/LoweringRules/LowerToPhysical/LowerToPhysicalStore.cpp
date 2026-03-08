@@ -39,8 +39,11 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
     const auto filePath = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::FILE_PATH);
     const auto append = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::APPEND);
     const auto header = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::HEADER);
+    const auto chunkMinBytes = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::CHUNK_MIN_BYTES);
     const auto directIO = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::DIRECT_IO);
     const auto fdatasyncInterval = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::FDATASYNC_INTERVAL);
+    const auto compression = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION);
+    const auto compressionLevel = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::COMPRESSION_LEVEL);
 
     std::stringstream schemaStream;
     schemaStream << logicalOperator.getOutputSchema();
@@ -49,8 +52,11 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
         .filePath = filePath,
         .append = append,
         .header = header,
+        .chunkMinBytes = chunkMinBytes,
         .directIO = directIO,
         .fdatasyncInterval = fdatasyncInterval,
+        .compression = compression,
+        .compressionLevel = compressionLevel,
         .schemaText = schemaStream.str(),
     };
 

@@ -17,8 +17,11 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <mutex>
 #include <string>
+#include <vector>
 
+#include <Replay/BinaryStoreFormat.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include "Runtime/QueryTerminationType.hpp"
 
@@ -34,8 +37,11 @@ public:
         std::string filePath;
         bool append{true};
         bool header{true};
+        uint32_t chunkMinBytes{65536};
         bool directIO{false};
         uint32_t fdatasyncInterval{0};
+        Replay::BinaryStoreCompressionCodec compression{Replay::BinaryStoreCompressionCodec::None};
+        int32_t compressionLevel{3};
         std::string schemaText;
     };
 
@@ -50,7 +56,10 @@ public:
     void append(const uint8_t* data, size_t len);
 
 private:
+    void flushPendingSegment();
     void openFile();
+    void validateExistingFile() const;
+    void writeAtTail(const uint8_t* data, size_t len);
     void writeHeaderIfNeeded();
     static uint64_t fnv1a64(const char* data, size_t len);
 
@@ -58,6 +67,8 @@ private:
     std::atomic<uint64_t> tail{0};
     std::atomic<bool> headerWritten{false};
     Config config;
+    std::vector<uint8_t> pendingSegment;
+    std::mutex pendingSegmentMutex;
     uint64_t writesSinceSync{0};
     static constexpr uint64_t FNVOffsetBasis = 14695981039346656037ULL;
     static constexpr uint64_t FNVPrime = 1099511628211ULL;

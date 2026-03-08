@@ -14,11 +14,15 @@
 
 #include <StoreOperatorHandler.hpp>
 
+#include <algorithm>
+#include <array>
 #include <atomic>
 #include <cerrno>
 #include <cstdint>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
+#include <limits>
 #include <string>
 #include <system_error>
 #include <utility>
@@ -29,21 +33,103 @@
 
 #include <fcntl.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
+#include <zstd.h>
 
 namespace NES
 {
 
 namespace
 {
-constexpr char MAGIC[8] = {'N', 'E', 'S', 'S', 'T', 'O', 'R', 'E'};
-constexpr uint32_t VERSION = 1;
-constexpr uint8_t ENDIANNESS_LE = 1;
+struct ParsedStoreHeader
+{
+    uint32_t version;
+    uint32_t flags;
+    Replay::BinaryStoreCompressionCodec compression;
+    uint64_t schemaFingerprint;
+};
+
+ParsedStoreHeader parseStoreHeader(std::istream& input)
+{
+    std::array<char, Replay::BINARY_STORE_MAGIC.size()> magic{};
+    input.read(magic.data(), static_cast<std::streamsize>(magic.size()));
+    if (!input)
+    {
+        throw CannotOpenSink("Failed to read binary store magic");
+    }
+    if (!std::equal(magic.begin(), magic.end(), Replay::BINARY_STORE_MAGIC.begin()))
+    {
+        throw CannotOpenSink("Invalid binary store magic");
+    }
+
+    uint32_t version = 0;
+    uint8_t endianness = 0;
+    uint32_t flags = 0;
+    uint64_t fingerprint = 0;
+    uint32_t schemaLen = 0;
+    input.read(reinterpret_cast<char*>(&version), sizeof(version));
+    input.read(reinterpret_cast<char*>(&endianness), sizeof(endianness));
+    input.read(reinterpret_cast<char*>(&flags), sizeof(flags));
+    input.read(reinterpret_cast<char*>(&fingerprint), sizeof(fingerprint));
+    input.read(reinterpret_cast<char*>(&schemaLen), sizeof(schemaLen));
+    if (!input)
+    {
+        throw CannotOpenSink("Failed to read binary store header");
+    }
+    if (endianness != Replay::BINARY_STORE_ENDIANNESS_LITTLE)
+    {
+        throw CannotOpenSink("Unsupported binary store endianness: {}", static_cast<uint32_t>(endianness));
+    }
+    if (version != Replay::BINARY_STORE_FORMAT_VERSION_RAW_ROWS && version != Replay::BINARY_STORE_FORMAT_VERSION_SEGMENTED)
+    {
+        throw CannotOpenSink("Unsupported binary store format version: {}", version);
+    }
+    const auto compression = Replay::binaryStoreCodecFromFlags(flags);
+    if (!compression.has_value())
+    {
+        throw CannotOpenSink("Unsupported binary store codec flags: {}", flags);
+    }
+
+    input.seekg(static_cast<std::streamoff>(schemaLen), std::ios::cur);
+    if (!input)
+    {
+        throw CannotOpenSink("Failed to skip binary store schema bytes");
+    }
+
+    return ParsedStoreHeader{
+        .version = version,
+        .flags = flags,
+        .compression = *compression,
+        .schemaFingerprint = fingerprint,
+    };
+}
+
+uint32_t versionForCodec(const Replay::BinaryStoreCompressionCodec codec)
+{
+    return codec == Replay::BinaryStoreCompressionCodec::None ? Replay::BINARY_STORE_FORMAT_VERSION_RAW_ROWS
+                                                              : Replay::BINARY_STORE_FORMAT_VERSION_SEGMENTED;
+}
 }
 
 StoreOperatorHandler::StoreOperatorHandler(Config cfg) : config(std::move(cfg))
 {
+    if (config.compression != Replay::BinaryStoreCompressionCodec::None && !config.header)
+    {
+        throw CannotOpenSink("Compressed store files require header=true");
+    }
+    if (config.compression != Replay::BinaryStoreCompressionCodec::None && config.directIO)
+    {
+        throw CannotOpenSink("Compressed store files do not support direct_io=true");
+    }
+    if (config.compression != Replay::BinaryStoreCompressionCodec::None && config.chunkMinBytes == 0)
+    {
+        throw CannotOpenSink("Compressed store files require chunk_min_bytes > 0");
+    }
+    if (config.compression == Replay::BinaryStoreCompressionCodec::Zstd)
+    {
+        pendingSegment.reserve(config.chunkMinBytes);
+    }
 }
 
 void StoreOperatorHandler::start(PipelineExecutionContext&, uint32_t)
@@ -59,6 +145,11 @@ void StoreOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
     if (fd >= 0)
     {
+        if (config.compression != Replay::BinaryStoreCompressionCodec::None)
+        {
+            std::lock_guard lock(pendingSegmentMutex);
+            flushPendingSegment();
+        }
         ::fsync(fd);
         ::close(fd);
         fd = -1;
@@ -83,21 +174,56 @@ void StoreOperatorHandler::append(const uint8_t* data, size_t len)
     {
         throw CannotOpenSink("StoreOperatorHandler not started; fd is invalid");
     }
-    const uint64_t off = tail.fetch_add(len, std::memory_order_relaxed);
-    const ssize_t written = ::pwrite(fd, data, len, static_cast<off_t>(off));
-    if (written < 0 || static_cast<size_t>(written) != len)
+    if (config.compression == Replay::BinaryStoreCompressionCodec::None)
     {
-        throw CannotOpenSink("pwrite failed: errno={} {}", errno, std::strerror(errno));
+        writeAtTail(data, len);
+        return;
     }
-    if (config.fdatasyncInterval > 0)
+
+    std::lock_guard lock(pendingSegmentMutex);
+    pendingSegment.insert(pendingSegment.end(), data, data + len);
+    if (pendingSegment.size() >= config.chunkMinBytes)
     {
-        ++writesSinceSync;
-        if (writesSinceSync >= config.fdatasyncInterval)
-        {
-            ::fdatasync(fd);
-            writesSinceSync = 0;
-        }
+        flushPendingSegment();
     }
+}
+
+void StoreOperatorHandler::flushPendingSegment()
+{
+    if (config.compression == Replay::BinaryStoreCompressionCodec::None || pendingSegment.empty())
+    {
+        return;
+    }
+    PRECONDITION(config.compression == Replay::BinaryStoreCompressionCodec::Zstd, "Unsupported binary store compression codec");
+    if (pendingSegment.size() > std::numeric_limits<uint32_t>::max())
+    {
+        throw CannotOpenSink("Binary store segment exceeds supported size: {}", pendingSegment.size());
+    }
+
+    const auto compressedBound = ZSTD_compressBound(pendingSegment.size());
+    std::vector<uint8_t> frame(sizeof(Replay::BinaryStoreSegmentHeader) + compressedBound);
+    const auto compressedSize = ZSTD_compress(
+        frame.data() + sizeof(Replay::BinaryStoreSegmentHeader),
+        compressedBound,
+        pendingSegment.data(),
+        pendingSegment.size(),
+        config.compressionLevel);
+    if (ZSTD_isError(compressedSize))
+    {
+        throw CannotOpenSink("ZSTD_compress failed: {}", ZSTD_getErrorName(compressedSize));
+    }
+    if (compressedSize > std::numeric_limits<uint32_t>::max())
+    {
+        throw CannotOpenSink("Compressed binary store segment exceeds supported size: {}", compressedSize);
+    }
+
+    auto* segmentHeader = reinterpret_cast<Replay::BinaryStoreSegmentHeader*>(frame.data());
+    segmentHeader->decodedSize = static_cast<uint32_t>(pendingSegment.size());
+    segmentHeader->encodedSize = static_cast<uint32_t>(compressedSize);
+    frame.resize(sizeof(Replay::BinaryStoreSegmentHeader) + compressedSize);
+
+    writeAtTail(frame.data(), frame.size());
+    pendingSegment.clear();
 }
 
 void StoreOperatorHandler::openFile()
@@ -141,6 +267,63 @@ void StoreOperatorHandler::openFile()
     }
     tail.store(static_cast<uint64_t>(st.st_size), std::memory_order_relaxed);
     headerWritten.store(st.st_size > 0, std::memory_order_relaxed);
+    if (st.st_size > 0 && config.header)
+    {
+        validateExistingFile();
+    }
+}
+
+void StoreOperatorHandler::validateExistingFile() const
+{
+    std::ifstream input(config.filePath, std::ios::binary);
+    if (!input)
+    {
+        throw CannotOpenSink("Could not open existing output file for validation: {}", config.filePath);
+    }
+
+    const auto header = parseStoreHeader(input);
+    const auto expectedVersion = versionForCodec(config.compression);
+    const auto expectedFlags = Replay::binaryStoreFlagsForCodec(config.compression);
+    const auto expectedFingerprint = fnv1a64(config.schemaText.c_str(), config.schemaText.size());
+    if (header.version != expectedVersion)
+    {
+        throw CannotOpenSink(
+            "Existing binary store format version {} is incompatible with requested version {} for {}",
+            header.version,
+            expectedVersion,
+            config.filePath);
+    }
+    if (header.flags != expectedFlags || header.compression != config.compression)
+    {
+        throw CannotOpenSink(
+            "Existing binary store codec flags {} are incompatible with requested flags {} for {}",
+            header.flags,
+            expectedFlags,
+            config.filePath);
+    }
+    if (header.schemaFingerprint != expectedFingerprint)
+    {
+        throw CannotOpenSink("Existing binary store schema fingerprint does not match {}", config.filePath);
+    }
+}
+
+void StoreOperatorHandler::writeAtTail(const uint8_t* data, size_t len)
+{
+    const uint64_t off = tail.fetch_add(len, std::memory_order_relaxed);
+    const ssize_t written = ::pwrite(fd, data, len, static_cast<off_t>(off));
+    if (written < 0 || static_cast<size_t>(written) != len)
+    {
+        throw CannotOpenSink("pwrite failed: errno={} {}", errno, std::strerror(errno));
+    }
+    if (config.fdatasyncInterval > 0)
+    {
+        ++writesSinceSync;
+        if (writesSinceSync >= config.fdatasyncInterval)
+        {
+            ::fdatasync(fd);
+            writesSinceSync = 0;
+        }
+    }
 }
 
 void StoreOperatorHandler::writeHeaderIfNeeded()
@@ -156,30 +339,28 @@ void StoreOperatorHandler::writeHeaderIfNeeded()
         return;
     }
 
-    const uint64_t fingerprint = fnv1a64(config.schemaText.c_str(), config.schemaText.size());
+    const auto fingerprint = fnv1a64(config.schemaText.c_str(), config.schemaText.size());
     const auto schemaLen = static_cast<uint32_t>(config.schemaText.size());
+    const auto version = versionForCodec(config.compression);
+    const auto flags = Replay::binaryStoreFlagsForCodec(config.compression);
 
-    const size_t headerSize
-        = sizeof(MAGIC) + sizeof(uint32_t) + sizeof(uint8_t) + sizeof(uint32_t) + sizeof(uint64_t) + sizeof(uint32_t) + schemaLen;
-    std::string buf;
-    buf.resize(headerSize);
+    std::vector<uint8_t> buf(static_cast<size_t>(Replay::binaryStoreHeaderSize(schemaLen)));
     size_t off = 0;
-    std::memcpy(buf.data() + off, MAGIC, sizeof(MAGIC));
-    off += sizeof(MAGIC);
-    std::memcpy(buf.data() + off, &VERSION, sizeof(uint32_t));
-    off += sizeof(uint32_t);
-    std::memcpy(buf.data() + off, &ENDIANNESS_LE, sizeof(uint8_t));
-    off += sizeof(uint8_t);
-    uint32_t flags = 0;
-    std::memcpy(buf.data() + off, &flags, sizeof(uint32_t));
-    off += sizeof(uint32_t);
-    std::memcpy(buf.data() + off, &fingerprint, sizeof(uint64_t));
-    off += sizeof(uint64_t);
-    std::memcpy(buf.data() + off, &schemaLen, sizeof(uint32_t));
-    off += sizeof(uint32_t);
+    std::memcpy(buf.data() + off, Replay::BINARY_STORE_MAGIC.data(), Replay::BINARY_STORE_MAGIC.size());
+    off += Replay::BINARY_STORE_MAGIC.size();
+    std::memcpy(buf.data() + off, &version, sizeof(version));
+    off += sizeof(version);
+    std::memcpy(buf.data() + off, &Replay::BINARY_STORE_ENDIANNESS_LITTLE, sizeof(Replay::BINARY_STORE_ENDIANNESS_LITTLE));
+    off += sizeof(Replay::BINARY_STORE_ENDIANNESS_LITTLE);
+    std::memcpy(buf.data() + off, &flags, sizeof(flags));
+    off += sizeof(flags);
+    std::memcpy(buf.data() + off, &fingerprint, sizeof(fingerprint));
+    off += sizeof(fingerprint);
+    std::memcpy(buf.data() + off, &schemaLen, sizeof(schemaLen));
+    off += sizeof(schemaLen);
     std::memcpy(buf.data() + off, config.schemaText.data(), schemaLen);
-    off += schemaLen;
 
+    const auto headerSize = static_cast<uint64_t>(buf.size());
     const uint64_t off0 = tail.fetch_add(headerSize, std::memory_order_relaxed);
     if (off0 != 0)
     {

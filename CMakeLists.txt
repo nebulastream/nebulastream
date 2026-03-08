@@ -200,6 +200,9 @@ set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(ZSTD REQUIRED IMPORTED_TARGET GLOBAL libzstd)
+
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
