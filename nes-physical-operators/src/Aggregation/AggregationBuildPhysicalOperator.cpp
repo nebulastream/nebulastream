@@ -96,28 +96,29 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
     if (bool expectedValue = false; operatorHandler->setupAlreadyCalled.compare_exchange_strong(expectedValue, true))
     {
         operatorHandler->cleanupStateNautilusFunction
-            = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-                [copyOfHashMapOptions = hashMapOptions,
-                 copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
-                {
-                    const ChainedHashMapRef hashMapRef(
-                        hashMap,
-                        copyOfHashMapOptions.fieldKeys,
-                        copyOfHashMapOptions.fieldValues,
-                        copyOfHashMapOptions.entriesPerPage,
-                        copyOfHashMapOptions.entrySize);
-                    for (const auto entry : hashMapRef)
+            = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
+                std::function(
+                    [copyOfHashMapOptions = hashMapOptions,
+                     copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                     {
-                        const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
-                        auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                        const ChainedHashMapRef hashMapRef(
+                            hashMap,
+                            copyOfHashMapOptions.fieldKeys,
+                            copyOfHashMapOptions.fieldValues,
+                            copyOfHashMapOptions.entriesPerPage,
+                            copyOfHashMapOptions.entrySize);
+                        for (const auto entry : hashMapRef)
                         {
-                            aggFunction->cleanup(state);
-                            state = state + aggFunction->getSizeOfStateInBytes();
+                            const ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
+                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            {
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
+                            }
                         }
-                    }
-                })));
+                    })));
     }
 
     /// NOLINTEND(performance-unnecessary-value-param)
@@ -133,6 +134,8 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
         timestamp,
+        // todo this should be possible to pass as a workerthreadId to the nautilvus val
+        nautilus::val<uint64_t>{ctx.workerThreadId.convertToValue()},
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
             // todo FunctionAttributes?

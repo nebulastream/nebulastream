@@ -55,15 +55,21 @@ public:
     virtual ~SliceCache() = default;
     static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
-    virtual nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) = 0;
+    virtual nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<Timestamp>& timestamp,
+        const nautilus::val<uint64_t>& workerThreadId,
+        const SliceCacheReplaceEntry& replaceEntry) = 0;
     virtual void setStartOfEntries(SliceCacheEntry* startOfEntries);
     virtual uint64_t getCacheMemorySize() const;
+
+    /// Sets the number of worker threads so that per-thread cache memory can be allocated.
+    void setNumberOfWorkerThreads(uint64_t numberOfWorkerThreads);
 
 protected:
     /// The pointer to the startOfEntries is constant, as we create the memory once and do not change it during the query runtime
     SliceCacheEntry* startOfEntriesRaw;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
+    uint64_t numberOfWorkerThreads = 1;
 };
 }

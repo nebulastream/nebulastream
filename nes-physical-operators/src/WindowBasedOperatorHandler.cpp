@@ -111,8 +111,9 @@ int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(const uint64_t sl
 
     /// We set everything to 0, as there might be old data in the tuple buffer
     std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
-    sliceCacheBuffers.push_back(std::make_unique<TupleBuffer>(buffer.value()));
-    return reinterpret_cast<int8_t*>(sliceCacheBuffers.back()->getAvailableMemoryArea().data());
+    auto* result = reinterpret_cast<int8_t*>(buffer.value().getAvailableMemoryArea().data());
+    sliceCacheBuffers.wlock()->emplace_back(std::make_unique<TupleBuffer>(buffer.value()));
+    return result;
 }
 
 }

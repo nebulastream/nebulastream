@@ -78,6 +78,14 @@ void initSliceCacheMemoryAndSetup(
     sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(memory));
 }
 
+/// Proxy function to set the number of worker threads on the slice cache during setup.
+void setSliceCacheWorkerThreads(SliceCache* sliceCache, PipelineExecutionContext* pipelineCtx)
+{
+    PRECONDITION(sliceCache != nullptr, "sliceCache should not be null!");
+    PRECONDITION(pipelineCtx != nullptr, "pipelineCtx should not be null!");
+    sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+}
+
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
     OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
     : operatorHandlerId(operatorHandlerId)
@@ -106,6 +114,10 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(registerActivePipeline, operatorHandler);
 
+    /// Set the number of worker threads on the slice cache so that per-thread memory is allocated.
+    invoke(setSliceCacheWorkerThreads, nautilus::val<SliceCache*>{sliceCache.get()}, executionCtx.pipelineContext);
+
+    /// Allocate per-thread cache memory and set the start of entries on the slice cache.
     nautilus::invoke(
         initSliceCacheMemoryAndSetup,
         operatorHandler,
@@ -121,7 +133,7 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, std::move(sliceCache)));
+    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, sliceCache));
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const

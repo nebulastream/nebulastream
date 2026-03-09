@@ -246,6 +246,7 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
+                nautilus::val<uint64_t>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
                     /// Use nautilus::invoke with a proxy function to avoid copying the val
@@ -296,6 +297,7 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
+                nautilus::val<uint64_t>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
                     /// Use nautilus::invoke with a proxy function to avoid copying the val

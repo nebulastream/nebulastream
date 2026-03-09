@@ -135,6 +135,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     const auto timestamp = timeFunction->getTs(ctx, record);
     const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
         timestamp,
+        // todo this should be possible to pass as a workerthreadId to the nautilvus val
+        nautilus::val<uint64_t>{ctx.workerThreadId.convertToValue()},
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
             // todo FunctionAttributes?

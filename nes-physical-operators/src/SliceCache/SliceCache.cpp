@@ -43,7 +43,12 @@ void SliceCache::setStartOfEntries(SliceCacheEntry* startOfEntries)
 
 uint64_t SliceCache::getCacheMemorySize() const
 {
-    return numberOfEntries * sizeOfEntry;
+    return numberOfWorkerThreads * numberOfEntries * sizeOfEntry;
+}
+
+void SliceCache::setNumberOfWorkerThreads(const uint64_t numberOfWorkerThreads)
+{
+    this->numberOfWorkerThreads = numberOfWorkerThreads;
 }
 
 }

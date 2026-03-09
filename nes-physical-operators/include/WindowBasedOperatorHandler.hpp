@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -106,8 +107,7 @@ protected:
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
 
-    /// Each entry owns one TupleBuffer backing a SliceCache. Stored in a vector so that multiple build sides
-    /// (e.g., left/right join) each get their own buffer without overwriting each other.
-    std::vector<std::unique_ptr<TupleBuffer>> sliceCacheBuffers;
+    /// We have here a vector, as we might have more than a single input pipeline with concurrent access
+    folly::Synchronized<std::vector<std::unique_ptr<TupleBuffer>>> sliceCacheBuffers;
 };
 }

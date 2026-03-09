@@ -28,7 +28,9 @@ class SliceCacheNone : public SliceCache
 public:
     SliceCacheNone();
     ~SliceCacheNone() override = default;
-    nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
+    nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<Timestamp>& timestamp,
+        const nautilus::val<uint64_t>& workerThreadId,
+        const SliceCacheReplaceEntry& replaceEntry) override;
 };
 }

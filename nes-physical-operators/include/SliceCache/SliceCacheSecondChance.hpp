@@ -29,9 +29,11 @@ class SliceCacheSecondChance final : public SliceCache
 public:
     SliceCacheSecondChance(uint64_t numberOfEntries, uint64_t sizeOfEntry);
     ~SliceCacheSecondChance() override = default;
-    nautilus::val<int8_t*>
-    getDataStructureRef(const nautilus::val<Timestamp>& timestamp, const SliceCacheReplaceEntry& replaceEntry) override;
-    /// Overrides to include space for the replacement index at the end of the cache entries.
+    nautilus::val<int8_t*> getDataStructureRef(
+        const nautilus::val<Timestamp>& timestamp,
+        const nautilus::val<uint64_t>& workerThreadId,
+        const SliceCacheReplaceEntry& replaceEntry) override;
+    /// Overrides to include space for the per-thread replacement indices at the end of the cache entries.
     uint64_t getCacheMemorySize() const override;
     /// Overrides to also derive the replacement index pointer from the end of the cache entries.
     void setStartOfEntries(SliceCacheEntry* startOfEntries) override;
@@ -44,9 +46,11 @@ private:
         nautilus::val<bool> foundInCache;
     };
 
-    EntryFound searchInCache(const nautilus::val<SliceCacheEntry*>& startOfEntries, const nautilus::val<Timestamp>& timestamp);
+    EntryFound searchInCache(
+        const nautilus::val<SliceCacheEntrySecondChance*>& threadLocalStart, const nautilus::val<Timestamp>& timestamp);
 
-    /// Raw pointer to the replacement index stored after the cache entries.
+    /// Raw pointer to the replacement indices stored after all cache entries.
+    /// Each worker thread has its own replacement index.
     /// Like startOfEntriesRaw, stored as raw pointer so val can be created locally during tracing.
     uint64_t* replacementIndexRaw;
 };

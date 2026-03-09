@@ -19,6 +19,7 @@
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceCache/SliceCache.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
