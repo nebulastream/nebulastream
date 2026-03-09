@@ -20,6 +20,7 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <nautilus/std/cstring.h>
 #include <nautilus/std/ostream.h>
+#include <nautilus/select.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <ErrorHandling.hpp>
@@ -80,18 +81,15 @@ nautilus::val<bool> VariableSizedData::isValid() const
 
 nautilus::val<bool> VariableSizedData::operator==(const VariableSizedData& rhs) const
 {
-    if (size != rhs.size)
+    /// Use select for cheap size comparison to avoid unnecessary branches.
+    /// Default to true when sizes match (covers the size==0 case).
+    auto result = nautilus::select(size == rhs.size, nautilus::val<bool>(true), nautilus::val<bool>(false));
+    /// Branch only to guard the expensive memcmp when both sizes are non-zero and match.
+    if (size == rhs.size && size > 0)
     {
-        return {false};
+        result = (nautilus::memcmp(getContent(), rhs.getContent(), size) == 0);
     }
-    if (size == 0)
-    {
-        return {true};
-    }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs.getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+    return result;
 }
 
 nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) const
@@ -101,16 +99,18 @@ nautilus::val<bool> VariableSizedData::operator!=(const VariableSizedData& rhs) 
 
 nautilus::val<bool> VariableSizedData::operator<(const VariableSizedData& rhs) const
 {
-    const auto minSize = (size < rhs.size) ? size : rhs.size;
+    /// Use select for branchless min-size and default result.
+    const auto sizeLess = (size < rhs.size);
+    const auto minSize = nautilus::select(sizeLess, size, rhs.size);
+    auto result = sizeLess;
+    /// Branch only to guard the expensive memcmp when both sizes are non-zero.
     if (minSize > 0)
     {
         const auto cmpResult = nautilus::memcmp(getContent(), rhs.getContent(), minSize);
-        if (cmpResult != 0)
-        {
-            return {cmpResult < 0};
-        }
+        /// Use select to pick between memcmp result and size comparison without branching.
+        result = nautilus::select(cmpResult != 0, cmpResult < 0, sizeLess);
     }
-    return {size < rhs.size};
+    return result;
 }
 
 nautilus::val<bool> VariableSizedData::operator!() const
