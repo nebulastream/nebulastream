@@ -42,19 +42,20 @@ namespace NES
 /// String may span between children or between the main buffer and the first child.
 /// RemainingSpace tells the function the amount of space that is left in the main buffer.
 inline void writeWithChildBuffers(
-    const std::string& value,
+    const char* value,
     const uint64_t remainingSpace,
     TupleBuffer* tupleBuffer,
     AbstractBufferProvider* bufferProvider,
     int8_t* bufferStartingAddress)
 {
-    size_t remainingBytes = value.size();
+    const std::string valueString{value};
+    size_t remainingBytes = valueString.size();
     uint32_t numOfChildBuffers = tupleBuffer->getNumberOfChildBuffers();
     /// Fill up the remaing space in the main tuple buffer before allocating any child buffers
     if (numOfChildBuffers == 0)
     {
         const size_t fitsInMainBuffer = std::min(remainingBytes, remainingSpace);
-        std::memcpy(bufferStartingAddress, value.c_str(), fitsInMainBuffer);
+        std::memcpy(bufferStartingAddress, valueString.c_str(), fitsInMainBuffer);
         remainingBytes -= fitsInMainBuffer;
         /// Create the first child buffer, if necessary
         if (remainingBytes > 0)
@@ -67,12 +68,12 @@ inline void writeWithChildBuffers(
     while (remainingBytes > 0)
     {
         /// Write as many bytes in the latest child buffer as possible and allocate a new one if space does not suffice
-        const VariableSizedAccess::Index childIndex(numOfChildBuffers - 1);
+        const VariableSizedAccess::Index childIndex{numOfChildBuffers - 1};
         auto lastChildBuffer = tupleBuffer->loadChildBuffer(childIndex);
         const auto bufferOffset = lastChildBuffer.getNumberOfTuples();
-        const uint32_t valueOffset = value.size() - remainingBytes;
+        const uint32_t valueOffset = valueString.size() - remainingBytes;
         const uint64_t writable = std::min(remainingBytes, lastChildBuffer.getBufferSize() - bufferOffset);
-        std::memcpy(lastChildBuffer.getAvailableMemoryArea<>().data() + bufferOffset, value.c_str() + valueOffset, writable);
+        std::memcpy(lastChildBuffer.getAvailableMemoryArea<>().data() + bufferOffset, valueString.c_str() + valueOffset, writable);
         remainingBytes -= writable;
         lastChildBuffer.setNumberOfTuples(bufferOffset + writable);
         if (remainingBytes > 0)
@@ -119,7 +120,7 @@ static uint64_t writeValAsString(
     size_t writtenBytes = 0;
     if (stringSize > remainingSpace)
     {
-        writeWithChildBuffers(stringFormattedValue, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+        writeWithChildBuffers(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
         writtenBytes = remainingSpace;
     }
     else

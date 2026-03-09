@@ -48,48 +48,41 @@
 
 namespace NES
 {
-
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : OutputFormatter(fieldNames)
+namespace
 {
+void writePreValueContentsWithChildBuffers(
+    const bool isFirstField,
+    const char* fieldIdentifier,
+    const uint64_t remainingSpace,
+    TupleBuffer* buffer,
+    AbstractBufferProvider* bufferProvider,
+    int8_t* bufferAddress)
+{
+    std::string preValueContentString = "\"" + std::string(fieldIdentifier) + "\":";
+    if (isFirstField)
+    {
+        preValueContentString = "{" + preValueContentString;
+    }
+    writeWithChildBuffers(preValueContentString.c_str(), remainingSpace, buffer, bufferProvider, bufferAddress);
 }
 
-nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
-    const VarVal& value,
-    const DataType& fieldType,
-    const nautilus::static_val<uint64_t>& fieldIndex,
+void writePreValueContents(
+    const nautilus::val<const char*>& fieldName,
+    const nautilus::val<bool>& firstField,
     const nautilus::val<int8_t*>& fieldPointer,
-    const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    nautilus::val<uint64_t>& written,
+    nautilus::val<uint64_t>& currentRemainingSize)
 {
-    nautilus::val<uint64_t> written{0};
-    nautilus::val<uint64_t> currentRemainingSize = remainingSize;
-
-    /// The identifier of the current field, which should be prepended to the value
-    const nautilus::val<const char*> fieldName{fieldNames.at(fieldIndex).c_str()};
     const auto nameLength(nautilus::strlen(fieldName));
-    /// Write the pre-value content
-    const nautilus::val<bool> firstField = fieldIndex == nautilus::val<uint64_t>(0);
-    /// Calculate the size of the pre-value content. Includes the size of the escaped fieldname, the colon and, optionally, the curly bracket
-    nautilus::val<uint64_t> preFieldContentSize = nameLength + 3 + nautilus::val<uint8_t>(static_cast<uint8_t>(firstField));
 
-    if (preFieldContentSize > currentRemainingSize)
+    /// Calculate the size of the pre-value content. Includes the size of the escaped fieldname, the colon and, optionally, the curly bracket
+    if (nautilus::val<uint64_t> preFieldContentSize = nameLength + 3 + nautilus::val<uint8_t>(static_cast<uint8_t>(firstField));
+        preFieldContentSize > currentRemainingSize)
     {
         nautilus::invoke(
-            +[](const bool isFirstField,
-                const char* fieldIdentifier,
-                const uint64_t remainingSpace,
-                TupleBuffer* buffer,
-                AbstractBufferProvider* bufferProvider,
-                int8_t* bufferAddress)
-            {
-                std::string preValueContentString = "\"" + std::string(fieldIdentifier) + "\":";
-                if (isFirstField)
-                {
-                    preValueContentString = "{" + preValueContentString;
-                }
-                writeWithChildBuffers(preValueContentString, remainingSpace, buffer, bufferProvider, bufferAddress);
-            },
+            writePreValueContentsWithChildBuffers,
             firstField,
             fieldName,
             currentRemainingSize,
@@ -117,104 +110,127 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         written += 2;
         currentRemainingSize -= 2;
     }
+}
 
-    /// Write the value
-    if (fieldType.type != DataType::Type::VARSIZED && fieldType.type != DataType::Type::CHAR)
-    {
-        /// Convert the VarVal to a string and write it into the address.
-        const nautilus::val<uint64_t> amountWritten
-            = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
-        written += amountWritten;
-        currentRemainingSize -= amountWritten;
-    }
-    else if (fieldType.type == DataType::Type::CHAR)
-    {
-        /// Chars are treated as strings in JSON
-        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-            +[](int8_t* bufferStartingAddress,
-                const uint64_t remainingSpace,
-                const char content,
-                TupleBuffer* tupleBuffer,
-                AbstractBufferProvider* bufferProvider)
-            {
-                /// Use nlohmann json library to delimit all special characters in the string
-                const std::string charAsJsonString = nlohmann::json(std::string(1, content)).dump();
-                writeWithChildBuffers(charAsJsonString, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-                return std::min(charAsJsonString.size(), remainingSpace);
-            },
-            fieldPointer + written,
-            currentRemainingSize,
-            value.cast<nautilus::val<char>>(),
-            recordBuffer.getReference(),
-            bufferProvider);
-        written += amountWritten;
-        currentRemainingSize -= amountWritten;
-    }
-    else
-    {
-        /// For varsized values, we cast to VariableSizedData and access the formatted string that way
-        const auto varSizedValue = value.cast<VariableSizedData>();
-        const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-            +[](int8_t* bufferStartingAddress,
-                const uint64_t remainingSpace,
-                const int8_t* varSizedContent,
-                const uint64_t contentSize,
-                TupleBuffer* tupleBuffer,
-                AbstractBufferProvider* bufferProvider)
-            {
-                /// Use nlohmann json library to delimit all special characters in the string
-                const std::string jsonFormattedString
-                    = nlohmann::json(std::string(reinterpret_cast<const char*>(varSizedContent), contentSize)).dump();
-                writeWithChildBuffers(jsonFormattedString, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-                return std::min(jsonFormattedString.size(), remainingSpace);
-            },
-            fieldPointer + written,
-            currentRemainingSize,
-            varSizedValue.getContent(),
-            varSizedValue.getSize(),
-            recordBuffer.getReference(),
-            bufferProvider);
+uint64_t writeChar(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const char content,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    /// Chars are treated as strings in JSON
+    const std::string charAsJsonString = nlohmann::json(std::string(1, content)).dump();
+    writeWithChildBuffers(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return std::min(charAsJsonString.size(), remainingSpace);
+}
 
-        written += amountWritten;
-        currentRemainingSize -= amountWritten;
-    }
-    /// Either write a , or a }\n depending on if the got the last value of the record
-    nautilus::val<const char*> delimiter{""};
-    nautilus::val<size_t> delimiterLength{0};
-    if (fieldIndex == nautilus::val<uint64_t>(fieldNames.size()) - 1)
-    {
-        delimiter = "}\n";
-        delimiterLength = 2;
-    }
-    else
-    {
-        delimiter = ",";
-        delimiterLength = 1;
-    }
+uint64_t writeVarsized(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const int8_t* varSizedContent,
+    const uint64_t contentSize,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    /// Use nlohmann json library to delimit all special characters in the string
+    const std::string jsonFormattedString = nlohmann::json(std::string(reinterpret_cast<const char*>(varSizedContent), contentSize)).dump();
+    writeWithChildBuffers(jsonFormattedString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+    return std::min(jsonFormattedString.size(), remainingSpace);
+}
+
+void writeDelimiter(
+    const nautilus::val<const char*>& delimiter,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    nautilus::val<uint64_t>& written,
+    nautilus::val<uint64_t>& currentRemainingSize)
+{
+    const nautilus::val<size_t> delimiterLength = nautilus::strlen(delimiter);
 
     if (delimiterLength > currentRemainingSize)
     {
         nautilus::invoke(
-            +[](int8_t* bufferStartingAddress,
-                const uint64_t remainingSpace,
-                const char* delimiterPointer,
-                TupleBuffer* tupleBuffer,
-                AbstractBufferProvider* bufferProvider)
-            {
-                const std::string delimiterString(delimiterPointer);
-                writeWithChildBuffers(delimiterString, remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-            },
-            fieldPointer + written,
-            currentRemainingSize,
-            delimiter,
-            recordBuffer.getReference(),
-            bufferProvider);
+            writeWithChildBuffers, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
         written += currentRemainingSize;
     }
     else
     {
         nautilus::memcpy(fieldPointer + written, delimiter, delimiterLength);
         written += delimiterLength;
+    }
+}
+}
+
+JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : OutputFormatter(fieldNames)
+{
+}
+
+nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
+    const VarVal& value,
+    const DataType& fieldType,
+    const nautilus::static_val<uint64_t>& fieldIndex,
+    const nautilus::val<int8_t*>& fieldPointer,
+    const nautilus::val<uint64_t>& remainingSize,
+    const RecordBuffer& recordBuffer,
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+{
+    nautilus::val<uint64_t> written{0};
+    nautilus::val<uint64_t> currentRemainingSize = remainingSize;
+
+    /// The identifier of the current field, which should be prepended to the value
+    const nautilus::val<const char*> fieldName{fieldNames.at(fieldIndex).c_str()};
+    /// Write the pre-value content
+    writePreValueContents(
+        fieldName, fieldIndex == nautilus::val<uint64_t>(0), fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+
+    /// Write the value
+    switch (fieldType.type)
+    {
+        case DataType::Type::CHAR: {
+            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                writeChar,
+                fieldPointer + written,
+                currentRemainingSize,
+                value.cast<nautilus::val<char>>(),
+                recordBuffer.getReference(),
+                bufferProvider);
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::VARSIZED: {
+            const auto varSizedValue = value.cast<VariableSizedData>();
+            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                writeVarsized,
+                fieldPointer + written,
+                currentRemainingSize,
+                varSizedValue.getContent(),
+                varSizedValue.getSize(),
+                recordBuffer.getReference(),
+                bufferProvider);
+
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        default: {
+            const nautilus::val<uint64_t> amountWritten
+                = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+        }
+    }
+
+    /// Either write a , or a }\n depending on if this is the last value of the record
+    if (fieldIndex == nautilus::val<uint64_t>(fieldNames.size()) - 1)
+    {
+        writeDelimiter("}\n", fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+    }
+    else
+    {
+        writeDelimiter(",", fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
     }
     return written;
 }
