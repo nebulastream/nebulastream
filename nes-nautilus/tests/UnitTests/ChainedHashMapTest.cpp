@@ -53,14 +53,8 @@
 namespace NES
 {
 
-using TestUtils::ALL_KEY_TYPES;
-using TestUtils::ALL_VALUE_TYPES;
-using TestUtils::AnyVecLess;
-using TestUtils::anyVecsEqual;
-using TestUtils::BUFFER_SIZE;
-using TestUtils::estimateSchemaSize;
-using TestUtils::genTypeSchema;
-using TestUtils::recordToAnyVec;
+/// NOLINTNEXTLINE(google-build-using-namespace) test code benefits from concise access to test utilities
+using namespace TestUtils;
 
 namespace
 {
