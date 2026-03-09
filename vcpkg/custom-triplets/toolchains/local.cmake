@@ -48,10 +48,22 @@ if (NOT _NES_TOOLCHAIN_FILE)
     set(CMAKE_C_COMPILER ${CLANG_EXECUTABLE})
     set(CMAKE_CXX_STANDARD 23)
 
+    # On macOS with Homebrew LLVM, vcpkg builds (e.g. LLVM) add -isystem <SDK>/usr/include
+    # which shadows libc++'s wrapper headers (stddef.h, string.h, etc.). Prepend the
+    # compiler's libc++ include path so it is searched first.
+    set(_NES_LIBCXX_ISYSTEM "")
+    if (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin")
+        get_filename_component(_CLANG_BIN_DIR "${CLANGXX_EXECUTABLE}" DIRECTORY)
+        get_filename_component(_LLVM_PREFIX "${_CLANG_BIN_DIR}" DIRECTORY)
+        if (EXISTS "${_LLVM_PREFIX}/include/c++/v1")
+            set(_NES_LIBCXX_ISYSTEM "-isystem ${_LLVM_PREFIX}/include/c++/v1 ")
+        endif ()
+    endif ()
+
     get_property(_CMAKE_IN_TRY_COMPILE GLOBAL PROPERTY IN_TRY_COMPILE)
     if (NOT _CMAKE_IN_TRY_COMPILE)
         string(APPEND CMAKE_C_FLAGS_INIT "-fPIC ${VCPKG_C_FLAGS} ")
-        string(APPEND CMAKE_CXX_FLAGS_INIT "-std=c++23 -fPIC ${VCPKG_CXX_FLAGS} ")
+        string(APPEND CMAKE_CXX_FLAGS_INIT "${_NES_LIBCXX_ISYSTEM}-std=c++23 -fPIC ${VCPKG_CXX_FLAGS} ")
         string(APPEND CMAKE_C_FLAGS_DEBUG_INIT "${VCPKG_C_FLAGS_DEBUG} ")
         string(APPEND CMAKE_CXX_FLAGS_DEBUG_INIT "${VCPKG_CXX_FLAGS_DEBUG} ")
         string(APPEND CMAKE_C_FLAGS_RELEASE_INIT "${VCPKG_C_FLAGS_RELEASE} ")

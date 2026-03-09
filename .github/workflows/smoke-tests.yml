@@ -113,14 +113,13 @@ jobs:
         run: |
           brew install llvm@19 ninja
           echo "$(brew --prefix llvm@19)/bin" >> "$GITHUB_PATH"
-          # Homebrew LLVM 19 is keg-only; export paths so the system linker and
-          # vcpkg builds can find LLVM's libraries and libc++ headers.
+          # Homebrew LLVM 19 is keg-only; create an empty stub libatomic.a to
+          # satisfy unconditional -latomic references from abseil/protobuf, and
+          # export LIBRARY_PATH so the system linker (ld64) can find it.
           LLVM_PREFIX="$(brew --prefix llvm@19)"
-          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
-          echo "CPLUS_INCLUDE_PATH=${LLVM_PREFIX}/include/c++/v1" >> "$GITHUB_ENV"
-          # Create an empty stub libatomic.a to satisfy -latomic from abseil/protobuf.
           echo "" | "${LLVM_PREFIX}/bin/clang" -x c -c - -o /tmp/empty.o
           ar rcs "${LLVM_PREFIX}/lib/libatomic.a" /tmp/empty.o
+          echo "LIBRARY_PATH=${LLVM_PREFIX}/lib" >> "$GITHUB_ENV"
       - name: ccache
         uses: hendrikmuhs/ccache-action@v1.2.18
         with:
