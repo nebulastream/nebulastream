@@ -54,12 +54,6 @@ using namespace TestUtils;
 namespace
 {
 
-/// RC generator for MemoryLayoutType
-rc::Gen<MemoryLayoutType> genMemoryLayout()
-{
-    return rc::gen::element(MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::COLUMNAR_LAYOUT);
-}
-
 /// Sets up a nautilus engine for the given backend.
 std::unique_ptr<nautilus::engine::NautilusEngine> createEngine(ExecutionMode backend)
 {
@@ -173,14 +167,13 @@ constexpr size_t MAX_FIELDS_INTERPRETER = 128;
 constexpr size_t MAX_FIELDS_COMPILER = 32;
 
 /// Insert N items into a PagedVector, then iterate and compare against reference.
-void insertAndIterateProperty(ExecutionMode backend, size_t maxFields)
+void insertAndIterateProperty(ExecutionMode backend, MemoryLayoutType layoutType, size_t maxFields)
 {
     const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(500, 5001);
     const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
-    const auto layoutType = *genMemoryLayout();
 
     NES_INFO(
         "Property insertAndIterate: fields={}, N={}, pageSize={}, layout={}, backend={}",
@@ -238,14 +231,13 @@ void insertAndIterateProperty(ExecutionMode backend, size_t maxFields)
 }
 
 /// Insert N items into a PagedVector, then read each by index and compare against reference.
-void insertAndReadByIndexProperty(ExecutionMode backend, size_t maxFields)
+void insertAndReadByIndexProperty(ExecutionMode backend, MemoryLayoutType layoutType, size_t maxFields)
 {
     const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
     const auto numberOfItems = *rc::gen::inRange<uint64_t>(500, 5001);
     const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
-    const auto layoutType = *genMemoryLayout();
 
     NES_INFO(
         "Property insertAndReadByIndex: fields={}, N={}, pageSize={}, layout={}, backend={}",
@@ -300,14 +292,13 @@ void insertAndReadByIndexProperty(ExecutionMode backend, size_t maxFields)
 }
 
 /// Create K PagedVectors, insert items, concat via moveAllPages, verify against concatenated reference.
-void concatProperty(ExecutionMode backend, size_t maxFields)
+void concatProperty(ExecutionMode backend, MemoryLayoutType layoutType, size_t maxFields)
 {
     const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
     RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
     const auto numVectors = *rc::gen::inRange<uint64_t>(2, 5);
     const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
-    const auto layoutType = *genMemoryLayout();
 
     NES_INFO(
         "Property concat: fields={}, numVectors={}, pageSize={}, layout={}, backend={}",
@@ -395,40 +386,76 @@ void concatProperty(ExecutionMode backend, size_t maxFields)
 
 /// ==================== Test Cases ====================
 
-RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateInterpreter, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateInterpreterRow, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertAndIterateProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
+    insertAndIterateProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_INTERPRETER);
 }
 
-RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateCompiler, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateInterpreterColumnar, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertAndIterateProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
+    insertAndIterateProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_INTERPRETER);
 }
 
-RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexInterpreter, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateCompilerRow, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertAndReadByIndexProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
+    insertAndIterateProperty(ExecutionMode::COMPILER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_COMPILER);
 }
 
-RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexCompiler, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateCompilerColumnar, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    insertAndReadByIndexProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
+    insertAndIterateProperty(ExecutionMode::COMPILER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_COMPILER);
 }
 
-RC_GTEST_PROP(PagedVectorPropertyTest, concatInterpreter, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexInterpreterRow, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    concatProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
+    insertAndReadByIndexProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_INTERPRETER);
 }
 
-RC_GTEST_PROP(PagedVectorPropertyTest, concatCompiler, ())
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexInterpreterColumnar, ())
 {
     Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
-    concatProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
+    insertAndReadByIndexProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_INTERPRETER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexCompilerRow, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndReadByIndexProperty(ExecutionMode::COMPILER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_COMPILER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexCompilerColumnar, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndReadByIndexProperty(ExecutionMode::COMPILER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_COMPILER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, concatInterpreterRow, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_INTERPRETER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, concatInterpreterColumnar, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::INTERPRETER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_INTERPRETER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, concatCompilerRow, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::COMPILER, MemoryLayoutType::ROW_LAYOUT, MAX_FIELDS_COMPILER);
+}
+
+RC_GTEST_PROP(PagedVectorPropertyTest, concatCompilerColumnar, ())
+{
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::COMPILER, MemoryLayoutType::COLUMNAR_LAYOUT, MAX_FIELDS_COMPILER);
 }
 
 }
