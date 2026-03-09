@@ -1,0 +1,135 @@
+# name: function/CaseWhen.test
+# description: Tests for the CASE WHEN function
+# groups: [Function, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE intersection(intersection_id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
+CREATE PHYSICAL SOURCE FOR intersection TYPE File;
+ATTACH INLINE
+1,0.5,true,false
+2,0.1,false,true
+3,0.9,false,false
+4,0.6,false,false
+5,0.3,false,false
+6,0.1,true,true
+7,0.9,false,true
+8,0.6,false,true
+9,0.3,false,true
+10,0.95,true,false
+
+CREATE SINK simple_signal(intersection.intersection_id INT32, signal VARSIZED) TYPE File;
+CREATE SINK traffic_light(intersection.intersection_id INT32, signal_command VARSIZED) TYPE File;
+
+# Minimal conditional: single condition with default (two-way branch)
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED("STOP"),
+                   VARSIZED("GO"))
+       AS signal
+FROM intersection
+INTO simple_signal;
+----
+1,STOP
+2,GO
+3,GO
+4,GO
+5,GO
+6,STOP
+7,GO
+8,GO
+9,GO
+10,STOP
+
+# All five branches are taken: emergency, pedestrian+low density, high density, medium density, and default.
+# Rows 6-10 test priority ordering when multiple conditions could match:
+#   Row 6: emergency + pedestrian both true -> first branch (emergency) wins
+#   Row 7: pedestrian=true but density too high for branch 2, falls through to branch 3
+#   Row 8: pedestrian=true but density too high for branch 2, density not > 0.8, falls to branch 4
+#   Row 9: pedestrian=true but density not < 0.2, density not > 0.5, falls to default
+#   Row 10: emergency=true with high density -> branch 1 wins over branch 3
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected, VARSIZED("ALL_RED_EMERGENCY"),
+                   pedestrian_waiting AND traffic_density < FLOAT32(0.2), VARSIZED("PEDESTRIAN_WALK"),
+                   traffic_density > FLOAT32(0.8), VARSIZED("GREEN_EXTENDED"),
+                   traffic_density > FLOAT32(0.5), VARSIZED("GREEN_STANDARD"),
+                   VARSIZED("FLASHING_YELLOW"))
+       AS signal_command
+FROM intersection
+INTO traffic_light;
+----
+1,ALL_RED_EMERGENCY
+2,PEDESTRIAN_WALK
+3,GREEN_EXTENDED
+4,GREEN_STANDARD
+5,FLASHING_YELLOW
+6,ALL_RED_EMERGENCY
+7,GREEN_EXTENDED
+8,GREEN_STANDARD
+9,FLASHING_YELLOW
+10,ALL_RED_EMERGENCY
+
+CREATE SINK numeric_priority(intersection.intersection_id INT32, priority INT32) TYPE File;
+
+# Conditional returning INT32 values based on traffic density thresholds.
+# Row 1:  density=0.5  -> not > 0.8, not > 0.5 (not strictly), -> default 0
+# Row 2:  density=0.1  -> default 0
+# Row 3:  density=0.9  -> > 0.8 -> 3
+# Row 4:  density=0.6  -> > 0.5 -> 2
+# Row 5:  density=0.3  -> default 0
+# Row 6:  density=0.1  -> default 0
+# Row 7:  density=0.9  -> > 0.8 -> 3
+# Row 8:  density=0.6  -> > 0.5 -> 2
+# Row 9:  density=0.3  -> default 0
+# Row 10: density=0.95 -> > 0.8 -> 3
+SELECT intersection_id,
+       Conditional(traffic_density > FLOAT32(0.8), INT32(3),
+                   traffic_density > FLOAT32(0.5), INT32(2),
+                   INT32(0))
+       AS priority
+FROM intersection
+INTO numeric_priority;
+----
+1,0
+2,0
+3,3
+4,2
+5,0
+6,0
+7,3
+8,2
+9,0
+10,3
+
+CREATE SINK nested_signal(intersection.intersection_id INT32, action VARSIZED) TYPE File;
+
+# Nested conditional: the result of the outer conditional is itself a conditional.
+# Outer: if emergency -> inner conditional on density (high density -> EVACUATE, else YIELD)
+#        else -> inner conditional on pedestrian (waiting -> SLOW, else PROCEED)
+# Row 1:  emergency=true,  density=0.5  -> YIELD
+# Row 2:  emergency=false, pedestrian=true  -> SLOW
+# Row 3:  emergency=false, pedestrian=false -> PROCEED
+# Row 4:  emergency=false, pedestrian=false -> PROCEED
+# Row 5:  emergency=false, pedestrian=false -> PROCEED
+# Row 6:  emergency=true,  density=0.1  -> YIELD
+# Row 7:  emergency=false, pedestrian=true  -> SLOW
+# Row 8:  emergency=false, pedestrian=true  -> SLOW
+# Row 9:  emergency=false, pedestrian=true  -> SLOW
+# Row 10: emergency=true,  density=0.95 -> EVACUATE
+SELECT intersection_id,
+       Conditional(emergency_vehicle_detected,
+                   Conditional(traffic_density > FLOAT32(0.8), VARSIZED("EVACUATE"),
+                               VARSIZED("YIELD")),
+                   Conditional(pedestrian_waiting, VARSIZED("SLOW"),
+                               VARSIZED("PROCEED")))
+       AS action
+FROM intersection
+INTO nested_signal;
+----
+1,YIELD
+2,SLOW
+3,PROCEED
+4,PROCEED
+5,PROCEED
+6,YIELD
+7,SLOW
+8,SLOW
+9,SLOW
+10,EVACUATE
