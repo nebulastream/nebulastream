@@ -55,6 +55,34 @@ bool isRecordingPayloadFile(const std::filesystem::path& path)
     return !isManifestFile(path) && !isCompactionTemporaryFile(path);
 }
 
+bool overlapsReplayInterval(
+    const BinaryStoreManifestEntry& segment, const std::optional<uint64_t> scanStartMs, const std::optional<uint64_t> scanEndMs)
+{
+    if (scanStartMs.has_value() && segment.maxWatermark < *scanStartMs)
+    {
+        return false;
+    }
+    if (scanEndMs.has_value() && segment.minWatermark > *scanEndMs)
+    {
+        return false;
+    }
+    return true;
+}
+
+std::string missingSegmentIdsMessage(const std::vector<uint64_t>& missingSegmentIds)
+{
+    std::ostringstream message;
+    for (size_t index = 0; index < missingSegmentIds.size(); ++index)
+    {
+        if (index > 0)
+        {
+            message << ", ";
+        }
+        message << missingSegmentIds[index];
+    }
+    return message.str();
+}
+
 RecordingLifecycleState deriveRecordingLifecycleState(const BinaryStoreManifest& manifest)
 {
     if (manifest.segments.empty())
@@ -290,6 +318,70 @@ void writeBinaryStoreManifest(const std::string& recordingFilePath, const Binary
     writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
 }
 
+std::vector<BinaryStoreManifestEntry>
+selectBinaryStoreSegments(const std::string& recordingFilePath, const BinaryStoreReplaySelection& selection)
+{
+    if (selection.scanStartMs.has_value() && selection.scanEndMs.has_value() && *selection.scanStartMs > *selection.scanEndMs)
+    {
+        throw CannotOpenSink(
+            "Invalid replay scan interval for {}: start {} ms must be less than or equal to end {} ms",
+            recordingFilePath,
+            *selection.scanStartMs,
+            *selection.scanEndMs);
+    }
+
+    std::lock_guard lock(replayStorageMutex);
+    const auto manifest = readBinaryStoreManifestUnlocked(recordingFilePath);
+    if (manifest.segments.empty())
+    {
+        return {};
+    }
+    if (selection.empty())
+    {
+        return manifest.segments;
+    }
+
+    std::unordered_set<uint64_t> requestedSegmentIds;
+    if (selection.segmentIds.has_value())
+    {
+        requestedSegmentIds = selection.segmentIds.value() | std::ranges::to<std::unordered_set<uint64_t>>();
+        std::vector<uint64_t> missingSegmentIds;
+        for (const auto requestedSegmentId : requestedSegmentIds)
+        {
+            const auto present = std::ranges::any_of(
+                manifest.segments, [requestedSegmentId](const auto& segment) { return segment.segmentId == requestedSegmentId; });
+            if (!present)
+            {
+                missingSegmentIds.push_back(requestedSegmentId);
+            }
+        }
+        if (!missingSegmentIds.empty())
+        {
+            std::ranges::sort(missingSegmentIds);
+            throw CannotOpenSink(
+                "Recording {} does not contain requested replay segment ids [{}]",
+                recordingFilePath,
+                missingSegmentIdsMessage(missingSegmentIds));
+        }
+    }
+
+    std::vector<BinaryStoreManifestEntry> selectedSegments;
+    selectedSegments.reserve(manifest.segments.size());
+    for (const auto& segment : manifest.segments)
+    {
+        if (!requestedSegmentIds.empty() && !requestedSegmentIds.contains(segment.segmentId))
+        {
+            continue;
+        }
+        if (!overlapsReplayInterval(segment, selection.scanStartMs, selection.scanEndMs))
+        {
+            continue;
+        }
+        selectedSegments.push_back(segment);
+    }
+    return selectedSegments;
+}
+
 std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePath)
 {
     std::lock_guard lock(replayStorageMutex);
@@ -306,6 +398,56 @@ std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePat
         ++segment.pinCount;
         pinnedSegmentIds.push_back(segment.segmentId);
     }
+    writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
+    return pinnedSegmentIds;
+}
+
+std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    if (segmentIds.empty())
+    {
+        return {};
+    }
+
+    std::lock_guard lock(replayStorageMutex);
+    auto manifest = readBinaryStoreManifestUnlocked(recordingFilePath);
+    if (manifest.segments.empty())
+    {
+        return {};
+    }
+
+    const auto requestedSegmentIds = segmentIds | std::ranges::to<std::unordered_set<uint64_t>>();
+    std::vector<uint64_t> pinnedSegmentIds;
+    pinnedSegmentIds.reserve(requestedSegmentIds.size());
+    for (auto& segment : manifest.segments)
+    {
+        if (!requestedSegmentIds.contains(segment.segmentId))
+        {
+            continue;
+        }
+        ++segment.pinCount;
+        pinnedSegmentIds.push_back(segment.segmentId);
+    }
+
+    if (pinnedSegmentIds.size() != requestedSegmentIds.size())
+    {
+        const auto pinnedSet = pinnedSegmentIds | std::ranges::to<std::unordered_set<uint64_t>>();
+        std::vector<uint64_t> missingSegmentIds;
+        missingSegmentIds.reserve(requestedSegmentIds.size() - pinnedSegmentIds.size());
+        for (const auto requestedSegmentId : requestedSegmentIds)
+        {
+            if (!pinnedSet.contains(requestedSegmentId))
+            {
+                missingSegmentIds.push_back(requestedSegmentId);
+            }
+        }
+        std::ranges::sort(missingSegmentIds);
+        throw CannotOpenSink(
+            "Recording {} does not contain requested replay segment ids [{}]",
+            recordingFilePath,
+            missingSegmentIdsMessage(missingSegmentIds));
+    }
+
     writeBinaryStoreManifestUnlocked(getRecordingManifestPath(recordingFilePath), manifest);
     return pinnedSegmentIds;
 }

@@ -33,6 +33,18 @@ inline constexpr std::string_view DEFAULT_RECORDING_FILE_PATH = "/tmp/REPLAY-Neb
 inline constexpr size_t DEFAULT_ESTIMATED_RECORDING_ROWS = 4096;
 inline constexpr size_t MIN_RECORDING_SIZE_BYTES = 4096;
 
+struct BinaryStoreReplaySelection
+{
+    std::optional<std::vector<uint64_t>> segmentIds = std::nullopt;
+    std::optional<uint64_t> scanStartMs = std::nullopt;
+    std::optional<uint64_t> scanEndMs = std::nullopt;
+
+    [[nodiscard]] bool empty() const
+    {
+        return !segmentIds.has_value() && !scanStartMs.has_value() && !scanEndMs.has_value();
+    }
+};
+
 std::recursive_mutex& getReplayStorageMutex();
 [[nodiscard]] std::string getRecordingFilePath(std::string_view recordingId);
 [[nodiscard]] std::string getRecordingManifestPath(std::string_view recordingFilePath);
@@ -41,7 +53,10 @@ std::recursive_mutex& getReplayStorageMutex();
 [[nodiscard]] bool binaryStoreManifestExists(const std::string& recordingFilePath);
 [[nodiscard]] BinaryStoreManifest readBinaryStoreManifest(const std::string& recordingFilePath);
 void writeBinaryStoreManifest(const std::string& recordingFilePath, const BinaryStoreManifest& manifest);
+[[nodiscard]] std::vector<BinaryStoreManifestEntry>
+selectBinaryStoreSegments(const std::string& recordingFilePath, const BinaryStoreReplaySelection& selection = {});
 [[nodiscard]] std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePath);
+[[nodiscard]] std::vector<uint64_t> pinBinaryStoreSegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds);
 void unpinBinaryStoreSegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds);
 [[nodiscard]] RecordingRuntimeStatus readRecordingRuntimeStatus(const std::string& recordingFilePath);
 [[nodiscard]] std::vector<RecordingRuntimeStatus> getRecordingRuntimeStatuses();

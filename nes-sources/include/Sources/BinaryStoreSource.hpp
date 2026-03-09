@@ -23,6 +23,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Replay/BinaryStoreFormat.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
@@ -56,13 +57,19 @@ private:
     void initializeRowLayoutMetadata();
     void recordPhysicalBytesRead(size_t bytes);
     bool loadNextSegment();
+    bool advanceToNextSelectedRawSegment();
     bool readPayload(char* dest, size_t len);
     bool skipPayload(size_t len);
     [[nodiscard]] bool isPayloadExhausted();
 
     std::string filePath;
     bool shouldPinReplaySegments{false};
+    bool useManifestSelection{false};
     std::vector<uint64_t> pinnedSegmentIds;
+    Replay::BinaryStoreReplaySelection replaySelection;
+    std::vector<Replay::BinaryStoreManifestEntry> selectedSegments;
+    size_t nextSelectedSegmentIndex{0};
+    uint64_t currentSelectedRawSegmentBytesRemaining{0};
     std::ifstream inputFile;
     uint64_t dataStartOffset{0};
     std::atomic<uint64_t> totalNumBytesRead{0};

@@ -118,7 +118,7 @@ public:
         return stream.str();
     }
 
-    SourceDescriptor createBinaryStoreDescriptor(const std::filesystem::path& filePath) const
+    SourceDescriptor createBinaryStoreDescriptorWithConfig(std::unordered_map<std::string, std::string> config) const
     {
         SourceCatalog catalog;
         const auto logicalSource = catalog.addLogicalSource("replay", getSchema());
@@ -127,27 +127,29 @@ public:
             *logicalSource,
             "BinaryStore",
             Host("localhost"),
-            {{"file_path", filePath.string()}},
+            std::move(config),
             {{"type", "CSV"}});
         EXPECT_TRUE(physicalSource.has_value());
         return *physicalSource;
     }
 
-    SourceDescriptor createManagedBinaryStoreDescriptor(
-        const std::string& recordingId, const std::optional<std::filesystem::path>& filePath = std::nullopt) const
+    SourceDescriptor createBinaryStoreDescriptor(const std::filesystem::path& filePath) const
     {
-        SourceCatalog catalog;
-        const auto logicalSource = catalog.addLogicalSource("replay", getSchema());
-        EXPECT_TRUE(logicalSource.has_value());
+        return createBinaryStoreDescriptorWithConfig({{"file_path", filePath.string()}});
+    }
+
+    SourceDescriptor createManagedBinaryStoreDescriptor(
+        const std::string& recordingId,
+        const std::optional<std::filesystem::path>& filePath = std::nullopt,
+        std::unordered_map<std::string, std::string> extraConfig = {}) const
+    {
         std::unordered_map<std::string, std::string> config{{"recording_id", recordingId}};
         if (filePath.has_value())
         {
             config.emplace("file_path", filePath->string());
         }
-        const auto physicalSource = catalog.addPhysicalSource(
-            *logicalSource, "BinaryStore", Host("localhost"), std::move(config), {{"type", "CSV"}});
-        EXPECT_TRUE(physicalSource.has_value());
-        return *physicalSource;
+        config.merge(std::move(extraConfig));
+        return createBinaryStoreDescriptorWithConfig(std::move(config));
     }
 
     std::filesystem::path createManagedRecordingPath(const std::string& recordingId)
@@ -225,6 +227,18 @@ public:
     {
         auto bufferManager = BufferManager::create(512, 4);
         BinaryStoreSource source(createBinaryStoreDescriptor(filePath));
+        return readRows(source, bufferManager);
+    }
+
+    std::vector<TestRow> readRows(const SourceDescriptor& sourceDescriptor)
+    {
+        auto bufferManager = BufferManager::create(512, 4);
+        BinaryStoreSource source(sourceDescriptor);
+        return readRows(source, bufferManager);
+    }
+
+    std::vector<TestRow> readRows(BinaryStoreSource& source, const std::shared_ptr<BufferManager>& bufferManager)
+    {
         source.open(bufferManager);
 
         const auto rowLayout = LowerSchemaProvider::lowerSchema(512, getSchema(), MemoryLayoutType::ROW_LAYOUT);
@@ -332,6 +346,23 @@ TEST_F(BinaryStoreSourceTest, WritesCompressedStoreManifestWithSegmentWatermarks
     EXPECT_EQ(*manifest.fillWatermark(), Timestamp(3000));
 }
 
+TEST_F(BinaryStoreSourceTest, ReplayStorageSelectsSegmentsOverlappingReplayInterval)
+{
+    const auto filePath = tempDir / "interval-selection.store";
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    const auto selectedSegments = Replay::selectBinaryStoreSegments(
+        filePath.string(),
+        Replay::BinaryStoreReplaySelection{
+            .segmentIds = std::nullopt,
+            .scanStartMs = 2000,
+            .scanEndMs = 2500});
+
+    EXPECT_THAT(
+        selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; }) | std::ranges::to<std::vector>(),
+        testing::ElementsAre(1));
+}
+
 TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredRawStoreSegmentsByRetentionWindow)
 {
     const auto filePath = tempDir / "raw-retention.store";
@@ -415,6 +446,58 @@ TEST_F(BinaryStoreSourceTest, PinsManagedRecordingSegmentsWhileReplaySourceIsOpe
     source.close();
     manifest = Replay::readBinaryStoreManifest(filePath.string());
     EXPECT_TRUE(std::ranges::all_of(manifest.segments, [](const auto& segment) { return segment.pinCount == 0; }));
+}
+
+TEST_F(BinaryStoreSourceTest, PinsOnlySelectedManagedRecordingSegmentsWhileReplaySourceIsOpen)
+{
+    const auto recordingId = std::string("managed-selected-open-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    auto bufferManager = BufferManager::create(512, 4);
+    BinaryStoreSource source(createManagedBinaryStoreDescriptor(recordingId, std::nullopt, {{"segment_ids", "1,2"}}));
+    source.open(bufferManager);
+
+    auto manifest = Replay::readBinaryStoreManifest(filePath.string());
+    ASSERT_EQ(manifest.segments.size(), 3U);
+    EXPECT_EQ(manifest.segments[0].pinCount, 0U);
+    EXPECT_EQ(manifest.segments[1].pinCount, 1U);
+    EXPECT_EQ(manifest.segments[2].pinCount, 1U);
+
+    source.close();
+    manifest = Replay::readBinaryStoreManifest(filePath.string());
+    EXPECT_TRUE(std::ranges::all_of(manifest.segments, [](const auto& segment) { return segment.pinCount == 0; }));
+}
+
+TEST_F(BinaryStoreSourceTest, ReadsOnlySelectedRawReplaySegmentsAndTracksReplayBytes)
+{
+    const auto recordingId = std::string("managed-raw-selection-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::None, watermarks);
+
+    Replay::clearReplayReadBytes();
+    EXPECT_EQ(
+        readRows(createManagedBinaryStoreDescriptor(recordingId, std::nullopt, {{"segment_ids", "0,2"}})),
+        std::vector<TestRow>({rows[0], rows[1], rows[4]}));
+    EXPECT_EQ(Replay::getReplayReadBytes(), 3 * sizeof(TestRow));
+    Replay::clearReplayReadBytes();
+}
+
+TEST_F(BinaryStoreSourceTest, ReadsOnlySegmentsOverlappingReplayIntervalInCompressedStore)
+{
+    const auto recordingId = std::string("managed-compressed-interval-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    writeRows(filePath, Replay::BinaryStoreCompressionCodec::Zstd, watermarks, -3);
+
+    EXPECT_EQ(
+        readRows(createManagedBinaryStoreDescriptor(
+            recordingId,
+            std::nullopt,
+            {{"scan_start_ms", "2000"}, {"scan_end_ms", "2500"}, {"replay_mode", "interval"}})),
+        std::vector<TestRow>({rows[2], rows[3]}));
 }
 
 TEST_F(BinaryStoreSourceTest, KeepsPinnedExpiredSegmentsDuringRollingRetentionGc)

@@ -20,6 +20,7 @@
 #include <cstring>
 #include <fstream>
 #include <optional>
+#include <sstream>
 #include <regex>
 #include <stop_token>
 #include <string>
@@ -35,6 +36,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
@@ -50,6 +52,12 @@ struct ParsedStoreHeader
     uint32_t version;
     Replay::BinaryStoreCompressionCodec compression;
     uint32_t schemaLen;
+};
+
+enum class BinaryStoreReplayMode : uint8_t
+{
+    Full,
+    Interval,
 };
 
 ParsedStoreHeader readStoreHeaderPrefix(std::istream& input)
@@ -121,6 +129,131 @@ Schema parseSchemaText(const std::string& schemaText)
     }
     return schema;
 }
+
+std::optional<uint64_t> readOptionalUInt64Config(const DescriptorConfig::Config& config, const std::string_view key)
+{
+    const auto it = config.find(std::string(key));
+    if (it == config.end())
+    {
+        return std::nullopt;
+    }
+
+    if (const auto* value = std::get_if<uint64_t>(&it->second))
+    {
+        return *value;
+    }
+    if (const auto* value = std::get_if<int64_t>(&it->second))
+    {
+        if (*value < 0)
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config '{}' must be non-negative", key);
+        }
+        return static_cast<uint64_t>(*value);
+    }
+    if (const auto* value = std::get_if<uint32_t>(&it->second))
+    {
+        return *value;
+    }
+    if (const auto* value = std::get_if<int32_t>(&it->second))
+    {
+        if (*value < 0)
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config '{}' must be non-negative", key);
+        }
+        return static_cast<uint64_t>(*value);
+    }
+    if (const auto* value = std::get_if<std::string>(&it->second))
+    {
+        const auto parsed = from_chars<uint64_t>(*value);
+        if (!parsed.has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config '{}' must be an unsigned integer", key);
+        }
+        return *parsed;
+    }
+
+    throw InvalidConfigParameter("BinaryStoreSource config '{}' has an unsupported type", key);
+}
+
+std::optional<std::string> readOptionalStringConfig(const DescriptorConfig::Config& config, const std::string_view key)
+{
+    const auto it = config.find(std::string(key));
+    if (it == config.end())
+    {
+        return std::nullopt;
+    }
+    if (const auto* value = std::get_if<std::string>(&it->second))
+    {
+        return *value;
+    }
+    throw InvalidConfigParameter("BinaryStoreSource config '{}' must be a string", key);
+}
+
+std::optional<std::vector<uint64_t>> parseSegmentIds(std::string_view rawSegmentIds)
+{
+    std::vector<uint64_t> segmentIds;
+    for (const auto part : splitOnMultipleDelimiters(rawSegmentIds, {',', ';', ' ', '\t', '\n'}))
+    {
+        const auto parsedSegmentId = from_chars<uint64_t>(part);
+        if (!parsedSegmentId.has_value())
+        {
+            return std::nullopt;
+        }
+        if (!std::ranges::contains(segmentIds, *parsedSegmentId))
+        {
+            segmentIds.push_back(*parsedSegmentId);
+        }
+    }
+    if (segmentIds.empty())
+    {
+        return std::nullopt;
+    }
+    return segmentIds;
+}
+
+std::string normalizeSegmentIds(std::string_view rawSegmentIds)
+{
+    const auto parsedSegmentIds = parseSegmentIds(rawSegmentIds);
+    if (!parsedSegmentIds.has_value())
+    {
+        throw InvalidConfigParameter("BinaryStoreSource config 'segment_ids' must contain a comma-separated list of uint64 ids");
+    }
+
+    std::ostringstream normalized;
+    for (size_t index = 0; index < parsedSegmentIds->size(); ++index)
+    {
+        if (index > 0)
+        {
+            normalized << ',';
+        }
+        normalized << parsedSegmentIds->at(index);
+    }
+    return normalized.str();
+}
+
+std::optional<BinaryStoreReplayMode> parseReplayMode(std::string_view replayMode)
+{
+    const auto normalizedReplayMode = toLowerCase(trimWhiteSpaces(replayMode));
+    if (normalizedReplayMode.empty() || normalizedReplayMode == "full")
+    {
+        return BinaryStoreReplayMode::Full;
+    }
+    if (normalizedReplayMode == "interval")
+    {
+        return BinaryStoreReplayMode::Interval;
+    }
+    return std::nullopt;
+}
+
+bool hasReplaySelectionFilters(const Replay::BinaryStoreReplaySelection& replaySelection)
+{
+    return replaySelection.segmentIds.has_value() || replaySelection.scanStartMs.has_value() || replaySelection.scanEndMs.has_value();
+}
+
+std::vector<uint64_t> selectedSegmentIds(const std::vector<Replay::BinaryStoreManifestEntry>& selectedSegments)
+{
+    return selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; }) | std::ranges::to<std::vector>();
+}
 }
 
 BinaryStoreSource::BinaryStoreSource(const SourceDescriptor& sourceDescriptor)
@@ -130,7 +263,25 @@ BinaryStoreSource::BinaryStoreSource(const SourceDescriptor& sourceDescriptor)
               : Replay::getRecordingFilePath(std::get<std::string>(sourceDescriptor.getConfig().at("recording_id"))))
     , schema(*sourceDescriptor.getLogicalSource().getSchema())
 {
+    replaySelection.segmentIds = readOptionalStringConfig(sourceDescriptor.getConfig(), "segment_ids").transform(
+        [](const auto& rawSegmentIds)
+        {
+            const auto parsedSegmentIds = parseSegmentIds(rawSegmentIds);
+            PRECONDITION(parsedSegmentIds.has_value(), "BinaryStoreSource segment_ids should have been validated before construction");
+            return *parsedSegmentIds;
+        });
+    replaySelection.scanStartMs = readOptionalUInt64Config(sourceDescriptor.getConfig(), "scan_start_ms");
+    replaySelection.scanEndMs = readOptionalUInt64Config(sourceDescriptor.getConfig(), "scan_end_ms");
+    const auto replayMode = readOptionalStringConfig(sourceDescriptor.getConfig(), "replay_mode").transform(
+        [](const auto& rawReplayMode)
+        {
+            const auto parsedReplayMode = parseReplayMode(rawReplayMode);
+            PRECONDITION(parsedReplayMode.has_value(), "BinaryStoreSource replay_mode should have been validated before construction");
+            return *parsedReplayMode;
+        });
+
     shouldPinReplaySegments = Replay::binaryStoreManifestExists(filePath) || sourceDescriptor.getConfig().contains("recording_id");
+    useManifestSelection = replayMode == BinaryStoreReplayMode::Interval || hasReplaySelectionFilters(replaySelection);
     initializeRowLayoutMetadata();
 }
 
@@ -185,7 +336,21 @@ void BinaryStoreSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
     close();
     NES_DEBUG("BinaryStoreSource: opening {}", filePath);
-    if (shouldPinReplaySegments)
+    selectedSegments.clear();
+    nextSelectedSegmentIndex = 0;
+    currentSelectedRawSegmentBytesRemaining = 0;
+    if (useManifestSelection)
+    {
+        if (!Replay::binaryStoreManifestExists(filePath))
+        {
+            throw CannotOpenSink(
+                "BinaryStoreSource replay segment selection requires a manifest-backed recording, but {} has no manifest",
+                filePath);
+        }
+        selectedSegments = Replay::selectBinaryStoreSegments(filePath, replaySelection);
+        pinnedSegmentIds = Replay::pinBinaryStoreSegments(filePath, selectedSegmentIds(selectedSegments));
+    }
+    else if (shouldPinReplaySegments)
     {
         pinnedSegmentIds = Replay::pinBinaryStoreSegments(filePath);
     }
@@ -208,7 +373,14 @@ void BinaryStoreSource::open(std::shared_ptr<AbstractBufferProvider>)
         dataStartOffset = static_cast<uint64_t>(inputFile.tellg());
         segmentBuffer.clear();
         segmentBufferOffset = 0;
-        endOfSegmentStream = false;
+        selectedSegments.shrink_to_fit();
+        nextSelectedSegmentIndex = 0;
+        currentSelectedRawSegmentBytesRemaining = 0;
+        endOfSegmentStream = useManifestSelection && selectedSegments.empty();
+        if (useManifestSelection && !Replay::binaryStoreUsesSegmentedPayload(formatVersion))
+        {
+            advanceToNextSelectedRawSegment();
+        }
         NES_DEBUG(
             "BinaryStoreSource: formatVersion={} compression={} dataStartOffset={}",
             formatVersion,
@@ -239,6 +411,9 @@ void BinaryStoreSource::close()
     segmentBuffer.clear();
     segmentBufferOffset = 0;
     endOfSegmentStream = false;
+    selectedSegments.clear();
+    nextSelectedSegmentIndex = 0;
+    currentSelectedRawSegmentBytesRemaining = 0;
     if (!pinnedSegmentIds.empty())
     {
         Replay::unpinBinaryStoreSegments(filePath, pinnedSegmentIds);
@@ -254,21 +429,58 @@ bool BinaryStoreSource::loadNextSegment()
     }
 
     Replay::BinaryStoreSegmentHeader segmentHeader{};
-    inputFile.read(reinterpret_cast<char*>(&segmentHeader.decodedSize), sizeof(segmentHeader.decodedSize));
-    if (!inputFile)
+    if (useManifestSelection)
     {
-        if (inputFile.eof())
+        if (nextSelectedSegmentIndex >= selectedSegments.size())
         {
-            inputFile.clear();
             endOfSegmentStream = true;
             return false;
         }
-        throw CannotOpenSink("Failed to read binary store segment header");
+
+        const auto& selectedSegment = selectedSegments.at(nextSelectedSegmentIndex++);
+        inputFile.seekg(static_cast<std::streamoff>(selectedSegment.payloadOffset), std::ios::beg);
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Failed to seek binary store segment {} at offset {}", selectedSegment.segmentId, selectedSegment.payloadOffset);
+        }
+        inputFile.read(reinterpret_cast<char*>(&segmentHeader.decodedSize), sizeof(segmentHeader.decodedSize));
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Failed to read binary store segment {} header", selectedSegment.segmentId);
+        }
+        inputFile.read(reinterpret_cast<char*>(&segmentHeader.encodedSize), sizeof(segmentHeader.encodedSize));
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Failed to read binary store segment {} size", selectedSegment.segmentId);
+        }
+        const auto expectedStoredSize = sizeof(Replay::BinaryStoreSegmentHeader) + static_cast<uint64_t>(segmentHeader.encodedSize);
+        if (expectedStoredSize != selectedSegment.storedSizeBytes)
+        {
+            throw CannotOpenSink(
+                "Binary store segment {} header declares {} stored bytes but manifest declares {}",
+                selectedSegment.segmentId,
+                expectedStoredSize,
+                selectedSegment.storedSizeBytes);
+        }
     }
-    inputFile.read(reinterpret_cast<char*>(&segmentHeader.encodedSize), sizeof(segmentHeader.encodedSize));
-    if (!inputFile)
+    else
     {
-        throw CannotOpenSink("Failed to read binary store segment size");
+        inputFile.read(reinterpret_cast<char*>(&segmentHeader.decodedSize), sizeof(segmentHeader.decodedSize));
+        if (!inputFile)
+        {
+            if (inputFile.eof())
+            {
+                inputFile.clear();
+                endOfSegmentStream = true;
+                return false;
+            }
+            throw CannotOpenSink("Failed to read binary store segment header");
+        }
+        inputFile.read(reinterpret_cast<char*>(&segmentHeader.encodedSize), sizeof(segmentHeader.encodedSize));
+        if (!inputFile)
+        {
+            throw CannotOpenSink("Failed to read binary store segment size");
+        }
     }
     if (segmentHeader.decodedSize == 0 || segmentHeader.encodedSize == 0)
     {
@@ -324,10 +536,57 @@ bool BinaryStoreSource::loadNextSegment()
     return true;
 }
 
+bool BinaryStoreSource::advanceToNextSelectedRawSegment()
+{
+    if (!useManifestSelection)
+    {
+        return false;
+    }
+    if (nextSelectedSegmentIndex >= selectedSegments.size())
+    {
+        currentSelectedRawSegmentBytesRemaining = 0;
+        return false;
+    }
+
+    const auto& selectedSegment = selectedSegments.at(nextSelectedSegmentIndex++);
+    inputFile.seekg(static_cast<std::streamoff>(selectedSegment.payloadOffset), std::ios::beg);
+    if (!inputFile)
+    {
+        throw CannotOpenSink("Failed to seek binary store segment {} at offset {}", selectedSegment.segmentId, selectedSegment.payloadOffset);
+    }
+    currentSelectedRawSegmentBytesRemaining = selectedSegment.storedSizeBytes;
+    return true;
+}
+
 bool BinaryStoreSource::readPayload(char* dest, size_t len)
 {
     if (!Replay::binaryStoreUsesSegmentedPayload(formatVersion))
     {
+        if (useManifestSelection)
+        {
+            size_t copied = 0;
+            while (copied < len)
+            {
+                if (currentSelectedRawSegmentBytesRemaining == 0 && !advanceToNextSelectedRawSegment())
+                {
+                    return false;
+                }
+
+                const auto toRead
+                    = static_cast<size_t>(std::min<uint64_t>(currentSelectedRawSegmentBytesRemaining, static_cast<uint64_t>(len - copied)));
+                inputFile.read(dest + copied, static_cast<std::streamsize>(toRead));
+                if (!inputFile)
+                {
+                    inputFile.clear();
+                    return false;
+                }
+                recordPhysicalBytesRead(toRead);
+                copied += toRead;
+                currentSelectedRawSegmentBytesRemaining -= toRead;
+            }
+            return true;
+        }
+
         inputFile.read(dest, static_cast<std::streamsize>(len));
         if (!inputFile)
         {
@@ -363,6 +622,31 @@ bool BinaryStoreSource::skipPayload(size_t len)
 {
     if (!Replay::binaryStoreUsesSegmentedPayload(formatVersion))
     {
+        if (useManifestSelection)
+        {
+            size_t skipped = 0;
+            while (skipped < len)
+            {
+                if (currentSelectedRawSegmentBytesRemaining == 0 && !advanceToNextSelectedRawSegment())
+                {
+                    return false;
+                }
+
+                const auto toSkip
+                    = static_cast<size_t>(std::min<uint64_t>(currentSelectedRawSegmentBytesRemaining, static_cast<uint64_t>(len - skipped)));
+                inputFile.seekg(static_cast<std::streamoff>(toSkip), std::ios::cur);
+                if (!inputFile)
+                {
+                    inputFile.clear();
+                    return false;
+                }
+                recordPhysicalBytesRead(toSkip);
+                skipped += toSkip;
+                currentSelectedRawSegmentBytesRemaining -= toSkip;
+            }
+            return true;
+        }
+
         inputFile.seekg(static_cast<std::streamoff>(len), std::ios::cur);
         if (!inputFile)
         {
@@ -397,11 +681,19 @@ bool BinaryStoreSource::isPayloadExhausted()
 {
     if (!Replay::binaryStoreUsesSegmentedPayload(formatVersion))
     {
+        if (useManifestSelection)
+        {
+            return currentSelectedRawSegmentBytesRemaining == 0 && nextSelectedSegmentIndex >= selectedSegments.size();
+        }
         return inputFile.peek() == std::char_traits<char>::eof();
     }
     if (segmentBufferOffset < segmentBuffer.size())
     {
         return false;
+    }
+    if (useManifestSelection)
+    {
+        return nextSelectedSegmentIndex >= selectedSegments.size();
     }
     if (endOfSegmentStream)
     {
@@ -525,6 +817,55 @@ DescriptorConfig::Config BinaryStoreSource::validateAndFormat(std::unordered_map
     if (const auto recordingIdIt = config.find("recording_id"); recordingIdIt != config.end())
     {
         validated.emplace("recording_id", DescriptorConfig::ConfigType(recordingIdIt->second));
+    }
+    if (const auto segmentIdsIt = config.find("segment_ids"); segmentIdsIt != config.end())
+    {
+        validated.emplace("segment_ids", DescriptorConfig::ConfigType(normalizeSegmentIds(segmentIdsIt->second)));
+    }
+    if (const auto scanStartMsIt = config.find("scan_start_ms"); scanStartMsIt != config.end())
+    {
+        const auto scanStartMs = from_chars<uint64_t>(scanStartMsIt->second);
+        if (!scanStartMs.has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config 'scan_start_ms' must be an unsigned integer");
+        }
+        validated.emplace("scan_start_ms", DescriptorConfig::ConfigType(*scanStartMs));
+    }
+    if (const auto scanEndMsIt = config.find("scan_end_ms"); scanEndMsIt != config.end())
+    {
+        const auto scanEndMs = from_chars<uint64_t>(scanEndMsIt->second);
+        if (!scanEndMs.has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config 'scan_end_ms' must be an unsigned integer");
+        }
+        validated.emplace("scan_end_ms", DescriptorConfig::ConfigType(*scanEndMs));
+    }
+    if (const auto scanStartMs = readOptionalUInt64Config(validated, "scan_start_ms");
+        scanStartMs.has_value())
+    {
+        if (const auto scanEndMs = readOptionalUInt64Config(validated, "scan_end_ms");
+            scanEndMs.has_value() && *scanStartMs > *scanEndMs)
+        {
+            throw InvalidConfigParameter(
+                "BinaryStoreSource config 'scan_start_ms' ({}) must be less than or equal to 'scan_end_ms' ({})",
+                *scanStartMs,
+                *scanEndMs);
+        }
+    }
+    if (const auto replayModeIt = config.find("replay_mode"); replayModeIt != config.end())
+    {
+        const auto normalizedReplayMode = toLowerCase(trimWhiteSpaces(replayModeIt->second));
+        if (!parseReplayMode(normalizedReplayMode).has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config 'replay_mode' must be one of: full, interval");
+        }
+        const auto hasBoundedSelection = config.contains("segment_ids") || config.contains("scan_start_ms") || config.contains("scan_end_ms");
+        if (normalizedReplayMode == "full" && hasBoundedSelection)
+        {
+            throw InvalidConfigParameter(
+                "BinaryStoreSource config 'replay_mode=full' cannot be combined with 'segment_ids' or scan interval bounds");
+        }
+        validated.emplace("replay_mode", DescriptorConfig::ConfigType(normalizedReplayMode));
     }
     validated.emplace("number_of_buffers_in_local_pool", DescriptorConfig::ConfigType(static_cast<int64_t>(-1)));
     validated.emplace("max_inflight_buffers", DescriptorConfig::ConfigType(SourceDescriptor::INVALID_MAX_INFLIGHT_BUFFERS));
