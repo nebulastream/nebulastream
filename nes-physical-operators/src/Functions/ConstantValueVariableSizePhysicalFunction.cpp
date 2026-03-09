@@ -22,6 +22,7 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
+#include <static.hpp>
 
 namespace NES
 {
@@ -33,9 +34,14 @@ ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunc
     std::memcpy(data.data(), value, size);
 }
 
-VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
+VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef& arena) const
 {
-    VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
+    auto result = arena.allocateVariableSizedData(nautilus::val<uint64_t>(data.size()));
+    for (nautilus::static_val<size_t> byteOffset = 0; byteOffset < data.size(); ++byteOffset)
+    {
+        auto targetByte = result.getContent() + nautilus::val<uint64_t>(byteOffset);
+        *targetByte = nautilus::val<int8_t>(data[static_cast<size_t>(byteOffset)]);
+    }
     return result;
 }
 

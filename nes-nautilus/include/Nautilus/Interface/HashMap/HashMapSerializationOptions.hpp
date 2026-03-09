@@ -16,7 +16,7 @@
 
 #include <cstdint>
 
-namespace NES::Nautilus::Interface
+namespace NES
 {
 
 /// Lightweight configuration required for hash map serialization/deserialization.
@@ -27,4 +27,9 @@ struct HashMapSerializationOptions
     bool valuesContainPagedVectors{false};
 };
 
+}
+
+namespace NES::Nautilus::Interface
+{
+using HashMapSerializationOptions = ::NES::HashMapSerializationOptions;
 }

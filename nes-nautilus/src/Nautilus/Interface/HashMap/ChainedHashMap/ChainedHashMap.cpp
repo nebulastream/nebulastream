@@ -281,12 +281,12 @@ void ChainedHashMap::serialize(std::ostream& out, const HashMapSerializationOpti
         while (entry != nullptr)
         {
             out.write(reinterpret_cast<const char*>(&entry->hash), sizeof(entry->hash));
-            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(Interface::ChainedHashMapEntry);
+            const auto* keyPtr = reinterpret_cast<const char*>(entry) + sizeof(ChainedHashMapEntry);
             out.write(keyPtr, static_cast<std::streamsize>(header.keySize));
             const auto* valuePtr = keyPtr + header.keySize;
             if (hashMapOptions.valuesContainPagedVectors)
             {
-                auto* pagedVector = reinterpret_cast<const Interface::PagedVector*>(valuePtr);
+                auto* pagedVector = reinterpret_cast<const PagedVector*>(valuePtr);
                 pagedVector->serialize(out);
             }
             else
@@ -320,15 +320,15 @@ void ChainedHashMap::deserialize(
     this->clear();
     for (uint64_t entryIdx = 0; entryIdx < header.numberOfEntries; ++entryIdx)
     {
-        Interface::HashFunction::HashValue::raw_type hash{0};
+        HashFunction::HashValue::raw_type hash{0};
         in.read(reinterpret_cast<char*>(&hash), sizeof(hash));
-        auto* const newEntry = static_cast<Interface::ChainedHashMapEntry*>(this->insertEntry(hash, bufferProvider));
-        auto* const keyPtr  = reinterpret_cast<char*>(newEntry) + sizeof(Interface::ChainedHashMapEntry);
+        auto* const newEntry = static_cast<ChainedHashMapEntry*>(this->insertEntry(hash, bufferProvider));
+        auto* const keyPtr = reinterpret_cast<char*>(newEntry) + sizeof(ChainedHashMapEntry);
         in.read(keyPtr, static_cast<std::streamsize>(header.keySize));
         auto* valuePtr = keyPtr + header.keySize;
         if (hashMapOptions.valuesContainPagedVectors)
         {
-            auto* pagedVector = new (valuePtr) Interface::PagedVector();
+            auto* pagedVector = new (valuePtr) PagedVector();
             pagedVector->deserialize(in, bufferProvider);
         }
         else

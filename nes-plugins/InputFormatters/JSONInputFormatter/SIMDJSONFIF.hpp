@@ -28,6 +28,7 @@
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -209,7 +210,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     static VariableSizedData parseStringIntoNautilusRecord(
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<SIMDJSONMetaData*>& metaData,
+        const nautilus::val<const SIMDJSONMetaData*>& metaData,
         const ArenaRef& arenaRef);
 
     void writeValueToRecord(
@@ -231,6 +232,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         ArenaRef& arenaRef) const
     {
         Record record;
+        const nautilus::val<const SIMDJSONMetaData*> metaDataPtr
+            = *getMemberWithOffset<const SIMDJSONMetaData*>(fieldIndexFunction, offsetof(SIMDJSONFIF, metaData));
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
         {
             const auto& fieldName = metaData.getFieldNameAt(i);
@@ -248,7 +251,7 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 fieldName,
                 fieldIdx,
                 fieldIndexFunction,
-                nautilus::val<const IndexerMetaData*>(&metaData),
+                metaDataPtr,
                 arenaRef);
         }
         /// Increment iterator and return record
@@ -267,6 +270,8 @@ public:
     SIMDJSONFIF() = default;
     ~SIMDJSONFIF() = default;
 
+    void setMetaData(const SIMDJSONMetaData* metaDataPtr) { metaData = metaDataPtr; }
+
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
     void markNoTupleDelimiters();
 
@@ -281,6 +286,7 @@ private:
     size_t numberOfFieldsInSchema{};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
+    const SIMDJSONMetaData* metaData{};
     std::shared_ptr<simdjson::ondemand::parser> parser;
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;

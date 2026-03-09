@@ -58,11 +58,11 @@ struct VarSizedResult
 VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<SIMDJSONMetaData*>& metaData,
+    const nautilus::val<const SIMDJSONMetaData*>& metaData,
     const ArenaRef& arenaRef)
 {
     const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, Arena* arena)
         {
             thread_local auto result = VarSizedResult{};
             INVARIANT(

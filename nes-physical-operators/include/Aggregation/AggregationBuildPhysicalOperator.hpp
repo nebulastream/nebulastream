@@ -34,46 +34,23 @@ class AggregationBuildPhysicalOperator;
 HashMap* getAggHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
-    WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator);
+    WorkerThreadId workerThreadId);
 
 void serializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    AbstractBufferProvider* bufferProvider,
-    const AggregationBuildPhysicalOperator* buildOperator);
+    AbstractBufferProvider* bufferProvider);
 
 HashMap* deserializeHashMapProxy(
     const AggregationOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
-    AbstractBufferProvider* bufferProvider,
-    const AggregationBuildPhysicalOperator* buildOperator);
+    AbstractBufferProvider* bufferProvider);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:
-    friend HashMap* getAggHashMapProxy(
-        const AggregationOperatorHandler* operatorHandler,
-        Timestamp timestamp,
-        WorkerThreadId workerThreadId,
-        const AggregationBuildPhysicalOperator* buildOperator);
-
-    friend void serializeHashMapProxy(
-        const AggregationOperatorHandler* operatorHandler,
-        Timestamp timestamp,
-        WorkerThreadId workerThreadId,
-        AbstractBufferProvider* bufferProvider,
-        const AggregationBuildPhysicalOperator* buildOperator);
-
-    friend HashMap* deserializeHashMapProxy(
-        const AggregationOperatorHandler* operatorHandler,
-        Timestamp timestamp,
-        WorkerThreadId workerThreadId,
-        AbstractBufferProvider* bufferProvider,
-        const AggregationBuildPhysicalOperator* buildOperator);
-
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,

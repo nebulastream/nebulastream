@@ -42,10 +42,16 @@ HJOperatorHandler::HJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const uint64_t maxNumberOfBuckets)
+    const uint64_t maxNumberOfBuckets,
+    const OperatorHandlerId operatorHandlerId,
+    HashMapOptions leftHashMapOptions,
+    HashMapOptions rightHashMapOptions)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
+    , operatorHandlerId(operatorHandlerId)
+    , leftHashMapOptions(std::move(leftHashMapOptions))
+    , rightHashMapOptions(std::move(rightHashMapOptions))
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
@@ -150,6 +156,23 @@ bool HJOperatorHandler::markCheckpointRestored(const JoinBuildSideType buildSide
             return rightCheckpointRestored.compare_exchange_strong(expected, true, std::memory_order_acq_rel);
     }
     return false;
+}
+
+OperatorHandlerId HJOperatorHandler::getOperatorHandlerId() const
+{
+    return operatorHandlerId;
+}
+
+const HashMapOptions& HJOperatorHandler::getHashMapOptions(const JoinBuildSideType buildSide) const
+{
+    switch (buildSide)
+    {
+        case JoinBuildSideType::Left:
+            return leftHashMapOptions;
+        case JoinBuildSideType::Right:
+            return rightHashMapOptions;
+    }
+    std::unreachable();
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
