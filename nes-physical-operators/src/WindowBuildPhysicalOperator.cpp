@@ -79,7 +79,7 @@ void initSliceCacheMemoryAndSetup(
 }
 
 /// Proxy function to set the number of worker threads on the slice cache during setup.
-void setSliceCacheWorkerThreads(SliceCache* sliceCache, PipelineExecutionContext* pipelineCtx)
+void setSliceCacheWorkerThreads(SliceCache* sliceCache, const PipelineExecutionContext* pipelineCtx)
 {
     PRECONDITION(sliceCache != nullptr, "sliceCache should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipelineCtx should not be null!");
@@ -87,10 +87,10 @@ void setSliceCacheWorkerThreads(SliceCache* sliceCache, PipelineExecutionContext
 }
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
-    OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
+    const OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
     : operatorHandlerId(operatorHandlerId)
     , timeFunction(std::move(timeFunction))
-    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
+    , sliceCache(SliceCache::createSliceCache(std::move(sliceCacheConfiguration)))
 {
 }
 

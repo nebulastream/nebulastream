@@ -70,6 +70,6 @@ protected:
     SliceCacheEntry* startOfEntriesRaw;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
-    uint64_t numberOfWorkerThreads = 1;
+    std::atomic<uint64_t> numberOfWorkerThreads = 1;
 };
 }
