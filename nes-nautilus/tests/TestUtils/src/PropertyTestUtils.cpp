@@ -14,8 +14,10 @@
 
 #include <PropertyTestUtils.hpp>
 
-#include <stdexcept>
+#include <ranges>
 #include <string>
+#include <ErrorHandling.hpp>
+#include <Util/Ranges.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -105,9 +107,14 @@ std::any varValToAny(const VarVal& val, DataType::Type type)
             const auto len = nautilus::details::RawValueResolver<uint64_t>::getRawValue(vsd.getSize());
             return std::string(reinterpret_cast<const char*>(ptr), len);
         }
-        default:
-            throw std::runtime_error("Unsupported type for varValToAny");
+        case DataType::Type::BOOLEAN:
+            [[fallthrough]];
+        case DataType::Type::CHAR:
+            [[fallthrough]];
+        case DataType::Type::UNDEFINED:
+            throw TestException("Unsupported type for varValToAny");
     }
+    std::unreachable();
 }
 
 std::vector<std::any>
@@ -115,9 +122,9 @@ recordToAnyVec(const Record& record, const std::vector<Record::RecordFieldIdenti
 {
     std::vector<std::any> result;
     result.reserve(projection.size());
-    for (size_t i = 0; i < projection.size(); ++i)
+    for (const auto& [field, type] : std::views::zip(projection, types))
     {
-        result.push_back(varValToAny(record.read(projection[i]), types[i]));
+        result.push_back(varValToAny(record.read(field), type));
     }
     return result;
 }
@@ -170,16 +177,21 @@ int compareAnyField(const std::any& lhs, const std::any& rhs, DataType::Type typ
             const auto& right = std::any_cast<const std::string&>(rhs);
             return left.compare(right);
         }
-        default:
-            throw std::runtime_error("Unsupported type for compareAnyField");
+        case DataType::Type::BOOLEAN:
+            [[fallthrough]];
+        case DataType::Type::CHAR:
+            [[fallthrough]];
+        case DataType::Type::UNDEFINED:
+            throw TestException("Unsupported type for compareAnyField");
     }
+    std::unreachable();
 }
 
 bool AnyVecLess::operator()(const std::vector<std::any>& lhs, const std::vector<std::any>& rhs) const
 {
-    for (size_t i = 0; i < types.size(); ++i)
+    for (const auto& [l, r, type] : std::views::zip(lhs, rhs, types))
     {
-        const int cmp = compareAnyField(lhs[i], rhs[i], types[i]);
+        const int cmp = compareAnyField(l, r, type);
         if (cmp != 0)
         {
             return cmp < 0;
@@ -190,9 +202,9 @@ bool AnyVecLess::operator()(const std::vector<std::any>& lhs, const std::vector<
 
 bool anyVecsEqual(const std::vector<std::any>& lhs, const std::vector<std::any>& rhs, const std::vector<DataType::Type>& types)
 {
-    for (size_t i = 0; i < types.size(); ++i)
+    for (const auto& [l, r, type] : std::views::zip(lhs, rhs, types))
     {
-        if (compareAnyField(lhs[i], rhs[i], types[i]) != 0)
+        if (compareAnyField(l, r, type) != 0)
         {
             return false;
         }
