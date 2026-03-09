@@ -29,6 +29,7 @@ namespace NES
 void SIMDJSONInputFormatIndexer::indexRawBuffer(
     SIMDJSONFIF& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const SIMDJSONMetaData& metaData)
 {
+    fieldIndexFunction.setMetaData(&metaData);
     const auto offsetOfFirstTuple = static_cast<FieldIndex>(rawBuffer.getBufferView().find(TUPLE_DELIMITER));
 
     /// If the buffer does not contain a delimiter, set the 'offsetOfFirstTuple' to a value larger than the buffer size to tell

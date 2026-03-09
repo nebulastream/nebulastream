@@ -23,12 +23,14 @@
 #include <optional>
 #include <utility>
 #include <vector>
+#include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
+#include <HashMapOptions.hpp>
 #include <HashMapSlice.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -63,7 +65,9 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        HashMapOptions hashMapOptions,
+        std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions);
     ~AggregationOperatorHandler() override;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -79,6 +83,8 @@ public:
     void setCheckpointCallbackId(std::string callbackId);
     void clearCheckpointCallback();
     [[nodiscard]] bool hasCheckpointCallback() const;
+    [[nodiscard]] const HashMapOptions& getHashMapOptions() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& getAggregationFunctions() const;
 
 protected:
     void triggerSlices(
@@ -86,6 +92,8 @@ protected:
         PipelineExecutionContext* pipelineCtx) override;
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
+    HashMapOptions hashMapOptions;
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     std::atomic<bool> checkpointRequested{false};
     std::optional<std::string> checkpointCallbackId;
 };

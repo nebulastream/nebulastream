@@ -31,6 +31,7 @@
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
+#include <HashMapOptions.hpp>
 #include <HashMapSlice.hpp>
 
 namespace NES
@@ -68,7 +69,10 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        OperatorHandlerId operatorHandlerId,
+        HashMapOptions leftHashMapOptions,
+        HashMapOptions rightHashMapOptions);
     ~HJOperatorHandler() override;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
@@ -85,6 +89,8 @@ public:
     void clearCheckpointCallback(const JoinBuildSideType buildSide) const;
     [[nodiscard]] bool wasCheckpointRestored(const JoinBuildSideType buildSide) const;
     bool markCheckpointRestored(const JoinBuildSideType buildSide) const;
+    [[nodiscard]] OperatorHandlerId getOperatorHandlerId() const;
+    [[nodiscard]] const HashMapOptions& getHashMapOptions(const JoinBuildSideType buildSide) const;
 
 private:
     /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
@@ -93,6 +99,9 @@ private:
     /// shared_ptr as multiple slices need access to it
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> leftCleanupStateNautilusFunction;
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
+    const OperatorHandlerId operatorHandlerId;
+    HashMapOptions leftHashMapOptions;
+    HashMapOptions rightHashMapOptions;
     mutable std::atomic<bool> leftCheckpointRequested{false};
     mutable std::atomic<bool> rightCheckpointRequested{false};
     mutable std::atomic<bool> leftCheckpointRestored{false};

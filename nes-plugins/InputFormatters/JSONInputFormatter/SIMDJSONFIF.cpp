@@ -51,17 +51,18 @@ SIMDJSONFIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SI
 
 struct VarSizedResult
 {
-    const char* varSizedPointer;
+    std::span<std::byte> varSizedPointer;
     uint64_t size{};
 };
 
 VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<SIMDJSONMetaData*>& metaData)
+    const nautilus::val<const SIMDJSONMetaData*>& metaData,
+    const ArenaRef& arenaRef)
 {
     const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData)
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, Arena* arena)
         {
             thread_local auto result = VarSizedResult{};
             INVARIANT(
@@ -74,14 +75,18 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
 
             /// Get the value from the document and convert it to a span of bytes
             const std::string_view value = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+            auto valueBytes = std::as_bytes(std::span(value));
 
             /// Get memory from arena that holds length of the string and the bytes of the string
-            result = VarSizedResult{.varSizedPointer = value.data(), .size = value.size()};
+            auto arenaPointer = arena->allocateMemory(value.size());
+            std::ranges::copy(valueBytes, arenaPointer.begin());
+            result = VarSizedResult{.varSizedPointer = arenaPointer, .size = value.size()};
             return &result;
         },
         fieldIdx,
         fieldIndexFunction,
-        metaData);
+        metaData,
+        arenaRef.getArena());
 
     VariableSizedData varSizedString{
         *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer)),
@@ -95,7 +100,8 @@ void SIMDJSONFIF::writeValueToRecord(
     const std::string& fieldName,
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<const SIMDJSONMetaData*>& metaData) const
+    const nautilus::val<const SIMDJSONMetaData*>& metaData,
+    ArenaRef& arenaRef) const
 {
     switch (physicalType)
     {
@@ -148,7 +154,7 @@ void SIMDJSONFIF::writeValueToRecord(
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef));
             return;
         }
         case DataType::Type::UNDEFINED:

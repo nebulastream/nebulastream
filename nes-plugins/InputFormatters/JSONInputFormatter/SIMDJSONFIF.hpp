@@ -28,6 +28,7 @@
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -209,7 +210,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     static VariableSizedData parseStringIntoNautilusRecord(
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<SIMDJSONMetaData*>& metaData);
+        const nautilus::val<const SIMDJSONMetaData*>& metaData,
+        const ArenaRef& arenaRef);
 
     void writeValueToRecord(
         DataType::Type physicalType,
@@ -217,7 +219,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<const SIMDJSONMetaData*>& metaData) const;
+        const nautilus::val<const SIMDJSONMetaData*>& metaData,
+        ArenaRef& arenaRef) const;
 
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
@@ -225,9 +228,12 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<int8_t*>&,
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,
-        nautilus::val<SIMDJSONFIF*> fieldIndexFunction) const
+        nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
+        ArenaRef& arenaRef) const
     {
         Record record;
+        const nautilus::val<const SIMDJSONMetaData*> metaDataPtr
+            = *getMemberWithOffset<const SIMDJSONMetaData*>(fieldIndexFunction, offsetof(SIMDJSONFIF, metaData));
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
         {
             const auto& fieldName = metaData.getFieldNameAt(i);
@@ -240,7 +246,13 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             auto fieldIdx = static_cast<nautilus::val<FieldIndex>>(i);
             const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             writeValueToRecord(
-                fieldDataType.type, record, fieldName, fieldIdx, fieldIndexFunction, nautilus::val<const IndexerMetaData*>(&metaData));
+                fieldDataType.type,
+                record,
+                fieldName,
+                fieldIdx,
+                fieldIndexFunction,
+                metaDataPtr,
+                arenaRef);
         }
         /// Increment iterator and return record
         nautilus::invoke(
@@ -258,6 +270,8 @@ public:
     SIMDJSONFIF() = default;
     ~SIMDJSONFIF() = default;
 
+    void setMetaData(const SIMDJSONMetaData* metaDataPtr) { metaData = metaDataPtr; }
+
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
     void markNoTupleDelimiters();
 
@@ -272,6 +286,7 @@ private:
     size_t numberOfFieldsInSchema{};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
+    const SIMDJSONMetaData* metaData{};
     std::shared_ptr<simdjson::ondemand::parser> parser;
     std::shared_ptr<simdjson::ondemand::document_stream> docStream;
     simdjson::ondemand::document_stream::iterator docStreamIterator;

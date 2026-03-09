@@ -44,11 +44,15 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const uint64_t maxNumberOfBuckets)
+    const uint64_t maxNumberOfBuckets,
+    HashMapOptions hashMapOptions,
+    std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalled(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
+    , hashMapOptions(std::move(hashMapOptions))
+    , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
 {
 }
 
@@ -84,6 +88,16 @@ void AggregationOperatorHandler::clearCheckpointCallback()
 bool AggregationOperatorHandler::hasCheckpointCallback() const
 {
     return checkpointCallbackId.has_value();
+}
+
+const HashMapOptions& AggregationOperatorHandler::getHashMapOptions() const
+{
+    return hashMapOptions;
+}
+
+const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& AggregationOperatorHandler::getAggregationFunctions() const
+{
+    return aggregationPhysicalFunctions;
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

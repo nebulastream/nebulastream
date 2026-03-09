@@ -168,8 +168,8 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
                 throw UnknownJoinStrategy(
                     "Could not handle join strategy that has chained logical functions operating over the join fields!");
             }
-            const auto firstFieldName = firstChild->getFieldName();
-            const auto secondFieldName = secondChild->getFieldName();
+            const auto firstFieldName = firstChild->get().getFieldName();
+            const auto secondFieldName = secondChild->get().getFieldName();
 
             const auto firstMatchLeft = findFieldMatch(leftInputSchema, firstFieldName);
             const auto firstMatchRight = findFieldMatch(rightInputSchema, firstFieldName);
@@ -193,13 +193,13 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
             std::optional<FieldAccessLogicalFunction> rightField;
             if (leftHasFirst && rightHasSecond && !leftHasSecond && !rightHasFirst)
             {
-                leftField = makeFieldAccess(*firstMatchLeft.field, *firstChild);
-                rightField = makeFieldAccess(*secondMatchRight.field, *secondChild);
+                leftField = makeFieldAccess(*firstMatchLeft.field, firstChild->get());
+                rightField = makeFieldAccess(*secondMatchRight.field, secondChild->get());
             }
             else if (leftHasSecond && rightHasFirst && !leftHasFirst && !rightHasSecond)
             {
-                leftField = makeFieldAccess(*secondMatchLeft.field, *secondChild);
-                rightField = makeFieldAccess(*firstMatchRight.field, *firstChild);
+                leftField = makeFieldAccess(*secondMatchLeft.field, secondChild->get());
+                rightField = makeFieldAccess(*firstMatchRight.field, firstChild->get());
             }
             else
             {
@@ -393,8 +393,14 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     /// Creating the hash join operator handler
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+    auto handler = std::make_shared<HJOperatorHandler>(
+        inputOriginIds,
+        outputOriginId,
+        std::move(sliceAndWindowStore),
+        conf.maxNumberOfBuckets,
+        handlerId,
+        leftHashMapOptions,
+        rightHashMapOptions);
 
 
     /// Building operator wrapper for the two builds and the probe.
