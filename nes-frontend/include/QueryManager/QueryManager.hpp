@@ -140,6 +140,9 @@ public:
         QueryRegistrationOptions options = {});
     [[nodiscard]] std::expected<ReplayExecution, Exception>
     registerReplayExecution(const DistributedQueryId& queryId, uint64_t intervalStartMs, uint64_t intervalEndMs);
+    [[nodiscard]] std::expected<ReplayExecution, Exception> getReplayExecution(const ReplayExecutionId& replayExecutionId) const;
+    [[nodiscard]] std::expected<ReplayPlan, Exception> getReplayPlan(const ReplayExecutionId& replayExecutionId) const;
+    [[nodiscard]] std::expected<void, Exception> updateReplayExecution(ReplayExecution replayExecution);
     [[nodiscard]] std::expected<DistributedQueryId, Exception>
     registerRecordingEpochQuery(const DistributedQueryId& beneficiaryQueryId, const DistributedLogicalPlan& plan);
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).

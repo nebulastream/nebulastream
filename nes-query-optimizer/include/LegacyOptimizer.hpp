@@ -49,6 +49,7 @@ public:
         const std::optional<ReplaySpecification>& replaySpecification,
         const RecordingSelectionResult& mergedSelectionResult,
         std::string_view queryId) const;
+    [[nodiscard]] DistributedLogicalPlan decomposePlacedPlan(const LogicalPlan& placedPlan) const;
     LegacyOptimizer() = default;
 
     explicit LegacyOptimizer(

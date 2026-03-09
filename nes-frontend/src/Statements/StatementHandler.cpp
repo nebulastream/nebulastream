@@ -22,6 +22,8 @@
 #include <optional>
 #include <ranges>
 #include <sstream>
+#include <thread>
+#include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
@@ -29,9 +31,11 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Replay/TimeTravelReadResolver.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Overloaded.hpp>
@@ -190,6 +194,357 @@ struct RecordingEpochDeployment
     DistributedQueryId beneficiaryQueryId;
     DistributedLogicalPlan epochPlan;
 };
+
+struct ReplayBoundaryEdgeHash
+{
+    [[nodiscard]] size_t operator()(const RecordingRewriteEdge& edge) const
+    {
+        return std::hash<uint64_t>{}(edge.parentId.getRawValue()) ^ (std::hash<uint64_t>{}(edge.childId.getRawValue()) << 1U);
+    }
+};
+
+struct PreparedReplayRecording
+{
+    RecordingId recordingId{RecordingId::INVALID};
+    std::string filePath;
+    std::vector<uint64_t> segmentIds;
+};
+
+struct ReplaySourceReplacement
+{
+    Host host{Host::INVALID};
+    std::string recordingId;
+    std::string filePath;
+    std::vector<uint64_t> segmentIds;
+    uint64_t intervalStartMs = 0;
+    uint64_t intervalEndMs = 0;
+};
+
+struct PreparedReplayExecutionPlan
+{
+    LogicalPlan replayPlan;
+    std::vector<PreparedReplayRecording> pinnedRecordings;
+};
+
+std::string joinExceptionMessages(const std::vector<Exception>& exceptions)
+{
+    return fmt::format(
+        "{}",
+        fmt::join(
+            exceptions | std::views::transform([](const auto& exception) { return std::string(exception.what()); }),
+            ", "));
+}
+
+std::string encodeSegmentIds(const std::vector<uint64_t>& segmentIds)
+{
+    std::stringstream encoded;
+    for (size_t index = 0; index < segmentIds.size(); ++index)
+    {
+        if (index > 0)
+        {
+            encoded << ',';
+        }
+        encoded << segmentIds[index];
+    }
+    return encoded.str();
+}
+
+LogicalOperator buildReplaySourceOperator(
+    const SharedPtr<const SourceCatalog>& sourceCatalog, const LogicalOperator& replacedChild, const ReplaySourceReplacement& replacement)
+{
+    std::unordered_map<std::string, std::string> sourceConfig{
+        {"host", replacement.host.getRawValue()},
+        {"file_path", replacement.filePath},
+        {"recording_id", replacement.recordingId},
+        {"segment_ids", encodeSegmentIds(replacement.segmentIds)},
+        {"scan_start_ms", std::to_string(replacement.intervalStartMs)},
+        {"scan_end_ms", std::to_string(replacement.intervalEndMs)},
+        {"replay_mode", "interval"}};
+    std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
+    const auto descriptor = sourceCatalog->getInlineSource("BinaryStore", replacedChild.getOutputSchema(), std::move(parserConfig), std::move(sourceConfig));
+    if (!descriptor.has_value())
+    {
+        throw InvalidConfigParameter("Could not create replay source descriptor for recording {}", replacement.recordingId);
+    }
+    return SourceDescriptorLogicalOperator(*descriptor).withTraitSet(replacedChild.getTraitSet());
+}
+
+LogicalOperator rewriteReplayBoundariesWithSources(
+    const LogicalOperator& current,
+    const SharedPtr<const SourceCatalog>& sourceCatalog,
+    const std::unordered_map<RecordingRewriteEdge, ReplaySourceReplacement, ReplayBoundaryEdgeHash>& replacements)
+{
+    const auto originalChildren = current.getChildren();
+    std::vector<LogicalOperator> rewrittenChildren;
+    rewrittenChildren.reserve(originalChildren.size());
+    for (const auto& child : originalChildren)
+    {
+        const RecordingRewriteEdge edge{.parentId = current.getId(), .childId = child.getId()};
+        if (const auto replacementIt = replacements.find(edge); replacementIt != replacements.end())
+        {
+            rewrittenChildren.push_back(buildReplaySourceOperator(sourceCatalog, child, replacementIt->second));
+            continue;
+        }
+        rewrittenChildren.push_back(rewriteReplayBoundariesWithSources(child, sourceCatalog, replacements));
+    }
+    return current.withChildren(std::move(rewrittenChildren));
+}
+
+LogicalPlan buildReplaySourcePlan(
+    const LogicalPlan& basePlan,
+    const SharedPtr<const SourceCatalog>& sourceCatalog,
+    const std::unordered_map<RecordingRewriteEdge, ReplaySourceReplacement, ReplayBoundaryEdgeHash>& replacements)
+{
+    auto rewrittenRoots = basePlan.getRootOperators();
+    for (auto& root : rewrittenRoots)
+    {
+        root = rewriteReplayBoundariesWithSources(root, sourceCatalog, replacements);
+    }
+    return basePlan.withRootOperators(std::move(rewrittenRoots));
+}
+
+std::optional<Exception> unsupportedReplayOperator(const LogicalOperator& current)
+{
+    if (const auto source = current.tryGetAs<SourceDescriptorLogicalOperator>(); source.has_value())
+    {
+        if (source->get().getSourceDescriptor().getSourceType() == "BinaryStore")
+        {
+            return std::nullopt;
+        }
+        return UnsupportedQuery(
+            "Replay execution currently requires all replay suffix inputs to come from maintained recordings, but replay plan still"
+            " depends on live source operator {}",
+            current.getId());
+    }
+    if (current.getName() == "Source")
+    {
+        return UnsupportedQuery(
+            "Replay execution currently requires all replay suffix inputs to come from maintained recordings, but replay plan still"
+            " depends on live source operator {}",
+            current.getId());
+    }
+    if (current.getName() == "Join" || current.getName() == "WindowedAggregation")
+    {
+        return UnsupportedQuery(
+            "Replay execution without checkpoints does not support replay suffix operator {} ({})",
+            current.getName(),
+            current.getId());
+    }
+    if (current.getName() == "Store")
+    {
+        return UnsupportedQuery(
+            "Replay execution expected persisted replay suffix plans without Store operators, but found Store operator {}",
+            current.getId());
+    }
+    return std::nullopt;
+}
+
+std::expected<void, Exception> validatePhase5ReplayPlan(const LogicalOperator& current)
+{
+    if (const auto unsupported = unsupportedReplayOperator(current); unsupported.has_value())
+    {
+        return std::unexpected(*unsupported);
+    }
+    for (const auto& child : current.getChildren())
+    {
+        if (auto validation = validatePhase5ReplayPlan(child); !validation)
+        {
+            return validation;
+        }
+    }
+    return {};
+}
+
+std::expected<void, Exception> validatePhase5ReplayPlan(const LogicalPlan& replayPlan)
+{
+    for (const auto& root : replayPlan.getRootOperators())
+    {
+        if (auto validation = validatePhase5ReplayPlan(root); !validation)
+        {
+            return validation;
+        }
+    }
+    return {};
+}
+
+void appendPinnedSegment(std::vector<ReplayPinnedSegment>& pinnedSegments, const RecordingId& recordingId, const uint64_t segmentId)
+{
+    const ReplayPinnedSegment pinnedSegment{.recordingId = recordingId.getRawValue(), .segmentId = segmentId};
+    if (!std::ranges::contains(pinnedSegments, pinnedSegment))
+    {
+        pinnedSegments.push_back(pinnedSegment);
+    }
+}
+
+std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecutionPlan(
+    const SharedPtr<const SourceCatalog>& sourceCatalog, const ReplayExecution& execution, const ReplayPlan& replayPlan)
+{
+    std::unordered_map<std::string, PreparedReplayRecording> pinnedRecordingsById;
+    std::unordered_map<RecordingRewriteEdge, ReplaySourceReplacement, ReplayBoundaryEdgeHash> replacements;
+    const Replay::BinaryStoreReplaySelection selection{
+        .segmentIds = std::nullopt,
+        .scanStartMs = execution.intervalStartMs,
+        .scanEndMs = execution.intervalEndMs};
+
+    for (const auto& replayBoundary : replayPlan.selectedReplayBoundaries)
+    {
+        if (replayBoundary.selection.filePath.empty())
+        {
+            return std::unexpected(UnsupportedQuery(
+                "Replay execution requires a concrete recording file for recording {}",
+                replayBoundary.selection.recordingId));
+        }
+
+        const auto recordingKey = replayBoundary.selection.recordingId.getRawValue();
+        auto recordingIt = pinnedRecordingsById.find(recordingKey);
+        if (recordingIt == pinnedRecordingsById.end())
+        {
+            const auto selectedSegments = Replay::selectBinaryStoreSegments(replayBoundary.selection.filePath, selection);
+            if (selectedSegments.empty())
+            {
+                return std::unexpected(PlacementFailure(
+                    "Replay execution could not select retained segments from recording {} for interval [{} ms, {} ms]",
+                    replayBoundary.selection.recordingId,
+                    execution.intervalStartMs,
+                    execution.intervalEndMs));
+            }
+
+            PreparedReplayRecording preparedRecording{
+                .recordingId = replayBoundary.selection.recordingId,
+                .filePath = replayBoundary.selection.filePath,
+                .segmentIds =
+                    selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
+                    | std::ranges::to<std::vector>()};
+            recordingIt = pinnedRecordingsById.emplace(recordingKey, std::move(preparedRecording)).first;
+        }
+
+        for (const auto& materializationEdge : replayBoundary.materializationEdges)
+        {
+            replacements.insert_or_assign(
+                materializationEdge,
+                ReplaySourceReplacement{
+                    .host = replayBoundary.selection.node,
+                    .recordingId = replayBoundary.selection.recordingId.getRawValue(),
+                    .filePath = replayBoundary.selection.filePath,
+                    .segmentIds = recordingIt->second.segmentIds,
+                    .intervalStartMs = execution.intervalStartMs,
+                    .intervalEndMs = execution.intervalEndMs});
+        }
+    }
+
+    auto replaySourcePlan = buildReplaySourcePlan(replayPlan.queryPlanRewrite.basePlan, sourceCatalog, replacements);
+    if (auto validation = validatePhase5ReplayPlan(replaySourcePlan); !validation)
+    {
+        return std::unexpected(validation.error());
+    }
+
+    return PreparedReplayExecutionPlan{
+        .replayPlan = std::move(replaySourcePlan),
+        .pinnedRecordings = pinnedRecordingsById | std::views::values | std::ranges::to<std::vector>()};
+}
+
+std::expected<void, Exception> waitForReplayQueryCompletion(const SharedPtr<QueryManager>& queryManager, const DistributedQueryId& queryId)
+{
+    constexpr auto replayStatusPollInterval = std::chrono::milliseconds(10);
+    while (true)
+    {
+        const auto statusResult = queryManager->status(queryId);
+        if (!statusResult)
+        {
+            return std::unexpected(QueryStatusFailed(
+                "Could not observe replay query {}: {}",
+                queryId,
+                joinExceptionMessages(statusResult.error())));
+        }
+
+        switch (statusResult->getGlobalQueryState())
+        {
+            case DistributedQueryState::Stopped:
+                return {};
+            case DistributedQueryState::Failed:
+                if (const auto exception = statusResult->coalesceException(); exception.has_value())
+                {
+                    return std::unexpected(QueryStatusFailed(
+                        "Replay query {} failed during execution: {}",
+                        queryId,
+                        exception->what()));
+                }
+                return std::unexpected(QueryStatusFailed("Replay query {} failed during execution", queryId));
+            case DistributedQueryState::Unreachable:
+                if (const auto exception = statusResult->coalesceException(); exception.has_value())
+                {
+                    return std::unexpected(QueryStatusFailed(
+                        "Replay query {} became unreachable during execution: {}",
+                        queryId,
+                        exception->what()));
+                }
+                return std::unexpected(QueryStatusFailed("Replay query {} became unreachable during execution", queryId));
+            case DistributedQueryState::Registered:
+            case DistributedQueryState::Running:
+            case DistributedQueryState::PartiallyStopped:
+                std::this_thread::sleep_for(replayStatusPollInterval);
+                break;
+        }
+    }
+}
+
+std::expected<void, Exception> cleanupReplayExecutionResources(
+    SharedPtr<QueryManager>& queryManager,
+    const std::optional<DistributedQueryId>& internalQueryId,
+    const bool internalQueryStarted,
+    const std::vector<PreparedReplayRecording>& pinnedRecordings)
+{
+    std::optional<Exception> firstException;
+    if (internalQueryId.has_value())
+    {
+        if (internalQueryStarted)
+        {
+            const auto statusResult = queryManager->status(*internalQueryId);
+            if (statusResult && statusResult->getGlobalQueryState() != DistributedQueryState::Stopped
+                && statusResult->getGlobalQueryState() != DistributedQueryState::Failed)
+            {
+                const auto stopResult = queryManager->stop(*internalQueryId);
+                if (!stopResult && !firstException.has_value())
+                {
+                    firstException = QueryStopFailed(
+                        "Could not stop replay query {}: {}",
+                        *internalQueryId,
+                        joinExceptionMessages(stopResult.error()));
+                }
+            }
+        }
+
+        const auto unregisterResult = queryManager->unregister(*internalQueryId);
+        if (!unregisterResult && !firstException.has_value())
+        {
+            firstException = QueryUnregistrationFailed(
+                "Could not unregister replay query {}: {}",
+                *internalQueryId,
+                joinExceptionMessages(unregisterResult.error()));
+        }
+    }
+
+    for (const auto& pinnedRecording : pinnedRecordings)
+    {
+        try
+        {
+            Replay::unpinBinaryStoreSegments(pinnedRecording.filePath, pinnedRecording.segmentIds);
+        }
+        catch (const Exception& exception)
+        {
+            if (!firstException.has_value())
+            {
+                firstException = exception;
+            }
+        }
+    }
+
+    if (firstException.has_value())
+    {
+        return std::unexpected(*firstException);
+    }
+    return {};
+}
 
 std::vector<DistributedQueryId>
 collectActiveReplayRedeployQueries(const RecordingSelectionResult& selectionResult, const DistributedQueryId& incomingQueryId)
@@ -450,8 +805,229 @@ QueryStatementHandler::QueryStatementHandler(
 
 std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator()(const ReplayStatement& statement)
 {
-    return queryManager->registerReplayExecution(statement.queryId, statement.intervalStartMs, statement.intervalEndMs)
-        .transform([](const auto& execution) { return ReplayStatementResult{execution}; });
+    CPPTRACE_TRY
+    {
+        queryManager->refreshWorkerMetrics();
+        auto replayExecution = queryManager->registerReplayExecution(statement.queryId, statement.intervalStartMs, statement.intervalEndMs);
+        if (!replayExecution)
+        {
+            return std::unexpected(replayExecution.error());
+        }
+        if (optimizer == nullptr || sourceCatalog == nullptr)
+        {
+            return std::unexpected(UnsupportedQuery("Replay execution requires optimizer and source catalog support in the frontend"));
+        }
+
+        auto execution = *replayExecution;
+        std::optional<DistributedQueryId> internalQueryId;
+        bool internalQueryStarted = false;
+        std::vector<PreparedReplayRecording> pinnedRecordings;
+
+        const auto persistExecution = [&]() -> std::expected<void, Exception>
+        {
+            return queryManager->updateReplayExecution(execution);
+        };
+        const auto failReplayExecution = [&](const Exception& exception) -> std::expected<ReplayStatementResult, Exception>
+        {
+            execution.state = ReplayExecutionState::Failed;
+            execution.failureReason = std::string(exception.what());
+            auto persisted = persistExecution();
+            if (!persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            return std::unexpected(exception);
+        };
+
+        execution.state = ReplayExecutionState::Preparing;
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        const auto replayPlan = queryManager->getReplayPlan(execution.id);
+        if (!replayPlan)
+        {
+            return failReplayExecution(replayPlan.error());
+        }
+
+        const auto preparedReplayPlan = buildPreparedReplayExecutionPlan(sourceCatalog, execution, *replayPlan);
+        if (!preparedReplayPlan)
+        {
+            return failReplayExecution(preparedReplayPlan.error());
+        }
+
+        std::optional<DistributedLogicalPlan> replayDistributedPlan;
+        try
+        {
+            replayDistributedPlan = optimizer->decomposePlacedPlan(preparedReplayPlan->replayPlan);
+        }
+        catch (const Exception& exception)
+        {
+            return failReplayExecution(exception);
+        }
+
+        try
+        {
+            pinnedRecordings = preparedReplayPlan->pinnedRecordings;
+            execution.pinnedSegments.clear();
+            for (const auto& pinnedRecording : pinnedRecordings)
+            {
+                const auto pinnedSegmentIds = Replay::pinBinaryStoreSegments(pinnedRecording.filePath, pinnedRecording.segmentIds);
+                for (const auto segmentId : pinnedSegmentIds)
+                {
+                    appendPinnedSegment(execution.pinnedSegments, pinnedRecording.recordingId, segmentId);
+                }
+            }
+        }
+        catch (const Exception& exception)
+        {
+            execution.state = ReplayExecutionState::CleaningUp;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            const auto cleanupResult = cleanupReplayExecutionResources(queryManager, std::nullopt, false, pinnedRecordings);
+            if (!cleanupResult)
+            {
+                execution.failureReason = std::string(cleanupResult.error().what());
+                execution.state = ReplayExecutionState::Failed;
+                if (auto persisted = persistExecution(); !persisted)
+                {
+                    return std::unexpected(persisted.error());
+                }
+                return std::unexpected(cleanupResult.error());
+            }
+            return failReplayExecution(exception);
+        }
+
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        const auto registerResult = queryManager->registerQuery(
+            *replayDistributedPlan,
+            std::nullopt,
+            QueryRegistrationOptions{.internal = true, .includeInReplayPlanning = false});
+        if (!registerResult)
+        {
+            execution.state = ReplayExecutionState::CleaningUp;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            const auto cleanupResult = cleanupReplayExecutionResources(queryManager, std::nullopt, false, pinnedRecordings);
+            if (!cleanupResult)
+            {
+                execution.failureReason = std::string(cleanupResult.error().what());
+                execution.state = ReplayExecutionState::Failed;
+                if (auto persisted = persistExecution(); !persisted)
+                {
+                    return std::unexpected(persisted.error());
+                }
+                return std::unexpected(cleanupResult.error());
+            }
+            return failReplayExecution(registerResult.error());
+        }
+
+        internalQueryId = *registerResult;
+        execution.internalQueryIds.push_back(*internalQueryId);
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        execution.state = ReplayExecutionState::FastForwarding;
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        const auto startResult = queryManager->start(*internalQueryId);
+        if (!startResult)
+        {
+            execution.state = ReplayExecutionState::CleaningUp;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            const auto cleanupResult = cleanupReplayExecutionResources(queryManager, internalQueryId, false, pinnedRecordings);
+            if (!cleanupResult)
+            {
+                execution.failureReason = std::string(cleanupResult.error().what());
+                execution.state = ReplayExecutionState::Failed;
+                if (auto persisted = persistExecution(); !persisted)
+                {
+                    return std::unexpected(persisted.error());
+                }
+                return std::unexpected(cleanupResult.error());
+            }
+            return failReplayExecution(QueryStartFailed(
+                "Could not start replay query {}: {}",
+                *internalQueryId,
+                joinExceptionMessages(startResult.error())));
+        }
+        internalQueryStarted = true;
+
+        execution.state = ReplayExecutionState::Emitting;
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        if (const auto waitResult = waitForReplayQueryCompletion(queryManager, *internalQueryId); !waitResult)
+        {
+            execution.state = ReplayExecutionState::CleaningUp;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            const auto cleanupResult = cleanupReplayExecutionResources(queryManager, internalQueryId, true, pinnedRecordings);
+            if (!cleanupResult)
+            {
+                execution.failureReason = std::string(cleanupResult.error().what());
+                execution.state = ReplayExecutionState::Failed;
+                if (auto persisted = persistExecution(); !persisted)
+                {
+                    return std::unexpected(persisted.error());
+                }
+                return std::unexpected(cleanupResult.error());
+            }
+            return failReplayExecution(waitResult.error());
+        }
+
+        execution.state = ReplayExecutionState::CleaningUp;
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+
+        const auto cleanupResult = cleanupReplayExecutionResources(queryManager, internalQueryId, true, pinnedRecordings);
+        if (!cleanupResult)
+        {
+            execution.failureReason = std::string(cleanupResult.error().what());
+            execution.state = ReplayExecutionState::Failed;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            return std::unexpected(cleanupResult.error());
+        }
+
+        execution.state = ReplayExecutionState::Done;
+        execution.failureReason.reset();
+        if (auto persisted = persistExecution(); !persisted)
+        {
+            return std::unexpected(persisted.error());
+        }
+        return ReplayStatementResult{execution};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected{wrapExternalException()};
+    }
+    std::unreachable();
 }
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)

@@ -176,4 +176,12 @@ DistributedLogicalPlan LegacyOptimizer::buildRecordingEpochWithFixedSelection(
     distributedPlan.setRecordingSelectionResult(selectionResultForActiveQuery(mergedSelectionResult, queryId));
     return distributedPlan;
 }
+
+DistributedLogicalPlan LegacyOptimizer::decomposePlacedPlan(const LogicalPlan& placedPlan) const
+{
+    auto distributedPlan = QueryDecomposer(workerCatalog, sourceCatalog, sinkCatalog).decompose(placedPlan);
+    distributedPlan.setReplaySpecification(std::nullopt);
+    distributedPlan.setRecordingSelectionResult({});
+    return distributedPlan;
+}
 }

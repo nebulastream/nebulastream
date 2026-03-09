@@ -136,6 +136,34 @@ std::expected<DistributedQuery, Exception> QueryManager::getQuery(DistributedQue
     return it->second;
 }
 
+std::expected<ReplayExecution, Exception> QueryManager::getReplayExecution(const ReplayExecutionId& replayExecutionId) const
+{
+    if (const auto it = state.replayExecutions.find(replayExecutionId); it != state.replayExecutions.end())
+    {
+        return it->second;
+    }
+    return std::unexpected(QueryNotFound("Replay execution {} is not known to the QueryManager", replayExecutionId));
+}
+
+std::expected<ReplayPlan, Exception> QueryManager::getReplayPlan(const ReplayExecutionId& replayExecutionId) const
+{
+    if (const auto it = state.replayPlans.find(replayExecutionId); it != state.replayPlans.end())
+    {
+        return it->second;
+    }
+    return std::unexpected(QueryNotFound("Replay plan for execution {} is not known to the QueryManager", replayExecutionId));
+}
+
+std::expected<void, Exception> QueryManager::updateReplayExecution(ReplayExecution replayExecution)
+{
+    if (!state.replayExecutions.contains(replayExecution.id))
+    {
+        return std::unexpected(QueryNotFound("Replay execution {} is not known to the QueryManager", replayExecution.id));
+    }
+    state.replayExecutions.insert_or_assign(replayExecution.id, std::move(replayExecution));
+    return {};
+}
+
 std::unordered_map<Host, UniquePtr<QuerySubmissionBackend>>
 QueryManager::QueryManagerBackends::createBackends(const std::vector<WorkerConfig>& workers, BackendProvider& provider)
 {
