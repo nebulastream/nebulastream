@@ -139,6 +139,11 @@ struct ExplainQueryStatementResult
     std::string explainString;
 };
 
+struct ReplayStatementResult
+{
+    ReplayExecution execution;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -155,6 +160,7 @@ using StatementResult = std::variant<
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
     QueryStatementResult,
+    ReplayStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
     DropQueryStatementResult>;
@@ -232,6 +238,7 @@ public:
     explicit QueryStatementHandler(
         SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer, SharedPtr<const SourceCatalog> sourceCatalog);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
+    std::expected<ReplayStatementResult, Exception> operator()(const ReplayStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
@@ -312,5 +319,6 @@ FMT_OSTREAM(NES::DropLogicalSourceStatementResult);
 FMT_OSTREAM(NES::DropPhysicalSourceStatementResult);
 FMT_OSTREAM(NES::DropQueryStatementResult);
 FMT_OSTREAM(NES::QueryStatementResult);
+FMT_OSTREAM(NES::ReplayStatementResult);
 FMT_OSTREAM(NES::WorkerStatusStatementResult);
 FMT_OSTREAM(NES::ExplainQueryStatementResult);

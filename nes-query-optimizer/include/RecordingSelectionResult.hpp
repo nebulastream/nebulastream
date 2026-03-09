@@ -128,6 +128,8 @@ struct RecordingSelectionResult
     std::vector<RecordingSelection> selectedRecordings;
     std::vector<RecordingSelectionExplanation> explanations;
     std::vector<QueryRecordingPlanRewrite> activeQueryPlanRewrites;
+    std::optional<QueryRecordingPlanRewrite> incomingQueryPlanRewrite = std::nullopt;
+    std::vector<QueryRecordingPlanInsertion> incomingQueryReplayBoundaries{};
 
     [[nodiscard]] bool empty() const { return selectedRecordings.empty() && networkExplanations.empty(); }
     [[nodiscard]] bool operator==(const RecordingSelectionResult& other) const = default;

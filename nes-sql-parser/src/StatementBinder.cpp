@@ -21,6 +21,7 @@
 #include <expected>
 #include <functional>
 #include <memory>
+#include <limits>
 #include <optional>
 #include <ostream>
 #include <ranges>
@@ -60,7 +61,27 @@
 
 namespace NES
 {
-
+namespace
+{
+uint64_t buildDurationInMilliseconds(const uint64_t size, const uint64_t timebase)
+{
+    switch (timebase)
+    {
+        case AntlrSQLLexer::MS:
+            return size;
+        case AntlrSQLLexer::SEC:
+            return size * 1000;
+        case AntlrSQLLexer::MINUTE:
+            return size * 60 * 1000;
+        case AntlrSQLLexer::HOUR:
+            return size * 60 * 60 * 1000;
+        case AntlrSQLLexer::DAY:
+            return size * 24 * 60 * 60 * 1000;
+        default:
+            throw InvalidQuerySyntax("Unknown time unit token {}", timebase);
+    }
+}
+}
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 class StatementBinder::Impl
@@ -492,10 +513,36 @@ public:
         throw InvalidStatement("Unrecognized SET statement");
     }
 
+    ReplayStatement bindReplayStatement(AntlrSQLParser::ReplayStatementContext* replayAst) const
+    {
+        const auto startMs = buildDurationInMilliseconds(
+            from_chars_with_exception<uint64_t>(replayAst->startAmount->getText()), replayAst->startUnit->getStart()->getType());
+        const auto durationMs = buildDurationInMilliseconds(
+            from_chars_with_exception<uint64_t>(replayAst->durationAmount->getText()), replayAst->durationUnit->getStart()->getType());
+
+        if (durationMs == 0)
+        {
+            throw InvalidQuerySyntax("REPLAY duration must be greater than zero");
+        }
+        if (startMs > std::numeric_limits<uint64_t>::max() - durationMs)
+        {
+            throw InvalidQuerySyntax("REPLAY interval end overflows uint64_t");
+        }
+
+        return ReplayStatement{
+            .queryId = DistributedQueryId(bindStringLiteral(replayAst->queryId)),
+            .intervalStartMs = startMs,
+            .intervalEndMs = startMs + durationMs};
+    }
+
     std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const
     {
         try
         {
+            if (auto* const replayAst = statementAST->replayStatement(); replayAst != nullptr)
+            {
+                return bindReplayStatement(replayAst);
+            }
             if (auto* const createAST = statementAST->createStatement(); createAST != nullptr)
             {
                 return bindCreateStatement(createAST);

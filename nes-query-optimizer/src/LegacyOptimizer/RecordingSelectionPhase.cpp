@@ -30,6 +30,17 @@ namespace NES
 {
 namespace
 {
+std::vector<RecordingRewriteEdge> rewriteEdgesForCandidate(const RecordingBoundaryCandidate& candidate)
+{
+    return candidate.materializationEdges
+        | std::views::transform(
+              [](const auto& edge)
+              {
+                  return RecordingRewriteEdge{.parentId = edge.parentId, .childId = edge.childId};
+              })
+        | std::ranges::to<std::vector>();
+}
+
 std::string recordingRepresentationDescription(const RecordingRepresentation representation)
 {
     switch (representation)
@@ -110,6 +121,7 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
     selectionResult.networkExplanations.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.selectedRecordings.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.explanations.reserve(boundarySelection.selectedBoundary.size());
+    selectionResult.incomingQueryReplayBoundaries.reserve(boundarySelection.selectedBoundary.size());
     selectionResult.activeQueryPlanRewrites = candidateSet.activeQueryPlans
         | std::views::transform(
               [](const auto& activeQueryPlan)
@@ -125,12 +137,15 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
     {
         auto explanation = buildSelectionExplanation(selectedBoundary, candidateSet.candidates.size(), boundarySelection.objectiveCost);
         selectionResult.networkExplanations.push_back(explanation);
+        const auto incomingQueryBoundary = QueryRecordingPlanInsertion{
+            .selection = selectedBoundary.chosenOption.selection,
+            .materializationEdges = rewriteEdgesForCandidate(selectedBoundary.candidate)};
         if (selectedBoundary.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
         {
-            for (const auto& materializationEdge : selectedBoundary.candidate.materializationEdges)
+            for (const auto& materializationEdge : incomingQueryBoundary.materializationEdges)
             {
                 storesToInsert.emplace(
-                    RecordingRewriteEdge{.parentId = materializationEdge.parentId, .childId = materializationEdge.childId},
+                    materializationEdge,
                     selectedBoundary.chosenOption.selection);
             }
             for (const auto& activeQueryTarget : selectedBoundary.candidate.activeQueryMaterializationTargets)
@@ -160,8 +175,21 @@ RecordingSelectionResult RecordingSelectionPhase::apply(
         }
         selectionResult.selectedRecordings.push_back(selectedBoundary.chosenOption.selection);
         selectionResult.explanations.push_back(std::move(explanation));
+        selectionResult.incomingQueryReplayBoundaries.push_back(incomingQueryBoundary);
+        if (selectedBoundary.chosenOption.decision != RecordingSelectionDecision::ReuseExistingRecording)
+        {
+            if (!selectionResult.incomingQueryPlanRewrite.has_value())
+            {
+                selectionResult.incomingQueryPlanRewrite = QueryRecordingPlanRewrite{.queryId = {}, .basePlan = placedPlan, .insertions = {}};
+            }
+            selectionResult.incomingQueryPlanRewrite->insertions.push_back(selectionResult.incomingQueryReplayBoundaries.back());
+        }
     }
 
+    if (!selectionResult.incomingQueryPlanRewrite.has_value())
+    {
+        selectionResult.incomingQueryPlanRewrite = QueryRecordingPlanRewrite{.queryId = {}, .basePlan = placedPlan, .insertions = {}};
+    }
     placedPlan = rewriteReplayBoundary(placedPlan, storesToInsert);
     return selectionResult;
 }

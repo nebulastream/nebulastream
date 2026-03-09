@@ -448,6 +448,12 @@ QueryStatementHandler::QueryStatementHandler(
 {
 }
 
+std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator()(const ReplayStatement& statement)
+{
+    return queryManager->registerReplayExecution(statement.queryId, statement.intervalStartMs, statement.intervalEndMs)
+        .transform([](const auto& execution) { return ReplayStatementResult{execution}; });
+}
+
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
     auto stopResult = queryManager->stop(statement.id)

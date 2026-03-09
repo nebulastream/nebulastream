@@ -458,7 +458,9 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
             .globalPlan = activePlan,
             .replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
             .selectedRecordings = {staleRecordingId},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
     state.recordingCatalog.upsertRecording(
         RecordingEntry{
             .id = staleRecordingId,
@@ -540,7 +542,9 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
                 .reason = "incoming create",
                 .chosenCost = {},
                 .alternatives = {}}},
-            .activeQueryPlanRewrites = {}});
+            .activeQueryPlanRewrites = {},
+            .incomingQueryPlanRewrite = std::nullopt,
+            .incomingQueryReplayBoundaries = {}});
 
     const auto registerResult = queryManager.registerQuery(distributedPlan);
     ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
@@ -564,6 +568,64 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
     EXPECT_THAT(recordingCatalog.getRecording(incomingRecordingId)->ownerQueries, testing::ElementsAre(*registerResult));
     EXPECT_EQ(recordingCatalog.getRecording(incomingRecordingId)->lifecycleState, std::optional(Replay::RecordingLifecycleState::Installing));
     EXPECT_FALSE(recordingCatalog.getTimeTravelReadRecording().has_value());
+}
+
+TEST(QueryManagerMetricsTest, RegisterQueryPersistsReplayBoundaryMetadataForReplayPlanning)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("incoming-query");
+    const auto recordingId = RecordingId("incoming-recording");
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    QueryManager queryManager(workerCatalog, [](const WorkerConfig&) { return std::make_unique<FakeLifecycleBackend>(); });
+
+    const auto incomingPlan = createReplayPlan(queryId, "INCOMING_SOURCE");
+    const auto selection = RecordingSelection{
+        .recordingId = recordingId,
+        .node = worker,
+        .filePath = "/tmp/REPLAY-NebulaStream/recordings/incoming.bin",
+        .structuralFingerprint = "incoming",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = std::nullopt,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto replayBoundary = QueryRecordingPlanInsertion{
+        .selection = selection,
+        .materializationEdges = {RecordingRewriteEdge{.parentId = OperatorId(11), .childId = OperatorId(7)}}};
+    const auto distributedPlan = DistributedLogicalPlan(
+        DecomposedLogicalPlan<Host>{{{worker, {incomingPlan}}}},
+        incomingPlan,
+        ReplaySpecification{.retentionWindowMs = 300'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingSelectionResult{
+            .networkExplanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .selectedRecordings = {selection},
+            .explanations = {RecordingSelectionExplanation{
+                .selection = selection,
+                .decision = RecordingSelectionDecision::CreateNewRecording,
+                .reason = "incoming create",
+                .chosenCost = {},
+                .alternatives = {}}},
+            .activeQueryPlanRewrites = {},
+            .incomingQueryPlanRewrite = QueryRecordingPlanRewrite{.queryId = {}, .basePlan = incomingPlan, .insertions = {replayBoundary}},
+            .incomingQueryReplayBoundaries = {replayBoundary}});
+
+    const auto registerResult = queryManager.registerQuery(distributedPlan);
+    ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
+
+    const auto& metadata = queryManager.getRecordingCatalog().getQueryMetadata().at(queryId);
+    ASSERT_TRUE(metadata.queryPlanRewrite.has_value());
+    EXPECT_EQ(metadata.queryPlanRewrite->queryId, queryId.getRawValue());
+    EXPECT_EQ(metadata.queryPlanRewrite->basePlan, incomingPlan);
+    EXPECT_THAT(metadata.queryPlanRewrite->insertions, testing::ElementsAre(replayBoundary));
+    EXPECT_THAT(metadata.replayBoundaries, testing::ElementsAre(replayBoundary));
 }
 
 TEST(QueryManagerMetricsTest, RegisterQueryMarksNewRecordingInstallingUntilWorkerReportsReady)
@@ -610,7 +672,9 @@ TEST(QueryManagerMetricsTest, RegisterQueryMarksNewRecordingInstallingUntilWorke
                 .reason = "incoming create",
                 .chosenCost = {},
                 .alternatives = {}}},
-            .activeQueryPlanRewrites = {}});
+            .activeQueryPlanRewrites = {},
+            .incomingQueryPlanRewrite = std::nullopt,
+            .incomingQueryReplayBoundaries = {}});
 
     const auto registerResult = queryManager.registerQuery(distributedPlan);
     ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
@@ -666,7 +730,9 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnre
                 .reason = "incoming create",
                 .chosenCost = {},
                 .alternatives = {}}},
-            .activeQueryPlanRewrites = {}});
+            .activeQueryPlanRewrites = {},
+            .incomingQueryPlanRewrite = std::nullopt,
+            .incomingQueryReplayBoundaries = {}});
 
     const auto registerResult = queryManager.registerQuery(distributedPlan);
     ASSERT_TRUE(registerResult.has_value()) << registerResult.error().what();
@@ -713,6 +779,82 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnre
     EXPECT_FALSE(std::filesystem::exists(Replay::getTimeTravelReadAliasPath()));
 }
 
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerRegistersPlannedReplayExecutionForReplayableQuery)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("replayable-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = std::nullopt,
+            .globalPlan = std::nullopt,
+            .replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = 5'000},
+            .selectedRecordings = {},
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
+
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [](const WorkerConfig&) { return std::make_unique<FakeLifecycleBackend>(); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, nullptr, nullptr);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 1'000, .intervalEndMs = 5'000});
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    EXPECT_EQ(result->execution.queryId, queryId);
+    EXPECT_EQ(result->execution.intervalStartMs, 1'000U);
+    EXPECT_EQ(result->execution.intervalEndMs, 5'000U);
+    EXPECT_EQ(result->execution.state, ReplayExecutionState::Planned);
+    EXPECT_TRUE(result->execution.selectedRecordingIds.empty());
+    EXPECT_TRUE(result->execution.pinnedSegments.empty());
+    EXPECT_TRUE(result->execution.internalQueryIds.empty());
+    EXPECT_TRUE(queryManager->getReplayExecutions().contains(result->execution.id));
+    EXPECT_EQ(queryManager->getReplayExecutions().at(result->execution.id), result->execution);
+}
+
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerRejectsNonReplayableQuery)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("plain-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = std::nullopt,
+            .globalPlan = std::nullopt,
+            .replaySpecification = std::nullopt,
+            .selectedRecordings = {},
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
+
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [](const WorkerConfig&) { return std::make_unique<FakeLifecycleBackend>(); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, nullptr, nullptr);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 1'000, .intervalEndMs = 5'000});
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code(), ErrorCode::UnsupportedQuery);
+}
+
 TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActiveOnlyRecordingCreation)
 {
     const ScopedTimeTravelReadAliasReset aliasReset;
@@ -751,7 +893,9 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
             .globalPlan = activeOptimizedPlan.getGlobalPlan(),
             .replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
             .selectedRecordings = {},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
 
     auto queryManager = std::make_shared<QueryManager>(
         workerCatalog,
@@ -836,7 +980,9 @@ TEST(QueryManagerMetricsTest, QueryStatementHandlerRedeploysActiveQueryForActive
             .globalPlan = activeOptimizedPlan.getGlobalPlan(),
             .replaySpecification = replaySpecification,
             .selectedRecordings = {activeRecording.recordingId},
-            .networkExplanations = activeOptimizedPlan.getRecordingSelectionResult().networkExplanations});
+            .networkExplanations = activeOptimizedPlan.getRecordingSelectionResult().networkExplanations,
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
     state.recordingCatalog.upsertRecording(
         RecordingEntry{
             .id = activeRecording.recordingId,

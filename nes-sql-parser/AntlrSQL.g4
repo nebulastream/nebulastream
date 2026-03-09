@@ -58,7 +58,9 @@ singleStatement: statement ';'? EOF;
 
 terminatedStatement: statement ';';
 multipleStatements: (statement (';' statement)* ';'?)? EOF;
-statement: queryWithOptions | createStatement | dropStatement | showStatement | explainStatement | setStatement;
+statement: replayStatement | queryWithOptions | createStatement | dropStatement | showStatement | explainStatement | setStatement;
+
+replayStatement: REPLAY QUERY queryId=STRING FROM startAmount=INTEGER_VALUE startUnit=timeUnit FOR durationAmount=INTEGER_VALUE durationUnit=timeUnit;
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;

@@ -30,6 +30,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayExecution.hpp>
 #include <Replay/ReplaySpecification.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -133,6 +134,13 @@ struct ExplainQueryStatement
     std::optional<ReplaySpecification> replaySpecification = std::nullopt;
 };
 
+struct ReplayStatement
+{
+    DistributedQueryId queryId;
+    uint64_t intervalStartMs{};
+    uint64_t intervalEndMs{};
+};
+
 struct ShowQueriesStatement
 {
     std::optional<DistributedQueryId> id;
@@ -186,6 +194,7 @@ using Statement = std::variant<
     DropSinkStatement,
     QueryStatement,
     ExplainQueryStatement,
+    ReplayStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
     DropQueryStatement>;
@@ -270,6 +279,7 @@ FMT_OSTREAM(NES::DropPhysicalSourceStatement);
 FMT_OSTREAM(NES::DropQueryStatement);
 FMT_OSTREAM(NES::WorkerStatusStatement);
 FMT_OSTREAM(NES::ExplainQueryStatement);
+FMT_OSTREAM(NES::ReplayStatement);
 FMT_OSTREAM(NES::CreateWorkerStatement);
 FMT_OSTREAM(NES::DropWorkerStatement);
 FMT_OSTREAM(NES::SetRecordingStorageStatement);

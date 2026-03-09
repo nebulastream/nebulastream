@@ -284,6 +284,26 @@ struct StatementOutputAssembler<QueryStatementResult>
 };
 
 template <>
+struct StatementOutputAssembler<ReplayStatementResult>
+{
+    using OutputRowType = std::tuple<ReplayExecutionId, DistributedQueryId, std::string, uint64_t, uint64_t, std::optional<std::string>>;
+
+    auto convert(const ReplayStatementResult& result)
+    {
+        return std::make_pair(
+            std::to_array<std::string_view>(
+                {"replay_execution_id", "query_id", "replay_state", "interval_start_ms", "interval_end_ms", "error"}),
+            std::vector{std::make_tuple(
+                result.execution.id,
+                result.execution.queryId,
+                std::string(magic_enum::enum_name(result.execution.state)),
+                result.execution.intervalStartMs,
+                result.execution.intervalEndMs,
+                result.execution.failureReason)});
+    }
+};
+
+template <>
 struct StatementOutputAssembler<ShowQueriesStatementResult>
 {
     using OutputRowType = QueryStatusOutputRowType;
@@ -455,6 +475,7 @@ static_assert(AssemblembleStatementResult<DropLogicalSourceStatementResult>);
 static_assert(AssemblembleStatementResult<DropPhysicalSourceStatementResult>);
 static_assert(AssemblembleStatementResult<DropSinkStatementResult>);
 static_assert(AssemblembleStatementResult<QueryStatementResult>);
+static_assert(AssemblembleStatementResult<ReplayStatementResult>);
 static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
 static_assert(AssemblembleStatementResult<WorkerStatusStatementResult>);
 static_assert(AssemblembleStatementResult<DropQueryStatementResult>);

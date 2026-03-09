@@ -24,6 +24,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/RecordingLifecycleManager.hpp>
+#include <Replay/ReplayExecution.hpp>
 #include <RecordingCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
@@ -53,6 +54,7 @@ using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(con
 struct QueryManagerState
 {
     std::unordered_map<DistributedQueryId, DistributedQuery> queries;
+    std::unordered_map<ReplayExecutionId, ReplayExecution> replayExecutions;
     RecordingCatalog recordingCatalog{};
     std::unordered_set<DistributedQueryId> internalQueries{};
     std::unordered_map<DistributedQueryId, DistributedQueryId> activeRecordingEpochQueriesByBeneficiary{};
@@ -134,6 +136,8 @@ public:
         const DistributedLogicalPlan& plan,
         std::optional<LogicalPlan> originalPlan = std::nullopt,
         QueryRegistrationOptions options = {});
+    [[nodiscard]] std::expected<ReplayExecution, Exception>
+    registerReplayExecution(const DistributedQueryId& queryId, uint64_t intervalStartMs, uint64_t intervalEndMs);
     [[nodiscard]] std::expected<DistributedQueryId, Exception>
     registerRecordingEpochQuery(const DistributedQueryId& beneficiaryQueryId, const DistributedLogicalPlan& plan);
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
@@ -146,6 +150,7 @@ public:
     void refreshWorkerMetrics();
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
     [[nodiscard]] const RecordingCatalog& getRecordingCatalog() const { return state.recordingCatalog; }
+    [[nodiscard]] const auto& getReplayExecutions() const { return state.replayExecutions; }
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
 };
 

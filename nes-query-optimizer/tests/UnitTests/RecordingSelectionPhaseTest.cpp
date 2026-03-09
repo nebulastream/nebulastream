@@ -597,7 +597,9 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
             .globalPlan = activePlan,
             .replaySpecification = replaySpecification,
             .selectedRecordings = {},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
 
     const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, catalog);
 
@@ -627,6 +629,54 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultExposesAllMergedNetworkDecisi
     ASSERT_NE(incomingSelection, selectionResult.networkExplanations.end());
     EXPECT_EQ(incomingSelection->decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_EQ(getOperatorByType<StoreLogicalOperator>(incomingPlan).size(), 1U);
+}
+
+TEST_F(RecordingSelectionPhaseTest, SelectionResultKeepsIncomingReplayBoundaryMetadataForReusedRecording)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    auto incomingPlan = createPlacedUnaryPlan(host);
+    const auto expectedBasePlan = incomingPlan;
+    const auto root = incomingPlan.getRootOperators().front();
+    ASSERT_EQ(root.getChildren().size(), 1U);
+    const auto recordedSubplanRoot = root.getChildren().front();
+    const ReplaySpecification replaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt};
+
+    RecordingCatalog catalog;
+    const auto reusedRecordingId = recordingIdFromFingerprint(
+        createRecordingFingerprint(recordedSubplanRoot, host, replaySpecification, RecordingRepresentation::BinaryStore));
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = reusedRecordingId,
+            .node = host,
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/existing.bin",
+            .structuralFingerprint = createStructuralRecordingFingerprint(recordedSubplanRoot, host),
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("existing-query")},
+            .lifecycleState = std::nullopt,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+
+    const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, catalog);
+
+    ASSERT_EQ(selectionResult.selectedRecordings.size(), 1U);
+    ASSERT_EQ(selectionResult.explanations.size(), 1U);
+    EXPECT_EQ(selectionResult.explanations.front().decision, RecordingSelectionDecision::ReuseExistingRecording);
+    EXPECT_EQ(selectionResult.selectedRecordings.front().recordingId, reusedRecordingId);
+    ASSERT_EQ(selectionResult.incomingQueryReplayBoundaries.size(), 1U);
+    EXPECT_EQ(selectionResult.incomingQueryReplayBoundaries.front().selection, selectionResult.selectedRecordings.front());
+    EXPECT_FALSE(selectionResult.incomingQueryReplayBoundaries.front().materializationEdges.empty());
+    ASSERT_TRUE(selectionResult.incomingQueryPlanRewrite.has_value());
+    EXPECT_EQ(selectionResult.incomingQueryPlanRewrite->basePlan, expectedBasePlan);
+    EXPECT_TRUE(selectionResult.incomingQueryPlanRewrite->insertions.empty());
+    EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(incomingPlan).empty());
 }
 
 TEST_F(RecordingSelectionPhaseTest, SelectionPhaseInjectsIngestionTimeWatermarkAssignerForReplayStoreWithoutExistingWatermark)
@@ -770,7 +820,9 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOn
             .globalPlan = activePlan,
             .replaySpecification = replaySpecification,
             .selectedRecordings = {},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
 
     const auto selectionResult = RecordingSelectionPhase(workerCatalog).apply(incomingPlan, replaySpecification, catalog);
 

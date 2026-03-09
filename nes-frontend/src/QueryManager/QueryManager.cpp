@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/UUID.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -50,6 +51,16 @@ DistributedQueryId uniqueDistributedQueryId(const QueryManagerState& state)
     while (state.queries.contains(uniqueId))
     {
         uniqueId = DistributedQueryId(getNextDistributedQueryId().getRawValue() + std::to_string(counter++));
+    }
+    return uniqueId;
+}
+
+ReplayExecutionId uniqueReplayExecutionId(const QueryManagerState& state)
+{
+    auto uniqueId = ReplayExecutionId(generateUUID());
+    while (state.replayExecutions.contains(uniqueId))
+    {
+        uniqueId = ReplayExecutionId(generateUUID());
     }
     return uniqueId;
 }
@@ -99,6 +110,19 @@ std::optional<uint64_t> retentionWindowForSelectionExplanation(
             break;
     }
     return recordingCatalog.getRecording(explanation.selection.recordingId).and_then([](const auto& recording) { return recording.retentionWindowMs; });
+}
+
+std::optional<QueryRecordingPlanRewrite>
+queryPlanRewriteForMetadata(const RecordingSelectionResult& selectionResult, const DistributedQueryId& queryId)
+{
+    if (!selectionResult.incomingQueryPlanRewrite.has_value())
+    {
+        return std::nullopt;
+    }
+
+    auto queryPlanRewrite = *selectionResult.incomingQueryPlanRewrite;
+    queryPlanRewrite.queryId = queryId.getRawValue();
+    return queryPlanRewrite;
 }
 }
 
@@ -166,6 +190,41 @@ void QueryManager::QueryManagerBackends::rebuildBackendsIfNeeded() const
 QueryManager::registerQuery(const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan, QueryRegistrationOptions options)
 {
     return registerQueryImpl(plan, std::move(originalPlan), options);
+}
+
+[[nodiscard]] std::expected<ReplayExecution, Exception>
+QueryManager::registerReplayExecution(const DistributedQueryId& queryId, const uint64_t intervalStartMs, const uint64_t intervalEndMs)
+{
+    if (!state.queries.contains(queryId))
+    {
+        return std::unexpected(QueryNotFound("Query {} is not known to the QueryManager", queryId));
+    }
+    if (intervalEndMs <= intervalStartMs)
+    {
+        return std::unexpected(InvalidQuerySyntax(
+            "Replay interval end {} must be greater than start {}",
+            intervalEndMs,
+            intervalStartMs));
+    }
+
+    const auto metadataIt = state.recordingCatalog.getQueryMetadata().find(queryId);
+    if (metadataIt == state.recordingCatalog.getQueryMetadata().end() || !metadataIt->second.replaySpecification.has_value())
+    {
+        return std::unexpected(UnsupportedQuery("Replay currently requires a replayable query, but {} is not replayable", queryId));
+    }
+
+    auto replayExecution = ReplayExecution{
+        .id = uniqueReplayExecutionId(state),
+        .queryId = queryId,
+        .intervalStartMs = intervalStartMs,
+        .intervalEndMs = intervalEndMs,
+        .state = ReplayExecutionState::Planned,
+        .selectedRecordingIds = {},
+        .pinnedSegments = {},
+        .internalQueryIds = {},
+        .failureReason = std::nullopt};
+    state.replayExecutions.insert_or_assign(replayExecution.id, replayExecution);
+    return replayExecution;
 }
 
 [[nodiscard]] std::expected<DistributedQueryId, Exception>
@@ -250,7 +309,10 @@ QueryManager::registerQueryImpl(
             .globalPlan = options.includeInReplayPlanning ? std::make_optional(plan.getGlobalPlan()) : std::nullopt,
             .replaySpecification = options.includeInReplayPlanning ? plan.getReplaySpecification() : std::nullopt,
             .selectedRecordings = {},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = options.includeInReplayPlanning ? queryPlanRewriteForMetadata(selectionResult, id) : std::nullopt,
+            .replayBoundaries = options.includeInReplayPlanning ? selectionResult.incomingQueryReplayBoundaries
+                                                                : std::vector<QueryRecordingPlanInsertion>{}});
 
     std::unordered_map<DistributedQueryId, std::vector<RecordingId>> selectedRecordingsByQuery;
     std::unordered_map<DistributedQueryId, std::vector<RecordingSelectionExplanation>> networkExplanationsByQuery;

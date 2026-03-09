@@ -39,6 +39,8 @@ struct ReplayableQueryMetadata
     std::optional<ReplaySpecification> replaySpecification;
     std::vector<RecordingId> selectedRecordings;
     std::vector<RecordingSelectionExplanation> networkExplanations;
+    std::optional<QueryRecordingPlanRewrite> queryPlanRewrite = std::nullopt;
+    std::vector<QueryRecordingPlanInsertion> replayBoundaries{};
 };
 
 struct RecordingEntry

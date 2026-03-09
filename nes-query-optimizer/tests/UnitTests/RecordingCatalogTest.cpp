@@ -176,7 +176,9 @@ TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdat
             .globalPlan = std::nullopt,
             .replaySpecification = std::nullopt,
             .selectedRecordings = {staleRecordingId, sharedRecordingId},
-            .networkExplanations = {}});
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
     catalog.upsertQueryMetadata(sharedQueryId, ReplayableQueryMetadata{});
     catalog.upsertRecording(
         RecordingEntry{

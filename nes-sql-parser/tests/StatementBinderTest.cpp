@@ -135,6 +135,26 @@ TEST_F(StatementBinderTest, BindQueryWithBareReplayableClause)
     EXPECT_EQ(queryStatement.replaySpecification->replayLatencyLimitMs, std::nullopt);
 }
 
+TEST_F(StatementBinderTest, BindReplayStatement)
+{
+    const std::string replayString = "REPLAY QUERY 'replayable-query' FROM 5 MINUTE FOR 10 SEC";
+    const auto statement = binder->parseAndBindSingle(replayString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<ReplayStatement>(*statement));
+
+    const auto replayStatement = std::get<ReplayStatement>(*statement);
+    EXPECT_EQ(replayStatement.queryId, DistributedQueryId("replayable-query"));
+    EXPECT_EQ(replayStatement.intervalStartMs, 5 * 60 * 1000);
+    EXPECT_EQ(replayStatement.intervalEndMs, (5 * 60 * 1000) + (10 * 1000));
+}
+
+TEST_F(StatementBinderTest, RejectReplayStatementWithZeroDuration)
+{
+    const std::string replayString = "REPLAY QUERY 'replayable-query' FROM 5 MINUTE FOR 0 MS";
+    const auto statement = binder->parseAndBindSingle(replayString);
+    ASSERT_FALSE(statement.has_value());
+}
+
 TEST_F(StatementBinderTest, RejectQueryWithDuplicateReplayableOptions)
 {
     const std::string queryString
