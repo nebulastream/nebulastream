@@ -13,22 +13,14 @@
 
 add_subdirectory(TestUtils)
 
-add_nes_unit_test(paged-vector-unit-tests "UnitTests/PagedVectorTest.cpp")
-target_link_libraries(paged-vector-unit-tests nes-nautilus-test-util)
+function(add_nautilus_test)
+    add_nes_unit_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-nautilus-test-util)
+endfunction()
 
-add_nes_unit_test(variable-sized-data-unit-tests "UnitTests/VariableSizedDataTest.cpp")
-target_link_libraries(variable-sized-data-unit-tests nes-nautilus-test-util)
-
-add_nes_unit_test(var-val-unit-tests "UnitTests/VarValTest.cpp")
-target_link_libraries(var-val-unit-tests nes-nautilus-test-util)
-
-add_nes_unit_test(chained-hashmap-unit-tests "UnitTests/ChainedHashMapTest.cpp")
-target_link_libraries(chained-hashmap-unit-tests nes-nautilus-test-util)
-
-add_nes_unit_test(chained-hashmap-unit-tests-custom-value "UnitTests/ChainedHashMapCustomValueTest.cpp")
-target_link_libraries(chained-hashmap-unit-tests-custom-value nes-nautilus-test-util)
-
-if(ALL_HASHMAP_TESTS)
-    target_compile_definitions(chained-hashmap-unit-tests PRIVATE ALL_HASHMAP_TESTS)
-    target_compile_definitions(chained-hashmap-unit-tests-custom-value PRIVATE ALL_HASHMAP_TESTS)
-endif()
+add_nautilus_test(paged-vector-unit-tests "UnitTests/PagedVectorTest.cpp")
+add_nautilus_test(variable-sized-data-unit-tests "UnitTests/VariableSizedDataTest.cpp")
+add_nautilus_test(var-val-unit-tests "UnitTests/VarValTest.cpp")
+add_nautilus_test(chained-hashmap-unit-tests "UnitTests/ChainedHashMapTest.cpp")
+add_nautilus_test(chained-hashmap-unit-tests-custom-value "UnitTests/ChainedHashMapCustomValueTest.cpp")

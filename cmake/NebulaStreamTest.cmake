@@ -11,6 +11,16 @@
 # limitations under the License.
 
 include(GoogleTest)
+find_package(rapidcheck CONFIG REQUIRED)
+
+# RapidCheck iteration count applied to all tests via RC_PARAMS.
+# Set NES_EXHAUSTIVE_TESTS=ON for thorough testing (100 iterations), default is fast (20 iterations).
+option(NES_EXHAUSTIVE_TESTS "Run more RapidCheck iterations for thorough property testing" OFF)
+if (NES_EXHAUSTIVE_TESTS)
+    set(RAPIDCHECK_MAX_SUCCESS 100)
+else ()
+    set(RAPIDCHECK_MAX_SUCCESS 20)
+endif ()
 
 # Target to build all integration tests
 add_custom_target(integration_tests)
@@ -21,7 +31,7 @@ add_custom_target(e2e_tests)
 function(add_nes_test)
     add_executable(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-test-util)
+    target_link_libraries(${TARGET_NAME} nes-test-util rapidcheck rapidcheck_gtest)
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         target_precompile_headers(${TARGET_NAME} REUSE_FROM nes-common)
         # We need to compile with -fPIC to include with nes-common compiled headers as it uses PIC
@@ -31,7 +41,11 @@ function(add_nes_test)
         target_code_coverage(${TARGET_NAME} PUBLIC AUTO ALL EXTERNAL OBJECTS nes nes-common)
         message(STATUS "Added cc test ${TARGET_NAME}")
     endif ()
-    gtest_discover_tests(${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR} DISCOVERY_MODE PRE_TEST DISCOVERY_TIMEOUT 30)
+    gtest_discover_tests(${TARGET_NAME}
+        WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
+        DISCOVERY_MODE PRE_TEST
+        DISCOVERY_TIMEOUT 30
+        PROPERTIES ENVIRONMENT "RC_PARAMS=max_success=${RAPIDCHECK_MAX_SUCCESS}")
     message(STATUS "Added ut ${TARGET_NAME}")
 endfunction()
 
