@@ -29,13 +29,25 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/DataTypeProvider.hpp>
+#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
+#include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
+#include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Replay/ReplayStorage.hpp>
 #include <Replay/TimeTravelReadResolver.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Overloaded.hpp>
@@ -226,6 +238,20 @@ struct PreparedReplayExecutionPlan
     std::vector<PreparedReplayRecording> pinnedRecordings;
 };
 
+enum class ReplayWatermarkContract : uint8_t
+{
+    None,
+    EventTime,
+    IngestionTime,
+    Mixed,
+};
+
+struct PreparedReplaySubtree
+{
+    LogicalOperator root;
+    ReplayWatermarkContract watermarkContract{ReplayWatermarkContract::None};
+};
+
 std::string joinExceptionMessages(const std::vector<Exception>& exceptions)
 {
     return fmt::format(
@@ -252,6 +278,16 @@ std::string encodeSegmentIds(const std::vector<uint64_t>& segmentIds)
 LogicalOperator buildReplaySourceOperator(
     const SharedPtr<const SourceCatalog>& sourceCatalog, const LogicalOperator& replacedChild, const ReplaySourceReplacement& replacement)
 {
+    const auto replaySourceSchema = [&]() -> Schema
+    {
+        if ((replacedChild.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value()
+             || replacedChild.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value())
+            && !replacedChild.getChildren().empty())
+        {
+            return replacedChild.getChildren().front().getOutputSchema();
+        }
+        return replacedChild.getOutputSchema();
+    }();
     std::unordered_map<std::string, std::string> sourceConfig{
         {"host", replacement.host.getRawValue()},
         {"file_path", replacement.filePath},
@@ -261,12 +297,27 @@ LogicalOperator buildReplaySourceOperator(
         {"scan_end_ms", std::to_string(replacement.intervalEndMs)},
         {"replay_mode", "interval"}};
     std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
-    const auto descriptor = sourceCatalog->getInlineSource("BinaryStore", replacedChild.getOutputSchema(), std::move(parserConfig), std::move(sourceConfig));
+    const auto descriptor = sourceCatalog->getInlineSource("BinaryStore", replaySourceSchema, std::move(parserConfig), std::move(sourceConfig));
     if (!descriptor.has_value())
     {
         throw InvalidConfigParameter("Could not create replay source descriptor for recording {}", replacement.recordingId);
     }
-    return SourceDescriptorLogicalOperator(*descriptor).withTraitSet(replacedChild.getTraitSet());
+    auto replaySource = SourceDescriptorLogicalOperator(*descriptor).withTraitSet(replacedChild.getTraitSet());
+    if (const auto assigner = replacedChild.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(); assigner.has_value())
+    {
+        return EventTimeWatermarkAssignerLogicalOperator(assigner->get().onField, assigner->get().unit)
+            .withTraitSet(replacedChild.getTraitSet())
+            .withInferredSchema({replaySourceSchema})
+            .withChildren({replaySource});
+    }
+    if (replacedChild.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value())
+    {
+        return IngestionTimeWatermarkAssignerLogicalOperator()
+            .withTraitSet(replacedChild.getTraitSet())
+            .withInferredSchema({replaySourceSchema})
+            .withChildren({replaySource});
+    }
+    return replaySource;
 }
 
 LogicalOperator rewriteReplayBoundariesWithSources(
@@ -303,6 +354,72 @@ LogicalPlan buildReplaySourcePlan(
     return basePlan.withRootOperators(std::move(rewrittenRoots));
 }
 
+bool isStatefulReplaySuffixOperator(const LogicalOperator& current)
+{
+    return current.tryGetAs<JoinLogicalOperator>().has_value() || current.tryGetAs<WindowedAggregationLogicalOperator>().has_value();
+}
+
+void collectReplayBoundaryWarmupRequirements(
+    const LogicalOperator& current,
+    const bool warmupRequired,
+    std::unordered_map<RecordingRewriteEdge, bool, ReplayBoundaryEdgeHash>& warmupRequirements)
+{
+    const auto childWarmupRequired = warmupRequired || isStatefulReplaySuffixOperator(current);
+    for (const auto& child : current.getChildren())
+    {
+        warmupRequirements.insert_or_assign(
+            RecordingRewriteEdge{.parentId = current.getId(), .childId = child.getId()}, childWarmupRequired);
+        collectReplayBoundaryWarmupRequirements(child, childWarmupRequired, warmupRequirements);
+    }
+}
+
+std::unordered_map<RecordingRewriteEdge, bool, ReplayBoundaryEdgeHash> buildReplayBoundaryWarmupRequirements(const LogicalPlan& replayPlan)
+{
+    std::unordered_map<RecordingRewriteEdge, bool, ReplayBoundaryEdgeHash> warmupRequirements;
+    for (const auto& root : replayPlan.getRootOperators())
+    {
+        collectReplayBoundaryWarmupRequirements(root, false, warmupRequirements);
+    }
+    return warmupRequirements;
+}
+
+std::string replayWatermarkContractToString(const ReplayWatermarkContract contract)
+{
+    switch (contract)
+    {
+        case ReplayWatermarkContract::None:
+            return "no watermark";
+        case ReplayWatermarkContract::EventTime:
+            return "payload-derived event-time";
+        case ReplayWatermarkContract::IngestionTime:
+            return "ingestion-time";
+        case ReplayWatermarkContract::Mixed:
+            return "mixed/unsupported";
+    }
+    std::unreachable();
+}
+
+LogicalFunction buildReplayOutputGatePredicate(const std::string& windowEndFieldName, const uint64_t intervalStartMs, const uint64_t intervalEndMs)
+{
+    const auto uint64Type = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+    return LogicalFunction{AndLogicalFunction(
+        LogicalFunction{GreaterEqualsLogicalFunction(
+            LogicalFunction{FieldAccessLogicalFunction(windowEndFieldName)},
+            LogicalFunction{ConstantValueLogicalFunction(uint64Type, std::to_string(intervalStartMs))})},
+        LogicalFunction{LessEqualsLogicalFunction(
+            LogicalFunction{FieldAccessLogicalFunction(windowEndFieldName)},
+            LogicalFunction{ConstantValueLogicalFunction(uint64Type, std::to_string(intervalEndMs))})})};
+}
+
+LogicalOperator
+wrapReplayOutputGate(const LogicalOperator& current, const std::string& windowEndFieldName, const uint64_t intervalStartMs, const uint64_t intervalEndMs)
+{
+    return SelectionLogicalOperator(buildReplayOutputGatePredicate(windowEndFieldName, intervalStartMs, intervalEndMs))
+        .withTraitSet(current.getTraitSet())
+        .withInferredSchema({current.getOutputSchema()})
+        .withChildren({current});
+}
+
 std::optional<Exception> unsupportedReplayOperator(const LogicalOperator& current)
 {
     if (const auto source = current.tryGetAs<SourceDescriptorLogicalOperator>(); source.has_value())
@@ -323,13 +440,6 @@ std::optional<Exception> unsupportedReplayOperator(const LogicalOperator& curren
             " depends on live source operator {}",
             current.getId());
     }
-    if (current.getName() == "Join" || current.getName() == "WindowedAggregation")
-    {
-        return UnsupportedQuery(
-            "Replay execution without checkpoints does not support replay suffix operator {} ({})",
-            current.getName(),
-            current.getId());
-    }
     if (current.getName() == "Store")
     {
         return UnsupportedQuery(
@@ -339,32 +449,104 @@ std::optional<Exception> unsupportedReplayOperator(const LogicalOperator& curren
     return std::nullopt;
 }
 
-std::expected<void, Exception> validatePhase5ReplayPlan(const LogicalOperator& current)
+ReplayWatermarkContract mergeReplayWatermarkContracts(const std::vector<ReplayWatermarkContract>& childContracts)
 {
-    if (const auto unsupported = unsupportedReplayOperator(current); unsupported.has_value())
+    if (childContracts.empty())
+    {
+        return ReplayWatermarkContract::None;
+    }
+    const auto first = childContracts.front();
+    if (std::ranges::all_of(childContracts, [first](const auto contract) { return contract == first; }))
+    {
+        return first;
+    }
+    return ReplayWatermarkContract::Mixed;
+}
+
+std::expected<PreparedReplaySubtree, Exception>
+preparePhase6ReplaySubtree(const LogicalOperator& current, const uint64_t intervalStartMs, const uint64_t intervalEndMs)
+{
+    std::vector<LogicalOperator> rewrittenChildren;
+    std::vector<ReplayWatermarkContract> childContracts;
+    rewrittenChildren.reserve(current.getChildren().size());
+    childContracts.reserve(current.getChildren().size());
+    for (const auto& child : current.getChildren())
+    {
+        auto preparedChild = preparePhase6ReplaySubtree(child, intervalStartMs, intervalEndMs);
+        if (!preparedChild)
+        {
+            return std::unexpected(preparedChild.error());
+        }
+        childContracts.push_back(preparedChild->watermarkContract);
+        rewrittenChildren.push_back(std::move(preparedChild->root));
+    }
+
+    auto rewrittenCurrent = current.withChildren(std::move(rewrittenChildren));
+    if (const auto unsupported = unsupportedReplayOperator(rewrittenCurrent); unsupported.has_value())
     {
         return std::unexpected(*unsupported);
     }
-    for (const auto& child : current.getChildren())
+
+    if (rewrittenCurrent.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value())
     {
-        if (auto validation = validatePhase5ReplayPlan(child); !validation)
-        {
-            return validation;
-        }
+        return PreparedReplaySubtree{.root = std::move(rewrittenCurrent), .watermarkContract = ReplayWatermarkContract::EventTime};
     }
-    return {};
+    if (rewrittenCurrent.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value())
+    {
+        return PreparedReplaySubtree{.root = std::move(rewrittenCurrent), .watermarkContract = ReplayWatermarkContract::IngestionTime};
+    }
+    if (const auto join = rewrittenCurrent.tryGetAs<JoinLogicalOperator>(); join.has_value())
+    {
+        if (!std::ranges::all_of(childContracts, [](const auto contract) { return contract == ReplayWatermarkContract::EventTime; }))
+        {
+            return std::unexpected(UnsupportedQuery(
+                "Replay execution requires payload-derived event-time semantics for replay suffix operator {} ({}), but its inputs use [{}]",
+                rewrittenCurrent.getName(),
+                rewrittenCurrent.getId(),
+                fmt::join(
+                    childContracts
+                        | std::views::transform([](const auto contract) { return replayWatermarkContractToString(contract); }),
+                    ", ")));
+        }
+        return PreparedReplaySubtree{
+            .root = wrapReplayOutputGate(rewrittenCurrent, join->get().getWindowEndFieldName(), intervalStartMs, intervalEndMs),
+            .watermarkContract = ReplayWatermarkContract::EventTime};
+    }
+    if (const auto window = rewrittenCurrent.tryGetAs<WindowedAggregationLogicalOperator>(); window.has_value())
+    {
+        const auto childContract = childContracts.empty() ? ReplayWatermarkContract::None : childContracts.front();
+        if (childContract != ReplayWatermarkContract::EventTime)
+        {
+            return std::unexpected(UnsupportedQuery(
+                "Replay execution requires payload-derived event-time semantics for replay suffix operator {} ({}), but its input uses {}",
+                rewrittenCurrent.getName(),
+                rewrittenCurrent.getId(),
+                replayWatermarkContractToString(childContract)));
+        }
+        return PreparedReplaySubtree{
+            .root = wrapReplayOutputGate(rewrittenCurrent, window->get().getWindowEndFieldName(), intervalStartMs, intervalEndMs),
+            .watermarkContract = ReplayWatermarkContract::EventTime};
+    }
+
+    return PreparedReplaySubtree{
+        .root = std::move(rewrittenCurrent),
+        .watermarkContract = mergeReplayWatermarkContracts(childContracts)};
 }
 
-std::expected<void, Exception> validatePhase5ReplayPlan(const LogicalPlan& replayPlan)
+std::expected<LogicalPlan, Exception> preparePhase6ReplayPlan(
+    const LogicalPlan& replayPlan, const uint64_t intervalStartMs, const uint64_t intervalEndMs)
 {
-    for (const auto& root : replayPlan.getRootOperators())
+    auto rewrittenRoots = replayPlan.getRootOperators();
+    for (auto& root : rewrittenRoots)
     {
-        if (auto validation = validatePhase5ReplayPlan(root); !validation)
+        auto preparedRoot = preparePhase6ReplaySubtree(root, intervalStartMs, intervalEndMs);
+        if (!preparedRoot)
         {
-            return validation;
+            return std::unexpected(preparedRoot.error());
         }
+        root = std::move(preparedRoot->root);
     }
-    return {};
+    return replayPlan.withRootOperators(std::move(rewrittenRoots));
 }
 
 void appendPinnedSegment(std::vector<ReplayPinnedSegment>& pinnedSegments, const RecordingId& recordingId, const uint64_t segmentId)
@@ -379,12 +561,9 @@ void appendPinnedSegment(std::vector<ReplayPinnedSegment>& pinnedSegments, const
 std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecutionPlan(
     const SharedPtr<const SourceCatalog>& sourceCatalog, const ReplayExecution& execution, const ReplayPlan& replayPlan)
 {
+    const auto warmupRequirements = buildReplayBoundaryWarmupRequirements(replayPlan.queryPlanRewrite.basePlan);
     std::unordered_map<std::string, PreparedReplayRecording> pinnedRecordingsById;
     std::unordered_map<RecordingRewriteEdge, ReplaySourceReplacement, ReplayBoundaryEdgeHash> replacements;
-    const Replay::BinaryStoreReplaySelection selection{
-        .segmentIds = std::nullopt,
-        .scanStartMs = execution.intervalStartMs,
-        .scanEndMs = execution.intervalEndMs};
 
     for (const auto& replayBoundary : replayPlan.selectedReplayBoundaries)
     {
@@ -396,9 +575,17 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
         }
 
         const auto recordingKey = replayBoundary.selection.recordingId.getRawValue();
-        auto recordingIt = pinnedRecordingsById.find(recordingKey);
-        if (recordingIt == pinnedRecordingsById.end())
+        auto& preparedRecording = pinnedRecordingsById[recordingKey];
+        preparedRecording.recordingId = replayBoundary.selection.recordingId;
+        preparedRecording.filePath = replayBoundary.selection.filePath;
+        for (const auto& materializationEdge : replayBoundary.materializationEdges)
         {
+            const auto requiresWarmup = warmupRequirements.contains(materializationEdge) && warmupRequirements.at(materializationEdge);
+            const auto scanStartMs = requiresWarmup ? 0U : execution.intervalStartMs;
+            const Replay::BinaryStoreReplaySelection selection{
+                .segmentIds = std::nullopt,
+                .scanStartMs = scanStartMs,
+                .scanEndMs = execution.intervalEndMs};
             const auto selectedSegments = Replay::selectBinaryStoreSegments(replayBoundary.selection.filePath, selection);
             if (selectedSegments.empty())
             {
@@ -409,37 +596,36 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
                     execution.intervalEndMs));
             }
 
-            PreparedReplayRecording preparedRecording{
-                .recordingId = replayBoundary.selection.recordingId,
-                .filePath = replayBoundary.selection.filePath,
-                .segmentIds =
-                    selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
-                    | std::ranges::to<std::vector>()};
-            recordingIt = pinnedRecordingsById.emplace(recordingKey, std::move(preparedRecording)).first;
-        }
-
-        for (const auto& materializationEdge : replayBoundary.materializationEdges)
-        {
+            const auto selectedSegmentIds = selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
+                | std::ranges::to<std::vector>();
+            for (const auto segmentId : selectedSegmentIds)
+            {
+                if (!std::ranges::contains(preparedRecording.segmentIds, segmentId))
+                {
+                    preparedRecording.segmentIds.push_back(segmentId);
+                }
+            }
             replacements.insert_or_assign(
                 materializationEdge,
                 ReplaySourceReplacement{
                     .host = replayBoundary.selection.node,
                     .recordingId = replayBoundary.selection.recordingId.getRawValue(),
                     .filePath = replayBoundary.selection.filePath,
-                    .segmentIds = recordingIt->second.segmentIds,
-                    .intervalStartMs = execution.intervalStartMs,
+                    .segmentIds = std::move(selectedSegmentIds),
+                    .intervalStartMs = scanStartMs,
                     .intervalEndMs = execution.intervalEndMs});
         }
     }
 
     auto replaySourcePlan = buildReplaySourcePlan(replayPlan.queryPlanRewrite.basePlan, sourceCatalog, replacements);
-    if (auto validation = validatePhase5ReplayPlan(replaySourcePlan); !validation)
+    auto preparedReplayPlan = preparePhase6ReplayPlan(replaySourcePlan, execution.intervalStartMs, execution.intervalEndMs);
+    if (!preparedReplayPlan)
     {
-        return std::unexpected(validation.error());
+        return std::unexpected(preparedReplayPlan.error());
     }
 
     return PreparedReplayExecutionPlan{
-        .replayPlan = std::move(replaySourcePlan),
+        .replayPlan = std::move(*preparedReplayPlan),
         .pinnedRecordings = pinnedRecordingsById | std::views::values | std::ranges::to<std::vector>()};
 }
 

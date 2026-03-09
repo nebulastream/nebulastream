@@ -26,11 +26,18 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <LegacyOptimizer.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
+#include <Operators/Windows/Aggregations/CountAggregationLogicalFunction.hpp>
+#include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <QueryId.hpp>
@@ -44,6 +51,9 @@
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Measures/TimeMeasure.hpp>
+#include <WindowTypes/Types/TumblingWindow.hpp>
 
 namespace NES
 {
@@ -119,6 +129,7 @@ struct TrackingLifecycleBackendState
     std::unordered_map<DistributedQueryId, size_t> starts;
     std::unordered_map<DistributedQueryId, size_t> stops;
     std::unordered_map<DistributedQueryId, size_t> unregisters;
+    std::unordered_map<DistributedQueryId, LogicalPlan> registeredPlans;
     bool autoStopRunningQueriesOnStatus = false;
     std::expected<WorkerStatus, Exception> workerStatusResult = []()
     {
@@ -146,6 +157,7 @@ public:
         const auto queryId = QueryId::create(state->nextLocalQueryId(), plan.getQueryId().getDistributedQueryId());
         state->statuses.insert_or_assign(queryId, LocalQueryStatus{.queryId = queryId, .state = QueryState::Registered});
         ++state->registrations[plan.getQueryId().getDistributedQueryId()];
+        state->registeredPlans.insert_or_assign(plan.getQueryId().getDistributedQueryId(), plan);
         return queryId;
     }
 
@@ -214,6 +226,44 @@ Schema createQualifiedSchema(const std::string& sourceName)
     Schema schema;
     schema.addField(sourceName + "$id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
     return schema;
+}
+
+LogicalPlan createPlacedWindowReplayPlan(
+    const DistributedQueryId& queryId,
+    const Host& worker,
+    const Windowing::TimeCharacteristic& timeCharacteristic,
+    const std::string& sinkName)
+{
+    const auto placement = TraitSet{PlacementTrait(worker)};
+    const auto source = LogicalOperator(InlineSourceLogicalOperator("INLINE_REPLAY_SOURCE", createSchema(), {}, {}).withTraitSet(placement));
+    const auto watermarkAssigner = [&]() -> LogicalOperator
+    {
+        if (timeCharacteristic.getType() == Windowing::TimeCharacteristic::Type::EventTime)
+        {
+            return EventTimeWatermarkAssignerLogicalOperator(
+                       FieldAccessLogicalFunction(timeCharacteristic.field.name),
+                       timeCharacteristic.getTimeUnit())
+                .withTraitSet(placement)
+                .withInferredSchema({source.getOutputSchema()})
+                .withChildren({source});
+        }
+        return IngestionTimeWatermarkAssignerLogicalOperator()
+            .withTraitSet(placement)
+            .withInferredSchema({source.getOutputSchema()})
+            .withChildren({source});
+    }();
+
+    const auto window = LogicalOperator(
+        WindowedAggregationLogicalOperator(
+            {},
+            {std::make_shared<WindowAggregationLogicalFunction>(CountAggregationLogicalFunction(FieldAccessLogicalFunction("id")))},
+            std::make_shared<Windowing::TumblingWindow>(timeCharacteristic, Windowing::TimeMeasure(1'000)))
+            .withTraitSet(placement)
+            .withInferredSchema({watermarkAssigner.getOutputSchema()})
+            .withChildren({watermarkAssigner}));
+    const auto sink = LogicalOperator(
+        SinkLogicalOperator(sinkName).withTraitSet(placement).withInferredSchema({window.getOutputSchema()}).withChildren({window}));
+    return LogicalPlan(QueryId::createDistributed(queryId), {sink});
 }
 
 LogicalPlan createReplayPlan(
@@ -1157,6 +1207,269 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerRejectsReplayExecutionWhenSu
     EXPECT_TRUE(replayExecution.pinnedSegments.empty());
     ASSERT_TRUE(replayExecution.failureReason.has_value());
     EXPECT_THAT(*replayExecution.failureReason, testing::HasSubstr("Store operator"));
+
+    std::error_code errorCode;
+    std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
+}
+
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerInjectsEventTimeGateForWindowReplaySuffix)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("event-time-window-replay-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+    const auto replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = 5'000};
+    const auto recordingId = RecordingId("event-time-window-recording");
+    const auto recordingFilePath = createReplayRecordingFixturePath("replay-phase-6-event-window");
+    initializeReplayRecordingFixture(
+        recordingFilePath,
+        {
+            Replay::BinaryStoreManifestEntry{.segmentId = 41, .payloadOffset = 128, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 0, .maxWatermark = 1'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 42, .payloadOffset = 192, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 2'000, .maxWatermark = 3'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 43, .payloadOffset = 256, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 4'000, .maxWatermark = 5'999},
+        });
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
+
+    const auto basePlan = createPlacedWindowReplayPlan(
+        queryId,
+        worker,
+        Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction("id")),
+        "event_window_sink");
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto window = sink.getChildren().front();
+    ASSERT_TRUE(window.tryGetAs<WindowedAggregationLogicalOperator>().has_value());
+    ASSERT_EQ(window.getChildren().size(), 1U);
+    const auto assigner = window.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+
+    const QueryRecordingPlanInsertion replayBoundary{
+        .selection =
+            RecordingSelection{
+                .recordingId = recordingId,
+                .node = worker,
+                .filePath = recordingFilePath.string(),
+                .structuralFingerprint = "event-time-window-boundary",
+                .representation = RecordingRepresentation::BinaryStore,
+                .retentionWindowMs = replaySpecification.retentionWindowMs,
+                .beneficiaryQueries = {},
+                .coversIncomingQuery = true},
+        .materializationEdges =
+            {RecordingRewriteEdge{.parentId = window.getId(), .childId = assigner.getId()}}};
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = basePlan,
+            .globalPlan = basePlan,
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {recordingId},
+            .networkExplanations = {},
+            .queryPlanRewrite =
+                QueryRecordingPlanRewrite{
+                    .queryId = queryId.getRawValue(),
+                    .basePlan = basePlan,
+                    .insertions = {}},
+            .replayBoundaries = {replayBoundary}});
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = worker,
+            .filePath = recordingFilePath.string(),
+            .structuralFingerprint = replayBoundary.selection.structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(0),
+            .retainedEndWatermark = Timestamp(70'000),
+            .fillWatermark = Timestamp(70'000),
+            .segmentCount = 3,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt});
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    backendState->autoStopRunningQueriesOnStatus = true;
+    backendState->workerStatusResult = [recordingId, recordingFilePath]() -> std::expected<WorkerStatus, Exception>
+    {
+        WorkerStatus status;
+        status.until = std::chrono::system_clock::now();
+        status.replayMetrics.recordingStatuses.push_back(
+            Replay::RecordingRuntimeStatus{
+                .recordingId = recordingId.getRawValue(),
+                .filePath = recordingFilePath.string(),
+                .lifecycleState = Replay::RecordingLifecycleState::Ready,
+                .retentionWindowMs = 60'000,
+                .retainedStartWatermark = Timestamp(0),
+                .retainedEndWatermark = Timestamp(70'000),
+                .fillWatermark = Timestamp(70'000),
+                .segmentCount = 3,
+                .storageBytes = 4096,
+                .successorRecordingId = std::nullopt});
+        return status;
+    }();
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, optimizer, sourceCatalog);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 3'000, .intervalEndMs = 5'000});
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    ASSERT_THAT(result->execution.internalQueryIds, testing::SizeIs(1));
+
+    const auto internalQueryId = result->execution.internalQueryIds.front();
+    ASSERT_TRUE(backendState->registeredPlans.contains(internalQueryId));
+    const auto& registeredReplayPlan = backendState->registeredPlans.at(internalQueryId);
+    EXPECT_EQ(getOperatorByType<WindowedAggregationLogicalOperator>(registeredReplayPlan).size(), 1U);
+    EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(registeredReplayPlan).size(), 1U);
+    ASSERT_EQ(getOperatorByType<SelectionLogicalOperator>(registeredReplayPlan).size(), 1U);
+
+    const auto selections = getOperatorByType<SelectionLogicalOperator>(registeredReplayPlan);
+    const auto selectionPredicate = selections.front()->getPredicate().explain(ExplainVerbosity::Debug);
+    EXPECT_THAT(selectionPredicate, testing::HasSubstr("END"));
+    EXPECT_THAT(selectionPredicate, testing::HasSubstr("3000"));
+    EXPECT_THAT(selectionPredicate, testing::HasSubstr("5000"));
+
+    const auto sources = getOperatorByType<SourceDescriptorLogicalOperator>(registeredReplayPlan);
+    ASSERT_EQ(sources.size(), 1U);
+    const auto sourceConfig = sources.front()->getSourceDescriptor().getConfig();
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("scan_start_ms")), 0U);
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("scan_end_ms")), 5'000U);
+    EXPECT_EQ(std::get<std::string>(sourceConfig.at("segment_ids")), "41,42,43");
+    EXPECT_EQ(std::get<std::string>(sourceConfig.at("replay_mode")), "interval");
+
+    std::error_code errorCode;
+    std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
+}
+
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerRejectsWindowReplayWithoutPayloadDerivedEventTime)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("ingestion-time-window-replay-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+    const auto replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = 5'000};
+    const auto recordingId = RecordingId("ingestion-time-window-recording");
+    const auto recordingFilePath = createReplayRecordingFixturePath("replay-phase-6-ingestion-window");
+    initializeReplayRecordingFixture(
+        recordingFilePath,
+        {
+            Replay::BinaryStoreManifestEntry{.segmentId = 51, .payloadOffset = 128, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 0, .maxWatermark = 5'999},
+        });
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
+
+    const auto basePlan = createPlacedWindowReplayPlan(
+        queryId,
+        worker,
+        Windowing::TimeCharacteristic::createIngestionTime(),
+        "ingestion_window_sink");
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto window = sink.getChildren().front();
+    ASSERT_TRUE(window.tryGetAs<WindowedAggregationLogicalOperator>().has_value());
+    ASSERT_EQ(window.getChildren().size(), 1U);
+    const auto assigner = window.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value());
+
+    const QueryRecordingPlanInsertion replayBoundary{
+        .selection =
+            RecordingSelection{
+                .recordingId = recordingId,
+                .node = worker,
+                .filePath = recordingFilePath.string(),
+                .structuralFingerprint = "ingestion-time-window-boundary",
+                .representation = RecordingRepresentation::BinaryStore,
+                .retentionWindowMs = replaySpecification.retentionWindowMs,
+                .beneficiaryQueries = {},
+                .coversIncomingQuery = true},
+        .materializationEdges =
+            {RecordingRewriteEdge{.parentId = window.getId(), .childId = assigner.getId()}}};
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = basePlan,
+            .globalPlan = basePlan,
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {recordingId},
+            .networkExplanations = {},
+            .queryPlanRewrite =
+                QueryRecordingPlanRewrite{
+                    .queryId = queryId.getRawValue(),
+                    .basePlan = basePlan,
+                    .insertions = {}},
+            .replayBoundaries = {replayBoundary}});
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = worker,
+            .filePath = recordingFilePath.string(),
+            .structuralFingerprint = replayBoundary.selection.structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(0),
+            .retainedEndWatermark = Timestamp(70'000),
+            .fillWatermark = Timestamp(70'000),
+            .segmentCount = 1,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt});
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    backendState->workerStatusResult = [recordingId, recordingFilePath]() -> std::expected<WorkerStatus, Exception>
+    {
+        WorkerStatus status;
+        status.until = std::chrono::system_clock::now();
+        status.replayMetrics.recordingStatuses.push_back(
+            Replay::RecordingRuntimeStatus{
+                .recordingId = recordingId.getRawValue(),
+                .filePath = recordingFilePath.string(),
+                .lifecycleState = Replay::RecordingLifecycleState::Ready,
+                .retentionWindowMs = 60'000,
+                .retainedStartWatermark = Timestamp(0),
+                .retainedEndWatermark = Timestamp(70'000),
+                .fillWatermark = Timestamp(70'000),
+                .segmentCount = 1,
+                .storageBytes = 4096,
+                .successorRecordingId = std::nullopt});
+        return status;
+    }();
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, optimizer, sourceCatalog);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 1'000, .intervalEndMs = 5'000});
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().code(), ErrorCode::UnsupportedQuery);
+    EXPECT_TRUE(backendState->registeredPlans.empty());
+
+    ASSERT_THAT(queryManager->getReplayExecutions(), testing::SizeIs(1));
+    const auto& replayExecution = queryManager->getReplayExecutions().begin()->second;
+    EXPECT_EQ(replayExecution.state, ReplayExecutionState::Failed);
+    EXPECT_TRUE(replayExecution.internalQueryIds.empty());
+    EXPECT_TRUE(replayExecution.pinnedSegments.empty());
+    ASSERT_TRUE(replayExecution.failureReason.has_value());
+    EXPECT_THAT(*replayExecution.failureReason, testing::HasSubstr("payload-derived event-time semantics"));
 
     std::error_code errorCode;
     std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
