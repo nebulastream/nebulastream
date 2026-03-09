@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 1) Source Plugin
 add_plugin_as_library(
         LinuxProcess
         Source
@@ -23,7 +22,6 @@ target_include_directories(linux-process-source-plugin-library
         PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# 2) Source Validation Plugin
 add_plugin_as_library(
         LinuxProcess
         SourceValidation

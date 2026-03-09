@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# 1) Sink Plugin
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
 add_plugin_as_library(
@@ -25,8 +24,6 @@ target_include_directories(linux_process_sink_plugin
         PUBLIC include
         PRIVATE .
 )
-
-# 2) Sink Validation Plugin
 
 add_plugin_as_library(
         LinuxProcess

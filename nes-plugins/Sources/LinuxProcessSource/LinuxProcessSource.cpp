@@ -118,9 +118,17 @@ void LinuxProcessSource::close()
     NES_INFO("LinuxProcessSource::close: Closing process");
     if (pipe)
     {
-        pclose(pipe);
+        std::fflush(pipe);
+        const int rc = pclose(pipe);
         pipe = nullptr;
-        NES_TRACE("LinuxProcessSource::close: Process closed");
+        if (rc == -1)
+        {
+            throw QueryStopFailed("LinuxProcessSource: pclose failed: {}");
+        }
+        else
+        {
+            NES_TRACE("LinuxProcessSource closed");
+        }
     }
     NES_INFO("LinuxProcessSource::close: Process closed");
 }

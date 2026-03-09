@@ -39,7 +39,7 @@ LinuxProcessSink::LinuxProcessSink(BackpressureController backpressureController
     : Sink(std::move(backpressureController))
     , commandToRun(sinkDescriptor.getFromConfig(ConfigParametersLinuxProcessSink::COMMAND))
 {
-    // Create the formatter the same way FileSink does: based on the sink's INPUT_FORMAT.
+    /// Create the formatter the same way FileSink does: based on the sink's INPUT_FORMAT.
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {
         case InputFormat::CSV:
@@ -67,7 +67,6 @@ void LinuxProcessSink::start(PipelineExecutionContext&)
 
 void LinuxProcessSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
-    PRECONDITION(inputTupleBuffer, "Invalid input buffer in LinuxProcessSink.");
     PRECONDITION(pipe != nullptr, "LinuxProcessSink was not opened (start() not called or popen failed).");
     PRECONDITION(formatter != nullptr, "LinuxProcessSink formatter was not initialized.");
 
@@ -84,7 +83,7 @@ void LinuxProcessSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExec
             NES_ERROR("Could not write to output file: from {} written: {}", out.size(), written);
         }
 
-        // For interactive consumers, flushing per buffer.
+        /// For interactive consumers, flushing per buffer.
         std::fflush(pipe);
     }
     NES_INFO("LinuxProcessSink finished writing");
@@ -102,22 +101,22 @@ void LinuxProcessSink::stop(PipelineExecutionContext&)
 
         if (rc == -1)
         {
-            NES_ERROR("LinuxProcessSink: pclose failed: {}", std::strerror(errno));
+            throw QueryStopFailed("LinuxProcessSink: pclose failed: {}");
         }
         else
         {
             NES_TRACE("LinuxProcessSink closed");
         }
     }
+    NES_INFO("LinuxProcessSink::close: Process closed");
 }
 
 DescriptorConfig::Config LinuxProcessSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    // Uses your ConfigParametersLinuxProcess::parameterMap (extends SinkDescriptor::parameterMap).
+    /// Uses your ConfigParametersLinuxProcess::parameterMap (extends SinkDescriptor::parameterMap).
     return DescriptorConfig::validateAndFormat<ConfigParametersLinuxProcessSink>(std::move(config), NAME);
 }
 
-// ---- Registry hooks (like VoidSink / FileSink) ----
 
 SinkValidationRegistryReturnType RegisterLinuxProcessSinkValidation(SinkValidationRegistryArguments sinkConfig)
 {
