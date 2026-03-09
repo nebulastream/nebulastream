@@ -10,11 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+find_package(rapidcheck CONFIG REQUIRED)
+
 add_library(nes-nautilus-test-util STATIC
         src/NautilusTestUtils.cpp
         src/PagedVectorTestUtils.cpp
         src/ChainedHashMapTestUtils.cpp
         src/ChainedHashMapCustomValueTestUtils.cpp
+        src/PropertyTestUtils.cpp
 )
 
 target_include_directories(nes-nautilus-test-util PUBLIC
@@ -26,5 +29,6 @@ target_link_libraries(nes-nautilus-test-util PUBLIC
         nes-grpc
         nes-nautilus
         nes-test-util
+        rapidcheck
         ${GTEST_LIBRARIES}
 )

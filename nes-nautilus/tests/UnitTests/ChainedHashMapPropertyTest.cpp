@@ -29,6 +29,9 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -39,9 +42,7 @@
 #include <ChainedHashMapCustomValueTestUtils.hpp>
 #include <ChainedHashMapTestUtils.hpp>
 #include <NautilusTestUtils.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <PropertyTestUtils.hpp>
 #include <val.hpp>
 #include <val_details.hpp>
 #include <val_ptr.hpp>
@@ -52,91 +53,15 @@
 namespace NES
 {
 
-/// All data types available for keys (including VARSIZED)
-static const std::vector<DataType::Type> ALL_KEY_TYPES = {
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-    DataType::Type::VARSIZED,
-};
-
-/// All data types available for values (including floats and VARSIZED)
-static const std::vector<DataType::Type> ALL_VALUE_TYPES = {
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-    DataType::Type::FLOAT32,
-    DataType::Type::FLOAT64,
-    DataType::Type::VARSIZED,
-};
-
-/// Fixed-size types only (VARSIZED excluded). Used when operator< is required on keys
-/// (e.g. std::map/std::multimap) or for clean std::any comparison in high-volume tests.
-static const std::vector<DataType::Type> FIXED_KEY_TYPES = {
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-};
-
-static const std::vector<DataType::Type> FIXED_VALUE_TYPES = {
-    DataType::Type::UINT8,
-    DataType::Type::UINT16,
-    DataType::Type::UINT32,
-    DataType::Type::UINT64,
-    DataType::Type::INT8,
-    DataType::Type::INT16,
-    DataType::Type::INT32,
-    DataType::Type::INT64,
-    DataType::Type::FLOAT32,
-    DataType::Type::FLOAT64,
-};
-
-/// RapidCheck generator for a non-empty vector of DataType::Type from a given pool.
-/// Field count ranges from minFields to maxFields (inclusive).
-/// maxFields=256: tested up to 1024 fields without correctness issues, but the compiler
-/// backend becomes very slow for schemas with >256 fields due to JIT compilation overhead.
-rc::Gen<std::vector<DataType::Type>> genTypeSchema(std::vector<DataType::Type> pool, size_t minFields = 1, size_t maxFields = 256)
-{
-    return rc::gen::exec(
-        [pool = std::move(pool), minFields, maxFields]()
-        {
-            const auto numFields = *rc::gen::inRange(minFields, maxFields + 1);
-            std::vector<DataType::Type> schema;
-            schema.reserve(numFields);
-            for (size_t i = 0; i < numFields; ++i)
-            {
-                const auto idx = *rc::gen::inRange(static_cast<size_t>(0), pool.size());
-                schema.push_back(pool[idx]);
-            }
-            return schema;
-        });
-}
-
-/// Estimates the schema size in bytes for a given type vector using the Schema helper.
-uint64_t estimateSchemaSize(const std::vector<DataType::Type>& types)
-{
-    auto schema = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(types);
-    return schema.getSizeOfSchemaInBytes();
-}
-
-/// The buffer manager uses a fixed 4096-byte buffer size.
-/// Schemas whose tuple size exceeds this must be discarded via RC_PRE.
-static constexpr uint64_t BUFFER_SIZE = 4096;
+using TestUtils::ALL_KEY_TYPES;
+using TestUtils::ALL_VALUE_TYPES;
+using TestUtils::AnyVecLess;
+using TestUtils::anyVecsEqual;
+using TestUtils::BUFFER_SIZE;
+using TestUtils::estimateSchemaSize;
+using TestUtils::genTypeSchema;
+using TestUtils::recordToAnyVec;
+using TestUtils::varValToAny;
 
 /// Helper that configures ChainedHashMapTestUtils for a given combination.
 /// All random parameters are generated via RapidCheck for full reproducibility.
@@ -149,7 +74,11 @@ void configureTestUtils(
     utils.params.numberOfItems = *rc::gen::inRange<uint64_t>(100, 501);
     utils.params.numberOfBuckets = *rc::gen::inRange<uint64_t>(10, 257);
     utils.params.pageSize = *rc::gen::inRange<uint64_t>(4096, 1048577);
-    NES_INFO("RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}", utils.params.numberOfItems, utils.params.numberOfBuckets, utils.params.pageSize);
+    NES_INFO(
+        "RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}",
+        utils.params.numberOfItems,
+        utils.params.numberOfBuckets,
+        utils.params.pageSize);
     utils.setUpChainedHashMapTest(keyTypes, valueTypes, backend);
 }
 
@@ -164,8 +93,11 @@ void singleInsertProperty(ExecutionMode backend, size_t maxTotalFields)
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
     RC_PRE(keyTypes.size() + valueTypes.size() <= maxTotalFields);
 
-    NES_INFO("Property test singleInsert: keyFields={}, valueFields={}, backend={}",
-             keyTypes.size(), valueTypes.size(), magic_enum::enum_name(backend));
+    NES_INFO(
+        "Property test singleInsert: keyFields={}, valueFields={}, backend={}",
+        keyTypes.size(),
+        valueTypes.size(),
+        magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapTestUtils utils;
     configureTestUtils(utils, keyTypes, valueTypes, backend);
@@ -193,8 +125,11 @@ void updateProperty(ExecutionMode backend, size_t maxTotalFields)
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
     RC_PRE(keyTypes.size() + valueTypes.size() <= maxTotalFields);
 
-    NES_INFO("Property test update: keyFields={}, valueFields={}, backend={}",
-             keyTypes.size(), valueTypes.size(), magic_enum::enum_name(backend));
+    NES_INFO(
+        "Property test update: keyFields={}, valueFields={}, backend={}",
+        keyTypes.size(),
+        valueTypes.size(),
+        magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapTestUtils utils;
     configureTestUtils(utils, keyTypes, valueTypes, backend);
@@ -229,7 +164,11 @@ void configureCustomValueTestUtils(
     utils.params.numberOfItems = *rc::gen::inRange<uint64_t>(50, 201);
     utils.params.numberOfBuckets = *rc::gen::inRange<uint64_t>(1, 257);
     utils.params.pageSize = *rc::gen::inRange<uint64_t>(4096, 1048577);
-    NES_INFO("RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}", utils.params.numberOfItems, utils.params.numberOfBuckets, utils.params.pageSize);
+    NES_INFO(
+        "RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}",
+        utils.params.numberOfItems,
+        utils.params.numberOfBuckets,
+        utils.params.pageSize);
     utils.setUpChainedHashMapTest(keyTypes, valueTypes, backend);
 }
 
@@ -242,8 +181,11 @@ void pagedVectorProperty(ExecutionMode backend, size_t maxTotalFields)
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
     RC_PRE(keyTypes.size() + valueTypes.size() <= maxTotalFields);
 
-    NES_INFO("Property test pagedVector: keyFields={}, valueFields={}, backend={}",
-             keyTypes.size(), valueTypes.size(), magic_enum::enum_name(backend));
+    NES_INFO(
+        "Property test pagedVector: keyFields={}, valueFields={}, backend={}",
+        keyTypes.size(),
+        valueTypes.size(),
+        magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapCustomValueTestUtils utils;
     configureCustomValueTestUtils(utils, keyTypes, valueTypes, backend);
@@ -293,7 +235,11 @@ void pagedVectorProperty(ExecutionMode backend, size_t maxTotalFields)
         for (auto& bufferValue : utils.inputBuffers)
         {
             findAndInsertIntoPagedVector(
-                std::addressof(bufferKey), std::addressof(bufferValue), keyPositionInBuffer, utils.bufferManager.get(), std::addressof(hashMap));
+                std::addressof(bufferKey),
+                std::addressof(bufferValue),
+                keyPositionInBuffer,
+                utils.bufferManager.get(),
+                std::addressof(hashMap));
 
             const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValue)));
             for (nautilus::val<uint64_t> i = 0; i < recordBufferValue.getNumRecords(); i = i + 1)
@@ -302,7 +248,6 @@ void pagedVectorProperty(ExecutionMode backend, size_t maxTotalFields)
                 exactMap.insert({{recordKey, utils.projectionKeys}, recordValue});
             }
         }
-
     }
 
     /// Verify all values via lookup
@@ -342,99 +287,6 @@ void pagedVectorProperty(ExecutionMode backend, size_t maxTotalFields)
 
 /// ==================== High-volume tests with std::map<vector<any>, vector<any>> ====================
 
-/// Extracts the raw C++ value from a VarVal and wraps it in std::any.
-std::any varValToAny(const VarVal& val, DataType::Type type)
-{
-    switch (type)
-    {
-        case DataType::Type::UINT8:
-            return nautilus::details::RawValueResolver<uint8_t>::getRawValue(val.cast<nautilus::val<uint8_t>>());
-        case DataType::Type::UINT16:
-            return nautilus::details::RawValueResolver<uint16_t>::getRawValue(val.cast<nautilus::val<uint16_t>>());
-        case DataType::Type::UINT32:
-            return nautilus::details::RawValueResolver<uint32_t>::getRawValue(val.cast<nautilus::val<uint32_t>>());
-        case DataType::Type::UINT64:
-            return nautilus::details::RawValueResolver<uint64_t>::getRawValue(val.cast<nautilus::val<uint64_t>>());
-        case DataType::Type::INT8:
-            return nautilus::details::RawValueResolver<int8_t>::getRawValue(val.cast<nautilus::val<int8_t>>());
-        case DataType::Type::INT16:
-            return nautilus::details::RawValueResolver<int16_t>::getRawValue(val.cast<nautilus::val<int16_t>>());
-        case DataType::Type::INT32:
-            return nautilus::details::RawValueResolver<int32_t>::getRawValue(val.cast<nautilus::val<int32_t>>());
-        case DataType::Type::INT64:
-            return nautilus::details::RawValueResolver<int64_t>::getRawValue(val.cast<nautilus::val<int64_t>>());
-        case DataType::Type::FLOAT32:
-            return nautilus::details::RawValueResolver<float>::getRawValue(val.cast<nautilus::val<float>>());
-        case DataType::Type::FLOAT64:
-            return nautilus::details::RawValueResolver<double>::getRawValue(val.cast<nautilus::val<double>>());
-        default:
-            throw std::runtime_error("Unsupported type for varValToAny");
-    }
-}
-
-/// Converts a Record's fields into a std::vector<std::any> using the given projection and types.
-std::vector<std::any> recordToAnyVec(
-    const Record& record,
-    const std::vector<Record::RecordFieldIdentifier>& projection,
-    const std::vector<DataType::Type>& types)
-{
-    std::vector<std::any> result;
-    result.reserve(projection.size());
-    for (size_t i = 0; i < projection.size(); ++i)
-    {
-        result.push_back(varValToAny(record.read(projection[i]), types[i]));
-    }
-    return result;
-}
-
-/// Compares two std::any values of the same DataType::Type. Returns <0, 0, or >0.
-int compareAnyField(const std::any& a, const std::any& b, DataType::Type type)
-{
-    switch (type)
-    {
-        case DataType::Type::UINT8: { auto l = std::any_cast<uint8_t>(a), r = std::any_cast<uint8_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::UINT16: { auto l = std::any_cast<uint16_t>(a), r = std::any_cast<uint16_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::UINT32: { auto l = std::any_cast<uint32_t>(a), r = std::any_cast<uint32_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::UINT64: { auto l = std::any_cast<uint64_t>(a), r = std::any_cast<uint64_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::INT8: { auto l = std::any_cast<int8_t>(a), r = std::any_cast<int8_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::INT16: { auto l = std::any_cast<int16_t>(a), r = std::any_cast<int16_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::INT32: { auto l = std::any_cast<int32_t>(a), r = std::any_cast<int32_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::INT64: { auto l = std::any_cast<int64_t>(a), r = std::any_cast<int64_t>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::FLOAT32: { auto l = std::any_cast<float>(a), r = std::any_cast<float>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        case DataType::Type::FLOAT64: { auto l = std::any_cast<double>(a), r = std::any_cast<double>(b); return (l < r) ? -1 : (l > r) ? 1 : 0; }
-        default: throw std::runtime_error("Unsupported type for compareAnyField");
-    }
-}
-
-/// Custom comparator for std::map with std::vector<std::any> keys.
-/// Compares field-by-field using the known DataType::Type per position.
-struct AnyVecLess
-{
-    std::vector<DataType::Type> types;
-
-    bool operator()(const std::vector<std::any>& a, const std::vector<std::any>& b) const
-    {
-        for (size_t i = 0; i < types.size(); ++i)
-        {
-            const int cmp = compareAnyField(a[i], b[i], types[i]);
-            if (cmp != 0)
-                return cmp < 0;
-        }
-        return false;
-    }
-};
-
-/// Checks equality of two std::vector<std::any> using type-aware comparison.
-bool anyVecsEqual(const std::vector<std::any>& a, const std::vector<std::any>& b, const std::vector<DataType::Type>& types)
-{
-    for (size_t i = 0; i < types.size(); ++i)
-    {
-        if (compareAnyField(a[i], b[i], types[i]) != 0)
-            return false;
-    }
-    return true;
-}
-
 /// Configures ChainedHashMapTestUtils for high-volume tests with a specific numberOfItems.
 /// All random parameters are generated via RapidCheck for full reproducibility.
 void configureHighVolumeTestUtils(
@@ -447,7 +299,11 @@ void configureHighVolumeTestUtils(
     utils.params.numberOfItems = numberOfItems;
     utils.params.numberOfBuckets = *rc::gen::inRange<uint64_t>(64, 2049);
     utils.params.pageSize = *rc::gen::inRange<uint64_t>(4096, 1048577);
-    NES_INFO("RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}", utils.params.numberOfItems, utils.params.numberOfBuckets, utils.params.pageSize);
+    NES_INFO(
+        "RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}",
+        utils.params.numberOfItems,
+        utils.params.numberOfBuckets,
+        utils.params.pageSize);
     utils.setUpChainedHashMapTest(keyTypes, valueTypes, backend);
 }
 
@@ -456,12 +312,16 @@ void configureHighVolumeTestUtils(
 void highVolumeInsertProperty(ExecutionMode backend, uint64_t minItems, uint64_t maxItems)
 {
     const auto numberOfItems = *rc::gen::inRange(minItems, maxItems + 1);
-    const auto keyTypes = *genTypeSchema(FIXED_KEY_TYPES, 1, 4);
-    const auto valueTypes = *genTypeSchema(FIXED_VALUE_TYPES, 1, 4);
+    const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, 4);
+    const auto valueTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, 4);
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
 
-    NES_INFO("Property test highVolumeInsert: N={}, keyFields={}, valueFields={}, backend={}",
-             numberOfItems, keyTypes.size(), valueTypes.size(), magic_enum::enum_name(backend));
+    NES_INFO(
+        "Property test highVolumeInsert: N={}, keyFields={}, valueFields={}, backend={}",
+        numberOfItems,
+        keyTypes.size(),
+        valueTypes.size(),
+        magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapTestUtils utils;
     configureHighVolumeTestUtils(utils, keyTypes, valueTypes, backend, numberOfItems);
@@ -494,8 +354,8 @@ void highVolumeInsertProperty(ExecutionMode backend, uint64_t minItems, uint64_t
         findAndInsert(std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
     }
 
-    NES_INFO("highVolumeInsert: ChainedHashMap has {} entries, reference map has {} entries",
-             hashMap.getNumberOfTuples(), referenceMap.size());
+    NES_INFO(
+        "highVolumeInsert: ChainedHashMap has {} entries, reference map has {} entries", hashMap.getNumberOfTuples(), referenceMap.size());
     RC_ASSERT(hashMap.getNumberOfTuples() == referenceMap.size());
 
     /// === Forward check: every entry in ChainedHashMap must be in the reference map ===
@@ -536,12 +396,16 @@ void highVolumeInsertProperty(ExecutionMode backend, uint64_t minItems, uint64_t
 void highVolumeUpdateProperty(ExecutionMode backend, uint64_t minItems, uint64_t maxItems)
 {
     const auto numberOfItems = *rc::gen::inRange(minItems, maxItems + 1);
-    const auto keyTypes = *genTypeSchema(FIXED_KEY_TYPES, 1, 4);
-    const auto valueTypes = *genTypeSchema(FIXED_VALUE_TYPES, 1, 4);
+    const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, 4);
+    const auto valueTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, 4);
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
 
-    NES_INFO("Property test highVolumeUpdate: N={}, keyFields={}, valueFields={}, backend={}",
-             numberOfItems, keyTypes.size(), valueTypes.size(), magic_enum::enum_name(backend));
+    NES_INFO(
+        "Property test highVolumeUpdate: N={}, keyFields={}, valueFields={}, backend={}",
+        numberOfItems,
+        keyTypes.size(),
+        valueTypes.size(),
+        magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapTestUtils utils;
     configureHighVolumeTestUtils(utils, keyTypes, valueTypes, backend, numberOfItems);
@@ -578,8 +442,8 @@ void highVolumeUpdateProperty(ExecutionMode backend, uint64_t minItems, uint64_t
         findAndUpdate(std::addressof(buffer), std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
     }
 
-    NES_INFO("highVolumeUpdate: ChainedHashMap has {} entries, reference map has {} entries",
-             hashMap.getNumberOfTuples(), referenceMap.size());
+    NES_INFO(
+        "highVolumeUpdate: ChainedHashMap has {} entries, reference map has {} entries", hashMap.getNumberOfTuples(), referenceMap.size());
     RC_ASSERT(hashMap.getNumberOfTuples() == referenceMap.size());
 
     /// === Forward check: every entry in ChainedHashMap must be in the reference map ===

@@ -30,10 +30,6 @@ set(RAPIDCHECK_MAX_SUCCESS_SLOW "100" CACHE STRING "Number of RapidCheck iterati
 
 add_executable(chained-hashmap-property-tests "UnitTests/ChainedHashMapPropertyTest.cpp")
 target_link_libraries(chained-hashmap-property-tests nes-test-util nes-data-types nes-nautilus-test-util rapidcheck rapidcheck_gtest)
-if (NES_ENABLE_PRECOMPILED_HEADERS)
-    target_precompile_headers(chained-hashmap-property-tests REUSE_FROM nes-common)
-    target_compile_options(chained-hashmap-property-tests PUBLIC "-fPIC")
-endif ()
 
 # Fast: fewer iterations, suitable for CI
 add_test(NAME chained-hashmap-property-tests-fast
@@ -44,3 +40,15 @@ set_tests_properties(chained-hashmap-property-tests-fast PROPERTIES LABELS "fast
 add_test(NAME chained-hashmap-property-tests-slow
     COMMAND ${CMAKE_COMMAND} -E env "RC_PARAMS=max_success=${RAPIDCHECK_MAX_SUCCESS_SLOW}" $<TARGET_FILE:chained-hashmap-property-tests>)
 set_tests_properties(chained-hashmap-property-tests-slow PROPERTIES LABELS "slow" TIMEOUT 600)
+
+# Property-based PagedVector tests using RapidCheck.
+add_executable(paged-vector-property-tests "UnitTests/PagedVectorPropertyTest.cpp")
+target_link_libraries(paged-vector-property-tests nes-test-util nes-data-types nes-nautilus-test-util rapidcheck rapidcheck_gtest)
+
+add_test(NAME paged-vector-property-tests-fast
+    COMMAND ${CMAKE_COMMAND} -E env "RC_PARAMS=max_success=${RAPIDCHECK_MAX_SUCCESS_FAST}" $<TARGET_FILE:paged-vector-property-tests>)
+set_tests_properties(paged-vector-property-tests-fast PROPERTIES LABELS "fast" TIMEOUT 120)
+
+add_test(NAME paged-vector-property-tests-slow
+    COMMAND ${CMAKE_COMMAND} -E env "RC_PARAMS=max_success=${RAPIDCHECK_MAX_SUCCESS_SLOW}" $<TARGET_FILE:paged-vector-property-tests>)
+set_tests_properties(paged-vector-property-tests-slow PROPERTIES LABELS "slow" TIMEOUT 600)
