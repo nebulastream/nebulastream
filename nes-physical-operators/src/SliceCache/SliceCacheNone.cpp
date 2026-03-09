@@ -24,13 +24,11 @@
 namespace NES
 {
 /// Using 1 entry so that startOfEntries points to real memory, which is needed for COMPILER mode.
-SliceCacheNone::SliceCacheNone()
-    : SliceCache{1, sizeof(SliceCacheEntry)}
+SliceCacheNone::SliceCacheNone() : SliceCache{1, sizeof(SliceCacheEntry)}
 {
 }
 
-nautilus::val<int8_t*>
-SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const SliceCacheReplaceEntry& replaceEntry)
+nautilus::val<int8_t*> SliceCacheNone::getDataStructureRef(const nautilus::val<Timestamp>&, const SliceCacheReplaceEntry& replaceEntry)
 {
     /// Create a val from the raw pointer inside the traced function. traceConstant(real_ptr)
     /// produces a proper traced constant with the real address for COMPILER mode.

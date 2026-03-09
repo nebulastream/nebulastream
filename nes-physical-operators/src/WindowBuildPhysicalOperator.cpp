@@ -69,17 +69,13 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
 }
 
 void initSliceCacheMemoryAndSetup(
-    OperatorHandler* ptrOpHandler,
-    const uint64_t sliceCacheMemorySize,
-    AbstractBufferProvider* bufferProvider,
-    const WorkerThreadId workerThreadId,
-    SliceCache* sliceCache)
+    OperatorHandler* ptrOpHandler, const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, SliceCache* sliceCache)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(bufferProvider != nullptr, "bufferProvider should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider, workerThreadId);
-    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(opHandler->getSliceCache(workerThreadId)));
+    auto* memory = opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider);
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(memory));
 }
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
@@ -115,7 +111,6 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
         operatorHandler,
         nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
         executionCtx.pipelineMemoryProvider.bufferProvider,
-        executionCtx.workerThreadId,
         nautilus::val<SliceCache*>{sliceCache.get()});
 };
 

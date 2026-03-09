@@ -101,10 +101,8 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
-void WindowBasedOperatorHandler::allocateSpaceForSliceCache(
-    const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
+int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
 {
-    PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
     auto buffer = bufferProvider->getUnpooledBuffer(sliceCacheMemorySize);
     if (not buffer.has_value())
     {
@@ -113,17 +111,8 @@ void WindowBasedOperatorHandler::allocateSpaceForSliceCache(
 
     /// We set everything to 0, as there might be old data in the tuple buffer
     std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
-    workerThreadToSliceCache[workerThreadId] = std::make_unique<TupleBuffer>(buffer.value());
-}
-
-int8_t* WindowBasedOperatorHandler::getSliceCache(WorkerThreadId workerThreadId) const
-{
-    PRECONDITION(workerThreadId == INVALID<WorkerThreadId>, "Should not be called from a non worker thread!");
-    if (auto it = workerThreadToSliceCache.find(workerThreadId); it != workerThreadToSliceCache.end())
-    {
-        return reinterpret_cast<int8_t*>(it->second->getAvailableMemoryArea().data());
-    }
-    throw QueryNotRegistered("We expect to find a slice cache for the workerThreadId {} but did not!", workerThreadId);
+    sliceCacheBuffers.push_back(std::make_unique<TupleBuffer>(buffer.value()));
+    return reinterpret_cast<int8_t*>(sliceCacheBuffers.back()->getAvailableMemoryArea().data());
 }
 
 }

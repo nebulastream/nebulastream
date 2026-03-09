@@ -209,11 +209,7 @@ void replaceCacheEntryNoneProxy(bool* callbackFlag, SliceCacheEntry* entry, int8
 
 /// Proxy for SecondChance: sets the callback flag, slice boundaries, and dataStructure.
 void replaceCacheEntrySecondChanceProxy(
-    bool* callbackFlag,
-    SliceCacheEntry* entry,
-    Timestamp::Underlying sliceStart,
-    Timestamp::Underlying sliceEnd,
-    int8_t* dataStructure)
+    bool* callbackFlag, SliceCacheEntry* entry, Timestamp::Underlying sliceStart, Timestamp::Underlying sliceEnd, int8_t* dataStructure)
 {
     *callbackFlag = true;
     entry->sliceStart = sliceStart;
@@ -240,8 +236,8 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     /// SliceCacheNone never caches anything, so every lookup must invoke the replacement
     /// callback and return exactly what the callback provides
     bool callbackCalled = false;
-    using CompiledCacheFunction = std::function<nautilus::val<int8_t*>(
-        nautilus::val<uint64_t>, nautilus::val<int8_t*>, nautilus::val<bool*>)>;
+    using CompiledCacheFunction
+        = std::function<nautilus::val<int8_t*>(nautilus::val<uint64_t>, nautilus::val<int8_t*>, nautilus::val<bool*>)>;
     auto sliceCacheCallableFunction = nautilusEngine->registerFunction(CompiledCacheFunction(
         [&](const nautilus::val<uint64_t>& timestampRaw,
             const nautilus::val<int8_t*>& newDataStructurePtr,
@@ -261,8 +257,7 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     for (const auto& op : operations)
     {
         callbackCalled = false;
-        const auto rawResult =
-            sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult, &callbackCalled);
+        const auto rawResult = sliceCacheCallableFunction(op.timestamp.getRawValue(), op.expectedResult, &callbackCalled);
 
         EXPECT_TRUE(callbackCalled) << "SliceCacheNone must always call the replacement callback";
 

@@ -27,9 +27,8 @@ public:
     SliceCacheConfiguration() = default;
     SliceCacheConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
-    BoolOption enableSliceCache = {"sliceCache", "true", "Enabling Slice Cache for increased performance"};
-    UIntOption numberOfEntries
-        = {"numberOfEntriesSliceCache", "10", "Size of the slice cache", {std::make_shared<NonZeroValidation>()}};
+    BoolOption enableSliceCache = {"enable_slice_cache", "true", "Enabling Slice Cache for increased performance"};
+    UIntOption numberOfEntries = {"number_of_entries_sliceCache", "10", "Size of the slice cache", {std::make_shared<NonZeroValidation>()}};
 
 private:
     std::vector<BaseOption*> getOptions() override { return {&enableSliceCache, &numberOfEntries}; }

@@ -29,8 +29,10 @@ StreamJoinBuildPhysicalOperator::StreamJoinBuildPhysicalOperator(
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
     std::shared_ptr<TupleBufferRef> bufferRef,
-        SliceCacheConfiguration sliceCacheConfiguration)
-    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceCacheConfiguration)), joinBuildSide(joinBuildSide), bufferRef(std::move(bufferRef))
+    SliceCacheConfiguration sliceCacheConfiguration)
+    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceCacheConfiguration))
+    , joinBuildSide(joinBuildSide)
+    , bufferRef(std::move(bufferRef))
 {
 }
 }
