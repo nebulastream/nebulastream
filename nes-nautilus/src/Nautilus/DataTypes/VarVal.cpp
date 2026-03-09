@@ -63,7 +63,8 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
     std::visit(
         [&]<typename ValType>(const ValType& val)
         {
-            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, std::shared_ptr<LazyValueRepresentation>>)
+            if constexpr (
+                std::is_same_v<ValType, VariableSizedData> || std::derived_from<ValType, std::shared_ptr<LazyValueRepresentation>>)
             {
                 throw UnknownOperation(
                     std::string("VarVal T::operation=(val) not implemented for VariableSizedData and LazyValueRepresentation"));

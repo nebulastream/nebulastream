@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <cstring>
 #include <LazyValueRepresentations/VARSIZEDLazyValueRepresentation.hpp>
-#include <nautilus/std/cstring.h>
 
+#include <cstring>
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <nautilus/std/cstring.h>
 #include <LazyValueRepresentationRegistry.hpp>
 #include <val_bool.hpp>
 
@@ -44,18 +44,22 @@ VarVal VARSIZEDLazyValueRepresentation::eqImpl(const VariableSizedData& rhs) con
 
 VarVal VARSIZEDLazyValueRepresentation::eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const
 {
+    VarVal result{false};
     if (rhs->getType() == DataType::Type::BOOLEAN)
     {
-        return rhs->isBooleanTrue() == isValid();
+        result = rhs->isBooleanTrue() == isValid();
     }
-    if (size != rhs->getSize())
+    else if (size != rhs->getSize())
     {
-        return nautilus::val<bool>(false);
+        result = nautilus::val<bool>(false);
     }
-    const auto varSizedData = getContent();
-    const auto rhsVarSizedData = rhs->getContent();
-    const auto compareResult = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
-    return {compareResult};
+    else
+    {
+        const auto varSizedData = getContent();
+        const auto rhsVarSizedData = rhs->getContent();
+        result = (nautilus::memcmp(varSizedData, rhsVarSizedData, size) == 0);
+    }
+    return result;
 }
 
 VarVal VARSIZEDLazyValueRepresentation::neqImpl(const nautilus::val<bool>& rhs) const
@@ -83,7 +87,10 @@ VarVal VARSIZEDLazyValueRepresentation::operator==(const VarVal& other) const
     return other.customVisit(
         [&]<typename T>(const T& val) -> VarVal
         {
-            if constexpr (requires(T val) { this->eqImpl(val); })
+            if constexpr (requires {
+                              static_cast<VarVal (VARSIZEDLazyValueRepresentation::*)(const T&) const>(
+                                  &VARSIZEDLazyValueRepresentation::eqImpl);
+                          })
             {
                 return this->eqImpl(val);
             }
@@ -101,25 +108,20 @@ VarVal VARSIZEDLazyValueRepresentation::operator!=(const VarVal& other) const
     return other.customVisit(
         [&]<typename T>(const T& val) -> VarVal
         {
-            if constexpr (requires(T val) { this->neqImpl(val); })
+            if constexpr (requires {
+                              static_cast<VarVal (VARSIZEDLazyValueRepresentation::*)(const T&) const>(
+                                  &VARSIZEDLazyValueRepresentation::neqImpl);
+                          })
             {
                 return this->eqImpl(val);
             }
-            return LazyValueRepresentation::operator==(val);
+            return LazyValueRepresentation::operator!=(val);
         });
 }
 
 VarVal VARSIZEDLazyValueRepresentation::reverseNEQ(const VarVal& other) const
 {
-    return other.customVisit(
-        [&]<typename T>(const T& val) -> VarVal
-        {
-            if constexpr (requires(T val) { this->neqImpl(val); })
-            {
-                return this->eqImpl(val);
-            }
-            return LazyValueRepresentation::operator==(val);
-        });
+    return operator!=(other);
 }
 
 LazyValueRepresentationRegistryReturnType

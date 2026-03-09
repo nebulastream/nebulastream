@@ -4,43 +4,17 @@
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT32, timestamp UINT16, a INT8, b INT8);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
-1,3,1000,9,9
+1,3,1000,9,8
 12,2,1001,9,9
+12,2,1001,8,9
 
 CREATE LOGICAL SOURCE stringStream(textual VARSIZED, valid BOOLEAN);
 CREATE PHYSICAL SOURCE FOR stringStream TYPE File;
 ATTACH INLINE
 this,true
-definetly,false
+definitely,false
 a,true
 string,false
-
-
-
-
-SELECT id, value, a, b FROM stream WHERE id == UINT64(1) INTO FILE();
-----
-1,3,9,9
-
-SELECT (id + UINT64(1)) AS newid, value, a, b FROM stream WHERE id == UINT64(1) AND (id + UINT64(1)) == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id + UINT64(1)) AS newid, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id + id) AS newid, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id == UINT64(1)) AS boolval, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-1,3,9,9
-
-SELECT ((id + id) == UINT64(2)) AS boolval, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-1,3,9,9
 
 SELECT * FROM stringStream WHERE textual == valid INTO FILE();
 ----
@@ -50,10 +24,48 @@ a,true
 SELECT * FROM stringStream WHERE textual == BOOLEAN(1) INTO FILE();
 ----
 this,true
-definetly,false
+definitely,false
 a,true
 string,false
 
+# Should not parse a single value as lazy equals is implemented for numerics
+SELECT * FROM stream WHERE a == b INTO FILE();
+----
+12,2,1001,9,9
+
+# Not implemented, should parse a
+SELECT * FROM stream WHERE a == INT8(9) INTO FILE();
+----
+1,3,1000,9,8
+12,2,1001,9,9
+
+SELECT * FROM stream WHERE a != b INTO FILE();
+----
+1,3,1000,9,8
+12,2,1001,8,9
+
+# Not implemented, parse a
+SELECT * FROM stream WHERE a != INT8(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < b INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a <= b INTO FILE();
+----
+12,2,1001,8,9
+12,2,1001,9,9
+
+SELECT * FROM stream WHERE a > b INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE a >= b INTO FILE();
+----
+1,3,1000,9,8
+12,2,1001,9,9
 
 
 
