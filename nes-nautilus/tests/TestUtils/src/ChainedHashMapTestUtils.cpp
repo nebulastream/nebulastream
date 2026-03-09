@@ -13,19 +13,10 @@
 */
 #include <ChainedHashMapTestUtils.hpp>
 
-#include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <cstdlib>
-#include <cstring>
 #include <functional>
-#include <map>
 #include <memory>
-#include <numeric>
 #include <random>
-#include <sstream>
-#include <tuple>
-#include <unordered_map>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -42,11 +33,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
 
 #include <Engine.hpp>
-#include <ErrorHandling.hpp>
 #include <NautilusTestUtils.hpp>
 #include <options.hpp>
 #include <static.hpp>
@@ -118,103 +107,6 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
 
     /// Creating the buffers with the values for the keys and values with a specific seed
     inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
-}
-
-std::string ChainedHashMapTestUtils::compareExpectedWithActual(
-    const TupleBuffer& inputBufferKeys,
-    const TupleBuffer& bufferActual,
-    const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
-{
-    PRECONDITION(
-        inputBufferKeys.getNumberOfTuples() == bufferActual.getNumberOfTuples(),
-        "The number of tuples is not equal {}<--->{}",
-        inputBufferKeys.getNumberOfTuples(),
-        bufferActual.getNumberOfTuples());
-
-    const RecordBuffer recordBufferInput(nautilus::val<const TupleBuffer*>(std::addressof(inputBufferKeys)));
-    const RecordBuffer recordBufferActual(nautilus::val<const TupleBuffer*>(std::addressof(bufferActual)));
-    std::stringstream ss;
-    for (nautilus::val<uint64_t> i = 0; i < recordBufferInput.getNumRecords(); i = i + 1)
-    {
-        /// Reading the actual key and value and the exact value
-        auto recordKeyActual = inputBufferRef->readRecord(projectionKeys, recordBufferActual, i);
-        auto recordValueActual = inputBufferRef->readRecord(projectionValues, recordBufferActual, i);
-        auto recordKeyExact = inputBufferRef->readRecord(projectionKeys, recordBufferInput, i);
-        auto recordValueExact = exactMap.find({recordKeyExact, projectionKeys});
-        EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find the record with the key";
-
-        /// Populating the error message, if the values are not equal.
-        ss << NautilusTestUtils::compareRecords(recordKeyActual, recordKeyExact, projectionKeys).value_or("");
-        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues).value_or("");
-    }
-    return ss.str();
-}
-
-std::string ChainedHashMapTestUtils::compareExpectedWithActual(
-    const TupleBuffer& bufferActual,
-    const TupleBufferRef& memoryProviderInputBuffer,
-    const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
-{
-    PRECONDITION(
-        exactMap.size() == bufferActual.getNumberOfTuples(),
-        "The number of tuples is not equal {}<--->{}",
-        exactMap.size(),
-        bufferActual.getNumberOfTuples());
-
-    /// Now we are iterating over all tuples in the bufferOutput and compare them with the exact values from the map.
-    std::stringstream ss;
-    const RecordBuffer recordBufferActual(nautilus::val<const TupleBuffer*>(std::addressof(bufferActual)));
-    for (nautilus::val<uint64_t> pos = 0; pos < recordBufferActual.getNumRecords(); ++pos)
-    {
-        /// Reading the actual key and value and the exact value
-        auto recordKeyActual = memoryProviderInputBuffer.readRecord(projectionKeys, recordBufferActual, pos);
-        auto recordValueActual = memoryProviderInputBuffer.readRecord(projectionValues, recordBufferActual, pos);
-        auto recordValueExact = exactMap.find({recordKeyActual, projectionKeys});
-        EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find a record for this key";
-
-        /// Populating the error message, if the values are not equal.
-        ss << NautilusTestUtils::compareRecords(recordValueActual, recordValueExact->second, projectionValues).value_or("");
-    }
-    return ss.str();
-}
-
-nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
-ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
-{
-    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
-    return nautilusEngine->registerFunction(std::function(
-        [this](
-            nautilus::val<TupleBuffer*> keyBufferRef,
-            nautilus::val<TupleBuffer*> outputBufferForValues,
-            nautilus::val<AbstractBufferProvider*> bufferManagerVal,
-            nautilus::val<HashMap*> hashMapVal)
-        {
-            ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
-            const RecordBuffer recordBufferKey(keyBufferRef);
-            for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
-            {
-                auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, i);
-                auto foundEntry = hashMapRef.findOrCreateEntry(
-                    recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
-
-                const auto castedEntry = static_cast<nautilus::val<ChainedHashMapEntry*>>(foundEntry);
-                const ChainedHashMapRef::ChainedEntryRef entry(castedEntry, hashMapVal, fieldKeys, fieldValues);
-
-                /// Writing the read value from the chained hash map into the buffer.
-                Record outputRecord;
-                const auto keyRecord = entry.getKey();
-                const auto valueRecord = entry.getValue();
-                outputRecord.reassignFields(keyRecord);
-                outputRecord.reassignFields(valueRecord);
-
-                RecordBuffer recordBufferOutput(outputBufferForValues);
-                inputBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
-                recordBufferOutput.setNumRecords(i + 1);
-            }
-        }));
-    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, HashMap*, AbstractBufferProvider*>
@@ -325,93 +217,6 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
             }
         }));
     /// NOLINTEND(performance-unnecessary-value-param)
-}
-
-std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>
-ChainedHashMapTestUtils::createExactMap(const ExactMapInsert exactMapInsert)
-{
-    std::unordered_map<TestUtils::RecordWithFields, Record, RecordWithFieldsHash> exactMap;
-    for (const auto& buffer : inputBuffers)
-    {
-        const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
-        for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
-        {
-            const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBuffer, i);
-            const auto recordValue = inputBufferRef->readRecord(projectionValues, recordBuffer, i);
-
-            switch (exactMapInsert)
-            {
-                case ExactMapInsert::INSERT:
-                    exactMap.insert({{recordKey, projectionKeys}, recordValue});
-                    break;
-                case ExactMapInsert::OVERWRITE:
-                    exactMap[{recordKey, projectionKeys}].reassignFields(recordValue);
-                    break;
-            }
-        }
-    }
-
-    return exactMap;
-}
-
-void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
-    ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
-{
-    /// Ensuring that the number of tuples is correct.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
-
-    /// Calling now the compiled function to write all values of the map to the output buffer.
-    const auto numberOfInputTuples = std::accumulate(
-        inputBuffers.begin(), inputBuffers.end(), 0, [](const auto& sum, const auto& buffer) { return sum + buffer.getNumberOfTuples(); });
-    auto bufferOutputOpt = bufferManager->getUnpooledBuffer(numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
-    if (not bufferOutputOpt)
-    {
-        NES_ERROR("Could not allocate buffer for size {}", numberOfInputTuples * inputSchema.getSizeOfSchemaInBytes());
-        ASSERT_TRUE(false);
-    }
-    auto bufferOutput = bufferOutputOpt.value();
-    std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
-
-    /// We are calling the function to find all entries and write them to the output buffer.
-    auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator();
-    findAndWriteToOutputBuffer(std::addressof(bufferOutput), std::addressof(hashMap), bufferManager.get());
-
-    /// Checking if the number of items are equal to the number of items in the exact map.
-    ASSERT_EQ(bufferOutput.getNumberOfTuples(), exactMap.size());
-    const auto errorMessage = compareExpectedWithActual(bufferOutput, *inputBufferRef, exactMap);
-    if (not errorMessage.empty())
-    {
-        EXPECT_TRUE(false) << errorMessage;
-    }
-}
-
-void ChainedHashMapTestUtils::checkEntryIterator(
-    ChainedHashMap& hashMap, const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
-{
-    /// Ensuring that the number of tuples is correct.
-    ASSERT_EQ(hashMap.getNumberOfTuples(), exactMap.size());
-    auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBuffer();
-    for (auto& inputBuffer : inputBuffers)
-    {
-        /// We assume that the valueBuffer has the corresponding values for the keyBuffer.
-        /// Under this assumption, we know that the outputBufferForKeys MUST have the same size as the valueBuffer
-        auto bufferOutputOpt = bufferManager->getUnpooledBuffer(inputBuffer.getBufferSize());
-        if (not bufferOutputOpt)
-        {
-            NES_ERROR("Could not allocate buffer for size {}", inputBuffer.getBufferSize());
-            ASSERT_TRUE(false);
-        }
-        auto bufferOutput = bufferOutputOpt.value();
-        std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
-        findAndWriteToOutputBuffer(std::addressof(inputBuffer), std::addressof(bufferOutput), bufferManager.get(), std::addressof(hashMap));
-
-        /// Checking if the number of items are equal to the number of items in the exact map.
-        const auto errorStream = compareExpectedWithActual(inputBuffer, bufferOutput, exactMap);
-        if (not errorStream.empty())
-        {
-            EXPECT_TRUE(false) << errorStream;
-        }
-    }
 }
 
 }

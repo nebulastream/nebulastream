@@ -59,94 +59,6 @@ using namespace TestUtils;
 namespace
 {
 
-/// Helper that configures ChainedHashMapTestUtils for a given combination.
-/// All random parameters are generated via RapidCheck for full reproducibility.
-void configureTestUtils(
-    TestUtils::ChainedHashMapTestUtils& utils,
-    const std::vector<DataType::Type>& keyTypes,
-    const std::vector<DataType::Type>& valueTypes,
-    ExecutionMode backend)
-{
-    utils.params.numberOfItems = *rc::gen::inRange<uint64_t>(100, 501);
-    utils.params.numberOfBuckets = *rc::gen::inRange<uint64_t>(10, 257);
-    utils.params.pageSize = *rc::gen::inRange<uint64_t>(4096, 1048577);
-    NES_INFO(
-        "RC params: numberOfItems={}, numberOfBuckets={}, pageSize={}",
-        utils.params.numberOfItems,
-        utils.params.numberOfBuckets,
-        utils.params.pageSize);
-    utils.setUpChainedHashMapTest(keyTypes, valueTypes, backend);
-}
-
-/// Runs the singleInsert property for a specific backend.
-/// Generates random key/value schemas and verifies that findOrCreate + lookup is correct.
-void singleInsertProperty(ExecutionMode backend, size_t maxTotalFields)
-{
-    const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, maxTotalFields);
-    const auto valueTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxTotalFields);
-    /// Discard if the combined schema doesn't fit in a single buffer (4096 bytes)
-    /// or exceeds the total field count limit for this backend.
-    RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
-    RC_PRE(keyTypes.size() + valueTypes.size() <= maxTotalFields);
-
-    NES_INFO(
-        "Property test singleInsert: keyFields={}, valueFields={}, backend={}",
-        keyTypes.size(),
-        valueTypes.size(),
-        magic_enum::enum_name(backend));
-
-    TestUtils::ChainedHashMapTestUtils utils;
-    configureTestUtils(utils, keyTypes, valueTypes, backend);
-
-    ChainedHashMap hashMap{utils.keySize, utils.valueSize, utils.params.numberOfBuckets, utils.params.pageSize};
-    RC_ASSERT(hashMap.getNumberOfTuples() == 0);
-
-    const auto exactMap = utils.createExactMap(TestUtils::ChainedHashMapTestUtils::ExactMapInsert::INSERT);
-    auto findAndInsert = utils.compileFindAndInsert();
-    for (auto& buffer : utils.inputBuffers)
-    {
-        findAndInsert(std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
-    }
-
-    utils.checkIfValuesAreCorrectViaFindEntry(hashMap, exactMap);
-    utils.checkEntryIterator(hashMap, exactMap);
-}
-
-/// Runs the update property for a specific backend.
-/// Generates random key/value schemas and verifies that findOrCreate + update + lookup is correct.
-void updateProperty(ExecutionMode backend, size_t maxTotalFields)
-{
-    const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, maxTotalFields);
-    const auto valueTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxTotalFields);
-    RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
-    RC_PRE(keyTypes.size() + valueTypes.size() <= maxTotalFields);
-
-    NES_INFO(
-        "Property test update: keyFields={}, valueFields={}, backend={}",
-        keyTypes.size(),
-        valueTypes.size(),
-        magic_enum::enum_name(backend));
-
-    TestUtils::ChainedHashMapTestUtils utils;
-    configureTestUtils(utils, keyTypes, valueTypes, backend);
-
-    ChainedHashMap hashMap{utils.keySize, utils.valueSize, utils.params.numberOfBuckets, utils.params.pageSize};
-    RC_ASSERT(hashMap.getNumberOfTuples() == 0);
-
-    utils.inputBuffers = utils.createMonotonicallyIncreasingValues(
-        utils.inputSchema, MemoryLayoutType::ROW_LAYOUT, utils.params.numberOfItems, *utils.bufferManager);
-
-    const auto exactMap = utils.createExactMap(TestUtils::ChainedHashMapTestUtils::ExactMapInsert::OVERWRITE);
-    auto findAndUpdate = utils.compileFindAndUpdate();
-    for (auto& buffer : utils.inputBuffers)
-    {
-        findAndUpdate(std::addressof(buffer), std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
-    }
-
-    utils.checkIfValuesAreCorrectViaFindEntry(hashMap, exactMap);
-    utils.checkEntryIterator(hashMap, exactMap);
-}
-
 /// Helper that configures ChainedHashMapCustomValueTestUtils for a given combination.
 /// Uses smaller item counts since the pagedVector test has O(buffers^2) complexity.
 /// All random parameters are generated via RapidCheck for full reproducibility.
@@ -281,11 +193,9 @@ void pagedVectorProperty(ExecutionMode backend, size_t maxTotalFields)
     hashMap.clear();
 }
 
-/// ==================== High-volume tests with std::map<vector<any>, vector<any>> ====================
-
-/// Configures ChainedHashMapTestUtils for high-volume tests with a specific numberOfItems.
+/// Configures ChainedHashMapTestUtils for a given combination.
 /// All random parameters are generated via RapidCheck for full reproducibility.
-void configureHighVolumeTestUtils(
+void configureTestUtils(
     TestUtils::ChainedHashMapTestUtils& utils,
     const std::vector<DataType::Type>& keyTypes,
     const std::vector<DataType::Type>& valueTypes,
@@ -303,9 +213,9 @@ void configureHighVolumeTestUtils(
     utils.setUpChainedHashMapTest(keyTypes, valueTypes, backend);
 }
 
-/// High-volume insert property: generates N items, inserts into both ChainedHashMap and
-/// std::map<vector<any>, vector<any>>, then verifies bidirectional equivalence.
-void highVolumeInsertProperty(ExecutionMode backend, uint64_t minItems, uint64_t maxItems)
+/// Insert-and-update property: for each buffer, randomly chooses between findAndInsert
+/// (first-insert-wins) and findAndUpdate (last-write-wins), then verifies bidirectionally.
+void insertAndUpdateProperty(ExecutionMode backend, uint64_t minItems, uint64_t maxItems)
 {
     const auto numberOfItems = *rc::gen::inRange(minItems, maxItems + 1);
     const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, 4);
@@ -313,133 +223,104 @@ void highVolumeInsertProperty(ExecutionMode backend, uint64_t minItems, uint64_t
     RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
 
     NES_INFO(
-        "Property test highVolumeInsert: N={}, keyFields={}, valueFields={}, backend={}",
+        "Property test insertAndUpdate: N={}, keyFields={}, valueFields={}, backend={}",
         numberOfItems,
         keyTypes.size(),
         valueTypes.size(),
         magic_enum::enum_name(backend));
 
     TestUtils::ChainedHashMapTestUtils utils;
-    configureHighVolumeTestUtils(utils, keyTypes, valueTypes, backend, numberOfItems);
+    configureTestUtils(utils, keyTypes, valueTypes, backend, numberOfItems);
 
     ChainedHashMap hashMap{utils.keySize, utils.valueSize, utils.params.numberOfBuckets, utils.params.pageSize};
     RC_ASSERT(hashMap.getNumberOfTuples() == 0);
 
-    /// Build the reference map from input buffers.
-    /// The ChainedHashMap uses findOrCreate semantics: first insert wins (duplicate keys keep the first value).
-    const AnyVecLess keyComparator{keyTypes};
-    std::map<std::vector<std::any>, std::vector<std::any>, AnyVecLess> referenceMap(keyComparator);
-    for (const auto& buffer : utils.inputBuffers)
+    /// For each buffer, randomly decide: INSERT (findAndInsert) or UPDATE (findAndUpdate).
+    /// For update operations, optionally use a different buffer as the value source.
+    enum class Op : uint8_t
     {
-        const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
-        for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
+        INSERT,
+        UPDATE
+    };
+    struct BufferOp
+    {
+        size_t keyBufferIdx;
+        size_t valueBufferIdx; /// only used for UPDATE
+        Op op;
+    };
+
+    const auto numBuffers = utils.inputBuffers.size();
+    std::vector<BufferOp> ops;
+    for (size_t i = 0; i < numBuffers; ++i)
+    {
+        const auto useUpdate = *rc::gen::inRange(0, 2);
+        if (useUpdate)
         {
-            auto recordKey = utils.inputBufferRef->readRecord(utils.projectionKeys, recordBuffer, i);
-            auto recordValue = utils.inputBufferRef->readRecord(utils.projectionValues, recordBuffer, i);
-            auto keyVec = recordToAnyVec(recordKey, utils.projectionKeys, keyTypes);
-            auto valueVec = recordToAnyVec(recordValue, utils.projectionValues, valueTypes);
-            /// First insert wins (matches findOrCreate semantics)
-            referenceMap.try_emplace(std::move(keyVec), std::move(valueVec));
+            const auto valueIdx = *rc::gen::inRange<size_t>(0, numBuffers);
+            ops.push_back({i, valueIdx, Op::UPDATE});
+        }
+        else
+        {
+            ops.push_back({i, i, Op::INSERT});
         }
     }
 
-    /// Insert all items into the ChainedHashMap via compiled findAndInsert.
+    /// Build the reference map according to the chosen operations.
+    const AnyVecLess keyComparator{keyTypes};
+    std::map<std::vector<std::any>, std::vector<std::any>, AnyVecLess> referenceMap(keyComparator);
+    for (const auto& [keyIdx, valueIdx, op] : ops)
+    {
+        const auto& keyBuffer = utils.inputBuffers[keyIdx];
+        const auto& valueBuffer = utils.inputBuffers[valueIdx];
+        const auto tuplesToProcess = std::min(keyBuffer.getNumberOfTuples(), valueBuffer.getNumberOfTuples());
+        const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(keyBuffer)));
+        const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(valueBuffer)));
+        for (nautilus::val<uint64_t> i = 0; i < tuplesToProcess; i = i + 1)
+        {
+            auto recordKey = utils.inputBufferRef->readRecord(utils.projectionKeys, recordBufferKey, i);
+            auto recordValue = utils.inputBufferRef->readRecord(utils.projectionValues, recordBufferValue, i);
+            auto keyVec = recordToAnyVec(recordKey, utils.projectionKeys, keyTypes);
+            auto valueVec = recordToAnyVec(recordValue, utils.projectionValues, valueTypes);
+            switch (op)
+            {
+                case Op::INSERT:
+                    /// findAndInsert uses findOrCreate: first insert wins.
+                    referenceMap.try_emplace(std::move(keyVec), std::move(valueVec));
+                    break;
+                case Op::UPDATE:
+                    /// findAndUpdate uses findOrCreate + insertOrUpdateEntry: last write wins.
+                    referenceMap[std::move(keyVec)] = std::move(valueVec);
+                    break;
+            }
+        }
+    }
+
+    /// Execute the operations against the ChainedHashMap.
     auto findAndInsert = utils.compileFindAndInsert();
-    for (auto& buffer : utils.inputBuffers)
-    {
-        findAndInsert(std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
-    }
-
-    NES_INFO(
-        "highVolumeInsert: ChainedHashMap has {} entries, reference map has {} entries", hashMap.getNumberOfTuples(), referenceMap.size());
-    RC_ASSERT(hashMap.getNumberOfTuples() == referenceMap.size());
-
-    /// === Forward check: every entry in ChainedHashMap must be in the reference map ===
-    /// Iterate over all hash map entries via the entry iterator, writing them to an output buffer.
-    auto outputBufferOpt = utils.bufferManager->getUnpooledBuffer(hashMap.getNumberOfTuples() * utils.inputSchema.getSizeOfSchemaInBytes());
-    RC_ASSERT(outputBufferOpt.has_value());
-    auto outputBuffer = outputBufferOpt.value();
-    std::ranges::fill(outputBuffer.getAvailableMemoryArea(), std::byte{0});
-
-    auto entryIteratorFn = utils.compileFindAndWriteToOutputBufferWithEntryIterator();
-    entryIteratorFn(std::addressof(outputBuffer), std::addressof(hashMap), utils.bufferManager.get());
-    RC_ASSERT(outputBuffer.getNumberOfTuples() == hashMap.getNumberOfTuples());
-
-    std::set<std::vector<std::any>, AnyVecLess> keysFoundInHashMap(keyComparator);
-    const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
-    for (nautilus::val<uint64_t> pos = 0; pos < recordBufferOutput.getNumRecords(); ++pos)
-    {
-        auto keyRecord = utils.inputBufferRef->readRecord(utils.projectionKeys, recordBufferOutput, pos);
-        auto valueRecord = utils.inputBufferRef->readRecord(utils.projectionValues, recordBufferOutput, pos);
-        auto keyVec = recordToAnyVec(keyRecord, utils.projectionKeys, keyTypes);
-        auto valueVec = recordToAnyVec(valueRecord, utils.projectionValues, valueTypes);
-
-        auto it = referenceMap.find(keyVec);
-        RC_ASSERT(it != referenceMap.end());
-        RC_ASSERT(anyVecsEqual(it->second, valueVec, valueTypes));
-        keysFoundInHashMap.insert(std::move(keyVec));
-    }
-
-    /// === Reverse check: every entry in the reference map must be in the ChainedHashMap ===
-    for (const auto& [key, value] : referenceMap)
-    {
-        RC_ASSERT(keysFoundInHashMap.contains(key));
-    }
-}
-
-/// High-volume update property: generates N items, uses findOrCreate + insertOrUpdateEntry
-/// (last write wins), and verifies bidirectionally against std::map.
-void highVolumeUpdateProperty(ExecutionMode backend, uint64_t minItems, uint64_t maxItems)
-{
-    const auto numberOfItems = *rc::gen::inRange(minItems, maxItems + 1);
-    const auto keyTypes = *genTypeSchema(ALL_KEY_TYPES, 1, 4);
-    const auto valueTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, 4);
-    RC_PRE(estimateSchemaSize(keyTypes) + estimateSchemaSize(valueTypes) < BUFFER_SIZE);
-
-    NES_INFO(
-        "Property test highVolumeUpdate: N={}, keyFields={}, valueFields={}, backend={}",
-        numberOfItems,
-        keyTypes.size(),
-        valueTypes.size(),
-        magic_enum::enum_name(backend));
-
-    TestUtils::ChainedHashMapTestUtils utils;
-    configureHighVolumeTestUtils(utils, keyTypes, valueTypes, backend, numberOfItems);
-
-    ChainedHashMap hashMap{utils.keySize, utils.valueSize, utils.params.numberOfBuckets, utils.params.pageSize};
-    RC_ASSERT(hashMap.getNumberOfTuples() == 0);
-
-    /// Re-create input buffers with monotonically increasing values for update semantics.
-    utils.inputBuffers = utils.createMonotonicallyIncreasingValues(
-        utils.inputSchema, MemoryLayoutType::ROW_LAYOUT, utils.params.numberOfItems, *utils.bufferManager);
-
-    /// Build the reference map from input buffers.
-    /// The update path uses insertOrUpdateEntry: last write wins (duplicate keys overwrite).
-    const AnyVecLess keyComparator{keyTypes};
-    std::map<std::vector<std::any>, std::vector<std::any>, AnyVecLess> referenceMap(keyComparator);
-    for (const auto& buffer : utils.inputBuffers)
-    {
-        const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
-        for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
-        {
-            auto recordKey = utils.inputBufferRef->readRecord(utils.projectionKeys, recordBuffer, i);
-            auto recordValue = utils.inputBufferRef->readRecord(utils.projectionValues, recordBuffer, i);
-            auto keyVec = recordToAnyVec(recordKey, utils.projectionKeys, keyTypes);
-            auto valueVec = recordToAnyVec(recordValue, utils.projectionValues, valueTypes);
-            /// Last write wins (matches insertOrUpdateEntry semantics)
-            referenceMap[std::move(keyVec)] = std::move(valueVec);
-        }
-    }
-
-    /// Insert+update all items into the ChainedHashMap via compiled findAndUpdate.
     auto findAndUpdate = utils.compileFindAndUpdate();
-    for (auto& buffer : utils.inputBuffers)
+    for (const auto& [keyIdx, valueIdx, op] : ops)
     {
-        findAndUpdate(std::addressof(buffer), std::addressof(buffer), utils.bufferManager.get(), std::addressof(hashMap));
+        auto& keyBuffer = utils.inputBuffers[keyIdx];
+        auto& valueBuffer = utils.inputBuffers[valueIdx];
+        const auto tuplesToProcess = std::min(keyBuffer.getNumberOfTuples(), valueBuffer.getNumberOfTuples());
+        const auto originalKeyCount = keyBuffer.getNumberOfTuples();
+        keyBuffer.setNumberOfTuples(tuplesToProcess);
+        switch (op)
+        {
+            case Op::INSERT:
+                findAndInsert(std::addressof(keyBuffer), utils.bufferManager.get(), std::addressof(hashMap));
+                break;
+            case Op::UPDATE:
+                findAndUpdate(std::addressof(keyBuffer), std::addressof(valueBuffer), utils.bufferManager.get(), std::addressof(hashMap));
+                break;
+        }
+        keyBuffer.setNumberOfTuples(originalKeyCount);
     }
 
     NES_INFO(
-        "highVolumeUpdate: ChainedHashMap has {} entries, reference map has {} entries", hashMap.getNumberOfTuples(), referenceMap.size());
+        "insertAndUpdate: ChainedHashMap has {} entries, reference map has {} entries",
+        hashMap.getNumberOfTuples(),
+        referenceMap.size());
     RC_ASSERT(hashMap.getNumberOfTuples() == referenceMap.size());
 
     /// === Forward check: every entry in ChainedHashMap must be in the reference map ===
@@ -488,30 +369,6 @@ constexpr size_t MAX_TOTAL_FIELDS_PAGED_VECTOR_INTERPRETER = 128;
 
 } /// anonymous namespace
 
-RC_GTEST_PROP(ChainedHashMapPropertyTest, singleInsertInterpreter, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    singleInsertProperty(ExecutionMode::INTERPRETER, MAX_TOTAL_FIELDS_INTERPRETER);
-}
-
-RC_GTEST_PROP(ChainedHashMapPropertyTest, singleInsertCompiler, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    singleInsertProperty(ExecutionMode::COMPILER, MAX_TOTAL_FIELDS_COMPILER);
-}
-
-RC_GTEST_PROP(ChainedHashMapPropertyTest, updateInterpreter, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    updateProperty(ExecutionMode::INTERPRETER, MAX_TOTAL_FIELDS_INTERPRETER);
-}
-
-RC_GTEST_PROP(ChainedHashMapPropertyTest, updateCompiler, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    updateProperty(ExecutionMode::COMPILER, MAX_TOTAL_FIELDS_COMPILER);
-}
-
 RC_GTEST_PROP(ChainedHashMapPropertyTest, pagedVectorInterpreter, ())
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
@@ -524,30 +381,16 @@ RC_GTEST_PROP(ChainedHashMapPropertyTest, pagedVectorCompiler, ())
     pagedVectorProperty(ExecutionMode::COMPILER, MAX_TOTAL_FIELDS_COMPILER);
 }
 
-/// High-volume tests: insert 1000-10000 items and verify bidirectionally against std::map.
-RC_GTEST_PROP(ChainedHashMapPropertyTest, highVolumeInsertInterpreter, ())
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndUpdateInterpreter, ())
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    highVolumeInsertProperty(ExecutionMode::INTERPRETER, 1000, 10000);
+    insertAndUpdateProperty(ExecutionMode::INTERPRETER, 1000, 10000);
 }
 
-RC_GTEST_PROP(ChainedHashMapPropertyTest, highVolumeInsertCompiler, ())
+RC_GTEST_PROP(ChainedHashMapPropertyTest, insertAndUpdateCompiler, ())
 {
     Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    highVolumeInsertProperty(ExecutionMode::COMPILER, 1000, 5000);
-}
-
-/// High-volume update tests: insert+update N items, last write wins, verify against std::map.
-RC_GTEST_PROP(ChainedHashMapPropertyTest, highVolumeUpdateInterpreter, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    highVolumeUpdateProperty(ExecutionMode::INTERPRETER, 1000, 10000);
-}
-
-RC_GTEST_PROP(ChainedHashMapPropertyTest, highVolumeUpdateCompiler, ())
-{
-    Logger::setupLogging("ChainedHashMapPropertyTest.log", LogLevel::LOG_DEBUG);
-    highVolumeUpdateProperty(ExecutionMode::COMPILER, 1000, 5000);
+    insertAndUpdateProperty(ExecutionMode::COMPILER, 1000, 5000);
 }
 
 }
