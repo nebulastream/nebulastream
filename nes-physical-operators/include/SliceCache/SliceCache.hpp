@@ -14,10 +14,10 @@
 
 #pragma once
 #include <functional>
+#include <SliceCacheConfiguration.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Util.hpp>
 #include <Time/Timestamp.hpp>
-#include <SliceCacheConfiguration.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 #include <val_std.hpp>
