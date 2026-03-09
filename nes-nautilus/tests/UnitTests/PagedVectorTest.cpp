@@ -12,20 +12,21 @@
     limitations under the License.
 */
 
+#include <any>
 #include <cstdint>
-#include <cstdlib>
-#include <cstring>
+#include <functional>
 #include <memory>
-#include <random>
-#include <sstream>
-#include <tuple>
+#include <numeric>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -34,273 +35,404 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
-
-#include <BaseUnitTest.hpp>
-#include <Engine.hpp>
+#include <nautilus/Engine.hpp>
 #include <NautilusTestUtils.hpp>
-#include <PagedVectorTestUtils.hpp>
-#include <options.hpp>
+#include <PropertyTestUtils.hpp>
+#include <val.hpp>
+#include <val_details.hpp>
+#include <val_ptr.hpp>
+
+#include <rapidcheck.h>
+#include <rapidcheck/gtest.h>
 
 namespace NES
 {
 
-class PagedVectorTest : public Testing::BaseUnitTest,
-                        public TestUtils::NautilusTestUtils,
-                        public testing::WithParamInterface<std::tuple<ExecutionMode, MemoryLayoutType>>
+using TestUtils::ALL_VALUE_TYPES;
+using TestUtils::anyVecsEqual;
+using TestUtils::BUFFER_SIZE;
+using TestUtils::estimateSchemaSize;
+using TestUtils::genTypeSchema;
+using TestUtils::recordToAnyVec;
+
+namespace
 {
-public:
-    static constexpr uint64_t PAGE_SIZE = 4096;
-    std::shared_ptr<BufferManager> bufferManager;
-    std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
-    ExecutionMode backend = ExecutionMode::INTERPRETER;
-    MemoryLayoutType layoutType = MemoryLayoutType::COLUMNAR_LAYOUT;
-    uint64_t numberOfItems{};
-    static constexpr auto minNumberOfItems = 50;
-    static constexpr auto maxNumberOfItems = 2000;
 
-    static void SetUpTestSuite()
-    {
-        Logger::setupLogging("PagedVectorTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup PagedVectorTest class.");
-    }
-
-    void SetUp() override
-    {
-        BaseUnitTest::SetUp();
-        backend = std::get<0>(GetParam());
-        layoutType = std::get<1>(GetParam());
-        /// Setting the correct options for the engine, depending on the enum value from the backend
-        nautilus::engine::Options options;
-        const bool compilation = (backend == ExecutionMode::COMPILER);
-        NES_INFO("Backend: {} and compilation: {}", magic_enum::enum_name(backend), compilation);
-        options.setOption("engine.Compilation", compilation);
-        options.setOption("mlir.enableMultithreading", mlirEnableMultithreading);
-        nautilusEngine = std::make_unique<nautilus::engine::NautilusEngine>(options);
-
-        /// Getting a new random seed and then generating a random number for the no. items
-        /// We print the seed, so that we can reproduce the test if necessary
-        const auto seed = std::random_device()();
-        NES_INFO("Seed: {}", seed);
-        std::srand(seed);
-        numberOfItems = std::rand() % (maxNumberOfItems - minNumberOfItems + 1) + minNumberOfItems;
-    }
-
-    static void TearDownTestSuite() { NES_INFO("Tear down PagedVectorTest class."); }
-};
-
-TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
+/// RC generator for MemoryLayoutType
+rc::Gen<MemoryLayoutType> genMemoryLayout()
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataType::Type::UINT64)
-                                .addField("value3", DataType::Type::UINT64);
-    constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema.getFieldNames();
-    const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
+    return rc::gen::element(MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::COLUMNAR_LAYOUT);
+}
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
+/// Sets up a nautilus engine for the given backend.
+std::unique_ptr<nautilus::engine::NautilusEngine> createEngine(ExecutionMode backend)
+{
+    nautilus::engine::Options options;
+    const bool compilation = (backend == ExecutionMode::COMPILER);
+    options.setOption("engine.Compilation", compilation);
+    return std::make_unique<nautilus::engine::NautilusEngine>(options);
+}
+
+/// Compiles a function that inserts all records from an input buffer into a PagedVector.
+auto compileInsertFunction(
+    const nautilus::engine::NautilusEngine& engine,
+    const std::shared_ptr<TupleBufferRef>& inputBufferRef,
+    const std::shared_ptr<TupleBufferRef>& pagedVectorBufferRef,
+    const std::vector<Record::RecordFieldIdentifier>& projections)
+{
+    /// NOLINTBEGIN(performance-unnecessary-value-param) shared_ptrs are captured by value intentionally for nautilus lambda registration
+    return engine.registerFunction(std::function(
+        [=](nautilus::val<TupleBuffer*> inputBufferPtr,
+            nautilus::val<AbstractBufferProvider*> bufferProviderVal,
+            nautilus::val<PagedVector*> pagedVectorVal)
+        {
+            const RecordBuffer recordBuffer(inputBufferPtr);
+            const PagedVectorRef pagedVectorRef(pagedVectorVal, pagedVectorBufferRef);
+
+            for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
+            {
+                const auto record = inputBufferRef->readRecord(projections, recordBuffer, i);
+                pagedVectorRef.writeRecord(record, bufferProviderVal);
+            }
+        }));
+    /// NOLINTEND(performance-unnecessary-value-param)
+}
+
+/// Compiles a function that reads all records from a PagedVector via iteration into an output buffer.
+auto compileIterateFunction(
+    const nautilus::engine::NautilusEngine& engine,
+    const std::shared_ptr<TupleBufferRef>& outputBufferRef,
+    const std::shared_ptr<TupleBufferRef>& pagedVectorBufferRef,
+    const std::vector<Record::RecordFieldIdentifier>& projections)
+{
+    /// NOLINTBEGIN(performance-unnecessary-value-param) shared_ptrs are captured by value intentionally for nautilus lambda registration
+    return engine.registerFunction(std::function(
+        [=](nautilus::val<TupleBuffer*> outputBufferPtr,
+            nautilus::val<AbstractBufferProvider*> bufferProviderVal,
+            nautilus::val<PagedVector*> pagedVectorVal)
+        {
+            RecordBuffer recordBuffer(outputBufferPtr);
+            const PagedVectorRef pagedVectorRef(pagedVectorVal, pagedVectorBufferRef);
+
+            nautilus::val<uint64_t> numberOfTuples = 0;
+            for (auto it = pagedVectorRef.begin(projections); it != pagedVectorRef.end(projections); ++it)
+            {
+                auto record = *it;
+                outputBufferRef->writeRecord(numberOfTuples, recordBuffer, record, bufferProviderVal);
+                numberOfTuples = numberOfTuples + 1;
+                recordBuffer.setNumRecords(numberOfTuples);
+            }
+        }));
+    /// NOLINTEND(performance-unnecessary-value-param)
+}
+
+/// Compiles a function that reads a single record from a PagedVector by index.
+auto compileReadByIndexFunction(
+    const nautilus::engine::NautilusEngine& engine,
+    const std::shared_ptr<TupleBufferRef>& outputBufferRef,
+    const std::shared_ptr<TupleBufferRef>& pagedVectorBufferRef,
+    const std::vector<Record::RecordFieldIdentifier>& projections)
+{
+    /// NOLINTBEGIN(performance-unnecessary-value-param) shared_ptrs are captured by value intentionally for nautilus lambda registration
+    return engine.registerFunction(std::function(
+        [=](nautilus::val<TupleBuffer*> outputBufferPtr,
+            nautilus::val<AbstractBufferProvider*> bufferProviderVal,
+            nautilus::val<PagedVector*> pagedVectorVal,
+            nautilus::val<uint64_t> index)
+        {
+            RecordBuffer recordBuffer(outputBufferPtr);
+            const PagedVectorRef pagedVectorRef(pagedVectorVal, pagedVectorBufferRef);
+
+            auto record = pagedVectorRef.readRecord(index, projections);
+            nautilus::val<uint64_t> pos = 0;
+            outputBufferRef->writeRecord(pos, recordBuffer, record, bufferProviderVal);
+            recordBuffer.setNumRecords(1);
+        }));
+    /// NOLINTEND(performance-unnecessary-value-param)
+}
+
+/// Builds the reference vector from input buffers by reading all records in order.
+std::vector<std::vector<std::any>> buildReference(
+    const std::vector<TupleBuffer>& inputBuffers,
+    const std::shared_ptr<TupleBufferRef>& inputBufferRef,
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const std::vector<DataType::Type>& types)
+{
+    std::vector<std::vector<std::any>> reference;
+    for (const auto& buffer : inputBuffers)
+    {
+        const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
+        for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
+        {
+            auto record = inputBufferRef->readRecord(projections, recordBuffer, i);
+            reference.push_back(recordToAnyVec(record, projections, types));
+        }
+    }
+    return reference;
+}
+
+/// ==================== Property Functions ====================
+
+constexpr size_t MAX_FIELDS_INTERPRETER = 128;
+constexpr size_t MAX_FIELDS_COMPILER = 32;
+
+/// Insert N items into a PagedVector, then iterate and compare against reference.
+void insertAndIterateProperty(ExecutionMode backend, size_t maxFields)
+{
+    const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
+    RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
+
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(500, 5001);
+    const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
+    const auto layoutType = *genMemoryLayout();
+
+    NES_INFO(
+        "Property insertAndIterate: fields={}, N={}, pageSize={}, layout={}, backend={}",
+        fieldTypes.size(),
+        numberOfItems,
+        pageSize,
+        magic_enum::enum_name(layoutType),
+        magic_enum::enum_name(backend));
+
+    auto bufferManager = BufferManager::create();
+    auto engine = createEngine(backend);
+
+    const auto schema = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(fieldTypes);
+    const auto projections = schema.getFieldNames();
+    TestUtils::NautilusTestUtils testUtils;
+    const auto inputBuffers = testUtils.createMonotonicallyIncreasingValues(schema, layoutType, numberOfItems, *bufferManager);
+
+    const auto inputBufferRef = LowerSchemaProvider::lowerSchema(inputBuffers[0].getBufferSize(), schema, layoutType);
+    const auto pagedVectorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, schema, layoutType);
+
+    /// Insert all records into PagedVector
     PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    auto insertFn = compileInsertFunction(*engine, inputBufferRef, pagedVectorBufferRef, projections);
+    for (auto buf : inputBuffers)
+    {
+        insertFn(std::addressof(buf), std::addressof(*bufferManager), std::addressof(pagedVector));
+    }
+
+    /// Build reference
+    const auto reference = buildReference(inputBuffers, inputBufferRef, projections, fieldTypes);
+    NES_INFO(
+        "insertAndIterate: PagedVector has {} entries, reference has {} entries", pagedVector.getTotalNumberOfEntries(), reference.size());
+    RC_ASSERT(pagedVector.getTotalNumberOfEntries() == reference.size());
+
+    /// Iterate PagedVector and compare
+    const auto totalEntries = pagedVector.getTotalNumberOfEntries();
+    auto outputBufferOpt = bufferManager->getUnpooledBuffer(totalEntries * schema.getSizeOfSchemaInBytes());
+    RC_ASSERT(outputBufferOpt.has_value());
+    auto outputBuffer = outputBufferOpt.value();
+
+    const auto outputBufferRef = LowerSchemaProvider::lowerSchema(outputBuffer.getBufferSize(), schema, layoutType);
+    auto iterateFn = compileIterateFunction(*engine, outputBufferRef, pagedVectorBufferRef, projections);
+    iterateFn(std::addressof(outputBuffer), std::addressof(*bufferManager), std::addressof(pagedVector));
+
+    RC_ASSERT(outputBuffer.getNumberOfTuples() == totalEntries);
+
+    const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
+    for (nautilus::val<uint64_t> i = 0; i < outputBuffer.getNumberOfTuples(); ++i)
+    {
+        auto record = outputBufferRef->readRecord(projections, recordBufferOutput, i);
+        auto actual = recordToAnyVec(record, projections, fieldTypes);
+        const auto idx = nautilus::details::RawValueResolver<uint64_t>::getRawValue(i);
+        RC_ASSERT(anyVecsEqual(actual, reference[idx], fieldTypes));
+    }
 }
 
-TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
+/// Insert N items into a PagedVector, then read each by index and compare against reference.
+void insertAndReadByIndexProperty(ExecutionMode backend, size_t maxFields)
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema.getFieldNames();
-    const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
+    const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
+    RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
+    const auto numberOfItems = *rc::gen::inRange<uint64_t>(500, 5001);
+    const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
+    const auto layoutType = *genMemoryLayout();
+
+    NES_INFO(
+        "Property insertAndReadByIndex: fields={}, N={}, pageSize={}, layout={}, backend={}",
+        fieldTypes.size(),
+        numberOfItems,
+        pageSize,
+        magic_enum::enum_name(layoutType),
+        magic_enum::enum_name(backend));
+
+    auto bufferManager = BufferManager::create();
+    auto engine = createEngine(backend);
+
+    const auto schema = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(fieldTypes);
+    const auto projections = schema.getFieldNames();
+    TestUtils::NautilusTestUtils testUtils;
+    const auto inputBuffers = testUtils.createMonotonicallyIncreasingValues(schema, layoutType, numberOfItems, *bufferManager);
+
+    const auto inputBufferRef = LowerSchemaProvider::lowerSchema(inputBuffers[0].getBufferSize(), schema, layoutType);
+    const auto pagedVectorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, schema, layoutType);
+
+    /// Insert all records into PagedVector
     PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    auto insertFn = compileInsertFunction(*engine, inputBufferRef, pagedVectorBufferRef, projections);
+    for (auto buf : inputBuffers)
+    {
+        insertFn(std::addressof(buf), std::addressof(*bufferManager), std::addressof(pagedVector));
+    }
+
+    /// Build reference
+    const auto reference = buildReference(inputBuffers, inputBufferRef, projections, fieldTypes);
+    RC_ASSERT(pagedVector.getTotalNumberOfEntries() == reference.size());
+
+    /// Read each entry by index and compare
+    auto singleOutputOpt = bufferManager->getUnpooledBuffer(schema.getSizeOfSchemaInBytes());
+    RC_ASSERT(singleOutputOpt.has_value());
+    auto singleOutputBuffer = singleOutputOpt.value();
+    const auto singleOutputRef = LowerSchemaProvider::lowerSchema(singleOutputBuffer.getBufferSize(), schema, layoutType);
+    auto readByIndexFn = compileReadByIndexFunction(*engine, singleOutputRef, pagedVectorBufferRef, projections);
+
+    for (uint64_t idx = 0; idx < reference.size(); ++idx)
+    {
+        singleOutputBuffer.setNumberOfTuples(0);
+        readByIndexFn(std::addressof(singleOutputBuffer), std::addressof(*bufferManager), std::addressof(pagedVector), idx);
+        RC_ASSERT(singleOutputBuffer.getNumberOfTuples() == 1);
+
+        const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(singleOutputBuffer)));
+        nautilus::val<uint64_t> pos = 0;
+        auto record = singleOutputRef->readRecord(projections, recordBufferOutput, pos);
+        auto actual = recordToAnyVec(record, projections, fieldTypes);
+        RC_ASSERT(anyVecsEqual(actual, reference[idx], fieldTypes));
+    }
 }
 
-TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
+/// Create K PagedVectors, insert items, concat via moveAllPages, verify against concatenated reference.
+void concatProperty(ExecutionMode backend, size_t maxFields)
 {
-    /// We need to increase the number of buffers, otherwise we run out of them for this test
-    bufferManager = BufferManager::create(8 * 1024, 10 * 1000);
-    const auto testSchema = Schema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    /// smallest possible pageSize ensures that the text is split over multiple pages
-    constexpr auto pageSize = 16UL;
-    constexpr auto sizeVarSizedData = 2 * pageSize;
+    const auto fieldTypes = *genTypeSchema(ALL_VALUE_TYPES, 1, maxFields);
+    RC_PRE(estimateSchemaSize(fieldTypes) < BUFFER_SIZE);
 
-    const auto projections = testSchema.getFieldNames();
-    const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager, sizeVarSizedData);
+    const auto numVectors = *rc::gen::inRange<uint64_t>(2, 5);
+    const auto pageSize = *rc::gen::inRange<uint64_t>(64, 1048577);
+    const auto layoutType = *genMemoryLayout();
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    NES_INFO(
+        "Property concat: fields={}, numVectors={}, pageSize={}, layout={}, backend={}",
+        fieldTypes.size(),
+        numVectors,
+        pageSize,
+        magic_enum::enum_name(layoutType),
+        magic_enum::enum_name(backend));
+
+    auto bufferManager = BufferManager::create();
+    auto engine = createEngine(backend);
+
+    const auto schema = TestUtils::NautilusTestUtils::createSchemaFromBasicTypes(fieldTypes);
+    const auto projections = schema.getFieldNames();
+
+    /// Generate per-vector item counts
+    std::vector<uint64_t> itemCounts;
+    itemCounts.reserve(numVectors);
+    for (uint64_t v = 0; v < numVectors; ++v)
+    {
+        itemCounts.push_back(*rc::gen::inRange<uint64_t>(100, 1001));
+    }
+
+    /// Create input data and PagedVectors for each
+    std::vector<std::unique_ptr<PagedVector>> pagedVectors;
+    std::vector<std::vector<std::any>> fullReference;
+    TestUtils::NautilusTestUtils testUtils;
+
+    for (uint64_t v = 0; v < numVectors; ++v)
+    {
+        auto inputBuffers = testUtils.createMonotonicallyIncreasingValues(schema, layoutType, itemCounts[v], *bufferManager);
+        const auto inputBufferRef = LowerSchemaProvider::lowerSchema(inputBuffers[0].getBufferSize(), schema, layoutType);
+        const auto pagedVectorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, schema, layoutType);
+
+        pagedVectors.emplace_back(std::make_unique<PagedVector>());
+        auto insertFn = compileInsertFunction(*engine, inputBufferRef, pagedVectorBufferRef, projections);
+        for (auto buf : inputBuffers)
+        {
+            insertFn(std::addressof(buf), std::addressof(*bufferManager), pagedVectors.back().get());
+        }
+
+        /// Build per-vector reference and append to full reference
+        auto ref = buildReference(inputBuffers, inputBufferRef, projections, fieldTypes);
+        fullReference.insert(fullReference.end(), ref.begin(), ref.end());
+
+        NES_INFO("concat: vector {} has {} entries", v, pagedVectors.back()->getTotalNumberOfEntries());
+    }
+
+    /// Concat all into first vector
+    for (uint64_t v = 1; v < numVectors; ++v)
+    {
+        pagedVectors[0]->moveAllPages(*pagedVectors[v]);
+        RC_ASSERT(pagedVectors[v]->getNumberOfPages() == 0);
+        RC_ASSERT(pagedVectors[v]->getTotalNumberOfEntries() == 0);
+    }
+
+    NES_INFO(
+        "concat: merged vector has {} entries, reference has {} entries", pagedVectors[0]->getTotalNumberOfEntries(), fullReference.size());
+    RC_ASSERT(pagedVectors[0]->getTotalNumberOfEntries() == fullReference.size());
+
+    /// Iterate merged vector and compare
+    const auto totalEntries = pagedVectors[0]->getTotalNumberOfEntries();
+    auto outputBufferOpt = bufferManager->getUnpooledBuffer(totalEntries * schema.getSizeOfSchemaInBytes());
+    RC_ASSERT(outputBufferOpt.has_value());
+    auto outputBuffer = outputBufferOpt.value();
+
+    const auto outputBufferRef = LowerSchemaProvider::lowerSchema(outputBuffer.getBufferSize(), schema, layoutType);
+    const auto pagedVectorBufferRef = LowerSchemaProvider::lowerSchema(pageSize, schema, layoutType);
+    auto iterateFn = compileIterateFunction(*engine, outputBufferRef, pagedVectorBufferRef, projections);
+    iterateFn(std::addressof(outputBuffer), std::addressof(*bufferManager), pagedVectors[0].get());
+
+    RC_ASSERT(outputBuffer.getNumberOfTuples() == totalEntries);
+
+    const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
+    for (nautilus::val<uint64_t> i = 0; i < outputBuffer.getNumberOfTuples(); ++i)
+    {
+        auto record = outputBufferRef->readRecord(projections, recordBufferOutput, i);
+        auto actual = recordToAnyVec(record, projections, fieldTypes);
+        const auto idx = nautilus::details::RawValueResolver<uint64_t>::getRawValue(i);
+        RC_ASSERT(anyVecsEqual(actual, fullReference[idx], fieldTypes));
+    }
 }
 
-TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
+} /// anonymous namespace
+
+/// ==================== Test Cases ====================
+
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateInterpreter, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
-    constexpr auto pageSize = PAGE_SIZE;
-    const auto projections = testSchema.getFieldNames();
-    const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
 }
 
-TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndIterateCompiler, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}.addField("value1", DataType::Type::UINT64).addField("value2", DataType::Type::UINT64);
-    constexpr auto pageSize = 73UL;
-    const auto projections = testSchema.getFieldNames();
-    const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndIterateProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
 }
 
-TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexInterpreter, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
-    const auto entrySize = testSchema.getSizeOfSchemaInBytes();
-    constexpr auto pageSize = PAGE_SIZE;
-    constexpr auto numVectors = 2UL;
-    const auto projections = testSchema.getFieldNames();
-
-    std::vector<std::vector<TupleBuffer>> allRecords;
-    auto allFields = testSchema.getFieldNames();
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        auto records = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-        allRecords.emplace_back(records);
-    }
-
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
-    }
-
-    TestUtils::insertAndAppendAllPagesTest(
-        projections, testSchema, layoutType, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 0, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndReadByIndexProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
 }
 
-TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
+RC_GTEST_PROP(PagedVectorPropertyTest, insertAndReadByIndexCompiler, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
-    const auto entrySize = testSchema.getSizeOfSchemaInBytes();
-    constexpr auto pageSize = PAGE_SIZE;
-    constexpr auto numVectors = 4UL;
-    const auto projections = testSchema.getFieldNames();
-
-    std::vector<std::vector<TupleBuffer>> allRecords;
-    auto allFields = testSchema.getFieldNames();
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        auto records = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-        allRecords.emplace_back(records);
-    }
-
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
-    }
-
-    TestUtils::insertAndAppendAllPagesTest(
-        projections, testSchema, layoutType, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 0, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    insertAndReadByIndexProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
 }
 
-TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
+RC_GTEST_PROP(PagedVectorPropertyTest, concatInterpreter, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
-    const auto entrySize = testSchema.getSizeOfSchemaInBytes();
-    constexpr auto pageSize = PAGE_SIZE;
-    constexpr auto numVectors = 4UL;
-    const auto projections = testSchema.getFieldNames();
-
-    std::vector<std::vector<TupleBuffer>> allRecords;
-    auto allFields = testSchema.getFieldNames();
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        auto records = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-        allRecords.emplace_back(records);
-    }
-
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
-    }
-
-    TestUtils::insertAndAppendAllPagesTest(
-        projections, testSchema, layoutType, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 0, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::INTERPRETER, MAX_FIELDS_INTERPRETER);
 }
 
-TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
+RC_GTEST_PROP(PagedVectorPropertyTest, concatCompiler, ())
 {
-    bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
-                                .addField("value1", DataType::Type::UINT64)
-                                .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
-                                .addField("value3", DataType::Type::FLOAT64);
-    const auto entrySize = testSchema.getSizeOfSchemaInBytes();
-    constexpr auto pageSize = PAGE_SIZE;
-    constexpr auto numVectors = 4UL;
-    const auto projections = testSchema.getFieldNames();
-
-    std::vector<std::vector<TupleBuffer>> allRecords;
-    auto allFields = testSchema.getFieldNames();
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        auto records = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
-        allRecords.emplace_back(records);
-    }
-
-    std::vector<TupleBuffer> allRecordsAfterAppendAll;
-    for (auto i = 0UL; i < numVectors; ++i)
-    {
-        allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
-    }
-
-    TestUtils::insertAndAppendAllPagesTest(
-        projections, testSchema, layoutType, entrySize, pageSize, allRecords, allRecordsAfterAppendAll, 1, *nautilusEngine, *bufferManager);
+    Logger::setupLogging("PagedVectorPropertyTest.log", LogLevel::LOG_DEBUG);
+    concatProperty(ExecutionMode::COMPILER, MAX_FIELDS_COMPILER);
 }
 
-INSTANTIATE_TEST_CASE_P(
-    PagedVectorTest,
-    PagedVectorTest,
-    ::testing::Combine(
-        ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER),
-        ::testing::Values(MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::COLUMNAR_LAYOUT)),
-    [](const testing::TestParamInfo<PagedVectorTest::ParamType>& info)
-    {
-        std::stringstream ss;
-        ss << magic_enum::enum_name(std::get<0>(info.param)) << "_";
-        ss << magic_enum::enum_name(std::get<1>(info.param));
-        return ss.str();
-    });
 }
