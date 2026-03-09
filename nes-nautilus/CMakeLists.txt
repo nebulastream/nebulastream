@@ -28,6 +28,7 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_tests_if_enabled(tests)
+nautilus_inline(nes-nautilus)
 
 # Add nes-nautilus to the include directories
 target_include_directories(nes-nautilus PUBLIC

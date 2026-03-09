@@ -40,14 +40,14 @@ public:
     }
 
     /// == Implementations
-    [[nodiscard]] VarVal eqImpl(const nautilus::val<bool>& rhs) const;
-    [[nodiscard]] VarVal eqImpl(const VariableSizedData& rhs) const;
-    [[nodiscard]] VarVal eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const;
+    [[nodiscard]] nautilus::val<bool> eqImpl(const nautilus::val<bool>& rhs) const;
+    [[nodiscard]] nautilus::val<bool> eqImpl(const VariableSizedData& rhs) const;
+    [[nodiscard]] nautilus::val<bool> eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const;
 
     /// != Implementations
-    [[nodiscard]] VarVal neqImpl(const nautilus::val<bool>& rhs) const;
-    [[nodiscard]] VarVal neqImpl(const VariableSizedData& rhs) const;
-    [[nodiscard]] VarVal neqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const;
+    [[nodiscard]] nautilus::val<bool> neqImpl(const nautilus::val<bool>& rhs) const;
+    [[nodiscard]] nautilus::val<bool> neqImpl(const VariableSizedData& rhs) const;
+    [[nodiscard]] nautilus::val<bool> neqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const;
 
 
     [[nodiscard]] VarVal operator!() const override;

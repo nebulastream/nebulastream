@@ -134,7 +134,6 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 {
                     const auto lazyVal = val;
                     return hash ^ nautilus::invoke(hashBytes, lazyVal->getContent(), lazyVal->getSize());
-
                 }
                 else
                 {

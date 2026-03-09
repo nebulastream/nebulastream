@@ -106,7 +106,7 @@ template <typename T>
 nautilus::val<T> parseIntoNautilusRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const nautilus::val<bool>& nullable,
+    const bool& nullable,
     const nautilus::val<bool>& isNull)
 {
     if (nullable)

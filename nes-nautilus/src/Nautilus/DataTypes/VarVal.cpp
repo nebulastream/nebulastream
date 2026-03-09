@@ -372,11 +372,11 @@ VarVal VarVal::operator/(const VarVal& other) const
         {
             if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>)
             {
-                return lhsVal->operator/(VarVal{rhsVal,rightIsNullable,rightIsNull});
+                return lhsVal->operator/(VarVal{rhsVal, rightIsNullable, rightIsNull});
             }
             else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>)
             {
-                return VarVal{lhsVal,leftIsNullable,leftIsNull} / rhsVal;
+                return VarVal{lhsVal, leftIsNullable, leftIsNull} / rhsVal;
             }
             else if constexpr (requires(LHS l, RHS r) { l / r; })
             {
@@ -418,11 +418,11 @@ VarVal VarVal::operator%(const VarVal& other) const
         {
             if constexpr (std::is_same_v<LHS, std::shared_ptr<LazyValueRepresentation>>)
             {
-                return lhsVal->operator%(VarVal{rhsVal,rightIsNullable,rightIsNull});
+                return lhsVal->operator%(VarVal{rhsVal, rightIsNullable, rightIsNull});
             }
             else if constexpr (std::is_same_v<RHS, std::shared_ptr<LazyValueRepresentation>>)
             {
-                return VarVal{lhsVal,leftIsNullable,leftIsNull} % rhsVal;
+                return VarVal{lhsVal, leftIsNullable, leftIsNull} % rhsVal;
             }
             else if constexpr (requires(LHS l, RHS r) { l % r; })
             {

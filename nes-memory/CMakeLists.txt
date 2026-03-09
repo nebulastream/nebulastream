@@ -20,6 +20,7 @@ add_library(nes-memory
         VariableSizedAccess.cpp
         ${MEMORY_LAYOUT_SOURCES}
 )
+nautilus_inline(nes-memory)
 
 target_include_directories(nes-memory
         PUBLIC

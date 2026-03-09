@@ -1,5 +1,5 @@
 /*
-Licensed under the Apache License, Version 2.0 (the "License");
+    Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
     You may obtain a copy of the License at
 
@@ -110,7 +110,7 @@ public:
     /// Usable for some bool function overrides
     [[nodiscard]] nautilus::val<bool> isValid() const
     {
-        return !isNull && size > 0 && ptrToLazyValue != nullptr;
+        return size > 0 && ptrToLazyValue != nullptr;
     }
 
     /// Method to check if the lazy values content forms a representation of a boolean true

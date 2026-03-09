@@ -1,46 +1,20 @@
 # name: LazyTest.test
 # description: Tests for lazy parser
-
-CREATE LOGICAL SOURCE stream(id UINT64, value UINT32, timestamp UINT16, a INT8, b INT8);
+# groups: [CompilationIntensive]
+CREATE LOGICAL SOURCE stream(id UINT16, value UINT16, timestamp UINT16, a INT32, b INT32);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
-1,3,1000,9,9
+1,3,1000,9,8
 12,2,1001,9,9
+12,2,1001,8,9
 
 CREATE LOGICAL SOURCE stringStream(textual VARSIZED, valid BOOLEAN);
 CREATE PHYSICAL SOURCE FOR stringStream TYPE File;
 ATTACH INLINE
 this,true
-definetly,false
+definitely,false
 a,true
 string,false
-
-
-
-
-SELECT id, value, a, b FROM stream WHERE id == UINT64(1) INTO FILE();
-----
-1,3,9,9
-
-SELECT (id + UINT64(1)) AS newid, value, a, b FROM stream WHERE id == UINT64(1) AND (id + UINT64(1)) == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id + UINT64(1)) AS newid, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id + id) AS newid, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-2,3,9,9
-
-SELECT (id == UINT64(1)) AS boolval, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-1,3,9,9
-
-SELECT ((id + id) == UINT64(2)) AS boolval, value, a, b FROM stream WHERE id + id == UINT64(2) INTO FILE();
-----
-1,3,9,9
 
 SELECT * FROM stringStream WHERE textual == valid INTO FILE();
 ----
@@ -50,13 +24,177 @@ a,true
 SELECT * FROM stringStream WHERE textual == BOOLEAN(1) INTO FILE();
 ----
 this,true
-definetly,false
+definitely,false
 a,true
 string,false
 
+# Should not parse a single value as lazy equals is implemented for numerics
+SELECT * FROM stream WHERE a == b INTO FILE();
+----
+12,2,1001,9,9
 
+SELECT * FROM stream WHERE a != b INTO FILE();
+----
+1,3,1000,9,8
+12,2,1001,8,9
 
+# Not implemented, parse a
+SELECT * FROM stream WHERE a != INT8(9) INTO FILE();
+----
+12,2,1001,8,9
 
+SELECT * FROM stream WHERE a < b INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a <= b INTO FILE();
+----
+12,2,1001,8,9
+12,2,1001,9,9
+
+SELECT * FROM stream WHERE a > b INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE a >= b INTO FILE();
+----
+1,3,1000,9,8
+12,2,1001,9,9
+
+# See llvm ir tree to check, if the data type of id is resolved during compile time
+SELECT id + UINT64(1) as newid FROM stream INTO FILE();
+----
+2
+13
+13
+
+SELECT * FROM stream WHERE id == VARSIZED("1") INTO FILE();
+----
+1,3,1000,9,8
+
+# Constant value equal comparisons.
+# Should all be able to be resolved without lazy value parse
+SELECT * FROM stream WHERE a == INT8(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == INT16(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == INT32(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == INT64(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == UINT8(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == UINT16(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == UINT32(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == UINT64(8) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a == FLOAT32(9.9) INTO FILE();
+----
+
+SELECT * FROM stream WHERE a == FLOAT64(8.0) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a != INT8(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE value == INT8(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == INT16(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == INT32(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == INT64(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == UINT8(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == UINT16(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == UINT32(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == UINT64(3) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE value == FLOAT32(3.9) INTO FILE();
+----
+
+SELECT * FROM stream WHERE value == FLOAT64(3.0) INTO FILE();
+----
+1,3,1000,9,8
+
+SELECT * FROM stream WHERE a < INT8(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < INT16(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < INT32(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < INT64(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < UINT8(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < UINT16(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < UINT32(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < UINT64(9) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < FLOAT32(9.0) INTO FILE();
+----
+12,2,1001,8,9
+
+SELECT * FROM stream WHERE a < FLOAT64(8.1) INTO FILE();
+----
+12,2,1001,8,9
 
 
 

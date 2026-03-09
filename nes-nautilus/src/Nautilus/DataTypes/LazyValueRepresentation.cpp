@@ -24,6 +24,7 @@
 #include <ErrorHandling.hpp>
 #include <RawValueParser.hpp>
 #include <val_arith.hpp>
+#include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
 

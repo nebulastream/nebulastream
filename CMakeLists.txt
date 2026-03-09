@@ -119,6 +119,7 @@ include(cmake/CheckToolchain.cmake)
 include(cmake/UseCompilerCache.cmake)
 include(cmake/UseMold.cmake)
 include(cmake/CheckTestUtilities.cmake)
+include(cmake/NautilusInlining.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
