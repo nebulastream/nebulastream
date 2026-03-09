@@ -40,6 +40,7 @@
     "boost-system",
     "boost-url",
     "cpptrace",
+    "curl",
     "date",
     "fmt",
     "folly",
