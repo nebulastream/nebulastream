@@ -40,14 +40,15 @@ jobs:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha }}
 
-#  large-tests:
+  large-tests:
 #    needs: [ get-dev-images, smoke-tests ]
-#    name: "Run large scale tests"
-#    uses: ./.github/workflows/large_test.yml
-#    with:
-#      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
-#      head_sha: ${{ github.event.pull_request.head.sha }}
-#
+    needs: [ get-dev-images ]
+    name: "Run large scale tests"
+    uses: ./.github/workflows/large_test.yml
+    with:
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      head_sha: ${{ github.event.pull_request.head.sha }}
+
 #  run_code_coverage:
 #    needs: [ get-dev-images, smoke-tests ]
 #    name: "Run Code Coverage"
