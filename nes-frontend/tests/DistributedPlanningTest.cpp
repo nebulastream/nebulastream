@@ -440,7 +440,7 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreMaterializesSelectedBoundary)
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::CreateNewRecording);
     EXPECT_NE(selectionExplanation.reason.find("selected by replay min-cut"), std::string::npos);
     EXPECT_NE(selectionExplanation.reason.find("create_new_recording"), std::string::npos);
-    EXPECT_TRUE(selectionExplanation.alternatives.empty());
+    EXPECT_FALSE(selectionExplanation.alternatives.empty());
     EXPECT_GT(selectionExplanation.chosenCost.totalCost(), 0.0);
 
     size_t totalStores = 0;
@@ -545,9 +545,14 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreReusesExistingRecordingWithoutRei
     EXPECT_EQ(selectionExplanation.decision, RecordingSelectionDecision::ReuseExistingRecording);
     EXPECT_NE(selectionExplanation.reason.find("selected by replay min-cut"), std::string::npos);
     EXPECT_NE(selectionExplanation.reason.find("reuse_existing_recording"), std::string::npos);
-    ASSERT_EQ(selectionExplanation.alternatives.size(), 1);
-    EXPECT_EQ(selectionExplanation.alternatives.front().decision, RecordingSelectionDecision::CreateNewRecording);
-    EXPECT_LT(selectionExplanation.chosenCost.totalCost(), selectionExplanation.alternatives.front().cost.totalCost());
+    ASSERT_FALSE(selectionExplanation.alternatives.empty());
+    bool hasCreateNewAlternative = false;
+    for (const auto& alternative : selectionExplanation.alternatives)
+    {
+        hasCreateNewAlternative |= alternative.decision == RecordingSelectionDecision::CreateNewRecording;
+        EXPECT_LE(selectionExplanation.chosenCost.totalCost(), alternative.cost.totalCost());
+    }
+    EXPECT_TRUE(hasCreateNewAlternative);
 
     const LogicalPlan localPlan = reusedPlan[Host("localhost:8080")].front();
     EXPECT_TRUE(getOperatorByType<StoreLogicalOperator>(localPlan).empty());

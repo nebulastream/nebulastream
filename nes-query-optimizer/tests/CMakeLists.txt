@@ -24,6 +24,7 @@ add_nes_optimizer_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
 add_nes_optimizer_test(recording-catalog-test UnitTests/RecordingCatalogTest.cpp)
 add_nes_optimizer_test(worker-catalog-test UnitTests/WorkerCatalogTest.cpp)
 add_nes_optimizer_test(recording-selection-phase-test UnitTests/RecordingSelectionPhaseTest.cpp)
+add_nes_optimizer_test(replay-planner-test UnitTests/ReplayPlannerTest.cpp)
 # mold emits a malformed RELACOUNT for this large test binary on our toolchain; keep
 # the override local so the rest of the build can still use mold.
 target_link_options(recording-selection-phase-test PRIVATE -fuse-ld=bfd)

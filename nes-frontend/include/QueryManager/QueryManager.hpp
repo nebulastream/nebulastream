@@ -24,6 +24,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/RecordingLifecycleManager.hpp>
+#include <ReplayPlanning.hpp>
 #include <Replay/ReplayExecution.hpp>
 #include <RecordingCatalog.hpp>
 #include <Util/Pointers.hpp>
@@ -55,6 +56,7 @@ struct QueryManagerState
 {
     std::unordered_map<DistributedQueryId, DistributedQuery> queries;
     std::unordered_map<ReplayExecutionId, ReplayExecution> replayExecutions;
+    std::unordered_map<ReplayExecutionId, ReplayPlan> replayPlans;
     RecordingCatalog recordingCatalog{};
     std::unordered_set<DistributedQueryId> internalQueries{};
     std::unordered_map<DistributedQueryId, DistributedQueryId> activeRecordingEpochQueriesByBeneficiary{};
@@ -151,6 +153,7 @@ public:
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
     [[nodiscard]] const RecordingCatalog& getRecordingCatalog() const { return state.recordingCatalog; }
     [[nodiscard]] const auto& getReplayExecutions() const { return state.replayExecutions; }
+    [[nodiscard]] const auto& getReplayPlans() const { return state.replayPlans; }
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
 };
 

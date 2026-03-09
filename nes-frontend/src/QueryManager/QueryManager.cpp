@@ -212,6 +212,11 @@ QueryManager::registerReplayExecution(const DistributedQueryId& queryId, const u
     {
         return std::unexpected(UnsupportedQuery("Replay currently requires a replayable query, but {} is not replayable", queryId));
     }
+    const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadataIt->second, state.recordingCatalog, intervalStartMs, intervalEndMs);
+    if (!replayPlan)
+    {
+        return std::unexpected(replayPlan.error());
+    }
 
     auto replayExecution = ReplayExecution{
         .id = uniqueReplayExecutionId(state),
@@ -219,11 +224,14 @@ QueryManager::registerReplayExecution(const DistributedQueryId& queryId, const u
         .intervalStartMs = intervalStartMs,
         .intervalEndMs = intervalEndMs,
         .state = ReplayExecutionState::Planned,
-        .selectedRecordingIds = {},
+        .selectedRecordingIds =
+            replayPlan->selectedRecordingIds | std::views::transform([](const auto& recordingId) { return recordingId.getRawValue(); })
+            | std::ranges::to<std::vector>(),
         .pinnedSegments = {},
         .internalQueryIds = {},
         .failureReason = std::nullopt};
     state.replayExecutions.insert_or_assign(replayExecution.id, replayExecution);
+    state.replayPlans.insert_or_assign(replayExecution.id, *replayPlan);
     return replayExecution;
 }
 

@@ -27,6 +27,7 @@ add_source_files(nes-query-optimizer
         RecordingBoundarySolver.cpp
         RecordingPlanRewriter.cpp
         RecordingSelectionPhase.cpp
+        ReplayPlanner.cpp
         BottomUpPlacement.cpp
         OperatorPlacement.cpp
         QueryDecomposition.cpp
