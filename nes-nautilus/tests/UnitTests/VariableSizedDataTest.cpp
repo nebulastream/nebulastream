@@ -13,207 +13,117 @@
 */
 
 #include <cstdint>
-#include <cstdlib>
-#include <cstring>
+#include <exception>
 #include <ios>
-#include <iosfwd>
-#include <random>
+#include <sstream>
+#include <string>
 #include <utility>
-#include <vector>
+#include <rapidcheck.h>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Util/Logger/LogLevel.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <nautilus/function.hpp>
 #include <nautilus/std/sstream.h>
+#include <rapidcheck/gtest.h>
 #include <std/cstring.h>
-#include <BaseUnitTest.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
-
-
-class VariableSizedDataTest : public Testing::BaseUnitTest
+namespace
 {
-public:
-    static void SetUpTestCase()
+
+/// Creates a nautilus val pointer from a string's data. The caller must keep the string data alive.
+nautilus::val<int8_t*> toValPtr(const std::string& str)
+{
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast,cppcoreguidelines-pro-type-reinterpret-cast) nautilus val requires mutable int8_t* but string exposes const char*
+    return {const_cast<int8_t*>(reinterpret_cast<const int8_t*>(str.data()))};
+}
+
+/// Creates a VariableSizedData from a string. The caller must keep the string data alive.
+VariableSizedData createFromString(const std::string& str)
+{
+    return VariableSizedData(toValPtr(str), str.size());
+}
+
+} /// anonymous namespace
+
+RC_GTEST_PROP(VariableSizedDataTest, construction, (const std::string& data))
+{
+    const auto vsd = createFromString(data);
+    const VarVal varVal{vsd};
+    RC_ASSERT(varVal.cast<VariableSizedData>().getSize() == data.size());
+    if (!data.empty())
     {
-        Logger::setupLogging("VariableSizedDataTest.log", LogLevel::LOG_DEBUG);
-        NES_INFO("Setup VariableSizedDataTest class.");
+        const auto dataPtr = toValPtr(data);
+        RC_ASSERT(nautilus::memcmp(varVal.cast<VariableSizedData>().getContent(), dataPtr, data.size()) == 0);
     }
+}
 
-    static void TearDownTestCase() { NES_INFO("Tear down VariableSizedDataTest class."); }
+RC_GTEST_PROP(VariableSizedDataTest, copyConstruction, (const std::string& data))
+{
+    const auto vsd = createFromString(data);
+    const VarVal original{vsd};
 
-    static std::vector<int8_t> createVariableSizedRandomData(uint32_t size)
+    /// Copy via operator=
+    const VarVal copied = original; /// NOLINT(performance-unnecessary-copy-initialization) intentional copy to test copy semantics
+    RC_ASSERT(copied.cast<VariableSizedData>().getSize() == data.size());
+
+    /// Copy via copy constructor
+    const VarVal copied2(original); /// NOLINT(performance-unnecessary-copy-initialization) intentional copy to test copy constructor
+    RC_ASSERT(copied2.cast<VariableSizedData>().getSize() == data.size());
+
+    if (!data.empty())
     {
-        std::vector<int8_t> content(size);
-        for (uint32_t i = 0; i < size; i++)
+        const auto dataPtr = toValPtr(data);
+        RC_ASSERT(nautilus::memcmp(copied.cast<VariableSizedData>().getContent(), dataPtr, data.size()) == 0);
+        RC_ASSERT(nautilus::memcmp(copied2.cast<VariableSizedData>().getContent(), dataPtr, data.size()) == 0);
+    }
+}
+
+RC_GTEST_PROP(VariableSizedDataTest, moveConstruction, (const std::string& data))
+{
+    /// Move via operator=
+    {
+        const auto vsd = createFromString(data);
+        VarVal original{vsd};
+        const VarVal moved = std::move(original);
+        RC_ASSERT(moved.cast<VariableSizedData>().getSize() == data.size());
+        if (!data.empty())
         {
-            content[i] = rand() % 256;
+            const auto dataPtr = toValPtr(data);
+            RC_ASSERT(nautilus::memcmp(moved.cast<VariableSizedData>().getContent(), dataPtr, data.size()) == 0);
         }
-
-        return content;
-    }
-};
-
-TEST_F(VariableSizedDataTest, SimpleConstruction)
-{
-    {
-        /// Testing creating a variable sized data object from a pointer
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(varSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
     }
 
+    /// Move via move constructor
     {
-        /// Testing creating a variable sized data object from a pointer and a size
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-        EXPECT_EQ(varSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(varSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+        const auto vsd = createFromString(data);
+        VarVal original{vsd};
+        const VarVal moved(std::move(original));
+        RC_ASSERT(moved.cast<VariableSizedData>().getSize() == data.size());
+        if (!data.empty())
+        {
+            const auto dataPtr = toValPtr(data);
+            RC_ASSERT(nautilus::memcmp(moved.cast<VariableSizedData>().getContent(), dataPtr, data.size()) == 0);
+        }
     }
 }
 
-TEST_F(VariableSizedDataTest, CopyConstruction)
+RC_GTEST_PROP(VariableSizedDataTest, equalityMatchesString, (const std::string& lhs, const std::string& rhs))
 {
-    constexpr auto sizeInBytes = 1024;
-    auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-    const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-
-    /// Test, if we can copy the variable sized data object by copy operator=
-    const VarVal copiedVarSizedData = varSizedData; /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
-    EXPECT_EQ(copiedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-    EXPECT_TRUE(
-        nautilus::memcmp(copiedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
-
-    /// Test, if we can copy the variable sized data object by copy constructor
-    const VarVal copiedVarSizedData2(varSizedData); /// NOLINT(performance-unnecessary-copy-initialization) - intentional copy for testing
-    EXPECT_EQ(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-    EXPECT_TRUE(
-        nautilus::memcmp(copiedVarSizedData2.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes) == 0);
+    const auto vsdLhs = createFromString(lhs);
+    const auto vsdRhs = createFromString(rhs);
+    RC_ASSERT((lhs == rhs) == static_cast<bool>(vsdLhs == vsdRhs));
+    RC_ASSERT((lhs != rhs) == static_cast<bool>(vsdLhs != vsdRhs));
 }
 
-TEST_F(VariableSizedDataTest, MoveConstruction)
+RC_GTEST_PROP(VariableSizedDataTest, lessThanMatchesString, (const std::string& lhs, const std::string& rhs))
 {
-    {
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-
-        /// Test, if we can move the variable sized data object by move operator=
-        const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
-            == 0);
-    }
-
-    {
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, sizeInBytes)};
-
-        /// Test, if we can move the variable sized data object by move constructor
-        const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
-            == 0);
-    }
-}
-
-TEST_F(VariableSizedDataTest, AssignmentConstruction)
-{
-    {
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData = VarVal(VariableSizedData(ptrToVariableSized, sizeInBytes));
-
-        /// Test, if we can move the variable sized data object by move operator=
-        const VarVal movedVarSizedData = std::move(varSizedData);
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), sizeInBytes)
-            == 0);
-    }
-
-    {
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
-
-        /// Test, if we can move the variable sized data object by move constructor
-        const VarVal movedVarSizedData(std::move(varSizedData));
-        EXPECT_EQ(movedVarSizedData.getRawValueAs<VariableSizedData>().getSize(), sizeInBytes);
-        EXPECT_TRUE(
-            nautilus::memcmp(
-                movedVarSizedData.getRawValueAs<VariableSizedData>().getContent(), variableSizedData.data(), variableSizedData.size())
-            == 0);
-    }
-}
-
-TEST_F(VariableSizedDataTest, binaryOperatorOverloads)
-{
-    {
-        /// Testing if exact same variable sized data objects are equal
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
-
-        /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional copy for testing
-        const VarVal copiedVarSizedData = varSizedData;
-        EXPECT_TRUE(copiedVarSizedData.getRawValueAs<VariableSizedData>() == varSizedData.getRawValueAs<VariableSizedData>());
-        EXPECT_FALSE(copiedVarSizedData.getRawValueAs<VariableSizedData>() != varSizedData.getRawValueAs<VariableSizedData>());
-    }
-
-    {
-        /// Testing if two variable sized data with different sizes but same content are not equal
-        constexpr auto sizeInBytes = 1024;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        auto variableSizedDataDouble = createVariableSizedRandomData(sizeInBytes + sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const nautilus::val<int8_t*> ptrToVariableSizedDouble(variableSizedDataDouble.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
-        const VarVal varSizedDataDouble{VariableSizedData(ptrToVariableSizedDouble, variableSizedDataDouble.size())};
-        EXPECT_FALSE(varSizedData.getRawValueAs<VariableSizedData>() == varSizedDataDouble.getRawValueAs<VariableSizedData>());
-        EXPECT_TRUE(varSizedData.getRawValueAs<VariableSizedData>() != varSizedDataDouble.getRawValueAs<VariableSizedData>());
-    }
-
-    {
-        /// Testing if two variables sized data with the same size but in a randomize fashion. To ensure deterministic results, we
-        /// print the seed of the random number generator to be able to reproduce the results.
-        const auto seed = std::random_device()();
-        NES_INFO("Seed: {}", seed);
-        std::srand(seed);
-
-        constexpr auto maxSize = 5; /// We set the size quite small to ensure that we also happen to have the same content
-        const auto sizeInBytes = (std::rand() % maxSize) + 1;
-        auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-        auto otherVariableSizedData = createVariableSizedRandomData(sizeInBytes);
-        const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-        const nautilus::val<int8_t*> ptrToOtherVariableSized(otherVariableSizedData.data());
-        const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
-        const VarVal otherVarSizedData{VariableSizedData(ptrToOtherVariableSized, otherVariableSizedData.size())};
-
-        const bool isEqual = variableSizedData == otherVariableSizedData;
-        EXPECT_EQ(isEqual, varSizedData.getRawValueAs<VariableSizedData>() == otherVarSizedData.getRawValueAs<VariableSizedData>());
-    }
+    const auto vsdLhs = createFromString(lhs);
+    const auto vsdRhs = createFromString(rhs);
+    RC_ASSERT((lhs < rhs) == static_cast<bool>(vsdLhs < vsdRhs));
+    RC_ASSERT((rhs < lhs) == static_cast<bool>(vsdRhs < vsdLhs));
 }
 
 void compareStringProxy(const char* actual, const char* expected)
@@ -223,27 +133,25 @@ void compareStringProxy(const char* actual, const char* expected)
     EXPECT_EQ(expectedStr, actualStr);
 }
 
-TEST_F(VariableSizedDataTest, ostreamTest)
+RC_GTEST_PROP(VariableSizedDataTest, ostreamOutput, (const std::string& data))
 {
-    constexpr auto sizeInBytes = 1024;
-    auto variableSizedData = createVariableSizedRandomData(sizeInBytes);
-    const nautilus::val<int8_t*> ptrToVariableSized(variableSizedData.data());
-    const VarVal varSizedData{VariableSizedData(ptrToVariableSized, variableSizedData.size())};
+    RC_PRE(!data.empty());
+    const auto vsd = createFromString(data);
+    const VarVal varVal{vsd};
 
-    /// Comparing the output of the ostream operator with the expected output
+    /// Build expected output
     std::stringstream expectedOutput;
-    expectedOutput << "Size(" << sizeInBytes << "): ";
-    for (uint32_t i = 0; i < sizeInBytes; ++i)
+    expectedOutput << "Size(" << data.size() << "): ";
+    for (const auto byte : data)
     {
-        expectedOutput << std::hex << static_cast<int>(variableSizedData[i] & 0xff) << " ";
+        expectedOutput << std::hex << static_cast<int>(static_cast<uint8_t>(byte)) << " ";
     }
     nautilus::stringstream expected;
     expected << expectedOutput.str().c_str();
 
     nautilus::stringstream output;
-    output << varSizedData;
+    output << varVal;
 
-    /// Performing the comparison in a proxy function, as we cannot access the underlying data of the nautilus::stringstream object
     nautilus::invoke(compareStringProxy, output.str().c_str(), expected.str().c_str());
 }
 
