@@ -37,6 +37,7 @@
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
+#include <WindowTypes/Types/CountBasedWindowType.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -145,7 +146,8 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.inputSchema = firstSchema;
     copy.outputSchema = Schema{};
 
-    if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
+    if (dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get())
+        || dynamic_cast<Windowing::CountBasedWindowType*>(getWindowType().get()))
     {
         const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
