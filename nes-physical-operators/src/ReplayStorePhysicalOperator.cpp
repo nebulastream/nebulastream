@@ -18,7 +18,6 @@
 #include <cstdint>
 #include <optional>
 #include <utility>
-#include <vector>
 
 #include <DataTypes/Schema.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
@@ -33,6 +32,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <ReplayStoreOperatorHandler.hpp>
 #include <function.hpp>
+#include <static.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -121,35 +121,36 @@ void ReplayStorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 
 void ReplayStorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& executionCtx) const
 {
-    std::vector<uint8_t> row;
-    row.resize(rowWidth);
-    for (size_t i = 0; i < fieldNames.size(); ++i)
+    auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
+
+    /// Get a reusable row buffer from the handler.
+    auto bufferPtr = nautilus::invoke(
+        +[](OperatorHandler* h, uint32_t width) -> int8_t*
+        {
+            return dynamic_cast<ReplayStoreOperatorHandler*>(h)->getRowBuffer(width);
+        },
+        handler,
+        nautilus::val<uint32_t>(rowWidth));
+
+    /// Write each field into the buffer at its precomputed offset.
+    for (nautilus::static_val<size_t> i = 0; i < fieldNames.size(); ++i)
     {
-        const auto sz = fieldSizes[i];
-        if (sz == 0)
+        if (fieldSizes[i] == 0)
         {
             /// TODO #11: Add Varsized Support
             continue;
         }
-        const auto name = fieldNames[i];
-        auto* const dstPtr = reinterpret_cast<int8_t*>(row.data() + fieldOffsets[i]);
-        auto dstVal = nautilus::val<int8_t*>(dstPtr);
-        const auto& vv = record.read(name);
-        vv.writeToMemory(dstVal);
+        const auto& vv = record.read(fieldNames[i]);
+        vv.writeToMemory(bufferPtr + nautilus::static_val<int32_t>(fieldOffsets[i]));
     }
 
-    auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
-    auto dataPtr = nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(row.data()));
+    /// Commit the encoded row to the store.
     nautilus::invoke(
-        +[](OperatorHandler* h, int8_t* data, uint32_t len)
+        +[](OperatorHandler* h, uint32_t len)
         {
-            if (auto* store = dynamic_cast<ReplayStoreOperatorHandler*>(h))
-            {
-                store->append(reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(len));
-            }
+            dynamic_cast<ReplayStoreOperatorHandler*>(h)->commitRow(len);
         },
         handler,
-        dataPtr,
         nautilus::val<uint32_t>(rowWidth));
 }
 

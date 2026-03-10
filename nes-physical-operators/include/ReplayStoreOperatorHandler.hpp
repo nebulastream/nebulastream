@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <vector>
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <BinaryStoreWriter.hpp>
@@ -45,8 +46,15 @@ public:
 
     void append(const uint8_t* data, size_t len);
 
+    /// Returns a pointer to a reusable row buffer of at least `rowWidth` bytes.
+    int8_t* getRowBuffer(uint32_t rowWidth);
+
+    /// Appends the current row buffer contents to the store.
+    void commitRow(uint32_t len);
+
 private:
     StoreManager::BinaryStoreWriter writer;
+    std::vector<uint8_t> rowBuffer;
 };
 
 }

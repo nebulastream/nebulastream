@@ -56,4 +56,18 @@ void ReplayStoreOperatorHandler::append(const uint8_t* data, size_t len)
     writer.append(data, len);
 }
 
+int8_t* ReplayStoreOperatorHandler::getRowBuffer(uint32_t rowWidth)
+{
+    if (rowBuffer.size() < rowWidth)
+    {
+        rowBuffer.resize(rowWidth);
+    }
+    return reinterpret_cast<int8_t*>(rowBuffer.data());
+}
+
+void ReplayStoreOperatorHandler::commitRow(uint32_t len)
+{
+    writer.append(rowBuffer.data(), static_cast<size_t>(len));
+}
+
 }
