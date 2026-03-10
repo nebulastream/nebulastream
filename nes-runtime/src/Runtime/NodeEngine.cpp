@@ -77,7 +77,20 @@ public:
 
 NodeEngine::~NodeEngine()
 {
+    NES_DEBUG("Shutting down NodeEngine");
     queryEngine.reset();
+    sourceProvider.reset();
+    queryTracker.reset();
+
+    constexpr auto bufferReturnTimeout = std::chrono::milliseconds(5000);
+    if (!bufferManager->waitForAllBuffersReturned(bufferReturnTimeout))
+    {
+        NES_ERROR(
+            "NodeEngine shutdown: {} of {} buffers still in use after {}ms timeout",
+            bufferManager->getNumOfPooledBuffers() - bufferManager->getNumberOfAvailableBuffers(),
+            bufferManager->getNumOfPooledBuffers(),
+            bufferReturnTimeout.count());
+    }
 }
 
 NodeEngine::NodeEngine(

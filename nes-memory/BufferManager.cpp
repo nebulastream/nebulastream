@@ -24,6 +24,7 @@
 #include <memory_resource>
 #include <mutex>
 #include <optional>
+#include <thread>
 #include <utility>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -243,6 +244,21 @@ size_t BufferManager::getNumberOfAvailableBuffers() const
 BufferManagerType BufferManager::getBufferManagerType() const
 {
     return BufferManagerType::GLOBAL;
+}
+
+bool BufferManager::waitForAllBuffersReturned(const std::chrono::milliseconds timeout) const
+{
+    constexpr auto pollInterval = std::chrono::milliseconds(10);
+    const auto deadline = std::chrono::steady_clock::now() + timeout;
+    while (std::chrono::steady_clock::now() < deadline)
+    {
+        if (getNumberOfAvailableBuffers() == numOfBuffers)
+        {
+            return true;
+        }
+        std::this_thread::sleep_for(pollInterval);
+    }
+    return getNumberOfAvailableBuffers() == numOfBuffers;
 }
 
 }
