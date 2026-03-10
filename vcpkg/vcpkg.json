@@ -54,7 +54,8 @@
     "boost-url",
     "simdjson",
     "date",
-    "highs"
+    "highs",
+    "unixodbc"
   ],
   "default-features": [
     "mqtt"
