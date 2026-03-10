@@ -26,16 +26,23 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
+#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Plans/LogicalPlanBuilder.hpp>
+#include <Serialization/WindowTypeReflection.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
+#include <WindowTypes/Measures/CountMeasure.hpp>
+#include <WindowTypes/Types/CountSlidingWindow.hpp>
+#include <WindowTypes/Types/CountTumblingWindow.hpp>
 
 using namespace NES;
 
@@ -236,4 +243,31 @@ TEST_F(LogicalPlanTest, OutputOperator)
     std::stringstream ss;
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
+}
+
+TEST_F(LogicalPlanTest, ReflectCountTumblingWindow)
+{
+    const auto window = Windowing::CountTumblingWindow(Windowing::CountMeasure(10));
+    const auto reflected = reflectWindowType(window);
+    const auto unreflected = unreflectWindowType(reflected);
+    EXPECT_EQ(*unreflected, window);
+}
+
+TEST_F(LogicalPlanTest, ReflectCountSlidingWindow)
+{
+    const auto window = Windowing::CountSlidingWindow(Windowing::CountMeasure(100), Windowing::CountMeasure(20));
+    const auto reflected = reflectWindowType(window);
+    const auto unreflected = unreflectWindowType(reflected);
+    EXPECT_EQ(*unreflected, window);
+}
+
+TEST_F(LogicalPlanTest, CheckAndAddWatermarkAssignerSkipsCountWindow)
+{
+    const auto queryPlan = LogicalPlanBuilder::createLogicalPlan("Source");
+    const auto countWindow = std::make_shared<Windowing::CountTumblingWindow>(Windowing::CountMeasure(42));
+
+    const auto updatedPlan = LogicalPlanBuilder::checkAndAddWatermarkAssigner(queryPlan, countWindow);
+
+    EXPECT_TRUE(getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(updatedPlan).empty());
+    EXPECT_TRUE(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(updatedPlan).empty());
 }

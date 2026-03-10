@@ -36,6 +36,7 @@
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <WindowTypes/Types/CountBasedWindowType.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
@@ -145,7 +146,8 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
     copy.inputSchema = firstSchema;
     copy.outputSchema = Schema{};
 
-    if (auto* timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()))
+    if (dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get())
+        || dynamic_cast<Windowing::CountBasedWindowType*>(getWindowType().get()))
     {
         const auto& newQualifierForSystemField = firstSchema.getQualifierNameForSystemGeneratedFieldsWithSeparator();
 
@@ -266,8 +268,9 @@ Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const Window
         windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
 
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
+    return reflect(
+        detail::ReflectedWindowAggregationLogicalOperator{
+            .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
 }
 
 WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected) const

@@ -18,6 +18,8 @@
 #include <utility>
 
 #include <Util/Reflection.hpp>
+#include <WindowTypes/Types/CountSlidingWindow.hpp>
+#include <WindowTypes/Types/CountTumblingWindow.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -40,6 +42,16 @@ Reflected reflectWindowType(const Windowing::WindowType& windowType)
             const auto slidingWindow = dynamic_cast<const Windowing::SlidingWindow&>(windowType);
             return std::make_pair("SlidingWindow", reflect(slidingWindow));
         }
+        if (typeid(windowType) == typeid(Windowing::CountTumblingWindow))
+        {
+            const auto tumblingWindow = dynamic_cast<const Windowing::CountTumblingWindow&>(windowType);
+            return std::make_pair("CountTumblingWindow", reflect(tumblingWindow));
+        }
+        if (typeid(windowType) == typeid(Windowing::CountSlidingWindow))
+        {
+            const auto slidingWindow = dynamic_cast<const Windowing::CountSlidingWindow&>(windowType);
+            return std::make_pair("CountSlidingWindow", reflect(slidingWindow));
+        }
         throw CannotSerialize("Cannot serialize unknown window type");
     }();
 
@@ -59,6 +71,14 @@ std::shared_ptr<Windowing::WindowType> unreflectWindowType(const Reflected& refl
         if (type == "SlidingWindow")
         {
             return std::make_shared<Windowing::SlidingWindow>(unreflect<Windowing::SlidingWindow>(config));
+        }
+        if (type == "CountTumblingWindow")
+        {
+            return std::make_shared<Windowing::CountTumblingWindow>(unreflect<Windowing::CountTumblingWindow>(config));
+        }
+        if (type == "CountSlidingWindow")
+        {
+            return std::make_shared<Windowing::CountSlidingWindow>(unreflect<Windowing::CountSlidingWindow>(config));
         }
         throw CannotDeserialize("Cannot deserialize unknown window type {}", type);
     }();

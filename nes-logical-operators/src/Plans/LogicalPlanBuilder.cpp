@@ -45,6 +45,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
+#include <WindowTypes/Types/CountBasedWindowType.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 #include <ErrorHandling.hpp>
@@ -105,9 +106,13 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
                 break;
         }
     }
+    else if (auto* countBasedWindowType = dynamic_cast<Windowing::CountBasedWindowType*>(windowType.get()))
+    {
+        (void)countBasedWindowType;
+    }
     else
     {
-        throw NotImplemented("Only TimeBasedWindowType is supported for now");
+        throw NotImplemented("Only TimeBasedWindowType and CountBasedWindowType are supported for now");
     }
 
     auto inputSchema = queryPlan.getRootOperators().front().getOutputSchema();
@@ -191,6 +196,11 @@ LogicalPlan
 LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const std::shared_ptr<Windowing::WindowType>& windowType)
 {
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
+    if (dynamic_cast<Windowing::CountBasedWindowType*>(windowType.get()))
+    {
+        return queryPlan;
+    }
+
     auto timeBasedWindowType = as<Windowing::TimeBasedWindowType>(windowType);
 
     if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
