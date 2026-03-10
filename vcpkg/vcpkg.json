@@ -58,7 +58,8 @@
     "scope-guard",
     "simdjson",
     "spdlog",
-    "yaml-cpp"
+    "yaml-cpp",
+    "unixodbc"
   ],
   "default-features": [
     "mqtt"
