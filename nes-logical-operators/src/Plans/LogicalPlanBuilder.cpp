@@ -108,7 +108,7 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
     }
     else if (auto* countBasedWindowType = dynamic_cast<Windowing::CountBasedWindowType*>(windowType.get()))
     {
-        (void) countBasedWindowType;
+        (void)countBasedWindowType;
     }
     else
     {

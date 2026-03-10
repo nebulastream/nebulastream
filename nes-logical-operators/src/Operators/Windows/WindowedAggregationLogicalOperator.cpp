@@ -36,8 +36,8 @@
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/CountBasedWindowType.hpp>
+#include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -268,8 +268,9 @@ Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const Window
         windowAggregations.emplace_back(agg->getName(), agg->reflect());
     }
 
-    return reflect(detail::ReflectedWindowAggregationLogicalOperator{
-        .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
+    return reflect(
+        detail::ReflectedWindowAggregationLogicalOperator{
+            .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
 }
 
 WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected) const
