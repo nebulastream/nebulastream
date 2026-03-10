@@ -18,9 +18,9 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 usage() {
-    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined] [--name] [--no-vcpkg-cache]"
+    echo "Usage: $0 [-y|--yes] [-l|--local] [-r|--rootless] [--libstdcxx|--libcxx] [--address|--thread|--undefined|--no-sanitizer] [--name] [--no-vcpkg-cache]"
     echo "Options:"
-    echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx)"
+    echo "  -y, --yes            Non-interactive mode (requires --libstdcxx or --libcxx and a sanitizer option)"
     echo "  -l, --local          Build all Docker images locally"
     echo "  -r, --rootless       Force rootless Docker mode"
     echo "  --libstdcxx          Use libstdcxx standard library"
@@ -28,6 +28,7 @@ usage() {
     echo "  --address            Enable Address Sanitizer"
     echo "  --thread             Enable Thread Sanitizer"
     echo "  --undefined          Enable Undefined Behavior Sanitizer"
+    echo "  --no-sanitizer       Disable sanitizers (use no sanitizer)"
     echo "  --name               Add a name suffix to the tag (nes-development:local-<name>)"
     echo "  --no-vcpkg-cache     Disable vcpkg binary caching (by default uses public read-only cache)"
     echo ""
@@ -89,6 +90,11 @@ while [[ "$#" -gt 0 ]]; do
             SANITIZER="undefined"
             shift
             ;;
+        --no-sanitizer)
+            echo "Disabling sanitizers"
+            SANITIZER="none"
+            shift
+            ;;
         --no-vcpkg-cache)
             DISABLE_VCPKG_CACHE=1
             shift
@@ -138,6 +144,10 @@ fi
 
 # Check if the sanitizer is set, otherwise prompt the user
 if [[ "$SANITIZER" != "address" && "$SANITIZER" != "thread" && "$SANITIZER" != "undefined" && "$SANITIZER" != "none" ]]; then
+  if [ "$NON_INTERACTIVE" = 1 ]; then
+    echo -e "${RED}Error: Non-interactive mode requires --address, --thread, --undefined, or --no-sanitizer to be specified${NC}"
+    usage
+  fi
   echo "Please choose a sanitizer (or none):"
     echo "1. none"
     echo "2. Address Sanitizer"
