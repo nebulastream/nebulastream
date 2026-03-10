@@ -25,9 +25,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include "Traits/TraitSet.hpp"
 
 namespace NES
 {
@@ -57,20 +57,19 @@ public:
     [[nodiscard]] Schema getOutputSchema() const;
     [[nodiscard]] ReplayStoreLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
-
     [[nodiscard]] const DescriptorConfig::Config& getConfig() const { return config; }
 
     [[nodiscard]] ReplayStoreLogicalOperator withConfig(DescriptorConfig::Config validatedConfig) const;
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-            "file_path",
+        static inline const DescriptorConfig::ConfigParameter<std::string> STORE_NAME{
+            "store_name",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(FILE_PATH, cfg); }};
+            [](const std::unordered_map<std::string, std::string>& cfg) { return DescriptorConfig::tryGet(STORE_NAME, cfg); }};
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-            = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH);
+            = DescriptorConfig::createConfigParameterContainerMap(STORE_NAME);
     };
 
     static DescriptorConfig::Config validateAndFormatConfig(std::unordered_map<std::string, std::string> configPairs);

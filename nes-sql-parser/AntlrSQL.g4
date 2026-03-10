@@ -332,7 +332,7 @@ inlineSink
     : type=identifier '(' parameters=namedConfigExpressionSeq ')'
     ;
 
-timeTravelClause: TIME_TRAVEL_STORE;
+timeTravelClause: TIME_TRAVEL_STORE storeName=identifier;
 
 nullNotnull
     : NOT? NULLTOKEN

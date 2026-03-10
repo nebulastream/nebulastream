@@ -31,16 +31,16 @@ public:
 
     /// Register a new store, generating a unique file path under the given base directory.
     /// Returns the generated file path.
-    std::string registerStore(const std::string& storeId);
+    std::string registerStore(const std::string& storeName);
 
-    /// Look up the file path for a given store ID.
-    [[nodiscard]] std::optional<std::string> getFilePath(const std::string& storeId) const;
+    /// Look up the file path for a given store name.
+    [[nodiscard]] std::optional<std::string> getFilePath(const std::string& storeName) const;
 
     /// Get the file path of the most recently registered store.
     [[nodiscard]] std::optional<std::string> getLatestStorePath() const;
 
     /// Remove a store registration.
-    void unregisterStore(const std::string& storeId);
+    void unregisterStore(const std::string& storeName);
 
     /// Clear all registrations.
     void clear();

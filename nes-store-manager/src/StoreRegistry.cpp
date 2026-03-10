@@ -29,22 +29,22 @@ StoreRegistry& StoreRegistry::instance()
     return registry;
 }
 
-std::string StoreRegistry::registerStore(const std::string& storeId)
+std::string StoreRegistry::registerStore(const std::string& storeName)
 {
     const std::unique_lock lock(mutex);
 
     std::filesystem::create_directories(STORE_MANAGER_WORKING_DIR);
-    std::string filePath = std::string(STORE_MANAGER_WORKING_DIR) + "/replay_" + storeId + ".bin";
+    std::string filePath = std::string(STORE_MANAGER_WORKING_DIR) + "/replay_" + storeName + ".bin";
 
-    stores[storeId] = filePath;
-    latestStoreId = storeId;
+    stores[storeName] = filePath;
+    latestStoreId = storeName;
     return filePath;
 }
 
-std::optional<std::string> StoreRegistry::getFilePath(const std::string& storeId) const
+std::optional<std::string> StoreRegistry::getFilePath(const std::string& storeName) const
 {
     const std::shared_lock lock(mutex);
-    auto it = stores.find(storeId);
+    auto it = stores.find(storeName);
     if (it != stores.end())
     {
         return it->second;

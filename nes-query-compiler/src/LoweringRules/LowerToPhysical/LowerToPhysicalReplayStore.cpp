@@ -29,6 +29,7 @@
 #include <PhysicalOperator.hpp>
 #include <ReplayStoreOperatorHandler.hpp>
 #include <ReplayStorePhysicalOperator.hpp>
+#include <StoreRegistry.hpp>
 
 namespace NES
 {
