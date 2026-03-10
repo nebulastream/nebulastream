@@ -69,21 +69,16 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
 }
 
 void initSliceCacheMemoryAndSetup(
-    OperatorHandler* ptrOpHandler, const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider, SliceCache* sliceCache)
+    OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx, SliceCache* sliceCache)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    PRECONDITION(bufferProvider != nullptr, "bufferProvider should not be null!");
+    PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    auto* memory = opHandler->allocateSpaceForSliceCache(sliceCacheMemorySize, bufferProvider);
-    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(memory));
-}
 
-/// Proxy function to set the number of worker threads on the slice cache during setup.
-void setSliceCacheWorkerThreads(SliceCache* sliceCache, const PipelineExecutionContext* pipelineCtx)
-{
-    PRECONDITION(sliceCache != nullptr, "sliceCache should not be null!");
-    PRECONDITION(pipelineCtx != nullptr, "pipelineCtx should not be null!");
+    /// The order is important. First, we need to set the number of worker threads, as the slice cache depends on it.
     sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    auto* memory = opHandler->allocateSpaceForSliceCache(sliceCache->getCacheMemorySize(), *pipelineCtx->getBufferManager());
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(memory));
 }
 
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
@@ -112,15 +107,11 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
         *sliceCacheInitFlag,
         [&]
         {
-            /// Set the number of worker threads on the slice cache so that per-thread memory is allocated.
-            invoke(setSliceCacheWorkerThreads, nautilus::val<SliceCache*>{sliceCache.get()}, executionCtx.pipelineContext);
-
             /// Allocate per-thread cache memory and set the start of entries on the slice cache.
             nautilus::invoke(
                 initSliceCacheMemoryAndSetup,
                 operatorHandler,
-                nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
-                executionCtx.pipelineMemoryProvider.bufferProvider,
+                executionCtx.pipelineContext,
                 nautilus::val<SliceCache*>{sliceCache.get()});
         });
 };

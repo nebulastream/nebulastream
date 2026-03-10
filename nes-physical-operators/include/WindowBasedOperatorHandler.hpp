@@ -90,7 +90,7 @@ public:
     /// Allocates memory for a slice cache and returns a pointer to the allocated memory.
     /// Each call allocates a new buffer, so multiple build sides (e.g., left/right join) each get their own memory.
     /// Also, this method is being called via a nautilus::invoke(), thus, we require a raw pointer
-    int8_t* allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider);
+    int8_t* allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider& bufferProvider);
 
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.

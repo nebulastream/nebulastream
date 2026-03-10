@@ -101,9 +101,9 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
 }
 
-int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(const uint64_t sliceCacheMemorySize, AbstractBufferProvider* bufferProvider)
+int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(const uint64_t sliceCacheMemorySize, AbstractBufferProvider& bufferProvider)
 {
-    auto buffer = bufferProvider->getUnpooledBuffer(sliceCacheMemorySize);
+    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
     if (not buffer.has_value())
     {
         throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
