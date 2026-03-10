@@ -86,14 +86,6 @@ void setSliceCacheWorkerThreads(SliceCache* sliceCache, const PipelineExecutionC
     sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
-    const OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
-    : operatorHandlerId(operatorHandlerId)
-    , timeFunction(std::move(timeFunction))
-    , sliceCache(SliceCache::createSliceCache(std::move(sliceCacheConfiguration)))
-{
-}
-
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
@@ -114,16 +106,23 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
     invoke(registerActivePipeline, operatorHandler);
 
-    /// Set the number of worker threads on the slice cache so that per-thread memory is allocated.
-    invoke(setSliceCacheWorkerThreads, nautilus::val<SliceCache*>{sliceCache.get()}, executionCtx.pipelineContext);
+    /// Ensure the slice cache memory is allocated and initialized exactly once, even when
+    /// multiple pipelines sharing this operator call setup() concurrently on different threads.
+    std::call_once(
+        *sliceCacheInitFlag,
+        [&]
+        {
+            /// Set the number of worker threads on the slice cache so that per-thread memory is allocated.
+            invoke(setSliceCacheWorkerThreads, nautilus::val<SliceCache*>{sliceCache.get()}, executionCtx.pipelineContext);
 
-    /// Allocate per-thread cache memory and set the start of entries on the slice cache.
-    nautilus::invoke(
-        initSliceCacheMemoryAndSetup,
-        operatorHandler,
-        nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
-        executionCtx.pipelineMemoryProvider.bufferProvider,
-        nautilus::val<SliceCache*>{sliceCache.get()});
+            /// Allocate per-thread cache memory and set the start of entries on the slice cache.
+            nautilus::invoke(
+                initSliceCacheMemoryAndSetup,
+                operatorHandler,
+                nautilus::val<uint64_t>{sliceCache->getCacheMemorySize()},
+                executionCtx.pipelineMemoryProvider.bufferProvider,
+                nautilus::val<SliceCache*>{sliceCache.get()});
+        });
 };
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -152,12 +151,24 @@ void WindowBuildPhysicalOperator::setChild(PhysicalOperator child)
     this->child = std::move(child);
 }
 
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration)
+    : operatorHandlerId(operatorHandlerId)
+    , timeFunction(std::move(timeFunction))
+    , sliceCacheConfiguration(sliceCacheConfiguration)
+    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
+    , sliceCacheInitFlag(std::make_shared<std::once_flag>())
+{
+}
+
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)
-    , sliceCache(other.sliceCache)
+    , sliceCacheConfiguration(other.sliceCacheConfiguration)
+    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
+    , sliceCacheInitFlag(std::make_shared<std::once_flag>())
 {
 }
 }

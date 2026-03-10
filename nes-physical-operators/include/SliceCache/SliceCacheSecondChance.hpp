@@ -28,6 +28,7 @@ class SliceCacheSecondChance final : public SliceCache
 {
 public:
     SliceCacheSecondChance(uint64_t numberOfEntries, uint64_t sizeOfEntry);
+    explicit SliceCacheSecondChance(const SliceCacheSecondChance& other);
     ~SliceCacheSecondChance() override = default;
     nautilus::val<int8_t*> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
@@ -46,8 +47,8 @@ private:
         nautilus::val<bool> foundInCache;
     };
 
-    EntryFound searchInCache(
-        const nautilus::val<SliceCacheEntrySecondChance*>& threadLocalStart, const nautilus::val<Timestamp>& timestamp);
+    EntryFound
+    searchInCache(const nautilus::val<SliceCacheEntrySecondChance*>& threadLocalStart, const nautilus::val<Timestamp>& timestamp);
 
     /// Raw pointer to the replacement indices stored after all cache entries.
     /// Each worker thread has its own replacement index.

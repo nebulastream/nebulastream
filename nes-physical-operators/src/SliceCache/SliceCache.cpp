@@ -26,14 +26,19 @@ SliceCache::SliceCache(const uint64_t numberOfEntries, const uint64_t sizeOfEntr
 {
 }
 
-std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration)
+SliceCache::SliceCache(const SliceCache& cache)
+    : startOfEntriesRaw(nullptr), numberOfEntries(cache.numberOfEntries), sizeOfEntry(cache.sizeOfEntry)
+{
+}
+
+std::shared_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration)
 {
     if (sliceCacheConfiguration.enableSliceCache.getValue())
     {
-        return std::make_unique<SliceCacheSecondChance>(
+        return std::make_shared<SliceCacheSecondChance>(
             sliceCacheConfiguration.numberOfEntries.getValue(), sizeof(SliceCacheEntrySecondChance));
     }
-    return std::make_unique<SliceCacheNone>();
+    return std::make_shared<SliceCacheNone>();
 }
 
 void SliceCache::setStartOfEntries(SliceCacheEntry* startOfEntries)

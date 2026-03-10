@@ -14,10 +14,10 @@
 
 #pragma once
 #include <functional>
-#include <SliceCacheConfiguration.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Nautilus/Util.hpp>
 #include <Time/Timestamp.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 #include <val_std.hpp>
@@ -52,13 +52,16 @@ class SliceCache
 {
 public:
     explicit SliceCache(uint64_t numberOfEntries, uint64_t sizeOfEntry);
+    explicit SliceCache(const SliceCache& cache);
     virtual ~SliceCache() = default;
-    static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
+    // maybe have this return a unique_ptr...
+    static std::shared_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual nautilus::val<int8_t*> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
         const nautilus::val<uint64_t>& workerThreadId,
-        const SliceCacheReplaceEntry& replaceEntry) = 0;
+        const SliceCacheReplaceEntry& replaceEntry)
+        = 0;
     virtual void setStartOfEntries(SliceCacheEntry* startOfEntries);
     virtual uint64_t getCacheMemorySize() const;
 

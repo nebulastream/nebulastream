@@ -24,9 +24,13 @@
 
 namespace NES
 {
-
 SliceCacheSecondChance::SliceCacheSecondChance(const uint64_t numberOfEntries, const uint64_t sizeOfEntry)
-    : SliceCache(numberOfEntries, sizeOfEntry), replacementIndexRaw(nullptr)
+    : SliceCache{numberOfEntries, sizeOfEntry}, replacementIndexRaw(nullptr)
+{
+}
+
+SliceCacheSecondChance::SliceCacheSecondChance(const SliceCacheSecondChance& other)
+    : SliceCache{other.numberOfEntries, other.sizeOfEntry}, replacementIndexRaw(nullptr)
 {
 }
 
@@ -44,8 +48,7 @@ void SliceCacheSecondChance::setStartOfEntries(SliceCacheEntry* startOfEntries)
         reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntries) + numberOfWorkerThreads * numberOfEntries);
 }
 
-SliceCacheSecondChance::EntryFound
-SliceCacheSecondChance::searchInCache(
+SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
     const nautilus::val<SliceCacheEntrySecondChance*>& threadLocalStart, const nautilus::val<Timestamp>& timestamp)
 {
     /// We assume that a timestamp is in the cache, if the timestamp is in the range of the slice, e.g., sliceStart <= timestamp < sliceEnd.
@@ -69,8 +72,7 @@ nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
     /// produces proper traced constants with real addresses for COMPILER mode.
     /// We must use SliceCacheEntrySecondChance* for all pointer arithmetic, because the entries
     /// in memory are SliceCacheEntrySecondChance objects (40 bytes), not SliceCacheEntry (32 bytes).
-    const nautilus::val<SliceCacheEntrySecondChance*> startOfEntries{
-        reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntriesRaw)};
+    const nautilus::val<SliceCacheEntrySecondChance*> startOfEntries{reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntriesRaw)};
 
     /// Each worker thread uses its own partition of the cache to avoid data races.
     const nautilus::val<SliceCacheEntrySecondChance*> threadLocalStart = startOfEntries + workerThreadId * numberOfEntries;

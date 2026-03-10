@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceCache/SliceCache.hpp>
@@ -40,6 +41,7 @@ public:
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
 
+    // maybe think about returning SliceCache&
     std::shared_ptr<SliceCache> getSliceCache() const { return sliceCache; }
 
 private:
@@ -78,7 +80,11 @@ protected:
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;
+    // Maybe I can get rid of this here...
+    SliceCacheConfiguration sliceCacheConfiguration;
     std::shared_ptr<SliceCache> sliceCache;
+    /// Ensures that the slice cache memory is allocated and initialized exactly once across all pipelines sharing this operator.
+    std::shared_ptr<std::once_flag> sliceCacheInitFlag;
 };
 
 }

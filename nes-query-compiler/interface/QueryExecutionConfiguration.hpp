@@ -78,7 +78,13 @@ public:
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&executionMode, &pageSize, &numberOfPartitions, &numberOfRecordsPerKey, &maxNumberOfBuckets, &operatorBufferSize,
+        return {
+            &executionMode,
+            &pageSize,
+            &numberOfPartitions,
+            &numberOfRecordsPerKey,
+            &maxNumberOfBuckets,
+            &operatorBufferSize,
             &sliceCacheConfiguration};
     }
 };
