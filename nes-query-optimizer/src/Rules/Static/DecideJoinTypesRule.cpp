@@ -78,14 +78,34 @@ bool shallUseHashJoin(const LogicalFunction& joinFunction)
 }
 }
 
-LogicalPlan DecideJoinTypesRule::apply(const LogicalPlan& queryPlan)
+const std::type_info& DecideJoinTypesRule::getType() const
+{
+    return typeid(DecideJoinTypesRule);
+}
+
+std::string_view DecideJoinTypesRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> DecideJoinTypesRule::getDependencies() const
+{
+    return {};
+}
+
+LogicalPlan DecideJoinTypesRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
     return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator)
+bool DecideJoinTypesRule::operator==(const DecideJoinTypesRule& other) const
+{
+    return this->joinStrategy == other.joinStrategy;
+}
+
+LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperator) const
 {
     const auto children = logicalOperator.getChildren()
         | std::views::transform([this](const LogicalOperator& child) { return apply(child); }) | std::ranges::to<std::vector>();

@@ -81,8 +81,8 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
     auto plan = createSourcePlan("TEST", schema);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideMemoryLayoutRule rule;
-    auto result = rule.apply(plan);
+    DecideMemoryLayoutRule pass;
+    auto result = pass.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
@@ -107,8 +107,8 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideMemoryLayoutRule rule;
-    auto result = rule.apply(plan);
+    DecideMemoryLayoutRule pass;
+    auto result = pass.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {

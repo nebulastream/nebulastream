@@ -27,7 +27,27 @@
 namespace NES
 {
 
-void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
+const std::type_info& SourceInferenceRule::getType() const
+{
+    return typeid(SourceInferenceRule);
+}
+
+std::string_view SourceInferenceRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> SourceInferenceRule::getDependencies() const
+{
+    return {};
+}
+
+bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const
+{
+    return sourceCatalog == other.sourceCatalog;
+}
+
+LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
 {
     auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
     auto sourceDescriptorOperators = getOperatorByType<SourceDescriptorLogicalOperator>(queryPlan);
@@ -62,5 +82,6 @@ void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);
     }
+    return queryPlan;
 }
 }

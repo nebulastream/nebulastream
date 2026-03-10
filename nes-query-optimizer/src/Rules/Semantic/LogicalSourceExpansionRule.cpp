@@ -28,7 +28,27 @@
 namespace NES
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+const std::type_info& LogicalSourceExpansionRule::getType() const
+{
+    return typeid(LogicalSourceExpansionRule);
+}
+
+std::string_view LogicalSourceExpansionRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> LogicalSourceExpansionRule::getDependencies() const
+{
+    return {};
+}
+
+bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
+{
+    return sourceCatalog == other.sourceCatalog;
+}
+
+LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
@@ -70,6 +90,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             newParent.explain(ExplainVerbosity::Debug));
         queryPlan = std::move(replaceResult.value());
     }
+    return queryPlan;
 }
 
 }

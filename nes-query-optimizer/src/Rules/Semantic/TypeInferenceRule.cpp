@@ -44,7 +44,7 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+LogicalPlan TypeInferenceRule::apply(LogicalPlan queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.getRootOperators())
@@ -52,7 +52,28 @@ void TypeInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readabili
         const LogicalOperator inferredRoot = propagateSchema(sink);
         newRoots.push_back(inferredRoot);
     }
-    queryPlan = queryPlan.withRootOperators(newRoots);
+    return queryPlan.withRootOperators(newRoots);
 }
+
+const std::type_info& TypeInferenceRule::getType() const
+{
+    return typeid(TypeInferenceRule);
+}
+
+std::string_view TypeInferenceRule::getName() const
+{
+    return "TypeInferenceRule";
+}
+
+std::set<std::type_index> TypeInferenceRule::getDependencies() const
+{
+    return {};
+}
+
+bool TypeInferenceRule::operator==(const TypeInferenceRule&) const
+{
+    return true;
+}
+
 
 }

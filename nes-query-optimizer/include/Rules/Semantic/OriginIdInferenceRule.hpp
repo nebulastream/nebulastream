@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
+
 namespace NES
 {
-class LogicalPlan;
 
 /**
  * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
@@ -24,7 +26,7 @@ class LogicalPlan;
  * In general, origin ids are emitted from sources, windows or other stateful operators and are used to identify the origin of records.
  * This is crucial for stateful operators, which have to make guarantees over the order of records in the stream (see WatermarkProcessor)
  *
- * This rule is performed in two phases:
+ * This pass is performed in two phases:
  * 1. It assigns unique origin ids to all operators, which inherit from OriginIdAssignmentOperator.
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
@@ -32,8 +34,14 @@ class LogicalPlan;
 class OriginIdInferenceRule
 {
 public:
-    explicit OriginIdInferenceRule() = default;
+    static constexpr std::string_view NAME = "OriginIdInferenceRule";
 
-    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::set<std::type_index> getDependencies() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const OriginIdInferenceRule& other) const;
 };
+
+static_assert(PlanRuleConcept<OriginIdInferenceRule>);
 }

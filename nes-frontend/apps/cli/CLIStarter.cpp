@@ -35,8 +35,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -58,8 +56,10 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <SemanticAnalyzer.hpp>
 
 namespace
 {

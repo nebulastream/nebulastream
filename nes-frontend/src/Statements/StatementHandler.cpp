@@ -23,8 +23,6 @@
 #include <utility>
 #include <vector>
 #include <Listeners/QueryLog.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -34,6 +32,8 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
+#include <SemanticAnalyzer.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES

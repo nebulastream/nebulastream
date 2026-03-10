@@ -14,6 +14,7 @@
 
 #pragma once
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 #include <QueryOptimizerConfiguration.hpp>
 
@@ -26,10 +27,19 @@ class DecideJoinTypesRule
 public:
     explicit DecideJoinTypesRule(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
 
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    static constexpr std::string_view NAME = "DecideJoinTypesRule";
+
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::set<std::type_index> getDependencies() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const DecideJoinTypesRule& other) const;
+
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
+    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
     StreamJoinStrategy joinStrategy;
 };
+
+static_assert(PlanRuleConcept<DecideJoinTypesRule>);
 }

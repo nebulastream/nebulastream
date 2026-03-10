@@ -13,31 +13,38 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
 
-namespace NES
-{
-class SemanticAnalyzer
+template <typename U>
+class RuleManager
 {
 public:
-    [[nodiscard]] LogicalPlan analyse(const LogicalPlan& plan) const;
-
-    explicit SemanticAnalyzer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    void addRule(Rule<U> unit)
     {
+        dependencies.emplace(unit, unit.getDependencies());
+        rules.push_back(std::move(unit));
+    }
+
+    [[nodiscard]] U apply(U unit) const
+    {
+        for (const auto& rule : rules)
+        {
+            unit = rule.apply(unit);
+        }
+        return unit;
     }
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::unordered_map<Rule<U>, std::set<std::type_index>> dependencies;
+    std::vector<Rule<U>> rules;
 };
+
+
+using PlanRuleManager = RuleManager<LogicalPlan>;
 }
+

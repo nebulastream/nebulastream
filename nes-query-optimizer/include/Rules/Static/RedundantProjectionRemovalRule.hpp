@@ -15,16 +15,25 @@
 #pragma once
 
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
 
 /**
- * @brief This rule removes redundant projection, which project everything
+ * @brief This pass removes redundant projection, which project everything
  */
 class RedundantProjectionRemovalRule
 {
 public:
-    void apply(LogicalPlan& queryPlan) const;
+    static constexpr std::string_view NAME = "RedundantProjectionRemovalRule";
+
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::set<std::type_index> getDependencies() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const RedundantProjectionRemovalRule& other) const;
 };
+
+static_assert(PlanRuleConcept<RedundantProjectionRemovalRule>);
 }

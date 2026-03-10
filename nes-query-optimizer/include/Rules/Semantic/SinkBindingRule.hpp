@@ -16,6 +16,7 @@
 #include <memory>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 
 namespace NES
@@ -25,9 +26,17 @@ class SinkBindingRule
 public:
     explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    void apply(LogicalPlan& queryPlan) const;
+    static constexpr std::string_view NAME = "SinkBindingRule";
+
+    [[nodiscard]] const std::type_info& getType() const;
+    [[nodiscard]] std::string_view getName() const;
+    [[nodiscard]] std::set<std::type_index> getDependencies() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const SinkBindingRule& other) const;
 
 private:
     std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
+
+static_assert(PlanRuleConcept<SinkBindingRule>);
 }

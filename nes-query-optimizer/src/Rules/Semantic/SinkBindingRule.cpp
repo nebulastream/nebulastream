@@ -21,9 +21,32 @@
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
-void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
+namespace NES
 {
-    queryPlan = queryPlan.withRootOperators(
+
+const std::type_info& SinkBindingRule::getType() const
+{
+    return typeid(SinkBindingRule);
+}
+
+std::string_view SinkBindingRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> SinkBindingRule::getDependencies() const
+{
+    return {};
+}
+
+bool SinkBindingRule::operator==(const SinkBindingRule& other) const
+{
+    return sinkCatalog == other.sinkCatalog;
+}
+
+LogicalPlan SinkBindingRule::apply(LogicalPlan queryPlan) const
+{
+    return queryPlan.withRootOperators(
         queryPlan.getRootOperators()
         | std::ranges::views::transform(
             [this](const LogicalOperator& rootOperator) -> LogicalOperator
@@ -48,4 +71,6 @@ void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
                 return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
+}
+
 }

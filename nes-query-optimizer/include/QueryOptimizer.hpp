@@ -14,26 +14,24 @@
 
 #pragma once
 
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/RuleManager.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
-/**
- * @brief This pass removes redundant unions with only a single child.
- */
-class RedundantUnionRemovalRule
+class QueryOptimizer final
 {
 public:
-    static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
+    explicit QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization);
 
-    [[nodiscard]] const std::type_info& getType() const;
-    [[nodiscard]] std::string_view getName() const;
-    [[nodiscard]] std::set<std::type_index> getDependencies() const;
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-    bool operator==(const RedundantUnionRemovalRule& other) const;
+    /// Takes the query plan as a logical plan and returns a fully physical plan
+    [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
+private:
+    QueryOptimizerConfiguration defaultQueryOptimization;
+    PlanRuleManager ruleManager;
 };
 
-static_assert(PlanRuleConcept<RedundantUnionRemovalRule>);
 }

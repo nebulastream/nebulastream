@@ -87,8 +87,8 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
     plan = LogicalPlanBuilder::addSelection(selectionFn, plan);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
-    auto result = rule.apply(plan);
+    DecideJoinTypesRule pass(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = pass.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
@@ -113,8 +113,8 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
-    auto result = rule.apply(plan);
+    DecideJoinTypesRule pass(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = pass.apply(plan);
 
     auto joins = getOperatorByType<JoinLogicalOperator>(result);
     ASSERT_EQ(joins.size(), 1);
@@ -137,8 +137,8 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::NESTED_LOOP_JOIN);
-    auto result = rule.apply(plan);
+    DecideJoinTypesRule pass(StreamJoinStrategy::NESTED_LOOP_JOIN);
+    auto result = pass.apply(plan);
 
     auto joins = getOperatorByType<JoinLogicalOperator>(result);
     ASSERT_EQ(joins.size(), 1);
@@ -163,8 +163,8 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::HASH_JOIN);
-    auto result = rule.apply(plan);
+    DecideJoinTypesRule pass(StreamJoinStrategy::HASH_JOIN);
+    auto result = pass.apply(plan);
 
     auto joins = getOperatorByType<JoinLogicalOperator>(result);
     ASSERT_EQ(joins.size(), 1);
@@ -190,8 +190,8 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
-    auto result = rule.apply(plan);
+    DecideJoinTypesRule pass(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = pass.apply(plan);
 
     auto joins = getOperatorByType<JoinLogicalOperator>(result);
     ASSERT_EQ(joins.size(), 1);

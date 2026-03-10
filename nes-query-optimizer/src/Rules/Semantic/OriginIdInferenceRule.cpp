@@ -70,7 +70,27 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-void OriginIdInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+const std::type_info& OriginIdInferenceRule::getType() const
+{
+    return typeid(OriginIdInferenceRule);
+}
+
+std::string_view OriginIdInferenceRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> OriginIdInferenceRule::getDependencies() const
+{
+    return {};
+}
+
+bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
+{
+    return true;
+}
+
+LogicalPlan OriginIdInferenceRule::apply(LogicalPlan queryPlan) const
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
@@ -81,6 +101,6 @@ void OriginIdInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(reada
     {
         newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
-    queryPlan = queryPlan.withRootOperators(newSinks);
+    return queryPlan.withRootOperators(newSinks);
 }
 }

@@ -46,8 +46,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -62,7 +60,9 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <SemanticAnalyzer.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 

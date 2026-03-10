@@ -25,7 +25,27 @@
 namespace NES
 {
 
-void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
+const std::type_info& RedundantProjectionRemovalRule::getType() const
+{
+    return typeid(RedundantProjectionRemovalRule);
+}
+
+std::string_view RedundantProjectionRemovalRule::getName() const
+{
+    return NAME;
+}
+
+std::set<std::type_index> RedundantProjectionRemovalRule::getDependencies() const
+{
+    return {};
+}
+
+bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
+{
+    return true;
+}
+
+LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& projectionOp :
          getOperatorByType<ProjectionLogicalOperator>(queryPlan)
@@ -42,6 +62,7 @@ void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLI
         INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
         queryPlan = std::move(replaceResult.value());
     }
+    return queryPlan;
 }
 
 }
