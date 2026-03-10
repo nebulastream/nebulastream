@@ -10,6 +10,25 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/x64.cmake)
-include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/ubsan.cmake)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/local.cmake)
+set(VCPKG_TARGET_ARCHITECTURE x64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE static)
+set(VCPKG_CMAKE_SYSTEM_NAME Linux)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchain.cmake)
+set(VCPKG_CXX_FLAGS -fsanitize=undefined)
+set(VCPKG_C_FLAGS -fsanitize=undefined)
+
+# Building LLVM with the `-fsanitize=undefined` flag causes the sanitizer itself to be built sanitized which is not
+# possible. In general if the port supports sanitization via a CMake Option this should be the preferred way, to avoid
+# incompatibilities.
+if (PORT STREQUAL llvm)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined" -DLLVM_REQUIRES_RTTI=ON)
+endif()
+
+if (PORT STREQUAL ireeruntime)
+    set(VCPKG_CXX_FLAGS "-Wno-error=pass-failed")
+    set(VCPKG_C_FLAGS "-Wno-error=pass-failed")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DIREE_ENABLE_UBSAN=ON)
+endif()
