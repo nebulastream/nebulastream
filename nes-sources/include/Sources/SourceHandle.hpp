@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <memory>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -65,6 +66,7 @@ public:
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getSourceId() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const { return physicalSourceId; }
+    [[nodiscard]] std::shared_ptr<SourceCheckpointProgress> getCheckpointProgress() const;
 
     const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
 

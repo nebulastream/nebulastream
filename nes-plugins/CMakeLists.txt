@@ -24,6 +24,7 @@ activate_optional_plugin("Sources/NetworkSource" ON)
 activate_optional_plugin("Sinks/NetworkSink" ON)
 
 if (NES_ENABLES_TESTS)
+  activate_optional_plugin("Sources/SystestTupleFileSource" ON)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   activate_optional_plugin("Sinks/ChecksumSink" ON)
 endif()

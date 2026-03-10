@@ -79,7 +79,7 @@ void ReplayableSourceStorage::persistBuffer(const TupleBuffer& buffer)
     out.write(reinterpret_cast<const char*>(data.data()), static_cast<std::streamsize>(bytesToWrite));
 }
 
-void ReplayableSourceStorage::writeCheckpointMeta(SequenceNumber sequenceNumber)
+void ReplayableSourceStorage::writeCheckpointMeta(const SequenceNumber sequenceNumber, const uint64_t byteOffset)
 {
     std::ofstream out(metaFilePath, std::ios::binary | std::ios::trunc);
     if (!out.is_open())
@@ -87,8 +87,8 @@ void ReplayableSourceStorage::writeCheckpointMeta(SequenceNumber sequenceNumber)
         NES_WARNING("ReplayableSourceStorage: Cannot open {} for writing", metaFilePath.string());
         return;
     }
-    const auto value = sequenceNumber.getRawValue();
-    out.write(reinterpret_cast<const char*>(&value), sizeof(value));
+    const CheckpointMeta meta{.sequence = sequenceNumber.getRawValue(), .byteOffset = byteOffset};
+    out.write(reinterpret_cast<const char*>(&meta), sizeof(meta));
 }
 
 std::optional<SequenceNumber::Underlying> ReplayableSourceStorage::loadLastCheckpointedSequence()
@@ -97,6 +97,7 @@ std::optional<SequenceNumber::Underlying> ReplayableSourceStorage::loadLastCheck
     if (!std::filesystem::exists(metaFilePath))
     {
         lastCheckpointed.reset();
+        lastCheckpointedByteOffset.reset();
         return std::nullopt;
     }
 
@@ -105,38 +106,116 @@ std::optional<SequenceNumber::Underlying> ReplayableSourceStorage::loadLastCheck
     {
         NES_WARNING("ReplayableSourceStorage: Cannot open {} for reading", metaFilePath.string());
         lastCheckpointed.reset();
+        lastCheckpointedByteOffset.reset();
         return std::nullopt;
     }
 
-    SequenceNumber::Underlying value{0};
-    in.read(reinterpret_cast<char*>(&value), sizeof(value));
-    if (in.gcount() == static_cast<std::streamsize>(sizeof(value)))
+    CheckpointMeta meta{};
+    in.read(reinterpret_cast<char*>(&meta), sizeof(meta));
+    if (in.gcount() == static_cast<std::streamsize>(sizeof(meta)))
     {
-        lastCheckpointed = value;
+        lastCheckpointed = meta.sequence;
+        lastCheckpointedByteOffset = meta.byteOffset;
+    }
+    else if (in.gcount() == static_cast<std::streamsize>(sizeof(SequenceNumber::Underlying)))
+    {
+        lastCheckpointed = meta.sequence;
+        lastCheckpointedByteOffset = 0;
     }
     else
     {
         lastCheckpointed.reset();
+        lastCheckpointedByteOffset.reset();
     }
     return lastCheckpointed;
+}
+
+std::optional<uint64_t> ReplayableSourceStorage::loadLastCheckpointedByteOffset()
+{
+    std::scoped_lock lock(mutex);
+    if (!lastCheckpointedByteOffset.has_value() && std::filesystem::exists(metaFilePath))
+    {
+        std::ifstream in(metaFilePath, std::ios::binary);
+        if (!in.is_open())
+        {
+            return std::nullopt;
+        }
+
+        CheckpointMeta meta{};
+        in.read(reinterpret_cast<char*>(&meta), sizeof(meta));
+        if (in.gcount() == static_cast<std::streamsize>(sizeof(meta)))
+        {
+            lastCheckpointed = meta.sequence;
+            lastCheckpointedByteOffset = meta.byteOffset;
+        }
+        else if (in.gcount() == static_cast<std::streamsize>(sizeof(SequenceNumber::Underlying)))
+        {
+            lastCheckpointed = meta.sequence;
+            lastCheckpointedByteOffset = 0;
+        }
+    }
+    return lastCheckpointedByteOffset;
+}
+
+std::optional<uint64_t> ReplayableSourceStorage::loadRecoveryByteOffset()
+{
+    std::scoped_lock lock(mutex);
+    if (!lastCheckpointedByteOffset.has_value() && std::filesystem::exists(metaFilePath))
+    {
+        std::ifstream in(metaFilePath, std::ios::binary);
+        if (!in.is_open())
+        {
+            return std::nullopt;
+        }
+
+        CheckpointMeta meta{};
+        in.read(reinterpret_cast<char*>(&meta), sizeof(meta));
+        if (in.gcount() == static_cast<std::streamsize>(sizeof(meta)))
+        {
+            lastCheckpointed = meta.sequence;
+            lastCheckpointedByteOffset = meta.byteOffset;
+        }
+        else if (in.gcount() == static_cast<std::streamsize>(sizeof(SequenceNumber::Underlying)))
+        {
+            lastCheckpointed = meta.sequence;
+            lastCheckpointedByteOffset = 0;
+        }
+    }
+
+    const auto files = listPersistedFiles();
+    if (!lastCheckpointedByteOffset.has_value() && files.empty())
+    {
+        return std::nullopt;
+    }
+
+    uint64_t byteOffset = lastCheckpointedByteOffset.value_or(0);
+    for (const auto& file : files)
+    {
+        if (lastCheckpointed && file.sequence <= *lastCheckpointed)
+        {
+            continue;
+        }
+        byteOffset += file.dataSize;
+    }
+    return byteOffset;
 }
 
 void ReplayableSourceStorage::pruneCoveredFiles(SequenceNumber::Underlying checkpointSequence)
 {
     auto files = listPersistedFiles();
-    for (const auto& [seq, path] : files)
+    for (const auto& file : files)
     {
-        if (seq <= checkpointSequence)
+        if (file.sequence <= checkpointSequence)
         {
             std::error_code ec;
-            std::filesystem::remove(path, ec);
+            std::filesystem::remove(file.path, ec);
         }
     }
 }
 
-std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> ReplayableSourceStorage::listPersistedFiles()
+std::vector<ReplayableSourceStorage::PersistedFileInfo> ReplayableSourceStorage::listPersistedFiles()
 {
-    std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> files;
+    std::vector<PersistedFileInfo> files;
     if (!std::filesystem::exists(storageDir))
     {
         return files;
@@ -166,10 +245,10 @@ std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> Replay
             continue;
         }
 
-        files.emplace_back(header.sequence, entry.path());
+        files.push_back(PersistedFileInfo{.sequence = header.sequence, .dataSize = header.dataSize, .path = entry.path()});
     }
 
-    std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
+    std::sort(files.begin(), files.end(), [](const auto& lhs, const auto& rhs) { return lhs.sequence < rhs.sequence; });
     return files;
 }
 
@@ -181,8 +260,22 @@ void ReplayableSourceStorage::markCheckpoint(SequenceNumber sequenceNumber)
     {
         return;
     }
+    uint64_t byteOffset = lastCheckpointedByteOffset.value_or(0);
+    for (const auto& file : listPersistedFiles())
+    {
+        if (lastCheckpointed && file.sequence <= *lastCheckpointed)
+        {
+            continue;
+        }
+        if (file.sequence > checkpointValue)
+        {
+            break;
+        }
+        byteOffset += file.dataSize;
+    }
     lastCheckpointed = checkpointValue;
-    writeCheckpointMeta(sequenceNumber);
+    lastCheckpointedByteOffset = byteOffset;
+    writeCheckpointMeta(sequenceNumber, byteOffset);
     pruneCoveredFiles(checkpointValue);
 }
 
@@ -196,19 +289,19 @@ std::optional<SequenceNumber> ReplayableSourceStorage::replayPending(
     auto files = listPersistedFiles();
     const auto checkpointSequence = lastCheckpointed;
     std::optional<SequenceNumber> lastReplayed;
-    for (const auto& [seq, path] : files)
+    for (const auto& file : files)
     {
         if (stopToken.stop_requested())
         {
             continue;
         }
 
-        if (checkpointSequence && seq <= *checkpointSequence)
+        if (checkpointSequence && file.sequence <= *checkpointSequence)
         {
             continue;
         }
 
-        std::ifstream in(path, std::ios::binary);
+        std::ifstream in(file.path, std::ios::binary);
         if (!in.is_open())
         {
             continue;

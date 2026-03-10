@@ -78,6 +78,12 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NO
     program.add_argument("--workingDir")
         .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
               "/nes-systests/");
+    program.add_argument("--deterministic-inline-source-paths")
+        .flag()
+        .help("use deterministic file paths for inline systest data to keep plan fingerprints stable across reruns");
+    program.add_argument("--restart-between-tuples")
+        .flag()
+        .help("restart the local worker after each tuple using a dedicated systest file source plugin");
 
     /// server/remote mode
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
@@ -369,9 +375,39 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv) /// NO
         config.workingDir = program.get<std::string>("--workingDir");
     }
 
+    if (program.is_used("--deterministic-inline-source-paths"))
+    {
+        config.deterministicInlineSourcePaths = true;
+    }
+
+    if (program.is_used("--restart-between-tuples"))
+    {
+        config.restartBetweenTuples = true;
+        config.deterministicInlineSourcePaths = true;
+    }
+
     if (program.is_used("--endless"))
     {
         config.endlessMode = true;
+    }
+
+    if (config.restartBetweenTuples.getValue())
+    {
+        if (program.is_used("-s"))
+        {
+            std::cerr << "--restart-between-tuples only supports local systest execution.\n";
+            std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+        }
+        if (program.is_used("-b"))
+        {
+            std::cerr << "--restart-between-tuples cannot be combined with benchmarking mode.\n";
+            std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+        }
+        if (program.is_used("--endless"))
+        {
+            std::cerr << "--restart-between-tuples cannot be combined with endless mode.\n";
+            std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+        }
     }
 
     if (program.is_used("--list"))

@@ -72,6 +72,21 @@ namespace NES
 namespace
 {
 using OverrideQueriesMap = std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
+using OverrideQueryBatch = std::pair<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>>;
+
+std::vector<OverrideQueryBatch> groupQueriesByContiguousOverride(const std::vector<Systest::SystestQuery>& queries)
+{
+    std::vector<OverrideQueryBatch> batches;
+    for (const auto& query : queries)
+    {
+        if (batches.empty() || batches.back().first != query.configurationOverride)
+        {
+            batches.emplace_back(query.configurationOverride, std::vector<Systest::SystestQuery>{});
+        }
+        batches.back().second.push_back(query);
+    }
+    return batches;
+}
 
 void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueries, const size_t totalQueries)
 {
@@ -290,7 +305,12 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{
-            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(), config.clusterConfig};
+            config.workingDir.getValue(),
+            config.testDataDir.getValue(),
+            config.configDir.getValue(),
+            config.clusterConfig,
+            config.deterministicInlineSourcePaths.getValue(),
+            config.restartBetweenTuples.getValue()};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -350,6 +370,14 @@ SystestExecutorResult SystestExecutor::executeSystests()
             {
                 singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
             }
+            if (config.restartBetweenTuples.getValue())
+            {
+                const auto checkpointDirectory = std::filesystem::path(config.workingDir.getValue()) / "checkpoints";
+                singleNodeWorkerConfiguration.workerConfiguration.checkpointConfiguration.checkpointDirectory.setValue(
+                    checkpointDirectory.string());
+                singleNodeWorkerConfiguration.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.setValue(1);
+                singleNodeWorkerConfiguration.workerConfiguration.checkpointConfiguration.recoverFromCheckpoint.setValue(false);
+            }
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
@@ -388,24 +416,30 @@ SystestExecutorResult SystestExecutor::executeSystests()
             }
             else
             {
-                std::unordered_map<Systest::ConfigurationOverride, std::vector<Systest::SystestQuery>> queriesByOverride;
-                for (const auto& query : queries)
-                {
-                    queriesByOverride[query.configurationOverride].push_back(query);
-                }
-
                 progressTracker.reset();
                 progressTracker.setTotalQueries(queries.size());
-                for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
+                for (const auto& [overrideConfig, queriesForConfig] : groupQueriesByContiguousOverride(queries))
                 {
                     auto configCopy = singleNodeWorkerConfiguration;
                     for (const auto& [key, value] : overrideConfig.overrideParameters)
                     {
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
+                    if (config.restartBetweenTuples.getValue())
+                    {
+                        const auto checkpointDirectory = std::filesystem::path(config.workingDir.getValue()) / "checkpoints";
+                        configCopy.workerConfiguration.checkpointConfiguration.checkpointDirectory.setValue(checkpointDirectory.string());
+                        configCopy.workerConfiguration.checkpointConfiguration.checkpointIntervalMs.setValue(1);
+                        configCopy.workerConfiguration.checkpointConfiguration.recoverFromCheckpoint.setValue(false);
+                    }
 
                     auto failed = runQueriesAtLocalWorker(
-                        queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker);
+                        queriesForConfig,
+                        numberConcurrentQueries,
+                        config.clusterConfig,
+                        configCopy,
+                        config.restartBetweenTuples.getValue(),
+                        progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

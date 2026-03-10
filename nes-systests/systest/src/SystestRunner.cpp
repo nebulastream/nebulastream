@@ -42,12 +42,17 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <RestartingEmbeddedWorkerQueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/base.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
+#include <fmt/ostream.h>
+#include <fmt/ranges.h>
+#include <folly/MPMCQueue.h>
+#include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -539,12 +544,19 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const uint64_t numConcurrentQueries,
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
+    const bool restartBetweenTuples,
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
     for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : clusterConfig.workers)
     {
         catalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
+    }
+
+    if (restartBetweenTuples)
+    {
+        QuerySubmitter submitter(std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration));
+        return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
     }
 
     QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));

@@ -12,6 +12,7 @@
 
 add_source_files(nes-systest-lib
         SystestExecutor.cpp
+        RestartingEmbeddedWorkerQueryManager.cpp
         SystestParser.cpp
         SystestRunner.cpp
         SystestProgressTracker.cpp

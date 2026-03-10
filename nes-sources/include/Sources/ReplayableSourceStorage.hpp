@@ -57,6 +57,8 @@ public:
 
     /// Load previously persisted checkpoint metadata if present.
     std::optional<SequenceNumber::Underlying> loadLastCheckpointedSequence();
+    std::optional<uint64_t> loadLastCheckpointedByteOffset();
+    std::optional<uint64_t> loadRecoveryByteOffset();
 
 private:
     #pragma pack(push, 1)
@@ -67,12 +69,25 @@ private:
         uint8_t lastChunk{0};
         uint64_t dataSize{0};
     };
+
+    struct CheckpointMeta
+    {
+        uint64_t sequence{0};
+        uint64_t byteOffset{0};
+    };
     #pragma pack(pop)
 
     void ensureDirectory();
-    void writeCheckpointMeta(SequenceNumber sequenceNumber);
+    void writeCheckpointMeta(SequenceNumber sequenceNumber, uint64_t byteOffset);
     void pruneCoveredFiles(SequenceNumber::Underlying checkpointSequence);
-    std::vector<std::pair<SequenceNumber::Underlying, std::filesystem::path>> listPersistedFiles();
+    struct PersistedFileInfo
+    {
+        SequenceNumber::Underlying sequence;
+        uint64_t dataSize;
+        std::filesystem::path path;
+    };
+
+    std::vector<PersistedFileInfo> listPersistedFiles();
 
     OriginId originId;
     PhysicalSourceId physicalSourceId;
@@ -80,6 +95,7 @@ private:
     std::filesystem::path metaFilePath;
     std::mutex mutex;
     std::optional<SequenceNumber::Underlying> lastCheckpointed;
+    std::optional<uint64_t> lastCheckpointedByteOffset;
 };
 
 }

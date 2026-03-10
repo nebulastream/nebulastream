@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <ostream>
 #include <stop_token>
@@ -73,6 +74,7 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const Source& source);
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
+    virtual void setCheckpointRecoveryByteOffset(uint64_t) { }
 
 protected:
     /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.

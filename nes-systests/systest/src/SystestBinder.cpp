@@ -31,6 +31,7 @@
 #include <string>
 #include <string_view>
 #include <thread>
+#include <unistd.h>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -366,17 +367,30 @@ struct SystestBinder::Impl
         std::filesystem::path workingDir,
         std::filesystem::path testDataDir,
         std::filesystem::path configDir,
-        SystestClusterConfiguration clusterConfiguration)
+        SystestClusterConfiguration clusterConfiguration,
+        bool deterministicInlineSourcePaths,
+        bool restartBetweenTuples)
         : workingDir(std::move(workingDir))
         , testDataDir(std::move(testDataDir))
         , configDir(std::move(configDir))
         , clusterConfiguration(std::move(clusterConfiguration))
+        , deterministicInlineSourcePaths(deterministicInlineSourcePaths)
+        , restartBetweenTuples(restartBetweenTuples)
     {
         this->workerCatalog = std::make_shared<WorkerCatalog>();
         for (const auto& [host, data, capacity, recordingStorageBudget, downstream, config] : this->clusterConfiguration.workers)
         {
             workerCatalog->addWorker(host, data, capacity, downstream, config, recordingStorageBudget);
         }
+    }
+
+    [[nodiscard]] std::string rewriteSourceTypeForTupleRestart(std::string sourceType) const
+    {
+        if (restartBetweenTuples && sourceType == "File")
+        {
+            return "SystestTupleFile";
+        }
+        return sourceType;
     }
 
     static std::vector<ConfigurationOverride>
@@ -495,6 +509,7 @@ struct SystestBinder::Impl
                     testfile.file.string());
             });
 
+        std::ranges::stable_sort(buildSystests, {}, &SystestQuery::queryIdInFile);
         return buildSystests;
     }
 
@@ -507,7 +522,42 @@ struct SystestBinder::Impl
         }
     }
 
-    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
+    [[nodiscard]] static std::string sanitizePathComponent(std::string_view value)
+    {
+        std::string sanitized;
+        sanitized.reserve(value.size());
+        for (const auto ch : value)
+        {
+            const auto isAsciiAlphaNumeric = (ch >= 'a' && ch <= 'z') || (ch >= 'A' && ch <= 'Z') || (ch >= '0' && ch <= '9');
+            sanitized.push_back(isAsciiAlphaNumeric ? ch : '_');
+        }
+        if (sanitized.empty())
+        {
+            sanitized = "inline";
+        }
+        return sanitized;
+    }
+
+    [[nodiscard]] static uint64_t hashInlineTestData(const std::vector<std::string>& tuples)
+    {
+        constexpr uint64_t fnvOffsetBasis = 1469598103934665603ULL;
+        constexpr uint64_t fnvPrime = 1099511628211ULL;
+
+        uint64_t hash = fnvOffsetBasis;
+        for (const auto& tuple : tuples)
+        {
+            for (const auto ch : tuple)
+            {
+                hash ^= static_cast<uint8_t>(ch);
+                hash *= fnvPrime;
+            }
+            hash ^= static_cast<uint8_t>('\n');
+            hash *= fnvPrime;
+        }
+        return hash;
+    }
+
+    [[nodiscard]] std::filesystem::path ensureSourceDirectory() const
     {
         auto sourceDir = workingDir / "sources";
         if (not is_directory(sourceDir))
@@ -515,8 +565,33 @@ struct SystestBinder::Impl
             create_directory(sourceDir);
             std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
         }
+        return sourceDir;
+    }
 
-        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
+    [[nodiscard]] std::filesystem::path generateSourceFilePath() const
+    {
+        const auto sourceDir = ensureSourceDirectory();
+        auto pathTemplate = (sourceDir / "inline_XXXXXX").string();
+        std::vector<char> pathBuffer(pathTemplate.begin(), pathTemplate.end());
+        pathBuffer.push_back('\0');
+        const auto fileDescriptor = mkstemp(pathBuffer.data());
+        if (fileDescriptor < 0)
+        {
+            throw TestException("Failed to create a temporary systest inline source file in {}", sourceDir.string());
+        }
+        close(fileDescriptor);
+        return pathBuffer.data();
+    }
+
+    [[nodiscard]] std::filesystem::path generateDeterministicSourceFilePath(
+        const PhysicalSourceConfig& physicalSourceConfig, const std::vector<std::string>& tuples) const
+    {
+        const auto sourceDir = ensureSourceDirectory();
+        return sourceDir
+            / fmt::format(
+                "{}_{:016x}.csv",
+                sanitizePathComponent(physicalSourceConfig.logical),
+                hashInlineTestData(tuples));
     }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }
@@ -529,7 +604,9 @@ struct SystestBinder::Impl
         switch (testData.first)
         {
             case TestDataIngestionType::INLINE: {
-                const auto testFile = generateSourceFilePath();
+                const auto testFile = deterministicInlineSourcePaths
+                    ? generateDeterministicSourceFilePath(physicalSourceConfig, testData.second)
+                    : generateSourceFilePath();
                 return SourceDataProvider::provideInlineDataSource(
                     std::move(physicalSourceConfig), std::move(testData.second), std::move(sourceThreads), testFile);
             }
@@ -563,7 +640,7 @@ struct SystestBinder::Impl
 
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.getRawValue(),
-            .type = statement.sourceType,
+            .type = rewriteSourceTypeForTupleRestart(statement.sourceType),
             .parserConfig = statement.parserConfig,
             .sourceConfig = sourceConfigCopy};
 
@@ -653,6 +730,7 @@ struct SystestBinder::Impl
 
         if (const auto inlineSource = current.tryGetAs<InlineSourceLogicalOperator>())
         {
+            const auto rewrittenSourceType = rewriteSourceTypeForTupleRestart(inlineSource.value()->getSourceType());
             auto sourceConfig = inlineSource.value()->getSourceConfig();
             auto parserConfig = inlineSource.value()->getParserConfig();
 
@@ -669,10 +747,12 @@ struct SystestBinder::Impl
 
             sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
-            if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
+            if (rewrittenSourceType != inlineSource.value()->getSourceType()
+                || sourceConfig != inlineSource.value()->getSourceConfig()
+                || parserConfig != inlineSource.value()->getParserConfig())
             {
                 const InlineSourceLogicalOperator newOperator{
-                    inlineSource.value()->getSourceType(), inlineSource.value()->getSchema(), sourceConfig, parserConfig};
+                    rewrittenSourceType, inlineSource.value()->getSchema(), sourceConfig, parserConfig};
 
                 return newOperator.withChildren(newChildren);
             }
@@ -1013,14 +1093,24 @@ private:
     SystestClusterConfiguration clusterConfiguration;
 
     SharedPtr<WorkerCatalog> workerCatalog;
+    bool deterministicInlineSourcePaths = false;
+    bool restartBetweenTuples = false;
 };
 
 SystestBinder::SystestBinder(
     const std::filesystem::path& workingDir,
     const std::filesystem::path& testDataDir,
     const std::filesystem::path& configDir,
-    SystestClusterConfiguration clusterConfiguration)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, std::move(clusterConfiguration)))
+    SystestClusterConfiguration clusterConfiguration,
+    bool deterministicInlineSourcePaths,
+    bool restartBetweenTuples)
+    : impl(std::make_unique<Impl>(
+          workingDir,
+          testDataDir,
+          configDir,
+          std::move(clusterConfiguration),
+          deterministicInlineSourcePaths,
+          restartBetweenTuples))
 {
 }
 

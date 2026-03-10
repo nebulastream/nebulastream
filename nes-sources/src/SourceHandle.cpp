@@ -44,6 +44,7 @@ SourceHandle::SourceHandle(
         std::move(originId),
         physicalSourceId,
         CheckpointManager::getCheckpointDirectory(),
+        CheckpointManager::getCheckpointRecoveryDirectory(),
         std::move(bufferPool),
         std::move(sourceImplementation));
 }
@@ -68,6 +69,11 @@ SourceReturnType::TryStopResult SourceHandle::tryStop(const std::chrono::millise
 OriginId SourceHandle::getSourceId() const
 {
     return this->sourceThread->getOriginId();
+}
+
+std::shared_ptr<SourceCheckpointProgress> SourceHandle::getCheckpointProgress() const
+{
+    return this->sourceThread->getCheckpointProgress();
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)

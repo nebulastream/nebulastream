@@ -35,7 +35,9 @@ public:
         const std::filesystem::path& workingDir,
         const std::filesystem::path& testDataDir,
         const std::filesystem::path& configDir,
-        SystestClusterConfiguration clusterConfig);
+        SystestClusterConfiguration clusterConfig,
+        bool deterministicInlineSourcePaths = false,
+        bool restartBetweenTuples = false);
 
     /// @return the loaded systest queries and the number of loaded files
     [[nodiscard]] std::pair<std::vector<SystestQuery>, size_t> loadOptimizeQueries(const TestFileMap& discoveredTestFiles);
