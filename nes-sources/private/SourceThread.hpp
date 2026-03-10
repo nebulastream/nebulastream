@@ -27,6 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/SourceCheckpointProgress.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -67,6 +68,7 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         PhysicalSourceId physicalSourceId,
         std::filesystem::path replayBaseDir,
+        std::filesystem::path replayRecoveryBaseDir,
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<Source> sourceImplementation);
     ~SourceThread();
@@ -92,6 +94,7 @@ public:
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
+    [[nodiscard]] std::shared_ptr<SourceCheckpointProgress> getCheckpointProgress() const;
 
     friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
 
@@ -99,13 +102,16 @@ protected:
     OriginId originId;
     PhysicalSourceId physicalSourceId;
     std::filesystem::path replayBaseDir;
+    std::filesystem::path replayRecoveryBaseDir;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
     std::unique_ptr<Source> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
-    std::unique_ptr<ReplayableSourceStorage> replayStorage;
-    std::atomic<SequenceNumber::Underlying> lastEmittedSequence;
-    std::optional<std::string> checkpointCallbackId;
+    std::shared_ptr<ReplayableSourceStorage> replayStorage;
+    std::shared_ptr<SourceCheckpointProgress> checkpointProgress;
+    std::shared_ptr<std::atomic<SequenceNumber::Underlying>> preparedCheckpointSequence;
+    std::optional<std::string> prepareCheckpointCallbackId;
+    std::optional<std::string> commitCheckpointCallbackId;
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.

@@ -48,6 +48,14 @@ public:
         = {"test_query_numbers", "Directly specified test files. If directly specified no lookup at the test discovery dir will happen."};
     StringOption testFileExtension = {"test_file_extension", ".test", "File extension to find test files for. Default: .test"};
     StringOption workingDir = {"working_dir", PATH_TO_BINARY_DIR "/nes-systests/working-dir", "Directory with source and result files"};
+    BoolOption deterministicInlineSourcePaths
+        = {"deterministic_inline_source_paths",
+           "false",
+           "Use deterministic file paths for inline systest data to keep plan fingerprints stable across reruns"};
+    BoolOption restartBetweenTuples
+        = {"restart_between_tuples",
+           "false",
+           "Continuously crash and recover the local worker after each parsed tuple via a dedicated systest source plugin"};
     BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
     UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
     BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};

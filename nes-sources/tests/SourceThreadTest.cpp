@@ -17,11 +17,13 @@
 #include <chrono>
 #include <concepts>
 #include <cstddef>
+#include <filesystem>
 #include <iterator>
 #include <memory>
 #include <mutex>
 #include <ranges>
 #include <source_location>
+#include <string>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -30,6 +32,9 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/CheckpointManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/ReplayableSourceStorage.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -52,6 +57,43 @@ constexpr std::chrono::milliseconds DEFAULT_LONG_TIMEOUT = std::chrono::millisec
 constexpr size_t DEFAULT_BUFFER_SIZE = 8192;
 constexpr size_t DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER = 23;
 constexpr size_t DEFAULT_NUMBER_OF_LOCAL_BUFFERS = 100;
+
+std::filesystem::path createReplayBaseDir(const std::source_location location = std::source_location::current())
+{
+    auto replayDir = std::filesystem::temp_directory_path();
+    replayDir /= "nes-source-thread-test-" + std::to_string(location.line());
+    std::error_code ec;
+    std::filesystem::remove_all(replayDir, ec);
+    std::filesystem::create_directories(replayDir, ec);
+    return replayDir;
+}
+
+std::filesystem::path createReplayStorageDirectory(
+    const std::filesystem::path& replayBaseDir, const OriginId originId, const PhysicalSourceId physicalSourceId)
+{
+    return replayBaseDir / "source_replay"
+        / ("origin_" + std::to_string(originId.getRawValue()) + "_ps_" + std::to_string(physicalSourceId.getRawValue()));
+}
+
+TupleBuffer createPersistedReplayBuffer(
+    AbstractBufferProvider& bufferManager, const OriginId originId, const SequenceNumber sequenceNumber, const std::byte value)
+{
+    auto buffer = bufferManager.getBufferBlocking();
+    auto data = buffer.getAvailableMemoryArea<std::byte>();
+    data[0] = value;
+    buffer.setNumberOfTuples(1);
+    buffer.setOriginId(originId);
+    buffer.setSequenceNumber(sequenceNumber);
+    buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
+    buffer.setLastChunk(true);
+    return buffer;
+}
+
+class CheckpointManagerScopeGuard
+{
+public:
+    ~CheckpointManagerScopeGuard() { CheckpointManager::shutdown(); }
+};
 
 }
 
@@ -180,8 +222,10 @@ TEST_F(SourceThreadTest, DestructionOfStartedSourceThread)
         SourceThread sourceThread(
             std::move(backpressureListener),
             INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
             bm,
-
             std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
@@ -206,7 +250,13 @@ TEST_F(SourceThreadTest, NoOpDestruction)
     auto control = std::make_shared<TestSourceControl>();
     {
         const SourceThread sourceThread(
-            backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
     }
 
     verify_no_events(recorder);
@@ -225,7 +275,14 @@ TEST_F(SourceThreadTest, FailureDuringRunning)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectError("I should fail");
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -252,7 +309,14 @@ TEST_F(SourceThreadTest, FailureDuringOpen)
     auto control = std::make_shared<TestSourceControl>();
     control->failDuringOpen(std::chrono::milliseconds(0));
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -281,7 +345,14 @@ TEST_F(SourceThreadTest, SimpleCaseWithInternalStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -310,7 +381,14 @@ TEST_F(SourceThreadTest, EoSFromSourceWithStop)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
@@ -343,7 +421,14 @@ TEST_F(SourceThreadTest, ApplyBackbressure)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        SourceThread sourceThread(backpressureListener, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
@@ -379,7 +464,14 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     control->injectData(std::vector{DEFAULT_BUFFER_SIZE, std::byte(0)}, DEFAULT_NUMBER_OF_TUPLES_IN_BUFFER);
     control->injectEoS();
     {
-        SourceThread sourceThread(ingestion, INITIAL<OriginId>, bm, std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        SourceThread sourceThread(
+            ingestion,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            createReplayBaseDir(),
+            {},
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
         verify_non_blocking_start(
             sourceThread,
             [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const auto&)
@@ -398,6 +490,53 @@ TEST_F(SourceThreadTest, StopDuringBackpressure)
     EXPECT_TRUE(control->wasOpened());
     EXPECT_TRUE(control->wasClosed());
     EXPECT_TRUE(control->wasDestroyed());
+}
+
+TEST_F(SourceThreadTest, RecoveryRestoresReplayStateFromFrozenSnapshot)
+{
+    auto bm = BufferManager::create();
+    auto [backpressureController, backpressureListener] = createBackpressureChannel();
+    RecordingEmitFunction recorder(*bm);
+    auto control = std::make_shared<TestSourceControl>();
+    const auto checkpointDir = createReplayBaseDir();
+
+    CheckpointManager::initialize(checkpointDir, std::chrono::milliseconds{0}, true);
+    const CheckpointManagerScopeGuard checkpointManagerScopeGuard;
+
+    const auto liveReplayStorageDir
+        = createReplayStorageDirectory(CheckpointManager::getCheckpointDirectory(), INITIAL<OriginId>, INITIAL<PhysicalSourceId>);
+    ReplayableSourceStorage liveReplayStorage(INITIAL<OriginId>, liveReplayStorageDir, INITIAL<PhysicalSourceId>);
+    liveReplayStorage.persistBuffer(createPersistedReplayBuffer(*bm, INITIAL<OriginId>, SequenceNumber(7), std::byte{7}));
+
+    const auto recoveryReplayStorageDir = createReplayStorageDirectory(
+        CheckpointManager::getCheckpointRecoveryDirectory(), INITIAL<OriginId>, INITIAL<PhysicalSourceId>);
+    ReplayableSourceStorage recoveryReplayStorage(INITIAL<OriginId>, recoveryReplayStorageDir, INITIAL<PhysicalSourceId>);
+    recoveryReplayStorage.persistBuffer(createPersistedReplayBuffer(*bm, INITIAL<OriginId>, SequenceNumber(1), std::byte{1}));
+
+    {
+        SourceThread sourceThread(
+            backpressureListener,
+            INITIAL<OriginId>,
+            INITIAL<PhysicalSourceId>,
+            CheckpointManager::getCheckpointDirectory(),
+            CheckpointManager::getCheckpointRecoveryDirectory(),
+            bm,
+            std::make_unique<TestSource>(INITIAL<OriginId>, control));
+        verify_non_blocking_start(
+            sourceThread,
+            [&](const OriginId originId, SourceReturnType::SourceReturnType ret, const std::stop_token&)
+            {
+                recorder(originId, std::move(ret));
+                return SourceReturnType::EmitResult::SUCCESS;
+            });
+        wait_for_emits(recorder, 1);
+        verify_non_blocking_stop(sourceThread);
+    }
+
+    verify_number_of_emits(recorder, 1);
+    const auto* data = std::get_if<SourceReturnType::Data>(&recorder.recordedEmits.lock()->front());
+    ASSERT_NE(data, nullptr);
+    EXPECT_EQ(data->buffer.getSequenceNumber(), SequenceNumber(1));
 }
 
 

@@ -50,25 +50,34 @@ SourceThread::SourceThread(
     OriginId originId,
     PhysicalSourceId physicalSourceId,
     std::filesystem::path replayBaseDir,
+    std::filesystem::path replayRecoveryBaseDir,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
     , physicalSourceId(physicalSourceId)
     , replayBaseDir(std::move(replayBaseDir))
+    , replayRecoveryBaseDir(std::move(replayRecoveryBaseDir))
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , started(false)
     , backpressureListener(std::move(backpressureListener))
-    , lastEmittedSequence(INVALID_SEQ_NUMBER.getRawValue())
+    , checkpointProgress(std::make_shared<SourceCheckpointProgress>())
+    , preparedCheckpointSequence(std::make_shared<std::atomic<SequenceNumber::Underlying>>(INVALID_SEQ_NUMBER.getRawValue()))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
 
 SourceThread::~SourceThread()
 {
-    if (checkpointCallbackId)
+    if (prepareCheckpointCallbackId)
     {
-        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+        CheckpointManager::unregisterCallback(*prepareCheckpointCallbackId);
+        prepareCheckpointCallbackId.reset();
+    }
+    if (commitCheckpointCallbackId)
+    {
+        CheckpointManager::unregisterCallback(*commitCheckpointCallbackId);
+        commitCheckpointCallbackId.reset();
     }
 }
 
@@ -96,6 +105,51 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 }
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
+
+std::filesystem::path getReplayStorageDirectory(
+    const std::filesystem::path& replayBaseDir, const OriginId originId, const PhysicalSourceId physicalSourceId)
+{
+    return replayBaseDir / "source_replay" / fmt::format("origin_{}_ps_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+}
+
+void restoreReplayStorageFromRecoverySnapshot(
+    const std::filesystem::path& replayStorageDir, const std::filesystem::path& recoveryReplayStorageDir)
+{
+    std::error_code ec;
+    std::filesystem::remove_all(replayStorageDir, ec);
+    if (ec)
+    {
+        throw CheckpointError("Failed to reset source replay directory {}; {}", replayStorageDir.string(), ec.message());
+    }
+    if (!std::filesystem::exists(recoveryReplayStorageDir))
+    {
+        return;
+    }
+
+    const auto replayStorageParent = replayStorageDir.parent_path();
+    if (!replayStorageParent.empty())
+    {
+        std::filesystem::create_directories(replayStorageParent, ec);
+        if (ec)
+        {
+            throw CheckpointError("Failed to create source replay directory {}; {}", replayStorageParent.string(), ec.message());
+        }
+    }
+
+    std::filesystem::copy(
+        recoveryReplayStorageDir,
+        replayStorageDir,
+        std::filesystem::copy_options::recursive | std::filesystem::copy_options::overwrite_existing,
+        ec);
+    if (ec)
+    {
+        throw CheckpointError(
+            "Failed to restore source replay snapshot from {} to {}; {}",
+            recoveryReplayStorageDir.string(),
+            replayStorageDir.string(),
+            ec.message());
+    }
+}
 
 SourceImplementationTermination dataSourceThreadRoutine(
     const std::stop_token& stopToken,
@@ -163,8 +217,7 @@ void dataSourceThread(
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    ReplayableSourceStorage* replayStorage,
-    std::atomic<SequenceNumber::Underlying>* lastEmittedSequence)
+    ReplayableSourceStorage* replayStorage)
 {
     SequenceNumber::Underlying sequenceNumberGenerator = SequenceNumber::INITIAL;
     std::optional<SequenceNumber::Underlying> lastCheckpointedSequence;
@@ -184,14 +237,6 @@ void dataSourceThread(
         {
             const auto sequenceNumber = SequenceNumber(sequenceNumberGenerator++);
             addBufferMetaData(originId, sequenceNumber, buffer);
-            if (lastEmittedSequence)
-            {
-                lastEmittedSequence->store(sequenceNumber.getRawValue(), std::memory_order_release);
-            }
-        }
-        else if (lastEmittedSequence)
-        {
-            lastEmittedSequence->store(buffer.getSequenceNumber().getRawValue(), std::memory_order_release);
         }
         if (replayStorage && shouldAddMetadata)
         {
@@ -207,7 +252,9 @@ void dataSourceThread(
             if (const auto replayed = replayStorage->replayPending(*bufferProvider, dataEmit, stopToken))
             {
                 sequenceNumberGenerator
-                    = std::max(sequenceNumberGenerator, static_cast<SequenceNumber::Underlying>(replayed->getRawValue() + 1));
+                    = std::max(
+                        sequenceNumberGenerator,
+                        static_cast<SequenceNumber::Underlying>(replayed->getRawValue() + 1));
             }
         }
 
@@ -240,29 +287,54 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     this->terminationFuture = terminationPromise.get_future();
 
     const bool enableReplay = CheckpointManager::isCheckpointingEnabled() || CheckpointManager::shouldRecoverFromCheckpoint();
-    lastEmittedSequence.store(INVALID_SEQ_NUMBER.getRawValue(), std::memory_order_release);
+    checkpointProgress->reset();
+    preparedCheckpointSequence->store(INVALID_SEQ_NUMBER.getRawValue(), std::memory_order_release);
     if (enableReplay)
     {
-        const auto storageDir
-            = replayBaseDir / "source_replay"
-            / fmt::format("origin_{}_ps_{}", originId.getRawValue(), physicalSourceId.getRawValue());
-        replayStorage = std::make_unique<ReplayableSourceStorage>(originId, storageDir, physicalSourceId);
-
-        if (CheckpointManager::isCheckpointingEnabled() && !checkpointCallbackId)
+        const auto storageDir = getReplayStorageDirectory(replayBaseDir, originId, physicalSourceId);
+        if (CheckpointManager::shouldRecoverFromCheckpoint() && !replayRecoveryBaseDir.empty() && replayRecoveryBaseDir != replayBaseDir)
         {
-            checkpointCallbackId
-                = fmt::format("source_replay_{}_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+            restoreReplayStorageFromRecoverySnapshot(
+                storageDir,
+                getReplayStorageDirectory(replayRecoveryBaseDir, originId, physicalSourceId));
+        }
+        replayStorage = std::make_shared<ReplayableSourceStorage>(originId, storageDir, physicalSourceId);
+        if (CheckpointManager::shouldRecoverFromCheckpoint())
+        {
+            if (const auto checkpointedByteOffset = replayStorage->loadRecoveryByteOffset())
+            {
+                sourceImplementation->setCheckpointRecoveryByteOffset(*checkpointedByteOffset);
+            }
+        }
+
+        if (CheckpointManager::isCheckpointingEnabled() && !prepareCheckpointCallbackId && !commitCheckpointCallbackId)
+        {
+            prepareCheckpointCallbackId
+                = fmt::format("checkpoint_source_replay_prepare_{}_{}", originId.getRawValue(), physicalSourceId.getRawValue());
+            commitCheckpointCallbackId
+                = fmt::format("source_replay_commit_{}_{}", originId.getRawValue(), physicalSourceId.getRawValue());
             CheckpointManager::registerCallback(
-                *checkpointCallbackId,
-                [this]()
+                *prepareCheckpointCallbackId,
+                [checkpointProgress = checkpointProgress, preparedCheckpointSequence = preparedCheckpointSequence]
                 {
-                    const auto lastSeq = lastEmittedSequence.load(std::memory_order_acquire);
-                    if (lastSeq == INVALID_SEQ_NUMBER.getRawValue() || !replayStorage)
+                    preparedCheckpointSequence->store(
+                        checkpointProgress ? checkpointProgress->getHighestContiguousCompletedSequence()
+                                           : INVALID_SEQ_NUMBER.getRawValue(),
+                        std::memory_order_release);
+                },
+                CheckpointManager::CallbackPhase::Prepare);
+            CheckpointManager::registerCallback(
+                *commitCheckpointCallbackId,
+                [preparedCheckpointSequence = preparedCheckpointSequence, replayStorage = replayStorage]
+                {
+                    const auto preparedSequence = preparedCheckpointSequence->load(std::memory_order_acquire);
+                    if (preparedSequence == INVALID_SEQ_NUMBER.getRawValue() || !replayStorage)
                     {
                         return;
                     }
-                    replayStorage->markCheckpoint(SequenceNumber(lastSeq));
-                });
+                    replayStorage->markCheckpoint(SequenceNumber(preparedSequence));
+                },
+                CheckpointManager::CallbackPhase::Commit);
         }
     }
 
@@ -275,8 +347,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
         std::move(emitFunction),
         originId,
         localBufferManager,
-        replayStorage.get(),
-        enableReplay ? &lastEmittedSequence : nullptr);
+        replayStorage.get());
     thread = std::move(sourceThread);
     return true;
 }
@@ -336,6 +407,11 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
 OriginId SourceThread::getOriginId() const
 {
     return this->originId;
+}
+
+std::shared_ptr<SourceCheckpointProgress> SourceThread::getCheckpointProgress() const
+{
+    return checkpointProgress;
 }
 
 std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)

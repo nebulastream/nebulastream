@@ -19,6 +19,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/SystestTupleCrashControl.hpp>
 #include <cpptrace/from_current.hpp>
 #include <grpcpp/security/server_credentials.h>
 #include <grpcpp/server_builder.h>
@@ -66,6 +67,7 @@ int main(const int argc, const char* argv[])
         {
             NES_ERROR("Failed to set SIGTERM signal handler")
         }
+        NES::SystestTupleCrashControl::initializeFromEnvironment();
         auto configuration = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(argc, argv);
         if (!configuration)
         {

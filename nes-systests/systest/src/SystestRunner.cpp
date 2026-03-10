@@ -50,6 +50,7 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <QueryManager/EmbeddedWorkerQueryManager.hpp>
 #include <QueryManager/GRPCQueryManager.hpp>
+#include <RestartingEmbeddedWorkerQueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -511,10 +512,19 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
+    const bool restartBetweenTuples,
     SystestProgressTracker& progressTracker)
 {
-    auto embeddedQueryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
-    QuerySubmitter submitter(std::move(embeddedQueryManager));
+    std::unique_ptr<QueryManager> queryManager;
+    if (restartBetweenTuples)
+    {
+        queryManager = std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration);
+    }
+    else
+    {
+        queryManager = std::make_unique<EmbeddedWorkerQueryManager>(configuration);
+    }
+    QuerySubmitter submitter(std::move(queryManager));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
 }
 
