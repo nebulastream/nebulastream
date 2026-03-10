@@ -141,7 +141,7 @@ if [[ -z "$NAME_SUFFIX" ]]; then
   if [ "$NON_INTERACTIVE" = 0 ]; then
     read -p "Do you want to specify a name for the Docker image? [y/N] " -r
     if [[ $REPLY =~ ^([yY][eE][sS]|[yY])$ ]]; then
-      read -p "Enter the name suffix for the tax (image will be nes-development:local-<suffix>): " -r NAME_SUFFIX
+      read -p "Enter the name suffix for the tag (image will be nes-development:local-<suffix>): " -r NAME_SUFFIX
       if [[ -z "$NAME_SUFFIX" ]]; then
         echo "No name provided, using default image name"
       else
