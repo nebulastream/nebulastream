@@ -46,7 +46,7 @@ NON_INTERACTIVE=0
 BUILD_LOCAL=0
 FORCE_ROOTLESS=0
 STDLIB=""
-SANITIZER="none"
+SANITIZER=""
 NAME_SUFFIX=""
 DISABLE_VCPKG_CACHE=0
 
@@ -131,6 +131,26 @@ if [[ "$STDLIB" != "libcxx" && "$STDLIB" != "libstdcxx" ]]; then
       2) STDLIB="libstdcxx" ;;
       *)
         echo "Invalid option. Please re-run the script and select 1 or 2."
+        exit 1
+        ;;
+    esac
+fi
+
+# Check if the sanitizer is set, otherwise prompt the user
+if [[ "$SANITIZER" != "address" && "$SANITIZER" != "thread" && "$SANITIZER" != "undefined" && "$SANITIZER" != "none" ]]; then
+  echo "Please choose a sanitizer (or none):"
+    echo "1. none"
+    echo "2. Address Sanitizer"
+    echo "3. Thread Sanitizer"
+    echo "4. Undefined Behavior Sanitizer"
+    read -p "Enter the number (1-4): " -r
+    case $REPLY in
+      1) SANITIZER="none" ;;
+      2) SANITIZER="address" ;;
+      3) SANITIZER="thread" ;;
+      4) SANITIZER="undefined" ;;
+      *)
+        echo "Invalid option. Please re-run the script and select 1-4."
         exit 1
         ;;
     esac
