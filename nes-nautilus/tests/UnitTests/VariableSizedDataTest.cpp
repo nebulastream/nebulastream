@@ -20,8 +20,8 @@
 #include <random>
 #include <utility>
 #include <vector>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <NESNautilus/DataTypes/VarVal.hpp>
+#include <NESNautilus/DataTypes/VariableSizedData.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>

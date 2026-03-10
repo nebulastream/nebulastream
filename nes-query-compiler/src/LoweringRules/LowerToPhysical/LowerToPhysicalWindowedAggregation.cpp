@@ -30,11 +30,11 @@
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <NESNautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <NESNautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <NESNautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>

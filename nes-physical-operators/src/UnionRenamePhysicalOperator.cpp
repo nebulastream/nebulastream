@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalOperator.hpp>
 #include <static.hpp>

@@ -16,10 +16,10 @@
 #include <memory>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <NESNautilus/DataTypes/VarVal.hpp>
+#include <NESNautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES

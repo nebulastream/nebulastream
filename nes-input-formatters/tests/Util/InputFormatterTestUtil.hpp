@@ -29,12 +29,12 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/VariableSizedAccessRef.hpp>
-#include <Nautilus/Util.hpp>
+#include <NESNautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <NESNautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <NESNautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/VariableSizedAccessRef.hpp>
+#include <NESNautilus/Util.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>

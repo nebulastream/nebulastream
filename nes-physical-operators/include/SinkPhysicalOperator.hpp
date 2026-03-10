@@ -15,7 +15,7 @@
 
 #include <memory>
 #include <optional>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <PhysicalOperator.hpp>
 

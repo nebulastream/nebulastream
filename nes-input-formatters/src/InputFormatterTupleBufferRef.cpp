@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <ostream>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
 #include <Arena.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>

@@ -21,10 +21,10 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <NESNautilus/Interface/PagedVector/PagedVector.hpp>
+#include <NESNautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>

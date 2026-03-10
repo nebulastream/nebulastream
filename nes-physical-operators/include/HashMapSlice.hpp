@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <NESNautilus/Interface/HashMap/HashMap.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Engine.hpp>
 

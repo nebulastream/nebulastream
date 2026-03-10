@@ -17,7 +17,7 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 
 namespace NES
 {

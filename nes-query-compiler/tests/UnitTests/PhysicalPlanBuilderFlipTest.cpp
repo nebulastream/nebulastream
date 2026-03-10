@@ -29,7 +29,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <NESNautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <PhysicalOperator.hpp>

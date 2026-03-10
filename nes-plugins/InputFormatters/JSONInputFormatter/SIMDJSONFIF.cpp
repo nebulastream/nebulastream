@@ -30,9 +30,9 @@
 #include <simdjson.h>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/DataTypes/DataTypesUtil.hpp>
+#include <NESNautilus/DataTypes/VariableSizedData.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>

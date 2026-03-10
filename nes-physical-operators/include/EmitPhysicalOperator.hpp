@@ -17,9 +17,9 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <NESNautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <nautilus/val.hpp>
 #include <CompilationContext.hpp>

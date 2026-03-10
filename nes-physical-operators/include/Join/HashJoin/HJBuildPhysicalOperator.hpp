@@ -18,9 +18,9 @@
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <NESNautilus/Interface/HashMap/HashMap.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>

@@ -21,9 +21,9 @@
 #include <utility>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <NESNautilus/Interface/Hash/HashFunction.hpp>
+#include <NESNautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
+#include <NESNautilus/Interface/HashMap/HashMap.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

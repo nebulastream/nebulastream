@@ -17,7 +17,7 @@
 #include <memory>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <HashMapOptions.hpp>

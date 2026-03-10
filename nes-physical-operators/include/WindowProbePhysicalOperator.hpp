@@ -15,7 +15,7 @@
 #pragma once
 
 #include <optional>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <CompilationContext.hpp>

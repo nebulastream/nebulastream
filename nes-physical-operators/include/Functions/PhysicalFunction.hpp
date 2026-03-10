@@ -17,8 +17,8 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/DataTypes/VarVal.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>

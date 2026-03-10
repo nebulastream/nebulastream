@@ -21,8 +21,8 @@
 #include <string_view>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/DataTypes/VariableSizedData.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
 #include <val.hpp>

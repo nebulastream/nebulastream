@@ -18,9 +18,9 @@
 #include <utility>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Nautilus/Interface/TimestampRef.hpp>
+#include <NESNautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <ExecutionContext.hpp>
 #include <val.hpp>

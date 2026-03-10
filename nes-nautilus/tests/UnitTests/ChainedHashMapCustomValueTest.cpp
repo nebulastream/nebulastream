@@ -24,10 +24,10 @@
 #include <tuple>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+#include <NESNautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <NESNautilus/Interface/PagedVector/PagedVector.hpp>
+#include <NESNautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/RecordBuffer.hpp>
 
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>

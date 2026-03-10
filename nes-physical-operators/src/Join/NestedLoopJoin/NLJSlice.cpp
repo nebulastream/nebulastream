@@ -21,7 +21,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <NESNautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
 
 namespace NES

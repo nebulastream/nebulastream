@@ -16,7 +16,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Nautilus/Interface/Record.hpp>
+#include <NESNautilus/Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
