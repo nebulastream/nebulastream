@@ -28,6 +28,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <common/FunctionAttributes.hpp>
 
 namespace NES
 {
@@ -42,6 +43,7 @@ template <typename T>
 nautilus::val<T> parseIntoNautilusRecord(const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize)
 {
     return nautilus::invoke(
+        nautilus::FunctionAttributes{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true},
         +[](const char* fieldAddress, const uint64_t fieldSize)
         {
             const auto fieldView = std::string_view(fieldAddress, fieldSize);
