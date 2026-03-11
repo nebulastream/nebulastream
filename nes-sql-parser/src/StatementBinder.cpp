@@ -421,7 +421,7 @@ public:
 
 StatementBinder::StatementBinder(
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
+    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
     : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
 }
@@ -442,13 +442,13 @@ StatementBinder& StatementBinder::operator=(StatementBinder&& other) noexcept
 
 StatementBinder::~StatementBinder() = default;
 
-std::expected<Statement, Exception> StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST) const noexcept
+std::expected<Statement, Exception> StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST) const
 {
     return impl->bind(statementAST);
 }
 
 std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
-StatementBinder::parseAndBind(const std::string_view statementString) const noexcept
+StatementBinder::parseAndBind(const std::string_view statementString) const
 {
     try
     {
@@ -474,7 +474,7 @@ StatementBinder::parseAndBind(const std::string_view statementString) const noex
     }
 }
 
-std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::string_view statementStrings) const noexcept
+std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::string_view statementStrings) const
 {
     auto allParsed = parseAndBind(statementStrings);
     if (allParsed.has_value())
