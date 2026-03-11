@@ -135,14 +135,14 @@ class StatementHandler
 public:
     template <typename Statement>
     requires(std::invocable<HandlerImpl, const Statement&>)
-    [[nodiscard]] auto apply(const Statement& statement) const noexcept -> decltype(std::declval<HandlerImpl>()(statement))
+    [[nodiscard]] auto apply(const Statement& statement) const -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
     }
 
     template <typename Statement>
     requires(std::invocable<HandlerImpl, const Statement&>)
-    auto apply(const Statement& statement) noexcept -> decltype(std::declval<HandlerImpl>()(statement))
+    auto apply(const Statement& statement) -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
     }
