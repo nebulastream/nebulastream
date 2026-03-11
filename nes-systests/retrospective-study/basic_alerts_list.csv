@@ -1,0 +1,34 @@
+Laboratory_value,Specimen,Bez,Gruppe,Einheit,LOINC_code,rule,Re-evaluation interval_hours
+PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
+PaCO2,Arterial blood,PCO2,Blutgase arteriell,mmHg,2019-8,>52 mmHg,3
+pH,Arterial blood,PH,Blutgase arteriell,1,2744-1,<7.2,1
+Base excess (BEa),Arterial blood,ABEc,Blutgase arteriell,mmol/L,1925-7,<-7 mmol/L,3
+Lactate,Arterial blood,LACTAT(BG),Blutgase arteriell,mg/dL,30242-2,>72 mg/dL,2
+Ionized calcium (Ca2+),Arterial blood,CALCIUM(BG),Blutgase arteriell,mmol/L,34581-9,<0.9 mmol/L,2
+Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,>5.5 mM/L,2
+Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,<3.2 mM/L,6
+Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,>155 mM/L,6
+Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,<125 mM/L,6
+Free hemoglobin,Serum/Plasma,FREIES HB,Blutbild,mg/dL,4635-9,>40 mg/dL,6
+TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,<0.1,-
+TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,>10,-
+Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,>5.5 mM/L,6
+Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,<3.2 mM/L,6
+Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,>155 mM/L,6
+Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,<125 mM/L,6
+Glucose,Arterial blood,GLUCOSE(BG),Blutgase arteriell,mg/dL,41652-9,<50 mg/dL,2
+Glucose,Serum/Plasma,GLUCOSE,Blutzucker,mg/dL,2345-7,<50 mg/dL,2
+Hemoglobin,Arterial blood,HB(BG),Blutgase arteriell,g/dL,14775-1,<7.0 g/dL,4
+Hemoglobin,Blood,HB (HGB),Blutbild,g/dL,718-7,<7.0 g/dL,4
+Total bilirubin,Serum/Plasma,BILI (TOT.),Klinische Chemie,mg/dL,1975-2,>3 mg/dL,48
+WBC,Blood,WBC,Blutbild,K/µL,6690-2,<1.0 K/µL,24
+Platelet count,Blood,PLT,Blutbild,K/µL,777-3,<50 K/µL,24
+eGFR,Serum/Plasma,GFRKREA,Retention,mL/min/1.73*m^-2,98979-8,<30 mL/min/1.73m²,24
+INR,Plasma,INR,Gerinnung,1,6301-6,>4.5,24
+PTT,Plasma,PTT,Gerinnung,s,3173-2,>90 s,24
+CK-MB,Serum/Plasma,CK-MB,Enzyme,U/L,2154-3,>240 U/L,4
+Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,<20 µg/mL,24
+Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,>30 µg/mL,24
+Phosphate,Serum/Plasma,ANORGANISCHER PHOSPHOR,Elektrolyte,mmol/L,2777-1,<0.5 mM/L,24
+ScvO2,(Central) Venous blood,O2-SAETTIGUNG,Blutgase venös,%,1503-0,<50%,2
+SvO2,(mixed) Venous blood,O2-SAETTIGUNG,Blutgase gemischt-venös,%,19224-5,<50%,2
