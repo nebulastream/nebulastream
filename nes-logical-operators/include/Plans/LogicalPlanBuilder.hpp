@@ -84,6 +84,9 @@ public:
         std::shared_ptr<Windowing::WindowType> windowType,
         JoinLogicalOperator::JoinType joinType);
 
+    static LogicalPlan
+    addInferModel(std::string modelName, std::vector<LogicalFunction> inputFields, const LogicalPlan& queryPlan);
+
     static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addInlineSink(
         std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);

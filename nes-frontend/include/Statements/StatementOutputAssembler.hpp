@@ -322,6 +322,48 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
     }
 };
 
+using ModelNameOutputRowType = std::tuple<std::string>;
+constexpr std::array<std::string_view, 1> modelNameOutputColumns{"model_name"};
+
+template <>
+struct StatementOutputAssembler<CreateModelStatementResult>
+{
+    using OutputRowType = ModelNameOutputRowType;
+
+    auto convert(const CreateModelStatementResult& result)
+    {
+        return std::make_pair(modelNameOutputColumns, std::vector{std::make_tuple(result.name)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowModelsStatementResult>
+{
+    using OutputRowType = ModelNameOutputRowType;
+
+    auto convert(const ShowModelsStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.modelNames.size());
+        for (const auto& name : result.modelNames)
+        {
+            output.emplace_back(name);
+        }
+        return std::make_pair(modelNameOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropModelStatementResult>
+{
+    using OutputRowType = ModelNameOutputRowType;
+
+    auto convert(const DropModelStatementResult& result)
+    {
+        return std::make_pair(modelNameOutputColumns, std::vector{std::make_tuple(result.name)});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -338,5 +380,8 @@ static_assert(AssemblembleStatementResult<QueryStatementResult>);
 static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
 static_assert(AssemblembleStatementResult<WorkerStatusStatementResult>);
 static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
+static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
+static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
+static_assert(AssemblembleStatementResult<DropModelStatementResult>);
 
 }

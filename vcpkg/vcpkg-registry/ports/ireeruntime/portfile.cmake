@@ -3,20 +3,19 @@ vcpkg_check_linkage(ONLY_STATIC_LIBRARY)
 vcpkg_from_github(
     OUT_SOURCE_PATH SOURCE_PATH
     REPO iree-org/iree
-    REF "9f4212cc3a64487c5bc7b003e5e197295a8fddf5"
-    SHA512 75008814b265af9637e6a76344cc78962ca17cfe78a5338c01bd6d4ed7fa47ebfefc55dc0000dd71e938b04d56b98e9baf2365d6d36bc3852257b6a9b80415d4
+    REF "ae97779f59a81bc56f804927be57749bb22548fa"
+    SHA512 536be2e9e7069afe8558da548c46c3d35d07ceb37f6fec44df4ca7ff1826412fb91de52a8732c50083d5e9a4fea9a692f9e87fcd68b7795debe6426f05e091ce
     PATCHES
-        0001-Install-only-runtime.patch
+        0001-runtime-only-build.patch
         0002-fixup-install-destination.patch
         0003-do-not-enable-null-driver-in-debug.patch
-        0004-remove-benchmark.patch
 )
 
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH_STABLEHLO
         REPO iree-org/stablehlo
-        REF "8993ef703e5f98baa0da56346621e07932c68d8c"
-        SHA512 ddfa635dc9f039e65835ebb4a4cbb24c06c400a6cc78d2e46521a47bd604bad51a84cca6b61e8c4cfdc4e1ea63b49d620716b7da0111706c712e5533a9309497
+        REF "6fabd27b15885179a3b6a601ea1e4171f2ed2c91"
+        SHA512 03c55aec6d333064b276b283d2ef85e1714d293124c14264cbe442386b17aa3d6de81bd57165a1a84f712739058e7d0de724345e966c08b2b243b9b6ffc52f23
 )
 
 vcpkg_from_github(
@@ -40,14 +39,15 @@ vcpkg_cmake_configure(
         -DIREE_BUILD_SAMPLES=OFF
         -DIREE_BUILD_ALL_CHECK_TEST_MODULES=OFF
         -DIREE_BUILD_BUNDLED_LLVM=OFF
+        -DIREE_BUILD_BINDINGS_TFLITE=OFF
         -DIREE_BUILD_BINDINGS_TFLITE_JAVA=OFF
+        -DIREE_ENABLE_THREADING=OFF
         -DIREE_HAL_DRIVER_DEFAULTS=OFF
         -DIREE_HAL_DRIVER_LOCAL_SYNC=ON
-        -DIREE_HAL_DRIVER_LOCAL_TASK=ON
         -DIREE_TARGET_BACKEND_DEFAULTS=OFF
-        -DIREE_TARGET_BACKEND_LLVM_CPU=ON
         -DIREE_ERROR_ON_MISSING_SUBMODULES=OFF
         -DIREE_ENABLE_CPUINFO=OFF
+        -DIREE_ENABLE_LIBBACKTRACE=OFF
         -DIREE_INPUT_TORCH=OFF
 )
 

@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <Plans/LogicalPlan.hpp>
+#include <DataTypes/DataType.hpp>
 
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
@@ -136,6 +137,24 @@ struct DropQueryStatement
     QueryId id;
 };
 
+struct CreateModelStatement
+{
+    std::string name;
+    std::string path;
+    std::vector<std::pair<std::string, DataType>> inputs;
+    std::vector<std::pair<std::string, DataType>> outputs;
+};
+
+struct ShowModelsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropModelStatement
+{
+    std::string name;
+};
+
 struct WorkerStatusStatement
 {
 };
@@ -145,15 +164,18 @@ using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
+    CreateModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
+    DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
+    ShowModelsStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

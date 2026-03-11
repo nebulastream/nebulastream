@@ -62,7 +62,7 @@ statement: queryWithOptions | createStatement | dropStatement | showStatement | 
 
 explainStatement: EXPLAIN query;
 createStatement: CREATE createDefinition;
-createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition;
+createDefinition: createLogicalSourceDefinition | createPhysicalSourceDefinition | createSinkDefinition | createModelDefinition;
 createLogicalSourceDefinition: LOGICAL SOURCE sourceName=identifier schemaDefinition fromQuery?;
 
 createPhysicalSourceDefinition: PHYSICAL SOURCE FOR logicalSource=identifier
@@ -72,6 +72,11 @@ optionsClause: (SET '(' options=namedConfigExpressionSeq ')');
 
 createSinkDefinition: SINK sinkName=identifier schemaDefinition TYPE type=identifier optionsClause?;
 
+createModelDefinition: MODEL modelName=identifier '(' modelPath=STRING ')'
+                       INPUT '(' modelInputField (',' modelInputField)* ')'
+                       OUTPUT '(' modelOutputField (',' modelOutputField)* ')';
+modelInputField: identifier typeDefinition;
+modelOutputField: identifier typeDefinition;
 
 schemaDefinition: '(' columnDefinition (',' columnDefinition)* ')';
 columnDefinition: identifierChain typeDefinition;
@@ -81,7 +86,8 @@ typeDefinition: DATA_TYPE;
 fromQuery: AS query;
 
 dropStatement: DROP dropSubject WHERE dropFilter;
-dropSubject: dropQuery | dropSource | dropSink;
+dropSubject: dropQuery | dropSource | dropSink | dropModel;
+dropModel: MODEL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
@@ -95,7 +101,8 @@ showFormat: TEXT | JSON;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
-    | SINKS #showSinksSubject;
+    | SINKS #showSinksSubject
+    | MODELS #showModelsSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -300,6 +307,8 @@ timeUnit: MS
 
 timestampParameter: name=identifier;
 
+inferModelInputField: identifierChain;
+
 functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
 sinkClause: INTO sink (',' sink)*;
@@ -336,7 +345,8 @@ predicate
 
 
 valueExpression
-    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+    : INFER_MODEL '(' modelName=identifier (',' inferModelInputField)+ ')'             #inference
+    | (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
     | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
@@ -496,6 +506,11 @@ AT_LEAST_ONCE : 'AT_LEAST_ONCE';
 JSON: 'JSON';
 TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
+MODEL: 'MODEL';
+MODELS: 'MODELS';
+INFER_MODEL: 'INFER_MODEL';
+INPUT: 'INPUT';
+OUTPUT: 'OUTPUT';
 
 ///--NebulaSQL-KEYWORD-LIST-END
 ///****************************

@@ -33,6 +33,7 @@
 #include <Util/Pointers.hpp>
 #include <experimental/propagate_const>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <LegacyOptimizer.hpp>
 #include <WorkerStatus.hpp>
 
@@ -110,16 +111,34 @@ struct DropQueryStatementResult
     QueryId id;
 };
 
+struct CreateModelStatementResult
+{
+    std::string name;
+};
+
+struct ShowModelsStatementResult
+{
+    std::vector<std::string> modelNames;
+};
+
+struct DropModelStatementResult
+{
+    std::string name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
     CreateSinkStatementResult,
+    CreateModelStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
+    ShowModelsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
+    DropModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -186,6 +205,17 @@ public:
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
+};
+
+class ModelStatementHandler final : public StatementHandler<ModelStatementHandler>
+{
+    std::shared_ptr<Inference::ModelCatalog> modelCatalog;
+
+public:
+    explicit ModelStatementHandler(std::shared_ptr<Inference::ModelCatalog> modelCatalog);
+    std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
+    std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
+    std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
 };
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>

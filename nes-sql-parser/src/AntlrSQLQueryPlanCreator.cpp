@@ -487,6 +487,12 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addSelection(std::move(*whereExpr), queryPlan);
     }
 
+    /// Apply INFER_MODEL operators (before aggregation/projection)
+    for (auto& inferenceCall : helpers.top().inferenceCalls)
+    {
+        queryPlan = LogicalPlanBuilder::addInferModel(std::move(inferenceCall.modelName), std::move(inferenceCall.inputFields), queryPlan);
+    }
+
     /// Insert pre-aggregation projections for desugared expression arguments (e.g., AVG(i + UINT64(1))).
     if (!helpers.top().preAggregationProjections.empty())
     {
@@ -1013,5 +1019,36 @@ void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseCo
 {
     helpers.top().isGroupBy = false;
     AntlrSQLBaseListener::exitGroupByClause(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterInference(AntlrSQLParser::InferenceContext* context)
+{
+    helpers.top().isInference = true;
+    helpers.top().inferenceInputFieldBuilder.clear();
+    AntlrSQLBaseListener::enterInference(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitInference(AntlrSQLParser::InferenceContext* context)
+{
+    auto modelName = bindIdentifier(context->modelName);
+
+    std::vector<LogicalFunction> inputFields;
+    for (auto* const inputField : context->inferModelInputField())
+    {
+        std::string fieldName;
+        for (const auto& part : inputField->identifierChain()->strictIdentifier())
+        {
+            if (!fieldName.empty())
+            {
+                fieldName += "$";
+            }
+            fieldName += bindIdentifier(part);
+        }
+        inputFields.emplace_back(FieldAccessLogicalFunction(std::move(fieldName)));
+    }
+
+    helpers.top().inferenceCalls.push_back({.modelName = std::move(modelName), .inputFields = std::move(inputFields)});
+    helpers.top().isInference = false;
+    AntlrSQLBaseListener::exitInference(context);
 }
 }

@@ -99,6 +99,16 @@ public:
     std::vector<Projection> preAggregationProjections;
     size_t aggExprCounter = 0;
 
+    /// Inference model state: each entry is (modelName, inputFields) accumulated during parsing
+    struct InferenceCall
+    {
+        std::string modelName;
+        std::vector<LogicalFunction> inputFields;
+    };
+    std::vector<InferenceCall> inferenceCalls;
+    bool isInference = false;
+    std::vector<LogicalFunction> inferenceInputFieldBuilder;
+
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<Projection>& getProjections();

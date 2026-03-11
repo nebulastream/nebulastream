@@ -33,6 +33,7 @@
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
@@ -174,6 +175,13 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     leftLogicalPlan = addBinaryOperatorAndUpdateSource(
         JoinLogicalOperator(joinFunction, std::move(windowType), joinType), leftLogicalPlan, rightLogicalPlan);
     return leftLogicalPlan;
+}
+
+LogicalPlan LogicalPlanBuilder::addInferModel(
+    std::string modelName, std::vector<LogicalFunction> inputFields, const LogicalPlan& queryPlan)
+{
+    NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
+    return promoteOperatorToRoot(queryPlan, InferModelNameLogicalOperator(std::move(modelName), std::move(inputFields)));
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan& queryPlan)

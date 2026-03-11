@@ -52,6 +52,7 @@
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <ModelCatalog.hpp>
 #include <ErrorHandling.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
@@ -234,15 +235,18 @@ int main(int argc, char** argv)
 #endif
         }
 
+        auto modelCatalog = std::make_shared<NES::Inference::ModelCatalog>();
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
-        auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog);
+        NES::ModelStatementHandler modelStatementHandler{modelCatalog};
+        auto optimizer = std::make_shared<NES::LegacyOptimizer>(sourceCatalog, sinkCatalog, modelCatalog);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, optimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),
             std::move(topologyStatementHandler),
+            std::move(modelStatementHandler),
             queryStatementHandler,
             std::move(binder),
             errorBehaviour,
