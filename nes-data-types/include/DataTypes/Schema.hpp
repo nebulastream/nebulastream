@@ -47,7 +47,7 @@ public:
         [[nodiscard]] std::string getUnqualifiedName() const;
 
         std::string name;
-        DataType dataType{};
+        DataType dataType;
     };
 
     /// TODO #764: move qualified field logic in central place and improve
