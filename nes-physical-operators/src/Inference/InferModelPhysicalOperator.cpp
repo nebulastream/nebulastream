@@ -16,6 +16,7 @@
 
 #include <ranges>
 #include <ExecutionContext.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
 #include <Inference/IREEAdapter.hpp>
@@ -27,10 +28,12 @@ namespace NES
 InferModelPhysicalOperator::InferModelPhysicalOperator(
     OperatorHandlerId handlerId,
     std::vector<std::string> inputFieldNames,
-    std::vector<std::string> outputFieldNames)
+    std::vector<std::string> outputFieldNames,
+    bool varsizedInput)
     : handlerId(handlerId)
     , inputFieldNames(std::move(inputFieldNames))
     , outputFieldNames(std::move(outputFieldNames))
+    , varsizedInput(varsizedInput)
 {
 }
 
@@ -41,6 +44,14 @@ void addFloatValueToModel(int index, float value, OperatorHandler* handler, Work
     auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
     auto adapter = inferHandler->getIREEAdapter(thread);
     adapter->addModelInput(index, value);
+}
+
+/// Copies raw VARSIZED bytes directly into the model input buffer (no decoding).
+void addVarsizedInputToModel(int8_t* data, uint64_t size, OperatorHandler* handler, WorkerThreadId thread)
+{
+    auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
+    auto adapter = inferHandler->getIREEAdapter(thread);
+    adapter->addModelInput(std::span<std::byte>(reinterpret_cast<std::byte*>(data), size));
 }
 
 void applyModel(OperatorHandler* handler, WorkerThreadId thread)
@@ -71,10 +82,20 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
 {
     auto inferModelHandler = ctx.getGlobalOperatorHandler(handlerId);
 
-    for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); ++i)
+    if (varsizedInput)
     {
-        VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
-        nautilus::invoke(addFloatValueToModel, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler, ctx.workerThreadId);
+        /// Single VARSIZED input: read raw bytes and feed directly to model
+        VarVal value = record.read(inputFieldNames.at(0));
+        auto varSized = value.cast<VariableSizedData>();
+        nautilus::invoke(addVarsizedInputToModel, varSized.getContent(), varSized.getSize(), inferModelHandler, ctx.workerThreadId);
+    }
+    else
+    {
+        for (nautilus::static_val<size_t> i = 0; i < inputFieldNames.size(); ++i)
+        {
+            VarVal value = record.read(inputFieldNames.at(nautilus::static_val<int>(i)));
+            nautilus::invoke(addFloatValueToModel, nautilus::val<int>(i), value.cast<nautilus::val<float>>(), inferModelHandler, ctx.workerThreadId);
+        }
     }
 
     nautilus::invoke(applyModel, inferModelHandler, ctx.workerThreadId);
