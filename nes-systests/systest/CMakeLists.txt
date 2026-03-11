@@ -151,7 +151,8 @@ if (ENABLE_DOCKER_TESTS AND ENABLE_BATS_TESTS)
             env DATADIR=${EXPANDED_TEST_DATA_PATH}
             env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
             env ENABLE_LARGE_TESTS=${ENABLE_LARGE_TESTS}
+            env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
             ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/remote-test/systest_remote_test.bats
     )
-    set_tests_properties(systest-remote-test PROPERTIES LABELS "DockerCompose")
+    set_tests_properties(systest-remote-test PROPERTIES LABELS "DockerCompose" FIXTURES_REQUIRED RuntimeBaseImage)
 endif ()
