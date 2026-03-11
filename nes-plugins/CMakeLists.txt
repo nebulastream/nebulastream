@@ -24,6 +24,10 @@ activate_optional_plugin("Sources/MQTTSource" ON)
 activate_optional_plugin("Sources/ODBCSource" ON)
 activate_optional_plugin("Sinks/HTTPSink" ON)
 
+# MLife-specific
+activate_optional_plugin("Functions/VarSizedToDouble" ON)
+activate_optional_plugin("Functions/IsNaN" ON)
+
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.
   activate_optional_plugin("Sinks/ChecksumSink" ON)
