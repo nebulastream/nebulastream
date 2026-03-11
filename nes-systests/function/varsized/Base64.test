@@ -1,0 +1,18 @@
+# name: function/varsized/Base64.test
+# description: TO_BASE64 and FROM_BASE64 roundtrip test
+# groups: [Functions]
+
+CREATE LOGICAL SOURCE stream(data VARSIZED);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+SGVsbG8gV29ybGQ=
+AQID
+dGVzdA==
+
+CREATE SINK result(ROUNDTRIP VARSIZED) TYPE File;
+
+SELECT TO_BASE64(FROM_BASE64(data)) AS ROUNDTRIP FROM stream INTO result;
+----
+SGVsbG8gV29ybGQ=
+AQID
+dGVzdA==

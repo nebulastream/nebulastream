@@ -21,4 +21,6 @@ add_source_files(nes-logical-operators
 add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
+add_plugin(From_Base64 LogicalFunction nes-logical-operators FromBase64LogicalFunction.cpp)
+add_plugin(To_Base64 LogicalFunction nes-logical-operators ToBase64LogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
