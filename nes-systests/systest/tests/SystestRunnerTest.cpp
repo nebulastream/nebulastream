@@ -108,7 +108,6 @@ public:
     MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
     MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
-    MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (override));
     MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
 };
