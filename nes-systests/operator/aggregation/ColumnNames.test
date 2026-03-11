@@ -17,6 +17,8 @@ ATTACH INLINE
 CREATE SINK out(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, input.i_count UINT64 NOT NULL, input.i_min UINT64 NOT NULL, input.i_max UINT64 NOT NULL, input.i_sum UINT64 NOT NULL, input.i_avg FLOAT64 NOT NULL, input.i_median FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkAggResult(result FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkAggErr(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, out FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkMedian(input.i_median FLOAT64 NOT NULL) TYPE File;
+CREATE SINK sinkDupAlias(ID UINT64 NOT NULL) TYPE File;
 CREATE SINK sinkExprAgg(input.start UINT64 NOT NULL, input.end UINT64 NOT NULL, out FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkExprAggFloat(out FLOAT64 NOT NULL) TYPE File;
 CREATE SINK sinkExprAggUint(out UINT64 NOT NULL) TYPE File;
@@ -46,6 +48,14 @@ SELECT SUM(i) + FLOAT64(10) AS result FROM input WINDOW TUMBLING(timestamp, size
 13
 13
 
+# Single MEDIAN aggregation with explicit alias.
+# MEDIAN({1,2}) per window = 1.5.
+SELECT MEDIAN(i) AS i_median FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkMedian;
+----
+1.5
+1.5
+1.5
+
 # Expression inside aggregation: MEDIAN(i + UINT64(1)).
 # i + 1 yields {2, 3} per window, MEDIAN = 2.5.
 SELECT start, end, MEDIAN(i + UINT64(1)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkExprAgg;
@@ -74,3 +84,13 @@ SELECT SUM(i * UINT64(2)) AS out FROM input WINDOW TUMBLING(timestamp, size 100 
 SELECT start, end, MEDIAN(i) + 1 AS out FROM input WINDOW TUMBLING(timestamp, size 100 ms) INTO sinkAggErr;
 ----
 ERROR 2000
+
+# Duplicate explicit aliases (SELECT i AS ID, timestamp AS ID) must give a clear error.
+SELECT i AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
+----
+ERROR 2003
+
+# Duplicate explicit aliases with arithmetic (SELECT i + UINT64(1) AS ID, timestamp AS ID) must give a clear error.
+SELECT i + UINT64(1) AS ID, timestamp AS ID FROM input INTO sinkDupAlias;
+----
+ERROR 2003
