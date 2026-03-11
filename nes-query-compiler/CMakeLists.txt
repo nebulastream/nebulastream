@@ -21,8 +21,7 @@ target_link_libraries(nes-query-compiler-interface INTERFACE nes-configurations)
 
 # Add Library
 add_library(nes-query-compiler ${NES_QUERY_COMPILER_SOURCE_FILES})
-find_package(IREERuntime CONFIG REQUIRED)
-target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-physical-operators-registry nes-runtime nes-input-formatter-provider PRIVATE iree_runtime_runtime nes-inference)
+target_link_libraries(nes-query-compiler PUBLIC nes-nautilus nes-physical-operators nes-physical-operators-registry nes-runtime nes-input-formatter-provider)
 target_include_directories(nes-query-compiler PUBLIC
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)

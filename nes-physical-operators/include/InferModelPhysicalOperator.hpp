@@ -31,7 +31,8 @@ public:
     InferModelPhysicalOperator(
         OperatorHandlerId handlerId,
         std::vector<std::string> inputFieldNames,
-        std::vector<std::string> outputFieldNames);
+        std::vector<std::string> outputFieldNames,
+        bool varsizedInput = false);
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -44,6 +45,7 @@ private:
     OperatorHandlerId handlerId;
     std::vector<std::string> inputFieldNames;
     std::vector<std::string> outputFieldNames;
+    bool varsizedInput;
     std::optional<PhysicalOperator> child;
 };
 

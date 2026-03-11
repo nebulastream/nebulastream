@@ -21,10 +21,3 @@ add_plugin(Source LoweringRule nes-query-compiler LowerToPhysicalSource.cpp)
 add_plugin(IngestionTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
 add_plugin(EventTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalEventTimeWatermarkAssigner.cpp)
 add_plugin(InferModel LoweringRule nes-query-compiler LowerToPhysicalInferModel.cpp)
-
-add_source_files(nes-query-compiler
-        Inference/IREEAdapter.cpp
-        Inference/IREEInferenceOperatorHandler.cpp
-        Inference/IREERuntimeWrapper.cpp
-        Inference/InferModelPhysicalOperator.cpp
-)

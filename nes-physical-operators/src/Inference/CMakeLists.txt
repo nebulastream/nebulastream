@@ -10,20 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin_as_library(IREE ExecutableOperator nes-execution-registry iree_inference_plugin_library
-        IREEInferenceOperator.cpp
-        IREEInferenceOperatorHandler.cpp
+add_source_files(nes-physical-operators
         IREEAdapter.cpp
         IREERuntimeWrapper.cpp
-)
-
-find_package(IREERuntime CONFIG REQUIRED)
-target_include_directories(iree_inference_plugin_library PRIVATE ../include)
-target_include_directories(iree_inference_plugin_library SYSTEM PRIVATE ${_IREE_COMPILER_API})
-
-target_link_libraries(iree_inference_plugin_library PRIVATE
-        iree_runtime_runtime
-        nes-execution
-        nes-runtime
-        nes-inference
+        IREEInferenceOperatorHandler.cpp
+        InferModelPhysicalOperator.cpp
 )
