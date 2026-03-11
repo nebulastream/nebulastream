@@ -143,21 +143,6 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId) noexcept
-{
-    CPPTRACE_TRY
-    {
-        PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-        nodeEngine->unregisterQuery(queryId);
-        return {};
-    }
-    CPPTRACE_CATCH(...)
-    {
-        return std::unexpected(wrapExternalException());
-    }
-    std::unreachable();
-}
-
 std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
 {
     CPPTRACE_TRY

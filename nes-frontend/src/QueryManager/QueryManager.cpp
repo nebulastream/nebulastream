@@ -172,6 +172,8 @@ std::expected<void, Exception> QueryManager::stop(QueryId queryId)
         auto result = backend->stop(queryId);
         if (result)
         {
+            auto erased = state.queries.erase(queryId);
+            INVARIANT(erased == 1, "Should not stop query that has not been registered");
             NES_DEBUG("Stopping query {} was successful.", queryId);
             return {};
         }
@@ -180,32 +182,6 @@ std::expected<void, Exception> QueryManager::stop(QueryId queryId)
     catch (std::exception& e)
     {
         return std::unexpected{QueryStopFailed("Message from external exception: {} ", e.what())};
-    }
-}
-
-std::expected<void, Exception> QueryManager::unregister(QueryId queryId)
-{
-    auto queryResult = getQuery(queryId);
-    if (!queryResult.has_value())
-    {
-        return std::unexpected(queryResult.error());
-    }
-
-    try
-    {
-        auto result = backend->unregister(queryId);
-        if (result)
-        {
-            auto erased = state.queries.erase(queryId);
-            INVARIANT(erased == 1, "Should not unregister query that has not been registered");
-            NES_DEBUG("Unregister of query {} was successful.", queryId);
-            return {};
-        }
-        return std::unexpected{result.error()};
-    }
-    catch (std::exception& e)
-    {
-        return std::unexpected{QueryUnregistrationFailed("Message from external exception: {} ", e.what())};
     }
 }
 
