@@ -1,0 +1,313 @@
+# name: selection/Selection_Equals.test
+# description: Simple selection tests
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE odbc_source(LabVal_ID INT32, mlife_FallNr INT32, Zeitpunkt UINT64, GruppenNr INT32, Gruppe VARSIZED, Bez VARSIZED, Wert VARSIZED, Einheit VARSIZED, Wertebereich VARSIZED, SampleNr VARSIZED, TSFail UINT64, TSLog UINT64, Lab_ID INT32);
+
+#CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR odbc_source TYPE File;
+ATTACH INLINE
+1,1001,1705307400,1,5,Hämoglobin,14.5,g/dL,12-16,S001,1705305600,1705309200,101
+2,1001,1705307400,1,5,Leukozyten,7.2,10^9/L,4-10,S001,1705305600,1705309200,101
+3,1002,1705310100,2,5,Glucose,95,mg/dL,70-110,S002,1705308300,1705311000,102
+4,1002,1705310100,2,5,Kreatinin,?.9,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+5,1003,1705312800,1,5,Thrombozyten,K,10^9/L,150-400,S003,1705311000,1705313700,103
+6,1003,1705312900,1,5,PO2,50,mmHg,2703-7,S003,1705311000,1705313700,103
+7,1003,1705313000,1,5,PCO2,54,mmHg,2019-8,S003,1705311000,1705313700,103
+8,1004,1705315000,1,5,PH,7,1,2744-1,S004,1705313200,1705315800,104
+9,1004,1705315000,1,5,ABEc,-8,mmol/L,1925-7,S004,1705313200,1705315800,104
+10,1004,1705315000,1,5,LACTAT(BG),80,mg/dL,30242-2,S004,1705313200,1705315800,104
+11,1004,1705315000,1,5,CALCIUM(BG),0.75,mmol/L,34581-9,S004,1705313200,1705315800,104
+12,1004,1705315000,1,5,KALIUM(BG),6,mmol/L,6298-4,S004,1705313200,1705315800,104
+13,1004,1705315000,1,5,KALIUM(BG),3,mmol/L,6298-4,S004,1705313200,1705315800,104
+14,1004,1705315000,1,5,NATRIUM(BG),160,mmol/L,2947-0,S004,1705313200,1705315800,104
+15,1004,1705315000,1,5,NATRIUM(BG),120,mmol/L,2947-0,S004,1705313200,1705315800,104
+16,1005,1705317000,1,5,FREIES HB,50,mg/dL,4635-9,S005,1705315200,1705317800,105
+17,1005,1705317000,1,5,TSH,0.0625,µIU/mL,3016-3,S005,1705315200,1705317800,105
+18,1005,1705317000,1,5,TSH,12,µIU/mL,3016-3,S005,1705315200,1705317800,105
+19,1005,1705317000,1,5,KALIUM,6,mmol/L,2823-3,S005,1705315200,1705317800,105
+20,1005,1705317000,1,5,KALIUM,3,mmol/L,2823-3,S005,1705315200,1705317800,105
+21,1005,1705317000,1,5,NATRIUM,160,mmol/L,2951-2,S005,1705315200,1705317800,105
+22,1005,1705317000,1,5,NATRIUM,120,mmol/L,2951-2,S005,1705315200,1705317800,105
+23,1006,1705319000,1,5,GLUCOSE(BG),40,mg/dL,41652-9,S006,1705317200,1705319800,106
+24,1006,1705319000,1,5,GLUCOSE,40,mg/dL,2345-7,S006,1705317200,1705319800,106
+25,1006,1705319000,1,5,HB(BG),6.5,g/dL,14775-1,S006,1705317200,1705319800,106
+26,1006,1705319000,1,5,HB (HGB),6.5,g/dL,718-7,S006,1705317200,1705319800,106
+27,1006,1705319000,1,5,BILI (TOT.),4,mg/dL,1975-2,S006,1705317200,1705319800,106
+28,1007,1705321000,1,5,WBC,0.5,K/µL,6690-2,S007,1705319200,1705321800,107
+29,1007,1705321000,1,5,PLT,40,K/µL,777-3,S007,1705319200,1705321800,107
+30,1007,1705321000,1,5,GFRKREA,25,mL/min/1.73*m^-2,98979-8,S007,1705319200,1705321800,107
+31,1007,1705321000,1,5,INR,5,1,6301-6,S007,1705319200,1705321800,107
+32,1007,1705321000,1,5,PTT,95,s,3173-2,S007,1705319200,1705321800,107
+33,1008,1705323000,1,5,CK-MB,250,U/L,2154-3,S008,1705321200,1705323800,108
+34,1008,1705323000,1,5,VANCOMYCIN,15,µg/mL,20578-1,S008,1705321200,1705323800,108
+35,1008,1705323000,1,5,VANCOMYCIN,35,µg/mL,20578-1,S008,1705321200,1705323800,108
+36,1008,1705323000,1,5,ANORGANISCHER PHOSPHOR,0.25,mmol/L,2777-1,S008,1705321200,1705323800,108
+37,1009,1705325000,1,5,O2-SAETTIGUNG,45,%,1503-0,S009,1705323200,1705325800,109
+38,1009,1705325000,1,5,O2-SAETTIGUNG,45,%,19224-5,S009,1705323200,1705325800,109
+
+# Todo: check that group is correct (Blutgase arteriell)
+
+# [01] PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
+INTO File();
+----
+6,1003,1705312900,PO2,50,mmHg,2703-7,S003,1705311000,1705313700,103
+
+# [02] PaCO2,Arterial blood,PCO2,Blutgase arteriell,mmHg,2019-8,>52 mmHg,3
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PCO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(52)
+INTO File();
+----
+7,1003,1705313000,PCO2,54,mmHg,2019-8,S003,1705311000,1705313700,103
+
+# [03] pH,Arterial blood,PH,Blutgase arteriell,1,2744-1,<7.2,1
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PH") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.2)
+INTO File();
+----
+8,1004,1705315000,PH,7,1,2744-1,S004,1705313200,1705315800,104
+
+# [04] Base excess (BEa),Arterial blood,ABEc,Blutgase arteriell,mmol/L,1925-7,<-7 mmol/L,3
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("ABEc") AND not (IsNaN(VarSizedToDouble(Wert))) AND FLOAT64(0) - VarSizedToDouble(Wert) > FLOAT64(7)
+INTO File();
+----
+9,1004,1705315000,ABEc,-8,mmol/L,1925-7,S004,1705313200,1705315800,104
+
+# [05] Lactate,Arterial blood,LACTAT(BG),Blutgase arteriell,mg/dL,30242-2,>72 mg/dL,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("LACTAT(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(72)
+INTO File();
+----
+10,1004,1705315000,LACTAT(BG),80,mg/dL,30242-2,S004,1705313200,1705315800,104
+
+# [06] Ionized calcium (Ca2+),Arterial blood,CALCIUM(BG),Blutgase arteriell,mmol/L,34581-9,<0.9 mmol/L,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("CALCIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.9)
+INTO File();
+----
+11,1004,1705315000,CALCIUM(BG),0.75,mmol/L,34581-9,S004,1705313200,1705315800,104
+
+# [07] Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,>5.5 mM/L,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
+INTO File();
+----
+12,1004,1705315000,KALIUM(BG),6,mmol/L,6298-4,S004,1705313200,1705315800,104
+
+# [08] Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,<3.2 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
+INTO File();
+----
+13,1004,1705315000,KALIUM(BG),3,mmol/L,6298-4,S004,1705313200,1705315800,104
+
+# [09] Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,>155 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
+INTO File();
+----
+14,1004,1705315000,NATRIUM(BG),160,mmol/L,2947-0,S004,1705313200,1705315800,104
+
+# [10] Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,<125 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
+INTO File();
+----
+15,1004,1705315000,NATRIUM(BG),120,mmol/L,2947-0,S004,1705313200,1705315800,104
+
+# [11] Free hemoglobin,Serum/Plasma,FREIES HB,Blutbild,mg/dL,4635-9,>40 mg/dL,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("FREIES HB") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(40)
+INTO File();
+----
+16,1005,1705317000,FREIES HB,50.0,mg/dL,4635-9,S005,1705315200,1705317800,105
+
+# [12] TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,<0.1,-
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("TSH") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.1)
+INTO File();
+----
+17,1005,1705317000,TSH,0.0625,µIU/mL,3016-3,S005,1705315200,1705317800,105
+
+# [13] TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,>10,-
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("TSH") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(10)
+INTO File();
+----
+18,1005,1705317000,TSH,12,µIU/mL,3016-3,S005,1705315200,1705317800,105
+
+# [14] Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,>5.5 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
+INTO File();
+----
+19,1005,1705317000,KALIUM,6,mmol/L,2823-3,S005,1705315200,1705317800,105
+
+# [15] Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,<3.2 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
+INTO File();
+----
+20,1005,1705317000,KALIUM,3,mmol/L,2823-3,S005,1705315200,1705317800,105
+
+# [16] Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,>155 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
+INTO File();
+----
+21,1005,1705317000,NATRIUM,160,mmol/L,2951-2,S005,1705315200,1705317800,105
+
+# [17] Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,<125 mM/L,6
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
+INTO File();
+----
+22,1005,1705317000,NATRIUM,120,mmol/L,2951-2,S005,1705315200,1705317800,105
+
+# [18] Glucose,Arterial blood,GLUCOSE(BG),Blutgase arteriell,mg/dL,41652-9,<50 mg/dL,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GLUCOSE(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+23,1006,1705319000,GLUCOSE(BG),40,mg/dL,41652-9,S006,1705317200,1705319800,106
+
+# [19] Glucose,Serum/Plasma,GLUCOSE,Blutzucker,mg/dL,2345-7,<50 mg/dL,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GLUCOSE") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+24,1006,1705319000,GLUCOSE,40,mg/dL,2345-7,S006,1705317200,1705319800,106
+
+# [20] Hemoglobin,Arterial blood,HB(BG),Blutgase arteriell,g/dL,14775-1,<7.0 g/dL,4
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("HB(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
+INTO File();
+----
+25,1006,1705319000,HB(BG),6.5,g/dL,14775-1,S006,1705317200,1705319800,106
+
+# [21] Hemoglobin,Blood,HB (HGB),Blutbild,g/dL,718-7,<7.0 g/dL,4
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("HB (HGB)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
+INTO File();
+----
+26,1006,1705319000,HB (HGB),6.5,g/dL,718-7,S006,1705317200,1705319800,106
+
+# [22] Total bilirubin,Serum/Plasma,BILI (TOT.),Klinische Chemie,mg/dL,1975-2,>3 mg/dL,48
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("BILI (TOT.)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(3)
+INTO File();
+----
+27,1006,1705319000,BILI (TOT.),4.0,mg/dL,1975-2,S006,1705317200,1705319800,106
+
+# [23] WBC,Blood,WBC,Blutbild,K/µL,6690-2,<1.0 K/µL,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("WBC") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(1.0)
+INTO File();
+----
+28,1007,1705321000,WBC,0.5,K/µL,6690-2,S007,1705319200,1705321800,107
+
+# [24] Platelet count,Blood,PLT,Blutbild,K/µL,777-3,<50 K/µL,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PLT") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+29,1007,1705321000,PLT,40,K/µL,777-3,S007,1705319200,1705321800,107
+
+# [25] eGFR,Serum/Plasma,GFRKREA,Retention,mL/min/1.73*m^-2,98979-8,<30 mL/min/1.73m²,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GFRKREA") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(30)
+INTO File();
+----
+30,1007,1705321000,GFRKREA,25,mL/min/1.73*m^-2,98979-8,S007,1705319200,1705321800,107
+
+# [26] INR,Plasma,INR,Gerinnung,1,6301-6,>4.5,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("INR") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(4.5)
+INTO File();
+----
+31,1007,1705321000,INR,5,1,6301-6,S007,1705319200,1705321800,107
+
+# [27] PTT,Plasma,PTT,Gerinnung,s,3173-2,>90 s,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PTT") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(90)
+INTO File();
+----
+32,1007,1705321000,PTT,95,s,3173-2,S007,1705319200,1705321800,107
+
+# [28] CK-MB,Serum/Plasma,CK-MB,Enzyme,U/L,2154-3,>240 U/L,4
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("CK-MB") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(240)
+INTO File();
+----
+33,1008,1705323000,CK-MB,250,U/L,2154-3,S008,1705321200,1705323800,108
+
+# [29] Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,<20 µg/mL,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("VANCOMYCIN") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(20)
+INTO File();
+----
+34,1008,1705323000,VANCOMYCIN,15,µg/mL,20578-1,S008,1705321200,1705323800,108
+
+# [30] Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,>30 µg/mL,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("VANCOMYCIN") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(30)
+INTO File();
+----
+35,1008,1705323000,VANCOMYCIN,35,µg/mL,20578-1,S008,1705321200,1705323800,108
+
+# [31] Phosphate,Serum/Plasma,ANORGANISCHER PHOSPHOR,Elektrolyte,mmol/L,2777-1,<0.5 mM/L,24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("ANORGANISCHER PHOSPHOR") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.5)
+INTO File();
+----
+36,1008,1705323000,ANORGANISCHER PHOSPHOR,0.25,mmol/L,2777-1,S008,1705321200,1705323800,108
+
+# [32] ScvO2,(Central) Venous blood,O2-SAETTIGUNG,Blutgase venös,%,1503-0,<50%,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("1503-0") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+37,1009,1705325000,O2-SAETTIGUNG,45,%,1503-0,S009,1705323200,1705325800,109
+
+# [33] SvO2,(mixed) Venous blood,O2-SAETTIGUNG,Blutgase gemischt-venös,%,19224-5,<50%,2
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("19224-5") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+38,1009,1705325000,O2-SAETTIGUNG,45,%,19224-5,S009,1705323200,1705325800,109
