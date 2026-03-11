@@ -102,7 +102,7 @@ jobs:
   build-and-test-macos:
     name: "Build and test (macOS)"
     runs-on: macos-14
-    timeout-minutes: 120
+    timeout-minutes: 180
     env:
       LLVM_TOOLCHAIN_VERSION: 19
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
@@ -139,12 +139,9 @@ jobs:
           restore-keys: vcpkg-repo-
       - name: Configure NebulaStream
         run: |
-          LLVM_PREFIX="$(brew --prefix llvm@19)"
           cmake -GNinja -B build \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DNES_LOG_LEVEL=DEBUG \
-            -DUSE_LOCAL_MLIR=ON \
-            -DMLIR_DIR="${LLVM_PREFIX}/lib/cmake/mlir"
+            -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
         run: |
           cmake --build build -j -- -k 0
