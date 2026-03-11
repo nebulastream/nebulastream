@@ -29,8 +29,6 @@ class GRPCServer final : public WorkerRPCService::Service
 public:
     grpc::Status RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest*, RegisterQueryReply*) override;
 
-    grpc::Status UnregisterQuery(grpc::ServerContext*, const UnregisterQueryRequest*, google::protobuf::Empty*) override;
-
     grpc::Status StartQuery(grpc::ServerContext*, const StartQueryRequest*, google::protobuf::Empty*) override;
 
     grpc::Status StopQuery(grpc::ServerContext*, const StopQueryRequest*, google::protobuf::Empty*) override;
