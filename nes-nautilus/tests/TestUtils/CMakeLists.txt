@@ -13,8 +13,6 @@
 add_library(nes-nautilus-test-util STATIC
         src/NautilusTestUtils.cpp
         src/PagedVectorTestUtils.cpp
-        src/ChainedHashMapTestUtils.cpp
-        src/ChainedHashMapCustomValueTestUtils.cpp
         src/PropertyTestUtils.cpp
 )
 

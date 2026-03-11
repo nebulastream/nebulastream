@@ -77,14 +77,11 @@ public:
     ChainedHashMap(uint64_t entrySize, uint64_t numberOfBuckets, uint64_t pageSize);
     ChainedHashMap(uint64_t keySize, uint64_t valueSize, uint64_t numberOfBuckets, uint64_t pageSize);
     ~ChainedHashMap() override;
-    [[nodiscard]] ChainedHashMapEntry* findChain(HashFunction::HashValue::raw_type hash) const;
     std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
     [[nodiscard]] uint64_t getNumberOfTuples() const override;
     [[nodiscard]] const TupleBuffer& getPage(uint64_t pageIndex) const;
     [[nodiscard]] uint64_t getNumberOfPages() const;
-    [[nodiscard]] ChainedHashMapEntry* getStartOfChain(uint64_t entryIdx) const;
-    [[nodiscard]] uint64_t getNumberOfChains() const;
 
     /// Clears and deletes all entries in the hash map. It also releases the memory of any allocated buffers or other memory.
     void clear() noexcept;

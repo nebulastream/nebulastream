@@ -123,12 +123,6 @@ std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguratio
     return std::make_unique<ChainedHashMap>(other.entrySize, other.numberOfChains, other.pageSize);
 }
 
-ChainedHashMapEntry* ChainedHashMap::findChain(const HashFunction::HashValue::raw_type hash) const
-{
-    const auto entryStartPos = hash & mask;
-    return entries[entryStartPos];
-}
-
 std::span<std::byte> ChainedHashMap::allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
     if (varSizedSpace.empty() or varSizedSpace.back().getNumberOfTuples() + neededSize >= varSizedSpace.back().getBufferSize())
@@ -220,17 +214,6 @@ const TupleBuffer& ChainedHashMap::getPage(const uint64_t pageIndex) const
 uint64_t ChainedHashMap::getNumberOfPages() const
 {
     return storageSpace.size();
-}
-
-ChainedHashMapEntry* ChainedHashMap::getStartOfChain(const uint64_t entryIdx) const
-{
-    PRECONDITION(entryIdx <= numberOfChains, "Entry index {} is greater than the capacity {}", entryIdx, numberOfChains);
-    return entries[entryIdx];
-}
-
-uint64_t ChainedHashMap::getNumberOfChains() const
-{
-    return numberOfChains;
 }
 
 void ChainedHashMap::clear() noexcept
