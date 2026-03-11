@@ -139,9 +139,12 @@ jobs:
           restore-keys: vcpkg-repo-
       - name: Configure NebulaStream
         run: |
+          LLVM_PREFIX="$(brew --prefix llvm@19)"
           cmake -GNinja -B build \
             -DCMAKE_BUILD_TYPE=Debug \
-            -DNES_LOG_LEVEL=DEBUG
+            -DNES_LOG_LEVEL=DEBUG \
+            -DUSE_LOCAL_MLIR=ON \
+            -DMLIR_DIR="${LLVM_PREFIX}/lib/cmake/mlir"
       - name: Build NebulaStream
         run: |
           cmake --build build -j -- -k 0
