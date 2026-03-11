@@ -68,14 +68,6 @@ void QuerySubmitter::stopQuery(const QueryId query)
     }
 }
 
-void QuerySubmitter::unregisterQuery(const QueryId query)
-{
-    if (auto unregistered = queryManager->unregister(query); !unregistered.has_value())
-    {
-        throw std::move(unregistered.error());
-    }
-}
-
 LocalQueryStatus QuerySubmitter::waitForQueryTermination(const QueryId query)
 {
     while (true)

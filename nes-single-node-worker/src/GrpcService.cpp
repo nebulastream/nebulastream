@@ -85,25 +85,6 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     return {grpc::INTERNAL, "unknown exception"};
 }
 
-grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
-{
-    const auto queryId = QueryId(request->queryid());
-    CPPTRACE_TRY
-    {
-        getValueOrThrow(delegate.unregisterQuery(queryId));
-        return grpc::Status::OK;
-    }
-    CPPTRACE_CATCH(const Exception& e)
-    {
-        return handleError(e, context);
-    }
-    CPPTRACE_CATCH_ALT(const std::exception& e)
-    {
-        return handleError(e, context);
-    }
-    return {grpc::INTERNAL, "unknown exception"};
-}
-
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     const auto queryId = QueryId(request->queryid());
