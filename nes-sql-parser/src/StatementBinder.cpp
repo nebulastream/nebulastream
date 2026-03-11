@@ -466,7 +466,10 @@ StatementBinder::parseAndBind(const std::string_view statementString) const
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        /// Enable that antlr throws exeptions on parsing errors
+        /// Remove default error listeners that print to stdout/stderr
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+        /// Enable that antlr throws exceptions on parsing errors
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         AntlrSQLParser::MultipleStatementsContext* tree = parser.multipleStatements();
         if (tree == nullptr)
