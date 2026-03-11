@@ -1,5 +1,5 @@
 # name: inference/InferModelTwoModels.test
-# description: Two INFER_MODEL operators in a single query using different models on the same source
+# description: Two MODEL_INFERENCE operators nested in a single query
 # groups: [Inference]
 
 CREATE LOGICAL SOURCE stream(f1 FLOAT32, f2 FLOAT32, f3 FLOAT32, f4 FLOAT32, f5 FLOAT32);
@@ -17,7 +17,7 @@ OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
 
 CREATE SINK result(`STREAM$F1` FLOAT32, `STREAM$F2` FLOAT32, `STREAM$F3` FLOAT32, `STREAM$F4` FLOAT32, `STREAM$F5` FLOAT32, V1 FLOAT32, SETOSA FLOAT32, VERSICOLOR FLOAT32, VIRGINICA FLOAT32) TYPE File;
 
-SELECT INFER_MODEL(inspections, f1, f2, f3, f4, f5), INFER_MODEL(iris, f1, f2, f3, f4), * FROM stream
+SELECT * FROM MODEL_INFERENCE(iris, MODEL_INFERENCE(inspections, stream))
 INTO result;
 ----
 2.0,45.0,1.0,0.0,10.0,2.55389,0.758012,0.241783,0.000205

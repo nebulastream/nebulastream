@@ -15,7 +15,6 @@
 #include <Operators/InferModelLogicalOperator.hpp>
 
 #include <algorithm>
-#include <array>
 #include <cstddef>
 #include <memory>
 #include <span>
@@ -25,70 +24,53 @@
 #include <vector>
 
 #include <fmt/format.h>
+#include <openssl/evp.h>
 
-#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace
 {
-/// Base64 encoding table
-constexpr std::string_view BASE64_CHARS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-
 std::string base64Encode(std::span<const std::byte> data)
 {
-    std::string result;
-    result.reserve((data.size() + 2) / 3 * 4);
-    for (size_t i = 0; i < data.size(); i += 3)
-    {
-        uint32_t n = static_cast<uint8_t>(data[i]) << 16;
-        if (i + 1 < data.size()) n |= static_cast<uint8_t>(data[i + 1]) << 8;
-        if (i + 2 < data.size()) n |= static_cast<uint8_t>(data[i + 2]);
-        result += BASE64_CHARS[(n >> 18) & 0x3F];
-        result += BASE64_CHARS[(n >> 12) & 0x3F];
-        result += (i + 1 < data.size()) ? BASE64_CHARS[(n >> 6) & 0x3F] : '=';
-        result += (i + 2 < data.size()) ? BASE64_CHARS[n & 0x3F] : '=';
-    }
+    const auto maxLen = 4 * ((data.size() + 2) / 3) + 1;
+    std::string result(maxLen, '\0');
+    const auto len = EVP_EncodeBlock(
+        reinterpret_cast<unsigned char*>(result.data()),
+        reinterpret_cast<const unsigned char*>(data.data()),
+        static_cast<int>(data.size()));
+    result.resize(static_cast<size_t>(len));
     return result;
 }
 
 std::pair<std::shared_ptr<std::byte[]>, size_t> base64Decode(std::string_view encoded)
 {
-    /// Build reverse lookup
-    std::array<uint8_t, 256> lookup{};
-    lookup.fill(0xFF);
-    for (size_t i = 0; i < BASE64_CHARS.size(); ++i)
-        lookup[static_cast<uint8_t>(BASE64_CHARS[i])] = static_cast<uint8_t>(i);
-
-    size_t outSize = encoded.size() / 4 * 3;
-    if (!encoded.empty() && encoded.back() == '=') --outSize;
-    if (encoded.size() >= 2 && encoded[encoded.size() - 2] == '=') --outSize;
-
-    auto buffer = std::make_shared<std::byte[]>(outSize);
-    size_t j = 0;
-    for (size_t i = 0; i < encoded.size(); i += 4)
+    const auto maxLen = 3 * encoded.size() / 4;
+    auto buffer = std::make_shared<std::byte[]>(maxLen);
+    auto decodedLen = EVP_DecodeBlock(
+        reinterpret_cast<unsigned char*>(buffer.get()),
+        reinterpret_cast<const unsigned char*>(encoded.data()),
+        static_cast<int>(encoded.size()));
+    if (decodedLen < 0)
     {
-        uint32_t n = lookup[static_cast<uint8_t>(encoded[i])] << 18;
-        n |= lookup[static_cast<uint8_t>(encoded[i + 1])] << 12;
-        if (encoded[i + 2] != '=') n |= lookup[static_cast<uint8_t>(encoded[i + 2])] << 6;
-        if (encoded[i + 3] != '=') n |= lookup[static_cast<uint8_t>(encoded[i + 3])];
-        buffer[j++] = static_cast<std::byte>((n >> 16) & 0xFF);
-        if (encoded[i + 2] != '=') buffer[j++] = static_cast<std::byte>((n >> 8) & 0xFF);
-        if (encoded[i + 3] != '=') buffer[j++] = static_cast<std::byte>(n & 0xFF);
+        return {nullptr, 0};
     }
-    return {buffer, outSize};
+    /// EVP_DecodeBlock doesn't account for padding
+    auto actualLen = static_cast<size_t>(decodedLen);
+    if (!encoded.empty() && encoded.back() == '=') --actualLen;
+    if (encoded.size() >= 2 && encoded[encoded.size() - 2] == '=') --actualLen;
+    return {buffer, actualLen};
 }
 }
 
 namespace NES
 {
 
-InferModelLogicalOperator::InferModelLogicalOperator(Inference::Model model, std::vector<LogicalFunction> inputFields)
-    : model(std::move(model)), inputFields(std::move(inputFields))
+InferModelLogicalOperator::InferModelLogicalOperator(Inference::Model model)
+    : model(std::move(model))
 {
 }
 
@@ -107,14 +89,19 @@ Inference::Model& InferModelLogicalOperator::getModel()
     return model;
 }
 
-const std::vector<LogicalFunction>& InferModelLogicalOperator::getInputFields() const
+std::vector<std::string> InferModelLogicalOperator::getInputFieldNames() const
 {
-    return inputFields;
+    std::vector<std::string> names;
+    for (const auto& [name, _] : model.getInputs())
+    {
+        names.push_back(name);
+    }
+    return names;
 }
 
 bool InferModelLogicalOperator::operator==(const InferModelLogicalOperator& rhs) const
 {
-    return model == rhs.model && inputFields == rhs.inputFields;
+    return model == rhs.model;
 }
 
 std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
@@ -186,13 +173,12 @@ Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogic
         modelOutputs.push_back({name, dt->type});
     }
     std::vector<detail::ReflectedModelOutput> modelInputs;
-    for (const auto& dt : m.getInputs())
+    for (const auto& [name, dt] : m.getInputs())
     {
-        modelInputs.push_back({"", dt->type});
+        modelInputs.push_back({name, dt->type});
     }
     return reflect(detail::ReflectedInferModelLogicalOperator{
         .functionName = m.getFunctionName(),
-        .inputFields = op.getInputFields(),
         .modelOutputs = std::move(modelOutputs),
         .modelInputs = std::move(modelInputs),
         .bytecodeBase64 = base64Encode(m.getByteCode()),
@@ -205,7 +191,7 @@ Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogic
 
 InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl) const
 {
-    auto [functionName, inputFields, modelOutputs, modelInputs, bytecodeBase64, inputShape, outputShape, inputSizeInBytes, outputSizeInBytes]
+    auto [functionName, modelOutputs, modelInputs, bytecodeBase64, inputShape, outputShape, inputSizeInBytes, outputSizeInBytes]
         = unreflect<detail::ReflectedInferModelLogicalOperator>(rfl);
 
     auto [byteCode, byteCodeSize] = base64Decode(bytecodeBase64);
@@ -216,10 +202,10 @@ InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(con
     model.setInputSizeInBytes(inputSizeInBytes);
     model.setOutputSizeInBytes(outputSizeInBytes);
 
-    std::vector<std::shared_ptr<DataType>> inputs;
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
     for (auto& [name, type] : modelInputs)
     {
-        inputs.emplace_back(std::make_shared<DataType>(type));
+        inputs.emplace_back(std::move(name), std::make_shared<DataType>(type));
     }
     model.setInputs(std::move(inputs));
 
@@ -230,7 +216,7 @@ InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(con
     }
     model.setOutputs(std::move(outputs));
 
-    return InferModelLogicalOperator(std::move(model), std::move(inputFields));
+    return InferModelLogicalOperator(std::move(model));
 }
 
 LogicalOperatorRegistryReturnType

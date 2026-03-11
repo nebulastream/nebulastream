@@ -16,7 +16,6 @@
 
 #include <memory>
 #include <ranges>
-#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -42,19 +41,22 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
 
     const auto inputSchema = logicalOperator.getInputSchemas()[0];
 
-    /// Extract input field names from logical functions, resolving to qualified schema names
+    /// Extract input field names from model, resolving to qualified schema names.
+    /// If a model input maps to a VARSIZED schema field, use bulk byte input mode.
     std::vector<std::string> inputFields;
-    for (const auto& inputField : inferModelOp.get().getInputFields())
+    bool varsizedInput = false;
+    for (const auto& [name, _] : model.getInputs())
     {
-        auto fieldAccess = inputField.getAs<FieldAccessLogicalFunction>();
-        const auto& unqualifiedName = fieldAccess->getFieldName();
-        /// getFieldByName supports unqualified lookup and returns the fully qualified field
-        auto field = inputSchema.getFieldByName(unqualifiedName);
+        auto field = inputSchema.getFieldByName(name);
         if (!field.has_value())
         {
-            throw InferenceRuntime("Input field '{}' not found in schema", unqualifiedName);
+            throw InferenceRuntime("Model input field '{}' not found in schema", name);
         }
         inputFields.push_back(field->name);
+        if (field->dataType.type == DataType::Type::VARSIZED)
+        {
+            varsizedInput = true;
+        }
     }
 
     /// Extract output field names from model
@@ -66,7 +68,7 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
     auto handler = std::make_shared<Inference::IREEInferenceOperatorHandler>(model);
 
     /// Create the physical operator
-    auto physicalOperator = InferModelPhysicalOperator(handlerId, inputFields, outputFields);
+    auto physicalOperator = InferModelPhysicalOperator(handlerId, inputFields, outputFields, varsizedInput);
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");

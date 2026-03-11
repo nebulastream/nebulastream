@@ -18,8 +18,9 @@ get_source(nes-logical-operators NES_LOGICAL_OPERATORS_SOURCE_FILES)
 add_library(nes-logical-operators ${NES_LOGICAL_OPERATORS_SOURCE_FILES})
 
 find_package(reflectcpp REQUIRED)
+find_package(OpenSSL REQUIRED)
 
-target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference PRIVATE reflectcpp::reflectcpp)
+target_link_libraries(nes-logical-operators PUBLIC nes-sources nes-sinks nes-query-optimizer nes-data-types nes-inference PRIVATE reflectcpp::reflectcpp OpenSSL::Crypto)
 target_include_directories(nes-logical-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)

@@ -63,8 +63,8 @@ public:
     void enterSetOperation(AntlrSQLParser::SetOperationContext* context) override;
     void exitSetOperation(AntlrSQLParser::SetOperationContext* context) override;
 
-    void enterInference(AntlrSQLParser::InferenceContext* context) override;
-    void exitInference(AntlrSQLParser::InferenceContext* context) override;
+    void enterModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context) override;
+    void exitModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context) override;
 
     /// enter or exit functions (no pairs)
     void enterSinkClause(AntlrSQLParser::SinkClauseContext* context) override;

@@ -177,11 +177,10 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     return leftLogicalPlan;
 }
 
-LogicalPlan LogicalPlanBuilder::addInferModel(
-    std::string modelName, std::vector<LogicalFunction> inputFields, const LogicalPlan& queryPlan)
+LogicalPlan LogicalPlanBuilder::addInferModel(std::string modelName, const LogicalPlan& childPlan)
 {
     NES_TRACE("LogicalPlanBuilder: add infer model operator to query plan for model {}", modelName);
-    return promoteOperatorToRoot(queryPlan, InferModelNameLogicalOperator(std::move(modelName), std::move(inputFields)));
+    return promoteOperatorToRoot(childPlan, InferModelNameLogicalOperator(std::move(modelName)));
 }
 
 LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan& queryPlan)

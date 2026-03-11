@@ -31,7 +31,7 @@ bool Model::operator==(const Model& rhs) const
     }
     for (size_t i = 0; i < inputs.size(); ++i)
     {
-        if (*inputs[i] != *rhs.inputs[i])
+        if (inputs[i].first != rhs.inputs[i].first || *inputs[i].second != *rhs.inputs[i].second)
         {
             return false;
         }

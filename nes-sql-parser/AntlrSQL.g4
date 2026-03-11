@@ -155,6 +155,17 @@ relationPrimary
     | '(' relation ')' tableAlias             #aliasedRelation
     | inlineTable                             #inlineTableDefault2
     | inlineSource                            #inlineDefinedSource
+    | modelInferenceSource tableAlias         #modelInferenceRelation
+    ;
+
+modelInferenceSource
+    : MODEL_INFERENCE '(' modelName=identifier ',' modelInferenceInput ')'
+    ;
+
+modelInferenceInput
+    : multipartIdentifier                     #modelInferenceStreamName
+    | '(' query ')'                           #modelInferenceSubquery
+    | modelInferenceSource                    #modelInferenceNested
     ;
 
 inlineSource
@@ -307,8 +318,6 @@ timeUnit: MS
 
 timestampParameter: name=identifier;
 
-inferModelInputField: identifierChain;
-
 functionName:  IDENTIFIER | AVG | MAX | MIN | SUM | COUNT | MEDIAN;
 
 sinkClause: INTO sink (',' sink)*;
@@ -345,8 +354,7 @@ predicate
 
 
 valueExpression
-    : INFER_MODEL '(' modelName=identifier (',' inferModelInputField)+ ')'             #inference
-    | (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
+    : (functionName | typeDefinition) '(' (argument+=expression (',' argument+=expression)*)? ')'                 #functionCall
     | op=(MINUS | PLUS | TILDE) valueExpression                                        #arithmeticUnary
     | left=valueExpression op=(ASTERISK | SLASH | PERCENT | DIV) right=valueExpression #arithmeticBinary
     | left=valueExpression op=(PLUS | MINUS | CONCAT_PIPE) right=valueExpression       #arithmeticBinary
@@ -508,7 +516,7 @@ TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
 MODEL: 'MODEL';
 MODELS: 'MODELS';
-INFER_MODEL: 'INFER_MODEL';
+MODEL_INFERENCE: 'MODEL_INFERENCE';
 INPUT: 'INPUT';
 OUTPUT: 'OUTPUT';
 

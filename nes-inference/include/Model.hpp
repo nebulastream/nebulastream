@@ -50,7 +50,7 @@ class Model
     size_t outputDims = 0;
     size_t inputSizeInBytes = 0;
     size_t outputSizeInBytes = 0;
-    std::vector<std::shared_ptr<NES::DataType>> inputs;
+    std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> inputs;
     std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> outputs;
 
 public:
@@ -58,7 +58,7 @@ public:
     Model(std::shared_ptr<std::byte[]> modelByteCode, size_t modelSize) : byteCode(std::move(modelByteCode), modelSize) { }
 
     std::span<const std::byte> getByteCode() const { return byteCode.getBuffer(); }
-    const std::vector<std::shared_ptr<NES::DataType>>& getInputs() const { return inputs; }
+    const std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>>& getInputs() const { return inputs; }
     const std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>>& getOutputs() const { return outputs; }
 
     bool operator==(const Model& rhs) const;
@@ -74,7 +74,7 @@ public:
 
     const std::string& getFunctionName() const { return functionName; }
 
-    void setInputs(std::vector<std::shared_ptr<NES::DataType>> newInputs) { inputs = std::move(newInputs); }
+    void setInputs(std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> newInputs) { inputs = std::move(newInputs); }
     void setOutputs(std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> newOutputs) { outputs = std::move(newOutputs); }
     void setFunctionName(std::string name) { functionName = std::move(name); }
     void setInputShape(std::vector<size_t> s) { shape = std::move(s); dims = shape.size(); }

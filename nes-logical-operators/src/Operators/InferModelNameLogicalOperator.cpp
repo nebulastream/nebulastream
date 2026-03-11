@@ -21,7 +21,6 @@
 
 #include <fmt/format.h>
 
-#include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -32,8 +31,8 @@
 namespace NES
 {
 
-InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelName, std::vector<LogicalFunction> inputFields)
-    : modelName(std::move(modelName)), inputFields(std::move(inputFields))
+InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelName)
+    : modelName(std::move(modelName))
 {
 }
 
@@ -47,14 +46,9 @@ const std::string& InferModelNameLogicalOperator::getModelName() const
     return modelName;
 }
 
-const std::vector<LogicalFunction>& InferModelNameLogicalOperator::getInputFields() const
-{
-    return inputFields;
-}
-
 bool InferModelNameLogicalOperator::operator==(const InferModelNameLogicalOperator& rhs) const
 {
-    return modelName == rhs.modelName && inputFields == rhs.inputFields;
+    return modelName == rhs.modelName;
 }
 
 std::string InferModelNameLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
@@ -114,13 +108,13 @@ std::vector<LogicalOperator> InferModelNameLogicalOperator::getChildren() const
 
 Reflected Reflector<InferModelNameLogicalOperator>::operator()(const InferModelNameLogicalOperator& op) const
 {
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{op.getModelName(), op.getInputFields()});
+    return reflect(detail::ReflectedInferModelNameLogicalOperator{op.getModelName()});
 }
 
 InferModelNameLogicalOperator Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl) const
 {
-    auto [modelName, inputFields] = unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
-    return InferModelNameLogicalOperator(std::move(modelName), std::move(inputFields));
+    auto [modelName] = unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
+    return InferModelNameLogicalOperator(std::move(modelName));
 }
 
 LogicalOperatorRegistryReturnType

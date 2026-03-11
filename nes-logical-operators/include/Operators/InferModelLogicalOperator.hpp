@@ -18,7 +18,6 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Reflection.hpp>
@@ -27,15 +26,17 @@
 namespace NES
 {
 
-/// Operator that holds a compiled inference model and the input fields to feed it.
+/// Operator that holds a compiled inference model. Input/output field names come from the model itself.
 class InferModelLogicalOperator
 {
 public:
-    InferModelLogicalOperator(Inference::Model model, std::vector<LogicalFunction> inputFields);
+    explicit InferModelLogicalOperator(Inference::Model model);
 
     [[nodiscard]] const Inference::Model& getModel() const;
     [[nodiscard]] Inference::Model& getModel();
-    [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const;
+
+    /// Returns model input field names (from CREATE MODEL INPUT)
+    [[nodiscard]] std::vector<std::string> getInputFieldNames() const;
 
     [[nodiscard]] bool operator==(const InferModelLogicalOperator& rhs) const;
 
@@ -56,7 +57,6 @@ public:
 private:
     static constexpr std::string_view NAME = "InferModel";
     Inference::Model model;
-    std::vector<LogicalFunction> inputFields;
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
@@ -89,7 +89,6 @@ struct ReflectedModelOutput
 struct ReflectedInferModelLogicalOperator
 {
     std::string functionName;
-    std::vector<LogicalFunction> inputFields;
     std::vector<ReflectedModelOutput> modelOutputs;
     std::vector<ReflectedModelOutput> modelInputs;
     std::string bytecodeBase64;

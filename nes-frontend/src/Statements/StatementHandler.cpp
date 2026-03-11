@@ -199,10 +199,10 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
         return std::unexpected{ModelAlreadyExists(statement.name)};
     }
 
-    std::vector<std::shared_ptr<DataType>> inputs;
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
     for (const auto& [fieldName, dataType] : statement.inputs)
     {
-        inputs.push_back(std::make_shared<DataType>(dataType));
+        inputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
     }
 
     std::vector<std::pair<std::string, std::shared_ptr<DataType>>> outputs;

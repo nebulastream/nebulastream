@@ -18,7 +18,6 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/Schema.hpp>
-#include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Reflection.hpp>
@@ -26,15 +25,14 @@
 namespace NES
 {
 
-/// Placeholder operator that holds only the model name and input fields.
+/// Placeholder operator that holds only the model name.
 /// The ModelInferenceCompilationRule resolves this to an InferModelLogicalOperator with a compiled Model.
 class InferModelNameLogicalOperator
 {
 public:
-    InferModelNameLogicalOperator(std::string modelName, std::vector<LogicalFunction> inputFields);
+    explicit InferModelNameLogicalOperator(std::string modelName);
 
     [[nodiscard]] const std::string& getModelName() const;
-    [[nodiscard]] const std::vector<LogicalFunction>& getInputFields() const;
 
     [[nodiscard]] bool operator==(const InferModelNameLogicalOperator& rhs) const;
 
@@ -55,7 +53,6 @@ public:
 private:
     static constexpr std::string_view NAME = "InferModelName";
     std::string modelName;
-    std::vector<LogicalFunction> inputFields;
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
@@ -82,6 +79,5 @@ namespace NES::detail
 struct ReflectedInferModelNameLogicalOperator
 {
     std::string modelName;
-    std::vector<LogicalFunction> inputFields;
 };
 }

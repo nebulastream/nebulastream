@@ -26,7 +26,7 @@ struct RegisteredModel
 {
     std::string name;
     std::filesystem::path path;
-    std::vector<std::shared_ptr<NES::DataType>> inputs;
+    std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> inputs;
     std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> outputs;
 };
 

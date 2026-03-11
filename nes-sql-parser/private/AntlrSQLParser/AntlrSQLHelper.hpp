@@ -99,15 +99,8 @@ public:
     std::vector<Projection> preAggregationProjections;
     size_t aggExprCounter = 0;
 
-    /// Inference model state: each entry is (modelName, inputFields) accumulated during parsing
-    struct InferenceCall
-    {
-        std::string modelName;
-        std::vector<LogicalFunction> inputFields;
-    };
-    std::vector<InferenceCall> inferenceCalls;
-    bool isInference = false;
-    std::vector<LogicalFunction> inferenceInputFieldBuilder;
+    /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
+    bool isModelInference = false;
 
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
