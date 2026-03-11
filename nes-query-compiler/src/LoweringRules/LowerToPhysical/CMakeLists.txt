@@ -18,5 +18,4 @@ add_plugin(WindowedAggregation LoweringRule nes-query-compiler LowerToPhysicalWi
 add_plugin(Union LoweringRule nes-query-compiler LowerToPhysicalUnion.cpp)
 add_plugin(Sink LoweringRule nes-query-compiler LowerToPhysicalSink.cpp)
 add_plugin(Source LoweringRule nes-query-compiler LowerToPhysicalSource.cpp)
-add_plugin(IngestionTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
 add_plugin(EventTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalEventTimeWatermarkAssigner.cpp)

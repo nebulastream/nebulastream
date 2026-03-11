@@ -45,7 +45,6 @@
 #include <Watermark/TimeFunction.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
-#include <magic_enum/magic_enum.hpp>
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
@@ -83,26 +82,18 @@ static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLo
         throw UnknownWindowType("Window type is not a time based window type");
     }
 
-    switch (timeWindow->getTimeCharacteristic().getType())
+    const auto& timeCharacteristic = timeWindow->getTimeCharacteristic();
+    const auto& fieldName = timeCharacteristic.field.name;
+
+    /// Ingestion time uses buffer creation timestamp from execution context, not a per-tuple field.
+    if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
     {
-        case Windowing::TimeCharacteristic::Type::IngestionTime: {
-            if (timeWindow->getTimeCharacteristic().field.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
-            {
-                return std::make_unique<IngestionTimeFunction>();
-            }
-            throw UnknownWindowType(
-                "The ingestion time field of a window must be: {}", Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME);
-        }
-        case Windowing::TimeCharacteristic::Type::EventTime: {
-            /// For event time fields, we look up the reference field name and create an expression to read the field.
-            auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field.name;
-            auto timeStampField = FieldAccessPhysicalFunction(timeCharacteristicField);
-            return std::make_unique<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
-        }
-        default: {
-            throw UnknownWindowType("Unknown window type: {}", magic_enum::enum_name(timeWindow->getTimeCharacteristic().getType()));
-        }
+        return std::make_unique<IngestionTimeFunction>();
     }
+
+    /// Event time reads a timestamp field from each record.
+    auto timeStampField = FieldAccessPhysicalFunction(fieldName);
+    return std::make_unique<EventTimeFunction>(timeStampField, timeCharacteristic.getTimeUnit());
 }
 
 namespace

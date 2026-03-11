@@ -30,7 +30,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
-#include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -91,19 +90,11 @@ LogicalPlan LogicalPlanBuilder::addWindowAggregation(
 
     if (auto* timeBasedWindowType = dynamic_cast<Windowing::TimeBasedWindowType*>(windowType.get()))
     {
-        switch (timeBasedWindowType->getTimeCharacteristic().getType())
-        {
-            case Windowing::TimeCharacteristic::Type::IngestionTime:
-                queryPlan = promoteOperatorToRoot(queryPlan, IngestionTimeWatermarkAssignerLogicalOperator());
-                break;
-            case Windowing::TimeCharacteristic::Type::EventTime:
-                queryPlan = promoteOperatorToRoot(
-                    queryPlan,
-                    EventTimeWatermarkAssignerLogicalOperator(
-                        FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.name),
-                        timeBasedWindowType->getTimeCharacteristic().getTimeUnit()));
-                break;
-        }
+        queryPlan = promoteOperatorToRoot(
+            queryPlan,
+            EventTimeWatermarkAssignerLogicalOperator(
+                FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.name),
+                timeBasedWindowType->getTimeCharacteristic().getTimeUnit()));
     }
     else
     {
@@ -193,20 +184,12 @@ LogicalPlanBuilder::checkAndAddWatermarkAssigner(LogicalPlan queryPlan, const st
     NES_TRACE("LogicalPlanBuilder: checkAndAddWatermarkAssigner for a (sub)query plan");
     auto timeBasedWindowType = as<Windowing::TimeBasedWindowType>(windowType);
 
-    if (getOperatorByType<IngestionTimeWatermarkAssignerLogicalOperator>(queryPlan).empty()
-        and getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())
+    if (getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(queryPlan).empty())
     {
-        if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-        {
-            return promoteOperatorToRoot(queryPlan, IngestionTimeWatermarkAssignerLogicalOperator());
-        }
-        if (timeBasedWindowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::EventTime)
-        {
-            auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.name);
-            auto assigner
-                = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
-            return promoteOperatorToRoot(queryPlan, assigner);
-        }
+        auto logicalFunction = FieldAccessLogicalFunction(timeBasedWindowType->getTimeCharacteristic().field.name);
+        auto assigner
+            = EventTimeWatermarkAssignerLogicalOperator(logicalFunction, timeBasedWindowType->getTimeCharacteristic().getTimeUnit());
+        return promoteOperatorToRoot(queryPlan, assigner);
     }
     return queryPlan;
 }
