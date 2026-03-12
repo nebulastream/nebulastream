@@ -16,6 +16,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -24,24 +25,84 @@ template <typename U>
 class RuleManager
 {
 public:
-    void addRule(Rule<U> unit)
+    void addRule(Rule<U> rule)
     {
-        dependencies.emplace(unit, unit.getDependencies());
-        rules.push_back(std::move(unit));
+        if (rules.contains(rule.getType()))
+        {
+            throw UnknownException("Only supports one rule per type currently.");
+        }
+        for (auto deps: rule.getDependencies())
+        {
+            if (!dependencies.contains(deps))
+            {
+                dependencies[deps] = {rule.getType()};
+            } else
+            {
+                dependencies[deps].insert(rule.getType());
+            }
+        }
+
+        rules.emplace(rule.getType(), rule);
     }
 
     [[nodiscard]] U apply(U unit) const
     {
-        for (const auto& rule : rules)
+       const auto sequence = getSequence();
+
+        for (const auto& rule: sequence)
         {
             unit = rule.apply(unit);
         }
         return unit;
     }
 
+
+    [[nodiscard]] std::vector<Rule<U>> getSequence() const
+    {
+        std::queue<Rule<U>> candidates;
+        std::unordered_map<std::type_index, uint8_t> indegree;
+
+        std::vector<Rule<U>> sequence;
+
+        for (auto [_, rule]: rules)
+        {
+            indegree[rule.getType()] = rule.getDependencies().size();
+            if (rule.getDependencies().empty())
+            {
+                std::cout << "add_to_candidates: " << rule.getName() << '\n';
+                candidates.push(rule);
+            }
+        }
+
+        while (!candidates.empty())
+        {
+            // 1. Choose any candidate and remove it from list.
+            auto next = candidates.front();
+            candidates.pop();
+            // 2. Add candidate to sequence.
+            sequence.emplace_back(next);
+            std::cout << "add_to_seq: " << next.getName() << ", remaining candidates: "<< candidates.size() <<  "\n";
+            // 3. Reduce indegree of all rules that depend on it by one
+            if (dependencies.contains(next.getType()))
+            {
+                auto rulesThatDependsOnNext = dependencies.at(next.getType());
+                for (auto dependentRuleType: rulesThatDependsOnNext)
+                {
+                    indegree[dependentRuleType] -= 1;
+                    if (indegree[dependentRuleType] == 0)
+                    {
+                        // 4. If indegree of any rule becomes zero, add it to candidates.
+                        candidates.push(rules.at(dependentRuleType));
+                    }
+                }
+            }
+        }
+        return sequence;
+    }
+
 private:
-    std::unordered_map<Rule<U>, std::set<std::type_index>> dependencies;
-    std::vector<Rule<U>> rules;
+    std::unordered_map<std::type_index, std::set<std::type_index>> dependencies;
+    std::unordered_map<std::type_index, Rule<U>> rules;
 };
 
 
