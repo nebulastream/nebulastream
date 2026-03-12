@@ -14,25 +14,29 @@
 
 #include <Operators/InferModelNameLogicalOperator.hpp>
 
+#include <optional>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
 
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Serialization/LogicalFunctionReflection.hpp>
-#include <Util/Reflection.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
 
-InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelName)
-    : modelName(std::move(modelName))
+InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelName, std::vector<std::string> inputFieldNames)
+    : modelName(std::move(modelName)), inputFieldNames(std::move(inputFieldNames))
 {
 }
 
@@ -41,35 +45,41 @@ std::string_view InferModelNameLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-const std::string& InferModelNameLogicalOperator::getModelName() const
+std::string InferModelNameLogicalOperator::getModelName() const
 {
     return modelName;
 }
 
+std::vector<std::string> InferModelNameLogicalOperator::getInputFieldNames() const
+{
+    return inputFieldNames;
+}
+
 bool InferModelNameLogicalOperator::operator==(const InferModelNameLogicalOperator& rhs) const
 {
-    return modelName == rhs.modelName;
+    return modelName == rhs.modelName && inputFieldNames == rhs.inputFieldNames
+        && getOutputSchema() == rhs.getOutputSchema() && getInputSchemas() == rhs.getInputSchemas()
+        && getTraitSet() == rhs.getTraitSet();
 }
 
 std::string InferModelNameLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("INFER_MODEL_NAME(opId: {}, model: {})", opId, modelName);
+        return fmt::format(
+            "INFER_MODEL_NAME(opId: {}, model: {}, inputFields: [{}], traitSet: {})",
+            opId,
+            modelName,
+            fmt::join(inputFieldNames, ", "),
+            traitSet.explain(verbosity));
     }
-    return fmt::format("INFER_MODEL_NAME({})", modelName);
+    return fmt::format("INFER_MODEL_NAME(model: {}, inputFields: [{}])", modelName, fmt::join(inputFieldNames, ", "));
 }
 
-InferModelNameLogicalOperator InferModelNameLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+InferModelNameLogicalOperator InferModelNameLogicalOperator::withInferredSchema(
+    [[maybe_unused]] std::vector<Schema> inputSchemas) const
 {
-    auto copy = *this;
-    if (!inputSchemas.empty())
-    {
-        copy.inputSchema = inputSchemas.at(0);
-        // Output schema is the same as input - it will be modified when resolved to InferModelLogicalOperator
-        copy.outputSchema = inputSchemas.at(0);
-    }
-    return copy;
+    throw CannotInferSchema("InferModelName requires model resolution before schema inference");
 }
 
 TraitSet InferModelNameLogicalOperator::getTraitSet() const
@@ -77,17 +87,17 @@ TraitSet InferModelNameLogicalOperator::getTraitSet() const
     return traitSet;
 }
 
-InferModelNameLogicalOperator InferModelNameLogicalOperator::withTraitSet(TraitSet traitSet) const
+InferModelNameLogicalOperator InferModelNameLogicalOperator::withTraitSet(TraitSet newTraitSet) const
 {
     auto copy = *this;
-    copy.traitSet = std::move(traitSet);
+    copy.traitSet = std::move(newTraitSet);
     return copy;
 }
 
-InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
+InferModelNameLogicalOperator InferModelNameLogicalOperator::withChildren(std::vector<LogicalOperator> newChildren) const
 {
     auto copy = *this;
-    copy.children = std::move(children);
+    copy.children = std::move(newChildren);
     return copy;
 }
 
@@ -108,13 +118,21 @@ std::vector<LogicalOperator> InferModelNameLogicalOperator::getChildren() const
 
 Reflected Reflector<InferModelNameLogicalOperator>::operator()(const InferModelNameLogicalOperator& op) const
 {
-    return reflect(detail::ReflectedInferModelNameLogicalOperator{op.getModelName()});
+    return reflect(detail::ReflectedInferModelNameLogicalOperator{
+        std::make_optional(op.getModelName()),
+        std::make_optional(op.getInputFieldNames())});
 }
 
 InferModelNameLogicalOperator Unreflector<InferModelNameLogicalOperator>::operator()(const Reflected& rfl) const
 {
-    auto [modelName] = unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
-    return InferModelNameLogicalOperator(std::move(modelName));
+    auto [modelNameOpt, inputFieldNamesOpt] = unreflect<detail::ReflectedInferModelNameLogicalOperator>(rfl);
+
+    if (!modelNameOpt.has_value() || !inputFieldNamesOpt.has_value())
+    {
+        throw CannotDeserialize("Failed to deserialize InferModelNameLogicalOperator");
+    }
+
+    return InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value());
 }
 
 LogicalOperatorRegistryReturnType
@@ -124,7 +142,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelNameLogicalOperator(Logical
     {
         return unreflect<InferModelNameLogicalOperator>(arguments.reflected);
     }
-    PRECONDITION(false, "Operator is only built directly via parser or via reflection, not using the registry");
+    PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();
 }
 }

@@ -13,37 +13,81 @@
 */
 
 #include <Model.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <SerializableOperator.pb.h>
 
-namespace NES::Inference
-{
+#include <cstddef>
+#include <memory>
+#include <ranges>
+#include <string>
+#include <utility>
+#include <vector>
 
-bool Model::operator==(const Model& rhs) const
+NES::Nebuli::Inference::Model NES::Nebuli::Inference::deserializeModel(const SerializableOperator_Model& grpcModel)
 {
-    if (byteCode != rhs.byteCode || shape != rhs.shape || outputShape != rhs.outputShape || functionName != rhs.functionName
-        || dims != rhs.dims || outputDims != rhs.outputDims || inputSizeInBytes != rhs.inputSizeInBytes
-        || outputSizeInBytes != rhs.outputSizeInBytes)
-    {
-        return false;
-    }
-    if (inputs.size() != rhs.inputs.size() || outputs.size() != rhs.outputs.size())
-    {
-        return false;
-    }
-    for (size_t i = 0; i < inputs.size(); ++i)
-    {
-        if (inputs[i].first != rhs.inputs[i].first || *inputs[i].second != *rhs.inputs[i].second)
-        {
-            return false;
-        }
-    }
-    for (size_t i = 0; i < outputs.size(); ++i)
-    {
-        if (outputs[i].first != rhs.outputs[i].first || *outputs[i].second != *rhs.outputs[i].second)
-        {
-            return false;
-        }
-    }
-    return true;
+    auto modelByteCodeSize = grpcModel.bytecode().size();
+    auto modelByteCodeBuffer = std::make_shared<std::byte[]>(modelByteCodeSize);
+    std::ranges::copy(
+        grpcModel.bytecode() | std::views::transform([](const auto& character) { return static_cast<std::byte>(character); }),
+        modelByteCodeBuffer.get());
+
+    Model model{modelByteCodeBuffer, modelByteCodeSize};
+
+    model.functionName = grpcModel.functionname();
+    model.dims = static_cast<size_t>(grpcModel.dims());
+    model.shape.assign(grpcModel.shape().begin(), grpcModel.shape().end());
+
+    model.outputDims = static_cast<size_t>(grpcModel.outputdims());
+    model.outputShape.assign(grpcModel.outputshape().begin(), grpcModel.outputshape().end());
+
+    model.inputSizeInBytes = static_cast<size_t>(grpcModel.inputsizeinbytes());
+    model.outputSizeInBytes = static_cast<size_t>(grpcModel.outputsizeinbytes());
+
+    model.inputs = grpcModel.inputs()
+        | std::views::transform([](const auto& serializedDataType)
+                                { return DataTypeSerializationUtil::deserializeDataType(serializedDataType); })
+        | std::ranges::to<std::vector>();
+
+    model.outputs = grpcModel.outputs()
+        | std::views::transform(
+                        [](const auto& typeWithName) -> std::pair<std::string, NES::DataType>
+                        {
+                            return {typeWithName.name(), DataTypeSerializationUtil::deserializeDataType(typeWithName.type())};
+                        })
+        | std::ranges::to<std::vector>();
+
+    return model;
 }
 
+void NES::Nebuli::Inference::serializeModel(const NES::Nebuli::Inference::Model& model, SerializableOperator_Model& target)
+{
+    auto modelBytes = model.getByteCode() | std::views::transform([](const std::byte& byte) { return static_cast<char>(byte); });
+    target.mutable_bytecode()->assign(modelBytes.begin(), modelBytes.end());
+    target.set_dims(static_cast<int32_t>(model.dims));
+    for (auto sh : model.shape)
+    {
+        target.add_shape(static_cast<int32_t>(sh));
+    }
+
+    target.set_outputdims(static_cast<int32_t>(model.outputDims));
+    for (auto sh : model.outputShape)
+    {
+        target.add_outputshape(static_cast<int32_t>(sh));
+    }
+
+    target.set_functionname(model.functionName);
+    target.set_inputsizeinbytes(static_cast<int32_t>(model.inputSizeInBytes));
+    target.set_outputsizeinbytes(static_cast<int32_t>(model.outputSizeInBytes));
+
+    for (const auto& input : model.inputs)
+    {
+        DataTypeSerializationUtil::serializeDataType(input, target.add_inputs());
+    }
+
+    for (const auto& [name, type] : model.outputs)
+    {
+        auto* output = target.add_outputs();
+        output->set_name(name);
+        DataTypeSerializationUtil::serializeDataType(type, output->mutable_type());
+    }
 }
