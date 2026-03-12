@@ -46,7 +46,7 @@ namespace NES
 
 FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
+    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
     , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
