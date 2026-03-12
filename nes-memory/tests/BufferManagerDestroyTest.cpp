@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <cstdint>
 #include <memory>
-#include <optional>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <gtest/gtest.h>
