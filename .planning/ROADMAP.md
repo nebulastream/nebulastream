@@ -52,10 +52,11 @@ Plans:
   2. The numerical correctness test asserts `EXPECT_NEAR` on every output field against known-good expected values from the identity model
   3. Multi-tuple buffer processing (multiple records per buffer) produces per-record correct outputs
   4. Error-path tests for setup skipped, invalid model, and zero-tuple buffer each produce the expected behavior (exception or no-op) without undefined behavior or crashes
-**Plans:** 2/2 plans complete
+**Plans:** 3/3 plans complete
 Plans:
-- [ ] 03-01-PLAN.md — Wire CMake IREE tool checks and register InferModelPhysicalOperatorTest target
-- [ ] 03-02-PLAN.md — Write complete physical operator test suite (lifecycle, correctness, multi-record, edge cases)
+- [x] 03-01-PLAN.md — Wire CMake IREE tool checks and register InferModelPhysicalOperatorTest target
+- [x] 03-02-PLAN.md — Write complete physical operator test suite (lifecycle, correctness, multi-record, edge cases)
+- [x] 03-03-PLAN.md — Mark PHYS-05 and PHYS-06 as Dropped per user decision (gap closure)
 
 ## Progress
 
@@ -66,4 +67,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Infrastructure and Logical Tests | 2/3 | In Progress|  |
 | 2. Test Model Artifact | 1/1 | Complete   | 2026-03-12 |
-| 3. Physical Operator Tests | 2/2 | Complete   | 2026-03-12 |
+| 3. Physical Operator Tests | 3/3 | Complete | 2026-03-12 |
