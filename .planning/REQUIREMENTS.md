@@ -25,13 +25,13 @@
 
 ### Schema Inference
 
-- [ ] **SCHEMA-01**: Test withInferredSchema appends model output fields to input schema
-- [ ] **SCHEMA-02**: Test output field ordering is preserved (positional correctness)
-- [ ] **SCHEMA-03**: Test error on empty input schema
-- [ ] **SCHEMA-04**: Test error on missing required input fields
-- [ ] **SCHEMA-05**: Test error on type mismatch between schema and model input expectations
-- [ ] **SCHEMA-06**: Test with multiple output fields
-- [ ] **SCHEMA-07**: Test schema with pre-existing fields of same name as output fields
+- [x] **SCHEMA-01**: Test withInferredSchema appends model output fields to input schema
+- [x] **SCHEMA-02**: Test output field ordering is preserved (positional correctness)
+- [x] **SCHEMA-03**: Test error on empty input schema
+- [x] **SCHEMA-04**: Test error on missing required input fields
+- [x] **SCHEMA-05**: Test error on type mismatch between schema and model input expectations
+- [x] **SCHEMA-06**: Test with multiple output fields
+- [x] **SCHEMA-07**: Test schema with pre-existing fields of same name as output fields
 
 ### Physical Operator
 
@@ -75,13 +75,13 @@
 | LOGI-06 | Phase 1 | Complete |
 | LOGI-07 | Phase 1 | Complete |
 | LOGI-08 | Phase 1 | Complete |
-| SCHEMA-01 | Phase 1 | Pending |
-| SCHEMA-02 | Phase 1 | Pending |
-| SCHEMA-03 | Phase 1 | Pending |
-| SCHEMA-04 | Phase 1 | Pending |
-| SCHEMA-05 | Phase 1 | Pending |
-| SCHEMA-06 | Phase 1 | Pending |
-| SCHEMA-07 | Phase 1 | Pending |
+| SCHEMA-01 | Phase 1 | Complete |
+| SCHEMA-02 | Phase 1 | Complete |
+| SCHEMA-03 | Phase 1 | Complete |
+| SCHEMA-04 | Phase 1 | Complete |
+| SCHEMA-05 | Phase 1 | Complete |
+| SCHEMA-06 | Phase 1 | Complete |
+| SCHEMA-07 | Phase 1 | Complete |
 | INFRA-02 | Phase 2 | Pending |
 | PHYS-01 | Phase 3 | Pending |
 | PHYS-02 | Phase 3 | Pending |
