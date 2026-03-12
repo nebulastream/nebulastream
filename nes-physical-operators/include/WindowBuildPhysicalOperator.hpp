@@ -16,7 +16,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceCache/SliceCache.hpp>
@@ -83,8 +82,6 @@ protected:
     // Maybe I can get rid of this here...
     SliceCacheConfiguration sliceCacheConfiguration;
     std::shared_ptr<SliceCache> sliceCache;
-    /// Ensures that the slice cache memory is allocated and initialized exactly once across all pipelines sharing this operator.
-    std::shared_ptr<std::once_flag> sliceCacheInitFlag;
 };
 
 }
