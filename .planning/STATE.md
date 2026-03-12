@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-02-PLAN.md — InferModelPhysicalOperator 7-test suite all passing with real IREE inference
-last_updated: "2026-03-12T19:50:32.654Z"
+stopped_at: Completed 03-03-PLAN.md — PHYS-05 and PHYS-06 marked Dropped, zero Pending v1 requirements
+last_updated: "2026-03-12T20:24:41.486Z"
 last_activity: 2026-03-12 — InferModelLogicalOperator and InferModelNameLogicalOperator implemented; LOGI-01 through LOGI-08 pass
 progress:
   total_phases: 3
   completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 7
+  completed_plans: 7
   percent: 33
 ---
 
@@ -56,6 +56,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 02-test-model-artifact P01 | 333 | 2 tasks | 7 files |
 | Phase 03-physical-operator-tests P01 | 15 | 1 tasks | 12 files |
 | Phase 03-physical-operator-tests P02 | 8 | 2 tasks | 1 files |
+| Phase 03-physical-operator-tests P03 | 3 | 2 tasks | 2 files |
 
 ## Accumulated Context
 
@@ -78,6 +79,8 @@ Recent decisions affecting current work:
 - [Phase 03-physical-operator-tests]: NoOpChildOperator required as terminal child: setupChild INVARIANT asserts getChild().has_value()
 - [Phase 03-physical-operator-tests]: readRecord({}) includes NO fields — must pass explicit projection list like {"input_blob"}
 - [Phase 03-physical-operator-tests]: Output fields from InferModelPhysicalOperator are written to Record in-memory map, not TupleBuffer — use input-only schema for bufRef
+- [Phase 03-physical-operator-tests]: PHYS-05 Dropped: framework guarantees setup->execute*->stop ordering — no need to test setup-skipped error
+- [Phase 03-physical-operator-tests]: PHYS-06 Dropped: framework guarantees terminate is called exactly once — no need to test idempotent terminate
 
 ### Pending Todos
 
@@ -91,6 +94,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T19:50:32.652Z
-Stopped at: Completed 03-02-PLAN.md — InferModelPhysicalOperator 7-test suite all passing with real IREE inference
+Last session: 2026-03-12T20:24:41.484Z
+Stopped at: Completed 03-03-PLAN.md — PHYS-05 and PHYS-06 marked Dropped, zero Pending v1 requirements
 Resume file: None
