@@ -35,13 +35,13 @@
 
 ### Physical Operator
 
-- [ ] **PHYS-01**: Test full lifecycle: setup→open→execute→close→terminate with identity model
-- [ ] **PHYS-02**: Test numerical correctness (output == input for identity model)
-- [ ] **PHYS-03**: Test field extraction from TupleBuffer using TestTupleBuffer API
-- [ ] **PHYS-04**: Test multi-tuple buffer processing (multiple records per buffer)
+- [x] **PHYS-01**: Test full lifecycle: setup→open→execute→close→terminate with identity model
+- [x] **PHYS-02**: Test numerical correctness (output == input for identity model)
+- [x] **PHYS-03**: Test field extraction from TupleBuffer using TestTupleBuffer API
+- [x] **PHYS-04**: Test multi-tuple buffer processing (multiple records per buffer)
 - [ ] **PHYS-05**: Test error when handler not started (setup skipped)
 - [ ] **PHYS-06**: Test idempotent terminate (calling terminate twice doesn't crash)
-- [ ] **PHYS-07**: Test execute with empty buffer (zero tuples)
+- [x] **PHYS-07**: Test execute with empty buffer (zero tuples)
 
 ## v2 Requirements
 
@@ -83,13 +83,13 @@
 | SCHEMA-06 | Phase 1 | Complete |
 | SCHEMA-07 | Phase 1 | Complete |
 | INFRA-02 | Phase 2 | Complete |
-| PHYS-01 | Phase 3 | Pending |
-| PHYS-02 | Phase 3 | Pending |
-| PHYS-03 | Phase 3 | Pending |
-| PHYS-04 | Phase 3 | Pending |
+| PHYS-01 | Phase 3 | Complete |
+| PHYS-02 | Phase 3 | Complete |
+| PHYS-03 | Phase 3 | Complete |
+| PHYS-04 | Phase 3 | Complete |
 | PHYS-05 | Phase 3 | Pending |
 | PHYS-06 | Phase 3 | Pending |
-| PHYS-07 | Phase 3 | Pending |
+| PHYS-07 | Phase 3 | Complete |
 
 **Coverage:**
 - v1 requirements: 22 total
