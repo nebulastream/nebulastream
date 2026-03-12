@@ -1,0 +1,1898 @@
+Subject: [PATCH] rebasing changes
+Add CompletingTraceContext and optimize tracing hot paths
+---
+Index: .github/workflows/pr.yml
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/.github/workflows/pr.yml b/.github/workflows/pr.yml
+--- a/.github/workflows/pr.yml	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/.github/workflows/pr.yml	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -17,6 +17,12 @@
+     name: Check format
+     steps:
+       - uses: actions/checkout@v4
++      - name: Install clang-format-21
++        run: |
++          wget -qO- https://apt.llvm.org/llvm-snapshot.gpg.key | sudo tee /etc/apt/trusted.gpg.d/apt.llvm.org.asc
++          echo "deb http://apt.llvm.org/noble/ llvm-toolchain-noble-21 main" | sudo tee /etc/apt/sources.list.d/llvm-21.list
++          sudo apt-get update -q
++          sudo apt-get install -y clang-format-21
+       - name: run format.sh
+         run: |
+           ./format.sh
+Index: format.sh
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/format.sh b/format.sh
+--- a/format.sh	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/format.sh	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -17,17 +17,34 @@
+ fi
+
+
+-if [ -x "$(command -v clang-format-18)" ]
+-then
+-    CLANG_FORMAT="clang-format-18"
+-elif [ -x "$(command -v clang-format)" ] && clang-format --version | grep "version 18" > /dev/null
+-then
++CLANG_FORMAT=""
++
++# Try versioned binaries from highest to lowest
++for version in 21 20 19 18 17 16 15; do
++    if [ -x "$(command -v clang-format-${version})" ]; then
++        CLANG_FORMAT="clang-format-${version}"
++        break
++    fi
++done
++
++# Fall back to unversioned clang-format if available
++if [ -z "$CLANG_FORMAT" ] && [ -x "$(command -v clang-format)" ]; then
+     CLANG_FORMAT="clang-format"
+-else
+-    echo could not find clang-format 18 in PATH, please install.
++fi
++
++if [ -z "$CLANG_FORMAT" ]; then
++    echo "could not find clang-format in PATH, please install."
+     exit 1
+ fi
+
++echo "Using: $($CLANG_FORMAT --version)"
++
++# Cross-platform CPU count
++if command -v nproc > /dev/null 2>&1; then
++    NPROC="$(nproc)"
++else
++    NPROC="$(sysctl -n hw.logicalcpu 2>/dev/null || echo 1)"
++fi
+
+ FAIL=0
+
+@@ -36,7 +53,7 @@
+     # clang-format
+     git ls-files -- '*.cpp' '*.hpp' \
+       | grep --invert-match "^third_party" \
+-      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" -i
++      | xargs --max-args=10 --max-procs="$NPROC" "$CLANG_FORMAT" -i
+
+     # newline at eof
+     #
+@@ -47,13 +64,13 @@
+     git ls-files \
+       | grep --invert-match "^third_party" \
+       | grep --invert-match -e "\.png$" -e "\.zip$" \
+-      | xargs --max-procs="$(nproc)" -I {} sh -c '[ "$(tail -c 1 {} | od -A n -t d1)" = "   10" ] || echo "" >> {}'
++      | xargs --max-procs="$NPROC" -I {} sh -c '[ "$(tail -c 1 {} | wc -l | tr -d "[:space:]")" = "1" ] || printf "\n" >> {}'
+
+ else
+     # clang-format
+     git ls-files -- '*.cpp' '*.hpp' \
+       | grep --invert-match "^third_party" \
+-      | xargs --max-args=10 --max-procs="$(nproc)" "$CLANG_FORMAT" --dry-run -Werror \
++      | xargs --max-args=10 --max-procs="$NPROC" "$CLANG_FORMAT" --dry-run -Werror \
+       || FAIL=1
+
+     # newline at eof
+@@ -66,7 +83,7 @@
+     git ls-files \
+       | grep --invert-match "^third_party" \
+       | grep --invert-match -e "\.png$" -e "\.zip$" \
+-      | xargs --max-args=10 --max-procs="$(nproc)" tail -qc 1  | wc -cl \
++      | xargs --max-args=10 --max-procs="$NPROC" tail -qc 1  | wc -cl \
+       | awk '$1 != $2 { print $2-$1, "missing newline(s) at EOF. Please run \"format.sh -i\" to fix"; exit 1 }' \
+       || FAIL=1
+ fi
+Index: nautilus/include/nautilus/Engine.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+--- a/nautilus/include/nautilus/Engine.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/include/nautilus/Engine.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -86,9 +86,7 @@
+ 			                    fn(make_value(args)...));
+ 		                },
+ 		                [&](compiler::Executable::Invocable<typename R::raw_type, FunctionArguments...>& fn) ->
+-		                typename R::raw_type {
+-			                return fn(args...);
+-		                }},
++		                typename R::raw_type { return fn(args...); }},
+ 		    func);
+ 	}
+
+@@ -117,9 +115,7 @@
+
+ 	auto operator()(FunctionArguments... args) {
+ 		std::visit(overloaded {[&](std::function<void(val<FunctionArguments>...)>& fn) { fn(make_value(args)...); },
+-		                       [&](compiler::Executable::Invocable<void, FunctionArguments...>& fn) {
+-			                       fn(args...);
+-		                       }},
++		                       [&](compiler::Executable::Invocable<void, FunctionArguments...>& fn) { fn(args...); }},
+ 		           func);
+ 	}
+
+Index: nautilus/include/nautilus/tracing/TracingInterface.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/tracing/TracingInterface.hpp b/nautilus/include/nautilus/tracing/TracingInterface.hpp
+--- a/nautilus/include/nautilus/tracing/TracingInterface.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/include/nautilus/tracing/TracingInterface.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -18,7 +18,7 @@
+  * as a thread-local pointer, so all operations within a single trace go through the
+  * same implementation while different traces can use different ones.
+  *
+- * Concrete implementations (e.g. TraceContext) are set via setActiveTracer() before
++ * Concrete implementations (e.g. ExceptionBasedTraceContext) are set via setActiveTracer() before
+  * executing a traced function and cleared afterwards.
+  */
+ class TracingInterface {
+Index: nautilus/include/nautilus/val_ptr.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+--- a/nautilus/include/nautilus/val_ptr.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/include/nautilus/val_ptr.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -77,13 +77,13 @@
+ #define BINARY_AND_ASSIGN_OPERATOR(OP)                                                                                 \
+ 	template <class T>                                                                                                 \
+ 	    requires std::is_convertible_v<T, baseType>                                                                    \
+-	void operator OP##=(T other) {                                                                                     \
++	void operator OP## = (T other)  {                                                                          \
+ 		val<baseType> value {other};                                                                                   \
+ 		*this OP## = value;                                                                                            \
+ 	}                                                                                                                  \
+ 	template <class T>                                                                                                 \
+ 	    requires std::is_convertible_v<T, baseType>                                                                    \
+-	void operator OP##=(val<T> other) {                                                                                \
++	void operator OP## = (val<T> other)  {                                                                     \
+ 		val<baseType> value {other};                                                                                   \
+ 		*this = *this OP value;                                                                                        \
+ 	}                                                                                                                  \
+Index: nautilus/src/nautilus/compiler/JITCompiler.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/JITCompiler.cpp b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+--- a/nautilus/src/nautilus/compiler/JITCompiler.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/JITCompiler.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -16,7 +16,8 @@
+ #ifdef ENABLE_COMPILER
+
+ #include "nautilus/compiler/ir/util/GraphVizUtil.hpp"
+-#include "nautilus/tracing/TraceContext.hpp"
++#include "nautilus/tracing/ExceptionBasedTraceContext.hpp"
++#include "nautilus/tracing/LazyTraceContext.hpp"
+ #include "nautilus/tracing/phases/SSACreationPhase.hpp"
+ #include "nautilus/tracing/phases/TraceToIRConversionPhase.hpp"
+ #endif
+@@ -64,7 +65,9 @@
+ 	const CompilationUnitID compilationId = createCompilationUnitID();
+ 	auto dumpHandler = DumpHandler(options, compilationId);
+ 	// derive trace from function
+-	auto executionTrace = tracing::TraceContext::trace(function, options);
++	auto traceMode = options.getOptionOrDefault("engine.traceMode", std::string("lazyTracing"));
++	auto executionTrace = (traceMode == "lazyTracing") ? tracing::LazyTraceContext::trace(function, options)
++	                                                   : tracing::ExceptionBasedTraceContext::trace(function, options);
+ 	dumpHandler.dump("after_tracing", "trace", [&]() { return executionTrace->toString(); });
+
+ 	// create ssa
+Index: nautilus/src/nautilus/compiler/ir/IRGraph.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/IRGraph.cpp b/nautilus/src/nautilus/compiler/ir/IRGraph.cpp
+--- a/nautilus/src/nautilus/compiler/ir/IRGraph.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/ir/IRGraph.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -126,8 +126,8 @@
+
+ template <>
+ struct formatter<nautilus::compiler::ir::OperationIdentifier> : formatter<std::string_view> {
+-	static auto format(const nautilus::compiler::ir::OperationIdentifier& op,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::compiler::ir::OperationIdentifier& op, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+ 		fmt::format_to(out, "${}", op.getId());
+ 		return out;
+@@ -136,8 +136,8 @@
+
+ template <>
+ struct formatter<nautilus::compiler::ir::BasicBlockInvocation> : formatter<std::string_view> {
+-	static auto format(const nautilus::compiler::ir::BasicBlockInvocation& op,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::compiler::ir::BasicBlockInvocation& op, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+ 		fmt::format_to(out, "Block_{}(", op.getBlock()->getIdentifier());
+ 		const auto& args = op.getArguments();
+@@ -164,8 +164,8 @@
+
+ template <>
+ struct formatter<nautilus::compiler::ir::ProxyCallOperation> : formatter<std::string_view> {
+-	static auto format(const nautilus::compiler::ir::ProxyCallOperation& op,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::compiler::ir::ProxyCallOperation& op, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+
+ 		if (op.getStamp() != nautilus::Type::v) {
+@@ -245,8 +245,8 @@
+
+ template <>
+ struct formatter<nautilus::compiler::ir::BasicBlock> : formatter<std::string_view> {
+-	static auto format(const nautilus::compiler::ir::BasicBlock& block,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::compiler::ir::BasicBlock& block, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+ 		fmt::format_to(out, "\nBlock_{}(", block.getIdentifier());
+ 		const auto& args = block.getArguments();
+@@ -267,8 +267,8 @@
+
+ template <>
+ struct formatter<nautilus::compiler::ir::FunctionOperation> : formatter<std::string_view> {
+-	static auto format(const nautilus::compiler::ir::FunctionOperation& func,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::compiler::ir::FunctionOperation& func, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+ 		fmt::format_to(out, "{}(", func.getName());
+ 		for (const auto& arg : func.getInputArgNames()) {
+Index: nautilus/src/nautilus/compiler/ir/blocks/BasicBlockInvocation.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/blocks/BasicBlockInvocation.cpp b/nautilus/src/nautilus/compiler/ir/blocks/BasicBlockInvocation.cpp
+--- a/nautilus/src/nautilus/compiler/ir/blocks/BasicBlockInvocation.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/ir/blocks/BasicBlockInvocation.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -1,5 +1,6 @@
+
+ #include "nautilus/compiler/ir/blocks/BasicBlockInvocation.hpp"
++#include <algorithm>
+
+ namespace nautilus::compiler::ir {
+
+@@ -23,23 +24,11 @@
+ }
+
+ void BasicBlockInvocation::replaceArgument(Operation* toReplace, Operation* replaceWith) {
+-	auto argumentIndex = 0;
+-	for (const auto& argument : operations) {
+-		if (argument == toReplace) {
+-			operations.at(argumentIndex) = replaceWith;
+-		}
+-		++argumentIndex;
+-	}
++	std::replace(operations.begin(), operations.end(), toReplace, replaceWith);
+ }
+
+ void BasicBlockInvocation::replaceArgument(const Operation* toReplace, Operation* replaceWith) {
+-	auto argumentIndex = 0;
+-	for (const auto& argument : operations) {
+-		if (argument == toReplace) {
+-			operations.at(argumentIndex) = replaceWith;
+-		}
+-		++argumentIndex;
+-	}
++	std::replace(operations.begin(), operations.end(), const_cast<Operation*>(toReplace), replaceWith);
+ }
+
+ int BasicBlockInvocation::getOperationArgIndex(Operation* arg) {
+Index: nautilus/src/nautilus/compiler/ir/operations/Operation.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/Operation.cpp b/nautilus/src/nautilus/compiler/ir/operations/Operation.cpp
+--- a/nautilus/src/nautilus/compiler/ir/operations/Operation.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/ir/operations/Operation.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -17,7 +17,7 @@
+ 	return opType;
+ }
+
+-std::vector<Operation*> Operation::getInputs() {
++const std::vector<Operation*>& Operation::getInputs() const {
+ 	return inputs;
+ }
+
+Index: nautilus/src/nautilus/compiler/ir/operations/Operation.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/Operation.hpp b/nautilus/src/nautilus/compiler/ir/operations/Operation.hpp
+--- a/nautilus/src/nautilus/compiler/ir/operations/Operation.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/ir/operations/Operation.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -86,7 +86,7 @@
+
+ 	bool isConstOperation() const;
+
+-	std::vector<Operation*> getInputs();
++	const std::vector<Operation*>& getInputs() const;
+
+ 	void replaceInput(Operation* toReplace, std::shared_ptr<Operation> replaceWith);
+
+Index: nautilus/src/nautilus/compiler/ir/util/GraphVizUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/util/GraphVizUtil.cpp b/nautilus/src/nautilus/compiler/ir/util/GraphVizUtil.cpp
+--- a/nautilus/src/nautilus/compiler/ir/util/GraphVizUtil.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/compiler/ir/util/GraphVizUtil.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -243,7 +243,7 @@
+ 				for (const auto& op : block->getOperations()) {
+ 					const auto& to = nodeIdMap[op.get()];
+ 					// process inputs of node
+-					for (auto input : op->getInputs()) {
++					for (const auto* input : op->getInputs()) {
+ 						const auto& from = nodeIdMap[input];
+ 						writeEdge(from, to, "data", input->getIdentifier().toString());
+ 					}
+Index: nautilus/src/nautilus/tracing/Block.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/Block.cpp b/nautilus/src/nautilus/tracing/Block.cpp
+--- a/nautilus/src/nautilus/tracing/Block.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/Block.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -2,6 +2,7 @@
+ #include "nautilus/tracing/TraceOperation.hpp"
+ #include "nautilus/tracing/TracingUtil.hpp"
+ #include "nautilus/tracing/Types.hpp"
++#include <algorithm>
+
+ namespace nautilus::tracing {
+
+Index: nautilus/src/nautilus/tracing/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/CMakeLists.txt b/nautilus/src/nautilus/tracing/CMakeLists.txt
+--- a/nautilus/src/nautilus/tracing/CMakeLists.txt	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/CMakeLists.txt	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -8,7 +8,8 @@
+             Block.cpp
+             ExecutionTrace.cpp
+             TracingUtil.cpp
+-            TraceContext.cpp
++            ExceptionBasedTraceContext.cpp
++            LazyTraceContext.cpp
+             TraceOperation.cpp
+             Snapshot.cpp)
+ endif ()
+Index: nautilus/src/nautilus/tracing/TraceContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+rename from nautilus/src/nautilus/tracing/TraceContext.cpp
+rename to nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.cpp	(revision 20140ff580d5fba825bac67e8388d007c3791a2a)
+@@ -1,5 +1,5 @@
+
+-#include "TraceContext.hpp"
++#include "ExceptionBasedTraceContext.hpp"
+ #include "nautilus/common/FunctionAttributes.hpp"
+ #include "nautilus/logging.hpp"
+ #include "nautilus/tracing/TracingUtil.hpp"
+@@ -21,24 +21,25 @@
+
+ namespace nautilus::tracing {
+
+-// Thread-local TraceContext object (not a pointer)
++// Thread-local ExceptionBasedTraceContext object (not a pointer)
+ // This is allocated in thread-local storage - zero heap allocation overhead
+-static thread_local TraceContext traceContext;
++static thread_local ExceptionBasedTraceContext traceContext;
+
+ TraceState::TraceState(TagRecorder& tr, ExecutionTrace& et, SymbolicExecutionContext& sec, const engine::Options& opts)
+     : tagRecorder(tr), executionTrace(et), symbolicExecutionContext(sec), options(opts) {
+ 	// TraceState only holds references - the actual objects are stack-allocated in trace()
+ }
+
+-TraceContext* TraceContext::initialize(TagRecorder& tagRecorder, ExecutionTrace& executionTrace,
+-                                       SymbolicExecutionContext& symbolicExecutionContext,
+-                                       const engine::Options& options) {
++ExceptionBasedTraceContext* ExceptionBasedTraceContext::initialize(TagRecorder& tagRecorder,
++                                                                   ExecutionTrace& executionTrace,
++                                                                   SymbolicExecutionContext& symbolicExecutionContext,
++                                                                   const engine::Options& options) {
+ 	traceContext.state = std::make_unique<TraceState>(tagRecorder, executionTrace, symbolicExecutionContext, options);
+ 	setActiveTracer(&traceContext);
+ 	return &traceContext;
+ }
+
+-void TraceContext::resume() {
++void ExceptionBasedTraceContext::resume() {
+ 	// Clear dynamic containers
+ 	staticVars.clear();
+
+@@ -49,22 +50,22 @@
+ 	// as it needs to persist across trace iterations
+ }
+
+-TypedValueRef& TraceContext::registerFunctionArgument(Type type, size_t index) {
++TypedValueRef& ExceptionBasedTraceContext::registerFunctionArgument(Type type, size_t index) {
+ 	return state->executionTrace.setArgument(type, index);
+ }
+
+-bool TraceContext::isFollowing() {
++bool ExceptionBasedTraceContext::isFollowing() {
+ 	return state->symbolicExecutionContext.getCurrentMode() == SymbolicExecutionContext::MODE::FOLLOW;
+ }
+
+-TypedValueRef& TraceContext::follow([[maybe_unused]] Op op) {
++TypedValueRef& ExceptionBasedTraceContext::follow([[maybe_unused]] Op op) {
+ 	auto& currentOperation = state->executionTrace.getCurrentOperation();
+ 	state->executionTrace.nextOperation();
+ 	assert(currentOperation.op == op);
+ 	return currentOperation.resultRef;
+ }
+
+-TypedValueRef& TraceContext::traceConstant(Type type, const ConstantLiteral& constValue) {
++TypedValueRef& ExceptionBasedTraceContext::traceConstant(Type type, const ConstantLiteral& constValue) {
+ 	log::debug("Trace Constant");
+ 	auto op = Op::CONST;
+ 	if (isFollowing()) {
+@@ -84,7 +85,7 @@
+ }
+
+ template <typename OnCreation>
+-TypedValueRef& TraceContext::traceOperation(Op op, OnCreation&& onCreation) {
++TypedValueRef& ExceptionBasedTraceContext::traceOperation(Op op, OnCreation&& onCreation) {
+ 	if (isFollowing()) {
+ 		return follow(op);
+ 	} else {
+@@ -98,11 +99,11 @@
+ 	}
+ }
+
+-TypedValueRef& TraceContext::traceAlloca(size_t allocSize) {
++TypedValueRef& ExceptionBasedTraceContext::traceAlloca(size_t allocSize) {
+ 	return traceOperation(ALLOCA, Type::ptr, {allocSize});
+ }
+
+-TypedValueRef& TraceContext::traceCopy(const TypedValueRef& ref) {
++TypedValueRef& ExceptionBasedTraceContext::traceCopy(const TypedValueRef& ref) {
+ 	log::debug("Trace Copy");
+ 	return traceOperation(ASSIGN, [&](Snapshot& tag) -> TypedValueRef& {
+ 		auto resultRef = state->executionTrace.getNextValueRef();
+@@ -110,9 +111,9 @@
+ 	});
+ }
+
+-TypedValueRef& TraceContext::traceCall(void* fptn, Type resultType,
+-                                       const std::vector<tracing::TypedValueRef>& arguments,
+-                                       FunctionAttributes fnAttrs) {
++TypedValueRef& ExceptionBasedTraceContext::traceCall(void* fptn, Type resultType,
++                                                     const std::vector<tracing::TypedValueRef>& arguments,
++                                                     FunctionAttributes fnAttrs) {
+ 	auto mangledName = getMangledName(fptn);
+ 	auto functionName = getFunctionName(fptn, mangledName);
+ 	auto op = Op::CALL;
+@@ -126,13 +127,14 @@
+ 	});
+ }
+
+-void TraceContext::traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) {
++void ExceptionBasedTraceContext::traceAssignment(const TypedValueRef& target, const TypedValueRef& source,
++                                                 Type resultType) {
+ 	traceOperation(ASSIGN, [&](Snapshot& tag) -> TypedValueRef& {
+ 		return state->executionTrace.addAssignmentOperation(tag, target, source, resultType);
+ 	});
+ }
+
+-void TraceContext::traceReturnOperation(Type resultType, const TypedValueRef& ref) {
++void ExceptionBasedTraceContext::traceReturnOperation(Type resultType, const TypedValueRef& ref) {
+ 	if (isFollowing()) {
+ 		follow(RETURN);
+ 	} else {
+@@ -141,27 +143,27 @@
+ 	}
+ }
+
+-TypedValueRef& TraceContext::traceOperation(Op op, Type resultType, std::vector<InputVariant> inputs) {
++TypedValueRef& ExceptionBasedTraceContext::traceOperation(Op op, Type resultType, std::vector<InputVariant> inputs) {
+ 	return traceOperation(op, [&, inputs = std::move(inputs)](Snapshot& tag) mutable -> TypedValueRef& {
+ 		return state->executionTrace.addOperationWithResult(tag, op, resultType, std::move(inputs));
+ 	});
+ }
+
+-TypedValueRef& TraceContext::traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
+-                                           const TypedValueRef& right) {
++TypedValueRef& ExceptionBasedTraceContext::traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
++                                                         const TypedValueRef& right) {
+ 	return traceOperation(op, resultType, {left, right});
+ }
+
+-TypedValueRef& TraceContext::traceUnaryOp(Op op, Type resultType, const TypedValueRef& input) {
++TypedValueRef& ExceptionBasedTraceContext::traceUnaryOp(Op op, Type resultType, const TypedValueRef& input) {
+ 	return traceOperation(op, resultType, {input});
+ }
+
+-TypedValueRef& TraceContext::traceTernaryOp(Op op, Type resultType, const TypedValueRef& first,
+-                                            const TypedValueRef& second, const TypedValueRef& third) {
++TypedValueRef& ExceptionBasedTraceContext::traceTernaryOp(Op op, Type resultType, const TypedValueRef& first,
++                                                          const TypedValueRef& second, const TypedValueRef& third) {
+ 	return traceOperation(op, resultType, {first, second, third});
+ }
+
+-std::string TraceContext::formatStaticVars() const {
++std::string ExceptionBasedTraceContext::formatStaticVars() const {
+ 	std::string result;
+ 	for (size_t i = 0; i < staticVars.size(); i++) {
+ 		if (i > 0) {
+@@ -172,21 +174,21 @@
+ 	return result;
+ }
+
+-void TraceContext::pushStaticVal(void* valPtr, size_t size) {
++void ExceptionBasedTraceContext::pushStaticVal(void* valPtr, size_t size) {
+ 	staticVars.emplace_back(valPtr, size);
+ 	if (log::options::getLogStaticVars()) {
+ 		log::info("pushStaticVal: [{}]", formatStaticVars());
+ 	}
+ }
+
+-void TraceContext::popStaticVal() {
++void ExceptionBasedTraceContext::popStaticVal() {
+ 	if (log::options::getLogStaticVars()) {
+ 		log::info("popStaticVal: [{}] (popping last)", formatStaticVars());
+ 	}
+ 	staticVars.pop_back();
+ }
+
+-bool TraceContext::traceBool(const TypedValueRef& value, const double probability) {
++bool ExceptionBasedTraceContext::traceBool(const TypedValueRef& value, const double probability) {
+ 	bool result;
+ 	if (state->symbolicExecutionContext.getCurrentMode() == SymbolicExecutionContext::MODE::FOLLOW) {
+ 		// eval execution path one step
+@@ -217,8 +219,8 @@
+ 	return result;
+ }
+
+-std::unique_ptr<ExecutionTrace> TraceContext::trace(std::function<void()>& traceFunction,
+-                                                    const engine::Options& options) {
++std::unique_ptr<ExecutionTrace> ExceptionBasedTraceContext::trace(std::function<void()>& traceFunction,
++                                                                  const engine::Options& options) {
+ 	log::debug("Initialize Tracing");
+ 	auto rootAddress = __builtin_return_address(0);
+ 	auto tr = tracing::TagRecorder((tracing::TagAddress) rootAddress);
+@@ -228,7 +230,7 @@
+ 	ExecutionTrace executionTrace;
+ 	SymbolicExecutionContext symbolicExecutionContext;
+
+-	// Initialize TraceContext with references to our stack objects
++	// Initialize ExceptionBasedTraceContext with references to our stack objects
+ 	auto tc = initialize(tr, executionTrace, symbolicExecutionContext, options);
+ 	auto traceIteration = 0;
+
+@@ -266,14 +268,14 @@
+ 	return std::make_unique<ExecutionTrace>(std::move(executionTrace));
+ }
+
+-void TraceContext::allocateValRef(ValueRef ref) {
++void ExceptionBasedTraceContext::allocateValRef(ValueRef ref) {
+ 	aliveVars.increment(ref);
+ }
+-void TraceContext::freeValRef(ValueRef ref) {
++void ExceptionBasedTraceContext::freeValRef(ValueRef ref) {
+ 	aliveVars.decrement(ref);
+ }
+
+-std::string TraceContext::getMangledName(void* fnptr) {
++std::string ExceptionBasedTraceContext::getMangledName(void* fnptr) {
+ 	if (const auto it = mangledNameCache.find(fnptr); it != mangledNameCache.end()) {
+ 		return it->second;
+ 	}
+@@ -291,7 +293,7 @@
+ 	return ptrStr;
+ }
+
+-std::string TraceContext::getFunctionName(void* fnptr, const std::string& mangledName) {
++std::string ExceptionBasedTraceContext::getFunctionName(void* fnptr, const std::string& mangledName) {
+ 	// Check if function name normalization is enabled
+ 	bool normalizeFunctionNames = state->options.getOptionOrDefault("engine.normalizeFunctionNames", false);
+
+@@ -345,7 +347,7 @@
+ 	return hash;
+ }
+
+-Snapshot TraceContext::recordSnapshot() {
++Snapshot ExceptionBasedTraceContext::recordSnapshot() {
+ 	return {state->tagRecorder.createTag(), hashStaticVector(staticVars) ^ aliveVars.hash()};
+ }
+
+Index: nautilus/src/nautilus/tracing/TraceContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+rename from nautilus/src/nautilus/tracing/TraceContext.hpp
+rename to nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/ExceptionBasedTraceContext.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -145,7 +145,7 @@
+  * function.
+  *
+  * Design Philosophy:
+- * - TraceContext is a simple thread_local object (not a pointer) - zero heap allocation
++ * - ExceptionBasedTraceContext is a simple thread_local object (not a pointer) - zero heap allocation
+  * - ExecutionTrace and SymbolicExecutionContext are allocated on the stack in trace()
+  * - TraceState holds references to these stack objects and is created during initialization
+  * - staticVars and aliveVars are persistent members that get reset between trace iterations
+@@ -158,7 +158,7 @@
+  * 3. Multiple trace iterations execute, calling resume() to reset persistent state
+  * 4. After tracing completes, setActiveTracer(nullptr) is called and ExecutionTrace is returned
+  */
+-class TraceContext final : public TracingInterface {
++class ExceptionBasedTraceContext final : public TracingInterface {
+ public:
+ 	// --- TracingInterface overrides ---
+
+@@ -193,7 +193,7 @@
+
+ 	// --- Non-interface public API ---
+
+-	~TraceContext() override = default;
++	~ExceptionBasedTraceContext() override = default;
+
+ 	/**
+ 	 * @brief Resets persistent state between trace iterations.
+@@ -209,10 +209,11 @@
+ 	 * @param executionTrace Reference to stack-allocated ExecutionTrace
+ 	 * @param symbolicExecutionContext Reference to stack-allocated SymbolicExecutionContext
+ 	 * @param options Reference to engine options for configuration
+-	 * @return Pointer to initialized thread_local TraceContext
++	 * @return Pointer to initialized thread_local ExceptionBasedTraceContext
+ 	 */
+-	static TraceContext* initialize(TagRecorder& tagRecorder, ExecutionTrace& executionTrace,
+-	                                SymbolicExecutionContext& symbolicExecutionContext, const engine::Options& options);
++	static ExceptionBasedTraceContext* initialize(TagRecorder& tagRecorder, ExecutionTrace& executionTrace,
++	                                              SymbolicExecutionContext& symbolicExecutionContext,
++	                                              const engine::Options& options);
+
+ 	/**
+ 	 * @brief Main tracing entry point - allocates all objects on stack and executes symbolic tracing.
+@@ -233,7 +234,7 @@
+ 	 * @brief Default constructor - public to allow thread_local storage.
+ 	 * Initializes with empty state (state == nullptr means not initialized).
+ 	 */
+-	TraceContext() = default;
++	ExceptionBasedTraceContext() = default;
+
+ private:
+ 	bool isFollowing();
+Index: nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -307,8 +307,8 @@
+ 	return out;
+ }
+
+-auto formatter<nautilus::tracing::Block>::format(const nautilus::tracing::Block& block,
+-                                                 format_context& ctx) -> format_context::iterator {
++auto formatter<nautilus::tracing::Block>::format(const nautilus::tracing::Block& block, format_context& ctx)
++    -> format_context::iterator {
+ 	auto out = ctx.out();
+ 	fmt::format_to(out, "(");
+ 	for (size_t i = 0; i < block.arguments.size(); i++) {
+@@ -330,8 +330,8 @@
+
+ template <>
+ struct formatter<nautilus::tracing::TypedValueRef> : formatter<std::string_view> {
+-	static auto format(const nautilus::tracing::TypedValueRef& typeValRef,
+-	                   format_context& ctx) -> format_context::iterator {
++	static auto format(const nautilus::tracing::TypedValueRef& typeValRef, format_context& ctx)
++	    -> format_context::iterator {
+ 		auto out = ctx.out();
+ 		fmt::format_to(out, "${}", typeValRef.ref);
+ 		return out;
+Index: nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.cpp b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp
+new file mode 100644
+--- /dev/null	(revision 20140ff580d5fba825bac67e8388d007c3791a2a)
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.cpp	(revision 20140ff580d5fba825bac67e8388d007c3791a2a)
+@@ -0,0 +1,380 @@
++
++#include "LazyTraceContext.hpp"
++#include "nautilus/common/FunctionAttributes.hpp"
++#include "nautilus/logging.hpp"
++#include "nautilus/tracing/TracingUtil.hpp"
++#include "symbolic_execution/SymbolicExecutionContext.hpp"
++#include <cassert>
++#include <cxxabi.h>
++#include <dlfcn.h>
++#include <fmt/format.h>
++#include <sstream>
++
++namespace fmt {
++template <>
++struct formatter<nautilus::tracing::ExecutionTrace> : formatter<std::string_view> {
++	static auto format(const nautilus::tracing::ExecutionTrace& trace, format_context& ctx) -> format_context::iterator;
++};
++} // namespace fmt
++
++namespace nautilus::tracing {
++
++// Thread-local LazyTraceContext object (not a pointer)
++static thread_local LazyTraceContext completingTraceContext;
++
++LazyTraceContext* LazyTraceContext::initialize(TagRecorder& tagRecorder, ExecutionTrace& executionTrace,
++                                               SymbolicExecutionContext& symbolicExecutionContext,
++                                               const engine::Options& options) {
++	completingTraceContext.state =
++	    std::make_unique<TraceState>(tagRecorder, executionTrace, symbolicExecutionContext, options);
++	completingTraceContext.paused_ = false;
++	setActiveTracer(&completingTraceContext);
++	return &completingTraceContext;
++}
++
++void LazyTraceContext::resume() {
++	staticVars.clear();
++	aliveVars.reset();
++	paused_ = false;
++}
++
++TypedValueRef& LazyTraceContext::registerFunctionArgument(Type type, size_t index) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	return state->executionTrace.setArgument(type, index);
++}
++
++bool LazyTraceContext::isFollowing() {
++	return state->symbolicExecutionContext.getCurrentMode() == SymbolicExecutionContext::MODE::FOLLOW;
++}
++
++TypedValueRef& LazyTraceContext::follow([[maybe_unused]] Op op) {
++	auto& currentOperation = state->executionTrace.getCurrentOperation();
++	state->executionTrace.nextOperation();
++	assert(currentOperation.op == op);
++	return currentOperation.resultRef;
++}
++
++TypedValueRef& LazyTraceContext::traceConstant(Type type, const ConstantLiteral& constValue) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	log::debug("Trace Constant");
++	auto op = Op::CONST;
++	if (isFollowing()) {
++		return follow(op);
++	}
++	auto tag = recordSnapshot();
++	auto globalTabIter = state->executionTrace.globalTagMap.find(tag);
++	if (globalTabIter != state->executionTrace.globalTagMap.end()) {
++		auto& ref = globalTabIter->second;
++		auto& originalRef = state->executionTrace.getBlocks()[ref.blockIndex].operations[ref.operationIndex];
++		auto resultRef = state->executionTrace.addOperationWithResult(tag, op, type, {constValue});
++		state->executionTrace.addAssignmentOperation(tag, originalRef.resultRef, resultRef, resultRef.type);
++		return originalRef.resultRef;
++	} else {
++		return state->executionTrace.addOperationWithResult(tag, op, type, {constValue});
++	}
++}
++
++template <typename OnCreation>
++TypedValueRef& LazyTraceContext::traceOperation(Op op, OnCreation&& onCreation) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	if (isFollowing()) {
++		return follow(op);
++	} else {
++		auto tag = recordSnapshot();
++		if (state->executionTrace.checkTag(tag)) {
++			return onCreation(tag);
++		} else {
++			// Instead of throwing TraceTerminationException, enter passive mode.
++			paused_ = true;
++			return dummyRef_;
++		}
++	}
++}
++
++TypedValueRef& LazyTraceContext::traceCopy(const TypedValueRef& ref) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	log::debug("Trace Copy");
++	return traceOperation(ASSIGN, [&](Snapshot& tag) -> TypedValueRef& {
++		auto resultRef = state->executionTrace.getNextValueRef();
++		return state->executionTrace.addAssignmentOperation(tag, {resultRef, ref.type}, ref, ref.type);
++	});
++}
++
++TypedValueRef& LazyTraceContext::traceCall(void* fptn, Type resultType,
++                                           const std::vector<tracing::TypedValueRef>& arguments,
++                                           FunctionAttributes fnAttrs) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	auto mangledName = getMangledName(fptn);
++	auto functionName = getFunctionName(fptn, mangledName);
++	auto op = Op::CALL;
++	return traceOperation(op, [&](Snapshot& tag) -> TypedValueRef& {
++		auto functionArguments = FunctionCall {.functionName = functionName,
++		                                       .mangledName = mangledName,
++		                                       .ptr = fptn,
++		                                       .arguments = arguments,
++		                                       .fnAttrs = fnAttrs};
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {functionArguments});
++	});
++}
++
++void LazyTraceContext::traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) {
++	if (paused_) {
++		return;
++	}
++	traceOperation(ASSIGN, [&](Snapshot& tag) -> TypedValueRef& {
++		return state->executionTrace.addAssignmentOperation(tag, target, source, resultType);
++	});
++}
++
++void LazyTraceContext::traceReturnOperation(Type resultType, const TypedValueRef& ref) {
++	if (paused_) {
++		return;
++	}
++	if (isFollowing()) {
++		follow(RETURN);
++	} else {
++		auto tag = recordSnapshot();
++		state->executionTrace.addReturn(tag, resultType, ref);
++	}
++}
++
++TypedValueRef& LazyTraceContext::traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
++                                               const TypedValueRef& right) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	return traceOperation(
++	    op, [&, inputs = std::vector<InputVariant> {left, right}](Snapshot& tag) mutable -> TypedValueRef& {
++		    return state->executionTrace.addOperationWithResult(tag, op, resultType, std::move(inputs));
++	    });
++}
++
++TypedValueRef& LazyTraceContext::traceUnaryOp(Op op, Type resultType, const TypedValueRef& input) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	return traceOperation(op, [&, inputs = std::vector<InputVariant> {input}](Snapshot& tag) mutable -> TypedValueRef& {
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, std::move(inputs));
++	});
++}
++
++TypedValueRef& LazyTraceContext::traceTernaryOp(Op op, Type resultType, const TypedValueRef& first,
++                                                const TypedValueRef& second, const TypedValueRef& third) {
++	if (paused_) {
++		return dummyRef_;
++	}
++	return traceOperation(
++	    op, [&, inputs = std::vector<InputVariant> {first, second, third}](Snapshot& tag) mutable -> TypedValueRef& {
++		    return state->executionTrace.addOperationWithResult(tag, op, resultType, std::move(inputs));
++	    });
++}
++
++TypedValueRef& LazyTraceContext::traceAlloca(size_t allocSize) {
++	if (paused_) {
++		return dummyRef_;
++	}
++
++	Op op {ALLOCA};
++	auto resultType {Type::ptr};
++	return traceOperation(op, [&](Snapshot& tag) mutable -> TypedValueRef& {
++		return state->executionTrace.addOperationWithResult(tag, op, resultType, {allocSize});
++	});
++}
++
++bool LazyTraceContext::traceBool(const TypedValueRef& value, const double probability) {
++	if (paused_) {
++		// In passive mode, return false to guarantee loop termination.
++		return false;
++	}
++
++	bool result;
++	bool shouldTerminate = false;
++
++	if (state->symbolicExecutionContext.getCurrentMode() == SymbolicExecutionContext::MODE::FOLLOW) {
++		auto recordResult = state->symbolicExecutionContext.followNoThrow();
++		result = recordResult.branchDirection;
++		shouldTerminate = recordResult.shouldTerminate;
++	} else {
++		// record
++		auto tag = recordSnapshot();
++		if (state->executionTrace.checkTag(tag)) {
++			state->executionTrace.addCmpOperation(tag, value, probability);
++			auto recordResult = state->symbolicExecutionContext.recordNoThrow(tag);
++			result = recordResult.branchDirection;
++			shouldTerminate = recordResult.shouldTerminate;
++		} else {
++			// Control flow merge/loop detected. Enter passive mode.
++			paused_ = true;
++			return false;
++		}
++	}
++
++	if (shouldTerminate) {
++		// The symbolic execution signals termination (SecondVisit).
++		// Enter passive mode instead of throwing.
++		paused_ = true;
++		return false;
++	}
++
++	auto& currentOperation = state->executionTrace.getCurrentOperation();
++	assert(currentOperation.op == CMP);
++
++	uint16_t nextBlock;
++	if (result) {
++		nextBlock = std::get<BlockRef>(currentOperation.input[1]).block;
++	} else {
++		nextBlock = std::get<BlockRef>(currentOperation.input[2]).block;
++	}
++	state->executionTrace.setCurrentBlock(nextBlock);
++	return result;
++}
++
++std::unique_ptr<ExecutionTrace> LazyTraceContext::trace(std::function<void()>& traceFunction,
++                                                        const engine::Options& options) {
++	log::debug("Initialize Completing Tracing");
++	auto rootAddress = __builtin_return_address(0);
++	auto tr = tracing::TagRecorder((tracing::TagAddress) rootAddress);
++
++	// Allocate ExecutionTrace and SymbolicExecutionContext on the stack
++	ExecutionTrace executionTrace;
++	SymbolicExecutionContext symbolicExecutionContext;
++
++	// Initialize LazyTraceContext with references to our stack objects
++	auto tc = initialize(tr, executionTrace, symbolicExecutionContext, options);
++	auto traceIteration = 0;
++
++	// Symbolic execution loop: explore all execution paths
++	// No try/catch needed - the traced function always returns normally
++	while (symbolicExecutionContext.shouldContinue()) {
++		traceIteration = traceIteration + 1;
++		log::trace("Completing Trace Iteration {}", traceIteration);
++		log::trace("{}", executionTrace);
++
++		// Prepare for next iteration
++		symbolicExecutionContext.next();
++		executionTrace.resetExecution();
++		tc->resume(); // Reset persistent state (staticVars, aliveVars, paused_)
++
++		// Execute the traced function - it always returns normally
++		traceFunction();
++
++		// After each iteration, the static variable stack must be empty.
++		// Since the function completes normally, all destructors fire in order.
++		assert(completingTraceContext.staticVars.empty() && "static variable stack not empty after tracing iteration");
++	}
++
++	// Clean up: deregister active tracer and reset state pointer
++	setActiveTracer(nullptr);
++	tc->state.reset();
++
++	log::debug("Completing Tracing Terminated with {} iterations", traceIteration);
++	log::trace("Final trace: {}", executionTrace);
++
++	return std::make_unique<ExecutionTrace>(std::move(executionTrace));
++}
++
++void LazyTraceContext::allocateValRef(ValueRef ref) {
++	if (paused_) {
++		return;
++	}
++	aliveVars.increment(ref);
++}
++
++void LazyTraceContext::freeValRef(ValueRef ref) {
++	if (paused_) {
++		return;
++	}
++	aliveVars.decrement(ref);
++}
++
++void LazyTraceContext::pushStaticVal(void* valPtr, size_t size) {
++	// Always maintain the static variable stack, even in passive mode.
++	// Static variables may have been pushed before entering passive mode,
++	// and their destructors will call popStaticVal after.
++	staticVars.emplace_back(valPtr, size);
++	if (!paused_ && log::options::getLogStaticVars()) {
++		log::info("pushStaticVal: [{}]", formatStaticVars());
++	}
++}
++
++void LazyTraceContext::popStaticVal() {
++	// Always maintain the static variable stack, even in passive mode.
++	if (!paused_ && log::options::getLogStaticVars()) {
++		log::info("popStaticVal: [{}] (popping last)", formatStaticVars());
++	}
++	staticVars.pop_back();
++}
++
++std::string LazyTraceContext::formatStaticVars() const {
++	std::string result;
++	for (size_t i = 0; i < staticVars.size(); i++) {
++		if (i > 0) {
++			result += ", ";
++		}
++		result += std::to_string(getStaticVarValue(staticVars[i]));
++	}
++	return result;
++}
++
++std::string LazyTraceContext::getMangledName(void* fnptr) {
++	if (const auto it = mangledNameCache.find(fnptr); it != mangledNameCache.end()) {
++		return it->second;
++	}
++
++	Dl_info info;
++	dladdr(reinterpret_cast<void*>(fnptr), &info);
++	if (info.dli_sname != nullptr) {
++		mangledNameCache[fnptr] = info.dli_sname;
++		return info.dli_sname;
++	}
++	std::stringstream ss;
++	ss << fnptr;
++	std::string ptrStr = ss.str();
++	mangledNameCache[fnptr] = ptrStr;
++	return ptrStr;
++}
++
++std::string LazyTraceContext::getFunctionName(void* fnptr, const std::string& mangledName) {
++	bool normalizeFunctionNames = state->options.getOptionOrDefault("engine.normalizeFunctionNames", false);
++
++	if (normalizeFunctionNames) {
++		auto it = state->normalizedFunctionNameCache.find(fnptr);
++		if (it != state->normalizedFunctionNameCache.end()) {
++			return "runtimeFunc" + std::to_string(it->second);
++		}
++		uint32_t index = state->nextNormalizedFunctionIndex++;
++		state->normalizedFunctionNameCache[fnptr] = index;
++		return "runtimeFunc" + std::to_string(index);
++	}
++
++	bool demangleFunctionNames = state->options.getOptionOrDefault("engine.demangleFunctionNames", true);
++
++	if (!demangleFunctionNames) {
++		return mangledName;
++	}
++
++	int status;
++	char* demangled = __cxxabiv1::__cxa_demangle(mangledName.c_str(), nullptr, nullptr, &status);
++	if (status == 0 && demangled != nullptr) {
++		std::string result(demangled);
++		std::free(demangled);
++		return result;
++	}
++	return mangledName;
++}
++
++Snapshot LazyTraceContext::recordSnapshot() {
++	return {state->tagRecorder.createTag(), hashStaticVector(staticVars) ^ aliveVars.hash()};
++}
++
++} // namespace nautilus::tracing
+Index: nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/LazyTraceContext.hpp b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp
+new file mode 100644
+--- /dev/null	(revision 20140ff580d5fba825bac67e8388d007c3791a2a)
++++ b/nautilus/src/nautilus/tracing/LazyTraceContext.hpp	(revision 20140ff580d5fba825bac67e8388d007c3791a2a)
+@@ -0,0 +1,107 @@
++
++#pragma once
++
++#include "ExceptionBasedTraceContext.hpp"
++#include <functional>
++#include <memory>
++
++namespace nautilus::tracing {
++class ExecutionTrace;
++class SymbolicExecutionContext;
++
++/**
++ * @brief Exception-free tracing context that always completes function execution.
++ *
++ * This is an alternative to ExceptionBasedTraceContext that eliminates the need for TraceTerminationException.
++ * Instead of throwing an exception when a path is fully explored or a merge/loop is detected,
++ * it enters "passive mode" where all tracing operations become no-ops and traceBool() returns
++ * false to guide the function to its natural exit.
++ *
++ * Key differences from ExceptionBasedTraceContext:
++ * - No exceptions thrown during tracing - the traced function always returns normally
++ * - Uses SymbolicExecutionContext::recordNoThrow() instead of record()
++ * - When termination is detected, enters passive mode (paused_ = true)
++ * - In passive mode, traceBool() returns false (guarantees loop termination)
++ * - All other trace methods return dummyRef_ or are no-ops in passive mode
++ *
++ * Both LazyTraceContext and ExceptionBasedTraceContext produce identical ExecutionTrace output.
++ * The choice between them is made via the engine option "engine.traceMode" (values: "exceptionBasedTracing",
++ * "lazyTracing").
++ */
++class LazyTraceContext final : public TracingInterface {
++public:
++	// --- TracingInterface overrides ---
++
++	TypedValueRef& registerFunctionArgument(Type type, size_t index) override;
++	TypedValueRef& traceConstant(Type type, const ConstantLiteral& value) override;
++	TypedValueRef& traceCopy(const TypedValueRef& ref) override;
++	TypedValueRef& traceBinaryOp(Op op, Type resultType, const TypedValueRef& left,
++	                             const TypedValueRef& right) override;
++	TypedValueRef& traceUnaryOp(Op op, Type resultType, const TypedValueRef& input) override;
++	TypedValueRef& traceTernaryOp(Op op, Type resultType, const TypedValueRef& first, const TypedValueRef& second,
++	                              const TypedValueRef& third) override;
++	TypedValueRef& traceAlloca(size_t allocSize) override;
++	void traceReturnOperation(Type type, const TypedValueRef& ref) override;
++	void traceAssignment(const TypedValueRef& target, const TypedValueRef& source, Type resultType) override;
++	TypedValueRef& traceCall(void* fptn, Type resultType, const std::vector<tracing::TypedValueRef>& arguments,
++	                         FunctionAttributes fnAttrs) override;
++	bool traceBool(const TypedValueRef& value, double probability) override;
++	void allocateValRef(ValueRef ref) override;
++	void freeValRef(ValueRef ref) override;
++	void pushStaticVal(void* ptr, size_t size) override;
++	void popStaticVal() override;
++
++	// --- Non-interface public API ---
++
++	~LazyTraceContext() override = default;
++
++	/**
++	 * @brief Resets persistent state between trace iterations.
++	 * Also resets the paused_ flag.
++	 */
++	void resume();
++
++	/**
++	 * @brief Initialize the completing trace context with references to stack-allocated objects.
++	 */
++	static LazyTraceContext* initialize(TagRecorder& tagRecorder, ExecutionTrace& executionTrace,
++	                                    SymbolicExecutionContext& symbolicExecutionContext,
++	                                    const engine::Options& options);
++
++	/**
++	 * @brief Main tracing entry point - allocates all objects on stack and executes symbolic tracing.
++	 * Unlike ExceptionBasedTraceContext::trace(), this method never uses try/catch - the traced function always
++	 * returns normally.
++	 * @param traceFunction The function to trace
++	 * @param options Engine options for configuration
++	 * @return unique_ptr to ExecutionTrace containing the complete trace
++	 */
++	static std::unique_ptr<ExecutionTrace> trace(std::function<void()>& traceFunction,
++	                                             const engine::Options& options = engine::Options());
++
++	LazyTraceContext() = default;
++
++private:
++	bool isFollowing();
++	TypedValueRef& follow(Op op);
++	template <typename OnCreation>
++	TypedValueRef& traceOperation(Op op, OnCreation&& onCreation);
++	Snapshot recordSnapshot();
++	std::string formatStaticVars() const;
++	std::string getMangledName(void* fnptr);
++	std::string getFunctionName(void* fnptr, const std::string& mangledNamed);
++
++	// Injected state - holds references to stack-allocated objects
++	std::unique_ptr<TraceState> state;
++
++	// Persistent state - reset between trace iterations via resume()
++	std::vector<StaticVarHolder> staticVars;
++	AliveVariableHash aliveVars;
++	std::unordered_map<void*, std::string> mangledNameCache;
++
++	// Passive mode state
++	bool paused_ = false;
++	TypedValueRef dummyRef_ = {0, Type::v};
++};
++
++} // namespace nautilus::tracing
+Index: nautilus/src/nautilus/tracing/TracingUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -129,8 +129,8 @@
+ };
+ } // namespace fmt
+
+-auto fmt::formatter<nautilus::ConstantLiteral>::format(nautilus::ConstantLiteral lit,
+-                                                       format_context& ctx) const -> format_context::iterator {
++auto fmt::formatter<nautilus::ConstantLiteral>::format(nautilus::ConstantLiteral lit, format_context& ctx) const
++    -> format_context::iterator {
+ 	auto out = ctx.out();
+ 	std::visit(
+ 	    [&](auto&& value) {
+Index: nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -1,5 +1,6 @@
+
+ #include "fmt/core.h"
++#include <algorithm>
+ #include <nautilus/exceptions/RuntimeException.hpp>
+ #include <nautilus/tracing/ExecutionTrace.hpp>
+ #include <nautilus/tracing/phases/SSACreationPhase.hpp>
+Index: nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.cpp b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.cpp
+--- a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -35,13 +35,57 @@
+ 	case SymbolicExecutionContext::TagState::SecondVisit: {
+ 		// The tag is in SecondVisit state -> terminate execution.
+ 		// NES_DEBUG("Trace: early terminate via exception.");
+-		// TraceContext::get()->pause();
++		// ExceptionBasedTraceContext::get()->pause();
+ 		throw TraceTerminationException();
+ 	};
+ 	}
+ 	throw TraceTerminationException();
+ }
+
++RecordResult SymbolicExecutionContext::recordNoThrow(const Snapshot& tag) {
++	// special case if we are currently in the follow mode, we switch to record
++	// and change the last decision in this execution path.
++	if (currentMode == SymbolicExecutionContext::MODE::FOLLOW) {
++		currentMode = SymbolicExecutionContext::MODE::RECORD;
++		currentExecutionPath.getPath().pop_back();
++	}
++
++	auto foundTag = tagMap.find(tag);
++	if (foundTag == tagMap.end()) {
++		// If was not visited yet -> store the execution trace and return true.
++		tagMap.emplace(tag, SymbolicExecutionContext::TagState::FirstVisit);
++		currentExecutionPath.append(true);
++		currentExecutionPath.setFinalTag(tag);
++		inflightExecutionPaths.emplace_back(currentExecutionPath);
++		return {true, false};
++	}
++	// The tag already exists in the tag map.
++	switch (foundTag->second) {
++	case SymbolicExecutionContext::TagState::FirstVisit: {
++		foundTag->second = SymbolicExecutionContext::TagState::SecondVisit;
++		currentExecutionPath.append(false);
++		return {false, false};
++	};
++	case SymbolicExecutionContext::TagState::SecondVisit: {
++		// The tag is in SecondVisit state -> signal termination instead of throwing.
++		return {false, true};
++	};
++	}
++	return {false, true};
++}
++
++RecordResult SymbolicExecutionContext::followNoThrow() {
++	assert(getCurrentMode() == MODE::FOLLOW);
++	if (currentOperation >= currentExecutionPath.getSize() - 1) {
++		// we have the last operation
++		auto finalTag = currentExecutionPath.getFinalTag();
++		return recordNoThrow(finalTag);
++	}
++	auto operation = currentExecutionPath[currentOperation];
++	currentOperation++;
++	return {get<0>(operation), false};
++}
++
+ SymbolicExecutionContext::MODE SymbolicExecutionContext::getCurrentMode() const {
+ 	return this->currentMode;
+ }
+Index: nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp
+--- a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionContext.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -8,7 +8,17 @@
+ namespace nautilus::tracing {
+ class TagRecorder;
+
+-class TraceContext;
++class ExceptionBasedTraceContext;
++class LazyTraceContext;
++
++/**
++ * @brief Result of a non-throwing record operation.
++ * Used by LazyTraceContext to avoid TraceTerminationException.
++ */
++struct RecordResult {
++	bool branchDirection;
++	bool shouldTerminate;
++};
+
+ /**
+  * @brief The symbolic execution context supports the symbolic execution of functions.
+@@ -48,18 +58,34 @@
+ 	MODE getCurrentMode() const;
+
+ 	/**
+-	 * @brief Records a new cmp operation
+-	 * @param tr TagRecorder
+-	 * @return
++	 * @brief Records a new cmp operation. Throws TraceTerminationException on SecondVisit.
++	 * @param tag The snapshot tag for this branch
++	 * @return the branch direction
+ 	 */
+ 	bool record(const Snapshot& tag);
+
++	/**
++	 * @brief Non-throwing variant of record(). Returns a RecordResult instead of throwing.
++	 * Used by LazyTraceContext to avoid TraceTerminationException.
++	 * @param tag The snapshot tag for this branch
++	 * @return RecordResult with branch direction and termination signal
++	 */
++	RecordResult recordNoThrow(const Snapshot& tag);
++
+ 	bool shouldFollow();
+
+ 	bool follow();
+
++	/**
++	 * @brief Non-throwing variant of follow(). Returns a RecordResult instead of throwing.
++	 * Used by LazyTraceContext to avoid TraceTerminationException.
++	 * @return RecordResult with branch direction and termination signal
++	 */
++	RecordResult followNoThrow();
++
+ private:
+-	friend TraceContext;
++	friend ExceptionBasedTraceContext;
++	friend LazyTraceContext;
+ 	/**
+ 	 * @brief Symbolic execution mode.
+ 	 * That identifies if, we follow a previously recorded execution or if we record a new one.
+Index: nautilus/src/nautilus/tracing/tag/TagRecorder.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp b/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp
+--- a/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/src/nautilus/tracing/tag/TagRecorder.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -112,8 +112,7 @@
+ 		         (void(addr = __builtin_extract_return_addr(__builtin_return_address(ints + 2))), true)) ||
+ 		        ...);
+ 		return addr;
+-	}
+-	(std::make_index_sequence<StackSize> {});
++	}(std::make_index_sequence<StackSize> {});
+ }
+
+ static void* getReturnAddress(uint32_t offset) {
+Index: nautilus/test/benchmark/ExecutionBenchmark.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/benchmark/ExecutionBenchmark.cpp b/nautilus/test/benchmark/ExecutionBenchmark.cpp
+--- a/nautilus/test/benchmark/ExecutionBenchmark.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/benchmark/ExecutionBenchmark.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -4,8 +4,8 @@
+ #include "nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
+ #include "nautilus/config.hpp"
++#include "nautilus/tracing/ExceptionBasedTraceContext.hpp"
+ #include "nautilus/tracing/ExecutionTrace.hpp"
+-#include "nautilus/tracing/TraceContext.hpp"
+ #include "nautilus/tracing/phases/SSACreationPhase.hpp"
+ #include "nautilus/tracing/phases/TraceToIRConversionPhase.hpp"
+ #include <catch2/catch_all.hpp>
+@@ -77,19 +77,23 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		for (auto& test : benchmarks) {
+-			auto func = std::get<1>(test);
+-			auto name = std::get<0>(test);
++		for (auto& traceMode : traceModes) {
++			for (auto& test : benchmarks) {
++				auto func = std::get<1>(test);
++				auto name = std::get<0>(test);
+
+-			Catch::Benchmark::Benchmark("exec_" + backend + "_" + name)
+-			    .operator=([&func, backend](Catch::Benchmark::Chronometer meter) {
+-				    auto op = engine::Options();
+-				    // force compilation for the MLIR backend.
+-				    op.setOption("mlir.eager_compilation", true);
+-				    op.setOption("engine.backend", backend);
+-				    func(meter, op);
+-			    });
++				Catch::Benchmark::Benchmark("exec_" + backend + "_" + traceMode + "_" + name)
++				    .operator=([&func, backend, traceMode](Catch::Benchmark::Chronometer meter) {
++					    auto op = engine::Options();
++					    // force compilation for the MLIR backend.
++					    op.setOption("mlir.eager_compilation", true);
++					    op.setOption("engine.backend", backend);
++					    op.setOption("engine.traceMode", traceMode);
++					    func(meter, op);
++				    });
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/benchmark/TracingBenchmark.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/benchmark/TracingBenchmark.cpp b/nautilus/test/benchmark/TracingBenchmark.cpp
+--- a/nautilus/test/benchmark/TracingBenchmark.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/benchmark/TracingBenchmark.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -14,14 +14,17 @@
+ #include "nautilus/compiler/backends/mlir/MLIRCompilationBackend.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
+ #include "nautilus/config.hpp"
++#include "nautilus/tracing/ExceptionBasedTraceContext.hpp"
+ #include "nautilus/tracing/ExecutionTrace.hpp"
+-#include "nautilus/tracing/TraceContext.hpp"
++#include "nautilus/tracing/LazyTraceContext.hpp"
+ #include "nautilus/tracing/phases/SSACreationPhase.hpp"
+ #include "nautilus/tracing/phases/TraceToIRConversionPhase.hpp"
+ #include <catch2/catch_all.hpp>
+
+ namespace nautilus::engine {
+
++using TraceFn = std::unique_ptr<tracing::ExecutionTrace> (*)(std::function<void()>&, const engine::Options&);
++
+ static auto tests = std::vector<std::tuple<std::string, std::function<void()>>> {
+     {"add", details::createFunctionWrapper(int8AddExpression)},
+     {"ifThenElse", details::createFunctionWrapper(ifThenCondition)},
+@@ -39,14 +42,22 @@
+     {"chainedIf100", details::createFunctionWrapper(chainedIf100)},
+ };
+
++static auto traceContexts = std::vector<std::tuple<std::string, TraceFn>> {
++    {"trace", tracing::ExceptionBasedTraceContext::trace},
++    {"completing_trace", tracing::LazyTraceContext::trace},
++};
++
+ TEST_CASE("Tracing Benchmark") {
+
+-	for (auto& test : tests) {
+-		auto func = std::get<1>(test);
+-		auto name = std::get<0>(test);
+-		Catch::Benchmark::Benchmark("trace_" + name).operator=([&func](Catch::Benchmark::Chronometer meter) {
+-			meter.measure([&func] { return tracing::TraceContext::trace(func); });
+-		});
++	for (auto& [name, func] : tests) {
++		for (auto& [ctxName, traceFn] : traceContexts) {
++			auto benchName = ctxName + "_" + name;
++			auto fn = traceFn;
++			Catch::Benchmark::Benchmark(std::string(benchName))
++			    .operator=([&func, fn](Catch::Benchmark::Chronometer meter) {
++				    meter.measure([&func, fn] { return fn(func, engine::Options()); });
++			    });
++		}
+ 	}
+ }
+
+@@ -63,7 +74,7 @@
+ 		}
+
+ 		Catch::Benchmark::Benchmark("ssa_" + name).operator=([&func](Catch::Benchmark::Chronometer meter) {
+-			std::shared_ptr<tracing::ExecutionTrace> trace = tracing::TraceContext::trace(func);
++			std::shared_ptr<tracing::ExecutionTrace> trace = tracing::ExceptionBasedTraceContext::trace(func);
+ 			meter.measure([&] {
+ 				auto ssaCreationPhase = tracing::SSACreationPhase();
+ 				return ssaCreationPhase.apply(trace);
+@@ -79,7 +90,7 @@
+ 		auto name = std::get<0>(test);
+
+ 		Catch::Benchmark::Benchmark("ir_" + name).operator=([&func](Catch::Benchmark::Chronometer meter) {
+-			std::shared_ptr<tracing::ExecutionTrace> trace = tracing::TraceContext::trace(func);
++			std::shared_ptr<tracing::ExecutionTrace> trace = tracing::ExceptionBasedTraceContext::trace(func);
+ 			auto ssaCreationPhase = tracing::SSACreationPhase();
+ 			trace = ssaCreationPhase.apply(trace);
+
+@@ -115,7 +126,7 @@
+
+ 			Catch::Benchmark::Benchmark("comp_" + backend + "_" + name)
+ 			    .operator=([&func, &registry, backend](Catch::Benchmark::Chronometer meter) {
+-				    std::shared_ptr<tracing::ExecutionTrace> trace = tracing::TraceContext::trace(func);
++				    std::shared_ptr<tracing::ExecutionTrace> trace = tracing::ExceptionBasedTraceContext::trace(func);
+ 				    auto ssaCreationPhase = tracing::SSACreationPhase();
+ 				    trace = ssaCreationPhase.apply(trace);
+ 				    auto backendBackend = registry->getBackend(backend);
+Index: nautilus/test/common/ExpressionFunctions.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/common/ExpressionFunctions.hpp b/nautilus/test/common/ExpressionFunctions.hpp
+--- a/nautilus/test/common/ExpressionFunctions.hpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/common/ExpressionFunctions.hpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -212,7 +212,9 @@
+
+ val<int32_t> constructComplexReturnObject2(val<int32_t> a, val<int32_t> b) {
+ 	val<int32_t> t = 0;
+-	{ t = constructComplexReturnObject(a, b); }
++	{
++		t = constructComplexReturnObject(a, b);
++	}
+ 	return t + 42;
+ }
+
+Index: nautilus/test/execution-tests/BoolExecutionTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/BoolExecutionTest.cpp b/nautilus/test/execution-tests/BoolExecutionTest.cpp
+--- a/nautilus/test/execution-tests/BoolExecutionTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/BoolExecutionTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -153,12 +153,16 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			boolTest(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				boolTest(engine);
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/execution-tests/CastExecutionTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/CastExecutionTest.cpp b/nautilus/test/execution-tests/CastExecutionTest.cpp
+--- a/nautilus/test/execution-tests/CastExecutionTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/CastExecutionTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -123,12 +123,16 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			castTest(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				castTest(engine);
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/execution-tests/ExecutionTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/ExecutionTest.cpp b/nautilus/test/execution-tests/ExecutionTest.cpp
+--- a/nautilus/test/execution-tests/ExecutionTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/ExecutionTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -1280,18 +1280,22 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			options.setOption("dump.all", true);
+-			if (backend == "mlir") {
+-				options.setOption("engine.Compilation", true);
+-				options.setOption("mlir.enableMultithreading", false);
+-				options.setOption("mlir.inline_invoke_calls", true);
+-			}
+-			auto engine = engine::NautilusEngine(options);
+-			runAllTests(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("dump.all", true);
++				options.setOption("engine.traceMode", traceMode);
++				if (backend == "mlir") {
++					options.setOption("engine.Compilation", true);
++					options.setOption("mlir.enableMultithreading", false);
++					options.setOption("mlir.inline_invoke_calls", true);
++				}
++				auto engine = engine::NautilusEngine(options);
++				runAllTests(engine);
++			}
+ 		}
+ 	}
+ #if not defined(__APPLE__)
+Index: nautilus/test/execution-tests/SelectExecutionTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/SelectExecutionTest.cpp b/nautilus/test/execution-tests/SelectExecutionTest.cpp
+--- a/nautilus/test/execution-tests/SelectExecutionTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/SelectExecutionTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -139,12 +139,16 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			selectTest(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				selectTest(engine);
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/execution-tests/TracingTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/TracingTest.cpp b/nautilus/test/execution-tests/TracingTest.cpp
+--- a/nautilus/test/execution-tests/TracingTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/TracingTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -12,8 +12,9 @@
+ #include "ValueTypeFunctions.hpp"
+ #include "nautilus/Engine.hpp"
+ #include "nautilus/config.hpp"
++#include "nautilus/tracing/ExceptionBasedTraceContext.hpp"
+ #include "nautilus/tracing/ExecutionTrace.hpp"
+-#include "nautilus/tracing/TraceContext.hpp"
++#include "nautilus/tracing/LazyTraceContext.hpp"
+ #include "nautilus/tracing/phases/SSACreationPhase.hpp"
+ #include "nautilus/tracing/phases/SSAVerifier.hpp"
+ #include "nautilus/tracing/phases/TraceToIRConversionPhase.hpp"
+@@ -99,34 +100,43 @@
+ 	return false;
+ }
+
++using TraceFn = std::unique_ptr<tracing::ExecutionTrace> (*)(std::function<void()>&, const engine::Options&);
++
++static auto traceContexts = std::vector<std::tuple<std::string, TraceFn>> {
++    {"ExceptionBasedTraceContext", tracing::ExceptionBasedTraceContext::trace},
++    {"LazyTraceContext", tracing::LazyTraceContext::trace},
++};
++
+ void runTraceTests(const std::string& category, std::vector<std::tuple<std::string, std::function<void()>>>& tests) {
+ 	// disable logging of addresses such that the trace is deterministic
+ 	nautilus::log::options::setLogAddresses(false);
+-	for (auto& test : tests) {
+-		auto func = std::get<1>(test);
+-		auto name = std::get<0>(test);
+-		DYNAMIC_SECTION(name) {
+-			auto executionTrace = tracing::TraceContext::trace(func);
+-			DYNAMIC_SECTION("tracing") {
+-				REQUIRE(checkTestFile(executionTrace.get()->toString(), category, "tracing", name));
+-			}
+-			auto ssaCreationPhase = tracing::SSACreationPhase();
+-			auto afterSSA = ssaCreationPhase.apply(std::move(executionTrace));
+-			DYNAMIC_SECTION("after_ssa") {
+-				REQUIRE(checkTestFile(afterSSA.get()->toString(), category, "after_ssa", name));
+-			}
+-			DYNAMIC_SECTION("ssa_verify") {
+-				auto ssaResult = tracing::VerifySSA(*afterSSA);
+-				if (!ssaResult.valid) {
+-					for (const auto& error : ssaResult.errors) {
+-						FAIL(error);
+-					}
+-				}
+-			}
+-			DYNAMIC_SECTION("ir") {
+-				auto irGenerationPhase = tracing::TraceToIRConversionPhase();
+-				[[maybe_unused]] auto ir = irGenerationPhase.apply(std::move(afterSSA));
+-				REQUIRE(checkTestFile(ir.get()->toString(), category, "ir", name));
++	for (auto& [ctxName, traceFn] : traceContexts) {
++		DYNAMIC_SECTION(ctxName) {
++			for (auto& [name, func] : tests) {
++				DYNAMIC_SECTION(name) {
++					auto executionTrace = traceFn(func, engine::Options());
++					DYNAMIC_SECTION("tracing") {
++						REQUIRE(checkTestFile(executionTrace.get()->toString(), category, "tracing", name));
++					}
++					auto ssaCreationPhase = tracing::SSACreationPhase();
++					auto afterSSA = ssaCreationPhase.apply(std::move(executionTrace));
++					DYNAMIC_SECTION("after_ssa") {
++						REQUIRE(checkTestFile(afterSSA.get()->toString(), category, "after_ssa", name));
++					}
++					DYNAMIC_SECTION("ssa_verify") {
++						auto ssaResult = tracing::VerifySSA(*afterSSA);
++						if (!ssaResult.valid) {
++							for (const auto& error : ssaResult.errors) {
++								FAIL(error);
++							}
++						}
++					}
++					DYNAMIC_SECTION("ir") {
++						auto irGenerationPhase = tracing::TraceToIRConversionPhase();
++						[[maybe_unused]] auto ir = irGenerationPhase.apply(std::move(afterSSA));
++						REQUIRE(checkTestFile(ir.get()->toString(), category, "ir", name));
++					}
++				}
+ 			}
+ 		}
+ 	}
+@@ -631,4 +641,5 @@
+ 	};
+ 	runTraceTests("expression-tests", tests);
+ }
++
+ } // namespace nautilus::engine
+Index: nautilus/test/execution-tests/std/OstreamTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/std/OstreamTest.cpp b/nautilus/test/execution-tests/std/OstreamTest.cpp
+--- a/nautilus/test/execution-tests/std/OstreamTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/std/OstreamTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -110,12 +110,16 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			runOstreamTest(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				runOstreamTest(engine);
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/execution-tests/std/STDProxyTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/std/STDProxyTest.cpp b/nautilus/test/execution-tests/std/STDProxyTest.cpp
+--- a/nautilus/test/execution-tests/std/STDProxyTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/std/STDProxyTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -104,13 +104,17 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("dump.all", true);
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			runAllTests(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("dump.all", true);
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				runAllTests(engine);
++			}
+ 		}
+ 	}
+ }
+Index: nautilus/test/execution-tests/std/StringTest.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/std/StringTest.cpp b/nautilus/test/execution-tests/std/StringTest.cpp
+--- a/nautilus/test/execution-tests/std/StringTest.cpp	(revision bc3ff4abeede13f9afa2ab7116ba3d770531e8e1)
++++ b/nautilus/test/execution-tests/std/StringTest.cpp	(revision 316837dd8560b8ea32ea9746be27ed0f66d7f2b8)
+@@ -84,12 +84,16 @@
+ #ifdef ENABLE_ASMJIT_BACKEND
+ 	backends.emplace_back("asmjit");
+ #endif
++	std::vector<std::string> traceModes = {"exceptionBasedTracing", "lazyTracing"};
+ 	for (auto& backend : backends) {
+-		DYNAMIC_SECTION(backend) {
+-			engine::Options options;
+-			options.setOption("engine.backend", backend);
+-			auto engine = engine::NautilusEngine(options);
+-			runStringTest(engine);
++		for (auto& traceMode : traceModes) {
++			DYNAMIC_SECTION(backend + "_" + traceMode) {
++				engine::Options options;
++				options.setOption("engine.backend", backend);
++				options.setOption("engine.traceMode", traceMode);
++				auto engine = engine::NautilusEngine(options);
++				runStringTest(engine);
++			}
+ 		}
+ 	}
+ }

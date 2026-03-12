@@ -68,8 +68,6 @@ SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
 nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
     const nautilus::val<Timestamp>& timestamp, const nautilus::val<uint64_t>& workerThreadId, const SliceCacheReplaceEntry& replaceEntry)
 {
-    /// Create val wrappers from raw pointers inside the traced function. traceConstant(real_ptr)
-    /// produces proper traced constants with real addresses for COMPILER mode.
     /// We must use SliceCacheEntrySecondChance* for all pointer arithmetic, because the entries
     /// in memory are SliceCacheEntrySecondChance objects (40 bytes), not SliceCacheEntry (32 bytes).
     const nautilus::val<SliceCacheEntrySecondChance*> startOfEntries{reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntriesRaw)};
@@ -79,7 +77,7 @@ nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
     const nautilus::val<uint64_t*> replacementIndexBase{replacementIndexRaw};
     nautilus::val<uint64_t*> replacementIndexPtr = replacementIndexBase + workerThreadId;
 
-    /// First, we check if the timestamp is already in the cache.
+    /// We check if the timestamp is already in the cache.
     if (const auto [pos, foundInCache] = searchInCache(threadLocalStart, timestamp); foundInCache)
     {
         nautilus::val<SliceCacheEntrySecondChance*> sliceCacheEntryToReplace = threadLocalStart + pos;
