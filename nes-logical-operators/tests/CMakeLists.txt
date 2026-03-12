@@ -17,3 +17,6 @@ function(add_nes_logical_operators_test)
 endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
+
+add_nes_logical_operators_test(infer-model-logical-operator-test "InferModelLogicalOperatorTest.cpp")
+target_link_libraries(infer-model-logical-operator-test nes-inference nes-grpc)
