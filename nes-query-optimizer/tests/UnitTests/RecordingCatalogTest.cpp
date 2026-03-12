@@ -262,6 +262,68 @@ TEST(RecordingCatalogTest, ReconcileQuerySelectionsRemovesStaleOwnershipAndUpdat
     EXPECT_EQ(catalog.getQueryMetadata().at(queryId).networkExplanations.front().selection.recordingId, replacementRecordingId);
 }
 
+TEST(RecordingCatalogTest, ReconcileQuerySelectionsLinksStaleRecordingToReplacementSuccessor)
+{
+    RecordingCatalog catalog;
+    const auto queryId = DistributedQueryId("query-1");
+    const auto oldRecordingId = RecordingId("recording-old");
+    const auto newRecordingId = RecordingId("recording-new");
+
+    catalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = std::nullopt,
+            .globalPlan = std::nullopt,
+            .replaySpecification = std::nullopt,
+            .selectedRecordings = {oldRecordingId},
+            .networkExplanations = {},
+            .queryPlanRewrite = std::nullopt,
+            .replayBoundaries = {}});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = oldRecordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/old.bin",
+            .structuralFingerprint = "boundary",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(1000),
+            .retainedEndWatermark = Timestamp(61'000),
+            .fillWatermark = Timestamp(61'000),
+            .segmentCount = 4,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = newRecordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/new.bin",
+            .structuralFingerprint = "boundary",
+            .retentionWindowMs = 120'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Installing,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+
+    catalog.reconcileQuerySelections(queryId, {newRecordingId}, {});
+
+    const auto oldRecording = catalog.getRecording(oldRecordingId);
+    ASSERT_TRUE(oldRecording.has_value());
+    EXPECT_TRUE(oldRecording->ownerQueries.empty());
+    EXPECT_EQ(oldRecording->successorRecordingId, std::optional(newRecordingId));
+
+    const auto newRecording = catalog.getRecording(newRecordingId);
+    ASSERT_TRUE(newRecording.has_value());
+    EXPECT_THAT(newRecording->ownerQueries, testing::ElementsAre(queryId));
+}
+
 TEST(RecordingCatalogTest, ReconcileWorkerRuntimeStatusUpdatesKnownRecordings)
 {
     RecordingCatalog catalog;
@@ -305,6 +367,47 @@ TEST(RecordingCatalogTest, ReconcileWorkerRuntimeStatusUpdatesKnownRecordings)
     EXPECT_EQ(recording->fillWatermark, std::optional<Timestamp>(Timestamp(61'000)));
     EXPECT_EQ(recording->segmentCount, std::optional<size_t>(4));
     EXPECT_EQ(recording->storageBytes, std::optional<size_t>(4096));
+}
+
+TEST(RecordingCatalogTest, ReconcileWorkerRuntimeStatusPreservesCoordinatorSuccessorLinkWhenWorkerDoesNotReportOne)
+{
+    RecordingCatalog catalog;
+    const auto recordingId = RecordingId("recording-1");
+    const auto successorRecordingId = RecordingId("recording-2");
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .structuralFingerprint = "recording-1",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {DistributedQueryId("query-1")},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(1000),
+            .retainedEndWatermark = Timestamp(61'000),
+            .fillWatermark = Timestamp(61'000),
+            .segmentCount = 4,
+            .storageBytes = 4096,
+            .successorRecordingId = successorRecordingId});
+
+    catalog.reconcileWorkerRuntimeStatus(
+        Host("worker-1:8080"),
+        {Replay::RecordingRuntimeStatus{
+            .recordingId = "recording-1",
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retentionWindowMs = 60'000,
+            .retainedStartWatermark = Timestamp(1000),
+            .retainedEndWatermark = Timestamp(61'000),
+            .fillWatermark = Timestamp(61'000),
+            .segmentCount = 4,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt}});
+
+    const auto recording = catalog.getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_EQ(recording->successorRecordingId, std::optional(successorRecordingId));
 }
 
 }

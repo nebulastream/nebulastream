@@ -94,6 +94,65 @@ class RecordingCatalog
         std::erase(ownerQueries, queryId);
     }
 
+    void linkRecordingSuccessors(const std::vector<RecordingId>& predecessorIds, const std::vector<RecordingId>& successorIds)
+    {
+        std::unordered_map<std::string, std::vector<RecordingId>> successorsByFingerprint;
+        for (const auto& successorId : successorIds)
+        {
+            const auto successorIt = recordings.find(successorId);
+            if (successorIt == recordings.end() || successorIt->second.structuralFingerprint.empty())
+            {
+                continue;
+            }
+            successorsByFingerprint[successorIt->second.structuralFingerprint].push_back(successorId);
+        }
+
+        for (const auto& predecessorId : predecessorIds)
+        {
+            const auto predecessorIt = recordings.find(predecessorId);
+            if (predecessorIt == recordings.end())
+            {
+                continue;
+            }
+
+            auto& predecessor = predecessorIt->second;
+            if (predecessor.structuralFingerprint.empty())
+            {
+                predecessor.successorRecordingId.reset();
+                continue;
+            }
+
+            const auto candidatesIt = successorsByFingerprint.find(predecessor.structuralFingerprint);
+            if (candidatesIt == successorsByFingerprint.end())
+            {
+                predecessor.successorRecordingId.reset();
+                continue;
+            }
+
+            auto& candidates = candidatesIt->second;
+            const auto successorIt = std::ranges::find_if(
+                candidates,
+                [&](const auto& successorId)
+                {
+                    if (successorId == predecessorId)
+                    {
+                        return false;
+                    }
+                    const auto recordingIt = recordings.find(successorId);
+                    return recordingIt != recordings.end() && recordingIt->second.node == predecessor.node
+                        && recordingIt->second.representation == predecessor.representation;
+                });
+            if (successorIt == candidates.end())
+            {
+                predecessor.successorRecordingId.reset();
+                continue;
+            }
+
+            predecessor.successorRecordingId = *successorIt;
+            candidates.erase(successorIt);
+        }
+    }
+
 public:
     [[nodiscard]] const auto& getQueryMetadata() const { return queryMetadata; }
     [[nodiscard]] const auto& getRecordings() const { return recordings; }
@@ -205,17 +264,57 @@ public:
             }
         }
 
+        std::vector<RecordingId> staleSelectedRecordings;
+        staleSelectedRecordings.reserve(metadata.selectedRecordings.size());
         for (const auto& previouslySelectedRecording : metadata.selectedRecordings)
         {
             if (!std::ranges::contains(deduplicatedSelectedRecordings, previouslySelectedRecording))
             {
-                removeOwnerFromRecording(previouslySelectedRecording, queryId);
+                staleSelectedRecordings.push_back(previouslySelectedRecording);
             }
+        }
+
+        std::vector<RecordingId> addedSelectedRecordings;
+        addedSelectedRecordings.reserve(deduplicatedSelectedRecordings.size());
+        for (const auto& selectedRecording : deduplicatedSelectedRecordings)
+        {
+            if (!std::ranges::contains(metadata.selectedRecordings, selectedRecording))
+            {
+                addedSelectedRecordings.push_back(selectedRecording);
+            }
+        }
+
+        linkRecordingSuccessors(staleSelectedRecordings, addedSelectedRecordings);
+
+        for (const auto& staleSelectedRecording : staleSelectedRecordings)
+        {
+            removeOwnerFromRecording(staleSelectedRecording, queryId);
         }
 
         metadata.selectedRecordings = std::move(deduplicatedSelectedRecordings);
         metadata.networkExplanations = std::move(networkExplanations);
         sanitizeTimeTravelReadRecordingIds();
+    }
+
+    void linkQueryRecordingSuccessors(const DistributedQueryId& predecessorQueryId, const DistributedQueryId& successorQueryId)
+    {
+        const auto predecessorMetadataIt = queryMetadata.find(predecessorQueryId);
+        const auto successorMetadataIt = queryMetadata.find(successorQueryId);
+        if (predecessorMetadataIt == queryMetadata.end() || successorMetadataIt == queryMetadata.end())
+        {
+            return;
+        }
+
+        std::vector<RecordingId> staleSelectedRecordings;
+        staleSelectedRecordings.reserve(predecessorMetadataIt->second.selectedRecordings.size());
+        for (const auto& predecessorRecordingId : predecessorMetadataIt->second.selectedRecordings)
+        {
+            if (!std::ranges::contains(successorMetadataIt->second.selectedRecordings, predecessorRecordingId))
+            {
+                staleSelectedRecordings.push_back(predecessorRecordingId);
+            }
+        }
+        linkRecordingSuccessors(staleSelectedRecordings, successorMetadataIt->second.selectedRecordings);
     }
 
     void setTimeTravelReadRecording(const std::optional<RecordingId>& recordingId)
@@ -279,9 +378,10 @@ public:
             recording.fillWatermark = status.fillWatermark;
             recording.segmentCount = status.segmentCount;
             recording.storageBytes = status.storageBytes;
-            recording.successorRecordingId = status.successorRecordingId.has_value()
-                ? std::make_optional(RecordingId(*status.successorRecordingId))
-                : std::nullopt;
+            if (status.successorRecordingId.has_value())
+            {
+                recording.successorRecordingId = RecordingId(*status.successorRecordingId);
+            }
         }
 
         for (auto& recording : recordings | std::views::values)
@@ -300,7 +400,6 @@ public:
             recording.fillWatermark.reset();
             recording.segmentCount.reset();
             recording.storageBytes.reset();
-            recording.successorRecordingId.reset();
         }
     }
 };

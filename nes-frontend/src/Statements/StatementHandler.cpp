@@ -1240,7 +1240,6 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
             return failReplayExecution(exception);
         }
 
-        resolveTimeTravelReadSources(plan, sourceCatalog);
         if (auto persisted = persistExecution(); !persisted)
         {
             return std::unexpected(persisted.error());
@@ -1274,7 +1273,6 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
                 return std::unexpected(cleanupResult.error());
             }
             return failReplayExecution(registerResult.error());
-        resolveTimeTravelReadSources(plan, sourceCatalog);
         }
 
         internalQueryId = *registerResult;
@@ -1423,6 +1421,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
     {
         auto plan = statement.plan;
         queryManager->refreshWorkerMetrics();
+        resolveTimeTravelReadSources(plan, sourceCatalog, &queryManager->getRecordingCatalog());
         std::stringstream explainMessage;
         fmt::println(explainMessage, "Query:\n{}", plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", plan);
@@ -1456,6 +1455,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     {
         auto plan = statement.plan;
         queryManager->refreshWorkerMetrics();
+        resolveTimeTravelReadSources(plan, sourceCatalog, &queryManager->getRecordingCatalog());
         auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
         const auto fullSelectionResult = distributedPlan.getRecordingSelectionResult();
         auto incomingSelectionResult = fullSelectionResult;

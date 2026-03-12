@@ -25,7 +25,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
-#include <Replay/ReplayStorage.hpp>
+#include <RecordingCatalog.hpp>
 #include <Sources/BinaryStoreSource.hpp>
 #include <Sources/SourceCatalog.hpp>
 
@@ -34,46 +34,62 @@ namespace NES
 
 namespace
 {
-LogicalOperator replaceTimeTravelReadSource(const LogicalOperator& current, const SharedPtr<const SourceCatalog>& sourceCatalog)
+Schema resolveTimeTravelReadSchema(const SharedPtr<const SourceCatalog>& sourceCatalog, const std::string& recordingFilePath)
+{
+    Schema schema;
+    std::ifstream probe(recordingFilePath, std::ios::binary);
+    if (probe.good())
+    {
+        return BinaryStoreSource::readSchemaFromFile(recordingFilePath);
+    }
+
+    for (const auto& logicalSource : sourceCatalog->getAllLogicalSources())
+    {
+        for (const auto& field : *logicalSource.getSchema())
+        {
+            schema.addField(field.getUnqualifiedName(), field.dataType);
+        }
+        break;
+    }
+    return schema;
+}
+
+LogicalOperator replaceTimeTravelReadSource(
+    const LogicalOperator& current,
+    const SharedPtr<const SourceCatalog>& sourceCatalog,
+    const RecordingCatalog* recordingCatalog)
 {
     std::vector<LogicalOperator> newChildren;
     for (const auto& child : current.getChildren())
     {
-        newChildren.emplace_back(replaceTimeTravelReadSource(child, sourceCatalog));
+        newChildren.emplace_back(replaceTimeTravelReadSource(child, sourceCatalog, recordingCatalog));
     }
 
     if (const auto sourceOp = current.tryGetAs<SourceNameLogicalOperator>())
     {
         if (sourceOp.value()->getLogicalSourceName() == "TIME_TRAVEL_READ")
         {
-            const auto concreteFilePath = Replay::resolveTimeTravelReadProbePath();
-            const auto schemaProbePath = concreteFilePath;
-
-            Schema schema;
+            if (recordingCatalog == nullptr)
             {
-                std::ifstream probe(schemaProbePath, std::ios::binary);
-                if (probe.good())
-                {
-                    schema = BinaryStoreSource::readSchemaFromFile(schemaProbePath);
-                }
-                else
-                {
-                    for (const auto& logicalSource : sourceCatalog->getAllLogicalSources())
-                    {
-                        for (const auto& field : *logicalSource.getSchema())
-                        {
-                            schema.addField(field.getUnqualifiedName(), field.dataType);
-                        }
-                        break;
-                    }
-                }
+                throw UnsupportedQuery("TIME_TRAVEL_READ requires a coordinator-managed active replay recording");
             }
 
-            std::unordered_map<std::string, std::string> sourceConfig{{"file_path", concreteFilePath}};
-            if (Replay::binaryStoreManifestExists(concreteFilePath))
+            const auto activeRecording = recordingCatalog->getTimeTravelReadRecording();
+            if (!activeRecording.has_value())
             {
-                sourceConfig.emplace("recording_id", std::filesystem::path(concreteFilePath).stem().string());
+                throw UnsupportedQuery("TIME_TRAVEL_READ requires an active replay recording, but none is ready");
             }
+            if (activeRecording->filePath.empty())
+            {
+                throw UnsupportedQuery(
+                    "TIME_TRAVEL_READ requires a concrete active replay recording file for recording {}",
+                    activeRecording->id);
+            }
+
+            const auto schema = resolveTimeTravelReadSchema(sourceCatalog, activeRecording->filePath);
+            std::unordered_map<std::string, std::string> sourceConfig{
+                {"file_path", activeRecording->filePath},
+                {"recording_id", activeRecording->id.getRawValue()}};
             std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
             const InlineSourceLogicalOperator inlineOp{"BinaryStore", schema, std::move(sourceConfig), std::move(parserConfig)};
             return inlineOp.withChildren(newChildren);
@@ -84,12 +100,13 @@ LogicalOperator replaceTimeTravelReadSource(const LogicalOperator& current, cons
 }
 }
 
-void resolveTimeTravelReadSources(LogicalPlan& plan, const SharedPtr<const SourceCatalog>& sourceCatalog)
+void resolveTimeTravelReadSources(
+    LogicalPlan& plan, const SharedPtr<const SourceCatalog>& sourceCatalog, const RecordingCatalog* recordingCatalog)
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& root : plan.getRootOperators())
     {
-        newRoots.emplace_back(replaceTimeTravelReadSource(root, sourceCatalog));
+        newRoots.emplace_back(replaceTimeTravelReadSource(root, sourceCatalog, recordingCatalog));
     }
     plan = plan.withRootOperators(newRoots);
 }

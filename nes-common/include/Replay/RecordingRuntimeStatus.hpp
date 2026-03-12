@@ -38,7 +38,7 @@ struct RecordingRuntimeStatus
 {
     std::string recordingId;
     std::string filePath;
-    RecordingLifecycleState lifecycleState = RecordingLifecycleState::Filling;
+    RecordingLifecycleState lifecycleState = RecordingLifecycleState::New;
     std::optional<uint64_t> retentionWindowMs;
     std::optional<Timestamp> retainedStartWatermark;
     std::optional<Timestamp> retainedEndWatermark;

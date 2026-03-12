@@ -724,7 +724,8 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsMirrorsPerRecordingStatusIntoR
                     .segmentCount = 3,
                     .storageBytes = 2048,
                     .successorRecordingId = std::nullopt}},
-                .replayCheckpoints = {}};
+                .replayCheckpoints = {},
+                .replayQueryStatuses = {}};
             return std::make_unique<FakeWorkerStatusBackend>(status);
         },
         std::move(state));
@@ -871,7 +872,7 @@ TEST(QueryManagerMetricsTest, RegisterQueryReconcilesActiveReplaySelectionsFromN
 
     ASSERT_TRUE(recordingCatalog.getRecording(staleRecordingId).has_value());
     EXPECT_TRUE(recordingCatalog.getRecording(staleRecordingId)->ownerQueries.empty());
-    EXPECT_EQ(recordingCatalog.getRecording(staleRecordingId)->lifecycleState, std::optional(Replay::RecordingLifecycleState::Draining));
+    EXPECT_EQ(recordingCatalog.getRecording(staleRecordingId)->lifecycleState, std::optional(Replay::RecordingLifecycleState::Deleted));
     ASSERT_TRUE(recordingCatalog.getRecording(reusedRecordingId).has_value());
     EXPECT_THAT(
         recordingCatalog.getRecording(reusedRecordingId)->ownerQueries,
@@ -1072,7 +1073,8 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnre
             .segmentCount = 4,
             .storageBytes = 2048,
             .successorRecordingId = std::nullopt}},
-        .replayCheckpoints = {}};
+        .replayCheckpoints = {},
+        .replayQueryStatuses = {}};
     backendState->workerStatusResult = readyStatus;
 
     queryManager.refreshWorkerMetrics();
@@ -1082,8 +1084,6 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnre
     EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Ready));
     ASSERT_TRUE(queryManager.getRecordingCatalog().getTimeTravelReadRecording().has_value());
     EXPECT_EQ(queryManager.getRecordingCatalog().getTimeTravelReadRecording()->id, recordingId);
-    EXPECT_TRUE(std::filesystem::is_symlink(Replay::getTimeTravelReadAliasPath()));
-    EXPECT_EQ(Replay::resolveTimeTravelReadProbePath(), filePath);
 
     const auto unregisterResult = queryManager.unregister(*registerResult);
     ASSERT_TRUE(unregisterResult.has_value());
@@ -1093,7 +1093,116 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsActivatesReadyRecordingAndUnre
     EXPECT_TRUE(recording->ownerQueries.empty());
     EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Draining));
     EXPECT_FALSE(queryManager.getRecordingCatalog().getTimeTravelReadRecording().has_value());
-    EXPECT_FALSE(std::filesystem::exists(Replay::getTimeTravelReadAliasPath()));
+}
+
+TEST(QueryManagerMetricsTest, RecordingLifecycleManagerKeepsReadyPredecessorActiveUntilSuccessorIsReady)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    RecordingCatalog catalog;
+    const auto predecessorId = RecordingId("recording-old");
+    const auto successorId = RecordingId("recording-new");
+    const auto successorQueryId = DistributedQueryId("pending-query");
+    const auto predecessorPath = "/tmp/REPLAY-NebulaStream/recordings/recording-old.bin";
+    const auto successorPath = "/tmp/REPLAY-NebulaStream/recordings/recording-new.bin";
+
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = predecessorId,
+            .node = Host("worker-1:8080"),
+            .filePath = predecessorPath,
+            .structuralFingerprint = "boundary",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(1'000),
+            .retainedEndWatermark = Timestamp(61'000),
+            .fillWatermark = Timestamp(61'000),
+            .segmentCount = 4,
+            .storageBytes = 4096,
+            .successorRecordingId = successorId});
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = successorId,
+            .node = Host("worker-1:8080"),
+            .filePath = successorPath,
+            .structuralFingerprint = "boundary",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {successorQueryId},
+            .lifecycleState = Replay::RecordingLifecycleState::New,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+
+    catalog.setTimeTravelReadRecording(predecessorId);
+    catalog.setPendingTimeTravelReadRecording(successorId);
+
+    RecordingLifecycleManager lifecycleManager(catalog);
+    lifecycleManager.reconcile();
+
+    auto predecessor = catalog.getRecording(predecessorId);
+    auto successor = catalog.getRecording(successorId);
+    ASSERT_TRUE(predecessor.has_value());
+    ASSERT_TRUE(successor.has_value());
+    EXPECT_EQ(predecessor->lifecycleState, std::optional(Replay::RecordingLifecycleState::Ready));
+    EXPECT_EQ(successor->lifecycleState, std::optional(Replay::RecordingLifecycleState::Installing));
+    EXPECT_EQ(catalog.getTimeTravelReadRecordingId(), std::optional(predecessorId));
+    EXPECT_EQ(catalog.getPendingTimeTravelReadRecordingId(), std::optional(successorId));
+
+    auto& mutableSuccessor = catalog.getMutableRecordings().at(successorId);
+    mutableSuccessor.lifecycleState = Replay::RecordingLifecycleState::Ready;
+    mutableSuccessor.retainedStartWatermark = Timestamp(2'000);
+    mutableSuccessor.retainedEndWatermark = Timestamp(62'000);
+    mutableSuccessor.fillWatermark = Timestamp(62'000);
+    mutableSuccessor.segmentCount = 4;
+    mutableSuccessor.storageBytes = 4096;
+
+    lifecycleManager.reconcile();
+
+    predecessor = catalog.getRecording(predecessorId);
+    successor = catalog.getRecording(successorId);
+    ASSERT_TRUE(predecessor.has_value());
+    ASSERT_TRUE(successor.has_value());
+    EXPECT_EQ(predecessor->lifecycleState, std::optional(Replay::RecordingLifecycleState::Draining));
+    EXPECT_EQ(successor->lifecycleState, std::optional(Replay::RecordingLifecycleState::Ready));
+    EXPECT_EQ(catalog.getTimeTravelReadRecordingId(), std::optional(successorId));
+    EXPECT_FALSE(catalog.getPendingTimeTravelReadRecordingId().has_value());
+}
+
+TEST(QueryManagerMetricsTest, RecordingLifecycleManagerMarksMissingDrainedRecordingDeleted)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    RecordingCatalog catalog;
+    const auto recordingId = RecordingId("recording-1");
+    catalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = Host("worker-1:8080"),
+            .filePath = "/tmp/REPLAY-NebulaStream/recordings/recording-1.bin",
+            .structuralFingerprint = "boundary",
+            .retentionWindowMs = 60'000,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {},
+            .lifecycleState = Replay::RecordingLifecycleState::Draining,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+    catalog.setTimeTravelReadRecording(recordingId);
+
+    RecordingLifecycleManager lifecycleManager(catalog);
+    lifecycleManager.reconcile();
+
+    const auto recording = catalog.getRecording(recordingId);
+    ASSERT_TRUE(recording.has_value());
+    EXPECT_EQ(recording->lifecycleState, std::optional(Replay::RecordingLifecycleState::Deleted));
+    EXPECT_FALSE(catalog.getTimeTravelReadRecordingId().has_value());
 }
 
 TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCompletionForReplayableQuery)
@@ -2487,13 +2596,29 @@ TEST(QueryManagerMetricsTest, TimeTravelReadResolverTargetsConcreteRecordingFile
         manifest << Replay::BINARY_STORE_MANIFEST_MAGIC << '\n';
     }
 
-    Replay::updateTimeTravelReadAlias(recordingFilePath.string());
-
     auto sourceCatalog = std::make_shared<SourceCatalog>();
     ASSERT_TRUE(sourceCatalog->addLogicalSource("fallback", createSchema()).has_value());
+    RecordingCatalog recordingCatalog;
+    recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = RecordingId("resolver-recording"),
+            .node = Host("worker-1:8080"),
+            .filePath = recordingFilePath.string(),
+            .structuralFingerprint = "resolver-recording",
+            .retentionWindowMs = std::nullopt,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = std::nullopt,
+            .retainedEndWatermark = std::nullopt,
+            .fillWatermark = std::nullopt,
+            .segmentCount = std::nullopt,
+            .storageBytes = std::nullopt,
+            .successorRecordingId = std::nullopt});
+    recordingCatalog.setTimeTravelReadRecording(RecordingId("resolver-recording"));
 
     auto plan = LogicalPlanBuilder::createLogicalPlan("TIME_TRAVEL_READ");
-    resolveTimeTravelReadSources(plan, sourceCatalog);
+    resolveTimeTravelReadSources(plan, sourceCatalog, &recordingCatalog);
 
     const auto inlineSources = getOperatorByType<InlineSourceLogicalOperator>(plan);
     ASSERT_THAT(inlineSources, testing::SizeIs(1));

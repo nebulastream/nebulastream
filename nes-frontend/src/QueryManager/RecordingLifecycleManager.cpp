@@ -19,8 +19,6 @@
 #include <ranges>
 #include <vector>
 
-#include <Replay/ReplayStorage.hpp>
-
 namespace NES
 {
 namespace
@@ -48,9 +46,79 @@ bool hasCoveredRequestedRetention(const RecordingEntry& recording)
     return retainedDuration >= *recording.retentionWindowMs;
 }
 
+Replay::RecordingLifecycleState deriveRuntimeLifecycleStateFromObservations(const RecordingEntry& recording)
+{
+    if (recording.segmentCount.value_or(0) == 0)
+    {
+        return Replay::RecordingLifecycleState::Installing;
+    }
+    return hasCoveredRequestedRetention(recording) ? Replay::RecordingLifecycleState::Ready : Replay::RecordingLifecycleState::Filling;
+}
+
+Replay::RecordingLifecycleState runtimeLifecycleState(const RecordingEntry& recording)
+{
+    if (recording.lifecycleState.has_value())
+    {
+        switch (*recording.lifecycleState)
+        {
+            case Replay::RecordingLifecycleState::Installing:
+            case Replay::RecordingLifecycleState::Filling:
+            case Replay::RecordingLifecycleState::Ready:
+                return *recording.lifecycleState;
+            case Replay::RecordingLifecycleState::New:
+            case Replay::RecordingLifecycleState::Draining:
+            case Replay::RecordingLifecycleState::Deleted:
+                break;
+        }
+    }
+    return deriveRuntimeLifecycleStateFromObservations(recording);
+}
+
+bool successorStillWarming(const RecordingEntry& recording, const RecordingCatalog& recordingCatalog)
+{
+    if (!recording.successorRecordingId.has_value())
+    {
+        return false;
+    }
+
+    const auto successor = recordingCatalog.getRecording(*recording.successorRecordingId);
+    return successor.has_value() && !successor->ownerQueries.empty()
+        && successor->lifecycleState != Replay::RecordingLifecycleState::Ready
+        && successor->lifecycleState != Replay::RecordingLifecycleState::Deleted;
+}
+
+Replay::RecordingLifecycleState reconcileLifecycleState(const RecordingEntry& recording, const RecordingCatalog& recordingCatalog)
+{
+    if (!recording.ownerQueries.empty())
+    {
+        if (!hasRuntimeObservation(recording))
+        {
+            return Replay::RecordingLifecycleState::Installing;
+        }
+        return runtimeLifecycleState(recording);
+    }
+
+    if (!hasRuntimeObservation(recording))
+    {
+        return Replay::RecordingLifecycleState::Deleted;
+    }
+
+    if (successorStillWarming(recording, recordingCatalog))
+    {
+        return runtimeLifecycleState(recording);
+    }
+
+    return Replay::RecordingLifecycleState::Draining;
+}
+
 bool isReadyForActivation(const RecordingEntry& recording)
 {
     return !recording.ownerQueries.empty() && recording.lifecycleState == Replay::RecordingLifecycleState::Ready;
+}
+
+bool isUsableActiveRecording(const RecordingEntry& recording)
+{
+    return recording.lifecycleState == Replay::RecordingLifecycleState::Ready;
 }
 
 std::optional<RecordingId> chooseFallbackActiveRecording(const RecordingCatalog& recordingCatalog)
@@ -81,18 +149,7 @@ void RecordingLifecycleManager::reconcile()
 {
     for (auto& recording : recordingCatalog.getMutableRecordings() | std::views::values)
     {
-        if (recording.ownerQueries.empty())
-        {
-            recording.lifecycleState = Replay::RecordingLifecycleState::Draining;
-            continue;
-        }
-        if (!hasRuntimeObservation(recording))
-        {
-            recording.lifecycleState = Replay::RecordingLifecycleState::Installing;
-            continue;
-        }
-        recording.lifecycleState = hasCoveredRequestedRetention(recording) ? Replay::RecordingLifecycleState::Ready
-                                                                           : Replay::RecordingLifecycleState::Filling;
+        recording.lifecycleState = reconcileLifecycleState(recording, recordingCatalog);
     }
 
     if (const auto pendingRecordingId = recordingCatalog.getPendingTimeTravelReadRecordingId(); pendingRecordingId.has_value())
@@ -110,7 +167,7 @@ void RecordingLifecycleManager::reconcile()
     }
 
     if (const auto activeRecording = recordingCatalog.getTimeTravelReadRecording();
-        activeRecording.has_value() && !isReadyForActivation(*activeRecording))
+        activeRecording.has_value() && !isUsableActiveRecording(*activeRecording))
     {
         recordingCatalog.setTimeTravelReadRecording(std::nullopt);
     }
@@ -120,13 +177,5 @@ void RecordingLifecycleManager::reconcile()
         recordingCatalog.setTimeTravelReadRecording(chooseFallbackActiveRecording(recordingCatalog));
     }
 
-    if (const auto activeRecording = recordingCatalog.getTimeTravelReadRecording(); activeRecording.has_value())
-    {
-        Replay::updateTimeTravelReadAlias(activeRecording->filePath);
-    }
-    else
-    {
-        Replay::clearTimeTravelReadAlias();
-    }
 }
 }

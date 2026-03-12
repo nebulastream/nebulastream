@@ -87,7 +87,7 @@ RecordingLifecycleState deriveRecordingLifecycleState(const BinaryStoreManifest&
 {
     if (manifest.segments.empty())
     {
-        return RecordingLifecycleState::Filling;
+        return RecordingLifecycleState::Installing;
     }
     if (!manifest.retentionWindowMs.has_value())
     {

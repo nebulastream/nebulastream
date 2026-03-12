@@ -19,6 +19,8 @@
 namespace NES
 {
 class SourceCatalog;
+class RecordingCatalog;
 
-void resolveTimeTravelReadSources(LogicalPlan& plan, const SharedPtr<const SourceCatalog>& sourceCatalog);
+void resolveTimeTravelReadSources(
+    LogicalPlan& plan, const SharedPtr<const SourceCatalog>& sourceCatalog, const RecordingCatalog* recordingCatalog = nullptr);
 }

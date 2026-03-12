@@ -339,6 +339,7 @@ QueryManager::registerRecordingEpochQuery(const DistributedQueryId& beneficiaryQ
         return result;
     }
 
+    state.recordingCatalog.linkQueryRecordingSuccessors(beneficiaryQueryId, *result);
     state.pendingRecordingEpochQueriesByBeneficiary.insert_or_assign(beneficiaryQueryId, *result);
     reconcileRecordingEpochQueries();
     return result;
@@ -483,7 +484,7 @@ QueryManager::registerQueryImpl(
                 .retentionWindowMs = retentionWindowForSelectionExplanation(explanation, plan, this->state.recordingCatalog),
                 .representation = explanation.selection.representation,
                 .ownerQueries = ownerQueries,
-                .lifecycleState = std::nullopt,
+                .lifecycleState = Replay::RecordingLifecycleState::New,
                 .retainedStartWatermark = std::nullopt,
                 .retainedEndWatermark = std::nullopt,
                 .fillWatermark = std::nullopt,
