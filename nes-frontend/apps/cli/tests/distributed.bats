@@ -18,6 +18,12 @@ setup_file() {
     docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
   done
   docker network prune -f --filter label=nes-test=distributed-cli 2>/dev/null || true
+  # Remove all containers (running or stopped) referencing test images
+  # from previous runs, so those images can later be deleted
+  for img in $(docker images --filter reference='nes-worker-cli-test-*' --filter reference='nes-cli-image-*' -q 2>/dev/null); do
+    docker ps -aq --filter ancestor="$img" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+  done
+  docker images --filter reference='nes-worker-cli-test-*' --filter reference='nes-cli-image-*' -q | xargs -r docker image rm -f 2>/dev/null || true
 
   # Validate environment variables
   if [ -z "$NES_CLI" ]; then
