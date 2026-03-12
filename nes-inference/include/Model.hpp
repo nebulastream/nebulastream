@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <expected>
 #include <filesystem>
 #include <memory>
 #include <span>
@@ -27,8 +28,20 @@
 
 namespace NES::Nebuli::Inference
 {
+class Model;
+}
+
+// Forward-declare NES::Inference types and load() so Model can befriend it
+namespace NES::Inference
+{
 struct ModelLoadError;
 struct ModelOptions;
+std::expected<NES::Nebuli::Inference::Model, ModelLoadError> load(
+    const std::filesystem::path& path, const ModelOptions& options);
+}
+
+namespace NES::Nebuli::Inference
+{
 
 class Model
 {
@@ -75,7 +88,8 @@ public:
 
     [[nodiscard]] const std::string& getFunctionName() const { return functionName; }
 
-    friend std::expected<Model, ModelLoadError> load(const std::filesystem::path& path, const ModelOptions& options);
+    friend std::expected<Model, NES::Inference::ModelLoadError> NES::Inference::load(
+        const std::filesystem::path& path, const NES::Inference::ModelOptions& options);
     friend Model deserializeModel(const SerializableOperator_Model& grpcModel);
     friend void serializeModel(const Model& model, SerializableOperator_Model& target);
 };

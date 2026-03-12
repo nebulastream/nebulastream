@@ -22,6 +22,8 @@
 namespace NES::Inference
 {
 
+using Model = NES::Nebuli::Inference::Model;
+
 /// Check if inference support is built and all relevant tools are available
 bool enabled();
 

@@ -10,10 +10,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-inference Model.cpp)
+find_package(Boost REQUIRED COMPONENTS graph filesystem)
+
+add_library(nes-inference Model.cpp ModelLoader.cpp)
 target_include_directories(nes-inference PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/nebulastream/>
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(nes-inference PUBLIC nes-data-types nes-grpc PRIVATE nes-common)
-target_compile_definitions(nes-inference PUBLIC NEBULI_INFERENCE_SUPPORT)
+target_link_libraries(nes-inference PUBLIC nes-data-types nes-grpc PRIVATE nes-common Boost::graph Boost::filesystem)
+target_compile_definitions(nes-inference PUBLIC NES_INFERENCE_SUPPORT)
+
+add_tests_if_enabled(tests)
