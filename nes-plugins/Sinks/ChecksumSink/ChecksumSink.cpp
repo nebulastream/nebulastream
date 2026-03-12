@@ -42,9 +42,7 @@ namespace NES
 {
 
 ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
+    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
 {
 }
 
