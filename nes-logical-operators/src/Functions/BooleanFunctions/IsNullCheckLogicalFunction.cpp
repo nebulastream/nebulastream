@@ -102,11 +102,6 @@ IsNullCheckLogicalFunction Unreflector<IsNullCheckLogicalFunction>::operator()(c
 LogicalFunctionRegistryReturnType
 LogicalFunctionGeneratedRegistrar::RegisterIsNullLogicalFunction(const LogicalFunctionRegistryArguments arguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<IsNullCheckLogicalFunction>(arguments.reflected);
-    }
-
     if (arguments.children.size() != 1)
     {
         throw CannotDeserialize("IsNullCheckLogicalFunction requires exactly one child, but got {}", arguments.children.size());
