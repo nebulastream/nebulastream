@@ -25,6 +25,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <NetworkTopology.hpp>
 #include <Replay/ReplayExecutionStatistics.hpp>
+#include <Replay/ReplayCheckpoint.hpp>
 #include <Replay/RecordingRuntimeStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerConfig.hpp>
@@ -44,6 +45,7 @@ struct WorkerRuntimeMetrics
     size_t replayReadBytesPerSecond = 0;
     std::unordered_map<std::string, ReplayOperatorStatistics> replayOperatorStatistics;
     std::vector<Replay::RecordingRuntimeStatus> recordingStatuses;
+    std::vector<ReplayCheckpointStatus> replayCheckpoints;
 
     [[nodiscard]] bool operator==(const WorkerRuntimeMetrics& other) const = default;
 };

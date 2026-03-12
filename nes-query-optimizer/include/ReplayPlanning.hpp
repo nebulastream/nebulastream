@@ -16,9 +16,11 @@
 
 #include <cstdint>
 #include <expected>
+#include <optional>
 #include <vector>
 
 #include <RecordingCatalog.hpp>
+#include <Replay/ReplayCheckpoint.hpp>
 #include <RecordingSelectionResult.hpp>
 #include <Util/Pointers.hpp>
 #include <ErrorHandling.hpp>
@@ -32,6 +34,8 @@ struct ReplayPlan
     QueryRecordingPlanRewrite queryPlanRewrite;
     std::vector<QueryRecordingPlanInsertion> selectedReplayBoundaries;
     std::vector<RecordingSelectionExplanation> explanations;
+    std::optional<ReplayCheckpointReference> selectedCheckpoint;
+    uint64_t warmupStartMs = 0;
     std::vector<RecordingId> selectedRecordingIds;
     double objectiveCost = 0.0;
 

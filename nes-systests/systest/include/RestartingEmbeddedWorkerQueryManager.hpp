@@ -26,24 +26,26 @@
 
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <QueryManager/GRPCQueryManager.hpp>
+#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Util/URI.hpp>
 
 namespace NES::Systest
 {
-class RestartingEmbeddedWorkerQueryManager final : public QueryManager
+class RestartingEmbeddedWorkerQueryManager final : public QuerySubmissionBackend
 {
 public:
     explicit RestartingEmbeddedWorkerQueryManager(SingleNodeWorkerConfiguration configuration, uint64_t crashEveryNTuples = 1);
     ~RestartingEmbeddedWorkerQueryManager() override;
 
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;
+    [[nodiscard]] std::expected<QueryId, Exception>
+    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) override;
     std::expected<void, Exception> start(QueryId queryId) noexcept override;
     std::expected<void, Exception> stop(QueryId queryId) noexcept override;
     std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
+    [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 
 private:
     struct ManagedQuery
@@ -85,7 +87,7 @@ private:
     std::filesystem::path checkpointDirectory;
     std::filesystem::path workerBinaryPath;
     mutable std::mutex mutex;
-    mutable std::unique_ptr<GRPCQueryManager> worker;
+    mutable std::unique_ptr<GRPCQuerySubmissionBackend> worker;
     mutable std::unordered_map<QueryId, ManagedQuery> queriesBySyntheticId;
     mutable std::unordered_map<QueryId, QueryId> syntheticIdByBundleQueryId;
     mutable std::optional<Exception> backgroundFailure;

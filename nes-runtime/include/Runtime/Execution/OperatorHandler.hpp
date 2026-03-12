@@ -18,10 +18,12 @@
 #include <cstdint>
 #include <filesystem>
 #include <mutex>
+#include <optional>
 #include <shared_mutex>
 #include <string_view>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -122,11 +124,15 @@ public:
 
     virtual void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
-    void setCheckpointDirectories(std::filesystem::path checkpointDirectory, std::filesystem::path checkpointRecoveryDirectory = {})
+    void setCheckpointDirectories(
+        std::filesystem::path checkpointDirectory,
+        std::filesystem::path checkpointRecoveryDirectory = {},
+        const bool checkpointRecoveryEnabled = false)
     {
         this->checkpointDirectory = std::move(checkpointDirectory);
         this->checkpointRecoveryDirectory
             = checkpointRecoveryDirectory.empty() ? this->checkpointDirectory : std::move(checkpointRecoveryDirectory);
+        this->checkpointRecoveryEnabled = checkpointRecoveryEnabled;
     }
 
     [[nodiscard]] std::filesystem::path getCheckpointDirectory() const { return checkpointDirectory; }
@@ -135,6 +141,8 @@ public:
     {
         return checkpointRecoveryDirectory.empty() ? checkpointDirectory : checkpointRecoveryDirectory;
     }
+
+    [[nodiscard]] bool isCheckpointRecoveryEnabled() const { return checkpointRecoveryEnabled; }
 
     using CheckpointStateReadLock = std::shared_lock<std::shared_mutex>;
     using CheckpointStateWriteLock = std::unique_lock<std::shared_mutex>;
@@ -160,11 +168,13 @@ public:
     }
 
     virtual void serializeState(const std::filesystem::path&) {}
+    [[nodiscard]] virtual std::optional<Timestamp> getCheckpointCoverageWatermark() const { return std::nullopt; }
 
 private:
     mutable std::shared_mutex checkpointStateMutex;
     std::filesystem::path checkpointDirectory;
     std::filesystem::path checkpointRecoveryDirectory;
+    bool checkpointRecoveryEnabled = false;
 };
 
 }

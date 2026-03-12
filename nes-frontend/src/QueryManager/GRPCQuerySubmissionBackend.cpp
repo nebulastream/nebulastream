@@ -52,12 +52,20 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
     }
 }
 
-std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(LogicalPlan localPlan)
+std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(
+    LogicalPlan localPlan, std::optional<ReplayCheckpointReference> replayCheckpoint)
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
     request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
+    if (replayCheckpoint.has_value())
+    {
+        auto* serializedReplayCheckpoint = request.mutable_replaycheckpoint();
+        serializedReplayCheckpoint->set_bundle_name(replayCheckpoint->bundleName);
+        serializedReplayCheckpoint->set_plan_fingerprint(replayCheckpoint->planFingerprint);
+        serializedReplayCheckpoint->set_checkpoint_watermark_ms(replayCheckpoint->checkpointWatermarkMs);
+    }
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
     {

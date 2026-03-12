@@ -252,7 +252,7 @@ std::vector<std::shared_ptr<HJSlice>> getActiveHashJoinSlices(const HJOperatorHa
 bool restoreHashJoinCheckpointState(
     const HJOperatorHandler* operatorHandler, const JoinBuildSideType buildSide, AbstractBufferProvider* bufferProvider)
 {
-    if (!CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!operatorHandler->isCheckpointRecoveryEnabled())
     {
         return true;
     }
@@ -317,7 +317,7 @@ bool restoreHashJoinCheckpointState(
 void restoreHashJoinCheckpointStateProxy(OperatorHandler* ptrOpHandler, AbstractBufferProvider* bufferProvider)
 {
     auto* operatorHandler = dynamic_cast<HJOperatorHandler*>(ptrOpHandler);
-    if (operatorHandler == nullptr || bufferProvider == nullptr || !CheckpointManager::shouldRecoverFromCheckpoint())
+    if (operatorHandler == nullptr || bufferProvider == nullptr || !operatorHandler->isCheckpointRecoveryEnabled())
     {
         return;
     }
@@ -341,7 +341,7 @@ void restoreHashJoinCheckpointStateProxy(OperatorHandler* ptrOpHandler, Abstract
 void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!CheckpointManager::isCheckpointingEnabled() && !ptrOpHandler->isCheckpointRecoveryEnabled())
     {
         return;
     }
@@ -351,7 +351,7 @@ void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 void unlockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!CheckpointManager::isCheckpointingEnabled() && !ptrOpHandler->isCheckpointRecoveryEnabled())
     {
         return;
     }
@@ -537,7 +537,7 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 
-    if (CheckpointManager::shouldRecoverFromCheckpoint())
+    if (operatorHandler->isCheckpointRecoveryEnabled())
     {
         auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
             executionCtx.pipelineMemoryProvider.bufferProvider);

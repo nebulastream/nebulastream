@@ -49,9 +49,10 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 {
 }
 
-std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(LogicalPlan plan)
+std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(
+    LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint)
 {
-    return worker.registerQuery(plan);
+    return worker.registerQuery(std::move(plan), std::move(replayCheckpoint));
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)

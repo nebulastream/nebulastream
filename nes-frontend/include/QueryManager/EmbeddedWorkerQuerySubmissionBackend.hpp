@@ -31,7 +31,8 @@ class EmbeddedWorkerQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
     EmbeddedWorkerQuerySubmissionBackend(WorkerConfig config, SingleNodeWorkerConfiguration workerConfiguration);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
+    [[nodiscard]] std::expected<QueryId, Exception>
+    registerQuery(LogicalPlan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) override;
     std::expected<void, Exception> start(QueryId) override;
     std::expected<void, Exception> stop(QueryId) override;
     std::expected<void, Exception> unregister(QueryId) override;

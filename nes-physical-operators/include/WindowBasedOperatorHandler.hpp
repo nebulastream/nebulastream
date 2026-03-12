@@ -83,6 +83,7 @@ public:
     /// Triggers all windows that have not been already emitted to the probe
     virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
     [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getCheckpointBufferManager() const;
+    [[nodiscard]] std::optional<Timestamp> getCheckpointCoverageWatermark() const override;
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.

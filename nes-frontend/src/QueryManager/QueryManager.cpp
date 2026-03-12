@@ -252,6 +252,8 @@ QueryManager::registerReplayExecution(const DistributedQueryId& queryId, const u
         .intervalStartMs = intervalStartMs,
         .intervalEndMs = intervalEndMs,
         .state = ReplayExecutionState::Planned,
+        .warmupStartMs = replayPlan->warmupStartMs,
+        .selectedCheckpoint = replayPlan->selectedCheckpoint,
         .selectedRecordingIds =
             replayPlan->selectedRecordingIds | std::views::transform([](const auto& recordingId) { return recordingId.getRawValue(); })
             | std::ranges::to<std::vector>(),
@@ -310,13 +312,26 @@ QueryManager::registerQueryImpl(
     for (const auto& [host, localPlans] : plan)
     {
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
+        if (options.replayCheckpoint.has_value()
+            && (!options.replayCheckpoint->host.empty() && Host(options.replayCheckpoint->host) == host)
+            && localPlans.size() != 1U)
+        {
+            return std::unexpected(UnsupportedQuery(
+                "Replay checkpoint restoration currently requires exactly one local replay plan on host {}, but found {}",
+                host,
+                localPlans.size()));
+        }
         for (auto localPlan : localPlans)
         {
             try
             {
                 /// Set the distributed query ID on the local plan before sending to worker
                 localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto result = backends.at(host).registerQuery(localPlan);
+                const auto replayCheckpointForHost = options.replayCheckpoint.has_value()
+                        && (options.replayCheckpoint->host.empty() || Host(options.replayCheckpoint->host) == host)
+                    ? options.replayCheckpoint
+                    : std::nullopt;
+                const auto result = backends.at(host).registerQuery(localPlan, replayCheckpointForHost);
                 if (result)
                 {
                     NES_DEBUG("Registration to node {} was successful.", host);
@@ -577,7 +592,8 @@ void QueryManager::refreshWorkerMetrics()
                                 return std::pair{statistic.nodeFingerprint, statistic};
                             })
                         | std::ranges::to<std::unordered_map<std::string, ReplayOperatorStatistics>>(),
-                    .recordingStatuses = status.replayMetrics.recordingStatuses}))
+                    .recordingStatuses = status.replayMetrics.recordingStatuses,
+                    .replayCheckpoints = status.replayMetrics.replayCheckpoints}))
         {
             NES_WARNING("Could not refresh runtime metrics for unknown worker {}", host);
             continue;

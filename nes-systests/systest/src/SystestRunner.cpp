@@ -68,15 +68,16 @@ namespace
 std::atomic<int64_t> queryRuntimeSumNanoseconds{0};
 std::atomic<uint64_t> queryRuntimeMeasurements{0};
 
-void recordQueryRuntime(const LocalQueryStatus& queryStatus)
+void recordQueryRuntime(const DistributedQueryStatus& queryStatus)
 {
-    const auto stop = queryStatus.metrics.stop;
+    const auto metrics = queryStatus.coalesceQueryMetrics();
+    const auto stop = metrics.stop;
     if (not stop.has_value())
     {
         return;
     }
 
-    const auto start = queryStatus.metrics.running.has_value() ? queryStatus.metrics.running : queryStatus.metrics.start;
+    const auto start = metrics.running.has_value() ? metrics.running : metrics.start;
     if (not start.has_value() || stop.value() < start.value())
     {
         return;
@@ -556,7 +557,10 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 
     if (restartBetweenTuples)
     {
-        QuerySubmitter submitter(std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration, restartCrashFrequency));
+        QuerySubmitter submitter(std::make_unique<QueryManager>(
+            std::move(catalog),
+            [configuration, restartCrashFrequency](const WorkerConfig&)
+            { return std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration, restartCrashFrequency); }));
         return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
     }
 

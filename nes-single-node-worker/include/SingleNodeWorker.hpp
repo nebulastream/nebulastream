@@ -22,6 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Replay/ReplayCheckpoint.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -72,7 +73,8 @@ public:
     /// returned the query can be started with the QueryId. The registered Query will be in the StoppedState
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the registered Query
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan plan) noexcept;
+    [[nodiscard]] std::expected<QueryId, Exception>
+    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) noexcept;
 
     /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
     /// of the query.

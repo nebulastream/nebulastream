@@ -581,7 +581,7 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
         for (const auto& materializationEdge : replayBoundary.materializationEdges)
         {
             const auto requiresWarmup = warmupRequirements.contains(materializationEdge) && warmupRequirements.at(materializationEdge);
-            const auto scanStartMs = requiresWarmup ? 0U : execution.intervalStartMs;
+            const auto scanStartMs = requiresWarmup ? execution.warmupStartMs : execution.intervalStartMs;
             const Replay::BinaryStoreReplaySelection selection{
                 .segmentIds = std::nullopt,
                 .scanStartMs = scanStartMs,
@@ -1095,7 +1095,10 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
         const auto registerResult = queryManager->registerQuery(
             *replayDistributedPlan,
             std::nullopt,
-            QueryRegistrationOptions{.internal = true, .includeInReplayPlanning = false});
+            QueryRegistrationOptions{
+                .internal = true,
+                .includeInReplayPlanning = false,
+                .replayCheckpoint = execution.selectedCheckpoint});
         if (!registerResult)
         {
             execution.state = ReplayExecutionState::CleaningUp;

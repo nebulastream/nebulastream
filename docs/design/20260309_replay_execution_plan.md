@@ -112,6 +112,13 @@ The next step is to turn that substrate into a replay planner and replay executi
 We implement replay execution in phases.
 Each phase is independently testable and builds directly on the code that already exists.
 
+## Status update on current branch
+As of `serialize-hashmap-am-wip-rebased`, Phases 1 through 6 are largely implemented in code.
+The parser and frontend expose `ReplayStatement`, the coordinator persists replay-boundary metadata and derives replay plans over maintained recordings, `BinaryStoreSource` supports interval-bounded replay over selected segments, and replay execution already runs through `PREPARE -> FAST_FORWARD -> EMIT -> CLEANUP` with replay-specific output gating.
+
+The remaining substantive gap to the paper's Section 6 model is Phase 7.
+Current checkpointing supports worker restart recovery, compilation-cache reuse, and operator-local state recovery at startup, but it does not yet expose replay-oriented historical checkpoint selection and restore for a newly planned replay request.
+
 ## Phase 1: First-class replay request model
 
 We add a replay request surface in the parser and frontend.
@@ -165,6 +172,7 @@ We implement the first end-to-end replay execution state machine in the coordina
 
 1. `PREPARE`.
    The coordinator validates the replay request, builds the replay plan, pins the selected recording segments, and registers an internal replay query.
+   Once all workers acknowledge that the replay query is installed and ready, the coordinator issues a barriered replay start.
 2. `FAST_FORWARD`.
    The replay query scans from the warm-up start and suppresses outputs before the replay start boundary.
 3. `EMIT`.
@@ -191,8 +199,26 @@ This phase addresses **G6**.
 ## Phase 7: Checkpoint-aware replay restoration
 
 After the non-checkpoint replay path works, we add checkpoint-aware restoration for stateful suffixes.
+The replay planner should produce a replay plan tuple consisting of:
+
+- a selected checkpoint, or `none` if no compatible checkpoint exists,
+- the remaining scan window that must be replayed,
+- and the replay sources that replace the chosen cut edges.
+
 The replay planner selects the newest compatible checkpoint at or before the replay start.
-The runtime restores operator state from that checkpoint, then fast-forwards only the remaining warm-up interval before emit begins.
+Compatibility must be explicit instead of heuristic.
+At minimum, a checkpoint is compatible only if:
+
+- the replay suffix matches the checkpointed operator signatures,
+- every checkpoint-restored operator can be restored in topological order over the replay suffix,
+- and every input edge of a restored operator is either provided by an already restored upstream replay operator or by a replay source reading the exact maintained recording edge selected for this replay plan.
+
+At runtime, `PREPARE` restores operator state from the selected checkpoint before scanning begins.
+Operators that are not restorable from the checkpoint may initialize empty state only if correctness can still be recovered by replaying the remaining warm-up interval.
+Otherwise the replay candidate must be rejected.
+
+After restore, the replay executes `FAST_FORWARD` only over the interval from the checkpoint watermark up to the replay start watermark, then transitions to `EMIT` for the requested output interval.
+`CLEANUP` releases pins and discards replay-only restored state.
 
 This phase closes the remaining gap to the paper's Section 6 protocol.
 
@@ -213,7 +239,12 @@ We should implement the work in the following order.
 6. Add coordinator-side `ReplayExecutionManager` and the `PREPARE -> FAST_FORWARD -> EMIT -> CLEANUP` state machine.
 7. Add rejection paths for unsupported replay plans that would require missing checkpoint support.
 8. Define and implement the event-time replay contract.
-9. Add checkpoint-aware replay restoration as a follow-up phase.
+9. Add a replay-oriented historical checkpoint catalog instead of relying only on the latest restart-recovery bundle.
+10. Extend replay planning metadata to carry the selected checkpoint, its covered watermark, and the remaining warm-up scan interval.
+11. Extend replay query registration so the frontend can request replay restore from a specific checkpoint bundle instead of always registering a fresh internal query.
+12. Restore replay suffix operator state in topological order during `PREPARE`, validating operator-signature compatibility and exact cut-edge compatibility.
+13. Reject replay candidates that contain non-restorable stateful operators whose required state cannot be reconstructed by scanning the remaining warm-up interval.
+14. Add checkpoint-aware replay restoration as the final step that closes the remaining Section 6 gap.
 
 # Test Plan
 We should add tests in the same order as the implementation.
@@ -224,7 +255,9 @@ We should add tests in the same order as the implementation.
 4. Frontend tests for replay request registration, failure handling, and execution-state transitions.
 5. Integration tests for replay during recording-epoch rollout.
 6. Integration tests for replay while retention GC runs on expired but pinned segments.
-7. Follow-up tests for checkpoint-based restore once Phase 7 lands.
+7. Checkpoint-selection tests that choose the newest compatible checkpoint at or before the replay start and reject newer but incompatible checkpoints.
+8. Restore-compatibility tests that verify operator-signature mismatches and cut-edge mismatches are rejected during replay planning or `PREPARE`.
+9. End-to-end replay tests that restore from checkpoint, fast-forward only the remaining warm-up interval, emit only the requested interval, and unpin retained segments on cleanup.
 
 # Proof of Concept
 The existing implementation already provides a useful proof-of-concept base.
@@ -234,9 +267,9 @@ The system should be able to replay a registered replayable query over a bounded
 
 # Summary
 The replay paper's execution section expects replay-specific planning and execution over maintained recordings.
-The current NebulaStream codebase already implements much of the storage and lifecycle substrate needed for that model, but replay execution itself still depends on a global alias and a whole-file replay source.
-We therefore propose a phased implementation that starts with first-class replay requests, replay-boundary metadata, and interval-aware replay sources, then adds a replay execution protocol, and finally adds checkpoint-aware restoration.
-This plan reuses the storage and lifecycle work that is already present and closes the remaining gap between the paper's replay-execution model and the current implementation.
+The current NebulaStream branch already implements the first-class replay request path, replay-boundary metadata, interval-aware replay sources, and a replay execution protocol with warm-up and output gating.
+The remaining gap is checkpoint-aware replay restoration over historical checkpoints selected for a specific replay request.
+This revised plan therefore focuses the remaining work on checkpoint selection, compatibility validation, replay-time restore wiring, and the shortened fast-forward interval that follows from restoring a compatible checkpoint.
 
 # Open Questions
 - Which exact replay request syntax should we expose first for registered replayable queries.

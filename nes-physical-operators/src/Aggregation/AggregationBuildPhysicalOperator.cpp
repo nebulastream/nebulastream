@@ -218,7 +218,7 @@ std::vector<std::shared_ptr<AggregationSlice>> getActiveAggregationSlices(const 
 bool restoreAggregationCheckpointState(
     const AggregationOperatorHandler* operatorHandler, AbstractBufferProvider* bufferProvider, const WorkerThreadId targetWorkerThreadId)
 {
-    if (!CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!operatorHandler->isCheckpointRecoveryEnabled())
     {
         return true;
     }
@@ -280,7 +280,7 @@ void restoreAggregationCheckpointStateProxy(
     OperatorHandler* ptrOpHandler, AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
 {
     auto* operatorHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
-    if (operatorHandler == nullptr || bufferProvider == nullptr || !CheckpointManager::shouldRecoverFromCheckpoint()
+    if (operatorHandler == nullptr || bufferProvider == nullptr || !operatorHandler->isCheckpointRecoveryEnabled()
         || operatorHandler->checkpointStateRestored.load(std::memory_order_acquire))
     {
         return;
@@ -296,7 +296,7 @@ void restoreAggregationCheckpointStateProxy(
 void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!CheckpointManager::isCheckpointingEnabled() && !ptrOpHandler->isCheckpointRecoveryEnabled())
     {
         return;
     }
@@ -306,7 +306,7 @@ void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 void unlockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    if (!CheckpointManager::isCheckpointingEnabled() && !ptrOpHandler->isCheckpointRecoveryEnabled())
     {
         return;
     }
@@ -571,7 +571,7 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
 
     /// NOLINTEND(performance-unnecessary-value-param)
 
-    if (CheckpointManager::shouldRecoverFromCheckpoint())
+    if (operatorHandler->isCheckpointRecoveryEnabled())
     {
         auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
             executionCtx.pipelineMemoryProvider.bufferProvider);

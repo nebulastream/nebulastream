@@ -415,6 +415,75 @@ RecordingSelectionExplanation buildReplayPlanningExplanation(
                   })
             | std::ranges::to<std::vector>()};
 }
+
+std::optional<ReplayCheckpointReference> selectReplayCheckpoint(
+    const ReplayableQueryMetadata& queryMetadata,
+    const WorkerCatalog& workerCatalog,
+    const std::vector<SelectedRecordingBoundary>& selectedReplayBoundaries,
+    const uint64_t intervalStartMs)
+{
+    if (!queryMetadata.queryPlanRewrite.has_value())
+    {
+        return std::nullopt;
+    }
+
+    std::optional<Host> replayCheckpointHost;
+    for (const auto& selectedBoundary : selectedReplayBoundaries)
+    {
+        const auto& boundaryHost = selectedBoundary.chosenOption.selection.node;
+        if (!replayCheckpointHost.has_value())
+        {
+            replayCheckpointHost = boundaryHost;
+            continue;
+        }
+        if (*replayCheckpointHost != boundaryHost)
+        {
+            return std::nullopt;
+        }
+    }
+    if (!replayCheckpointHost.has_value())
+    {
+        return std::nullopt;
+    }
+
+    const auto runtimeMetrics = workerCatalog.getWorkerRuntimeMetrics(*replayCheckpointHost);
+    if (!runtimeMetrics.has_value())
+    {
+        return std::nullopt;
+    }
+
+    std::optional<ReplayCheckpointReference> selectedCheckpoint;
+    for (const auto& replayCheckpoint : runtimeMetrics->replayCheckpoints)
+    {
+        if (!replayCheckpoint.queryId.isDistributed()
+            || replayCheckpoint.queryId.getDistributedQueryId() != DistributedQueryId(queryMetadata.queryPlanRewrite->queryId))
+        {
+            continue;
+        }
+        if (replayCheckpoint.checkpointWatermarkMs > intervalStartMs)
+        {
+            continue;
+        }
+        if (selectedCheckpoint.has_value()
+            && selectedCheckpoint->checkpointWatermarkMs > replayCheckpoint.checkpointWatermarkMs)
+        {
+            continue;
+        }
+        if (selectedCheckpoint.has_value()
+            && selectedCheckpoint->checkpointWatermarkMs == replayCheckpoint.checkpointWatermarkMs
+            && selectedCheckpoint->bundleName >= replayCheckpoint.bundleName)
+        {
+            continue;
+        }
+
+        selectedCheckpoint = ReplayCheckpointReference{
+            .host = replayCheckpointHost->getRawValue(),
+            .bundleName = replayCheckpoint.bundleName,
+            .planFingerprint = replayCheckpoint.planFingerprint,
+            .checkpointWatermarkMs = replayCheckpoint.checkpointWatermarkMs};
+    }
+    return selectedCheckpoint;
+}
 }
 
 std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
@@ -515,6 +584,8 @@ std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
     try
     {
         const auto selection = RecordingBoundarySolver(copyPtr(workerCatalog)).solve(candidateSet);
+        const auto selectedCheckpoint
+            = selectReplayCheckpoint(queryMetadata, *workerCatalog, selection.selectedBoundary, intervalStartMs);
 
         ReplayPlan replayPlan{
             .queryPlanRewrite =
@@ -524,6 +595,8 @@ std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
                     .insertions = {}},
             .selectedReplayBoundaries = {},
             .explanations = {},
+            .selectedCheckpoint = selectedCheckpoint,
+            .warmupStartMs = selectedCheckpoint.has_value() ? selectedCheckpoint->checkpointWatermarkMs : 0,
             .selectedRecordingIds = {},
             .objectiveCost = selection.objectiveCost};
         replayPlan.selectedReplayBoundaries.reserve(selection.selectedBoundary.size());

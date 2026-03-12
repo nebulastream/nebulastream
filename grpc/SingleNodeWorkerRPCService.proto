@@ -29,8 +29,15 @@ service WorkerRPCService {
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
 }
 
+message SerializableReplayCheckpoint {
+  string bundle_name = 1;
+  string plan_fingerprint = 2;
+  uint64 checkpoint_watermark_ms = 3;
+}
+
 message RegisterQueryRequest {
   NES.SerializableQueryPlan queryPlan = 1;
+  optional SerializableReplayCheckpoint replayCheckpoint = 2;
 }
 
 message RegisterQueryReply {
@@ -133,12 +140,20 @@ message WorkerStatusResponse {
       optional string successor_recording_id = 10;
     }
 
+    message ReplayCheckpointStatus {
+      NES.SerializableQueryId query_id = 1;
+      string bundle_name = 2;
+      string plan_fingerprint = 3;
+      uint64 checkpoint_watermark_ms = 4;
+    }
+
     uint64 recording_storage_bytes = 1;
     uint64 recording_file_count = 2;
     uint64 active_query_count = 3;
     uint64 replay_read_bytes = 5;
     repeated ReplayOperatorStatistics operator_statistics = 4;
     repeated RecordingStatus recording_statuses = 6;
+    repeated ReplayCheckpointStatus replay_checkpoint_statuses = 7;
   }
 
   message ActiveQuery {

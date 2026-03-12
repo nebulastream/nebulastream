@@ -182,7 +182,8 @@ public:
     {
     }
 
-    [[nodiscard]] std::expected<NES::QueryId, NES::Exception> registerQuery(NES::LogicalPlan) override
+    [[nodiscard]] std::expected<NES::QueryId, NES::Exception>
+    registerQuery(NES::LogicalPlan, std::optional<NES::ReplayCheckpointReference> = std::nullopt) override
     {
         return std::unexpected(NES::QueryRegistrationFailed("unused in FakeExplainWorkerStatusBackend"));
     }

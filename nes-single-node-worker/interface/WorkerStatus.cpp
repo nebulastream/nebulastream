@@ -161,6 +161,14 @@ void serializeWorkerStatus(const WorkerStatus& status, WorkerStatusResponse* res
             recordingStatusGRPC->set_successor_recording_id(*recordingStatus.successorRecordingId);
         }
     }
+    for (const auto& replayCheckpoint : status.replayMetrics.replayCheckpoints)
+    {
+        auto* replayCheckpointGRPC = replayMetricsGRPC->add_replay_checkpoint_statuses();
+        *replayCheckpointGRPC->mutable_query_id() = QueryPlanSerializationUtil::serializeQueryId(replayCheckpoint.queryId);
+        replayCheckpointGRPC->set_bundle_name(replayCheckpoint.bundleName);
+        replayCheckpointGRPC->set_plan_fingerprint(replayCheckpoint.planFingerprint);
+        replayCheckpointGRPC->set_checkpoint_watermark_ms(replayCheckpoint.checkpointWatermarkMs);
+    }
 }
 
 WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
@@ -242,6 +250,18 @@ WorkerStatus deserializeWorkerStatus(const WorkerStatusResponse* response)
                             .successorRecordingId = recordingStatus.has_successor_recording_id()
                                 ? std::make_optional(recordingStatus.successor_recording_id())
                                 : std::nullopt};
+                    })
+                | std::ranges::to<std::vector>(),
+            .replayCheckpoints
+            = response->replay_metrics().replay_checkpoint_statuses()
+                | std::views::transform(
+                    [](const auto& replayCheckpoint)
+                    {
+                        return ReplayCheckpointStatus{
+                            .queryId = QueryPlanSerializationUtil::deserializeQueryId(replayCheckpoint.query_id()),
+                            .bundleName = replayCheckpoint.bundle_name(),
+                            .planFingerprint = replayCheckpoint.plan_fingerprint(),
+                            .checkpointWatermarkMs = replayCheckpoint.checkpoint_watermark_ms()};
                     })
                 | std::ranges::to<std::vector>()}};
 }

@@ -42,7 +42,8 @@ class QuerySubmissionBackend
 {
 public:
     virtual ~QuerySubmissionBackend() = default;
-    [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(LogicalPlan) = 0;
+    [[nodiscard]] virtual std::expected<QueryId, Exception>
+    registerQuery(LogicalPlan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) = 0;
     virtual std::expected<void, Exception> start(QueryId) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     virtual std::expected<void, Exception> unregister(QueryId) = 0;
@@ -67,6 +68,7 @@ struct QueryRegistrationOptions
 {
     bool internal = false;
     bool includeInReplayPlanning = true;
+    std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt;
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.

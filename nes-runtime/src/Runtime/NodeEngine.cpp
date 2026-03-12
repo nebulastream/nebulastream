@@ -108,12 +108,11 @@ void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<Comp
         const auto callbackId = fmt::format("query_state_{}", encodeQueryIdForIdentifier(queryId));
         CheckpointManager::registerCallback(callbackId, [handlers = std::move(statefulHandlers)]
         {
-            const auto checkpointDir = CheckpointManager::getCheckpointDirectory();
             for (const auto& handler : handlers)
             {
                 if (handler)
                 {
-                    handler->serializeState(checkpointDir);
+                    handler->serializeState(handler->getCheckpointDirectory());
                 }
             }
         });

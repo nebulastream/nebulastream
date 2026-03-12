@@ -89,7 +89,14 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
-        auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
+        auto replayCheckpoint = request->has_replaycheckpoint()
+            ? std::optional<ReplayCheckpointReference>{ReplayCheckpointReference{
+                  .host = std::string{},
+                  .bundleName = request->replaycheckpoint().bundle_name(),
+                  .planFingerprint = request->replaycheckpoint().plan_fingerprint(),
+                  .checkpointWatermarkMs = request->replaycheckpoint().checkpoint_watermark_ms()}}
+            : std::nullopt;
+        auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan), std::move(replayCheckpoint));
         if (result.has_value())
         {
             *response->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(*result);

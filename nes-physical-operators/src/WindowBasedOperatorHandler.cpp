@@ -106,4 +106,13 @@ std::shared_ptr<AbstractBufferProvider> WindowBasedOperatorHandler::getCheckpoin
     return checkpointBufferManager;
 }
 
+std::optional<Timestamp> WindowBasedOperatorHandler::getCheckpointCoverageWatermark() const
+{
+    if (!watermarkProcessorBuild)
+    {
+        return std::nullopt;
+    }
+    return watermarkProcessorBuild->getCurrentWatermark();
+}
+
 }

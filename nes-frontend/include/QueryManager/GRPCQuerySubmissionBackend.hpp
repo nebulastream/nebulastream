@@ -34,7 +34,8 @@ class GRPCQuerySubmissionBackend final : public QuerySubmissionBackend
 
 public:
     explicit GRPCQuerySubmissionBackend(WorkerConfig config);
-    [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
+    [[nodiscard]] std::expected<QueryId, Exception>
+    registerQuery(LogicalPlan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) override;
     std::expected<void, Exception> start(QueryId) override;
     std::expected<void, Exception> stop(QueryId) override;
     std::expected<void, Exception> unregister(QueryId) override;

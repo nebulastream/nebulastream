@@ -26,6 +26,7 @@
 #include <LegacyOptimizer/RecordingFingerprint.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
+#include <QueryId.hpp>
 #include <RecordingCatalog.hpp>
 #include <ReplayPlanning.hpp>
 #include <Replay/ReplaySpecification.hpp>
@@ -222,6 +223,172 @@ TEST_F(ReplayPlannerTest, PlannerRejectsReplayBoundaryWithoutRetainedCoverage)
 
     ASSERT_FALSE(replayPlan.has_value());
     EXPECT_NE(std::string(replayPlan.error().what()).find("does not cover replay start"), std::string::npos);
+}
+
+TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
+{
+    const auto host = Host("worker-1:8080");
+    const auto distributedQueryId = DistributedQueryId("replayable-query");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto basePlan = createPlacedUnaryPlan(host);
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto selection = sink.getChildren().front();
+
+    const auto replayBoundary = replayBoundaryForOperator(
+        sink,
+        selection,
+        host,
+        RecordingId("selection-recording"),
+        RecordingRepresentation::BinaryStore);
+
+    ReplayableQueryMetadata metadata{
+        .originalPlan = std::nullopt,
+        .globalPlan = basePlan,
+        .replaySpecification = ReplaySpecification{.retentionWindowMs = 10'000, .replayLatencyLimitMs = std::nullopt},
+        .selectedRecordings = {},
+        .networkExplanations = {},
+        .queryPlanRewrite = QueryRecordingPlanRewrite{.queryId = distributedQueryId.getRawValue(), .basePlan = basePlan, .insertions = {}},
+        .replayBoundaries = {replayBoundary}};
+
+    RecordingCatalog catalog;
+    catalog.upsertRecording(readyRecording(
+        RecordingId("selection-recording"),
+        host,
+        "/tmp/REPLAY-NebulaStream/recordings/selection.bin",
+        replayBoundary.selection.structuralFingerprint,
+        RecordingRepresentation::BinaryStore));
+
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        host,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::milliseconds(1000)),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 0,
+            .activeQueryCount = 0,
+            .recordingWriteBytesPerSecond = 0,
+            .replayReadBytes = 0,
+            .replayReadBytesPerSecond = 0,
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {},
+            .replayCheckpoints =
+                {
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")),
+                            distributedQueryId),
+                        .bundleName = "plan_a_replay_checkpoint_00000000000000000500",
+                        .planFingerprint = "fingerprint-a",
+                        .checkpointWatermarkMs = 500},
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000002")),
+                            distributedQueryId),
+                        .bundleName = "plan_b_replay_checkpoint_00000000000000000900",
+                        .planFingerprint = "fingerprint-b",
+                        .checkpointWatermarkMs = 900},
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000003")),
+                            distributedQueryId),
+                        .bundleName = "plan_c_replay_checkpoint_00000000000000001100",
+                        .planFingerprint = "fingerprint-c",
+                        .checkpointWatermarkMs = 1100},
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000004")),
+                            DistributedQueryId("other-query")),
+                        .bundleName = "plan_d_replay_checkpoint_00000000000000000950",
+                        .planFingerprint = "fingerprint-d",
+                        .checkpointWatermarkMs = 950},
+                }}));
+
+    const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadata, catalog, 1'000, 5'000);
+
+    ASSERT_TRUE(replayPlan.has_value()) << replayPlan.error().what();
+    ASSERT_TRUE(replayPlan->selectedCheckpoint.has_value());
+    EXPECT_EQ(replayPlan->selectedCheckpoint->host, host.getRawValue());
+    EXPECT_EQ(replayPlan->selectedCheckpoint->bundleName, "plan_b_replay_checkpoint_00000000000000000900");
+    EXPECT_EQ(replayPlan->selectedCheckpoint->planFingerprint, "fingerprint-b");
+    EXPECT_EQ(replayPlan->selectedCheckpoint->checkpointWatermarkMs, 900U);
+    EXPECT_EQ(replayPlan->warmupStartMs, 900U);
+    EXPECT_THAT(replayPlan->selectedRecordingIds, testing::ElementsAre(RecordingId("selection-recording")));
+}
+
+TEST_F(ReplayPlannerTest, PlannerLeavesWarmupAtZeroWhenOnlyFutureReplayCheckpointsExist)
+{
+    const auto host = Host("worker-1:8080");
+    const auto distributedQueryId = DistributedQueryId("replayable-query");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto basePlan = createPlacedUnaryPlan(host);
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto selection = sink.getChildren().front();
+
+    const auto replayBoundary = replayBoundaryForOperator(
+        sink,
+        selection,
+        host,
+        RecordingId("selection-recording"),
+        RecordingRepresentation::BinaryStore);
+
+    ReplayableQueryMetadata metadata{
+        .originalPlan = std::nullopt,
+        .globalPlan = basePlan,
+        .replaySpecification = ReplaySpecification{.retentionWindowMs = 10'000, .replayLatencyLimitMs = std::nullopt},
+        .selectedRecordings = {},
+        .networkExplanations = {},
+        .queryPlanRewrite = QueryRecordingPlanRewrite{.queryId = distributedQueryId.getRawValue(), .basePlan = basePlan, .insertions = {}},
+        .replayBoundaries = {replayBoundary}};
+
+    RecordingCatalog catalog;
+    catalog.upsertRecording(readyRecording(
+        RecordingId("selection-recording"),
+        host,
+        "/tmp/REPLAY-NebulaStream/recordings/selection.bin",
+        replayBoundary.selection.structuralFingerprint,
+        RecordingRepresentation::BinaryStore));
+
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        host,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::milliseconds(1000)),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 0,
+            .activeQueryCount = 0,
+            .recordingWriteBytesPerSecond = 0,
+            .replayReadBytes = 0,
+            .replayReadBytesPerSecond = 0,
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {},
+            .replayCheckpoints =
+                {
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")),
+                            distributedQueryId),
+                        .bundleName = "plan_future_replay_checkpoint_00000000000000001100",
+                        .planFingerprint = "future-fingerprint",
+                        .checkpointWatermarkMs = 1100},
+                    ReplayCheckpointStatus{
+                        .queryId = QueryId::create(
+                            LocalQueryId(std::string("00000000-0000-0000-0000-000000000002")),
+                            DistributedQueryId("other-query")),
+                        .bundleName = "plan_other_replay_checkpoint_00000000000000000900",
+                        .planFingerprint = "other-fingerprint",
+                        .checkpointWatermarkMs = 900},
+                }}));
+
+    const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadata, catalog, 1'000, 5'000);
+
+    ASSERT_TRUE(replayPlan.has_value()) << replayPlan.error().what();
+    EXPECT_FALSE(replayPlan->selectedCheckpoint.has_value());
+    EXPECT_EQ(replayPlan->warmupStartMs, 0U);
+    EXPECT_THAT(replayPlan->selectedRecordingIds, testing::ElementsAre(RecordingId("selection-recording")));
 }
 }
 }

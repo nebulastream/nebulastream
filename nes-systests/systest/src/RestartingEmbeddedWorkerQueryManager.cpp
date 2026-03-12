@@ -79,7 +79,8 @@ RestartingEmbeddedWorkerQueryManager::~RestartingEmbeddedWorkerQueryManager()
     terminateWorkerLocked();
 }
 
-std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::registerQuery(const LogicalPlan& plan)
+std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::registerQuery(
+    LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint)
 {
     std::scoped_lock lock(mutex);
     if (backgroundFailure)
@@ -94,7 +95,7 @@ std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::register
     }
     setWorkerArmedLocked(false);
 
-    auto runtimeQueryId = worker->registerQuery(plan);
+    auto runtimeQueryId = worker->registerQuery(std::move(plan), std::move(replayCheckpoint));
     if (!runtimeQueryId)
     {
         return std::unexpected(runtimeQueryId.error());
@@ -286,6 +287,26 @@ std::expected<LocalQueryStatus, Exception> RestartingEmbeddedWorkerQueryManager:
     }
 }
 
+std::expected<WorkerStatus, Exception>
+RestartingEmbeddedWorkerQueryManager::workerStatus(const std::chrono::system_clock::time_point after) const
+{
+    std::scoped_lock lock(mutex);
+    if (backgroundFailure)
+    {
+        return std::unexpected(*backgroundFailure);
+    }
+
+    if (!worker)
+    {
+        WorkerStatus status{};
+        status.after = after;
+        status.until = std::chrono::system_clock::now();
+        return status;
+    }
+
+    return worker->workerStatus(after);
+}
+
 void RestartingEmbeddedWorkerQueryManager::refreshWorkerStateLocked() const
 {
     if (workerPid < 0)
@@ -436,7 +457,13 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::spawnWorker
     {
         if (channel->WaitForConnected(std::chrono::system_clock::now() + std::chrono::milliseconds(200)))
         {
-            worker = std::make_unique<GRPCQueryManager>(channel);
+            worker = std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{
+                .host = Host(workerUri.toString()),
+                .data = "",
+                .capacity = 0,
+                .recordingStorageBudget = DEFAULT_RECORDING_STORAGE_BUDGET,
+                .downstream = {},
+                .config = {}});
             return {};
         }
 
@@ -703,6 +730,7 @@ std::vector<std::string> RestartingEmbeddedWorkerQueryManager::buildWorkerArgume
     const auto& workerConfiguration = configuration.workerConfiguration;
     const auto& queryEngine = workerConfiguration.queryEngine;
     const auto& queryExecution = workerConfiguration.defaultQueryExecution;
+    const auto& queryOptimization = workerConfiguration.defaultQueryOptimization;
     const auto& checkpoint = workerConfiguration.checkpointConfiguration;
 
     return {
@@ -717,7 +745,7 @@ std::vector<std::string> RestartingEmbeddedWorkerQueryManager::buildWorkerArgume
         fmt::format("--worker.default_query_execution.number_of_records_per_key={}", queryExecution.numberOfRecordsPerKey.getValue()),
         fmt::format("--worker.default_query_execution.max_number_of_buckets={}", queryExecution.maxNumberOfBuckets.getValue()),
         fmt::format("--worker.default_query_execution.operator_buffer_size={}", queryExecution.operatorBufferSize.getValue()),
-        fmt::format("--worker.default_query_execution.join_strategy={}", magic_enum::enum_name(queryExecution.joinStrategy.getValue())),
+        fmt::format("--worker.default_query_optimization.join_strategy={}", magic_enum::enum_name(queryOptimization.joinStrategy.getValue())),
         fmt::format(
             "--worker.number_of_buffers_in_global_buffer_manager={}",
             workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()),
