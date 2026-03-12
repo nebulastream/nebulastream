@@ -280,7 +280,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
+    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
@@ -314,7 +314,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
+    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::INPUT_FORMAT), InputFormat::CSV);
 }
 

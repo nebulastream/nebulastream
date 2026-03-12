@@ -41,7 +41,7 @@ namespace NES
 ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
     , isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
+    , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
     , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
 {
 }
