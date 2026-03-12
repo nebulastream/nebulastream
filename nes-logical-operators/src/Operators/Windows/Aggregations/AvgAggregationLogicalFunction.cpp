@@ -103,9 +103,7 @@ AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInferredStamp(c
     const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
         DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     return this->withOnField(newOnField.getAs<FieldAccessLogicalFunction>().get())
-        .withFinalAggregateStamp(newFinalAggregateStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp))
-        .withInputStamp(newOnField.getDataType());
+        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
 }
 
 Reflected AvgAggregationLogicalFunction::reflect() const
@@ -144,21 +142,6 @@ std::string AvgAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType AvgAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType AvgAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType AvgAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction AvgAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -167,27 +150,6 @@ FieldAccessLogicalFunction AvgAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction AvgAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 AvgAggregationLogicalFunction AvgAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const

@@ -34,17 +34,13 @@ namespace NES
 {
 /// COUNT(*) includes null values (counts all rows), COUNT(fieldName) does not
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const bool includeNullValues)
-    : includeNullValues(includeNullValues)
-    , onField(field)
-    , asField(field)
+    : includeNullValues(includeNullValues), onField(field), asField(field)
 {
 }
 
 CountAggregationLogicalFunction::CountAggregationLogicalFunction(
     FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField, const bool includeNullValues)
-    : includeNullValues(includeNullValues)
-    , onField(std::move(onField))
-    , asField(std::move(asField))
+    : includeNullValues(includeNullValues), onField(std::move(onField)), asField(std::move(asField))
 {
 }
 
@@ -99,10 +95,7 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
         auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
-        return this->withInputStamp(newInputStamp)
-            .withOnField(newOnField.withDataType(newInputStamp))
-            .withFinalAggregateStamp(newFinalAggregateStamp)
-            .withAsField(newAsField.withDataType(newFinalAggregateStamp));
+        return this->withOnField(newOnField.withDataType(newInputStamp)).withAsField(newAsField.withDataType(newFinalAggregateStamp));
     }
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }
@@ -146,21 +139,6 @@ std::string CountAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType CountAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType CountAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType CountAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction CountAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -169,27 +147,6 @@ FieldAccessLogicalFunction CountAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction CountAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const
