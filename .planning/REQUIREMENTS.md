@@ -8,7 +8,7 @@
 ### Infrastructure
 
 - [x] **INFRA-01**: Cherry-pick TestTupleBuffer abstraction (40e18d4a36) for schema-aware buffer access in tests
-- [ ] **INFRA-02**: Create tiny identity .vmfb test model (shape [1,2] float32 in→out, compiled with iree-base-compiler 3.10.0)
+- [x] **INFRA-02**: Create tiny identity .vmfb test model (shape [1,2] float32 in→out, compiled with iree-base-compiler 3.10.0)
 - [x] **INFRA-03**: Fix IREERuntimeWrapper destructor to release IREE handles (instance, session, device)
 - [x] **INFRA-04**: CMake registration for new test executables via add_nes_unit_test / add_nes_physical_operator_test
 
@@ -82,7 +82,7 @@
 | SCHEMA-05 | Phase 1 | Complete |
 | SCHEMA-06 | Phase 1 | Complete |
 | SCHEMA-07 | Phase 1 | Complete |
-| INFRA-02 | Phase 2 | Pending |
+| INFRA-02 | Phase 2 | Complete |
 | PHYS-01 | Phase 3 | Pending |
 | PHYS-02 | Phase 3 | Pending |
 | PHYS-03 | Phase 3 | Pending |
