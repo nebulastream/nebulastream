@@ -123,9 +123,10 @@ public:
     size_t getNumOfUnpooledBuffers() const override;
     size_t getNumberOfAvailableBuffers() const;
 
-    /// Waits until all pooled buffers have been returned or the timeout expires.
-    /// @return true if all buffers were returned, false on timeout.
-    bool waitForAllBuffersReturned(std::chrono::milliseconds timeout) const;
+    /// Explicitly shuts down the buffer manager: checks for leaked buffers (fires INVARIANT on leaks),
+    /// deallocates all memory, and marks the manager as destroyed. The destructor calls this automatically
+    /// if it has not already been called.
+    void destroy();
 
     /**
      * @brief Recycle a pooled buffer by making it available to others

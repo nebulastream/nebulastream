@@ -82,15 +82,8 @@ NodeEngine::~NodeEngine()
     sourceProvider.reset();
     queryTracker.reset();
 
-    constexpr auto bufferReturnTimeout = std::chrono::milliseconds(5000);
-    if (!bufferManager->waitForAllBuffersReturned(bufferReturnTimeout))
-    {
-        NES_ERROR(
-            "NodeEngine shutdown: {} of {} buffers still in use after {}ms timeout",
-            bufferManager->getNumOfPooledBuffers() - bufferManager->getNumberOfAvailableBuffers(),
-            bufferManager->getNumOfPooledBuffers(),
-            bufferReturnTimeout.count());
-    }
+    bufferManager->destroy();
+    bufferManager.reset();
 }
 
 NodeEngine::NodeEngine(
