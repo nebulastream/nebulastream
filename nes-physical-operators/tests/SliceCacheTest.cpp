@@ -127,8 +127,6 @@ public:
     static constexpr bool mlirEnableMultithreading = false;
     static constexpr uint64_t minNumberOfOperations = 10'000;
     static constexpr uint64_t maxNumberOfOperations = 100'000;
-    // static constexpr uint64_t minNumberOfOperations = 10;
-    // static constexpr uint64_t maxNumberOfOperations = 11;
     std::unique_ptr<nautilus::engine::NautilusEngine> nautilusEngine;
     ExecutionMode backend = ExecutionMode::INTERPRETER;
     std::unique_ptr<SliceCache> sliceCache;
@@ -167,7 +165,6 @@ public:
 
         /// Use a random seed and log it so that test failures can be reproduced
         std::random_device rd;
-        // const auto seed = 3600187933;
         const auto seed = rd();
         NES_INFO("SliceCacheTest random seed: {}", seed);
         std::mt19937 gen{seed};
@@ -222,8 +219,7 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
     /// SliceCacheNone does not use numberOfEntries or sliceCacheSize, so only run once per execution mode.
     if (numberOfEntries != 1 || sliceSize != 1)
     {
-        // We need to come up with something else. Maybe we can have two different TEST_P groups?
-        // Currently, we are skipping more than 50 tests
+        // todo We need to come up with something else. Currently, we are skipping more than 50 tests. Maybe we can have two different TEST_P groups? One for the slice cache non and one for the second chance
         GTEST_SKIP() << "SliceCacheNone only needs to run for different execution modes";
     }
 
@@ -248,7 +244,7 @@ TEST_P(SliceCacheTest, testSliceCacheNone)
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
-                nautilus::val<uint64_t>{0},
+                nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
                     /// Use nautilus::invoke with a proxy function to avoid copying the val
@@ -299,7 +295,7 @@ TEST_P(SliceCacheTest, testSliceCacheSecondChance)
             const nautilus::val<Timestamp> timestamp{timestampRaw};
             return sliceCache->getDataStructureRef(
                 timestamp,
-                nautilus::val<uint64_t>{0},
+                nautilus::val<WorkerThreadId>{0},
                 [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
                 {
                     /// Use nautilus::invoke with a proxy function to avoid copying the val
@@ -348,7 +344,6 @@ INSTANTIATE_TEST_CASE_P(
     SliceCacheTest,
     ::testing::Combine(
         ::testing::Values(ExecutionMode::INTERPRETER, ExecutionMode::COMPILER), /// Nautilus execution backend
-        // ::testing::Values(ExecutionMode::INTERPRETER), /// Nautilus execution backend
         ::testing::Values(1, 5, 10, 15, 50, 100), /// Number of cache entries
         ::testing::Values(1, 10, 100, 1000, 100'000) /// Size of slice
         ),

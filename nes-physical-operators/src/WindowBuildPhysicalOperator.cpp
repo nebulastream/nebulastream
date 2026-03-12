@@ -68,8 +68,7 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
-void initSliceCacheMemoryAndSetup(
-    OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx, SliceCache* sliceCache)
+void initSliceCacheMemoryAndSetup(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx, SliceCache* sliceCache)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
@@ -102,10 +101,7 @@ void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Compilat
     invoke(registerActivePipeline, operatorHandler);
 
     nautilus::invoke(
-        initSliceCacheMemoryAndSetup,
-        operatorHandler,
-        executionCtx.pipelineContext,
-        nautilus::val<SliceCache*>{sliceCache.get()});
+        initSliceCacheMemoryAndSetup, operatorHandler, executionCtx.pipelineContext, nautilus::val<SliceCache*>{sliceCache.get()});
 }
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -115,7 +111,7 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, sliceCache));
+    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, *sliceCache));
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const

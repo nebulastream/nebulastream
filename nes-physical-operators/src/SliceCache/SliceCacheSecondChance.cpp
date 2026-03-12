@@ -66,16 +66,18 @@ SliceCacheSecondChance::EntryFound SliceCacheSecondChance::searchInCache(
 }
 
 nautilus::val<int8_t*> SliceCacheSecondChance::getDataStructureRef(
-    const nautilus::val<Timestamp>& timestamp, const nautilus::val<uint64_t>& workerThreadId, const SliceCacheReplaceEntry& replaceEntry)
+    const nautilus::val<Timestamp>& timestamp,
+    const nautilus::val<WorkerThreadId>& workerThreadId,
+    const SliceCacheReplaceEntry& replaceEntry)
 {
     /// We must use SliceCacheEntrySecondChance* for all pointer arithmetic, because the entries
     /// in memory are SliceCacheEntrySecondChance objects (40 bytes), not SliceCacheEntry (32 bytes).
-    const nautilus::val<SliceCacheEntrySecondChance*> startOfEntries{reinterpret_cast<SliceCacheEntrySecondChance*>(startOfEntriesRaw)};
+    const nautilus::val<SliceCacheEntrySecondChance*> startOfEntries{reinterpret_cast<SliceCacheEntrySecondChance*>(startOfAllEntries)};
 
     /// Each worker thread uses its own partition of the cache to avoid data races.
-    const nautilus::val<SliceCacheEntrySecondChance*> threadLocalStart = startOfEntries + workerThreadId * numberOfEntries;
+    const nautilus::val<SliceCacheEntrySecondChance*> threadLocalStart = startOfEntries + workerThreadId.convertToValue() * numberOfEntries;
     const nautilus::val<uint64_t*> replacementIndexBase{replacementIndexRaw};
-    nautilus::val<uint64_t*> replacementIndexPtr = replacementIndexBase + workerThreadId;
+    nautilus::val<uint64_t*> replacementIndexPtr = replacementIndexBase + workerThreadId.convertToValue();
 
     /// We check if the timestamp is already in the cache.
     if (const auto [pos, foundInCache] = searchInCache(threadLocalStart, timestamp); foundInCache)

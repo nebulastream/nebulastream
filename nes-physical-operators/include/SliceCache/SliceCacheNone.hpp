@@ -17,7 +17,6 @@
 
 namespace NES
 {
-// do I even need this?
 struct SliceCacheNoneEntry final : SliceCacheEntry
 {
     ~SliceCacheNoneEntry() override = default;
@@ -30,7 +29,7 @@ public:
     ~SliceCacheNone() override = default;
     nautilus::val<int8_t*> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
-        const nautilus::val<uint64_t>& workerThreadId,
+        const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry) override;
 };
 }

@@ -22,28 +22,28 @@
 namespace NES
 {
 SliceCache::SliceCache(const uint64_t numberOfEntries, const uint64_t sizeOfEntry)
-    : startOfEntriesRaw(nullptr), numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
+    : startOfAllEntries(nullptr), numberOfEntries(numberOfEntries), sizeOfEntry(sizeOfEntry)
 {
 }
 
 SliceCache::SliceCache(const SliceCache& cache)
-    : startOfEntriesRaw(nullptr), numberOfEntries(cache.numberOfEntries), sizeOfEntry(cache.sizeOfEntry)
+    : startOfAllEntries(nullptr), numberOfEntries(cache.numberOfEntries), sizeOfEntry(cache.sizeOfEntry)
 {
 }
 
-std::shared_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration)
+std::unique_ptr<SliceCache> SliceCache::createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration)
 {
     if (sliceCacheConfiguration.enableSliceCache.getValue())
     {
-        return std::make_shared<SliceCacheSecondChance>(
+        return std::make_unique<SliceCacheSecondChance>(
             sliceCacheConfiguration.numberOfEntries.getValue(), sizeof(SliceCacheEntrySecondChance));
     }
-    return std::make_shared<SliceCacheNone>();
+    return std::make_unique<SliceCacheNone>();
 }
 
 void SliceCache::setStartOfEntries(SliceCacheEntry* startOfEntries)
 {
-    this->startOfEntriesRaw = startOfEntries;
+    this->startOfAllEntries = startOfEntries;
 }
 
 uint64_t SliceCache::getCacheMemorySize() const

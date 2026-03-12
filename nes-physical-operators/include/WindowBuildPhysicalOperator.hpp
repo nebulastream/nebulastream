@@ -33,19 +33,19 @@ namespace NES
 class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
-    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, std::shared_ptr<SliceCache> sliceCache)
-        : operatorHandler(operatorHandler), sliceCache(std::move(sliceCache))
+    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, SliceCache& sliceCache)
+        : operatorHandler(operatorHandler), sliceCache(sliceCache)
     {
     }
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
 
-    // maybe think about returning SliceCache&
-    std::shared_ptr<SliceCache> getSliceCache() const { return sliceCache; }
+    SliceCache& getSliceCache() const { return sliceCache; }
 
 private:
     nautilus::val<OperatorHandler*> operatorHandler;
-    std::shared_ptr<SliceCache> sliceCache;
+    /// Having here a reference is fine, as the WindowOperatorBuildLocalState never outlives the WindowBuildPhysicalOperator
+    SliceCache& sliceCache;
 };
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
@@ -53,7 +53,6 @@ private:
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    // or should we pass here the slice cache and then later on set the start via a setter method?
     explicit WindowBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, SliceCacheConfiguration sliceCacheConfiguration);
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
@@ -79,9 +78,9 @@ protected:
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;
-    // Maybe I can get rid of this here...
+    // todo Maybe I can get rid of this here. the challenge is that I need to create a new slice cache (so deep copy) in the WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
     SliceCacheConfiguration sliceCacheConfiguration;
-    std::shared_ptr<SliceCache> sliceCache;
+    std::unique_ptr<SliceCache> sliceCache;
 };
 
 }

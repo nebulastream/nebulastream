@@ -68,13 +68,11 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto nljPagedVectorMemRef = localState->getSliceCache()->getDataStructureRef(
+    const auto nljPagedVectorMemRef = localState->getSliceCache().getDataStructureRef(
         timestamp,
-        // todo this should be possible to pass as a workerthreadId to the nautilvus val
-        nautilus::val<uint64_t>{executionCtx.workerThreadId.convertToValue()},
+        executionCtx.workerThreadId,
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
-            // todo FunctionAttributes?
             nautilus::invoke(
                 +[](SliceCacheEntry* entryToReplace,
                     const NLJOperatorHandler* opHandler,

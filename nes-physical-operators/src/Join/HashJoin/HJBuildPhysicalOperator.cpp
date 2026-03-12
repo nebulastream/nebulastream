@@ -96,32 +96,31 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     }
 
     const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
-            std::function(
-                [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
+            {
+                const ChainedHashMapRef hashMapRef{
+                    hashMap,
+                    copyOfHashMapOptions.fieldKeys,
+                    copyOfHashMapOptions.fieldValues,
+                    copyOfHashMapOptions.entriesPerPage,
+                    copyOfHashMapOptions.entrySize};
+                for (const auto entry : hashMapRef)
                 {
-                    const ChainedHashMapRef hashMapRef{
-                        hashMap,
-                        copyOfHashMapOptions.fieldKeys,
-                        copyOfHashMapOptions.fieldValues,
-                        copyOfHashMapOptions.entriesPerPage,
-                        copyOfHashMapOptions.entrySize};
-                    for (const auto entry : hashMapRef)
-                    {
-                        const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                        const auto state = entryRefReset.getValueMemArea();
-                        nautilus::invoke(
-                            +[](int8_t* pagedVectorMemArea) -> void
-                            {
-                                /// Calls the destructor of the PagedVector
-                                /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                                auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                                pagedVector->~PagedVector();
-                            },
-                            state);
-                    }
-                })));
+                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                    const auto state = entryRefReset.getValueMemArea();
+                    nautilus::invoke(
+                        +[](int8_t* pagedVectorMemArea) -> void
+                        {
+                            /// Calls the destructor of the PagedVector
+                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
+                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                            pagedVector->~PagedVector();
+                        },
+                        state);
+                }
+            })));
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 }
@@ -134,13 +133,11 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
+    const auto hashMapPtr = localState->getSliceCache().getDataStructureRef(
         timestamp,
-        // todo this should be possible to pass as a workerthreadId to the nautilvus val
-        nautilus::val<uint64_t>{ctx.workerThreadId.convertToValue()},
+        ctx.workerThreadId,
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
-            // todo FunctionAttributes?
             nautilus::invoke(
                 getHashJoinHashMapProxy,
                 entryToReplace,

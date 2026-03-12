@@ -131,13 +131,11 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the correspinding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = localState->getSliceCache()->getDataStructureRef(
+    const auto hashMapPtr = localState->getSliceCache().getDataStructureRef(
         timestamp,
-        // todo this should be possible to pass as a workerthreadId to the nautilvus val
-        nautilus::val<uint64_t>{ctx.workerThreadId.convertToValue()},
+        ctx.workerThreadId,
         [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
         {
-            // todo FunctionAttributes?
             nautilus::invoke(
                 getAggHashMapProxy,
                 entryToReplace,

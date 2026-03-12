@@ -29,14 +29,11 @@ SliceCacheNone::SliceCacheNone() : SliceCache{1, sizeof(SliceCacheEntry)}
 }
 
 nautilus::val<int8_t*> SliceCacheNone::getDataStructureRef(
-    const nautilus::val<Timestamp>&, const nautilus::val<uint64_t>& workerThreadId, const SliceCacheReplaceEntry& replaceEntry)
+    const nautilus::val<Timestamp>&, const nautilus::val<WorkerThreadId>& workerThreadId, const SliceCacheReplaceEntry& replaceEntry)
 {
-    /// Create a val from the raw pointer inside the traced function. traceConstant(real_ptr)
-    /// produces a proper traced constant with the real address for COMPILER mode.
     /// Each worker thread uses its own entry to avoid data races.
-    // todo rename startOfEntriesRaw --> startOfAllEntries
-    nautilus::val<SliceCacheEntry*> startOfEntries{startOfEntriesRaw};
-    nautilus::val<SliceCacheEntry*> threadEntry = startOfEntries + workerThreadId;
+    nautilus::val<SliceCacheEntry*> startOfEntries{startOfAllEntries};
+    nautilus::val<SliceCacheEntry*> threadEntry = startOfEntries + workerThreadId.convertToValue();
     /// As this slice cache does nothing, we simply replace the single entry and return the data structure
     replaceEntry(threadEntry);
     return threadEntry.get(&SliceCacheEntry::dataStructure);

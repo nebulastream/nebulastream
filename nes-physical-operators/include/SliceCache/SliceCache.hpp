@@ -30,7 +30,6 @@ namespace NES
 struct SliceCacheEntry
 {
     /// As we are doing everything in Nautilus, we do not care about the initialization of these values
-    // might not be 100% true anymore
     SliceCacheEntry() : sliceStart(0), sliceEnd(0), dataStructure(nullptr) { }
 
     SliceCacheEntry(const Timestamp::Underlying sliceStart, const Timestamp::Underlying sliceEnd, int8_t* dataStructure)
@@ -39,10 +38,6 @@ struct SliceCacheEntry
     }
 
     virtual ~SliceCacheEntry() = default;
-    // talk with PMG, if we can not also support classes that have a val<> wrapper
-    // problem is also the val<Timestamp&> so the reference stuff
-    // Timestamp sliceStart;
-    // Timestamp sliceEnd;
     Timestamp::Underlying sliceStart;
     Timestamp::Underlying sliceEnd;
     int8_t* dataStructure;
@@ -54,12 +49,11 @@ public:
     explicit SliceCache(uint64_t numberOfEntries, uint64_t sizeOfEntry);
     explicit SliceCache(const SliceCache& cache);
     virtual ~SliceCache() = default;
-    // maybe have this return a unique_ptr...
-    static std::shared_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
+    static std::unique_ptr<SliceCache> createSliceCache(const SliceCacheConfiguration& sliceCacheConfiguration);
     using SliceCacheReplaceEntry = std::function<void(const nautilus::val<SliceCacheEntry*>&)>;
     virtual nautilus::val<int8_t*> getDataStructureRef(
         const nautilus::val<Timestamp>& timestamp,
-        const nautilus::val<uint64_t>& workerThreadId,
+        const nautilus::val<WorkerThreadId>& workerThreadId,
         const SliceCacheReplaceEntry& replaceEntry)
         = 0;
     virtual void setStartOfEntries(SliceCacheEntry* startOfEntries);
@@ -70,7 +64,7 @@ public:
 
 protected:
     /// The pointer to the startOfEntries is constant, as we create the memory once and do not change it during the query runtime
-    SliceCacheEntry* startOfEntriesRaw;
+    SliceCacheEntry* startOfAllEntries;
     uint64_t numberOfEntries;
     uint64_t sizeOfEntry;
     std::atomic<uint64_t> numberOfWorkerThreads = 1;
