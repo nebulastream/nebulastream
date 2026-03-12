@@ -135,6 +135,18 @@ std::optional<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getSliceBySlic
     return {};
 }
 
+std::vector<std::shared_ptr<Slice>> DefaultTimeBasedSliceStore::getActiveSlices()
+{
+    const auto slicesReadLocked = slices.rlock();
+    std::vector<std::shared_ptr<Slice>> activeSlices;
+    activeSlices.reserve(slicesReadLocked->size());
+    for (const auto& [_, slice] : *slicesReadLocked)
+    {
+        activeSlices.emplace_back(slice);
+    }
+    return activeSlices;
+}
+
 std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> DefaultTimeBasedSliceStore::getAllNonTriggeredSlices()
 {
     /// Acquiring a lock for the windows, as we have to iterate over all windows and trigger all non-triggered windows

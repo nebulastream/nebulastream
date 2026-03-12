@@ -28,6 +28,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &workingDir,
         &deterministicInlineSourcePaths,
         &restartBetweenTuples,
+        &restartCrashFrequency,
         &randomQueryOrder,
         &numberConcurrentQueries,
         &testGroups,

@@ -14,19 +14,16 @@
 
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 
-#include <atomic>
+#include <algorithm>
+#include <array>
 #include <cstdint>
-#include <condition_variable>
 #include <filesystem>
 #include <functional>
 #include <fstream>
 #include <memory>
-#include <optional>
-#include <regex>
-#include <sstream>
-#include <cstring>
 #include <string_view>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
@@ -48,6 +45,7 @@
 #include <fmt/format.h>
 #include <function.hpp>
 #include <options.hpp>
+#include <scope_guard.hpp>
 #include <static.hpp>
 #include <val_enum.hpp>
 #include <val_ptr.hpp>
@@ -56,6 +54,42 @@ namespace NES
 {
 namespace
 {
+constexpr std::array<char, 8> HashJoinCheckpointMagic{'N', 'E', 'S', 'H', 'J', '0', '2', '\0'};
+
+struct HashJoinWorkerCheckpointSnapshot
+{
+    WorkerThreadId workerThreadId;
+    HashMap* hashMap;
+};
+
+struct HashJoinSliceCheckpointSnapshot
+{
+    std::shared_ptr<HJSlice> slice;
+    std::vector<HashJoinWorkerCheckpointSnapshot> workerStates;
+};
+
+template <typename T>
+void writeCheckpointValue(std::ostream& out, const T& value)
+{
+    out.write(reinterpret_cast<const char*>(&value), static_cast<std::streamsize>(sizeof(T)));
+    if (!out)
+    {
+        throw CheckpointError("Failed to write hash join checkpoint");
+    }
+}
+
+template <typename T>
+T readCheckpointValue(std::istream& in)
+{
+    T value{};
+    in.read(reinterpret_cast<char*>(&value), static_cast<std::streamsize>(sizeof(T)));
+    if (!in)
+    {
+        throw CheckpointError("Failed to read hash join checkpoint");
+    }
+    return value;
+}
+
 void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
 {
     const auto checkpointDir = checkpointFile.parent_path();
@@ -65,83 +99,76 @@ void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
     }
 }
 
-std::filesystem::path getHashJoinCheckpointFile(OperatorHandlerId handlerId, JoinBuildSideType buildSide, WorkerThreadId workerId)
+std::filesystem::path getHashJoinCheckpointFile(
+    const std::filesystem::path& checkpointDirectory, OperatorHandlerId handlerId, JoinBuildSideType buildSide)
 {
-    auto baseDir = CheckpointManager::getCheckpointDirectory();
+    auto baseDir = checkpointDirectory;
     baseDir /= fmt::format(
-        "hash_join_checkpoint_{}_{}_{}.bin",
+        "hash_join_checkpoint_{}_{}.bin",
         handlerId.getRawValue(),
-        buildSide == JoinBuildSideType::Left ? "left" : "right",
-        workerId.getRawValue());
+        buildSide == JoinBuildSideType::Left ? "left" : "right");
     return baseDir;
 }
 
-std::optional<std::filesystem::path> findLatestCheckpointForSide(JoinBuildSideType buildSide, std::optional<WorkerThreadId> workerId)
+void writeCheckpointHeader(std::ostream& out)
 {
-    const auto checkpointDir = CheckpointManager::getCheckpointDirectory();
-    if (!std::filesystem::exists(checkpointDir) || !std::filesystem::is_directory(checkpointDir))
+    out.write(HashJoinCheckpointMagic.data(), static_cast<std::streamsize>(HashJoinCheckpointMagic.size()));
+    if (!out)
     {
-        return std::nullopt;
+        throw CheckpointError("Failed to write hash join checkpoint header");
     }
+}
 
-    /// If a workerId is provided we first try the per-worker naming scheme, otherwise we fall back to the legacy
-    /// per-side file names (without the worker suffix).
-    const auto sideStr = buildSide == JoinBuildSideType::Left ? "left" : "right";
-    std::vector<std::regex> patterns;
-    if (workerId.has_value())
+void validateCheckpointHeader(std::istream& in, const std::filesystem::path& checkpointFile)
+{
+    std::array<char, HashJoinCheckpointMagic.size()> actualMagic{};
+    in.read(actualMagic.data(), static_cast<std::streamsize>(actualMagic.size()));
+    if (!in)
     {
-        patterns.emplace_back(
-            fmt::format(R"(hash_join_checkpoint_.*_{}_{}\.bin)", sideStr, workerId->getRawValue()));
+        throw CheckpointError("Failed to read hash join checkpoint header from {}", checkpointFile.string());
     }
-    patterns.emplace_back(fmt::format(R"(hash_join_checkpoint_.*_{}\.bin)", sideStr));
+    if (actualMagic != HashJoinCheckpointMagic)
+    {
+        throw CheckpointError("Unsupported hash join checkpoint format in {}", checkpointFile.string());
+    }
+}
 
-    std::optional<std::filesystem::path> newestFile;
-    std::optional<std::filesystem::file_time_type> newestTime;
+void removeCheckpointFileIfPresent(const std::filesystem::path& checkpointFile)
+{
     std::error_code ec;
-    for (std::filesystem::directory_iterator it(checkpointDir, ec); !ec && it != std::filesystem::directory_iterator(); ++it)
-    {
-        const auto& entry = *it;
-        if (!entry.is_regular_file())
-        {
-            continue;
-        }
-        const auto filename = entry.path().filename().string();
-        const bool matches = std::any_of(
-            patterns.begin(), patterns.end(), [&](const auto& pattern) { return std::regex_match(filename, pattern); });
-        if (!matches)
-        {
-            continue;
-        }
-        const auto writeTime = entry.last_write_time();
-        if (!newestTime || writeTime > *newestTime)
-        {
-            newestTime = writeTime;
-            newestFile = entry.path();
-        }
-    }
+    std::filesystem::remove(checkpointFile, ec);
     if (ec)
     {
-        NES_WARNING("Failed to inspect checkpoint directory {}: {}", checkpointDir.string(), ec.message());
+        NES_WARNING("Failed to remove hash join checkpoint {}: {}", checkpointFile.string(), ec.message());
     }
-    return newestFile;
+}
+
+std::filesystem::path getTempCheckpointFile(const std::filesystem::path& checkpointFile)
+{
+    return checkpointFile.string() + ".tmp";
+}
+
+void replaceCheckpointFileAtomically(const std::filesystem::path& tempCheckpointFile, const std::filesystem::path& checkpointFile)
+{
+    std::error_code ec;
+    std::filesystem::rename(tempCheckpointFile, checkpointFile, ec);
+    if (ec)
+    {
+        std::filesystem::remove(tempCheckpointFile, ec);
+        throw CheckpointError("Cannot replace hash join checkpoint {}; {}", checkpointFile.string(), ec.message());
+    }
 }
 
 void serializeHashJoinState(
     const HashMap* hashMap,
     const HJOperatorHandler* operatorHandler,
     const JoinBuildSideType buildSide,
-    const std::filesystem::path& path)
+    std::ostream& out)
 {
     const auto* chainedHashMap = dynamic_cast<const ChainedHashMap*>(hashMap);
     if (!chainedHashMap)
     {
         throw CheckpointError("Hash join checkpoint only supports chained hash maps");
-    }
-
-    std::ofstream out(path, std::ios::binary);
-    if (!out.is_open())
-    {
-        throw CheckpointError("Cannot open output file {}", path.string());
     }
     hashMap->serialize(out, operatorHandler->getHashMapOptions(buildSide).getSerializationOptions());
 }
@@ -151,23 +178,185 @@ void deserializeHashJoinState(
     const HJOperatorHandler* operatorHandler,
     const JoinBuildSideType buildSide,
     AbstractBufferProvider* bufferProvider,
-    const std::filesystem::path& path)
+    std::istream& in)
 {
     auto* chainedHashMap = dynamic_cast<ChainedHashMap*>(hashMap);
     if (!chainedHashMap)
     {
         throw CheckpointError("Hash join checkpoint only supports chained hash maps");
     }
-
-    std::ifstream in(path, std::ios::binary);
-    if (!in.is_open())
-    {
-        throw CheckpointError("Cannot open input file {}", path.string());
-    }
     hashMap->deserialize(in, operatorHandler->getHashMapOptions(buildSide).getSerializationOptions(), bufferProvider);
 }
 
-// Removed merge-based checkpointing; we now serialize each worker's hash map independently.
+CreateNewHashMapSliceArgs createHashJoinHashMapSliceArgs(const HJOperatorHandler* operatorHandler, const JoinBuildSideType buildSide)
+{
+    const auto& hashMapOptions = operatorHandler->getHashMapOptions(buildSide);
+    return {
+        operatorHandler->getNautilusCleanupExec(),
+        hashMapOptions.keySize,
+        hashMapOptions.valueSize,
+        hashMapOptions.pageSize,
+        hashMapOptions.numberOfBuckets};
+}
+
+std::shared_ptr<HJSlice>
+getOrCreateHashJoinSlice(const HJOperatorHandler* operatorHandler, const SliceStart sliceStart, const SliceEnd sliceEnd, JoinBuildSideType buildSide)
+{
+    auto createFunction = operatorHandler->getCreateNewSlicesFunction(createHashJoinHashMapSliceArgs(operatorHandler, buildSide));
+    const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+        sliceStart,
+        [createFunction = std::move(createFunction), sliceStart, sliceEnd](const SliceStart assignedSliceStart, const SliceEnd assignedSliceEnd)
+        {
+            INVARIANT(
+                assignedSliceStart == sliceStart && assignedSliceEnd == sliceEnd,
+                "Recovered hash join slice {}-{} does not match assigned slice {}-{}",
+                sliceStart,
+                sliceEnd,
+                assignedSliceStart,
+                assignedSliceEnd);
+            return createFunction(assignedSliceStart, assignedSliceEnd);
+        });
+    INVARIANT(slices.size() == 1, "We expect exactly one slice for recovered hash join state, but got {}", slices.size());
+    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slices[0]);
+    INVARIANT(hjSlice != nullptr, "Recovered slice must be an HJSlice");
+    return hjSlice;
+}
+
+std::vector<std::shared_ptr<HJSlice>> getActiveHashJoinSlices(const HJOperatorHandler* operatorHandler)
+{
+    std::vector<std::shared_ptr<HJSlice>> hashJoinSlices;
+    for (const auto& slice : operatorHandler->getSliceAndWindowStore().getActiveSlices())
+    {
+        const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slice);
+        INVARIANT(hjSlice != nullptr, "Hash join checkpointing expects hash join slices only");
+        hashJoinSlices.emplace_back(hjSlice);
+    }
+    return hashJoinSlices;
+}
+
+[[noreturn]] void throwHashJoinRecoveryFailure(
+    const HJOperatorHandler* operatorHandler,
+    const std::filesystem::path& checkpointFile,
+    const JoinBuildSideType buildSide,
+    const std::string_view reason)
+{
+    operatorHandler->getSliceAndWindowStore().deleteState();
+    throw CheckpointError(
+        "Cannot recover hash join checkpoint {} for {} build side: {}. Replay fallback is unavailable because source replay "
+        "storage may already have pruned checkpoint-covered buffers.",
+        checkpointFile.string(),
+        buildSide == JoinBuildSideType::Left ? "left" : "right",
+        reason);
+}
+
+bool restoreHashJoinCheckpointState(
+    const HJOperatorHandler* operatorHandler, const JoinBuildSideType buildSide, AbstractBufferProvider* bufferProvider)
+{
+    if (!CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return true;
+    }
+    if (!operatorHandler->markCheckpointRestored(buildSide))
+    {
+        return true;
+    }
+
+    const auto checkpointFile = getHashJoinCheckpointFile(
+        operatorHandler->getCheckpointRecoveryDirectory(), operatorHandler->getOperatorHandlerId(), buildSide);
+    if (!std::filesystem::exists(checkpointFile))
+    {
+        return true;
+    }
+
+    try
+    {
+        std::ifstream in(checkpointFile, std::ios::binary);
+        if (!in.is_open())
+        {
+            throw CheckpointError("Cannot open hash join checkpoint {}", checkpointFile.string());
+        }
+
+        validateCheckpointHeader(in, checkpointFile);
+        const auto sliceCount = readCheckpointValue<uint64_t>(in);
+        uint64_t totalMaps = 0;
+        uint64_t totalEntries = 0;
+        for (uint64_t sliceIdx = 0; sliceIdx < sliceCount; ++sliceIdx)
+        {
+            const auto sliceStart = SliceStart(readCheckpointValue<uint64_t>(in));
+            const auto sliceEnd = SliceEnd(readCheckpointValue<uint64_t>(in));
+            const auto workerStateCount = readCheckpointValue<uint64_t>(in);
+            auto hjSlice = getOrCreateHashJoinSlice(operatorHandler, sliceStart, sliceEnd, buildSide);
+            for (uint64_t workerStateIdx = 0; workerStateIdx < workerStateCount; ++workerStateIdx)
+            {
+                const auto workerThreadId = WorkerThreadId(readCheckpointValue<uint64_t>(in));
+                auto* hashMap = hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+                deserializeHashJoinState(hashMap, operatorHandler, buildSide, bufferProvider, in);
+                totalMaps += 1;
+                totalEntries += hashMap->getNumberOfTuples();
+            }
+        }
+
+        NES_INFO(
+            "HashJoin deserialized checkpoint | side={} slices={} maps={} entries={}",
+            buildSide == JoinBuildSideType::Left ? "left" : "right",
+            sliceCount,
+            totalMaps,
+            totalEntries);
+        return true;
+    }
+    catch (const Exception& exception)
+    {
+        throwHashJoinRecoveryFailure(operatorHandler, checkpointFile, buildSide, exception.what());
+    }
+    catch (const std::exception& exception)
+    {
+        throwHashJoinRecoveryFailure(operatorHandler, checkpointFile, buildSide, exception.what());
+    }
+}
+
+void restoreHashJoinCheckpointStateProxy(OperatorHandler* ptrOpHandler, AbstractBufferProvider* bufferProvider)
+{
+    auto* operatorHandler = dynamic_cast<HJOperatorHandler*>(ptrOpHandler);
+    if (operatorHandler == nullptr || bufferProvider == nullptr || !CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return;
+    }
+
+    const auto cleanupFunctions = operatorHandler->getNautilusCleanupExec();
+    const auto allCleanupFunctionsReady = std::all_of(
+        cleanupFunctions.begin(), cleanupFunctions.end(), [](const auto& cleanupFunction) { return cleanupFunction != nullptr; });
+    const auto allCheckpointStateRestored
+        = operatorHandler->wasCheckpointRestored(JoinBuildSideType::Left)
+        && operatorHandler->wasCheckpointRestored(JoinBuildSideType::Right);
+    if (!allCleanupFunctionsReady || allCheckpointStateRestored)
+    {
+        return;
+    }
+
+    auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+    restoreHashJoinCheckpointState(operatorHandler, JoinBuildSideType::Left, bufferProvider);
+    restoreHashJoinCheckpointState(operatorHandler, JoinBuildSideType::Right, bufferProvider);
+}
+
+void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return;
+    }
+    ptrOpHandler->lockCheckpointStateShared();
+}
+
+void unlockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return;
+    }
+    ptrOpHandler->unlockCheckpointStateShared();
+}
 }
 
 HashMap* getHashJoinHashMapProxy(
@@ -210,49 +399,86 @@ void serializeHashMapProxy(
     {
         return;
     }
+    (void)timestamp;
     (void)workerThreadId;
-    if (bufferProvider == nullptr)
+    serializeHashJoinCheckpoint(operatorHandler, operatorHandler->getCheckpointDirectory(), buildSide, bufferProvider);
+}
+
+void serializeHashJoinCheckpoint(
+    const HJOperatorHandler* operatorHandler,
+    const std::filesystem::path& checkpointDirectory,
+    const JoinBuildSideType buildSide,
+    [[maybe_unused]] AbstractBufferProvider* bufferProvider)
+{
+    const auto checkpointFile = getHashJoinCheckpointFile(checkpointDirectory, operatorHandler->getOperatorHandlerId(), buildSide);
+    std::vector<HashJoinSliceCheckpointSnapshot> checkpointSnapshots;
+    for (const auto& hjSlice : getActiveHashJoinSlices(operatorHandler))
     {
-        NES_WARNING("HashJoin checkpoint serialization skipped: buffer provider is null");
+        HashJoinSliceCheckpointSnapshot snapshot{hjSlice, {}};
+        for (uint64_t idx = 0; idx < hjSlice->getNumberOfHashMapsForSide(); ++idx)
+        {
+            auto* const hashMap = hjSlice->getHashMapPtr(WorkerThreadId(idx), buildSide);
+            if (hashMap == nullptr || hashMap->getNumberOfTuples() == 0)
+            {
+                continue;
+            }
+            snapshot.workerStates.push_back({WorkerThreadId(idx), hashMap});
+        }
+        if (!snapshot.workerStates.empty())
+        {
+            checkpointSnapshots.emplace_back(std::move(snapshot));
+        }
+    }
+
+    if (checkpointSnapshots.empty())
+    {
+        removeCheckpointFileIfPresent(checkpointFile);
         return;
     }
 
-    const auto& hashMapOptions = operatorHandler->getHashMapOptions(buildSide);
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(),
-        hashMapOptions.keySize,
-        hashMapOptions.valueSize,
-        hashMapOptions.pageSize,
-        hashMapOptions.numberOfBuckets};
-    const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
-    INVARIANT(
-        slices.size() == 1,
-        "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support slicing, but got {}",
-        slices.size());
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slices[0]);
-    INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
+    ensureCheckpointDirectory(checkpointFile);
+    const auto tempCheckpointFile = getTempCheckpointFile(checkpointFile);
+    std::ofstream out(tempCheckpointFile, std::ios::binary | std::ios::trunc);
+    if (!out.is_open())
+    {
+        throw CheckpointError("Cannot open hash join checkpoint {}", tempCheckpointFile.string());
+    }
 
-    bool wroteAny = false;
-    for (uint64_t idx = 0; idx < hjSlice->getNumberOfHashMapsForSide(); ++idx)
+    writeCheckpointHeader(out);
+    writeCheckpointValue(out, static_cast<uint64_t>(checkpointSnapshots.size()));
+    uint64_t totalMaps = 0;
+    uint64_t totalEntries = 0;
+    for (const auto& snapshot : checkpointSnapshots)
     {
-        auto* const hashMap = hjSlice->getHashMapPtr(WorkerThreadId(idx), buildSide);
-        if (hashMap == nullptr || hashMap->getNumberOfTuples() == 0)
+        writeCheckpointValue(out, snapshot.slice->getSliceStart().getRawValue());
+        writeCheckpointValue(out, snapshot.slice->getSliceEnd().getRawValue());
+        writeCheckpointValue(out, static_cast<uint64_t>(snapshot.workerStates.size()));
+        for (const auto& workerState : snapshot.workerStates)
         {
-            continue;
+            writeCheckpointValue(out, workerState.workerThreadId.getRawValue());
+            serializeHashJoinState(workerState.hashMap, operatorHandler, buildSide, out);
+            totalMaps += 1;
+            totalEntries += workerState.hashMap->getNumberOfTuples();
         }
-        const auto checkpointFile = getHashJoinCheckpointFile(operatorHandler->getOperatorHandlerId(), buildSide, WorkerThreadId(idx));
-        ensureCheckpointDirectory(checkpointFile);
-        serializeHashJoinState(hashMap, operatorHandler, buildSide, checkpointFile);
-        wroteAny = true;
     }
-    if (!wroteAny)
+    out.flush();
+    if (!out)
     {
-        NES_DEBUG(
-            "HashJoin serialize checkpoint skipped (empty) side={} ts={}",
-            buildSide == JoinBuildSideType::Left ? "left" : "right",
-            timestamp.getRawValue());
+        throw CheckpointError("Failed to flush hash join checkpoint {}", tempCheckpointFile.string());
     }
+    out.close();
+    if (!out)
+    {
+        throw CheckpointError("Failed to close hash join checkpoint {}", tempCheckpointFile.string());
+    }
+    replaceCheckpointFileAtomically(tempCheckpointFile, checkpointFile);
+
+    NES_INFO(
+        "HashJoin serialize checkpoint | side={} slices={} maps={} entries={}",
+        buildSide == JoinBuildSideType::Left ? "left" : "right",
+        checkpointSnapshots.size(),
+        totalMaps,
+        totalEntries);
 }
 
 HashMap* deserializeHashMapProxy(
@@ -260,60 +486,8 @@ HashMap* deserializeHashMapProxy(
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
     const JoinBuildSideType buildSide,
-    AbstractBufferProvider* bufferProvider)
+    [[maybe_unused]] AbstractBufferProvider* bufferProvider)
 {
-    if (!CheckpointManager::shouldRecoverFromCheckpoint())
-    {
-        return nullptr;
-    }
-    if (!operatorHandler->markCheckpointRestored(buildSide))
-    {
-        return nullptr;
-    }
-
-    const auto& hashMapOptions = operatorHandler->getHashMapOptions(buildSide);
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(),
-        hashMapOptions.keySize,
-        hashMapOptions.valueSize,
-        hashMapOptions.pageSize,
-        hashMapOptions.numberOfBuckets};
-    const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
-    INVARIANT(
-        slices.size() == 1,
-        "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support slicing, but got {}",
-        slices.size());
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slices[0]);
-    INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-
-    bool loaded = false;
-    for (uint64_t idx = 0; idx < hjSlice->getNumberOfHashMapsForSide(); ++idx)
-    {
-        auto* const hashMap = hjSlice->getHashMapPtrOrCreate(WorkerThreadId(idx), buildSide);
-        auto checkpointFile = getHashJoinCheckpointFile(operatorHandler->getOperatorHandlerId(), buildSide, WorkerThreadId(idx));
-        if (!std::filesystem::exists(checkpointFile))
-        {
-            if (auto latest = findLatestCheckpointForSide(buildSide, WorkerThreadId(idx)))
-            {
-                checkpointFile = *latest;
-            }
-            else
-            {
-                continue;
-            }
-        }
-        ensureCheckpointDirectory(checkpointFile);
-        deserializeHashJoinState(hashMap, operatorHandler, buildSide, bufferProvider, checkpointFile);
-        loaded = true;
-    }
-
-    if (!loaded)
-    {
-        NES_DEBUG(
-            "HashJoin deserialize: no checkpoint files for side {}, returning empty map",
-            buildSide == JoinBuildSideType::Left ? "left" : "right");
-    }
     return getHashJoinHashMapProxy(operatorHandler, timestamp, workerThreadId, buildSide);
 }
 
@@ -363,68 +537,37 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
     /// NOLINTEND(performance-unnecessary-value-param)
     operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
 
-    if (CheckpointManager::isCheckpointingEnabled() && !operatorHandler->hasCheckpointCallback(joinBuildSide))
-    {
-        const auto callbackId = fmt::format(
-            "hash_join_state_{}_{}_{}",
-            operatorHandlerId.getRawValue(),
-            joinBuildSide == JoinBuildSideType::Left ? "left" : "right",
-            reinterpret_cast<uintptr_t>(operatorHandler));
-        operatorHandler->setCheckpointCallbackId(joinBuildSide, callbackId);
-        CheckpointManager::registerCallback(callbackId, [handler = operatorHandler, buildSide = joinBuildSide]() {
-            handler->requestCheckpoint(buildSide);
-        });
-    }
-
-    // If we recover and the build side has no new tuples, eagerly restore the checkpoint once during setup.
     if (CheckpointManager::shouldRecoverFromCheckpoint())
     {
         auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
             executionCtx.pipelineMemoryProvider.bufferProvider);
-        if (bufferProvider && operatorHandler->markCheckpointRestored(joinBuildSide))
+        const auto cleanupFunctions = operatorHandler->getNautilusCleanupExec();
+        const auto allCleanupFunctionsReady = std::all_of(
+            cleanupFunctions.begin(), cleanupFunctions.end(), [](const auto& cleanupFunction) { return cleanupFunction != nullptr; });
+        if (bufferProvider != nullptr && allCleanupFunctionsReady)
         {
-            const auto& opts = hashMapOptions;
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{
-                operatorHandler->getNautilusCleanupExec(),
-                opts.keySize,
-                opts.valueSize,
-                opts.pageSize,
-                opts.numberOfBuckets};
-            const auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-                Timestamp(0), operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
-            if (!slices.empty())
-            {
-                const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(slices[0]);
-                if (hjSlice)
-                {
-                    for (uint64_t idx = 0; idx < hjSlice->getNumberOfHashMapsForSide(); ++idx)
-                    {
-                        auto* hashMap = hjSlice->getHashMapPtrOrCreate(WorkerThreadId(idx), joinBuildSide);
-                        auto checkpointFile = getHashJoinCheckpointFile(operatorHandlerId, joinBuildSide, WorkerThreadId(idx));
-                        if (!std::filesystem::exists(checkpointFile))
-                        {
-                            if (auto latest = findLatestCheckpointForSide(joinBuildSide, WorkerThreadId(idx)))
-                            {
-                                checkpointFile = *latest;
-                            }
-                            else
-                            {
-                                continue;
-                            }
-                        }
-                        ensureCheckpointDirectory(checkpointFile);
-                        deserializeHashJoinState(hashMap, operatorHandler, joinBuildSide, bufferProvider, checkpointFile);
-                        NES_INFO(
-                            "HashJoin restored checkpoint for {} side worker {} with {} tuples from {}",
-                            joinBuildSide == JoinBuildSideType::Left ? "left" : "right",
-                            idx,
-                            hashMap->getNumberOfTuples(),
-                            checkpointFile.string());
-                    }
-                }
-            }
+            auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+            restoreHashJoinCheckpointState(operatorHandler, JoinBuildSideType::Left, bufferProvider);
+            restoreHashJoinCheckpointState(operatorHandler, JoinBuildSideType::Right, bufferProvider);
         }
     }
+}
+
+void HJBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    WindowBuildPhysicalOperator::open(executionCtx, recordBuffer);
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+    nautilus::invoke(restoreHashJoinCheckpointStateProxy, operatorHandler, executionCtx.pipelineMemoryProvider.bufferProvider);
+    nautilus::invoke(lockCheckpointStateSharedProxy, operatorHandler);
+}
+
+void HJBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    const auto operatorHandler = localState->getOperatorHandler();
+    SCOPE_EXIT { nautilus::invoke(unlockCheckpointStateSharedProxy, operatorHandler); };
+    WindowBuildPhysicalOperator::close(executionCtx, recordBuffer);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -479,36 +622,23 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     auto entryMemArea = entryRef.getValueMemArea();
     const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
     pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
+}
 
-    nautilus::invoke(
-        deserializeHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        ctx.pipelineMemoryProvider.bufferProvider);
-
-    const auto checkpointRequested = invoke(
-        +[](OperatorHandler* handler, JoinBuildSideType side) -> bool
-        {
-            if (auto* hjHandler = dynamic_cast<HJOperatorHandler*>(handler))
-            {
-                return hjHandler->consumeCheckpointRequest(side);
-            }
-            return false;
-        },
-        operatorHandler,
-        nautilus::val<JoinBuildSideType>(joinBuildSide));
-    if (checkpointRequested)
+void HJBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    if (CheckpointManager::isCheckpointingEnabled())
     {
-        nautilus::invoke(
-            serializeHashMapProxy,
-            operatorHandler,
-            timestamp,
-            ctx.workerThreadId,
-            nautilus::val<JoinBuildSideType>(joinBuildSide),
-            ctx.pipelineMemoryProvider.bufferProvider);
+        auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(
+            nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
+        auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
+            executionCtx.pipelineMemoryProvider.bufferProvider);
+        if (operatorHandler != nullptr && bufferProvider != nullptr)
+        {
+            auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+            serializeHashJoinCheckpoint(operatorHandler, operatorHandler->getCheckpointDirectory(), joinBuildSide, bufferProvider);
+        }
     }
+    WindowBuildPhysicalOperator::terminate(executionCtx);
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(

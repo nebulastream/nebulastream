@@ -48,6 +48,7 @@ void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerT
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
+    checkpointBufferManager = pipelineExecutionContext.getBufferManager();
     watermarkProcessorBuild = std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins);
     watermarkProcessorProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
 }
@@ -98,6 +99,11 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
+}
+
+std::shared_ptr<AbstractBufferProvider> WindowBasedOperatorHandler::getCheckpointBufferManager() const
+{
+    return checkpointBufferManager;
 }
 
 }

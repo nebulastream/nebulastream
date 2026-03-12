@@ -17,24 +17,88 @@
 
 #include <CompilationCache.hpp>
 
+#include <optional>
 #include <memory>
 #include <Configuration/WorkerConfiguration.hpp>
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 #include <Phases/PipeliningPhase.hpp>
+#include <PhysicalOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/DumpMode.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
+namespace
+{
+struct OperatorHandlerIdAllocatorInfo
+{
+    std::optional<uint64_t> namespacePrefix;
+    std::optional<OperatorHandlerId> maxHandlerId;
+};
+
+void collectOperatorHandlerIdAllocatorInfo(
+    const std::shared_ptr<PhysicalOperatorWrapper>& wrapper, OperatorHandlerIdAllocatorInfo& allocatorInfo)
+{
+    if (const auto handlerId = wrapper->getHandlerId(); handlerId.has_value())
+    {
+        const auto handlerNamespacePrefix = getOperatorHandlerIdNamespacePrefix(handlerId.value());
+        if (!allocatorInfo.namespacePrefix.has_value())
+        {
+            allocatorInfo.namespacePrefix = handlerNamespacePrefix;
+        }
+        else
+        {
+            PRECONDITION(
+                allocatorInfo.namespacePrefix.value() == handlerNamespacePrefix,
+                "All operator handlers of a physical plan must share the same namespace");
+        }
+
+        if (!allocatorInfo.maxHandlerId.has_value()
+            || getOperatorHandlerIdOrdinal(handlerId.value()) > getOperatorHandlerIdOrdinal(allocatorInfo.maxHandlerId.value()))
+        {
+            allocatorInfo.maxHandlerId = handlerId.value();
+        }
+    }
+
+    for (const auto& child : wrapper->getChildren())
+    {
+        collectOperatorHandlerIdAllocatorInfo(child, allocatorInfo);
+    }
+}
+
+void initializeOperatorHandlerIdAllocatorForQuery(const PhysicalPlan& physicalPlan)
+{
+    OperatorHandlerIdAllocatorInfo allocatorInfo;
+    for (const auto& root : physicalPlan.getRootOperators())
+    {
+        collectOperatorHandlerIdAllocatorInfo(root, allocatorInfo);
+    }
+
+    if (allocatorInfo.namespacePrefix.has_value())
+    {
+        initializeOperatorHandlerIdAllocator(allocatorInfo.namespacePrefix.value(), INITIAL_OPERATOR_HANDLER_ID.getRawValue());
+        if (allocatorInfo.maxHandlerId.has_value())
+        {
+            advanceOperatorHandlerIdAllocatorPast(allocatorInfo.maxHandlerId.value());
+        }
+        return;
+    }
+
+    initializeOperatorHandlerIdAllocator(physicalPlan.getOriginalSql());
+}
+}
 
 QueryCompiler::QueryCompiler() = default;
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
+    initializeOperatorHandlerIdAllocatorForQuery(request->queryPlan);
+    const auto cacheEnabled = request->compilationCacheMode != CompilationCacheMode::Disabled;
     auto compilationCache
-        = CompilationCache(CompilationCache::Settings{request->compilationCacheEnabled, std::move(request->compilationCacheDir)});
+        = CompilationCache(CompilationCache::Settings{cacheEnabled, std::move(request->compilationCacheDir)});
     compilationCache.prepareForQuery(request->queryPlan);
 
     auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, &compilationCache);

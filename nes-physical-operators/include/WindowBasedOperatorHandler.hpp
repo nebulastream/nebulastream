@@ -20,6 +20,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -81,6 +82,7 @@ public:
 
     /// Triggers all windows that have not been already emitted to the probe
     virtual void triggerAllWindows(PipelineExecutionContext* pipelineCtx);
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getCheckpointBufferManager() const;
 
     /// Gives the specific operator handler the chance to provide a function that creates new slices
     /// This method is being called whenever a new slice is needed, e.g., receiving a timestamp that is not yet in the slice store.
@@ -98,6 +100,7 @@ protected:
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorBuild;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessorProbe;
+    std::shared_ptr<AbstractBufferProvider> checkpointBufferManager;
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;

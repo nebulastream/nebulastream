@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
@@ -78,7 +79,11 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
         .help("use deterministic file paths for inline systest data to keep plan fingerprints stable across reruns");
     program.add_argument("--restart-between-tuples")
         .flag()
-        .help("restart the local worker after each tuple using a dedicated systest file source plugin");
+        .help("restart the local worker while reading tuples using a dedicated systest file source plugin");
+    program.add_argument("--restart-crash-frequency")
+        .help("with --restart-between-tuples, crash the local worker after every N parsed tuples. Default: 1")
+        .default_value(1)
+        .scan<'i', int>();
 
     /// server/remote mode
     program.add_argument("-s", "--server").help("grpc uri, e.g., 127.0.0.1:8080, if not specified local single-node-worker is used.");
@@ -337,6 +342,14 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     {
         config.deterministicInlineSourcePaths = true;
     }
+
+    const auto restartCrashFrequency = program.get<int>("--restart-crash-frequency");
+    if (restartCrashFrequency <= 0)
+    {
+        std::cerr << "--restart-crash-frequency must be greater than zero.\n";
+        std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+    }
+    config.restartCrashFrequency = static_cast<uint64_t>(restartCrashFrequency);
 
     if (program.is_used("--restart-between-tuples"))
     {

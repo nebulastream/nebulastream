@@ -23,6 +23,13 @@
 namespace NES::QueryCompilation
 {
 
+enum class CompilationCacheMode
+{
+    Disabled,
+    Preferred,
+    Required,
+};
+
 /// Represents a query compilation request.
 struct QueryCompilationRequest
 {
@@ -31,7 +38,7 @@ struct QueryCompilationRequest
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
-    bool compilationCacheEnabled = true;
+    CompilationCacheMode compilationCacheMode = CompilationCacheMode::Preferred;
     std::string compilationCacheDir;
 };
 

@@ -62,6 +62,8 @@ private:
     std::string tupleDelimiter;
     std::atomic<size_t> totalNumBytesRead{0};
     uint64_t recoveryByteOffset = 0;
+    uint64_t crashEveryNTuples = 1;
+    uint64_t tuplesUntilCrash = 1;
     bool crashBeforeNextRead = false;
 };
 

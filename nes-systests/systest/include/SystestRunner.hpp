@@ -72,6 +72,7 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
     bool restartBetweenTuples,
+    uint64_t restartCrashFrequency,
     SystestProgressTracker& progressTracker);
 
 /// Run queries remote on the single-node-worker specified by the URI

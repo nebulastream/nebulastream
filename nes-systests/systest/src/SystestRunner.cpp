@@ -513,12 +513,13 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
     const bool restartBetweenTuples,
+    const uint64_t restartCrashFrequency,
     SystestProgressTracker& progressTracker)
 {
     std::unique_ptr<QueryManager> queryManager;
     if (restartBetweenTuples)
     {
-        queryManager = std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration);
+        queryManager = std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration, restartCrashFrequency);
     }
     else
     {

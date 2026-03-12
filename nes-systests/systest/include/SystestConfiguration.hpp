@@ -55,7 +55,11 @@ public:
     BoolOption restartBetweenTuples
         = {"restart_between_tuples",
            "false",
-           "Continuously crash and recover the local worker after each parsed tuple via a dedicated systest source plugin"};
+           "Continuously crash and recover the local worker while parsing tuples via a dedicated systest source plugin"};
+    UIntOption restartCrashFrequency
+        = {"restart_crash_frequency",
+           "1",
+           "When restart_between_tuples is enabled, crash the local worker after every N parsed tuples"};
     BoolOption randomQueryOrder = {"random_query_order", "false", "run queries in random order"};
     UIntOption numberConcurrentQueries = {"number_concurrent_queries", "6", "number of maximal concurrently running queries"};
     BoolOption benchmark = {"benchmark_queries", "false", "Records the execution time of each query"};

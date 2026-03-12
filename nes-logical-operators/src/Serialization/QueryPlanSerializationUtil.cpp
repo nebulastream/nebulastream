@@ -40,6 +40,10 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     auto rootOperator = queryPlan.getRootOperators().front();
 
     SerializableQueryPlan serializableQueryPlan;
+    if (queryPlan.getQueryId() != INVALID_QUERY_ID)
+    {
+        serializableQueryPlan.set_queryid(queryPlan.getQueryId().getRawValue());
+    }
     serializableQueryPlan.set_originalsql(queryPlan.getOriginalSql());
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;

@@ -17,3 +17,18 @@ function(add_nes_logical_operators_test)
 endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")
+
+add_nes_test(nes-plan-recovery-compilation-cache-test "PlanRecoveryCompilationCacheTest.cpp")
+target_link_libraries(nes-plan-recovery-compilation-cache-test nes-logical-operators nes-nebuli-lib nes-query-compiler)
+target_include_directories(
+    nes-plan-recovery-compilation-cache-test
+    PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/nes-query-compiler/private>)
+
+add_nes_test(nes-multi-query-checkpoint-recovery-test "MultiQueryCheckpointRecoveryTest.cpp")
+target_link_libraries(nes-multi-query-checkpoint-recovery-test nes-logical-operators nes-nebuli-lib nes-single-node-worker-lib)
+target_include_directories(
+    nes-multi-query-checkpoint-recovery-test
+    PRIVATE
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/nes-single-node-worker/include>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/nes-query-compiler/include>)

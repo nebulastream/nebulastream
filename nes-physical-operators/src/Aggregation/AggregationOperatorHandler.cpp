@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Aggregation/AggregationOperatorHandler.hpp>
+#include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
 #include <algorithm>
 #include <bit>
@@ -28,7 +29,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -45,49 +45,34 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     const uint64_t maxNumberOfBuckets,
+    const OperatorHandlerId operatorHandlerId,
     HashMapOptions hashMapOptions,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalled(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
+    , operatorHandlerId(operatorHandlerId)
     , hashMapOptions(std::move(hashMapOptions))
     , aggregationPhysicalFunctions(std::move(aggregationPhysicalFunctions))
 {
 }
 
-AggregationOperatorHandler::~AggregationOperatorHandler()
+void AggregationOperatorHandler::serializeState(const std::filesystem::path& checkpointDirectory)
 {
-    if (checkpointCallbackId)
+    auto bufferManager = getCheckpointBufferManager();
+    if (!bufferManager)
     {
-        CheckpointManager::unregisterCallback(*checkpointCallbackId);
+        return;
     }
+
+    auto checkpointStateLock = acquireCheckpointStateWriteLock();
+    serializeAggregationCheckpoint(this, checkpointDirectory, bufferManager.get());
 }
 
-void AggregationOperatorHandler::requestCheckpoint()
+OperatorHandlerId AggregationOperatorHandler::getOperatorHandlerId() const
 {
-    checkpointRequested.store(true, std::memory_order_relaxed);
-}
-
-bool AggregationOperatorHandler::consumeCheckpointRequest()
-{
-    bool expected = true;
-    return checkpointRequested.compare_exchange_strong(expected, false, std::memory_order_acq_rel);
-}
-
-void AggregationOperatorHandler::setCheckpointCallbackId(std::string callbackId)
-{
-    checkpointCallbackId = std::move(callbackId);
-}
-
-void AggregationOperatorHandler::clearCheckpointCallback()
-{
-    checkpointCallbackId.reset();
-}
-
-bool AggregationOperatorHandler::hasCheckpointCallback() const
-{
-    return checkpointCallbackId.has_value();
+    return operatorHandlerId;
 }
 
 const HashMapOptions& AggregationOperatorHandler::getHashMapOptions() const

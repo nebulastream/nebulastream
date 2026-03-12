@@ -56,6 +56,7 @@ public:
     getTriggerableWindowSlices(Timestamp globalWatermark) override;
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> getAllNonTriggeredSlices() override;
     std::optional<std::shared_ptr<Slice>> getSliceBySliceEnd(SliceEnd sliceEnd) override;
+    std::vector<std::shared_ptr<Slice>> getActiveSlices() override;
     void garbageCollectSlicesAndWindows(Timestamp newGlobalWaterMark) override;
     void deleteState() override;
     void incrementNumberOfInputPipelines() override;
