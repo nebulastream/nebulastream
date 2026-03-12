@@ -18,6 +18,12 @@ setup_file() {
     docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
   done
   docker network prune -f --filter label=nes-test=distributed-cli 2>/dev/null || true
+  # Clean up leaked Docker images and build cache from previous crashed runs
+  # Remove stopped containers that reference test images so the images can be freed
+  docker container prune -f 2>/dev/null || true
+  docker images --filter reference='nes-worker-cli-test-*' --filter reference='nes-cli-image-*' -q | xargs -r docker rmi -f 2>/dev/null || true
+  docker builder prune -f 2>/dev/null || true
+  docker image prune -f 2>/dev/null || true
 
   # Validate environment variables
   if [ -z "$NES_CLI" ]; then
@@ -111,6 +117,8 @@ teardown_file() {
   echo "# Test suite completed" >&3
   docker rmi $WORKER_IMAGE || true
   docker rmi $CLI_IMAGE || true
+  docker builder prune -f || true
+  docker image prune -f || true
 }
 
 setup() {
