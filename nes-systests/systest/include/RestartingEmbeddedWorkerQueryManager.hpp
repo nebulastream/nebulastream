@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <cstdint>
 #include <filesystem>
 #include <memory>
 #include <mutex>
@@ -35,7 +36,7 @@ namespace NES::Systest
 class RestartingEmbeddedWorkerQueryManager final : public QueryManager
 {
 public:
-    explicit RestartingEmbeddedWorkerQueryManager(SingleNodeWorkerConfiguration configuration);
+    explicit RestartingEmbeddedWorkerQueryManager(SingleNodeWorkerConfiguration configuration, uint64_t crashEveryNTuples = 1);
     ~RestartingEmbeddedWorkerQueryManager() override;
 
     [[nodiscard]] std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan) override;
@@ -60,6 +61,7 @@ private:
     void terminateWorkerLocked() const;
     void setWorkerArmedLocked(bool armed) const;
     void maybeArmWorkerLocked() const;
+    void updateWorkerArmingLocked() const;
     [[nodiscard]] bool hasActiveQueriesLocked() const;
     [[nodiscard]] bool hasRecoverableBundlesForActiveQueriesLocked() const;
     [[nodiscard]] std::vector<std::pair<std::string, QueryId>> listCheckpointBundlesLocked() const;
@@ -79,6 +81,7 @@ private:
     [[nodiscard]] static std::string boolString(bool value);
 
     SingleNodeWorkerConfiguration configuration;
+    uint64_t crashEveryNTuples;
     std::filesystem::path checkpointDirectory;
     std::filesystem::path workerBinaryPath;
     mutable std::mutex mutex;
@@ -87,7 +90,6 @@ private:
     mutable std::unordered_map<QueryId, QueryId> syntheticIdByBundleQueryId;
     mutable std::optional<Exception> backgroundFailure;
     QueryId::Underlying nextSyntheticQueryId = INITIAL<QueryId>.getRawValue();
-    mutable QueryId::Underlying nextExpectedRuntimeQueryId = INITIAL<QueryId>.getRawValue();
     mutable pid_t workerPid = -1;
     mutable URI workerUri;
     mutable bool workerArmed = false;

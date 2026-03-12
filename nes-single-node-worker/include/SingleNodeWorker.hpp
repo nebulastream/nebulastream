@@ -50,7 +50,11 @@ class SingleNodeWorker
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
 
-    void recoverLatestCheckpoint(const std::filesystem::path& checkpointDirectory);
+    struct QueryRegistrationOptions;
+
+    [[nodiscard]] std::expected<QueryId, Exception> registerQueryInternal(
+        LogicalPlan plan, const QueryRegistrationOptions* options) noexcept;
+    void recoverCheckpointBundles(const std::filesystem::path& checkpointDirectory);
     static std::optional<std::string> loadSerializedPlanFromFile(const std::filesystem::path& planFilePath);
 
 public:

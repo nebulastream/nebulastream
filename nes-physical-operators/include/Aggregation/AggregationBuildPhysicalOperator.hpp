@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
@@ -36,10 +37,9 @@ HashMap* getAggHashMapProxy(
     Timestamp timestamp,
     WorkerThreadId workerThreadId);
 
-void serializeHashMapProxy(
+void serializeAggregationCheckpoint(
     const AggregationOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
+    const std::filesystem::path& checkpointDirectory,
     AbstractBufferProvider* bufferProvider);
 
 HashMap* deserializeHashMapProxy(
@@ -57,7 +57,10 @@ public:
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
 private:
     /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()

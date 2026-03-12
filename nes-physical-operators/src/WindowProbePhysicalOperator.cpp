@@ -45,6 +45,7 @@ void garbageCollectSlicesProxy(
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
 
     const auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    auto checkpointStateLock = opHandler->acquireCheckpointStateReadLock();
     const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
 
     opHandler->garbageCollectSlicesAndWindows(bufferMetaData);
@@ -66,6 +67,7 @@ void terminateProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pip
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+    auto checkpointStateLock = opHandler->acquireCheckpointStateReadLock();
     opHandler->stop(QueryTerminationType::Graceful, *pipelineCtx);
 }
 }

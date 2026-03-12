@@ -19,7 +19,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -73,20 +72,16 @@ public:
         OperatorHandlerId operatorHandlerId,
         HashMapOptions leftHashMapOptions,
         HashMapOptions rightHashMapOptions);
-    ~HJOperatorHandler() override;
+    ~HJOperatorHandler() override = default;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
+    void serializeState(const std::filesystem::path& checkpointDirectory) override;
 
     bool wasSetupCalled(const JoinBuildSideType& buildSide);
     void setNautilusCleanupExec(
         std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide);
     [[nodiscard]] std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> getNautilusCleanupExec() const;
-    void requestCheckpoint(const JoinBuildSideType buildSide) const;
-    bool consumeCheckpointRequest(const JoinBuildSideType buildSide) const;
-    void setCheckpointCallbackId(const JoinBuildSideType buildSide, std::string callbackId);
-    bool hasCheckpointCallback(const JoinBuildSideType buildSide) const;
-    void clearCheckpointCallback(const JoinBuildSideType buildSide) const;
     [[nodiscard]] bool wasCheckpointRestored(const JoinBuildSideType buildSide) const;
     bool markCheckpointRestored(const JoinBuildSideType buildSide) const;
     [[nodiscard]] OperatorHandlerId getOperatorHandlerId() const;
@@ -102,12 +97,8 @@ private:
     const OperatorHandlerId operatorHandlerId;
     HashMapOptions leftHashMapOptions;
     HashMapOptions rightHashMapOptions;
-    mutable std::atomic<bool> leftCheckpointRequested{false};
-    mutable std::atomic<bool> rightCheckpointRequested{false};
     mutable std::atomic<bool> leftCheckpointRestored{false};
     mutable std::atomic<bool> rightCheckpointRestored{false};
-    mutable std::optional<std::string> leftCheckpointCallbackId;
-    mutable std::optional<std::string> rightCheckpointCallbackId;
 
 
     void emitSlicesToProbe(

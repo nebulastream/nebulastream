@@ -20,7 +20,6 @@
 #include <functional>
 #include <map>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -66,23 +65,21 @@ public:
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
         uint64_t maxNumberOfBuckets,
+        OperatorHandlerId operatorHandlerId,
         HashMapOptions hashMapOptions,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions);
-    ~AggregationOperatorHandler() override;
+    ~AggregationOperatorHandler() override = default;
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
+    void serializeState(const std::filesystem::path& checkpointDirectory) override;
 
     /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
     std::atomic<bool> setupAlreadyCalled;
     /// shared_ptr as multiple slices need access to it
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
     mutable std::atomic_bool checkpointStateRestored{false};
-    void requestCheckpoint();
-    bool consumeCheckpointRequest();
-    void setCheckpointCallbackId(std::string callbackId);
-    void clearCheckpointCallback();
-    [[nodiscard]] bool hasCheckpointCallback() const;
+    [[nodiscard]] OperatorHandlerId getOperatorHandlerId() const;
     [[nodiscard]] const HashMapOptions& getHashMapOptions() const;
     [[nodiscard]] const std::vector<std::shared_ptr<AggregationPhysicalFunction>>& getAggregationFunctions() const;
 
@@ -92,10 +89,9 @@ protected:
         PipelineExecutionContext* pipelineCtx) override;
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
+    const OperatorHandlerId operatorHandlerId;
     HashMapOptions hashMapOptions;
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
-    std::atomic<bool> checkpointRequested{false};
-    std::optional<std::string> checkpointCallbackId;
 };
 
 }

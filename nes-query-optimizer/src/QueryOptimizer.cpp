@@ -19,6 +19,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <OptimizedPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 
 namespace NES
 {
@@ -32,6 +33,7 @@ OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptim
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
+    initializeOperatorHandlerIdAllocator(plan.getOriginalSql());
     DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);

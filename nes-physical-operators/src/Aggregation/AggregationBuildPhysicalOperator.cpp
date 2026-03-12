@@ -13,14 +13,13 @@
 */
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 
+#include <array>
 #include <cstdint>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <memory>
 #include <mutex>
-#include <ranges>
-#include <sstream>
 #include <string_view>
 #include <utility>
 #include <vector>
@@ -44,6 +43,7 @@
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 #include <options.hpp>
+#include <scope_guard.hpp>
 #include <static.hpp>
 #include <val_ptr.hpp>
 
@@ -51,8 +51,37 @@ namespace NES
 {
 namespace
 {
-constexpr std::string_view AggregationCheckpointFileName = "aggregation_hashmap.bin";
+constexpr std::string_view AggregationCheckpointFileNamePrefix = "aggregation_hashmap";
+constexpr std::array<char, 8> AggregationCheckpointMagic{'N', 'E', 'S', 'A', 'G', 'G', '2', '\0'};
 std::mutex AggregationCheckpointMutex;
+
+struct AggregationSliceCheckpointSnapshot
+{
+    std::shared_ptr<AggregationSlice> slice;
+    std::unique_ptr<HashMap> hashMap;
+};
+
+template <typename T>
+void writeCheckpointValue(std::ostream& out, const T& value)
+{
+    out.write(reinterpret_cast<const char*>(&value), static_cast<std::streamsize>(sizeof(T)));
+    if (!out)
+    {
+        throw CheckpointError("Failed to write aggregation checkpoint");
+    }
+}
+
+template <typename T>
+T readCheckpointValue(std::istream& in)
+{
+    T value{};
+    in.read(reinterpret_cast<char*>(&value), static_cast<std::streamsize>(sizeof(T)));
+    if (!in)
+    {
+        throw CheckpointError("Failed to read aggregation checkpoint");
+    }
+    return value;
+}
 
 PipelineMemoryProvider createPipelineMemoryProvider(AbstractBufferProvider* bufferProvider)
 {
@@ -61,10 +90,10 @@ PipelineMemoryProvider createPipelineMemoryProvider(AbstractBufferProvider* buff
     return PipelineMemoryProvider(nautilus::val<Arena*>{nullptr}, nautilus::val<AbstractBufferProvider*>{bufferProvider});
 }
 
-std::filesystem::path getAggregationCheckpointFile()
+std::filesystem::path getAggregationCheckpointFile(const std::filesystem::path& checkpointDirectory, const OperatorHandlerId handlerId)
 {
-    auto baseDir = CheckpointManager::getCheckpointDirectory();
-    baseDir /= AggregationCheckpointFileName;
+    auto baseDir = checkpointDirectory;
+    baseDir /= fmt::format("{}_{}.bin", AggregationCheckpointFileNamePrefix, handlerId.getRawValue());
     return baseDir;
 }
 
@@ -75,6 +104,213 @@ void ensureCheckpointDirectory(const std::filesystem::path& checkpointFile)
     {
         std::filesystem::create_directories(checkpointDir);
     }
+}
+
+void writeCheckpointHeader(std::ostream& out)
+{
+    out.write(AggregationCheckpointMagic.data(), static_cast<std::streamsize>(AggregationCheckpointMagic.size()));
+    if (!out)
+    {
+        throw CheckpointError("Failed to write aggregation checkpoint header");
+    }
+}
+
+void validateCheckpointHeader(std::istream& in, const std::filesystem::path& checkpointFile)
+{
+    std::array<char, AggregationCheckpointMagic.size()> actualMagic{};
+    in.read(actualMagic.data(), static_cast<std::streamsize>(actualMagic.size()));
+    if (!in)
+    {
+        throw CheckpointError("Failed to read aggregation checkpoint header from {}", checkpointFile.string());
+    }
+    if (actualMagic != AggregationCheckpointMagic)
+    {
+        throw CheckpointError("Unsupported aggregation checkpoint format in {}", checkpointFile.string());
+    }
+}
+
+void removeCheckpointFileIfPresent(const std::filesystem::path& checkpointFile)
+{
+    std::error_code ec;
+    std::filesystem::remove(checkpointFile, ec);
+    if (ec)
+    {
+        NES_WARNING("Failed to remove aggregation checkpoint {}: {}", checkpointFile.string(), ec.message());
+    }
+}
+
+std::filesystem::path getTempCheckpointFile(const std::filesystem::path& checkpointFile)
+{
+    return checkpointFile.string() + ".tmp";
+}
+
+void replaceCheckpointFileAtomically(const std::filesystem::path& tempCheckpointFile, const std::filesystem::path& checkpointFile)
+{
+    std::error_code ec;
+    std::filesystem::rename(tempCheckpointFile, checkpointFile, ec);
+    if (ec)
+    {
+        std::filesystem::remove(tempCheckpointFile, ec);
+        throw CheckpointError("Cannot replace aggregation checkpoint {}; {}", checkpointFile.string(), ec.message());
+    }
+}
+
+CreateNewHashMapSliceArgs createAggregationHashMapSliceArgs(const AggregationOperatorHandler* operatorHandler)
+{
+    const auto& hashMapOptions = operatorHandler->getHashMapOptions();
+    return {
+        {operatorHandler->cleanupStateNautilusFunction},
+        hashMapOptions.keySize,
+        hashMapOptions.valueSize,
+        hashMapOptions.pageSize,
+        hashMapOptions.numberOfBuckets};
+}
+
+std::shared_ptr<AggregationSlice>
+getOrCreateAggregationSlice(const AggregationOperatorHandler* operatorHandler, const SliceStart sliceStart, const SliceEnd sliceEnd)
+{
+    auto createFunction = operatorHandler->getCreateNewSlicesFunction(createAggregationHashMapSliceArgs(operatorHandler));
+    auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+        sliceStart,
+        [createFunction = std::move(createFunction), sliceStart, sliceEnd](const SliceStart assignedSliceStart, const SliceEnd assignedSliceEnd)
+        {
+            INVARIANT(
+                assignedSliceStart == sliceStart && assignedSliceEnd == sliceEnd,
+                "Recovered aggregation slice {}-{} does not match assigned slice {}-{}",
+                sliceStart,
+                sliceEnd,
+                assignedSliceStart,
+                assignedSliceEnd);
+            return createFunction(assignedSliceStart, assignedSliceEnd);
+        });
+    INVARIANT(
+        slices.size() == 1,
+        "We expect exactly one slice for recovered aggregation state, but got {}",
+        slices.size());
+    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slices[0]);
+    INVARIANT(aggregationSlice != nullptr, "Recovered slice must be an AggregationSlice");
+    return aggregationSlice;
+}
+
+std::vector<std::shared_ptr<AggregationSlice>> getActiveAggregationSlices(const AggregationOperatorHandler* operatorHandler)
+{
+    std::vector<std::shared_ptr<AggregationSlice>> aggregationSlices;
+    for (const auto& slice : operatorHandler->getSliceAndWindowStore().getActiveSlices())
+    {
+        const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
+        INVARIANT(aggregationSlice != nullptr, "Aggregation checkpointing expects aggregation slices only");
+        aggregationSlices.emplace_back(aggregationSlice);
+    }
+    return aggregationSlices;
+}
+
+[[noreturn]] void throwAggregationRecoveryFailure(
+    const AggregationOperatorHandler* operatorHandler, const std::filesystem::path& checkpointFile, const std::string_view reason)
+{
+    operatorHandler->getSliceAndWindowStore().deleteState();
+    throw CheckpointError(
+        "Cannot recover aggregation checkpoint {}: {}. Replay fallback is unavailable because source replay storage may already "
+        "have pruned checkpoint-covered buffers.",
+        checkpointFile.string(),
+        reason);
+}
+
+bool restoreAggregationCheckpointState(
+    const AggregationOperatorHandler* operatorHandler, AbstractBufferProvider* bufferProvider, const WorkerThreadId targetWorkerThreadId)
+{
+    if (!CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return true;
+    }
+
+    bool expected = false;
+    if (!operatorHandler->checkpointStateRestored.compare_exchange_strong(expected, true))
+    {
+        return true;
+    }
+
+    const auto checkpointFile = getAggregationCheckpointFile(
+        operatorHandler->getCheckpointRecoveryDirectory(), operatorHandler->getOperatorHandlerId());
+    if (!std::filesystem::exists(checkpointFile))
+    {
+        return true;
+    }
+
+    try
+    {
+        const auto serializationOptions = operatorHandler->getHashMapOptions().getSerializationOptions();
+        INVARIANT(
+            !serializationOptions.valuesContainPagedVectors,
+            "Aggregation checkpointing expects raw value serialization but received paged vectors");
+
+        std::lock_guard lock(AggregationCheckpointMutex);
+        std::ifstream in(checkpointFile, std::ios::binary);
+        if (!in.is_open())
+        {
+            throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
+        }
+
+        validateCheckpointHeader(in, checkpointFile);
+        const auto sliceCount = readCheckpointValue<uint64_t>(in);
+        uint64_t totalEntries = 0;
+        for (uint64_t sliceIdx = 0; sliceIdx < sliceCount; ++sliceIdx)
+        {
+            const auto sliceStart = SliceStart(readCheckpointValue<uint64_t>(in));
+            const auto sliceEnd = SliceEnd(readCheckpointValue<uint64_t>(in));
+            auto aggregationSlice = getOrCreateAggregationSlice(operatorHandler, sliceStart, sliceEnd);
+            auto* localHashMap = aggregationSlice->getHashMapPtrOrCreate(targetWorkerThreadId);
+            localHashMap->deserialize(in, serializationOptions, bufferProvider);
+            totalEntries += localHashMap->getNumberOfTuples();
+        }
+
+        NES_INFO("Aggregations deserialized checkpoint | slices={} entries={}", sliceCount, totalEntries);
+        return true;
+    }
+    catch (const Exception& exception)
+    {
+        throwAggregationRecoveryFailure(operatorHandler, checkpointFile, exception.what());
+    }
+    catch (const std::exception& exception)
+    {
+        throwAggregationRecoveryFailure(operatorHandler, checkpointFile, exception.what());
+    }
+}
+
+void restoreAggregationCheckpointStateProxy(
+    OperatorHandler* ptrOpHandler, AbstractBufferProvider* bufferProvider, const WorkerThreadId workerThreadId)
+{
+    auto* operatorHandler = dynamic_cast<AggregationOperatorHandler*>(ptrOpHandler);
+    if (operatorHandler == nullptr || bufferProvider == nullptr || !CheckpointManager::shouldRecoverFromCheckpoint()
+        || operatorHandler->checkpointStateRestored.load(std::memory_order_acquire))
+    {
+        return;
+    }
+
+    auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+    if (!operatorHandler->checkpointStateRestored.load(std::memory_order_acquire))
+    {
+        restoreAggregationCheckpointState(operatorHandler, bufferProvider, workerThreadId);
+    }
+}
+
+void lockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return;
+    }
+    ptrOpHandler->lockCheckpointStateShared();
+}
+
+void unlockCheckpointStateSharedProxy(OperatorHandler* ptrOpHandler)
+{
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    if (!CheckpointManager::isCheckpointingEnabled() && !CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        return;
+    }
+    ptrOpHandler->unlockCheckpointStateShared();
 }
 }
 
@@ -118,36 +354,25 @@ HashMap* getAggHashMapProxy(
 
 std::unique_ptr<HashMap> mergeHashMapsForCheckpoint(
     const AggregationOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
+    const AggregationSlice& aggregationSlice,
     AbstractBufferProvider* bufferProvider)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
 
     const auto& hashMapOptions = operatorHandler->getHashMapOptions();
     const auto& aggregationPhysicalFunctions = operatorHandler->getAggregationFunctions();
-    // Ensure the slice exists so we can access all thread-local hash maps.
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction},
-        hashMapOptions.keySize,
-        hashMapOptions.valueSize,
-        hashMapOptions.pageSize,
-        hashMapOptions.numberOfBuckets};
-    auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs)](
-            const SliceStart sliceStart, const SliceEnd sliceEnd)
-        { return createFunction(sliceStart, sliceEnd); });
-    auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
-    INVARIANT(
-        slices.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing, but got {}",
-        slices.size());
-    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slices[0]);
-    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
 
     auto pipelineMemoryProvider = createPipelineMemoryProvider(bufferProvider);
 
-    HashMap* referenceMap = aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
+    HashMap* referenceMap = nullptr;
+    for (uint64_t mapIdx = 0; mapIdx < aggregationSlice.getNumberOfHashMaps(); ++mapIdx)
+    {
+        referenceMap = aggregationSlice.getHashMapPtr(WorkerThreadId(mapIdx));
+        if (referenceMap != nullptr)
+        {
+            break;
+        }
+    }
     if (referenceMap == nullptr)
     {
         return nullptr;
@@ -165,9 +390,9 @@ std::unique_ptr<HashMap> mergeHashMapsForCheckpoint(
         nautilus::val<uint64_t>{hashMapOptions.entriesPerPage},
         nautilus::val<uint64_t>{hashMapOptions.entrySize});
 
-    for (uint64_t mapIdx = 0; mapIdx < aggregationSlice->getNumberOfHashMaps(); ++mapIdx)
+    for (uint64_t mapIdx = 0; mapIdx < aggregationSlice.getNumberOfHashMaps(); ++mapIdx)
     {
-        auto* sourceMap = aggregationSlice->getHashMapPtrOrCreate(WorkerThreadId(mapIdx));
+        auto* sourceMap = aggregationSlice.getHashMapPtr(WorkerThreadId(mapIdx));
         if ((sourceMap == nullptr) || sourceMap->getNumberOfTuples() == 0)
         {
             continue;
@@ -233,40 +458,71 @@ std::unique_ptr<HashMap> mergeHashMapsForCheckpoint(
     return snapshot;
 }
 
-void serializeHashMapProxy(
+void serializeAggregationCheckpoint(
     const AggregationOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
+    const std::filesystem::path& checkpointDirectory,
     [[maybe_unused]] AbstractBufferProvider* bufferProvider)
 {
-    if (!CheckpointManager::isCheckpointingEnabled())
-    {
-        return;
-    }
-    auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId);
+    std::lock_guard lock(AggregationCheckpointMutex);
     const auto serializationOptions = operatorHandler->getHashMapOptions().getSerializationOptions();
     INVARIANT(
         !serializationOptions.valuesContainPagedVectors,
         "Aggregation checkpointing expects raw value serialization but received paged vectors");
-    NES_INFO(
-        "Aggregations serialize checkpoint | entries={} keySize={} valueSize={}",
-        hashMap->getNumberOfTuples(),
-        serializationOptions.keySize,
-        serializationOptions.valueSize);
-    const auto checkpointFile = getAggregationCheckpointFile();
-    ensureCheckpointDirectory(checkpointFile);
-    std::lock_guard lock(AggregationCheckpointMutex);
-    auto combinedHashMap = mergeHashMapsForCheckpoint(operatorHandler, timestamp, workerThreadId, bufferProvider);
-    if (!combinedHashMap)
+    const auto checkpointFile = getAggregationCheckpointFile(checkpointDirectory, operatorHandler->getOperatorHandlerId());
+    std::vector<AggregationSliceCheckpointSnapshot> checkpointSnapshots;
+    checkpointSnapshots.reserve(getActiveAggregationSlices(operatorHandler).size());
+    for (const auto& aggregationSlice : getActiveAggregationSlices(operatorHandler))
     {
+        auto combinedHashMap = mergeHashMapsForCheckpoint(operatorHandler, *aggregationSlice, bufferProvider);
+        if (!combinedHashMap)
+        {
+            continue;
+        }
+        checkpointSnapshots.push_back({aggregationSlice, std::move(combinedHashMap)});
+    }
+
+    if (checkpointSnapshots.empty())
+    {
+        removeCheckpointFileIfPresent(checkpointFile);
         return;
     }
-    std::ofstream out(checkpointFile, std::ios::binary | std::ios::trunc);
+
+    ensureCheckpointDirectory(checkpointFile);
+    const auto tempCheckpointFile = getTempCheckpointFile(checkpointFile);
+    std::ofstream out(tempCheckpointFile, std::ios::binary | std::ios::trunc);
     if (!out.is_open())
     {
-        throw CheckpointError("Cannot open aggregation checkpoint {}", checkpointFile.string());
+        throw CheckpointError("Cannot open aggregation checkpoint {}", tempCheckpointFile.string());
     }
-    combinedHashMap->serialize(out, serializationOptions);
+
+    writeCheckpointHeader(out);
+    writeCheckpointValue(out, static_cast<uint64_t>(checkpointSnapshots.size()));
+    uint64_t totalEntries = 0;
+    for (const auto& checkpointSnapshot : checkpointSnapshots)
+    {
+        writeCheckpointValue(out, checkpointSnapshot.slice->getSliceStart().getRawValue());
+        writeCheckpointValue(out, checkpointSnapshot.slice->getSliceEnd().getRawValue());
+        checkpointSnapshot.hashMap->serialize(out, serializationOptions);
+        totalEntries += checkpointSnapshot.hashMap->getNumberOfTuples();
+    }
+    out.flush();
+    if (!out)
+    {
+        throw CheckpointError("Failed to flush aggregation checkpoint {}", tempCheckpointFile.string());
+    }
+    out.close();
+    if (!out)
+    {
+        throw CheckpointError("Failed to close aggregation checkpoint {}", tempCheckpointFile.string());
+    }
+    replaceCheckpointFileAtomically(tempCheckpointFile, checkpointFile);
+
+    NES_INFO(
+        "Aggregations serialize checkpoint | slices={} entries={} keySize={} valueSize={}",
+        checkpointSnapshots.size(),
+        totalEntries,
+        serializationOptions.keySize,
+        serializationOptions.valueSize);
 }
 
 HashMap* deserializeHashMapProxy(
@@ -275,61 +531,7 @@ HashMap* deserializeHashMapProxy(
     WorkerThreadId workerThreadId,
     [[maybe_unused]] AbstractBufferProvider* bufferProvider)
 {
-    if (!CheckpointManager::shouldRecoverFromCheckpoint())
-    {
-        return nullptr;
-    }
-    bool expected = false;
-    if (!operatorHandler->checkpointStateRestored.compare_exchange_strong(expected, true))
-    {
-        return nullptr;
-    }
-    auto* const hashMap = getAggHashMapProxy(operatorHandler, timestamp, workerThreadId);
-    const auto checkpointFile = getAggregationCheckpointFile();
-    if (!std::filesystem::exists(checkpointFile))
-    {
-        return hashMap;
-    }
-    ensureCheckpointDirectory(checkpointFile);
-    std::lock_guard lock(AggregationCheckpointMutex);
-    const auto contents = CheckpointManager::loadFile(checkpointFile);
-    if (!contents)
-    {
-        return hashMap;
-    }
-
-    const auto serializationOptions = operatorHandler->getHashMapOptions().getSerializationOptions();
-    INVARIANT(
-        !serializationOptions.valuesContainPagedVectors,
-        "Aggregation checkpointing expects raw value serialization but received paged vectors");
-
-    const auto& hashMapOptions = operatorHandler->getHashMapOptions();
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction},
-        hashMapOptions.keySize,
-        hashMapOptions.valueSize,
-        hashMapOptions.pageSize,
-        hashMapOptions.numberOfBuckets};
-    auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs)](
-            const SliceStart sliceStart, const SliceEnd sliceEnd)
-        { return createFunction(sliceStart, sliceEnd); });
-    auto slices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
-    INVARIANT(
-        slices.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support slicing, but got {}",
-        slices.size());
-    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slices[0]);
-    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-
-    // Restore the snapshot into the current worker's hash map only to avoid duplicating state across threads.
-    if (auto* localHashMap = aggregationSlice->getHashMapPtrOrCreate(workerThreadId))
-    {
-        std::istringstream inStream(*contents);
-        localHashMap->deserialize(inStream, serializationOptions, bufferProvider);
-    }
-    NES_INFO("Aggregations deserialized checkpoint | entries={}", hashMap->getNumberOfTuples());
-    return hashMap;
+    return getAggHashMapProxy(operatorHandler, timestamp, workerThreadId);
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -367,18 +569,39 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                 }
             })));
 
-    if (CheckpointManager::isCheckpointingEnabled() && not operatorHandler->hasCheckpointCallback())
-    {
-        const auto callbackId = fmt::format(
-            "aggregation_state_{}_{}",
-            operatorHandlerId.getRawValue(),
-            reinterpret_cast<uintptr_t>(operatorHandler));
-        operatorHandler->setCheckpointCallbackId(callbackId);
-        CheckpointManager::registerCallback(callbackId, [handler = operatorHandler]() { handler->requestCheckpoint(); });
-    }
-
-
     /// NOLINTEND(performance-unnecessary-value-param)
+
+    if (CheckpointManager::shouldRecoverFromCheckpoint())
+    {
+        auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
+            executionCtx.pipelineMemoryProvider.bufferProvider);
+        if (bufferProvider != nullptr)
+        {
+            auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+            restoreAggregationCheckpointState(operatorHandler, bufferProvider, WorkerThreadId(0));
+        }
+    }
+}
+
+void AggregationBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    WindowBuildPhysicalOperator::open(executionCtx, recordBuffer);
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    auto operatorHandler = localState->getOperatorHandler();
+    nautilus::invoke(
+        restoreAggregationCheckpointStateProxy,
+        operatorHandler,
+        executionCtx.pipelineMemoryProvider.bufferProvider,
+        executionCtx.workerThreadId);
+    nautilus::invoke(lockCheckpointStateSharedProxy, operatorHandler);
+}
+
+void AggregationBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(executionCtx.getLocalState(id));
+    const auto operatorHandler = localState->getOperatorHandler();
+    SCOPE_EXIT { nautilus::invoke(unlockCheckpointStateSharedProxy, operatorHandler); };
+    WindowBuildPhysicalOperator::close(executionCtx, recordBuffer);
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -389,13 +612,6 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 
     /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-
-    nautilus::invoke(
-        deserializeHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        ctx.pipelineMemoryProvider.bufferProvider);
 
     const auto hashMapPtr = invoke(
         getAggHashMapProxy,
@@ -440,25 +656,23 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
-    const auto checkpointRequested = invoke(
-        +[](OperatorHandler* handler) -> bool
-        {
-            if (auto* aggHandler = dynamic_cast<AggregationOperatorHandler*>(handler))
-            {
-                return aggHandler->consumeCheckpointRequest();
-            }
-            return false;
-        },
-        operatorHandler);
-    if (checkpointRequested)
+}
+
+void AggregationBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
+{
+    if (CheckpointManager::isCheckpointingEnabled())
     {
-        nautilus::invoke(
-            serializeHashMapProxy,
-            operatorHandler,
-            timestamp,
-            ctx.workerThreadId,
-            ctx.pipelineMemoryProvider.bufferProvider);
+        auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(
+            nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
+        auto* bufferProvider = nautilus::details::RawValueResolver<AbstractBufferProvider*>::getRawValue(
+            executionCtx.pipelineMemoryProvider.bufferProvider);
+        if (operatorHandler != nullptr && bufferProvider != nullptr)
+        {
+            auto checkpointStateLock = operatorHandler->acquireCheckpointStateWriteLock();
+            serializeAggregationCheckpoint(operatorHandler, operatorHandler->getCheckpointDirectory(), bufferProvider);
+        }
     }
+    WindowBuildPhysicalOperator::terminate(executionCtx);
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(

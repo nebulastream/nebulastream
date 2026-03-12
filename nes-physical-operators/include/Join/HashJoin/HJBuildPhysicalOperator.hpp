@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <filesystem>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
@@ -44,6 +45,11 @@ void serializeHashMapProxy(
     WorkerThreadId workerThreadId,
     JoinBuildSideType buildSide,
     AbstractBufferProvider* bufferProvider);
+void serializeHashJoinCheckpoint(
+    const HJOperatorHandler* operatorHandler,
+    const std::filesystem::path& checkpointDirectory,
+    JoinBuildSideType buildSide,
+    AbstractBufferProvider* bufferProvider = nullptr);
 HashMap* deserializeHashMapProxy(
     const HJOperatorHandler* operatorHandler,
     Timestamp timestamp,
@@ -64,7 +70,10 @@ public:
         const std::shared_ptr<TupleBufferRef>& bufferRef,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void terminate(ExecutionContext& executionCtx) const override;
 
 private:
     HashMapOptions hashMapOptions;

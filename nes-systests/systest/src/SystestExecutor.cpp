@@ -439,6 +439,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                         config.clusterConfig,
                         configCopy,
                         config.restartBetweenTuples.getValue(),
+                        config.restartCrashFrequency.getValue(),
                         progressTracker);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }

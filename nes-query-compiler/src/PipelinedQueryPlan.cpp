@@ -19,6 +19,7 @@
 #include <ostream>
 #include <ranges>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
@@ -26,6 +27,42 @@
 
 namespace NES
 {
+namespace
+{
+void registerStatefulHandlersRecursively(
+    const std::shared_ptr<Pipeline>& pipeline,
+    const ExecutionMode executionMode,
+    std::unordered_set<PipelineId::Underlying>& visitedPipelineIds,
+    std::unordered_set<OperatorHandlerId>& registeredStatefulHandlerIds,
+    std::vector<std::shared_ptr<OperatorHandler>>& statefulHandlers)
+{
+    if (!pipeline)
+    {
+        return;
+    }
+
+    const auto pipelineId = pipeline->getPipelineId().getRawValue();
+    if (!visitedPipelineIds.insert(pipelineId).second)
+    {
+        return;
+    }
+
+    pipeline->setExecutionMode(executionMode);
+    for (const auto& [handlerId, handler] : pipeline->getStatefulHandlers())
+    {
+        if (handler && registeredStatefulHandlerIds.insert(handlerId).second)
+        {
+            statefulHandlers.push_back(handler);
+        }
+    }
+
+    for (const auto& successor : pipeline->getSuccessors())
+    {
+        registerStatefulHandlersRecursively(
+            successor, executionMode, visitedPipelineIds, registeredStatefulHandlerIds, statefulHandlers);
+    }
+}
+}
 
 PipelinedQueryPlan::PipelinedQueryPlan(QueryId id, ExecutionMode executionMode) : queryId(id), executionMode(executionMode) { };
 
@@ -78,14 +115,9 @@ const std::vector<std::shared_ptr<Pipeline>>& PipelinedQueryPlan::getPipelines()
 
 void PipelinedQueryPlan::addPipeline(const std::shared_ptr<Pipeline>& pipeline)
 {
-    pipeline->setExecutionMode(executionMode);
-    for (const auto& [handlerId, handler] : pipeline->getStatefulHandlers())
-    {
-        if (handler && registeredStatefulHandlerIds.insert(handlerId).second)
-        {
-            statefulHandlers.push_back(handler);
-        }
-    }
+    std::unordered_set<PipelineId::Underlying> visitedPipelineIds;
+    registerStatefulHandlersRecursively(
+        pipeline, executionMode, visitedPipelineIds, registeredStatefulHandlerIds, statefulHandlers);
     pipelines.push_back(pipeline);
 }
 

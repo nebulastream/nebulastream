@@ -222,6 +222,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         outputOriginId,
         std::move(sliceAndWindowStore),
         conf.maxNumberOfBuckets,
+        handlerId,
         hashMapOptions,
         aggregationPhysicalFunctions);
     auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);

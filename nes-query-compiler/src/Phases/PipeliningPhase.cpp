@@ -345,12 +345,13 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
         rootPipeline->setReplayStatisticsFingerprint(rootWrapper->getReplayStatisticsFingerprint());
         const auto opId = rootWrapper->getPhysicalOperator().getId();
         pipelineMap.emplace(opId, rootPipeline);
-        pipelinedPlan->addPipeline(rootPipeline);
 
         for (const auto& child : rootWrapper->getChildren())
         {
             buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
         }
+
+        pipelinedPlan->addPipeline(rootPipeline);
     }
 
     NES_DEBUG("Constructed pipeline plan with {} root pipelines.\n{}", pipelinedPlan->getPipelines().size(), *pipelinedPlan);

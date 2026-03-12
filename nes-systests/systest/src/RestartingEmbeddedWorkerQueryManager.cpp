@@ -25,6 +25,7 @@
 #include <filesystem>
 #include <memory>
 #include <netinet/in.h>
+#include <string>
 #include <string_view>
 #include <sys/socket.h>
 #include <sys/wait.h>
@@ -60,11 +61,14 @@ LocalQueryStatus makeFailedStatus(const QueryId queryId, const Exception& except
 }
 }
 
-RestartingEmbeddedWorkerQueryManager::RestartingEmbeddedWorkerQueryManager(SingleNodeWorkerConfiguration configuration)
+RestartingEmbeddedWorkerQueryManager::RestartingEmbeddedWorkerQueryManager(
+    SingleNodeWorkerConfiguration configuration, const uint64_t crashEveryNTuples)
     : configuration(std::move(configuration))
+    , crashEveryNTuples(crashEveryNTuples)
     , checkpointDirectory(this->configuration.workerConfiguration.checkpointConfiguration.checkpointDirectory.getValue())
     , workerBinaryPath(resolveWorkerBinaryPath())
 {
+    PRECONDITION(this->crashEveryNTuples > 0, "restart-mode crash frequency must be greater than zero");
 }
 
 RestartingEmbeddedWorkerQueryManager::~RestartingEmbeddedWorkerQueryManager()
@@ -95,7 +99,6 @@ std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::register
     }
 
     const auto syntheticId = QueryId(nextSyntheticQueryId++);
-    nextExpectedRuntimeQueryId = std::max(nextExpectedRuntimeQueryId, runtimeQueryId->getRawValue() + 1);
     queriesBySyntheticId.emplace(
         syntheticId,
         ManagedQuery{
@@ -105,7 +108,7 @@ std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::register
             .started = false,
             .terminalStatus = std::nullopt});
     syntheticIdByBundleQueryId.emplace(*runtimeQueryId, syntheticId);
-    armPending = hasActiveQueriesLocked();
+    updateWorkerArmingLocked();
     return syntheticId;
 }
 
@@ -136,7 +139,7 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::start(const
             return std::unexpected(started.error());
         }
         (*managedQuery)->started = true;
-        armPending = hasActiveQueriesLocked();
+        updateWorkerArmingLocked();
         return {};
     }
     catch (...)
@@ -178,7 +181,7 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::stop(const 
         {
             return std::unexpected(stopped.error());
         }
-        armPending = hasActiveQueriesLocked();
+        updateWorkerArmingLocked();
         return {};
     }
     catch (...)
@@ -219,7 +222,7 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::unregister(
         removeBundleDirectoriesLocked(query.bundleQueryId);
         syntheticIdByBundleQueryId.erase(query.bundleQueryId);
         queriesBySyntheticId.erase(query.syntheticId);
-        armPending = hasActiveQueriesLocked();
+        updateWorkerArmingLocked();
         return {};
     }
     catch (...)
@@ -336,7 +339,6 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::ensureWorke
     }
 
     const auto recoverableBundles = listCheckpointBundlesLocked();
-    const auto firstRecoveredRuntimeId = INITIAL<QueryId>.getRawValue();
     for (auto& [_, query] : queriesBySyntheticId)
     {
         if (query.started && !query.terminalStatus)
@@ -350,10 +352,8 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::ensureWorke
         return spawned;
     }
 
-    auto recoveredRuntimeId = firstRecoveredRuntimeId;
     for (const auto& [bundleName, bundleQueryId] : recoverableBundles)
     {
-        const auto assignedRuntimeId = QueryId(recoveredRuntimeId++);
         const auto syntheticIdIt = syntheticIdByBundleQueryId.find(bundleQueryId);
         if (syntheticIdIt == syntheticIdByBundleQueryId.end())
         {
@@ -370,10 +370,9 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::ensureWorke
             "Mapped recovered checkpoint bundle {} from stable bundle query {} to runtime query {}",
             bundleName,
             bundleQueryId,
-            assignedRuntimeId);
-        managedQueryIt->second.currentRuntimeId = assignedRuntimeId;
+            bundleQueryId);
+        managedQueryIt->second.currentRuntimeId = bundleQueryId;
     }
-    nextExpectedRuntimeQueryId = recoveredRuntimeId;
 
     for (auto& [syntheticId, query] : queriesBySyntheticId)
     {
@@ -387,7 +386,7 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::ensureWorke
         }
     }
 
-    armPending = hasActiveQueriesLocked();
+    updateWorkerArmingLocked();
     return {};
 }
 
@@ -410,7 +409,8 @@ std::expected<void, Exception> RestartingEmbeddedWorkerQueryManager::spawnWorker
     if (pid == 0)
     {
         ::setenv(SystestTupleCrashControl::EnabledEnvironmentVariable, "1", 1);
-        ::setenv(SystestTupleCrashControl::PauseOnStartupEnvironmentVariable, recoverFromCheckpoint ? "1" : "0", 1);
+        const auto crashFrequency = std::to_string(crashEveryNTuples);
+        ::setenv(SystestTupleCrashControl::CrashFrequencyEnvironmentVariable, crashFrequency.c_str(), 1);
 
         std::vector<char*> argv;
         argv.reserve(args.size() + 1);
@@ -492,6 +492,12 @@ void RestartingEmbeddedWorkerQueryManager::maybeArmWorkerLocked() const
         return;
     }
     setWorkerArmedLocked(true);
+}
+
+void RestartingEmbeddedWorkerQueryManager::updateWorkerArmingLocked() const
+{
+    armPending = hasActiveQueriesLocked();
+    maybeArmWorkerLocked();
 }
 
 bool RestartingEmbeddedWorkerQueryManager::hasActiveQueriesLocked() const
@@ -637,7 +643,7 @@ void RestartingEmbeddedWorkerQueryManager::finalizeTerminalQueryLocked(ManagedQu
     }
     query.currentRuntimeId = INVALID_QUERY_ID;
     removeBundleDirectoriesLocked(query.bundleQueryId);
-    armPending = hasActiveQueriesLocked();
+    updateWorkerArmingLocked();
 }
 
 std::expected<RestartingEmbeddedWorkerQueryManager::ManagedQuery*, Exception>

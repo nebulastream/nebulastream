@@ -545,6 +545,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     const bool restartBetweenTuples,
+    const uint64_t restartCrashFrequency,
     SystestProgressTracker& progressTracker)
 {
     auto catalog = std::make_shared<WorkerCatalog>();
@@ -555,7 +556,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 
     if (restartBetweenTuples)
     {
-        QuerySubmitter submitter(std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration));
+        QuerySubmitter submitter(std::make_unique<RestartingEmbeddedWorkerQueryManager>(configuration, restartCrashFrequency));
         return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
     }
 

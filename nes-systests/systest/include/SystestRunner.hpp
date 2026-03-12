@@ -73,6 +73,7 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SystestClusterConfiguration& clusterConfig,
     const SingleNodeWorkerConfiguration& configuration,
     bool restartBetweenTuples,
+    uint64_t restartCrashFrequency,
     SystestProgressTracker& progressTracker);
 
 /// Run queries remote on the single-node-worker specified by the URI

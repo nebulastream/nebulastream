@@ -49,6 +49,8 @@ SystestTupleFileSource::SystestTupleFileSource(const SourceDescriptor& sourceDes
     , tupleDelimiter(sourceDescriptor.getParserConfig().tupleDelimiter)
 {
     SystestTupleCrashControl::initializeFromEnvironment();
+    crashEveryNTuples = SystestTupleCrashControl::getCrashFrequency();
+    tuplesUntilCrash = crashEveryNTuples;
     if (tupleDelimiter.empty())
     {
         throw InvalidConfigParameter("SystestTupleFile source requires a non-empty tuple delimiter");
@@ -79,6 +81,7 @@ void SystestTupleFileSource::open(std::shared_ptr<AbstractBufferProvider>)
     }
 
     crashBeforeNextRead = false;
+    tuplesUntilCrash = crashEveryNTuples;
 }
 
 void SystestTupleFileSource::close()
@@ -107,7 +110,18 @@ Source::FillTupleBufferResult SystestTupleFileSource::fillTupleBuffer(TupleBuffe
         return FillTupleBufferResult::eos();
     }
 
-    crashBeforeNextRead = true;
+    if (!crashBeforeNextRead)
+    {
+        if (tuplesUntilCrash > 1)
+        {
+            --tuplesUntilCrash;
+        }
+        else
+        {
+            crashBeforeNextRead = true;
+            tuplesUntilCrash = crashEveryNTuples;
+        }
+    }
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
