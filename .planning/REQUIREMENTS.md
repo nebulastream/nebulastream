@@ -10,18 +10,18 @@
 - [x] **INFRA-01**: Cherry-pick TestTupleBuffer abstraction (40e18d4a36) for schema-aware buffer access in tests
 - [ ] **INFRA-02**: Create tiny identity .vmfb test model (shape [1,2] float32 in→out, compiled with iree-base-compiler 3.10.0)
 - [x] **INFRA-03**: Fix IREERuntimeWrapper destructor to release IREE handles (instance, session, device)
-- [ ] **INFRA-04**: CMake registration for new test executables via add_nes_unit_test / add_nes_physical_operator_test
+- [x] **INFRA-04**: CMake registration for new test executables via add_nes_unit_test / add_nes_physical_operator_test
 
 ### Logical Operator
 
-- [ ] **LOGI-01**: Test InferModelLogicalOperator construction with valid Model
-- [ ] **LOGI-02**: Test explain() returns meaningful string describing the operator
-- [ ] **LOGI-03**: Test getChildren/withChildren round-trip preserves children
-- [ ] **LOGI-04**: Test withTraitSet/getTraitSet correctly propagates traits
-- [ ] **LOGI-05**: Test operator== equality semantics (same model, same children → equal)
-- [ ] **LOGI-06**: Test getName returns correct operator identifier
-- [ ] **LOGI-07**: Test getInputSchemas/getOutputSchema propagation
-- [ ] **LOGI-08**: Test InferModelNameLogicalOperator (name variant construction and explain)
+- [x] **LOGI-01**: Test InferModelLogicalOperator construction with valid Model
+- [x] **LOGI-02**: Test explain() returns meaningful string describing the operator
+- [x] **LOGI-03**: Test getChildren/withChildren round-trip preserves children
+- [x] **LOGI-04**: Test withTraitSet/getTraitSet correctly propagates traits
+- [x] **LOGI-05**: Test operator== equality semantics (same model, same children → equal)
+- [x] **LOGI-06**: Test getName returns correct operator identifier
+- [x] **LOGI-07**: Test getInputSchemas/getOutputSchema propagation
+- [x] **LOGI-08**: Test InferModelNameLogicalOperator (name variant construction and explain)
 
 ### Schema Inference
 
@@ -66,15 +66,15 @@
 |-------------|-------|--------|
 | INFRA-01 | Phase 1 | Complete |
 | INFRA-03 | Phase 1 | Complete |
-| INFRA-04 | Phase 1 | Pending |
-| LOGI-01 | Phase 1 | Pending |
-| LOGI-02 | Phase 1 | Pending |
-| LOGI-03 | Phase 1 | Pending |
-| LOGI-04 | Phase 1 | Pending |
-| LOGI-05 | Phase 1 | Pending |
-| LOGI-06 | Phase 1 | Pending |
-| LOGI-07 | Phase 1 | Pending |
-| LOGI-08 | Phase 1 | Pending |
+| INFRA-04 | Phase 1 | Complete |
+| LOGI-01 | Phase 1 | Complete |
+| LOGI-02 | Phase 1 | Complete |
+| LOGI-03 | Phase 1 | Complete |
+| LOGI-04 | Phase 1 | Complete |
+| LOGI-05 | Phase 1 | Complete |
+| LOGI-06 | Phase 1 | Complete |
+| LOGI-07 | Phase 1 | Complete |
+| LOGI-08 | Phase 1 | Complete |
 | SCHEMA-01 | Phase 1 | Pending |
 | SCHEMA-02 | Phase 1 | Pending |
 | SCHEMA-03 | Phase 1 | Pending |
