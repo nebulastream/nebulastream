@@ -27,7 +27,7 @@ Decimal phases appear between their surrounding integers in numeric order.
   2. Every public method on `InferModelLogicalOperator` (getName, explain, getChildren, withChildren, getTraitSet, withTraitSet, operator==, getInputSchemas, getOutputSchema) has at least one test exercising its contract
   3. `withInferredSchema` happy path tests assert output fields by name and index (not just count), confirming positional correctness
   4. All schema inference error paths (empty schema, missing field, type mismatch, name collision) produce the expected exception or error code rather than crashing
-**Plans:** 3 plans
+**Plans:** 1/3 plans executed
 Plans:
 - [ ] 01-01-PLAN.md — Cherry-pick TestTupleBuffer and fix IREERuntimeWrapper destructor
 - [ ] 01-02-PLAN.md — Create InferModel operator implementations and write LOGI unit tests
@@ -61,6 +61,6 @@ Phases execute in numeric order: 1 -> 2 -> 3
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Infrastructure and Logical Tests | 0/3 | Planned | - |
+| 1. Infrastructure and Logical Tests | 1/3 | In Progress|  |
 | 2. Test Model Artifact | 0/? | Not started | - |
 | 3. Physical Operator Tests | 0/? | Not started | - |
