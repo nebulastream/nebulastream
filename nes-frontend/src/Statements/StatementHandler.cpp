@@ -44,6 +44,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <ReplayCheckpointPlanning.hpp>
 #include <Replay/ReplayStorage.hpp>
 #include <Replay/TimeTravelReadResolver.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -217,6 +218,7 @@ struct ReplayBoundaryEdgeHash
 
 struct PreparedReplayRecording
 {
+    Host host{Host::INVALID};
     RecordingId recordingId{RecordingId::INVALID};
     std::string filePath;
     std::vector<uint64_t> segmentIds;
@@ -230,6 +232,7 @@ struct ReplaySourceReplacement
     std::vector<uint64_t> segmentIds;
     uint64_t intervalStartMs = 0;
     uint64_t intervalEndMs = 0;
+    std::optional<uint64_t> emitStartMs = std::nullopt;
 };
 
 struct PreparedReplayExecutionPlan
@@ -296,6 +299,19 @@ LogicalOperator buildReplaySourceOperator(
         {"scan_start_ms", std::to_string(replacement.intervalStartMs)},
         {"scan_end_ms", std::to_string(replacement.intervalEndMs)},
         {"replay_mode", "interval"}};
+    if (const auto assigner = replacedChild.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>();
+        assigner.has_value() && replacement.emitStartMs.has_value())
+    {
+        if (const auto eventTimeField = assigner->get().onField.tryGetAs<FieldAccessLogicalFunction>(); eventTimeField.has_value())
+        {
+            sourceConfig.emplace("event_time_field", eventTimeField->get().getFieldName());
+            sourceConfig.emplace(
+                "event_time_unit_ms_multiplier",
+                std::to_string(assigner->get().unit.getMillisecondsConversionMultiplier()));
+            sourceConfig.emplace("emit_start_ms", std::to_string(*replacement.emitStartMs));
+            sourceConfig.emplace("emit_end_ms", std::to_string(replacement.intervalEndMs));
+        }
+    }
     std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
     const auto descriptor = sourceCatalog->getInlineSource("BinaryStore", replaySourceSchema, std::move(parserConfig), std::move(sourceConfig));
     if (!descriptor.has_value())
@@ -305,10 +321,31 @@ LogicalOperator buildReplaySourceOperator(
     auto replaySource = SourceDescriptorLogicalOperator(*descriptor).withTraitSet(replacedChild.getTraitSet());
     if (const auto assigner = replacedChild.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(); assigner.has_value())
     {
-        return EventTimeWatermarkAssignerLogicalOperator(assigner->get().onField, assigner->get().unit)
+        auto replaySourceWithEventTime = EventTimeWatermarkAssignerLogicalOperator(assigner->get().onField, assigner->get().unit)
             .withTraitSet(replacedChild.getTraitSet())
             .withInferredSchema({replaySourceSchema})
             .withChildren({replaySource});
+        if (replacement.emitStartMs.has_value())
+        {
+            const auto timeUnitMultiplier = assigner->get().unit.getMillisecondsConversionMultiplier();
+            const auto intervalStartInTimeUnits
+                = *replacement.emitStartMs / timeUnitMultiplier + ((*replacement.emitStartMs % timeUnitMultiplier) == 0 ? 0 : 1);
+            const auto intervalEndInTimeUnits = replacement.intervalEndMs / timeUnitMultiplier;
+            const auto timestampExpression = assigner->get().onField;
+            const auto timestampType = timestampExpression.getDataType();
+            auto predicate = LogicalFunction{AndLogicalFunction(
+                LogicalFunction{GreaterEqualsLogicalFunction(
+                    timestampExpression,
+                    LogicalFunction{ConstantValueLogicalFunction(timestampType, std::to_string(intervalStartInTimeUnits))})},
+                LogicalFunction{LessEqualsLogicalFunction(
+                    timestampExpression,
+                    LogicalFunction{ConstantValueLogicalFunction(timestampType, std::to_string(intervalEndInTimeUnits))})})};
+            return SelectionLogicalOperator(std::move(predicate))
+                .withTraitSet(replacedChild.getTraitSet())
+                .withInferredSchema({replaySourceWithEventTime.getOutputSchema()})
+                .withChildren({replaySourceWithEventTime});
+        }
+        return replaySourceWithEventTime;
     }
     if (replacedChild.tryGetAs<IngestionTimeWatermarkAssignerLogicalOperator>().has_value())
     {
@@ -559,7 +596,10 @@ void appendPinnedSegment(std::vector<ReplayPinnedSegment>& pinnedSegments, const
 }
 
 std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecutionPlan(
-    const SharedPtr<const SourceCatalog>& sourceCatalog, const ReplayExecution& execution, const ReplayPlan& replayPlan)
+    const SharedPtr<QueryManager>& queryManager,
+    const SharedPtr<const SourceCatalog>& sourceCatalog,
+    const ReplayExecution& execution,
+    const ReplayPlan& replayPlan)
 {
     const auto warmupRequirements = buildReplayBoundaryWarmupRequirements(replayPlan.queryPlanRewrite.basePlan);
     std::unordered_map<std::string, PreparedReplayRecording> pinnedRecordingsById;
@@ -576,6 +616,7 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
 
         const auto recordingKey = replayBoundary.selection.recordingId.getRawValue();
         auto& preparedRecording = pinnedRecordingsById[recordingKey];
+        preparedRecording.host = replayBoundary.selection.node;
         preparedRecording.recordingId = replayBoundary.selection.recordingId;
         preparedRecording.filePath = replayBoundary.selection.filePath;
         for (const auto& materializationEdge : replayBoundary.materializationEdges)
@@ -586,8 +627,15 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
                 .segmentIds = std::nullopt,
                 .scanStartMs = scanStartMs,
                 .scanEndMs = execution.intervalEndMs};
-            const auto selectedSegments = Replay::selectBinaryStoreSegments(replayBoundary.selection.filePath, selection);
-            if (selectedSegments.empty())
+            const auto selectedSegmentsResult
+                = queryManager->selectReplaySegments(replayBoundary.selection.node, replayBoundary.selection.filePath, selection);
+            if (!selectedSegmentsResult)
+            {
+                return std::unexpected(selectedSegmentsResult.error());
+            }
+
+            const auto& selectedSegmentIds = *selectedSegmentsResult;
+            if (selectedSegmentIds.empty())
             {
                 return std::unexpected(PlacementFailure(
                     "Replay execution could not select retained segments from recording {} for interval [{} ms, {} ms]",
@@ -596,8 +644,6 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
                     execution.intervalEndMs));
             }
 
-            const auto selectedSegmentIds = selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
-                | std::ranges::to<std::vector>();
             for (const auto segmentId : selectedSegmentIds)
             {
                 if (!std::ranges::contains(preparedRecording.segmentIds, segmentId))
@@ -613,7 +659,8 @@ std::expected<PreparedReplayExecutionPlan, Exception> buildPreparedReplayExecuti
                     .filePath = replayBoundary.selection.filePath,
                     .segmentIds = std::move(selectedSegmentIds),
                     .intervalStartMs = scanStartMs,
-                    .intervalEndMs = execution.intervalEndMs});
+                    .intervalEndMs = execution.intervalEndMs,
+                    .emitStartMs = requiresWarmup ? std::nullopt : std::optional<uint64_t>(execution.intervalStartMs)});
         }
     }
 
@@ -674,6 +721,103 @@ std::expected<void, Exception> waitForReplayQueryCompletion(const SharedPtr<Quer
     }
 }
 
+std::expected<bool, Exception> waitForReplayQueryEmitPhase(const SharedPtr<QueryManager>& queryManager, const DistributedQueryId& queryId)
+{
+    constexpr auto replayStatusPollInterval = std::chrono::milliseconds(10);
+    const auto replayQuery = queryManager->getQuery(queryId);
+    if (!replayQuery)
+    {
+        return std::unexpected(replayQuery.error());
+    }
+
+    while (true)
+    {
+        const auto statusResult = queryManager->status(queryId);
+        if (!statusResult)
+        {
+            return std::unexpected(QueryStatusFailed(
+                "Could not observe replay query {} while waiting for emit phase: {}",
+                queryId,
+                joinExceptionMessages(statusResult.error())));
+        }
+
+        switch (statusResult->getGlobalQueryState())
+        {
+            case DistributedQueryState::Stopped:
+                return false;
+            case DistributedQueryState::Failed:
+                if (const auto exception = statusResult->coalesceException(); exception.has_value())
+                {
+                    return std::unexpected(QueryStatusFailed(
+                        "Replay query {} failed before entering emit phase: {}",
+                        queryId,
+                        exception->what()));
+                }
+                return std::unexpected(QueryStatusFailed("Replay query {} failed before entering emit phase", queryId));
+            case DistributedQueryState::Unreachable:
+                if (const auto exception = statusResult->coalesceException(); exception.has_value())
+                {
+                    return std::unexpected(QueryStatusFailed(
+                        "Replay query {} became unreachable before entering emit phase: {}",
+                        queryId,
+                        exception->what()));
+                }
+                return std::unexpected(QueryStatusFailed("Replay query {} became unreachable before entering emit phase", queryId));
+            case DistributedQueryState::Registered:
+            case DistributedQueryState::Running:
+            case DistributedQueryState::PartiallyStopped:
+                break;
+        }
+
+        const auto workerStatusResult = queryManager->workerStatus(std::chrono::system_clock::time_point(std::chrono::milliseconds(0)));
+        if (!workerStatusResult)
+        {
+            return std::unexpected(QueryStatusFailed(
+                "Could not observe worker replay status for query {}: {}",
+                queryId,
+                workerStatusResult.error().what()));
+        }
+
+        auto allWorkersEmitting = true;
+        for (const auto& [host, localQueryId] : replayQuery->iterate())
+        {
+            if (!workerStatusResult->workerStatus.contains(host))
+            {
+                return std::unexpected(QueryStatusFailed(
+                    "Replay query {} references worker {} that did not return worker status",
+                    queryId,
+                    host));
+            }
+
+            const auto& localWorkerStatus = workerStatusResult->workerStatus.at(host);
+            if (!localWorkerStatus)
+            {
+                return std::unexpected(QueryStatusFailed(
+                    "Could not observe replay status for query {} on worker {}: {}",
+                    queryId,
+                    host,
+                    localWorkerStatus.error().what()));
+            }
+
+            const auto replayQueryStatus = std::ranges::find(
+                localWorkerStatus->replayMetrics.replayQueryStatuses, localQueryId, &ReplayQueryStatus::queryId);
+            if (replayQueryStatus == localWorkerStatus->replayMetrics.replayQueryStatuses.end()
+                || replayQueryStatus->phase != ReplayQueryPhase::Emitting)
+            {
+                allWorkersEmitting = false;
+                break;
+            }
+        }
+
+        if (allWorkersEmitting)
+        {
+            return true;
+        }
+
+        std::this_thread::sleep_for(replayStatusPollInterval);
+    }
+}
+
 std::expected<void, Exception> cleanupReplayExecutionResources(
     SharedPtr<QueryManager>& queryManager,
     const std::optional<DistributedQueryId>& internalQueryId,
@@ -712,16 +856,10 @@ std::expected<void, Exception> cleanupReplayExecutionResources(
 
     for (const auto& pinnedRecording : pinnedRecordings)
     {
-        try
+        const auto unpinResult = queryManager->unpinReplaySegments(pinnedRecording.host, pinnedRecording.filePath, pinnedRecording.segmentIds);
+        if (!unpinResult && !firstException.has_value())
         {
-            Replay::unpinBinaryStoreSegments(pinnedRecording.filePath, pinnedRecording.segmentIds);
-        }
-        catch (const Exception& exception)
-        {
-            if (!firstException.has_value())
-            {
-                firstException = exception;
-            }
+            firstException = unpinResult.error();
         }
     }
 
@@ -1037,16 +1175,25 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
             return failReplayExecution(replayPlan.error());
         }
 
-        const auto preparedReplayPlan = buildPreparedReplayExecutionPlan(sourceCatalog, execution, *replayPlan);
+        const auto preparedReplayPlan = buildPreparedReplayExecutionPlan(queryManager, sourceCatalog, execution, *replayPlan);
         if (!preparedReplayPlan)
         {
             return failReplayExecution(preparedReplayPlan.error());
         }
 
         std::optional<DistributedLogicalPlan> replayDistributedPlan;
+        std::optional<ReplayCheckpointFingerprintsByHost> replayCheckpointFingerprintsByHost;
         try
         {
             replayDistributedPlan = optimizer->decomposePlacedPlan(preparedReplayPlan->replayPlan);
+            const auto baseReplayDistributedPlan = optimizer->decomposePlacedPlan(replayPlan->queryPlanRewrite.basePlan);
+            const auto replayCheckpointFingerprints
+                = computeReplayCheckpointFingerprints(baseReplayDistributedPlan, replayPlan->replayCheckpointBoundaries);
+            if (!replayCheckpointFingerprints)
+            {
+                return failReplayExecution(replayCheckpointFingerprints.error());
+            }
+            replayCheckpointFingerprintsByHost = *replayCheckpointFingerprints;
         }
         catch (const Exception& exception)
         {
@@ -1057,10 +1204,16 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
         {
             pinnedRecordings = preparedReplayPlan->pinnedRecordings;
             execution.pinnedSegments.clear();
-            for (const auto& pinnedRecording : pinnedRecordings)
+            for (auto& pinnedRecording : pinnedRecordings)
             {
-                const auto pinnedSegmentIds = Replay::pinBinaryStoreSegments(pinnedRecording.filePath, pinnedRecording.segmentIds);
-                for (const auto segmentId : pinnedSegmentIds)
+                const auto pinnedSegmentIds
+                    = queryManager->pinReplaySegments(pinnedRecording.host, pinnedRecording.filePath, pinnedRecording.segmentIds);
+                if (!pinnedSegmentIds)
+                {
+                    throw pinnedSegmentIds.error();
+                }
+                pinnedRecording.segmentIds = *pinnedSegmentIds;
+                for (const auto segmentId : *pinnedSegmentIds)
                 {
                     appendPinnedSegment(execution.pinnedSegments, pinnedRecording.recordingId, segmentId);
                 }
@@ -1087,6 +1240,7 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
             return failReplayExecution(exception);
         }
 
+        resolveTimeTravelReadSources(plan, sourceCatalog);
         if (auto persisted = persistExecution(); !persisted)
         {
             return std::unexpected(persisted.error());
@@ -1098,7 +1252,9 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
             QueryRegistrationOptions{
                 .internal = true,
                 .includeInReplayPlanning = false,
-                .replayCheckpoint = execution.selectedCheckpoint});
+                .replayCheckpoints = execution.selectedCheckpoints,
+                .replayRestoreFingerprintsByHost = replayCheckpointFingerprintsByHost.value_or(ReplayCheckpointFingerprintsByHost{}),
+                .replayRuntimeControl = ReplayQueryRuntimeControl{.emitStartWatermarkMs = execution.intervalStartMs}});
         if (!registerResult)
         {
             execution.state = ReplayExecutionState::CleaningUp;
@@ -1118,6 +1274,7 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
                 return std::unexpected(cleanupResult.error());
             }
             return failReplayExecution(registerResult.error());
+        resolveTimeTravelReadSources(plan, sourceCatalog);
         }
 
         internalQueryId = *registerResult;
@@ -1159,10 +1316,35 @@ std::expected<ReplayStatementResult, Exception> QueryStatementHandler::operator(
         }
         internalQueryStarted = true;
 
-        execution.state = ReplayExecutionState::Emitting;
-        if (auto persisted = persistExecution(); !persisted)
+        const auto emitPhaseResult = waitForReplayQueryEmitPhase(queryManager, *internalQueryId);
+        if (!emitPhaseResult)
         {
-            return std::unexpected(persisted.error());
+            execution.state = ReplayExecutionState::CleaningUp;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
+            const auto cleanupResult = cleanupReplayExecutionResources(queryManager, internalQueryId, true, pinnedRecordings);
+            if (!cleanupResult)
+            {
+                execution.failureReason = std::string(cleanupResult.error().what());
+                execution.state = ReplayExecutionState::Failed;
+                if (auto persisted = persistExecution(); !persisted)
+                {
+                    return std::unexpected(persisted.error());
+                }
+                return std::unexpected(cleanupResult.error());
+            }
+            return failReplayExecution(emitPhaseResult.error());
+        }
+
+        if (*emitPhaseResult)
+        {
+            execution.state = ReplayExecutionState::Emitting;
+            if (auto persisted = persistExecution(); !persisted)
+            {
+                return std::unexpected(persisted.error());
+            }
         }
 
         if (const auto waitResult = waitForReplayQueryCompletion(queryManager, *internalQueryId); !waitResult)
@@ -1240,7 +1422,6 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
     CPPTRACE_TRY
     {
         auto plan = statement.plan;
-        resolveTimeTravelReadSources(plan, sourceCatalog);
         queryManager->refreshWorkerMetrics();
         std::stringstream explainMessage;
         fmt::println(explainMessage, "Query:\n{}", plan.getOriginalSql());
@@ -1274,7 +1455,6 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
     CPPTRACE_TRY
     {
         auto plan = statement.plan;
-        resolveTimeTravelReadSources(plan, sourceCatalog);
         queryManager->refreshWorkerMetrics();
         auto distributedPlan = optimizer->optimize(plan, statement.replaySpecification, queryManager->getRecordingCatalog());
         const auto fullSelectionResult = distributedPlan.getRecordingSelectionResult();

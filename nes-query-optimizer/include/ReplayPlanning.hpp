@@ -32,9 +32,11 @@ class WorkerCatalog;
 struct ReplayPlan
 {
     QueryRecordingPlanRewrite queryPlanRewrite;
+    std::vector<ReplayCheckpointBoundary> replayCheckpointBoundaries;
+    std::vector<ReplayCheckpointRequirement> replayCheckpointRequirements;
     std::vector<QueryRecordingPlanInsertion> selectedReplayBoundaries;
     std::vector<RecordingSelectionExplanation> explanations;
-    std::optional<ReplayCheckpointReference> selectedCheckpoint;
+    std::vector<ReplayCheckpointReference> selectedCheckpoints;
     uint64_t warmupStartMs = 0;
     std::vector<RecordingId> selectedRecordingIds;
     double objectiveCost = 0.0;

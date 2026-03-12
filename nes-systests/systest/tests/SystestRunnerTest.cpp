@@ -116,12 +116,23 @@ public:
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
 {
 public:
-    MOCK_METHOD((std::expected<QueryId, Exception>), registerQuery, (LogicalPlan), (override));
+    MOCK_METHOD(
+        (std::expected<QueryId, Exception>),
+        registerQuery,
+        (LogicalPlan, std::optional<ReplayCheckpointRegistration>, std::optional<ReplayQueryRuntimeControl>),
+        (override));
     MOCK_METHOD((std::expected<void, Exception>), start, (QueryId), (override));
     MOCK_METHOD((std::expected<void, Exception>), stop, (QueryId), (override));
     MOCK_METHOD((std::expected<void, Exception>), unregister, (QueryId), (override));
     MOCK_METHOD((std::expected<LocalQueryStatus, Exception>), status, (QueryId), (const, override));
     MOCK_METHOD((std::expected<WorkerStatus, Exception>), workerStatus, (std::chrono::system_clock::time_point), (const, override));
+    MOCK_METHOD(
+        (std::expected<std::vector<uint64_t>, Exception>),
+        selectReplaySegments,
+        (const std::string&, const Replay::BinaryStoreReplaySelection&),
+        (const, override));
+    MOCK_METHOD((std::expected<std::vector<uint64_t>, Exception>), pinReplaySegments, (const std::string&, const std::vector<uint64_t>&), (override));
+    MOCK_METHOD((std::expected<void, Exception>), unpinReplaySegments, (const std::string&, const std::vector<uint64_t>&), (override));
 };
 
 namespace
@@ -167,7 +178,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     /// Runtime fails with unexpected error code 10000
     const auto runtimeErr = std::make_shared<Exception>(Exception{"runtime boom", 10000});
     auto [submitter, mockBackend] = createQuerySubmitter();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Registered, nullptr)))
@@ -199,7 +211,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const auto id = randomQueryId();
 
     auto [submitter, mockBackend] = createQuerySubmitter();
-    EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
+    EXPECT_CALL(*mockBackend, registerQuery(::testing::_, ::testing::_, ::testing::_))
+        .WillOnce(testing::Return(std::expected<QueryId, Exception>{id}));
     EXPECT_CALL(*mockBackend, start(id));
     EXPECT_CALL(*mockBackend, status(id))
         .WillOnce(testing::Return(makeSummary(id, QueryState::Registered, nullptr)))

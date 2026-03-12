@@ -31,7 +31,6 @@
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <typeinfo>
 #include <unordered_map>
 #include <utility>
 #include <vector>
@@ -40,25 +39,21 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
-#include <Aggregation/AggregationOperatorHandler.hpp>
-#include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Replay/ReplayStorage.hpp>
 #include <Runtime/CheckpointManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Serialization/OperatorSerializationUtil.hpp>
+#include <Serialization/QueryPlanFingerprintUtil.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/QueryIdEncoding.hpp>
 #include <Util/UUID.hpp>
-#include <google/protobuf/io/coded_stream.h>
-#include <google/protobuf/io/zero_copy_stream_impl_lite.h>
 #include <fmt/format.h>
 #include <cpptrace/from_current.hpp>
 #include <CompositeStatisticListener.hpp>
@@ -108,9 +103,11 @@ struct CheckpointCacheManifest
     QueryCompilation::CompilationCacheMode compilationCacheMode = QueryCompilation::CompilationCacheMode::Preferred;
     std::string cacheDirectory = std::string(BundleCacheDirectoryName);
     std::string planFingerprint;
+    std::optional<std::string> replayRestoreFingerprint;
     CheckpointBundleKind bundleKind = CheckpointBundleKind::Live;
     std::string encodedQueryId;
     std::optional<uint64_t> checkpointWatermarkMs;
+    std::vector<std::string> stateFiles;
 };
 
 struct RecoveredCheckpointBundle
@@ -223,132 +220,6 @@ std::optional<CheckpointBundleKind> parseCheckpointBundleKind(std::string_view b
     return std::nullopt;
 }
 
-std::string computeFingerprintFromBytes(const std::string_view bytes)
-{
-    constexpr uint64_t fnvOffsetBasis = 1469598103934665603ULL;
-    constexpr uint64_t fnvPrime = 1099511628211ULL;
-
-    uint64_t hash = fnvOffsetBasis;
-    for (const auto byte : bytes)
-    {
-        hash ^= static_cast<uint8_t>(byte);
-        hash *= fnvPrime;
-    }
-    return fmt::format("fnv1a64:{:016x}", hash);
-}
-
-template <typename ProtoMessage>
-std::string serializeProtoDeterministically(const ProtoMessage& message)
-{
-    std::string bytes;
-    bytes.reserve(static_cast<size_t>(message.ByteSizeLong()));
-    google::protobuf::io::StringOutputStream rawOutput(&bytes);
-    google::protobuf::io::CodedOutputStream codedOutput(&rawOutput);
-    codedOutput.SetSerializationDeterministic(true);
-    if (!message.SerializeToCodedStream(&codedOutput))
-    {
-        throw CannotSerialize("Failed to deterministically serialize canonical query plan for fingerprinting");
-    }
-    return bytes;
-}
-
-SerializableQueryPlan canonicalizePlanForFingerprint(const SerializableQueryPlan& serializedPlan)
-{
-    std::vector<ReflectedOperator> reflectedOperators;
-    reflectedOperators.reserve(serializedPlan.reflectedoperators_size());
-    std::unordered_map<OperatorId::Underlying, const ReflectedOperator*> operatorsById;
-    operatorsById.reserve(serializedPlan.reflectedoperators_size());
-    for (const auto& reflectedOperator : serializedPlan.reflectedoperators())
-    {
-        auto parsedOperator = rfl::json::read<ReflectedOperator>(reflectedOperator);
-        if (!parsedOperator.has_value())
-        {
-            throw CannotDeserialize("Failed to parse serialized operator while canonicalizing query plan fingerprint");
-        }
-        reflectedOperators.push_back(std::move(parsedOperator.value()));
-        operatorsById.emplace(reflectedOperators.back().operatorId, &reflectedOperators.back());
-    }
-
-    std::unordered_map<OperatorId::Underlying, OperatorId::Underlying> canonicalIds;
-    canonicalIds.reserve(operatorsById.size());
-    OperatorId::Underlying nextOperatorId = INITIAL_OPERATOR_ID.getRawValue();
-    std::vector<OperatorId::Underlying> worklist;
-    worklist.reserve(serializedPlan.rootoperatorids_size() + reflectedOperators.size());
-    for (const auto rootOperatorId : serializedPlan.rootoperatorids())
-    {
-        worklist.push_back(rootOperatorId);
-    }
-
-    for (size_t idx = 0; idx < worklist.size(); ++idx)
-    {
-        const auto originalOperatorId = worklist[idx];
-        if (canonicalIds.contains(originalOperatorId))
-        {
-            continue;
-        }
-        canonicalIds.emplace(originalOperatorId, nextOperatorId++);
-        if (const auto opIt = operatorsById.find(originalOperatorId); opIt != operatorsById.end())
-        {
-            for (const auto childId : opIt->second->childrenIds)
-            {
-                worklist.push_back(childId);
-            }
-        }
-    }
-
-    std::vector<OperatorId::Underlying> remainingOperatorIds;
-    remainingOperatorIds.reserve(operatorsById.size());
-    for (const auto& [operatorId, _] : operatorsById)
-    {
-        if (!canonicalIds.contains(operatorId))
-        {
-            remainingOperatorIds.push_back(operatorId);
-        }
-    }
-    std::ranges::sort(remainingOperatorIds);
-    for (const auto operatorId : remainingOperatorIds)
-    {
-        canonicalIds.emplace(operatorId, nextOperatorId++);
-    }
-
-    std::vector<ReflectedOperator> canonicalOperators;
-    canonicalOperators.reserve(reflectedOperators.size());
-    for (const auto& op : reflectedOperators)
-    {
-        auto canonicalOperator = op;
-        canonicalOperator.operatorId = canonicalIds.at(op.operatorId);
-        for (auto& childId : canonicalOperator.childrenIds)
-        {
-            childId = canonicalIds.at(childId);
-        }
-        canonicalOperators.push_back(std::move(canonicalOperator));
-    }
-    std::ranges::sort(
-        canonicalOperators,
-        [](const auto& lhs, const auto& rhs) { return lhs.operatorId < rhs.operatorId; });
-
-    auto canonicalPlan = serializedPlan;
-    canonicalPlan.clear_rootoperatorids();
-    canonicalPlan.clear_reflectedoperators();
-    for (const auto rootOperatorId : serializedPlan.rootoperatorids())
-    {
-        canonicalPlan.add_rootoperatorids(canonicalIds.at(rootOperatorId));
-    }
-    for (const auto& op : canonicalOperators)
-    {
-        canonicalPlan.add_reflectedoperators(rfl::json::write(op));
-    }
-    return canonicalPlan;
-}
-
-std::string computePlanFingerprint(const SerializableQueryPlan& serializedPlan)
-{
-    auto canonicalPlan = canonicalizePlanForFingerprint(serializedPlan);
-    canonicalPlan.clear_queryid();
-    auto canonicalPlanBytes = serializeProtoDeterministically(canonicalPlan);
-    return computeFingerprintFromBytes(canonicalPlanBytes);
-}
-
 std::string compilationCacheModeToString(const QueryCompilation::CompilationCacheMode mode)
 {
     switch (mode)
@@ -392,6 +263,34 @@ std::string makeCheckpointRelativePath(const std::filesystem::path& absolutePath
     return relativePath.generic_string();
 }
 
+std::vector<std::string> enumerateStateFiles(const std::filesystem::path& stateDirectory)
+{
+    std::vector<std::string> stateFiles;
+    std::error_code ec;
+    for (std::filesystem::recursive_directory_iterator it(stateDirectory, ec); !ec && it != std::filesystem::recursive_directory_iterator(); ++it)
+    {
+        if (!it->is_regular_file())
+        {
+            continue;
+        }
+        const auto relativePath = it->path().lexically_relative(stateDirectory);
+        if (relativePath.empty() || relativePath.native().starts_with(".."))
+        {
+            throw CheckpointError(
+                "State file {} is not inside replay checkpoint state directory {}",
+                it->path().string(),
+                stateDirectory.string());
+        }
+        stateFiles.push_back(relativePath.generic_string());
+    }
+    if (ec)
+    {
+        throw CheckpointError("Cannot enumerate replay checkpoint state files in {}; {}", stateDirectory.string(), ec.message());
+    }
+    std::ranges::sort(stateFiles);
+    return stateFiles;
+}
+
 std::string serializeCacheManifest(const CheckpointCacheManifest& manifest)
 {
     auto manifestJson = nlohmann::json{
@@ -401,7 +300,12 @@ std::string serializeCacheManifest(const CheckpointCacheManifest& manifest)
         {"compilation_cache_directory", manifest.cacheDirectory},
         {"plan_fingerprint", manifest.planFingerprint},
         {"bundle_kind", checkpointBundleKindToString(manifest.bundleKind)},
-        {"query_id", manifest.encodedQueryId}};
+        {"query_id", manifest.encodedQueryId},
+        {"state_files", manifest.stateFiles}};
+    if (manifest.replayRestoreFingerprint.has_value())
+    {
+        manifestJson["replay_restore_fingerprint"] = *manifest.replayRestoreFingerprint;
+    }
     if (manifest.checkpointWatermarkMs.has_value())
     {
         manifestJson["checkpoint_watermark_ms"] = *manifest.checkpointWatermarkMs;
@@ -434,11 +338,19 @@ std::optional<CheckpointCacheManifest> deserializeCacheManifest(const std::strin
         {
             return std::nullopt;
         }
+        if (manifestJson.contains("replay_restore_fingerprint") && !manifestJson["replay_restore_fingerprint"].is_string())
+        {
+            return std::nullopt;
+        }
         if (manifestJson.contains("bundle_kind") && !manifestJson["bundle_kind"].is_string())
         {
             return std::nullopt;
         }
         if (manifestJson.contains("query_id") && !manifestJson["query_id"].is_string())
+        {
+            return std::nullopt;
+        }
+        if (manifestJson.contains("state_files") && !manifestJson["state_files"].is_array())
         {
             return std::nullopt;
         }
@@ -464,12 +376,19 @@ std::optional<CheckpointCacheManifest> deserializeCacheManifest(const std::strin
             .compilationCacheMode = *parsedMode,
             .cacheDirectory = manifestJson["compilation_cache_directory"].get<std::string>(),
             .planFingerprint = manifestJson["plan_fingerprint"].get<std::string>(),
+            .replayRestoreFingerprint = manifestJson.contains("replay_restore_fingerprint")
+                    && manifestJson["replay_restore_fingerprint"].is_string()
+                ? std::make_optional(manifestJson["replay_restore_fingerprint"].get<std::string>())
+                : std::nullopt,
             .bundleKind = *parsedBundleKind,
             .encodedQueryId = manifestJson.value("query_id", std::string{}),
             .checkpointWatermarkMs = manifestJson.contains("checkpoint_watermark_ms")
                     && manifestJson["checkpoint_watermark_ms"].is_number_unsigned()
                 ? std::make_optional(manifestJson["checkpoint_watermark_ms"].get<uint64_t>())
-                : std::nullopt};
+                : std::nullopt,
+            .stateFiles = manifestJson.contains("state_files") && manifestJson["state_files"].is_array()
+                ? manifestJson["state_files"].get<std::vector<std::string>>()
+                : std::vector<std::string>{}};
     }
     catch (...)
     {
@@ -627,57 +546,33 @@ void persistReplayCheckpointBundle(
     }
 
     const auto tempReplayBundlePaths = createCheckpointBundlePaths(tempReplayBundleDirectory);
+    replayManifest.stateFiles = enumerateStateFiles(tempReplayBundlePaths.stateDir);
+    if (replayManifest.stateFiles.empty())
+    {
+        std::filesystem::remove_all(tempReplayBundleDirectory, ec);
+        throw CheckpointError(
+            "Replay checkpoint bundle {} does not contain any checkpoint state files",
+            replayBundle.rootDir.string());
+    }
     CheckpointManager::persistFile(
         makeCheckpointRelativePath(tempReplayBundlePaths.manifestFile), serializeCacheManifest(replayManifest));
     replaceDirectoryAtomically(tempReplayBundleDirectory, replayBundle.rootDir);
 }
 
-std::string describeReplayCheckpointHandler(const std::shared_ptr<OperatorHandler>& handler)
+std::expected<void, Exception>
+validateReplayCheckpointCompatibility(const std::filesystem::path& recoveryBundleDirectory, const CheckpointCacheManifest& manifest)
 {
-    if (handler == nullptr)
+    if (!manifest.replayRestoreFingerprint.has_value() || manifest.replayRestoreFingerprint->empty())
     {
-        return "null handler";
+        return std::unexpected(QueryRegistrationFailed(
+            "Replay checkpoint bundle {} is missing replay restore compatibility metadata",
+            recoveryBundleDirectory.string()));
     }
-    if (const auto* aggregationHandler = dynamic_cast<const AggregationOperatorHandler*>(handler.get()); aggregationHandler != nullptr)
+    if (manifest.stateFiles.empty())
     {
-        return fmt::format("aggregation handler {}", aggregationHandler->getOperatorHandlerId());
-    }
-    if (const auto* hashJoinHandler = dynamic_cast<const HJOperatorHandler*>(handler.get()); hashJoinHandler != nullptr)
-    {
-        return fmt::format("hash join handler {}", hashJoinHandler->getOperatorHandlerId());
-    }
-    return "unsupported stateful handler";
-}
-
-std::expected<std::vector<std::filesystem::path>, Exception> replayCheckpointFilesForHandler(
-    const std::filesystem::path& stateDirectory, const std::shared_ptr<OperatorHandler>& handler)
-{
-    if (handler == nullptr)
-    {
-        return std::vector<std::filesystem::path>{};
-    }
-    if (const auto* aggregationHandler = dynamic_cast<const AggregationOperatorHandler*>(handler.get()); aggregationHandler != nullptr)
-    {
-        return std::vector<std::filesystem::path>{
-            stateDirectory / fmt::format("aggregation_hashmap_{}.bin", aggregationHandler->getOperatorHandlerId().getRawValue())};
-    }
-    if (const auto* hashJoinHandler = dynamic_cast<const HJOperatorHandler*>(handler.get()); hashJoinHandler != nullptr)
-    {
-        return std::vector<std::filesystem::path>{
-            stateDirectory / fmt::format("hash_join_checkpoint_{}_left.bin", hashJoinHandler->getOperatorHandlerId().getRawValue()),
-            stateDirectory / fmt::format("hash_join_checkpoint_{}_right.bin", hashJoinHandler->getOperatorHandlerId().getRawValue())};
-    }
-    return std::unexpected(QueryRegistrationFailed(
-        "Replay checkpoint restoration does not support stateful replay handler {}",
-        describeReplayCheckpointHandler(handler)));
-}
-
-std::expected<void, Exception> validateReplayCheckpointCompatibility(
-    const std::filesystem::path& recoveryBundleDirectory, const std::vector<std::shared_ptr<OperatorHandler>>& statefulHandlers)
-{
-    if (statefulHandlers.empty())
-    {
-        return {};
+        return std::unexpected(QueryRegistrationFailed(
+            "Replay checkpoint bundle {} is missing an exact state file manifest for replay restore",
+            recoveryBundleDirectory.string()));
     }
 
     const auto stateDirectory = createCheckpointBundlePaths(recoveryBundleDirectory).stateDir;
@@ -690,26 +585,12 @@ std::expected<void, Exception> validateReplayCheckpointCompatibility(
             stateDirectory.string()));
     }
 
-    for (const auto& handler : statefulHandlers)
+    const auto actualStateFiles = enumerateStateFiles(stateDirectory);
+    if (actualStateFiles != manifest.stateFiles)
     {
-        const auto expectedCheckpointFiles = replayCheckpointFilesForHandler(stateDirectory, handler);
-        if (!expectedCheckpointFiles)
-        {
-            return std::unexpected(expectedCheckpointFiles.error());
-        }
-
-        for (const auto& checkpointFile : *expectedCheckpointFiles)
-        {
-            ec.clear();
-            if (!std::filesystem::exists(checkpointFile, ec))
-            {
-                return std::unexpected(QueryRegistrationFailed(
-                    "Replay checkpoint bundle {} is incompatible with replay restore because {} is missing checkpoint file {}",
-                    recoveryBundleDirectory.string(),
-                    describeReplayCheckpointHandler(handler),
-                    checkpointFile.filename().string()));
-            }
-        }
+        return std::unexpected(QueryRegistrationFailed(
+            "Replay checkpoint bundle {} state file manifest does not match the checkpoint state directory contents",
+            recoveryBundleDirectory.string()));
     }
     return {};
 }
@@ -749,6 +630,7 @@ std::vector<ReplayCheckpointStatus> findReplayCheckpointStatuses(const std::file
             .queryId = *queryId,
             .bundleName = entry.path().filename().string(),
             .planFingerprint = manifest->planFingerprint,
+            .replayRestoreFingerprint = manifest->replayRestoreFingerprint.value_or(std::string{}),
             .checkpointWatermarkMs = *manifest->checkpointWatermarkMs});
     }
 
@@ -843,8 +725,11 @@ struct SingleNodeWorker::QueryRegistrationOptions
     QueryCompilation::CompilationCacheMode compilationCacheMode = QueryCompilation::CompilationCacheMode::Preferred;
     std::optional<std::filesystem::path> compilationCacheDir;
     std::optional<std::filesystem::path> recoveryBundleDirectory;
+    std::optional<CheckpointCacheManifest> recoveryBundleManifest;
     std::optional<std::string> recoveryPlanFingerprint;
+    std::optional<std::string> replayRestoreFingerprint;
     std::optional<std::string> serializedPlanBytes;
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl;
     bool replayCheckpointRestore = false;
 };
 
@@ -908,11 +793,22 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 }
 
 std::expected<QueryId, Exception>
-SingleNodeWorker::registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint) noexcept
+SingleNodeWorker::registerQuery(
+    LogicalPlan plan,
+    std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration,
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl) noexcept
 {
-    if (replayCheckpoint.has_value())
+    QueryRegistrationOptions options{};
+    options.replayRuntimeControl = std::move(replayRuntimeControl);
+    if (replayCheckpointRegistration.has_value())
     {
-        const auto recoveryBundleDirectory = CheckpointManager::getCheckpointDirectory() / replayCheckpoint->bundleName;
+        options.replayRestoreFingerprint = replayCheckpointRegistration->replayRestoreFingerprint;
+    }
+
+    if (replayCheckpointRegistration.has_value() && replayCheckpointRegistration->restoreCheckpoint.has_value())
+    {
+        const auto& replayCheckpoint = *replayCheckpointRegistration->restoreCheckpoint;
+        const auto recoveryBundleDirectory = CheckpointManager::getCheckpointDirectory() / replayCheckpoint.bundleName;
         std::error_code ec;
         const auto recoveryBundleExists = std::filesystem::exists(recoveryBundleDirectory, ec);
         const auto recoveryBundleIsDirectory = !ec && std::filesystem::is_directory(recoveryBundleDirectory, ec);
@@ -920,7 +816,7 @@ SingleNodeWorker::registerQuery(LogicalPlan plan, std::optional<ReplayCheckpoint
         {
             return std::unexpected(QueryRegistrationFailed(
                 "Replay checkpoint bundle {} is not available in checkpoint directory {}",
-                replayCheckpoint->bundleName,
+                replayCheckpoint.bundleName,
                 CheckpointManager::getCheckpointDirectory().string()));
         }
 
@@ -929,21 +825,37 @@ SingleNodeWorker::registerQuery(LogicalPlan plan, std::optional<ReplayCheckpoint
         {
             return std::unexpected(QueryRegistrationFailed(
                 "Replay checkpoint bundle {} is missing a valid replay checkpoint manifest",
-                replayCheckpoint->bundleName));
+                replayCheckpoint.bundleName));
         }
-        if (manifest->planFingerprint != replayCheckpoint->planFingerprint)
+        if (manifest->planFingerprint != replayCheckpoint.planFingerprint)
         {
             return std::unexpected(QueryRegistrationFailed(
                 "Replay checkpoint bundle {} fingerprint mismatch: requested={} actual={}",
-                replayCheckpoint->bundleName,
-                replayCheckpoint->planFingerprint,
+                replayCheckpoint.bundleName,
+                replayCheckpoint.planFingerprint,
                 manifest->planFingerprint));
         }
+        const auto expectedReplayRestoreFingerprint
+            = options.replayRestoreFingerprint.value_or(replayCheckpoint.replayRestoreFingerprint);
+        if (!manifest->replayRestoreFingerprint.has_value()
+            || manifest->replayRestoreFingerprint.value() != expectedReplayRestoreFingerprint)
+        {
+            return std::unexpected(QueryRegistrationFailed(
+                "Replay checkpoint bundle {} replay restore fingerprint mismatch: requested={} actual={}",
+                replayCheckpoint.bundleName,
+                expectedReplayRestoreFingerprint,
+                manifest->replayRestoreFingerprint.value_or(std::string("<missing>"))));
+        }
 
-        QueryRegistrationOptions options{};
         options.recoveryBundleDirectory = recoveryBundleDirectory;
+        options.recoveryBundleManifest = *manifest;
         options.recoveryPlanFingerprint = manifest->planFingerprint;
+        options.replayRestoreFingerprint = expectedReplayRestoreFingerprint;
         options.replayCheckpointRestore = true;
+        return registerQueryInternal(std::move(plan), &options);
+    }
+    if (options.replayRuntimeControl.has_value() || options.replayRestoreFingerprint.has_value())
+    {
         return registerQueryInternal(std::move(plan), &options);
     }
     return registerQueryInternal(std::move(plan), nullptr);
@@ -1111,7 +1023,8 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQueryInternal(
         }
         if (options != nullptr && options->replayCheckpointRestore)
         {
-            const auto compatibility = validateReplayCheckpointCompatibility(options->recoveryBundleDirectory.value(), statefulHandlers);
+            const auto compatibility = validateReplayCheckpointCompatibility(
+                options->recoveryBundleDirectory.value(), options->recoveryBundleManifest.value());
             if (!compatibility)
             {
                 return std::unexpected(compatibility.error());
@@ -1119,6 +1032,10 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQueryInternal(
         }
 
         replayStatisticsCollector->registerCompiledQueryPlan(assignedQueryId, *result);
+        if (options != nullptr && options->replayRuntimeControl.has_value())
+        {
+            replayStatisticsCollector->registerReplayQuery(assignedQueryId, *options->replayRuntimeControl);
+        }
         nodeEngine->registerCompiledQueryPlan(assignedQueryId, std::move(result));
         const auto queryId = assignedQueryId;
 
@@ -1132,9 +1049,11 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQueryInternal(
                     ? std::string(BundleCacheDirectoryName)
                     : checkpointBundle->cacheDir.lexically_relative(checkpointBundle->rootDir).generic_string(),
                 .planFingerprint = bundlePlanFingerprint,
+                .replayRestoreFingerprint = options != nullptr ? options->replayRestoreFingerprint : std::nullopt,
                 .bundleKind = CheckpointBundleKind::Live,
                 .encodedQueryId = encodeQueryIdForIdentifier(queryId),
-                .checkpointWatermarkMs = std::nullopt};
+                .checkpointWatermarkMs = std::nullopt,
+                .stateFiles = {}};
             auto persistPlan = [planBytes = serializedPlan,
                                 manifestBytes = serializeCacheManifest(manifest),
                                 bundle = *checkpointBundle]() mutable
@@ -1236,6 +1155,56 @@ std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(Quer
     std::unreachable();
 }
 
+std::expected<std::vector<uint64_t>, Exception>
+SingleNodeWorker::selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const noexcept
+{
+    CPPTRACE_TRY
+    {
+        auto selectedSegments = Replay::selectBinaryStoreSegments(recordingFilePath, selection);
+        std::vector<uint64_t> segmentIds;
+        segmentIds.reserve(selectedSegments.size());
+        for (const auto& segment : selectedSegments)
+        {
+            segmentIds.push_back(segment.segmentId);
+        }
+        return segmentIds;
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(wrapExternalException());
+    }
+    std::unreachable();
+}
+
+std::expected<std::vector<uint64_t>, Exception>
+SingleNodeWorker::pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) noexcept
+{
+    CPPTRACE_TRY
+    {
+        return Replay::pinBinaryStoreSegments(recordingFilePath, segmentIds);
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(wrapExternalException());
+    }
+    std::unreachable();
+}
+
+std::expected<void, Exception>
+SingleNodeWorker::unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) noexcept
+{
+    CPPTRACE_TRY
+    {
+        Replay::unpinBinaryStoreSegments(recordingFilePath, segmentIds);
+        return {};
+    }
+    CPPTRACE_CATCH(...)
+    {
+        return std::unexpected(wrapExternalException());
+    }
+    std::unreachable();
+}
+
 WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_point after) const
 {
     const std::chrono::system_clock::time_point until = std::chrono::system_clock::now();
@@ -1294,6 +1263,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     status.replayMetrics.recordingFileCount = status.replayMetrics.recordingStatuses.size();
     status.replayMetrics.replayReadBytes = Replay::getReplayReadBytes();
     status.replayMetrics.operatorStatistics = replayStatisticsCollector->snapshot();
+    status.replayMetrics.replayQueryStatuses = replayStatisticsCollector->snapshotReplayQueries();
     status.replayMetrics.replayCheckpoints = findReplayCheckpointStatuses(CheckpointManager::getCheckpointDirectory());
     return status;
 }
@@ -1351,8 +1321,11 @@ void SingleNodeWorker::recoverCheckpointBundles(const std::filesystem::path& che
                 .compilationCacheMode = recoveredBundle.manifest.compilationCacheMode,
                 .compilationCacheDir = recoveredBundle.livePaths.cacheDir,
                 .recoveryBundleDirectory = recoveredBundle.recoveryBundleDirectory,
+                .recoveryBundleManifest = recoveredBundle.manifest,
                 .recoveryPlanFingerprint = recoveredBundle.manifest.planFingerprint,
-                .serializedPlanBytes = *serializedPlanOpt};
+                .replayRestoreFingerprint = recoveredBundle.manifest.replayRestoreFingerprint,
+                .serializedPlanBytes = *serializedPlanOpt,
+                .replayRuntimeControl = std::nullopt};
             auto registerResult = registerQueryInternal(plan, &options);
             if (!registerResult)
             {

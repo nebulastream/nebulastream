@@ -183,7 +183,10 @@ public:
     }
 
     [[nodiscard]] std::expected<NES::QueryId, NES::Exception>
-    registerQuery(NES::LogicalPlan, std::optional<NES::ReplayCheckpointReference> = std::nullopt) override
+    registerQuery(
+        NES::LogicalPlan,
+        std::optional<NES::ReplayCheckpointRegistration> = std::nullopt,
+        std::optional<NES::ReplayQueryRuntimeControl> = std::nullopt) override
     {
         return std::unexpected(NES::QueryRegistrationFailed("unused in FakeExplainWorkerStatusBackend"));
     }
@@ -211,6 +214,23 @@ public:
     [[nodiscard]] std::expected<NES::WorkerStatus, NES::Exception> workerStatus(std::chrono::system_clock::time_point) const override
     {
         return workerStatusResult;
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, NES::Exception>
+    selectReplaySegments(const std::string&, const NES::Replay::BinaryStoreReplaySelection&) const override
+    {
+        return std::unexpected(NES::PlacementFailure("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, NES::Exception>
+    pinReplaySegments(const std::string&, const std::vector<uint64_t>&) override
+    {
+        return std::unexpected(NES::PlacementFailure("unused in FakeExplainWorkerStatusBackend"));
+    }
+
+    std::expected<void, NES::Exception> unpinReplaySegments(const std::string&, const std::vector<uint64_t>&) override
+    {
+        return std::unexpected(NES::PlacementFailure("unused in FakeExplainWorkerStatusBackend"));
     }
 };
 
@@ -472,7 +492,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsInsufficientRemainingRecor
             .recordingFileCount = 2,
             .activeQueryCount = 1,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -491,7 +512,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWork
             .recordingFileCount = 1,
             .activeQueryCount = 2,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
     ASSERT_TRUE(boundStatement.catalogs.workerCatalog->updateWorkerRuntimeMetrics(
         Host("localhost:8080"),
         WorkerRuntimeMetrics{
@@ -500,7 +522,8 @@ TEST_F(DistributedPlanningTest, TimeTravelStoreRejectsReplayLatencyLimitWhenWork
             .recordingFileCount = 6,
             .activeQueryCount = 8,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     EXPECT_THROW(
         (void)boundStatement.optimizer->optimize(
@@ -624,7 +647,8 @@ TEST_F(DistributedPlanningTest, ExplainIncludesReplayConstraintsAndSelectedRecor
                 .recordingFileCount = 0,
                 .activeQueryCount = 0,
                 .operatorStatistics = {},
-                .recordingStatuses = {}};
+                .recordingStatuses = {},
+                .replayCheckpoints = {}};
             return std::make_unique<FakeExplainWorkerStatusBackend>(status);
         });
 

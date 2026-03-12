@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstring>
 #include <filesystem>
+#include <fstream>
 #include <memory>
 #include <optional>
 #include <ranges>
@@ -57,6 +58,14 @@ struct TestRow
     bool operator==(const TestRow&) const = default;
 };
 
+struct TimestampRow
+{
+    uint64_t ts;
+    uint64_t id;
+
+    bool operator==(const TimestampRow&) const = default;
+};
+
 class BinaryStoreSourceTest : public Testing::BaseUnitTest
 {
     struct MockPipelineContext final : PipelineExecutionContext
@@ -72,9 +81,19 @@ class BinaryStoreSourceTest : public Testing::BaseUnitTest
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return handlers; }
         void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& opHandlers) override { handlers = opHandlers; }
+        void setRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey, void* runtimeHandle) override
+        {
+            runtimeInputFormatterHandles.insert_or_assign(runtimeInputFormatterKey, runtimeHandle);
+        }
+        [[nodiscard]] void* getRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey) const override
+        {
+            const auto handleIterator = runtimeInputFormatterHandles.find(runtimeInputFormatterKey);
+            return handleIterator == runtimeInputFormatterHandles.end() ? nullptr : handleIterator->second;
+        }
 
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> handlers;
+        std::unordered_map<uint64_t, void*> runtimeInputFormatterHandles;
     };
 
 public:
@@ -111,17 +130,19 @@ public:
         return Schema{}.addField("id", DataType::Type::UINT64).addField("value", DataType::Type::UINT64);
     }
 
-    [[nodiscard]] static std::string schemaText()
+    [[nodiscard]] static std::string schemaText(const Schema& schema)
     {
         std::stringstream stream;
-        stream << getSchema();
+        stream << schema;
         return stream.str();
     }
 
-    SourceDescriptor createBinaryStoreDescriptorWithConfig(std::unordered_map<std::string, std::string> config) const
+    [[nodiscard]] static std::string schemaText() { return schemaText(getSchema()); }
+
+    SourceDescriptor createBinaryStoreDescriptorWithConfig(const Schema& schema, std::unordered_map<std::string, std::string> config) const
     {
         SourceCatalog catalog;
-        const auto logicalSource = catalog.addLogicalSource("replay", getSchema());
+        const auto logicalSource = catalog.addLogicalSource("replay", schema);
         EXPECT_TRUE(logicalSource.has_value());
         const auto physicalSource = catalog.addPhysicalSource(
             *logicalSource,
@@ -131,6 +152,11 @@ public:
             {{"type", "CSV"}});
         EXPECT_TRUE(physicalSource.has_value());
         return *physicalSource;
+    }
+
+    SourceDescriptor createBinaryStoreDescriptorWithConfig(std::unordered_map<std::string, std::string> config) const
+    {
+        return createBinaryStoreDescriptorWithConfig(getSchema(), std::move(config));
     }
 
     SourceDescriptor createBinaryStoreDescriptor(const std::filesystem::path& filePath) const
@@ -159,19 +185,23 @@ public:
         return path;
     }
 
-    void writeRows(
+    template <typename Row>
+    void writeTypedRows(
         const std::filesystem::path& filePath,
+        const Schema& rowSchema,
+        const std::vector<Row>& rowsToWrite,
+        const std::vector<Timestamp::Underlying>& watermarksToWrite,
         const Replay::BinaryStoreCompressionCodec compression,
-        const std::vector<Timestamp::Underlying>& watermarks,
         const int32_t compressionLevel = 3,
-        const std::optional<uint64_t> retentionWindowMs = std::nullopt) const
+        const std::optional<uint64_t> retentionWindowMs = std::nullopt,
+        const bool append = false) const
     {
-        ASSERT_EQ(watermarks.size(), rows.size());
+        ASSERT_EQ(watermarksToWrite.size(), rowsToWrite.size());
         auto bufferManager = BufferManager::create(512, 4);
         MockPipelineContext context(bufferManager);
         StoreOperatorHandler handler({
             .filePath = filePath.string(),
-            .append = false,
+            .append = append,
             .header = true,
             .chunkMinBytes = 32,
             .directIO = false,
@@ -179,16 +209,25 @@ public:
             .compression = compression,
             .compressionLevel = compressionLevel,
             .retentionWindowMs = retentionWindowMs,
-            .schemaText = schemaText(),
+            .schemaText = schemaText(rowSchema),
         });
 
         handler.start(context, 0);
-        for (size_t i = 0; i < rows.size(); ++i)
+        for (size_t i = 0; i < rowsToWrite.size(); ++i)
         {
-            const auto& row = rows[i];
-            handler.append(reinterpret_cast<const uint8_t*>(&row), sizeof(row), Timestamp(watermarks[i]));
+            handler.append(reinterpret_cast<const uint8_t*>(&rowsToWrite[i]), sizeof(Row), Timestamp(watermarksToWrite[i]));
         }
         handler.stop(QueryTerminationType::Graceful, context);
+    }
+
+    void writeRows(
+        const std::filesystem::path& filePath,
+        const Replay::BinaryStoreCompressionCodec compression,
+        const std::vector<Timestamp::Underlying>& watermarks,
+        const int32_t compressionLevel = 3,
+        const std::optional<uint64_t> retentionWindowMs = std::nullopt) const
+    {
+        writeTypedRows(filePath, getSchema(), rows, watermarks, compression, compressionLevel, retentionWindowMs, false);
     }
 
     void appendRows(
@@ -199,28 +238,7 @@ public:
         const int32_t compressionLevel = 3,
         const std::optional<uint64_t> retentionWindowMs = std::nullopt) const
     {
-        ASSERT_EQ(watermarksToWrite.size(), rowsToWrite.size());
-        auto bufferManager = BufferManager::create(512, 4);
-        MockPipelineContext context(bufferManager);
-        StoreOperatorHandler handler({
-            .filePath = filePath.string(),
-            .append = true,
-            .header = true,
-            .chunkMinBytes = 32,
-            .directIO = false,
-            .fdatasyncInterval = 0,
-            .compression = compression,
-            .compressionLevel = compressionLevel,
-            .retentionWindowMs = retentionWindowMs,
-            .schemaText = schemaText(),
-        });
-
-        handler.start(context, 0);
-        for (size_t i = 0; i < rowsToWrite.size(); ++i)
-        {
-            handler.append(reinterpret_cast<const uint8_t*>(&rowsToWrite[i]), sizeof(rowsToWrite[i]), Timestamp(watermarksToWrite[i]));
-        }
-        handler.stop(QueryTerminationType::Graceful, context);
+        writeTypedRows(filePath, getSchema(), rowsToWrite, watermarksToWrite, compression, compressionLevel, retentionWindowMs, true);
     }
 
     std::vector<TestRow> readRows(const std::filesystem::path& filePath)
@@ -232,17 +250,24 @@ public:
 
     std::vector<TestRow> readRows(const SourceDescriptor& sourceDescriptor)
     {
-        auto bufferManager = BufferManager::create(512, 4);
-        BinaryStoreSource source(sourceDescriptor);
-        return readRows(source, bufferManager);
+        return readTypedRows<TestRow>(sourceDescriptor, getSchema());
     }
 
-    std::vector<TestRow> readRows(BinaryStoreSource& source, const std::shared_ptr<BufferManager>& bufferManager)
+    template <typename Row>
+    std::vector<Row> readTypedRows(const SourceDescriptor& sourceDescriptor, const Schema& rowSchema)
+    {
+        auto bufferManager = BufferManager::create(512, 4);
+        BinaryStoreSource source(sourceDescriptor);
+        return readTypedRows<Row>(source, bufferManager, rowSchema);
+    }
+
+    template <typename Row>
+    std::vector<Row> readTypedRows(BinaryStoreSource& source, const std::shared_ptr<BufferManager>& bufferManager, const Schema& rowSchema)
     {
         source.open(bufferManager);
 
-        const auto rowLayout = LowerSchemaProvider::lowerSchema(512, getSchema(), MemoryLayoutType::ROW_LAYOUT);
-        std::vector<TestRow> result;
+        const auto rowLayout = LowerSchemaProvider::lowerSchema(512, rowSchema, MemoryLayoutType::ROW_LAYOUT);
+        std::vector<Row> result;
         for (;;)
         {
             auto buffer = bufferManager->getBufferBlocking();
@@ -255,14 +280,19 @@ public:
             auto* data = buffer.getAvailableMemoryArea<char>().data();
             for (uint64_t i = 0; i < buffer.getNumberOfTuples(); ++i)
             {
-                TestRow row{};
-                std::memcpy(&row, data + i * rowLayout->getTupleSize(), sizeof(TestRow));
+                Row row{};
+                std::memcpy(&row, data + i * rowLayout->getTupleSize(), sizeof(Row));
                 result.push_back(row);
             }
         }
 
         source.close();
         return result;
+    }
+
+    std::vector<TestRow> readRows(BinaryStoreSource& source, const std::shared_ptr<BufferManager>& bufferManager)
+    {
+        return readTypedRows<TestRow>(source, bufferManager, getSchema());
     }
 
     std::filesystem::path tempDir;
@@ -389,6 +419,30 @@ TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredRawStoreSegmentsByRetentionW
     EXPECT_EQ(runtimeStatus.storageBytes, std::filesystem::file_size(filePath));
 }
 
+TEST_F(BinaryStoreSourceTest, DerivesInstallingRecordingRuntimeStatusBeforeFirstSegment)
+{
+    const auto recordingId = std::string("managed-installing-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    std::filesystem::create_directories(filePath.parent_path());
+    {
+        std::ofstream recording(filePath, std::ios::binary);
+        ASSERT_TRUE(recording.good());
+    }
+    Replay::writeBinaryStoreManifest(
+        filePath.string(),
+        Replay::BinaryStoreManifest{
+            .retentionWindowMs = 1'500,
+            .successorRecordingId = std::nullopt,
+            .segments = {}});
+
+    const auto runtimeStatus = Replay::readRecordingRuntimeStatus(filePath.string());
+    EXPECT_EQ(runtimeStatus.recordingId, recordingId);
+    EXPECT_EQ(runtimeStatus.lifecycleState, Replay::RecordingLifecycleState::Installing);
+    EXPECT_EQ(runtimeStatus.segmentCount, 0U);
+    EXPECT_EQ(runtimeStatus.storageBytes, std::filesystem::file_size(filePath));
+}
+
 TEST_F(BinaryStoreSourceTest, GarbageCollectsExpiredCompressedStoreSegmentsByRetentionWindow)
 {
     const auto filePath = tempDir / "compressed-retention.store";
@@ -498,6 +552,31 @@ TEST_F(BinaryStoreSourceTest, ReadsOnlySegmentsOverlappingReplayIntervalInCompre
             std::nullopt,
             {{"scan_start_ms", "2000"}, {"scan_end_ms", "2500"}, {"replay_mode", "interval"}})),
         std::vector<TestRow>({rows[2], rows[3]}));
+}
+
+TEST_F(BinaryStoreSourceTest, AppliesExactEventTimeTupleFilterWithinSelectedReplaySegments)
+{
+    const auto recordingId = std::string("managed-event-time-filter-")
+        + std::to_string(std::chrono::steady_clock::now().time_since_epoch().count());
+    const auto filePath = createManagedRecordingPath(recordingId);
+    const auto timestampSchema = Schema{}.addField("ts", DataType::Type::UINT64).addField("id", DataType::Type::UINT64);
+    const std::vector<TimestampRow> timestampRows{{1000, 1}, {1000, 2}, {2000, 3}, {3000, 4}, {3000, 5}};
+    writeTypedRows(filePath, timestampSchema, timestampRows, watermarks, Replay::BinaryStoreCompressionCodec::None);
+
+    EXPECT_EQ(
+        readTypedRows<TimestampRow>(
+            createBinaryStoreDescriptorWithConfig(
+                timestampSchema,
+                {{"recording_id", recordingId},
+                 {"scan_start_ms", "2000"},
+                 {"scan_end_ms", "2500"},
+                 {"emit_start_ms", "2000"},
+                 {"emit_end_ms", "2500"},
+                 {"event_time_field", "ts"},
+                 {"event_time_unit_ms_multiplier", "1"},
+                 {"replay_mode", "interval"}}),
+            timestampSchema),
+        std::vector<TimestampRow>({timestampRows[2]}));
 }
 
 TEST_F(BinaryStoreSourceTest, KeepsPinnedExpiredSegmentsDuringRollingRetentionGc)

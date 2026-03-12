@@ -19,6 +19,7 @@
 #include <vector>
 
 #include <QueryEngineStatisticListener.hpp>
+#include <Replay/ReplayQueryStatus.hpp>
 #include <Replay/ReplayExecutionStatistics.hpp>
 #include <CompiledQueryPlan.hpp>
 
@@ -29,8 +30,10 @@ class ReplayStatisticsCollector final : public QueryEngineStatisticListener
 {
 public:
     void registerCompiledQueryPlan(QueryId queryId, const CompiledQueryPlan& compiledQueryPlan);
+    void registerReplayQuery(QueryId queryId, ReplayQueryRuntimeControl runtimeControl);
     void unregisterQuery(QueryId queryId);
     [[nodiscard]] std::vector<ReplayOperatorStatistics> snapshot() const;
+    [[nodiscard]] std::vector<ReplayQueryStatus> snapshotReplayQueries() const;
 
     void onEvent(Event event) override;
 
@@ -81,6 +84,8 @@ private:
         std::unordered_map<PipelineKey, std::string, PipelineKeyHash> pipelineFingerprints;
         std::unordered_map<TaskKey, PendingTask, TaskKeyHash> pendingTasks;
         std::unordered_map<std::string, ReplayOperatorStatistics> statisticsByFingerprint;
+        std::unordered_map<QueryId, ReplayQueryRuntimeControl> replayQueryControls;
+        std::unordered_map<QueryId, ReplayQueryStatus> replayQueryStatuses;
     };
 
     void clearPendingTasksForQuery(State& state, QueryId queryId) const;

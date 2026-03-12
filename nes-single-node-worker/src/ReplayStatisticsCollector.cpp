@@ -46,11 +46,19 @@ void ReplayStatisticsCollector::registerCompiledQueryPlan(QueryId queryId, const
     }
 }
 
+void ReplayStatisticsCollector::registerReplayQuery(QueryId queryId, ReplayQueryRuntimeControl runtimeControl)
+{
+    std::scoped_lock lock(mutex);
+    state.replayQueryControls.insert_or_assign(queryId, runtimeControl);
+}
+
 void ReplayStatisticsCollector::unregisterQuery(QueryId queryId)
 {
     std::scoped_lock lock(mutex);
     std::erase_if(state.pipelineFingerprints, [&](const auto& entry) { return entry.first.queryId == queryId; });
     clearPendingTasksForQuery(state, queryId);
+    state.replayQueryControls.erase(queryId);
+    state.replayQueryStatuses.erase(queryId);
 }
 
 std::vector<ReplayOperatorStatistics> ReplayStatisticsCollector::snapshot() const
@@ -58,6 +66,23 @@ std::vector<ReplayOperatorStatistics> ReplayStatisticsCollector::snapshot() cons
     std::scoped_lock lock(mutex);
     auto snapshot = state.statisticsByFingerprint | std::views::values | std::ranges::to<std::vector>();
     std::ranges::sort(snapshot, {}, &ReplayOperatorStatistics::nodeFingerprint);
+    return snapshot;
+}
+
+std::vector<ReplayQueryStatus> ReplayStatisticsCollector::snapshotReplayQueries() const
+{
+    std::scoped_lock lock(mutex);
+    auto snapshot = state.replayQueryStatuses | std::views::values | std::ranges::to<std::vector>();
+    std::ranges::sort(
+        snapshot,
+        [](const auto& lhs, const auto& rhs)
+        {
+            if (lhs.queryId.getDistributedQueryId() != rhs.queryId.getDistributedQueryId())
+            {
+                return lhs.queryId.getDistributedQueryId().getRawValue() < rhs.queryId.getDistributedQueryId().getRawValue();
+            }
+            return lhs.queryId.getLocalQueryId().getRawValue() < rhs.queryId.getLocalQueryId().getRawValue();
+        });
     return snapshot;
 }
 
@@ -83,6 +108,26 @@ void ReplayStatisticsCollector::onEvent(Event event)
                 if (const auto it = state.pendingTasks.find(taskKey); it != state.pendingTasks.end())
                 {
                     it->second.outputTuples += emit.numberOfTuples;
+                }
+
+                const auto replayQueryControlIt = state.replayQueryControls.find(emit.queryId);
+                if (replayQueryControlIt == state.replayQueryControls.end())
+                {
+                    return;
+                }
+
+                auto replayQueryStatusIt = state.replayQueryStatuses.find(emit.queryId);
+                if (replayQueryStatusIt == state.replayQueryStatuses.end())
+                {
+                    return;
+                }
+
+                replayQueryStatusIt->second.lastOutputWatermarkMs = replayQueryStatusIt->second.lastOutputWatermarkMs.has_value()
+                    ? std::max(*replayQueryStatusIt->second.lastOutputWatermarkMs, emit.outputWatermarkMs)
+                    : emit.outputWatermarkMs;
+                if (emit.outputWatermarkMs >= replayQueryControlIt->second.emitStartWatermarkMs)
+                {
+                    replayQueryStatusIt->second.phase = ReplayQueryPhase::Emitting;
                 }
             },
             [&](const TaskExecutionComplete& complete)
@@ -115,9 +160,31 @@ void ReplayStatisticsCollector::onEvent(Event event)
             {
                 state.pendingTasks.erase(TaskKey{.queryId = expired.queryId, .pipelineId = expired.pipelineId, .taskId = expired.taskId});
             },
+            [&](const QueryStart& start)
+            {
+                if (!state.replayQueryControls.contains(start.queryId))
+                {
+                    return;
+                }
+
+                state.replayQueryStatuses.insert_or_assign(
+                    start.queryId,
+                    ReplayQueryStatus{
+                        .queryId = start.queryId,
+                        .phase = ReplayQueryPhase::FastForwarding,
+                        .lastOutputWatermarkMs = std::nullopt});
+            },
             [&](const QueryStopRequest& stopRequest) { clearPendingTasksForQuery(state, stopRequest.queryId); },
-            [&](const QueryStop& stop) { clearPendingTasksForQuery(state, stop.queryId); },
-            [&](const QueryFail& failed) { clearPendingTasksForQuery(state, failed.queryId); },
+            [&](const QueryStop& stop)
+            {
+                clearPendingTasksForQuery(state, stop.queryId);
+                state.replayQueryStatuses.erase(stop.queryId);
+            },
+            [&](const QueryFail& failed)
+            {
+                clearPendingTasksForQuery(state, failed.queryId);
+                state.replayQueryStatuses.erase(failed.queryId);
+            },
             [&](const auto&) {}},
         std::move(event));
 }

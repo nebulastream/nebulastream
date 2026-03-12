@@ -41,6 +41,15 @@ public:
 
     grpc::Status RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response) override;
 
+    grpc::Status SelectReplaySegments(
+        grpc::ServerContext* context, const ReplaySegmentSelectionRequest* request, ReplaySegmentSelectionReply* response) override;
+
+    grpc::Status PinReplaySegments(
+        grpc::ServerContext* context, const ReplaySegmentPinRequest* request, ReplaySegmentPinReply* response) override;
+
+    grpc::Status UnpinReplaySegments(
+        grpc::ServerContext* context, const ReplaySegmentUnpinRequest* request, google::protobuf::Empty* response) override;
+
     explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
 
 private:

@@ -53,18 +53,35 @@ GRPCQuerySubmissionBackend::GRPCQuerySubmissionBackend(WorkerConfig config)
 }
 
 std::expected<QueryId, Exception> GRPCQuerySubmissionBackend::registerQuery(
-    LogicalPlan localPlan, std::optional<ReplayCheckpointReference> replayCheckpoint)
+    LogicalPlan localPlan,
+    std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration,
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl)
 {
     grpc::ClientContext context;
     RegisterQueryReply reply;
     RegisterQueryRequest request;
     request.mutable_queryplan()->CopyFrom(QueryPlanSerializationUtil::serializeQueryPlan(localPlan));
-    if (replayCheckpoint.has_value())
+    if (replayCheckpointRegistration.has_value())
     {
-        auto* serializedReplayCheckpoint = request.mutable_replaycheckpoint();
-        serializedReplayCheckpoint->set_bundle_name(replayCheckpoint->bundleName);
-        serializedReplayCheckpoint->set_plan_fingerprint(replayCheckpoint->planFingerprint);
-        serializedReplayCheckpoint->set_checkpoint_watermark_ms(replayCheckpoint->checkpointWatermarkMs);
+        auto* serializedReplayCheckpointRegistration = request.mutable_replaycheckpoint();
+        if (replayCheckpointRegistration->restoreCheckpoint.has_value())
+        {
+            auto* serializedReplayCheckpoint = serializedReplayCheckpointRegistration->mutable_restore_checkpoint();
+            serializedReplayCheckpoint->set_bundle_name(replayCheckpointRegistration->restoreCheckpoint->bundleName);
+            serializedReplayCheckpoint->set_plan_fingerprint(replayCheckpointRegistration->restoreCheckpoint->planFingerprint);
+            serializedReplayCheckpoint->set_checkpoint_watermark_ms(replayCheckpointRegistration->restoreCheckpoint->checkpointWatermarkMs);
+            serializedReplayCheckpoint->set_replay_restore_fingerprint(
+                replayCheckpointRegistration->restoreCheckpoint->replayRestoreFingerprint);
+        }
+        if (replayCheckpointRegistration->replayRestoreFingerprint.has_value())
+        {
+            serializedReplayCheckpointRegistration->set_replay_restore_fingerprint(
+                *replayCheckpointRegistration->replayRestoreFingerprint);
+        }
+    }
+    if (replayRuntimeControl.has_value())
+    {
+        request.mutable_replayruntimecontrol()->set_emit_start_watermark_ms(replayRuntimeControl->emitStartWatermarkMs);
     }
     const auto status = stub->RegisterQuery(&context, request, &reply);
     if (status.ok())
@@ -209,6 +226,110 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId qu
 
     return std::unexpected{QueryUnregistrationFailed(
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
+}
+
+std::expected<std::vector<uint64_t>, Exception> GRPCQuerySubmissionBackend::selectReplaySegments(
+    const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const
+{
+    grpc::ClientContext context;
+    ReplaySegmentSelectionRequest request;
+    ReplaySegmentSelectionReply response;
+    request.set_recording_file_path(recordingFilePath);
+    if (selection.segmentIds.has_value())
+    {
+        for (const auto segmentId : *selection.segmentIds)
+        {
+            request.add_segment_ids(segmentId);
+        }
+    }
+    if (selection.scanStartMs.has_value())
+    {
+        request.set_scan_start_ms(*selection.scanStartMs);
+    }
+    if (selection.scanEndMs.has_value())
+    {
+        request.set_scan_end_ms(*selection.scanEndMs);
+    }
+
+    const auto status = stub->SelectReplaySegments(&context, request, &response);
+    if (!status.ok())
+    {
+        return std::unexpected(PlacementFailure(
+            "Could not select replay segments for {} on {}.\nStatus: {}\nMessage: {}\nDetail: {}",
+            recordingFilePath,
+            workerConfig.host,
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details()));
+    }
+
+    std::vector<uint64_t> segmentIds;
+    segmentIds.reserve(static_cast<size_t>(response.segment_ids_size()));
+    for (const auto segmentId : response.segment_ids())
+    {
+        segmentIds.push_back(segmentId);
+    }
+    return segmentIds;
+}
+
+std::expected<std::vector<uint64_t>, Exception>
+GRPCQuerySubmissionBackend::pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    grpc::ClientContext context;
+    ReplaySegmentPinRequest request;
+    ReplaySegmentPinReply response;
+    request.set_recording_file_path(recordingFilePath);
+    for (const auto segmentId : segmentIds)
+    {
+        request.add_segment_ids(segmentId);
+    }
+
+    const auto status = stub->PinReplaySegments(&context, request, &response);
+    if (!status.ok())
+    {
+        return std::unexpected(PlacementFailure(
+            "Could not pin replay segments for {} on {}.\nStatus: {}\nMessage: {}\nDetail: {}",
+            recordingFilePath,
+            workerConfig.host,
+            magic_enum::enum_name(status.error_code()),
+            status.error_message(),
+            status.error_details()));
+    }
+
+    std::vector<uint64_t> pinnedSegmentIds;
+    pinnedSegmentIds.reserve(static_cast<size_t>(response.segment_ids_size()));
+    for (const auto segmentId : response.segment_ids())
+    {
+        pinnedSegmentIds.push_back(segmentId);
+    }
+    return pinnedSegmentIds;
+}
+
+std::expected<void, Exception>
+GRPCQuerySubmissionBackend::unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    grpc::ClientContext context;
+    ReplaySegmentUnpinRequest request;
+    google::protobuf::Empty response;
+    request.set_recording_file_path(recordingFilePath);
+    for (const auto segmentId : segmentIds)
+    {
+        request.add_segment_ids(segmentId);
+    }
+
+    const auto status = stub->UnpinReplaySegments(&context, request, &response);
+    if (status.ok())
+    {
+        return {};
+    }
+
+    return std::unexpected(PlacementFailure(
+        "Could not unpin replay segments for {} on {}.\nStatus: {}\nMessage: {}\nDetail: {}",
+        recordingFilePath,
+        workerConfig.host,
+        magic_enum::enum_name(status.error_code()),
+        status.error_message(),
+        status.error_details()));
 }
 
 BackendProvider createGRPCBackend()

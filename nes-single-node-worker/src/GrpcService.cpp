@@ -18,6 +18,7 @@
 #include <exception>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -82,6 +83,39 @@ T getValueOrThrow(std::expected<T, Exception> expected)
     }
     throw std::move(expected.error());
 }
+
+Replay::BinaryStoreReplaySelection deserializeReplaySegmentSelection(const ReplaySegmentSelectionRequest& request)
+{
+    Replay::BinaryStoreReplaySelection selection;
+    if (request.segment_ids_size() > 0)
+    {
+        std::vector<uint64_t> segmentIds;
+        segmentIds.reserve(static_cast<size_t>(request.segment_ids_size()));
+        for (const auto segmentId : request.segment_ids())
+        {
+            segmentIds.push_back(segmentId);
+        }
+        selection.segmentIds = std::move(segmentIds);
+    }
+    if (request.has_scan_start_ms())
+    {
+        selection.scanStartMs = request.scan_start_ms();
+    }
+    if (request.has_scan_end_ms())
+    {
+        selection.scanEndMs = request.scan_end_ms();
+    }
+    return selection;
+}
+
+template <typename Reply>
+void setReplaySegmentIds(Reply* reply, const std::vector<uint64_t>& segmentIds)
+{
+    for (const auto segmentId : segmentIds)
+    {
+        reply->add_segment_ids(segmentId);
+    }
+}
 }
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
@@ -89,14 +123,29 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
     auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
     CPPTRACE_TRY
     {
-        auto replayCheckpoint = request->has_replaycheckpoint()
-            ? std::optional<ReplayCheckpointReference>{ReplayCheckpointReference{
-                  .host = std::string{},
-                  .bundleName = request->replaycheckpoint().bundle_name(),
-                  .planFingerprint = request->replaycheckpoint().plan_fingerprint(),
-                  .checkpointWatermarkMs = request->replaycheckpoint().checkpoint_watermark_ms()}}
+        auto replayCheckpointRegistration = request->has_replaycheckpoint()
+            ? std::optional<ReplayCheckpointRegistration>{ReplayCheckpointRegistration{
+                  .restoreCheckpoint = request->replaycheckpoint().has_restore_checkpoint()
+                      ? std::optional<ReplayCheckpointReference>{ReplayCheckpointReference{
+                            .host = std::string{},
+                            .bundleName = request->replaycheckpoint().restore_checkpoint().bundle_name(),
+                            .planFingerprint = request->replaycheckpoint().restore_checkpoint().plan_fingerprint(),
+                            .replayRestoreFingerprint
+                            = request->replaycheckpoint().restore_checkpoint().replay_restore_fingerprint(),
+                            .checkpointWatermarkMs
+                            = request->replaycheckpoint().restore_checkpoint().checkpoint_watermark_ms()}}
+                      : std::nullopt,
+                  .replayRestoreFingerprint = request->replaycheckpoint().has_replay_restore_fingerprint()
+                      ? std::optional<std::string>{request->replaycheckpoint().replay_restore_fingerprint()}
+                      : std::nullopt}}
             : std::nullopt;
-        auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan), std::move(replayCheckpoint));
+        auto replayRuntimeControl = request->has_replayruntimecontrol()
+            ? std::optional<ReplayQueryRuntimeControl>{ReplayQueryRuntimeControl{
+                  .emitStartWatermarkMs = request->replayruntimecontrol().emit_start_watermark_ms()}}
+            : std::nullopt;
+        auto result
+            = delegate.registerQuery(
+                std::move(fullySpecifiedQueryPlan), std::move(replayCheckpointRegistration), std::move(replayRuntimeControl));
         if (result.has_value())
         {
             *response->mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(*result);
@@ -272,6 +321,77 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
 
         serializeWorkerStatus(status, response);
 
+        return grpc::Status::OK;
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unknown exception"};
+}
+
+grpc::Status
+GRPCServer::SelectReplaySegments(grpc::ServerContext* context, const ReplaySegmentSelectionRequest* request, ReplaySegmentSelectionReply* response)
+{
+    CPPTRACE_TRY
+    {
+        auto selectedSegmentIds
+            = getValueOrThrow(delegate.selectReplaySegments(request->recording_file_path(), deserializeReplaySegmentSelection(*request)));
+        setReplaySegmentIds(response, selectedSegmentIds);
+        return grpc::Status::OK;
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unknown exception"};
+}
+
+grpc::Status GRPCServer::PinReplaySegments(grpc::ServerContext* context, const ReplaySegmentPinRequest* request, ReplaySegmentPinReply* response)
+{
+    CPPTRACE_TRY
+    {
+        std::vector<uint64_t> segmentIds;
+        segmentIds.reserve(static_cast<size_t>(request->segment_ids_size()));
+        for (const auto segmentId : request->segment_ids())
+        {
+            segmentIds.push_back(segmentId);
+        }
+        auto pinnedSegmentIds = getValueOrThrow(delegate.pinReplaySegments(request->recording_file_path(), segmentIds));
+        setReplaySegmentIds(response, pinnedSegmentIds);
+        return grpc::Status::OK;
+    }
+    CPPTRACE_CATCH(const Exception& e)
+    {
+        return handleError(e, context);
+    }
+    CPPTRACE_CATCH_ALT(const std::exception& e)
+    {
+        return handleError(e, context);
+    }
+    return {grpc::INTERNAL, "unknown exception"};
+}
+
+grpc::Status
+GRPCServer::UnpinReplaySegments(grpc::ServerContext* context, const ReplaySegmentUnpinRequest* request, google::protobuf::Empty*)
+{
+    CPPTRACE_TRY
+    {
+        std::vector<uint64_t> segmentIds;
+        segmentIds.reserve(static_cast<size_t>(request->segment_ids_size()));
+        for (const auto segmentId : request->segment_ids())
+        {
+            segmentIds.push_back(segmentId);
+        }
+        getValueOrThrow(delegate.unpinReplaySegments(request->recording_file_path(), segmentIds));
         return grpc::Status::OK;
     }
     CPPTRACE_CATCH(const Exception& e)

@@ -508,7 +508,14 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                     [&](const auto& successor)
                     {
                         pool.statistic->onEvent(
-                            TaskEmit{id, task.queryId, pipeline->id, successor->id, taskId, tupleBuffer.getNumberOfTuples()});
+                            TaskEmit{
+                                id,
+                                task.queryId,
+                                pipeline->id,
+                                successor->id,
+                                taskId,
+                                tupleBuffer.getNumberOfTuples(),
+                                tupleBuffer.getWatermark().getRawValue()});
                         return pool.emitWork(task.queryId, successor, tupleBuffer, TaskCallback{}, continuationPolicy);
                     });
             },
@@ -523,7 +530,14 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
                 {
                     pool.addInternalTask(WorkTask(task.queryId, pipeline->id, pipeline, tupleBuffer, std::move(task.callback)));
                 }
-                pool.statistic->onEvent(TaskEmit{id, task.queryId, pipeline->id, pipeline->id, taskId, tupleBuffer.getNumberOfTuples()});
+                pool.statistic->onEvent(TaskEmit{
+                    id,
+                    task.queryId,
+                    pipeline->id,
+                    pipeline->id,
+                    taskId,
+                    tupleBuffer.getNumberOfTuples(),
+                    tupleBuffer.getWatermark().getRawValue()});
             }
 
         );

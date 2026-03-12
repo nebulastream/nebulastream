@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <fstream>
 #include <optional>
 #include <string>
@@ -42,6 +43,7 @@
 #include <Plans/LogicalPlanBuilder.hpp>
 #include <QueryId.hpp>
 #include <Replay/ReplayStorage.hpp>
+#include <ReplayCheckpointPlanning.hpp>
 #include <Replay/TimeTravelReadResolver.hpp>
 #include <RecordingSelectionResult.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -70,7 +72,10 @@ public:
     }
 
     [[nodiscard]] std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan, std::optional<ReplayCheckpointReference> = std::nullopt) override
+    registerQuery(
+        LogicalPlan,
+        std::optional<ReplayCheckpointRegistration> = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> = std::nullopt) override
     {
         return std::unexpected(QueryRegistrationFailed("unused in FakeWorkerStatusBackend"));
     }
@@ -91,6 +96,23 @@ public:
     {
         return workerStatusResult;
     }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string&, const Replay::BinaryStoreReplaySelection&) const override
+    {
+        return std::unexpected(PlacementFailure("unused in FakeWorkerStatusBackend"));
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string&, const std::vector<uint64_t>&) override
+    {
+        return std::unexpected(PlacementFailure("unused in FakeWorkerStatusBackend"));
+    }
+
+    std::expected<void, Exception> unpinReplaySegments(const std::string&, const std::vector<uint64_t>&) override
+    {
+        return std::unexpected(PlacementFailure("unused in FakeWorkerStatusBackend"));
+    }
 };
 
 class FakeLifecycleBackend final : public QuerySubmissionBackend
@@ -99,7 +121,10 @@ class FakeLifecycleBackend final : public QuerySubmissionBackend
 
 public:
     [[nodiscard]] std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> = std::nullopt) override
+    registerQuery(
+        LogicalPlan plan,
+        std::optional<ReplayCheckpointRegistration> = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> = std::nullopt) override
     {
         static_cast<void>(nextQueryId++);
         return QueryId::create(
@@ -121,6 +146,59 @@ public:
         status.until = std::chrono::system_clock::now();
         return status;
     }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const override
+    {
+        try
+        {
+            const auto selectedSegments = Replay::selectBinaryStoreSegments(recordingFilePath, selection);
+            return selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
+                | std::ranges::to<std::vector>();
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override
+    {
+        try
+        {
+            return Replay::pinBinaryStoreSegments(recordingFilePath, segmentIds);
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    }
+
+    std::expected<void, Exception> unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override
+    {
+        try
+        {
+            Replay::unpinBinaryStoreSegments(recordingFilePath, segmentIds);
+            return {};
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    }
+};
+
+struct ReplaySegmentSelectionCall
+{
+    std::string recordingFilePath;
+    Replay::BinaryStoreReplaySelection selection;
+};
+
+struct ReplaySegmentPinCall
+{
+    std::string recordingFilePath;
+    std::vector<uint64_t> segmentIds;
 };
 
 struct TrackingLifecycleBackendState
@@ -132,9 +210,18 @@ struct TrackingLifecycleBackendState
     std::unordered_map<DistributedQueryId, size_t> stops;
     std::unordered_map<DistributedQueryId, size_t> unregisters;
     std::unordered_map<DistributedQueryId, LogicalPlan> registeredPlans;
-    std::unordered_map<DistributedQueryId, std::optional<ReplayCheckpointReference>> registeredReplayCheckpoints;
+    std::unordered_map<DistributedQueryId, std::vector<std::optional<ReplayCheckpointRegistration>>> registeredReplayCheckpoints;
+    std::vector<ReplaySegmentSelectionCall> replaySelections;
+    std::vector<ReplaySegmentPinCall> replayPins;
+    std::vector<ReplaySegmentPinCall> replayUnpins;
     std::optional<std::string> replayCheckpointRegistrationFailureMessage;
+    std::unordered_map<DistributedQueryId, std::vector<std::optional<ReplayQueryRuntimeControl>>> registeredReplayRuntimeControls;
     bool autoStopRunningQueriesOnStatus = false;
+    size_t workerStatusCallCount = 0;
+    size_t statusCallCount = 0;
+    std::optional<size_t> stopRunningQueriesAfterWorkerStatusCallCount;
+    std::optional<size_t> fallbackStopRunningQueriesAfterStatusCallCount;
+    std::function<std::expected<WorkerStatus, Exception>(const TrackingLifecycleBackendState&)> workerStatusProvider;
     std::expected<WorkerStatus, Exception> workerStatusResult = []()
     {
         WorkerStatus status;
@@ -157,9 +244,13 @@ public:
     explicit TrackingLifecycleBackend(std::shared_ptr<TrackingLifecycleBackendState> state) : state(std::move(state)) { }
 
     [[nodiscard]] std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) override
+    registerQuery(
+        LogicalPlan plan,
+        std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> replayRuntimeControl = std::nullopt) override
     {
-        if (replayCheckpoint.has_value() && state->replayCheckpointRegistrationFailureMessage.has_value())
+        if (replayCheckpointRegistration.has_value() && replayCheckpointRegistration->restoreCheckpoint.has_value()
+            && state->replayCheckpointRegistrationFailureMessage.has_value())
         {
             return std::unexpected(QueryRegistrationFailed("{}", *state->replayCheckpointRegistrationFailureMessage));
         }
@@ -167,7 +258,8 @@ public:
         state->statuses.insert_or_assign(queryId, LocalQueryStatus{.queryId = queryId, .state = QueryState::Registered});
         ++state->registrations[plan.getQueryId().getDistributedQueryId()];
         state->registeredPlans.insert_or_assign(plan.getQueryId().getDistributedQueryId(), plan);
-        state->registeredReplayCheckpoints.insert_or_assign(plan.getQueryId().getDistributedQueryId(), std::move(replayCheckpoint));
+        state->registeredReplayCheckpoints[plan.getQueryId().getDistributedQueryId()].push_back(std::move(replayCheckpointRegistration));
+        state->registeredReplayRuntimeControls[plan.getQueryId().getDistributedQueryId()].push_back(std::move(replayRuntimeControl));
         return queryId;
     }
 
@@ -207,9 +299,14 @@ public:
 
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const override
     {
+        ++state->statusCallCount;
         if (const auto it = state->statuses.find(queryId); it != state->statuses.end())
         {
-            if (state->autoStopRunningQueriesOnStatus && it->second.state == QueryState::Running)
+            const auto stopOnReplayPhase = state->stopRunningQueriesAfterWorkerStatusCallCount.has_value()
+                && state->workerStatusCallCount >= *state->stopRunningQueriesAfterWorkerStatusCallCount;
+            const auto stopOnFallback = state->fallbackStopRunningQueriesAfterStatusCallCount.has_value()
+                && state->statusCallCount >= *state->fallbackStopRunningQueriesAfterStatusCallCount;
+            if ((state->autoStopRunningQueriesOnStatus || stopOnReplayPhase || stopOnFallback) && it->second.state == QueryState::Running)
             {
                 it->second.state = QueryState::Stopped;
             }
@@ -220,7 +317,56 @@ public:
 
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point) const override
     {
+        ++state->workerStatusCallCount;
+        if (state->workerStatusProvider)
+        {
+            return state->workerStatusProvider(*state);
+        }
         return state->workerStatusResult;
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const override
+    {
+        state->replaySelections.push_back(ReplaySegmentSelectionCall{.recordingFilePath = recordingFilePath, .selection = selection});
+        try
+        {
+            const auto selectedSegments = Replay::selectBinaryStoreSegments(recordingFilePath, selection);
+            return selectedSegments | std::views::transform([](const auto& segment) { return segment.segmentId; })
+                | std::ranges::to<std::vector>();
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    }
+
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override
+    {
+        state->replayPins.push_back(ReplaySegmentPinCall{.recordingFilePath = recordingFilePath, .segmentIds = segmentIds});
+        try
+        {
+            return Replay::pinBinaryStoreSegments(recordingFilePath, segmentIds);
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
+    }
+
+    std::expected<void, Exception> unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override
+    {
+        state->replayUnpins.push_back(ReplaySegmentPinCall{.recordingFilePath = recordingFilePath, .segmentIds = segmentIds});
+        try
+        {
+            Replay::unpinBinaryStoreSegments(recordingFilePath, segmentIds);
+            return {};
+        }
+        catch (const Exception& exception)
+        {
+            return std::unexpected(exception);
+        }
     }
 };
 
@@ -273,6 +419,21 @@ LogicalPlan createPlacedWindowReplayPlan(
             .withChildren({watermarkAssigner}));
     const auto sink = LogicalOperator(
         SinkLogicalOperator(sinkName).withTraitSet(placement).withInferredSchema({window.getOutputSchema()}).withChildren({window}));
+    return LogicalPlan(QueryId::createDistributed(queryId), {sink});
+}
+
+LogicalPlan createPlacedEventTimeReplayPlan(const DistributedQueryId& queryId, const Host& worker, const std::string& sinkName)
+{
+    const auto placement = TraitSet{PlacementTrait(worker)};
+    const auto source = LogicalOperator(InlineSourceLogicalOperator("INLINE_REPLAY_SOURCE", createSchema(), {}, {}).withTraitSet(placement));
+    const auto watermarkAssigner = LogicalOperator(
+        EventTimeWatermarkAssignerLogicalOperator(FieldAccessLogicalFunction("id"), Windowing::TimeUnit::Milliseconds())
+            .withTraitSet(placement)
+            .withInferredSchema({source.getOutputSchema()})
+            .withChildren({source}));
+    const auto sink = LogicalOperator(
+        SinkLogicalOperator(sinkName).withTraitSet(placement).withInferredSchema({watermarkAssigner.getOutputSchema()}).withChildren(
+            {watermarkAssigner}));
     return LogicalPlan(QueryId::createDistributed(queryId), {sink});
 }
 
@@ -371,7 +532,8 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsUpdatesWorkerCatalogFromBacken
                     .taskCount = 4,
                     .executionTimeNanos = 20'000'000}},
                 .recordingStatuses = {recordingStatus},
-                .replayCheckpoints = {}};
+                .replayCheckpoints = {},
+                .replayQueryStatuses = {}};
             return std::make_unique<FakeWorkerStatusBackend>(status);
         });
 
@@ -454,7 +616,14 @@ TEST(QueryManagerMetricsTest, WorkerStatusSerializationRoundTripsReplayOperatorS
                 DistributedQueryId("query-1")),
             .bundleName = "plan_query-1_replay_checkpoint_00000000000000001000",
             .planFingerprint = "fingerprint-1",
-            .checkpointWatermarkMs = 1000}}};
+            .replayRestoreFingerprint = "restore-fingerprint-1",
+            .checkpointWatermarkMs = 1000}},
+        .replayQueryStatuses = {ReplayQueryStatus{
+            .queryId = QueryId::create(
+                LocalQueryId(std::string("00000000-0000-0000-0000-000000000009")),
+                DistributedQueryId("query-9")),
+            .phase = ReplayQueryPhase::Emitting,
+            .lastOutputWatermarkMs = 1500}}};
 
     WorkerStatusResponse response;
     serializeWorkerStatus(status, &response);
@@ -490,7 +659,9 @@ TEST(QueryManagerMetricsTest, RefreshWorkerMetricsMirrorsReplayCheckpointStatusI
                         DistributedQueryId("query-1")),
                     .bundleName = "plan_query-1_replay_checkpoint_00000000000000001000",
                     .planFingerprint = "fingerprint-1",
-                    .checkpointWatermarkMs = 1000}}};
+                    .replayRestoreFingerprint = "restore-fingerprint-1",
+                    .checkpointWatermarkMs = 1000}},
+                .replayQueryStatuses = {}};
             return std::make_unique<FakeWorkerStatusBackend>(status);
         });
 
@@ -944,15 +1115,43 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
 
     auto sourceCatalog = std::make_shared<SourceCatalog>();
     auto sinkCatalog = std::make_shared<SinkCatalog>();
-    addSourceAndSinkCatalogEntries(sourceCatalog, sinkCatalog, worker, "REPLAY_SOURCE", "replay_sink");
-
     auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
-    const auto originalPlan = createReplayPlan(queryId, "REPLAY_SOURCE", "replay_sink");
-    const auto optimizedPlan = optimizer->optimize(originalPlan, replaySpecification, RecordingCatalog{});
-    ASSERT_EQ(optimizedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1U);
-    ASSERT_TRUE(optimizedPlan.getRecordingSelectionResult().incomingQueryPlanRewrite.has_value());
-    ASSERT_EQ(optimizedPlan.getRecordingSelectionResult().incomingQueryReplayBoundaries.size(), 1U);
-    const auto selectedRecording = optimizedPlan.getRecordingSelectionResult().selectedRecordings.front();
+    const auto originalPlan = createPlacedWindowReplayPlan(
+        queryId,
+        worker,
+        Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction("id")),
+        "replay_sink");
+    const auto sink = originalPlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto window = sink.getChildren().front();
+    ASSERT_TRUE(window.tryGetAs<WindowedAggregationLogicalOperator>().has_value());
+    ASSERT_EQ(window.getChildren().size(), 1U);
+    const auto assigner = window.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+    const auto selectedRecording = RecordingSelection{
+        .recordingId = RecordingId("replayable-query-recording"),
+        .node = worker,
+        .filePath = recordingFilePath.string(),
+        .structuralFingerprint = "replayable-window-boundary",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = replaySpecification.retentionWindowMs,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto replayBoundary = QueryRecordingPlanInsertion{
+        .selection = selectedRecording,
+        .materializationEdges = {RecordingRewriteEdge{.parentId = window.getId(), .childId = assigner.getId()}}};
+    const auto replayCheckpointBoundaryRewrite = QueryRecordingPlanRewrite{
+        .queryId = queryId.getRawValue(),
+        .basePlan = originalPlan,
+        .insertions = {replayBoundary}};
+    const auto replayCheckpointBoundaries = buildReplayCheckpointBoundaries(replayCheckpointBoundaryRewrite);
+    ASSERT_TRUE(replayCheckpointBoundaries.has_value()) << replayCheckpointBoundaries.error().what();
+    const auto replayCheckpointFingerprints = computeReplayCheckpointFingerprints(optimizer->decomposePlacedPlan(originalPlan), *replayCheckpointBoundaries);
+    ASSERT_TRUE(replayCheckpointFingerprints.has_value()) << replayCheckpointFingerprints.error().what();
+    ASSERT_TRUE(replayCheckpointFingerprints->contains(worker));
+    ASSERT_THAT(replayCheckpointFingerprints->at(worker), testing::SizeIs(1));
+    ASSERT_TRUE(replayCheckpointFingerprints->at(worker).front().has_value());
+    const auto replayRestoreFingerprint = *replayCheckpointFingerprints->at(worker).front();
 
     QueryManagerState state;
     state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
@@ -960,15 +1159,18 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
         queryId,
         ReplayableQueryMetadata{
             .originalPlan = originalPlan,
-            .globalPlan = optimizedPlan.getGlobalPlan(),
+            .globalPlan = originalPlan,
             .replaySpecification = replaySpecification,
             .selectedRecordings = {selectedRecording.recordingId},
             .networkExplanations = {},
             .queryPlanRewrite = QueryRecordingPlanRewrite{
                 .queryId = queryId.getRawValue(),
-                .basePlan = optimizedPlan.getRecordingSelectionResult().incomingQueryPlanRewrite->basePlan,
+                .basePlan = originalPlan,
                 .insertions = {}},
-            .replayBoundaries = optimizedPlan.getRecordingSelectionResult().incomingQueryReplayBoundaries});
+            .replayBoundaries = {replayBoundary},
+            .replayCheckpointRequirements = {ReplayCheckpointRequirement{
+                .host = worker.getRawValue(),
+                .replayRestoreFingerprint = replayRestoreFingerprint}}});
     state.recordingCatalog.upsertRecording(
         RecordingEntry{
             .id = selectedRecording.recordingId,
@@ -991,7 +1193,8 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
     backendState->workerStatusResult = [](
                                          const QueryId& queryId,
                                          const RecordingId& recordingId,
-                                         const std::filesystem::path& recordingFilePath) -> std::expected<WorkerStatus, Exception>
+                                         const std::filesystem::path& recordingFilePath,
+                                         const std::string& replayRestoreFingerprint) -> std::expected<WorkerStatus, Exception>
     {
         WorkerStatus status;
         status.until = std::chrono::system_clock::now();
@@ -1012,9 +1215,10 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
                 .queryId = queryId,
                 .bundleName = "plan_replayable-query_replay_checkpoint_00000000000000000500",
                 .planFingerprint = "replay-checkpoint-fingerprint",
+                .replayRestoreFingerprint = replayRestoreFingerprint,
                 .checkpointWatermarkMs = 500});
         return status;
-    }(localQueryId, selectedRecording.recordingId, recordingFilePath);
+    }(localQueryId, selectedRecording.recordingId, recordingFilePath, replayRestoreFingerprint);
     auto queryManager = std::make_shared<QueryManager>(
         workerCatalog,
         [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
@@ -1027,11 +1231,13 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
     EXPECT_EQ(result->execution.intervalStartMs, 1'000U);
     EXPECT_EQ(result->execution.intervalEndMs, 5'000U);
     EXPECT_EQ(result->execution.state, ReplayExecutionState::Done);
-    ASSERT_TRUE(result->execution.selectedCheckpoint.has_value());
-    EXPECT_EQ(result->execution.selectedCheckpoint->host, worker.getRawValue());
-    EXPECT_EQ(result->execution.selectedCheckpoint->bundleName, "plan_replayable-query_replay_checkpoint_00000000000000000500");
-    EXPECT_EQ(result->execution.selectedCheckpoint->planFingerprint, "replay-checkpoint-fingerprint");
-    EXPECT_EQ(result->execution.selectedCheckpoint->checkpointWatermarkMs, 500U);
+    ASSERT_THAT(result->execution.selectedCheckpoints, testing::SizeIs(1));
+    EXPECT_EQ(result->execution.selectedCheckpoints.front().host, worker.getRawValue());
+    EXPECT_EQ(
+        result->execution.selectedCheckpoints.front().bundleName,
+        "plan_replayable-query_replay_checkpoint_00000000000000000500");
+    EXPECT_EQ(result->execution.selectedCheckpoints.front().planFingerprint, "replay-checkpoint-fingerprint");
+    EXPECT_EQ(result->execution.selectedCheckpoints.front().checkpointWatermarkMs, 500U);
     EXPECT_EQ(result->execution.warmupStartMs, 500U);
     EXPECT_THAT(result->execution.selectedRecordingIds, testing::ElementsAre(selectedRecording.recordingId.getRawValue()));
     EXPECT_THAT(
@@ -1046,9 +1252,9 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
     EXPECT_EQ(queryManager->getReplayExecutions().at(result->execution.id), result->execution);
     ASSERT_TRUE(queryManager->getReplayPlans().contains(result->execution.id));
     EXPECT_THAT(queryManager->getReplayPlans().at(result->execution.id).selectedRecordingIds, testing::ElementsAre(selectedRecording.recordingId));
-    ASSERT_TRUE(queryManager->getReplayPlans().at(result->execution.id).selectedCheckpoint.has_value());
+    ASSERT_THAT(queryManager->getReplayPlans().at(result->execution.id).selectedCheckpoints, testing::SizeIs(1));
     EXPECT_EQ(
-        queryManager->getReplayPlans().at(result->execution.id).selectedCheckpoint->bundleName,
+        queryManager->getReplayPlans().at(result->execution.id).selectedCheckpoints.front().bundleName,
         "plan_replayable-query_replay_checkpoint_00000000000000000500");
 
     const auto internalQueryId = result->execution.internalQueryIds.front();
@@ -1056,11 +1262,29 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
     EXPECT_EQ(backendState->starts[internalQueryId], 1U);
     EXPECT_EQ(backendState->unregisters[internalQueryId], 1U);
     ASSERT_TRUE(backendState->registeredReplayCheckpoints.contains(internalQueryId));
-    ASSERT_TRUE(backendState->registeredReplayCheckpoints.at(internalQueryId).has_value());
+    ASSERT_THAT(backendState->registeredReplayCheckpoints.at(internalQueryId), testing::SizeIs(1));
+    ASSERT_TRUE(backendState->registeredReplayCheckpoints.at(internalQueryId).front().has_value());
     EXPECT_EQ(
-        backendState->registeredReplayCheckpoints.at(internalQueryId)->bundleName,
+        backendState->registeredReplayCheckpoints.at(internalQueryId).front()->restoreCheckpoint->bundleName,
         "plan_replayable-query_replay_checkpoint_00000000000000000500");
-    EXPECT_EQ(backendState->registeredReplayCheckpoints.at(internalQueryId)->checkpointWatermarkMs, 500U);
+    EXPECT_EQ(
+        backendState->registeredReplayCheckpoints.at(internalQueryId).front()->restoreCheckpoint->checkpointWatermarkMs,
+        500U);
+    ASSERT_TRUE(backendState->registeredReplayCheckpoints.at(internalQueryId).front()->replayRestoreFingerprint.has_value());
+    ASSERT_TRUE(backendState->registeredReplayRuntimeControls.contains(internalQueryId));
+    ASSERT_THAT(backendState->registeredReplayRuntimeControls.at(internalQueryId), testing::SizeIs(1));
+    ASSERT_TRUE(backendState->registeredReplayRuntimeControls.at(internalQueryId).front().has_value());
+    EXPECT_EQ(backendState->registeredReplayRuntimeControls.at(internalQueryId).front()->emitStartWatermarkMs, 1'000U);
+    ASSERT_THAT(backendState->replaySelections, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replaySelections.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_EQ(backendState->replaySelections.front().selection.scanStartMs, std::optional<uint64_t>(500));
+    EXPECT_EQ(backendState->replaySelections.front().selection.scanEndMs, std::optional<uint64_t>(5'000));
+    ASSERT_THAT(backendState->replayPins, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replayPins.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_THAT(backendState->replayPins.front().segmentIds, testing::ElementsAre(11, 12, 13));
+    ASSERT_THAT(backendState->replayUnpins, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replayUnpins.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_THAT(backendState->replayUnpins.front().segmentIds, testing::ElementsAre(11, 12, 13));
 
     const auto manifest = Replay::readBinaryStoreManifest(recordingFilePath.string());
     EXPECT_THAT(manifest.segments | std::views::transform(&Replay::BinaryStoreManifestEntry::pinCount) | std::ranges::to<std::vector>(), testing::Each(0U));
@@ -1069,7 +1293,162 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerExecutesReplayExecutionToCom
     std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
 }
 
-TEST(QueryManagerMetricsTest, RegisterQueryRejectsReplayCheckpointRestoreWhenReplayHostHasMultipleLocalPlans)
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerWaitsForWorkerReplayPhaseBeforeMarkingEmitting)
+{
+    const ScopedTimeTravelReadAliasReset aliasReset;
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("replay-phase-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+    const auto replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = 5'000};
+    const auto recordingFilePath = createReplayRecordingFixturePath("replay-phase-5-emit-transition");
+    initializeReplayRecordingFixture(
+        recordingFilePath,
+        {
+            Replay::BinaryStoreManifestEntry{.segmentId = 11, .payloadOffset = 128, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 0, .maxWatermark = 1'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 12, .payloadOffset = 192, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 2'000, .maxWatermark = 3'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 13, .payloadOffset = 256, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 4'000, .maxWatermark = 5'999},
+        });
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
+    const auto originalPlan = createPlacedWindowReplayPlan(
+        queryId,
+        worker,
+        Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction("id")),
+        "replay_sink");
+    const auto sink = originalPlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto window = sink.getChildren().front();
+    ASSERT_TRUE(window.tryGetAs<WindowedAggregationLogicalOperator>().has_value());
+    ASSERT_EQ(window.getChildren().size(), 1U);
+    const auto assigner = window.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+    const auto selectedRecording = RecordingSelection{
+        .recordingId = RecordingId("replay-phase-query-recording"),
+        .node = worker,
+        .filePath = recordingFilePath.string(),
+        .structuralFingerprint = "replay-phase-window-boundary",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = replaySpecification.retentionWindowMs,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto replayBoundary = QueryRecordingPlanInsertion{
+        .selection = selectedRecording,
+        .materializationEdges = {RecordingRewriteEdge{.parentId = window.getId(), .childId = assigner.getId()}}};
+    const auto replayCheckpointBoundaryRewrite = QueryRecordingPlanRewrite{
+        .queryId = queryId.getRawValue(),
+        .basePlan = originalPlan,
+        .insertions = {replayBoundary}};
+    const auto replayCheckpointBoundaries = buildReplayCheckpointBoundaries(replayCheckpointBoundaryRewrite);
+    ASSERT_TRUE(replayCheckpointBoundaries.has_value()) << replayCheckpointBoundaries.error().what();
+    const auto replayCheckpointFingerprints = computeReplayCheckpointFingerprints(optimizer->decomposePlacedPlan(originalPlan), *replayCheckpointBoundaries);
+    ASSERT_TRUE(replayCheckpointFingerprints.has_value()) << replayCheckpointFingerprints.error().what();
+    ASSERT_TRUE(replayCheckpointFingerprints->contains(worker));
+    ASSERT_THAT(replayCheckpointFingerprints->at(worker), testing::SizeIs(1));
+    ASSERT_TRUE(replayCheckpointFingerprints->at(worker).front().has_value());
+    const auto replayRestoreFingerprint = *replayCheckpointFingerprints->at(worker).front();
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = originalPlan,
+            .globalPlan = originalPlan,
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {selectedRecording.recordingId},
+            .networkExplanations = {},
+            .queryPlanRewrite = QueryRecordingPlanRewrite{
+                .queryId = queryId.getRawValue(),
+                .basePlan = originalPlan,
+                .insertions = {}},
+            .replayBoundaries = {replayBoundary},
+            .replayCheckpointRequirements = {ReplayCheckpointRequirement{
+                .host = worker.getRawValue(),
+                .replayRestoreFingerprint = replayRestoreFingerprint}}});
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = selectedRecording.recordingId,
+            .node = selectedRecording.node,
+            .filePath = recordingFilePath.string(),
+            .structuralFingerprint = selectedRecording.structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = selectedRecording.representation,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(0),
+            .retainedEndWatermark = Timestamp(70'000),
+            .fillWatermark = Timestamp(70'000),
+            .segmentCount = 3,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt});
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    backendState->stopRunningQueriesAfterWorkerStatusCallCount = 2;
+    backendState->fallbackStopRunningQueriesAfterStatusCallCount = 20;
+    backendState->workerStatusProvider = [recordingId = selectedRecording.recordingId, recordingFilePath](
+                                             const TrackingLifecycleBackendState& backendState) -> std::expected<WorkerStatus, Exception>
+    {
+        WorkerStatus status;
+        status.until = std::chrono::system_clock::now();
+        status.replayMetrics.recordingStatuses.push_back(
+            Replay::RecordingRuntimeStatus{
+                .recordingId = recordingId.getRawValue(),
+                .filePath = recordingFilePath.string(),
+                .lifecycleState = Replay::RecordingLifecycleState::Ready,
+                .retentionWindowMs = 60'000,
+                .retainedStartWatermark = Timestamp(0),
+                .retainedEndWatermark = Timestamp(70'000),
+                .fillWatermark = Timestamp(70'000),
+                .segmentCount = 3,
+                .storageBytes = 4096,
+                .successorRecordingId = std::nullopt});
+
+        for (const auto& [localQueryId, localStatus] : backendState.statuses)
+        {
+            if (localStatus.state != QueryState::Running)
+            {
+                continue;
+            }
+            status.replayMetrics.replayQueryStatuses.push_back(
+                ReplayQueryStatus{
+                    .queryId = localQueryId,
+                    .phase = backendState.workerStatusCallCount >= 2 ? ReplayQueryPhase::Emitting
+                                                                     : ReplayQueryPhase::FastForwarding,
+                    .lastOutputWatermarkMs = backendState.workerStatusCallCount >= 2 ? std::optional<uint64_t>(1'000)
+                                                                                     : std::optional<uint64_t>(500)});
+        }
+        return status;
+    };
+
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, optimizer, sourceCatalog);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 1'000, .intervalEndMs = 5'000});
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    EXPECT_EQ(result->execution.state, ReplayExecutionState::Done);
+    ASSERT_THAT(result->execution.internalQueryIds, testing::SizeIs(1));
+
+    const auto internalQueryId = result->execution.internalQueryIds.front();
+    ASSERT_TRUE(backendState->registeredReplayRuntimeControls.contains(internalQueryId));
+    ASSERT_THAT(backendState->registeredReplayRuntimeControls.at(internalQueryId), testing::SizeIs(1));
+    ASSERT_TRUE(backendState->registeredReplayRuntimeControls.at(internalQueryId).front().has_value());
+    EXPECT_EQ(backendState->registeredReplayRuntimeControls.at(internalQueryId).front()->emitStartWatermarkMs, 1'000U);
+    EXPECT_GE(backendState->workerStatusCallCount, 2U);
+
+    std::error_code errorCode;
+    std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
+}
+
+TEST(QueryManagerMetricsTest, RegisterQueryRoutesReplayCheckpointRestoreAcrossMultipleLocalPlansOnSameHost)
 {
     const auto worker = Host("worker-1:8080");
     const auto queryId = DistributedQueryId("replay-guard-query");
@@ -1094,18 +1473,34 @@ TEST(QueryManagerMetricsTest, RegisterQueryRejectsReplayCheckpointRestoreWhenRep
         QueryRegistrationOptions{
             .internal = true,
             .includeInReplayPlanning = false,
-            .replayCheckpoint =
-                ReplayCheckpointReference{
+            .replayCheckpoints =
+                {ReplayCheckpointReference{
                     .host = worker.getRawValue(),
-                    .bundleName = "plan_replay-guard-query_replay_checkpoint_00000000000000000900",
-                    .planFingerprint = "fingerprint-guard",
-                    .checkpointWatermarkMs = 900}});
+                    .bundleName = "plan_replay-guard-query_a_replay_checkpoint_00000000000000000900",
+                    .planFingerprint = "fingerprint-guard-a",
+                    .replayRestoreFingerprint = "restore-a",
+                    .checkpointWatermarkMs = 900},
+                 ReplayCheckpointReference{
+                     .host = worker.getRawValue(),
+                     .bundleName = "plan_replay-guard-query_b_replay_checkpoint_00000000000000000900",
+                     .planFingerprint = "fingerprint-guard-b",
+                     .replayRestoreFingerprint = "restore-b",
+                     .checkpointWatermarkMs = 900}},
+            .replayRestoreFingerprintsByHost = {{worker, {std::optional<std::string>{"restore-a"}, std::optional<std::string>{"restore-b"}}}}});
 
-    ASSERT_FALSE(result.has_value());
-    EXPECT_EQ(result.error().code(), UnsupportedQuery("unused").code());
-    EXPECT_THAT(std::string(result.error().what()), testing::HasSubstr("exactly one local replay plan"));
-    EXPECT_TRUE(backendState->registrations.empty());
+    ASSERT_TRUE(result.has_value()) << result.error().what();
     EXPECT_TRUE(queryManager->queries().empty());
+    EXPECT_TRUE(queryManager->getQuery(*result).has_value());
+    ASSERT_TRUE(backendState->registeredReplayCheckpoints.contains(*result));
+    ASSERT_THAT(backendState->registeredReplayCheckpoints.at(*result), testing::SizeIs(2));
+    ASSERT_TRUE(backendState->registeredReplayCheckpoints.at(*result)[0].has_value());
+    ASSERT_TRUE(backendState->registeredReplayCheckpoints.at(*result)[1].has_value());
+    EXPECT_EQ(
+        backendState->registeredReplayCheckpoints.at(*result)[0]->restoreCheckpoint->bundleName,
+        "plan_replay-guard-query_a_replay_checkpoint_00000000000000000900");
+    EXPECT_EQ(
+        backendState->registeredReplayCheckpoints.at(*result)[1]->restoreCheckpoint->bundleName,
+        "plan_replay-guard-query_b_replay_checkpoint_00000000000000000900");
 }
 
 TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplayCheckpointRegistration)
@@ -1130,15 +1525,43 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplay
 
     auto sourceCatalog = std::make_shared<SourceCatalog>();
     auto sinkCatalog = std::make_shared<SinkCatalog>();
-    addSourceAndSinkCatalogEntries(sourceCatalog, sinkCatalog, worker, "REPLAY_SOURCE", "replay_sink");
-
     auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
-    const auto originalPlan = createReplayPlan(queryId, "REPLAY_SOURCE", "replay_sink");
-    const auto optimizedPlan = optimizer->optimize(originalPlan, replaySpecification, RecordingCatalog{});
-    ASSERT_EQ(optimizedPlan.getRecordingSelectionResult().selectedRecordings.size(), 1U);
-    ASSERT_TRUE(optimizedPlan.getRecordingSelectionResult().incomingQueryPlanRewrite.has_value());
-    ASSERT_EQ(optimizedPlan.getRecordingSelectionResult().incomingQueryReplayBoundaries.size(), 1U);
-    const auto selectedRecording = optimizedPlan.getRecordingSelectionResult().selectedRecordings.front();
+    const auto originalPlan = createPlacedWindowReplayPlan(
+        queryId,
+        worker,
+        Windowing::TimeCharacteristic::createEventTime(FieldAccessLogicalFunction("id")),
+        "replay_sink");
+    const auto sink = originalPlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto window = sink.getChildren().front();
+    ASSERT_TRUE(window.tryGetAs<WindowedAggregationLogicalOperator>().has_value());
+    ASSERT_EQ(window.getChildren().size(), 1U);
+    const auto assigner = window.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+    const auto selectedRecording = RecordingSelection{
+        .recordingId = RecordingId("replayable-query-registration-failure-recording"),
+        .node = worker,
+        .filePath = recordingFilePath.string(),
+        .structuralFingerprint = "replayable-window-registration-failure-boundary",
+        .representation = RecordingRepresentation::BinaryStore,
+        .retentionWindowMs = replaySpecification.retentionWindowMs,
+        .beneficiaryQueries = {},
+        .coversIncomingQuery = true};
+    const auto replayBoundary = QueryRecordingPlanInsertion{
+        .selection = selectedRecording,
+        .materializationEdges = {RecordingRewriteEdge{.parentId = window.getId(), .childId = assigner.getId()}}};
+    const auto replayCheckpointBoundaryRewrite = QueryRecordingPlanRewrite{
+        .queryId = queryId.getRawValue(),
+        .basePlan = originalPlan,
+        .insertions = {replayBoundary}};
+    const auto replayCheckpointBoundaries = buildReplayCheckpointBoundaries(replayCheckpointBoundaryRewrite);
+    ASSERT_TRUE(replayCheckpointBoundaries.has_value()) << replayCheckpointBoundaries.error().what();
+    const auto replayCheckpointFingerprints = computeReplayCheckpointFingerprints(optimizer->decomposePlacedPlan(originalPlan), *replayCheckpointBoundaries);
+    ASSERT_TRUE(replayCheckpointFingerprints.has_value()) << replayCheckpointFingerprints.error().what();
+    ASSERT_TRUE(replayCheckpointFingerprints->contains(worker));
+    ASSERT_THAT(replayCheckpointFingerprints->at(worker), testing::SizeIs(1));
+    ASSERT_TRUE(replayCheckpointFingerprints->at(worker).front().has_value());
+    const auto replayRestoreFingerprint = *replayCheckpointFingerprints->at(worker).front();
 
     QueryManagerState state;
     state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
@@ -1146,15 +1569,18 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplay
         queryId,
         ReplayableQueryMetadata{
             .originalPlan = originalPlan,
-            .globalPlan = optimizedPlan.getGlobalPlan(),
+            .globalPlan = originalPlan,
             .replaySpecification = replaySpecification,
             .selectedRecordings = {selectedRecording.recordingId},
             .networkExplanations = {},
             .queryPlanRewrite = QueryRecordingPlanRewrite{
                 .queryId = queryId.getRawValue(),
-                .basePlan = optimizedPlan.getRecordingSelectionResult().incomingQueryPlanRewrite->basePlan,
+                .basePlan = originalPlan,
                 .insertions = {}},
-            .replayBoundaries = optimizedPlan.getRecordingSelectionResult().incomingQueryReplayBoundaries});
+            .replayBoundaries = {replayBoundary},
+            .replayCheckpointRequirements = {ReplayCheckpointRequirement{
+                .host = worker.getRawValue(),
+                .replayRestoreFingerprint = replayRestoreFingerprint}}});
     state.recordingCatalog.upsertRecording(
         RecordingEntry{
             .id = selectedRecording.recordingId,
@@ -1177,7 +1603,8 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplay
     backendState->workerStatusResult = [](
                                          const QueryId& queryId,
                                          const RecordingId& recordingId,
-                                         const std::filesystem::path& recordingFilePath) -> std::expected<WorkerStatus, Exception>
+                                         const std::filesystem::path& recordingFilePath,
+                                         const std::string& replayRestoreFingerprint) -> std::expected<WorkerStatus, Exception>
     {
         WorkerStatus status;
         status.until = std::chrono::system_clock::now();
@@ -1198,9 +1625,10 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplay
                 .queryId = queryId,
                 .bundleName = "plan_replayable-query_replay_checkpoint_00000000000000000500",
                 .planFingerprint = "replay-checkpoint-fingerprint",
+                .replayRestoreFingerprint = replayRestoreFingerprint,
                 .checkpointWatermarkMs = 500});
         return status;
-    }(localQueryId, selectedRecording.recordingId, recordingFilePath);
+    }(localQueryId, selectedRecording.recordingId, recordingFilePath, replayRestoreFingerprint);
     auto queryManager = std::make_shared<QueryManager>(
         workerCatalog,
         [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
@@ -1228,6 +1656,16 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerFailsWhenWorkerRejectsReplay
     EXPECT_TRUE(backendState->registeredReplayCheckpoints.empty());
     EXPECT_TRUE(backendState->starts.empty());
     EXPECT_TRUE(backendState->unregisters.empty());
+    ASSERT_THAT(backendState->replaySelections, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replaySelections.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_EQ(backendState->replaySelections.front().selection.scanStartMs, std::optional<uint64_t>(500));
+    EXPECT_EQ(backendState->replaySelections.front().selection.scanEndMs, std::optional<uint64_t>(5'000));
+    ASSERT_THAT(backendState->replayPins, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replayPins.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_THAT(backendState->replayPins.front().segmentIds, testing::ElementsAre(11, 12, 13));
+    ASSERT_THAT(backendState->replayUnpins, testing::SizeIs(1));
+    EXPECT_EQ(backendState->replayUnpins.front().recordingFilePath, recordingFilePath.string());
+    EXPECT_THAT(backendState->replayUnpins.front().segmentIds, testing::ElementsAre(11, 12, 13));
 
     const auto manifest = Replay::readBinaryStoreManifest(recordingFilePath.string());
     EXPECT_THAT(manifest.segments | std::views::transform(&Replay::BinaryStoreManifestEntry::pinCount) | std::ranges::to<std::vector>(), testing::Each(0U));
@@ -1597,6 +2035,138 @@ TEST(QueryManagerMetricsTest, ReplayStatementHandlerInjectsEventTimeGateForWindo
     EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("scan_end_ms")), 5'000U);
     EXPECT_EQ(std::get<std::string>(sourceConfig.at("segment_ids")), "41,42,43");
     EXPECT_EQ(std::get<std::string>(sourceConfig.at("replay_mode")), "interval");
+
+    std::error_code errorCode;
+    std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);
+}
+
+TEST(QueryManagerMetricsTest, ReplayStatementHandlerInjectsExactEventTimeTupleGateForStatelessReplaySuffix)
+{
+    const auto worker = Host("worker-1:8080");
+    const auto queryId = DistributedQueryId("event-time-stateless-replay-query");
+    const auto localQueryId = QueryId::create(
+        LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")), queryId);
+    const auto replaySpecification = ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = 5'000};
+    const auto recordingId = RecordingId("event-time-stateless-recording");
+    const auto recordingFilePath = createReplayRecordingFixturePath("replay-phase-6-event-stateless");
+    initializeReplayRecordingFixture(
+        recordingFilePath,
+        {
+            Replay::BinaryStoreManifestEntry{.segmentId = 51, .payloadOffset = 128, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 0, .maxWatermark = 1'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 52, .payloadOffset = 192, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 2'000, .maxWatermark = 3'999},
+            Replay::BinaryStoreManifestEntry{.segmentId = 53, .payloadOffset = 256, .storedSizeBytes = 64, .logicalSizeBytes = 64, .minWatermark = 4'000, .maxWatermark = 5'999},
+        });
+
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(worker, "worker-1-data", INFINITE_CAPACITY, {}));
+
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    auto optimizer = std::make_shared<LegacyOptimizer>(sourceCatalog, sinkCatalog, workerCatalog);
+
+    const auto basePlan = createPlacedEventTimeReplayPlan(queryId, worker, "event_time_sink");
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto assigner = sink.getChildren().front();
+    ASSERT_TRUE(assigner.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>().has_value());
+
+    const QueryRecordingPlanInsertion replayBoundary{
+        .selection =
+            RecordingSelection{
+                .recordingId = recordingId,
+                .node = worker,
+                .filePath = recordingFilePath.string(),
+                .structuralFingerprint = "event-time-stateless-boundary",
+                .representation = RecordingRepresentation::BinaryStore,
+                .retentionWindowMs = replaySpecification.retentionWindowMs,
+                .beneficiaryQueries = {},
+                .coversIncomingQuery = true},
+        .materializationEdges =
+            {RecordingRewriteEdge{.parentId = sink.getId(), .childId = assigner.getId()}}};
+
+    QueryManagerState state;
+    state.queries.emplace(queryId, DistributedQuery({{worker, {localQueryId}}}));
+    state.recordingCatalog.upsertQueryMetadata(
+        queryId,
+        ReplayableQueryMetadata{
+            .originalPlan = basePlan,
+            .globalPlan = basePlan,
+            .replaySpecification = replaySpecification,
+            .selectedRecordings = {recordingId},
+            .networkExplanations = {},
+            .queryPlanRewrite =
+                QueryRecordingPlanRewrite{
+                    .queryId = queryId.getRawValue(),
+                    .basePlan = basePlan,
+                    .insertions = {}},
+            .replayBoundaries = {replayBoundary}});
+    state.recordingCatalog.upsertRecording(
+        RecordingEntry{
+            .id = recordingId,
+            .node = worker,
+            .filePath = recordingFilePath.string(),
+            .structuralFingerprint = replayBoundary.selection.structuralFingerprint,
+            .retentionWindowMs = replaySpecification.retentionWindowMs,
+            .representation = RecordingRepresentation::BinaryStore,
+            .ownerQueries = {queryId},
+            .lifecycleState = Replay::RecordingLifecycleState::Ready,
+            .retainedStartWatermark = Timestamp(0),
+            .retainedEndWatermark = Timestamp(70'000),
+            .fillWatermark = Timestamp(70'000),
+            .segmentCount = 3,
+            .storageBytes = 4096,
+            .successorRecordingId = std::nullopt});
+
+    auto backendState = std::make_shared<TrackingLifecycleBackendState>();
+    backendState->autoStopRunningQueriesOnStatus = true;
+    backendState->workerStatusResult = [recordingId, recordingFilePath]() -> std::expected<WorkerStatus, Exception>
+    {
+        WorkerStatus status;
+        status.until = std::chrono::system_clock::now();
+        status.replayMetrics.recordingStatuses.push_back(
+            Replay::RecordingRuntimeStatus{
+                .recordingId = recordingId.getRawValue(),
+                .filePath = recordingFilePath.string(),
+                .lifecycleState = Replay::RecordingLifecycleState::Ready,
+                .retentionWindowMs = 60'000,
+                .retainedStartWatermark = Timestamp(0),
+                .retainedEndWatermark = Timestamp(70'000),
+                .fillWatermark = Timestamp(70'000),
+                .segmentCount = 3,
+                .storageBytes = 4096,
+                .successorRecordingId = std::nullopt});
+        return status;
+    }();
+    auto queryManager = std::make_shared<QueryManager>(
+        workerCatalog,
+        [backendState](const WorkerConfig&) { return std::make_unique<TrackingLifecycleBackend>(backendState); },
+        std::move(state));
+    QueryStatementHandler handler(queryManager, optimizer, sourceCatalog);
+
+    const auto result = handler(ReplayStatement{.queryId = queryId, .intervalStartMs = 3'000, .intervalEndMs = 5'000});
+    ASSERT_TRUE(result.has_value()) << result.error().what();
+    ASSERT_THAT(result->execution.internalQueryIds, testing::SizeIs(1));
+
+    const auto internalQueryId = result->execution.internalQueryIds.front();
+    ASSERT_TRUE(backendState->registeredPlans.contains(internalQueryId));
+    const auto& registeredReplayPlan = backendState->registeredPlans.at(internalQueryId);
+    EXPECT_EQ(getOperatorByType<EventTimeWatermarkAssignerLogicalOperator>(registeredReplayPlan).size(), 1U);
+    ASSERT_EQ(getOperatorByType<SelectionLogicalOperator>(registeredReplayPlan).size(), 1U);
+
+    const auto selections = getOperatorByType<SelectionLogicalOperator>(registeredReplayPlan);
+    const auto selectionPredicate = selections.front()->getPredicate().explain(ExplainVerbosity::Debug);
+    EXPECT_THAT(selectionPredicate, testing::HasSubstr("3000"));
+    EXPECT_THAT(selectionPredicate, testing::HasSubstr("5000"));
+
+    const auto sources = getOperatorByType<SourceDescriptorLogicalOperator>(registeredReplayPlan);
+    ASSERT_EQ(sources.size(), 1U);
+    const auto sourceConfig = sources.front()->getSourceDescriptor().getConfig();
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("scan_start_ms")), 3'000U);
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("scan_end_ms")), 5'000U);
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("emit_start_ms")), 3'000U);
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("emit_end_ms")), 5'000U);
+    EXPECT_EQ(std::get<std::string>(sourceConfig.at("event_time_field")), "id");
+    EXPECT_EQ(std::get<uint64_t>(sourceConfig.at("event_time_unit_ms_multiplier")), 1U);
 
     std::error_code errorCode;
     std::filesystem::remove_all(recordingFilePath.parent_path(), errorCode);

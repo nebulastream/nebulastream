@@ -20,6 +20,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Replay/ReplayCheckpoint.hpp>
+#include <Replay/ReplayQueryStatus.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Replay/ReplayExecutionStatistics.hpp>
 #include <Replay/RecordingRuntimeStatus.hpp>
@@ -41,6 +42,7 @@ struct WorkerStatus
         std::vector<ReplayOperatorStatistics> operatorStatistics;
         std::vector<Replay::RecordingRuntimeStatus> recordingStatuses;
         std::vector<ReplayCheckpointStatus> replayCheckpoints;
+        std::vector<ReplayQueryStatus> replayQueryStatuses;
 
         [[nodiscard]] bool operator==(const ReplayMetrics& other) const = default;
     };

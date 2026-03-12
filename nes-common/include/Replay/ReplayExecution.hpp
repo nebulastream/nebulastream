@@ -55,7 +55,7 @@ struct ReplayExecution
     uint64_t intervalEndMs = 0;
     ReplayExecutionState state = ReplayExecutionState::Planned;
     uint64_t warmupStartMs = 0;
-    std::optional<ReplayCheckpointReference> selectedCheckpoint;
+    std::vector<ReplayCheckpointReference> selectedCheckpoints;
     std::vector<std::string> selectedRecordingIds;
     std::vector<ReplayPinnedSegment> pinnedSegments;
     std::vector<DistributedQueryId> internalQueryIds;

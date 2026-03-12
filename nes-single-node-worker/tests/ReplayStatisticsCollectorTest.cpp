@@ -41,7 +41,7 @@ std::unique_ptr<CompiledQueryPlan> makeCompiledQueryPlan(QueryId queryId, Pipeli
 {
     auto pipeline = ExecutablePipeline::create(pipelineId, nullptr, {});
     pipeline->replayStatisticsFingerprint = std::move(replayFingerprint);
-    return CompiledQueryPlan::create(queryId, {std::move(pipeline)}, {}, {});
+    return CompiledQueryPlan::create(queryId, {std::move(pipeline)}, {}, {}, {});
 }
 }
 
@@ -125,6 +125,48 @@ TEST(ReplayStatisticsCollectorTest, ClearsPendingTasksAndIgnoresEventsAfterQuery
     collector.onEvent(ignoredComplete);
 
     EXPECT_TRUE(collector.snapshot().empty());
+}
+
+TEST(ReplayStatisticsCollectorTest, TracksReplayQueryPhaseFromEmittedWatermarks)
+{
+    ReplayStatisticsCollector collector;
+    const auto queryId = makeQueryId("00000000-0000-0000-0000-000000000103");
+    const auto pipelineId = PipelineId(15);
+    collector.registerReplayQuery(queryId, ReplayQueryRuntimeControl{.emitStartWatermarkMs = 1'000});
+
+    QueryStart queryStart(WorkerThreadId(0), queryId);
+    queryStart.timestamp = atMs(5000);
+    collector.onEvent(queryStart);
+
+    auto replayQueryStatuses = collector.snapshotReplayQueries();
+    ASSERT_EQ(replayQueryStatuses.size(), 1U);
+    EXPECT_EQ(replayQueryStatuses.front().queryId, queryId);
+    EXPECT_EQ(replayQueryStatuses.front().phase, ReplayQueryPhase::FastForwarding);
+    EXPECT_FALSE(replayQueryStatuses.front().lastOutputWatermarkMs.has_value());
+
+    TaskEmit fastForwardEmit(WorkerThreadId(0), queryId, pipelineId, PipelineId(16), TaskId(1), 0, 900);
+    fastForwardEmit.timestamp = atMs(5001);
+    collector.onEvent(fastForwardEmit);
+
+    replayQueryStatuses = collector.snapshotReplayQueries();
+    ASSERT_EQ(replayQueryStatuses.size(), 1U);
+    EXPECT_EQ(replayQueryStatuses.front().phase, ReplayQueryPhase::FastForwarding);
+    EXPECT_EQ(replayQueryStatuses.front().lastOutputWatermarkMs, std::optional<uint64_t>(900));
+
+    TaskEmit emitPhase(WorkerThreadId(0), queryId, pipelineId, PipelineId(16), TaskId(2), 0, 1'000);
+    emitPhase.timestamp = atMs(5002);
+    collector.onEvent(emitPhase);
+
+    replayQueryStatuses = collector.snapshotReplayQueries();
+    ASSERT_EQ(replayQueryStatuses.size(), 1U);
+    EXPECT_EQ(replayQueryStatuses.front().phase, ReplayQueryPhase::Emitting);
+    EXPECT_EQ(replayQueryStatuses.front().lastOutputWatermarkMs, std::optional<uint64_t>(1'000));
+
+    QueryStop queryStop(WorkerThreadId(0), queryId);
+    queryStop.timestamp = atMs(5003);
+    collector.onEvent(queryStop);
+
+    EXPECT_TRUE(collector.snapshotReplayQueries().empty());
 }
 
 }

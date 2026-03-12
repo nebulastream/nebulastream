@@ -50,9 +50,11 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 }
 
 std::expected<QueryId, Exception> EmbeddedWorkerQuerySubmissionBackend::registerQuery(
-    LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint)
+    LogicalPlan plan,
+    std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration,
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl)
 {
-    return worker.registerQuery(std::move(plan), std::move(replayCheckpoint));
+    return worker.registerQuery(std::move(plan), std::move(replayCheckpointRegistration), std::move(replayRuntimeControl));
 }
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(QueryId queryId)
@@ -78,6 +80,24 @@ std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend:
 std::expected<WorkerStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const
 {
     return worker.getWorkerStatus(after);
+}
+
+std::expected<std::vector<uint64_t>, Exception> EmbeddedWorkerQuerySubmissionBackend::selectReplaySegments(
+    const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const
+{
+    return worker.selectReplaySegments(recordingFilePath, selection);
+}
+
+std::expected<std::vector<uint64_t>, Exception>
+EmbeddedWorkerQuerySubmissionBackend::pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    return worker.pinReplaySegments(recordingFilePath, segmentIds);
+}
+
+std::expected<void, Exception>
+EmbeddedWorkerQuerySubmissionBackend::unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    return worker.unpinReplaySegments(recordingFilePath, segmentIds);
 }
 
 BackendProvider createEmbeddedBackend(const SingleNodeWorkerConfiguration& workerConfiguration)

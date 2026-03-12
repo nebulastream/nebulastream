@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <ReplayCheckpointPlanning.hpp>
 #include <Util/UUID.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -123,6 +124,56 @@ queryPlanRewriteForMetadata(const RecordingSelectionResult& selectionResult, con
     auto queryPlanRewrite = *selectionResult.incomingQueryPlanRewrite;
     queryPlanRewrite.queryId = queryId.getRawValue();
     return queryPlanRewrite;
+}
+
+std::expected<ReplayCheckpointFingerprintsByHost, Exception>
+deriveReplayCheckpointFingerprints(const DistributedLogicalPlan& plan, const QueryRegistrationOptions& options)
+{
+    if (!options.replayRestoreFingerprintsByHost.empty())
+    {
+        return options.replayRestoreFingerprintsByHost;
+    }
+
+    if (!options.includeInReplayPlanning)
+    {
+        return ReplayCheckpointFingerprintsByHost{};
+    }
+
+    const auto& selectionResult = plan.getRecordingSelectionResult();
+    if (!selectionResult.incomingQueryPlanRewrite.has_value() || selectionResult.incomingQueryPlanRewrite->insertions.empty())
+    {
+        return ReplayCheckpointFingerprintsByHost{};
+    }
+
+    const auto replayCheckpointBoundaries = buildReplayCheckpointBoundaries(*selectionResult.incomingQueryPlanRewrite);
+    if (!replayCheckpointBoundaries)
+    {
+        return std::unexpected(replayCheckpointBoundaries.error());
+    }
+    return computeReplayCheckpointFingerprints(plan, *replayCheckpointBoundaries);
+}
+
+std::optional<ReplayCheckpointReference>
+takeReplayCheckpointForFingerprint(
+    std::vector<ReplayCheckpointReference>& remainingReplayCheckpoints,
+    const Host& host,
+    const std::string& replayRestoreFingerprint)
+{
+    const auto matchingCheckpointIt = std::ranges::find_if(
+        remainingReplayCheckpoints,
+        [&](const auto& replayCheckpoint)
+        {
+            return (replayCheckpoint.host.empty() || Host(replayCheckpoint.host) == host)
+                && replayCheckpoint.replayRestoreFingerprint == replayRestoreFingerprint;
+        });
+    if (matchingCheckpointIt == remainingReplayCheckpoints.end())
+    {
+        return std::nullopt;
+    }
+
+    auto replayCheckpoint = *matchingCheckpointIt;
+    remainingReplayCheckpoints.erase(matchingCheckpointIt);
+    return replayCheckpoint;
 }
 }
 
@@ -253,7 +304,7 @@ QueryManager::registerReplayExecution(const DistributedQueryId& queryId, const u
         .intervalEndMs = intervalEndMs,
         .state = ReplayExecutionState::Planned,
         .warmupStartMs = replayPlan->warmupStartMs,
-        .selectedCheckpoint = replayPlan->selectedCheckpoint,
+        .selectedCheckpoints = replayPlan->selectedCheckpoints,
         .selectedRecordingIds =
             replayPlan->selectedRecordingIds | std::views::transform([](const auto& recordingId) { return recordingId.getRawValue(); })
             | std::ranges::to<std::vector>(),
@@ -298,6 +349,12 @@ QueryManager::registerQueryImpl(
     const DistributedLogicalPlan& plan, std::optional<LogicalPlan> originalPlan, const QueryRegistrationOptions options)
 {
     std::unordered_map<Host, std::vector<QueryId>> localQueries;
+    const auto replayCheckpointFingerprintsByHost = deriveReplayCheckpointFingerprints(plan, options);
+    if (!replayCheckpointFingerprintsByHost)
+    {
+        return std::unexpected(replayCheckpointFingerprintsByHost.error());
+    }
+    auto remainingReplayCheckpoints = options.replayCheckpoints;
 
     auto id = options.internal ? DistributedQueryId(DistributedQueryId::INVALID) : plan.getQueryId();
     if (id == DistributedQueryId(DistributedQueryId::INVALID))
@@ -312,26 +369,48 @@ QueryManager::registerQueryImpl(
     for (const auto& [host, localPlans] : plan)
     {
         INVARIANT(backends.contains(host), "Plan was assigned to a node ({}) that is not part of the cluster", host);
-        if (options.replayCheckpoint.has_value()
-            && (!options.replayCheckpoint->host.empty() && Host(options.replayCheckpoint->host) == host)
-            && localPlans.size() != 1U)
+        const auto fingerprintIt = replayCheckpointFingerprintsByHost->find(host);
+        const auto replayRestoreFingerprints = fingerprintIt != replayCheckpointFingerprintsByHost->end()
+            ? fingerprintIt->second
+            : std::vector<std::optional<std::string>>{};
+        if (!replayRestoreFingerprints.empty() && replayRestoreFingerprints.size() != localPlans.size())
         {
             return std::unexpected(UnsupportedQuery(
-                "Replay checkpoint restoration currently requires exactly one local replay plan on host {}, but found {}",
+                "Replay checkpoint planning expected {} local replay checkpoint fingerprints on host {}, but found {} local plans",
+                replayRestoreFingerprints.size(),
                 host,
                 localPlans.size()));
         }
-        for (auto localPlan : localPlans)
+        for (size_t localPlanIndex = 0; localPlanIndex < localPlans.size(); ++localPlanIndex)
         {
+            auto localPlan = localPlans[localPlanIndex];
             try
             {
                 /// Set the distributed query ID on the local plan before sending to worker
                 localPlan.setQueryId(QueryId::createDistributed(id));
-                const auto replayCheckpointForHost = options.replayCheckpoint.has_value()
-                        && (options.replayCheckpoint->host.empty() || Host(options.replayCheckpoint->host) == host)
-                    ? options.replayCheckpoint
+                const auto expectedReplayRestoreFingerprint
+                    = !replayRestoreFingerprints.empty() ? replayRestoreFingerprints[localPlanIndex] : std::nullopt;
+                const auto replayCheckpointForLocalPlan = expectedReplayRestoreFingerprint.has_value()
+                    ? takeReplayCheckpointForFingerprint(remainingReplayCheckpoints, host, *expectedReplayRestoreFingerprint)
                     : std::nullopt;
-                const auto result = backends.at(host).registerQuery(localPlan, replayCheckpointForHost);
+                if (expectedReplayRestoreFingerprint.has_value() && !options.replayCheckpoints.empty()
+                    && !replayCheckpointForLocalPlan.has_value())
+                {
+                    return std::unexpected(QueryRegistrationFailed(
+                        "Replay checkpoint restoration requires a compatible checkpoint on host {} for replay fingerprint {}",
+                        host,
+                        *expectedReplayRestoreFingerprint));
+                }
+
+                std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration;
+                if (expectedReplayRestoreFingerprint.has_value() || replayCheckpointForLocalPlan.has_value())
+                {
+                    replayCheckpointRegistration = ReplayCheckpointRegistration{
+                        .restoreCheckpoint = replayCheckpointForLocalPlan,
+                        .replayRestoreFingerprint = expectedReplayRestoreFingerprint};
+                }
+                const auto result
+                    = backends.at(host).registerQuery(localPlan, std::move(replayCheckpointRegistration), options.replayRuntimeControl);
                 if (result)
                 {
                     NES_DEBUG("Registration to node {} was successful.", host);
@@ -345,6 +424,12 @@ QueryManager::registerQueryImpl(
                 return std::unexpected{QueryRegistrationFailed("Message from external exception: {}", e.what())};
             }
         }
+    }
+    if (!remainingReplayCheckpoints.empty())
+    {
+        return std::unexpected(QueryRegistrationFailed(
+            "Replay checkpoint restoration did not consume {} compatible checkpoint bundle(s)",
+            remainingReplayCheckpoints.size()));
     }
 
     this->state.queries.emplace(id, std::move(localQueries));
@@ -363,7 +448,10 @@ QueryManager::registerQueryImpl(
             .networkExplanations = {},
             .queryPlanRewrite = options.includeInReplayPlanning ? queryPlanRewriteForMetadata(selectionResult, id) : std::nullopt,
             .replayBoundaries = options.includeInReplayPlanning ? selectionResult.incomingQueryReplayBoundaries
-                                                                : std::vector<QueryRecordingPlanInsertion>{}});
+                                                                : std::vector<QueryRecordingPlanInsertion>{},
+            .replayCheckpointRequirements = options.includeInReplayPlanning
+                ? flattenReplayCheckpointRequirements(*replayCheckpointFingerprintsByHost)
+                : std::vector<ReplayCheckpointRequirement>{}});
 
     std::unordered_map<DistributedQueryId, std::vector<RecordingId>> selectedRecordingsByQuery;
     std::unordered_map<DistributedQueryId, std::vector<RecordingSelectionExplanation>> networkExplanationsByQuery;
@@ -561,6 +649,42 @@ std::expected<DistributedWorkerStatus, Exception> QueryManager::workerStatus(std
         distributedStatus.workerStatus.try_emplace(wId, backend->workerStatus(after));
     }
     return distributedStatus;
+}
+
+std::expected<std::vector<uint64_t>, Exception> QueryManager::selectReplaySegments(
+    const Host& host, const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const
+{
+    if (!backends.contains(host))
+    {
+        return std::unexpected(PlacementFailure(
+            "Replay segment selection references node ({}) that is not part of the cluster",
+            host));
+    }
+    return backends.at(host).selectReplaySegments(recordingFilePath, selection);
+}
+
+std::expected<std::vector<uint64_t>, Exception>
+QueryManager::pinReplaySegments(const Host& host, const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    if (!backends.contains(host))
+    {
+        return std::unexpected(PlacementFailure(
+            "Replay segment pinning references node ({}) that is not part of the cluster",
+            host));
+    }
+    return backends.at(host).pinReplaySegments(recordingFilePath, segmentIds);
+}
+
+std::expected<void, Exception>
+QueryManager::unpinReplaySegments(const Host& host, const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    if (!backends.contains(host))
+    {
+        return std::unexpected(PlacementFailure(
+            "Replay segment unpinning references node ({}) that is not part of the cluster",
+            host));
+    }
+    return backends.at(host).unpinReplaySegments(recordingFilePath, segmentIds);
 }
 
 void QueryManager::refreshWorkerMetrics()

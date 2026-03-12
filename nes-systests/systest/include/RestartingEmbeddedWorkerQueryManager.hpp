@@ -40,12 +40,20 @@ public:
     ~RestartingEmbeddedWorkerQueryManager() override;
 
     [[nodiscard]] std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) override;
+    registerQuery(
+        LogicalPlan plan,
+        std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> replayRuntimeControl = std::nullopt) override;
     std::expected<void, Exception> start(QueryId queryId) noexcept override;
     std::expected<void, Exception> stop(QueryId queryId) noexcept override;
     std::expected<void, Exception> unregister(QueryId queryId) noexcept override;
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId queryId) const noexcept override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const override;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override;
+    std::expected<void, Exception> unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) override;
 
 private:
     struct ManagedQuery

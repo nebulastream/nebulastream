@@ -26,6 +26,7 @@
 #include <QueryManager/RecordingLifecycleManager.hpp>
 #include <ReplayPlanning.hpp>
 #include <Replay/ReplayExecution.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <RecordingCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
@@ -43,12 +44,22 @@ class QuerySubmissionBackend
 public:
     virtual ~QuerySubmissionBackend() = default;
     [[nodiscard]] virtual std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) = 0;
+    registerQuery(
+        LogicalPlan,
+        std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> replayRuntimeControl = std::nullopt)
+        = 0;
     virtual std::expected<void, Exception> start(QueryId) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
     virtual std::expected<void, Exception> unregister(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
+    [[nodiscard]] virtual std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const = 0;
+    [[nodiscard]] virtual std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) = 0;
+    virtual std::expected<void, Exception> unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+        = 0;
 };
 
 using BackendProvider = absl::AnyInvocable<UniquePtr<QuerySubmissionBackend>(const WorkerConfig&)>;
@@ -68,7 +79,9 @@ struct QueryRegistrationOptions
 {
     bool internal = false;
     bool includeInReplayPlanning = true;
-    std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt;
+    std::vector<ReplayCheckpointReference> replayCheckpoints = {};
+    std::unordered_map<Host, std::vector<std::optional<std::string>>> replayRestoreFingerprintsByHost = {};
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl = std::nullopt;
 };
 
 /// Manages the lifecycle of distributed queries in a NebulaStream cluster.
@@ -154,6 +167,12 @@ public:
     [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const Host& host, const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const Host& host, const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds);
+    std::expected<void, Exception>
+    unpinReplaySegments(const Host& host, const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds);
     void refreshWorkerMetrics();
     [[nodiscard]] std::expected<DistributedQuery, Exception> getQuery(DistributedQueryId query) const;
     [[nodiscard]] const RecordingCatalog& getRecordingCatalog() const { return state.recordingCatalog; }

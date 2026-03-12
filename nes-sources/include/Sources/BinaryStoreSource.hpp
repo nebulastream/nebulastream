@@ -54,13 +54,23 @@ protected:
     std::ostream& toString(std::ostream& str) const override;
 
 private:
+    struct EventTimeTupleFilter
+    {
+        size_t fieldIndex{0};
+        uint64_t unitMultiplierMs{1};
+        std::optional<uint64_t> emitStartMs;
+        std::optional<uint64_t> emitEndMs;
+    };
+
     void initializeRowLayoutMetadata();
+    void initializeEventTimeTupleFilter(const SourceDescriptor& sourceDescriptor);
     void recordPhysicalBytesRead(size_t bytes);
     bool loadNextSegment();
     bool advanceToNextSelectedRawSegment();
     bool readPayload(char* dest, size_t len);
     bool skipPayload(size_t len);
     [[nodiscard]] bool isPayloadExhausted();
+    [[nodiscard]] bool shouldEmitRow(const std::vector<char>& rowData) const;
 
     std::string filePath;
     bool shouldPinReplaySegments{false};
@@ -83,6 +93,8 @@ private:
     std::vector<uint64_t> fieldSizes;
     uint32_t rowWidthBytes{0};
     bool hasVarSizedFields{false};
+    std::vector<char> rowScratchBuffer;
+    std::optional<EventTimeTupleFilter> eventTimeTupleFilter;
 };
 
 }

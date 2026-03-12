@@ -80,7 +80,9 @@ RestartingEmbeddedWorkerQueryManager::~RestartingEmbeddedWorkerQueryManager()
 }
 
 std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::registerQuery(
-    LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint)
+    LogicalPlan plan,
+    std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration,
+    std::optional<ReplayQueryRuntimeControl> replayRuntimeControl)
 {
     std::scoped_lock lock(mutex);
     if (backgroundFailure)
@@ -95,7 +97,8 @@ std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::register
     }
     setWorkerArmedLocked(false);
 
-    auto runtimeQueryId = worker->registerQuery(std::move(plan), std::move(replayCheckpoint));
+    auto runtimeQueryId
+        = worker->registerQuery(std::move(plan), std::move(replayCheckpointRegistration), std::move(replayRuntimeControl));
     if (!runtimeQueryId)
     {
         return std::unexpected(runtimeQueryId.error());
@@ -305,6 +308,72 @@ RestartingEmbeddedWorkerQueryManager::workerStatus(const std::chrono::system_clo
     }
 
     return worker->workerStatus(after);
+}
+
+std::expected<std::vector<uint64_t>, Exception> RestartingEmbeddedWorkerQueryManager::selectReplaySegments(
+    const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const
+{
+    std::scoped_lock lock(mutex);
+    if (backgroundFailure)
+    {
+        return std::unexpected(*backgroundFailure);
+    }
+    if (auto available = ensureWorkerAvailableLocked(hasActiveQueriesLocked()); !available)
+    {
+        return std::unexpected(available.error());
+    }
+    setWorkerArmedLocked(false);
+    if (!worker)
+    {
+        return std::unexpected(TestException("restart-mode worker is unavailable"));
+    }
+    auto selectedSegments = worker->selectReplaySegments(recordingFilePath, selection);
+    updateWorkerArmingLocked();
+    return selectedSegments;
+}
+
+std::expected<std::vector<uint64_t>, Exception>
+RestartingEmbeddedWorkerQueryManager::pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    std::scoped_lock lock(mutex);
+    if (backgroundFailure)
+    {
+        return std::unexpected(*backgroundFailure);
+    }
+    if (auto available = ensureWorkerAvailableLocked(hasActiveQueriesLocked()); !available)
+    {
+        return std::unexpected(available.error());
+    }
+    setWorkerArmedLocked(false);
+    if (!worker)
+    {
+        return std::unexpected(TestException("restart-mode worker is unavailable"));
+    }
+    auto pinnedSegments = worker->pinReplaySegments(recordingFilePath, segmentIds);
+    updateWorkerArmingLocked();
+    return pinnedSegments;
+}
+
+std::expected<void, Exception>
+RestartingEmbeddedWorkerQueryManager::unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds)
+{
+    std::scoped_lock lock(mutex);
+    if (backgroundFailure)
+    {
+        return std::unexpected(*backgroundFailure);
+    }
+    if (auto available = ensureWorkerAvailableLocked(hasActiveQueriesLocked()); !available)
+    {
+        return std::unexpected(available.error());
+    }
+    setWorkerArmedLocked(false);
+    if (!worker)
+    {
+        return std::unexpected(TestException("restart-mode worker is unavailable"));
+    }
+    auto unpinResult = worker->unpinReplaySegments(recordingFilePath, segmentIds);
+    updateWorkerArmingLocked();
+    return unpinResult;
 }
 
 void RestartingEmbeddedWorkerQueryManager::refreshWorkerStateLocked() const

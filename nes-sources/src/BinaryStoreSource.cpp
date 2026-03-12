@@ -19,9 +19,10 @@
 #include <cerrno>
 #include <cstring>
 #include <fstream>
+#include <limits>
 #include <optional>
-#include <sstream>
 #include <regex>
+#include <sstream>
 #include <stop_token>
 #include <string>
 #include <unordered_map>
@@ -283,6 +284,7 @@ BinaryStoreSource::BinaryStoreSource(const SourceDescriptor& sourceDescriptor)
     shouldPinReplaySegments = Replay::binaryStoreManifestExists(filePath) || sourceDescriptor.getConfig().contains("recording_id");
     useManifestSelection = replayMode == BinaryStoreReplayMode::Interval || hasReplaySelectionFilters(replaySelection);
     initializeRowLayoutMetadata();
+    initializeEventTimeTupleFilter(sourceDescriptor);
 }
 
 BinaryStoreSource::~BinaryStoreSource()
@@ -324,6 +326,59 @@ void BinaryStoreSource::initializeRowLayoutMetadata()
         currentOffset += fieldSize;
         rowWidthBytes += static_cast<uint32_t>(fieldSize);
     }
+    rowScratchBuffer.resize(rowWidthBytes);
+}
+
+void BinaryStoreSource::initializeEventTimeTupleFilter(const SourceDescriptor& sourceDescriptor)
+{
+    const auto eventTimeField = readOptionalStringConfig(sourceDescriptor.getConfig(), "event_time_field");
+    const auto eventTimeUnitMsMultiplier = readOptionalUInt64Config(sourceDescriptor.getConfig(), "event_time_unit_ms_multiplier");
+    const auto emitStartMs = readOptionalUInt64Config(sourceDescriptor.getConfig(), "emit_start_ms");
+    const auto emitEndMs = readOptionalUInt64Config(sourceDescriptor.getConfig(), "emit_end_ms");
+    if (!eventTimeField.has_value() && !eventTimeUnitMsMultiplier.has_value() && !emitStartMs.has_value() && !emitEndMs.has_value())
+    {
+        eventTimeTupleFilter.reset();
+        return;
+    }
+
+    PRECONDITION(eventTimeField.has_value(), "BinaryStoreSource event_time_field should have been validated before construction");
+    PRECONDITION(
+        eventTimeUnitMsMultiplier.has_value(),
+        "BinaryStoreSource event_time_unit_ms_multiplier should have been validated before construction");
+
+    const auto resolvedField = schema.getFieldByName(*eventTimeField);
+    if (!resolvedField.has_value())
+    {
+        throw InvalidConfigParameter(
+            "BinaryStoreSource config 'event_time_field' references unknown or ambiguous schema field '{}'",
+            *eventTimeField);
+    }
+    if (!resolvedField->dataType.isInteger())
+    {
+        throw InvalidConfigParameter(
+            "BinaryStoreSource config 'event_time_field' must reference an integer field, but '{}' has type {}",
+            resolvedField->name,
+            resolvedField->dataType);
+    }
+
+    const auto fieldIndex = [&]() -> std::optional<size_t>
+    {
+        for (size_t index = 0; index < schema.getNumberOfFields(); ++index)
+        {
+            if (const auto field = schema.getFieldAt(index); field.name == resolvedField->name)
+            {
+                return index;
+            }
+        }
+        return std::nullopt;
+    }();
+    PRECONDITION(fieldIndex.has_value(), "BinaryStoreSource failed to resolve the event_time_field index after schema lookup");
+
+    eventTimeTupleFilter = EventTimeTupleFilter{
+        .fieldIndex = *fieldIndex,
+        .unitMultiplierMs = *eventTimeUnitMsMultiplier,
+        .emitStartMs = emitStartMs,
+        .emitEndMs = emitEndMs};
 }
 
 void BinaryStoreSource::recordPhysicalBytesRead(const size_t bytes)
@@ -704,6 +759,96 @@ bool BinaryStoreSource::isPayloadExhausted()
     return !loadNextSegment();
 }
 
+bool BinaryStoreSource::shouldEmitRow(const std::vector<char>& rowData) const
+{
+    if (!eventTimeTupleFilter.has_value())
+    {
+        return true;
+    }
+
+    const auto& filter = *eventTimeTupleFilter;
+    const auto fieldOffset = static_cast<size_t>(fieldOffsets.at(filter.fieldIndex));
+    const auto fieldType = schema.getFieldAt(filter.fieldIndex).dataType;
+    const auto withinUnsignedInterval = [&](const unsigned __int128 eventTimeMs)
+    {
+        if (filter.emitStartMs.has_value() && eventTimeMs < *filter.emitStartMs)
+        {
+            return false;
+        }
+        if (filter.emitEndMs.has_value() && eventTimeMs > *filter.emitEndMs)
+        {
+            return false;
+        }
+        return true;
+    };
+    const auto withinSignedInterval = [&](const int64_t rawEventTime)
+    {
+        if (rawEventTime < 0)
+        {
+            return !filter.emitStartMs.has_value();
+        }
+        return withinUnsignedInterval(static_cast<unsigned __int128>(rawEventTime) * filter.unitMultiplierMs);
+    };
+    const auto* fieldData = rowData.data() + fieldOffset;
+
+    switch (fieldType.type)
+    {
+        case DataType::Type::UINT8:
+        {
+            uint8_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinUnsignedInterval(static_cast<unsigned __int128>(value) * filter.unitMultiplierMs);
+        }
+        case DataType::Type::UINT16:
+        {
+            uint16_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinUnsignedInterval(static_cast<unsigned __int128>(value) * filter.unitMultiplierMs);
+        }
+        case DataType::Type::UINT32:
+        {
+            uint32_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinUnsignedInterval(static_cast<unsigned __int128>(value) * filter.unitMultiplierMs);
+        }
+        case DataType::Type::UINT64:
+        {
+            uint64_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinUnsignedInterval(static_cast<unsigned __int128>(value) * filter.unitMultiplierMs);
+        }
+        case DataType::Type::INT8:
+        {
+            int8_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinSignedInterval(value);
+        }
+        case DataType::Type::INT16:
+        {
+            int16_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinSignedInterval(value);
+        }
+        case DataType::Type::INT32:
+        {
+            int32_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinSignedInterval(value);
+        }
+        case DataType::Type::INT64:
+        {
+            int64_t value = 0;
+            std::memcpy(&value, fieldData, sizeof(value));
+            return withinSignedInterval(value);
+        }
+        default:
+            throw InvalidConfigParameter(
+                "BinaryStoreSource config 'event_time_field' must reference an integer field, but '{}' has type {}",
+                schema.getFieldAt(filter.fieldIndex).name,
+                fieldType);
+    }
+}
+
 Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     NES_DEBUG("BinaryStoreSource: fill called at pos {}", static_cast<long long>(inputFile.tellg()));
@@ -715,16 +860,16 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
     auto rowLayout = LowerSchemaProvider::lowerSchema(tupleBuffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
     const auto capacity = rowLayout->getCapacity();
     uint64_t tuplesWritten = 0;
+    auto* tupleBufferData = tupleBuffer.getAvailableMemoryArea<char>().data();
 
-    for (; tuplesWritten < capacity; ++tuplesWritten)
+    while (tuplesWritten < capacity)
     {
         bool rowOk = true;
         for (size_t fieldIdx = 0; fieldIdx < schema.getNumberOfFields(); ++fieldIdx)
         {
             const auto type = schema.getFieldAt(fieldIdx).dataType;
             const auto fieldSize = fieldSizes[fieldIdx];
-            const auto offset = tuplesWritten * rowLayout->getTupleSize() + fieldOffsets[fieldIdx];
-            char* dest = tupleBuffer.getAvailableMemoryArea<char>().data() + offset;
+            char* dest = rowScratchBuffer.data() + fieldOffsets[fieldIdx];
 
             if (type.isType(DataType::Type::VARSIZED))
             {
@@ -755,6 +900,20 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
         {
             break;
         }
+        if (!shouldEmitRow(rowScratchBuffer))
+        {
+            continue;
+        }
+
+        const auto tupleBaseOffset = static_cast<size_t>(tuplesWritten) * rowLayout->getTupleSize();
+        for (size_t fieldIdx = 0; fieldIdx < schema.getNumberOfFields(); ++fieldIdx)
+        {
+            std::memcpy(
+                tupleBufferData + tupleBaseOffset + fieldOffsets[fieldIdx],
+                rowScratchBuffer.data() + fieldOffsets[fieldIdx],
+                static_cast<size_t>(fieldSizes[fieldIdx]));
+        }
+        ++tuplesWritten;
     }
 
     const auto bytesRead = static_cast<size_t>(tuplesWritten) * static_cast<size_t>(rowWidthBytes);
@@ -852,6 +1011,63 @@ DescriptorConfig::Config BinaryStoreSource::validateAndFormat(std::unordered_map
                 *scanEndMs);
         }
     }
+    if (const auto emitStartMsIt = config.find("emit_start_ms"); emitStartMsIt != config.end())
+    {
+        const auto emitStartMs = from_chars<uint64_t>(emitStartMsIt->second);
+        if (!emitStartMs.has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config 'emit_start_ms' must be an unsigned integer");
+        }
+        validated.emplace("emit_start_ms", DescriptorConfig::ConfigType(*emitStartMs));
+    }
+    if (const auto emitEndMsIt = config.find("emit_end_ms"); emitEndMsIt != config.end())
+    {
+        const auto emitEndMs = from_chars<uint64_t>(emitEndMsIt->second);
+        if (!emitEndMs.has_value())
+        {
+            throw InvalidConfigParameter("BinaryStoreSource config 'emit_end_ms' must be an unsigned integer");
+        }
+        validated.emplace("emit_end_ms", DescriptorConfig::ConfigType(*emitEndMs));
+    }
+    if (const auto emitStartMs = readOptionalUInt64Config(validated, "emit_start_ms");
+        emitStartMs.has_value())
+    {
+        if (const auto emitEndMs = readOptionalUInt64Config(validated, "emit_end_ms");
+            emitEndMs.has_value() && *emitStartMs > *emitEndMs)
+        {
+            throw InvalidConfigParameter(
+                "BinaryStoreSource config 'emit_start_ms' ({}) must be less than or equal to 'emit_end_ms' ({})",
+                *emitStartMs,
+                *emitEndMs);
+        }
+    }
+    if (const auto eventTimeFieldIt = config.find("event_time_field"); eventTimeFieldIt != config.end())
+    {
+        validated.emplace("event_time_field", DescriptorConfig::ConfigType(eventTimeFieldIt->second));
+    }
+    if (const auto eventTimeUnitMsMultiplierIt = config.find("event_time_unit_ms_multiplier");
+        eventTimeUnitMsMultiplierIt != config.end())
+    {
+        const auto eventTimeUnitMsMultiplier = from_chars<uint64_t>(eventTimeUnitMsMultiplierIt->second);
+        if (!eventTimeUnitMsMultiplier.has_value() || *eventTimeUnitMsMultiplier == 0)
+        {
+            throw InvalidConfigParameter(
+                "BinaryStoreSource config 'event_time_unit_ms_multiplier' must be a positive unsigned integer");
+        }
+        validated.emplace("event_time_unit_ms_multiplier", DescriptorConfig::ConfigType(*eventTimeUnitMsMultiplier));
+    }
+    const auto hasEmitInterval = validated.contains("emit_start_ms") || validated.contains("emit_end_ms");
+    const auto hasEventTimeField = validated.contains("event_time_field");
+    const auto hasEventTimeUnitMsMultiplier = validated.contains("event_time_unit_ms_multiplier");
+    if (hasEmitInterval || hasEventTimeField || hasEventTimeUnitMsMultiplier)
+    {
+        if (!hasEmitInterval || !hasEventTimeField || !hasEventTimeUnitMsMultiplier)
+        {
+            throw InvalidConfigParameter(
+                "BinaryStoreSource configs 'emit_start_ms'/'emit_end_ms', 'event_time_field', and"
+                " 'event_time_unit_ms_multiplier' must be configured together");
+        }
+    }
     if (const auto replayModeIt = config.find("replay_mode"); replayModeIt != config.end())
     {
         const auto normalizedReplayMode = toLowerCase(trimWhiteSpaces(replayModeIt->second));
@@ -859,7 +1075,8 @@ DescriptorConfig::Config BinaryStoreSource::validateAndFormat(std::unordered_map
         {
             throw InvalidConfigParameter("BinaryStoreSource config 'replay_mode' must be one of: full, interval");
         }
-        const auto hasBoundedSelection = config.contains("segment_ids") || config.contains("scan_start_ms") || config.contains("scan_end_ms");
+        const auto hasBoundedSelection = config.contains("segment_ids") || config.contains("scan_start_ms") || config.contains("scan_end_ms")
+            || config.contains("emit_start_ms") || config.contains("emit_end_ms");
         if (normalizedReplayMode == "full" && hasBoundedSelection)
         {
             throw InvalidConfigParameter(

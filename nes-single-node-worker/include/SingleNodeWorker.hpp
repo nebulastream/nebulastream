@@ -23,6 +23,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Replay/ReplayCheckpoint.hpp>
+#include <Replay/ReplayStorage.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -74,7 +75,10 @@ public:
     /// @param plan Fully Specified LogicalQueryPlan.
     /// @return QueryId which identifies the registered Query
     [[nodiscard]] std::expected<QueryId, Exception>
-    registerQuery(LogicalPlan plan, std::optional<ReplayCheckpointReference> replayCheckpoint = std::nullopt) noexcept;
+    registerQuery(
+        LogicalPlan plan,
+        std::optional<ReplayCheckpointRegistration> replayCheckpointRegistration = std::nullopt,
+        std::optional<ReplayQueryRuntimeControl> replayRuntimeControl = std::nullopt) noexcept;
 
     /// Starts the Query asynchronously and moves it into the RunningState. Query execution error are only reported during runtime
     /// of the query.
@@ -96,5 +100,10 @@ public:
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(QueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    selectReplaySegments(const std::string& recordingFilePath, const Replay::BinaryStoreReplaySelection& selection) const noexcept;
+    [[nodiscard]] std::expected<std::vector<uint64_t>, Exception>
+    pinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) noexcept;
+    std::expected<void, Exception> unpinReplaySegments(const std::string& recordingFilePath, const std::vector<uint64_t>& segmentIds) noexcept;
 };
 }
