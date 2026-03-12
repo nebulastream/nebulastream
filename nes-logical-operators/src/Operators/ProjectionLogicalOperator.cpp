@@ -183,7 +183,10 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         copy.projections.end(),
         initial,
         [](Schema schema, const auto& projection)
-        { return schema.addField(projection.first.value().getFieldName(), projection.second.getDataType()); });
+        {
+            INVARIANT(projection.first.has_value(), "Projection identifier must be set after inference");
+            return schema.addField(projection.first->getFieldName(), projection.second.getDataType());
+        });
 
     return copy;
 }
