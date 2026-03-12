@@ -89,7 +89,6 @@ private:
     mutable std::unordered_map<QueryId, ManagedQuery> queriesBySyntheticId;
     mutable std::unordered_map<QueryId, QueryId> syntheticIdByBundleQueryId;
     mutable std::optional<Exception> backgroundFailure;
-    QueryId::Underlying nextSyntheticQueryId = INITIAL<QueryId>.getRawValue();
     mutable pid_t workerPid = -1;
     mutable URI workerUri;
     mutable bool workerArmed = false;

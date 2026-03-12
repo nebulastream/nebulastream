@@ -457,13 +457,14 @@ diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend
 index d1c5c38..0dbc751 100644
 --- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
 +++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
-@@ -6,11 +6,32 @@
+@@ -6,12 +6,33 @@
  #include "nautilus/compiler/backends/mlir/MLIRExecutable.hpp"
  #include "nautilus/compiler/backends/mlir/MLIRLoweringProvider.hpp"
  #include "nautilus/compiler/backends/mlir/MLIRPassManager.hpp"
 +#include "nautilus/compiler/backends/mlir/ProxyFunctions.hpp"
  #include "nautilus/compiler/backends/mlir/intrinsics/MLIRAssumeIntrinsics.hpp"
  #include "nautilus/compiler/backends/mlir/intrinsics/MLIRBackendIntrinsic.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRBitIntrinsics.hpp"
  #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMathIntrinsics.hpp"
  #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.hpp"
  #include "nautilus/compiler/ir/IRGraph.hpp"

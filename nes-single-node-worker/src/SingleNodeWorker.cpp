@@ -47,10 +47,12 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Serialization/OperatorSerializationUtil.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/QueryIdEncoding.hpp>
 #include <Util/UUID.hpp>
 #include <google/protobuf/io/coded_stream.h>
 #include <google/protobuf/io/zero_copy_stream_impl_lite.h>
@@ -64,6 +66,8 @@
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+#include <rfl/json/read.hpp>
+#include <rfl/json/write.hpp>
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 #include <nlohmann/json.hpp>
 
@@ -145,7 +149,11 @@ std::string sanitizePlanFingerprintForPath(std::string_view planFingerprint)
 
 std::string makeCheckpointBundleName(const QueryId queryId, std::string_view planFingerprint)
 {
-    return fmt::format("{}{}_{}", BundleNamePrefix, queryId.getRawValue(), sanitizePlanFingerprintForPath(planFingerprint));
+    return fmt::format(
+        "{}{}_{}",
+        BundleNamePrefix,
+        encodeQueryIdForIdentifier(queryId),
+        sanitizePlanFingerprintForPath(planFingerprint));
 }
 
 std::optional<QueryId> parseBundleQueryId(std::string_view bundleName)
@@ -162,14 +170,8 @@ std::optional<QueryId> parseBundleQueryId(std::string_view bundleName)
         return std::nullopt;
     }
 
-    QueryId::Underlying queryIdValue = 0;
     const auto queryIdPart = suffix.substr(0, separator);
-    const auto [ptr, errorCode] = std::from_chars(queryIdPart.data(), queryIdPart.data() + queryIdPart.size(), queryIdValue);
-    if (errorCode != std::errc{} || ptr != queryIdPart.data() + queryIdPart.size())
-    {
-        return std::nullopt;
-    }
-    return QueryId(queryIdValue);
+    return decodeQueryIdFromIdentifier(queryIdPart);
 }
 
 std::string computeFingerprintFromBytes(const std::string_view bytes)
@@ -203,18 +205,26 @@ std::string serializeProtoDeterministically(const ProtoMessage& message)
 
 SerializableQueryPlan canonicalizePlanForFingerprint(const SerializableQueryPlan& serializedPlan)
 {
-    std::unordered_map<OperatorId::Underlying, const SerializableOperator*> operatorsById;
-    operatorsById.reserve(serializedPlan.operators_size());
-    for (const auto& op : serializedPlan.operators())
+    std::vector<ReflectedOperator> reflectedOperators;
+    reflectedOperators.reserve(serializedPlan.reflectedoperators_size());
+    std::unordered_map<OperatorId::Underlying, const ReflectedOperator*> operatorsById;
+    operatorsById.reserve(serializedPlan.reflectedoperators_size());
+    for (const auto& reflectedOperator : serializedPlan.reflectedoperators())
     {
-        operatorsById.emplace(op.operator_id(), &op);
+        auto parsedOperator = rfl::json::read<ReflectedOperator>(reflectedOperator);
+        if (!parsedOperator.has_value())
+        {
+            throw CannotDeserialize("Failed to parse serialized operator while canonicalizing query plan fingerprint");
+        }
+        reflectedOperators.push_back(std::move(parsedOperator.value()));
+        operatorsById.emplace(reflectedOperators.back().operatorId, &reflectedOperators.back());
     }
 
     std::unordered_map<OperatorId::Underlying, OperatorId::Underlying> canonicalIds;
     canonicalIds.reserve(operatorsById.size());
     OperatorId::Underlying nextOperatorId = INITIAL_OPERATOR_ID.getRawValue();
     std::vector<OperatorId::Underlying> worklist;
-    worklist.reserve(serializedPlan.rootoperatorids_size() + serializedPlan.operators_size());
+    worklist.reserve(serializedPlan.rootoperatorids_size() + reflectedOperators.size());
     for (const auto rootOperatorId : serializedPlan.rootoperatorids())
     {
         worklist.push_back(rootOperatorId);
@@ -230,7 +240,7 @@ SerializableQueryPlan canonicalizePlanForFingerprint(const SerializableQueryPlan
         canonicalIds.emplace(originalOperatorId, nextOperatorId++);
         if (const auto opIt = operatorsById.find(originalOperatorId); opIt != operatorsById.end())
         {
-            for (const auto childId : opIt->second->children_ids())
+            for (const auto childId : opIt->second->childrenIds)
             {
                 worklist.push_back(childId);
             }
@@ -252,32 +262,32 @@ SerializableQueryPlan canonicalizePlanForFingerprint(const SerializableQueryPlan
         canonicalIds.emplace(operatorId, nextOperatorId++);
     }
 
-    std::vector<SerializableOperator> canonicalOperators;
-    canonicalOperators.reserve(serializedPlan.operators_size());
-    for (const auto& op : serializedPlan.operators())
+    std::vector<ReflectedOperator> canonicalOperators;
+    canonicalOperators.reserve(reflectedOperators.size());
+    for (const auto& op : reflectedOperators)
     {
         auto canonicalOperator = op;
-        canonicalOperator.set_operator_id(canonicalIds.at(op.operator_id()));
-        for (int childIdx = 0; childIdx < canonicalOperator.children_ids_size(); ++childIdx)
+        canonicalOperator.operatorId = canonicalIds.at(op.operatorId);
+        for (auto& childId : canonicalOperator.childrenIds)
         {
-            canonicalOperator.set_children_ids(childIdx, canonicalIds.at(op.children_ids(childIdx)));
+            childId = canonicalIds.at(childId);
         }
         canonicalOperators.push_back(std::move(canonicalOperator));
     }
     std::ranges::sort(
         canonicalOperators,
-        [](const auto& lhs, const auto& rhs) { return lhs.operator_id() < rhs.operator_id(); });
+        [](const auto& lhs, const auto& rhs) { return lhs.operatorId < rhs.operatorId; });
 
     auto canonicalPlan = serializedPlan;
     canonicalPlan.clear_rootoperatorids();
-    canonicalPlan.clear_operators();
+    canonicalPlan.clear_reflectedoperators();
     for (const auto rootOperatorId : serializedPlan.rootoperatorids())
     {
         canonicalPlan.add_rootoperatorids(canonicalIds.at(rootOperatorId));
     }
     for (const auto& op : canonicalOperators)
     {
-        *canonicalPlan.add_operators() = op;
+        canonicalPlan.add_reflectedoperators(rfl::json::write(op));
     }
     return canonicalPlan;
 }
@@ -288,17 +298,6 @@ std::string computePlanFingerprint(const SerializableQueryPlan& serializedPlan)
     canonicalPlan.clear_queryid();
     auto canonicalPlanBytes = serializeProtoDeterministically(canonicalPlan);
     return computeFingerprintFromBytes(canonicalPlanBytes);
-}
-
-QueryId reserveRecoveredQueryId(const QueryId recoveredQueryId, std::atomic<QueryId::Underlying>& queryIdCounter)
-{
-    const auto nextQueryId = recoveredQueryId.getRawValue() + 1;
-    auto current = queryIdCounter.load(std::memory_order_relaxed);
-    while (current < nextQueryId
-           && !queryIdCounter.compare_exchange_weak(current, nextQueryId, std::memory_order_relaxed, std::memory_order_relaxed))
-    {
-    }
-    return recoveredQueryId;
 }
 
 std::string compilationCacheModeToString(const QueryCompilation::CompilationCacheMode mode)
@@ -596,7 +595,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQueryInternal(
         QueryId assignedQueryId = plan.getQueryId();
         if (options != nullptr && options->recoveredQueryId.has_value())
         {
-            assignedQueryId = reserveRecoveredQueryId(options->recoveredQueryId.value(), queryIdCounter);
+            assignedQueryId = options->recoveredQueryId.value();
         }
         else if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
         {
@@ -743,7 +742,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQueryInternal(
         nodeEngine->registerCompiledQueryPlan(assignedQueryId, std::move(result));
         const auto queryId = assignedQueryId;
 
-        const auto callbackId = fmt::format("query_plan_{}", queryId.getRawValue());
+        const auto callbackId = fmt::format("query_plan_{}", encodeQueryIdForIdentifier(queryId));
         if (checkpointingEnabled && checkpointBundle.has_value())
         {
             auto manifest = CheckpointCacheManifest{
@@ -809,8 +808,8 @@ std::expected<void, Exception> SingleNodeWorker::unregisterQuery(QueryId queryId
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         replayStatisticsCollector->unregisterQuery(queryId);
         nodeEngine->unregisterQuery(queryId);
-        CheckpointManager::unregisterCallback(fmt::format("query_plan_{}", queryId.getRawValue()));
-        CheckpointManager::unregisterCallback(fmt::format("query_state_{}", queryId.getRawValue()));
+        CheckpointManager::unregisterCallback(fmt::format("query_plan_{}", encodeQueryIdForIdentifier(queryId)));
+        CheckpointManager::unregisterCallback(fmt::format("query_state_{}", encodeQueryIdForIdentifier(queryId)));
         return {};
     }
     CPPTRACE_CATCH(...)

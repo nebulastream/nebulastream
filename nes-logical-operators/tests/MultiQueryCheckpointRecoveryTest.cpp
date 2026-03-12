@@ -42,7 +42,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -256,11 +256,10 @@ public:
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
-            [](auto&& queryContext)
-            { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
-        sourceStatementHandler = std::make_unique<SourceStatementHandler>(sourceCatalog);
-        sinkStatementHandler = std::make_unique<SinkStatementHandler>(sinkCatalog);
-        legacyOptimizer = std::make_unique<LegacyOptimizer>(sourceCatalog, sinkCatalog);
+            [](AntlrSQLParser::QueryContext* queryContext)
+            { return AntlrSQLQueryParser::bindReplayableQueryPlan(queryContext); });
+        sourceStatementHandler = std::make_unique<SourceStatementHandler>(sourceCatalog, RequireHostConfig{});
+        sinkStatementHandler = std::make_unique<SinkStatementHandler>(sinkCatalog, RequireHostConfig{});
     }
 
     void TearDown() override
@@ -329,7 +328,7 @@ protected:
         {
             throw std::runtime_error("Expected query statement while building checkpoint recovery test plan");
         }
-        return legacyOptimizer->optimize(std::get<QueryStatement>(statementResult.value()));
+        return std::get<QueryStatement>(statementResult.value()).plan;
     }
 
     LogicalPlan buildJoinPlan(const JoinQueryScenario& scenario) const
@@ -377,7 +376,7 @@ protected:
         {
             throw std::runtime_error("Expected join query statement while building checkpoint recovery test plan");
         }
-        return legacyOptimizer->optimize(std::get<QueryStatement>(statementResult.value()));
+        return std::get<QueryStatement>(statementResult.value()).plan;
     }
 
     static void waitForStoppedQuery(SingleNodeWorker& worker, const QueryId queryId)
@@ -399,7 +398,6 @@ protected:
     std::shared_ptr<StatementBinder> binder;
     std::unique_ptr<SourceStatementHandler> sourceStatementHandler;
     std::unique_ptr<SinkStatementHandler> sinkStatementHandler;
-    std::unique_ptr<LegacyOptimizer> legacyOptimizer;
 };
 
 TEST_F(MultiQueryCheckpointRecoveryTest, RestoresMultipleCheckpointedQueriesAcrossWorkerRestart)
@@ -442,19 +440,19 @@ TEST_F(MultiQueryCheckpointRecoveryTest, RestoresMultipleCheckpointedQueriesAcro
             ASSERT_TRUE(queryId.has_value()) << queryId.error().what();
             initialQueryIds.push_back(*queryId);
         }
-        for (const auto queryId : initialQueryIds)
+        for (const auto& queryId : initialQueryIds)
         {
             auto started = worker.startQuery(queryId);
             ASSERT_TRUE(started.has_value()) << started.error().what();
         }
-        for (const auto queryId : initialQueryIds)
+        for (const auto& queryId : initialQueryIds)
         {
             waitForStoppedQuery(worker, queryId);
         }
 
         CheckpointManager::runCallbacksOnce();
 
-        for (const auto queryId : initialQueryIds)
+        for (const auto& queryId : initialQueryIds)
         {
             auto unregistered = worker.unregisterQuery(queryId);
             ASSERT_TRUE(unregistered.has_value()) << unregistered.error().what();
@@ -481,7 +479,7 @@ TEST_F(MultiQueryCheckpointRecoveryTest, RestoresMultipleCheckpointedQueriesAcro
 
     {
         SingleNodeWorker worker(recoveryConfig);
-        for (const auto recoveredQueryId : initialQueryIds)
+        for (const auto& recoveredQueryId : initialQueryIds)
         {
             waitForStoppedQuery(worker, recoveredQueryId);
             auto unregistered = worker.unregisterQuery(recoveredQueryId);
@@ -517,12 +515,12 @@ TEST_F(MultiQueryCheckpointRecoveryTest, RestoresMultipleCheckpointedQueriesAcro
             ASSERT_TRUE(queryId.has_value()) << queryId.error().what();
             coldQueryIds.push_back(*queryId);
         }
-        for (const auto queryId : coldQueryIds)
+        for (const auto& queryId : coldQueryIds)
         {
             auto started = worker.startQuery(queryId);
             ASSERT_TRUE(started.has_value()) << started.error().what();
         }
-        for (const auto queryId : coldQueryIds)
+        for (const auto& queryId : coldQueryIds)
         {
             waitForStoppedQuery(worker, queryId);
             auto unregistered = worker.unregisterQuery(queryId);

@@ -22,10 +22,12 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/CheckpointManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryIdEncoding.hpp>
 #include <folly/Synchronized.h>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
@@ -103,7 +105,7 @@ void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<Comp
     queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
     if (!statefulHandlers.empty())
     {
-        const auto callbackId = fmt::format("query_state_{}", queryId.getRawValue());
+        const auto callbackId = fmt::format("query_state_{}", encodeQueryIdForIdentifier(queryId));
         CheckpointManager::registerCallback(callbackId, [handlers = std::move(statefulHandlers)]
         {
             const auto checkpointDir = CheckpointManager::getCheckpointDirectory();

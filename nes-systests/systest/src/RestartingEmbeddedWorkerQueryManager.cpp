@@ -39,7 +39,9 @@
 
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/QueryIdEncoding.hpp>
 #include <Util/SystestTupleCrashControl.hpp>
+#include <Util/UUID.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
@@ -98,7 +100,7 @@ std::expected<QueryId, Exception> RestartingEmbeddedWorkerQueryManager::register
         return std::unexpected(runtimeQueryId.error());
     }
 
-    const auto syntheticId = QueryId(nextSyntheticQueryId++);
+    const auto syntheticId = QueryId::createLocal(LocalQueryId(generateUUID()));
     queriesBySyntheticId.emplace(
         syntheticId,
         ManagedQuery{
@@ -575,19 +577,13 @@ std::optional<QueryId> RestartingEmbeddedWorkerQueryManager::parseBundleQueryId(
         return std::nullopt;
     }
 
-    QueryId::Underlying queryIdValue = 0;
     const auto numberPart = suffix.substr(0, separator);
-    const auto [ptr, errorCode] = std::from_chars(numberPart.data(), numberPart.data() + numberPart.size(), queryIdValue);
-    if (errorCode != std::errc{} || ptr != numberPart.data() + numberPart.size())
-    {
-        return std::nullopt;
-    }
-    return QueryId(queryIdValue);
+    return decodeQueryIdFromIdentifier(numberPart);
 }
 
 std::string RestartingEmbeddedWorkerQueryManager::bundlePrefix(const QueryId queryId)
 {
-    return std::string(BundleNamePrefix) + std::to_string(queryId.getRawValue()) + "_";
+    return std::string(BundleNamePrefix) + encodeQueryIdForIdentifier(queryId) + "_";
 }
 
 void RestartingEmbeddedWorkerQueryManager::removeBundleDirectoriesLocked(const QueryId bundleQueryId) const

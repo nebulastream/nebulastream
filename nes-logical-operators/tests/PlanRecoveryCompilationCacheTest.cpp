@@ -25,6 +25,7 @@
 #include <BaseUnitTest.hpp>
 #include <CompilationCache.hpp>
 #include <LegacyOptimizer.hpp>
+#include <Phases/LowerToPhysicalOperators.hpp>
 #include <Phases/PipeliningPhase.hpp>
 #include <QueryOptimizer.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -32,7 +33,7 @@
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <StatementHandler.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -65,11 +66,10 @@ public:
         sinkCatalog = std::make_shared<SinkCatalog>();
         binder = std::make_shared<StatementBinder>(
             sourceCatalog,
-            [](auto&& queryContext)
-            { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
-        sourceStatementHandler = std::make_unique<SourceStatementHandler>(sourceCatalog);
-        sinkStatementHandler = std::make_unique<SinkStatementHandler>(sinkCatalog);
-        legacyOptimizer = std::make_unique<LegacyOptimizer>(sourceCatalog, sinkCatalog);
+            [](AntlrSQLParser::QueryContext* queryContext)
+            { return AntlrSQLQueryParser::bindReplayableQueryPlan(queryContext); });
+        sourceStatementHandler = std::make_unique<SourceStatementHandler>(sourceCatalog, RequireHostConfig{});
+        sinkStatementHandler = std::make_unique<SinkStatementHandler>(sinkCatalog, RequireHostConfig{});
     }
 
 protected:
@@ -112,8 +112,8 @@ protected:
         EXPECT_TRUE(statementResult.has_value()) << statementResult.error();
         EXPECT_TRUE(std::holds_alternative<QueryStatement>(statementResult.value()));
 
-        auto optimizedPlan = legacyOptimizer->optimize(std::get<QueryStatement>(statementResult.value()));
-        optimizedPlan.setQueryId(QueryId(1));
+        auto optimizedPlan = std::get<QueryStatement>(statementResult.value()).plan;
+        optimizedPlan.setQueryId(QueryId::createLocal(LocalQueryId(std::string_view("00000000-0000-0000-0000-000000000001"))));
         return optimizedPlan;
     }
 
@@ -151,7 +151,8 @@ protected:
 
     [[nodiscard]] std::vector<std::string> collectExplicitPipelineCacheKeys(const LogicalPlan& plan) const
     {
-        auto physicalPlan = queryOptimizer.optimize(plan);
+        const auto optimizedPlan = queryOptimizer.optimize(plan);
+        const auto physicalPlan = LowerToPhysicalOperators::apply(optimizedPlan.getPlan(), QueryExecutionConfiguration{});
         auto compilationCache = QueryCompilation::CompilationCache(QueryCompilation::CompilationCache::Settings{true, "/tmp/unused"});
         compilationCache.prepareForQuery(physicalPlan);
 
@@ -191,8 +192,7 @@ protected:
     std::shared_ptr<StatementBinder> binder;
     std::unique_ptr<SourceStatementHandler> sourceStatementHandler;
     std::unique_ptr<SinkStatementHandler> sinkStatementHandler;
-    std::unique_ptr<LegacyOptimizer> legacyOptimizer;
-    QueryOptimizer queryOptimizer{QueryExecutionConfiguration{}};
+    QueryOptimizer queryOptimizer{QueryOptimizerConfiguration{}};
 };
 
 TEST_F(PlanRecoveryCompilationCacheTest, AggregationCheckpointPlanRecoveryPreservesCompilationCacheKeys)

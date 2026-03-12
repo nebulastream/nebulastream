@@ -76,10 +76,23 @@ public:
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<Derived*> fieldIndexFunction) const
+        nautilus::val<Derived*> fieldIndexFunction,
+        ArenaRef& arenaRef) const
     {
-        return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
-            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction);
+        if constexpr (requires(const Derived* derived)
+                      {
+                          derived->template applyReadSpanningRecord<IndexerMetaData>(
+                              projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, arenaRef);
+                      })
+        {
+            return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
+                projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, arenaRef);
+        }
+        else
+        {
+            return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
+                projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction);
+        }
     }
 };
 
