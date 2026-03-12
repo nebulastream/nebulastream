@@ -27,6 +27,7 @@
 #include <LegacyOptimizer/RecordingBoundarySolver.hpp>
 #include <LegacyOptimizer/RecordingCostModel.hpp>
 #include <LegacyOptimizer/RecordingSelectionTypes.hpp>
+#include <ReplayCheckpointPlanning.hpp>
 #include <Replay/ReplayNodeFingerprint.hpp>
 #include <WorkerCatalog.hpp>
 #include <fmt/format.h>
@@ -416,73 +417,114 @@ RecordingSelectionExplanation buildReplayPlanningExplanation(
             | std::ranges::to<std::vector>()};
 }
 
-std::optional<ReplayCheckpointReference> selectReplayCheckpoint(
+std::vector<ReplayCheckpointReference> selectReplayCheckpoints(
     const ReplayableQueryMetadata& queryMetadata,
     const WorkerCatalog& workerCatalog,
-    const std::vector<SelectedRecordingBoundary>& selectedReplayBoundaries,
     const uint64_t intervalStartMs)
 {
-    if (!queryMetadata.queryPlanRewrite.has_value())
+    if (!queryMetadata.queryPlanRewrite.has_value() || queryMetadata.replayCheckpointRequirements.empty())
     {
-        return std::nullopt;
+        return {};
     }
 
-    std::optional<Host> replayCheckpointHost;
-    for (const auto& selectedBoundary : selectedReplayBoundaries)
+    std::unordered_map<Host, std::vector<ReplayCheckpointStatus>> replayCheckpointsByHost;
+    std::vector<uint64_t> candidateWatermarks;
+    std::unordered_set<Host> replayCheckpointHosts;
+    for (const auto& requirement : queryMetadata.replayCheckpointRequirements)
     {
-        const auto& boundaryHost = selectedBoundary.chosenOption.selection.node;
-        if (!replayCheckpointHost.has_value())
-        {
-            replayCheckpointHost = boundaryHost;
-            continue;
-        }
-        if (*replayCheckpointHost != boundaryHost)
-        {
-            return std::nullopt;
-        }
-    }
-    if (!replayCheckpointHost.has_value())
-    {
-        return std::nullopt;
-    }
-
-    const auto runtimeMetrics = workerCatalog.getWorkerRuntimeMetrics(*replayCheckpointHost);
-    if (!runtimeMetrics.has_value())
-    {
-        return std::nullopt;
-    }
-
-    std::optional<ReplayCheckpointReference> selectedCheckpoint;
-    for (const auto& replayCheckpoint : runtimeMetrics->replayCheckpoints)
-    {
-        if (!replayCheckpoint.queryId.isDistributed()
-            || replayCheckpoint.queryId.getDistributedQueryId() != DistributedQueryId(queryMetadata.queryPlanRewrite->queryId))
-        {
-            continue;
-        }
-        if (replayCheckpoint.checkpointWatermarkMs > intervalStartMs)
-        {
-            continue;
-        }
-        if (selectedCheckpoint.has_value()
-            && selectedCheckpoint->checkpointWatermarkMs > replayCheckpoint.checkpointWatermarkMs)
-        {
-            continue;
-        }
-        if (selectedCheckpoint.has_value()
-            && selectedCheckpoint->checkpointWatermarkMs == replayCheckpoint.checkpointWatermarkMs
-            && selectedCheckpoint->bundleName >= replayCheckpoint.bundleName)
+        const auto host = Host(requirement.host);
+        if (!replayCheckpointHosts.insert(host).second)
         {
             continue;
         }
 
-        selectedCheckpoint = ReplayCheckpointReference{
-            .host = replayCheckpointHost->getRawValue(),
-            .bundleName = replayCheckpoint.bundleName,
-            .planFingerprint = replayCheckpoint.planFingerprint,
-            .checkpointWatermarkMs = replayCheckpoint.checkpointWatermarkMs};
+        const auto runtimeMetrics = workerCatalog.getWorkerRuntimeMetrics(host);
+        if (!runtimeMetrics.has_value())
+        {
+            return {};
+        }
+
+        auto& hostCheckpoints = replayCheckpointsByHost[host];
+        for (const auto& replayCheckpoint : runtimeMetrics->replayCheckpoints)
+        {
+            if (!replayCheckpoint.queryId.isDistributed()
+                || replayCheckpoint.queryId.getDistributedQueryId() != DistributedQueryId(queryMetadata.queryPlanRewrite->queryId)
+                || replayCheckpoint.checkpointWatermarkMs > intervalStartMs || replayCheckpoint.replayRestoreFingerprint.empty())
+            {
+                continue;
+            }
+            hostCheckpoints.push_back(replayCheckpoint);
+            candidateWatermarks.push_back(replayCheckpoint.checkpointWatermarkMs);
+        }
     }
-    return selectedCheckpoint;
+
+    if (candidateWatermarks.empty())
+    {
+        return {};
+    }
+
+    std::ranges::sort(candidateWatermarks);
+    candidateWatermarks.erase(std::unique(candidateWatermarks.begin(), candidateWatermarks.end()), candidateWatermarks.end());
+
+    auto requirements = queryMetadata.replayCheckpointRequirements;
+    std::ranges::sort(
+        requirements,
+        [](const auto& lhs, const auto& rhs)
+        {
+            if (lhs.host != rhs.host)
+            {
+                return lhs.host < rhs.host;
+            }
+            return lhs.replayRestoreFingerprint < rhs.replayRestoreFingerprint;
+        });
+
+    for (auto watermarkIt = candidateWatermarks.rbegin(); watermarkIt != candidateWatermarks.rend(); ++watermarkIt)
+    {
+        const auto checkpointWatermarkMs = *watermarkIt;
+        std::vector<ReplayCheckpointReference> selectedCheckpoints;
+        std::unordered_map<Host, std::unordered_set<std::string>> usedBundlesByHost;
+        bool completeCheckpointSet = true;
+
+        for (const auto& requirement : requirements)
+        {
+            const auto host = Host(requirement.host);
+            const auto hostCheckpointsIt = replayCheckpointsByHost.find(host);
+            if (hostCheckpointsIt == replayCheckpointsByHost.end())
+            {
+                completeCheckpointSet = false;
+                break;
+            }
+
+            const auto checkpointIt = std::ranges::find_if(
+                hostCheckpointsIt->second,
+                [&](const auto& replayCheckpoint)
+                {
+                    return replayCheckpoint.checkpointWatermarkMs == checkpointWatermarkMs
+                        && replayCheckpoint.replayRestoreFingerprint == requirement.replayRestoreFingerprint
+                        && !usedBundlesByHost[host].contains(replayCheckpoint.bundleName);
+                });
+            if (checkpointIt == hostCheckpointsIt->second.end())
+            {
+                completeCheckpointSet = false;
+                break;
+            }
+
+            usedBundlesByHost[host].insert(checkpointIt->bundleName);
+            selectedCheckpoints.push_back(ReplayCheckpointReference{
+                .host = host.getRawValue(),
+                .bundleName = checkpointIt->bundleName,
+                .planFingerprint = checkpointIt->planFingerprint,
+                .replayRestoreFingerprint = checkpointIt->replayRestoreFingerprint,
+                .checkpointWatermarkMs = checkpointIt->checkpointWatermarkMs});
+        }
+
+        if (completeCheckpointSet)
+        {
+            return selectedCheckpoints;
+        }
+    }
+
+    return {};
 }
 }
 
@@ -584,8 +626,7 @@ std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
     try
     {
         const auto selection = RecordingBoundarySolver(copyPtr(workerCatalog)).solve(candidateSet);
-        const auto selectedCheckpoint
-            = selectReplayCheckpoint(queryMetadata, *workerCatalog, selection.selectedBoundary, intervalStartMs);
+        const auto selectedCheckpoints = selectReplayCheckpoints(queryMetadata, *workerCatalog, intervalStartMs);
 
         ReplayPlan replayPlan{
             .queryPlanRewrite =
@@ -593,10 +634,12 @@ std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
                     .queryId = queryMetadata.queryPlanRewrite->queryId,
                     .basePlan = queryMetadata.queryPlanRewrite->basePlan,
                     .insertions = {}},
+            .replayCheckpointBoundaries = {},
+            .replayCheckpointRequirements = queryMetadata.replayCheckpointRequirements,
             .selectedReplayBoundaries = {},
             .explanations = {},
-            .selectedCheckpoint = selectedCheckpoint,
-            .warmupStartMs = selectedCheckpoint.has_value() ? selectedCheckpoint->checkpointWatermarkMs : 0,
+            .selectedCheckpoints = selectedCheckpoints,
+            .warmupStartMs = selectedCheckpoints.empty() ? 0 : selectedCheckpoints.front().checkpointWatermarkMs,
             .selectedRecordingIds = {},
             .objectiveCost = selection.objectiveCost};
         replayPlan.selectedReplayBoundaries.reserve(selection.selectedBoundary.size());
@@ -625,6 +668,12 @@ std::expected<ReplayPlan, Exception> ReplayPlanner::plan(
                 selection.objectiveCost));
             replayPlan.selectedRecordingIds.push_back(selectedBoundary.chosenOption.selection.recordingId);
         }
+        const auto replayCheckpointBoundaries = buildReplayCheckpointBoundaries(replayPlan.queryPlanRewrite);
+        if (!replayCheckpointBoundaries)
+        {
+            return std::unexpected(replayCheckpointBoundaries.error());
+        }
+        replayPlan.replayCheckpointBoundaries = *replayCheckpointBoundaries;
         return replayPlan;
     }
     catch (const Exception& exception)

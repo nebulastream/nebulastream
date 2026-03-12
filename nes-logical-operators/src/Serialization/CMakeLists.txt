@@ -12,6 +12,7 @@
 
 add_source_files(nes-logical-operators
         OperatorSerializationUtil.cpp
+        QueryPlanFingerprintUtil.cpp
         QueryPlanSerializationUtil.cpp
         WindowTypeReflection.cpp
 )

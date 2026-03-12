@@ -895,6 +895,9 @@ TEST(QueryManagerMetricsTest, RegisterQueryPersistsReplayBoundaryMetadataForRepl
     QueryManager queryManager(workerCatalog, [](const WorkerConfig&) { return std::make_unique<FakeLifecycleBackend>(); });
 
     const auto incomingPlan = createReplayPlan(queryId, "INCOMING_SOURCE");
+    const auto sink = incomingPlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto source = sink.getChildren().front();
     const auto selection = RecordingSelection{
         .recordingId = recordingId,
         .node = worker,
@@ -906,7 +909,7 @@ TEST(QueryManagerMetricsTest, RegisterQueryPersistsReplayBoundaryMetadataForRepl
         .coversIncomingQuery = true};
     const auto replayBoundary = QueryRecordingPlanInsertion{
         .selection = selection,
-        .materializationEdges = {RecordingRewriteEdge{.parentId = OperatorId(11), .childId = OperatorId(7)}}};
+        .materializationEdges = {RecordingRewriteEdge{.parentId = sink.getId(), .childId = source.getId()}}};
     const auto distributedPlan = DistributedLogicalPlan(
         DecomposedLogicalPlan<Host>{{{worker, {incomingPlan}}}},
         incomingPlan,
@@ -938,6 +941,7 @@ TEST(QueryManagerMetricsTest, RegisterQueryPersistsReplayBoundaryMetadataForRepl
     EXPECT_EQ(metadata.queryPlanRewrite->basePlan, incomingPlan);
     EXPECT_THAT(metadata.queryPlanRewrite->insertions, testing::ElementsAre(replayBoundary));
     EXPECT_THAT(metadata.replayBoundaries, testing::ElementsAre(replayBoundary));
+    EXPECT_TRUE(metadata.replayCheckpointRequirements.empty());
 }
 
 TEST(QueryManagerMetricsTest, RegisterQueryMarksNewRecordingInstallingUntilWorkerReportsReady)

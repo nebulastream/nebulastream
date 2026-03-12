@@ -251,7 +251,10 @@ TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
         .selectedRecordings = {},
         .networkExplanations = {},
         .queryPlanRewrite = QueryRecordingPlanRewrite{.queryId = distributedQueryId.getRawValue(), .basePlan = basePlan, .insertions = {}},
-        .replayBoundaries = {replayBoundary}};
+        .replayBoundaries = {replayBoundary},
+        .replayCheckpointRequirements = {ReplayCheckpointRequirement{
+            .host = host.getRawValue(),
+            .replayRestoreFingerprint = "restore-selection"}}};
 
     RecordingCatalog catalog;
     catalog.upsertRecording(readyRecording(
@@ -281,6 +284,7 @@ TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
                             distributedQueryId),
                         .bundleName = "plan_a_replay_checkpoint_00000000000000000500",
                         .planFingerprint = "fingerprint-a",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 500},
                     ReplayCheckpointStatus{
                         .queryId = QueryId::create(
@@ -288,6 +292,7 @@ TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
                             distributedQueryId),
                         .bundleName = "plan_b_replay_checkpoint_00000000000000000900",
                         .planFingerprint = "fingerprint-b",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 900},
                     ReplayCheckpointStatus{
                         .queryId = QueryId::create(
@@ -295,6 +300,7 @@ TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
                             distributedQueryId),
                         .bundleName = "plan_c_replay_checkpoint_00000000000000001100",
                         .planFingerprint = "fingerprint-c",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 1100},
                     ReplayCheckpointStatus{
                         .queryId = QueryId::create(
@@ -302,19 +308,135 @@ TEST_F(ReplayPlannerTest, PlannerSelectsNewestReplayCheckpointOnReplayHost)
                             DistributedQueryId("other-query")),
                         .bundleName = "plan_d_replay_checkpoint_00000000000000000950",
                         .planFingerprint = "fingerprint-d",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 950},
                 }}));
 
     const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadata, catalog, 1'000, 5'000);
 
     ASSERT_TRUE(replayPlan.has_value()) << replayPlan.error().what();
-    ASSERT_TRUE(replayPlan->selectedCheckpoint.has_value());
-    EXPECT_EQ(replayPlan->selectedCheckpoint->host, host.getRawValue());
-    EXPECT_EQ(replayPlan->selectedCheckpoint->bundleName, "plan_b_replay_checkpoint_00000000000000000900");
-    EXPECT_EQ(replayPlan->selectedCheckpoint->planFingerprint, "fingerprint-b");
-    EXPECT_EQ(replayPlan->selectedCheckpoint->checkpointWatermarkMs, 900U);
+    ASSERT_THAT(replayPlan->selectedCheckpoints, testing::SizeIs(1));
+    EXPECT_EQ(replayPlan->selectedCheckpoints.front().host, host.getRawValue());
+    EXPECT_EQ(replayPlan->selectedCheckpoints.front().bundleName, "plan_b_replay_checkpoint_00000000000000000900");
+    EXPECT_EQ(replayPlan->selectedCheckpoints.front().planFingerprint, "fingerprint-b");
+    EXPECT_EQ(replayPlan->selectedCheckpoints.front().checkpointWatermarkMs, 900U);
     EXPECT_EQ(replayPlan->warmupStartMs, 900U);
     EXPECT_THAT(replayPlan->selectedRecordingIds, testing::ElementsAre(RecordingId("selection-recording")));
+}
+
+TEST_F(ReplayPlannerTest, PlannerSelectsCompatibleReplayCheckpointSetAcrossHosts)
+{
+    const auto hostA = Host("worker-1:8080");
+    const auto hostB = Host("worker-2:8080");
+    const auto distributedQueryId = DistributedQueryId("replayable-query");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(hostA, {}, 16, {}, {}, 1024 * 1024));
+    ASSERT_TRUE(workerCatalog->addWorker(hostB, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto basePlan = createPlacedUnaryPlan(hostA);
+    const auto sink = basePlan.getRootOperators().front();
+    ASSERT_EQ(sink.getChildren().size(), 1U);
+    const auto selection = sink.getChildren().front();
+
+    const auto replayBoundary = replayBoundaryForOperator(
+        sink,
+        selection,
+        hostA,
+        RecordingId("selection-recording"),
+        RecordingRepresentation::BinaryStore);
+
+    ReplayableQueryMetadata metadata{
+        .originalPlan = std::nullopt,
+        .globalPlan = basePlan,
+        .replaySpecification = ReplaySpecification{.retentionWindowMs = 10'000, .replayLatencyLimitMs = std::nullopt},
+        .selectedRecordings = {},
+        .networkExplanations = {},
+        .queryPlanRewrite = QueryRecordingPlanRewrite{.queryId = distributedQueryId.getRawValue(), .basePlan = basePlan, .insertions = {}},
+        .replayBoundaries = {replayBoundary},
+        .replayCheckpointRequirements =
+            {ReplayCheckpointRequirement{.host = hostA.getRawValue(), .replayRestoreFingerprint = "restore-selection-a"},
+             ReplayCheckpointRequirement{.host = hostB.getRawValue(), .replayRestoreFingerprint = "restore-selection-b"}}};
+
+    RecordingCatalog catalog;
+    catalog.upsertRecording(readyRecording(
+        RecordingId("selection-recording"),
+        hostA,
+        "/tmp/REPLAY-NebulaStream/recordings/selection.bin",
+        replayBoundary.selection.structuralFingerprint,
+        RecordingRepresentation::BinaryStore));
+
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        hostA,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::milliseconds(1000)),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 0,
+            .activeQueryCount = 0,
+            .recordingWriteBytesPerSecond = 0,
+            .replayReadBytes = 0,
+            .replayReadBytesPerSecond = 0,
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {},
+            .replayCheckpoints =
+                {ReplayCheckpointStatus{
+                     .queryId = QueryId::create(
+                         LocalQueryId(std::string("00000000-0000-0000-0000-000000000001")),
+                         distributedQueryId),
+                     .bundleName = "plan_a_replay_checkpoint_00000000000000000900",
+                     .planFingerprint = "fingerprint-a-900",
+                     .replayRestoreFingerprint = "restore-selection-a",
+                     .checkpointWatermarkMs = 900},
+                 ReplayCheckpointStatus{
+                     .queryId = QueryId::create(
+                         LocalQueryId(std::string("00000000-0000-0000-0000-000000000002")),
+                         distributedQueryId),
+                     .bundleName = "plan_a_replay_checkpoint_00000000000000000800",
+                     .planFingerprint = "fingerprint-a-800",
+                     .replayRestoreFingerprint = "restore-selection-a",
+                     .checkpointWatermarkMs = 800}},
+        }));
+    ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
+        hostB,
+        WorkerRuntimeMetrics{
+            .observedAt = std::chrono::system_clock::time_point(std::chrono::milliseconds(1000)),
+            .recordingStorageBytes = 0,
+            .recordingFileCount = 0,
+            .activeQueryCount = 0,
+            .recordingWriteBytesPerSecond = 0,
+            .replayReadBytes = 0,
+            .replayReadBytesPerSecond = 0,
+            .replayOperatorStatistics = {},
+            .recordingStatuses = {},
+            .replayCheckpoints =
+                {ReplayCheckpointStatus{
+                     .queryId = QueryId::create(
+                         LocalQueryId(std::string("00000000-0000-0000-0000-000000000003")),
+                         distributedQueryId),
+                     .bundleName = "plan_b_replay_checkpoint_00000000000000000850",
+                     .planFingerprint = "fingerprint-b-850",
+                     .replayRestoreFingerprint = "restore-selection-b",
+                     .checkpointWatermarkMs = 850},
+                 ReplayCheckpointStatus{
+                     .queryId = QueryId::create(
+                         LocalQueryId(std::string("00000000-0000-0000-0000-000000000004")),
+                         distributedQueryId),
+                     .bundleName = "plan_b_replay_checkpoint_00000000000000000800",
+                     .planFingerprint = "fingerprint-b-800",
+                     .replayRestoreFingerprint = "restore-selection-b",
+                     .checkpointWatermarkMs = 800}},
+        }));
+
+    const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadata, catalog, 1'000, 5'000);
+
+    ASSERT_TRUE(replayPlan.has_value()) << replayPlan.error().what();
+    ASSERT_THAT(replayPlan->selectedCheckpoints, testing::SizeIs(2));
+    EXPECT_EQ(replayPlan->selectedCheckpoints[0].host, hostA.getRawValue());
+    EXPECT_EQ(replayPlan->selectedCheckpoints[0].bundleName, "plan_a_replay_checkpoint_00000000000000000800");
+    EXPECT_EQ(replayPlan->selectedCheckpoints[0].planFingerprint, "fingerprint-a-800");
+    EXPECT_EQ(replayPlan->selectedCheckpoints[1].host, hostB.getRawValue());
+    EXPECT_EQ(replayPlan->selectedCheckpoints[1].bundleName, "plan_b_replay_checkpoint_00000000000000000800");
+    EXPECT_EQ(replayPlan->selectedCheckpoints[1].planFingerprint, "fingerprint-b-800");
+    EXPECT_EQ(replayPlan->warmupStartMs, 800U);
 }
 
 TEST_F(ReplayPlannerTest, PlannerLeavesWarmupAtZeroWhenOnlyFutureReplayCheckpointsExist)
@@ -343,7 +465,10 @@ TEST_F(ReplayPlannerTest, PlannerLeavesWarmupAtZeroWhenOnlyFutureReplayCheckpoin
         .selectedRecordings = {},
         .networkExplanations = {},
         .queryPlanRewrite = QueryRecordingPlanRewrite{.queryId = distributedQueryId.getRawValue(), .basePlan = basePlan, .insertions = {}},
-        .replayBoundaries = {replayBoundary}};
+        .replayBoundaries = {replayBoundary},
+        .replayCheckpointRequirements = {ReplayCheckpointRequirement{
+            .host = host.getRawValue(),
+            .replayRestoreFingerprint = "restore-selection"}}};
 
     RecordingCatalog catalog;
     catalog.upsertRecording(readyRecording(
@@ -373,6 +498,7 @@ TEST_F(ReplayPlannerTest, PlannerLeavesWarmupAtZeroWhenOnlyFutureReplayCheckpoin
                             distributedQueryId),
                         .bundleName = "plan_future_replay_checkpoint_00000000000000001100",
                         .planFingerprint = "future-fingerprint",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 1100},
                     ReplayCheckpointStatus{
                         .queryId = QueryId::create(
@@ -380,13 +506,14 @@ TEST_F(ReplayPlannerTest, PlannerLeavesWarmupAtZeroWhenOnlyFutureReplayCheckpoin
                             DistributedQueryId("other-query")),
                         .bundleName = "plan_other_replay_checkpoint_00000000000000000900",
                         .planFingerprint = "other-fingerprint",
+                        .replayRestoreFingerprint = "restore-selection",
                         .checkpointWatermarkMs = 900},
                 }}));
 
     const auto replayPlan = ReplayPlanner(workerCatalog).plan(metadata, catalog, 1'000, 5'000);
 
     ASSERT_TRUE(replayPlan.has_value()) << replayPlan.error().what();
-    EXPECT_FALSE(replayPlan->selectedCheckpoint.has_value());
+    EXPECT_TRUE(replayPlan->selectedCheckpoints.empty());
     EXPECT_EQ(replayPlan->warmupStartMs, 0U);
     EXPECT_THAT(replayPlan->selectedRecordingIds, testing::ElementsAre(RecordingId("selection-recording")));
 }

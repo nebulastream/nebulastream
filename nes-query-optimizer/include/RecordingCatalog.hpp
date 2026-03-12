@@ -25,6 +25,7 @@
 #include <DistributedQuery.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <RecordingSelectionResult.hpp>
+#include <Replay/ReplayCheckpoint.hpp>
 #include <Replay/RecordingRuntimeStatus.hpp>
 #include <Replay/ReplaySpecification.hpp>
 #include <Time/Timestamp.hpp>
@@ -41,6 +42,7 @@ struct ReplayableQueryMetadata
     std::vector<RecordingSelectionExplanation> networkExplanations;
     std::optional<QueryRecordingPlanRewrite> queryPlanRewrite = std::nullopt;
     std::vector<QueryRecordingPlanInsertion> replayBoundaries{};
+    std::vector<ReplayCheckpointRequirement> replayCheckpointRequirements{};
 };
 
 struct RecordingEntry

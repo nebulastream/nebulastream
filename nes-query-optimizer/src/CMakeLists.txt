@@ -16,4 +16,4 @@ add_subdirectory(Serialization)
 add_subdirectory(LegacyOptimizer)
 
 add_source_files(nes-query-optimizer
-        QueryOptimizer.cpp OptimizedPlan.cpp)
+        QueryOptimizer.cpp OptimizedPlan.cpp ReplayCheckpointPlanning.cpp)

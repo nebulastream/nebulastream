@@ -301,14 +301,14 @@ struct TypedLogicalOperator
         return self->withInferredSchema(std::move(inputSchemas));
     }
 
+    [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); }
+
 private:
     friend class QueryPlanSerializationUtil;
     friend class OperatorSerializationUtil;
 
     template <typename FriendChecked>
     friend struct TypedLogicalOperator;
-
-    [[nodiscard]] TypedLogicalOperator withOperatorId(const OperatorId id) const { return self->withOperatorId(id); };
 
     std::shared_ptr<const NES::detail::ErasedLogicalOperator> self;
 };
