@@ -39,8 +39,8 @@
 - [x] **PHYS-02**: Test numerical correctness (output == input for identity model)
 - [x] **PHYS-03**: Test field extraction from TupleBuffer using TestTupleBuffer API
 - [x] **PHYS-04**: Test multi-tuple buffer processing (multiple records per buffer)
-- [ ] **PHYS-05**: Test error when handler not started (setup skipped)
-- [ ] **PHYS-06**: Test idempotent terminate (calling terminate twice doesn't crash)
+- [x] **PHYS-05**: ~~Test error when handler not started (setup skipped)~~ — Dropped: framework guarantees setup->execute*->stop ordering (user decision in 03-CONTEXT.md)
+- [x] **PHYS-06**: ~~Test idempotent terminate (calling terminate twice doesn't crash)~~ — Dropped: framework guarantees terminate is called exactly once (user decision in 03-CONTEXT.md)
 - [x] **PHYS-07**: Test execute with empty buffer (zero tuples)
 
 ## v2 Requirements
@@ -87,15 +87,16 @@
 | PHYS-02 | Phase 3 | Complete |
 | PHYS-03 | Phase 3 | Complete |
 | PHYS-04 | Phase 3 | Complete |
-| PHYS-05 | Phase 3 | Pending |
-| PHYS-06 | Phase 3 | Pending |
+| PHYS-05 | Phase 3 | Dropped |
+| PHYS-06 | Phase 3 | Dropped |
 | PHYS-07 | Phase 3 | Complete |
 
 **Coverage:**
-- v1 requirements: 22 total
+- v1 requirements: 22 total (20 Complete, 2 Dropped)
 - Mapped to phases: 22
 - Unmapped: 0 ✓
+- Pending: 0 ✓
 
 ---
 *Requirements defined: 2026-03-12*
-*Last updated: 2026-03-12 after roadmap creation (coarse 3-phase structure)*
+*Last updated: 2026-03-12 — PHYS-05 and PHYS-06 marked Dropped per user decision (03-03-PLAN.md gap closure)*
