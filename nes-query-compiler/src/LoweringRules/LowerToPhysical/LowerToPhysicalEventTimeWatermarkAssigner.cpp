@@ -14,6 +14,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
 
 #include <memory>
+#include <utility>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
