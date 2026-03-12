@@ -107,6 +107,14 @@ jobs:
       LLVM_TOOLCHAIN_VERSION: 19
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
     steps:
+      - name: Free disk space
+        run: |
+          # Remove large pre-installed tools to make room for LLVM build
+          sudo rm -rf /Applications/Xcode_15.2.app || true
+          sudo rm -rf /Applications/Xcode_15.3.app || true
+          sudo rm -rf /Users/runner/Library/Android || true
+          sudo rm -rf /opt/homebrew/lib/node_modules || true
+          df -h /
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}

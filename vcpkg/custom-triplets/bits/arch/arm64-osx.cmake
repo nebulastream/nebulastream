@@ -19,3 +19,9 @@ set(VCPKG_CMAKE_SYSTEM_NAME Darwin)
 if (PORT STREQUAL "boost-context")
     SET(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR=aarch64)
 endif ()
+
+# LLVM/MLIR is only used as a JIT backend at runtime; building Debug
+# libraries doubles disk usage and exceeds GitHub Actions runner limits.
+if (PORT STREQUAL "llvm")
+    set(VCPKG_BUILD_TYPE release)
+endif ()
