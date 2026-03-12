@@ -23,7 +23,7 @@ std::shared_ptr<IREEAdapter> IREEAdapter::create()
     return std::make_shared<IREEAdapter>();
 }
 
-void IREEAdapter::initializeModel(Model& model)
+void IREEAdapter::initializeModel(NES::Nebuli::Inference::Model& model)
 {
     this->runtimeWrapper = IREERuntimeWrapper();
     runtimeWrapper.setup(

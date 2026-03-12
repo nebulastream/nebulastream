@@ -20,9 +20,13 @@
 #include <Inference/IREERuntimeWrapper.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Inference
+namespace NES::Nebuli::Inference
 {
 class Model;
+}
+
+namespace NES::Inference
+{
 
 class IREEAdapter
 {
@@ -31,7 +35,7 @@ public:
 
     IREEAdapter() = default;
 
-    void initializeModel(Model& model);
+    void initializeModel(NES::Nebuli::Inference::Model& model);
 
     template <class T>
     void addModelInput(size_t index, T value)

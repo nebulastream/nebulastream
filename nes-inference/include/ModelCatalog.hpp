@@ -81,9 +81,6 @@ inline Model ModelCatalog::load(const std::string& modelName) const
         auto result = Inference::load(it->second.path, {});
         if (result)
         {
-            result->setInputs(it->second.inputs);
-            result->setOutputs(it->second.outputs);
-
             catalogImpl.emplace(modelName, *result);
             return *result;
         }

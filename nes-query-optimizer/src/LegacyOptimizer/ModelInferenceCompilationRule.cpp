@@ -41,7 +41,7 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
         }
 
         auto model = modelCatalog->load(modelName);
-        auto inferModelOp = InferModelLogicalOperator(std::move(model));
+        auto inferModelOp = InferModelLogicalOperator(std::move(model), op.getInputFieldNames());
         /// Preserve children from the original operator
         inferModelOp = inferModelOp.withChildren(op.getChildren());
         auto replacement = LogicalOperator(std::move(inferModelOp));

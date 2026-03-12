@@ -19,7 +19,7 @@
 namespace NES::Inference
 {
 
-IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(Model model) : model(std::move(model))
+IREEInferenceOperatorHandler::IREEInferenceOperatorHandler(NES::Nebuli::Inference::Model model) : model(std::move(model))
 {
 }
 
@@ -38,7 +38,7 @@ void IREEInferenceOperatorHandler::stop(QueryTerminationType, PipelineExecutionC
     threadLocalAdapters.clear();
 }
 
-const Model& IREEInferenceOperatorHandler::getModel() const
+const NES::Nebuli::Inference::Model& IREEInferenceOperatorHandler::getModel() const
 {
     return model;
 }

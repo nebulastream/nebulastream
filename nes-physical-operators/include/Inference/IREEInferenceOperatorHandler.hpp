@@ -27,16 +27,16 @@ class IREEAdapter;
 class IREEInferenceOperatorHandler : public OperatorHandler
 {
 public:
-    explicit IREEInferenceOperatorHandler(Model model);
+    explicit IREEInferenceOperatorHandler(NES::Nebuli::Inference::Model model);
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    [[nodiscard]] const Model& getModel() const;
+    [[nodiscard]] const NES::Nebuli::Inference::Model& getModel() const;
     [[nodiscard]] const std::shared_ptr<IREEAdapter>& getIREEAdapter(WorkerThreadId threadId) const;
 
 private:
-    Model model;
+    NES::Nebuli::Inference::Model model;
     std::vector<std::shared_ptr<IREEAdapter>> threadLocalAdapters;
 };
 
