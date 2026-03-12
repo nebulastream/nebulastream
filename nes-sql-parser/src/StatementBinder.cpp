@@ -168,6 +168,30 @@ public:
             .name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions, .formatConfig = formatOptions};
     }
 
+    CreateModelStatement bindCreateModelStatement(AntlrSQLParser::CreateModelDefinitionContext* modelDefAST) const
+    {
+        const auto modelName = bindIdentifier(modelDefAST->modelName->strictIdentifier());
+        const auto modelPath = bindStringLiteral(modelDefAST->modelPath);
+
+        std::vector<std::pair<std::string, DataType>> inputs;
+        for (auto* const inputField : modelDefAST->modelInputField())
+        {
+            auto fieldName = bindIdentifier(inputField->identifier());
+            auto dataType = bindDataType(inputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE);
+            inputs.emplace_back(std::move(fieldName), std::move(dataType));
+        }
+
+        std::vector<std::pair<std::string, DataType>> outputs;
+        for (auto* const outputField : modelDefAST->modelOutputField())
+        {
+            auto fieldName = bindIdentifier(outputField->identifier());
+            auto dataType = bindDataType(outputField->typeDefinition(), DataType::NULLABLE::NOT_NULLABLE);
+            outputs.emplace_back(std::move(fieldName), std::move(dataType));
+        }
+
+        return CreateModelStatement{.name = modelName, .path = modelPath, .inputs = std::move(inputs), .outputs = std::move(outputs)};
+    }
+
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
     {
         if (auto* const logicalSourceDefAST = createAST->createDefinition()->createLogicalSourceDefinition();
@@ -183,6 +207,10 @@ public:
         if (auto* const sinkDefAST = createAST->createDefinition()->createSinkDefinition(); sinkDefAST != nullptr)
         {
             return bindCreateSinkStatement(sinkDefAST);
+        }
+        if (auto* const modelDefAST = createAST->createDefinition()->createModelDefinition(); modelDefAST != nullptr)
+        {
+            return bindCreateModelStatement(modelDefAST);
         }
         throw InvalidStatement("Unrecognized CREATE statement");
     }
@@ -302,6 +330,13 @@ public:
         {
             return bindShowSinksStatement(showFilter, showAST->showFormat());
         }
+        if (const auto* modelsSubject = dynamic_cast<AntlrSQLParser::ShowModelsSubjectContext*>(showAST->showSubject());
+            modelsSubject != nullptr)
+        {
+            const std::optional<StatementOutputFormat> format
+                = showAST->showFormat() != nullptr ? std::make_optional(bindFormat(showAST->showFormat())) : std::nullopt;
+            return ShowModelsStatement{.format = format};
+        }
         throw InvalidStatement("Unrecognized SHOW statement");
     }
 
@@ -369,6 +404,18 @@ public:
             }
             const auto sinkName = std::get<std::string>(value);
             return DropSinkStatement{sinkName};
+        }
+        else if (const auto* const dropModelAst = dropAst->dropSubject()->dropModel(); dropModelAst != nullptr)
+        {
+            if (attr != "NAME")
+            {
+                throw InvalidQuerySyntax("Filter for DROP MODEL must be on NAME attribute");
+            }
+            if (not std::holds_alternative<std::string>(value))
+            {
+                throw InvalidQuerySyntax("Filter value for DROP MODEL must be a string");
+            }
+            return DropModelStatement{.name = std::get<std::string>(value)};
         }
         throw InvalidStatement("Unrecognized DROP statement");
     }

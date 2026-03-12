@@ -61,6 +61,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <LegacyOptimizer.hpp>
+#include <ModelCatalog.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -421,10 +422,11 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto modelCatalog = std::make_shared<Inference::ModelCatalog>();
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog, modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -542,9 +544,38 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(statement.sinkType, statement.name, schema);
     }
 
+    void createModel(const std::shared_ptr<Inference::ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
+    {
+        std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
+        for (const auto& [fieldName, dataType] : statement.inputs)
+        {
+            inputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+        }
+
+        std::vector<std::pair<std::string, std::shared_ptr<DataType>>> outputs;
+        for (const auto& [fieldName, dataType] : statement.outputs)
+        {
+            outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+        }
+
+        auto path = std::filesystem::path(statement.path);
+        if (!path.is_absolute())
+        {
+            path = testDataDir / path;
+        }
+
+        modelCatalog->registerModel(Inference::RegisteredModel{
+            .name = statement.name,
+            .path = path,
+            .inputs = std::move(inputs),
+            .outputs = std::move(outputs),
+        });
+    }
+
     void createCallback(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<Inference::ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
@@ -574,6 +605,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
             createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateModelStatement>(statement))
+        {
+            createModel(modelCatalog, std::get<CreateModelStatement>(statement));
         }
         else
         {
@@ -803,6 +838,7 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<Inference::ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -895,8 +931,9 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            [&, sourceCatalog, modelCatalog](
+                const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
+            { createCallback(binder, sourceCatalog, modelCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
 
         try
         {

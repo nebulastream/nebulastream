@@ -24,6 +24,11 @@ class SinkCatalog;
 class SourceCatalog;
 }
 
+namespace NES::Inference
+{
+class ModelCatalog;
+}
+
 namespace NES
 {
 class LegacyOptimizer
@@ -32,13 +37,17 @@ public:
     [[nodiscard]] LogicalPlan optimize(const LogicalPlan& plan) const;
     LegacyOptimizer() = default;
 
-    explicit LegacyOptimizer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit LegacyOptimizer(
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        std::shared_ptr<Inference::ModelCatalog> modelCatalog = nullptr)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
     {
     }
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<Inference::ModelCatalog> modelCatalog;
 };
 }
