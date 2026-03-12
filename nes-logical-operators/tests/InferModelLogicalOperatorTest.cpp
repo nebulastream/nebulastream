@@ -14,6 +14,8 @@
 
 #include <gtest/gtest.h>
 
+#include <BaseUnitTest.hpp>
+
 #include <memory>
 #include <optional>
 #include <string>
@@ -186,6 +188,160 @@ TEST_F(InferModelLogicalOperatorTest, NameVariantConstructionAndExplain)
         LogicalOperator wrapped{nameOp};
         (void)wrapped;
     });
+}
+
+// ---------------------------------------------------------------------------
+// Schema inference — happy-path and multi-output (SCHEMA-01, SCHEMA-02, SCHEMA-06)
+// ---------------------------------------------------------------------------
+
+// SCHEMA-01: withInferredSchema appends model output fields to input schema
+TEST_F(InferModelLogicalOperatorTest, WithInferredSchemaAppendsOutputFields)
+{
+    // Model: 1 Float32 input, 1 Float32 output named "prediction"
+    auto model = makeModel({DataType::Type::FLOAT32}, {{"prediction", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"value"}};
+
+    auto inputSchema = makeSchema({{"value", DataType::Type::FLOAT32}});
+    auto inferred = op.withInferredSchema({inputSchema});
+
+    auto outputSchema = inferred.getOutputSchema();
+    EXPECT_TRUE(outputSchema.getFieldByName("value").has_value());
+    EXPECT_TRUE(outputSchema.getFieldByName("prediction").has_value());
+    EXPECT_EQ(outputSchema.getNumberOfFields(), 2u);
+}
+
+// SCHEMA-02: Output field ordering is preserved and verifiable by index
+TEST_F(InferModelLogicalOperatorTest, OutputFieldOrderingPreserved)
+{
+    // Model: 1 Float32 input, 2 outputs: "out_a" (Float32), "out_b" (Int32)
+    auto model = makeModel(
+        {DataType::Type::FLOAT32},
+        {{"out_a", DataType::Type::FLOAT32}, {"out_b", DataType::Type::INT32}});
+    InferModelLogicalOperator op{std::move(model), {"value"}};
+
+    auto inputSchema = makeSchema({{"value", DataType::Type::FLOAT32}});
+    auto inferred = op.withInferredSchema({inputSchema});
+
+    auto outputSchema = inferred.getOutputSchema();
+    ASSERT_EQ(outputSchema.getNumberOfFields(), 3u);
+
+    // Verify by index: field[0]="value", field[1]="out_a", field[2]="out_b"
+    auto field0 = outputSchema.getFieldAt(0);
+    auto field1 = outputSchema.getFieldAt(1);
+    auto field2 = outputSchema.getFieldAt(2);
+
+    EXPECT_EQ(field0.getUnqualifiedName(), "value");
+    EXPECT_EQ(field0.dataType, (DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}));
+
+    EXPECT_EQ(field1.getUnqualifiedName(), "out_a");
+    EXPECT_EQ(field1.dataType, (DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}));
+
+    EXPECT_EQ(field2.getUnqualifiedName(), "out_b");
+    EXPECT_EQ(field2.dataType, (DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}));
+}
+
+// SCHEMA-06: Multiple output fields of mixed types all appear in output schema
+TEST_F(InferModelLogicalOperatorTest, MultipleOutputFieldsHandled)
+{
+    // Model: 1 Float32 input, 3 outputs: "score" (Float32), "class_id" (Int32), "confidence" (Int64)
+    auto model = makeModel(
+        {DataType::Type::FLOAT32},
+        {{"score", DataType::Type::FLOAT32}, {"class_id", DataType::Type::INT32}, {"confidence", DataType::Type::INT64}});
+    InferModelLogicalOperator op{std::move(model), {"input_val"}};
+
+    auto inputSchema = makeSchema({{"input_val", DataType::Type::FLOAT32}});
+    auto inferred = op.withInferredSchema({inputSchema});
+
+    auto outputSchema = inferred.getOutputSchema();
+    // 1 input field + 3 output fields = 4 total
+    EXPECT_EQ(outputSchema.getNumberOfFields(), 4u);
+
+    auto scoreField = outputSchema.getFieldByName("score");
+    ASSERT_TRUE(scoreField.has_value());
+    EXPECT_EQ(scoreField->dataType, (DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE}));
+
+    auto classIdField = outputSchema.getFieldByName("class_id");
+    ASSERT_TRUE(classIdField.has_value());
+    EXPECT_EQ(classIdField->dataType, (DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}));
+
+    auto confidenceField = outputSchema.getFieldByName("confidence");
+    ASSERT_TRUE(confidenceField.has_value());
+    EXPECT_EQ(confidenceField->dataType, (DataType{DataType::Type::INT64, DataType::NULLABLE::NOT_NULLABLE}));
+}
+
+// ---------------------------------------------------------------------------
+// Schema inference — error-path and edge-case tests (SCHEMA-03, SCHEMA-04, SCHEMA-05, SCHEMA-07)
+// ---------------------------------------------------------------------------
+
+// SCHEMA-03: Empty input schemas vector throws CannotInferSchema
+TEST_F(InferModelLogicalOperatorTest, ErrorOnEmptyInputSchema)
+{
+    auto op = makeOp();
+    // withInferredSchema is [[nodiscard]] — cast to void inside the macro to suppress warning
+    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({}), NES::ErrorCode::CannotInferSchema);
+}
+
+// SCHEMA-04: Missing required input fields throws CannotInferSchema
+TEST_F(InferModelLogicalOperatorTest, ErrorOnMissingRequiredInputFields)
+{
+    // Sub-test A: inputFieldNames count != model.getInputs().size()
+    // Model expects 2 Float32 inputs but operator only has 1 inputFieldName
+    auto model1 = makeModel(
+        {DataType::Type::FLOAT32, DataType::Type::FLOAT32},
+        {{"result", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op1{std::move(model1), {"only_one_field"}};
+    auto schemaA = makeSchema({{"only_one_field", DataType::Type::FLOAT32}});
+    ASSERT_EXCEPTION_ERRORCODE((void)op1.withInferredSchema({schemaA}), NES::ErrorCode::CannotInferSchema);
+
+    // Sub-test B: field referenced in inputFieldNames is absent from schema
+    auto model2 = makeModel(
+        {DataType::Type::FLOAT32, DataType::Type::FLOAT32},
+        {{"result", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op2{std::move(model2), {"field_a", "field_b"}};
+    // Schema only has "field_a" — "field_b" is missing
+    auto schemaB = makeSchema({{"field_a", DataType::Type::FLOAT32}});
+    ASSERT_EXCEPTION_ERRORCODE((void)op2.withInferredSchema({schemaB}), NES::ErrorCode::CannotInferSchema);
+}
+
+// SCHEMA-05: Type mismatch throws CannotInferSchema; VARSIZED type is accepted when model expects it
+TEST_F(InferModelLogicalOperatorTest, ErrorOnTypeMismatch)
+{
+    // Model expects Float32 input but schema has Int32 — should throw
+    auto model = makeModel({DataType::Type::FLOAT32}, {{"prediction", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"value"}};
+    auto wrongTypeSchema = makeSchema({{"value", DataType::Type::INT32}});
+    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({wrongTypeSchema}), NES::ErrorCode::CannotInferSchema);
+
+    // VARSIZED acceptance: model expects VARSIZED, schema has VARSIZED — should NOT throw
+    auto varsizedModel = makeModel({DataType::Type::VARSIZED}, {{"embedding", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator varsizedOp{std::move(varsizedModel), {"text"}};
+    auto varsizedSchema = makeSchema({{"text", DataType::Type::VARSIZED}});
+    EXPECT_NO_THROW({
+        auto inferred = varsizedOp.withInferredSchema({varsizedSchema});
+        (void)inferred;
+    });
+}
+
+// SCHEMA-07: Name collision replaces existing field type rather than duplicating or erroring
+TEST_F(InferModelLogicalOperatorTest, NameCollisionReplacesFieldType)
+{
+    // Model: 1 Float32 input ("input_field"), 1 output "value" of Int32
+    // Schema: fields "input_field" (Float32), "value" (Float32)
+    // After withInferredSchema: "value" has Int32, total field count stays 2
+    auto model = makeModel({DataType::Type::FLOAT32}, {{"value", DataType::Type::INT32}});
+    InferModelLogicalOperator op{std::move(model), {"input_field"}};
+
+    auto inputSchema = makeSchema({{"input_field", DataType::Type::FLOAT32}, {"value", DataType::Type::FLOAT32}});
+    auto inferred = op.withInferredSchema({inputSchema});
+
+    auto outputSchema = inferred.getOutputSchema();
+    // Field count unchanged — no duplication
+    EXPECT_EQ(outputSchema.getNumberOfFields(), 2u);
+
+    // "value" field type was replaced from Float32 to Int32
+    auto valueField = outputSchema.getFieldByName("value");
+    ASSERT_TRUE(valueField.has_value());
+    EXPECT_EQ(valueField->dataType, (DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}));
 }
 
 } // namespace NES
