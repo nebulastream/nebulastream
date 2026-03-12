@@ -14,7 +14,7 @@ Decimal phases appear between their surrounding integers in numeric order.
 
 - [ ] **Phase 1: Infrastructure and Logical Tests** - Cherry-pick TestTupleBuffer, fix IREERuntimeWrapper destructor, wire CMake, and write all logical operator and schema inference unit tests
 - [x] **Phase 2: Test Model Artifact** - Compile and commit the tiny identity .vmfb model needed by all physical operator tests (completed 2026-03-12)
-- [ ] **Phase 3: Physical Operator Tests** - Write the full physical operator test suite covering lifecycle, correctness, errors, and edge cases
+- [x] **Phase 3: Physical Operator Tests** - Write the full physical operator test suite covering lifecycle, correctness, errors, and edge cases (completed 2026-03-12)
 
 ## Phase Details
 
@@ -52,7 +52,7 @@ Plans:
   2. The numerical correctness test asserts `EXPECT_NEAR` on every output field against known-good expected values from the identity model
   3. Multi-tuple buffer processing (multiple records per buffer) produces per-record correct outputs
   4. Error-path tests for setup skipped, invalid model, and zero-tuple buffer each produce the expected behavior (exception or no-op) without undefined behavior or crashes
-**Plans:** 1/2 plans executed
+**Plans:** 2/2 plans complete
 Plans:
 - [ ] 03-01-PLAN.md — Wire CMake IREE tool checks and register InferModelPhysicalOperatorTest target
 - [ ] 03-02-PLAN.md — Write complete physical operator test suite (lifecycle, correctness, multi-record, edge cases)
@@ -66,4 +66,4 @@ Phases execute in numeric order: 1 -> 2 -> 3
 |-------|----------------|--------|-----------|
 | 1. Infrastructure and Logical Tests | 2/3 | In Progress|  |
 | 2. Test Model Artifact | 1/1 | Complete   | 2026-03-12 |
-| 3. Physical Operator Tests | 1/2 | In Progress|  |
+| 3. Physical Operator Tests | 2/2 | Complete   | 2026-03-12 |

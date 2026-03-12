@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: executing
-stopped_at: Completed 03-01-PLAN.md — InferModelPhysicalOperatorTest CMake target built and ctest verified
-last_updated: "2026-03-12T19:33:52.067Z"
+stopped_at: Completed 03-02-PLAN.md — InferModelPhysicalOperator 7-test suite all passing with real IREE inference
+last_updated: "2026-03-12T19:50:32.654Z"
 last_activity: 2026-03-12 — InferModelLogicalOperator and InferModelNameLogicalOperator implemented; LOGI-01 through LOGI-08 pass
 progress:
   total_phases: 3
-  completed_phases: 2
+  completed_phases: 3
   total_plans: 6
-  completed_plans: 5
+  completed_plans: 6
   percent: 33
 ---
 
@@ -55,6 +55,7 @@ Progress: [███░░░░░░░] 33%
 | Phase 01-infrastructure-and-logical-tests P03 | 3 | 2 tasks | 1 files |
 | Phase 02-test-model-artifact P01 | 333 | 2 tasks | 7 files |
 | Phase 03-physical-operator-tests P01 | 15 | 1 tasks | 12 files |
+| Phase 03-physical-operator-tests P02 | 8 | 2 tasks | 1 files |
 
 ## Accumulated Context
 
@@ -74,6 +75,9 @@ Recent decisions affecting current work:
 - [Phase 02-test-model-artifact]: Forward-declare NES::Inference::load() in Model.hpp to fix friend access across namespaces
 - [Phase 03-physical-operator-tests]: Model type is NES::Nebuli::Inference::Model — IREEAdapter/IREEInferenceOperatorHandler updated to use fully-qualified name
 - [Phase 03-physical-operator-tests]: SetUpTestSuite with Logger::setupLogging required even in stub tests — BaseUnitTest::TearDown calls forceFlush unconditionally
+- [Phase 03-physical-operator-tests]: NoOpChildOperator required as terminal child: setupChild INVARIANT asserts getChild().has_value()
+- [Phase 03-physical-operator-tests]: readRecord({}) includes NO fields — must pass explicit projection list like {"input_blob"}
+- [Phase 03-physical-operator-tests]: Output fields from InferModelPhysicalOperator are written to Record in-memory map, not TupleBuffer — use input-only schema for bufRef
 
 ### Pending Todos
 
@@ -87,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-03-12T19:33:52.066Z
-Stopped at: Completed 03-01-PLAN.md — InferModelPhysicalOperatorTest CMake target built and ctest verified
+Last session: 2026-03-12T19:50:32.652Z
+Stopped at: Completed 03-02-PLAN.md — InferModelPhysicalOperator 7-test suite all passing with real IREE inference
 Resume file: None
