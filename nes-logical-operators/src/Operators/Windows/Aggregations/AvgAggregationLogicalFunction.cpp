@@ -40,7 +40,8 @@ AvgAggregationLogicalFunction::AvgAggregationLogicalFunction(AggregationFieldAcc
 
 DataType AvgAggregationLogicalFunction::getAggregateType() const
 {
-    return DataTypeProvider::provideDataType(finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return DataTypeProvider::provideDataType(
+        finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 
 bool AvgAggregationLogicalFunction::shallIncludeNullValues() noexcept

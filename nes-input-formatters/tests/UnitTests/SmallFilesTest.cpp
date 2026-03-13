@@ -331,100 +331,93 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "TwoIntegerColumns",
-            .formatterType = "JSON",
-            .fileEnding = "JSON",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "JSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Bimbo",
-            .formatterType = "JSON",
-            .fileEnding = "JSON",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "Bimbo",
+        .formatterType = "JSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Food",
-            .formatterType = "JSON",
-            .fileEnding = "JSON",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "Food",
+        .formatterType = "JSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Spacecraft_Telemetry",
-            .formatterType = "JSON",
-            .fileEnding = "JSON",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "Spacecraft_Telemetry",
+        .formatterType = "JSON",
+        .fileEnding = "JSON",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "TwoIntegerColumns",
-            .formatterType = "CSV",
-            .fileEnding = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "TwoIntegerColumns",
+        .formatterType = "CSV",
+        .fileEnding = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 16,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Bimbo",
-            .formatterType = "CSV",
-            .fileEnding = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 1,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 2,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "Bimbo",
+        .formatterType = "CSV",
+        .fileEnding = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 1,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 2,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
 {
-    runTest(
-        TestConfig{
-            .testFileName = "Food",
-            .formatterType = "CSV",
-            .fileEnding = "CSV",
-            .hasSpanningTuples = true,
-            .numberOfIterations = 10,
-            .numberOfThreads = 8,
-            .sizeOfRawBuffers = 2,
-            .isCompiled = true});
+    runTest(TestConfig{
+        .testFileName = "Food",
+        .formatterType = "CSV",
+        .fileEnding = "CSV",
+        .hasSpanningTuples = true,
+        .numberOfIterations = 10,
+        .numberOfThreads = 8,
+        .sizeOfRawBuffers = 2,
+        .isCompiled = true});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)

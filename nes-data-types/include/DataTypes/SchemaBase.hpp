@@ -154,7 +154,7 @@ public:
         // | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first, pair.second}; })
         // | std::ranges::to<std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
-            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull();  });
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
         return *this;
     }
 

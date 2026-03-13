@@ -315,9 +315,11 @@ std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered
         | std::ranges::to<std::unordered_map<NES::Identifier, std::string>>();
 }
 
-NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields) {
+NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields)
+{
     return schemaFields
-        | std::views::transform([](const auto& rawField) { return NES::UnqualifiedUnboundField{bindIdentifierName(rawField.name), rawField.type}; })
+        | std::views::transform([](const auto& rawField)
+                                { return NES::UnqualifiedUnboundField{bindIdentifierName(rawField.name), rawField.type}; })
         | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 }
 
@@ -327,24 +329,24 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
-
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = bindIdentifierName(name), .schema = bindSchema(schemaFields)});
     }
 
     for (const auto& [logical, type, parserConfig, sourceConfig] : physical)
     {
-        statements.emplace_back(
-            NES::CreatePhysicalSourceStatement{
-                .attachedTo = bindIdentifierName(logical),
-                .sourceType = bindIdentifierName(type),
-                .sourceConfig = bindConfig(sourceConfig),
-                .parserConfig = bindConfig(parserConfig)});
+        statements.emplace_back(NES::CreatePhysicalSourceStatement{
+            .attachedTo = bindIdentifierName(logical),
+            .sourceType = bindIdentifierName(type),
+            .sourceConfig = bindConfig(sourceConfig),
+            .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, config] : sinks)
     {
-        statements.emplace_back(
-            NES::CreateSinkStatement{
-                .name = bindIdentifierName(name), .sinkType = bindIdentifierName(type), .schema = bindSchema(schemaFields), .sinkConfig = bindConfig(config)});
+        statements.emplace_back(NES::CreateSinkStatement{
+            .name = bindIdentifierName(name),
+            .sinkType = bindIdentifierName(type),
+            .schema = bindSchema(schemaFields),
+            .sinkConfig = bindConfig(config)});
     }
     return statements;
 }

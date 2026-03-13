@@ -91,24 +91,23 @@ InlineSinkDescriptor::InlineSinkDescriptor(
     DescriptorConfig::Config config)
     : Descriptor(std::move(config))
     , sinkId(sinkId)
-    , schema(
-          std::visit(
-              [](auto&& arg) -> std::variant<
-                                 std::monostate,
-                                 std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
-                                 std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
+    , schema(std::visit(
+          [](auto&& arg) -> std::variant<
+                             std::monostate,
+                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Unordered>>,
+                             std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
+          {
+              using T = std::decay_t<decltype(arg)>;
+              if constexpr (std::is_same_v<T, std::monostate>)
               {
-                  using T = std::decay_t<decltype(arg)>;
-                  if constexpr (std::is_same_v<T, std::monostate>)
-                  {
-                      return std::monostate{};
-                  }
-                  else
-                  {
-                      return std::make_shared<const T>(std::move(arg));
-                  }
-              },
-              std::move(schema)))
+                  return std::monostate{};
+              }
+              else
+              {
+                  return std::make_shared<const T>(std::move(arg));
+              }
+          },
+          std::move(schema)))
     , sinkType(sinkType)
 {
 }
@@ -253,12 +252,11 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 
 Reflected Reflector<NamedSinkDescriptor>::operator()(const NamedSinkDescriptor& descriptor) const
 {
-    return reflect(
-        detail::ReflectedNamedSinkDescriptor{
-            .name = descriptor.getSinkName(),
-            .schema = *descriptor.getSchema(),
-            .sinkType = descriptor.getSinkType(),
-            .config = descriptor.getReflectedConfig()});
+    return reflect(detail::ReflectedNamedSinkDescriptor{
+        .name = descriptor.getSinkName(),
+        .schema = *descriptor.getSchema(),
+        .sinkType = descriptor.getSinkType(),
+        .config = descriptor.getReflectedConfig()});
 }
 
 NamedSinkDescriptor Unreflector<NamedSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const
@@ -276,12 +274,11 @@ Reflected Reflector<InlineSinkDescriptor>::operator()(const InlineSinkDescriptor
             [](const auto& schemaPtr) { return SchemaType{*schemaPtr}; }},
         descriptor.getSchema());
 
-    return reflect(
-        detail::ReflectedInlineSinkDescriptor{
-            .sinkId = descriptor.getSinkId(),
-            .schema = std::move(schema),
-            .sinkType = descriptor.getSinkType(),
-            .config = descriptor.getReflectedConfig()});
+    return reflect(detail::ReflectedInlineSinkDescriptor{
+        .sinkId = descriptor.getSinkId(),
+        .schema = std::move(schema),
+        .sinkType = descriptor.getSinkType(),
+        .config = descriptor.getReflectedConfig()});
 }
 
 InlineSinkDescriptor Unreflector<InlineSinkDescriptor>::operator()(const Reflected& reflected, const ReflectionContext& context) const

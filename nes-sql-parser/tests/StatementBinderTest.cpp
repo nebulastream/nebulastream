@@ -103,9 +103,12 @@ TEST_F(StatementBinderTest, Nullable)
     ASSERT_TRUE(createdSourceResult.has_value());
     const auto [actualSource] = createdSourceResult.value();
     auto expectedSchema = Schema<UnqualifiedUnboundField, Ordered>{
-        UnqualifiedUnboundField{Identifier::parse("\"attribute1\""), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
-        UnqualifiedUnboundField{Identifier::parse("\"attribute2\""), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE)}
-    };
+        UnqualifiedUnboundField{
+            Identifier::parse("\"attribute1\""),
+            DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        UnqualifiedUnboundField{
+            Identifier::parse("\"attribute2\""),
+            DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE)}};
     ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("\"testSource\""));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
@@ -136,8 +139,10 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
     ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
 
     const Schema<UnqualifiedUnboundField, Ordered> schema{
-        UnqualifiedUnboundField{Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
-        UnqualifiedUnboundField{Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
+        UnqualifiedUnboundField{
+            Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        UnqualifiedUnboundField{
+            Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
     ASSERT_EQ(schema, inlineSinkOperator->getTargetSchema());
 }
 
@@ -169,15 +174,19 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
     ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
 
     Schema<UnqualifiedUnboundField, Ordered> schema{
-        UnqualifiedUnboundField{Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
-        UnqualifiedUnboundField{Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
+        UnqualifiedUnboundField{
+            Identifier::parse("ID"), DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)},
+        UnqualifiedUnboundField{
+            Identifier::parse("TEXT"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
     ASSERT_EQ(schema, inlineSourceOperator->getSourceSchema());
 }
 
 TEST_F(StatementBinderTest, BindQuotedIdentifiers)
 {
     const std::string createLogicalSourceStatement
-        = """CREATE LOGICAL SOURCE \"testSource\" (\"attribute1\" UINT32 NOT NULL, \"attribute2\" VARSIZED NOT NULL)""";
+        = ""
+          "CREATE LOGICAL SOURCE \"testSource\" (\"attribute1\" UINT32 NOT NULL, \"attribute2\" VARSIZED NOT NULL)"
+          "";
     const auto statement1 = binder->parseAndBindSingle(createLogicalSourceStatement);
     ASSERT_TRUE(statement1.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateLogicalSourceStatement>(*statement1));
@@ -270,8 +279,10 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     auto expectedSchema = Schema<QualifiedUnboundField, Ordered>{
-        QualifiedUnboundField{Identifier::parse("ATTRIBUTE1"), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
-        QualifiedUnboundField{Identifier::parse("ATTRIBUTE2"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
+        QualifiedUnboundField{
+            Identifier::parse("ATTRIBUTE1"), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        QualifiedUnboundField{
+            Identifier::parse("ATTRIBUTE2"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::IS_NULLABLE)}};
     ASSERT_EQ(actualSink.getSinkName(), Identifier::parse("TESTSINK"));
     const auto correctSchemaType
         = std::holds_alternative<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());
@@ -297,9 +308,8 @@ TEST_F(StatementBinderTest, BindCreateSink)
 /// TODO #764 Remove test when we have proper schema inference and don't require matching source names in sinks anymore
 TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
 {
-    const std::string createSinkStatement
-        = "CREATE SINK testSink (attribute1 UINT32, attribute2 VARSIZED NOT NULL) TYPE File "
-          "SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS \"SINK\".INPUT_FORMAT)";
+    const std::string createSinkStatement = "CREATE SINK testSink (attribute1 UINT32, attribute2 VARSIZED NOT NULL) TYPE File "
+                                            "SET ('/dev/null' AS \"SINK\".FILE_PATH, 'CSV' AS \"SINK\".INPUT_FORMAT)";
     const auto statement = binder->parseAndBindSingle(createSinkStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateSinkStatement>(*statement));
@@ -307,7 +317,8 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_TRUE(createdSinkResult.has_value());
     const auto [actualSink] = createdSinkResult.value();
     auto expectedSchema = Schema<QualifiedUnboundField, Ordered>{
-        QualifiedUnboundField{Identifier::parse("ATTRIBUTE1"), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        QualifiedUnboundField{
+            Identifier::parse("ATTRIBUTE1"), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
         QualifiedUnboundField{Identifier::parse("ATTRIBUTE2"), DataTypeProvider::provideDataType(DataType::Type::VARSIZED)}};
     ASSERT_EQ(actualSink.getSinkName(), Identifier::parse("TESTSINK"));
     const auto actualSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(actualSink.getSchema());

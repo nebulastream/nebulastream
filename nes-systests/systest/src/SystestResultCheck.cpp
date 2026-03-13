@@ -247,49 +247,51 @@ NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> parseFieldNames(const st
 {
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32:IS_NULLABLE, window$val_i8_i8_plus_1:INT16:NOT_NULLABLE
-    auto fields = std::ranges::split_view(fieldNamesRawLine, ',')
+    auto fields
+        = std::ranges::split_view(fieldNamesRawLine, ',')
         | std::views::transform([](auto splitNameAndType) { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
         | std::views::filter([](const auto& stringViewSplit) { return !stringViewSplit.empty(); })
         | std::views::transform(
-                      [](const auto& field)
+              [](const auto& field)
+              {
+                  /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
+                  /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
+                  /// After that, we can trim the field name and type and store it in the fields vector.
+                  /// "window$val_i8_i8:INT32:IS_NULLABLE " -> ["window$val_i8_i8", "INT32 ", " IS_NULLABLE"] -> {"window$val_i8_i8", INT32, NOT_NULLABLE}
+                  const auto [nameTrimmed, typeTrimmed, isNullable]
+                      = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
+                  {
+                      std::vector<std::string_view> fieldAndTypeVector;
+                      for (const auto subrange : std::ranges::split_view(field, ':'))
                       {
-                          /// At this point, we have a field and tpye separated by a colon, e.g., "window$val_i8_i8:INT32"
-                          /// We need to split the fieldName and type by the colon, store the field name and type in a vector.
-                          /// After that, we can trim the field name and type and store it in the fields vector.
-                          /// "window$val_i8_i8:INT32:IS_NULLABLE " -> ["window$val_i8_i8", "INT32 ", " IS_NULLABLE"] -> {"window$val_i8_i8", INT32, NOT_NULLABLE}
-                          const auto [nameTrimmed, typeTrimmed, isNullable]
-                              = [](const std::string_view field) -> std::tuple<std::string_view, std::string_view, NES::DataType::NULLABLE>
-                          {
-                              std::vector<std::string_view> fieldAndTypeVector;
-                              for (const auto subrange : std::ranges::split_view(field, ':'))
-                              {
-                                  fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
-                              }
-                              INVARIANT(fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
+                          fieldAndTypeVector.emplace_back(NES::trimWhiteSpaces(std::string_view(subrange)));
+                      }
+                      INVARIANT(
+                          fieldAndTypeVector.size() == 3, "Field and type pairs should always be pairs of a key, a value and isNullable");
 
-            const auto isNullableString = fieldAndTypeVector.at(2);
-            const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
-            if (not isNullable)
-            {
-                throw NES::SLTUnexpectedToken("Unknown nullable: {}", isNullableString);
-            }
-                              return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
-                          }(field);
-                          NES::DataType dataType;
-                          if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
-                          {
-                              dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
-                          }
-                          else if (NES::toLowerCase(typeTrimmed) == "varsized")
-                          {
-                              dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
-                          }
-                          else
-                          {
-                              throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
-                          }
-                          return NES::UnqualifiedUnboundField{NES::Identifier::parse(std::string(nameTrimmed)), dataType};
-                      });
+                      const auto isNullableString = fieldAndTypeVector.at(2);
+                      const auto isNullable = magic_enum::enum_cast<NES::DataType::NULLABLE>(isNullableString);
+                      if (not isNullable)
+                      {
+                          throw NES::SLTUnexpectedToken("Unknown nullable: {}", isNullableString);
+                      }
+                      return std::make_tuple(fieldAndTypeVector.at(0), fieldAndTypeVector.at(1), isNullable.value());
+                  }(field);
+                  NES::DataType dataType;
+                  if (auto type = magic_enum::enum_cast<NES::DataType::Type>(typeTrimmed); type.has_value())
+                  {
+                      dataType = NES::DataTypeProvider::provideDataType(type.value(), isNullable);
+                  }
+                  else if (NES::toLowerCase(typeTrimmed) == "varsized")
+                  {
+                      dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
+                  }
+                  else
+                  {
+                      throw NES::SLTUnexpectedToken("Unknown basic type: {}", typeTrimmed);
+                  }
+                  return NES::UnqualifiedUnboundField{NES::Identifier::parse(std::string(nameTrimmed)), dataType};
+              });
     return fields | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 }
 

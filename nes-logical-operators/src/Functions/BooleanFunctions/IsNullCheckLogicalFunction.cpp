@@ -88,7 +88,8 @@ Reflected Reflector<IsNullCheckLogicalFunction>::operator()(const IsNullCheckLog
     return reflect(detail::ReflectedIsNullCheckLogicalFunction{.child = std::make_optional<LogicalFunction>(function.child)});
 }
 
-IsNullCheckLogicalFunction Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
+IsNullCheckLogicalFunction
+Unreflector<IsNullCheckLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [function] = context.unreflect<detail::ReflectedIsNullCheckLogicalFunction>(reflected);
     if (!function.has_value())

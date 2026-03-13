@@ -45,7 +45,8 @@ std::string_view MedianAggregationLogicalFunction::getName() const noexcept
 
 DataType MedianAggregationLogicalFunction::getAggregateType() const
 {
-return DataTypeProvider::provideDataType(finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
+    return DataTypeProvider::provideDataType(
+        finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 
 bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
