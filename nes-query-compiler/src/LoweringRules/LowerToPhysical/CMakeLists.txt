@@ -10,13 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_plugin(NLJoin LoweringRule nes-query-compiler LowerToPhysicalNLJoin.cpp)
-add_plugin(HashJoin LoweringRule nes-query-compiler LowerToPhysicalHashJoin.cpp)
-add_plugin(Selection LoweringRule nes-query-compiler LowerToPhysicalSelection.cpp)
-add_plugin(Projection LoweringRule nes-query-compiler LowerToPhysicalProjection.cpp)
-add_plugin(WindowedAggregation LoweringRule nes-query-compiler LowerToPhysicalWindowedAggregation.cpp)
-add_plugin(Union LoweringRule nes-query-compiler LowerToPhysicalUnion.cpp)
-add_plugin(Sink LoweringRule nes-query-compiler LowerToPhysicalSink.cpp)
-add_plugin(Source LoweringRule nes-query-compiler LowerToPhysicalSource.cpp)
-add_plugin(IngestionTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
-add_plugin(EventTimeWatermarkAssigner LoweringRule nes-query-compiler LowerToPhysicalEventTimeWatermarkAssigner.cpp)
+add_plugin(NLJoin LoweringRule LowerToPhysicalNLJoin.cpp)
+add_plugin(HashJoin LoweringRule LowerToPhysicalHashJoin.cpp)
+add_plugin(Selection LoweringRule LowerToPhysicalSelection.cpp)
+add_plugin(Projection LoweringRule LowerToPhysicalProjection.cpp)
+add_plugin(WindowedAggregation LoweringRule LowerToPhysicalWindowedAggregation.cpp)
+add_plugin(Union LoweringRule LowerToPhysicalUnion.cpp)
+add_plugin(Sink LoweringRule LowerToPhysicalSink.cpp)
+add_plugin(Source LoweringRule LowerToPhysicalSource.cpp)
+add_plugin(IngestionTimeWatermarkAssigner LoweringRule LowerToPhysicalIngestionTimeWatermarkAssigner.cpp)
+add_plugin(EventTimeWatermarkAssigner LoweringRule LowerToPhysicalEventTimeWatermarkAssigner.cpp)

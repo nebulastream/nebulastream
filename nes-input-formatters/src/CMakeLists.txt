@@ -19,4 +19,4 @@ add_source_files(nes-input-formatters
 )
 
 # Register plugins
-add_plugin(CSV InputFormatIndexer nes-input-formatters CSVInputFormatIndexer.cpp)
+add_plugin(CSV InputFormatIndexer CSVInputFormatIndexer.cpp)
