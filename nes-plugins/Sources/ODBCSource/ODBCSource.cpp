@@ -143,6 +143,8 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
         /// wait for data to arrive
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, *bufferProvider, maxRowsPerBuffer);
+        NES_DEBUG("No new rows. Retries {}/{}", retryCount, maxRetries);
+
         if (++retryCount >= maxRetries)
         {
             return FillTupleBufferResult::eos();

@@ -76,9 +76,9 @@ private:
     size_t pollIntervalMs;
     std::string syncTable;
     std::string query;
-    bool trustServerCertificate;
+    bool trustServerCertificate{};
     size_t maxRetries;
-    bool readOnlyNewRows;
+    bool readOnlyNewRows{};
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
     size_t fetchedSizeOfRow{0};
@@ -146,12 +146,12 @@ struct ConfigParametersODBC
 
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_RETRIES{
         "maxretries",
-        5,
+        1000,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RETRIES, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<bool> READ_ONLY_NEW_ROWS{
         "readonlynewrows",
-        false,
+        true,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(READ_ONLY_NEW_ROWS, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
