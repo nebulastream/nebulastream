@@ -1,0 +1,16 @@
+name: Docker Cleanup
+
+on:
+  schedule:
+    - cron: '0 3 * * 0' # Every Sunday at 3:00 AM UTC
+  workflow_dispatch:
+
+jobs:
+  docker-cleanup:
+    strategy:
+      matrix:
+        arch: [ x64, arm64 ]
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
+    steps:
+      - name: Prune all unused Docker data
+        run: docker system prune -af --volumes
