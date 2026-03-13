@@ -106,7 +106,11 @@ set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer ${NES_SPECIFIC_FLAG
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
-set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
+if (APPLE)
+    set(CMAKE_INSTALL_RPATH "@loader_path/nes-plugins")
+else ()
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
+endif ()
 
 if (ENABLE_FTIME_TRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
@@ -212,8 +216,10 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 
-# $ORIGIN is to read the shared object from the installation directory
-if (ORIGIN)
+# Read the shared object from the installation directory
+if (APPLE)
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath,'@executable_path'")
+elseif (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
 endif ()
 #https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
