@@ -96,6 +96,7 @@ public:
     [[nodiscard]] const std::string& getFunctionName() const { return functionName; }
 
     void setInputs(std::vector<NES::DataType> newInputs) { inputs = std::move(newInputs); }
+
     void setOutputs(std::vector<std::pair<std::string, NES::DataType>> newOutputs) { outputs = std::move(newOutputs); }
 
     friend std::expected<Model, NES::Inference::ModelLoadError>
