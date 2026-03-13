@@ -33,7 +33,6 @@ class OperatorMapping;
 struct Field
 {
     Field(const LogicalOperator& producedBy, Identifier name, DataType dataType);
-    Field(const LogicalOperator& producedBy, Identifier name, DataType::Type dataType);
 
     friend std::ostream& operator<<(std::ostream& os, const Field& field);
     bool operator==(const Field& other) const;

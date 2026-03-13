@@ -44,7 +44,7 @@ SourceCatalog::addLogicalSource(const Identifier& logicalSourceName, const Schem
     if (!containsLogicalSource(logicalSourceName))
     {
         LogicalSource logicalSource{logicalSourceName, schema};
-        namesToLogicalSourceMapping.emplace(toUpperCase(logicalSourceName), logicalSource);
+        namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);
         return logicalSource;
@@ -92,7 +92,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
 std::optional<LogicalSource> SourceCatalog::getLogicalSource(const Identifier& logicalSourceName) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(toUpperCase(logicalSourceName)); found != namesToLogicalSourceMapping.end())
+    if (const auto found = namesToLogicalSourceMapping.find(logicalSourceName); found != namesToLogicalSourceMapping.end())
     {
         return found->second;
     }
@@ -102,7 +102,7 @@ std::optional<LogicalSource> SourceCatalog::getLogicalSource(const Identifier& l
 bool SourceCatalog::containsLogicalSource(const LogicalSource& logicalSource) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(toUpperCase(logicalSource.getLogicalSourceName()));
+    if (const auto found = namesToLogicalSourceMapping.find(logicalSource.getLogicalSourceName());
         found != namesToLogicalSourceMapping.end())
     {
         const auto equals = found->second == logicalSource;
@@ -165,7 +165,7 @@ std::optional<std::unordered_set<SourceDescriptor>> SourceCatalog::getPhysicalSo
 bool SourceCatalog::removeLogicalSource(const LogicalSource& logicalSource)
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto removedByName = namesToLogicalSourceMapping.erase(toUpperCase(logicalSource.getLogicalSourceName())); removedByName == 0)
+    if (const auto removedByName = namesToLogicalSourceMapping.erase(logicalSource.getLogicalSourceName()); removedByName == 0)
     {
         NES_TRACE("Trying to remove logical source \"{}\", but it was not registered by name", logicalSource.getLogicalSourceName());
         return false;

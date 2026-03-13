@@ -70,7 +70,8 @@ LogicalFunction MulLogicalFunction::withInferredDataType(const Schema<Field, Uno
     {
         throw CannotInferStamp("Cannot apply multiplication to input function left: {}, right: {}", copy.left, copy.right);
     }
-    newDataType.value().nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType = std::move(newDataType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
 };
 

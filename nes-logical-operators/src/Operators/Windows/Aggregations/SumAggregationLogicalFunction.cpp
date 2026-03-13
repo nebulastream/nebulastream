@@ -42,7 +42,8 @@ SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAcc
 }
 
 SumAggregationLogicalFunction::SumAggregationLogicalFunction(AggregationFieldAccess inputFunction, const DataType aggregateType)
-    : inputFunction(std::move(inputFunction)), aggregateType(aggregateType) {
+    : inputFunction(std::move(inputFunction)), aggregateType(aggregateType)
+{
 }
 
 bool SumAggregationLogicalFunction::shallIncludeNullValues() noexcept
@@ -59,19 +60,23 @@ DataType SumAggregationLogicalFunction::inferFromInput(const DataType inputType)
 {
     if (inputType.type == DataType::Type::UNDEFINED)
     {
-        return DataTypeProvider::provideDataType(DataType::Type::UNDEFINED);
+        return DataTypeProvider::provideDataType(
+            DataType::Type::UNDEFINED, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
     if (inputType.isSignedInteger())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::INT64);
+        return DataTypeProvider::provideDataType(
+            DataType::Type::INT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
     if (inputType.isInteger())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::UINT64);
+        return DataTypeProvider::provideDataType(
+            DataType::Type::UINT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
     if (inputType.isFloat())
     {
-        return DataTypeProvider::provideDataType(DataType::Type::FLOAT64);
+        return DataTypeProvider::provideDataType(
+            DataType::Type::FLOAT64, inputType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
     }
     throw CannotInferStamp("aggregations on non numeric fields is not supported.", inputType.isNumeric());
 }

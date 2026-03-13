@@ -28,11 +28,6 @@ Field::Field(const LogicalOperator& producedBy, Identifier name, DataType dataTy
 {
 }
 
-Field::Field(const LogicalOperator& producedBy, Identifier name, const DataType::Type dataType)
-    : producedBy(producedBy->shared_from_this()), name(std::move(name)), dataType(dataType)
-{
-}
-
 IdentifierListBase<1> Field::getFullyQualifiedName() const
 {
     return name;

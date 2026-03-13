@@ -67,11 +67,6 @@ public:
 
     [[nodiscard]] bool isInAggFunction() const { return not windowAggs.empty(); }
 
-    /// Containers that hold state of specific objects that we create during parsing.
-    /// Pre-aggregation projections for desugaring expressions inside aggregation functions.
-    /// E.g., AVG(i + UINT64(1)) becomes: Projection(*, i + UINT64(1) AS _AGG_INPUT_0) → AVG(_AGG_INPUT_0).
-    std::vector<Projection> preAggregationProjections;
-    size_t aggExprCounter = 0;
     std::optional<Windowing::TimeBasedWindowType> windowType;
     std::vector<std::pair<WindowAggregationLogicalFunction, std::optional<Identifier>>> windowAggs;
     std::vector<SinkDescriptor> sinkDescriptor;

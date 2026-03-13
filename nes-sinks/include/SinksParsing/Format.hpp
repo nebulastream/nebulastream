@@ -61,7 +61,14 @@ public:
                 schema
                     | std::views::transform(
                         [](const auto& field)
-                        { return fmt::format("{}:{}:{}", field.getFullyQualifiedName(), magic_enum::enum_name(field.getDataType().type), magic_enum::enum_name(field.dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE)); }),
+                        {
+                            return fmt::format(
+                                "{}:{}:{}",
+                                field.getFullyQualifiedName(),
+                                magic_enum::enum_name(field.getDataType().type),
+                                magic_enum::enum_name(
+                                    field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                        }),
                 ","));
     }
 

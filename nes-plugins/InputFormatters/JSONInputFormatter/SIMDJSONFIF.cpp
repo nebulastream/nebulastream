@@ -83,7 +83,7 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
 
     /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
-    if (not currentDoc[fieldName].has_value())
+    if (not currentDoc[fieldName.asCanonicalString()].has_value())
     {
         return true;
     }

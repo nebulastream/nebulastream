@@ -56,7 +56,7 @@ LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema<Field, 
     {
         throw CannotInferSchema("Negate Function Node: the dataType of child must be boolean, but was: {}", copy.child.getDataType());
     }
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN);
+    copy.dataType = copy.child.getDataType();
     return copy;
 }
 

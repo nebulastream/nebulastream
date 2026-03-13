@@ -30,7 +30,7 @@ namespace NES
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
     const uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, const MemoryLayoutType layoutType)
 {
-    PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
+    PRECONDITION(!std::ranges::empty(schema), "We can not lower an empty schema!");
 
     /// For now, we assume that the fields lie in the exact same order as in the Schema<Field, Unordered>. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
@@ -59,7 +59,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
                 schema.begin(),
                 schema.end(),
                 0UL,
-                [](auto size, const Schema::Field& field) { return size + field.dataType.getSizeInBytesWithNull(); });
+                [](auto size, const QualifiedUnboundField& field) { return size + field.getDataType().getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;
@@ -68,7 +68,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchema(
             uint64_t columnOffset = 0;
             for (const auto& field : schema)
             {
-                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), field.dataType.getSizeInBytesWithNull(), columnOffset);
+                fields.emplace_back(field.getFullyQualifiedName(), field.getDataType(), field.getDataType().getSizeInBytesWithNull(), columnOffset);
                 columnOffset += (field.getDataType().getSizeInBytesWithNull() * capacity);
             }
 

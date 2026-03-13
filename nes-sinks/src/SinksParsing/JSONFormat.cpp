@@ -45,8 +45,7 @@ JSONFormat::JSONFormat(const Schema<UnqualifiedUnboundField, Ordered>& pSchema) 
         formattingContext.physicalTypes.emplace_back(physicalType);
         formattingContext.names.emplace_back(field.getFullyQualifiedName());
     }
-    formattingContext.schemaSizeInBytes = std::ranges::fold_left(
-        schema | std::views::transform([](const auto& field) { return field.getDataType().getSizeInBytes(); }), 0, std::plus{});
+    formattingContext.schemaSizeInBytes = schema.getSizeInBytes();
 }
 
 std::string JSONFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const

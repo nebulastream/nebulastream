@@ -37,12 +37,14 @@ public:
     [[nodiscard]] std::string_view getName() const noexcept;
     [[nodiscard]] Reflected reflect() const;
     [[nodiscard]] DataType getAggregateType() const;
+    [[nodiscard]] static bool shallIncludeNullValues() noexcept;
     [[nodiscard]] AggregationFieldAccess getInputFunction() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
     [[nodiscard]] bool operator==(const MedianAggregationLogicalFunction& other) const;
 
 private:
     AggregationFieldAccess inputFunction;
+    bool nullable;
     static constexpr std::string_view NAME = "Median";
     static constexpr DataType::Type finalAggregateStampType = DataType::Type::FLOAT64;
 };

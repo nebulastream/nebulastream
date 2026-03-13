@@ -147,8 +147,8 @@ TEST_F(UnboundSchemaTest, CalcSizeInBytes)
     const QualifiedUnboundField field2{Identifier::parse("field2"), DataType::Type::INT32};
     const Schema<QualifiedUnboundField, Ordered> unboundSchema{field1, field2, field1};
 
-    const auto expectedSize = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN).getSizeInBytes() * 2
-        + DataTypeProvider::provideDataType(DataType::Type::INT32).getSizeInBytes();
+    const auto expectedSize = DataTypeProvider::provideDataType(DataType::Type::BOOLEAN).getSizeInBytesWithNull() * 2
+        + DataTypeProvider::provideDataType(DataType::Type::INT32).getSizeInBytesWithNull();
     EXPECT_EQ(unboundSchema.getSizeInBytes(), expectedSize);
 }
 

@@ -38,7 +38,7 @@ namespace NES
 {
 
 ConcatLogicalFunction::ConcatLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(left.getDataType().join(right.getDataType()).value_or(DataType{DataType::Type::UNDEFINED})), left(left), right(right)
+    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right)
 {
 }
 
@@ -64,9 +64,13 @@ LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema<Field, 
     auto copy = *this;
     copy.left = left.withInferredDataType(schema);
     copy.right = right.withInferredDataType(schema);
-
-    /// TODO clarify type inference for concat
-    copy.dataType = DataTypeProvider::provideDataType(DataType::Type::VARSIZED);
+    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
+    if (not newDataType.has_value() || not newDataType.value().isType(DataType::Type::VARSIZED))
+    {
+        throw DifferentFieldTypeExpected(
+            "Concat must output VARSIZZED, but joining {} and {} gave type {}", copy.left, copy.right, newDataType);
+    }
+    copy.dataType = std::move(newDataType).value();
     copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
 };

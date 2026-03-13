@@ -23,7 +23,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>

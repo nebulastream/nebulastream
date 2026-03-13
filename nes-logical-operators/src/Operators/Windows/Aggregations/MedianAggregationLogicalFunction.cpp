@@ -45,7 +45,7 @@ std::string_view MedianAggregationLogicalFunction::getName() const noexcept
 
 DataType MedianAggregationLogicalFunction::getAggregateType() const
 {
-    return DataTypeProvider::provideDataType(finalAggregateStampType);
+return DataTypeProvider::provideDataType(finalAggregateStampType, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 
 bool MedianAggregationLogicalFunction::shallIncludeNullValues() noexcept
@@ -80,7 +80,9 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredT
     {
         throw CannotInferStamp("Cannot calculate median over non numeric fields.", newInputFunction->getDataType().isNumeric());
     }
-    return MedianAggregationLogicalFunction{newInputFunction};
+    MedianAggregationLogicalFunction newAgg{newInputFunction};
+    newAgg.nullable = newInputFunction->getDataType().nullable;
+    return newAgg;
 }
 
 Reflected MedianAggregationLogicalFunction::reflect() const

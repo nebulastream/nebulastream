@@ -246,9 +246,9 @@ public:
     }
 
     static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
-        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
+        simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const Identifier& fieldName)
     {
-        const auto simdJsonResult = simdJsonReference[fieldName];
+        const auto simdJsonResult = simdJsonReference[fieldName.asCanonicalString()];
         if (not simdJsonResult.has_value())
         {
             throw FieldNotFound(
@@ -306,7 +306,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     }
     else if constexpr (std::same_as<T, char>)
     {
-        const std::string_view valueSV = currentDoc[fieldName];
+        const std::string_view valueSV = currentDoc[fieldName.asCanonicalString()];
         PRECONDITION(valueSV.size() == 1, "Cannot take {} as character, because size is not 1", valueSV);
         result.value
             = static_cast<T>(SIMDJSONFIF::parseSIMDJsonValueOrThrow(simdJsonResult.get_string(), simdJsonResult, "char", fieldName)[0]);

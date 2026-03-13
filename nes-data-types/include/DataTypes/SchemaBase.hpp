@@ -111,7 +111,7 @@ public:
                                  })*/
         // | std::ranges::to<const std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
-            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytes(); });
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
     }
 
     template <std::ranges::input_range Range>
@@ -129,7 +129,7 @@ public:
         // | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first, pair.second}; })
         // | std::ranges::to<std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
-            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytes(); });
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
     }
 
     Schema(std::initializer_list<FieldType> fields) : Schema{FieldContainer{std::move(fields)}} { }
@@ -154,7 +154,7 @@ public:
         // | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first, pair.second}; })
         // | std::ranges::to<std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
-            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytes(); });
+            this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull();  });
         return *this;
     }
 

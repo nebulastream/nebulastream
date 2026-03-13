@@ -68,7 +68,7 @@ LogicalFunction SubLogicalFunction::withInferredDataType(const Schema<Field, Uno
         throw CannotInferStamp("Cannot apply subtraction to input function left: {}, right: {}", copy.left, copy.right);
     }
     copy.dataType = std::move(newDataType).value();
-    copy.dataType.nullable = std::ranges::any_of(getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
     return copy;
 };
 

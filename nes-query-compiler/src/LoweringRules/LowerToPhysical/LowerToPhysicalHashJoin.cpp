@@ -282,11 +282,6 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
-    auto sizeOfSchema = [](const Schema<QualifiedUnboundField, Ordered>& schema)
-    {
-        return std::ranges::fold_left(
-            schema | std::views::transform([](const auto& field) { return field.getDataType().getSizeInBytes(); }), 0, std::plus{});
-    };
     /// TODO decide memory layout in optimization stage and pass it here
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
         conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeInBytes(), newLeftInputSchema, memoryLayoutType);

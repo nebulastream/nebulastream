@@ -102,12 +102,11 @@ TEST_F(StatementBinderTest, Nullable)
     const auto createdSourceResult = sourceStatementHandler->apply(std::get<CreateLogicalSourceStatement>(*statement1));
     ASSERT_TRUE(createdSourceResult.has_value());
     const auto [actualSource] = createdSourceResult.value();
-    Schema expectedSchema{};
-    expectedSchema.addField(
-        "testSource$attribute1", DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE));
-    expectedSchema.addField(
-        "testSource$attribute2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE));
-    ASSERT_EQ(actualSource.getLogicalSourceName(), "testSource");
+    auto expectedSchema = Schema<UnqualifiedUnboundField, Ordered>{
+        UnqualifiedUnboundField{Identifier::parse("\"attribute1\""), DataTypeProvider::provideDataType(DataType::Type::UINT32, DataType::NULLABLE::IS_NULLABLE)},
+        UnqualifiedUnboundField{Identifier::parse("\"attribute2\""), DataTypeProvider::provideDataType(DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE)}
+    };
+    ASSERT_EQ(actualSource.getLogicalSourceName(), Identifier::parse("\"testSource\""));
     ASSERT_EQ(*actualSource.getSchema(), expectedSchema);
 }
 

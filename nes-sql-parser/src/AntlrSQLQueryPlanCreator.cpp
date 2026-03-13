@@ -544,7 +544,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         queryPlan = LogicalPlanBuilder::addProjection(verifiedProjections | std::ranges::to<std::vector>(), /*asterisk=*/true, queryPlan);
     }
 
-    if (helpers.top().isInAggFunction())
+    if (helpers.top().windowType.has_value() && helpers.top().joinKeyRelationHelper.empty())
     {
         if (!helpers.top().windowTimestamp.has_value()
             || !std::holds_alternative<Windowing::UnboundTimeCharacteristic>(helpers.top().windowTimestamp.value()))
