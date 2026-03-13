@@ -40,7 +40,7 @@ std::string_view LogicalSourceExpansionRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> LogicalSourceExpansionRule::getDependencies() const
+std::set<std::type_index> LogicalSourceExpansionRule::dependsOn() const
 {
     return {typeid(SourceInferenceRule)};
 }

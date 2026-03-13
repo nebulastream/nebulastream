@@ -35,7 +35,7 @@ std::string_view RedundantUnionRemovalRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> RedundantUnionRemovalRule::getDependencies() const
+std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
 {
     return {};
 }

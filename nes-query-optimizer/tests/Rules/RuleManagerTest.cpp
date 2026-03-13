@@ -42,7 +42,7 @@ class FirstTestRule
 public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(FirstTestRule); }
     [[nodiscard]] std::string_view getName() const { return "FirstTestRule"; }
-    [[nodiscard]] std::set<std::type_index> getDependencies() const { return {}; }
+    [[nodiscard]] std::set<std::type_index> dependsOn() const { return {}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const FirstTestRule&) const { return false;};
 };
@@ -54,7 +54,7 @@ class SecondTestRule
 public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(SecondTestRule); }
     [[nodiscard]] std::string_view getName() const { return "SecondTestRule"; }
-    [[nodiscard]] std::set<std::type_index> getDependencies() const { return {typeid(FirstTestRule)}; }
+    [[nodiscard]] std::set<std::type_index> dependsOn() const { return {typeid(FirstTestRule)}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const SecondTestRule&) const { return false; };
 };
@@ -66,7 +66,7 @@ class ThirdTestRule
 public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(ThirdTestRule);}
     [[nodiscard]] std::string_view getName() const { return "ThirdTestRule"; }
-    [[nodiscard]] std::set<std::type_index> getDependencies() const { return {typeid(FirstTestRule)}; }
+    [[nodiscard]] std::set<std::type_index> dependsOn() const { return {typeid(FirstTestRule)}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const ThirdTestRule&) const { return false; };
 };
@@ -78,7 +78,7 @@ class FourthTestRule
 public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(FourthTestRule);}
     [[nodiscard]] std::string_view getName() const { return "FourthTestRule"; }
-    [[nodiscard]] std::set<std::type_index> getDependencies() const
+    [[nodiscard]] std::set<std::type_index> dependsOn() const
     {
         return {typeid(SecondTestRule), typeid(ThirdTestRule)};
     }

@@ -88,7 +88,7 @@ std::string_view DecideJoinTypesRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> DecideJoinTypesRule::getDependencies() const
+std::set<std::type_index> DecideJoinTypesRule::dependsOn() const
 {
     return {};
 }

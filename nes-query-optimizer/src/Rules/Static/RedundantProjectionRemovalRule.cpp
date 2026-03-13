@@ -35,7 +35,7 @@ std::string_view RedundantProjectionRemovalRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> RedundantProjectionRemovalRule::getDependencies() const
+std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
 {
     return {};
 }

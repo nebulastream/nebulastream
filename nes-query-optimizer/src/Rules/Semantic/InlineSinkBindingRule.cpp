@@ -34,7 +34,7 @@ std::string_view InlineSinkBindingRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> InlineSinkBindingRule::getDependencies() const
+std::set<std::type_index> InlineSinkBindingRule::dependsOn() const
 {
     return {};
 }

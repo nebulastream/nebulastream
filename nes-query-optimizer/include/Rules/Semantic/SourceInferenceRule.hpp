@@ -32,7 +32,7 @@ public:
 
     [[nodiscard]] const std::type_info& getType() const;
     [[nodiscard]] std::string_view getName() const;
-    [[nodiscard]] std::set<std::type_index> getDependencies() const;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
 
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed

@@ -31,7 +31,7 @@ public:
         {
             throw UnknownException("Only supports one rule per type currently.");
         }
-        for (auto deps: rule.getDependencies())
+        for (auto deps: rule.dependsOn())
         {
             if (!dependencies.contains(deps))
             {
@@ -66,8 +66,8 @@ public:
 
         for (auto [_, rule]: rules)
         {
-            indegree[rule.getType()] = rule.getDependencies().size();
-            if (rule.getDependencies().empty())
+            indegree[rule.getType()] = rule.dependsOn().size();
+            if (rule.dependsOn().empty())
             {
                 candidates.push(rule);
             }

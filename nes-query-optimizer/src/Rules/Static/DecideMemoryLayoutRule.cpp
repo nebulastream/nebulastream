@@ -37,7 +37,7 @@ std::string_view DecideMemoryLayoutRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> DecideMemoryLayoutRule::getDependencies() const
+std::set<std::type_index> DecideMemoryLayoutRule::dependsOn() const
 {
     return {typeid(DecideJoinTypesRule), typeid(RedundantUnionRemovalRule)};
 }

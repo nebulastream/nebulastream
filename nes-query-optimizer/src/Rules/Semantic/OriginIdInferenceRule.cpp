@@ -81,7 +81,7 @@ std::string_view OriginIdInferenceRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> OriginIdInferenceRule::getDependencies() const
+std::set<std::type_index> OriginIdInferenceRule::dependsOn() const
 {
     return {typeid(TypeInferenceRule)};
 }

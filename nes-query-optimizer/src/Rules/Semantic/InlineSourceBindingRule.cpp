@@ -35,7 +35,7 @@ std::string_view InlineSourceBindingRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> InlineSourceBindingRule::getDependencies() const
+std::set<std::type_index> InlineSourceBindingRule::dependsOn() const
 {
     return {typeid(SinkBindingRule)};
 }

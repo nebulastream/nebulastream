@@ -36,7 +36,7 @@ std::string_view SinkBindingRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> SinkBindingRule::getDependencies() const
+std::set<std::type_index> SinkBindingRule::dependsOn() const
 {
     return {typeid(InlineSinkBindingRule)};
 }

@@ -67,7 +67,7 @@ std::string_view TypeInferenceRule::getName() const
     return "TypeInferenceRule";
 }
 
-std::set<std::type_index> TypeInferenceRule::getDependencies() const
+std::set<std::type_index> TypeInferenceRule::dependsOn() const
 {
     return {typeid(LogicalSourceExpansionRule)};
 }

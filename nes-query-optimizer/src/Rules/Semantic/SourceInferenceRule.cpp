@@ -38,7 +38,7 @@ std::string_view SourceInferenceRule::getName() const
     return NAME;
 }
 
-std::set<std::type_index> SourceInferenceRule::getDependencies() const
+std::set<std::type_index> SourceInferenceRule::dependsOn() const
 {
     return {typeid(InlineSourceBindingRule)};
 }

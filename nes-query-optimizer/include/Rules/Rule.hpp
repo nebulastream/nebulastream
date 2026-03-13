@@ -30,7 +30,7 @@
  *
  * A Rule<U> is a value-semantic, type-erased wrapper around any type satisfying
  * RuleConcept<T, U>: a rewrite rule that transforms a unit of type U into another
- * unit of type U. Rules declare their dependencies via getDependencies(), enabling
+ * unit of type U. Rules declare their dependencies via dependsOn(), enabling
  * the RuleManager to enforce application order.
  *
  * ## Key types
@@ -61,7 +61,7 @@ concept RuleConcept = requires(const T& thisRule, U unit, const T& rhs) {
     { thisRule.getType() } -> std::convertible_to<const std::type_info&>;
     { thisRule.getName() } -> std::convertible_to<std::string_view>;
 
-    { thisRule.getDependencies() } -> std::convertible_to<std::set<std::type_index>>;
+    { thisRule.dependsOn() } -> std::convertible_to<std::set<std::type_index>>;
 
     { thisRule.apply(unit) } -> std::same_as<U>;
 
@@ -78,7 +78,7 @@ struct ErasedRule
     [[nodiscard]] virtual const std::type_info& getType() const = 0;
     [[nodiscard]] virtual std::string_view getName() const = 0;
 
-    [[nodiscard]] virtual std::set<std::type_index> getDependencies() const = 0;
+    [[nodiscard]] virtual std::set<std::type_index> dependsOn() const = 0;
 
     [[nodiscard]] virtual U apply(U unit) const = 0;
 
@@ -201,7 +201,7 @@ struct TypedRule
 
     [[nodiscard]] std::string_view getName() const { return self->getName(); }
 
-    [[nodiscard]] std::set<std::type_index> getDependencies() const { return self->getDependencies(); }
+    [[nodiscard]] std::set<std::type_index> dependsOn() const { return self->dependsOn(); }
 
     [[nodiscard]] U apply(U unit) const { return self->apply(std::move(unit)); }
 
@@ -227,7 +227,7 @@ struct RuleModel : ErasedRule<U>
 
     [[nodiscard]] std::string_view getName() const override { return impl.getName(); }
 
-    [[nodiscard]] std::set<std::type_index> getDependencies() const override {return impl.getDependencies(); };
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override {return impl.dependsOn(); };
 
     [[nodiscard]] U apply(U unit) const override { return impl.apply(std::move(unit)); };
 
