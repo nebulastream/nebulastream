@@ -16,3 +16,5 @@ add_plugin_as_library(Generator SourceValidation generator_validation_plugin_lib
 target_include_directories(generator_source_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 target_compile_definitions(generator_source_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
 target_compile_definitions(generator_validation_plugin_library PRIVATE SYSTEST_DATA_DIR="${CMAKE_SOURCE_DIR}/nes-systests/testdata/")
+
+add_tests_if_enabled(tests)
