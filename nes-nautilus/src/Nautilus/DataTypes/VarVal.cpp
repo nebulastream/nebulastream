@@ -57,14 +57,33 @@ VarVal& VarVal::operator=(VarVal&& other) /// NOLINT, as we need to have the opt
     return *this;
 }
 
+bool VarVal::isRaw() const
+{
+    return std::holds_alternative<RawValue>(value);
+}
+
+VarVal VarVal::materializeRaw() const
+{
+    if (!isRaw())
+    {
+        return *this;
+    }
+    return std::get<RawValue>(value).materialize();
+}
+
 void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
 {
+    if (isRaw())
+    {
+        materializeRaw().writeToMemory(memRef);
+        return;
+    }
     std::visit(
         [&]<typename ValType>(const ValType& val)
         {
-            if constexpr (std::is_same_v<ValType, VariableSizedData>)
+            if constexpr (std::is_same_v<ValType, VariableSizedData> || std::is_same_v<ValType, RawValue>)
             {
-                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData"));
+                throw UnknownOperation(std::string("VarVal T::operation=(val) not implemented for VariableSizedData/RawValue"));
             }
             else
             {
@@ -76,10 +95,18 @@ void VarVal::writeToMemory(const nautilus::val<int8_t*>& memRef) const
 
 VarVal::operator bool() const
 {
+    if (isRaw())
+    {
+        return static_cast<bool>(materializeRaw());
+    }
     return std::visit(
         []<typename T>(T& val) -> nautilus::val<bool>
         {
-            if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
+            if constexpr (std::is_same_v<std::remove_cvref_t<T>, RawValue>)
+            {
+                throw UnknownOperation();
+            }
+            else if constexpr (requires(T t) { t == nautilus::val<bool>(true); })
             {
                 /// We have to do it like this. The reason is that during the comparison of the two values, @val is NOT converted to a bool
                 /// but rather the val<bool>(false) is converted to std::common_type<T, bool>. This is a problem for any val that is not set to 1.
@@ -190,12 +217,21 @@ VarVal VarVal::readVarValFromMemory(const nautilus::val<int8_t*>& memRef, const 
 
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const VarVal& varVal)
 {
+    if (varVal.isRaw())
+    {
+        return os << varVal.materializeRaw();
+    }
     return std::visit(
         [&os]<typename T>(T& value) -> nautilus::val<std::ostream>&
         {
             /// If the T is of type uint8_t or int8_t, we want to convert it to an integer to print it as an integer and not as a char
             using Tremoved = std::remove_cvref_t<T>;
-            if constexpr (
+            if constexpr (std::is_same_v<Tremoved, RawValue>)
+            {
+                throw UnknownOperation();
+                return os;
+            }
+            else if constexpr (
                 std::is_same_v<Tremoved, nautilus::val<uint8_t>> || std::is_same_v<Tremoved, nautilus::val<int8_t>>
                 || std::is_same_v<Tremoved, nautilus::val<unsigned char>> || std::is_same_v<Tremoved, nautilus::val<char>>)
             {
@@ -221,6 +257,10 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
 #define DEFINE_OPERATOR_VAR_VAL_BINARY(operatorName, op) \
     VarVal VarVal::operatorName(const VarVal& other) const \
     { \
+        if (isRaw() || other.isRaw()) \
+        { \
+            return materializeRaw().operatorName(other.materializeRaw()); \
+        } \
         return std::visit( \
             [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal) \
             { \
@@ -240,6 +280,10 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const V
 #define DEFINE_OPERATOR_VAR_VAL_UNARY(operatorName, op) \
     VarVal VarVal::operatorName() const \
     { \
+        if (isRaw()) \
+        { \
+            return materializeRaw().operatorName(); \
+        } \
         return std::visit( \
             [&]<typename RHS>(const RHS& rhsVal) \
             { \
@@ -265,7 +309,40 @@ DEFINE_OPERATOR_VAR_VAL_BINARY(operator-, -);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator*, *);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator/, /);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator%, %);
-DEFINE_OPERATOR_VAR_VAL_BINARY(operator==, ==);
+/// Custom operator== with RawValue fast-path: both sides RawValue with same type → memcmp without parsing.
+VarVal VarVal::operator==(const VarVal& other) const
+{
+    if (isRaw() && other.isRaw())
+    {
+        const auto& lhsRaw = std::get<RawValue>(value);
+        const auto& rhsRaw = std::get<RawValue>(other.value);
+        if (lhsRaw.type == rhsRaw.type)
+        {
+            return VarVal(lhsRaw == rhsRaw);
+        }
+        /// Different raw types: materialize both and compare
+        return lhsRaw.materialize() == rhsRaw.materialize();
+    }
+    if (isRaw() || other.isRaw())
+    {
+        return materializeRaw() == other.materializeRaw();
+    }
+    return std::visit(
+        [&]<typename LHS, typename RHS>(const LHS& lhsVal, const RHS& rhsVal)
+        {
+            if constexpr (requires(LHS lhs, RHS rhs) { lhs == rhs; })
+            {
+                return detail::var_val_t(lhsVal == rhsVal);
+            }
+            else
+            {
+                throw UnknownOperation("VarVal operation not implemented: {} == {}", NAMEOF_TYPE(LHS), NAMEOF_TYPE(RHS));
+                return detail::var_val_t(lhsVal);
+            }
+        },
+        this->value,
+        other.value);
+}
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator!=, !=);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator&&, &&);
 DEFINE_OPERATOR_VAR_VAL_BINARY(operator||, ||);

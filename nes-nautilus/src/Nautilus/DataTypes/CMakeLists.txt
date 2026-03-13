@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
+        RawValue.cpp
         VariableSizedData.cpp
         VarVal.cpp
 )

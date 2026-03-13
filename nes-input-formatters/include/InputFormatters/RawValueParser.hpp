@@ -21,6 +21,7 @@
 #include <string_view>
 
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/RawValue.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
@@ -55,6 +56,17 @@ VariableSizedData parseVarSizedIntoNautilusRecord(
     const nautilus::val<int8_t*>& fieldAddress, const nautilus::val<uint64_t>& fieldSize, QuotationType quotationType);
 
 void parseRawValueIntoRecord(
+    DataType::Type physicalType,
+    Record& record,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& fieldName,
+    QuotationType quotationType);
+
+/// Stores a RawValue (pointer + size into input buffer) for fixed-size types, avoiding from_chars parsing.
+/// Equality comparisons on the resulting VarVal use memcmp on raw bytes. Non-equality operators
+/// trigger deferred parsing (materialization). For VARSIZED types, falls back to parseRawValueIntoRecord.
+void storeRawValueInRecord(
     DataType::Type physicalType,
     Record& record,
     const nautilus::val<int8_t*>& fieldAddress,

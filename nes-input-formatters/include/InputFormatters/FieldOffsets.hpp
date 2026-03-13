@@ -29,6 +29,7 @@
 #include <ErrorHandling.hpp>
 #include <FieldIndexFunction.hpp>
 #include <InputFormatter.hpp>
+#include <RawValueParser.hpp>
 #include <static.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
@@ -106,7 +107,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto sizeOfDelimiter = (i + 1 == metaData.getNumberOfFields()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            storeRawValueInRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
         }
         return record;
     }
@@ -142,7 +143,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
 
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            storeRawValueInRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
         }
         return record;
     }

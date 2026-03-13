@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <Nautilus/DataTypes/RawValue.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -123,7 +124,12 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
         .customVisit(
             [&]<typename T>(const T& val) -> VarVal
             {
-                if constexpr (std::is_same_v<T, VariableSizedData>)
+                if constexpr (std::is_same_v<T, RawValue>)
+                {
+                    /// RawValue must be materialized before hashing
+                    return calculate(hash, val.materialize());
+                }
+                else if constexpr (std::is_same_v<T, VariableSizedData>)
                 {
                     const auto& varSizedContent = val;
                     return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
