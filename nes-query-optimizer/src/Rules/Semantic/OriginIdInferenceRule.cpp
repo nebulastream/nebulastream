@@ -86,6 +86,11 @@ std::set<std::type_index> OriginIdInferenceRule::dependsOn() const
     return {typeid(TypeInferenceRule)};
 }
 
+std::set<std::type_index> OriginIdInferenceRule::requiredBy() const
+{
+    return {};
+}
+
 bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
 {
     return true;

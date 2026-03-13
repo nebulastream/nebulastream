@@ -41,6 +41,11 @@ std::set<std::type_index> SinkBindingRule::dependsOn() const
     return {typeid(InlineSinkBindingRule)};
 }
 
+std::set<std::type_index> SinkBindingRule::requiredBy() const
+{
+    return {};
+}
+
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const
 {
     return sinkCatalog == other.sinkCatalog;

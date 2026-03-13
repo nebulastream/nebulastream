@@ -72,6 +72,11 @@ std::set<std::type_index> TypeInferenceRule::dependsOn() const
     return {typeid(LogicalSourceExpansionRule)};
 }
 
+std::set<std::type_index> TypeInferenceRule::requiredBy() const
+{
+    return {};
+}
+
 bool TypeInferenceRule::operator==(const TypeInferenceRule&) const
 {
     return true;

@@ -45,6 +45,12 @@ std::set<std::type_index> LogicalSourceExpansionRule::dependsOn() const
     return {typeid(SourceInferenceRule)};
 }
 
+std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
+{
+    return {};
+};
+
+
 bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
 {
     return sourceCatalog == other.sourceCatalog;

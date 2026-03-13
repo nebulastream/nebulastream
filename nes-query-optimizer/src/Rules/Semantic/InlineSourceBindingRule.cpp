@@ -40,6 +40,11 @@ std::set<std::type_index> InlineSourceBindingRule::dependsOn() const
     return {typeid(SinkBindingRule)};
 }
 
+std::set<std::type_index> InlineSourceBindingRule::requiredBy() const
+{
+    return {};
+};
+
 bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const
 {
     return sourceCatalog == other.sourceCatalog;

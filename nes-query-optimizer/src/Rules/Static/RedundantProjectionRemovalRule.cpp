@@ -40,6 +40,11 @@ std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
     return {};
 }
 
+std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
+{
+    return {};
+}
+
 bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
 {
     return true;

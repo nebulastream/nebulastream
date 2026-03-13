@@ -88,6 +88,7 @@ public:
     [[nodiscard]] const std::type_info& getType() const;
     [[nodiscard]] std::string_view getName() const;
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
     [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
     bool operator==(const LogicalSourceExpansionRule& other) const;
 

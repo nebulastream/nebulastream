@@ -33,13 +33,12 @@ public:
         }
         for (auto deps: rule.dependsOn())
         {
-            if (!dependencies.contains(deps))
-            {
-                dependencies[deps] = {rule.getType()};
-            } else
-            {
                 dependencies[deps].insert(rule.getType());
-            }
+        }
+
+        for (auto requiredBy: rule.requiredBy())
+        {
+            dependencies[rule.getType()].insert(requiredBy);
         }
 
         rules.emplace(rule.getType(), rule);

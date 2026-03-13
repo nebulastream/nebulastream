@@ -93,6 +93,11 @@ std::set<std::type_index> DecideJoinTypesRule::dependsOn() const
     return {};
 }
 
+std::set<std::type_index> DecideJoinTypesRule::requiredBy() const
+{
+    return {};
+}
+
 LogicalPlan DecideJoinTypesRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");

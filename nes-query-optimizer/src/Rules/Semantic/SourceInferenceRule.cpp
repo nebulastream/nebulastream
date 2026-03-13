@@ -43,6 +43,11 @@ std::set<std::type_index> SourceInferenceRule::dependsOn() const
     return {typeid(InlineSourceBindingRule)};
 }
 
+std::set<std::type_index> SourceInferenceRule::requiredBy() const
+{
+    return {};
+}
+
 bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const
 {
     return sourceCatalog == other.sourceCatalog;

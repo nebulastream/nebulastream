@@ -62,6 +62,7 @@ concept RuleConcept = requires(const T& thisRule, U unit, const T& rhs) {
     { thisRule.getName() } -> std::convertible_to<std::string_view>;
 
     { thisRule.dependsOn() } -> std::convertible_to<std::set<std::type_index>>;
+    { thisRule.requiredBy() } -> std::convertible_to<std::set<std::type_index>>;
 
     { thisRule.apply(unit) } -> std::same_as<U>;
 
@@ -79,6 +80,7 @@ struct ErasedRule
     [[nodiscard]] virtual std::string_view getName() const = 0;
 
     [[nodiscard]] virtual std::set<std::type_index> dependsOn() const = 0;
+    [[nodiscard]] virtual std::set<std::type_index> requiredBy() const = 0;
 
     [[nodiscard]] virtual U apply(U unit) const = 0;
 
@@ -202,6 +204,7 @@ struct TypedRule
     [[nodiscard]] std::string_view getName() const { return self->getName(); }
 
     [[nodiscard]] std::set<std::type_index> dependsOn() const { return self->dependsOn(); }
+    [[nodiscard]] std::set<std::type_index> requiredBy() const { return self->requiredBy(); }
 
     [[nodiscard]] U apply(U unit) const { return self->apply(std::move(unit)); }
 
@@ -227,7 +230,8 @@ struct RuleModel : ErasedRule<U>
 
     [[nodiscard]] std::string_view getName() const override { return impl.getName(); }
 
-    [[nodiscard]] std::set<std::type_index> dependsOn() const override {return impl.dependsOn(); };
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override { return impl.dependsOn(); };
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override { return impl.requiredBy(); };
 
     [[nodiscard]] U apply(U unit) const override { return impl.apply(std::move(unit)); };
 

@@ -42,6 +42,11 @@ std::set<std::type_index> DecideMemoryLayoutRule::dependsOn() const
     return {typeid(DecideJoinTypesRule), typeid(RedundantUnionRemovalRule)};
 }
 
+std::set<std::type_index> DecideMemoryLayoutRule::requiredBy() const
+{
+    return {};
+}
+
 bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule&) const
 {
     return true;

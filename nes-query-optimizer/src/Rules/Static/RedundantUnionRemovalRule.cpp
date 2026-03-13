@@ -40,6 +40,11 @@ std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
     return {};
 }
 
+std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
+{
+    return {};
+}
+
 bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
 {
     return true;

@@ -43,6 +43,7 @@ public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(FirstTestRule); }
     [[nodiscard]] std::string_view getName() const { return "FirstTestRule"; }
     [[nodiscard]] std::set<std::type_index> dependsOn() const { return {}; }
+    [[nodiscard]] std::set<std::type_index> requiredBy() const { return {}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const FirstTestRule&) const { return false;};
 };
@@ -55,23 +56,12 @@ public:
     [[nodiscard]] const std::type_info& getType() const { return typeid(SecondTestRule); }
     [[nodiscard]] std::string_view getName() const { return "SecondTestRule"; }
     [[nodiscard]] std::set<std::type_index> dependsOn() const { return {typeid(FirstTestRule)}; }
+    [[nodiscard]] std::set<std::type_index> requiredBy() const { return {}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const SecondTestRule&) const { return false; };
 };
 
 static_assert(PlanRuleConcept<SecondTestRule>);
-
-class ThirdTestRule
-{
-public:
-    [[nodiscard]] const std::type_info& getType() const { return typeid(ThirdTestRule);}
-    [[nodiscard]] std::string_view getName() const { return "ThirdTestRule"; }
-    [[nodiscard]] std::set<std::type_index> dependsOn() const { return {typeid(FirstTestRule)}; }
-    [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
-    bool operator==(const ThirdTestRule&) const { return false; };
-};
-
-static_assert(PlanRuleConcept<ThirdTestRule>);
 
 class FourthTestRule
 {
@@ -80,13 +70,27 @@ public:
     [[nodiscard]] std::string_view getName() const { return "FourthTestRule"; }
     [[nodiscard]] std::set<std::type_index> dependsOn() const
     {
-        return {typeid(SecondTestRule), typeid(ThirdTestRule)};
+        return {typeid(SecondTestRule)};
     }
+    [[nodiscard]] std::set<std::type_index> requiredBy() const { return {}; }
     [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
     bool operator==(const FourthTestRule&) const { return false; };
 };
 
 static_assert(PlanRuleConcept<FourthTestRule>);
+
+class ThirdTestRule
+{
+public:
+    [[nodiscard]] const std::type_info& getType() const { return typeid(ThirdTestRule);}
+    [[nodiscard]] std::string_view getName() const { return "ThirdTestRule"; }
+    [[nodiscard]] std::set<std::type_index> dependsOn() const { return {typeid(FirstTestRule), typeid(SecondTestRule)}; }
+    [[nodiscard]] std::set<std::type_index> requiredBy() const { return { typeid(FourthTestRule)}; }
+    [[nodiscard]] std::nullptr_t apply(std::nullptr_t) const { return nullptr; };
+    bool operator==(const ThirdTestRule&) const { return false; };
+};
+
+static_assert(PlanRuleConcept<ThirdTestRule>);
 
 TEST_F(RuleManagerTest, Sequencing)
 {
@@ -101,9 +105,24 @@ TEST_F(RuleManagerTest, Sequencing)
 
     ASSERT_EQ(seq.size(), 4);
     ASSERT_EQ(seq.at(0).getType(), typeid(FirstTestRule));
-    ASSERT_EQ(seq.at(1).getType(), typeid(ThirdTestRule));
-    ASSERT_EQ(seq.at(2).getType(), typeid(SecondTestRule));
+    ASSERT_EQ(seq.at(1).getType(), typeid(SecondTestRule));
+    ASSERT_EQ(seq.at(2).getType(), typeid(ThirdTestRule));
     ASSERT_EQ(seq.at(3).getType(), typeid(FourthTestRule));
+
+    RuleManager<std::nullptr_t> manager2;
+
+    manager2.addRule(SecondTestRule{});
+    manager2.addRule(FirstTestRule{});
+    manager2.addRule(FourthTestRule{});
+    manager2.addRule(ThirdTestRule{});
+
+    auto seq2 = manager2.getSequence();
+
+    ASSERT_EQ(seq2.size(), 4);
+    ASSERT_EQ(seq2.at(0).getType(), typeid(FirstTestRule));
+    ASSERT_EQ(seq2.at(1).getType(), typeid(SecondTestRule));
+    ASSERT_EQ(seq2.at(2).getType(), typeid(ThirdTestRule));
+    ASSERT_EQ(seq2.at(3).getType(), typeid(FourthTestRule));
 }
 
 }
