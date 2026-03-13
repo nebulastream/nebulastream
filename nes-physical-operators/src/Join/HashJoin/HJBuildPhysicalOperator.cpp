@@ -44,7 +44,9 @@
 
 namespace NES
 {
-HashMap* getHashJoinHashMapProxy(
+
+void getHashJoinHashMapProxy(
+    SliceCacheEntry* entryToReplace,
     const HJOperatorHandler* operatorHandler,
     const Timestamp timestamp,
     const WorkerThreadId workerThreadId,
@@ -60,18 +62,22 @@ HashMap* getHashJoinHashMapProxy(
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
         buildOperator->hashMapOptions.numberOfBuckets};
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
+    const auto hjSlices = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(
-        hashMap.size() == 1,
+        hjSlices.size() == 1,
         "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
         "slicing, but got {}",
-        hashMap.size());
+        hjSlices.size());
 
     /// Converting the slice to an HJSlice and returning the pointer to the hashmap
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
+    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hjSlices[0]);
     INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
+
+    /// Updating the slice cache entry
+    entryToReplace->sliceStart = hjSlice->getSliceStart().getRawValue();
+    entryToReplace->sliceEnd = hjSlice->getSliceEnd().getRawValue();
+    entryToReplace->dataStructure = reinterpret_cast<int8_t*>(hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide));
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -128,13 +134,21 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getHashJoinHashMapProxy,
-        operatorHandler,
+    const auto hashMapPtr = localState->getSliceCache().getDataStructureRef(
         timestamp,
         ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+        [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
+        {
+            nautilus::invoke(
+                getHashJoinHashMapProxy,
+                entryToReplace,
+                localState->getOperatorHandler(),
+                timestamp,
+                ctx.workerThreadId,
+                nautilus::val<JoinBuildSideType>(joinBuildSide),
+                nautilus::val<const HJBuildPhysicalOperator*>(this));
+        });
+
     ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
@@ -187,9 +201,11 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<TupleBufferRef>& bufferRef,
-    HashMapOptions hashMapOptions)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    HashMapOptions hashMapOptions,
+    SliceCacheConfiguration sliceCacheConfiguration)
+    : StreamJoinBuildPhysicalOperator(
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceCacheConfiguration))
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

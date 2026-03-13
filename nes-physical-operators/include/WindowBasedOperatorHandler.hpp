@@ -18,6 +18,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -86,6 +87,11 @@ public:
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
 
+    /// Allocates memory for a slice cache and returns a pointer to the allocated memory.
+    /// Each call allocates a new buffer, so multiple build sides (e.g., left/right join) each get their own memory.
+    /// Also, this method is being called via a nautilus::invoke(), thus, we require a raw pointer
+    int8_t* allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, AbstractBufferProvider& bufferProvider);
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
@@ -100,5 +106,8 @@ protected:
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+
+    /// We have here a vector, as we might have more than a single input pipeline with concurrent access
+    folly::Synchronized<std::vector<std::unique_ptr<TupleBuffer>>> sliceCacheBuffers;
 };
 }

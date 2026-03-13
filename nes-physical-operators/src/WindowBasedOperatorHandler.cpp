@@ -14,6 +14,7 @@
 
 #include <WindowBasedOperatorHandler.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <utility>
@@ -98,6 +99,21 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
+}
+
+int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(const uint64_t sliceCacheMemorySize, AbstractBufferProvider& bufferProvider)
+{
+    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
+    if (not buffer.has_value())
+    {
+        throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
+    }
+
+    /// We set everything to 0, as there might be old data in the tuple buffer
+    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
+    auto* result = reinterpret_cast<int8_t*>(buffer.value().getAvailableMemoryArea().data());
+    sliceCacheBuffers.wlock()->emplace_back(std::make_unique<TupleBuffer>(buffer.value()));
+    return result;
 }
 
 }
