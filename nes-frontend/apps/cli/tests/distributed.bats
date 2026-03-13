@@ -64,41 +64,30 @@ setup_file() {
     exit 1
   fi
 
+  if [ -z "$NES_RUNTIME_BASE_IMAGE" ]; then
+    echo "ERROR: NES_RUNTIME_BASE_IMAGE environment variable must be set" >&2
+    exit 1
+  fi
+
   # Build Docker images with unique tags to avoid collisions when test suites run in parallel
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   export WORKER_IMAGE="nes-worker-cli-test-${suffix}"
-  docker build -t $WORKER_IMAGE -f - $(dirname $(realpath $NEBULASTREAM)) <<EOF
-    FROM ubuntu:24.04 AS app
-    ENV LLVM_TOOLCHAIN_VERSION=19
-    RUN apt update -y && apt install curl wget gpg -y
-    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
-    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
-    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
-    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y \
-    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
-
-    RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/\${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-\$(dpkg --print-architecture) && \
-    chmod +x /bin/grpc_health_probe
-
+  local worker_ctx=$(mktemp -d)
+  cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
+  docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
+    FROM $NES_RUNTIME_BASE_IMAGE
     COPY nes-single-node-worker /usr/bin
     ENTRYPOINT ["nes-single-node-worker"]
 EOF
+  rm -rf "$worker_ctx"
   export CLI_IMAGE="nes-cli-image-${suffix}"
-  docker build -t $CLI_IMAGE -f - $(dirname $(realpath $NES_CLI)) <<EOF
-    FROM ubuntu:24.04 AS app
-    ENV LLVM_TOOLCHAIN_VERSION=19
-    RUN apt update -y && apt install curl wget gpg -y
-    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
-    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
-    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
-    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y \
-    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
-
+  local cli_ctx=$(mktemp -d)
+  cp $(realpath $NES_CLI) "$cli_ctx/nes-cli"
+  docker build --load -t $CLI_IMAGE -f - "$cli_ctx" <<EOF
+    FROM $NES_RUNTIME_BASE_IMAGE
     COPY nes-cli /usr/bin
 EOF
+  rm -rf "$cli_ctx"
 
   # Print environment info for debugging
   echo "# Using NES_CLI: $NES_CLI" >&3
