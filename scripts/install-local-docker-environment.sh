@@ -14,6 +14,10 @@
 
 set -e
 
+# Enable Docker BuildKit, which is required by our Dockerfiles (they use
+# BuildKit-only features such as --mount, --chmod, --checksum, and --secret).
+export DOCKER_BUILDKIT=1
+
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 

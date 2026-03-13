@@ -17,6 +17,11 @@ To set up a development container, always use the provided installation script:
 This script ensures that a suitable development image is available locally. It will automatically pull a pre-built image that matches the current dependency hash, or build one locally when needed. Local builds also install the current user inside the container, preventing permission issues.
 If you are using Docker in rootless mode, the user inside the container will be `root`.
 
+> [!NOTE]
+> The Dockerfiles use [BuildKit](https://docs.docker.com/build/buildkit/) features (e.g., `--mount`, `--chmod`, `--checksum`).
+> The installation script enables BuildKit automatically (`DOCKER_BUILDKIT=1`).
+> If you invoke `docker build` manually, make sure BuildKit is enabled, either by setting `export DOCKER_BUILDKIT=1` or by using `docker buildx build`.
+
 > [!WARNING]
 > The logic for detecting root mode is not perfect. If you encounter permission problems you may have to force root mode using the `-r` flag.
 
