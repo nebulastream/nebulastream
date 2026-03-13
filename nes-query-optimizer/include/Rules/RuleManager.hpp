@@ -59,16 +59,32 @@ public:
     [[nodiscard]] std::vector<Rule<U>> getSequence() const
     {
         std::queue<Rule<U>> candidates;
-        std::unordered_map<std::type_index, uint8_t> indegree;
+        std::unordered_map<std::type_index, size_t> indegree;
 
         std::vector<Rule<U>> sequence;
 
-        for (auto [_, rule]: rules)
+        for (auto [type, rule]: rules)
         {
-            indegree[rule.getType()] = rule.dependsOn().size();
-            if (rule.dependsOn().empty())
+            indegree[type] = 0;
+        }
+
+        for (const auto& requiredBy : dependencies | std::views::values)
+        {
+            for (auto type : requiredBy)
             {
-                candidates.push(rule);
+                if (!rules.contains(type))
+                {
+                    throw UnknownException("Unregistered Rule in RuleManager dependency graph: ", type.name());
+                }
+                indegree[type]++;
+            }
+        }
+
+        for (auto [type, numberOfRulesItDependsOn]: indegree)
+        {
+            if (numberOfRulesItDependsOn == 0)
+            {
+                candidates.push(rules.at(type));
             }
         }
 
@@ -93,6 +109,10 @@ public:
                     }
                 }
             }
+        }
+        if (sequence.size() != rules.size())
+        {
+            throw UnknownException("Cycle detected in rule dependencies.");
         }
         return sequence;
     }
