@@ -21,7 +21,7 @@
 #include <typeinfo>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -62,7 +62,7 @@ struct Reflector<JoinImplementationTypeTrait>
 template <>
 struct Unreflector<JoinImplementationTypeTrait>
 {
-    JoinImplementationTypeTrait operator()(const Reflected& reflected) const;
+    JoinImplementationTypeTrait operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(TraitConcept<JoinImplementationTypeTrait>);

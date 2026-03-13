@@ -28,7 +28,6 @@
 #include <fmt/format.h>
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -99,9 +98,10 @@ Reflected Reflector<MaxAggregationLogicalFunction>::operator()(const MaxAggregat
     return reflect(detail::ReflectedMaxAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
 }
 
-MaxAggregationLogicalFunction Unreflector<MaxAggregationLogicalFunction>::operator()(const Reflected& reflected) const
+MaxAggregationLogicalFunction
+Unreflector<MaxAggregationLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedMaxAggregationLogicalFunction>(reflected);
+    auto [onField, asField] = context.unreflect<detail::ReflectedMaxAggregationLogicalFunction>(reflected);
     return MaxAggregationLogicalFunction{onField, asField};
 }
 
@@ -110,7 +110,8 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunct
 {
     if (!arguments.reflected.isEmpty())
     {
-        return std::make_shared<WindowAggregationLogicalFunction>(unreflect<MaxAggregationLogicalFunction>(arguments.reflected));
+        return std::make_shared<WindowAggregationLogicalFunction>(
+            ReflectionContext{}.unreflect<MaxAggregationLogicalFunction>(arguments.reflected));
     }
     if (arguments.fields.size() != 2)
     {

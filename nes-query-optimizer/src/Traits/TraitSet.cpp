@@ -63,9 +63,9 @@ Reflected Reflector<TraitSet>::operator()(const TraitSet& traitSet) const
     return reflect(reflectedTraitSet);
 }
 
-TraitSet Unreflector<TraitSet>::operator()(const Reflected& reflected) const
+TraitSet Unreflector<TraitSet>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [traits] = unreflect<detail::ReflectedTraitSet>(reflected);
+    auto [traits] = context.unreflect<detail::ReflectedTraitSet>(reflected);
     return TraitSet{traits};
 }
 

@@ -47,7 +47,6 @@
 #include <WindowTypes/Types/WindowType.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -201,25 +200,20 @@ Reflected Reflector<JoinLogicalOperator>::operator()(const JoinLogicalOperator& 
         .joinFunction = op.getJoinFunction(), .windowType = reflectWindowType(*op.getWindowType()), .joinType = op.joinType});
 }
 
-JoinLogicalOperator Unreflector<JoinLogicalOperator>::operator()(const Reflected& reflected) const
+JoinLogicalOperator Unreflector<JoinLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [joinFunction, reflectedWindowType, joinType] = unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
+    auto [joinFunction, reflectedWindowType, joinType] = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
 
-    if (!joinFunction.has_value())
-    {
-        throw CannotDeserialize("Missing Join Function");
-    }
+    const auto windowType = unreflectWindowType(reflectedWindowType, context);
 
-    const auto windowType = unreflectWindowType(reflectedWindowType);
-
-    return JoinLogicalOperator(joinFunction.value(), windowType, joinType);
+    return JoinLogicalOperator(joinFunction, windowType, joinType);
 }
 
 LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<JoinLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<JoinLogicalOperator>(arguments.reflected);
     }
 
     PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");

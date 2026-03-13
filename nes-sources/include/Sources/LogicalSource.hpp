@@ -22,7 +22,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
-#include <Util/Reflection.hpp>
+#include <Util/ReflectionFwd.hpp>
 
 namespace NES
 {
@@ -60,7 +60,7 @@ struct Reflector<LogicalSource>
 template <>
 struct Unreflector<LogicalSource>
 {
-    LogicalSource operator()(const Reflected& rfl) const;
+    LogicalSource operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }

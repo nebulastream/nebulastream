@@ -374,9 +374,9 @@ Reflected Reflector<DataType>::operator()(const DataType& field) const
     return reflect(std::make_pair(field.type, field.nullable));
 }
 
-DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
+DataType Unreflector<DataType>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    const auto [type, nullable] = unreflect<std::pair<DataType::Type, bool>>(rfl);
+    const auto [type, nullable] = context.unreflect<std::pair<DataType::Type, bool>>(rfl);
     return DataTypeProvider::provideDataType(type, nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 

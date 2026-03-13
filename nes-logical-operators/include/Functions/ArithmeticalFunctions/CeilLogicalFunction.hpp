@@ -23,7 +23,6 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -62,7 +61,7 @@ struct Reflector<CeilLogicalFunction>
 template <>
 struct Unreflector<CeilLogicalFunction>
 {
-    CeilLogicalFunction operator()(const Reflected& reflected) const;
+    CeilLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<CeilLogicalFunction>);
@@ -73,6 +72,6 @@ namespace NES::detail
 {
 struct ReflectedCeilLogicalFunction
 {
-    std::optional<LogicalFunction> child;
+    LogicalFunction child;
 };
 }

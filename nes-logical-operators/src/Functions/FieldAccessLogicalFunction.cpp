@@ -30,7 +30,6 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -119,9 +118,10 @@ Reflected Reflector<FieldAccessLogicalFunction>::operator()(const FieldAccessLog
     return reflect(detail::ReflectedFieldAccessLogicalFunction{.fieldName = function.getFieldName(), .dataType = function.getDataType()});
 }
 
-FieldAccessLogicalFunction Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected) const
+FieldAccessLogicalFunction
+Unreflector<FieldAccessLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [name, type] = unreflect<detail::ReflectedFieldAccessLogicalFunction>(reflected);
+    auto [name, type] = context.unreflect<detail::ReflectedFieldAccessLogicalFunction>(reflected);
 
     return FieldAccessLogicalFunction{DataType{type}, name};
 }
@@ -131,7 +131,7 @@ LogicalFunctionGeneratedRegistrar::RegisterFieldAccessLogicalFunction(LogicalFun
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<FieldAccessLogicalFunction>(arguments.reflected);
+        return ReflectionContext{}.unreflect<FieldAccessLogicalFunction>(arguments.reflected);
     }
 
     PRECONDITION(false, "Function is only build directly via parser or via reflection, not using the registry");

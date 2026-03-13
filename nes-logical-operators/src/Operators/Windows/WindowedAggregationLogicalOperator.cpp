@@ -45,7 +45,6 @@
 #include <AggregationLogicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
 
 namespace NES
 {
@@ -270,11 +269,12 @@ Reflected Reflector<WindowedAggregationLogicalOperator>::operator()(const Window
         .aggregations = windowAggregations, .keys = op.getGroupingKeys(), .windowType = reflectWindowType(*op.getWindowType())});
 }
 
-WindowedAggregationLogicalOperator Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected) const
+WindowedAggregationLogicalOperator
+Unreflector<WindowedAggregationLogicalOperator>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [aggregations, keys, windowTypeReflected] = unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
+    auto [aggregations, keys, windowTypeReflected] = context.unreflect<detail::ReflectedWindowAggregationLogicalOperator>(reflected);
 
-    auto windowType = unreflectWindowType(windowTypeReflected);
+    auto windowType = unreflectWindowType(windowTypeReflected, context);
 
     std::vector<std::shared_ptr<WindowAggregationLogicalFunction>> aggregationFunctions;
 
@@ -298,7 +298,7 @@ LogicalOperatorGeneratedRegistrar::RegisterWindowedAggregationLogicalOperator(Lo
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<WindowedAggregationLogicalOperator>(arguments.reflected);
+        return ReflectionContext{}.unreflect<WindowedAggregationLogicalOperator>(arguments.reflected);
     }
 
     PRECONDITION(false, "Expected arguments are missing");

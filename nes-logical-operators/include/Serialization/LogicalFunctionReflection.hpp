@@ -60,9 +60,9 @@ struct Reflector<TypedLogicalFunction<detail::ErasedLogicalFunction>>
 template <>
 struct Unreflector<TypedLogicalFunction<>>
 {
-    TypedLogicalFunction<> operator()(const Reflected& rfl) const
+    TypedLogicalFunction<> operator()(const Reflected& rfl, const ReflectionContext& context) const
     {
-        auto [name, data] = unreflect<detail::ReflectedLogicalFunction>(rfl);
+        auto [name, data] = context.unreflect<detail::ReflectedLogicalFunction>(rfl);
 
         LogicalFunctionRegistryArguments argument;
         argument.reflected = data;

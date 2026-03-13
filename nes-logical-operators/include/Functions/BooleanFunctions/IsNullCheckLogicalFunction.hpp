@@ -63,7 +63,7 @@ struct Reflector<IsNullCheckLogicalFunction>
 template <>
 struct Unreflector<IsNullCheckLogicalFunction>
 {
-    IsNullCheckLogicalFunction operator()(const Reflected& reflected) const;
+    IsNullCheckLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalFunctionConcept<IsNullCheckLogicalFunction>);
