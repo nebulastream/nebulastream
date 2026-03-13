@@ -40,6 +40,7 @@ public:
     void removeModel(const std::string& modelName);
     bool hasModel(const std::string& modelName) const;
     std::vector<std::string> getModelNames() const;
+    const RegisteredModel& getRegisteredModel(const std::string& modelName) const;
     Model load(const std::string& modelName) const;
 };
 
@@ -57,6 +58,11 @@ inline void ModelCatalog::removeModel(const std::string& modelName)
 inline bool ModelCatalog::hasModel(const std::string& modelName) const
 {
     return registeredModels.contains(modelName);
+}
+
+inline const RegisteredModel& ModelCatalog::getRegisteredModel(const std::string& modelName) const
+{
+    return registeredModels.at(modelName);
 }
 
 inline std::vector<std::string> ModelCatalog::getModelNames() const
@@ -78,9 +84,24 @@ inline Model ModelCatalog::load(const std::string& modelName) const
 
     if (auto it = registeredModels.find(modelName); it != registeredModels.end())
     {
-        auto result = Inference::load(it->second.path, {});
+        const auto& reg = it->second;
+        auto result = Inference::load(reg.path, {});
         if (result)
         {
+            std::vector<NES::DataType> inputTypes;
+            for (const auto& [name, dt] : reg.inputs)
+            {
+                inputTypes.push_back(*dt);
+            }
+            result->setInputs(std::move(inputTypes));
+
+            std::vector<std::pair<std::string, NES::DataType>> outputFields;
+            for (const auto& [name, dt] : reg.outputs)
+            {
+                outputFields.emplace_back(name, *dt);
+            }
+            result->setOutputs(std::move(outputFields));
+
             catalogImpl.emplace(modelName, *result);
             return *result;
         }

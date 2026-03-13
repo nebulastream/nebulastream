@@ -41,7 +41,16 @@ void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
         }
 
         auto model = modelCatalog->load(modelName);
-        auto inferModelOp = InferModelLogicalOperator(std::move(model), op.getInputFieldNames());
+        auto inputFieldNames = op.getInputFieldNames();
+        if (inputFieldNames.empty())
+        {
+            const auto& reg = modelCatalog->getRegisteredModel(modelName);
+            for (const auto& [name, dt] : reg.inputs)
+            {
+                inputFieldNames.push_back(name);
+            }
+        }
+        auto inferModelOp = InferModelLogicalOperator(std::move(model), std::move(inputFieldNames));
         /// Preserve children from the original operator
         inferModelOp = inferModelOp.withChildren(op.getChildren());
         auto replacement = LogicalOperator(std::move(inferModelOp));

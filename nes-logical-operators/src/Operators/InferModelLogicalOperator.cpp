@@ -99,7 +99,11 @@ InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema(std::vec
         {
             throw CannotInferSchema("Field '{}' not found in input schema", fieldName);
         }
-        if (field->dataType != model.getInputs()[i])
+        if (field->dataType.nullable)
+        {
+            throw CannotInferSchema("Field '{}' is nullable, but model inputs must not be nullable", fieldName);
+        }
+        if (field->dataType.type != model.getInputs()[i].type)
         {
             throw CannotInferSchema("Type mismatch for field '{}': schema has a different type than model expects", fieldName);
         }

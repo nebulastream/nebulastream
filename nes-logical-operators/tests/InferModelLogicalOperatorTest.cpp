@@ -312,7 +312,61 @@ TEST_F(InferModelLogicalOperatorTest, ErrorOnTypeMismatch)
     });
 }
 
-/// SCHEMA-07: Name collision replaces existing field type rather than duplicating or erroring
+/// SCHEMA-07: Nullable input field is rejected
+TEST_F(InferModelLogicalOperatorTest, ErrorOnNullableInputField)
+{
+    auto model = makeModel({DataType::Type::FLOAT32}, {{"prediction", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"value"}};
+
+    /// Build a schema with a nullable field
+    Schema nullableSchema;
+    nullableSchema = nullableSchema.addField("value", DataType{DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE});
+
+    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({nullableSchema}), NES::ErrorCode::CannotInferSchema);
+}
+
+/// SCHEMA-08: Multiple inputs where one is nullable — rejected
+TEST_F(InferModelLogicalOperatorTest, ErrorOnOneNullableAmongMultipleInputs)
+{
+    auto model = makeModel({DataType::Type::FLOAT32, DataType::Type::FLOAT32}, {{"out", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"a", "b"}};
+
+    /// "a" is NOT_NULLABLE, "b" is IS_NULLABLE
+    Schema schema;
+    schema = schema.addField("a", DataType{DataType::Type::FLOAT32, DataType::NULLABLE::NOT_NULLABLE});
+    schema = schema.addField("b", DataType{DataType::Type::FLOAT32, DataType::NULLABLE::IS_NULLABLE});
+
+    ASSERT_EXCEPTION_ERRORCODE((void)op.withInferredSchema({schema}), NES::ErrorCode::CannotInferSchema);
+}
+
+/// SCHEMA-09: All non-nullable inputs are accepted
+TEST_F(InferModelLogicalOperatorTest, AcceptsNonNullableInputs)
+{
+    auto model = makeModel({DataType::Type::FLOAT32, DataType::Type::INT32}, {{"out", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"a", "b"}};
+
+    auto schema = makeSchema({{"a", DataType::Type::FLOAT32}, {"b", DataType::Type::INT32}});
+    EXPECT_NO_THROW({
+        auto inferred = op.withInferredSchema({schema});
+        (void)inferred;
+    });
+}
+
+/// SCHEMA-10: Model outputs are always NOT_NULLABLE in the output schema
+TEST_F(InferModelLogicalOperatorTest, OutputFieldsAreNotNullable)
+{
+    auto model = makeModel({DataType::Type::FLOAT32}, {{"prediction", DataType::Type::FLOAT32}});
+    InferModelLogicalOperator op{std::move(model), {"value"}};
+
+    auto inputSchema = makeSchema({{"value", DataType::Type::FLOAT32}});
+    auto inferred = op.withInferredSchema({inputSchema});
+
+    auto predField = inferred.getOutputSchema().getFieldByName("prediction");
+    ASSERT_TRUE(predField.has_value());
+    EXPECT_FALSE(predField->dataType.nullable);
+}
+
+/// SCHEMA-11: Name collision replaces existing field type rather than duplicating or erroring
 TEST_F(InferModelLogicalOperatorTest, NameCollisionReplacesFieldType)
 {
     /// Model: 1 Float32 input ("input_field"), 1 output "value" of Int32
