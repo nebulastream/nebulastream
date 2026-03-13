@@ -43,7 +43,8 @@ std::string base64Encode(const std::string& input)
 {
     const auto encodedLen = 4 * ((input.size() + 2) / 3);
     std::string out(encodedLen, '\0');
-    EVP_EncodeBlock(reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    EVP_EncodeBlock(
+        reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
     return out;
 }
 
@@ -51,7 +52,8 @@ std::string base64Decode(const std::string& input)
 {
     const auto maxDecodedLen = 3 * input.size() / 4;
     std::string out(maxDecodedLen, '\0');
-    const auto actualLen = EVP_DecodeBlock(reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    const auto actualLen = EVP_DecodeBlock(
+        reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
     /// EVP_DecodeBlock doesn't account for padding — trim trailing null bytes
     auto padding = std::count(input.rbegin(), input.rend(), '=');
     out.resize(static_cast<size_t>(actualLen - padding));
