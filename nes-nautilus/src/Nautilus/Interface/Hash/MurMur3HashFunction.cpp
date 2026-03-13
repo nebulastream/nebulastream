@@ -21,6 +21,7 @@
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
 #include <ErrorHandling.hpp>
+#include <HashFunctionRegistry.hpp>
 
 namespace NES
 {
@@ -134,5 +135,10 @@ HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, const Va
                 }
             })
         .getRawValueAs<HashValue>();
+}
+
+HashFunctionRegistryReturnType HashFunctionGeneratedRegistrar::RegisterMurMur3HashFunction(HashFunctionRegistryArguments)
+{
+    return std::make_unique<MurMur3HashFunction>();
 }
 }

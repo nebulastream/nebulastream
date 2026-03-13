@@ -10,6 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# include registrar generation functions
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+
 include_directories(tests/include)
 
 # Set Sources and Headers
@@ -28,6 +31,8 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_tests_if_enabled(tests)
+
+create_registries_for_component(HashFunction)
 
 # Add nes-nautilus to the include directories
 target_include_directories(nes-nautilus PUBLIC
