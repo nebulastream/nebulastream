@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #pragma once
+#include <Util/Logger/Formatter.hpp>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <yaml-cpp/yaml.h>
@@ -50,6 +52,13 @@ public:
     /// Copies the value from another option of the same concrete type.
     virtual void copyValueFrom(const BaseOption& source) = 0;
 
+    friend std::ostream& operator<<(std::ostream& os, const BaseOption& option)
+    {
+        os << "Name: " << option.name << "\n";
+        os << "Description: " << option.description << "\n";
+        return os;
+    }
+
 protected:
     friend class BaseConfiguration;
 
@@ -69,3 +78,5 @@ template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
 }
+
+FMT_OSTREAM(NES::BaseOption);
