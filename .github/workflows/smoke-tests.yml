@@ -102,7 +102,7 @@ jobs:
   build-and-test-macos:
     name: "Build and test (macOS)"
     runs-on: macos-14
-    timeout-minutes: 180
+    timeout-minutes: 240
     env:
       LLVM_TOOLCHAIN_VERSION: 19
       VCPKG_BINARY_SOURCES: "clear;x-gha,readwrite"
