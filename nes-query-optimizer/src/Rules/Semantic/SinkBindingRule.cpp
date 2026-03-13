@@ -16,10 +16,12 @@
 
 #include <ranges>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
+#include "Rules/Semantic/InlineSinkBindingRule.hpp"
 
 namespace NES
 {
@@ -36,7 +38,7 @@ std::string_view SinkBindingRule::getName() const
 
 std::set<std::type_index> SinkBindingRule::getDependencies() const
 {
-    return {};
+    return {typeid(InlineSinkBindingRule)};
 }
 
 bool SinkBindingRule::operator==(const SinkBindingRule& other) const

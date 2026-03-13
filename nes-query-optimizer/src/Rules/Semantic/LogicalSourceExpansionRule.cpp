@@ -17,6 +17,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -24,6 +25,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
+#include "Rules/Semantic/SourceInferenceRule.hpp"
 
 namespace NES
 {
@@ -40,7 +42,7 @@ std::string_view LogicalSourceExpansionRule::getName() const
 
 std::set<std::type_index> LogicalSourceExpansionRule::getDependencies() const
 {
-    return {};
+    return {typeid(SourceInferenceRule)};
 }
 
 bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const

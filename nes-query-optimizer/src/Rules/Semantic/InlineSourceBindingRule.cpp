@@ -14,11 +14,13 @@
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
+#include "Rules/Semantic/SinkBindingRule.hpp"
 
 namespace NES
 {
@@ -35,7 +37,7 @@ std::string_view InlineSourceBindingRule::getName() const
 
 std::set<std::type_index> InlineSourceBindingRule::getDependencies() const
 {
-    return {};
+    return {typeid(SinkBindingRule)};
 }
 
 bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const

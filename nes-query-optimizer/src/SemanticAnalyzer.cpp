@@ -36,7 +36,6 @@ SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<SourceCatalog> sourceCatalog,
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(OriginIdInferenceRule{});
-    ruleManager.addRule(TypeInferenceRule{});
 }
 
 LogicalPlan SemanticAnalyzer::analyse(LogicalPlan plan) const

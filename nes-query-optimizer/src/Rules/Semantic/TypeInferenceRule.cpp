@@ -15,9 +15,11 @@
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include "Rules/Semantic/LogicalSourceExpansionRule.hpp"
 
 namespace NES
 {
@@ -67,7 +69,7 @@ std::string_view TypeInferenceRule::getName() const
 
 std::set<std::type_index> TypeInferenceRule::getDependencies() const
 {
-    return {};
+    return {typeid(LogicalSourceExpansionRule)};
 }
 
 bool TypeInferenceRule::operator==(const TypeInferenceRule&) const

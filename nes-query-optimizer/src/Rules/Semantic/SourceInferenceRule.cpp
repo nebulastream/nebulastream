@@ -23,6 +23,7 @@
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
+#include "Rules/Semantic/InlineSourceBindingRule.hpp"
 
 namespace NES
 {
@@ -39,7 +40,7 @@ std::string_view SourceInferenceRule::getName() const
 
 std::set<std::type_index> SourceInferenceRule::getDependencies() const
 {
-    return {};
+    return {typeid(InlineSourceBindingRule)};
 }
 
 bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const

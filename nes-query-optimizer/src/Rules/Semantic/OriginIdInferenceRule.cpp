@@ -30,6 +30,7 @@
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
+#include "Rules/Semantic/TypeInferenceRule.hpp"
 
 namespace NES
 {
@@ -82,7 +83,7 @@ std::string_view OriginIdInferenceRule::getName() const
 
 std::set<std::type_index> OriginIdInferenceRule::getDependencies() const
 {
-    return {};
+    return {typeid(TypeInferenceRule)};
 }
 
 bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const

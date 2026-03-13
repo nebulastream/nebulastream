@@ -69,7 +69,6 @@ public:
             indegree[rule.getType()] = rule.getDependencies().size();
             if (rule.getDependencies().empty())
             {
-                std::cout << "add_to_candidates: " << rule.getName() << '\n';
                 candidates.push(rule);
             }
         }
@@ -81,7 +80,6 @@ public:
             candidates.pop();
             // 2. Add candidate to sequence.
             sequence.emplace_back(next);
-            std::cout << "add_to_seq: " << next.getName() << ", remaining candidates: "<< candidates.size() <<  "\n";
             // 3. Reduce indegree of all rules that depend on it by one
             if (dependencies.contains(next.getType()))
             {
