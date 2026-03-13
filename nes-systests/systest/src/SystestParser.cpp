@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -322,10 +323,25 @@ void SystestParser::applySubstitutionRules(std::string& line)
         const std::string& keyword = rule.keyword;
         while ((pos = line.find(keyword, pos)) != std::string::npos)
         {
-            std::string substring = line.substr(pos, keyword.length());
-            rule.ruleFunction(substring);
-            line.replace(pos, keyword.length(), substring);
-            pos += substring.length();
+            /// Check word boundaries: the character immediately before and after the keyword
+            /// must not be alphanumeric or underscore. This prevents replacing substrings of
+            /// longer identifiers (e.g., replacing "we" inside "producedPower").
+            const bool leftBoundary = pos == 0 || !(std::isalnum(static_cast<unsigned char>(line[pos - 1])) || line[pos - 1] == '_');
+            const auto endPos = pos + keyword.length();
+            const bool rightBoundary
+                = endPos >= line.size() || !(std::isalnum(static_cast<unsigned char>(line[endPos])) || line[endPos] == '_');
+
+            if (leftBoundary && rightBoundary)
+            {
+                std::string substring = line.substr(pos, keyword.length());
+                rule.ruleFunction(substring);
+                line.replace(pos, keyword.length(), substring);
+                pos += substring.length();
+            }
+            else
+            {
+                pos += keyword.length();
+            }
         }
     }
 }
