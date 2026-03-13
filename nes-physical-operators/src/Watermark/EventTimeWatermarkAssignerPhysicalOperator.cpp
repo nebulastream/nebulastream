@@ -21,6 +21,8 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
+#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -50,7 +52,17 @@ void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, 
 
 void EventTimeWatermarkAssignerPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    PhysicalOperatorConcept::close(executionCtx, recordBuffer);
+    closeChild(executionCtx, recordBuffer);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::setup(ExecutionContext& ctx, CompilationContext& compCtx) const
+{
+    setupChild(ctx, compCtx);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::terminate(ExecutionContext& ctx) const
+{
+    terminateChild(ctx);
 }
 
 std::optional<PhysicalOperator> EventTimeWatermarkAssignerPhysicalOperator::getChild() const
@@ -58,9 +70,41 @@ std::optional<PhysicalOperator> EventTimeWatermarkAssignerPhysicalOperator::getC
     return child;
 }
 
-void EventTimeWatermarkAssignerPhysicalOperator::setChild(PhysicalOperator child)
+EventTimeWatermarkAssignerPhysicalOperator EventTimeWatermarkAssignerPhysicalOperator::withChild(const PhysicalOperator& newChild) const
 {
-    this->child = std::move(child);
+    auto copy = *this;
+    copy.child = newChild;
+    return copy;
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void EventTimeWatermarkAssignerPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 }

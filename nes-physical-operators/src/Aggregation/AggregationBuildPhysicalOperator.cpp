@@ -32,6 +32,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapSlice.hpp>
+#include <PhysicalOperator.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
 #include <options.hpp>
@@ -167,6 +168,13 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
+}
+
+AggregationBuildPhysicalOperator AggregationBuildPhysicalOperator::withChild(const PhysicalOperator& child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
 }
 
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(

@@ -74,7 +74,7 @@ PhysicalOperator createScanOperator(
     /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
     if (prevPipeline.isSourcePipeline())
     {
-        const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+        const auto inputFormatterConfig = prevPipeline.getRootOperator().getAs<SourcePhysicalOperator>()->getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(
@@ -204,14 +204,14 @@ void buildPipelineRecursively(
     }
 
     /// Case 3: Sink Operator – treat sinks as pipeline breakers
-    if (auto sink = opWrapper->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    if (auto sink = opWrapper->getPhysicalOperator().tryGetAs<SinkPhysicalOperator>())
     {
         if (currentPipeline->isSourcePipeline())
         {
             const auto sourceFormat = toUpperCase(
-                currentPipeline->getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig().parserType);
+                currentPipeline->getRootOperator().getAs<SourcePhysicalOperator>()->getDescriptor().getParserConfig().parserType);
 
-            const auto sinkFormat = sink->getDescriptor().getFormatType() ? sink->getDescriptor().getFormatType().value() : "";
+            const auto sinkFormat = sink->get().getDescriptor().getFormatType() ? sink->get().getDescriptor().getFormatType().value() : "";
             /// Add a formatting pipeline if the source-sink pipelines do not simply forward natively formatted data
             /// Otherwise, even if both formats are, e.g., 'CSV', the source 'blindly' ingest buffers until they are full, meaning buffers
             /// may start and end with a cut-off tuples (rows in the CSV case)

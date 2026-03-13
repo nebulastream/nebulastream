@@ -18,6 +18,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
@@ -72,6 +73,18 @@ WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId opera
 {
 }
 
+std::optional<PhysicalOperator> WindowBuildPhysicalOperator::getChild() const
+{
+    return child;
+}
+
+WindowBuildPhysicalOperator WindowBuildPhysicalOperator::withChild(PhysicalOperator newChild) const
+{
+    auto copy = *this;
+    copy.child = std::move(newChild);
+    return copy;
+}
+
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
@@ -109,18 +122,43 @@ void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) cons
     invoke(triggerAllWindowsProxy, operatorHandlerMemRef, executionCtx.pipelineContext);
 }
 
-std::optional<PhysicalOperator> WindowBuildPhysicalOperator::getChild() const
+void WindowBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    return child;
+    executeChild(ctx, record);
 }
 
-void WindowBuildPhysicalOperator::setChild(PhysicalOperator child)
+void WindowBuildPhysicalOperator::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
-    this->child = std::move(child);
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().setup(executionCtx, compilationContext);
+}
+
+void WindowBuildPhysicalOperator::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().open(executionCtx, recordBuffer);
+}
+
+void WindowBuildPhysicalOperator::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().close(executionCtx, recordBuffer);
+}
+
+void WindowBuildPhysicalOperator::executeChild(ExecutionContext& executionCtx, Record& record) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().execute(executionCtx, record);
+}
+
+void WindowBuildPhysicalOperator::terminateChild(ExecutionContext& executionCtx) const
+{
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child.value().terminate(executionCtx);
 }
 
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
-    : PhysicalOperatorConcept(other.id)
+    : id(other.id)
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)

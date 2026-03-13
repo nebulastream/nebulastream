@@ -55,6 +55,7 @@
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
@@ -222,10 +223,11 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
     auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
-    auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider), schema.getFieldNames());
-    scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
+    const auto scanOp = PhysicalOperator(
+        ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider), schema.getFieldNames()));
+    auto newScanOp = scanOp.withChild(PhysicalOperator(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider))));
 
-    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));
+    auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(newScanOp));
     physicalScanPipeline->getOperatorHandlers().emplace(emitOperatorHandlerId, std::make_shared<EmitOperatorHandler>());
 
     auto nautilusOptions = nautilus::engine::Options{};

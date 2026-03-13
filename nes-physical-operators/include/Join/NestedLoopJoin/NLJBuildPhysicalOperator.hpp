@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
@@ -38,6 +39,8 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::shared_ptr<TupleBufferRef> bufferRef);
 
-    void execute(ExecutionContext& executionCtx, Record& record) const override;
+    void execute(ExecutionContext& executionCtx, Record& record) const;
+
+    [[nodiscard]] NLJBuildPhysicalOperator withChild(const PhysicalOperator& child) const;
 };
 }

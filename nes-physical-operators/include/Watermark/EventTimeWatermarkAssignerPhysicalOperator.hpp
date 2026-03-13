@@ -14,7 +14,10 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES
@@ -23,19 +26,33 @@ class TimeFunction;
 
 /// @brief Watermark assignment operator.
 /// Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
-class EventTimeWatermarkAssignerPhysicalOperator : public PhysicalOperatorConcept
+class EventTimeWatermarkAssignerPhysicalOperator
 {
 public:
     explicit EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction);
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    void execute(ExecutionContext& ctx, Record& record) const override;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    [[nodiscard]] EventTimeWatermarkAssignerPhysicalOperator withChild(const PhysicalOperator& newChild) const;
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
+    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+
+protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
 
 private:
     EventTimeFunction timeFunction;
     std::optional<PhysicalOperator> child;
 };
+
+static_assert(PhysicalOperatorConcept<EventTimeWatermarkAssignerPhysicalOperator>);
 
 }

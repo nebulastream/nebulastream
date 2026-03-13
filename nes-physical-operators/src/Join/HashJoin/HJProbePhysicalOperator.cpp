@@ -34,6 +34,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <PhysicalOperator.hpp>
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -56,6 +57,13 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     , leftHashMapOptions(std::move(leftHashMapBasedOptions))
     , rightHashMapOptions(std::move(rightHashMapBasedOptions))
 {
+}
+
+HJProbePhysicalOperator HJProbePhysicalOperator::withChild(const PhysicalOperator& child) const
+{
+    auto copy = *this;
+    copy.child = child;
+    return copy;
 }
 
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

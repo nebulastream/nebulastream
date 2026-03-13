@@ -58,24 +58,27 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline {}", *pipeline);
 
     /// Convert logical source descriptor to actual source descriptor
-    const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
+    const auto sourceOperator = pipeline->getRootOperator().getAs<SourcePhysicalOperator>();
 
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
 
     for (const auto& successor : pipeline->getSuccessors())
     {
-        if (auto executableSuccessor = processSuccessor(sourceOperator.id, successor))
+        if (auto executableSuccessor = processSuccessor(sourceOperator.get().id, successor))
         {
             executableSuccessorPipelines.emplace_back(*executableSuccessor);
         }
     }
     sources.emplace_back(
-        sourceOperator.getOriginId(), sourceOperator.id, sourceOperator.getDescriptor(), std::move(executableSuccessorPipelines));
+        sourceOperator.get().getOriginId(),
+        sourceOperator.get().id,
+        sourceOperator.get().getDescriptor(),
+        std::move(executableSuccessorPipelines));
 }
 
 void LowerToCompiledQueryPlanPhase::processSink(const Predecessor& predecessor, const std::shared_ptr<Pipeline>& pipeline)
 {
-    const auto sinkOperator = pipeline->getRootOperator().get<SinkPhysicalOperator>().getDescriptor();
+    const auto sinkOperator = pipeline->getRootOperator().getAs<SinkPhysicalOperator>().get().getDescriptor();
     auto it = std::ranges::find(sinks, pipeline->getPipelineId(), &CompiledQueryPlan::Sink::id);
     if (it == sinks.end())
     {

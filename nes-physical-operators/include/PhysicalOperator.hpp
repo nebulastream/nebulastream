@@ -15,6 +15,7 @@
 #pragma once
 
 #include <atomic>
+#include <concepts>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -22,6 +23,7 @@
 #include <string>
 #include <type_traits>
 #include <typeinfo>
+#include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -29,6 +31,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <CompilationContext.hpp>
@@ -46,164 +49,282 @@ inline OperatorId getNextPhysicalOperatorId()
     return OperatorId(id++);
 }
 
-/// Concept defining the interface for all physical operators in the query plan.
-/// Physical operators represent operations that are executed during query execution.
-/// TODO #875: Investigate C++20 Concepts to replace Operator/Function Inheritance
-struct PhysicalOperatorConcept
+namespace detail
 {
-    virtual ~PhysicalOperatorConcept() = default;
+struct ErasedPhysicalOperator;
+}
 
-    explicit PhysicalOperatorConcept();
-    explicit PhysicalOperatorConcept(OperatorId existingId);
+template <typename Checked = NES::detail::ErasedPhysicalOperator>
+struct TypedPhysicalOperator;
+using PhysicalOperator = TypedPhysicalOperator<>;
 
-    [[nodiscard]] virtual std::optional<struct PhysicalOperator> getChild() const = 0;
-    virtual void setChild(struct PhysicalOperator child) = 0;
+/// Concept defining the interface for all logical functions in the query plan.
+/// This concept defines the common interface that all logical functions must implement.
+/// Logical functions represent functions in the query plan and are used during query
+/// planning and optimization.
+template <typename T>
+concept PhysicalOperatorConceptBase
+    = requires(T& op, ExecutionContext& execCtx, RecordBuffer& recordBuffer, CompilationContext& compCtx, Record& record) {
+          /// This is called once before the operator starts processing records.
+          { op.setup(execCtx, compCtx) } -> std::same_as<void>;
 
-    /// This is called once before the operator starts processing records.
-    virtual void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+          /// Opens the operator for processing records.
+          /// This is called before each batch of records is processed.
+          { op.open(execCtx, recordBuffer) } -> std::same_as<void>;
 
-    /// Opens the operator for processing records.
-    /// This is called before each batch of records is processed.
-    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+          /// Closes the operator after processing records.
+          /// This is called after each batch of records is processed.
+          { op.close(execCtx, recordBuffer) } -> std::same_as<void>;
 
-    /// Closes the operator after processing records.
-    /// This is called after each batch of records is processed.
-    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+          /// Terminates the operator.
+          /// This is called once after all records have been processed.
+          { op.terminate(execCtx) } -> std::same_as<void>;
 
-    /// Terminates the operator.
-    /// This is called once after all records have been processed.
-    virtual void terminate(ExecutionContext& executionCtx) const;
+          /// Executes the operator on the given record.
+          { op.execute(execCtx, record) } -> std::same_as<void>;
+      };
 
-    /// Executes the operator on the given record.
-    virtual void execute(ExecutionContext& executionCtx, Record& record) const;
-
-    /// Unique identifier for this operator.
-    const OperatorId id = INVALID_OPERATOR_ID;
-
-protected:
-    /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
-    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void executeChild(ExecutionContext& executionCtx, Record& record) const;
-    void terminateChild(ExecutionContext& executionCtx) const;
+template <typename T>
+concept PhysicalOperatorConcept = PhysicalOperatorConceptBase<T> && requires(T& op, PhysicalOperator& child) {
+    { op.getChild() } -> std::convertible_to<std::optional<PhysicalOperator>>;
+    { op.withChild(child) } -> std::convertible_to<T>;
 };
 
-/// A type-erased wrapper for physical operators.
-/// C.f.: https://sean-parent.stlab.cc/presentations/2017-01-18-runtime-polymorphism/2017-01-18-runtime-polymorphism.pdf
-/// This class provides type erasure for physical operators, allowing them to be stored
-/// and manipulated without knowing their concrete type. It uses the PIMPL pattern
-/// to store the actual operator implementation.
-/// @tparam T The type of the physical operator. Must inherit from PhysicalOperatorConcept.
-template <typename T>
-concept IsPhysicalOperator = std::is_base_of_v<PhysicalOperatorConcept, std::remove_cv_t<std::remove_reference_t<T>>>;
-
-/// Type-erased physical operator that can be used to process records.
-struct PhysicalOperator
+namespace detail
 {
-    /// Constructs a PhysicalOperator from a concrete operator type.
-    /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
-    /// @param op The operator to wrap.
-    template <IsPhysicalOperator T>
-    PhysicalOperator(const T& op) : self(std::make_shared<Model<T>>(op, op.id)) /// NOLINT
+/// @brief A type erased wrapper for physical operators
+struct ErasedPhysicalOperator
+{
+    virtual ~ErasedPhysicalOperator() = default;
+
+    [[nodiscard]] virtual std::optional<PhysicalOperator> getChild() const = 0;
+    [[nodiscard]] virtual PhysicalOperator withChild(const PhysicalOperator& child) const = 0;
+
+    virtual void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const = 0;
+    virtual void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
+    virtual void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const = 0;
+    virtual void terminate(ExecutionContext& executionCtx) const = 0;
+    virtual void execute(ExecutionContext& executionCtx, Record& record) const = 0;
+
+    [[nodiscard]] virtual OperatorId getId() const = 0;
+    [[nodiscard]] virtual std::string toString() const = 0;
+
+private:
+    template <typename T>
+    friend struct NES::TypedPhysicalOperator;
+    ///If the function inherits from DynamicBase (over Castable), then returns a pointer to the wrapped operator as DynamicBase,
+    ///so that we can then safely try to dyncast the DynamicBase* to Castable<T>*
+    [[nodiscard]] virtual std::optional<const DynamicBase*> getImpl() const = 0;
+};
+
+template <PhysicalOperatorConcept PhysicalOperatorType>
+struct PhysicalOperatorModel;
+}
+
+template <typename Checked>
+struct TypedPhysicalOperator
+{
+    template <PhysicalOperatorConcept T>
+    requires std::same_as<Checked, NES::detail::ErasedPhysicalOperator>
+    TypedPhysicalOperator(TypedPhysicalOperator<T> other) : self(other.self) /// NOLINT(google-explicit-constructor)
     {
     }
 
-    PhysicalOperator();
-    PhysicalOperator(const PhysicalOperator& other);
-    PhysicalOperator(PhysicalOperator&&) noexcept;
-
-    PhysicalOperator& operator=(const PhysicalOperator& other);
-
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
-    [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
-
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
-    void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
-    void terminate(ExecutionContext& executionCtx) const;
-    void execute(ExecutionContext& executionCtx, Record& record) const;
-    [[nodiscard]] std::string toString() const;
-
-    [[nodiscard]] OperatorId getId() const;
-
-    /// Attempts to get the underlying operator as type OperatorType.
-    /// @tparam OperatorType The type to try to get the operator as.
-    /// @return std::optional<OperatorType> The operator if it is of type OperatorType, nullopt otherwise.
-    template <IsPhysicalOperator OperatorType>
-    [[nodiscard]] std::optional<OperatorType> tryGet() const
+    /// Constructs a LogicalOperator from a concrete operator type.
+    /// @tparam T The type of the operator. Must satisfy IsLogicalOperator concept.
+    /// @param op The operator to wrap.
+    template <PhysicalOperatorConceptBase T>
+    TypedPhysicalOperator(const T& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op))
     {
-        if (auto p = dynamic_cast<const Model<OperatorType>*>(self.get()))
+    }
+
+    template <PhysicalOperatorConcept T>
+    TypedPhysicalOperator(const NES::detail::PhysicalOperatorModel<T>& op) /// NOLINT(google-explicit-constructor)
+        : self(std::make_shared<NES::detail::PhysicalOperatorModel<T>>(op.impl, op.id))
+    {
+    }
+
+    explicit TypedPhysicalOperator(std::shared_ptr<const NES::detail::ErasedPhysicalOperator> op) : self(std::move(op)) { }
+
+    TypedPhysicalOperator() = default;
+
+    /// @brief Access to the underlying erased interface
+    [[nodiscard]] const Checked& get() const
+    {
+        if constexpr (std::is_same_v<NES::detail::ErasedPhysicalOperator, Checked>)
         {
-            return p->data;
+            return *std::dynamic_pointer_cast<const NES::detail::ErasedPhysicalOperator>(self);
+        }
+        else
+        {
+            return std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<Checked>>(self)->impl;
+        }
+    }
+
+    const Checked& operator*() const { return get(); }
+
+    const Checked* operator->() const
+    {
+        if constexpr (std::is_same_v<NES::detail::ErasedPhysicalOperator, Checked>)
+        {
+            return std::dynamic_pointer_cast<const NES::detail::ErasedPhysicalOperator>(self).get();
+        }
+        else
+        {
+            auto casted = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<Checked>>(self);
+            return &casted->impl;
+        }
+    }
+
+    /// Attempts to get the underlying operator as type T (Concept-based).
+    template <PhysicalOperatorConcept T>
+    std::optional<TypedPhysicalOperator<T>> tryGetAs() const
+    {
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<T>>(self))
+        {
+            return TypedPhysicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedPhysicalOperator>(model)};
         }
         return std::nullopt;
     }
 
-    /// Gets the underlying operator as type OperatorType.
-    /// @tparam OperatorType The type to get the operator as.
-    /// @return OperatorType The operator.
-    /// @throw InvalidDynamicCast If the operator is not of type OperatorType.
-    template <IsPhysicalOperator OperatorType>
-    [[nodiscard]] OperatorType get() const
+    /// Attempts to get the underlying operator as type T (DynamicBase/Castable based).
+    template <typename T>
+    requires(!PhysicalOperatorConcept<T>)
+    std::optional<std::shared_ptr<const Castable<T>>> tryGetAs() const
     {
-        if (auto p = dynamic_cast<const Model<OperatorType>*>(self.get()))
+        if (auto castable = self->getImpl(); castable.has_value())
         {
-            return p->data;
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
         }
-        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(OperatorType), NAMEOF_TYPE_EXPR(self));
+        return std::nullopt;
+    }
+
+    /// Gets the underlying operator as type T (Concept-based). throws if failed.
+    template <PhysicalOperatorConcept T>
+    TypedPhysicalOperator<T> getAs() const
+    {
+        if (auto model = std::dynamic_pointer_cast<const NES::detail::PhysicalOperatorModel<T>>(self))
+        {
+            return TypedPhysicalOperator<T>{std::static_pointer_cast<const NES::detail::ErasedPhysicalOperator>(model)};
+        }
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+    }
+
+    /// Gets the underlying operator as type T (Castable based). throws if failed.
+    template <typename T>
+    requires(!PhysicalOperatorConcept<T>)
+    std::shared_ptr<const Castable<T>> getAs() const
+    {
+        if (auto castable = self->getImpl(); castable.has_value())
+        {
+            if (auto ptr = dynamic_cast<const Castable<T>*>(castable.value()))
+            {
+                return std::shared_ptr<const Castable<T>>{self, ptr};
+            }
+        }
+        throw InvalidDynamicCast("requested type {} , but stored type is {}", NAMEOF_TYPE(T), NAMEOF_TYPE_EXPR(self));
+    }
+
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const { return self->getChild(); }
+
+    [[nodiscard]] TypedPhysicalOperator withChild(const PhysicalOperator& child) const { return self->withChild(child); }
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const { self->setup(ctx, compCtx); }
+
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) const { self->open(ctx, buffer); }
+
+    void close(ExecutionContext& ctx, RecordBuffer& buffer) const { self->close(ctx, buffer); }
+
+    void terminate(ExecutionContext& ctx) const { self->terminate(ctx); }
+
+    void execute(ExecutionContext& ctx, Record& record) const { self->execute(ctx, record); }
+
+    [[nodiscard]] OperatorId getId() const { return self->getId(); }
+
+    [[nodiscard]] std::string toString() const { return self->toString(); }
+
+private:
+    template <typename FriendChecked>
+    friend struct TypedPhysicalOperator;
+
+    std::shared_ptr<const NES::detail::ErasedPhysicalOperator> self;
+};
+
+namespace detail
+{
+/// @brief Wrapper type that acts as a bridge between a type satisfying PhysicalOperatorConcept and TypedPhysicalOperator
+template <PhysicalOperatorConcept PhysicalOperatorType>
+struct PhysicalOperatorModel : ErasedPhysicalOperator
+{
+    PhysicalOperatorType impl;
+    const OperatorId id = INVALID_OPERATOR_ID;
+
+    explicit PhysicalOperatorModel(PhysicalOperatorType pImpl) : impl(std::move(pImpl)), id(getNextPhysicalOperatorId())
+    {
+        if constexpr (requires { this->impl.id = this->id; })
+        {
+            this->impl.id = this->id;
+        }
+    }
+
+    PhysicalOperatorModel(PhysicalOperatorType pImpl, const OperatorId existingId) : impl(std::move(pImpl)), id(existingId)
+    {
+        if constexpr (requires { this->impl.id = this->id; })
+        {
+            this->impl.id = this->id;
+        }
+    }
+
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return impl.getChild(); }
+
+    [[nodiscard]] PhysicalOperator withChild(const PhysicalOperator& child) const override { return impl.withChild(child); }
+
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const override { impl.setup(ctx, compCtx); }
+
+    void open(ExecutionContext& ctx, RecordBuffer& buffer) const override { impl.open(ctx, buffer); }
+
+    void close(ExecutionContext& ctx, RecordBuffer& buffer) const override { impl.close(ctx, buffer); }
+
+    void terminate(ExecutionContext& ctx) const override { impl.terminate(ctx); }
+
+    void execute(ExecutionContext& ctx, Record& record) const override { impl.execute(ctx, record); }
+
+    [[nodiscard]] PhysicalOperatorType get() const { return impl; }
+
+    [[nodiscard]] OperatorId getId() const override { return id; }
+
+    [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(PhysicalOperatorType)); }
+
+    [[nodiscard]] bool operator==(const PhysicalOperator& other) const
+    {
+        if (auto ptr = dynamic_cast<const PhysicalOperatorModel*>(&other))
+        {
+            return impl.operator==(ptr->impl);
+        }
+        return false;
     }
 
 private:
-    /// Constructs a PhysicalOperator from a concrete operator type.
-    /// @tparam T The type of the operator. Must satisfy IsPhysicalOperator concept.
-    /// @param op The operator to wrap.
-    template <IsPhysicalOperator T>
-    PhysicalOperator(std::shared_ptr<T> op) : self(std::move(op)) /// NOLINT
+    template <typename T>
+    friend struct NES::TypedPhysicalOperator;
+
+    [[nodiscard]] std::optional<const DynamicBase*> getImpl() const override
     {
-    }
-
-    struct Concept : PhysicalOperatorConcept
-    {
-        explicit Concept(OperatorId existingId) : PhysicalOperatorConcept(existingId) { }
-
-        [[nodiscard]] virtual std::shared_ptr<Concept> clone() const = 0;
-        [[nodiscard]] virtual std::string toString() const = 0;
-    };
-
-    template <IsPhysicalOperator OperatorType>
-    struct Model : Concept
-    {
-        OperatorType data;
-
-        explicit Model(OperatorType d) : Concept(getNextPhysicalOperatorId()), data(std::move(d)) { }
-
-        Model(OperatorType d, OperatorId existingId) : Concept(existingId), data(std::move(d)) { }
-
-        [[nodiscard]] std::shared_ptr<Concept> clone() const override { return std::make_shared<Model>(data, this->id); }
-
-        [[nodiscard]] std::optional<PhysicalOperator> getChild() const override { return data.getChild(); }
-
-        void setChild(PhysicalOperator child) override { data.setChild(child); }
-
-        void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override
+        if constexpr (std::is_base_of_v<DynamicBase, PhysicalOperatorType>)
         {
-            data.setup(executionCtx, compilationContext);
+            return static_cast<const DynamicBase*>(&impl);
         }
-
-        void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
-
-        void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.close(executionCtx, recordBuffer); }
-
-        void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
-
-        void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
-
-        [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
-    };
-
-    std::shared_ptr<const Concept> self;
+        else
+        {
+            return std::nullopt;
+        }
+    }
 };
+}
 
 inline std::ostream& operator<<(std::ostream& os, const PhysicalOperator& op)
 {

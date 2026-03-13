@@ -15,6 +15,7 @@
 #pragma once
 
 #include <optional>
+#include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
@@ -26,28 +27,38 @@ namespace NES
 
 /// Is the general probe operator for window operators. It is responsible for garbage collecting slices and windows.
 /// It is part of the second phase (probe) that processes the build up state of the first phase (build).
-class WindowProbePhysicalOperator : public PhysicalOperatorConcept
+class WindowProbePhysicalOperator
 {
 public:
     explicit WindowProbePhysicalOperator(OperatorHandlerId operatorHandlerId, WindowMetaData windowMetaData);
 
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
+    [[nodiscard]] WindowProbePhysicalOperator withChild(PhysicalOperator newChild) const;
+
     /// The setup method is called for each pipeline during the query initialization procedure. Meaning that if
     /// multiple pipelines with the same operator (e.g. JoinBuild) have access to the same operator handler, this will lead to race conditions.
     /// Therefore, any setup to the operator handler should ONLY happen in the WindowProbePhysicalOperator.
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
-
+    void setup(ExecutionContext& ctx, CompilationContext& compCtx) const;
+    void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
     /// Checks the current watermark and then deletes all slices and windows that are not valid anymore
-    void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
-
-    void terminate(ExecutionContext& executionCtx) const override;
-
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator child) override;
+    void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const;
+    void terminate(ExecutionContext& ctx) const;
+    void execute(ExecutionContext& ctx, Record& record) const;
 
 protected:
+    /// Helper classes to propagate to the child
+    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
+    void executeChild(ExecutionContext& executionCtx, Record& record) const;
+    void terminateChild(ExecutionContext& executionCtx) const;
+
+
     std::optional<PhysicalOperator> child;
     OperatorHandlerId operatorHandlerId;
     WindowMetaData windowMetaData;
 };
+
+static_assert(PhysicalOperatorConcept<WindowProbePhysicalOperator>);
 
 }
