@@ -90,6 +90,13 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
     {
         try
         {
+            if (optionMap[identifier]->isExplicitlySet())
+            {
+                NES_WARNING(
+                    "Configuration '{}' was already set (e.g. via YAML config file) and is now being overridden by a "
+                    "command-line argument.",
+                    identifier);
+            }
             optionMap[identifier]->parseFromString(identifier, inputParams);
         }
         catch (const Exception& e)
