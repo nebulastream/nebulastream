@@ -31,29 +31,11 @@ struct std::hash<std::array<T, N>>
     size_t operator()(const std::array<T, N>& array) const noexcept { return folly::hash::hash_range(array.begin(), array.end()); }
 };
 
-// template <typename T, typename R>
-// struct std::hash<std::pair<T, R>> {
-//     si
-// };
-
 template <typename T, typename R>
 struct std::hash<std::unordered_map<T, R>>
 {
     size_t operator()(const std::unordered_map<T, R>& map) const noexcept
     {
         return folly::hash::commutative_hash_combine_range(map.begin(), map.end());
-        // map | std::ranges::to<std::vector>();
     }
 };
-
-// template <typename... Ts>
-// struct std::hash<std::variant<Ts...>>
-// {
-//     size_t operator()(const std::variant<Ts...>& variant) const noexcept
-//     {
-//         const auto valueHash = std::visit(
-//             [](const auto& value) { return std::hash<std::remove_cvref_t<decltype(value)>>{}(value); },
-//             variant);
-//         return folly::hash::hash_combine(valueHash, variant.index());
-//     }
-// };

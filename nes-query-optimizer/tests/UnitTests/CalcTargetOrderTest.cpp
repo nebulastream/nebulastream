@@ -114,7 +114,7 @@ TEST_F(CalcTargetOrderTest, JoinOverProjection)
         FieldAccessLogicalFunction{projectionOp->getOutputSchema()[Identifier::parse("projection_a")].value()}};
     auto joinOp = TypedLogicalOperator<JoinLogicalOperator>{
         joinPredicate,
-        std::make_shared<Windowing::TumblingWindow>(Windowing::TimeMeasure{1000}),
+        Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure{1000}}},
         JoinLogicalOperator::JoinType::INNER_JOIN,
         JoinTimeCharacteristic{std::array{
             Windowing::BoundTimeCharacteristic{Windowing::TimeCharacteristicWrapper::createIngestionTime()},
@@ -141,40 +141,4 @@ TEST_F(CalcTargetOrderTest, JoinOverProjection)
         plan.getRootOperators()[0].getAs<SinkLogicalOperator>()->getSinkDescriptor()->getSchema());
     EXPECT_EQ(*newTargetSchema, expectedSchema);
 }
-
-// TEST_F(CalcTargetOrderTest, JustSource)
-// {
-//     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp{sourceDescriptor};
-//     const auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}->withChildren({sourceOp});
-//
-//     auto plan = LogicalPlan{sinkOp.withInferredSchema()};
-//     CalcTargetOrderPhase{}.apply(plan);
-//
-//     auto targetSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
-//         plan.getRootOperators()[0].getAs<SinkLogicalOperator>()->getSinkDescriptor()->getSchema());
-//     EXPECT_EQ(*targetSchema, *sourceDescriptor.getLogicalSource().getSchema());
-// }
-//
-// TEST_F(CalcTargetOrderTest, SimpleOrderingTrait)
-// {
-//     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp{sourceDescriptor};
-//     const auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}->withChildren({sourceOp});
-//
-//     auto plan = LogicalPlan{sinkOp};
-//     CalcTargetOrderPhase{}.apply(plan);
-//
-//     const auto newSource = plan.getRootOperators().at(0)->getChildren()[0];
-//
-//     const auto sourceFieldOrdering = newSource.getTraitSet().get<FieldOrderingTrait>();
-//
-//     const auto expectedSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema());
-//     EXPECT_EQ(*expectedSchema, sourceFieldOrdering.getOrderedFields());
-// }
-//
-// TEST_F(CalcTargetOrderTest, UnionOrdering)
-// {
-//     TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp{sourceDescriptor};
-//     const auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}->withChildren({sourceOp});
-// }
-
 }

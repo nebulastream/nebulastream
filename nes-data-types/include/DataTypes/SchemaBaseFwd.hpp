@@ -43,12 +43,6 @@ struct OrderType
 static constexpr OrderType Ordered{true};
 static constexpr OrderType Unordered{false};
 
-// template <typename T, size_t IdListExtent>
-// concept QualifiableFieldConcept = requires(T field)
-// {
-//     {}
-// } ;
-// Forward declaration without concept constraint to allow incomplete types
 template <typename FieldType, OrderType IsOrdered>
 class Schema;
 }

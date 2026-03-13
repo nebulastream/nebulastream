@@ -226,8 +226,6 @@ public:
         std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,
         MemoryLayoutType inputMemoryLayoutType,
         PipelineLocation pipelineLocation);
-    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema, std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema);
-    // PhysicalOperatorWrapper(PhysicalOperator physicalOperator, std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema, std::optional<Schema<QualifiedUnboundField, Ordered>> outputSchema, PipelineLocation pipelineLocation);
     PhysicalOperatorWrapper(
         PhysicalOperator physicalOperator,
         std::optional<Schema<QualifiedUnboundField, Ordered>> inputSchema,

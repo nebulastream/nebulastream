@@ -172,7 +172,8 @@ struct TypedLogicalOperator
         }
     }
 
-    // TypedLogicalOperator() = delete;
+    /// I am not quite sure how do only allow "empty" ctors for concrete operators that take no arguments
+    /// TypedLogicalOperator() = delete;
 
     /// Attempts to get the underlying operator as type T.
     /// @tparam T The type to try to get the operator as.
@@ -324,12 +325,7 @@ public:
 
     explicit WeakTypedLogicalOperator(const LogicalOperator& owningOperator) : self(owningOperator.self) { }
 
-    explicit WeakTypedLogicalOperator(
-        // std::variant<std::weak_ptr<const detail::ErasedLogicalOperator>, std::shared_ptr<detail::SelfRef<Checked>>> weakPtr)
-        PtrType weakPtr)
-        : self(std::move(weakPtr))
-    {
-    }
+    explicit WeakTypedLogicalOperator(PtrType weakPtr) : self(std::move(weakPtr)) { }
 
     template <typename OtherChecked>
     requires(std::is_same_v<Checked, detail::ErasedLogicalOperator> && LogicalOperatorConcept<OtherChecked>)
@@ -395,7 +391,6 @@ public:
 
 private:
     PtrType self;
-    // std::variant<std::weak_ptr<const detail::ErasedLogicalOperator>, std::shared_ptr<detail::SelfRef<Checked>>> self;
 };
 
 namespace detail
@@ -427,7 +422,6 @@ struct OperatorModel : ErasedLogicalOperator
         , selfRef(std::make_shared<SelfRef<OperatorType>>(this))
         , impl(WeakLogicalOperator{selfRef}, std::forward<Args>(args)...)
     {
-        // impl.self = WeakLogicalOperator{selfRef};
     }
 
     OperatorModel(const OperatorModel& other) : id(other.id), selfRef(std::make_shared<SelfRef<OperatorType>>(this)), impl(other.impl)
@@ -438,20 +432,6 @@ struct OperatorModel : ErasedLogicalOperator
     OperatorModel(OperatorModel&& other) noexcept = delete;
 
     OperatorModel& operator=(const OperatorModel& other) = delete;
-
-    // {
-    //     if (this == &other)
-    //     {
-    //         return *this;
-    //     }
-    //     id = other.id;
-    //     selfRef = std::make_shared<SelfRef<OperatorType>>(this);
-    //     impl = other.impl;
-    //     impl.self = WeakLogicalOperator{selfRef};
-    //     return *this;
-    // }
-
-    // OperatorModel& operator=(OperatorModel&& other) noexcept = default;
 
     ~OperatorModel() override { selfRef->self = std::nullopt; }
 

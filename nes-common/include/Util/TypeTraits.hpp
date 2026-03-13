@@ -47,7 +47,7 @@ constexpr auto extractParameter(const T<N>&)
     return N;
 }
 
-// Type trait version to extract template parameter from a type
+/// Type trait version to extract template parameter from a type
 template <typename T>
 struct ExtractParameter;
 

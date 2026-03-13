@@ -45,7 +45,6 @@ LogicalOperator applyRecur(const LogicalOperator& visiting)
     {
         if (const auto reorderer = visiting.tryGetAs<Reorderer>())
         {
-            // TODO How does this work, the operator getOrderedOutputSchema implementation will be called with the old children
             return reorderer.value()->get().getOrderedOutputSchema([&childrenWithOutputOrder, &childrenMap](const LogicalOperator& child)
                                                                    { return childrenWithOutputOrder.at(childrenMap.at(child)); });
         }

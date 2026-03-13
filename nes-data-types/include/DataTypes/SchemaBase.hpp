@@ -40,23 +40,15 @@ namespace NES
 {
 
 
-///If it is a schema for bound field, id list extent must be dynamic since in the future we'd be implicitly storing relation aliases
 template <typename FieldType, OrderType IsOrdered>
-// requires (FieldConcept<FieldType, IdListExtent>)
 class Schema
 {
     static constexpr size_t IdListExtent
         = NES::ExtractParameter<std::remove_cvref_t<decltype(std::declval<FieldType>().getFullyQualifiedName())>>::value;
-    // static constexpr size_t IdListExtent = detail::extract<FieldType, IdListExtent>(FieldType{});
-    // using FieldType = FieldTypeTemplate<IdListExtent>;
     using IdSpan = std::span<const Identifier, IdListExtent>;
     using IdList = IdentifierListBase<IdListExtent>;
-    // using FieldRef = std::reference_wrapper<const FieldType>;
     using FieldRef = FieldType;
-    // using FieldByNameRefsType = std::unordered_map<IdSpan, FieldRef, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>>;
     using FieldByNameRefsType = std::unordered_map<IdList, FieldRef>;
-    // using CollisionsRefType
-    //     = std::unordered_map<IdSpan, std::vector<FieldRef>, std::hash<IdSpan>, IdentifierList::SpanEquals<IdListExtent>>;
     using CollisionsRefType = std::unordered_map<IdList, std::vector<FieldRef>>;
 
     using FieldContainer = std::conditional_t<IsOrdered.ordered, std::vector<FieldType>, std::unordered_set<FieldType>>;
@@ -94,7 +86,6 @@ class Schema
     }
 
 public:
-    // explicit SchemaBase(std::initializer_list<UnboundFieldBase<MaxIdentifierSize>> fields);
     explicit Schema(FieldContainer fields) : fields(std::move(fields))
     {
         auto [fieldsByName, collisions] = initialize(this->fields);
@@ -103,13 +94,6 @@ public:
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
         }
         this->fieldsByName = fieldsByName;
-        /*| std::views::transform(
-                                 [](const auto& pair)
-                                 {
-                                     return std::pair<const IdentifierListBase<IdListExtent>, FieldRef>{
-                                         IdentifierListBase<IdListExtent>{pair.first}, pair.second};
-                                 })*/
-        // | std::ranges::to<const std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
             this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
     }
@@ -126,8 +110,6 @@ public:
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
         }
         this->fieldsByName = fieldsByName;
-        // | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first, pair.second}; })
-        // | std::ranges::to<std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
             this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
     }
@@ -151,8 +133,6 @@ public:
             NES_DEBUG("Duplicate identifiers in schema: {}", fmt::join(collisions, ", "));
         }
         this->fieldsByName = fieldsByName;
-        // | std::views::transform([](const auto& pair) { return std::pair{IdentifierListBase<IdListExtent>{pair.first, pair.second}; })
-        // | std::ranges::to<std::unordered_map>();
         sizeInBytes = std::ranges::fold_left(
             this->fields, 0, [](size_t acc, const auto& field) { return acc + field.getDataType().getSizeInBytesWithNull(); });
         return *this;
@@ -212,7 +192,6 @@ public:
                 fieldVec.reserve(fieldRefs.size());
                 for (const auto& fieldRef : fieldRefs)
                 {
-                    // fieldVec.push_back(fieldRef.get());
                     fieldVec.push_back(fieldRef);
                 }
                 collisionMap.emplace(IdList{idSpan}, std::move(fieldVec));
@@ -243,10 +222,6 @@ public:
                         }),
                 ", "));
     }
-
-    // explicit SchemaBase(const std::initializer_list<UnboundFieldBase<IdListExtent>> fields) : SchemaBase{std::vector(fields)}
-    // {
-    // }
 
     Schema() = default;
 

@@ -159,7 +159,7 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
         JoinLogicalOperator::JoinType::INNER_JOIN,
         characteristics.value()};
 
-    // Create a sink schema that includes all fields from both sources plus window boundaries
+    /// Create a sink schema that includes all fields from both sources plus window boundaries
     Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
         {Identifier::parse("left_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
         {Identifier::parse("left_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},

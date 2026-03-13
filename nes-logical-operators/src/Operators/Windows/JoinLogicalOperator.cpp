@@ -35,7 +35,6 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Serialization/TimeCharacteristicSerializationUtil.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Hash.hpp>
@@ -172,7 +171,6 @@ void JoinLogicalOperator::inferLocalSchema()
         },
         this->timestampFields);
 
-    // Infer function and window types
     this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
     std::vector<UnqualifiedUnboundField> outputFields

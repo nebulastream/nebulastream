@@ -41,12 +41,10 @@ struct Field
 
     [[nodiscard]] Identifier getLastName() const { return name; }
 
-    /// Placeholder function that also correctly includes prefixes from the relation it stems from
     [[nodiscard]] IdentifierListBase<1> getFullyQualifiedName() const;
 
     [[nodiscard]] DataType getDataType() const { return dataType; }
 
-    /// TODO template this method over IdListExtent when adding either named relations or compound types
     [[nodiscard]] UnqualifiedUnboundField unbound() const;
 
 private:

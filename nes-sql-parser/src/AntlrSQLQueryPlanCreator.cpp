@@ -459,11 +459,6 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
             helpers.top().windowAggs.pop_back();
             aggFunc.second = parseIdentifier(context);
             helpers.top().windowAggs.push_back(aggFunc);
-            // helpers.top().functionBuilder.push_back(UnboundFieldAccessLogicalFunction(aggFunc.second.value()));
-            // INVARIANT(
-            //     std::nullopt != helpers.top().functionBuilder.back().tryGetAs<UnboundFieldAccessLogicalFunction>(),
-            // "The functionBuilder should hold the AccessFunction of the name of the field the aggregation is executed on.");
-            // helpers.top().functionBuilder.pop_back();
             helpers.top().addProjection(std::nullopt, UnboundFieldAccessLogicalFunction{aggFunc.second.value()});
         }
         else
@@ -734,19 +729,6 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helpers.top().functionBuilder.pop_back();
         helpers.top().addProjection(std::nullopt, expression);
         helpers.top().hasUnnamedAggregation = false;
-
-        // const auto accessFunction = helpers.top().functionBuilder.back();
-        // helpers.top().functionBuilder.pop_back();
-        // const auto fieldAccessNode = accessFunction.getAs<UnboundFieldAccessLogicalFunction>();
-        // auto lastAggregation = helpers.top().windowAggs.back();
-        // const auto newName = fmt::format("{}_{}", fieldAccessNode.get().getFieldName(), lastAggregation.first->getName());
-        // const auto asField = Identifier::parse(newName);
-        // lastAggregation.second = std::make_optional(asField);
-        // helpers.top().windowAggs.pop_back();
-        // helpers.top().windowAggs.push_back(lastAggregation);
-        // helpers.top().getProjections().pop_back();
-        // helpers.top().addProjection(asField, UnboundFieldAccessLogicalFunction{asField});
-        // helpers.top().hasUnnamedAggregation = false;
     }
     AntlrSQLBaseListener::exitNamedExpression(context);
 }
@@ -1075,7 +1057,6 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
         helpers.top().windowAggs.pop_back();
         helpers.top().windowAggs.emplace_back(aggFunc, std::optional{asField});
         helpers.top().functionBuilder.push_back(UnboundFieldAccessLogicalFunction(asField));
-        // helpers.top().addProjection(std::make_optional(asField), UnboundFieldAccessLogicalFunction{asField});
     }
 }
 

@@ -75,7 +75,6 @@ public:
     WeakLogicalOperator self;
 
 private:
-    /// TODO remove when moving inference to constructor, only needed for deserialization
     static constexpr std::string_view NAME = "Selection";
     std::optional<LogicalOperator> child;
     LogicalFunction predicate;

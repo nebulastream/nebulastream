@@ -27,19 +27,6 @@ struct ReflectedLogicalFunction
     Reflected functionConfig;
 };
 
-// Helper to detect TypedLogicalFunction instances
-template <typename T>
-struct is_typed_logical_function : std::false_type
-{
-};
-
-template <typename Checked>
-struct is_typed_logical_function<TypedLogicalFunction<Checked>> : std::true_type
-{
-};
-
-template <typename T>
-inline constexpr bool is_typed_logical_function_v = is_typed_logical_function<T>::value;
 }
 
 namespace NES

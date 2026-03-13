@@ -69,9 +69,6 @@ concept LogicalOperatorConcept = requires(
     /// Returns the name of the operator, used during planning and optimization
     { thisOperator.getName() } noexcept -> std::convertible_to<std::string_view>;
 
-    /// Serialize the operator to a Reflected object
-    // { NES::reflect(thisOperator) } -> std::same_as<Reflected>;
-
     /// Returns the trait set of the operator
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
 

@@ -39,17 +39,6 @@
 namespace NES
 {
 
-// namespace
-// {
-// Schema<Field, Unordered> inferOutputSchema(const Schema<Field, Unordered>& inputSchema, const LogicalOperator& newOperator)
-// {
-//     return Schema<Field, Unordered>{
-//         inputSchema
-//         | std::views::transform([&newOperator](const auto& field) { return Field{newOperator, field.getLastName(), field.getDataType()}; })
-//         | std::ranges::to<std::vector>()};
-// }
-// }
-
 IngestionTimeWatermarkAssignerLogicalOperator::IngestionTimeWatermarkAssignerLogicalOperator(WeakLogicalOperator self)
     : self(std::move(self))
 {

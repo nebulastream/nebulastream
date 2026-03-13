@@ -192,12 +192,6 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
             outputSchema,
             memoryLayoutType,
             memoryLayoutType));
-        // mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-        //     MapPhysicalOperator(newName, castedPhysicalFunction),
-        //     copyOfInputSchemaOfMap,
-        //     inputSchemaOfMap,
-        //     memoryLayoutType,
-        //     memoryLayoutType));
     }
 
     return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
@@ -282,7 +276,6 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [leftJoinFields, rightJoinFields] = getJoinFieldExtensionsLeftRight(leftOperator, rightOperator, logicalJoinFunction);
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(leftOperator, leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(rightOperator, rightJoinFields, memoryLayoutType);
-    /// TODO decide memory layout in optimization stage and pass it here
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
         conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeInBytes(), newLeftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(

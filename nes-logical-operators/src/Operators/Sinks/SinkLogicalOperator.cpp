@@ -163,49 +163,6 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema() const
     copy.child = child->withInferredSchema();
     copy.inferLocalSchema();
     return copy;
-
-    // if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && std::ranges::empty(*sinkDescriptor.value().getSchema()))
-    // {
-    //     copy.sinkDescriptor->schema = std::make_shared<const Schema<UnqualifiedUnboundField, Ordered>>(unboundInputSchema);
-    // }
-    // else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != unboundInputSchema)
-    // {
-    //     std::vector expectedFields(copy.sinkDescriptor.value().getSchema()->begin(), copy.sinkDescriptor.value().getSchema()->end());
-    //     std::vector<QualifiedUnboundField> actualFields = unboundInputSchema | std::ranges::to<std::vector>();
-    //
-    //     std::stringstream expectedFieldsString;
-    //     std::stringstream actualFieldsString;
-    //
-    //     for (unsigned int i = 0; i < expectedFields.size(); ++i)
-    //     {
-    //         const auto& field = expectedFields.at(i);
-    //         auto foundIndex = std::ranges::find(actualFields, field);
-    //
-    //         if (foundIndex == actualFields.end())
-    //         {
-    //             expectedFieldsString << field << ", ";
-    //         }
-    //         else if (auto foundOffset = foundIndex - std::ranges::begin(actualFields); foundOffset != i)
-    //         {
-    //             expectedFieldsString << fmt::format("Field {} at {}, but was at {},", field, i, foundOffset);
-    //         }
-    //     }
-    //     for (const auto& field : actualFields)
-    //     {
-    //         if (std::ranges::find(expectedFields, field) == expectedFields.end())
-    //         {
-    //             actualFieldsString << fmt::format("QualifiedUnboundField(name: {}, type: {})", field.getFullyQualifiedName(), field.getDataType())
-    //                                << ", ";
-    //         }
-    //     }
-    //
-    //     throw CannotInferSchema(
-    //         "The schema of the sink must be equal to the schema of the input operator. Expected fields {} where not found, and found "
-    //         "unexpected fields {}",
-    //         expectedFieldsString.str(),
-    //         actualFieldsString.str().substr(0, actualFieldsString.str().size() - 2));
-    // }
-    // return copy;
 }
 
 SinkLogicalOperator SinkLogicalOperator::withTraitSet(TraitSet traitSet) const

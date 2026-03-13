@@ -220,14 +220,8 @@ bool SinkDescriptor::isInline() const
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<Identifier, std::string> configPairs)
 {
-    const std::unordered_map<std::string, std::string> stringConfigMap
-        = configPairs
-        | std::views::transform(
-              [](const auto& pair)
-              {
-                  /// TODO this is a hack and we should move the config system to identifiers as well
-                  return std::make_pair(pair.first.asCanonicalString(), pair.second);
-              })
+    const std::unordered_map<std::string, std::string> stringConfigMap = configPairs
+        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
         | std::ranges::to<std::unordered_map>();
     auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{std::move(stringConfigMap)};
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));

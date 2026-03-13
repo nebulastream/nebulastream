@@ -33,7 +33,6 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Schema/Schema.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Serialization/TimeCharacteristicSerializationUtil.hpp>
 #include <Serialization/WindowAggregationLogicalFunctionReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Hash.hpp>

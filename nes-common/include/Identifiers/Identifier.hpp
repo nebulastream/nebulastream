@@ -133,7 +133,7 @@ public:
         caseSensitive = refIdentifier.isCaseSensitive();
     }
 
-    //Should we keep the conversion operator or the conversion constructor?
+    /// Should we keep the conversion operator or the conversion constructor?
     operator IdentifierBase<std::dynamic_extent>() const
     requires(Extent != std::dynamic_extent)
     {
@@ -158,7 +158,6 @@ public:
 
     template <size_t Rhs_Extent>
     friend bool operator==(const IdentifierBase& lhs, const IdentifierBase<Rhs_Extent>& rhs)
-    // requires (Extent == std::dynamic_extent)
     {
         std::stringstream lhsss;
         std::stringstream rhsss;
@@ -253,7 +252,7 @@ struct fmt::formatter<NES::IdentifierBase<Extent>>
         std::stringstream ss;
         if (!obj.isCaseSensitive())
         {
-            // Uppercase non-case-sensitive identifiers
+            /// Uppercase non-case-sensitive identifiers
             for (char c : obj.getOriginalString())
             {
                 ss << static_cast<char>(std::toupper(static_cast<unsigned char>(c)));
@@ -261,7 +260,7 @@ struct fmt::formatter<NES::IdentifierBase<Extent>>
         }
         else
         {
-            // Remove surrounding quotes for case-sensitive identifiers
+            /// Remove surrounding quotes for case-sensitive identifiers
             auto str = obj.getOriginalString();
             if (str.size() >= 2)
             {
@@ -293,8 +292,8 @@ struct std::hash<NES::IdentifierBase<Extent>>
 template <size_t Extent, size_t SpanExtent>
 struct std::hash<std::span<NES::IdentifierBase<Extent>, SpanExtent>>
 {
-    //taken from https://stackoverflow.com/a/72073933 from SO user see,
-    //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
+    ///taken from https://stackoverflow.com/a/72073933 from SO user see,
+    ///based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
     std::size_t operator()(const std::span<NES::IdentifierBase<Extent>, SpanExtent>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
@@ -314,8 +313,8 @@ struct std::hash<std::span<NES::IdentifierBase<Extent>, SpanExtent>>
 template <size_t Extent, size_t SpanExtent>
 struct std::hash<std::span<const NES::IdentifierBase<Extent>, SpanExtent>>
 {
-    //taken from https://stackoverflow.com/a/72073933 from SO user see,
-    //based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
+    ///taken from https://stackoverflow.com/a/72073933 from SO user see,
+    ///based on https://stackoverflow.com/a/12996028 from SO user Thomas Mueller
     std::size_t operator()(const std::span<const NES::IdentifierBase<Extent>, SpanExtent>& arg) const noexcept
     {
         std::size_t seed = std::ranges::size(arg);
@@ -380,12 +379,6 @@ public:
                   else
                   {
                       return detail::toArray(idSpan, std::make_index_sequence<Extent>{});
-                      // std::array<Identifier, Extent> identifiers{};
-                      // for (const auto& [idx, identifier] : views::enumerate(idSpan))
-                      // {
-                      //     identifiers[idx] = identifier;
-                      // }
-                      // return identifiers;
                   }
               }())
     {
@@ -399,14 +392,6 @@ public:
     {
         PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
     }
-
-    // constexpr IdentifierListBase(const std::initializer_list<Identifier>& identifiers) : identifiers(identifiers)
-    // {
-    //     PRECONDITION(std::ranges::size(this->identifiers) > 0, "IdentifierList must not be empty");
-    // }
-
-    // constexpr IdentifierListBase(Identifier identifier) : identifiers(ContainerType{std::move(identifier)}) { }
-
 
     constexpr IdentifierListBase() = delete;
     constexpr IdentifierListBase(const IdentifierListBase& other) = default;
@@ -671,36 +656,11 @@ struct fmt::formatter<NES::IdentifierListBase<std::dynamic_extent>> : ostream_fo
 {
 };
 
-// template <>
-// struct formatter<NES::IdentifierListBase<1>>
-// {
-//     auto parse(format_parse_context& ctx) -> decltype(ctx.begin()) { return ctx.begin(); }
-//
-//     auto format(const NES::IdentifierListBase<1>& list, format_context& ctx) -> decltype(ctx.out())
-//     {
-//         std::ostringstream lstring{};
-//         lstring << list;
-//         return format_to(ctx.out(), "{}", lstring.str());
-//     }
-// };
-// template <>
-// struct formatter<NES::IdentifierListBase<std::dynamic_extent>>
-// {
-//     constexpr auto parse(format_parse_context& ctx) { return ctx.begin(); }
-//
-//     constexpr auto format(const NES::IdentifierListBase<std::dynamic_extent>& list, format_context& ctx)
-//     {
-//         std::ostringstream lstring{};
-//         lstring << list;
-//         return format_to(ctx.out(), "{}", lstring.str());
-//     }
-// };
 }
 
 static_assert(fmt::formattable<NES::IdentifierListBase<std::dynamic_extent>>);
 static_assert(fmt::formattable<NES::IdentifierListBase<1>>);
 
-// Folly hasher specialization for Identifier
 namespace folly
 {
 template <size_t Extent>

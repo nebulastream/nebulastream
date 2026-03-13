@@ -33,8 +33,4 @@ Unreflector<IdentifierListBase<std::dynamic_extent>>::operator()(const Reflected
         "Expected string for IdentifierList, but got {} instead",
         std::visit([](const auto& actual) { return NAMEOF_TYPE(decltype(actual)); }, reflectable->get()));
 }
-
-// Explicit template instantiation for commonly used IdentifierListBase types
-template struct Reflector<IdentifierListBase<1>>;
-template struct Reflector<IdentifierListBase<std::dynamic_extent>>;
 }

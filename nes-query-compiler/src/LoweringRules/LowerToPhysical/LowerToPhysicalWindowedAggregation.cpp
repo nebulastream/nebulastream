@@ -58,56 +58,6 @@
 
 namespace NES
 {
-
-// static std::pair<std::vector<Record::RecordFieldIdentifier>, std::vector<Record::RecordFieldIdentifier>>
-// getKeyAndValueFields(const WindowedAggregationLogicalOperator& logicalOperator)
-// {
-//     std::vector<Record::RecordFieldIdentifier> fieldKeyNames;
-//     std::vector<Record::RecordFieldIdentifier> fieldValueNames;
-//
-//     /// Getting the key and value field names
-//     for (const auto& nodeAccess : logicalOperator.getGroupingKeys())
-//     {
-//         fieldKeyNames.emplace_back(nodeAccess.getFieldName());
-//     }
-//     for (const auto& descriptor : logicalOperator.getWindowAggregation())
-//     {
-//         const auto aggregationResultFieldIdentifier = descriptor->getOnField().getFieldName();
-//         fieldValueNames.emplace_back(aggregationResultFieldIdentifier);
-//     }
-//     return {fieldKeyNames, fieldValueNames};
-// }
-//
-// static std::unique_ptr<TimeFunction> getTimeFunction(const WindowedAggregationLogicalOperator& logicalOperator)
-// {
-//     auto* const timeWindow = dynamic_cast<Windowing::TimeBasedWindowType*>(logicalOperator.getWindowType().get());
-//     if (timeWindow == nullptr)
-//     {
-//         throw UnknownWindowType("Window type is not a time based window type");
-//     }
-//
-//     switch (timeWindow->getTimeCharacteristic().getType())
-//     {
-//         case Windowing::TimeCharacteristic::Type::IngestionTime: {
-//             if (timeWindow->getTimeCharacteristic().field.name == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
-//             {
-//                 return std::make_unique<IngestionTimeFunction>();
-//             }
-//             throw UnknownWindowType(
-//                 "The ingestion time field of a window must be: {}", Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME);
-//         }
-//         case Windowing::TimeCharacteristic::Type::EventTime: {
-//             /// For event time fields, we look up the reference field name and create an expression to read the field.
-//             auto timeCharacteristicField = timeWindow->getTimeCharacteristic().field.name;
-//             auto timeStampField = FieldAccessPhysicalFunction(timeCharacteristicField);
-//             return std::make_unique<EventTimeFunction>(timeStampField, timeWindow->getTimeCharacteristic().getTimeUnit());
-//         }
-//         default: {
-//             throw UnknownWindowType("Unknown window type: {}", magic_enum::enum_name(timeWindow->getTimeCharacteristic().getType()));
-//         }
-//     }
-// }
-
 namespace
 {
 std::vector<std::shared_ptr<AggregationPhysicalFunction>>
@@ -135,11 +85,6 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto physicalInputSchema = createPhysicalOutputSchema(logicalOperator.getChild()->getTraitSet());
 
         auto bufferRef = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), physicalInputSchema, memoryLayoutType);
-        // auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(descriptor.function->getInputFunction());
-        // const auto resultFieldIdentifier = descriptor.name;
-        // auto layout = std::make_shared<ColumnLayout>(configuration.pageSize.getValue(), logicalOperator.getChild().getOutputSchema().unbind<std::dynamic_extent>());
-        // auto bufferRef = std::make_shared<Interface::BufferRef::ColumnTupleBufferRef>(layout);
-
         auto name = descriptor.function->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(
             std::move(physicalInputType),
@@ -209,19 +154,10 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     const auto keysAreBound = std::holds_alternative<std::vector<TypedLogicalFunction<FieldAccessLogicalFunction>>>(groupingKeys);
     PRECONDITION(keysAreBound, "Expected the grouping keys to be bound");
 
-    // Not sure if this is 100% correct in regard to the field mappings
     auto boundGroupingKeys = std::get<std::vector<TypedLogicalFunction<FieldAccessLogicalFunction>>>(groupingKeys);
     for (auto& nodeFunctionKey : boundGroupingKeys)
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
-        // if (loweredFunctionType.isType(DataType::Type::VARSIZED))
-        // {
-        //     loweredFunctionType.type = DataType::Type::VARSIZED_POINTER_REP;
-        //     auto fieldNode = newInputFields.extract(nodeFunctionKey->getField().getLastName());
-        //     PRECONDITION(!fieldNode.empty(), "Expect to find the field {} in the input schema", nodeFunctionKey->getField().getLastName());
-        //     fieldNode.mapped() = QualifiedUnboundField{fieldNode.mapped().getFullyQualifiedName(), loweredFunctionType};
-        //     newInputFields.insert(std::move(fieldNode));
-        // }
         keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }

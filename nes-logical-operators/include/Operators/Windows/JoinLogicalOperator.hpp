@@ -106,7 +106,6 @@ public:
     WeakLogicalOperator self;
 
 private:
-    // template <LogicalOperatorConcept OperatorType>
     friend struct detail::ErasedLogicalOperator;
 
     static constexpr std::string_view NAME = "Join";

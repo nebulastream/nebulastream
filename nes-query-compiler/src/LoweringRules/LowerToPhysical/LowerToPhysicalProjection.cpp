@@ -127,7 +127,6 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     /// Creates a physical leaf for each logical leaf. Required, as this operator can have any number of sources.
     const std::vector leafs(projectionLogicalOperator.getChildren().size(), scanWrapper);
     return {.root = child, .leafs = {scanWrapper}};
-    // return {.root = child, .leafs = {leafs}};
 }
 
 std::unique_ptr<AbstractLoweringRule>

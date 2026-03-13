@@ -70,8 +70,6 @@ std::string_view ProjectionLogicalOperator::getName() const noexcept
 
 std::vector<Field> ProjectionLogicalOperator::getAccessedFields() const
 {
-    /// TODO we might want to move this to the inferSchema/constructor as well
-
     PRECONDITION(child.has_value(), "Child not set when accessing accessed fields");
     auto asteriskFields = [&]
     {
@@ -181,10 +179,7 @@ void ProjectionLogicalOperator::inferLocalSchema()
                       [&inputSchema](const UnboundProjection& projection)
                       {
                           auto inferredFunction = projection.second.withInferredDataType(inputSchema);
-                          /// If projection has a name use it.
                           return UnboundProjection{projection.first, inferredFunction};
-                          /// Otherwise derive the name from the inferred function
-                          // return Projection{inferredFunction.explain(ExplainVerbosity::Short), inferredFunction};
                       })
         | std::ranges::to<std::vector>();
 

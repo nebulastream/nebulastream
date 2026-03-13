@@ -43,10 +43,8 @@ Schema<QualifiedUnboundField, Ordered> createSchemaFromTraits(
 Schema<QualifiedUnboundField, Ordered> createPhysicalOutputSchema(const TraitSet& traitSet)
 {
     const auto outputFieldMappingOpt = traitSet.get<FieldMappingTrait>();
-    // PRECONDITION(outputFieldMappingOpt.has_value(), "Expected FieldMappingTrait to be set");
 
     const auto fieldOrderingOpt = traitSet.get<FieldOrderingTrait>();
-    // PRECONDITION(fieldOrderingOpt.has_value(), "Expected a FieldOrderingTrait");
     return createSchemaFromTraits(outputFieldMappingOpt->getUnderlying(), fieldOrderingOpt->getOrderedFields());
 }
 }

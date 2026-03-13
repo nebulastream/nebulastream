@@ -46,7 +46,6 @@ public:
     [[nodiscard]] size_t hash() const;
 
 private:
-    ///TODO change this to UnboundFields once we support aliased relations or compound types
     std::unordered_map<UnqualifiedUnboundField, IdentifierList> mapping;
 
     friend Reflector<FieldMappingTrait>;

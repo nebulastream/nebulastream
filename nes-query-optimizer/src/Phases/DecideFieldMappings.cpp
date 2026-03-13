@@ -112,35 +112,6 @@ LogicalOperator DecideFieldMappings::apply(const LogicalOperator& logicalOperato
     }
     else if (const auto sinkOpOpt = logicalOperator.tryGetAs<SinkLogicalOperator>())
     {
-        /// If the child of a sink redefines a field name,
-        /// we need to project it back to the original name,
-        /// since otherwise the assigned name might get leaked to the outside world via the output formatter of the sink
-        // auto childFieldMapOpt = sinkOpOpt.value()->getChild()->getTraitSet().tryGet<FieldMappingTrait>();
-        // PRECONDITION(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
-        // const auto& chieldFieldMapping = childFieldMapOpt.value();
-        //
-        // /// We still iterate over the output schema and not the field mapping trait to "self-validate" the behavior of this function
-        // /// First we find out whether we need to add an additional projection
-        // std::vector<ProjectionLogicalOperator::UnboundProjection> projections{};
-        // bool additionalProjection = false;
-        // for (const auto& childOutputField : sinkOpOpt.value()->getChild()->getOutputSchema())
-        // {
-        //     const auto foundMapping = chieldFieldMapping.getMapping(childOutputField.unbound());
-        //     INVARIANT(foundMapping.has_value(), "Field mapping trait was not set for child of sink");
-        //     if (childOutputField.getFullyQualifiedName() != *foundMapping)
-        //     {
-        //         additionalProjection = true;
-        //         projections.emplace_back(*std::ranges::rbegin(foundMapping.value()), FieldAccessLogicalFunction{childOutputField});
-        //     }
-        // }
-        //
-        // if (additionalProjection)
-        // {
-        //     const auto newProjection
-        //         = TypedLogicalOperator<ProjectionLogicalOperator>{projections, ProjectionLogicalOperator::Asterisk{false}}.withChildren(
-        //             {sinkOpOpt.value()->getChild()});
-        //
-        // }
     }
     else
     {
