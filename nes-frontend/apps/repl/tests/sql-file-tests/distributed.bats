@@ -255,9 +255,18 @@ assert_json_contains() {
   duration=$((end_time - start_time))
   [ "$duration" -le 5 ]
 
-  sleep 1
-  # Check the log to ensure that the query has been started but not stopped
-  sync_workdir
-  grep "Starting source with originId" worker-node/singleNodeWorker.log
+  # Check the log to ensure that the query has been started but not stopped.
+  # The source may take a moment to start after the REPL exits, so retry
+  # sync_workdir + grep for up to 10 seconds to avoid a race condition.
+  local found=false
+  for i in $(seq 1 10); do
+    sleep 1
+    sync_workdir
+    if grep -q "Starting source with originId" worker-node/singleNodeWorker.log 2>/dev/null; then
+      found=true
+      break
+    fi
+  done
+  [ "$found" = true ]
   ! grep "attempting to stop source" worker-node/singleNodeWorker.log
 }
