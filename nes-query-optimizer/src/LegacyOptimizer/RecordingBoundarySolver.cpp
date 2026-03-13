@@ -41,7 +41,6 @@ namespace NES
 namespace
 {
 constexpr double STORAGE_PENALTY_NORMALIZATION_BYTES = 4096.0;
-constexpr size_t MAX_SHADOW_PRICE_ITERATIONS = 16;
 constexpr double EPSILON = 1e-9;
 constexpr double CAPACITY_SCALE = 1000.0;
 constexpr int64_t MAX_FLOW_CAPACITY = std::numeric_limits<int64_t>::max() / 4;
@@ -91,14 +90,19 @@ int decisionPreference(const RecordingSelectionDecision decision)
         [](const double total, const SelectedRecordingBoundary& selected) { return total + selected.chosenOption.cost.maintenanceCost; });
 }
 
-[[nodiscard]] double warmStartLatencyPrice(const RecordingCandidateSet& candidateSet)
+[[nodiscard]] double baseLatencyPrice(const RecordingCandidateSet& candidateSet)
 {
     return candidateSet.replayLatencyLimitMs.has_value() ? 1.0 / std::max<double>(*candidateSet.replayLatencyLimitMs, 1.0) : 0.0;
 }
 
-[[nodiscard]] double latencyPriceStep(const RecordingCandidateSet& candidateSet)
+[[nodiscard]] double warmStartLatencyPrice(const RecordingCandidateSet& candidateSet, const ShadowPriceTuning& shadowPriceTuning)
 {
-    return warmStartLatencyPrice(candidateSet);
+    return baseLatencyPrice(candidateSet) * shadowPriceTuning.replayInitialPriceScale;
+}
+
+[[nodiscard]] double latencyPriceStep(const RecordingCandidateSet& candidateSet, const ShadowPriceTuning& shadowPriceTuning)
+{
+    return baseLatencyPrice(candidateSet) * shadowPriceTuning.replayStepScale;
 }
 
 [[nodiscard]] double normalizedConstraintGap(const double used, const double limit)
@@ -106,10 +110,70 @@ int decisionPreference(const RecordingSelectionDecision decision)
     return (used - limit) / std::max(limit, 1.0);
 }
 
+[[nodiscard]] double constraintSatisfactionPercent(const double used, const double limit)
+{
+    if (used <= limit + EPSILON)
+    {
+        return 100.0;
+    }
+    if (used <= EPSILON)
+    {
+        return 100.0;
+    }
+    if (limit <= EPSILON)
+    {
+        return 0.0;
+    }
+    return std::clamp((limit / used) * 100.0, 0.0, 100.0);
+}
+
+[[nodiscard]] double storageBudgetConstraintSatisfactionPercent(
+    const std::unordered_map<Host, size_t>& selectedStorageBytesByHost,
+    const std::unordered_map<Host, size_t>& availableStorageBytesByHost)
+{
+    double worstSatisfactionPercent = 100.0;
+    for (const auto& [host, availableBytes] : availableStorageBytesByHost)
+    {
+        const auto selectedBytes = selectedStorageBytesByHost.contains(host) ? selectedStorageBytesByHost.at(host) : 0U;
+        worstSatisfactionPercent = std::min(
+            worstSatisfactionPercent,
+            constraintSatisfactionPercent(static_cast<double>(selectedBytes), static_cast<double>(availableBytes)));
+    }
+    return worstSatisfactionPercent;
+}
+
+[[nodiscard]] double maxStorageUtilizationPercent(
+    const std::unordered_map<Host, size_t>& selectedStorageBytesByHost,
+    const std::unordered_map<Host, size_t>& availableStorageBytesByHost)
+{
+    double maxUtilizationPercent = 0.0;
+    for (const auto& [host, availableBytes] : availableStorageBytesByHost)
+    {
+        const auto selectedBytes = selectedStorageBytesByHost.contains(host) ? selectedStorageBytesByHost.at(host) : 0U;
+        const auto denominator = std::max<double>(static_cast<double>(availableBytes), 1.0);
+        maxUtilizationPercent = std::max(maxUtilizationPercent, (static_cast<double>(selectedBytes) / denominator) * 100.0);
+    }
+    return maxUtilizationPercent;
+}
+
+[[nodiscard]] std::unordered_map<Host, double> warmStartStorageShadowPrices(
+    const std::unordered_map<Host, size_t>& availableStorageBytesByHost,
+    const ShadowPriceTuning&)
+{
+    std::unordered_map<Host, double> storageShadowPrices;
+    storageShadowPrices.reserve(availableStorageBytesByHost.size());
+    for (const auto& [host, _] : availableStorageBytesByHost)
+    {
+        storageShadowPrices.emplace(host, 0.0);
+    }
+    return storageShadowPrices;
+}
+
 [[nodiscard]] bool updateStorageShadowPrices(
     std::unordered_map<Host, double>& storageShadowPrices,
     const std::unordered_map<Host, size_t>& selectedStorageBytesByHost,
-    const std::unordered_map<Host, size_t>& availableStorageBytesByHost)
+    const std::unordered_map<Host, size_t>& availableStorageBytesByHost,
+    const ShadowPriceTuning& shadowPriceTuning)
 {
     bool pricesChanged = false;
     for (const auto& [host, availableBytes] : availableStorageBytesByHost)
@@ -117,7 +181,11 @@ int decisionPreference(const RecordingSelectionDecision decision)
         const auto selectedBytes = selectedStorageBytesByHost.contains(host) ? selectedStorageBytesByHost.at(host) : 0U;
         auto& shadowPrice = storageShadowPrices[host];
         const auto updatedPrice =
-            std::max(0.0, shadowPrice + normalizedConstraintGap(static_cast<double>(selectedBytes), static_cast<double>(availableBytes)));
+            std::max(
+                0.0,
+                shadowPrice
+                    + (shadowPriceTuning.storageStepScale
+                       * normalizedConstraintGap(static_cast<double>(selectedBytes), static_cast<double>(availableBytes))));
         if (std::abs(updatedPrice - shadowPrice) > EPSILON)
         {
             pricesChanged = true;
@@ -128,7 +196,10 @@ int decisionPreference(const RecordingSelectionDecision decision)
 }
 
 [[nodiscard]] bool updateReplayTimePrice(
-    const RecordingCandidateSet& candidateSet, const double selectedReplayTimeMs, double& replayTimePrice)
+    const RecordingCandidateSet& candidateSet,
+    const double selectedReplayTimeMs,
+    double& replayTimePrice,
+    const ShadowPriceTuning& shadowPriceTuning)
 {
     if (!candidateSet.replayLatencyLimitMs.has_value())
     {
@@ -138,7 +209,7 @@ int decisionPreference(const RecordingSelectionDecision decision)
     const auto updatedPrice = std::max(
         0.0,
         replayTimePrice
-            + (latencyPriceStep(candidateSet)
+            + (latencyPriceStep(candidateSet, shadowPriceTuning)
                * normalizedConstraintGap(selectedReplayTimeMs, static_cast<double>(*candidateSet.replayLatencyLimitMs))));
     const auto pricesChanged = std::abs(updatedPrice - replayTimePrice) > EPSILON;
     replayTimePrice = updatedPrice;
@@ -266,11 +337,22 @@ std::string describeReplayLatencyViolation(const double selectedReplayTimeMs, co
 
 }
 
-RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandidateSet& candidateSet) const
+RecordingBoundarySelection RecordingBoundarySolver::solve(
+    const RecordingCandidateSet& candidateSet,
+    std::vector<ShadowPriceIterationStats>* iterationTrace) const
 {
     PRECONDITION(workerCatalog != nullptr, "Recording boundary solving requires a valid worker catalog");
     PRECONDITION(candidateSet.rootOperatorId != INVALID_OPERATOR_ID, "Recording boundary solving requires a valid root operator");
     PRECONDITION(!candidateSet.leafOperatorIds.empty(), "Recording boundary solving requires at least one leaf operator");
+    PRECONDITION(
+        shadowPriceTuning.replayInitialPriceScale >= 0.0 && shadowPriceTuning.replayStepScale >= 0.0
+            && shadowPriceTuning.storageStepScale >= 0.0,
+        "Recording boundary solving requires non-negative shadow price scales");
+    PRECONDITION(shadowPriceTuning.maxIterations > 0, "Recording boundary solving requires at least one shadow price iteration");
+    if (iterationTrace != nullptr)
+    {
+        iterationTrace->clear();
+    }
 
     std::unordered_map<Host, size_t> availableStorageBytesByHost;
     for (const auto& candidate : candidateSet.candidates)
@@ -289,19 +371,20 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         }
     }
 
-    std::unordered_map<Host, double> storageShadowPrices;
-    auto replayTimePrice = warmStartLatencyPrice(candidateSet);
+    auto storageShadowPrices = warmStartStorageShadowPrices(availableStorageBytesByHost, shadowPriceTuning);
+    auto replayTimePrice = warmStartLatencyPrice(candidateSet, shadowPriceTuning);
     std::optional<RecordingBoundarySelection> bestFeasibleSelection;
     auto bestFeasibleMaintenanceCost = std::numeric_limits<double>::infinity();
 
-    for (size_t iteration = 0; iteration < MAX_SHADOW_PRICE_ITERATIONS; ++iteration)
+    for (size_t iteration = 0; iteration < shadowPriceTuning.maxIterations; ++iteration)
     {
         std::unordered_map<RecordingPlanEdge, WeightedCandidateChoice, RecordingPlanEdgeHash> bestChoiceByEdge;
         std::unordered_map<OperatorId, double> replayEdgeCostByOperatorId;
         LemonCapacity totalFiniteCapacity = 0;
         for (const auto& candidate : candidateSet.candidates)
         {
-            if (const auto bestChoice = chooseBestOption(candidate, storageShadowPrices, replayTimePrice); bestChoice.has_value())
+            if (const auto bestChoice = chooseBestOption(candidate, storageShadowPrices, replayTimePrice);
+                bestChoice.has_value())
             {
                 bestChoiceByEdge.emplace(candidate.edge, *bestChoice);
                 totalFiniteCapacity = checkedAddCapacity(totalFiniteCapacity, scaledCapacityFromCost(bestChoice->adjustedDataflowEdgeCost));
@@ -459,6 +542,22 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
             && selectedReplayTimeMs > static_cast<double>(*candidateSet.replayLatencyLimitMs);
         const auto maintenanceCost = selectedBoundaryMaintenanceCost(selectedBoundary);
         const auto objectiveCost = maintenanceCost + (replayTimePrice * selectedReplayTimeMs);
+        if (iterationTrace != nullptr)
+        {
+            const auto replayConstraintSatisfaction = candidateSet.replayLatencyLimitMs.has_value()
+                ? constraintSatisfactionPercent(selectedReplayTimeMs, static_cast<double>(*candidateSet.replayLatencyLimitMs))
+                : 100.0;
+            iterationTrace->push_back(ShadowPriceIterationStats{
+                .iteration = iteration + 1,
+                .replayTimePrice = replayTimePrice,
+                .selectedReplayTimeMs = selectedReplayTimeMs,
+                .replayConstraintSatisfactionPercent = replayConstraintSatisfaction,
+                .storageBudgetConstraintSatisfactionPercent =
+                    storageBudgetConstraintSatisfactionPercent(selectedStorageBytesByHost, availableStorageBytesByHost),
+                .maxStorageUtilizationPercent = maxStorageUtilizationPercent(selectedStorageBytesByHost, availableStorageBytesByHost),
+                .replayConstraintSatisfied = !violatesReplayLatency,
+                .storageBudgetConstraintSatisfied = !violatesBudget});
+        }
         if (!violatesBudget && !violatesReplayLatency
             && (!bestFeasibleSelection.has_value() || maintenanceCost < bestFeasibleMaintenanceCost - EPSILON
                 || (std::abs(maintenanceCost - bestFeasibleMaintenanceCost) <= EPSILON
@@ -471,8 +570,8 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         }
 
         const auto storagePricesChanged =
-            updateStorageShadowPrices(storageShadowPrices, selectedStorageBytesByHost, availableStorageBytesByHost);
-        const auto replayPriceChanged = updateReplayTimePrice(candidateSet, selectedReplayTimeMs, replayTimePrice);
+            updateStorageShadowPrices(storageShadowPrices, selectedStorageBytesByHost, availableStorageBytesByHost, shadowPriceTuning);
+        const auto replayPriceChanged = updateReplayTimePrice(candidateSet, selectedReplayTimeMs, replayTimePrice, shadowPriceTuning);
         if (!storagePricesChanged && !replayPriceChanged)
         {
             if (bestFeasibleSelection.has_value())
@@ -497,6 +596,8 @@ RecordingBoundarySelection RecordingBoundarySolver::solve(const RecordingCandida
         return *bestFeasibleSelection;
     }
 
-    throw PlacementFailure("Replay selection is infeasible: replay min-cut did not converge within {} iterations", MAX_SHADOW_PRICE_ITERATIONS);
+    throw PlacementFailure(
+        "Replay selection is infeasible: replay min-cut did not converge within {} iterations",
+        shadowPriceTuning.maxIterations);
 }
 }

@@ -207,6 +207,8 @@ getOrCreateHashJoinSlice(const HJOperatorHandler* operatorHandler, const SliceSt
         sliceStart,
         [createFunction = std::move(createFunction), sliceStart, sliceEnd](const SliceStart assignedSliceStart, const SliceEnd assignedSliceEnd)
         {
+            static_cast<void>(sliceStart);
+            static_cast<void>(sliceEnd);
             INVARIANT(
                 assignedSliceStart == sliceStart && assignedSliceEnd == sliceEnd,
                 "Recovered hash join slice {}-{} does not match assigned slice {}-{}",

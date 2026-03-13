@@ -79,6 +79,19 @@ RecordingCandidateOption makeUpgradeRecordingOption(
     return option;
 }
 
+RecordingCandidateOption makeReuseRecordingOption(
+    std::string recordingId,
+    const Host& host,
+    double maintenanceCost,
+    uint64_t estimatedReplayLatencyMs = 0)
+{
+    auto option = makeNewRecordingOption(std::move(recordingId), host, maintenanceCost, 0, estimatedReplayLatencyMs);
+    option.decision = RecordingSelectionDecision::ReuseExistingRecording;
+    option.cost.estimatedStorageBytes = 0;
+    option.cost.incrementalStorageBytes = 0;
+    return option;
+}
+
 class RecordingBoundarySolverTest : public Testing::BaseUnitTest
 {
 public:
@@ -303,7 +316,8 @@ TEST_F(RecordingBoundarySolverTest, SolverBudgetsUpgradeByIncrementalStorageByte
             .recordingFileCount = 1,
             .activeQueryCount = 1,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     const auto rootId = OperatorId(1);
     const auto leafId = OperatorId(2);
@@ -377,6 +391,192 @@ TEST_F(RecordingBoundarySolverTest, SolverKeepsLowestMaintenanceFeasibleCutAcros
     EXPECT_EQ(selection.selectedBoundary.front().candidate.edge.childId, leafId);
     EXPECT_EQ(selection.selectedBoundary.front().chosenOption.selection.recordingId, RecordingId("branch-leaf"));
     EXPECT_DOUBLE_EQ(selection.objectiveCost, 0.8);
+}
+
+TEST_F(RecordingBoundarySolverTest, SolverHandlesDiamondDagWithSharedLeaf)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto rootId = OperatorId(1);
+    const auto mergeId = OperatorId(2);
+    const auto leftId = OperatorId(3);
+    const auto rightId = OperatorId(4);
+    const auto sourceId = OperatorId(5);
+
+    RecordingCandidateSet candidateSet;
+    candidateSet.rootOperatorId = rootId;
+    candidateSet.leafOperatorIds = {sourceId};
+    candidateSet.operatorReplayTimes = {
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = mergeId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = leftId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = rightId, .replayTimeMs = 1.0}};
+    candidateSet.planEdges = {
+        RecordingPlanEdge{.parentId = rootId, .childId = mergeId},
+        RecordingPlanEdge{.parentId = mergeId, .childId = leftId},
+        RecordingPlanEdge{.parentId = mergeId, .childId = rightId},
+        RecordingPlanEdge{.parentId = leftId, .childId = sourceId},
+        RecordingPlanEdge{.parentId = rightId, .childId = sourceId}};
+    candidateSet.candidates = {
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rootId, .childId = mergeId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("root-merge", host, 5.0)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = mergeId, .childId = leftId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("merge-left", host, 2.5)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = mergeId, .childId = rightId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("merge-right", host, 2.5)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = leftId, .childId = sourceId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("left-source", host, 1.0)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rightId, .childId = sourceId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("right-source", host, 1.0)}}};
+
+    const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
+
+    ASSERT_EQ(selection.selectedBoundary.size(), 2U);
+    EXPECT_DOUBLE_EQ(selection.objectiveCost, 2.0);
+    EXPECT_THAT(
+        selection.selectedBoundary
+            | std::views::transform(
+                  [](const auto& selected)
+                  {
+                      return std::pair{
+                          selected.candidate.edge.parentId.getRawValue(),
+                          selected.candidate.edge.childId.getRawValue()};
+                  })
+            | std::ranges::to<std::vector>(),
+        ::testing::UnorderedElementsAre(
+            std::pair{leftId.getRawValue(), sourceId.getRawValue()},
+            std::pair{rightId.getRawValue(), sourceId.getRawValue()}));
+}
+
+TEST_F(RecordingBoundarySolverTest, SolverChoosesReuseOptionsOnDiamondWhenStorageBudgetBinds)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 2048));
+
+    const auto rootId = OperatorId(1);
+    const auto mergeId = OperatorId(2);
+    const auto leftId = OperatorId(3);
+    const auto rightId = OperatorId(4);
+    const auto sourceId = OperatorId(5);
+
+    RecordingCandidateSet candidateSet;
+    candidateSet.rootOperatorId = rootId;
+    candidateSet.leafOperatorIds = {sourceId};
+    candidateSet.operatorReplayTimes = {
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = mergeId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = leftId, .replayTimeMs = 1.0},
+        RecordingCandidateSet::OperatorReplayTime{.operatorId = rightId, .replayTimeMs = 1.0}};
+    candidateSet.planEdges = {
+        RecordingPlanEdge{.parentId = rootId, .childId = mergeId},
+        RecordingPlanEdge{.parentId = mergeId, .childId = leftId},
+        RecordingPlanEdge{.parentId = mergeId, .childId = rightId},
+        RecordingPlanEdge{.parentId = leftId, .childId = sourceId},
+        RecordingPlanEdge{.parentId = rightId, .childId = sourceId}};
+    candidateSet.candidates = {
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rootId, .childId = mergeId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("root-merge", host, 4.0, 2048, 0)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = mergeId, .childId = leftId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("merge-left", host, 2.5, 2048, 0)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = mergeId, .childId = rightId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {makeNewRecordingOption("merge-right", host, 2.5, 2048, 0)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = leftId, .childId = sourceId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {
+                makeNewRecordingOption("left-create", host, 1.0, 2048, 0),
+                makeReuseRecordingOption("left-reuse", host, 1.2)}},
+        RecordingBoundaryCandidate{
+            .edge = {.parentId = rightId, .childId = sourceId},
+            .upstreamNode = host,
+            .downstreamNode = host,
+            .routeNodes = {host},
+            .materializationEdges = {},
+            .activeQueryMaterializationTargets = {},
+            .beneficiaryQueries = {},
+            .coversIncomingQuery = true,
+            .options = {
+                makeNewRecordingOption("right-create", host, 1.0, 2048, 0),
+                makeReuseRecordingOption("right-reuse", host, 1.2)}}};
+
+    const auto selection = RecordingBoundarySolver(workerCatalog).solve(candidateSet);
+
+    ASSERT_EQ(selection.selectedBoundary.size(), 2U);
+    EXPECT_DOUBLE_EQ(selection.objectiveCost, 2.4);
+    EXPECT_TRUE(std::ranges::all_of(
+        selection.selectedBoundary,
+        [](const auto& selected) { return selected.chosenOption.decision == RecordingSelectionDecision::ReuseExistingRecording; }));
 }
 }
 }

@@ -260,8 +260,7 @@
           rustc
         ];
 
-        defaultPackage = clangStdenv.mkDerivation rec {
-          pname = "nebulastream";
+        commonPackageAttrs = rec {
           version = "unstable";
           src = ./.;
           cargoRoot = "nes-network";
@@ -283,6 +282,8 @@
 
           preConfigure = ''
             export CARGO_HOME="$sourceRoot/.cargo"
+            export CCACHE_DIR="$TMPDIR/ccache"
+            mkdir -p "$CCACHE_DIR"
           '';
 
           postPatch = ''
@@ -307,6 +308,10 @@
 
           enableParallelBuilding = true;
           strictDeps = true;
+        };
+
+        defaultPackage = clangStdenv.mkDerivation (commonPackageAttrs // rec {
+          pname = "nebulastream";
 
           installPhase = ''
             runHook preInstall
@@ -316,6 +321,7 @@
               nes-single-node-worker/nes-single-node-worker \
               nes-frontend/nes-frontend \
               nes-frontend/nes-frontend-embedded \
+              nes-benchmark/recording-selection-benchmark \
               nes-systests/systest/systest
             do
               if [ -x "$binary" ]; then
@@ -329,6 +335,208 @@
 
             runHook postInstall
           '';
+        });
+
+        plotPython = pkgs.python3.withPackages (
+          pythonPackages: with pythonPackages; [
+            matplotlib
+          ]
+        );
+
+        recordingSelectionBenchmark = pkgs.writeShellApplication {
+          name = "recording-selection-benchmark";
+          runtimeInputs = [ pkgs.coreutils ];
+          text = ''
+            set -euo pipefail
+
+            project_root="$(pwd -P)"
+            build_dir="$project_root/cmake-build-debug"
+            nix_cmake="$project_root/.nix/nix-cmake.sh"
+            benchmark_binary="$build_dir/nes-benchmark/recording-selection-benchmark"
+
+            if [ ! -x "$nix_cmake" ]; then
+              echo "recording-selection-benchmark: run this command from the repository root" >&2
+              exit 1
+            fi
+
+            if [ ! -f "$build_dir/CMakeCache.txt" ]; then
+              "$nix_cmake" -S "$project_root" -B "$build_dir"
+            fi
+
+            benchmark_build_jobs="''${NES_BENCHMARK_BUILD_JOBS:-35}"
+            "$nix_cmake" --build "$build_dir" --target recording-selection-benchmark -j"$benchmark_build_jobs"
+            exec "$benchmark_binary" "$@"
+          '';
+        };
+
+        recordingSelectionPlot = pkgs.writeShellApplication {
+          name = "recording-selection-plot";
+          runtimeInputs = [ plotPython ];
+          text = ''
+            exec python ${./nes-benchmark/plot_recording_selection.py} "$@"
+          '';
+        };
+
+        recordingSelectionScatterPlot = pkgs.writeShellApplication {
+          name = "recording-selection-scatter-plot";
+          runtimeInputs = [ plotPython ];
+          text = ''
+            exec python ${./nes-benchmark/plot_recording_selection.py} --plot-kind scatter "$@"
+          '';
+        };
+
+        recordingSelectionShadowPricePlot = pkgs.writeShellApplication {
+          name = "recording-selection-shadow-price-plot";
+          runtimeInputs = [ plotPython ];
+          text = ''
+            exec python ${./nes-benchmark/plot_recording_selection.py} --plot-kind shadow-price-heatmap "$@"
+          '';
+        };
+
+        recordingSelectionConvergencePlot = pkgs.writeShellApplication {
+          name = "recording-selection-convergence-plot";
+          runtimeInputs = [ plotPython ];
+          text = ''
+            exec python ${./nes-benchmark/plot_recording_selection.py} --plot-kind shadow-price-convergence "$@"
+          '';
+        };
+
+        recordingSelectionReport = pkgs.writeShellApplication {
+          name = "recording-selection-report";
+          runtimeInputs = [ plotPython ];
+          text = ''
+            exec python ${./nes-benchmark/render_recording_selection_report.py} "$@"
+          '';
+        };
+
+        recordingSelectionPaperFigure = pkgs.writeShellApplication {
+          name = "recording-selection-paper-figure";
+          runtimeInputs = [
+            pkgs.coreutils
+            recordingSelectionBenchmark
+            recordingSelectionPlot
+          ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 1 ]; then
+              echo "usage: recording-selection-paper-figure <output.pdf> [benchmark args...]" >&2
+              exit 1
+            fi
+
+            output_path="$1"
+            shift
+
+            tmp_csv="$(mktemp /tmp/recording-selection.XXXXXX.csv)"
+            trap 'rm -f "$tmp_csv"' EXIT
+
+            recording-selection-benchmark --output "$tmp_csv" "$@"
+            recording-selection-plot "$tmp_csv" "$output_path"
+          '';
+        };
+
+        recordingSelectionScatterFigure = pkgs.writeShellApplication {
+          name = "recording-selection-scatter-figure";
+          runtimeInputs = [
+            pkgs.coreutils
+            recordingSelectionBenchmark
+            recordingSelectionScatterPlot
+          ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 1 ]; then
+              echo "usage: recording-selection-scatter-figure <output.pdf> [benchmark args...]" >&2
+              exit 1
+            fi
+
+            output_path="$1"
+            shift
+
+            tmp_csv="$(mktemp /tmp/recording-selection-scatter.XXXXXX.csv)"
+            trap 'rm -f "$tmp_csv"' EXIT
+
+            recording-selection-benchmark --output "$tmp_csv" "$@"
+            recording-selection-scatter-plot "$tmp_csv" "$output_path"
+          '';
+        };
+
+        recordingSelectionShadowPriceFigure = pkgs.writeShellApplication {
+          name = "recording-selection-shadow-price-figure";
+          runtimeInputs = [
+            pkgs.coreutils
+            recordingSelectionBenchmark
+            recordingSelectionShadowPricePlot
+          ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 1 ]; then
+              echo "usage: recording-selection-shadow-price-figure <output.pdf> [benchmark args...]" >&2
+              exit 1
+            fi
+
+            output_path="$1"
+            shift
+
+            tmp_csv="$(mktemp /tmp/recording-selection-shadow-price.XXXXXX.csv)"
+            trap 'rm -f "$tmp_csv"' EXIT
+
+            recording-selection-benchmark --shadow-price-sweep --output "$tmp_csv" "$@"
+            recording-selection-shadow-price-plot "$tmp_csv" "$output_path"
+          '';
+        };
+
+        recordingSelectionConvergenceFigure = pkgs.writeShellApplication {
+          name = "recording-selection-convergence-figure";
+          runtimeInputs = [
+            pkgs.coreutils
+            recordingSelectionBenchmark
+            recordingSelectionConvergencePlot
+          ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 1 ]; then
+              echo "usage: recording-selection-convergence-figure <output.pdf> [benchmark args...]" >&2
+              exit 1
+            fi
+
+            output_path="$1"
+            shift
+
+            tmp_csv="$(mktemp /tmp/recording-selection-convergence.XXXXXX.csv)"
+            trap 'rm -f "$tmp_csv"' EXIT
+
+            recording-selection-benchmark --shadow-price-convergence --output "$tmp_csv" "$@"
+            recording-selection-convergence-plot "$tmp_csv" "$output_path"
+          '';
+        };
+
+        recordingSelectionReportFigure = pkgs.writeShellApplication {
+          name = "recording-selection-report-figure";
+          runtimeInputs = [
+            pkgs.coreutils
+            recordingSelectionBenchmark
+            recordingSelectionReport
+          ];
+          text = ''
+            set -euo pipefail
+
+            if [ "$#" -lt 1 ]; then
+              echo "usage: recording-selection-report-figure <output.pdf> [benchmark args...]" >&2
+              exit 1
+            fi
+
+            output_path="$1"
+            shift
+
+            tmp_report="$(mktemp /tmp/recording-selection-report.XXXXXX.json)"
+            trap 'rm -f "$tmp_report"' EXIT
+
+            recording-selection-benchmark --report-output "$tmp_report" "$@"
+            recording-selection-report "$tmp_report" "$output_path"
+          '';
         };
 
       in
@@ -336,6 +544,17 @@
         formatter = pkgs.nixfmt-tree;
 
         packages.default = defaultPackage;
+        packages.recording-selection-benchmark = recordingSelectionBenchmark;
+        packages.recording-selection-plot = recordingSelectionPlot;
+        packages.recording-selection-scatter-plot = recordingSelectionScatterPlot;
+        packages.recording-selection-shadow-price-plot = recordingSelectionShadowPricePlot;
+        packages.recording-selection-convergence-plot = recordingSelectionConvergencePlot;
+        packages.recording-selection-report = recordingSelectionReport;
+        packages.recording-selection-paper-figure = recordingSelectionPaperFigure;
+        packages.recording-selection-scatter-figure = recordingSelectionScatterFigure;
+        packages.recording-selection-shadow-price-figure = recordingSelectionShadowPriceFigure;
+        packages.recording-selection-convergence-figure = recordingSelectionConvergenceFigure;
+        packages.recording-selection-report-figure = recordingSelectionReportFigure;
 
         checks = {
           antlr4 = antlr4Pkg;
@@ -379,6 +598,50 @@
             format = {
               type = "app";
               program = "${formatRunner}/bin/nes-format";
+            };
+            recording-selection-benchmark = {
+              type = "app";
+              program = "${recordingSelectionBenchmark}/bin/recording-selection-benchmark";
+            };
+            recording-selection-plot = {
+              type = "app";
+              program = "${recordingSelectionPlot}/bin/recording-selection-plot";
+            };
+            recording-selection-scatter-plot = {
+              type = "app";
+              program = "${recordingSelectionScatterPlot}/bin/recording-selection-scatter-plot";
+            };
+            recording-selection-shadow-price-plot = {
+              type = "app";
+              program = "${recordingSelectionShadowPricePlot}/bin/recording-selection-shadow-price-plot";
+            };
+            recording-selection-convergence-plot = {
+              type = "app";
+              program = "${recordingSelectionConvergencePlot}/bin/recording-selection-convergence-plot";
+            };
+            recording-selection-report = {
+              type = "app";
+              program = "${recordingSelectionReport}/bin/recording-selection-report";
+            };
+            recording-selection-paper-figure = {
+              type = "app";
+              program = "${recordingSelectionPaperFigure}/bin/recording-selection-paper-figure";
+            };
+            recording-selection-scatter-figure = {
+              type = "app";
+              program = "${recordingSelectionScatterFigure}/bin/recording-selection-scatter-figure";
+            };
+            recording-selection-shadow-price-figure = {
+              type = "app";
+              program = "${recordingSelectionShadowPriceFigure}/bin/recording-selection-shadow-price-figure";
+            };
+            recording-selection-convergence-figure = {
+              type = "app";
+              program = "${recordingSelectionConvergenceFigure}/bin/recording-selection-convergence-figure";
+            };
+            recording-selection-report-figure = {
+              type = "app";
+              program = "${recordingSelectionReportFigure}/bin/recording-selection-report-figure";
             };
           };
 

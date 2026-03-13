@@ -588,15 +588,21 @@ void collectMergedGraph(
 void collectMergedGraph(const QueryReplayPlan& queryReplayPlan, const WorkerCatalog& workerCatalog, MergedReplayGraphBuilder& builder)
 {
     const auto roots = queryReplayPlan.plan.getRootOperators();
-    PRECONDITION(roots.size() == 1, "Replay recording selection requires a single sink root per query plan, but got {} roots", roots.size());
-    PRECONDITION(roots.front().tryGetAs<SinkLogicalOperator>().has_value(), "Replay recording selection requires sink roots");
+    PRECONDITION(!roots.empty(), "Replay recording selection requires at least one sink root per query plan");
 
-    const auto rootFingerprint = structuralNodeFingerprint(roots.front());
-    builder.rootOperatorIds.insert(getOrCreateSyntheticOperatorId(builder, rootFingerprint));
+    for (const auto& root : roots)
+    {
+        PRECONDITION(root.tryGetAs<SinkLogicalOperator>().has_value(), "Replay recording selection requires sink roots");
+        const auto rootFingerprint = structuralNodeFingerprint(root);
+        builder.rootOperatorIds.insert(getOrCreateSyntheticOperatorId(builder, rootFingerprint));
+    }
 
     std::unordered_set<RecordingPlanEdge, RecordingPlanEdgeHash> visitedEdges;
     std::unordered_set<OperatorId> visitedLeaves;
-    collectMergedGraph(*roots.begin(), queryReplayPlan, workerCatalog, builder, visitedEdges, visitedLeaves);
+    for (const auto& root : roots)
+    {
+        collectMergedGraph(root, queryReplayPlan, workerCatalog, builder, visitedEdges, visitedLeaves);
+    }
 }
 
 void populateInstalledRecordings(MergedReplayContext& replayContext, const RecordingCatalog& recordingCatalog)

@@ -33,6 +33,7 @@
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/IngestionTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
@@ -84,9 +85,26 @@ LogicalPlan createPlacedUnaryPlan(const std::string& sourceName, const Host& hos
     return plan.withRootOperators({addPlacementTraitRecursively(plan.getRootOperators().front(), host)});
 }
 
+LogicalPlan createPlacedUnaryPlan(const std::string& sourceName, const std::string& sinkName, const Host& host)
+{
+    auto plan = LogicalPlanBuilder::createLogicalPlan(sourceName, createSchema(), {}, {});
+    const auto predicate = LogicalFunction{
+        EqualsLogicalFunction(LogicalFunction{FieldAccessLogicalFunction("id")}, LogicalFunction{FieldAccessLogicalFunction("id")})};
+    plan = LogicalPlanBuilder::addSelection(predicate, plan);
+    plan = LogicalPlanBuilder::addSink(sinkName, plan);
+    return plan.withRootOperators({addPlacementTraitRecursively(plan.getRootOperators().front(), host)});
+}
+
 LogicalPlan createPlacedUnaryPlan(const Host& host)
 {
     return createPlacedUnaryPlan("TEST", host);
+}
+
+LogicalPlan createPlacedMultiSinkPlan(const Host& host)
+{
+    const auto firstPlan = createPlacedUnaryPlan("MERGED_SOURCE", "test_sink_a", host);
+    const auto secondPlan = createPlacedUnaryPlan("MERGED_SOURCE", "test_sink_b", host);
+    return firstPlan.withRootOperators({firstPlan.getRootOperators().front(), secondPlan.getRootOperators().front()});
 }
 
 LogicalPlan createPlacedUnaryPlanWithNestedEventTimeWatermark(const Host& host)
@@ -413,7 +431,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseBudgetsUpgradeByIncrementalSto
             .recordingFileCount = 1,
             .activeQueryCount = 1,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     RecordingCatalog catalog;
     const auto weakerRecordingId = recordingIdFromFingerprint(createRecordingFingerprint(
@@ -841,6 +860,46 @@ TEST_F(RecordingSelectionPhaseTest, SelectionResultCanCreateRecordingForActiveOn
 
 }
 
+TEST_F(RecordingSelectionPhaseTest, CandidatePhaseAcceptsMultipleSinkRootsByAddingSyntheticSuperRoot)
+{
+    const auto host = Host("worker-1:8080");
+    auto workerCatalog = std::make_shared<WorkerCatalog>();
+    ASSERT_TRUE(workerCatalog->addWorker(host, {}, 16, {}, {}, 1024 * 1024));
+
+    const auto plan = createPlacedMultiSinkPlan(host);
+    ASSERT_EQ(plan.getRootOperators().size(), 2U);
+
+    const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
+        plan,
+        ReplaySpecification{.retentionWindowMs = 60'000, .replayLatencyLimitMs = std::nullopt},
+        RecordingCatalog{});
+
+    ASSERT_EQ(candidateSet.leafOperatorIds.size(), 1U);
+    ASSERT_EQ(candidateSet.candidates.size(), 3U);
+    ASSERT_EQ(candidateSet.planEdges.size(), 5U);
+
+    const auto syntheticRootOutgoingEdges = std::ranges::count_if(
+        candidateSet.planEdges,
+        [&](const RecordingPlanEdge& edge) { return edge.parentId == candidateSet.rootOperatorId; });
+    EXPECT_EQ(syntheticRootOutgoingEdges, 2U);
+    EXPECT_EQ(
+        std::ranges::count_if(
+            candidateSet.candidates,
+            [&](const RecordingBoundaryCandidate& candidate) { return candidate.edge.parentId == candidateSet.rootOperatorId; }),
+        0);
+    EXPECT_EQ(
+        std::ranges::count_if(
+            candidateSet.candidates,
+            [](const RecordingBoundaryCandidate& candidate) { return candidate.coversIncomingQuery && candidate.beneficiaryQueries.empty(); }),
+        3);
+    EXPECT_EQ(
+        std::ranges::count_if(candidateSet.candidates, [](const RecordingBoundaryCandidate& candidate) { return candidate.materializationEdges.size() == 1U; }),
+        2);
+    EXPECT_EQ(
+        std::ranges::count_if(candidateSet.candidates, [](const RecordingBoundaryCandidate& candidate) { return candidate.materializationEdges.size() == 2U; }),
+        1);
+}
+
 TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsForOperatorReplayTimes)
 {
     const auto host = Host("worker-1:8080");
@@ -869,7 +928,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesRuntimeReplayStatisticsFor
                     .outputTuples = 64,
                     .taskCount = 2,
                     .executionTimeNanos = 34'000'000}}},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     const auto candidateSet = RecordingCandidateSelectionPhase(workerCatalog).apply(
         plan,
@@ -926,7 +986,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesMeasuredReplayReadBandwidt
             .activeQueryCount = 0,
             .replayReadBytes = 0,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
     constexpr size_t measuredReplayReadBytesPerSecond = 5 * 1024 * 1024;
     ASSERT_TRUE(workerCatalog->updateWorkerRuntimeMetrics(
         host,
@@ -937,7 +998,8 @@ TEST_F(RecordingSelectionPhaseTest, CandidatePhaseUsesMeasuredReplayReadBandwidt
             .activeQueryCount = 0,
             .replayReadBytes = measuredReplayReadBytesPerSecond * 2,
             .replayOperatorStatistics = {},
-            .recordingStatuses = {}}));
+            .recordingStatuses = {},
+            .replayCheckpoints = {}}));
 
     const auto plan = createPlacedUnaryPlan(host);
     const auto root = plan.getRootOperators().front();
