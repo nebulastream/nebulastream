@@ -11,4 +11,4 @@
 # limitations under the License.
 
 add_nes_test(generator-source-test GeneratorSourceTest.cpp)
-target_link_libraries(generator-source-test generator_source_plugin_library)
+target_link_libraries(generator-source-test generator_source_plugin_library nes-data-types)

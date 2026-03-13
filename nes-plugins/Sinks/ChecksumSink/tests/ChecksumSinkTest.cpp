@@ -15,9 +15,9 @@
 #include <string>
 #include <unordered_map>
 
-#include <ErrorHandling.hpp>
-#include <ChecksumSink.hpp>
 #include <gtest/gtest.h>
+#include <ChecksumSink.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
