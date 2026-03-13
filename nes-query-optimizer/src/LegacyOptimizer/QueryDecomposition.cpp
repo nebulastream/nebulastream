@@ -205,7 +205,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan)
         }
     }
 
-    return {DecomposedLogicalPlan<Host>{std::move(context.plansByNode)}, placedPlan};
+    return {std::move(context.plansByNode), placedPlan};
 }
 
 }
