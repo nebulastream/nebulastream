@@ -31,41 +31,33 @@
 namespace NES
 {
 
-template <typename AddressType>
-struct DecomposedLogicalPlan
-{
-    std::unordered_map<AddressType, std::vector<LogicalPlan>> localPlans;
-
-    explicit DecomposedLogicalPlan(std::unordered_map<AddressType, std::vector<LogicalPlan>> plans) : localPlans{std::move(plans)} { }
-};
-
 class DistributedLogicalPlan
 {
 public:
-    DistributedLogicalPlan(DecomposedLogicalPlan<Host>&& decomposedPlan, LogicalPlan globalPlan)
+    DistributedLogicalPlan(std::unordered_map<Host, std::vector<LogicalPlan>> localPlans, LogicalPlan globalPlan)
         : queryId(globalPlan.getQueryId().getDistributedQueryId())
-        , decomposedPlan(std::move(decomposedPlan))
+        , localPlans(std::move(localPlans))
         , globalPlan(std::move(globalPlan))
     {
-        PRECONDITION(not this->decomposedPlan.localPlans.empty(), "Input plan should not be empty");
+        PRECONDITION(not this->localPlans.empty(), "Input plan should not be empty");
     }
 
     /// Subscript operator for accessing plans by worker id
     const std::vector<LogicalPlan>& operator[](const Host& worker) const
     {
-        if (const auto it = decomposedPlan.localPlans.find(worker); it != decomposedPlan.localPlans.end())
+        if (const auto it = localPlans.find(worker); it != localPlans.end())
         {
             return it->second;
         }
         throw std::out_of_range(fmt::format("No plan found in decomposed plan under worker {}", worker));
     }
 
-    std::vector<LogicalPlan>& operator[](const Host& worker) { return decomposedPlan.localPlans.at(worker); }
+    std::vector<LogicalPlan>& operator[](const Host& worker) { return localPlans.at(worker); }
 
     [[nodiscard]] size_t size() const
     {
         return std::ranges::fold_left(
-            decomposedPlan.localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
+            localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
     }
 
     [[nodiscard]] const LogicalPlan& getGlobalPlan() const { return globalPlan; }
@@ -74,13 +66,13 @@ public:
 
     void setQueryId(DistributedQueryId queryId) { this->queryId = std::move(queryId); }
 
-    [[nodiscard]] auto begin() const { return decomposedPlan.localPlans.begin(); }
+    [[nodiscard]] auto begin() const { return localPlans.begin(); }
 
-    [[nodiscard]] auto end() const { return decomposedPlan.localPlans.end(); }
+    [[nodiscard]] auto end() const { return localPlans.end(); }
 
 private:
     DistributedQueryId queryId{DistributedQueryId::INVALID};
-    DecomposedLogicalPlan<Host> decomposedPlan;
+    std::unordered_map<Host, std::vector<LogicalPlan>> localPlans;
     LogicalPlan globalPlan;
 };
 }
