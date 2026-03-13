@@ -1,0 +1,47 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <string>
+#include <unordered_set>
+#include <Functions/LogicalFunction.hpp>
+#include <Operators/LogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
+
+namespace NES
+{
+
+/// Pushes Selection (filter) operators closer to data sources in the logical plan.
+/// This reduces the volume of data flowing through the pipeline by filtering early.
+///
+/// Currently supported pushdown rules:
+/// - Selection past Projection: if the selection's predicate only references fields available in the projection's input
+/// - Selection past Join: if the selection's predicate only references fields from one side of the join
+class PredicatePushdown
+{
+public:
+    LogicalPlan apply(const LogicalPlan& queryPlan);
+
+private:
+    LogicalOperator apply(const LogicalOperator& logicalOperator);
+
+    /// Collects all field names referenced by FieldAccessLogicalFunction nodes in a logical function tree
+    static std::unordered_set<std::string> collectReferencedFields(const LogicalFunction& function);
+
+    /// Checks if all referenced fields belong to a given schema
+    static bool allFieldsBelongToSchema(const std::unordered_set<std::string>& fields, const Schema& schema);
+};
+
+}

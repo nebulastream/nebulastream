@@ -16,6 +16,7 @@
 
 #include <Phases/DecideJoinTypes.hpp>
 #include <Phases/DecideMemoryLayout.hpp>
+#include <Phases/PredicatePushdown.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <OptimizedPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -31,10 +32,13 @@ OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
 OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptimizerConfiguration& defaultQueryOptimization)
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
-    /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
+    /// For now, we apply predicate pushdown, decide the join type (if one exists in the query),
+    /// set the memory layout type and lower to physical operators in a pure function.
+    PredicatePushdown predicatePushdown;
     DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
-    auto optimizedPlan = joinTypeDecider.apply(plan);
+    auto pushdownPlan = predicatePushdown.apply(plan);
+    auto optimizedPlan = joinTypeDecider.apply(pushdownPlan);
     return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
 }
 
