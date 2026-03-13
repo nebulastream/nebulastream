@@ -446,6 +446,46 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     }
 }
 
+void AntlrSQLQueryPlanCreator::exitDereference(AntlrSQLParser::DereferenceContext* context)
+{
+    /// A dereference like `A.id` causes two identifiers to be pushed separately (first `A`, then `id`).
+    /// We combine them into a single qualified field access using the `$` separator (e.g., `A$id`).
+    auto combineLastTwoFieldAccesses = [](std::vector<LogicalFunction>& builder)
+    {
+        if (builder.size() < 2)
+        {
+            return;
+        }
+        const auto fieldNameFunc = builder.back();
+        builder.pop_back();
+        const auto qualifierFunc = builder.back();
+        builder.pop_back();
+        const auto fieldAccess = fieldNameFunc.tryGetAs<FieldAccessLogicalFunction>();
+        const auto qualifierAccess = qualifierFunc.tryGetAs<FieldAccessLogicalFunction>();
+        if (fieldAccess.has_value() and qualifierAccess.has_value())
+        {
+            const auto qualifiedName = qualifierAccess.value()->getFieldName() + "$" + fieldAccess.value()->getFieldName();
+            builder.emplace_back(FieldAccessLogicalFunction(qualifiedName));
+        }
+        else
+        {
+            /// If the entries are not simple field accesses, push them back unchanged.
+            builder.push_back(qualifierFunc);
+            builder.push_back(fieldNameFunc);
+        }
+    };
+
+    if (helpers.top().isJoinRelation)
+    {
+        combineLastTwoFieldAccesses(helpers.top().joinKeyRelationHelper);
+    }
+    else if (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
+    {
+        combineLastTwoFieldAccesses(helpers.top().functionBuilder);
+    }
+    AntlrSQLBaseListener::exitDereference(context);
+}
+
 void AntlrSQLQueryPlanCreator::enterPrimaryQuery(AntlrSQLParser::PrimaryQueryContext* context)
 {
     if (not helpers.empty() and not helpers.top().isFrom and not helpers.top().isSetOperation)

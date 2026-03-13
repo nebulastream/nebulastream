@@ -27,6 +27,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -554,6 +556,40 @@ TEST_F(StatementBinderTest, ExplainStatement)
         const auto explainStatementResult = binder->parseAndBindSingle(explain);
         ASSERT_FALSE(explainStatementResult.has_value());
     }
+}
+
+/// Issue #474: Qualified names in join ON clauses (e.g., A.id = B.id)
+TEST_F(StatementBinderTest, JoinWithQualifiedNames)
+{
+    const std::string queryString = "SELECT * FROM (SELECT * FROM A) INNER JOIN (SELECT * FROM B) ON A.id = B.id "
+                                    "WINDOW TUMBLING (timestamp, size 1 sec) INTO outputSink";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto joinOps = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joinOps.size());
+
+    /// Verify that the join function uses qualified field names with the $ separator
+    const auto joinFunction = joinOps.at(0)->getJoinFunction();
+    const auto joinFunctionString = joinFunction.explain(ExplainVerbosity::Debug);
+    EXPECT_TRUE(joinFunctionString.find("A$ID") != std::string::npos) << "Expected qualified name A$ID in: " << joinFunctionString;
+    EXPECT_TRUE(joinFunctionString.find("B$ID") != std::string::npos) << "Expected qualified name B$ID in: " << joinFunctionString;
+}
+
+TEST_F(StatementBinderTest, JoinWithUnqualifiedNames)
+{
+    /// Ensure unqualified names still work (regression check)
+    const std::string queryString = "SELECT * FROM (SELECT * FROM A) INNER JOIN (SELECT * FROM B) ON id = id2 "
+                                    "WINDOW TUMBLING (timestamp, size 1 sec) INTO outputSink";
+    const auto statement = binder->parseAndBindSingle(queryString);
+    ASSERT_TRUE(statement.has_value());
+    ASSERT_TRUE(std::holds_alternative<QueryStatement>(*statement));
+
+    const auto plan = std::get<QueryStatement>(*statement).plan;
+    const auto joinOps = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joinOps.size());
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)
