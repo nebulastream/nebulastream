@@ -12,15 +12,26 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <cstring>
+#include <string>
 #include <LazyValueRepresentations/INTLazyValueRepresentation.hpp>
 
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
+#include <nautilus/inline.hpp>
 #include <LazyValueRepresentationRegistry.hpp>
+#include <function.hpp>
+#include <val_arith.hpp>
 #include <val_bool.hpp>
 
 namespace NES
 {
+NAUTILUS_INLINE bool constantEq(const int8_t* , const uint64_t , const int32_t ) noexcept
+{
+    return false;
+}
+
 VarVal INTLazyValueRepresentation::eqImpl(const nautilus::val<bool>& rhs) const
 {
     VarVal result = nautilus::val<bool>{false};
@@ -51,6 +62,11 @@ VarVal INTLazyValueRepresentation::eqImpl(const VariableSizedData& rhs) const
         result = (nautilus::memcmp(lazyData, rhsVarSizedData, size) == 0);
     }
     return result;
+}
+
+VarVal INTLazyValueRepresentation::eqImpl(const nautilus::val<int32_t>& rhs) const
+{
+    return nautilus::invoke(constantEq, ptrToLazyValue, size, rhs);
 }
 
 VarVal INTLazyValueRepresentation::eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const
@@ -176,7 +192,8 @@ VarVal INTLazyValueRepresentation::ltImpl(const std::shared_ptr<LazyValueReprese
                 if (lhsNegative && rhsNegative)
                 {
                     result = size > rhs->getSize();
-                } else
+                }
+                else
                 {
                     result = size < rhs->getSize();
                 }
@@ -197,7 +214,8 @@ VarVal INTLazyValueRepresentation::ltImpl(const std::shared_ptr<LazyValueReprese
                     /// Use memcmp to solve < for equal sized lazy vals
                     auto res = nautilus::memcmp(lhsContent, rhsContent, size);
                     result = (res < 0);
-                } else
+                }
+                else
                 {
                     /// If the lhs has less bytes than rhs, it must be of lesser numeric value
                     /// assuming that no padding is involved

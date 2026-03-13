@@ -34,10 +34,9 @@ SELECT * FROM stream WHERE a == b INTO FILE();
 12,2,1001,9,9
 
 # Not implemented, should parse a
-SELECT * FROM stream WHERE a == INT8(9) INTO FILE();
+SELECT * FROM stream WHERE a == INT32(9) AND b == INT32(8) INTO FILE();
 ----
 1,3,1000,9,8
-12,2,1001,9,9
 
 SELECT * FROM stream WHERE a != b INTO FILE();
 ----

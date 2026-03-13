@@ -52,6 +52,7 @@ public:
         /// Transform rhs into a LazyValue and use it for the comparison
     }
     */
+    [[nodiscard]] VarVal eqImpl(const nautilus::val<int32_t>& rhs) const;
     [[nodiscard]] VarVal eqImpl(const std::shared_ptr<LazyValueRepresentation>& rhs) const;
 
     /// != Implementations
