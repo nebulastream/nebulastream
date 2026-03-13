@@ -399,10 +399,22 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema.getRawValue(), expectedField);
-            matchingFieldIt != actualResultSchema.getRawValue().end())
+        /// Find a matching actual field that has not already been matched. This handles duplicate field names
+        /// by matching each expected field to a distinct actual field in order.
+        const auto& actualFields = actualResultSchema.getRawValue().getFields();
+        auto matchingFieldIt = actualFields.end();
+        for (auto it = actualFields.begin(); it != actualFields.end(); ++it)
         {
-            auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
+            const auto idx = static_cast<size_t>(std::distance(actualFields.begin(), it));
+            if (*it == expectedField and not matchedActualResultFields.contains(idx))
+            {
+                matchingFieldIt = it;
+                break;
+            }
+        }
+        if (matchingFieldIt != actualFields.end())
+        {
+            auto offset = static_cast<size_t>(std::distance(actualFields.begin(), matchingFieldIt));
             expectedToActualFieldMap.expectedToActualFieldMap.emplace_back(expectedField.dataType, offset);
             matchedActualResultFields.emplace(offset);
             expectedToActualFieldMap.expectedResultsFieldSortIdx.emplace_back(expectedFieldIdx);
