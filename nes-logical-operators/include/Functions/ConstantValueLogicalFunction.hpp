@@ -56,11 +56,11 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> CONSTANT_VALUE_AS_STRING{
+        static constexpr auto CONSTANT_VALUE_AS_STRING = DescriptorConfig::makeConfigParameter<std::string>(
             "constantValueAsString",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(CONSTANT_VALUE_AS_STRING, config); }};
+            { return DescriptorConfig::tryGetByName<std::string>("constantValueAsString", config); });
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(CONSTANT_VALUE_AS_STRING);

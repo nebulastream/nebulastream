@@ -86,12 +86,13 @@ private:
 
 struct ConfigParametersGenerator
 {
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
+    static constexpr auto SEQUENCE_STOPS_GENERATOR = DescriptorConfig::makeConfigParameter<EnumWrapper, GeneratorStop>(
         "stop_generator_when_sequence_finishes",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
+            const auto optToken
+                = DescriptorConfig::tryGetByName<EnumWrapper, GeneratorStop>("stop_generator_when_sequence_finishes", config);
             if (not optToken.has_value() || not optToken.value().asEnum<GeneratorStop>().has_value())
             {
                 NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
@@ -116,19 +117,21 @@ struct ConfigParametersGenerator
                         "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
                 }
             }
-        }};
+        });
 
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> SEED{
+    /// SEED cannot be constexpr because its default value depends on std::chrono::high_resolution_clock::now()
+    static inline const auto SEED = DescriptorConfig::makeConfigParameter<uint32_t>(
         "seed",
         std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<uint32_t>("seed", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorRate::Type> GENERATOR_RATE_TYPE{
+    static constexpr auto GENERATOR_RATE_TYPE = DescriptorConfig::makeConfigParameter<EnumWrapper, GeneratorRate::Type>(
         "generator_rate_type",
         EnumWrapper{GeneratorRate::Type::FIXED},
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_TYPE, config);
+            const auto optToken = DescriptorConfig::tryGetByName<EnumWrapper, GeneratorRate::Type>("generator_rate_type", config);
             if (not optToken.has_value() || not optToken.value().asEnum<GeneratorRate::Type>().has_value())
             {
                 return std::optional<EnumWrapper>();
@@ -141,14 +144,14 @@ struct ConfigParametersGenerator
                     return std::optional(EnumWrapper(GeneratorRate::Type::SINUS));
             }
             return std::optional<EnumWrapper>();
-        }};
+        });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
+    static constexpr auto GENERATOR_RATE_CONFIG = DescriptorConfig::makeConfigParameter<std::string>(
         "generator_rate_config",
         "emit_rate 1000",
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
+            const auto optToken = DescriptorConfig::tryGetByName<std::string>("generator_rate_config", config);
             if (not optToken.has_value())
             {
                 return std::optional<std::string>();
@@ -156,17 +159,17 @@ struct ConfigParametersGenerator
             if (SinusGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value()
                 or FixedGeneratorRate::parseAndValidateConfigString(optToken.value()).has_value())
             {
-                return DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
+                return DescriptorConfig::tryGetByName<std::string>("generator_rate_config", config);
             }
             return std::optional<std::string>();
-        }};
+        });
 
-    static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
+    static constexpr auto GENERATOR_SCHEMA = DescriptorConfig::makeConfigParameter<std::string>(
         "generator_schema",
         {},
         [](const std::unordered_map<std::string, std::string>& config)
         {
-            const std::string schema = DescriptorConfig::tryGet(GENERATOR_SCHEMA, config).value_or("");
+            const std::string schema = DescriptorConfig::tryGetByName<std::string>("generator_schema", config).value_or("");
             if (schema.empty())
             {
                 NES_ERROR("Generator schema cannot be empty!")
@@ -196,23 +199,21 @@ struct ConfigParametersGenerator
                         "Cannot identify the type of field in \"{}\", does the field have a registered validator?", line);
                 }
             }
-            return DescriptorConfig::tryGet(GENERATOR_SCHEMA, config);
-        }};
+            return DescriptorConfig::tryGetByName<std::string>("generator_schema", config);
+        });
 
-    static inline const NES::DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
+    static constexpr auto FLUSH_INTERVAL_MS = DescriptorConfig::makeConfigParameter<uint64_t>(
         "flush_interval_ms",
         10,
         [](const std::unordered_map<std::string, std::string>& config)
-        {
-            const auto value = DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
-            return value;
-        }};
+        { return DescriptorConfig::tryGetByName<uint64_t>("flush_interval_ms", config); });
 
     /// @brief config option for setting the max runtime in ms, if set to -1 the source will run till stopped by another thread
-    static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
+    static constexpr auto MAX_RUNTIME_MS = DescriptorConfig::makeConfigParameter<int32_t>(
         "max_runtime_ms",
         -1,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<int32_t>("max_runtime_ms", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(

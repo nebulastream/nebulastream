@@ -66,15 +66,17 @@ private:
 
 struct ConfigParametersPrint
 {
-    static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
+    static constexpr auto INGESTION = DescriptorConfig::makeConfigParameter<uint32_t>(
         "ingestion",
         0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<uint32_t>("ingestion", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
+    static constexpr auto INPUT_FORMAT = DescriptorConfig::makeConfigParameter<EnumWrapper, InputFormat>(
         "input_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<EnumWrapper, InputFormat>("input_format", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(INGESTION, INPUT_FORMAT);
