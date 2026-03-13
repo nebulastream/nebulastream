@@ -14,32 +14,24 @@
 
 #pragma once
 
-#include <Identifiers/NESStrongType.hpp>
+#include <memory>
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
 
-using ChannelId = NESStrongUUIDType<struct ChannelId_>;
-
-class QueryDecomposer
+class SourceInferencePhase
 {
-    SharedPtr<const WorkerCatalog> workerCatalog;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-
 public:
-    QueryDecomposer(
-        SharedPtr<const WorkerCatalog> workerCatalog,
-        SharedPtr<const SourceCatalog> sourceCatalog,
-        SharedPtr<const SinkCatalog> sinkCatalog);
+    explicit SourceInferencePhase(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan);
+    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
+    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
+    void apply(LogicalPlan& queryPlan) const;
+
+private:
+    std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
-
 }

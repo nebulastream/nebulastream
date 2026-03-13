@@ -10,12 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(add_nes_optimizer_test)
+function(add_nes_distributed_test)
     add_nes_unit_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-query-optimizer nes-logical-operators nes-test-util)
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
+    target_link_libraries(${TARGET_NAME} nes-distributed nes-test-util)
 endfunction()
 
-add_nes_optimizer_test(DecideJoinTypesTest UnitTests/DecideJoinTypesTest.cpp)
-add_nes_optimizer_test(DecideMemoryLayoutTest UnitTests/DecideMemoryLayoutTest.cpp)
+add_nes_distributed_test(distributed-query-status-test UnitTests/DistributedQueryTest.cpp)
+add_nes_distributed_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
+add_nes_distributed_test(WorkerCatalogTest UnitTests/WorkerCatalogTest.cpp)

@@ -31,8 +31,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Plans/LogicalPlan.hpp>
+#include <QueryStatus.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
@@ -150,59 +149,6 @@ public:
 
 std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);
 std::ostream& operator<<(std::ostream& ostream, const DistributedQueryState& status);
-
-template <typename AddressType>
-struct DecomposedLogicalPlan
-{
-    std::unordered_map<AddressType, std::vector<LogicalPlan>> localPlans;
-
-    explicit DecomposedLogicalPlan(std::unordered_map<AddressType, std::vector<LogicalPlan>> plans) : localPlans{std::move(plans)} { }
-};
-
-class DistributedLogicalPlan
-{
-public:
-    DistributedLogicalPlan(DecomposedLogicalPlan<Host>&& decomposedPlan, LogicalPlan globalPlan)
-        : queryId(globalPlan.getQueryId().getDistributedQueryId())
-        , decomposedPlan(std::move(decomposedPlan))
-        , globalPlan(std::move(globalPlan))
-    {
-        PRECONDITION(not this->decomposedPlan.localPlans.empty(), "Input plan should not be empty");
-    }
-
-    /// Subscript operator for accessing plans by worker id
-    const std::vector<LogicalPlan>& operator[](const Host& worker) const
-    {
-        if (const auto it = decomposedPlan.localPlans.find(worker); it != decomposedPlan.localPlans.end())
-        {
-            return it->second;
-        }
-        throw std::out_of_range(fmt::format("No plan found in decomposed plan under worker {}", worker));
-    }
-
-    std::vector<LogicalPlan>& operator[](const Host& worker) { return decomposedPlan.localPlans.at(worker); }
-
-    [[nodiscard]] size_t size() const
-    {
-        return std::ranges::fold_left(
-            decomposedPlan.localPlans | std::views::values | std::views::transform(&std::vector<LogicalPlan>::size), 0, std::plus{});
-    }
-
-    [[nodiscard]] const LogicalPlan& getGlobalPlan() const { return globalPlan; }
-
-    [[nodiscard]] const DistributedQueryId& getQueryId() const { return queryId; }
-
-    void setQueryId(DistributedQueryId queryId) { this->queryId = std::move(queryId); }
-
-    [[nodiscard]] auto begin() const { return decomposedPlan.localPlans.begin(); }
-
-    [[nodiscard]] auto end() const { return decomposedPlan.localPlans.end(); }
-
-private:
-    DistributedQueryId queryId{DistributedQueryId::INVALID};
-    DecomposedLogicalPlan<Host> decomposedPlan;
-    LogicalPlan globalPlan;
-};
 }
 
 FMT_OSTREAM(NES::DistributedQueryState);

@@ -14,8 +14,4 @@ add_source_files(nes-query-optimizer
         BottomUpPlacement.cpp
         OperatorPlacement.cpp
         QueryDecomposition.cpp
-        NetworkTopology.cpp
-        DistributedQuery.cpp
-        DistributedQueryIdGenerator.cpp
-        WorkerCatalog.cpp
 )
