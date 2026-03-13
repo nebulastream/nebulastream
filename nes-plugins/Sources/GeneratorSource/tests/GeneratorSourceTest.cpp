@@ -20,12 +20,12 @@
 #include <string_view>
 #include <tuple>
 
+#include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
 #include <FixedGeneratorRate.hpp>
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
 #include <SinusGeneratorRate.hpp>
-#include <gtest/gtest.h>
 
 namespace NES
 {
@@ -79,9 +79,9 @@ TEST_F(SequenceFieldTest, sequenceStopsAtEnd)
     std::ostringstream oss;
 
     EXPECT_FALSE(field.stop);
-    field.generate(oss, rng); // 0
-    field.generate(oss, rng); // 1
-    field.generate(oss, rng); // 2
+    field.generate(oss, rng); /// 0
+    field.generate(oss, rng); /// 1
+    field.generate(oss, rng); /// 2
     EXPECT_TRUE(field.stop);
 }
 
@@ -226,8 +226,8 @@ TEST_F(GeneratorTest, shouldStopWhenAllSequencesComplete)
     std::ostringstream oss;
 
     EXPECT_FALSE(generator.shouldStop());
-    generator.generateTuple(oss); // 0
-    generator.generateTuple(oss); // 1 -> hits end
+    generator.generateTuple(oss); /// 0
+    generator.generateTuple(oss); /// 1 -> hits end
     EXPECT_TRUE(generator.shouldStop());
 }
 
@@ -237,8 +237,8 @@ TEST_F(GeneratorTest, shouldStopWhenOneSequenceCompletes)
     std::ostringstream oss;
 
     EXPECT_FALSE(generator.shouldStop());
-    generator.generateTuple(oss); // first: 0, second: 0
-    generator.generateTuple(oss); // first: 1 -> end, second: 1
+    generator.generateTuple(oss); /// first: 0, second: 0
+    generator.generateTuple(oss); /// first: 1 -> end, second: 1
     EXPECT_TRUE(generator.shouldStop());
 }
 

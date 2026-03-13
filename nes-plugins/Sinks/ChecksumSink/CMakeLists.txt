@@ -15,12 +15,10 @@ add_plugin_as_library(Checksum Sink checksum_sink_plugin ChecksumSink.cpp)
 add_plugin_as_library(Checksum SinkValidation checksum_sink_validation_plugin ChecksumSink.cpp)
 
 target_include_directories(checksum_sink_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC include .
 )
 target_include_directories(checksum_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC include .
 )
 
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
