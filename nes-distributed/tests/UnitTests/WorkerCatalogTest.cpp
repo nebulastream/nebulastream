@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <variant>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -24,6 +23,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <SingleNodeWorkerConfiguration.hpp>
 
 /// NOLINTBEGIN(google-build-using-namespace, readability-identifier-length)
 namespace NES
@@ -50,7 +50,7 @@ TEST_F(WorkerCatalogTest, AddWorker)
     const auto host = Host("worker1:9090");
     const bool added = catalog.addWorker(host, "data1:4321", CapacityKind::Unlimited{}, {});
     EXPECT_TRUE(added);
-    EXPECT_THAT(catalog.size(), Eq(1U));
+    EXPECT_THAT(catalog.size(), Eq(1u));
     const auto workers = catalog.getAllWorkers();
     EXPECT_THAT(workers, SizeIs(1));
     EXPECT_THAT(workers[0].host, Eq(host));
@@ -65,7 +65,7 @@ TEST_F(WorkerCatalogTest, AddWorkerDuplicate)
     const bool second = catalog.addWorker(host, "data1:4321", CapacityKind::Unlimited{}, {});
     EXPECT_TRUE(first);
     EXPECT_FALSE(second);
-    EXPECT_THAT(catalog.size(), Eq(1U));
+    EXPECT_THAT(catalog.size(), Eq(1u));
 }
 
 /// AddWorkerWithUnlimitedCapacity: worker with CapacityKind::Unlimited{} can be added and retrieved
@@ -88,7 +88,7 @@ TEST_F(WorkerCatalogTest, AddWorkerWithLimitedCapacity)
     const auto retrieved = catalog.getWorker(host);
     ASSERT_TRUE(retrieved.has_value());
     ASSERT_TRUE(std::holds_alternative<CapacityKind::Limited>(retrieved->maxOperators));
-    EXPECT_THAT(std::get<CapacityKind::Limited>(retrieved->maxOperators).value, Eq(100U));
+    EXPECT_THAT(std::get<CapacityKind::Limited>(retrieved->maxOperators).value, Eq(100u));
 }
 
 /// RemoveWorker: removing existing worker returns the WorkerConfig, size() decreases
@@ -97,11 +97,11 @@ TEST_F(WorkerCatalogTest, RemoveWorker)
     WorkerCatalog catalog;
     const auto host = Host("worker1:9090");
     catalog.addWorker(host, "data1:4321", CapacityKind::Unlimited{}, {});
-    EXPECT_THAT(catalog.size(), Eq(1U));
+    EXPECT_THAT(catalog.size(), Eq(1u));
     const auto removed = catalog.removeWorker(host);
     ASSERT_TRUE(removed.has_value());
     EXPECT_THAT(removed->host, Eq(host));
-    EXPECT_THAT(catalog.size(), Eq(0U));
+    EXPECT_THAT(catalog.size(), Eq(0u));
 }
 
 /// RemoveNonExistent: removing non-existent host returns nullopt, size unchanged
@@ -112,13 +112,13 @@ TEST_F(WorkerCatalogTest, RemoveNonExistent)
     catalog.addWorker(host, "data1:4321", CapacityKind::Unlimited{}, {});
     const auto removed = catalog.removeWorker(Host("nonexistent:9090"));
     EXPECT_FALSE(removed.has_value());
-    EXPECT_THAT(catalog.size(), Eq(1U));
+    EXPECT_THAT(catalog.size(), Eq(1u));
 }
 
 /// GetAllWorkersEmpty: empty catalog returns empty vector
 TEST_F(WorkerCatalogTest, GetAllWorkersEmpty)
 {
-    const WorkerCatalog catalog;
+    WorkerCatalog catalog;
     EXPECT_THAT(catalog.getAllWorkers(), IsEmpty());
 }
 
@@ -130,7 +130,7 @@ TEST_F(WorkerCatalogTest, GetAllWorkersMultiple)
     catalog.addWorker(Host("worker2:9090"), "data2:4321", CapacityKind::Limited{50}, {});
     catalog.addWorker(Host("worker3:9090"), "data3:4321", CapacityKind::Limited{200}, {});
     EXPECT_THAT(catalog.getAllWorkers(), SizeIs(3));
-    EXPECT_THAT(catalog.size(), Eq(3U));
+    EXPECT_THAT(catalog.size(), Eq(3u));
 }
 
 /// TopologyConsistency: after addWorker with downstream, getTopology() reflects the edge
@@ -142,7 +142,7 @@ TEST_F(WorkerCatalogTest, TopologyConsistency)
     catalog.addWorker(downstream, "data-ds:4321", CapacityKind::Unlimited{}, {});
     catalog.addWorker(upstream, "data-us:4321", CapacityKind::Unlimited{}, {downstream});
     const auto topology = catalog.getTopology();
-    EXPECT_THAT(topology.size(), Eq(2U));
+    EXPECT_THAT(topology.size(), Eq(2u));
     EXPECT_THAT(topology.getDownstreamNodesOf(upstream), Contains(downstream));
     EXPECT_THAT(topology.getUpstreamNodesOf(downstream), Contains(upstream));
 }
@@ -158,7 +158,7 @@ TEST_F(WorkerCatalogTest, TopologyAfterRemove)
     catalog.removeWorker(host);
     const auto topologyAfter = catalog.getTopology();
     EXPECT_FALSE(topologyAfter.contains(host));
-    EXPECT_THAT(topologyAfter.size(), Eq(0U));
+    EXPECT_THAT(topologyAfter.size(), Eq(0u));
 }
 
 /// TopologyDiamond: source->left->sink and source->right->sink; topology has 4 nodes,
@@ -177,9 +177,9 @@ TEST_F(WorkerCatalogTest, TopologyDiamond)
     catalog.addWorker(rightNode, "data-right-node:4321", CapacityKind::Unlimited{}, {sinkNode});
     catalog.addWorker(sourceNode, "data-source-node:4321", CapacityKind::Unlimited{}, {leftNode, rightNode});
 
-    EXPECT_THAT(catalog.size(), Eq(4U));
+    EXPECT_THAT(catalog.size(), Eq(4u));
     const auto topology = catalog.getTopology();
-    EXPECT_THAT(topology.size(), Eq(4U));
+    EXPECT_THAT(topology.size(), Eq(4u));
 
     EXPECT_THAT(topology.getDownstreamNodesOf(sourceNode), UnorderedElementsAre(leftNode, rightNode));
     EXPECT_THAT(topology.getUpstreamNodesOf(sinkNode), UnorderedElementsAre(leftNode, rightNode));
@@ -202,9 +202,9 @@ TEST_F(WorkerCatalogTest, TopologyShortcut)
     catalog.addWorker(midNode, "data-mid-node:4321", CapacityKind::Unlimited{}, {sinkNode});
     catalog.addWorker(sourceNode, "data-source-node:4321", CapacityKind::Unlimited{}, {midNode, sinkNode});
 
-    EXPECT_THAT(catalog.size(), Eq(3U));
+    EXPECT_THAT(catalog.size(), Eq(3u));
     const auto topology = catalog.getTopology();
-    EXPECT_THAT(topology.size(), Eq(3U));
+    EXPECT_THAT(topology.size(), Eq(3u));
 
     EXPECT_THAT(topology.getDownstreamNodesOf(sourceNode), UnorderedElementsAre(midNode, sinkNode));
     EXPECT_THAT(topology.getUpstreamNodesOf(sinkNode), UnorderedElementsAre(midNode, sourceNode));
@@ -233,7 +233,7 @@ TEST_F(WorkerCatalogTest, TopologyCycle)
 
     /// The topology rejects the cycle-closing node; only 2 nodes appear in the topology.
     const auto topology = catalog.getTopology();
-    EXPECT_THAT(topology.size(), Eq(2U));
+    EXPECT_THAT(topology.size(), Eq(2u));
     EXPECT_FALSE(topology.contains(nodeC));
 
     EXPECT_THAT(topology.getDownstreamNodesOf(nodeA), Contains(nodeB));
@@ -257,9 +257,9 @@ TEST_F(WorkerCatalogTest, TopologyDiamondRemoveIntermediateNode)
 
     catalog.removeWorker(leftNode);
 
-    EXPECT_THAT(catalog.size(), Eq(3U));
+    EXPECT_THAT(catalog.size(), Eq(3u));
     const auto topology = catalog.getTopology();
-    EXPECT_THAT(topology.size(), Eq(3U));
+    EXPECT_THAT(topology.size(), Eq(3u));
     EXPECT_FALSE(topology.contains(leftNode));
 
     EXPECT_THAT(topology.getDownstreamNodesOf(sourceNode), Not(Contains(leftNode)));

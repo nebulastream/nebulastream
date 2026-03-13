@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <optional>
 #include <ostream>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>

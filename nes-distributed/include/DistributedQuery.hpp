@@ -14,22 +14,28 @@
 
 #pragma once
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <functional>
+#include <numeric>
 #include <optional>
 #include <ostream>
 #include <ranges>
+#include <stdexcept>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <QueryStatus.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <QueryStatus.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES

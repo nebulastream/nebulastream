@@ -16,7 +16,7 @@
 
 #include <Phases/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/BottomUpPlacement.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
@@ -25,7 +25,7 @@
 #include <Rules/BottomUpPlacement.hpp>
 #include <Rules/QueryDecomposition.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {

@@ -13,33 +13,26 @@
 */
 
 #pragma once
-
-#include <Identifiers/NESStrongType.hpp>
+#include <memory>
+#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
 
-using ChannelId = NESStrongUUIDType<struct ChannelId_>;
+/// The InlineSinkBindingPhase replaces all sink that are defined within the query itself (InlineSinkLogicalOperators), as opposed to
+/// sinks that are created in separate CREATE statements, with SinkLogicalOperators based on the given inline sink configuration.
 
-class QueryDecomposer
+class InlineSinkBindingPhase
 {
-    SharedPtr<const WorkerCatalog> workerCatalog;
-    SharedPtr<const SourceCatalog> sourceCatalog;
-    SharedPtr<const SinkCatalog> sinkCatalog;
-
 public:
-    QueryDecomposer(
-        SharedPtr<const WorkerCatalog> workerCatalog,
-        SharedPtr<const SourceCatalog> sourceCatalog,
-        SharedPtr<const SinkCatalog> sinkCatalog);
+    explicit InlineSinkBindingPhase(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan);
+    void apply(LogicalPlan& queryPlan) const;
+
+private:
+    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 
 }

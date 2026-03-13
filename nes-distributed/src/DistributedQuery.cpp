@@ -25,13 +25,13 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <QueryStatus.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <QueryStatus.hpp>
 
 NES::DistributedException::DistributedException(std::unordered_map<Host, std::vector<Exception>> errors) : errors(std::move(errors))
 {

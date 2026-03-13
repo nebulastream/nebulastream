@@ -25,6 +25,7 @@
 #include <gtest/gtest.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <QueryStatus.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -32,7 +33,6 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
-#include <QueryStatus.hpp>
 
 namespace NES
 {

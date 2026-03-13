@@ -21,6 +21,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
+#include <QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>

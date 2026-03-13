@@ -19,7 +19,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
