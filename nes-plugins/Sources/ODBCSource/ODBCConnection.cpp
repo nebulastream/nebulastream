@@ -330,14 +330,23 @@ void ODBCConnection::connect(
     }
 }
 
+// Todo: add to log of tuple
 SQLRETURN ODBCConnection::readVarSized(
-    const size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider) const
+    const size_t colIdx,
+    const TypeInfo& typeInfo,
+    SQLLEN& indicator,
+    TupleBuffer& buffer,
+    AbstractBufferProvider& bufferProvider,
+    std::string& currentTuple) const
 {
     /// Add 1 byte for the null terminator (required)
     if (auto varSizedBuffer = bufferProvider.getUnpooledBuffer(typeInfo.sqlColumnSize))
     {
         const auto ret = SQLGetData(
             hstmt, colIdx, SQL_C_CHAR, varSizedBuffer.value().getAvailableMemoryArea<char>().data(), typeInfo.sqlColumnSize, &indicator);
+        const auto varsizedString
+            = std::string(varSizedBuffer.value().getAvailableMemoryArea<char>().data(), static_cast<uint64_t>(indicator));
+        currentTuple = fmt::format("{}, {}", currentTuple, varsizedString);
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
         INVARIANT(indicator != SQL_NULL_DATA, "not supporting null data for varsized");
         const auto childBufferIdx = buffer.storeChildBuffer(varSizedBuffer.value());
@@ -351,15 +360,20 @@ SQLRETURN ODBCConnection::readVarSized(
 }
 
 SQLRETURN ODBCConnection::readDataIntoBuffer(
-    const size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider) const
+    const size_t colIdx,
+    const TypeInfo& typeInfo,
+    SQLLEN& indicator,
+    TupleBuffer& buffer,
+    AbstractBufferProvider& bufferProvider,
+    std::string& currentTuple) const
 {
     switch (typeInfo.sqlType)
     {
         case SQL_BINARY: {
-            return readVal<char>(colIdx, buffer, typeInfo, indicator);
+            return readVal<char>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_BIT: {
-            return readVal<bool>(colIdx, buffer, typeInfo, indicator);
+            return readVal<bool>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_CHAR: {
             std::array<char, 2> charBuffer = {};
@@ -369,30 +383,31 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
             return ret;
         }
         case SQL_TINYINT: {
-            return readVal<int8_t>(colIdx, buffer, typeInfo, indicator);
+            return readVal<int8_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_SMALLINT: {
-            return readVal<int16_t>(colIdx, buffer, typeInfo, indicator);
+            return readVal<int16_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_INTEGER: {
-            return readVal<int32_t>(colIdx, buffer, typeInfo, indicator);
+            return readVal<int32_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_C_SBIGINT: {
-            return readVal<int64_t>(colIdx, buffer, typeInfo, indicator);
+            return readVal<int64_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_FLOAT: {
-            return readVal<float>(colIdx, buffer, typeInfo, indicator);
+            return readVal<float>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_DOUBLE: {
-            return readVal<double>(colIdx, buffer, typeInfo, indicator);
+            return readVal<double>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_REAL: {
-            return readVal<float>(colIdx, buffer, typeInfo, indicator);
+            return readVal<float>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_TYPE_TIMESTAMP: {
             SQL_TIMESTAMP_STRUCT timestamp;
             const auto ret = SQLGetData(hstmt, colIdx, SQL_TYPE_TIMESTAMP, &timestamp, sizeof(SQL_TIMESTAMP_STRUCT), &indicator);
             const uint64_t timestampAsUint64 = timestampStructToUnix(timestamp);
+            currentTuple = fmt::format("{}, {}", currentTuple, timestampAsUint64);
             *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = timestampAsUint64;
             buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
             return ret;
@@ -403,7 +418,7 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
         case SQL_LONGVARCHAR:
         case SQL_VARBINARY:
         case SQL_LONGVARBINARY: {
-            return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider);
+            return readVarSized(colIdx, typeInfo, indicator, buffer, bufferProvider, currentTuple);
         }
         case SQL_WCHAR:
         case SQL_WLONGVARCHAR:
@@ -444,34 +459,53 @@ std::vector<SQLCHAR> ODBCConnection::buildNewRowFetchSting(const std::string_vie
 ODBCPollStatus ODBCConnection::executeQuery(
     const std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer)
 {
-    const auto newRowCount = syncRowCount();
-    if (newRowCount <= this->rowCountTracker)
+    size_t nextRowsToFetch = 0;
+    /// if there are still rows to read, fetch and read these first, otherwise try to get new rows
+    if (this->numberOfLeftoverTuples > 0)
     {
-        return (newRowCount < this->rowCountTracker) ? ODBCPollStatus::FEWER_ROWS : ODBCPollStatus::NO_NEW_ROWS;
+        nextRowsToFetch = std::min(numberOfLeftoverTuples, rowsPerBuffer);
+        this->rowCountTracker += nextRowsToFetch;
+        INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
+        this->numberOfLeftoverTuples -= nextRowsToFetch;
     }
-
-    /// Create query string that fetches only the last N rows
-    const auto rowsToFetch = std::min(newRowCount - this->rowCountTracker, rowsPerBuffer);
-    auto queryBuffer = buildNewRowFetchSting(query, rowsToFetch);
-
-    /// There are new rows, Execute the SQL statement
-    SQLRETURN ret = SQLExecDirect(hstmt, queryBuffer.data(), static_cast<SQLINTEGER>(queryBuffer.size()));
-    checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
-
-    this->rowCountTracker += rowsToFetch;
-    for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < rowsToFetch; ++bufferLocalRowCount)
+    else
     {
-        ret = SQLFetch(hstmt);
-        INVARIANT(ret != SQL_NO_DATA, "Ran out of data in polling ODBC source, which should never happen.");
-        checkError(ret, SQL_HANDLE_STMT, hstmt, "Fetch row");
+        const auto newRowCount = syncRowCount();
+        if (newRowCount <= this->rowCountTracker)
+        {
+            return (newRowCount < this->rowCountTracker) ? ODBCPollStatus::FEWER_ROWS : ODBCPollStatus::NO_NEW_ROWS;
+        }
+
+        /// Create query string that fetches only the last N rows
+        this->numberOfLeftoverTuples = newRowCount - this->rowCountTracker;
+        nextRowsToFetch = std::min(this->numberOfLeftoverTuples, rowsPerBuffer);
+
+        auto queryBuffer = buildNewRowFetchSting(query, this->numberOfLeftoverTuples);
+
+        /// There are new rows, Execute the SQL statement
+        const SQLRETURN ret = SQLExecDirect(hstmt, queryBuffer.data(), static_cast<SQLINTEGER>(queryBuffer.size()));
+        checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
+        this->rowCountTracker += nextRowsToFetch;
+        INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
+        this->numberOfLeftoverTuples -= nextRowsToFetch;
+    }
+    // Todo: fetches rows in reverse order (when fetching 58 tuples (100-157), it reads 157,156,155,..
+    // - since we may emit multiple tuples (when results don't fit in a single buffer, we send buffers out of order (wrong sequence numbers!)
+    NES_DEBUG("Reading {} rows, with {} rows left", nextRowsToFetch, this->numberOfLeftoverTuples);
+    for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < nextRowsToFetch; ++bufferLocalRowCount)
+    {
+        std::string currentTuple{};
+        const SQLRETURN fetchReturn = SQLFetch(hstmt);
+        INVARIANT(fetchReturn != SQL_NO_DATA, "Ran out of data in polling ODBC source, which should never happen.");
+        checkError(fetchReturn, SQL_HANDLE_STMT, hstmt, "Fetch row");
 
         /// Process fetched row
         for (const auto [columnIdx, columnType] : fetchedSchema.columnTypes | NES::views::enumerate)
         {
             SQLLEN indicator{};
             /// ODBC column indexes start at >1<
-            readDataIntoBuffer(columnIdx + 1, columnType, indicator, tupleBuffer, bufferProvider);
-            if (ret != SQL_SUCCESS and ret != SQL_SUCCESS_WITH_INFO)
+            readDataIntoBuffer(columnIdx + 1, columnType, indicator, tupleBuffer, bufferProvider, currentTuple);
+            if (fetchReturn != SQL_SUCCESS and fetchReturn != SQL_SUCCESS_WITH_INFO)
             {
                 throw UnknownDataType("Not supporting {} type in ODBC source", magic_enum::enum_name(columnType.nesType));
             }
@@ -480,8 +514,12 @@ ODBCPollStatus ODBCConnection::executeQuery(
                 throw UnknownDataType("Not supporting null types in ODBC source");
             }
         }
+        NES_DEBUG("Tuple {}: ({})", bufferLocalRowCount, currentTuple);
     }
-    SQLCloseCursor(hstmt);
+    if (this->numberOfLeftoverTuples == 0)
+    {
+        SQLCloseCursor(hstmt);
+    }
     return ODBCPollStatus::NEW_ROWS;
 }
 }
