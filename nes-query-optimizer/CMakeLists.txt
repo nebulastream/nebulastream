@@ -23,7 +23,8 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 
 # Add Library
 add_library(nes-query-optimizer ${NES_OPTIMIZER_SOURCE_FILES})
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators PRIVATE nes-input-formatter-provider)
+find_package(highs CONFIG REQUIRED)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
 target_include_directories(nes-query-optimizer
         PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)

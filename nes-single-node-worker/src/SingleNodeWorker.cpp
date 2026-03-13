@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <sstream>
+#include <string>
 #include <utility>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
@@ -39,10 +40,13 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
+#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
 namespace NES
 {
@@ -51,37 +55,61 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host workerId)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host host)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {
         std::stringstream configStr;
         ConfigValuePrinter printer(configStr);
         SingleNodeWorkerConfiguration(configuration).accept(printer);
-        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", workerId.getRawValue(), configStr.str());
+        NES_INFO("Starting SingleNodeWorker {} with configuration:\n{}", host.getRawValue(), configStr.str());
     }
     if (configuration.enableGoogleEventTrace.getValue())
     {
         auto googleTracePrinter = std::make_shared<GoogleEventTracePrinter>(
-            fmt::format("trace_{}_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", workerId.getRawValue(), std::chrono::system_clock::now(), ::getpid()));
+            fmt::format("trace_{}_{:%Y-%m-%d_%H-%M-%S}_{:d}.json", host.getRawValue(), std::chrono::system_clock::now(), ::getpid()));
         googleTracePrinter->start();
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(workerId);
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
 
     optimizer = std::make_unique<QueryOptimizer>(configuration.workerConfiguration.defaultQueryOptimization);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+
+    if (!configuration.data.getValue().empty())
+    {
+        const auto& networkConfig = configuration.workerConfiguration.network;
+        initNetworkServices(
+            configuration.data.getValue(),
+            host,
+            NetworkOptions{
+                .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
+                .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
+                .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
+                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
+                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
+            });
+    }
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a query ID
-        if (!plan.getQueryId().isValid())
+        /// Check if the plan already has a local query ID, generate one if needed
+        /// but preserve the distributed query ID if present
+        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
         {
-            plan.setQueryId(QueryId::createLocal(LocalQueryId(generateUUID())));
+            auto localId = LocalQueryId(generateUUID());
+            if (plan.getQueryId().isDistributed())
+            {
+                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
+            }
+            else
+            {
+                plan.setQueryId(QueryId::createLocal(localId));
+            }
         }
 
         const LogContext context("queryId", plan.getQueryId());

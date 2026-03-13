@@ -29,7 +29,6 @@ option(ENABLE_DOCKER_TESTS "Runs testcases that require docker" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
-option(ENABLE_LARGE_TESTS "Runs testcases with larger input data" OFF)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
 
@@ -58,13 +57,18 @@ else ()
 endif ()
 
 
-if (NES_LOG_WITH_STACKTRACE)
-    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
-endif ()
-
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
 include(cmake/HostIdentification.cmake)
 include(cmake/Sanitizers.cmake)
+
+if (NES_LOG_WITH_STACKTRACE)
+    if (SANITIZER_OPTION STREQUAL "thread")
+        message(WARNING "NES_LOG_WITH_STACKTRACE is ON but is disabled because the thread sanitizer is active. "
+                "Stack trace resolution is prohibitively slow under TSAN and causes test timeouts.")
+    else ()
+        add_compile_definitions(NES_LOG_WITH_STACKTRACE)
+    endif ()
+endif ()
 include(cmake/ImportDependencies.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
@@ -228,6 +232,18 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
+    if (ENABLE_DOCKER_TESTS)
+        set(NES_RUNTIME_BASE_IMAGE "nes-runtime-base:test" CACHE STRING "Docker image name for the runtime base used by DockerCompose tests")
+        add_test(NAME build-runtime-base-image
+                COMMAND docker build --load -t ${NES_RUNTIME_BASE_IMAGE}
+                -f ${CMAKE_SOURCE_DIR}/docker/runtime/Runtime.dockerfile
+                ${CMAKE_SOURCE_DIR}/docker/runtime
+        )
+        set_tests_properties(build-runtime-base-image PROPERTIES
+                FIXTURES_SETUP RuntimeBaseImage
+                LABELS "DockerCompose"
+        )
+    endif ()
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
