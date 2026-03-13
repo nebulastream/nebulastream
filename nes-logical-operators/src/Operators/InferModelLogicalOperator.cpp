@@ -21,6 +21,8 @@
 #include <utility>
 #include <vector>
 
+#include <openssl/evp.h>
+
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
@@ -34,6 +36,28 @@
 #include <LogicalOperatorRegistry.hpp>
 #include <Model.hpp>
 #include <SerializableOperator.pb.h>
+
+namespace
+{
+std::string base64Encode(const std::string& input)
+{
+    const auto encodedLen = 4 * ((input.size() + 2) / 3);
+    std::string out(encodedLen, '\0');
+    EVP_EncodeBlock(reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    return out;
+}
+
+std::string base64Decode(const std::string& input)
+{
+    const auto maxDecodedLen = 3 * input.size() / 4;
+    std::string out(maxDecodedLen, '\0');
+    const auto actualLen = EVP_DecodeBlock(reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    /// EVP_DecodeBlock doesn't account for padding — trim trailing null bytes
+    auto padding = std::count(input.rbegin(), input.rend(), '=');
+    out.resize(static_cast<size_t>(actualLen - padding));
+    return out;
+}
+}
 
 namespace NES
 {
@@ -162,14 +186,15 @@ std::vector<LogicalOperator> InferModelLogicalOperator::getChildren() const
 
 Reflected Reflector<InferModelLogicalOperator>::operator()(const InferModelLogicalOperator& op) const
 {
-    /// Serialize model to protobuf bytes for reflection
+    /// Serialize model to protobuf bytes, then base64-encode for JSON safety
     SerializableOperator_Model proto;
     Nebuli::Inference::serializeModel(op.getModel(), proto);
     std::string bytes;
     proto.SerializeToString(&bytes);
+    auto encoded = base64Encode(bytes);
 
     return reflect(
-        detail::ReflectedInferModelLogicalOperator{std::make_optional(std::move(bytes)), std::make_optional(op.getInputFieldNames())});
+        detail::ReflectedInferModelLogicalOperator{std::make_optional(std::move(encoded)), std::make_optional(op.getInputFieldNames())});
 }
 
 InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(const Reflected& rfl) const
@@ -181,8 +206,9 @@ InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(con
         throw CannotDeserialize("Failed to deserialize InferModelLogicalOperator");
     }
 
+    auto decoded = base64Decode(modelBytesOpt.value());
     SerializableOperator_Model proto;
-    if (!proto.ParseFromString(modelBytesOpt.value()))
+    if (!proto.ParseFromString(decoded))
     {
         throw CannotDeserialize("Failed to parse InferModelLogicalOperator model proto");
     }
@@ -195,7 +221,7 @@ LogicalOperatorGeneratedRegistrar::RegisterInferModelLogicalOperator(LogicalOper
 {
     if (!arguments.reflected.isEmpty())
     {
-        return unreflect<InferModelLogicalOperator>(arguments.reflected);
+        return Unreflector<InferModelLogicalOperator>{}(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly or via reflection, not using the registry");
     std::unreachable();
