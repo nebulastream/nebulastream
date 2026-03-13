@@ -195,7 +195,7 @@ std::string DataType::formattedBytesToString(const void* data) const
         case Type::FLOAT64:
             return formatFloat(*static_cast<const double*>(data));
         case Type::BOOLEAN:
-            return std::to_string(static_cast<int>(*static_cast<const bool*>(data)));
+            return *static_cast<const bool*>(data) ? "true" : "false";
         case Type::CHAR: {
             if (getSizeInBytesWithoutNull() != 1)
             {
