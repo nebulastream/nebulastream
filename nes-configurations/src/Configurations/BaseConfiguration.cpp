@@ -25,6 +25,7 @@
 #include <Configurations/BaseOption.hpp>
 #include <Configurations/OptionVisitor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/ranges.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 
@@ -46,7 +47,9 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         auto node = entry.second;
         if (!optionMap.contains(identifier))
         {
-            throw InvalidConfigParameter("Identifier: {} is not known. Check if it exposed in the getOptions function.", identifier);
+            auto knownKeys = std::views::keys(optionMap);
+            NES_WARNING("Unrecognized configuration key: '{}'. Known keys: [{}]. Skipping.", identifier, fmt::join(knownKeys, ", "));
+            continue;
         }
         /// check if config is empty
         if (node.IsScalar())
@@ -80,7 +83,9 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
 
     if (!optionMap.contains(identifier))
     {
-        throw InvalidConfigParameter("Identifier for: {} is not known.", identifier);
+        auto knownKeys = std::views::keys(optionMap);
+        NES_WARNING("Unrecognized configuration key: '{}'. Known keys: [{}]. Skipping.", identifier, fmt::join(knownKeys, ", "));
+        return;
     }
     if (auto* option = dynamic_cast<BaseConfiguration*>(optionMap[identifier]))
     {

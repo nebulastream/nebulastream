@@ -261,6 +261,33 @@ TEST_F(ExplicitlySetTrackingTest, ConfigValuePrinterWithYAMLOverrides)
     EXPECT_NE(output.find("port: 8080 (default)"), std::string::npos);
 }
 
+TEST_F(ExplicitlySetTrackingTest, UnrecognizedYAMLKeyLogsWarningAndContinues)
+{
+    TestConfig config;
+    YAML::Node node;
+    node["host"] = "my-host";
+    node["typo_key"] = "some-value";
+    node["port"] = "9090";
+
+    /// Should not throw; the unrecognized key is skipped with a warning.
+    EXPECT_NO_THROW(config.overwriteConfigWithYAMLNode(node));
+    /// Recognized keys should still be applied.
+    EXPECT_EQ(config.host.getValue(), "my-host");
+    EXPECT_EQ(config.port.getValue(), static_cast<size_t>(9090));
+}
+
+TEST_F(ExplicitlySetTrackingTest, UnrecognizedCLIKeyLogsWarningAndContinues)
+{
+    TestConfig config;
+    std::unordered_map<std::string, std::string> params = {{"--host", "cli-host"}, {"--unknown_flag", "value"}, {"--port", "1234"}};
+
+    /// Should not throw; the unrecognized key is skipped with a warning.
+    EXPECT_NO_THROW(config.overwriteConfigWithCommandLineInput(params));
+    /// Recognized keys should still be applied.
+    EXPECT_EQ(config.host.getValue(), "cli-host");
+    EXPECT_EQ(config.port.getValue(), static_cast<size_t>(1234));
+}
+
 }
 
 /// NOLINTEND(readability-magic-numbers)
