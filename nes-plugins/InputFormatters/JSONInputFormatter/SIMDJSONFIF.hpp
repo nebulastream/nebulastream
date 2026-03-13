@@ -265,7 +265,7 @@ public:
     static simdjson::simdjson_result<simdjson::ondemand::value> accessSIMDJsonFieldOrThrow(
         simdjson::simdjson_result<simdjson::ondemand::document_reference>& simdJsonReference, const std::string_view fieldName)
     {
-        const auto simdJsonResult = simdJsonReference[fieldName];
+        const auto simdJsonResult = simdJsonReference.at_pointer(fieldName);
         if (not simdJsonResult.has_value())
         {
             throw FieldNotFound(
