@@ -147,7 +147,10 @@ jobs:
           restore-keys: vcpkg-repo-
       - name: Configure NebulaStream
         run: |
+          LLVM_PREFIX="$(brew --prefix llvm@19)"
           cmake -GNinja -B build \
+            -DCMAKE_C_COMPILER="${LLVM_PREFIX}/bin/clang" \
+            -DCMAKE_CXX_COMPILER="${LLVM_PREFIX}/bin/clang++" \
             -DCMAKE_BUILD_TYPE=Debug \
             -DNES_LOG_LEVEL=DEBUG
       - name: Build NebulaStream
