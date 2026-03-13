@@ -25,3 +25,5 @@ target_include_directories(checksum_sink_validation_plugin
 
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
 target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
+
+add_tests_if_enabled(tests)
