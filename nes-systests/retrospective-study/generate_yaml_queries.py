@@ -86,7 +86,7 @@ def render_yaml(
     comment: str,
     sql: str,
     original_source_name: str,
-    schema: list[dict[str, str]],
+    schema  : list[dict[str, str]],
     physical_source_text: str,
 ) -> str:
     """Render the YAML file content for a single query."""

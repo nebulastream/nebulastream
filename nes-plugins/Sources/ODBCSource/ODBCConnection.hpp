@@ -27,6 +27,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include "Util/Strings.hpp"
 
 struct TypeInfo
 {
@@ -67,19 +68,26 @@ public:
     void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows);
 
     template <typename T>
-    SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator) const
+    SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator, std::string& currentTuple) const
     {
         T* val = reinterpret_cast<T*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]);
         buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
-        return SQLGetData(hstmt, colIdx, typeInfo.sqlType, val, typeInfo.nesTypeSize, &indicator);
+        const auto readSqlVal = SQLGetData(hstmt, colIdx, typeInfo.sqlType, val, typeInfo.nesTypeSize, &indicator);
+        currentTuple = fmt::format("{}, {}", currentTuple, std::to_string(*val));
+        return readSqlVal;
     }
 
     SQLRETURN
     readVarSized(
-        size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider) const;
+        size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider, std::string& currentTuple) const;
 
     SQLRETURN readDataIntoBuffer(
-        size_t colIdx, const TypeInfo& typeInfo, SQLLEN& indicator, TupleBuffer& buffer, AbstractBufferProvider& bufferProvider) const;
+        size_t colIdx,
+        const TypeInfo& typeInfo,
+        SQLLEN& indicator,
+        TupleBuffer& buffer,
+        AbstractBufferProvider& bufferProvider,
+        std::string& currentTuple) const;
 
     std::vector<SQLCHAR> buildNewRowFetchSting(std::string_view userQuery, uint64_t numRowsToFetch);
 
@@ -93,6 +101,7 @@ private:
     SQLHSTMT hstmtCount = SQL_NULL_HSTMT;
     FetchedSchema fetchedSchema;
     uint64_t rowCountTracker{0};
+    uint64_t numberOfLeftoverTuples{0};
     std::string countQuery;
 };
 }
