@@ -20,6 +20,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -64,6 +65,8 @@ private:
     Schema schema;
     std::string sinkType;
     std::unordered_map<std::string, std::string> sinkConfig;
+
+    SELF_REF
 };
 
 template <>

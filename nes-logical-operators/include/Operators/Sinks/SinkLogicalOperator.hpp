@@ -20,10 +20,12 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -85,6 +87,8 @@ private:
     std::optional<SinkDescriptor> sinkDescriptor;
 
     friend class OperatorSerializationUtil;
+
+    SELF_REF
 };
 
 template <>

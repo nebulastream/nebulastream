@@ -26,6 +26,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
 #include <Operators/OriginIdAssigner.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -87,6 +88,8 @@ private:
     Schema leftInputSchema, rightInputSchema, outputSchema;
 
     friend Reflector<JoinLogicalOperator>;
+
+    SELF_REF
 };
 
 template <>
