@@ -11,39 +11,51 @@
 # limitations under the License.
 
 query: |
-  SELECT start, end, id FROM (
-  SELECT * FROM (SELECT * FROM stream)
-  INNER JOIN (SELECT * FROM stream2)
-  ON id = id2
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream3)
-  ON id2 = id3
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream4)
-  ON id3 = id4
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream5)
-  ON id4 = id5
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream6)
-  ON id5 = id6
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  INNER JOIN (SELECT * FROM stream7)
-  ON id6 = id7
-  WINDOW TUMBLING (timestamp, size 1 sec)
+  SELECT start6, end6, id FROM (
+    SELECT start as start6, end as end6, id, timestamp1, id2, timestamp2, id3, timestamp3, id4, timestamp4, id5, timestamp5, id6, timestamp6, id7, timestamp7 FROM (
+      SELECT start as start5, end as end5, id, timestamp1, id2, timestamp2, id3, timestamp3, id4, timestamp4, id5, timestamp5, id6, timestamp6 FROM (
+        SELECT start as start4, end as end4, id, timestamp1, id2, timestamp2, id3, timestamp3, id4, timestamp4, id5, timestamp5 FROM (
+          SELECT start as start3, end as end3, id, timestamp1, id2, timestamp2, id3, timestamp3, id4, timestamp4 FROM (
+            SELECT start as start2, end as end2, id, timestamp1, id2, timestamp2, id3, timestamp3 FROM (
+              SELECT start as start1, end as end1, id, timestamp1, id2, timestamp2 FROM (
+                SELECT * FROM (SELECT * FROM stream)
+                INNER JOIN (SELECT * FROM stream2)
+                ON id = id2
+                WINDOW TUMBLING (timestamp1, timestamp2, size 1 sec)
+              )
+            )
+            INNER JOIN (SELECT * FROM stream3)
+            ON id2 = id3
+            WINDOW TUMBLING (timestamp2, timestamp3, size 1 sec)
+          )
+          INNER JOIN (SELECT * FROM stream4)
+          ON id3 = id4
+          WINDOW TUMBLING (timestamp3, timestamp4, size 1 sec)
+        )
+        INNER JOIN (SELECT * FROM stream5)
+        ON id4 = id5
+        WINDOW TUMBLING (timestamp4, timestamp5, size 1 sec)
+      )
+      INNER JOIN (SELECT * FROM stream6)
+      ON id5 = id6
+      WINDOW TUMBLING (timestamp5, timestamp6, size 1 sec)
+    )
+    INNER JOIN (SELECT * FROM stream7)
+    ON id6 = id7
+    WINDOW TUMBLING (timestamp6, timestamp7, size 1 sec)
+  )
   INNER JOIN (SELECT * FROM stream8)
   ON id7 = id8
-  WINDOW TUMBLING (timestamp, size 1 sec)
-  )
+  WINDOW TUMBLING (timestamp7, timestamp8, size 1 sec)
   INTO sink;
 sinks:
   - name: sink
     schema:
-      - name: streamstream2stream3stream4stream5stream6stream7stream8$START
+      - name: start6
         type: UINT64
-      - name: streamstream2stream3stream4stream5stream6stream7stream8$END
+      - name: end6
         type: UINT64
-      - name: stream$id
+      - name: id
         type: UINT64
     type: File
     config:
@@ -53,49 +65,49 @@ sinks:
 logical:
   - name: stream
     schema:
-      - name: timestamp
+      - name: timestamp1
         type: UINT64
       - name: id
         type: UINT64
   - name: stream8
     schema:
-      - name: timestamp
+      - name: timestamp8
         type: UINT64
       - name: id8
         type: UINT64
   - name: stream7
     schema:
-      - name: timestamp
+      - name: timestamp7
         type: UINT64
       - name: id7
         type: UINT64
   - name: stream6
     schema:
-      - name: timestamp
+      - name: timestamp6
         type: UINT64
       - name: id6
         type: UINT64
   - name: stream5
     schema:
-      - name: timestamp
+      - name: timestamp5
         type: UINT64
       - name: id5
         type: UINT64
   - name: stream4
     schema:
-      - name: timestamp
+      - name: timestamp4
         type: UINT64
       - name: id4
         type: UINT64
   - name: stream3
     schema:
-      - name: timestamp
+      - name: timestamp3
         type: UINT64
       - name: id3
         type: UINT64
   - name: stream2
     schema:
-      - name: timestamp
+      - name: timestamp2
         type: UINT64
       - name: id2
         type: UINT64

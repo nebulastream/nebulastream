@@ -25,7 +25,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
@@ -39,7 +38,6 @@
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
@@ -53,24 +51,23 @@ public:
 
     static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
-    static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
+    /// Helper to create a simple source plan with a schema containing an "id" field
+    static LogicalPlan createSourcePlan(const Identifier& sourceType, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
         return LogicalPlanBuilder::createLogicalPlan(sourceType, schema, {}, {});
     }
 
-    static Schema createSchema(const std::string& prefix)
+    static Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::string& prefix)
     {
-        Schema schema;
-        schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".ts", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return schema;
+        return Schema<UnqualifiedUnboundField, Ordered>{
+            {Identifier::parse(prefix + "_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {Identifier::parse(prefix + "_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {Identifier::parse(prefix + "_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
     }
 
-    static std::shared_ptr<Windowing::WindowType> createTumblingWindow()
+    static Windowing::TimeBasedWindowType createTumblingWindow()
     {
-        return std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS));
+        return Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS)}};
     }
 };
 
@@ -78,8 +75,8 @@ public:
 TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
 {
     auto schema = createSchema("src");
-    auto plan = createSourcePlan("TEST", schema);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto plan = createSourcePlan(Identifier::parse("TEST"), schema);
+    plan = LogicalPlanBuilder::addSink(Identifier::parse("test_sink"), plan);
 
     DecideMemoryLayout phase;
     auto result = phase.apply(plan);
@@ -97,15 +94,22 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
 {
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
+    auto leftPlan = createSourcePlan(Identifier::parse("TEST"), leftSchema);
+    auto rightPlan = createSourcePlan(Identifier::parse("TEST"), rightSchema);
 
     auto joinFunction = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+        LogicalFunction{UnboundFieldAccessLogicalFunction(Identifier::parse("left_id"))},
+        LogicalFunction{UnboundFieldAccessLogicalFunction(Identifier::parse("right_id"))})};
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan,
+        rightPlan,
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+        Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}});
+    plan = LogicalPlanBuilder::addSink(Identifier::parse("test_sink"), plan);
 
     DecideMemoryLayout phase;
     auto result = phase.apply(plan);

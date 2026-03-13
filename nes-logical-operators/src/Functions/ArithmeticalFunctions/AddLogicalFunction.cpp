@@ -22,8 +22,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -31,12 +32,12 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
 
-AddLogicalFunction::AddLogicalFunction(const LogicalFunction& left, const LogicalFunction& right)
-    : dataType(DataTypeProvider::provideDataType(DataType::Type::UNDEFINED)), left(left), right(right)
+AddLogicalFunction::AddLogicalFunction(LogicalFunction left, LogicalFunction right) : left(std::move(left)), right(std::move(right))
 {
 }
 
@@ -45,25 +46,20 @@ DataType AddLogicalFunction::getDataType() const
     return dataType;
 };
 
-AddLogicalFunction AddLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction AddLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
+    AddLogicalFunction copy = *this;
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
 
-LogicalFunction AddLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "AddLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
-    if (not newDataType.has_value())
+    auto newType = copy.left.getDataType().join(copy.right.getDataType());
+    if (not newType.has_value())
     {
-        throw DifferentFieldTypeExpected("Could not join {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+        throw CannotInferStamp("Could not join data types of input functions, left: {}, right: {}", copy.left, copy.right);
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    copy.dataType = std::move(newType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
 }
 
 std::vector<LogicalFunction> AddLogicalFunction::getChildren() const
@@ -111,7 +107,7 @@ Reflected Reflector<AddLogicalFunction>::operator()(const AddLogicalFunction& fu
 AddLogicalFunction Unreflector<AddLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedAddLogicalFunction>(reflected);
-    return AddLogicalFunction{left, right};
+    return AddLogicalFunction{std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterAddLogicalFunction(LogicalFunctionRegistryArguments arguments)

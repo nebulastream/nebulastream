@@ -25,7 +25,11 @@ target_include_directories(nes-logical-operators PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # Enable unreflection for LogicalFunction registry (dynamic dispatch deserialization)
-enable_unreflection_for_registries(LogicalFunction)
+enable_unreflection_for_registries(LogicalFunction AggregationLogicalFunction LogicalOperator)
+disable_factory_functions_for_registries(LogicalOperator)
+
+# Set wrapper type for LogicalOperator unreflection (uses TypedLogicalOperator wrapper)
+set_unreflection_wrapper_type(LogicalOperator "TypedLogicalOperator")
 
 # Create all registries (LogicalFunction will have unreflection support)
 create_registries_for_component(LogicalOperator LogicalFunction AggregationLogicalFunction)

@@ -21,7 +21,7 @@
 #include <span>
 #include <sstream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
@@ -33,19 +33,19 @@
 namespace NES
 {
 
-JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
+JSONFormat::JSONFormat(const Schema<UnqualifiedUnboundField, Ordered>& pSchema) : Format(pSchema)
 {
-    PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
+    PRECONDITION(!std::ranges::empty(schema), "Formatter expected a non-empty schema");
     size_t offset = 0;
-    for (const auto& field : schema.getFields())
+    for (const auto& field : schema)
     {
-        const auto physicalType = field.dataType;
+        const auto physicalType = field.getDataType();
         formattingContext.offsets.push_back(offset);
         offset += physicalType.getSizeInBytesWithNull();
         formattingContext.physicalTypes.emplace_back(physicalType);
-        formattingContext.names.emplace_back(field.name);
+        formattingContext.names.emplace_back(field.getFullyQualifiedName());
     }
-    formattingContext.schemaSizeInBytes = schema.getSizeOfSchemaInBytes();
+    formattingContext.schemaSizeInBytes = schema.getSizeInBytes();
 }
 
 std::string JSONFormat::getFormattedBuffer(const TupleBuffer& inputBuffer) const
@@ -104,7 +104,7 @@ std::string JSONFormat::tupleBufferToFormattedJSONString(TupleBuffer tbuffer, co
 
 std::ostream& operator<<(std::ostream& out, const JSONFormat& format)
 {
-    return out << fmt::format("JSONFormat(Schema: {})", format.schema);
+    return out << fmt::format("JSONFormat(Schema<Field, Unordered>: {})", format.schema);
 }
 
 }

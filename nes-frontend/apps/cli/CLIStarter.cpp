@@ -32,7 +32,6 @@
 #include <unistd.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -73,26 +72,14 @@ NES::DataType stringToFieldType(const std::string& fieldNodeType)
     }
 }
 
-std::string bindIdentifierName(std::string_view identifier)
+NES::Identifier bindIdentifierName(std::string_view identifier)
 {
-    auto verifyAllowedCharacters = [](std::string_view potentiallyInvalid)
+    auto identifierOrError = NES::Identifier::tryParse(std::string{identifier});
+    if (!identifierOrError)
     {
-        if (!std::ranges::all_of(
-                potentiallyInvalid, [](char character) { return std::isalnum(character) || character == '_' || character == '$'; }))
-        {
-            throw NES::InvalidIdentifier("{}", potentiallyInvalid);
-        }
-    };
-
-    if (identifier.size() > 2 && identifier.starts_with('`') && identifier.ends_with('`'))
-    {
-        /// remove backticks and keep name as is;
-        verifyAllowedCharacters(identifier.substr(1, identifier.size() - 2));
-        return std::string(identifier.substr(1, identifier.size() - 2));
+        throw identifierOrError.error();
     }
-
-    verifyAllowedCharacters(identifier);
-    return NES::toUpperCase(identifier);
+    return identifierOrError.value();
 }
 }
 
@@ -148,7 +135,7 @@ struct convert<NES::CLI::SchemaField>
 {
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
+        rhs.name = node["name"].as<std::string>();
         rhs.type = stringToFieldType(node["type"].as<std::string>());
         return true;
     }
@@ -159,7 +146,7 @@ struct convert<NES::CLI::Sink>
 {
     static bool decode(const Node& node, NES::CLI::Sink& rhs)
     {
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
+        rhs.name = node["name"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
@@ -172,7 +159,7 @@ struct convert<NES::CLI::LogicalSource>
 {
     static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
     {
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
+        rhs.name = node["name"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         return true;
     }
@@ -183,7 +170,7 @@ struct convert<NES::CLI::PhysicalSource>
 {
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
-        rhs.logical = bindIdentifierName(node["logical"].as<std::string>());
+        rhs.logical = node["logical"].as<std::string>();
         rhs.type = node["type"].as<std::string>();
         rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
@@ -321,35 +308,45 @@ std::vector<std::string> loadQueries(
     return queries;
 }
 
+std::unordered_map<NES::Identifier, std::string> bindConfig(const std::unordered_map<std::string, std::string>& config)
+{
+    return config
+        | std::views::transform([](const auto& rawPair) { return std::make_pair(bindIdentifierName(rawPair.first), rawPair.second); })
+        | std::ranges::to<std::unordered_map<NES::Identifier, std::string>>();
+}
+
+NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered> bindSchema(const std::vector<NES::CLI::SchemaField>& schemaFields)
+{
+    return schemaFields
+        | std::views::transform([](const auto& rawField)
+                                { return NES::UnqualifiedUnboundField{bindIdentifierName(rawField.name), rawField.type}; })
+        | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
+}
+
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
     const auto& [query, sinks, logical, physical] = topologyConfig;
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
-        NES::Schema schema;
-        for (const auto& schemaField : schemaFields)
-        {
-            schema.addField(schemaField.name, schemaField.type);
-        }
-
-        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
+        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = bindIdentifierName(name), .schema = bindSchema(schemaFields)});
     }
 
     for (const auto& [logical, type, parserConfig, sourceConfig] : physical)
     {
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = NES::LogicalSourceName(logical), .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig});
+            .attachedTo = bindIdentifierName(logical),
+            .sourceType = bindIdentifierName(type),
+            .sourceConfig = bindConfig(sourceConfig),
+            .parserConfig = bindConfig(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, config] : sinks)
     {
-        NES::Schema schema;
-        for (const auto& schemaField : schemaFields)
-        {
-            schema.addField(schemaField.name, schemaField.type);
-        }
-
-        statements.emplace_back(NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config});
+        statements.emplace_back(NES::CreateSinkStatement{
+            .name = bindIdentifierName(name),
+            .sinkType = bindIdentifierName(type),
+            .schema = bindSchema(schemaFields),
+            .sinkConfig = bindConfig(config)});
     }
     return statements;
 }

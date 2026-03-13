@@ -83,7 +83,7 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
 
     /// First, we check if the key is not in the doc. If this is the case, we can return true, as this counts as null
-    if (not currentDoc[fieldName].has_value())
+    if (not currentDoc[fieldName.asCanonicalString()].has_value())
     {
         return true;
     }
@@ -99,7 +99,7 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
 void SIMDJSONFIF::writeValueToRecord(
     const DataType dataType,
     Record& record,
-    const std::string& fieldName,
+    const IdentifierList& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<const SIMDJSONMetaData*>& metaData) const

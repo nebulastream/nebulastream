@@ -21,14 +21,16 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
+#include <Serialization/ReflectedOperator.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include "LogicalOperatorFwd.hpp"
 
 namespace NES
 {
@@ -37,7 +39,8 @@ namespace NES
 class SelectionLogicalOperator
 {
 public:
-    explicit SelectionLogicalOperator(LogicalFunction predicate);
+    explicit SelectionLogicalOperator(WeakLogicalOperator self, LogicalFunction predicate);
+    SelectionLogicalOperator(WeakLogicalOperator self, LogicalOperator child, LogicalFunction predicate);
 
     [[nodiscard]] LogicalFunction getPredicate() const;
 
@@ -48,19 +51,19 @@ public:
 
     [[nodiscard]] SelectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
+    [[nodiscard]] LogicalOperator getChild() const;
+    [[nodiscard]] Schema<Field, Unordered> getOutputSchema() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SelectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] SelectionLogicalOperator withInferredSchema() const;
 
     struct ConfigParameters
     {
         static inline const DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{
-            "selectionFunctionName",
+            "SELECTION_FUNCTION_NAME",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
             { return DescriptorConfig::tryGet(SELECTION_FUNCTION_NAME, config); }};
@@ -69,34 +72,50 @@ public:
             = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
     };
 
+    WeakLogicalOperator self;
+
 private:
     static constexpr std::string_view NAME = "Selection";
+    std::optional<LogicalOperator> child;
     LogicalFunction predicate;
 
-    std::vector<LogicalOperator> children;
+    void inferLocalSchema();
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
+
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    friend struct std::hash<SelectionLogicalOperator>;
+};
+
+namespace detail
+{
+struct ReflectedSelectionLogicalOperator
+{
+    OperatorId operatorId;
+    LogicalFunction predicate;
+};
+}
+
+template <>
+struct Reflector<TypedLogicalOperator<SelectionLogicalOperator>>
+{
+    Reflected operator()(const TypedLogicalOperator<SelectionLogicalOperator>& op) const;
 };
 
 template <>
-struct Reflector<SelectionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<SelectionLogicalOperator>>
 {
-    Reflected operator()(const SelectionLogicalOperator& op) const;
-};
-
-template <>
-struct Unreflector<SelectionLogicalOperator>
-{
-    SelectionLogicalOperator operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    using ContextType = std::shared_ptr<ReflectedPlan>;
+    ContextType plan;
+    explicit Unreflector(ContextType operatorMapping);
+    TypedLogicalOperator<SelectionLogicalOperator> operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<SelectionLogicalOperator>);
 }
 
-namespace NES::detail
+template <>
+struct std::hash<NES::SelectionLogicalOperator>
 {
-struct ReflectedSelectionLogicalOperator
-{
-    LogicalFunction predicate;
+    uint64_t operator()(const NES::SelectionLogicalOperator& op) const noexcept;
 };
-}

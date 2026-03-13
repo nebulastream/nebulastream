@@ -26,7 +26,6 @@
 #include <unordered_set>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -38,26 +37,14 @@
 namespace NES
 {
 
-std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
+std::optional<LogicalSource>
+SourceCatalog::addLogicalSource(const Identifier& logicalSourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
 {
-    Schema newSchema;
-    for (const auto& field : schema.getFields())
-    {
-        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
-        if (field.name.find(logicalSourceName) != std::string::npos)
-        {
-            NES_DEBUG(
-                "Trying to register logical source \"{}\" where passed field name {} already contained the source name as a prefix, which "
-                "is probably a mistake",
-                logicalSourceName,
-                field.name);
-        }
-    }
     const std::unique_lock lock(catalogMutex);
     if (!containsLogicalSource(logicalSourceName))
     {
-        LogicalSource logicalSource{logicalSourceName, newSchema};
-        namesToLogicalSourceMapping.emplace(toUpperCase(logicalSourceName), logicalSource);
+        LogicalSource logicalSource{logicalSourceName, schema};
+        namesToLogicalSourceMapping.emplace(logicalSourceName, logicalSource);
         logicalToPhysicalSourceMapping.emplace(logicalSource, std::unordered_set<SourceDescriptor>{});
         NES_DEBUG("Added logical source {}", logicalSourceName);
         return logicalSource;
@@ -68,9 +55,9 @@ std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& 
 
 std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
-    const std::string_view sourceType,
-    std::unordered_map<std::string, std::string> descriptorConfig,
-    const std::unordered_map<std::string, std::string>& parserConfig)
+    const Identifier sourceType,
+    std::unordered_map<Identifier, std::string> descriptorConfig,
+    const std::unordered_map<Identifier, std::string>& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
 
@@ -81,7 +68,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{UnknownSourceName("Logical source {} does not exist.", logicalSource.getLogicalSourceName())};
     }
     auto id = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType, std::move(descriptorConfig));
+    auto descriptorConfigOpt = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(descriptorConfig));
     if (not descriptorConfigOpt.has_value())
     {
         return std::unexpected{
@@ -94,17 +81,18 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
         return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
     }
 
-    SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(descriptorConfigOpt.value()), parserConfigObject};
+    SourceDescriptor descriptor{
+        id, logicalSource, sourceType.asCanonicalString(), std::move(descriptorConfigOpt.value()), parserConfigObject};
     idsToPhysicalSources.emplace(id, descriptor);
     logicalPhysicalIter->second.insert(descriptor);
     NES_DEBUG("Successfully registered new physical source of type {} with id {}", descriptor.getSourceType(), id);
     return descriptor;
 }
 
-std::optional<LogicalSource> SourceCatalog::getLogicalSource(const std::string& logicalSourceName) const
+std::optional<LogicalSource> SourceCatalog::getLogicalSource(const Identifier& logicalSourceName) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(toUpperCase(logicalSourceName)); found != namesToLogicalSourceMapping.end())
+    if (const auto found = namesToLogicalSourceMapping.find(logicalSourceName); found != namesToLogicalSourceMapping.end())
     {
         return found->second;
     }
@@ -114,7 +102,7 @@ std::optional<LogicalSource> SourceCatalog::getLogicalSource(const std::string& 
 bool SourceCatalog::containsLogicalSource(const LogicalSource& logicalSource) const
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto found = namesToLogicalSourceMapping.find(toUpperCase(logicalSource.getLogicalSourceName()));
+    if (const auto found = namesToLogicalSourceMapping.find(logicalSource.getLogicalSourceName());
         found != namesToLogicalSourceMapping.end())
     {
         const auto equals = found->second == logicalSource;
@@ -126,7 +114,7 @@ bool SourceCatalog::containsLogicalSource(const LogicalSource& logicalSource) co
     return false;
 }
 
-bool SourceCatalog::containsLogicalSource(const std::string& logicalSourceName) const
+bool SourceCatalog::containsLogicalSource(const Identifier& logicalSourceName) const
 {
     const std::unique_lock lock{catalogMutex};
     return namesToLogicalSourceMapping.contains(logicalSourceName);
@@ -143,12 +131,12 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
 }
 
 std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
-    const std::string& sourceType,
-    const Schema& schema,
-    std::unordered_map<std::string, std::string> parserConfigMap,
-    std::unordered_map<std::string, std::string> sourceConfigMap) const
+    const Identifier& sourceType,
+    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    std::unordered_map<Identifier, std::string> parserConfigMap,
+    std::unordered_map<Identifier, std::string> sourceConfigMap) const
 {
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
+    auto descriptorConfig = SourceValidationProvider::provide(sourceType.asCanonicalString(), std::move(sourceConfigMap));
     if (!descriptorConfig.has_value())
     {
         return std::nullopt;
@@ -157,10 +145,10 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
 
     auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};
-    auto name = physicalId.toString();
+    auto name = Identifier::parse(physicalId.toString());
 
     const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, descriptorConfig.value(), parserConfig};
+    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType.asCanonicalString(), descriptorConfig.value(), parserConfig};
     return sourceDescriptor;
 }
 
@@ -177,7 +165,7 @@ std::optional<std::unordered_set<SourceDescriptor>> SourceCatalog::getPhysicalSo
 bool SourceCatalog::removeLogicalSource(const LogicalSource& logicalSource)
 {
     const std::unique_lock lock(catalogMutex);
-    if (const auto removedByName = namesToLogicalSourceMapping.erase(toUpperCase(logicalSource.getLogicalSourceName())); removedByName == 0)
+    if (const auto removedByName = namesToLogicalSourceMapping.erase(logicalSource.getLogicalSourceName()); removedByName == 0)
     {
         NES_TRACE("Trying to remove logical source \"{}\", but it was not registered by name", logicalSource.getLogicalSourceName());
         return false;

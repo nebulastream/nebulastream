@@ -19,8 +19,8 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,13 +32,12 @@ class MulLogicalFunction final
 public:
     static constexpr std::string_view NAME = "Mul";
 
-    MulLogicalFunction(const LogicalFunction& left, const LogicalFunction& right);
+    MulLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] bool operator==(const MulLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] MulLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] MulLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

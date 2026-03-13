@@ -13,7 +13,7 @@ ATTACH INLINE
 1|8|89
 1|9|100
 
-CREATE SINK unifiedStreamSink(combinedSource.id UINT64 NOT NULL, combinedSource.value UINT64 NOT NULL, combinedSource.timestamp UINT64 NOT NULL)  TYPE File;
+CREATE SINK unifiedStreamSink(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL)  TYPE File;
 
 SELECT * FROM combinedSource INTO unifiedStreamSink;
 ----

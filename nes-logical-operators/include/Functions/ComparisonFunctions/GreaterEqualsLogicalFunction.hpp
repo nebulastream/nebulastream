@@ -19,8 +19,8 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -37,8 +37,7 @@ public:
     [[nodiscard]] bool operator==(const GreaterEqualsLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] GreaterEqualsLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] GreaterEqualsLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

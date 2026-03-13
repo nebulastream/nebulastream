@@ -22,40 +22,53 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Schema/Schema.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Hash.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+
+InlineSinkLogicalOperator::InlineSinkLogicalOperator(
+    WeakLogicalOperator self,
+    Identifier sinkType,
+    std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
+    std::unordered_map<Identifier, std::string> config)
+    : self(std::move(self)), targetSchema(std::move(schema)), sinkType(std::move(sinkType)), sinkConfig(std::move(config))
 {
-    PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
-    return *this;
 }
 
-std::string InlineSinkLogicalOperator::getSinkType() const
+InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(false, "Schema<Field, Unordered> inference should happen on SinkLogicalOperator");
+    std::unreachable();
+}
+
+Identifier InlineSinkLogicalOperator::getSinkType() const
 {
     return sinkType;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getSinkConfig() const
+std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getSinkConfig() const
 {
     return sinkConfig;
 }
 
-Schema InlineSinkLogicalOperator::getSchema() const
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> InlineSinkLogicalOperator::getTargetSchema() const
 {
-    return schema;
+    return targetSchema;
 }
 
 bool InlineSinkLogicalOperator::operator==(const InlineSinkLogicalOperator& rhs) const
 {
-    return this->sinkType == rhs.sinkType && this->schema == rhs.schema && this->sinkConfig == rhs.sinkConfig;
+    return this->sinkType == rhs.sinkType && this->targetSchema == rhs.targetSchema && this->sinkConfig == rhs.sinkConfig;
 }
 
 std::string InlineSinkLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -91,14 +104,10 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> InlineSinkLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> InlineSinkLogicalOperator::getOutputSchema() const
 {
-    return {schema};
-};
-
-Schema InlineSinkLogicalOperator::getOutputSchema() const
-{
-    return schema;
+    INVARIANT(false, "SinkLogicalOperator does not define a output schema");
+    std::unreachable();
 }
 
 std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
@@ -106,22 +115,23 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
     return children;
 }
 
-InlineSinkLogicalOperator::InlineSinkLogicalOperator(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> config)
-    : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config))
-{
-}
-
-Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
-InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
+TypedLogicalOperator<InlineSinkLogicalOperator>
+Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
+}
+
+uint64_t std::hash<NES::InlineSinkLogicalOperator>::operator()(const NES::InlineSinkLogicalOperator& op) const noexcept
+{
+    return folly::hash::hash_combine(op.getTargetSchema(), op.getSinkType(), op.getSinkConfig());
 }

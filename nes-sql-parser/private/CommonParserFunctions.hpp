@@ -22,22 +22,24 @@
 #include <vector>
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 
 namespace NES
 {
 using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
-using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<Literal, Schema>>>;
+using ConfigMap
+    = std::unordered_map<Identifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
 
-std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
-std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
+Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
+Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
+IdentifierList bindIdentifierList(AntlrSQLParser::IdentifierChainContext* identifierList);
 
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions);
-std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions);
-std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions);
-std::optional<Schema> getSourceSchema(ConfigMap configOptions);
-std::optional<Schema> getSinkSchema(ConfigMap configOptions);
+std::unordered_map<Identifier, std::string> getParserConfig(const ConfigMap& configOptions);
+std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& configOptions);
+std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& configOptions);
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSourceSchema(ConfigMap configOptions);
+std::optional<Schema<UnqualifiedUnboundField, Ordered>> getSinkSchema(ConfigMap configOptions);
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);
@@ -48,7 +50,10 @@ int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral);
 std::string bindStringLiteral(antlr4::Token* stringLiteral);
 
-Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
+std::pair<Identifier, Literal> bindShowFilter(const AntlrSQLParser::ShowFilterContext* showFilterAST);
+std::pair<Identifier, Literal> bindDropFilter(const AntlrSQLParser::DropFilterContext* dropFilterAST);
+
+Schema<UnqualifiedUnboundField, Ordered> bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, DataType::NULLABLE isNullable);
 

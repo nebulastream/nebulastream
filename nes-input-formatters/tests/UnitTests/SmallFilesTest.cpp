@@ -30,7 +30,7 @@
 #include <vector>
 
 #include <Configuration/WorkerConfiguration.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -50,17 +50,17 @@
 
 namespace
 {
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
+std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema<NES::QualifiedUnboundField, NES::Ordered>& schema)
 {
     size_t priorFieldOffset = 0;
     std::vector<size_t> varSizedFieldOffsets;
     for (const auto& field : schema)
     {
-        if (field.dataType.isType(NES::DataType::Type::VARSIZED))
+        if (field.getDataType().isType(NES::DataType::Type::VARSIZED))
         {
             varSizedFieldOffsets.emplace_back(priorFieldOffset);
         }
-        priorFieldOffset += field.dataType.getSizeInBytesWithNull();
+        priorFieldOffset += field.getDataType().getSizeInBytesWithNull();
     }
     return varSizedFieldOffsets;
 }
@@ -165,7 +165,7 @@ public:
 
     struct SetupResult
     {
-        Schema schema;
+        Schema<UnqualifiedUnboundField, Ordered> schema;
         MemoryLayoutType memoryLayoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;
@@ -190,7 +190,11 @@ public:
     SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
-        const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes, currentTestFile.schemaFieldNames);
+        const auto schema = InputFormatterTestUtil::createSchema(
+            currentTestFile.schemaFieldTypes,
+            currentTestFile.schemaFieldNames
+                | std::views::transform([](const auto& name) { return Identifier::parse(fmt::format("\"{}\"", name)); })
+                | std::ranges::to<std::vector>());
 
         const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.fileEnding;
         const auto testFilePath = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view fileEnding)
@@ -204,7 +208,7 @@ public:
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
-        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeOfSchemaInBytes());
+        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeInBytes());
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector

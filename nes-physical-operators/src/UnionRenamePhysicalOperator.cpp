@@ -37,7 +37,7 @@ void UnionRenamePhysicalOperator::execute(ExecutionContext& ctx, Record& record)
     executeChild(ctx, outputRecord);
 }
 
-UnionRenamePhysicalOperator::UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields)
+UnionRenamePhysicalOperator::UnionRenamePhysicalOperator(std::vector<IdentifierList> inputFields, std::vector<IdentifierList> outputFields)
     : inputFields(std::move(inputFields)), outputFields(std::move(outputFields))
 {
     PRECONDITION(this->inputFields.size() == this->outputFields.size(), "Input and output fields must have the same size");

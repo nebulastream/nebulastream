@@ -23,7 +23,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/TypeTraits.hpp>
@@ -49,9 +49,10 @@ void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 
-void to_json(nlohmann::json& jsonOutput, const Schema::Field& str);
+void to_json(nlohmann::json& jsonOutput, const QualifiedUnboundField& str);
 
-void to_json(nlohmann::json& jsonOutput, const Schema& schema);
+
+void to_json(nlohmann::json& jsonOutput, const Schema<QualifiedUnboundField, Ordered>& schema);
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos);
 
@@ -61,6 +62,12 @@ void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& co
 
 namespace nlohmann
 {
+
+template <size_t Extent>
+struct adl_serializer<NES::IdentifierBase<Extent>>
+{
+    static void to_json(json& jsonOutput, const NES::IdentifierBase<Extent>& identifier) { jsonOutput = identifier.asCanonicalString(); }
+};
 
 template <typename Clock, typename Duration>
 struct adl_serializer<std::chrono::time_point<Clock, Duration>>

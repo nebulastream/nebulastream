@@ -45,6 +45,8 @@
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
+
+#include <DataTypes/UnboundField.hpp>
 #include <SystestState.hpp>
 #include <WorkerStatus.hpp>
 
@@ -99,7 +101,13 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}
+                                             .addSinkDescriptor(
+                                                 Identifier::parse("dummySink"),
+                                                 Schema<UnqualifiedUnboundField, Ordered>{},
+                                                 Identifier::parse("Print"),
+                                                 {{Identifier::parse("input_format"), "CSV"}})
+                                             .value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -147,15 +155,19 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), Identifier::parse("File"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor}.withChildren({sourceOperator})};
 
-    const auto result
-        = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
+    const auto result = runQueries(
+        {makeQuery(SystestQuery::PlanInfo{plan, Schema<UnqualifiedUnboundField, Ordered>{}}, {})},
+        1,
+        submitter,
+        progressTracker,
+        discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -178,15 +190,17 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
-    auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    auto testLogicalSource = sourceCatalog.addLogicalSource(Identifier::parse("testSource"), Schema<UnqualifiedUnboundField, Ordered>{});
+    const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("type"), "CSV"}};
+    auto testPhysicalSource = sourceCatalog.addPhysicalSource(
+        testLogicalSource.value(), Identifier::parse("File"), {{Identifier::parse("file_path"), "/dev/null"}}, parserConfig);
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor}.withChildren({sourceOperator})};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
+        {makeQuery(
+            SystestQuery::PlanInfo{plan, Schema<UnqualifiedUnboundField, Ordered>{}},
+            ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
         progressTracker,

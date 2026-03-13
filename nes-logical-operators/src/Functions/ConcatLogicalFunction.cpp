@@ -22,8 +22,9 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -31,6 +32,7 @@
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
+#include "DataTypes/DataTypeProvider.hpp"
 
 namespace NES
 {
@@ -57,26 +59,20 @@ DataType ConcatLogicalFunction::getDataType() const
     return dataType;
 };
 
-ConcatLogicalFunction ConcatLogicalFunction::withDataType(const DataType& dataType) const
+LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     auto copy = *this;
-    copy.dataType = dataType;
-    return copy;
-};
-
-LogicalFunction ConcatLogicalFunction::withInferredDataType(const Schema& schema) const
-{
-    const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
-        | std::ranges::to<std::vector>();
-    INVARIANT(newChildren.size() == 2, "ConcatLogicalFunction expects exactly two child function but has {}", newChildren.size());
-    auto newDataType = newChildren[0].getDataType().join(newChildren[1].getDataType());
-    if (not newDataType.has_value() or not newDataType.value().isType(DataType::Type::VARSIZED))
+    copy.left = left.withInferredDataType(schema);
+    copy.right = right.withInferredDataType(schema);
+    auto newDataType = copy.left.getDataType().join(copy.right.getDataType());
+    if (not newDataType.has_value() || not newDataType.value().isType(DataType::Type::VARSIZED))
     {
         throw DifferentFieldTypeExpected(
-            "Expected VARSIZED as outcome of {} and {}", newChildren[0].getDataType(), newChildren[1].getDataType());
+            "Concat must output VARSIZZED, but joining {} and {} gave type {}", copy.left, copy.right, newDataType);
     }
-    newDataType.value().nullable = std::ranges::any_of(newChildren, [](const auto& child) { return child.getDataType().nullable; });
-    return withDataType(newDataType.value()).withChildren(newChildren);
+    copy.dataType = std::move(newDataType).value();
+    copy.dataType.nullable = std::ranges::any_of(copy.getChildren(), [](const auto& child) { return child.getDataType().nullable; });
+    return copy;
 };
 
 std::vector<LogicalFunction> ConcatLogicalFunction::getChildren() const
@@ -107,7 +103,7 @@ Reflected Reflector<ConcatLogicalFunction>::operator()(const ConcatLogicalFuncti
 ConcatLogicalFunction Unreflector<ConcatLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [left, right] = context.unreflect<detail::ReflectedConcatLogicalFunction>(reflected);
-    return ConcatLogicalFunction{left, right};
+    return ConcatLogicalFunction{std::move(left), std::move(right)};
 }
 
 LogicalFunctionRegistryReturnType
