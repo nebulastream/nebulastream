@@ -18,7 +18,6 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -77,29 +76,27 @@ private:
     friend Reflector<SinkDescriptor>;
 
 public:
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
+    static constexpr auto INPUT_FORMAT = DescriptorConfig::makeConfigParameter<EnumWrapper, InputFormat>(
         "input_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<EnumWrapper, InputFormat>("input_format", config); });
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
+    static constexpr auto ADD_TIMESTAMP = DescriptorConfig::makeConfigParameter<bool>(
         "add_timestamp",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<bool>("add_timestamp", config); });
 
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, ADD_TIMESTAMP);
 
     /// Well-known property for any sink that sends its data to a file
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+    static constexpr auto FILE_PATH = DescriptorConfig::makeConfigParameter<std::string>(
         "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("file_path", config); });
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);

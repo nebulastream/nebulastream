@@ -18,7 +18,6 @@
 #include <compare>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <ostream>
 #include <string>
 #include <string_view>
@@ -100,14 +99,12 @@ public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
     static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
+    static constexpr auto MAX_INFLIGHT_BUFFERS = DescriptorConfig::makeConfigParameter<size_t>(
         "max_inflight_buffers",
         INVALID_MAX_INFLIGHT_BUFFERS,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<size_t>("max_inflight_buffers", config); });
 
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
 };

@@ -60,10 +60,11 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_NAME{
+        static constexpr auto FIELD_NAME = DescriptorConfig::makeConfigParameter<std::string>(
             "fieldName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_NAME, config); }};
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return DescriptorConfig::tryGetByName<std::string>("fieldName", config); });
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(FIELD_NAME);

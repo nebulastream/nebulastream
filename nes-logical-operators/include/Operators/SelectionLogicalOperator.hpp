@@ -59,11 +59,11 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{
+        static constexpr auto SELECTION_FUNCTION_NAME = DescriptorConfig::makeConfigParameter<std::string>(
             "selectionFunctionName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(SELECTION_FUNCTION_NAME, config); }};
+            { return DescriptorConfig::tryGetByName<std::string>("selectionFunctionName", config); });
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);

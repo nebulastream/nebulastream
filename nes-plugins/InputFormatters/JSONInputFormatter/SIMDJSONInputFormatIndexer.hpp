@@ -47,7 +47,7 @@ public:
 
 struct ConfigParametersSIMDJSON
 {
-    static inline const std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap();
 };
 }
