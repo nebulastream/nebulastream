@@ -12,5 +12,7 @@
 
 add_source_files(nes-nautilus
         HashFunction.cpp
-        MurMur3HashFunction.cpp
         )
+
+# Register hash function plugins
+add_plugin(MurMur3 HashFunction nes-nautilus MurMur3HashFunction.cpp)
