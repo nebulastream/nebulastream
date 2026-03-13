@@ -15,8 +15,8 @@
 #include <string>
 #include <unordered_map>
 
-#include <VoidSink.hpp>
 #include <gtest/gtest.h>
+#include <VoidSink.hpp>
 
 namespace NES
 {
