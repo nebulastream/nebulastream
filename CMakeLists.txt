@@ -227,6 +227,18 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
+    if (ENABLE_DOCKER_TESTS)
+        set(NES_RUNTIME_BASE_IMAGE "nes-runtime-base:test" CACHE STRING "Docker image name for the runtime base used by DockerCompose tests")
+        add_test(NAME build-runtime-base-image
+                COMMAND docker build --load -t ${NES_RUNTIME_BASE_IMAGE}
+                -f ${CMAKE_SOURCE_DIR}/docker/runtime/RuntimeBase.dockerfile
+                ${CMAKE_SOURCE_DIR}/docker/runtime
+        )
+        set_tests_properties(build-runtime-base-image PROPERTIES
+                FIXTURES_SETUP RuntimeBaseImage
+                LABELS "DockerCompose"
+        )
+    endif ()
     if (CODE_COVERAGE)
         include(cmake/CodeCoverage.cmake)
         add_code_coverage_all_targets(EXCLUDE ${CMAKE_BINARY_DIR}/* tests/*)
