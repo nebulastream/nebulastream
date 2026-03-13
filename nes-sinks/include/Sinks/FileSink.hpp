@@ -66,16 +66,16 @@ private:
 
 struct ConfigParametersFile
 {
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+    static constexpr auto FILE_PATH = DescriptorConfig::makeConfigParameter<std::string>(
         "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("file_path", config); });
 
-    static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
+    static constexpr auto APPEND = DescriptorConfig::makeConfigParameter<bool>(
         "append",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGetByName<bool>("append", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);

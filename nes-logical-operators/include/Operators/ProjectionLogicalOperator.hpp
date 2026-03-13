@@ -72,16 +72,17 @@ public:
 
     struct ConfigParameters
     {
-        static inline const DescriptorConfig::ConfigParameter<std::string> PROJECTION_FUNCTION_NAME{
+        static constexpr auto PROJECTION_FUNCTION_NAME = DescriptorConfig::makeConfigParameter<std::string>(
             "projectionFunctionName",
             std::nullopt,
             [](const std::unordered_map<std::string, std::string>& config)
-            { return DescriptorConfig::tryGet(PROJECTION_FUNCTION_NAME, config); }};
+            { return DescriptorConfig::tryGetByName<std::string>("projectionFunctionName", config); });
 
-        static inline const DescriptorConfig::ConfigParameter<std::string> ASTERISK{
+        static constexpr auto ASTERISK = DescriptorConfig::makeConfigParameter<std::string>(
             "asterisk",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ASTERISK, config); }};
+            [](const std::unordered_map<std::string, std::string>& config)
+            { return DescriptorConfig::tryGetByName<std::string>("asterisk", config); });
 
         static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(PROJECTION_FUNCTION_NAME, ASTERISK);

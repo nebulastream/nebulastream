@@ -68,24 +68,25 @@ public:
     /// Tag struct that tags a config key with a type.
     /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
     /// Therefore, config keys defined in a single place are sufficient to retrieve parameters from the config, reducing the surface for errors.
-    template <typename T, typename U = void>
+    /// The Func template parameter allows the validate function to be stored directly (instead of via std::function),
+    /// enabling constexpr ConfigParameter instances.
+    template <typename T, typename U = void, typename Func = void>
     struct ConfigParameter
     {
         using Type = T;
         using EnumType = U;
-        using ValidateFunc = std::function<std::optional<T>(const std::unordered_map<std::string, std::string>& config)>;
 
-        ConfigParameter(std::string name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
-            : name(std::move(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
+        constexpr ConfigParameter(const char* name, std::optional<T> defaultValue, Func&& validateFunc)
+            : name(name), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
         {
             static_assert(
                 not(std::is_same_v<EnumWrapper, T> && std::is_same_v<void, U>),
                 "An EnumWrapper config parameter must define the enum type as a template parameter.");
         }
 
-        const std::string name;
-        const ValidateFunc validateFunc;
-        const std::optional<T> defaultValue;
+        std::string name;
+        Func validateFunc;
+        std::optional<T> defaultValue;
 
         operator const std::string&() const { return name; }
 
@@ -98,6 +99,13 @@ public:
 
         static constexpr bool isEnumWrapper() { return not(std::is_same_v<U, void>); }
     };
+
+    /// Factory function to create a ConfigParameter with a deduced Func type, enabling constexpr instances.
+    template <typename T, typename U = void, typename Func>
+    static constexpr auto makeConfigParameter(const char* name, std::optional<T> defaultValue, Func&& validateFunc)
+    {
+        return ConfigParameter<T, U, std::decay_t<Func>>(name, std::move(defaultValue), std::forward<Func>(validateFunc));
+    }
 
     /// Uses type erasure to create a container for ConfigParameters, which are templated.
     /// @note Expects ConfigParameter to have a 'validate' function.
@@ -238,6 +246,18 @@ public:
         return std::nullopt;
     };
 
+    /// Like tryGet, but takes a string key name instead of a ConfigParameter reference.
+    /// This enables use from non-capturing (constexpr) lambdas that cannot reference the ConfigParameter.
+    template <typename T, typename EnumType = void>
+    static std::optional<T> tryGetByName(const std::string& name, const std::unordered_map<std::string, std::string>& config)
+    {
+        if (config.contains(name))
+        {
+            return stringParameterAs<T, EnumType>(config.at(name));
+        }
+        return std::nullopt;
+    }
+
     /// Takes ConfigParameters as inputs and creates an unordered map using the 'key' form the ConfigParameter as key and the ConfigParameter as value.
     /// This function should be used at the end of the Config definition of a source, e.g., the ConfigParametersTCP definition.
     /// The map makes it possible that we can simply iterate over all config parameters to check if the user provided all mandatory
@@ -251,9 +271,9 @@ public:
             if constexpr (requires {
                               typename decltype(param)::Type;
                               typename decltype(param)::EnumType;
-                              std::is_same_v<
-                                  ConfigParameter<typename decltype(param)::Type, typename decltype(param)::EnumType>,
-                                  decltype(param)>;
+                              param.name;
+                              param.validateFunc;
+                              param.defaultValue;
                           })
             {
                 configParameterMap.emplace(param.name, std::forward<decltype(param)>(param));
@@ -354,8 +374,8 @@ DescriptorConfig::ConfigType protoToDescriptorConfigType(const SerializableVaria
 
 FMT_OSTREAM(NES::Descriptor);
 
-template <typename T>
-struct fmt::formatter<NES::DescriptorConfig::ConfigParameter<T>> : ostream_formatter
+template <typename T, typename U, typename Func>
+struct fmt::formatter<NES::DescriptorConfig::ConfigParameter<T, U, Func>> : ostream_formatter
 {
 };
 

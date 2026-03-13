@@ -18,7 +18,6 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
-#include <functional>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -82,20 +81,18 @@ private:
     friend Reflector<SinkDescriptor>;
 
 public:
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+    static constexpr auto OUTPUT_FORMAT = DescriptorConfig::makeConfigParameter<std::string>(
         "output_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("output_format", config); });
 
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
+    static constexpr auto ADD_TIMESTAMP = DescriptorConfig::makeConfigParameter<bool>(
         "add_timestamp",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<bool>("add_timestamp", config); });
 
-
-    /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
 

@@ -66,10 +66,11 @@ private:
 
 struct ConfigParametersCSV
 {
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        std::string(SYSTEST_FILE_PATH_PARAMETER),
+    static constexpr auto FILEPATH = DescriptorConfig::makeConfigParameter<std::string>(
+        "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGetByName<std::string>("file_path", config); });
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
