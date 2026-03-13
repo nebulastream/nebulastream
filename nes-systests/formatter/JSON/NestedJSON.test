@@ -8,6 +8,11 @@ ATTACH INLINE
 {"KEY":1, "VALUE":2, "EXTRA_KEY": {"NAME": "max"}}
 
 
+CREATE LOGICAL SOURCE NestedJSON2(`machineId` UINT32, `milk$cycles$left` FLOAT64, `milk$cycles$right` FLOAT64, `milk$totalTime` FLOAT64, `water$totalQuantity` FLOAT64);
+CREATE PHYSICAL SOURCE FOR NestedJSON2 TYPE File SET("JSON" AS PARSER.`TYPE`);
+ATTACH INLINE
+{"machineId":101,"milk":{"cycles":{"left":0,"right":0},"totalTime":0.0},"water":{"totalQuantity":0.0}}
+
 SELECT key, value, `EXTRA_KEY$NAME` FROM NestedJSON INTO File();
 ----
 1,2,max
@@ -19,3 +24,8 @@ ATTACH FILE small/coffee.json
 SELECT `absoluteCounter`, `airPumpTime`, `beans$frontOrRightQuantity`, `milk$cycles$left` FROM CoffeeJSON INTO File();
 ----
 0,0.1,0.1,0
+
+
+SELECT `machineId`, `milk$cycles$left`, `milk$cycles$right`, `milk$totalTime` , `water$totalQuantity` FROM NestedJSON2 INTO File();
+----
+101,0,0,0.0,0.0
