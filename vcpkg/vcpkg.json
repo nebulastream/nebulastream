@@ -12,6 +12,12 @@
     "        (c.f. nes-sql-parser/CMakeLists.txt)"
   ],
   "features": {
+    "mqtt": {
+      "description": "enables mqtt sources and sinks",
+      "dependencies": [
+        "paho-mqttpp3"
+      ]
+    },
     "mlir": {
       "description": "nautilus mlir backend",
       "dependencies": [
@@ -48,6 +54,9 @@
     "boost-url",
     "simdjson",
     "date"
+  ],
+  "default-features": [
+    "mqtt"
   ],
   "overrides": [
     {

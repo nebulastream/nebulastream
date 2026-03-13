@@ -81,6 +81,7 @@
           openjdk21
           howard-hinnant-date
           reflect_cppPkg
+          paho-mqtt-cpp
         ]);
 
         antlr4Jar = pkgs.fetchurl {
