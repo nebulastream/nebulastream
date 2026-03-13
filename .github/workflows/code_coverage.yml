@@ -42,6 +42,8 @@ jobs:
     steps:
       - name: Checkout PR Branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
       - name: Build coverage and export as lcov
         run: |
           cmake -DCODE_COVERAGE=ON -B build
