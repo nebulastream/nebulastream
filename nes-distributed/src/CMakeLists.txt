@@ -10,18 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        InlineSinkBindingPhase.cpp
-        InlineSourceBindingPhase.cpp
-        SourceInferencePhase.cpp
-        LogicalSourceExpansionRule.cpp
-        RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp
-        OriginIdInferencePhase.cpp
-        TypeInferencePhase.cpp
-        SinkBindingRule.cpp
-        LegacyOptimizer.cpp
-        BottomUpPlacement.cpp
-        OperatorPlacement.cpp
-        QueryDecomposition.cpp
+add_source_files(nes-distributed
+        DistributedQuery.cpp
+        DistributedQueryIdGenerator.cpp
+        NetworkTopology.cpp
+        WorkerCatalog.cpp
 )

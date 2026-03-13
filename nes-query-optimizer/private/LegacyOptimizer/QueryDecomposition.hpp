@@ -19,7 +19,7 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES

@@ -26,7 +26,7 @@
 #include <LegacyOptimizer/SinkBindingRule.hpp>
 #include <LegacyOptimizer/SourceInferencePhase.hpp>
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {

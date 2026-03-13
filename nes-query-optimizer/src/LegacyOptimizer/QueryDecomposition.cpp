@@ -37,7 +37,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>

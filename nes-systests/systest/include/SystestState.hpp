@@ -40,7 +40,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 

@@ -25,8 +25,7 @@
 #include <gtest/gtest.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
+#include <QueryStatus.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>

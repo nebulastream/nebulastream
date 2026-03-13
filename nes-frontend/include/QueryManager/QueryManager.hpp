@@ -24,7 +24,7 @@
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>

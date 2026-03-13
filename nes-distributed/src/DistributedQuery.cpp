@@ -25,8 +25,7 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
+#include <QueryStatus.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>

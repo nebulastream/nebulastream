@@ -10,18 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        InlineSinkBindingPhase.cpp
-        InlineSourceBindingPhase.cpp
-        SourceInferencePhase.cpp
-        LogicalSourceExpansionRule.cpp
-        RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp
-        OriginIdInferencePhase.cpp
-        TypeInferencePhase.cpp
-        SinkBindingRule.cpp
-        LegacyOptimizer.cpp
-        BottomUpPlacement.cpp
-        OperatorPlacement.cpp
-        QueryDecomposition.cpp
-)
+function(add_nes_distributed_test)
+    add_nes_unit_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-distributed nes-test-util)
+endfunction()
+
+add_nes_distributed_test(distributed-query-status-test UnitTests/DistributedQueryTest.cpp)
+add_nes_distributed_test(network-topology-test UnitTests/NetworkTopologyTest.cpp)
+add_nes_distributed_test(WorkerCatalogTest UnitTests/WorkerCatalogTest.cpp)

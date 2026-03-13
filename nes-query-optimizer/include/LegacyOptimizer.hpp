@@ -15,7 +15,7 @@
 #pragma once
 #include <memory>
 #include <utility>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <WorkerCatalog.hpp>
 
 #include <Plans/LogicalPlan.hpp>

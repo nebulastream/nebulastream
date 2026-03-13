@@ -19,7 +19,7 @@
 #include <vector>
 #include <QueryManager/QueryManager.hpp>
 #include <Util/Pointers.hpp>
-#include <DistributedQuery.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Systest
