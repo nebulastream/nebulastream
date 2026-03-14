@@ -10,6 +10,12 @@ inputs:
   run:
     description: 'bash command(s) to run within the container'
     required: true
+  docker_username:
+    description: 'Docker Hub username for authenticated pulls inside the container'
+    required: false
+  docker_password:
+    description: 'Docker Hub password/token for authenticated pulls inside the container'
+    required: false
 
 runs:
   using: 'composite'
@@ -17,14 +23,18 @@ runs:
     - name: run in container
       shell: bash
       run: |
-        DOCKER_CONFIG_ARGS=""
-        if [ -f "$HOME/.docker/config.json" ]; then
-          DOCKER_CONFIG_ARGS="-v $HOME/.docker:/tmp/docker-config:ro -e DOCKER_CONFIG=/tmp/docker-config"
+        DOCKER_LOGIN_ARGS=""
+        DOCKER_LOGIN_CMD=""
+        if [ -n "${{ inputs.docker_username }}" ] && [ -n "${{ inputs.docker_password }}" ]; then
+          DOCKER_LOGIN_ARGS="-e DOCKER_HUB_USER -e DOCKER_HUB_PASS"
+          DOCKER_LOGIN_CMD='echo "$DOCKER_HUB_PASS" | docker login -u "$DOCKER_HUB_USER" --password-stdin > /dev/null 2>&1 && '
         fi
+        export DOCKER_HUB_USER="${{ inputs.docker_username }}"
+        export DOCKER_HUB_PASS="${{ inputs.docker_password }}"
         docker run \
              -v /var/run/docker.sock:/var/run/docker.sock \
              --group-add $(stat -c '%g' /var/run/docker.sock) \
-             $DOCKER_CONFIG_ARGS \
+             $DOCKER_LOGIN_ARGS \
              -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache -e HOME=$(pwd) --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
-              /usr/bin/bash -c '${{inputs.run}}'
+              /usr/bin/bash -c "${DOCKER_LOGIN_CMD}"'${{inputs.run}}'
