@@ -17,14 +17,14 @@ runs:
     - name: run in container
       shell: bash
       run: |
-        DOCKER_CONFIG_MOUNT=""
+        DOCKER_CONFIG_ARGS=""
         if [ -f "$HOME/.docker/config.json" ]; then
-          DOCKER_CONFIG_MOUNT="-v $HOME/.docker/config.json:$(pwd)/.docker/config.json:ro"
+          DOCKER_CONFIG_ARGS="-v $HOME/.docker:/tmp/docker-config:ro -e DOCKER_CONFIG=/tmp/docker-config"
         fi
         docker run \
              -v /var/run/docker.sock:/var/run/docker.sock \
              --group-add $(stat -c '%g' /var/run/docker.sock) \
-             $DOCKER_CONFIG_MOUNT \
+             $DOCKER_CONFIG_ARGS \
              -v $(pwd):$(pwd) -e CCACHE_DIR=$(pwd)/.ccache -e HOME=$(pwd) --workdir $(pwd) -u $(id -u):$(id -g) \
              ${{inputs.image_name}} \
               /usr/bin/bash -c '${{inputs.run}}'
