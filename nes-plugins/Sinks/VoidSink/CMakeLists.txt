@@ -21,4 +21,7 @@ target_include_directories(void_sink_validation_plugin
         PUBLIC include .
 )
 
+target_link_libraries(void_sink_plugin PUBLIC nes-sinks)
+target_link_libraries(void_sink_validation_plugin PUBLIC nes-sinks)
+
 add_tests_if_enabled(tests)
