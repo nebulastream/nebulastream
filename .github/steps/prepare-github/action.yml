@@ -10,10 +10,22 @@ inputs:
   image_name:
     description: 'name of the docker image to prepare'
     required: true
+  docker_username:
+    description: 'Docker Hub username for authenticated pulls'
+    required: false
+  docker_password:
+    description: 'Docker Hub password/token for authenticated pulls'
+    required: false
 
 runs:
   using: 'composite'
   steps:
+    - name: Login to Docker Hub
+      shell: bash
+      run: |
+        if [ -n "${{ inputs.docker_username }}" ] && [ -n "${{ inputs.docker_password }}" ]; then
+          echo "${{ inputs.docker_password }}" | docker login -u "${{ inputs.docker_username }}" --password-stdin
+        fi
     - name: Maximize build space
       # Idea was taken from https://github.com/marketplace/actions/maximize-build-disk-space. GitHub hosted ci servers
       # have around 100 gb of diskspace, however, alot is already claimed by pre-installed software.
