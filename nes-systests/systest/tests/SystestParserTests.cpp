@@ -258,8 +258,7 @@ TEST_F(SystestParserTest, testSubstitutionRuleRespectsWordBoundaries)
     SystestParser parser{};
 
     /// Register a substitution rule for the short keyword "we"
-    parser.registerSubstitutionRule(
-        {.keyword = "we", .ruleFunction = [](std::string& substitute) { substitute = "REPLACED"; }});
+    parser.registerSubstitutionRule({.keyword = "we", .ruleFunction = [](std::string& substitute) { substitute = "REPLACED"; }});
 
     /// The query contains "producedPower" which has "we" as a substring, and also "INTO we" which is an exact word match.
     static constexpr std::string_view TestContent = R"(
@@ -271,8 +270,8 @@ SELECT producedPower, timestamp FROM source INTO we;
     std::string receivedQuery;
     parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId) { receivedQuery = queryOut; });
     parser.registerOnCreateCallback(
-        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) {});
-    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId) {});
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+    parser.registerOnResultTuplesCallback([](std::vector<std::string>&&, SystestQueryId) { });
 
     ASSERT_TRUE(parser.loadString(std::string(TestContent)));
     EXPECT_NO_THROW(parser.parse());
@@ -280,10 +279,8 @@ SELECT producedPower, timestamp FROM source INTO we;
     /// "producedPower" must NOT be modified, but "we" as a standalone word must be replaced
     EXPECT_NE(receivedQuery.find("producedPower"), std::string::npos)
         << "producedPower was incorrectly modified by substitution rule. Query: " << receivedQuery;
-    EXPECT_NE(receivedQuery.find("INTO REPLACED"), std::string::npos)
-        << "Standalone 'we' was not replaced. Query: " << receivedQuery;
-    EXPECT_EQ(receivedQuery.find("INTO we"), std::string::npos)
-        << "Standalone 'we' should have been replaced. Query: " << receivedQuery;
+    EXPECT_NE(receivedQuery.find("INTO REPLACED"), std::string::npos) << "Standalone 'we' was not replaced. Query: " << receivedQuery;
+    EXPECT_EQ(receivedQuery.find("INTO we"), std::string::npos) << "Standalone 'we' should have been replaced. Query: " << receivedQuery;
 }
 
 }
