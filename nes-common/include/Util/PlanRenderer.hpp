@@ -79,7 +79,7 @@ constexpr char PARENT_CHILD_LAST_BRANCH = '}'; /// '┤'
 constexpr size_t MAX_NODE_DISPLAY_WIDTH = 60;
 
 /// Truncates a string to at most `maxWidth` characters, appending "..." if truncated.
-inline std::string truncateNodeLabel(const std::string& label, const size_t maxWidth = MAX_NODE_DISPLAY_WIDTH)
+inline std::string truncateNodeLabel(const std::string& label, const size_t maxWidth)
 {
     if (label.size() <= maxWidth)
     {
@@ -180,7 +180,7 @@ private:
             layerCalcQueue.pop_front();
             nodesPerLayer.current--;
 
-            const std::string currentNodeAsString = truncateNodeLabel(currentNode.explain(verbosity));
+            const std::string currentNodeAsString = truncateNodeLabel(currentNode.explain(verbosity), MAX_NODE_DISPLAY_WIDTH);
             const size_t width = currentNodeAsString.size();
             const auto id = currentNode.getId().getRawValue();
             auto layerNode = std::make_shared<PrintNode>(
