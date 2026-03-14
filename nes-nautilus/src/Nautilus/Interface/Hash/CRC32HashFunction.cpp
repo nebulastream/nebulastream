@@ -96,7 +96,8 @@ VarVal crc32VarVal(const VarVal& input)
         auto byte = (value >> nautilus::val<uint64_t>(i * bitsPerByte)) & nautilus::val<uint64_t>(byteMask);
         auto tableIndex = (crc ^ byte) & nautilus::val<uint64_t>(byteMask);
         /// We invoke a helper to perform the table lookup at runtime.
-        crc = (crc >> nautilus::val<uint64_t>(bitsPerByte)) ^ nautilus::invoke(+[](uint64_t idx) -> uint64_t { return crc32Table[idx]; }, tableIndex);
+        crc = (crc >> nautilus::val<uint64_t>(bitsPerByte))
+            ^ nautilus::invoke(+[](uint64_t idx) -> uint64_t { return crc32Table[idx]; }, tableIndex);
     }
     crc = crc ^ nautilus::val<uint64_t>(finalXor);
     return VarVal(crc);
