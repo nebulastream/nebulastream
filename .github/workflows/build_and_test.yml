@@ -72,6 +72,8 @@ jobs:
         name: Run Unit Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # Run unit tests in parallel. Timeout after 40 minutes.
@@ -284,6 +286,8 @@ jobs:
         name: Run Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
