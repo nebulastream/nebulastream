@@ -16,10 +16,10 @@
 #include <memory>
 #include <vector>
 
-#include <BaseUnitTest.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 #include <QueryOptimizer.hpp>
 
@@ -33,7 +33,6 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Plans/LogicalPlanBuilder.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -41,6 +40,7 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -90,8 +90,7 @@ TEST_F(QueryOptimizerTest, SimplePlanHasBothTraitsAfterOptimization)
     {
         EXPECT_TRUE(op.getTraitSet().contains<JoinImplementationTypeTrait>())
             << "Operator should have JoinImplementationTypeTrait after optimization";
-        EXPECT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>())
-            << "Operator should have MemoryLayoutTypeTrait after optimization";
+        EXPECT_TRUE(op.getTraitSet().contains<MemoryLayoutTypeTrait>()) << "Operator should have MemoryLayoutTypeTrait after optimization";
     }
 }
 

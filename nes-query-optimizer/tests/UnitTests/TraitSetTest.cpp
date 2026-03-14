@@ -15,10 +15,10 @@
 #include <cstdint>
 #include <vector>
 
-#include <BaseUnitTest.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/ImplementationTypeTrait.hpp>
@@ -78,7 +78,7 @@ TEST_F(TraitSetTest, TryInsertSucceedsOnceAndRejectsDuplicate)
 TEST_F(TraitSetTest, GetReturnsCorrectValue)
 {
     TraitSet traitSet;
-    traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    (void)traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
 
     auto trait = traitSet.get<MemoryLayoutTypeTrait>();
     EXPECT_EQ(trait->memoryLayout, MemoryLayoutType::ROW_LAYOUT);
@@ -96,7 +96,7 @@ TEST_F(TraitSetTest, TryGetReturnsNulloptWhenAbsent)
 TEST_F(TraitSetTest, TryGetReturnsValueWhenPresent)
 {
     TraitSet traitSet;
-    traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+    (void)traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
 
     auto result = traitSet.tryGet<JoinImplementationTypeTrait>();
     ASSERT_TRUE(result.has_value());
@@ -107,12 +107,12 @@ TEST_F(TraitSetTest, TryGetReturnsValueWhenPresent)
 TEST_F(TraitSetTest, EqualityWithSameTraits)
 {
     TraitSet a;
-    a.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
-    a.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    (void)a.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+    (void)a.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
 
     TraitSet b;
-    b.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
-    b.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    (void)b.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+    (void)b.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
 
     EXPECT_EQ(a, b);
 }
@@ -121,10 +121,10 @@ TEST_F(TraitSetTest, EqualityWithSameTraits)
 TEST_F(TraitSetTest, InequalityWithDifferentValues)
 {
     TraitSet a;
-    a.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+    (void)a.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
 
     TraitSet b;
-    b.tryInsert(JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
+    (void)b.tryInsert(JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
 
     EXPECT_NE(a, b);
 }
@@ -133,8 +133,8 @@ TEST_F(TraitSetTest, InequalityWithDifferentValues)
 TEST_F(TraitSetTest, FreeStandingHelpers)
 {
     TraitSet traitSet;
-    traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
-    traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    (void)traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::CHOICELESS});
+    (void)traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
 
     EXPECT_TRUE(hasTrait<JoinImplementationTypeTrait>(traitSet));
     EXPECT_TRUE(hasTrait<MemoryLayoutTypeTrait>(traitSet));
@@ -163,8 +163,8 @@ TEST_F(TraitSetTest, RangeConstructor)
 TEST_F(TraitSetTest, IsIterable)
 {
     TraitSet traitSet;
-    traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
-    traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
+    (void)traitSet.tryInsert(JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+    (void)traitSet.tryInsert(MemoryLayoutTypeTrait{MemoryLayoutType::ROW_LAYOUT});
 
     size_t count = 0;
     for ([[maybe_unused]] const auto& [typeIndex, trait] : traitSet)
@@ -179,7 +179,7 @@ TEST_F(TraitSetTest, OutputOriginIdsTraitRoundTrip)
 {
     std::vector<OriginId> ids = {OriginId(1), OriginId(2), OriginId(3)};
     TraitSet traitSet;
-    traitSet.tryInsert(OutputOriginIdsTrait{ids});
+    (void)traitSet.tryInsert(OutputOriginIdsTrait{ids});
 
     ASSERT_TRUE(traitSet.contains<OutputOriginIdsTrait>());
     auto trait = traitSet.get<OutputOriginIdsTrait>();
