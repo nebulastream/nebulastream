@@ -86,7 +86,7 @@ private:
 
 struct ConfigParametersGenerator
 {
-    static constexpr auto SEQUENCE_STOPS_GENERATOR = DescriptorConfig::makeConfigParameter<EnumWrapper, GeneratorStop>(
+    static inline const auto SEQUENCE_STOPS_GENERATOR = DescriptorConfig::makeConfigParameter<EnumWrapper, GeneratorStop>(
         "stop_generator_when_sequence_finishes",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
@@ -164,7 +164,7 @@ struct ConfigParametersGenerator
             return std::optional<std::string>();
         });
 
-    static constexpr auto GENERATOR_SCHEMA = DescriptorConfig::makeConfigParameter<std::string>(
+    static inline const auto GENERATOR_SCHEMA = DescriptorConfig::makeConfigParameter<std::string>(
         "generator_schema",
         {},
         [](const std::unordered_map<std::string, std::string>& config)

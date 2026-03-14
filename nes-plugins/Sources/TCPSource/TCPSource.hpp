@@ -47,7 +47,7 @@ struct ConfigParametersTCP
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGetByName<std::string>("socket_host", config); });
-    static constexpr auto PORT = DescriptorConfig::makeConfigParameter<uint32_t>(
+    static inline const auto PORT = DescriptorConfig::makeConfigParameter<uint32_t>(
         "socket_port",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<uint32_t>
@@ -64,7 +64,7 @@ struct ConfigParametersTCP
             }
             return portNumber;
         });
-    static constexpr auto DOMAIN = DescriptorConfig::makeConfigParameter<int32_t>(
+    static inline const auto DOMAIN = DescriptorConfig::makeConfigParameter<int32_t>(
         "socket_domain",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
@@ -81,7 +81,7 @@ struct ConfigParametersTCP
             NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
             return std::nullopt;
         });
-    static constexpr auto TYPE = DescriptorConfig::makeConfigParameter<int32_t>(
+    static inline const auto TYPE = DescriptorConfig::makeConfigParameter<int32_t>(
         "socket_type",
         SOCK_STREAM,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
