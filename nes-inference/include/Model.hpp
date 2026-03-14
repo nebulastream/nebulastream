@@ -51,6 +51,14 @@ class Model
 
         friend bool operator==(const RefCountedByteBuffer& lhs, const RefCountedByteBuffer& rhs)
         {
+            if (lhs.size != rhs.size)
+            {
+                return false;
+            }
+            if (!lhs.buffer || !rhs.buffer)
+            {
+                return lhs.buffer == rhs.buffer;
+            }
             return std::ranges::equal(std::span{lhs.buffer.get(), lhs.size}, std::span{rhs.buffer.get(), rhs.size});
         }
 

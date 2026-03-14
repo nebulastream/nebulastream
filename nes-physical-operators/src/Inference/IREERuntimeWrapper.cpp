@@ -13,6 +13,11 @@
 */
 
 #include <Inference/IREERuntimeWrapper.hpp>
+
+#include <cstddef>
+#include <memory>
+#include <span>
+#include <string>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
 #include <ErrorHandling.hpp>
@@ -69,10 +74,19 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_instance_options_use_all_available_drivers(&instanceOptions);
     iree_runtime_instance_t* inst = nullptr;
     iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &inst);
+    if (!iree_status_is_ok(status))
+    {
+        throw InferenceRuntime("Model Setup failed. Could not create IREE runtime instance");
+    }
     NES_DEBUG("Created IREE runtime instance")
 
     iree_hal_device_t* dev = nullptr;
-    iree_runtime_instance_try_create_default_device(inst, iree_make_cstring_view("local-sync"), &dev);
+    status = iree_runtime_instance_try_create_default_device(inst, iree_make_cstring_view("local-sync"), &dev);
+    if (!iree_status_is_ok(status) || dev == nullptr)
+    {
+        iree_runtime_instance_release(inst);
+        throw InferenceRuntime("Model Setup failed. Could not create IREE device");
+    }
     NES_DEBUG("Created IREE device")
 
     iree_runtime_session_options_t sessionOptions;
@@ -102,7 +116,7 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     this->session = sess;
 }
 
-void IREERuntimeWrapper::execute(const std::string& functionName, void* inputData, size_t inputSize, void* outputData)
+void IREERuntimeWrapper::execute(const std::string& functionName, void* inputData, size_t inputSize, std::span<std::byte> output)
 {
     iree_runtime_call_t call;
     if (this->function.module == nullptr)
@@ -118,6 +132,8 @@ void IREERuntimeWrapper::execute(const std::string& functionName, void* inputDat
     {
         iree_runtime_call_initialize(session, function, &call);
     }
+    /// Ensure call resources are released on all exit paths (including exceptions)
+    const std::unique_ptr<iree_runtime_call_t, decltype(&iree_runtime_call_deinitialize)> callGuard(&call, &iree_runtime_call_deinitialize);
 
     iree_hal_device_t* dev = iree_runtime_session_device(session);
     iree_hal_allocator_t* deviceAllocator = iree_runtime_session_device_allocator(session);
@@ -167,12 +183,16 @@ void IREERuntimeWrapper::execute(const std::string& functionName, void* inputDat
     std::unique_ptr<iree_hal_buffer_view_t, decltype(&iree_hal_buffer_view_release)> outputBuffer(
         outputView, &iree_hal_buffer_view_release);
 
-    int outputSizeBytes = iree_hal_buffer_view_byte_length(outputBuffer.get());
+    auto outputSizeBytes = iree_hal_buffer_view_byte_length(outputBuffer.get());
+    if (outputSizeBytes > output.size())
+    {
+        throw InferenceRuntime("Model Execution failed. Model output size exceeds buffer capacity");
+    }
     status = iree_hal_device_transfer_d2h(
         iree_runtime_session_device(session),
         iree_hal_buffer_view_buffer(outputBuffer.get()),
         0,
-        outputData,
+        output.data(),
         outputSizeBytes,
         IREE_HAL_TRANSFER_BUFFER_FLAG_DEFAULT,
         iree_infinite_timeout());

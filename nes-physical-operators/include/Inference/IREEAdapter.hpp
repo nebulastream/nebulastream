@@ -46,7 +46,7 @@ public:
 
     float getResultAt(size_t idx)
     {
-        PRECONDITION(idx < outputSize / 4, "Index is too large");
+        PRECONDITION(idx < outputSize / sizeof(float), "Index is too large");
         return std::bit_cast<float*>(outputData.get())[idx];
     }
 
@@ -56,6 +56,7 @@ public:
         std::ranges::copy_n(outputData.get(), std::min(content.size(), outputSize), content.data());
     }
 
+    /// Copies up to inputSize bytes from content, truncating if content is larger (e.g., for varsized inputs).
     void addModelInput(std::span<std::byte> content)
     {
         std::ranges::copy_n(content.data(), std::min(content.size(), inputSize), inputData.get());

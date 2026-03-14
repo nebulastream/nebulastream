@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <span>
 #include <string>
 #include <vector>
 #include <iree/runtime/api.h>
@@ -33,7 +35,7 @@ public:
     IREERuntimeWrapper& operator=(IREERuntimeWrapper&&) noexcept;
 
     void setup(iree_const_byte_span_t compiledModel);
-    void execute(const std::string& functionName, void* inputData, size_t inputSize, void* outputData);
+    void execute(const std::string& functionName, void* inputData, size_t inputSize, std::span<std::byte> output);
     void setInputShape(std::vector<size_t> inputShape);
     void setNDim(size_t nDim);
 

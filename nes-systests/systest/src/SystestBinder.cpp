@@ -53,6 +53,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Strings.hpp>
@@ -546,30 +547,21 @@ struct SystestBinder::Impl
 
     void createModel(const std::shared_ptr<Inference::ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
     {
-        std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
-        for (const auto& [fieldName, dataType] : statement.inputs)
-        {
-            inputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
-        }
-
-        std::vector<std::pair<std::string, std::shared_ptr<DataType>>> outputs;
-        for (const auto& [fieldName, dataType] : statement.outputs)
-        {
-            outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
-        }
-
+        /// Resolve relative paths against testDataDir before routing through the handler
+        auto resolvedStatement = statement;
         auto path = std::filesystem::path(statement.path);
         if (!path.is_absolute())
         {
             path = testDataDir / path;
         }
+        resolvedStatement.path = path.string();
 
-        modelCatalog->registerModel(Inference::RegisteredModel{
-            .name = statement.name,
-            .path = path,
-            .inputs = std::move(inputs),
-            .outputs = std::move(outputs),
-        });
+        auto handler = ModelStatementHandler(modelCatalog);
+        auto result = handler(resolvedStatement);
+        if (!result)
+        {
+            throw std::move(result).error();
+        }
     }
 
     void createCallback(

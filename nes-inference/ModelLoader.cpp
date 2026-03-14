@@ -20,9 +20,12 @@
 
 #include <array>
 #include <atomic>
+#include <chrono>
 #include <cstddef>
+#include <future>
 #include <expected>
 #include <filesystem>
+#include <functional>
 #include <ios>
 #include <iostream>
 #include <iterator>
@@ -94,11 +97,18 @@ struct ModelMetadataGraph
 
     std::vector<size_t> parseTensorShape(const std::string& label)
     {
-        std::regex tensor_regex(R"(tensor<([?0-9x]+)f32>)");
+        /// Match tensor shapes with any element type (e.g., f32, f64, i32)
+        const std::regex tensorRegex(R"(tensor<([?0-9x]+)([a-z][a-z0-9]+)>)");
         std::smatch match;
         std::vector<size_t> result;
-        if (std::regex_search(label, match, tensor_regex))
+        if (std::regex_search(label, match, tensorRegex))
         {
+            std::string elementType = match[2];
+            if (elementType != "f32")
+            {
+                NES_ERROR("Unsupported tensor element type '{}' in label '{}'. Only f32 is supported.", elementType, label);
+                return {};
+            }
             std::string shape_str = match[1];
             std::stringstream ss(shape_str);
             std::string dim;
@@ -311,7 +321,19 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             std::ranges::copy(std::span{buffer.data(), static_cast<size_t>(model_stream.gcount())}, std::back_inserter(modelVmfb));
         }
 
-        std::ranges::for_each(process, [](auto& process) { process.wait(); });
+        /// boost::process v1 wait_for() uses sigtimedwait on POSIX, which can miss
+        /// SIGCHLD and block for the full timeout even after the process exits
+        /// (boostorg/process#69). We work around this by calling wait() in a background
+        /// thread and using std::future::wait_for for the timeout.
+        auto waitFuture = std::async(std::launch::async, [&]() { std::ranges::for_each(process, [](auto& proc) { proc.wait(); }); });
+        if (waitFuture.wait_for(std::chrono::seconds(10)) == std::future_status::timeout)
+        {
+            for (auto& proc : process)
+            {
+                proc.terminate();
+            }
+            return std::unexpected(ModelLoadError("Model import/compile timed out after 10 seconds"));
+        }
         const auto success = std::ranges::all_of(process, [](const auto& process) { return process.exit_code() == 0; });
         if (success)
         {
@@ -326,11 +348,13 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             model.functionName = "module." + metadata.functionName;
             model.shape = metadata.inputShape;
             model.dims = metadata.inputShape.size();
-            model.inputSizeInBytes = 4 * std::accumulate(model.shape.begin(), model.shape.end(), 1, std::multiplies<int>());
+            model.inputSizeInBytes
+                = sizeof(float) * std::accumulate(model.shape.begin(), model.shape.end(), size_t{1}, std::multiplies<>());
 
             model.outputShape = metadata.outputShape;
             model.outputDims = metadata.outputShape.size();
-            model.outputSizeInBytes = 4 * std::accumulate(model.outputShape.begin(), model.outputShape.end(), 1, std::multiplies<int>());
+            model.outputSizeInBytes
+                = sizeof(float) * std::accumulate(model.outputShape.begin(), model.outputShape.end(), size_t{1}, std::multiplies<>());
 
             return model;
         }

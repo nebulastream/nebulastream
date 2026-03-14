@@ -26,7 +26,7 @@ if (ENABLE_IREE_TESTS)
     function(add_nes_inference_physical_operator_test)
         add_nes_physical_operator_test(${ARGN})
         set(TARGET_NAME ${ARGV0})
-        target_link_libraries(${TARGET_NAME} nes-inference nes-iree-inference-plugin nes-nautilus-test-util)
+        target_link_libraries(${TARGET_NAME} nes-inference nes-nautilus-test-util)
     endfunction()
 
     add_nes_inference_physical_operator_test(InferModelPhysicalOperatorTest InferModelPhysicalOperatorTest.cpp)

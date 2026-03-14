@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -209,6 +210,11 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
     for (const auto& [fieldName, dataType] : statement.outputs)
     {
         outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+    }
+
+    if (!std::filesystem::exists(statement.path))
+    {
+        return std::unexpected{InvalidStatement("Model path does not exist: {}", statement.path)};
     }
 
     modelCatalog->registerModel(Inference::RegisteredModel{

@@ -30,6 +30,9 @@ struct RegisteredModel
     std::vector<std::pair<std::string, std::shared_ptr<NES::DataType>>> outputs;
 };
 
+/// Manages model registration and lazy-loading/caching of compiled models.
+/// `catalogImpl` is mutable to allow caching compiled models in const `load()`.
+/// Not thread-safe — concurrent access requires external synchronization.
 class ModelCatalog
 {
     mutable std::unordered_map<std::string, Model> catalogImpl;

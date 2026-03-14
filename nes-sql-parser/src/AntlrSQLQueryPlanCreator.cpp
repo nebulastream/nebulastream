@@ -1055,13 +1055,13 @@ LogicalPlan buildModelInferencePlan(AntlrSQLParser::ModelInferenceSourceContext*
             /// The subquery has already been processed by the listener; its plan is on the queryPlans vector.
             if (queryPlans.empty())
             {
-                throw std::runtime_error("MODEL_INFERENCE subquery plan not found");
+                throw InvalidQuerySyntax("MODEL_INFERENCE subquery plan not found");
             }
             auto plan = std::move(queryPlans.back());
             queryPlans.pop_back();
             return plan;
         }
-        throw std::runtime_error("MODEL_INFERENCE: unrecognized input type");
+        throw InvalidQuerySyntax("MODEL_INFERENCE: unrecognized input type");
     }();
 
     return LogicalPlanBuilder::addInferModel(std::move(modelName), childPlan);

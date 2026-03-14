@@ -39,7 +39,7 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
 
     NES_DEBUG("Lowering InferModel operator to physical IREE operator (function: {})", model.getFunctionName());
 
-    const auto inputSchema = logicalOperator.getInputSchemas()[0];
+    const auto inputSchema = logicalOperator.getInputSchemas().at(0);
 
     /// Extract input field names from the logical operator, resolving to qualified schema names.
     /// If a model input maps to a VARSIZED schema field, use bulk byte input mode.

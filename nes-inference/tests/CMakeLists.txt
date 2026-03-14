@@ -15,7 +15,7 @@ add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_CURRENT_SOURCE_DIR}/testdata")
 function(add_nes_test_inference)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-inference nes-iree-inference-plugin)
+    target_link_libraries(${TARGET_NAME} nes-inference)
 endfunction()
 
 add_nes_test_inference(ModelLoaderTest ModelLoaderTest.cpp)

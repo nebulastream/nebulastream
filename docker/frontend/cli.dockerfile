@@ -29,7 +29,7 @@ RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
 
 # Install IREE compiler tools for ML inference (ONNX → IREE compilation at runtime)
 ARG IREE_COMPILER_VERSION=3.10.0
-RUN apt install -y python3 python3-venv && \
+RUN apt-get update && apt-get install -y python3 python3-venv && \
     python3 -m venv /opt/iree && \
     /opt/iree/bin/pip install --no-cache-dir \
         iree-base-compiler==${IREE_COMPILER_VERSION} \

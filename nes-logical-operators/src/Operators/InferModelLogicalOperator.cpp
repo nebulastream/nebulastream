@@ -43,8 +43,12 @@ std::string base64Encode(const std::string& input)
 {
     const auto encodedLen = 4 * ((input.size() + 2) / 3);
     std::string out(encodedLen, '\0');
-    EVP_EncodeBlock(
+    const auto result = EVP_EncodeBlock(
         reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    if (result < 0)
+    {
+        throw NES::CannotDeserialize("EVP_EncodeBlock failed");
+    }
     return out;
 }
 
@@ -54,6 +58,10 @@ std::string base64Decode(const std::string& input)
     std::string out(maxDecodedLen, '\0');
     const auto actualLen = EVP_DecodeBlock(
         reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    if (actualLen < 0)
+    {
+        throw NES::CannotDeserialize("EVP_DecodeBlock failed on malformed base64 input");
+    }
     /// EVP_DecodeBlock doesn't account for padding — trim trailing null bytes
     auto padding = std::count(input.rbegin(), input.rend(), '=');
     out.resize(static_cast<size_t>(actualLen - padding));
@@ -205,14 +213,14 @@ InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(con
 
     if (!modelBytesOpt.has_value() || !inputFieldNamesOpt.has_value())
     {
-        throw CannotDeserialize("Failed to deserialize InferModelLogicalOperator");
+        throw NES::CannotDeserialize("Failed to deserialize InferModelLogicalOperator");
     }
 
     auto decoded = base64Decode(modelBytesOpt.value());
     SerializableOperator_Model proto;
     if (!proto.ParseFromString(decoded))
     {
-        throw CannotDeserialize("Failed to parse InferModelLogicalOperator model proto");
+        throw NES::CannotDeserialize("Failed to parse InferModelLogicalOperator model proto");
     }
 
     return InferModelLogicalOperator(Nebuli::Inference::deserializeModel(proto), inputFieldNamesOpt.value());

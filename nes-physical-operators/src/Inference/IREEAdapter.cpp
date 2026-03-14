@@ -13,6 +13,8 @@
 */
 
 #include <Inference/IREEAdapter.hpp>
+
+#include <span>
 #include <Model.hpp>
 
 namespace NES::Inference
@@ -42,7 +44,7 @@ void IREEAdapter::initializeModel(NES::Nebuli::Inference::Model& model)
 
 void IREEAdapter::infer()
 {
-    runtimeWrapper.execute(functionName, inputData.get(), inputSize, reinterpret_cast<float*>(outputData.get()));
+    runtimeWrapper.execute(functionName, inputData.get(), inputSize, std::span<std::byte>{outputData.get(), outputSize});
 }
 
 }
