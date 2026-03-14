@@ -118,7 +118,9 @@ TEST(ModelLoaderTest, LoadEmptyOnnxFile)
     }
 
     auto emptyFile = std::filesystem::temp_directory_path() / "empty_model.onnx";
-    { std::ofstream out(emptyFile, std::ios::binary); }
+    {
+        std::ofstream out(emptyFile, std::ios::binary);
+    }
 
     auto result = load(emptyFile, {});
     EXPECT_FALSE(result.has_value());
