@@ -77,9 +77,7 @@ SumAggregationLogicalFunction SumAggregationLogicalFunction::withInferredStamp(c
         newAsFieldName = attributeNameResolver + fieldName;
     }
     auto newFinalAggregationStamp = newOnField.getDataType();
-    return this->withInputStamp(newOnField.getDataType())
-        .withOnField(newOnField)
-        .withFinalAggregateStamp(newFinalAggregationStamp)
+    return this->withOnField(newOnField)
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
@@ -118,21 +116,6 @@ std::string SumAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType SumAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType SumAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType SumAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction SumAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -141,27 +124,6 @@ FieldAccessLogicalFunction SumAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction SumAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-SumAggregationLogicalFunction SumAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 SumAggregationLogicalFunction SumAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const

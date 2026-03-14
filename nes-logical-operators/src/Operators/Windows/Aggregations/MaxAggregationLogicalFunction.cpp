@@ -83,9 +83,7 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(c
         newAsFieldName = attributeNameResolver + fieldName;
     }
     auto newFinalAggregationStamp = newOnField.getDataType();
-    return this->withInputStamp(newOnField.getDataType())
-        .withOnField(newOnField)
-        .withFinalAggregateStamp(newFinalAggregationStamp)
+    return this->withOnField(newOnField)
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
@@ -119,21 +117,6 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterMaxAggregationLogicalFunct
     return std::make_shared<WindowAggregationLogicalFunction>(MaxAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
 }
 
-DataType MaxAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType MaxAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType MaxAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction MaxAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -142,27 +125,6 @@ FieldAccessLogicalFunction MaxAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction MaxAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const

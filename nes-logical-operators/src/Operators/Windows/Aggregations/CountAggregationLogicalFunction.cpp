@@ -32,20 +32,21 @@
 
 namespace NES
 {
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field) : onField(field), asField(field)
+/// COUNT(*) includes null values (counts all rows), COUNT(fieldName) does not
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(const FieldAccessLogicalFunction& field, const bool includeNullValues)
+    : includeNullValues(includeNullValues), onField(field), asField(field)
 {
 }
 
-CountAggregationLogicalFunction::CountAggregationLogicalFunction(FieldAccessLogicalFunction field, FieldAccessLogicalFunction asField)
-    : onField(std::move(field)), asField(std::move(asField))
+CountAggregationLogicalFunction::CountAggregationLogicalFunction(
+    FieldAccessLogicalFunction onField, FieldAccessLogicalFunction asField, const bool includeNullValues)
+    : includeNullValues(includeNullValues), onField(std::move(onField)), asField(std::move(asField))
 {
 }
 
-bool CountAggregationLogicalFunction::shallIncludeNullValues() noexcept
+bool CountAggregationLogicalFunction::shallIncludeNullValues() const noexcept
 {
-    /// For now, we hardcode it. As soon as TODO #699 is merged, we can specify here a difference
-    /// For example, COUNT(*) includes null whereas COUNT(fieldName) does not
-    return false;
+    return includeNullValues;
 }
 
 std::string_view CountAggregationLogicalFunction::getName() const noexcept
@@ -62,8 +63,17 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
-        /// We infer the data type from the schema for the on field
-        auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
+        auto newOnField = onField;
+        if (includeNullValues)
+        {
+            const auto& firstField = schema.getFields().at(0);
+            newOnField = FieldAccessLogicalFunction{firstField.dataType, firstField.name};
+        }
+        else
+        {
+            /// We infer the data type from the schema for the on field
+            newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
+        }
         const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
@@ -85,29 +95,27 @@ CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredSta
         auto newFinalAggregateStamp = DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE);
         auto newAsField = this->getAsField().withFieldName(newAsFieldName);
 
-        return this->withInputStamp(newInputStamp)
-            .withOnField(newOnField.withDataType(newInputStamp))
-            .withFinalAggregateStamp(newFinalAggregateStamp)
-            .withAsField(newAsField.withDataType(newFinalAggregateStamp));
+        return this->withOnField(newOnField.withDataType(newInputStamp)).withAsField(newAsField.withDataType(newFinalAggregateStamp));
     }
     throw CannotInferSchema("Schema lacked source name qualifier: {}", schema);
 }
 
 Reflected Reflector<CountAggregationLogicalFunction>::operator()(const CountAggregationLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedCountAggregationLogicalFunction{.onField = function.getOnField(), .asField = function.getAsField()});
+    return reflect(detail::ReflectedCountAggregationLogicalFunction{
+        .onField = function.getOnField(), .asField = function.getAsField(), .includeNullValues = function.shallIncludeNullValues()});
 }
 
 CountAggregationLogicalFunction Unreflector<CountAggregationLogicalFunction>::operator()(const Reflected& reflected) const
 {
-    auto [onField, asField] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
+    auto [onField, asField, includeNullValues] = unreflect<detail::ReflectedCountAggregationLogicalFunction>(reflected);
 
-    if (!onField.has_value() || !asField.has_value())
+    if (not onField.has_value() or not asField.has_value() or not includeNullValues.has_value())
     {
         throw CannotDeserialize("CountAggregationLogicalFunction is missing onField/asField function");
     }
 
-    return {onField.value(), asField.value()};
+    return {onField.value(), asField.value(), includeNullValues.value()};
 }
 
 AggregationLogicalFunctionRegistryReturnType
@@ -122,27 +130,13 @@ AggregationLogicalFunctionGeneratedRegistrar::RegisterCountAggregationLogicalFun
     {
         throw CannotDeserialize("CountAggregationLogicalFunction requires exactly two fields, but got {}", arguments.fields.size());
     }
-    return std::make_shared<WindowAggregationLogicalFunction>(CountAggregationLogicalFunction(arguments.fields[0], arguments.fields[1]));
+    return std::make_shared<WindowAggregationLogicalFunction>(
+        CountAggregationLogicalFunction(arguments.fields[0], arguments.fields[1], arguments.includeNullValues));
 }
 
 std::string CountAggregationLogicalFunction::toString() const
 {
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
-}
-
-DataType CountAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType CountAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType CountAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
 }
 
 FieldAccessLogicalFunction CountAggregationLogicalFunction::getOnField() const
@@ -153,27 +147,6 @@ FieldAccessLogicalFunction CountAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction CountAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 CountAggregationLogicalFunction CountAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const

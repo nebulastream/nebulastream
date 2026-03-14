@@ -78,9 +78,7 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(c
         newAsFieldName = attributeNameResolver + fieldName;
     }
     auto newFinalAggregationStamp = newOnField.getDataType();
-    return this->withInputStamp(newOnField.getDataType())
-        .withOnField(newOnField)
-        .withFinalAggregateStamp(newFinalAggregationStamp)
+    return this->withOnField(newOnField)
         .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregationStamp));
 }
 
@@ -119,21 +117,6 @@ std::string MinAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType MinAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType MinAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType MinAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction MinAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -142,27 +125,6 @@ FieldAccessLogicalFunction MinAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction MinAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 MinAggregationLogicalFunction MinAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const

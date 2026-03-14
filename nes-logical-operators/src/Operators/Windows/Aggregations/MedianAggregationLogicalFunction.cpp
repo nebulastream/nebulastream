@@ -81,10 +81,7 @@ MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInferredS
     }
     const auto newFinalAggregateStamp = DataTypeProvider::provideDataType(
         DataType::Type::FLOAT64, newOnField.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-    return this->withInputStamp(newOnField.getDataType())
-        .withOnField(newOnField)
-        .withFinalAggregateStamp(newFinalAggregateStamp)
-        .withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
+    return this->withOnField(newOnField).withAsField(this->getAsField().withFieldName(newAsFieldName).withDataType(newFinalAggregateStamp));
 }
 
 Reflected MedianAggregationLogicalFunction::reflect() const
@@ -122,21 +119,6 @@ std::string MedianAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-DataType MedianAggregationLogicalFunction::getInputStamp() const
-{
-    return inputStamp;
-}
-
-DataType MedianAggregationLogicalFunction::getPartialAggregateStamp() const
-{
-    return partialAggregateStamp;
-}
-
-DataType MedianAggregationLogicalFunction::getFinalAggregateStamp() const
-{
-    return finalAggregateStamp;
-}
-
 FieldAccessLogicalFunction MedianAggregationLogicalFunction::getOnField() const
 {
     return onField;
@@ -145,27 +127,6 @@ FieldAccessLogicalFunction MedianAggregationLogicalFunction::getOnField() const
 FieldAccessLogicalFunction MedianAggregationLogicalFunction::getAsField() const
 {
     return asField;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withInputStamp(DataType inputStamp) const
-{
-    auto copy = *this;
-    copy.inputStamp = std::move(inputStamp);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withPartialAggregateStamp(DataType partialAggregateStamp) const
-{
-    auto copy = *this;
-    copy.partialAggregateStamp = std::move(partialAggregateStamp);
-    return copy;
-}
-
-MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withFinalAggregateStamp(DataType finalAggregateStamp) const
-{
-    auto copy = *this;
-    copy.finalAggregateStamp = std::move(finalAggregateStamp);
-    return copy;
 }
 
 MedianAggregationLogicalFunction MedianAggregationLogicalFunction::withOnField(FieldAccessLogicalFunction onField) const
