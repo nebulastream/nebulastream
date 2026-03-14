@@ -21,6 +21,8 @@ target_include_directories(checksum_sink_validation_plugin
         PUBLIC include .
 )
 
+target_link_libraries(checksum_sink_plugin PUBLIC nes-sinks)
+target_link_libraries(checksum_sink_validation_plugin PUBLIC nes-sinks)
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
 target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
 
