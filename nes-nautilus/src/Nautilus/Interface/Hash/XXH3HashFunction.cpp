@@ -176,7 +176,7 @@ inline uint64_t hashLen17to128(const uint8_t* input, uint64_t length, const uint
 inline uint64_t hashLen129to240(const uint8_t* input, uint64_t length, const uint8_t* secret, [[maybe_unused]] uint64_t seed)
 {
     constexpr uint64_t startOffset = 3;
-    constexpr uint64_t lastRoundSecretOffset = 136 - 17; // = 119
+    constexpr uint64_t lastRoundSecretOffset = 136 - 17; /// = 119
 
     auto acc = length * PRIME64_1;
     const auto nbRounds = length / 16;
@@ -200,7 +200,7 @@ inline uint64_t hashLen129to240(const uint8_t* input, uint64_t length, const uin
     return avalanche64(acc);
 }
 
-} // namespace XXH3Constants
+} /// namespace XXH3Constants
 
 /// Computes XXH3-64 hash over a raw byte buffer.
 uint64_t xxh3HashBytes(void* data, uint64_t length)
