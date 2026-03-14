@@ -24,6 +24,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
 
@@ -38,44 +39,39 @@ class IngestionTimeFunction;
 /// This enforces fields carrying time values to be evaluated with respect to a specific timeunit.
 class TimestampField
 {
-    enum TimeFunctionType : uint8_t
-    {
-        EVENT_TIME,
-        INGESTION_TIME,
-    };
-
 public:
     friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
 
     /// Builds the TimeFunction
     [[nodiscard]] std::unique_ptr<TimeFunction> toTimeFunction() const
     {
-        switch (timeFunctionType)
+        /// Ingestion time: timestamp comes from buffer metadata via execution context.
+        if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
         {
-            case EVENT_TIME:
-                return std::make_unique<EventTimeFunction>(FieldAccessPhysicalFunction(fieldName), unit);
-            case INGESTION_TIME:
-                return std::make_unique<IngestionTimeFunction>();
+            return std::make_unique<IngestionTimeFunction>();
         }
+        return std::make_unique<EventTimeFunction>(FieldAccessPhysicalFunction(fieldName), unit);
     }
 
-    static TimestampField ingestionTime() { return {"IngestionTime", Windowing::TimeUnit(1), INGESTION_TIME}; }
-
-    static TimestampField eventTime(std::string fieldName, const Windowing::TimeUnit& timeUnit)
+    static TimestampField ingestionTime()
     {
-        return {std::move(fieldName), timeUnit, EVENT_TIME};
+        return {std::string(Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME), Windowing::TimeUnit(1)};
     }
+
+    static TimestampField eventTime(std::string fieldName, const Windowing::TimeUnit& timeUnit) { return {std::move(fieldName), timeUnit}; }
 
     static std::tuple<TimestampField, TimestampField>
     getTimestampLeftAndRight(const JoinLogicalOperator& joinOperator, const std::shared_ptr<Windowing::TimeBasedWindowType>& windowType)
     {
-        if (windowType->getTimeCharacteristic().getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
+        const auto& timeCharacteristic = windowType->getTimeCharacteristic();
+
+        /// Ingestion time uses the buffer creation timestamp, not a per-tuple field.
+        if (timeCharacteristic.getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
         {
-            NES_DEBUG("Skip eventime identification as we use ingestion time");
             return {TimestampField::ingestionTime(), TimestampField::ingestionTime()};
         }
 
-        const auto timeStampFieldNameWithoutSourceName = windowType->getTimeCharacteristic().field.getUnqualifiedName();
+        const auto timeStampFieldNameWithoutSourceName = timeCharacteristic.field.getUnqualifiedName();
 
         /// Extracting the left and right timestamp
         const auto timeStampFieldNameLeft = joinOperator.getInputSchemas().at(0).getFieldByName(timeStampFieldNameWithoutSourceName);
@@ -87,19 +83,15 @@ public:
             timeStampFieldNameWithoutSourceName);
 
         return {
-            TimestampField::eventTime(timeStampFieldNameLeft.value().name, windowType->getTimeCharacteristic().getTimeUnit()),
-            TimestampField::eventTime(timeStampFieldNameRight.value().name, windowType->getTimeCharacteristic().getTimeUnit())};
+            TimestampField::eventTime(timeStampFieldNameLeft.value().name, timeCharacteristic.getTimeUnit()),
+            TimestampField::eventTime(timeStampFieldNameRight.value().name, timeCharacteristic.getTimeUnit())};
     }
 
 private:
     std::string fieldName;
     Windowing::TimeUnit unit;
-    TimeFunctionType timeFunctionType;
 
-    TimestampField(std::string fieldName, const Windowing::TimeUnit& unit, TimeFunctionType timeFunctionType)
-        : fieldName(std::move(fieldName)), unit(unit), timeFunctionType(timeFunctionType)
-    {
-    }
+    TimestampField(std::string fieldName, const Windowing::TimeUnit& unit) : fieldName(std::move(fieldName)), unit(unit) { }
 };
 
 
