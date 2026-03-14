@@ -19,3 +19,15 @@ endfunction()
 add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
 add_nes_physical_operator_test(AndOrPhysicalFunctionTest AndOrPhysicalFunctionTest.cpp)
 add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
+
+if (ENABLE_IREE_TESTS)
+    add_definitions(-DINFERENCE_TEST_DATA="${CMAKE_SOURCE_DIR}/nes-inference/tests/testdata")
+
+    function(add_nes_inference_physical_operator_test)
+        add_nes_physical_operator_test(${ARGN})
+        set(TARGET_NAME ${ARGV0})
+        target_link_libraries(${TARGET_NAME} nes-inference nes-nautilus-test-util)
+    endfunction()
+
+    add_nes_inference_physical_operator_test(InferModelPhysicalOperatorTest InferModelPhysicalOperatorTest.cpp)
+endif ()

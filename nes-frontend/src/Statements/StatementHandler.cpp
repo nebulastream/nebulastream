@@ -16,12 +16,14 @@
 
 #include <chrono>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <ranges>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataTypeProvider.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
@@ -185,6 +187,59 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
         return DropSinkStatementResult{sink.value()};
     }
     return std::unexpected{UnknownSinkName(statement.name)};
+}
+
+ModelStatementHandler::ModelStatementHandler(std::shared_ptr<Inference::ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog))
+{
+}
+
+std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
+{
+    if (modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{ModelAlreadyExists(statement.name)};
+    }
+
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
+    for (const auto& [fieldName, dataType] : statement.inputs)
+    {
+        inputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+    }
+
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> outputs;
+    for (const auto& [fieldName, dataType] : statement.outputs)
+    {
+        outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+    }
+
+    if (!std::filesystem::exists(statement.path))
+    {
+        return std::unexpected{InvalidStatement("Model path does not exist: {}", statement.path)};
+    }
+
+    modelCatalog->registerModel(Inference::RegisteredModel{
+        .name = statement.name,
+        .path = statement.path,
+        .inputs = std::move(inputs),
+        .outputs = std::move(outputs),
+    });
+
+    return CreateModelStatementResult{.name = statement.name};
+}
+
+std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement&) const
+{
+    return ShowModelsStatementResult{.modelNames = modelCatalog->getModelNames()};
+}
+
+std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operator()(const DropModelStatement& statement)
+{
+    if (!modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{UnknownModelName(statement.name)};
+    }
+    modelCatalog->removeModel(statement.name);
+    return DropModelStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer)

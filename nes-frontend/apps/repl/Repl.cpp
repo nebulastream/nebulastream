@@ -51,6 +51,7 @@ struct Repl::Impl
     SourceStatementHandler sourceStatementHandler;
     SinkStatementHandler sinkStatementHandler;
     TopologyStatementHandler topologyStatementHandler;
+    ModelStatementHandler modelStatementHandler;
     std::shared_ptr<QueryStatementHandler> queryStatementHandler;
     StatementBinder binder;
     std::stop_token stopToken;
@@ -74,6 +75,7 @@ struct Repl::Impl
         SourceStatementHandler sourceStatementHandler,
         SinkStatementHandler sinkStatementHandler,
         TopologyStatementHandler topologyStatementHandler,
+        ModelStatementHandler modelStatementHandler,
         std::shared_ptr<QueryStatementHandler> queryStatementHandler,
         StatementBinder binder,
         const ErrorBehaviour errorBehaviour,
@@ -83,6 +85,7 @@ struct Repl::Impl
         : sourceStatementHandler(std::move(sourceStatementHandler))
         , sinkStatementHandler(std::move(sinkStatementHandler))
         , topologyStatementHandler(std::move(topologyStatementHandler))
+        , modelStatementHandler(std::move(modelStatementHandler))
         , queryStatementHandler(std::move(queryStatementHandler))
         , binder(std::move(binder))
         , stopToken(std::move(stopToken))
@@ -399,6 +402,10 @@ struct Repl::Impl
                 {
                     return sinkStatementHandler.apply(stmt);
                 }
+                else if constexpr (requires { modelStatementHandler.apply(stmt); })
+                {
+                    return modelStatementHandler.apply(stmt);
+                }
                 else if constexpr (requires { topologyStatementHandler.apply(stmt); })
                 {
                     return topologyStatementHandler.apply(stmt);
@@ -553,6 +560,7 @@ Repl::Repl(
     SourceStatementHandler sourceStatementHandler,
     SinkStatementHandler sinkStatementHandler,
     TopologyStatementHandler topologyStatementHandler,
+    ModelStatementHandler modelStatementHandler,
     std::shared_ptr<QueryStatementHandler> queryStatementHandler,
     StatementBinder binder,
     ErrorBehaviour errorBehaviour,
@@ -563,6 +571,7 @@ Repl::Repl(
           std::move(sourceStatementHandler),
           std::move(sinkStatementHandler),
           std::move(topologyStatementHandler),
+          std::move(modelStatementHandler),
           std::move(queryStatementHandler),
           std::move(binder),
           errorBehaviour,

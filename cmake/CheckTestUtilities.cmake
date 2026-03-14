@@ -42,3 +42,19 @@ else ()
     set(ENABLE_BATS_TESTS ON CACHE BOOL "Runs testcases that require bats" FORCE)
     message(STATUS "Bats tests enabled: using ${BATS}")
 endif ()
+
+# Check if IREE tools are available for inference-backed physical operator tests
+find_program(IREE_IMPORT_ONNX iree-import-onnx)
+find_program(IREE_COMPILE iree-compile)
+if (IREE_IMPORT_ONNX STREQUAL "IREE_IMPORT_ONNX-NOTFOUND" OR IREE_COMPILE STREQUAL "IREE_COMPILE-NOTFOUND")
+    set(ENABLE_IREE_TESTS OFF CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
+    message(WARNING
+        "IREE tools not found. Disabling IREE inference tests.\n"
+        "  iree-import-onnx: ${IREE_IMPORT_ONNX}\n"
+        "  iree-compile: ${IREE_COMPILE}\n"
+        "  To enable, install the IREE toolchain and ensure iree-import-onnx and iree-compile are in PATH."
+    )
+else ()
+    set(ENABLE_IREE_TESTS ON CACHE BOOL "Build tests that require iree-import-onnx and iree-compile" FORCE)
+    message(STATUS "IREE inference tests enabled")
+endif ()
