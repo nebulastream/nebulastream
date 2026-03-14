@@ -90,7 +90,8 @@ grpc::Status handleGrpcRequest(grpc::ServerContext* context, Handler&& handler)
 
 grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext* ctx)
         {
             auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
@@ -106,7 +107,8 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 
 grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             const auto queryId = QueryId(request->queryid());
@@ -117,7 +119,8 @@ grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const Unr
 
 grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQueryRequest* request, google::protobuf::Empty*)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             const auto queryId = QueryId(request->queryid());
@@ -128,7 +131,8 @@ grpc::Status GRPCServer::StartQuery(grpc::ServerContext* context, const StartQue
 
 grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQueryRequest* request, google::protobuf::Empty*)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             const auto queryId = QueryId(request->queryid());
@@ -140,7 +144,8 @@ grpc::Status GRPCServer::StopQuery(grpc::ServerContext* context, const StopQuery
 
 grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const QueryStatusRequest* request, QueryStatusReply* reply)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             const auto queryId = QueryId{request->queryid()};
@@ -185,7 +190,8 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
 
 grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             auto queryId = QueryId(request->queryid());
@@ -219,7 +225,8 @@ grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const Que
 
 grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response)
 {
-    return handleGrpcRequest(context,
+    return handleGrpcRequest(
+        context,
         [&](grpc::ServerContext*)
         {
             const auto status = delegate.getWorkerStatus(
