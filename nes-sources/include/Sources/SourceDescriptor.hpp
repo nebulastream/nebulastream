@@ -99,9 +99,9 @@ private:
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
     /// Given an invalid value, the NodeEngine takes its configured value. Otherwise, the source-specific configuration takes priority.
-    static constexpr size_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
+    static constexpr uint64_t INVALID_MAX_INFLIGHT_BUFFERS = 0;
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
+    static inline const DescriptorConfig::ConfigParameter<uint64_t> MAX_INFLIGHT_BUFFERS{
         "max_inflight_buffers",
         INVALID_MAX_INFLIGHT_BUFFERS,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};

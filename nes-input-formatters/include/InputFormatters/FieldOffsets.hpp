@@ -71,7 +71,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
     applyHasNext(const nautilus::val<uint64_t>& recordIdx, nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     {
         nautilus::val<uint64_t> totalNumberOfTuples
-            = *getMemberWithOffset<size_t>(fieldOffsetsPtr, offsetof(FieldOffsets, totalNumberOfTuples));
+            = *getMemberWithOffset<uint64_t>(fieldOffsetsPtr, offsetof(FieldOffsets, totalNumberOfTuples));
         return recordIdx < totalNumberOfTuples;
     }
 
@@ -225,7 +225,7 @@ private:
     FieldIndex sizeOfFieldDelimiter{};
     size_t numberOfFieldsInSchema{};
     size_t numberOfOffsetsPerTuple{};
-    size_t totalNumberOfTuples{};
+    uint64_t totalNumberOfTuples{};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};
     std::vector<FieldIndex> indexValues;

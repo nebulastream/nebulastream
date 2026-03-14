@@ -70,7 +70,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const auto seed = std::random_device()();
     NES_INFO("Seed for creating values: {}", seed);
 
-    const auto maxSizeVarSizedData = std::max(20UL, minSizeVarSizedData + 1);
+    const auto maxSizeVarSizedData = std::max(static_cast<uint64_t>(20), minSizeVarSizedData + 1);
     return createMonotonicallyIncreasingValues(
         schema, memoryLayout, numberOfTuples, bufferManager, seed, minSizeVarSizedData, maxSizeVarSizedData);
 }
