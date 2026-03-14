@@ -18,3 +18,4 @@ add_source_files(nes-nautilus
 add_plugin(MurMur3 HashFunction nes-nautilus MurMur3HashFunction.cpp)
 add_plugin(CRC32 HashFunction nes-nautilus CRC32HashFunction.cpp)
 add_plugin(XXH3 HashFunction nes-nautilus XXH3HashFunction.cpp)
+add_plugin(SipHash HashFunction nes-nautilus SipHashFunction.cpp)
