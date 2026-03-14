@@ -137,6 +137,9 @@ joinRelation
 
 joinType
     : INNER?
+    | LEFT OUTER
+    | RIGHT OUTER
+    | FULL OUTER
     ;
 
 joinCriteria
@@ -448,6 +451,7 @@ OF: 'OF';
 ON: 'ON' | 'on';
 OR: 'OR' | 'or';
 ORDER: 'ORDER' | 'order';
+OUTER: 'OUTER' | 'outer';
 QUERY: 'QUERY';
 RECOVER: 'RECOVER';
 RIGHT: 'RIGHT';

@@ -32,6 +32,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -92,7 +93,17 @@ LogicalOperator DecideJoinTypes::apply(const LogicalOperator& logicalOperator)
     auto traitSet = logicalOperator.getTraitSet();
     if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
-        if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
+        if (isOuterJoin(joinOperator.value()->getJoinType()))
+        {
+            /// Outer joins require equi-predicates because only the Hash Join implementation supports them
+            if (not shallUseHashJoin(joinOperator.value()->getJoinFunction()))
+            {
+                throw UnsupportedQuery("Outer joins require equi-predicates (equality on field accesses). "
+                                       "Non-equi outer joins are not supported.");
+            }
+            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
+        }
+        else if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }

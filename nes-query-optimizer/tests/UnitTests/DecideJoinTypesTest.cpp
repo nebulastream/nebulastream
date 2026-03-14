@@ -41,6 +41,7 @@
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -196,6 +197,123 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
     ASSERT_EQ(joins.size(), 1);
     auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
     EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+}
+
+/// LEFT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
+TEST_F(DecideJoinTypesTest, LeftOuterJoinWithEquiPredicateGetsHashJoin)
+{
+    auto leftSchema = createSchema("left");
+    auto rightSchema = createSchema("right");
+    auto leftPlan = createSourcePlan("TEST", leftSchema);
+    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
+        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = phase.apply(plan);
+
+    auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+}
+
+/// RIGHT outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
+TEST_F(DecideJoinTypesTest, RightOuterJoinWithEquiPredicateGetsHashJoin)
+{
+    auto leftSchema = createSchema("left");
+    auto rightSchema = createSchema("right");
+    auto leftPlan = createSourcePlan("TEST", leftSchema);
+    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
+        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN);
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = phase.apply(plan);
+
+    auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+}
+
+/// FULL outer join with equi-predicate under OPTIMIZER_CHOOSES strategy -> HASH_JOIN trait
+TEST_F(DecideJoinTypesTest, FullOuterJoinWithEquiPredicateGetsHashJoin)
+{
+    auto leftSchema = createSchema("left");
+    auto rightSchema = createSchema("right");
+    auto leftPlan = createSourcePlan("TEST", leftSchema);
+    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
+        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::OUTER_FULL_JOIN);
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    auto result = phase.apply(plan);
+
+    auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+}
+
+/// Outer joins must get HASH_JOIN even when strategy is forced to NESTED_LOOP_JOIN (NLJ does not support outer joins)
+TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
+{
+    auto leftSchema = createSchema("left");
+    auto rightSchema = createSchema("right");
+    auto leftPlan = createSourcePlan("TEST", leftSchema);
+    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
+        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    DecideJoinTypes phase(StreamJoinStrategy::NESTED_LOOP_JOIN);
+    auto result = phase.apply(plan);
+
+    auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+}
+
+/// Outer join with non-equi predicate must be rejected (only Hash Join supports outer joins, and it requires equi-predicates)
+TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
+{
+    auto leftSchema = createSchema("left");
+    auto rightSchema = createSchema("right");
+    auto leftPlan = createSourcePlan("TEST", leftSchema);
+    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    /// Use Add(field, field) as a non-equi leaf — not valid for hash join
+    auto addFunc = LogicalFunction{AddLogicalFunction(
+        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("left.value")})};
+    auto joinFunction = LogicalFunction{EqualsLogicalFunction(addFunc, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+
+    auto plan = LogicalPlanBuilder::addJoin(
+        leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN);
+    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+
+    DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    EXPECT_THROW(phase.apply(plan), Exception);
 }
 
 }

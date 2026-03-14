@@ -725,15 +725,35 @@ void AntlrSQLQueryPlanCreator::enterJoinType(AntlrSQLParser::JoinTypeContext* co
 void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* context)
 {
     const auto joinType = context->getText();
-    auto tokenType = context->getStop()->getType();
+    auto stopTokenType = context->getStop()->getType();
 
-    if (joinType.empty() || tokenType == AntlrSQLLexer::INNER)
+    if (joinType.empty() || stopTokenType == AntlrSQLLexer::INNER)
     {
         helpers.top().joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
     }
+    else if (stopTokenType == AntlrSQLLexer::OUTER)
+    {
+        auto startTokenType = context->getStart()->getType();
+        if (startTokenType == AntlrSQLLexer::LEFT)
+        {
+            helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN;
+        }
+        else if (startTokenType == AntlrSQLLexer::RIGHT)
+        {
+            helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN;
+        }
+        else if (startTokenType == AntlrSQLLexer::FULL)
+        {
+            helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+        }
+        else
+        {
+            throw InvalidQuerySyntax("Unknown outer join direction: {}", joinType);
+        }
+    }
     else
     {
-        throw InvalidQuerySyntax("Unknown join type: {}, resolved to token type: {}", joinType, tokenType);
+        throw InvalidQuerySyntax("Unknown join type: {}, resolved to token type: {}", joinType, stopTokenType);
     }
     AntlrSQLBaseListener::exitJoinType(context);
 }

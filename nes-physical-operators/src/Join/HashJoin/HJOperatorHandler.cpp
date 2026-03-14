@@ -20,6 +20,7 @@
 #include <cstdint>
 #include <cstring>
 #include <functional>
+#include <map>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -28,6 +29,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -41,10 +43,12 @@ HJOperatorHandler::HJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-    const uint64_t maxNumberOfBuckets)
+    const uint64_t maxNumberOfBuckets,
+    JoinLogicalOperator::JoinType joinType)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
     , setupAlreadyCalledLeft(false)
     , setupAlreadyCalledRight(false)
+    , joinType(joinType)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
@@ -102,6 +106,82 @@ void HJOperatorHandler::setNautilusCleanupExec(
 std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> HJOperatorHandler::getNautilusCleanupExec() const
 {
     return {leftCleanupStateNautilusFunction, rightCleanupStateNautilusFunction};
+}
+
+void HJOperatorHandler::triggerSlices(
+    const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+    PipelineExecutionContext* pipelineCtx)
+{
+    if (!isOuterJoin(joinType))
+    {
+        /// Inner join: use the base class N x N slice-pair iteration
+        StreamJoinOperatorHandler::triggerSlices(slicesAndWindowInfo, pipelineCtx);
+        return;
+    }
+
+    /// Outer join: collect ALL hash maps from ALL slices in the window and emit a single buffer.
+    /// This is necessary because the outer join probe must see all hash maps at once to correctly
+    /// determine which keys are unmatched across the entire window.
+    for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
+    {
+        std::vector<HashMap*> allLeftHashMaps;
+        std::vector<HashMap*> allRightHashMaps;
+        uint64_t totalNumberOfTuples = 0;
+
+        for (const auto& slice : allSlices)
+        {
+            const auto* const hjSlice = dynamic_cast<const HJSlice*>(slice.get());
+            INVARIANT(hjSlice != nullptr, "Slice must be of type HJSlice!");
+            for (uint64_t hashMapIdx = 0; hashMapIdx < hjSlice->getNumberOfHashMapsForSide(); ++hashMapIdx)
+            {
+                if (auto* leftMap = hjSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), JoinBuildSideType::Left);
+                    (leftMap != nullptr) && leftMap->getNumberOfTuples() > 0)
+                {
+                    rollingAverageNumberOfKeys.wlock()->add(leftMap->getNumberOfTuples());
+                    allLeftHashMaps.emplace_back(leftMap);
+                    totalNumberOfTuples += leftMap->getNumberOfTuples();
+                }
+                if (auto* rightMap = hjSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), JoinBuildSideType::Right);
+                    (rightMap != nullptr) && rightMap->getNumberOfTuples() > 0)
+                {
+                    rollingAverageNumberOfKeys.wlock()->add(rightMap->getNumberOfTuples());
+                    allRightHashMaps.emplace_back(rightMap);
+                    totalNumberOfTuples += rightMap->getNumberOfTuples();
+                }
+            }
+        }
+
+        const auto neededBufferSize
+            = sizeof(EmittedHJWindowTrigger) + ((allLeftHashMaps.size() + allRightHashMaps.size()) * sizeof(HashMap*));
+        const auto tupleBufferVal = pipelineCtx->getBufferManager()->getUnpooledBuffer(neededBufferSize);
+        if (not tupleBufferVal.has_value())
+        {
+            throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededBufferSize);
+        }
+
+        auto tupleBuffer = tupleBufferVal.value();
+        const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(ChunkNumber::INITIAL), /*lastChunk=*/true};
+        tupleBuffer.setOriginId(outputOriginId);
+        tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
+        tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
+        tupleBuffer.setLastChunk(sequenceData.lastChunk);
+        tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
+        tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
+        tupleBuffer.setCreationTimestampInMS(Timestamp(
+            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+
+        new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo.windowInfo, allLeftHashMaps, allRightHashMaps};
+
+        pipelineCtx->emitBuffer(tupleBuffer);
+
+        NES_TRACE(
+            "Outer join: triggered window {}-{} with {}-{} total hashmaps from {} slices",
+            windowInfo.windowInfo.windowStart,
+            windowInfo.windowInfo.windowEnd,
+            allLeftHashMaps.size(),
+            allRightHashMaps.size(),
+            allSlices.size());
+    }
 }
 
 void HJOperatorHandler::emitSlicesToProbe(

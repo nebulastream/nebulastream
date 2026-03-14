@@ -296,14 +296,15 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         leftBufferRef,
         rightBufferRef,
         leftHashMapOptions,
-        rightHashMapOptions);
+        rightHashMapOptions,
+        join->getJoinType());
 
 
     /// Creating the hash join operator handler
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+    auto handler = std::make_shared<HJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, join->getJoinType());
 
 
     /// Building operator wrapper for the two builds and the probe.

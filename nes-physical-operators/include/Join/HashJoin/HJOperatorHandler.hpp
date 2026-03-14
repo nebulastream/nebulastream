@@ -17,6 +17,7 @@
 #include <bit>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -24,6 +25,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
@@ -66,7 +68,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        JoinLogicalOperator::JoinType joinType);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -85,6 +88,13 @@ private:
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
 
 
+    /// For outer joins with sliding windows, we override triggerSlices to collect ALL hash maps
+    /// from ALL slices in the window into a single probe buffer. This ensures the probe can correctly
+    /// determine matched/unmatched keys across the entire window.
+    void triggerSlices(
+        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        PipelineExecutionContext* pipelineCtx) override;
+
     void emitSlicesToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
@@ -92,6 +102,7 @@ private:
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
 
+    JoinLogicalOperator::JoinType joinType;
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
 };

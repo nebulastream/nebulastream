@@ -14,6 +14,7 @@
 
 #include <Plans/LogicalPlanBuilder.hpp>
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <ranges>
@@ -128,6 +129,12 @@ LogicalPlan LogicalPlanBuilder::addJoin(
     std::shared_ptr<Windowing::WindowType> windowType,
     JoinLogicalOperator::JoinType joinType)
 {
+    PRECONDITION(
+        !(isOuterJoin(joinType)
+          && std::ranges::none_of(
+              BFSRange(joinFunction), [](const LogicalFunction& fn) { return fn.tryGetAs<FieldAccessLogicalFunction>().has_value(); })),
+        "Outer joins require an explicit join predicate");
+
     NES_TRACE("LogicalPlanBuilder: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<LogicalFunction> visitedFunctions;
     /// We are iterating over all binary functions and check if each side's leaf is a constant value, as we are supposedly not supporting this

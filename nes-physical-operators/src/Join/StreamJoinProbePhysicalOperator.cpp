@@ -18,19 +18,68 @@
 #include <memory>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <magic_enum/magic_enum.hpp>
+#include <ErrorHandling.hpp>
 #include <WindowProbePhysicalOperator.hpp>
 #include <static.hpp>
+#include <val_arith.hpp>
+#include <val_bool.hpp>
 
 namespace NES
 {
+
+namespace
+{
+/// Returns a typed null VarVal for the given DataType. Used in NULL-fill record construction
+/// for outer join unmatched tuples.
+VarVal makeNullVarVal(const DataType& dataType)
+{
+    const auto nullFlag = nautilus::val<bool>{true};
+    switch (dataType.type)
+    {
+        case DataType::Type::BOOLEAN:
+            return VarVal(nautilus::val<bool>{false}, true, nullFlag);
+        case DataType::Type::INT8:
+            return VarVal(nautilus::val<int8_t>{0}, true, nullFlag);
+        case DataType::Type::INT16:
+            return VarVal(nautilus::val<int16_t>{0}, true, nullFlag);
+        case DataType::Type::INT32:
+            return VarVal(nautilus::val<int32_t>{0}, true, nullFlag);
+        case DataType::Type::INT64:
+            return VarVal(nautilus::val<int64_t>{0}, true, nullFlag);
+        case DataType::Type::UINT8:
+            return VarVal(nautilus::val<uint8_t>{0}, true, nullFlag);
+        case DataType::Type::UINT16:
+            return VarVal(nautilus::val<uint16_t>{0}, true, nullFlag);
+        case DataType::Type::UINT32:
+            return VarVal(nautilus::val<uint32_t>{0}, true, nullFlag);
+        case DataType::Type::UINT64:
+            return VarVal(nautilus::val<uint64_t>{0}, true, nullFlag);
+        case DataType::Type::FLOAT32:
+            return VarVal(nautilus::val<float>{0}, true, nullFlag);
+        case DataType::Type::FLOAT64:
+            return VarVal(nautilus::val<double>{0}, true, nullFlag);
+        case DataType::Type::CHAR:
+            return VarVal(nautilus::val<char>{0}, true, nullFlag);
+        case DataType::Type::VARSIZED:
+            return VarVal(VariableSizedData(nautilus::val<int8_t*>{nullptr}, nautilus::val<uint64_t>{0}), true, nullFlag);
+        default:
+            throw UnknownDataType("Cannot null-fill field of type {}", magic_enum::enum_name(dataType.type));
+    }
+}
+} /// anonymous namespace
 
 StreamJoinProbePhysicalOperator::StreamJoinProbePhysicalOperator(
     const OperatorHandlerId operatorHandlerId, PhysicalFunction joinFunction, WindowMetaData windowMetaData, JoinSchema joinSchema)
@@ -64,6 +113,35 @@ Record StreamJoinProbePhysicalOperator::createJoinedRecord(
     for (const auto& fieldName : nautilus::static_iterable(projectionsInner))
     {
         joinedRecord.write(fieldName, innerRecord.read(fieldName));
+    }
+
+    return joinedRecord;
+}
+
+Record StreamJoinProbePhysicalOperator::createNullFilledJoinedRecord(
+    const Record& preservedRecord,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd,
+    const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
+    const Schema& nullSideSchema) const
+{
+    Record joinedRecord;
+
+    /// Writing the window start and end fields
+    joinedRecord.write(windowMetaData.windowStartFieldName, windowStart.convertToValue());
+    joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd.convertToValue());
+
+    /// Writing preserved-side fields normally (same pattern as createJoinedRecord)
+    for (const auto& fieldName : nautilus::static_iterable(preservedProjections))
+    {
+        joinedRecord.write(fieldName, preservedRecord.read(fieldName));
+    }
+
+    /// Writing null-filled fields for the null side — type must match schema DataType
+    for (const auto& field : nautilus::static_iterable(nullSideSchema.getFields()))
+    {
+        auto nullVal = makeNullVarVal(field.dataType);
+        joinedRecord.write(field.name, nullVal);
     }
 
     return joinedRecord;
