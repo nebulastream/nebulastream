@@ -64,13 +64,13 @@ struct ConfigParametersTCP
             }
             return portNumber;
         }};
-    static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
+    static inline const DescriptorConfig::ConfigParameter<int32_t> SOCKET_DOMAIN{
         "socket_domain",
         AF_INET,
         [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
         {
             /// User specified value, set if input is valid, throw if not.
-            const auto& socketDomainString = config.at(DOMAIN);
+            const auto& socketDomainString = config.at(SOCKET_DOMAIN);
             if (strcasecmp(socketDomainString.c_str(), "AF_INET") == 0)
             {
                 return (AF_INET);
@@ -145,7 +145,7 @@ struct ConfigParametersTCP
             SourceDescriptor::parameterMap,
             HOST,
             PORT,
-            DOMAIN,
+            SOCKET_DOMAIN,
             TYPE,
             SEPARATOR,
             FLUSH_INTERVAL_MS,

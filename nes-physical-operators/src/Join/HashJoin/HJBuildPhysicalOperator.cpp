@@ -104,7 +104,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};
-    for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < static_cast<uint64_t>(hashMapOptions.fieldKeys.size()); ++i)
     {
         const auto& [fieldIdentifier, type, fieldOffset] = hashMapOptions.fieldKeys[i];
         const auto& function = hashMapOptions.keyFunctions[i];

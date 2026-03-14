@@ -58,7 +58,7 @@ Record ColumnTupleBufferRef::readRecord(
 {
     Record record;
     const auto bufferAddress = recordBuffer.getMemArea();
-    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+    for (nautilus::static_val<uint64_t> i = 0; i < static_cast<uint64_t>(fields.size()); ++i)
     {
         const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
         if (not includesField(projections, name))
@@ -84,7 +84,7 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
     if (recordIndex < capacity)
     {
         const auto bufferAddress = recordBuffer.getMemArea();
-        for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+        for (nautilus::static_val<uint64_t> i = 0; i < static_cast<uint64_t>(fields.size()); ++i)
         {
             const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
             if (not rec.hasField(name))

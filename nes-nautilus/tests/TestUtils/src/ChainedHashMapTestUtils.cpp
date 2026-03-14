@@ -100,7 +100,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     /// We use a minimum number of buffers, as some tests (e.g. customValue) creates more tuple buffers from the buffer manager.
     /// We use 3 calls to create the monotonic values, keys+values, updates values and for the compoundKeys
     constexpr auto bufferSize = 4096;
-    constexpr auto minimumBuffers = 4000UL;
+    constexpr uint64_t minimumBuffers = 4000;
     constexpr auto callsToCreateMonotonicValues = 3;
     const auto bufferNeeded
         = callsToCreateMonotonicValues * ((inputSchema.getSizeOfSchemaInBytes() * params.numberOfItems) / bufferSize + 1);
