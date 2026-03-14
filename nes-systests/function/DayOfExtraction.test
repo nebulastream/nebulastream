@@ -1,0 +1,36 @@
+# name: Day extraction from Unix timestamp
+# description: Checks if the extraction of the day from unix timestamps (ms) works
+# groups: [Function]
+
+CREATE LOGICAL SOURCE MSSTREAM(ID UINT64, MSMS UINT64);
+CREATE PHYSICAL SOURCE FOR MSSTREAM TYPE File;
+ATTACH INLINE
+1,0
+2,1000
+3,1234
+4,1639494303000
+5,1771243200000
+6,253402300799999
+7,
+
+# different data type than a uint64_t
+CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Error, wrong data type
+SELECT DAYOF(timestamp) AS DAY_IN_STREAM FROM WrongDataType INTO FILE();
+----
+Error 2006
+
+
+SELECT DAYOF(`MSSTREAM$MSMS`) AS DAY_IN_STREAM FROM MSSTREAM INTO FILE();
+----
+1
+1
+1
+14
+16
+31
+NULL

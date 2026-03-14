@@ -1,0 +1,36 @@
+# name: Year extraction from Unix timestamp
+# description: Checks if the extraction of the year from unix timestamps (ms) works
+# groups: [Function]
+
+CREATE LOGICAL SOURCE MSSTREAM(ID UINT64, MSMS UINT64);
+CREATE PHYSICAL SOURCE FOR MSSTREAM TYPE File;
+ATTACH INLINE
+1,0
+2,1000
+3,1234
+4,1639494303000
+5,1771243200000
+6,253402300799999
+7,
+
+# different data type than a uint64_t
+CREATE LOGICAL SOURCE WrongDataType(timestamp VARSIZED);
+CREATE PHYSICAL SOURCE FOR WrongDataType TYPE File;
+ATTACH INLINE
+1970-01-01T00:00:00.000Z
+
+# Error, wrong data type
+SELECT YEAROF(timestamp) AS YEAR FROM WrongDataType INTO FILE();
+----
+Error 2006
+
+
+SELECT YEAROF(`MSSTREAM$MSMS`) AS YEAR FROM MSSTREAM INTO FILE();
+----
+1970
+1970
+1970
+2021
+2026
+9999
+NULL
