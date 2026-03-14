@@ -75,6 +75,20 @@ constexpr char PARENT_CHILD_FIRST_BRANCH = '{'; /// '├'
 constexpr char PARENT_CHILD_MIDDLE_BRANCH = '+'; /// '┼'
 constexpr char PARENT_CHILD_LAST_BRANCH = '}'; /// '┤'
 
+/// Maximum display width for a single operator node label before truncation.
+constexpr size_t MAX_NODE_DISPLAY_WIDTH = 60;
+
+/// Truncates a string to at most `maxWidth` characters, appending "..." if truncated.
+inline std::string truncateNodeLabel(const std::string& label, const size_t maxWidth)
+{
+    if (label.size() <= maxWidth)
+    {
+        return label;
+    }
+    /// Reserve 3 characters for the ellipsis.
+    return label.substr(0, maxWidth - 3) + "...";
+}
+
 /// Dumps query plans to an output stream
 template <typename Plan, typename Operator>
 class PlanRenderer
@@ -90,10 +104,9 @@ public:
         dump(rootOperators);
     }
 
-    /// Prints a tree like graph of the queryplan to the stream this class was instatiated with.
+    /// Prints a tree like graph of the queryplan to the stream this class was instantiated with.
     ///
     /// Caveats:
-    /// - See the [issue](https://github.com/nebulastream/nebulastream-public/issues/685) (/// TODO #685).
     /// - The replacing of ASCII branches with Unicode box drawing symbols relies on every even line being branches.
     void dump(const std::vector<Operator>& rootOperators)
     {
@@ -134,7 +147,6 @@ private:
     struct Layer
     {
         std::vector<std::shared_ptr<PrintNode>> nodes;
-        /// TODO #685 If this member is still not used after closing this issue, remove it.
         size_t layerWidth;
     };
 
@@ -168,7 +180,7 @@ private:
             layerCalcQueue.pop_front();
             nodesPerLayer.current--;
 
-            const std::string currentNodeAsString = currentNode.explain(verbosity);
+            const std::string currentNodeAsString = truncateNodeLabel(currentNode.explain(verbosity), MAX_NODE_DISPLAY_WIDTH);
             const size_t width = currentNodeAsString.size();
             const auto id = currentNode.getId().getRawValue();
             auto layerNode = std::make_shared<PrintNode>(
@@ -225,7 +237,7 @@ private:
     ///   branches between its former position and its new one. Finally queue it.
     /// - The new node is in the `alreadySeen` list and in the queue. Same as above, but note that it has another parent instead of queueing it.
     void queueChild(
-        const std::unordered_set<uint64_t>& alreadySeen,
+        std::unordered_set<uint64_t>& alreadySeen,
         NodesPerLayerCounter& nodesPerLayer,
         size_t depth,
         const Operator& child,
@@ -244,20 +256,22 @@ private:
         else if (seenIt != alreadySeen.end())
         {
             /// Child is in `processedDag` already. Replace it with dummies up to the current layer.
+            bool found = false;
             for (size_t depthLayer = 0; depthLayer <= depth; ++depthLayer)
             {
-                auto nodes = processedDag.at(depthLayer).nodes;
+                const auto& nodes = processedDag.at(depthLayer).nodes;
                 auto it = std::ranges::find_if(nodes, [&](const auto& node) { return node->id == childId; });
                 if (it != nodes.end())
                 {
                     const size_t nodeIndex = std::distance(nodes.begin(), it);
-                    insertVerticalBranches(depthLayer, depth, nodeIndex, child, queueIt, nodesPerLayer);
+                    insertVerticalBranches(depthLayer, depth, nodeIndex, child, queueIt, nodesPerLayer, alreadySeen);
+                    found = true;
+                    break;
                 }
-                else
-                {
-                    /// `it` should never be `end()`, because we only add nodes to `alreadySeen` when we add them to `processedDag`.
-                    NES_ERROR("Bug: child that was marked as already seen was not found in processedDag.");
-                }
+            }
+            if (!found)
+            {
+                NES_ERROR("Bug: child that was marked as already seen was not found in processedDag.");
             }
         }
         else if (queueIt != layerCalcQueue.end())
@@ -276,8 +290,8 @@ private:
                 {
                     auto temp = std::move(*queueIt);
                     layerCalcQueue.erase(queueIt);
-                    /// TODO #685 Test all of these cases: To reduce crossings of branches, try to insert the child at a good place in the
-                    /// queue. If the next layer has a similar number of nodes, `childIndex` could be a good place to insert it.
+                    /// To reduce crossings of branches, try to insert the child at a good place in the queue. If the next layer has a
+                    /// similar number of nodes, `childIndex` could be a good place to insert it.
                     if (layerCalcQueue.size() > nodesPerLayer.current + childIndex)
                     {
                         layerCalcQueue.insert(layerCalcQueue.begin() + static_cast<int64_t>(nodesPerLayer.current + childIndex), temp);
@@ -296,20 +310,19 @@ private:
     }
 
     /// Removes the Node at `nodesIndex` on `startDepth`, replacing it with nodes that represent vertical branches on each layer until
-    /// `endDepth` is reached (all in `processedDag`).
+    /// `endDepth` is reached (all in `processedDag`). The node is re-queued so it will be placed at the correct (deeper) layer.
     void insertVerticalBranches(
         size_t startDepth,
         size_t endDepth,
         size_t nodesIndex,
         Operator operatorToBeReplaced,
         const std::ranges::borrowed_iterator_t<std::deque<QueueItem>&>& queueIt,
-        NodesPerLayerCounter& nodesPerLayer)
+        NodesPerLayerCounter& nodesPerLayer,
+        std::unordered_set<uint64_t>& alreadySeen)
     {
         const auto node = processedDag.at(startDepth).nodes.at(nodesIndex);
 
         {
-            /// TODO #685 Remove the node's children (if they exist) recursively from processedDag and reinsert them.
-            /// TODO #685 What if one of its children has multiple parents?
             auto parents = node->parents;
             for (auto depthDiff = startDepth; depthDiff < endDepth; ++depthDiff)
             {
@@ -321,14 +334,14 @@ private:
                 else
                 {
                     /// Here we use `nodesIndex` as a "heuristic" of where to put the verticalBranchNode
-                    auto nodes = processedDag.at(depthDiff).nodes;
+                    auto& nodes = processedDag.at(depthDiff).nodes;
                     if (nodes.size() > nodesIndex)
                     {
                         nodes.insert(nodes.begin() + static_cast<int64_t>(nodesIndex), verticalBranchNode);
                     }
                     else
                     {
-                        processedDag.at(depthDiff).nodes.emplace_back(verticalBranchNode);
+                        nodes.emplace_back(verticalBranchNode);
                     }
                 }
                 for (const auto& parent : parents)
@@ -346,6 +359,8 @@ private:
                 /// Prepare next iteration
                 parents = {verticalBranchNode};
             }
+            /// Remove from alreadySeen so calculateLayers can re-process the node at the correct depth.
+            alreadySeen.erase(operatorToBeReplaced.getId().getRawValue());
             /// Add the final dummy as parent of the to be drawn child
             if (queueIt == layerCalcQueue.end())
             {
@@ -362,7 +377,6 @@ private:
     [[nodiscard]] std::stringstream drawTree(size_t maxWidth) const
     {
         std::stringstream asciiOutput;
-        /// TODO #685 Adjust perNodeWidth if it * numberOfNodesOnThisLayer is more than maxWidth. Maybe do that in `calculateLayers`.
         for (const auto& currentLayer : processedDag)
         {
             const size_t numberOfNodesInCurrentDepth = currentLayer.nodes.size();
