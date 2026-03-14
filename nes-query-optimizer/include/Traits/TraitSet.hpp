@@ -39,8 +39,7 @@ public:
     template <TraitConcept... TraitType>
     explicit TraitSet(TraitType&&... traits)
     {
-        traitMap = std::unordered_map<std::type_index, Trait>{
-            ((std::make_pair<std::type_index, Trait>(typeid(TraitType), std::forward<TraitType>(traits))), ...)};
+        (traitMap.try_emplace(typeid(TraitType), std::forward<TraitType>(traits)), ...);
     }
 
     template <std::ranges::input_range Range>
