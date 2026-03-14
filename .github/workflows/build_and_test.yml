@@ -12,6 +12,11 @@ on:
         type: string
         required: true
         description: "head_sha of the branch"
+    secrets:
+      DOCKER_USER_NAME:
+        required: false
+      DOCKER_SECRET:
+        required: false
 
 jobs:
   build-and-test-linux:
@@ -53,6 +58,8 @@ jobs:
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
@@ -132,6 +139,8 @@ jobs:
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: Run Log Level Test
         with:
@@ -226,6 +235,8 @@ jobs:
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
@@ -259,6 +270,8 @@ jobs:
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
