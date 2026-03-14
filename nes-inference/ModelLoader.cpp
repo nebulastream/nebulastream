@@ -19,6 +19,7 @@
 #include <Model.hpp>
 
 #include <array>
+#include <atomic>
 #include <cstddef>
 #include <expected>
 #include <filesystem>
@@ -42,6 +43,7 @@
 #include <boost/process/v1/pipe.hpp>
 #include <boost/process/v1/search_path.hpp>
 #include <fmt/format.h>
+#include <scope_guard.hpp>
 #include <fmt/ranges.h>
 
 namespace bp = boost::process;
@@ -273,8 +275,10 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
     compileArgs.emplace_back("--iree-stream-partitioning-favor=min-peak-memory");
     compileArgs.emplace_back("--iree-llvmcpu-target-cpu=host");
 
-    auto graphDir = std::filesystem::temp_directory_path() / ("nes-graph-" + std::to_string(getpid()));
+    static std::atomic<uint64_t> loadCounter{0};
+    auto graphDir = std::filesystem::temp_directory_path() / ("nes-graph-" + std::to_string(getpid()) + "-" + std::to_string(loadCounter++));
     std::filesystem::create_directories(graphDir);
+    SCOPE_EXIT { std::filesystem::remove_all(graphDir); };
     std::string graphPath = graphDir.string() + "/model.dot";
     compileArgs.emplace_back("--iree-flow-dump-dispatch-graph");
     compileArgs.emplace_back("--iree-flow-dump-dispatch-graph-output-file=" + graphPath);
@@ -293,18 +297,15 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
         std::vector<std::byte> modelVmfb;
         std::array<std::byte, 4096> buffer;
 
-        while (process[1].running() && model_stream.good())
+        while (model_stream.read(reinterpret_cast<char*>(buffer.data()), buffer.size()))
         {
-            model_stream.read(reinterpret_cast<char*>(buffer.data()), buffer.size());
-
-            const std::streamsize count = model_stream.gcount();
-            if (count <= 0)
-            {
-                break;
-            }
-
-            const std::span bytesWritten = {buffer.data(), static_cast<size_t>(count)};
-            std::ranges::copy(bytesWritten, std::back_inserter(modelVmfb));
+            std::ranges::copy(std::span{buffer.data(), static_cast<size_t>(model_stream.gcount())}, std::back_inserter(modelVmfb));
+        }
+        /// read() returns false on EOF or error; gcount() still holds the bytes from the final partial read
+        if (model_stream.gcount() > 0)
+        {
+            std::ranges::copy(
+                std::span{buffer.data(), static_cast<size_t>(model_stream.gcount())}, std::back_inserter(modelVmfb));
         }
 
         std::ranges::for_each(process, [](auto& process) { process.wait(); });
@@ -328,7 +329,6 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             model.outputDims = metadata.outputShape.size();
             model.outputSizeInBytes = 4 * std::accumulate(model.outputShape.begin(), model.outputShape.end(), 1, std::multiplies<int>());
 
-            std::filesystem::remove_all(graphDir);
             return model;
         }
         NES_ERROR(

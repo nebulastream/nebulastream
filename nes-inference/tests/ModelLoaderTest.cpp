@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <fstream>
+#include <string>
 #include <gtest/gtest.h>
 #include <ModelLoader.hpp>
 
@@ -80,6 +83,91 @@ TEST(ModelLoaderTest, LoadInvalidPath)
 {
     auto result = load("nonexistent.onnx", {});
     EXPECT_FALSE(result.has_value());
+}
+
+TEST(ModelLoaderTest, LoadNonOnnxExtensionIsRejected)
+{
+    auto result = load("model.pt", {});
+    EXPECT_FALSE(result.has_value());
+    EXPECT_NE(result.error().message.find(".onnx"), std::string::npos);
+}
+
+TEST(ModelLoaderTest, LoadCorruptOnnxFile)
+{
+    if (!enabled())
+    {
+        GTEST_SKIP() << "IREE inference tools not available";
+    }
+
+    auto corruptFile = std::filesystem::temp_directory_path() / "corrupt_model.onnx";
+    {
+        std::ofstream out(corruptFile, std::ios::binary);
+        out << "this is not a valid onnx model";
+    }
+
+    auto result = load(corruptFile, {});
+    EXPECT_FALSE(result.has_value());
+    std::filesystem::remove(corruptFile);
+}
+
+TEST(ModelLoaderTest, LoadEmptyOnnxFile)
+{
+    if (!enabled())
+    {
+        GTEST_SKIP() << "IREE inference tools not available";
+    }
+
+    auto emptyFile = std::filesystem::temp_directory_path() / "empty_model.onnx";
+    { std::ofstream out(emptyFile, std::ios::binary); }
+
+    auto result = load(emptyFile, {});
+    EXPECT_FALSE(result.has_value());
+    std::filesystem::remove(emptyFile);
+}
+
+TEST(ModelLoaderTest, TempDirectoryIsCleanedUpOnSuccess)
+{
+    if (!enabled())
+    {
+        GTEST_SKIP() << "IREE inference tools not available";
+    }
+
+    std::string path = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
+    auto result = load(path, {});
+    ASSERT_TRUE(result.has_value());
+
+    /// Verify no nes-graph-<our-pid>-* directories remain
+    auto pid = std::to_string(getpid());
+    for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::temp_directory_path()))
+    {
+        auto name = entry.path().filename().string();
+        EXPECT_FALSE(name.starts_with("nes-graph-" + pid)) << "Leftover temp directory: " << name;
+    }
+}
+
+TEST(ModelLoaderTest, TempDirectoryIsCleanedUpOnFailure)
+{
+    if (!enabled())
+    {
+        GTEST_SKIP() << "IREE inference tools not available";
+    }
+
+    auto corruptFile = std::filesystem::temp_directory_path() / "corrupt_for_cleanup.onnx";
+    {
+        std::ofstream out(corruptFile, std::ios::binary);
+        out << "not valid onnx data";
+    }
+
+    auto result = load(corruptFile, {});
+    EXPECT_FALSE(result.has_value());
+
+    auto pid = std::to_string(getpid());
+    for (const auto& entry : std::filesystem::directory_iterator(std::filesystem::temp_directory_path()))
+    {
+        auto name = entry.path().filename().string();
+        EXPECT_FALSE(name.starts_with("nes-graph-" + pid)) << "Leftover temp directory: " << name;
+    }
+    std::filesystem::remove(corruptFile);
 }
 
 }
