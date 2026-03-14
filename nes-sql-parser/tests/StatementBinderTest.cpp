@@ -27,9 +27,8 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Util/PlanRenderer.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -43,6 +42,7 @@
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
