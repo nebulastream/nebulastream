@@ -45,6 +45,7 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_registry_compo
 
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
+    set_property(GLOBAL APPEND PROPERTY NES_ALL_PLUGIN_REGISTRIES "${plugin_registry}")
 endfunction()
 
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
@@ -61,6 +62,7 @@ macro(add_plugin plugin_name plugin_registry plugin_registry_component)
         )
     endif ()
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
+    set_property(GLOBAL APPEND PROPERTY NES_ALL_PLUGIN_REGISTRIES "${plugin_registry}")
 endmacro()
 
 # iterates over all plugins, collect all plugins with given name, inject plugins into registrar
@@ -115,6 +117,56 @@ function(generate_plugin_registrars plugin_registry_component)
                 cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
         ")
     endforeach ()
+    # Schedule generation of the activated plugins file at the end of configuration.
+    # The DEFER ensures all plugins have been registered before the file is written.
+    # Using ID_VAR with a fixed id ensures the call is scheduled only once, even if
+    # generate_plugin_registrars is invoked from multiple components.
+    cmake_language(EVAL CODE "
+            cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] ID_VAR _nes_gen_plugins_id ID nes_generate_activated_plugins CALL generate_activated_plugins_file)
+    ")
+endfunction()
+
+# generates a JSON file in the build directory that lists all plugin registries and their activated plugins
+function(generate_activated_plugins_file)
+    get_property(all_registries GLOBAL PROPERTY NES_ALL_PLUGIN_REGISTRIES)
+    if (NOT all_registries)
+        return()
+    endif ()
+    list(REMOVE_DUPLICATES all_registries)
+    list(SORT all_registries)
+
+    set(json_content "{\n")
+    set(first_registry TRUE)
+    foreach (registry IN LISTS all_registries)
+        if (NOT first_registry)
+            string(APPEND json_content ",\n")
+        endif ()
+        set(first_registry FALSE)
+
+        get_property(plugin_names GLOBAL PROPERTY ${registry}_plugin_names)
+        if (NOT plugin_names)
+            set(plugin_names "")
+        endif ()
+        list(REMOVE_DUPLICATES plugin_names)
+        list(SORT plugin_names)
+
+        # build JSON array of plugin names
+        set(plugins_json "")
+        set(first_plugin TRUE)
+        foreach (plugin IN LISTS plugin_names)
+            if (NOT first_plugin)
+                string(APPEND plugins_json ", ")
+            endif ()
+            set(first_plugin FALSE)
+            string(APPEND plugins_json "\"${plugin}\"")
+        endforeach ()
+
+        string(APPEND json_content "  \"${registry}\": [${plugins_json}]")
+    endforeach ()
+    string(APPEND json_content "\n}\n")
+
+    file(WRITE "${PROJECT_BINARY_DIR}/activated_plugins.json" "${json_content}")
+    message(STATUS "Generated activated plugins list: ${PROJECT_BINARY_DIR}/activated_plugins.json")
 endfunction()
 
 # Provide the names of all registries that the component creates as ARGS
