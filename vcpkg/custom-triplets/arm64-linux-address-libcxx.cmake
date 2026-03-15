@@ -13,3 +13,9 @@
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/asan.cmake)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/libcxx.cmake)
+
+if (PORT STREQUAL ireeruntime)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DIREE_ENABLE_ASAN=ON)
+endif()

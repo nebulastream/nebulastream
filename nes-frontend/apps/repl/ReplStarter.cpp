@@ -56,6 +56,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
@@ -267,16 +268,19 @@ int main(int argc, char** argv)
 #endif
         }
 
+        auto modelCatalog = std::make_shared<NES::Inference::ModelCatalog>();
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog};
         NES::TopologyStatementHandler topologyStatementHandler{queryManager};
-        auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
+        NES::ModelStatementHandler modelStatementHandler{modelCatalog};
+        auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog, modelCatalog);
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig);
         auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),
             std::move(topologyStatementHandler),
+            std::move(modelStatementHandler),
             queryStatementHandler,
             std::move(binder),
             errorBehaviour,

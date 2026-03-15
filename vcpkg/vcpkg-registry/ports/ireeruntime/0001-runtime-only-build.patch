@@ -1,0 +1,23 @@
+--- a/build_tools/cmake/CMakeLists.txt
++++ b/build_tools/cmake/CMakeLists.txt
+@@ -4,6 +4,7 @@
+ # See https://llvm.org/LICENSE.txt for license information.
+ # SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
+
++include(GNUInstallDirs)
+ set(_cmake_installdir "${CMAKE_INSTALL_LIBDIR}/cmake/IREE")
+
+ # Generate export sets.
+@@ -13,12 +14,6 @@ iree_generate_export_targets(
+   INSTALL_DESTINATION ${_cmake_installdir}
+ )
+
+-# See compiler/bindings/c/CMakeLists.txt
+-iree_generate_export_targets(
+-  EXPORT_SET Compiler
+-  INSTALL_DESTINATION ${_cmake_installdir}
+-)
+-
+ if(IREE_BUILD_COMPILER)
+   configure_file(
+     ${CMAKE_CURRENT_SOURCE_DIR}/IREECompilerConfig.cmake.in

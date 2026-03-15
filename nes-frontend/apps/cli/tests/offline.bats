@@ -107,6 +107,13 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli dump with model inference topology" {
+  touch /tmp/iris.onnx
+  run $NES_CLI -t tests/good/infer-model.yaml dump
+  rm -f /tmp/iris.onnx
+  [ "$status" -eq 0 ]
+}
+
 @test "nebucli dump using environment" {
 
   NES_TOPOLOGY_FILE=tests/good/crazy-join.yaml run $NES_CLI dump
