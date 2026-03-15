@@ -220,10 +220,13 @@
                 pkgs.openjdk21
                 pkgs.howard-hinnant-date
                 pkgs.libuuid
+                ireeruntimePkg
               ];
           in {
             inherit fmtPkg spdlogPkg follyPkg baseThirdPartyDeps;
           };
+
+        ireeruntimePkg = pkgs.callPackage ./.nix/ireeruntime/package.nix { };
 
         nlohmannJsonPackages = pkgs.callPackage ./.nix/nlohmann_json/package.nix { };
         abseilPackages = pkgs.callPackage ./.nix/abseil/package.nix { };

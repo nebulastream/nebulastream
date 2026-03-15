@@ -193,7 +193,7 @@ public:
 private:
     friend class TestTupleBufferRecordView;
 
-    std::optional<FieldValue> readFieldValue() const;
+    [[nodiscard]] std::optional<FieldValue> readFieldValue() const;
 
     std::weak_ptr<TestTupleBufferView::Impl> implWeak;
     size_t recordIndex;

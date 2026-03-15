@@ -19,6 +19,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <ranges>
 #include <span>
 #include <string>
 #include <utility>
@@ -34,7 +35,6 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -124,35 +124,35 @@ VarVal nonNullVarVal(const FieldValue& value, const DataType::Type type)
 /// nullable write path stores the null byte first and `loadValue` skips the payload on read.
 VarVal nullVarVal(const DataType::Type type)
 {
-    const auto t = nautilus::val<bool>(true);
+    const auto isNull = nautilus::val<bool>(true);
     switch (type)
     {
         case DataType::Type::BOOLEAN:
-            return VarVal(false, /*nullable=*/true, t);
+            return VarVal(false, /*nullable=*/true, isNull);
         case DataType::Type::INT8:
-            return VarVal(int8_t{0}, /*nullable=*/true, t);
+            return VarVal(int8_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::INT16:
-            return VarVal(int16_t{0}, /*nullable=*/true, t);
+            return VarVal(int16_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::INT32:
-            return VarVal(int32_t{0}, /*nullable=*/true, t);
+            return VarVal(int32_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::INT64:
-            return VarVal(int64_t{0}, /*nullable=*/true, t);
+            return VarVal(int64_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::UINT8:
-            return VarVal(uint8_t{0}, /*nullable=*/true, t);
+            return VarVal(uint8_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::UINT16:
-            return VarVal(uint16_t{0}, /*nullable=*/true, t);
+            return VarVal(uint16_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::UINT32:
-            return VarVal(uint32_t{0}, /*nullable=*/true, t);
+            return VarVal(uint32_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::UINT64:
-            return VarVal(uint64_t{0}, /*nullable=*/true, t);
+            return VarVal(uint64_t{0}, /*nullable=*/true, isNull);
         case DataType::Type::FLOAT32:
-            return VarVal(float{0}, /*nullable=*/true, t);
+            return VarVal(float{0}, /*nullable=*/true, isNull);
         case DataType::Type::FLOAT64:
-            return VarVal(double{0}, /*nullable=*/true, t);
+            return VarVal(double{0}, /*nullable=*/true, isNull);
         case DataType::Type::VARSIZED: {
             auto ptr = nautilus::val<int8_t*>(nullptr);
             auto size = nautilus::val<uint64_t>(0);
-            return VarVal{VariableSizedData(ptr, size), /*nullable=*/true, t};
+            return VarVal{VariableSizedData(ptr, size), /*nullable=*/true, isNull};
         }
         default:
             throw UnknownDataType("nullVarVal: unsupported data type");

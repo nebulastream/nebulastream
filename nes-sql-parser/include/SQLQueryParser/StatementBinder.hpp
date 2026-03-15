@@ -138,6 +138,24 @@ struct DropQueryStatement
     DistributedQueryId id;
 };
 
+struct CreateModelStatement
+{
+    std::string name;
+    std::string path;
+    Schema inputs;
+    Schema outputs;
+};
+
+struct ShowModelsStatement
+{
+    std::optional<StatementOutputFormat> format;
+};
+
+struct DropModelStatement
+{
+    std::string name;
+};
+
 struct WorkerStatusStatement
 {
     std::vector<std::string> host;
@@ -164,15 +182,18 @@ using Statement = std::variant<
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
+    CreateModelStatement,
     ShowLogicalSourcesStatement,
     ShowPhysicalSourcesStatement,
     DropLogicalSourceStatement,
     DropPhysicalSourceStatement,
     DropSinkStatement,
+    DropModelStatement,
     QueryStatement,
     ExplainQueryStatement,
     ShowQueriesStatement,
     ShowSinksStatement,
+    ShowModelsStatement,
     DropQueryStatement>;
 
 inline std::optional<StatementOutputFormat> getOutputFormat(const Statement& statement)

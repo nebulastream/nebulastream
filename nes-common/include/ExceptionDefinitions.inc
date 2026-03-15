@@ -65,6 +65,9 @@ EXCEPTION(SinkAlreadyExists, 2034, "sink already exists")
 EXCEPTION(QueryAlreadyRegistered, 2035, "query already registered")
 EXCEPTION(UnknownOutputFormatterType, 2036, "unknown output formatter type")
 EXCEPTION(InvalidOptimizerRuleset, 2037, "invalid optimizer ruleset")
+EXCEPTION(UnknownModelName, 2040, "unknown model name")
+EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
+EXCEPTION(CannotLoadModel, 2042, "cannot load model")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -81,6 +84,7 @@ EXCEPTION(CannotFormatMalformedStringValue, 3002, "cannot format malformed strin
 EXCEPTION(CannotAllocateBuffer, 3003, "cannot allocate buffer")
 EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during shutdown")
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipeline buffer size")
+EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
 
 /// 4XXX Errors interpreting data stream, sources and sinks

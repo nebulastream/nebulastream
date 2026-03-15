@@ -54,6 +54,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Statements/StatementHandler.hpp>
 #include <Util/Files.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
@@ -64,6 +65,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -474,11 +476,12 @@ struct SystestBinder::Impl
     std::vector<SystestQuery> loadOptimizeQueriesFromTestFile(const Systest::TestFile& testfile)
     {
         SLTSinkFactory sinkProvider{testfile.sinkCatalog, clusterConfiguration.allowSinkPlacement};
-        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
+        auto modelCatalog = std::make_shared<ModelCatalog>();
+        auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, modelCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
         const QueryOptimizer queryOptimizer{
-            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
+            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog), modelCatalog};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -611,9 +614,29 @@ struct SystestBinder::Impl
         sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
     }
 
+    void createModel(const std::shared_ptr<ModelCatalog>& modelCatalog, const CreateModelStatement& statement) const
+    {
+        /// Resolve relative paths against testDataDir before routing through the handler
+        auto resolvedStatement = statement;
+        auto path = std::filesystem::path(statement.path);
+        if (!path.is_absolute())
+        {
+            path = testDataDir / path;
+        }
+        resolvedStatement.path = path.string();
+
+        auto handler = ModelStatementHandler(modelCatalog);
+        auto result = handler(resolvedStatement);
+        if (!result)
+        {
+            throw std::move(result).error();
+        }
+    }
+
     void createCallback(
         const StatementBinder& binder,
         const std::shared_ptr<SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider,
         const std::shared_ptr<std::vector<std::jthread>>& sourceThreads,
         const std::string& query,
@@ -643,6 +666,10 @@ struct SystestBinder::Impl
         else if (std::holds_alternative<CreateSinkStatement>(statement))
         {
             createSink(sltSinkProvider, std::get<CreateSinkStatement>(statement));
+        }
+        else if (std::holds_alternative<CreateModelStatement>(statement))
+        {
+            createModel(modelCatalog, std::get<CreateModelStatement>(statement));
         }
         else
         {
@@ -892,6 +919,7 @@ struct SystestBinder::Impl
         const std::filesystem::path& testFilePath,
         const std::string_view testFileName,
         const std::shared_ptr<NES::SourceCatalog>& sourceCatalog,
+        const std::shared_ptr<ModelCatalog>& modelCatalog,
         SLTSinkFactory& sltSinkProvider)
     {
         uint64_t sourceIndex = 0;
@@ -985,8 +1013,9 @@ struct SystestBinder::Impl
             });
 
         parser.registerOnCreateCallback(
-            [&, sourceCatalog](const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
-            { createCallback(binder, sourceCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
+            [&, sourceCatalog, modelCatalog](
+                const std::string& query, std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>> input)
+            { createCallback(binder, sourceCatalog, modelCatalog, sltSinkProvider, sourceThreads, query, std::move(input)); });
 
         try
         {

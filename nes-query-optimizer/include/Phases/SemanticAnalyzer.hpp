@@ -27,16 +27,25 @@ class SourceCatalog;
 
 namespace NES
 {
+class ModelCatalog;
+}
+
+namespace NES
+{
 class SemanticAnalyzer
 {
 public:
     [[nodiscard]] LogicalPlan analyse(LogicalPlan plan) const;
 
-    explicit SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog);
+    explicit SemanticAnalyzer(
+        std::shared_ptr<const SourceCatalog> sourceCatalog,
+        std::shared_ptr<const SinkCatalog> sinkCatalog,
+        std::shared_ptr<const ModelCatalog> modelCatalog);
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<const ModelCatalog> modelCatalog;
     std::vector<Rule<LogicalPlan>> ruleSequence;
 };
 }
