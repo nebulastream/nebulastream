@@ -1,0 +1,6 @@
+# Treat binary files as binary to prevent CRLF corruption and bad merges
+*.onnx binary
+*.png binary
+*.zip binary
+*.nes binary
+*.bin binary

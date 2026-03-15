@@ -108,6 +108,11 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 }
 
+@test "nebucli dump with model inference topology" {
+  run $NES_CLI -t tests/good/infer-model.yaml dump
+  [ "$status" -eq 0 ]
+}
+
 @test "nebucli dump using environment" {
 
   NES_TOPOLOGY_FILE=tests/good/chained-joins.yaml run $NES_CLI dump

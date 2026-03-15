@@ -34,6 +34,7 @@
 #include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -121,6 +122,26 @@ struct ExplainQueryStatementResult
     std::string explainString;
 };
 
+struct ModelInfo
+{
+    std::string name;
+    std::string path;
+    Schema inputSchema;
+    Schema outputSchema;
+};
+
+using CreateModelStatementResult = ModelInfo;
+
+struct ShowModelsStatementResult
+{
+    std::vector<ModelInfo> models;
+};
+
+struct DropModelStatementResult
+{
+    std::string name;
+};
+
 using StatementResult = std::variant<
     CreateLogicalSourceStatementResult,
     CreatePhysicalSourceStatementResult,
@@ -128,12 +149,15 @@ using StatementResult = std::variant<
     DropWorkerStatementResult,
     CreateWorkerStatementResult,
     WorkerStatusStatementResult,
+    CreateModelStatementResult,
     ShowLogicalSourcesStatementResult,
     ShowPhysicalSourcesStatementResult,
     ShowSinksStatementResult,
+    ShowModelsStatementResult,
     DropLogicalSourceStatementResult,
     DropPhysicalSourceStatementResult,
     DropSinkStatementResult,
+    DropModelStatementResult,
     QueryStatementResult,
     ShowQueriesStatementResult,
     ExplainQueryStatementResult,
@@ -214,6 +238,17 @@ public:
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
     std::expected<DropQueryStatementResult, Exception> operator()(const DropQueryStatement& statement);
+};
+
+class ModelStatementHandler final : public StatementHandler<ModelStatementHandler>
+{
+    std::shared_ptr<ModelCatalog> modelCatalog;
+
+public:
+    explicit ModelStatementHandler(std::shared_ptr<ModelCatalog> modelCatalog);
+    std::expected<CreateModelStatementResult, Exception> operator()(const CreateModelStatement& statement);
+    std::expected<ShowModelsStatementResult, Exception> operator()(const ShowModelsStatement& statement) const;
+    std::expected<DropModelStatementResult, Exception> operator()(const DropModelStatement& statement);
 };
 
 class TopologyStatementHandler final : public StatementHandler<TopologyStatementHandler>

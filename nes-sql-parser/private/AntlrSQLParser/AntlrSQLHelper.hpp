@@ -99,6 +99,9 @@ public:
     std::vector<Projection> preAggregationProjections;
     size_t aggExprCounter = 0;
 
+    /// Flag set while parsing a MODEL_INFERENCE TVF source to suppress identifier capture as FROM source
+    bool isModelInference = false;
+
     [[nodiscard]] std::vector<LogicalFunction>& getWhereClauses();
     [[nodiscard]] std::vector<LogicalFunction>& getHavingClauses();
     [[nodiscard]] std::vector<Projection>& getProjections();

@@ -77,7 +77,10 @@ INGORED_ENDINGS = {
     "nix",
     "lock",
     "nes",
-    "jsonl"
+    "jsonl",
+    "onnx",
+    "gitkeep",
+    "gitattributes"
 }
 
 VENDORED_FILES = {

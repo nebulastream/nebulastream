@@ -17,6 +17,7 @@
 #include <algorithm>
 #include <chrono>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <ranges>
 #include <sstream>
@@ -39,6 +40,7 @@
 #include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
@@ -226,6 +228,75 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
         return DropSinkStatementResult{sink.value()};
     }
     return std::unexpected{UnknownSinkName(statement.name)};
+}
+
+ModelStatementHandler::ModelStatementHandler(std::shared_ptr<ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog))
+{
+}
+
+namespace
+{
+ModelInfo toModelInfo(const RegisteredModel& model)
+{
+    return ModelInfo{
+        .name = model.getName(),
+        .path = model.getPath().string(),
+        .inputSchema = model.getSchema().inputs,
+        .outputSchema = model.getSchema().outputs,
+    };
+}
+}
+
+/// Translates a `CREATE MODEL` SQL statement into a registration in the model catalog.
+///
+/// The order matters:
+///   1. Reject duplicate names before doing any work — the catalog does not
+///      replace an existing entry, and registration is not cheap (it reads
+///      the ONNX file, shells out to `iree-import-onnx`, and validates the
+///      declared schema against the model's tensor shape).
+///   2. Hand the request to the catalog, which performs the remaining
+///      validation (file existence, ONNX-only, single tensor input/output,
+///      schema-vs-signature compatibility) and stores the resulting
+///      `RegisteredModel`.
+std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
+{
+    if (modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{ModelAlreadyExists(statement.name)};
+    }
+
+    try
+    {
+        modelCatalog->registerModel(statement.name, statement.path, ModelSchema{.inputs = statement.inputs, .outputs = statement.outputs});
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toModelInfo(modelCatalog->load(statement.name));
+}
+
+std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement&) const
+{
+    auto registeredModels = modelCatalog->getRegisteredModels();
+    std::vector<ModelInfo> models;
+    models.reserve(registeredModels.size());
+    for (const auto& model : registeredModels)
+    {
+        models.push_back(toModelInfo(model));
+    }
+    return ShowModelsStatementResult{.models = std::move(models)};
+}
+
+std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operator()(const DropModelStatement& statement)
+{
+    if (!modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{UnknownModelName(statement.name)};
+    }
+    modelCatalog->removeModel(statement.name);
+    return DropModelStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)

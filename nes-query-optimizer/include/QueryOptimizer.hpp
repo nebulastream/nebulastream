@@ -27,6 +27,11 @@
 
 namespace NES
 {
+class ModelCatalog;
+}
+
+namespace NES
+{
 
 class QueryOptimizer final
 {
@@ -35,8 +40,9 @@ public:
         const QueryOptimizerConfiguration& defaultQueryOptimization,
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::shared_ptr<const SinkCatalog>& sinkCatalog,
-        const std::shared_ptr<const WorkerCatalog>& workerCatalog)
-        : semanticAnalyzer(sourceCatalog, sinkCatalog)
+        const std::shared_ptr<const WorkerCatalog>& workerCatalog,
+        const std::shared_ptr<const ModelCatalog>& modelCatalog)
+        : semanticAnalyzer(sourceCatalog, sinkCatalog, modelCatalog)
         , ruleBasedOptimization(defaultQueryOptimization)
         , operatorPlacement(defaultQueryOptimization, sourceCatalog, sinkCatalog, workerCatalog) { };
 
