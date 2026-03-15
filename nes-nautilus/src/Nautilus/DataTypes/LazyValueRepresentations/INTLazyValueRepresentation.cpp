@@ -19,7 +19,7 @@
 
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
-#include <nautilus/inline.hpp>
+#include <inline.hpp>
 #include <LazyValueRepresentationRegistry.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
@@ -27,9 +27,11 @@
 
 namespace NES
 {
-NAUTILUS_INLINE bool constantEq(const int8_t* , const uint64_t , const int32_t ) noexcept
+NAUTILUS_INLINE bool constantEq(const int8_t* lazyContent, const uint64_t lazySize, const int32_t rhs) noexcept
 {
-    return false;
+    const std::string rhsStr = std::to_string(rhs);
+    const std::string_view lhsStr{reinterpret_cast<const char*>(lazyContent), lazySize};
+    return lhsStr == rhsStr;
 }
 
 VarVal INTLazyValueRepresentation::eqImpl(const nautilus::val<bool>& rhs) const
