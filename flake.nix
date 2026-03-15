@@ -51,6 +51,7 @@
             });
 
         reflect_cppPkg = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
+        ireeruntimePkg = pkgs.callPackage ./.nix/ireeruntime/package.nix { };
 
         baseThirdPartyDeps = (with pkgs; [
           fmtPkg
@@ -84,6 +85,7 @@
           openjdk21
           howard-hinnant-date
           reflect_cppPkg
+          ireeruntimePkg
         ]);
 
         antlr4Jar = pkgs.fetchurl {

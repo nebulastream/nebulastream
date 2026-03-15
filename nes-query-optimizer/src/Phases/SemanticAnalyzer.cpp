@@ -18,6 +18,7 @@
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/ModelInferenceCompilationRule.hpp>
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/SourceInferenceRule.hpp>
@@ -41,6 +42,10 @@ LogicalPlan SemanticAnalyzer::analyse(const LogicalPlan& plan) const
     inlineSourceBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
+
+    const auto modelInferenceCompilationRule = ModelInferenceCompilationRule{modelCatalog};
+    modelInferenceCompilationRule.apply(newPlan);
+
     typeInferenceRule.apply(newPlan);
     originIdInferenceRule.apply(newPlan);
     typeInferenceRule.apply(newPlan);

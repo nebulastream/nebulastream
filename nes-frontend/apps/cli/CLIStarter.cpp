@@ -58,6 +58,7 @@
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
 
@@ -135,6 +136,14 @@ struct PhysicalSource
     std::unordered_map<std::string, std::string> sourceConfig;
 };
 
+struct Model
+{
+    std::string name;
+    std::string path;
+    std::vector<SchemaField> input;
+    std::vector<SchemaField> output;
+};
+
 struct QueryConfig
 {
     std::vector<std::string> query;
@@ -142,6 +151,7 @@ struct QueryConfig
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
     std::unordered_map<std::string, std::string> optimizer;
+    std::vector<Model> models;
 };
 }
 
@@ -197,6 +207,19 @@ struct convert<NES::CLI::PhysicalSource>
 };
 
 template <>
+struct convert<NES::CLI::Model>
+{
+    static bool decode(const Node& node, NES::CLI::Model& rhs)
+    {
+        rhs.name = bindIdentifierName(node["name"].as<std::string>());
+        rhs.path = node["path"].as<std::string>();
+        rhs.input = node["input"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.output = node["output"].as<std::vector<NES::CLI::SchemaField>>();
+        return true;
+    }
+};
+
+template <>
 struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
@@ -208,6 +231,11 @@ struct convert<NES::CLI::QueryConfig>
         if (node["optimizer"].IsDefined())
         {
             rhs.optimizer = node["optimizer"].as<std::unordered_map<std::string, std::string>>();
+        }
+        rhs.models = {};
+        if (node["models"].IsDefined())
+        {
+            rhs.models = node["models"].as<std::vector<NES::CLI::Model>>();
         }
         rhs.query = {};
         if (node["query"].IsDefined())
@@ -333,7 +361,7 @@ std::vector<std::string> loadQueries(
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical, optimizer] = topologyConfig;
+    const auto& [query, sinks, logical, physical, optimizer, models] = topologyConfig;
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
@@ -361,6 +389,23 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
         statements.emplace_back(
             NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config, .formatConfig = parserConfig});
+    }
+    for (const auto& [name, path, input, output] : models)
+    {
+        std::vector<std::pair<std::string, NES::DataType>> inputs;
+        inputs.reserve(input.size());
+        for (const auto& field : input)
+        {
+            inputs.emplace_back(field.name, field.type);
+        }
+        std::vector<std::pair<std::string, NES::DataType>> outputs;
+        outputs.reserve(output.size());
+        for (const auto& field : output)
+        {
+            outputs.emplace_back(field.name, field.type);
+        }
+        statements.emplace_back(
+            NES::CreateModelStatement{.name = name, .path = path, .inputs = std::move(inputs), .outputs = std::move(outputs)});
     }
     return statements;
 }
@@ -483,16 +528,18 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
 
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+    auto modelCatalog = std::make_shared<NES::Inference::ModelCatalog>();
     const auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(program), NES::QueryManagerState{state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
+    NES::ModelStatementHandler modelHandler{modelCatalog};
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog, modelCatalog);
     auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration);
     NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
 
-    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
+    handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler, modelHandler);
 
     if (program.is_subcommand_used("stop"))
     {
@@ -521,14 +568,16 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
 
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
+    auto modelCatalog = std::make_shared<NES::Inference::ModelCatalog>();
     auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(program));
 
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
     NES::SinkStatementHandler sinkHandler{sinkCatalog};
-    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
+    NES::ModelStatementHandler modelHandler{modelCatalog};
+    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog, modelCatalog);
     auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration);
-    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
+    handleStatements(statements, topologyHandler, sourceHandler, sinkHandler, modelHandler);
 
     if (program.is_subcommand_used("start"))
     {

@@ -389,7 +389,9 @@ void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext
     {
         helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(bindIdentifier(context)));
     }
-    else if (helpers.top().isFrom and not helpers.top().isJoinRelation and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
+    else if (
+        helpers.top().isFrom and not helpers.top().isJoinRelation and not helpers.top().isModelInference
+        and AntlrSQLParser::RuleErrorCapturingIdentifier == parentRuleIndex)
     {
         /// get main source name
         helpers.top().setSource(bindIdentifier(context));
@@ -1014,5 +1016,63 @@ void AntlrSQLQueryPlanCreator::exitGroupByClause(AntlrSQLParser::GroupByClauseCo
 {
     helpers.top().isGroupBy = false;
     AntlrSQLBaseListener::exitGroupByClause(context);
+}
+
+void AntlrSQLQueryPlanCreator::enterModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context)
+{
+    helpers.top().isModelInference = true;
+    AntlrSQLBaseListener::enterModelInferenceRelation(context);
+}
+
+namespace
+{
+/// Recursively build a LogicalPlan from a modelInferenceSource context.
+/// For subquery inputs, the inner query plan is already on the queryPlans vector (processed by the listener).
+LogicalPlan buildModelInferencePlan(AntlrSQLParser::ModelInferenceSourceContext* ctx, std::vector<LogicalPlan>& queryPlans)
+{
+    auto modelName = bindIdentifier(ctx->modelName);
+
+    auto* input = ctx->modelInferenceInput();
+    LogicalPlan childPlan = [&]() -> LogicalPlan
+    {
+        if (auto* streamName = dynamic_cast<AntlrSQLParser::ModelInferenceStreamNameContext*>(input))
+        {
+            std::string name;
+            for (auto* part : streamName->multipartIdentifier()->parts)
+            {
+                if (!name.empty())
+                    name += "$";
+                name += bindIdentifier(part->identifier());
+            }
+            return LogicalPlanBuilder::createLogicalPlan(std::move(name));
+        }
+        if (auto* nested = dynamic_cast<AntlrSQLParser::ModelInferenceNestedContext*>(input))
+        {
+            return buildModelInferencePlan(nested->modelInferenceSource(), queryPlans);
+        }
+        if (dynamic_cast<AntlrSQLParser::ModelInferenceSubqueryContext*>(input))
+        {
+            /// The subquery has already been processed by the listener; its plan is on the queryPlans vector.
+            if (queryPlans.empty())
+            {
+                throw InvalidQuerySyntax("MODEL_INFERENCE subquery plan not found");
+            }
+            auto plan = std::move(queryPlans.back());
+            queryPlans.pop_back();
+            return plan;
+        }
+        throw InvalidQuerySyntax("MODEL_INFERENCE: unrecognized input type");
+    }();
+
+    return LogicalPlanBuilder::addInferModel(std::move(modelName), childPlan);
+}
+}
+
+void AntlrSQLQueryPlanCreator::exitModelInferenceRelation(AntlrSQLParser::ModelInferenceRelationContext* context)
+{
+    auto plan = buildModelInferencePlan(context->modelInferenceSource(), helpers.top().queryPlans);
+    helpers.top().queryPlans.push_back(std::move(plan));
+    helpers.top().isModelInference = false;
+    AntlrSQLBaseListener::exitModelInferenceRelation(context);
 }
 }
