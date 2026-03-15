@@ -12,5 +12,6 @@
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
-add_plugin(IsNaN LogicalFunction nes-logical-operators IsNaNLogicalFunction.cpp)
-add_plugin(IsNaN PhysicalFunction nes-physical-operators IsNaNPhysicalFunction.cpp)
+#add_plugin_as_library(HTTP Sink nes-sinks-registry http_sink_plugin HTTPSink.cpp)
+add_plugin(BaseLine2xDiff LogicalFunction nes-logical-operators BaseLine2xDiffLogicalFunction.cpp)
+add_plugin(BaseLine2xDiff PhysicalFunction nes-physical-operators BaseLine2xDiffPhysicalFunction.cpp)

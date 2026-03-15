@@ -82,6 +82,10 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     /// Format buffer
     const auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
 
+    // Todo: write buffer to file (use FileSink logic)
+    // Todo: look at buffer content and string and improve alert msg
+    // -> could use concat idea, otherwise, just hardcode map to produce expected result
+
     curl_slist* headers = nullptr;
     /// Set newline delimited json as content type
     headers = curl_slist_append(headers, "Content-Type: application/x-ndjson");
