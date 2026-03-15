@@ -116,13 +116,6 @@ void NodeEngine::startQuery(QueryId queryId)
     }
 }
 
-void NodeEngine::unregisterQuery(QueryId queryId)
-{
-    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-    NES_INFO("Unregister {}", queryId);
-    queryEngine->stop(queryId);
-}
-
 void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)
 {
     PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");

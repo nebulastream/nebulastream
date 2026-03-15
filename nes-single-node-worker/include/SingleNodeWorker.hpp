@@ -75,10 +75,6 @@ public:
     /// @param terminationType dictates what happens with in in-flight data
     std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
 
-    /// Unregisters a stopped Query.
-    /// @param queryId identifies the registered stopped query
-    std::expected<void, Exception> unregisterQuery(QueryId queryId) noexcept;
-
     /// Complete history of query status changes.
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.

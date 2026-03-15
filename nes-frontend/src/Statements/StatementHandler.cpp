@@ -194,12 +194,9 @@ QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManage
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
-    auto stopResult = queryManager->stop(statement.id)
-                          .and_then([&statement, this] { return queryManager->unregister(statement.id); })
-                          .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
-                          .transform([&statement] { return DropQueryStatementResult{statement.id}; });
-
-    return stopResult;
+    return queryManager->stop(statement.id)
+        .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
+        .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
 std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)

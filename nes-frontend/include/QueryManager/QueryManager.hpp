@@ -45,7 +45,6 @@ public:
     [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(LogicalPlan) = 0;
     virtual std::expected<void, Exception> start(QueryId) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
-    virtual std::expected<void, Exception> unregister(QueryId) = 0;
     [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
 };
@@ -67,7 +66,6 @@ public:
     /// Starts a pre-registered query. Start may potentially block waiting for the query state to change (even if it fails).
     std::expected<void, Exception> start(QueryId query);
     std::expected<void, Exception> stop(QueryId query);
-    std::expected<void, Exception> unregister(QueryId query);
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId query) const;
     [[nodiscard]] std::vector<QueryId> queries() const;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;
