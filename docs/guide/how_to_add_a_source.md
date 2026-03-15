@@ -55,8 +55,7 @@ find_package(PahoMqttCpp CONFIG REQUIRED) # <-- We depend on the paho-mqtt lib
 # 1) Source Plugin
 add_plugin_as_library(
         MQTT                       # Plugin name
-        Source                     # Registry name  
-        nes-sources-registry       # Component registry name
+        Source                     # Registry name
         mqtt-source-plugin-library # Plugin library name
         MQTTSource.cpp             # Source files list
 )
@@ -67,7 +66,7 @@ target_include_directories(mqtt-source-plugin-library
 target_link_libraries(mqtt-source-plugin-library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 
 # 2) Source Validation Plugin
-add_plugin_as_library(MQTT SourceValidation nes-sources-registry mqtt-source-validation-plugin-library MQTTSource.cpp)
+add_plugin_as_library(MQTT SourceValidation mqtt-source-validation-plugin-library MQTTSource.cpp)
 target_include_directories(mqtt-source-validation-plugin-library
         PUBLIC include
         PRIVATE .
@@ -75,7 +74,7 @@ target_include_directories(mqtt-source-validation-plugin-library
 target_link_libraries(mqtt-source-validation-plugin-library PRIVATE PahoMqttCpp::paho-mqttpp3-static)
 ```
 Notes:
-- Plugin name, Registry type, and Registry name are fixed and must match internal expectations.
+- Plugin name and Registry name are fixed and must match internal expectations.
 - The output library name is freely chosen
 - Use `FetchContent` for third-party dependencies not already included in our internal `vcpkg/vcpkg.json`.
 

@@ -14,9 +14,9 @@ add_source_files(nes-logical-operators
         WindowAggregationLogicalFunction.cpp
 )
 
-add_plugin(Avg AggregationLogicalFunction nes-logical-operators AvgAggregationLogicalFunction.cpp)
-add_plugin(Count AggregationLogicalFunction nes-logical-operators CountAggregationLogicalFunction.cpp)
-add_plugin(Max AggregationLogicalFunction nes-logical-operators MaxAggregationLogicalFunction.cpp)
-add_plugin(Median AggregationLogicalFunction nes-logical-operators MedianAggregationLogicalFunction.cpp)
-add_plugin(Min AggregationLogicalFunction nes-logical-operators MinAggregationLogicalFunction.cpp)
-add_plugin(Sum AggregationLogicalFunction nes-logical-operators SumAggregationLogicalFunction.cpp)
+add_plugin(Avg AggregationLogicalFunction AvgAggregationLogicalFunction.cpp)
+add_plugin(Count AggregationLogicalFunction CountAggregationLogicalFunction.cpp)
+add_plugin(Max AggregationLogicalFunction MaxAggregationLogicalFunction.cpp)
+add_plugin(Median AggregationLogicalFunction MedianAggregationLogicalFunction.cpp)
+add_plugin(Min AggregationLogicalFunction MinAggregationLogicalFunction.cpp)
+add_plugin(Sum AggregationLogicalFunction SumAggregationLogicalFunction.cpp)
