@@ -1,0 +1,35 @@
+# name: join/SlidingWindowLeftOuterJoin.test
+# description: Test LEFT OUTER JOIN with sliding windows — cross-slice matches must not produce false NULL rows
+# groups: [WindowOperators, Join, OuterJoin, SlidingWindow]
+
+# Source definitions
+# Left stream: id=1 in slice 1 (t=500), id=2 in slice 1 (t=1500), id=3 in slice 2 (t=2500)
+# Right stream: id2=1 in slice 2 (t=2500) — cross-slice match with left id=1
+# Window W1=[0,4000): id=1 matches id2=1 (cross-slice), id=2 and id=3 are unmatched left rows
+# Window W2=[2000,6000): id=3 is unmatched left; id2=1 and id2=4 are on the right but no match
+# Without Plan 01 fix: N-squared probe calls would produce a false NULL row for id=1 in W1
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,500
+2,20,1500
+3,30,2500
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,100,2500
+4,400,3500
+
+CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM stream) LEFT OUTER JOIN (SELECT * FROM stream2)
+ON (id = id2)
+WINDOW SLIDING (timestamp, size 4 sec, advance by 2 sec)
+INTO sink;
+----
+0,4000,1,10,500,1,100,2500
+0,4000,2,20,1500,NULL,NULL,NULL
+0,4000,3,30,2500,NULL,NULL,NULL
+2000,6000,3,30,2500,NULL,NULL,NULL
