@@ -56,14 +56,11 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
 private:
-    /// Outer-join probe: iterates the outer (preserved) side's hash maps.
+    /// Null-fill probe: iterates the outer (preserved) side's hash maps.
     /// For each entry, checks whether the inner side has a matching key.
-    /// When emitMatchedPairs is true: matched entries produce a Cartesian product; unmatched entries emit NULL-filled records.
-    /// When emitMatchedPairs is false: only unmatched entries emit NULL-filled records (used for FULL join pass 2).
-    /// The emitMatchedPairs parameter is a compile-time C++ bool, NOT a nautilus::val, so dead code is eliminated
-    /// before nautilus tracing, keeping each traced pipeline simple.
-    template <bool EmitMatchedPairs>
-    void performOuterProbe(
+    /// Unmatched entries emit NULL-filled records; matched entries are skipped
+    /// (matched pairs are emitted by separate MATCH_PAIRS tasks using the inner join code path).
+    void performNullFillProbe(
         nautilus::val<HashMap**> outerHashMapRefs,
         nautilus::val<uint64_t> outerNumberOfHashMaps,
         nautilus::val<HashMap**> innerHashMapRefs,
@@ -71,7 +68,6 @@ private:
         const HashMapOptions& outerHashMapOptions,
         const HashMapOptions& innerHashMapOptions,
         const std::shared_ptr<TupleBufferRef>& outerBufferRef,
-        const std::shared_ptr<TupleBufferRef>& innerBufferRef,
         const Schema& nullSideSchema,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
