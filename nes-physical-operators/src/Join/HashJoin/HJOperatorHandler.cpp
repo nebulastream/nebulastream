@@ -128,6 +128,8 @@ void HJOperatorHandler::triggerSlices(
         std::vector<HashMap*> allRightHashMaps;
         uint64_t totalNumberOfTuples = 0;
 
+        uint64_t totalKeysForAverage = 0;
+        uint64_t keysSampleCount = 0;
         for (const auto& slice : allSlices)
         {
             const auto* const hjSlice = dynamic_cast<const HJSlice*>(slice.get());
@@ -137,18 +139,24 @@ void HJOperatorHandler::triggerSlices(
                 if (auto* leftMap = hjSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), JoinBuildSideType::Left);
                     (leftMap != nullptr) && leftMap->getNumberOfTuples() > 0)
                 {
-                    rollingAverageNumberOfKeys.wlock()->add(leftMap->getNumberOfTuples());
+                    totalKeysForAverage += leftMap->getNumberOfTuples();
+                    ++keysSampleCount;
                     allLeftHashMaps.emplace_back(leftMap);
                     totalNumberOfTuples += leftMap->getNumberOfTuples();
                 }
                 if (auto* rightMap = hjSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), JoinBuildSideType::Right);
                     (rightMap != nullptr) && rightMap->getNumberOfTuples() > 0)
                 {
-                    rollingAverageNumberOfKeys.wlock()->add(rightMap->getNumberOfTuples());
+                    totalKeysForAverage += rightMap->getNumberOfTuples();
+                    ++keysSampleCount;
                     allRightHashMaps.emplace_back(rightMap);
                     totalNumberOfTuples += rightMap->getNumberOfTuples();
                 }
             }
+        }
+        if (keysSampleCount > 0)
+        {
+            rollingAverageNumberOfKeys.wlock()->add(totalKeysForAverage / keysSampleCount);
         }
 
         const auto neededBufferSize

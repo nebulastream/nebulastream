@@ -14,6 +14,7 @@
 
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -56,6 +57,12 @@ namespace NES
 JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
     : joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
 {
+    if (isOuterJoin(this->joinType)
+        && std::ranges::none_of(
+            BFSRange(this->joinFunction), [](const LogicalFunction& fn) { return fn.tryGetAs<FieldAccessLogicalFunction>().has_value(); }))
+    {
+        throw UnsupportedQuery("Outer joins require an explicit equi-join predicate (e.g. ON left$key = right$key)");
+    }
 }
 
 std::string_view JoinLogicalOperator::getName() const noexcept

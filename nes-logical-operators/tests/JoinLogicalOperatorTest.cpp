@@ -189,7 +189,10 @@ TEST_F(JoinLogicalOperatorTest, InnerJoinDoesNotMarkAnyFieldsNullable)
 TEST_F(JoinLogicalOperatorTest, WindowStartEndFieldsAreNotNullableForOuterJoins)
 {
     /// NOLINTBEGIN(bugprone-unchecked-optional-access) ASSERT_TRUE(has_value()) guards the access but clang-tidy cannot see through gtest macros
-    for (const auto joinType : {JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
+    for (const auto joinType :
+         {JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
         auto op = createOperatorWithSchema(joinType);
         const auto outputSchema = op.getOutputSchema();
@@ -207,7 +210,10 @@ TEST_F(JoinLogicalOperatorTest, WindowStartEndFieldsAreNotNullableForOuterJoins)
 
 TEST_F(JoinLogicalOperatorTest, ReflectionRoundTripPreservesOuterJoinTypes)
 {
-    for (const auto joinType : {JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
+    for (const auto joinType :
+         {JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN,
+          JoinLogicalOperator::JoinType::OUTER_FULL_JOIN})
     {
         auto op = createOperator(joinType);
         auto reflected = reflect(op);

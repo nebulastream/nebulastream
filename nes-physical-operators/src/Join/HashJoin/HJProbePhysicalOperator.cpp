@@ -157,6 +157,7 @@ void HJProbePhysicalOperator::performOuterProbe(
     }
 }
 
+/// NOLINTNEXTLINE(readability-function-cognitive-complexity) inner join's N x N hash-map iteration is inherently deeply nested
 void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
@@ -182,12 +183,9 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
     auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
-    if (isOuterJoin(joinType))
+    switch (joinType)
     {
-        /// For outer joins, we need at least one side to have hash maps to produce unmatched rows.
-        /// If the preserved side has no hash maps, there are no rows to preserve, so we can return.
-        if (joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN)
-        {
+        case JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN: {
             if (leftNumberOfHashMaps == 0)
             {
                 return;
@@ -206,9 +204,9 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 executionCtx,
                 windowStart,
                 windowEnd);
+            break;
         }
-        else if (joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN)
-        {
+        case JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN: {
             if (rightNumberOfHashMaps == 0)
             {
                 return;
@@ -227,9 +225,9 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 executionCtx,
                 windowStart,
                 windowEnd);
+            break;
         }
-        else /// OUTER_FULL_JOIN
-        {
+        case JoinLogicalOperator::JoinType::OUTER_FULL_JOIN: {
             /// Pass 1: LEFT semantics -- iterate left, look up in right, emit matches + unmatched left with NULL right
             if (leftNumberOfHashMaps > 0)
             {
@@ -264,69 +262,71 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     windowStart,
                     windowEnd);
             }
+            break;
         }
-    }
-    else
-    {
-        /// Inner join: both sides must have hash maps
-        if (leftNumberOfHashMaps == 0 or rightNumberOfHashMaps == 0)
-        {
-            return;
-        }
-
-        /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
-        for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
-        {
-            const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
-            ChainedHashMapRef leftHashMap{
-                leftHashMapPtr,
-                leftHashMapOptions.fieldKeys,
-                leftHashMapOptions.fieldValues,
-                leftHashMapOptions.entriesPerPage,
-                leftHashMapOptions.entrySize};
-            for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
+        case JoinLogicalOperator::JoinType::INNER_JOIN:
+        case JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT: {
+            /// Inner join / cartesian product: both sides must have hash maps
+            if (leftNumberOfHashMaps == 0 or rightNumberOfHashMaps == 0)
             {
-                const nautilus::val<HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
-                const ChainedHashMapRef rightHashMap{
-                    rightHashMapPtr,
-                    rightHashMapOptions.fieldKeys,
-                    rightHashMapOptions.fieldValues,
-                    rightHashMapOptions.entriesPerPage,
-                    rightHashMapOptions.entrySize};
-                for (const auto rightEntry : rightHashMap)
+                return;
+            }
+
+            /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
+            for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
+            {
+                const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
+                ChainedHashMapRef leftHashMap{
+                    leftHashMapPtr,
+                    leftHashMapOptions.fieldKeys,
+                    leftHashMapOptions.fieldValues,
+                    leftHashMapOptions.entriesPerPage,
+                    leftHashMapOptions.entrySize};
+                for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
                 {
-                    const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                        rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
-                    auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                    const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
-                    const auto rightFields = rightBufferRef->getAllFieldNames();
-                    auto rightItStart = rightPagedVector.begin(rightFields);
-                    auto rightItEnd = rightPagedVector.end(rightFields);
-
-                    /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
-                    if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
+                    const nautilus::val<HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
+                    const ChainedHashMapRef rightHashMap{
+                        rightHashMapPtr,
+                        rightHashMapOptions.fieldKeys,
+                        rightHashMapOptions.fieldValues,
+                        rightHashMapOptions.entriesPerPage,
+                        rightHashMapOptions.entrySize};
+                    for (const auto rightEntry : rightHashMap)
                     {
-                        /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
-                        const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
-                            leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
-                        auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                        const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
-                        const auto leftFields = leftBufferRef->getAllFieldNames();
+                        const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
+                            rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
+                        auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
+                        const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
+                        const auto rightFields = rightBufferRef->getAllFieldNames();
+                        auto rightItStart = rightPagedVector.begin(rightFields);
+                        auto rightItEnd = rightPagedVector.end(rightFields);
 
-                        for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
+                        /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
+                        if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
                         {
-                            for (auto rightIt = rightItStart; rightIt != rightItEnd; ++rightIt)
+                            /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
+                            const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
+                                leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
+                            auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
+                            const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
+                            const auto leftFields = leftBufferRef->getAllFieldNames();
+
+                            for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
                             {
-                                const auto leftRecord = *leftIt;
-                                const auto rightRecord = *rightIt;
-                                auto joinedRecord
-                                    = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
-                                executeChild(executionCtx, joinedRecord);
+                                for (auto rightIt = rightItStart; rightIt != rightItEnd; ++rightIt)
+                                {
+                                    const auto leftRecord = *leftIt;
+                                    const auto rightRecord = *rightIt;
+                                    auto joinedRecord
+                                        = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
+                                    executeChild(executionCtx, joinedRecord);
+                                }
                             }
                         }
                     }
                 }
             }
+            break;
         }
     }
 }

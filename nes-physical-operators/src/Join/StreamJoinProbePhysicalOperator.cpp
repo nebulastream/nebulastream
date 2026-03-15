@@ -75,9 +75,10 @@ VarVal makeNullVarVal(const DataType& dataType)
             return VarVal(nautilus::val<char>{0}, true, nullFlag);
         case DataType::Type::VARSIZED:
             return VarVal(VariableSizedData(nautilus::val<int8_t*>{nullptr}, nautilus::val<uint64_t>{0}), true, nullFlag);
-        default:
+        case DataType::Type::UNDEFINED:
             throw UnknownDataType("Cannot null-fill field of type {}", magic_enum::enum_name(dataType.type));
     }
+    std::unreachable();
 }
 } /// anonymous namespace
 

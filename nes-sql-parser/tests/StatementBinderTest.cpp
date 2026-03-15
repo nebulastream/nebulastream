@@ -617,6 +617,66 @@ TEST_F(StatementBinderTest, LowercaseOuterJoinParsesToOuterLeftJoinType)
     EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
 }
 
+TEST_F(StatementBinderTest, LeftJoinWithoutOuterKeywordParsesToOuterLeftJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) LEFT JOIN (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, RightJoinWithoutOuterKeywordParsesToOuterRightJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) RIGHT JOIN (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, FullJoinWithoutOuterKeywordParsesToOuterFullJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) FULL JOIN (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, LowercaseLeftJoinParsesToOuterLeftJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) left join (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, LowercaseRightJoinParsesToOuterRightJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) right join (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN, joins.at(0)->getJoinType());
+}
+
+TEST_F(StatementBinderTest, LowercaseFullJoinParsesToOuterFullJoinType)
+{
+    const std::string query = "SELECT * FROM (SELECT * FROM s1) full join (SELECT * FROM s2) "
+                              "ON s1key = s2key WINDOW TUMBLING(SIZE 1000 MS) INTO sink";
+    const auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+    const auto joins = getOperatorByType<JoinLogicalOperator>(plan);
+    ASSERT_EQ(1, joins.size());
+    EXPECT_EQ(JoinLogicalOperator::JoinType::OUTER_FULL_JOIN, joins.at(0)->getJoinType());
+}
+
 ///NOLINTEND(bugprone-unchecked-optional-access)
 }
 }
