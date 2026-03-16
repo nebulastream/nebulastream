@@ -1,0 +1,184 @@
+diff --git a/nautilus/include/nautilus/Engine.hpp b/nautilus/include/nautilus/Engine.hpp
+index ffdd291..08d2e77 100644
+--- a/nautilus/include/nautilus/Engine.hpp
++++ b/nautilus/include/nautilus/Engine.hpp
+@@ -62,7 +62,7 @@ public:
+ 	}
+ 
+ 	explicit CallableFunction(std::unique_ptr<compiler::Executable>& executable)
+-	    : func(executable->getInvocableMember<typename R::raw_type, FunctionArguments...>("execute")),
++	    : func(executable->getInvocableMember<typename R::raw_type, FunctionArguments...>(executable->getEntryFunctionName())),
+ 	      executable(std::move(executable)) {
+ 	}
+ 
+@@ -109,7 +109,7 @@ public:
+ 	}
+ 
+ 	explicit CallableFunction(std::unique_ptr<compiler::Executable>& executable)
+-	    : func(executable->getInvocableMember<void, FunctionArguments...>("execute")),
++	    : func(executable->getInvocableMember<void, FunctionArguments...>(executable->getEntryFunctionName())),
+ 	      executable(std::move(executable)) {
+ 	}
+ 
+diff --git a/nautilus/include/nautilus/Executable.hpp b/nautilus/include/nautilus/Executable.hpp
+index 37d4761..74852d1 100644
+--- a/nautilus/include/nautilus/Executable.hpp
++++ b/nautilus/include/nautilus/Executable.hpp
+@@ -146,8 +146,17 @@ public:
+ 
+ 	const std::string_view getGeneratedFile(std::string_view key) const;
+ 
++	void setEntryFunctionName(std::string name) {
++		entryFunctionName = std::move(name);
++	}
++
++	[[nodiscard]] const std::string& getEntryFunctionName() const {
++		return entryFunctionName;
++	}
++
+ private:
+ 	std::map<std::string, std::string> generatedFiles;
++	std::string entryFunctionName = "execute";
+ };
+ 
+ } // namespace nautilus::compiler
+diff --git a/nautilus/src/nautilus/compiler/backends/cpp/CPPCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/cpp/CPPCompilationBackend.cpp
+index 84998a8..1b962a6 100644
+--- a/nautilus/src/nautilus/compiler/backends/cpp/CPPCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/cpp/CPPCompilationBackend.cpp
+@@ -3,6 +3,8 @@
+ #include "nautilus/compiler/backends/cpp/CPPCompiler.hpp"
+ #include "nautilus/compiler/backends/cpp/CPPExecutable.hpp"
+ #include "nautilus/compiler/backends/cpp/CPPLoweringProvider.hpp"
++#include "nautilus/compiler/ir/IRGraph.hpp"
++#include "nautilus/compiler/ir/operations/FunctionOperation.hpp"
+ #include <iostream>
+ namespace nautilus::compiler::cpp {
+ 
+@@ -14,7 +16,9 @@ std::unique_ptr<Executable> CPPCompilationBackend::compile(const std::shared_ptr
+ 
+ 	auto compiler = CPPCompiler::create();
+ 	auto res = compiler->compile("nautilus_" + ir->getId(), code);
+-	return std::make_unique<CPPExecutable>(res);
++	auto executable = std::make_unique<CPPExecutable>(res);
++	executable->setEntryFunctionName(ir->getRootOperation().getName());
++	return executable;
+ }
+ 
+ } // namespace nautilus::compiler::cpp
+diff --git a/nautilus/src/nautilus/compiler/backends/cpp/CPPExecutable.cpp b/nautilus/src/nautilus/compiler/backends/cpp/CPPExecutable.cpp
+index 2e373ea..674ab44 100644
+--- a/nautilus/src/nautilus/compiler/backends/cpp/CPPExecutable.cpp
++++ b/nautilus/src/nautilus/compiler/backends/cpp/CPPExecutable.cpp
+@@ -7,8 +7,8 @@ namespace nautilus::compiler::cpp {
+ CPPExecutable::CPPExecutable(std::shared_ptr<SharedLibrary> obj) : obj(std::move(obj)) {
+ }
+ 
+-void* CPPExecutable::getInvocableFunctionPtr(const std::string&) {
+-	return obj->getInvocableFunctionPtr("execute");
++void* CPPExecutable::getInvocableFunctionPtr(const std::string& member) {
++	return obj->getInvocableFunctionPtr(member);
+ }
+ 
+ bool CPPExecutable::hasInvocableFunctionPtr() {
+diff --git a/nautilus/src/nautilus/compiler/backends/cpp/CPPLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/cpp/CPPLoweringProvider.cpp
+index c13c9d6..f7bff0b 100644
+--- a/nautilus/src/nautilus/compiler/backends/cpp/CPPLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/cpp/CPPLoweringProvider.cpp
+@@ -81,7 +81,7 @@ std::stringstream CPPLoweringProvider::LoweringContext::process() {
+ 	pipelineCode << "\n";
+ 	pipelineCode << "#include <cstdint>";
+ 	pipelineCode << "\n";
+-	pipelineCode << "extern \"C\" " << returnType << " execute(";
++	pipelineCode << "extern \"C\" " << returnType << " " << functionOperation.getName() << "(";
+ 	for (size_t i = 0; i < arguments.size(); i++) {
+ 		if (i != 0) {
+ 			pipelineCode << ",";
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+index 0500cbb..68cd282 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.cpp
+@@ -19,9 +19,10 @@ LLVMIROptimizer::LLVMIROptimizer() = default;
+ LLVMIROptimizer::~LLVMIROptimizer() = default;
+ 
+ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipeline(const engine::Options& options,
+-                                                                                    const DumpHandler& handler) {
++                                                                                    const DumpHandler& handler,
++                                                                                    const std::string& entryFunctionName) {
+ 	// Return LLVM optimizer pipeline.
+-	return [options, &handler](llvm::Module* llvmIRModule) {
++	return [options, &handler, entryFunctionName](llvm::Module* llvmIRModule) {
+ 		// Currently, we do not increase the sizeLevel requirement of the
+ 		// optimizingTransformer beyond 0.
+ 		constexpr int SIZE_LEVEL = 0;
+@@ -31,13 +32,14 @@ std::function<llvm::Error(llvm::Module*)> LLVMIROptimizer::getLLVMOptimizerPipel
+ 		llvm::TargetMachine* targetMachinePtr = targetMachine->get();
+ 		targetMachinePtr->setOptLevel(llvm::CodeGenOptLevel::Aggressive);
+ 
+-		// Add target-specific attributes to the 'execute' function.
+-		llvmIRModule->getFunction("execute")->addAttributeAtIndex(
++		// Add target-specific attributes to the entry function.
++		auto* entryFunction = llvmIRModule->getFunction(entryFunctionName);
++		entryFunction->addAttributeAtIndex(
+ 		    ~0, llvm::Attribute::get(llvmIRModule->getContext(), "target-cpu", targetMachinePtr->getTargetCPU()));
+-		llvmIRModule->getFunction("execute")->addAttributeAtIndex(
++		entryFunction->addAttributeAtIndex(
+ 		    ~0, llvm::Attribute::get(llvmIRModule->getContext(), "target-features",
+ 		                             targetMachinePtr->getTargetFeatureString()));
+-		llvmIRModule->getFunction("execute")->addAttributeAtIndex(
++		entryFunction->addAttributeAtIndex(
+ 		    ~0, llvm::Attribute::get(llvmIRModule->getContext(), "tune-cpu", targetMachinePtr->getTargetCPU()));
+ 		llvm::SMDiagnostic Err;
+ 
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.hpp b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.hpp
+index 9770187..411620e 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.hpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/LLVMIROptimizer.hpp
+@@ -25,6 +25,7 @@ public:
+ 	~LLVMIROptimizer(); // Disable default destructor
+ 
+ 	static std::function<llvm::Error(llvm::Module*)> getLLVMOptimizerPipeline(const engine::Options& options,
+-	                                                                          const DumpHandler& handler);
++	                                                                          const DumpHandler& handler,
++	                                                                          const std::string& entryFunctionName);
+ };
+ } // namespace nautilus::compiler::mlir
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index 38c37dc..f9a7719 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -12,6 +12,7 @@
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMathIntrinsics.hpp"
+ #include "nautilus/compiler/backends/mlir/intrinsics/MLIRMemoryIntrinsics.hpp"
+ #include "nautilus/compiler/ir/IRGraph.hpp"
++#include "nautilus/compiler/ir/operations/FunctionOperation.hpp"
+ #include <mlir/Dialect/Arith/IR/Arith.h>
+ #include <mlir/Dialect/ControlFlow/IR/ControlFlow.h>
+ #include <mlir/Dialect/Func/Extensions/AllExtensions.h>
+@@ -86,20 +87,23 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	}
+ 
+ 	// 3. Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+-	auto optPipeline = LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHandler);
++	const auto& entryFunctionName = ir->getRootOperation().getName();
++	auto optPipeline = LLVMIROptimizer::getLLVMOptimizerPipeline(options, dumpHandler, entryFunctionName);
+ 
+ 	// 4. JIT compile LLVM IR module and return engine that provides access
+ 	// compiled execute function.
+ 	auto engine = JITCompiler::jitCompileModule(mlirModule, optPipeline, loweringProvider->getJitProxyFunctionSymbols(),
+ 	                                            loweringProvider->getJitProxyTargetAddresses(), options);
+ 	if (options.getOptionOrDefault("mlir.eager_compilation", false)) {
+-		auto result = engine->lookupPacked("execute");
++		auto result = engine->lookupPacked(entryFunctionName);
+ 		if (!result) {
+ 			llvm::errs() << "Could not compile function" << result.takeError() << "\n";
+ 		}
+ 	}
+ 	// 5. Get execution function from engine. Create and return execution context.
+-	return std::make_unique<MLIRExecutable>(std::move(engine));
++	auto executable = std::make_unique<MLIRExecutable>(std::move(engine));
++	executable->setEntryFunctionName(entryFunctionName);
++	return executable;
+ }
+ 
+ } // namespace nautilus::compiler::mlir

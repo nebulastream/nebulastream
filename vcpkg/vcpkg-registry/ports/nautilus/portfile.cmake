@@ -17,6 +17,7 @@ vcpkg_from_github(
         SHA512 a7183af0239111531763144648749a6a07dc3a8ca01b656ca4ad3a819e8d75de940035a77c29fb318d8beab6166f4146a8028a8aeff5d4566592561e2ed40b9e
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
+		0003-remove-hardcoded-execute-function-name.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

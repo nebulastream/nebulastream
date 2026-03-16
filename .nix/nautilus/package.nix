@@ -65,6 +65,7 @@ let
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
       ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
+      ./patches/0003-remove-hardcoded-execute-function-name.patch
     ];
 
     nativeBuildInputs = [
