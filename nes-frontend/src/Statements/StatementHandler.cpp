@@ -36,6 +36,7 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <WorkerStatus.hpp>
 
@@ -206,7 +207,7 @@ ModelInfo toModelInfo(const Inference::RegisteredModel& reg)
         {
             inputSchema += ", ";
         }
-        inputSchema += fmt::format("{}: {}", fieldName, *dataType);
+        inputSchema += fmt::format("{}: {}", fieldName, magic_enum::enum_name(dataType->type));
     }
 
     std::string outputSchema;
@@ -216,7 +217,7 @@ ModelInfo toModelInfo(const Inference::RegisteredModel& reg)
         {
             outputSchema += ", ";
         }
-        outputSchema += fmt::format("{}: {}", fieldName, *dataType);
+        outputSchema += fmt::format("{}: {}", fieldName, magic_enum::enum_name(dataType->type));
     }
 
     return ModelInfo{
