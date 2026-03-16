@@ -487,6 +487,118 @@ workers:
     capacity: 10000
 ```
 
+### Model Registration
+
+The topology file supports an optional `models` section for registering ML models. Models are registered before
+queries are submitted, so they can be referenced by `MODEL_INFERENCE` in the query.
+
+```yaml
+models:
+  - name: iris
+    path: /path/to/iris.onnx
+    input:
+      - name: p1
+        type: FLOAT32
+      - name: p2
+        type: FLOAT32
+      - name: p3
+        type: FLOAT32
+      - name: p4
+        type: FLOAT32
+    output:
+      - name: setosa
+        type: FLOAT32
+      - name: versicolor
+        type: FLOAT32
+      - name: virginica
+        type: FLOAT32
+```
+
+Each model entry requires:
+- `name` - Identifier used in `MODEL_INFERENCE(name, ...)` queries
+- `path` - Absolute path to an `.onnx` model file (must exist at registration time)
+- `input` - List of input fields with name and type (must match the model's input tensor)
+- `output` - List of output fields with name and type (must match the model's output tensor)
+
+The equivalent SQL syntax is:
+
+```sql
+CREATE MODEL iris ('/path/to/iris.onnx')
+INPUT (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32)
+OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
+```
+
+**Example: Complete Topology with Model Inference**
+
+```yaml
+query: |
+  SELECT * FROM MODEL_INFERENCE(iris, stream) INTO result
+
+models:
+  - name: iris
+    path: /data/models/iris.onnx
+    input:
+      - name: p1
+        type: FLOAT32
+      - name: p2
+        type: FLOAT32
+      - name: p3
+        type: FLOAT32
+      - name: p4
+        type: FLOAT32
+    output:
+      - name: setosa
+        type: FLOAT32
+      - name: versicolor
+        type: FLOAT32
+      - name: virginica
+        type: FLOAT32
+
+sinks:
+  - name: result
+    schema:
+      - name: stream$p1
+        type: FLOAT32
+      - name: stream$p2
+        type: FLOAT32
+      - name: stream$p3
+        type: FLOAT32
+      - name: stream$p4
+        type: FLOAT32
+      - name: SETOSA
+        type: FLOAT32
+      - name: VERSICOLOR
+        type: FLOAT32
+      - name: VIRGINICA
+        type: FLOAT32
+    type: File
+    config:
+      file_path: predictions.csv
+      output_format: CSV
+    parser_config: { }
+
+logical:
+  - name: stream
+    schema:
+      - name: p1
+        type: FLOAT32
+      - name: p2
+        type: FLOAT32
+      - name: p3
+        type: FLOAT32
+      - name: p4
+        type: FLOAT32
+
+physical:
+  - logical: stream
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: File
+    source_config:
+      file_path: input_data.csv
+```
+
 ### Query Management
 
 **Checking Status:**

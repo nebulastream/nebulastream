@@ -531,6 +531,59 @@ WINDOW SLIDING(ts, SIZE 30 SEC, ADVANCE BY 5 SEC) INTO sink
 
 💡 Currently, the timestamp field is required to have the same name in both input streams.
 
+### Table-Valued Functions
+
+| Operator         | Description                                                |
+|------------------|------------------------------------------------------------|
+| MODEL_INFERENCE  | Run an ONNX ML model on each tuple in a stream             |
+
+#### MODEL_INFERENCE
+
+`MODEL_INFERENCE` runs a registered ML model on each input tuple and appends the model's output fields to the result.
+Models must be registered with `CREATE MODEL` before use.
+
+**Registering a model:**
+
+```sql
+CREATE MODEL iris ('/path/to/iris.onnx')
+INPUT (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32)
+OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32);
+```
+
+- The `INPUT` fields must match the model's input tensor shape and types. Each field maps to one element of the input tensor.
+- The `OUTPUT` fields must match the model's output tensor shape and types.
+- Only `.onnx` model files are supported. Models are compiled to IREE bytecode at first use.
+- Only `FLOAT32` tensor element types are currently supported.
+
+**Using a model in a query:**
+
+```sql
+-- Direct stream input: each tuple's fields are fed to the model
+SELECT * FROM MODEL_INFERENCE(iris, stream) INTO result;
+```
+
+The output schema contains all fields from the input stream followed by the model's output fields.
+
+**Using a subquery as input:**
+
+```sql
+-- Decode base64-encoded image data before feeding to a model
+SELECT c0, c1, c2, c3, c4, c5, c6, c7, c8, c9
+FROM MODEL_INFERENCE(mnist, (SELECT FROM_BASE64(pixels) AS pixels FROM stream))
+INTO result;
+```
+
+When the model input is defined as `VARSIZED`, a single binary blob (e.g., raw tensor bytes) is passed directly to the model runtime. This is useful for image data or pre-packed tensors.
+
+**Nesting models (chaining inference):**
+
+```sql
+-- Feed the output of one model into another
+SELECT * FROM MODEL_INFERENCE(model_b, MODEL_INFERENCE(model_a, stream)) INTO result;
+```
+
+💡 `MODEL_INFERENCE` requires the IREE runtime library and the IREE compiler tools (`iree-import-onnx`, `iree-compile`) to be installed. If the tools are not available, model compilation will fail at query time.
+
 ---
 ## Functions
 
@@ -587,9 +640,15 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Other**
 
-| Description                     | Example                                        |
-|---------------------------------|------------------------------------------------|
-| Concatenate variable-sized data | `SELECT CONCAT(text1, text2) FROM s INTO sink` |
+| Description                     | Example                                            |
+|---------------------------------|----------------------------------------------------|
+| Concatenate variable-sized data | `SELECT CONCAT(text1, text2) FROM s INTO sink`     |
+| Encode to base64                | `SELECT TO_BASE64(data) FROM s INTO sink`          |
+| Decode from base64              | `SELECT FROM_BASE64(encoded) FROM s INTO sink`     |
+
+`TO_BASE64` and `FROM_BASE64` convert between raw binary data (`VARSIZED`) and base64-encoded text (`VARSIZED`).
+They use OpenSSL's EVP base64 implementation. These functions are particularly useful with `MODEL_INFERENCE` to
+pass binary tensor data through SQL queries (see [MODEL_INFERENCE](#model_inference)).
 
 We can combine functions into nested structures:
 ```sql
