@@ -2,6 +2,8 @@
 # description: Store stream to binary via TIME_TRAVEL_STORE and read back via store name
 # groups: [Store, Read]
 
+SEQUENTIAL_EXECUTION
+
 CREATE LOGICAL SOURCE stream(id UINT64, value UINT64, timestamp UINT64);
 CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE

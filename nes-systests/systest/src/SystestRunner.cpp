@@ -25,6 +25,7 @@
 #include <expected> /// NOLINT(misc-include-cleaner)
 #include <filesystem>
 #include <fstream>
+#include <functional>
 #include <iostream>
 #include <memory>
 #include <optional>
