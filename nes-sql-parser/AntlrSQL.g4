@@ -137,6 +137,9 @@ joinRelation
 
 joinType
     : INNER?
+    | LEFT OUTER?
+    | RIGHT OUTER?
+    | FULL OUTER?
     ;
 
 joinCriteria
@@ -423,7 +426,7 @@ FALSE: 'FALSE';
 FIRST: 'FIRST';
 FOR: 'FOR';
 FROM: 'FROM' | 'from';
-FULL: 'FULL';
+FULL: 'FULL' | 'full';
 GROUP: 'GROUP' | 'group';
 GROUPING: 'GROUPING';
 HAVING: 'HAVING' | 'having';
@@ -435,7 +438,7 @@ INTO: 'INTO' | 'into';
 IS: 'IS'  'is';
 JOIN: 'JOIN' | 'join';
 LAST: 'LAST';
-LEFT: 'LEFT';
+LEFT: 'LEFT' | 'left';
 LIKE: 'LIKE';
 LIMIT: 'LIMIT' | 'limit';
 LIST: 'LIST';
@@ -448,9 +451,10 @@ OF: 'OF';
 ON: 'ON' | 'on';
 OR: 'OR' | 'or';
 ORDER: 'ORDER' | 'order';
+OUTER: 'OUTER' | 'outer';
 QUERY: 'QUERY';
 RECOVER: 'RECOVER';
-RIGHT: 'RIGHT';
+RIGHT: 'RIGHT' | 'right';
 RLIKE: 'RLIKE' | 'REGEXP';
 ROLLUP: 'ROLLUP';
 SCHEMA: 'SCHEMA';

@@ -45,12 +45,16 @@ public:
     enum class JoinType : uint8_t
     {
         INNER_JOIN,
-        CARTESIAN_PRODUCT
+        CARTESIAN_PRODUCT,
+        OUTER_LEFT_JOIN,
+        OUTER_RIGHT_JOIN,
+        OUTER_FULL_JOIN
     };
 
     explicit JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
+    [[nodiscard]] JoinType getJoinType() const;
     [[nodiscard]] Schema getLeftSchema() const;
     [[nodiscard]] Schema getRightSchema() const;
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
@@ -102,6 +106,13 @@ struct Unreflector<JoinLogicalOperator>
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
+
+[[nodiscard]] inline bool isOuterJoin(JoinLogicalOperator::JoinType joinType) noexcept
+{
+    return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
+        || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+}
+
 }
 
 namespace NES::detail
