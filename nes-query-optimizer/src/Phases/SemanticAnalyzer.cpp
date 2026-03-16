@@ -15,10 +15,10 @@
 
 #include <Phases/SemanticAnalyzer.hpp>
 
+#include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
-#include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/SourceInferenceRule.hpp>

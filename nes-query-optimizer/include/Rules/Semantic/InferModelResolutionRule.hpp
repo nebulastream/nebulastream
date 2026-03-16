@@ -27,8 +27,7 @@ namespace NES
 class InferModelResolutionRule
 {
 public:
-    explicit InferModelResolutionRule(std::shared_ptr<Inference::ModelCatalog> modelCatalog)
-        : modelCatalog(std::move(modelCatalog)) { }
+    explicit InferModelResolutionRule(std::shared_ptr<Inference::ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog)) { }
 
     void apply(LogicalPlan& queryPlan) const;
 

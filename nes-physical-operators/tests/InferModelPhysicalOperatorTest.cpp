@@ -644,8 +644,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
             for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
             {
                 auto outputBlob = view[r]["output_blob"].as<std::string>();
-                ASSERT_EQ(outputBlob.size(), numFloats * sizeof(float))
-                    << "Output blob size mismatch (compiled=" << compiled << ")";
+                ASSERT_EQ(outputBlob.size(), numFloats * sizeof(float)) << "Output blob size mismatch (compiled=" << compiled << ")";
 
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-float unpacking
                 const auto* floatPtr = reinterpret_cast<const float*>(outputBlob.data());

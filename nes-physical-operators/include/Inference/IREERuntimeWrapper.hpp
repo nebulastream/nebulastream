@@ -43,6 +43,7 @@ public:
 private:
     std::vector<size_t> inputShape;
     size_t nDim = 0;
+
     struct InstanceDeleter
     {
         void operator()(iree_runtime_instance_t* p) const
@@ -53,6 +54,7 @@ private:
             }
         }
     };
+
     struct SessionDeleter
     {
         void operator()(iree_runtime_session_t* p) const
@@ -63,6 +65,7 @@ private:
             }
         }
     };
+
     std::unique_ptr<iree_runtime_instance_t, InstanceDeleter> instance;
     std::unique_ptr<iree_runtime_session_t, SessionDeleter> session;
     iree_vm_function_t function{};

@@ -34,8 +34,11 @@ inline void ireeCheckStatus(iree_status_t status, const char* msg)
 }
 
 IREERuntimeWrapper::IREERuntimeWrapper(IREERuntimeWrapper&& other) noexcept
-    : inputShape(std::move(other.inputShape)), nDim(other.nDim), instance(std::move(other.instance)), session(std::move(other.session)),
-      function(other.function)
+    : inputShape(std::move(other.inputShape))
+    , nDim(other.nDim)
+    , instance(std::move(other.instance))
+    , session(std::move(other.session))
+    , function(other.function)
 {
     other.function = {};
 }
@@ -77,7 +80,8 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_session_options_t sessionOptions;
     iree_runtime_session_options_initialize(&sessionOptions);
     iree_runtime_session_t* sess = nullptr;
-    status = iree_runtime_session_create_with_device(instPtr.get(), &sessionOptions, dev, iree_runtime_instance_host_allocator(instPtr.get()), &sess);
+    status = iree_runtime_session_create_with_device(
+        instPtr.get(), &sessionOptions, dev, iree_runtime_instance_host_allocator(instPtr.get()), &sess);
     /// Session takes a reference to the device, so we release our reference
     iree_hal_device_release(dev);
     NES_DEBUG("Created IREE session")
