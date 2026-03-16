@@ -14,6 +14,7 @@
 
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 
+#include <algorithm>
 #include <array>
 #include <cstddef>
 #include <functional>
@@ -28,6 +29,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 /// NOLINTNEXTLINE(misc-include-cleaner)
 #include <Configurations/Descriptor.hpp>
@@ -38,6 +40,7 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/UnboundFieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -153,18 +156,20 @@ bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
+    const auto joinTypeName = std::string(magic_enum::enum_name(joinType));
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, windowType: {}, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
+            "Join(opId: {}, type: {}, windowType: {}, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
             id,
+            joinTypeName,
             getWindowType(),
             getJoinFunction().explain(verbosity),
             startEndFields.at(0),
             startEndFields.at(1),
             traitSet.explain(verbosity));
     }
-    return fmt::format("Join({})", getJoinFunction().explain(verbosity));
+    return fmt::format("Join({}, {})", joinTypeName, getJoinFunction().explain(verbosity));
 }
 
 JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
@@ -175,6 +180,21 @@ JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
 void JoinLogicalOperator::inferLocalSchema()
 {
     PRECONDITION(children.has_value(), "Child not set when calling schema inference");
+
+    /// The predicate may still be unbound at first inference (the SQL flow binds field accesses later in this method), so accept either the
+    /// bound FieldAccessLogicalFunction or the unbound UnboundFieldAccessLogicalFunction as evidence of an explicit equi-join predicate.
+    if (isOuterJoin(this->joinType)
+        && std::ranges::none_of(
+            BFSRange(this->joinFunction),
+            [](const LogicalFunction& fn)
+            {
+                return fn.tryGetAs<FieldAccessLogicalFunction>().has_value()
+                    || fn.tryGetAs<UnboundFieldAccessLogicalFunction>().has_value();
+            }))
+    {
+        throw UnsupportedQuery("Outer joins require an explicit equi-join predicate (e.g. ON left$key = right$key)");
+    }
+
     const std::vector<Field> inputFields = *children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
         | std::views::join | std::ranges::to<std::vector>();
 
@@ -197,8 +217,29 @@ void JoinLogicalOperator::inferLocalSchema()
 
     this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
-    std::vector<UnqualifiedUnboundField> outputFields
-        = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
+    /// For outer joins, the fields of the side that may be unmatched become nullable in the output schema.
+    const bool leftNullable = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+    const bool rightNullable = (joinType == JoinType::OUTER_LEFT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+
+    const auto toOutputField = [](const Field& field, const bool nullable) -> UnqualifiedUnboundField
+    {
+        if (nullable)
+        {
+            return UnqualifiedUnboundField{
+                field.getFullyQualifiedName(), DataType{field.getDataType().type, DataType::NULLABLE::IS_NULLABLE}};
+        }
+        return field.unbound();
+    };
+
+    std::vector<UnqualifiedUnboundField> outputFields;
+    for (const auto& field : (*children)[0].getOutputSchema())
+    {
+        outputFields.emplace_back(toOutputField(field, leftNullable));
+    }
+    for (const auto& field : (*children)[1].getOutputSchema())
+    {
+        outputFields.emplace_back(toOutputField(field, rightNullable));
+    }
 
     outputFields.emplace_back(startEndFields[0].getFullyQualifiedName(), startEndFields[0].getDataType());
     outputFields.emplace_back(startEndFields[1].getFullyQualifiedName(), startEndFields[1].getDataType());

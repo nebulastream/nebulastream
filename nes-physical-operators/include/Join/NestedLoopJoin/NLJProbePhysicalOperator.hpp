@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -57,6 +58,7 @@ protected:
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
+
     std::shared_ptr<TupleBufferRef> leftMemoryProvider;
     std::shared_ptr<TupleBufferRef> rightMemoryProvider;
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;

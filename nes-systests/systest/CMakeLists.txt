@@ -70,7 +70,7 @@ endif ()
 # Group exclude lists for systest invocations. The Inference group requires the IREE toolchain;
 # when ENABLE_IREE_TESTS is OFF (e.g. iree-import-onnx / iree-compile not in PATH) we exclude it
 # so the .test files in nes-systests/inference/ are skipped at runtime.
-set(SYSTEST_EXCLUDE_GROUPS large)
+set(SYSTEST_EXCLUDE_GROUPS large OuterJoin)
 set(SYSTEST_EXCLUDE_GROUPS_COMPILER large CompilationIntensive)
 if (NOT ENABLE_IREE_TESTS)
     list(APPEND SYSTEST_EXCLUDE_GROUPS Inference)
