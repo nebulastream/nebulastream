@@ -41,8 +41,7 @@ struct HashMapOptions
         const uint64_t entrySize,
         const uint64_t keySize,
         const uint64_t valueSize,
-        const uint64_t pageSize,
-        const uint64_t numberOfBuckets)
+        const uint64_t pageSize)
         : hashFunction(std::move(hashFunction))
         , keyFunctions(std::move(keyFunctions))
         , fieldKeys(std::move(fieldKeys))
@@ -52,13 +51,11 @@ struct HashMapOptions
         , keySize(keySize)
         , valueSize(valueSize)
         , pageSize(pageSize)
-        , numberOfBuckets(numberOfBuckets)
     {
         INVARIANT(entriesPerPage > 0, "The number of entries per page must be greater than 0");
         INVARIANT(entrySize > 0, "The entry size must be greater than 0");
         INVARIANT(valueSize > 0, "The value size must be greater than 0");
         INVARIANT(pageSize > 0, "The page size must be greater than 0");
-        INVARIANT(numberOfBuckets > 0, "The number of buckets must be greater than 0");
         INVARIANT(
             entrySize > keySize + valueSize,
             "Entry size {} must be larger than the sum of key {} and value size {}",
@@ -77,7 +74,6 @@ struct HashMapOptions
         , keySize(std::move(other.keySize))
         , valueSize(std::move(other.valueSize))
         , pageSize(std::move(other.pageSize))
-        , numberOfBuckets(std::move(other.numberOfBuckets))
     {
     }
 
@@ -91,7 +87,6 @@ struct HashMapOptions
         , keySize(other.keySize)
         , valueSize(other.valueSize)
         , pageSize(other.pageSize)
-        , numberOfBuckets(other.numberOfBuckets)
     {
     }
 
@@ -106,7 +101,6 @@ struct HashMapOptions
         keySize = std::move(other.keySize);
         valueSize = std::move(other.valueSize);
         pageSize = std::move(other.pageSize);
-        numberOfBuckets = std::move(other.numberOfBuckets);
         return *this;
     };
 
@@ -121,7 +115,6 @@ struct HashMapOptions
         keySize = other.keySize;
         valueSize = other.valueSize;
         pageSize = other.pageSize;
-        numberOfBuckets = other.numberOfBuckets;
         return *this;
     }
 
@@ -153,7 +146,6 @@ struct HashMapOptions
     uint64_t keySize;
     uint64_t valueSize;
     uint64_t pageSize;
-    uint64_t numberOfBuckets;
 };
 
 }

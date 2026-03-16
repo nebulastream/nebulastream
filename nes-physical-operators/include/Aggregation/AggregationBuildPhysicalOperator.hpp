@@ -37,8 +37,7 @@ HashMap* getAggHashMapProxy(
     WorkerThreadId workerThreadId,
     uint64_t keySize,
     uint64_t valueSize,
-    uint64_t pageSize,
-    uint64_t numberOfBuckets);
+    uint64_t pageSize);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
@@ -49,8 +48,7 @@ public:
         WorkerThreadId workerThreadId,
         uint64_t keySize,
         uint64_t valueSize,
-        uint64_t pageSize,
-        uint64_t numberOfBuckets);
+        uint64_t pageSize);
 
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,

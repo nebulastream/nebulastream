@@ -193,7 +193,6 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         keySize += DataTypeProvider::provideDataType(loweredFunctionType.type).getSizeInBytes();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
-    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto pageSize = conf.pageSize.getValue();
     const auto entriesPerPage = pageSize / entrySize;
 
@@ -211,8 +210,7 @@ RewriteRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOpera
         entrySize,
         keySize,
         valueSize,
-        pageSize,
-        numberOfBuckets);
+        pageSize);
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());

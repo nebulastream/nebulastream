@@ -46,14 +46,13 @@ HashMap* getAggHashMapProxy(
     const WorkerThreadId workerThreadId,
     const uint64_t keySize,
     const uint64_t valueSize,
-    const uint64_t pageSize,
-    const uint64_t numberOfBuckets)
+    const uint64_t pageSize)
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
     const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction}, keySize, valueSize, pageSize, numberOfBuckets};
+        {operatorHandler->cleanupStateNautilusFunction}, keySize, valueSize, pageSize, 1};
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
@@ -132,8 +131,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
         ctx.workerThreadId,
         nautilus::val<uint64_t>(hashMapOptions.keySize),
         nautilus::val<uint64_t>(hashMapOptions.valueSize),
-        nautilus::val<uint64_t>(hashMapOptions.pageSize),
-        nautilus::val<uint64_t>(hashMapOptions.numberOfBuckets));
+        nautilus::val<uint64_t>(hashMapOptions.pageSize));
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 

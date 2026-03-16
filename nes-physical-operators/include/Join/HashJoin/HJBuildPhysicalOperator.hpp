@@ -40,8 +40,7 @@ HashMap* getHashJoinHashMapProxy(
     JoinBuildSideType buildSide,
     uint64_t keySize,
     uint64_t valueSize,
-    uint64_t pageSize,
-    uint64_t numberOfBuckets);
+    uint64_t pageSize);
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
@@ -56,8 +55,7 @@ public:
         JoinBuildSideType buildSide,
         uint64_t keySize,
         uint64_t valueSize,
-        uint64_t pageSize,
-        uint64_t numberOfBuckets);
+        uint64_t pageSize);
     HJBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,

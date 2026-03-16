@@ -213,7 +213,6 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
     }
 
     const auto pageSize = conf.pageSize.getValue();
-    const auto numberOfBuckets = conf.numberOfPartitions.getValue();
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;
     const auto entriesPerPage = pageSize / entrySize;
 
@@ -228,8 +227,7 @@ createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Sche
         entrySize,
         keySize,
         valueSize,
-        pageSize,
-        numberOfBuckets};
+        pageSize};
     return hashMapOptions;
 }
 }
