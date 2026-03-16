@@ -46,20 +46,20 @@ ATTACH INLINE
 38,1009,1705325000,1,Blutgase arteriell,O2-SAETTIGUNG,45,%,19224-5,S009,1705323200,1705325800,109
 
 # [01] PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
 INTO File();
 ----
-Detected low PO2(50 < 60) for patient 1003 at 15.01.2024 10:01(1705312900)
+Detected low PO2(50 < 60 mmHg) for patient 1003 at 15.01.2024 10:01(1705312900)
 
 # [02] PaCO2,Arterial blood,PCO2,Blutgase arteriell,mmHg,2019-8,>52 mmHg,3
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PCO2("), Wert), VARSIZED(" > 52) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PCO2("), Wert), VARSIZED(" > 52 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PCO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(52)
 INTO File();
 ----
-Detected high PCO2(54 > 52) for patient 1003 at 15.01.2024 10:03(1705313000)
+Detected high PCO2(54 > 52 mmHg) for patient 1003 at 15.01.2024 10:03(1705313000)
 
 # [03] pH,Arterial blood,PH,Blutgase arteriell,1,2744-1,<7.2,1
 SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PH("), Wert), VARSIZED(" < 7.2) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
@@ -70,180 +70,180 @@ INTO File();
 Detected low PH(7 < 7.2) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [04] Base excess (BEa),Arterial blood,ABEc,Blutgase arteriell,mmol/L,1925-7,<-7 mmol/L,3
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low ABEc("), Wert), VARSIZED(" < -7) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low ABEc("), Wert), VARSIZED(" < -7 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("ABEc") AND not (IsNaN(VarSizedToDouble(Wert))) AND FLOAT64(0) - VarSizedToDouble(Wert) > FLOAT64(7)
 INTO File();
 ----
-Detected low ABEc(-8 < -7) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected low ABEc(-8 < -7 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [05] Lactate,Arterial blood,LACTAT(BG),Blutgase arteriell,mg/dL,30242-2,>72 mg/dL,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high LACTAT(BG)("), Wert), VARSIZED(" > 72) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high LACTAT(BG)("), Wert), VARSIZED(" > 72 mg/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("LACTAT(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(72)
 INTO File();
 ----
-Detected high LACTAT(BG)(80 > 72) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected high LACTAT(BG)(80 > 72 mg/dL) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [06] Ionized calcium (Ca2+),Arterial blood,CALCIUM(BG),Blutgase arteriell,mmol/L,34581-9,<0.9 mmol/L,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low CALCIUM(BG)("), Wert), VARSIZED(" < 0.9) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low CALCIUM(BG)("), Wert), VARSIZED(" < 0.9 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("CALCIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.9)
 INTO File();
 ----
-Detected low CALCIUM(BG)(0.75 < 0.9) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected low CALCIUM(BG)(0.75 < 0.9 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [07] Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,>5.5 mM/L,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high KALIUM(BG)("), Wert), VARSIZED(" > 5.5) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high KALIUM(BG)("), Wert), VARSIZED(" > 5.5 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("KALIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
 INTO File();
 ----
-Detected high KALIUM(BG)(6 > 5.5) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected high KALIUM(BG)(6 > 5.5 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [08] Potassium (K+),Arterial blood,KALIUM(BG),Blutgase arteriell,mmol/L,6298-4,<3.2 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low KALIUM(BG)("), Wert), VARSIZED(" < 3.2) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low KALIUM(BG)("), Wert), VARSIZED(" < 3.2 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("KALIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
 INTO File();
 ----
-Detected low KALIUM(BG)(3 < 3.2) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected low KALIUM(BG)(3 < 3.2 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [09] Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,>155 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high NATRIUM(BG)("), Wert), VARSIZED(" > 155) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high NATRIUM(BG)("), Wert), VARSIZED(" > 155 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("NATRIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
 INTO File();
 ----
-Detected high NATRIUM(BG)(160 > 155) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected high NATRIUM(BG)(160 > 155 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [10] Sodium (Na+),Arterial blood,NATRIUM(BG),Blutgase arteriell,mmol/L,2947-0,<125 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low NATRIUM(BG)("), Wert), VARSIZED(" < 125) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low NATRIUM(BG)("), Wert), VARSIZED(" < 125 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("NATRIUM(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
 INTO File();
 ----
-Detected low NATRIUM(BG)(120 < 125) for patient 1004 at 15.01.2024 10:36(1705315000)
+Detected low NATRIUM(BG)(120 < 125 mmol/L) for patient 1004 at 15.01.2024 10:36(1705315000)
 
 # [11] Free hemoglobin,Serum/Plasma,FREIES HB,Blutbild,mg/dL,4635-9,>40 mg/dL,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high FREIES HB("), Wert), VARSIZED(" > 40) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high FREIES HB("), Wert), VARSIZED(" > 40 mg/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("FREIES HB") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(40)
 INTO File();
 ----
-Detected high FREIES HB(50 > 40) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected high FREIES HB(50 > 40 mg/dL) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [12] TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,<0.1,-
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low TSH("), Wert), VARSIZED(" < 0.1) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low TSH("), Wert), VARSIZED(" < 0.1 µIU/mL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("TSH") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.1)
 INTO File();
 ----
-Detected low TSH(0.0625 < 0.1) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected low TSH(0.0625 < 0.1 µIU/mL) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [13] TSH,Serum/Plasma,TSH,Schilddrüse,µIU/mL,3016-3,>10,-
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high TSH("), Wert), VARSIZED(" > 10) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high TSH("), Wert), VARSIZED(" > 10 µIU/mL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("TSH") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(10)
 INTO File();
 ----
-Detected high TSH(12 > 10) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected high TSH(12 > 10 µIU/mL) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [14] Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,>5.5 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high KALIUM("), Wert), VARSIZED(" > 5.5) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high KALIUM("), Wert), VARSIZED(" > 5.5 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("KALIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
 INTO File();
 ----
-Detected high KALIUM(6 > 5.5) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected high KALIUM(6 > 5.5 mmol/L) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [15] Potassium (K+),Serum/Plasma,KALIUM,Elektrolyte,mmol/L,2823-3,<3.2 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low KALIUM("), Wert), VARSIZED(" < 3.2) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low KALIUM("), Wert), VARSIZED(" < 3.2 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("KALIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
 INTO File();
 ----
-Detected low KALIUM(3 < 3.2) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected low KALIUM(3 < 3.2 mmol/L) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [16] Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,>155 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high NATRIUM("), Wert), VARSIZED(" > 155) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high NATRIUM("), Wert), VARSIZED(" > 155 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("NATRIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
 INTO File();
 ----
-Detected high NATRIUM(160 > 155) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected high NATRIUM(160 > 155 mmol/L) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [17] Sodium (Na+),Serum/Plasma,NATRIUM,Elektrolyte,mmol/L,2951-2,<125 mM/L,6
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low NATRIUM("), Wert), VARSIZED(" < 125) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low NATRIUM("), Wert), VARSIZED(" < 125 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("NATRIUM") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
 INTO File();
 ----
-Detected low NATRIUM(120 < 125) for patient 1005 at 15.01.2024 11:10(1705317000)
+Detected low NATRIUM(120 < 125 mmol/L) for patient 1005 at 15.01.2024 11:10(1705317000)
 
 # [18] Glucose,Arterial blood,GLUCOSE(BG),Blutgase arteriell,mg/dL,41652-9,<50 mg/dL,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GLUCOSE(BG)("), Wert), VARSIZED(" < 50) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GLUCOSE(BG)("), Wert), VARSIZED(" < 50 mg/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("GLUCOSE(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
 INTO File();
 ----
-Detected low GLUCOSE(BG)(40 < 50) for patient 1006 at 15.01.2024 11:43(1705319000)
+Detected low GLUCOSE(BG)(40 < 50 mg/dL) for patient 1006 at 15.01.2024 11:43(1705319000)
 
 # [19] Glucose,Serum/Plasma,GLUCOSE,Blutzucker,mg/dL,2345-7,<50 mg/dL,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GLUCOSE("), Wert), VARSIZED(" < 50) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GLUCOSE("), Wert), VARSIZED(" < 50 mg/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("GLUCOSE") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
 INTO File();
 ----
-Detected low GLUCOSE(40 < 50) for patient 1006 at 15.01.2024 11:43(1705319000)
+Detected low GLUCOSE(40 < 50 mg/dL) for patient 1006 at 15.01.2024 11:43(1705319000)
 
 # [20] Hemoglobin,Arterial blood,HB(BG),Blutgase arteriell,g/dL,14775-1,<7.0 g/dL,4
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low HB(BG)("), Wert), VARSIZED(" < 7.0) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low HB(BG)("), Wert), VARSIZED(" < 7.0 g/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("HB(BG)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
 INTO File();
 ----
-Detected low HB(BG)(6.5 < 7.0) for patient 1006 at 15.01.2024 11:43(1705319000)
+Detected low HB(BG)(6.5 < 7.0 g/dL) for patient 1006 at 15.01.2024 11:43(1705319000)
 
 # [21] Hemoglobin,Blood,HB (HGB),Blutbild,g/dL,718-7,<7.0 g/dL,4
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low HB (HGB)("), Wert), VARSIZED(" < 7.0) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low HB (HGB)("), Wert), VARSIZED(" < 7.0 g/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("HB (HGB)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
 INTO File();
 ----
-Detected low HB (HGB)(6.5 < 7.0) for patient 1006 at 15.01.2024 11:43(1705319000)
+Detected low HB (HGB)(6.5 < 7.0 g/dL) for patient 1006 at 15.01.2024 11:43(1705319000)
 
 # [22] Total bilirubin,Serum/Plasma,BILI (TOT.),Klinische Chemie,mg/dL,1975-2,>3 mg/dL,48
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high BILI (TOT.)("), Wert), VARSIZED(" > 3) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high BILI (TOT.)("), Wert), VARSIZED(" > 3 mg/dL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("BILI (TOT.)") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(3)
 INTO File();
 ----
-Detected high BILI (TOT.)(4 > 3) for patient 1006 at 15.01.2024 11:43(1705319000)
+Detected high BILI (TOT.)(4 > 3 mg/dL) for patient 1006 at 15.01.2024 11:43(1705319000)
 
 # [23] WBC,Blood,WBC,Blutbild,K/µL,6690-2,<1.0 K/µL,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low WBC("), Wert), VARSIZED(" < 1.0) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low WBC("), Wert), VARSIZED(" < 1.0 K/µL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("WBC") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(1.0)
 INTO File();
 ----
-Detected low WBC(0.5 < 1.0) for patient 1007 at 15.01.2024 12:16(1705321000)
+Detected low WBC(0.5 < 1.0 K/µL) for patient 1007 at 15.01.2024 12:16(1705321000)
 
 # [24] Platelet count,Blood,PLT,Blutbild,K/µL,777-3,<50 K/µL,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PLT("), Wert), VARSIZED(" < 50) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PLT("), Wert), VARSIZED(" < 50 K/µL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PLT") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
 INTO File();
 ----
-Detected low PLT(40 < 50) for patient 1007 at 15.01.2024 12:16(1705321000)
+Detected low PLT(40 < 50 K/µL) for patient 1007 at 15.01.2024 12:16(1705321000)
 
 # [25] eGFR,Serum/Plasma,GFRKREA,Retention,mL/min/1.73*m^-2,98979-8,<30 mL/min/1.73m²,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GFRKREA("), Wert), VARSIZED(" < 30) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low GFRKREA("), Wert), VARSIZED(" < 30 mL/min/1.73*m^-2) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("GFRKREA") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(30)
 INTO File();
 ----
-Detected low GFRKREA(25 < 30) for patient 1007 at 15.01.2024 12:16(1705321000)
+Detected low GFRKREA(25 < 30 mL/min/1.73*m^-2) for patient 1007 at 15.01.2024 12:16(1705321000)
 
 # [26] INR,Plasma,INR,Gerinnung,1,6301-6,>4.5,24
 SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high INR("), Wert), VARSIZED(" > 4.5) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
@@ -254,57 +254,57 @@ INTO File();
 Detected high INR(5 > 4.5) for patient 1007 at 15.01.2024 12:16(1705321000)
 
 # [27] PTT,Plasma,PTT,Gerinnung,s,3173-2,>90 s,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PTT("), Wert), VARSIZED(" > 90) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PTT("), Wert), VARSIZED(" > 90 s) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PTT") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(90)
 INTO File();
 ----
-Detected high PTT(95 > 90) for patient 1007 at 15.01.2024 12:16(1705321000)
+Detected high PTT(95 > 90 s) for patient 1007 at 15.01.2024 12:16(1705321000)
 
 # [28] CK-MB,Serum/Plasma,CK-MB,Enzyme,U/L,2154-3,>240 U/L,4
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high CK-MB("), Wert), VARSIZED(" > 240) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high CK-MB("), Wert), VARSIZED(" > 240 U/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("CK-MB") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(240)
 INTO File();
 ----
-Detected high CK-MB(250 > 240) for patient 1008 at 15.01.2024 12:50(1705323000)
+Detected high CK-MB(250 > 240 U/L) for patient 1008 at 15.01.2024 12:50(1705323000)
 
 # [29] Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,<20 µg/mL,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low VANCOMYCIN("), Wert), VARSIZED(" < 20) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low VANCOMYCIN("), Wert), VARSIZED(" < 20 µg/mL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("VANCOMYCIN") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(20)
 INTO File();
 ----
-Detected low VANCOMYCIN(15 < 20) for patient 1008 at 15.01.2024 12:50(1705323000)
+Detected low VANCOMYCIN(15 < 20 µg/mL) for patient 1008 at 15.01.2024 12:50(1705323000)
 
 # [30] Vancomycin,Serum/Plasma,VANCOMYCIN,Medikamentenspiegel,µg/mL,20578-1,>30 µg/mL,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high VANCOMYCIN("), Wert), VARSIZED(" > 30) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high VANCOMYCIN("), Wert), VARSIZED(" > 30 µg/mL) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("VANCOMYCIN") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(30)
 INTO File();
 ----
-Detected high VANCOMYCIN(35 > 30) for patient 1008 at 15.01.2024 12:50(1705323000)
+Detected high VANCOMYCIN(35 > 30 µg/mL) for patient 1008 at 15.01.2024 12:50(1705323000)
 
 # [31] Phosphate,Serum/Plasma,ANORGANISCHER PHOSPHOR,Elektrolyte,mmol/L,2777-1,<0.5 mM/L,24
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low ANORGANISCHER PHOSPHOR("), Wert), VARSIZED(" < 0.5) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low ANORGANISCHER PHOSPHOR("), Wert), VARSIZED(" < 0.5 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("ANORGANISCHER PHOSPHOR") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.5)
 INTO File();
 ----
-Detected low ANORGANISCHER PHOSPHOR(0.25 < 0.5) for patient 1008 at 15.01.2024 12:50(1705323000)
+Detected low ANORGANISCHER PHOSPHOR(0.25 < 0.5 mmol/L) for patient 1008 at 15.01.2024 12:50(1705323000)
 
 # [32] ScvO2,(Central) Venous blood,O2-SAETTIGUNG,Blutgase venös,%,1503-0,<50%,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low O2-SAETTIGUNG("), Wert), VARSIZED(" < 50) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low O2-SAETTIGUNG("), Wert), VARSIZED(" < 50%) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("1503-0") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
 INTO File();
 ----
-Detected low O2-SAETTIGUNG(45 < 50) for patient 1009 at 15.01.2024 13:23(1705325000)
+Detected low O2-SAETTIGUNG(45 < 50%) for patient 1009 at 15.01.2024 13:23(1705325000)
 
 # [33] SvO2,(mixed) Venous blood,O2-SAETTIGUNG,Blutgase gemischt-venös,%,19224-5,<50%,2
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low O2-SAETTIGUNG("), Wert), VARSIZED(" < 50) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low O2-SAETTIGUNG("), Wert), VARSIZED(" < 50%) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("19224-5") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
 INTO File();
 ----
-Detected low O2-SAETTIGUNG(45 < 50) for patient 1009 at 15.01.2024 13:23(1705325000)
+Detected low O2-SAETTIGUNG(45 < 50%) for patient 1009 at 15.01.2024 13:23(1705325000)
