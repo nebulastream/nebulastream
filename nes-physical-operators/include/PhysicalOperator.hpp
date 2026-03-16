@@ -124,6 +124,7 @@ struct PhysicalOperator
     void terminate(ExecutionContext& executionCtx) const;
     void execute(ExecutionContext& executionCtx, Record& record) const;
     [[nodiscard]] std::string toString() const;
+    [[nodiscard]] std::string getSignature() const;
 
     [[nodiscard]] OperatorId getId() const;
 
@@ -169,6 +170,7 @@ private:
 
         [[nodiscard]] virtual std::shared_ptr<Concept> clone() const = 0;
         [[nodiscard]] virtual std::string toString() const = 0;
+        [[nodiscard]] virtual std::string getSignature() const = 0;
     };
 
     template <IsPhysicalOperator OperatorType>
@@ -200,6 +202,8 @@ private:
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
+
+        [[nodiscard]] std::string getSignature() const override { return toString(); }
     };
 
     std::shared_ptr<const Concept> self;

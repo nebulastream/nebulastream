@@ -23,13 +23,9 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Util/DumpMode.hpp>
+#include <CompilationCache.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <PipelinedQueryPlan.hpp>
-
-namespace NES::QueryCompilation
-{
-class CompilationCache;
-}
 
 namespace NES
 {
@@ -37,8 +33,8 @@ class LowerToCompiledQueryPlanPhase
 {
 public:
     explicit LowerToCompiledQueryPlanPhase(
-        DumpMode dumpQueryCompilationIntermediateRepresentations, QueryCompilation::CompilationCache* compilationCache)
-        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), compilationCache(compilationCache)
+        DumpMode dumpQueryCompilationIntermediateRepresentations, QueryCompilation::CompilationCache compilationCache)
+        : dumpQueryCompilationIR(dumpQueryCompilationIntermediateRepresentations), compilationCache(std::move(compilationCache))
     {
     }
 
@@ -64,6 +60,6 @@ private:
 
     /// Config parameter
     DumpMode dumpQueryCompilationIR;
-    QueryCompilation::CompilationCache* compilationCache;
+    QueryCompilation::CompilationCache compilationCache;
 };
 }

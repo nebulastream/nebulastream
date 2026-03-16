@@ -28,15 +28,13 @@ The explicit key is built from three main parts:
 
 ### 1) Query Seed (`cacheKeySeed`)
 
-`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` constructs a string intended to be stable for the same
-physical plan, including:
+`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` uses `PhysicalPlan::getSignature()`, which constructs a
+string intended to be stable for the same physical plan, including:
 
-- `PhysicalPlan::getOriginalSql()`
 - execution mode and operator buffer size
 - number of root operators
 - a recursive signature of the physical operator plan, including:
-  - `PhysicalOperator::toString()`
-  - operator-specific details for sources/sinks (descriptors, schema, format/parser settings, delimiters)
+  - `PhysicalOperator::getSignature()`
   - input/output schema and memory layout
   - pipeline location and child structure
 

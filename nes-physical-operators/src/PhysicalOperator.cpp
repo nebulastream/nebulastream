@@ -155,6 +155,11 @@ std::string PhysicalOperator::toString() const
     return self->toString();
 }
 
+std::string PhysicalOperator::getSignature() const
+{
+    return self->getSignature();
+}
+
 [[nodiscard]] OperatorId PhysicalOperator::getId() const
 {
     return self->id;

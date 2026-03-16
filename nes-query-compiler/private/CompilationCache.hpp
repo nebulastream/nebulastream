@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <optional>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -33,6 +34,7 @@ struct Pipeline;
 namespace NES::QueryCompilation
 {
 
+/// See nes-query-compiler/COMPILATION_CACHE.md.
 class CompilationCache final
 {
 public:
@@ -58,6 +60,7 @@ private:
     [[nodiscard]] static std::string createHandlerCacheSignature(const Pipeline& pipeline);
 
     Settings settings;
+    std::optional<std::string> binaryFingerprint;
     std::string cacheKeySeed;
     std::unordered_map<const Pipeline*, uint64_t> pipelineToStableOrdinalMap;
     uint64_t nextStablePipelineOrdinal = 0;

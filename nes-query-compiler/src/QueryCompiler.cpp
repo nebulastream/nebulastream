@@ -28,16 +28,20 @@
 namespace NES::QueryCompilation
 {
 
-QueryCompiler::QueryCompiler() = default;
+QueryCompiler::QueryCompiler(CompilationCacheSettings compilationCacheSettings)
+    : compilationCacheSettings(std::move(compilationCacheSettings))
+{
+}
 
 /// This phase should be as dumb as possible and not further decisions should be made here.
 std::unique_ptr<CompiledQueryPlan> QueryCompiler::compileQuery(std::unique_ptr<QueryCompilationRequest> request)
 {
-    auto compilationCache
-        = CompilationCache(CompilationCache::Settings{request->compilationCacheEnabled, std::move(request->compilationCacheDir)});
+    auto compilationCache = CompilationCache(CompilationCache::Settings{
+        compilationCacheSettings.enabled,
+        compilationCacheSettings.cacheDir});
     compilationCache.prepareForQuery(request->queryPlan);
 
-    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, &compilationCache);
+    auto lowerToCompiledQueryPlanPhase = LowerToCompiledQueryPlanPhase(request->dumpCompilationResult, std::move(compilationCache));
     auto pipelinedQueryPlan = PipeliningPhase::apply(request->queryPlan);
     return lowerToCompiledQueryPlanPhase.apply(pipelinedQueryPlan);
 }

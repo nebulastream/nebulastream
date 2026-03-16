@@ -14,8 +14,6 @@
 
 #include <Phases/LowerToCompiledQueryPlanPhase.hpp>
 
-#include <CompilationCache.hpp>
-
 #include <memory>
 #include <ranges>
 #include <utility>
@@ -128,10 +126,7 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     }
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
 
-    if (compilationCache != nullptr)
-    {
-        compilationCache->configureEngineOptionsForPipeline(options, pipeline);
-    }
+    compilationCache.configureEngineOptionsForPipeline(options, pipeline);
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
 }
 
@@ -159,10 +154,7 @@ std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperat
 std::unique_ptr<CompiledQueryPlan> LowerToCompiledQueryPlanPhase::apply(const std::shared_ptr<PipelinedQueryPlan>& pipelineQueryPlan)
 {
     this->pipelineQueryPlan = pipelineQueryPlan;
-    if (compilationCache != nullptr)
-    {
-        compilationCache->resetPipelineOrdinals();
-    }
+    compilationCache.resetPipelineOrdinals();
 
     /// Process all pipelines recursively.
     for (auto sourcePipelines = pipelineQueryPlan->getSourcePipelines(); const auto& pipeline : sourcePipelines)

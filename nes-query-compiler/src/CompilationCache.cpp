@@ -16,32 +16,26 @@
 
 #include <algorithm>
 #include <cstdint>
-#include <filesystem>
 #include <chrono>
-#include <memory>
+#include <filesystem>
 #include <optional>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <typeinfo>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
-#include <SinkPhysicalOperator.hpp>
-#include <SourcePhysicalOperator.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <options.hpp>
 
 namespace NES::QueryCompilation
 {
 namespace
 {
-std::string createBinaryFingerprint()
+std::optional<std::string> createBinaryFingerprint()
 {
     try
     {
@@ -56,114 +50,29 @@ std::string createBinaryFingerprint()
     }
     catch (...)
     {
-        return "unknown_binary_fingerprint";
+        return std::nullopt;
     }
 }
 
-const std::string& getBinaryFingerprint()
+}
+
+CompilationCache::CompilationCache(Settings settings)
+    : settings(std::move(settings)), binaryFingerprint(createBinaryFingerprint())
 {
-    static const auto fingerprint = createBinaryFingerprint();
-    return fingerprint;
-}
-
-void appendOperatorSpecificCacheSignature(const PhysicalOperator& physicalOperator, std::ostringstream& signature)
-{
-    if (const auto source = physicalOperator.tryGet<SourcePhysicalOperator>(); source.has_value())
+    if (!this->settings.enabled && !this->settings.cacheDir.empty())
     {
-        const auto descriptor = source->getDescriptor();
-        const auto logicalSource = descriptor.getLogicalSource();
-        signature << ",sourceType=" << descriptor.getSourceType();
-        signature << ",sourceName=" << logicalSource.getLogicalSourceName();
-        signature << ",sourceSchema=" << *logicalSource.getSchema();
-        const auto parserConfig = descriptor.getParserConfig();
-        signature << ",parserType=" << parserConfig.parserType;
-        signature << ",tupleDelimiter=" << parserConfig.tupleDelimiter;
-        signature << ",fieldDelimiter=" << parserConfig.fieldDelimiter;
+        NES_INFO("Compilation cache directory is set, but compilation cache is disabled.");
     }
-    if (const auto sink = physicalOperator.tryGet<SinkPhysicalOperator>(); sink.has_value())
+    if (this->settings.enabled && !this->settings.cacheDir.empty() && !binaryFingerprint.has_value())
     {
-        const auto descriptor = sink->getDescriptor();
-        signature << ",sinkType=" << descriptor.getSinkType();
-        signature << ",sinkSchema=" << *descriptor.getSchema();
-        if (const auto formatType = descriptor.getFormatType(); formatType.has_value())
-        {
-            signature << ",sinkFormat=" << formatType.value();
-        }
-        else
-        {
-            signature << ",sinkFormat=<none>";
-        }
+        NES_WARNING("Could not determine binary fingerprint. Disabling compilation cache.");
+        this->settings.enabled = false;
     }
-}
-
-void appendOptionalSchemaSignature(std::ostringstream& signature, const std::optional<Schema>& schema)
-{
-    if (schema.has_value())
-    {
-        signature << schema.value();
-    }
-    else
-    {
-        signature << "<none>";
-    }
-}
-
-void appendOptionalLayoutSignature(std::ostringstream& signature, const std::optional<MemoryLayoutType>& layout)
-{
-    if (layout.has_value())
-    {
-        signature << static_cast<int>(layout.value());
-    }
-    else
-    {
-        signature << "<none>";
-    }
-}
-
-void appendWrapperCacheSignature(
-    const std::shared_ptr<PhysicalOperatorWrapper>& wrapper,
-    std::ostringstream& signature,
-    std::unordered_map<const PhysicalOperatorWrapper*, uint64_t>& wrapperOrdinals,
-    uint64_t& nextWrapperOrdinal)
-{
-    const auto wrapperPtr = wrapper.get();
-    if (const auto it = wrapperOrdinals.find(wrapperPtr); it != wrapperOrdinals.end())
-    {
-        signature << "{ref=w" << it->second << "}";
-        return;
-    }
-    const auto wrapperOrdinal = nextWrapperOrdinal++;
-    wrapperOrdinals.emplace(wrapperPtr, wrapperOrdinal);
-
-    const auto& physicalOperator = wrapper->getPhysicalOperator();
-    signature << "{w=" << wrapperOrdinal;
-    signature << ",op=" << physicalOperator.toString();
-    appendOperatorSpecificCacheSignature(physicalOperator, signature);
-    signature << ",inSchema=";
-    appendOptionalSchemaSignature(signature, wrapper->getInputSchema());
-    signature << ",outSchema=";
-    appendOptionalSchemaSignature(signature, wrapper->getOutputSchema());
-    signature << ",inLayout=";
-    appendOptionalLayoutSignature(signature, wrapper->getInputMemoryLayoutType());
-    signature << ",outLayout=";
-    appendOptionalLayoutSignature(signature, wrapper->getOutputMemoryLayoutType());
-    signature << ",loc=" << static_cast<int>(wrapper->getPipelineLocation());
-    signature << ",children=[";
-    for (const auto& children = wrapper->getChildren(); const auto& child : children)
-    {
-        appendWrapperCacheSignature(child, signature, wrapperOrdinals, nextWrapperOrdinal);
-    }
-    signature << "]}";
-}
-}
-
-CompilationCache::CompilationCache(Settings settings) : settings(std::move(settings))
-{
 }
 
 bool CompilationCache::isEnabled() const
 {
-    return settings.enabled && !settings.cacheDir.empty();
+    return settings.enabled && !settings.cacheDir.empty() && binaryFingerprint.has_value();
 }
 
 void CompilationCache::prepareForQuery(const PhysicalPlan& physicalPlan)
@@ -202,7 +111,10 @@ std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipel
 
     std::ostringstream keyBuilder;
     keyBuilder << "nes:auto";
-    keyBuilder << "|binary=" << getBinaryFingerprint();
+    if (binaryFingerprint.has_value())
+    {
+        keyBuilder << "|binary=" << *binaryFingerprint;
+    }
     if (!cacheKeySeed.empty())
     {
         keyBuilder << ":q=" << cacheKeySeed;
@@ -225,23 +137,7 @@ void CompilationCache::configureEngineOptionsForPipeline(nautilus::engine::Optio
 
 std::string CompilationCache::createCacheKeySeed(const PhysicalPlan& physicalPlan)
 {
-    std::ostringstream signature;
-    signature << "physical-plan-sql-canonical";
-    const auto& originalSql = physicalPlan.getOriginalSql();
-    signature << "|sqlLen=" << originalSql.size();
-    signature << "|sql=" << originalSql;
-    signature << "|mode=" << static_cast<int>(physicalPlan.getExecutionMode());
-    signature << "|buffer=" << physicalPlan.getOperatorBufferSize();
-    signature << "|rootCount=" << physicalPlan.getRootOperators().size();
-    signature << "|roots=[";
-    std::unordered_map<const PhysicalOperatorWrapper*, uint64_t> wrapperOrdinals;
-    uint64_t nextWrapperOrdinal = 0;
-    for (const auto& rootWrapper : physicalPlan.getRootOperators())
-    {
-        appendWrapperCacheSignature(rootWrapper, signature, wrapperOrdinals, nextWrapperOrdinal);
-    }
-    signature << "]";
-    return signature.str();
+    return physicalPlan.getSignature();
 }
 
 std::string CompilationCache::createHandlerCacheSignature(const Pipeline& pipeline)

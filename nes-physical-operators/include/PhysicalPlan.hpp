@@ -41,6 +41,7 @@ public:
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
     [[nodiscard]] const std::string& getOriginalSql() const;
+    [[nodiscard]] std::string getSignature() const;
 
 private:
     QueryId queryId;

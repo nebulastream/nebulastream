@@ -15,11 +15,14 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <sstream>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
@@ -29,6 +32,68 @@
 
 namespace NES
 {
+namespace
+{
+void appendOptionalSchemaSignature(std::ostringstream& signature, const std::optional<Schema>& schema)
+{
+    if (schema.has_value())
+    {
+        signature << schema.value();
+    }
+    else
+    {
+        signature << "<none>";
+    }
+}
+
+void appendOptionalLayoutSignature(std::ostringstream& signature, const std::optional<MemoryLayoutType>& layout)
+{
+    if (layout.has_value())
+    {
+        signature << static_cast<int>(layout.value());
+    }
+    else
+    {
+        signature << "<none>";
+    }
+}
+
+void appendWrapperSignature(
+    const std::shared_ptr<PhysicalOperatorWrapper>& wrapper,
+    std::ostringstream& signature,
+    std::unordered_map<const PhysicalOperatorWrapper*, uint64_t>& wrapperOrdinals,
+    uint64_t& nextWrapperOrdinal)
+{
+    const auto wrapperPtr = wrapper.get();
+    if (const auto it = wrapperOrdinals.find(wrapperPtr); it != wrapperOrdinals.end())
+    {
+        signature << "{ref=w" << it->second << "}";
+        return;
+    }
+
+    const auto wrapperOrdinal = nextWrapperOrdinal++;
+    wrapperOrdinals.emplace(wrapperPtr, wrapperOrdinal);
+
+    signature << "{w=" << wrapperOrdinal;
+    signature << ",op=" << wrapper->getPhysicalOperator().getSignature();
+    signature << ",inSchema=";
+    appendOptionalSchemaSignature(signature, wrapper->getInputSchema());
+    signature << ",outSchema=";
+    appendOptionalSchemaSignature(signature, wrapper->getOutputSchema());
+    signature << ",inLayout=";
+    appendOptionalLayoutSignature(signature, wrapper->getInputMemoryLayoutType());
+    signature << ",outLayout=";
+    appendOptionalLayoutSignature(signature, wrapper->getOutputMemoryLayoutType());
+    signature << ",loc=" << static_cast<int>(wrapper->getPipelineLocation());
+    signature << ",children=[";
+    for (const auto& child : wrapper->getChildren())
+    {
+        appendWrapperSignature(child, signature, wrapperOrdinals, nextWrapperOrdinal);
+    }
+    signature << "]}";
+}
+}
+
 PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
@@ -81,6 +146,24 @@ uint64_t PhysicalPlan::getOperatorBufferSize() const
 const std::string& PhysicalPlan::getOriginalSql() const
 {
     return originalSql;
+}
+
+std::string PhysicalPlan::getSignature() const
+{
+    std::ostringstream signature;
+    signature << "physical-plan-canonical";
+    signature << "|mode=" << static_cast<int>(executionMode);
+    signature << "|buffer=" << operatorBufferSize;
+    signature << "|rootCount=" << rootOperators.size();
+    signature << "|roots=[";
+    std::unordered_map<const PhysicalOperatorWrapper*, uint64_t> wrapperOrdinals;
+    uint64_t nextWrapperOrdinal = 0;
+    for (const auto& rootWrapper : rootOperators)
+    {
+        appendWrapperSignature(rootWrapper, signature, wrapperOrdinals, nextWrapperOrdinal);
+    }
+    signature << "]";
+    return signature.str();
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan)
