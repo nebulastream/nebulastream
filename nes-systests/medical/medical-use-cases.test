@@ -1,0 +1,292 @@
+# name: selection/Selection_Equals.test
+# description: Simple selection tests
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE medical_data_source(LabVal_ID INT32, mlife_FallNr INT32, Zeitpunkt UINT64, GruppenNr INT32, Gruppe INT32, Bez VARSIZED, Wert VARSIZED, Einheit VARSIZED, Wertebereich VARSIZED, SampleNr VARSIZED, TSFail UINT64, TSLog UINT64, Lab_ID INT32);
+
+#CREATE PHYSICAL SOURCE FOR stream TYPE File;
+CREATE PHYSICAL SOURCE FOR medical_data_source TYPE File;
+ATTACH INLINE
+1,1001,1705307400,1,5,Hämoglobin,14.5,g/dL,12-16,S001,1705305600,1705309200,101
+2,1001,1705307400,1,5,Leukozyten,7.2,10^9/L,4-10,S001,1705305600,1705309200,101
+3,1002,1705310100,2,5,Glucose,95,mg/dL,70-110,S002,1705308300,1705311000,102
+4,1002,1705310100,2,5,Kreatinin,?.9,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+5,1003,1705312800,1,5,Thrombozyten,K,10^9/L,150-400,S003,1705311000,1705313700,103
+
+
+# basic alert rule 01
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PO2") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
+INTO File();
+----
+
+
+# basic alert rule 02
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PCO2") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(52)
+INTO File();
+----
+
+
+# basic alert rule 03
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PH") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.2)
+INTO File();
+----
+
+
+# basic alert rule 04
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("ABEc") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND FLOAT64(0) - VarSizedToDouble(Wert) > FLOAT64(7)
+INTO File();
+----
+
+
+# basic alert rule 05
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("LACTAT(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(72)
+INTO File();
+----
+
+
+
+# basic alert rule 06
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("CALCIUM(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.9)
+INTO File();
+----
+
+
+# basic alert rule 07
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
+INTO File();
+----
+
+
+
+# basic alert rule 08
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
+INTO File();
+----
+
+
+# basic alert rule 09
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
+INTO File();
+----
+
+
+# basic alert rule 10
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
+INTO File();
+----
+
+
+# basic alert rule 11
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("FREIES HB") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(40)
+INTO File();
+----
+
+
+# basic alert rule 12
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("TSH") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.1)
+INTO File();
+----
+
+
+# basic alert rule 13
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("TSH") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(10)
+INTO File();
+----
+
+
+
+# basic alert rule 14
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(5.5)
+INTO File();
+----
+
+
+# basic alert rule 15
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("KALIUM") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(3.2)
+INTO File();
+----
+
+
+# basic alert rule 16
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(155)
+INTO File();
+----
+
+
+# basic alert rule 17
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("NATRIUM") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(125)
+INTO File();
+----
+
+
+
+# basic alert rule 18
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GLUCOSE(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+
+
+# basic alert rule 19
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GLUCOSE") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+
+
+# basic alert rule 20
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("HB(BG)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
+INTO File();
+----
+
+
+# basic alert rule 21
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("HB (HGB)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(7.0)
+INTO File();
+----
+
+
+# basic alert rule 22
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("BILI (TOT.)") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(3)
+INTO File();
+----
+
+
+# basic alert rule 23
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("WBC") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(1.0)
+INTO File();
+----
+
+
+# basic alert rule 24
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PLT") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+
+
+# basic alert rule 25
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("GFRKREA") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(30)
+INTO File();
+----
+
+
+# basic alert rule 26
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("INR") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(4.5)
+INTO File();
+----
+
+
+# basic alert rule 27
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("PTT") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(90)
+INTO File();
+----
+
+
+# basic alert rule 28
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("CK-MB") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(240)
+INTO File();
+----
+
+
+# basic alert rule 29
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("VANCOMYCIN") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(20)
+INTO File();
+----
+
+
+
+
+# basic alert rule 30
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("VANCOMYCIN") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(30)
+INTO File();
+----
+
+
+
+
+
+# basic alert rule 31
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("ANORGANISCHER PHOSPHOR") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.5)
+INTO File();
+----
+
+
+
+
+# basic alert rule 32
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("1503-0") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+
+
+
+
+# basic alert rule 33
+SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+FROM odbc_source
+WHERE Bez = VARSIZED("O2-SAETTIGUNG") AND Wertebereich = VARSIZED("19224-5") AND NOT(IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(50)
+INTO File();
+----
+
