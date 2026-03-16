@@ -23,4 +23,4 @@ SELECT * FROM (
 WHERE alarm != VARSIZED("")
 INTO File();
 ----
-High anion gap detected for patient 1002, at time: 2026-03-16 10:32:58. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)).
+High anion gap detected for patient 1002 at time: 16.03.2026 10:32. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)).
