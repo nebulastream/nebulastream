@@ -23,3 +23,4 @@ add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalF
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
 add_plugin(UnboundFieldAccess LogicalFunction nes-logical-operators UnboundFieldAccessLogicalFunction.cpp)
+add_plugin(VarSizedToDouble LogicalFunction nes-logical-operators VarSizedToDoubleLogicalFunction.cpp)
