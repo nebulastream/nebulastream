@@ -29,6 +29,7 @@ public:
     void setChild(PhysicalOperator) override;
 
     [[nodiscard]] SinkDescriptor getDescriptor() const;
+    [[nodiscard]] std::string getSignature() const;
 
     bool operator==(const SinkPhysicalOperator& other) const;
 

@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -36,6 +37,13 @@ OriginId SourcePhysicalOperator::getOriginId() const
 {
     return originId;
 };
+
+std::string SourcePhysicalOperator::getSignature() const
+{
+    std::ostringstream signature;
+    signature << "SourcePhysicalOperator(" << descriptor << ")";
+    return signature.str();
+}
 
 bool SourcePhysicalOperator::operator==(const SourcePhysicalOperator& other) const
 {

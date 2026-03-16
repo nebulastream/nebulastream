@@ -51,8 +51,7 @@ HashMap* getAggHashMapProxy(
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
 
     /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction}, keySize, valueSize, pageSize, 1};
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{{operatorHandler->cleanupStateNautilusFunction}, keySize, valueSize, pageSize, 1};
     auto wrappedCreateFunction(
         [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
          cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)

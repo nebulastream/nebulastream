@@ -15,8 +15,8 @@
 #include <CompilationCache.hpp>
 
 #include <algorithm>
-#include <cstdint>
 #include <chrono>
+#include <cstdint>
 #include <filesystem>
 #include <optional>
 #include <ranges>
@@ -26,9 +26,9 @@
 #include <utility>
 #include <vector>
 
+#include <Util/Logger/Logger.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <options.hpp>
 
 namespace NES::QueryCompilation
@@ -56,8 +56,7 @@ std::optional<std::string> createBinaryFingerprint()
 
 }
 
-CompilationCache::CompilationCache(Settings settings)
-    : settings(std::move(settings)), binaryFingerprint(createBinaryFingerprint())
+CompilationCache::CompilationCache(Settings settings) : settings(std::move(settings)), binaryFingerprint(createBinaryFingerprint())
 {
     if (!this->settings.enabled && !this->settings.cacheDir.empty())
     {

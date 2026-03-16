@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <utility>
 #include <Sinks/SinkDescriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -30,6 +31,13 @@ SinkDescriptor SinkPhysicalOperator::getDescriptor() const
 {
     return descriptor;
 };
+
+std::string SinkPhysicalOperator::getSignature() const
+{
+    std::ostringstream signature;
+    signature << "SinkPhysicalOperator(" << descriptor << ")";
+    return signature.str();
+}
 
 bool SinkPhysicalOperator::operator==(const SinkPhysicalOperator& other) const
 {

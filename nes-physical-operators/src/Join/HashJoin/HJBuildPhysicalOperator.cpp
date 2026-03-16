@@ -54,8 +54,7 @@ HashMap* getHashJoinHashMapProxy(
 {
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
 
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(), keySize, valueSize, pageSize, 1};
+    const CreateNewHashMapSliceArgs hashMapSliceArgs{operatorHandler->getNautilusCleanupExec(), keySize, valueSize, pageSize, 1};
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(

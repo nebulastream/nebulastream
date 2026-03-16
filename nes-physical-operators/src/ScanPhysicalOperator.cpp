@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <sstream>
 #include <utility>
 #include <vector>
 
@@ -38,16 +39,16 @@ ScanPhysicalOperator::ScanPhysicalOperator(
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
     , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
-    , runtimeInputFormatterSlot(runtimeInputFormatterSlot)
 {
+    (void)runtimeInputFormatterSlot;
 }
 
 void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
+    const auto runtimeInputFormatterHandle = inputFormatterBufferRef->getRuntimeInputFormatterHandle();
 
-    if (not inputFormatterBufferRef->indexBuffer(
-            recordBuffer, executionCtx.pipelineMemoryProvider.arena, executionCtx.pipelineContext, runtimeInputFormatterSlot))
+    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena, runtimeInputFormatterHandle))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
@@ -58,7 +59,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 
     /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
-    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda, runtimeInputFormatterSlot);
+    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda, runtimeInputFormatterHandle);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -92,9 +93,36 @@ std::shared_ptr<TupleBufferRef> ScanPhysicalOperator::getBufferRef() const
     return bufferRef;
 }
 
-uint64_t ScanPhysicalOperator::getRuntimeInputFormatterSlot() const
+std::uintptr_t ScanPhysicalOperator::getRuntimeInputFormatterHandle() const
 {
-    return runtimeInputFormatterSlot;
+    if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(bufferRef))
+    {
+        return inputFormatterBufferRef->getRuntimeInputFormatterHandle();
+    }
+    return 0;
+}
+
+std::string ScanPhysicalOperator::getSignature() const
+{
+    std::ostringstream signature;
+    signature << "ScanPhysicalOperator(raw=" << isRawScan;
+    if (bufferRef)
+    {
+        signature << ",capacity=" << bufferRef->getCapacity();
+        signature << ",bufferSize=" << bufferRef->getBufferSize();
+        signature << ",tupleSize=" << bufferRef->getTupleSize();
+    }
+    else
+    {
+        signature << ",bufferRef=<null>";
+    }
+    signature << ",projections=[";
+    for (const auto& projection : projections)
+    {
+        signature << projection << ';';
+    }
+    signature << "])";
+    return signature.str();
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

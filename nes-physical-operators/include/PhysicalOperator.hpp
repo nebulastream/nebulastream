@@ -203,7 +203,14 @@ private:
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
 
-        [[nodiscard]] std::string getSignature() const override { return toString(); }
+        [[nodiscard]] std::string getSignature() const override
+        {
+            if constexpr (requires { data.getSignature(); })
+            {
+                return data.getSignature();
+            }
+            return toString();
+        }
     };
 
     std::shared_ptr<const Concept> self;
