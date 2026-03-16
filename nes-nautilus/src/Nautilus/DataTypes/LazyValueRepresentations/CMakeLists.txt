@@ -18,3 +18,5 @@ add_plugin(UINT8 LazyValueRepresentation nes-nautilus UINTLazyValueRepresentatio
 add_plugin(UINT16 LazyValueRepresentation nes-nautilus UINTLazyValueRepresentation.cpp)
 add_plugin(UINT32 LazyValueRepresentation nes-nautilus UINTLazyValueRepresentation.cpp)
 add_plugin(UINT64 LazyValueRepresentation nes-nautilus UINTLazyValueRepresentation.cpp)
+add_plugin(FLOAT32 LazyValueRepresentation nes-nautilus FLOATLazyValueRepresentation.cpp)
+add_plugin(FLOAT64 LazyValueRepresentation nes-nautilus FLOATLazyValueRepresentation.cpp)
