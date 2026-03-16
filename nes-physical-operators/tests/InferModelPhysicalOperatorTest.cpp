@@ -156,6 +156,7 @@ public:
     static std::vector<float> makeFloats(size_t count, float startValue = 1.0F)
     {
         std::vector<float> vec(count);
+        /// NOLINTNEXTLINE(modernize-use-ranges) std::ranges::iota not yet available in libc++
         std::iota(vec.begin(), vec.end(), startValue);
         return vec;
     }
@@ -212,7 +213,7 @@ public:
         handlers[OperatorHandlerId(0)] = std::make_shared<NES::Inference::IREEInferenceOperatorHandler>(model);
         handlers[OperatorHandlerId(1)] = std::make_shared<EmitOperatorHandler>();
 
-        return {std::move(pipeline), std::move(handlers)};
+        return {.pipeline = std::move(pipeline), .handlers = std::move(handlers)};
     }
 
     /// Creates an input TupleBuffer with VARSIZED records, each containing packed floats.
@@ -530,7 +531,7 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
         for (size_t b = 0; b < buffersPerThread; ++b)
         {
             auto buf = createInputBuffer(inputSchema, {inputFloats});
-            buf.setSequenceNumber(SequenceNumber(t * buffersPerThread + b + 1));
+            buf.setSequenceNumber(SequenceNumber((t * buffersPerThread) + b + 1));
             buf.setChunkNumber(INITIAL_CHUNK_NUMBER);
             buf.setLastChunk(true);
             buf.setOriginId(INITIAL<OriginId>);
