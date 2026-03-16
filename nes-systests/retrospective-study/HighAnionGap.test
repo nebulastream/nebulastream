@@ -1,0 +1,26 @@
+# name: selection/Selection_Equals.test
+# description: Simple selection tests
+# groups: [Selection]
+
+CREATE LOGICAL SOURCE odbc_source(LabVal_ID INT32, mlife_FallNr INT32, Zeitpunkt UINT64, GruppenNr INT32, Gruppe VARSIZED, Bez VARSIZED, Wert VARSIZED, Einheit VARSIZED, Wertebereich VARSIZED, SampleNr VARSIZED, TSFail UINT64, TSLog UINT64, Lab_ID INT32);
+
+# Todo: adapt values to trigger formula
+# if ((phVal < 7.3) and (abecVal < -6.0) and (natriumVal - chloridVal - hco3Val > 12))
+CREATE PHYSICAL SOURCE FOR odbc_source TYPE File;
+ATTACH INLINE
+1,1002,1773657178,2,Blutgase arteriell,PH,5.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+2,1002,1773657178,2,Blutgase arteriell,ABEc,-10.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+3,1002,1773657178,2,Blutgase arteriell,NATRIUM(BG),20.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+4,1002,1773657178,2,Blutgase arteriell,CHLORID(BG),2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+5,1002,1773657178,2,Blutgase arteriell,HCO3,2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
+
+# where clause guarantees that only relevant values ever enter HighAnionGap function
+SELECT * FROM (
+    SELECT HighAnionGap(VarSizedToDouble(Wert)) as alarm
+    FROM odbc_source
+    WHERE Gruppe == VARSIZED("Blutgase arteriell") AND (Bez == VARSIZED("PH") OR Bez == VARSIZED("ABEc") OR Bez == VARSIZED("NATRIUM(BG)") OR Bez == VARSIZED("CHLORID(BG)") OR Bez == VARSIZED("HCO3"))
+    )
+WHERE alarm != VARSIZED("")
+INTO File();
+----
+High anion gap detected for patient 1002, at time: 2026-03-16 10:32:58. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)).

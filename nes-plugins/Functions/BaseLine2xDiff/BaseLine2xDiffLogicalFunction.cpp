@@ -34,8 +34,8 @@
 namespace NES
 {
 
-// BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
-BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::BOOLEAN), child(child)
+BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::VARSIZED), child(child)
+// BaseLine2xDiffLogicalFunction::BaseLine2xDiffLogicalFunction(const LogicalFunction& child) : dataType(DataType::Type::BOOLEAN), child(child)
 {
 }
 

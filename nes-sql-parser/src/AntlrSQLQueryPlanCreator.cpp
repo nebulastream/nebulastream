@@ -818,7 +818,7 @@ void AntlrSQLQueryPlanCreator::exitConstantDefault(AntlrSQLParser::ConstantDefau
     }
     if (const auto stringLiteralContext = dynamic_cast<AntlrSQLParser::StringLiteralContext*>(context->children.at(0)))
     {
-        if (!(stringLiteralContext->getText().size() > 2))
+        if (!(stringLiteralContext->getText().size() >= 2))
         {
             throw InvalidQuerySyntax(
                 "A constant string literal must contain at least two quotes and must not be empty at {}", context->getText());

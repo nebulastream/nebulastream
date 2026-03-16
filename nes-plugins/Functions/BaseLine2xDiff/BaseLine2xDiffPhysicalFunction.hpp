@@ -69,25 +69,34 @@ struct BaselineValues
 class StaticSharedDiffState
 {
 public:
-    bool probe(int32_t patientId, const std::string_view& bezeichnung, const std::string_view& gruppe, double value, uint64_t timestamp)
+    std::string probe(const BaselineValues& newBaselineValue)
     {
         std::scoped_lock lock(mutex);
-        std::string valueString{bezeichnung};
-        valueString.append(gruppe);
 
-        // if (const auto prior = this->baselineMap.find(std::make_pair(patientId, valueString)); prior != this->baselineMap.end())
-        if (const auto patientBaseline = this->patienBaselinetMap.find(patientId); patientBaseline != this->patienBaselinetMap.end())
+        if (const auto patientBaseline = this->patienBaselinetMap.find(newBaselineValue.patientId);
+            patientBaseline != this->patienBaselinetMap.end())
         {
-            if (patientBaseline->second.value * 2 <= value)
+            if (patientBaseline->second.value * 2 <= newBaselineValue.value)
             {
-                return true;
+                std::string alertMessage
+                    = fmt::format(
+                          "serum_Kreatinin value of {}, measured at {} is (more than) twice as large as baseline value of {}, measured at {}.",
+                          newBaselineValue.value,
+                          newBaselineValue.timestamp,
+                          patientBaseline->second.value,
+                          patientBaseline->second.timestamp);
+                constexpr size_t sevenDaysInMilliseconds = 604800000;
+                if (newBaselineValue.timestamp - patientBaseline->second.timestamp >= sevenDaysInMilliseconds)
+                {
+                    alertMessage.append(" Note: Values were measure more than one week apart.");
+                }
+                return alertMessage;
             }
-            return false;
+            return "";
         }
         /// set baseline
-        patienBaselinetMap.emplace(
-            std::make_pair(patientId, BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value}));
-        return false;
+        patienBaselinetMap.emplace(std::make_pair(newBaselineValue.patientId, newBaselineValue));
+        return "";
     }
 
 private:
@@ -96,6 +105,12 @@ private:
 };
 
 static StaticSharedDiffState staticSharedDiffState;
+
+struct VarSizedResult
+{
+    const char* varSizedPointer;
+    uint64_t size{};
+};
 
 class BaseLine2xDiffPhysicalFunction final
 {
@@ -112,27 +127,31 @@ public:
             const auto valueVal = child.execute(record, arena).cast<nautilus::val<double>>();
             auto patientIdVal = record.read("ODBC_SOURCE$MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
             const auto bezeichnungVal = record.read("ODBC_SOURCE$BEZ").cast<VariableSizedData>();
-            const auto gruppeVal = record.read("ODBC_SOURCE$GRUPPE").cast<VariableSizedData>();
-            const auto zeitpunktVal = record.read("ODBC_SOURCE$ZEITPUNKT").cast<nautilus::val<int32_t>>();
-            nautilus::val<bool> probeResult = nautilus::invoke(
-                +[](int32_t patientId, char* bez, size_t bezLength, char* gruppe, size_t gruppeLength, double value, uint64_t timestamp)
+            const auto zeitpunktVal = record.read("ODBC_SOURCE$ZEITPUNKT").cast<nautilus::val<uint64_t>>();
+            nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
+                +[](int32_t patientId, char* bez, size_t bezLength, double value, uint64_t timestamp, Arena* arenaPtr)
                 {
+                    thread_local auto result = VarSizedResult{};
                     const std::string_view bezSV{bez, bezLength};
-                    if (bezSV != "Kreatinin")
-                    {
-                        return false;
-                    }
-                    const std::string_view gruppeSV{gruppe, gruppeLength};
-                    return staticSharedDiffState.probe(patientId, bezSV, gruppeSV, value, timestamp);
+                    // Todo: can remove check
+                    INVARIANT(bezSV == "Kreatinin", "Function only works for Kreatinin values, apply WHERE filter first");
+                    const std::string probeResult
+                        = staticSharedDiffState.probe(BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value});
+                    const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
+                    std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
+                    result = VarSizedResult{.varSizedPointer = allocatedMemory, .size = probeResult.size()};
+                    return &result;
                 },
                 patientIdVal,
                 bezeichnungVal.getContent(),
                 bezeichnungVal.getSize(),
-                gruppeVal.getContent(),
-                gruppeVal.getSize(),
                 valueVal,
-                zeitpunktVal);
-            return probeResult;
+                zeitpunktVal,
+                arena.getArena());
+            VariableSizedData varSizedString{
+                *getMemberWithOffset<int8_t*>(probeResult, offsetof(VarSizedResult, varSizedPointer)),
+                *getMemberWithOffset<uint64_t>(probeResult, offsetof(VarSizedResult, size))};
+            return varSizedString;
         }
         throw FieldNotFound("BaseLine2xDiffPhysicalFunction require 'Wert' field");
         // auto variableSized = arena.allocateVariableSizedData(2);

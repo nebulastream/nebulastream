@@ -3,7 +3,7 @@ query: |
   SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
   FROM odbc_source_01
   WHERE Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
-  INTO File('/tmp/results/output_01.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
+  INTO File('results/output_01.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
 logical:
   - name: odbc_source_01
     schema:
@@ -40,7 +40,7 @@ physical:
       type: Native
     source_config:
       host: "localhost"
-      port: "1434"
+      port: "1433"
       database: "master"
       username: "sa"
       password: "samplePassword1!"
