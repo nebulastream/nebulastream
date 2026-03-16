@@ -22,6 +22,11 @@
 
 namespace NES::QueryCompilation
 {
+struct CompilationCacheSettings final
+{
+    bool enabled = true;
+    std::string cacheDir;
+};
 
 /// Represents a query compilation request.
 struct QueryCompilationRequest
@@ -31,8 +36,6 @@ struct QueryCompilationRequest
     /// IMPORTANT: only the queryPlan should influence the actual result, other request options only influence how much to debug print etc.
     bool debug = false;
     DumpMode dumpCompilationResult = DumpMode{DumpMode::Options::NONE, false};
-    bool compilationCacheEnabled = true;
-    std::string compilationCacheDir;
 };
 
 /// The query compiler behaves as a pure function: QueryPlan -> CompiledQueryPlan
@@ -40,8 +43,11 @@ struct QueryCompilationRequest
 class QueryCompiler
 {
 public:
-    QueryCompiler();
+    explicit QueryCompiler(CompilationCacheSettings compilationCacheSettings = {});
     std::unique_ptr<CompiledQueryPlan> compileQuery(std::unique_ptr<QueryCompilationRequest> request);
+
+private:
+    CompilationCacheSettings compilationCacheSettings;
 };
 
 }
