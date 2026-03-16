@@ -12,22 +12,14 @@ ATTACH INLINE
 3,1002,1705310100,2,Blutgas,Kreatinin,2.0,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
 4,1002,2310110100,2,Blutgas,Kreatinin,2.5,mg/dL,0.6-1.2,S002,1705308300,1705311000,102
 
-#1,1001,1705307400,1,5,Hämoglobin,14.5,g/dL,12-16,S001,1705305600,1705309200,101
-#2,1001,1705307400,1,5,Leukozyten,7.2,10^9/L,4-10,S001,1705305600,1705309200,101
-#3,1002,1705310100,2,5,Glucose,95,mg/dL,70-110,S002,1705308300,1705311000,102
-#5,1003,1705312800,1,5,Thrombozyten,K,10^9/L,150-400,S003,1705311000,1705313700,103
-
-#SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
-
 SELECT * FROM (
-    SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Gruppe, Bez, VarSizedToDouble(Wert) AS wert_double, Baseline2xDiff(VarSizedToDouble(Wert)) as alarm
+    SELECT Baseline2xDiff(VarSizedToDouble(Wert)) as alarm
     FROM odbc_source
     WHERE Bez == VARSIZED("Kreatinin")
     )
 WHERE alarm != VARSIZED("")
-#WHERE
 INTO File();
 ----
-3,1002,1705310100,Blutgas,Kreatinin,2.0,serum_Kreatinin value of 2 measured at 1705310100 is (more than) twice as large as baseline value of 1 measured at 1705310100.
-4,1002,2310110100,Blutgas,Kreatinin,2.5,serum_Kreatinin value of 2.5 measured at 2310110100 is (more than) twice as large as baseline value of 1 measured at 1705310100. Note: Values were measure more than one week apart.
+Acute kidney injury detected for patient 1002 at time: 15.01.2024 09:15. Reason: serum_Kreatinin value of 2 is (more than) twice as large as baseline value of 1 measured at 15.01.2024 09:15.
+Acute kidney injury detected for patient 1002 at time: 16.03.2043 09:15. Reason: serum_Kreatinin value of 2.5 is (more than) twice as large as baseline value of 1 measured at 15.01.2024 09:15. Note: Values were measure more than one week apart.
 

@@ -179,7 +179,7 @@ public:
 
                 /// if ( (pH<7.3) AND (base excess<-6) AND (Sodium - Chloride - Bicarbonate > 12) ) == TRUE
                 std::string alertMessage = std::format(
-                    "High anion gap detected for patient {}, at time: {}. Reason: if( ( PH({}) < 7.3) AND (Base Excess({}) < -6) AND (Sodium({}) - "
+                    "High anion gap detected for patient {} at time: {}. Reason: if( ( PH({}) < 7.3) AND (Base Excess({}) < -6) AND (Sodium({}) - "
                     "Chloride({}) - Bicarbonate({}) > 12)).",
                     newAnionGapValue.patientId,
                     // std::chrono::sys_seconds{std::chrono::seconds(phVal.first)},
