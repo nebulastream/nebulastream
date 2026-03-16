@@ -326,12 +326,13 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{
+            const CreateNewHJSliceArgs hashMapSliceArgs{
                 hjHandler.getNautilusCleanupExec(),
                 hashMapOptions.keySize,
                 hashMapOptions.valueSize,
                 hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets};
+                hashMapOptions.numberOfBuckets,
+                JoinBuildSideType::Left};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
@@ -344,16 +345,17 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
             auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
-            const CreateNewHashMapSliceArgs hashMapSliceArgs{
+            const CreateNewHJSliceArgs hashMapSliceArgs{
                 hjHandler.getNautilusCleanupExec(),
                 hashMapOptions.keySize,
                 hashMapOptions.valueSize,
                 hashMapOptions.pageSize,
-                hashMapOptions.numberOfBuckets};
+                hashMapOptions.numberOfBuckets,
+                JoinBuildSideType::Right};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+    auto handler = std::make_shared<HJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, join->getJoinType());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
@@ -381,8 +383,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         leftTupleLayout,
         rightTupleLayout,
         leftHashMapOptions,
-        rightHashMapOptions);
-
+        rightHashMapOptions,
+        join->getJoinType());
 
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
