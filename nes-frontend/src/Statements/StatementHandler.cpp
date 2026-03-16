@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
@@ -250,7 +249,7 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
         outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
     }
 
-    Inference::RegisteredModel reg{
+    const Inference::RegisteredModel reg{
         .name = statement.name,
         .path = statement.path,
         .inputs = std::move(inputs),

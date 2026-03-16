@@ -16,10 +16,12 @@
 
 #include <Model.hpp>
 
+#include <algorithm>
 #include <array>
 #include <atomic>
 #include <chrono>
 #include <cstddef>
+#include <cstdint>
 #include <expected>
 #include <filesystem>
 #include <fstream>
@@ -31,7 +33,6 @@
 #include <regex>
 #include <span>
 #include <sstream>
-#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <vector>
@@ -109,10 +110,10 @@ struct ModelMetadataGraph
     static std::vector<size_t> parseTensorShape(const std::string& label)
     {
         /// Match tensor shapes with any element type (e.g., f32, f64, i32)
-        static const std::regex tensorRegex(R"(tensor<([?0-9x]+)([a-z][a-z0-9]+)>)");
+        static const std::regex TensorRegex(R"(tensor<([?0-9x]+)([a-z][a-z0-9]+)>)");
         std::smatch match;
         std::vector<size_t> result;
-        if (std::regex_search(label, match, tensorRegex))
+        if (std::regex_search(label, match, TensorRegex))
         {
             std::string elementType = match[2];
             if (elementType != "f32")
@@ -139,9 +140,9 @@ struct ModelMetadataGraph
 
     static std::string parseFunctionName(const std::string& label)
     {
-        static const std::regex graphNameRegex(R"(@([a-zA-Z0-9_]+)\$)");
+        static const std::regex GraphNameRegex(R"(@([a-zA-Z0-9_]+)\$)");
         std::smatch match;
-        if (std::regex_search(label, match, graphNameRegex))
+        if (std::regex_search(label, match, GraphNameRegex))
         {
             return match[1];
         }
@@ -279,8 +280,8 @@ bool checkInferenceToolsAreAvailable()
 
 bool enabled()
 {
-    static const bool isAvailable = checkInferenceToolsAreAvailable();
-    return isAvailable;
+    static const bool IsAvailable = checkInferenceToolsAreAvailable();
+    return IsAvailable;
 }
 
 std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath, const ModelOptions& options)
