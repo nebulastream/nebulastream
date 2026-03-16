@@ -14,10 +14,13 @@
 
 #include <StoreRegistry.hpp>
 
+#include <chrono>
 #include <filesystem>
+#include <iomanip>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
+#include <sstream>
 #include <string>
 
 namespace NES::StoreManager
@@ -34,7 +37,14 @@ std::string StoreRegistry::registerStore(const std::string& storeName)
     const std::unique_lock lock(mutex);
 
     std::filesystem::create_directories(STORE_MANAGER_WORKING_DIR);
-    std::string filePath = std::string(STORE_MANAGER_WORKING_DIR) + "/replay_" + storeName + ".bin";
+
+    const auto now = std::chrono::system_clock::now();
+    const auto timeT = std::chrono::system_clock::to_time_t(now);
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
+    std::ostringstream ts;
+    ts << std::put_time(std::localtime(&timeT), "%Y%m%d_%H%M%S") << '_' << std::setfill('0') << std::setw(3) << ms.count();
+
+    std::string filePath = std::string(STORE_MANAGER_WORKING_DIR) + "/replay_" + storeName + "_" + ts.str() + ".bin";
 
     stores[storeName] = filePath;
     latestStoreId = storeName;
@@ -80,6 +90,17 @@ void StoreRegistry::unregisterStore(const std::string& storeId)
 void StoreRegistry::clear()
 {
     const std::unique_lock lock(mutex);
+    stores.clear();
+    latestStoreId.clear();
+}
+
+void StoreRegistry::clearAndDeleteFiles()
+{
+    const std::unique_lock lock(mutex);
+    for (const auto& [name, filePath] : stores)
+    {
+        std::filesystem::remove(filePath);
+    }
     stores.clear();
     latestStoreId.clear();
 }

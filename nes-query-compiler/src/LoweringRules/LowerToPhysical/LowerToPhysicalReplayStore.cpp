@@ -41,13 +41,17 @@ LoweringRuleResultSubgraph LowerToPhysicalReplayStore::apply(LogicalOperator log
 
     auto cfgCopy = DescriptorConfig::Config(store->getConfig());
     Descriptor logicalCfg(std::move(cfgCopy));
-    const auto filePath = logicalCfg.getFromConfig(StoreLogicalOperator::ConfigParameters::FILE_PATH);
+    const auto storeName = logicalCfg.getFromConfig(ReplayStoreLogicalOperator::ConfigParameters::STORE_NAME);
+
+    const auto registeredPath = StoreManager::StoreRegistry::instance().getFilePath(storeName);
+    PRECONDITION(registeredPath.has_value(), "Store '{}' must be registered before lowering to physical", storeName);
 
     std::stringstream schemaStream;
     schemaStream << logicalOperator.getOutputSchema();
 
     const ReplayStoreOperatorHandler::Config handlerCfg{
-        .filePath = filePath,
+        .storeName = storeName,
+        .filePath = registeredPath.value(),
         .schemaText = schemaStream.str(),
     };
 

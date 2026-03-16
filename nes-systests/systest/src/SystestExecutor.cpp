@@ -50,6 +50,7 @@
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
+#include <StoreRegistry.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
@@ -420,6 +421,7 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .outputMessage = outputMessage.str(),
                 .errorCode = ErrorCode::QueryStatusFailed};
         }
+        StoreManager::StoreRegistry::instance().clearAndDeleteFiles();
         std::stringstream outputMessage;
         outputMessage << '\n' << "All queries passed.";
         return {.returnType = SystestExecutorResult::ReturnType::SUCCESS, .outputMessage = outputMessage.str()};

@@ -32,6 +32,7 @@ class ReplayStoreOperatorHandler final : public OperatorHandler
 public:
     struct Config
     {
+        std::string storeName;
         std::string filePath;
         std::string schemaText;
     };

@@ -27,11 +27,8 @@ class BinaryStoreWriter
 public:
     struct Config
     {
+        std::string storeName;
         std::string filePath;
-        bool append{true};
-        bool writeHeader{true};
-        bool directIO{false};
-        uint32_t fdatasyncInterval{0};
         std::string schemaText;
     };
 
@@ -49,13 +46,16 @@ public:
     /// Fsync and close the file descriptor.
     void close();
 
+    /// Remove the backing file from disk.
+    void removeFile();
+
     /// Thread-safe: write the file header exactly once (if file is empty and writeHeader is enabled).
     void ensureHeader();
 
     /// Append a contiguous buffer using atomic offset reservation and pwrite.
     void append(const uint8_t* data, size_t len);
 
-    [[nodiscard]] const std::string& getFilePath() const { return config.filePath; }
+    [[nodiscard]] const std::string& getStoreName() const { return config.storeName; }
 
 private:
     int fd{-1};

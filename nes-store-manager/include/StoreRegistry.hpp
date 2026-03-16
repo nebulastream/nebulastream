@@ -45,6 +45,9 @@ public:
     /// Clear all registrations.
     void clear();
 
+    /// Delete all registered store files from disk and clear the registry.
+    void clearAndDeleteFiles();
+
 private:
     StoreRegistry() = default;
 

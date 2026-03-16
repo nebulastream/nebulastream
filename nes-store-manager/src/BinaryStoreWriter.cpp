@@ -46,21 +46,12 @@ BinaryStoreWriter::~BinaryStoreWriter()
 
 void BinaryStoreWriter::open()
 {
-    int flags = O_CREAT | O_WRONLY;
-    if (!config.append)
-    {
-        flags |= O_TRUNC;
-    }
-#ifdef O_DIRECT
-    if (config.directIO)
-    {
-        flags |= O_DIRECT;
-    }
-#endif
-    fd = ::open(config.filePath.c_str(), flags, 0644);
+    constexpr int flags = O_CREAT | O_WRONLY;
+    const std::string& filePath = config.filePath;
+    fd = ::open(filePath.c_str(), flags, 0644);
     if (fd < 0)
     {
-        throw CannotOpenSink("Could not open output file: {} (errno={}, msg={})", config.filePath, errno, std::strerror(errno));
+        throw CannotOpenSink("Could not open output file: {} (errno={}, msg={})", filePath, errno, std::strerror(errno));
     }
     struct stat st{};
     if (::fstat(fd, &st) != 0)
@@ -68,7 +59,7 @@ void BinaryStoreWriter::open()
         const int err = errno;
         ::close(fd);
         fd = -1;
-        throw CannotOpenSink("fstat failed for {}: errno={}, msg={}", config.filePath, err, std::strerror(err));
+        throw CannotOpenSink("fstat failed for {}: errno={}, msg={}", filePath, err, std::strerror(err));
     }
     tail.store(static_cast<uint64_t>(st.st_size), std::memory_order_relaxed);
     headerWritten.store(st.st_size > 0, std::memory_order_relaxed);
@@ -84,12 +75,15 @@ void BinaryStoreWriter::close()
     }
 }
 
+void BinaryStoreWriter::removeFile()
+{
+    close();
+    const std::string& filePath = config.filePath;
+    std::remove(filePath.c_str());
+}
+
 void BinaryStoreWriter::ensureHeader()
 {
-    if (!config.writeHeader)
-    {
-        return;
-    }
 
     bool expected = false;
     if (!headerWritten.compare_exchange_strong(expected, true, std::memory_order_acq_rel))
@@ -131,15 +125,6 @@ void BinaryStoreWriter::append(const uint8_t* data, size_t len)
     if (written < 0 || static_cast<size_t>(written) != len)
     {
         throw CannotOpenSink("pwrite failed: errno={} {}", errno, std::strerror(errno));
-    }
-    if (config.fdatasyncInterval > 0)
-    {
-        ++writesSinceSync;
-        if (writesSinceSync >= config.fdatasyncInterval)
-        {
-            ::fdatasync(fd);
-            writesSinceSync = 0;
-        }
     }
 }
 
