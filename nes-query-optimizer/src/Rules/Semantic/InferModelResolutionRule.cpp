@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/Semantic/ModelInferenceCompilationRule.hpp>
+#include <Rules/Semantic/InferModelResolutionRule.hpp>
 
 #include <utility>
 #include <Operators/InferModelLogicalOperator.hpp>
@@ -24,7 +24,7 @@
 namespace NES
 {
 
-void ModelInferenceCompilationRule::apply(LogicalPlan& queryPlan) const
+void InferModelResolutionRule::apply(LogicalPlan& queryPlan) const
 {
     if (!modelCatalog)
     {

@@ -32,7 +32,8 @@ public:
         OperatorHandlerId handlerId,
         std::vector<std::string> inputFieldNames,
         std::vector<std::string> outputFieldNames,
-        bool varsizedInput = false);
+        bool varsizedInput = false,
+        bool varsizedOutput = false);
 
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -46,6 +47,7 @@ private:
     std::vector<std::string> inputFieldNames;
     std::vector<std::string> outputFieldNames;
     bool varsizedInput;
+    bool varsizedOutput;
     std::optional<PhysicalOperator> child;
 };
 

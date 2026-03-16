@@ -118,9 +118,17 @@ struct CreateModelStatementResult
     std::string name;
 };
 
+struct ModelInfo
+{
+    std::string name;
+    std::string path;
+    std::string inputSchema;
+    std::string outputSchema;
+};
+
 struct ShowModelsStatementResult
 {
-    std::vector<std::string> modelNames;
+    std::vector<ModelInfo> models;
 };
 
 struct DropModelStatementResult

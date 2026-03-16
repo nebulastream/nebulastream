@@ -1,18 +1,52 @@
 # name: function/varsized/Base64.test
-# description: TO_BASE64 and FROM_BASE64 roundtrip test
+# description: TO_BASE64 and FROM_BASE64 standalone and roundtrip tests
 # groups: [Functions]
 
-CREATE LOGICAL SOURCE stream(data VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR stream TYPE File;
+# --- Source with plain ASCII data (for encode and roundtrip tests) ---
+CREATE LOGICAL SOURCE asciiStream(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR asciiStream TYPE File;
+ATTACH INLINE
+Hello World
+NebulaStream
+abc123
+
+# --- Source with base64-encoded ASCII strings (for decode and roundtrip tests) ---
+CREATE LOGICAL SOURCE base64Stream(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR base64Stream TYPE File;
 ATTACH INLINE
 SGVsbG8gV29ybGQ=
-AQID
-dGVzdA==
+TmVidWxhU3RyZWFt
+YWJjMTIz
 
-CREATE SINK result(ROUNDTRIP VARSIZED NOT NULL) TYPE File;
+# --- Sinks ---
+CREATE SINK encodeSink(encoded VARSIZED NOT NULL) TYPE File;
+CREATE SINK decodeSink(decoded VARSIZED NOT NULL) TYPE File;
+CREATE SINK roundtripSink(roundtrip VARSIZED NOT NULL) TYPE File;
 
-SELECT TO_BASE64(FROM_BASE64(data)) AS ROUNDTRIP FROM stream INTO result;
+# Test TO_BASE64: encode known ASCII strings and validate base64 output
+SELECT TO_BASE64(data) AS encoded FROM asciiStream INTO encodeSink;
 ----
 SGVsbG8gV29ybGQ=
-AQID
-dGVzdA==
+TmVidWxhU3RyZWFt
+YWJjMTIz
+
+# Test FROM_BASE64: decode known base64 strings and validate ASCII output
+SELECT FROM_BASE64(data) AS decoded FROM base64Stream INTO decodeSink;
+----
+Hello World
+NebulaStream
+abc123
+
+# Test roundtrip: TO_BASE64(FROM_BASE64(base64_value)) == base64_value
+SELECT TO_BASE64(FROM_BASE64(data)) AS roundtrip FROM base64Stream INTO roundtripSink;
+----
+SGVsbG8gV29ybGQ=
+TmVidWxhU3RyZWFt
+YWJjMTIz
+
+# Test roundtrip: FROM_BASE64(TO_BASE64(ascii_value)) == ascii_value
+SELECT FROM_BASE64(TO_BASE64(data)) AS roundtrip FROM asciiStream INTO roundtripSink;
+----
+Hello World
+NebulaStream
+abc123

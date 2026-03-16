@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstddef>
+#include <memory>
 #include <span>
 #include <string>
 #include <vector>
@@ -27,7 +28,7 @@ class IREERuntimeWrapper
 {
 public:
     IREERuntimeWrapper() = default;
-    ~IREERuntimeWrapper();
+    ~IREERuntimeWrapper() = default;
 
     IREERuntimeWrapper(const IREERuntimeWrapper&) = delete;
     IREERuntimeWrapper& operator=(const IREERuntimeWrapper&) = delete;
@@ -42,8 +43,28 @@ public:
 private:
     std::vector<size_t> inputShape;
     size_t nDim = 0;
-    iree_runtime_instance_t* instance = nullptr;
-    iree_runtime_session_t* session = nullptr;
+    struct InstanceDeleter
+    {
+        void operator()(iree_runtime_instance_t* p) const
+        {
+            if (p)
+            {
+                iree_runtime_instance_release(p);
+            }
+        }
+    };
+    struct SessionDeleter
+    {
+        void operator()(iree_runtime_session_t* p) const
+        {
+            if (p)
+            {
+                iree_runtime_session_release(p);
+            }
+        }
+    };
+    std::unique_ptr<iree_runtime_instance_t, InstanceDeleter> instance;
+    std::unique_ptr<iree_runtime_session_t, SessionDeleter> session;
     iree_vm_function_t function{};
 };
 

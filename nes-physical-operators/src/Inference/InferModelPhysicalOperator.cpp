@@ -20,53 +20,65 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
+#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
 InferModelPhysicalOperator::InferModelPhysicalOperator(
-    OperatorHandlerId handlerId, std::vector<std::string> inputFieldNames, std::vector<std::string> outputFieldNames, bool varsizedInput)
+    OperatorHandlerId handlerId,
+    std::vector<std::string> inputFieldNames,
+    std::vector<std::string> outputFieldNames,
+    bool varsizedInput,
+    bool varsizedOutput)
     : handlerId(handlerId)
     , inputFieldNames(std::move(inputFieldNames))
     , outputFieldNames(std::move(outputFieldNames))
     , varsizedInput(varsizedInput)
+    , varsizedOutput(varsizedOutput)
 {
 }
 
 namespace
 {
+std::shared_ptr<Inference::IREEAdapter> getAdapter(OperatorHandler* handler, WorkerThreadId thread)
+{
+    auto* inferHandler = dynamic_cast<Inference::IREEInferenceOperatorHandler*>(handler);
+    return inferHandler->getIREEAdapter(thread);
+}
+
 void addFloatValueToModel(int index, float value, OperatorHandler* handler, WorkerThreadId thread)
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) handler type is guaranteed by operator construction
-    auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
-    auto adapter = inferHandler->getIREEAdapter(thread);
-    adapter->addModelInput(index, value);
+    getAdapter(handler, thread)->addModelInput(index, value);
 }
 
 /// Copies raw VARSIZED bytes directly into the model input buffer (no decoding).
 void addVarsizedInputToModel(int8_t* data, uint64_t size, OperatorHandler* handler, WorkerThreadId thread)
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) handler type is guaranteed by operator construction
-    auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
-    auto adapter = inferHandler->getIREEAdapter(thread);
-    adapter->addModelInput(std::span<std::byte>(reinterpret_cast<std::byte*>(data), size));
+    getAdapter(handler, thread)->addModelInput(std::span<std::byte>(reinterpret_cast<std::byte*>(data), size));
 }
 
 void applyModel(OperatorHandler* handler, WorkerThreadId thread)
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) handler type is guaranteed by operator construction
-    auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
-    auto adapter = inferHandler->getIREEAdapter(thread);
-    adapter->infer();
+    getAdapter(handler, thread)->infer();
 }
 
 float getFloatValueFromModel(int index, OperatorHandler* handler, WorkerThreadId thread)
 {
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-static-cast-downcast) handler type is guaranteed by operator construction
-    auto* inferHandler = static_cast<Inference::IREEInferenceOperatorHandler*>(handler);
-    auto adapter = inferHandler->getIREEAdapter(thread);
-    return adapter->getResultAt(index);
+    return getAdapter(handler, thread)->getResultAt(index);
+}
+
+/// Returns the output size in bytes of the model result buffer.
+uint64_t getModelOutputSize(OperatorHandler* handler, WorkerThreadId thread)
+{
+    return getAdapter(handler, thread)->getOutputSize();
+}
+
+/// Copies the full model result into the given varsized output buffer.
+void copyModelOutputToVarsized(int8_t* outputPtr, uint64_t size, OperatorHandler* handler, WorkerThreadId thread)
+{
+    getAdapter(handler, thread)->copyResultTo(std::span<std::byte>(reinterpret_cast<std::byte*>(outputPtr), size));
 }
 }
 
@@ -106,11 +118,22 @@ void InferModelPhysicalOperator::execute(ExecutionContext& ctx, Record& record) 
 
     nautilus::invoke(applyModel, inferModelHandler, ctx.workerThreadId);
 
-    for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
+    if (varsizedOutput)
     {
-        const VarVal result = VarVal(
-            nautilus::invoke(getFloatValueFromModel, nautilus::val<int>(static_cast<int>(i)), inferModelHandler, ctx.workerThreadId));
-        record.write(outputFieldNames.at(i), result);
+        /// Single VARSIZED output: allocate arena space, copy model result, and write as varsized field
+        auto outputSize = nautilus::invoke(getModelOutputSize, inferModelHandler, ctx.workerThreadId);
+        auto output = ctx.pipelineMemoryProvider.arena.allocateVariableSizedData(outputSize);
+        nautilus::invoke(copyModelOutputToVarsized, output.getContent(), outputSize, inferModelHandler, ctx.workerThreadId);
+        record.write(outputFieldNames.at(0), VarVal(output));
+    }
+    else
+    {
+        for (nautilus::static_val<size_t> i = 0; i < outputFieldNames.size(); ++i)
+        {
+            const VarVal result = VarVal(
+                nautilus::invoke(getFloatValueFromModel, nautilus::val<int>(static_cast<int>(i)), inferModelHandler, ctx.workerThreadId));
+            record.write(outputFieldNames.at(i), result);
+        }
     }
 
     executeChild(ctx, record);

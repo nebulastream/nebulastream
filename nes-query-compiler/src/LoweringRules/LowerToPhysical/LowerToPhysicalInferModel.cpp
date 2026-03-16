@@ -59,16 +59,24 @@ LoweringRuleResultSubgraph LowerToPhysicalInferModel::apply(LogicalOperator logi
         }
     }
 
-    /// Extract output field names from model
+    /// Extract output field names from model and detect varsized output
+    bool varsizedOutput = false;
     auto outputFields
         = std::views::transform(model.getOutputs(), [](const auto& pair) { return pair.first; }) | std::ranges::to<std::vector>();
+    for (const auto& [name, dataType] : model.getOutputs())
+    {
+        if (dataType.type == DataType::Type::VARSIZED)
+        {
+            varsizedOutput = true;
+        }
+    }
 
     /// Create the operator handler
     auto handlerId = getNextOperatorHandlerId();
     auto handler = std::make_shared<Inference::IREEInferenceOperatorHandler>(model);
 
     /// Create the physical operator
-    auto physicalOperator = InferModelPhysicalOperator(handlerId, inputFields, outputFields, varsizedInput);
+    auto physicalOperator = InferModelPhysicalOperator(handlerId, inputFields, outputFields, varsizedInput, varsizedOutput);
 
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");

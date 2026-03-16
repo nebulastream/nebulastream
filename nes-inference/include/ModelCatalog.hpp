@@ -53,6 +53,7 @@ public:
     void removeModel(const std::string& modelName);
     bool hasModel(const std::string& modelName) const;
     std::vector<std::string> getModelNames() const;
+    std::vector<RegisteredModel> getRegisteredModels() const;
     const RegisteredModel& getRegisteredModel(const std::string& modelName) const;
     Model load(const std::string& modelName) const;
 };
@@ -92,6 +93,17 @@ inline std::vector<std::string> ModelCatalog::getModelNames() const
         names.push_back(name);
     }
     return names;
+}
+
+inline std::vector<RegisteredModel> ModelCatalog::getRegisteredModels() const
+{
+    std::vector<RegisteredModel> models;
+    models.reserve(registeredModels.size());
+    for (const auto& [_, model] : registeredModels)
+    {
+        models.push_back(model);
+    }
+    return models;
 }
 
 inline Model ModelCatalog::load(const std::string& modelName) const

@@ -245,6 +245,20 @@ TEST_F(InferModelLogicalOperatorTest, VarsizedInputAccepted)
     validateOutputSchema(inferred.getOutputSchema(), {"embedding"});
 }
 
+/// VARSIZED output type is accepted when model produces it
+TEST_F(InferModelLogicalOperatorTest, VarsizedOutputAccepted)
+{
+    auto varsizedOutputModel = makeModel({DataType::Type::VARSIZED}, {{"result_blob", DataType::Type::VARSIZED}});
+    const InferModelLogicalOperator op{std::move(varsizedOutputModel), {"input_blob"}};
+    auto schema = makeSchema({{"input_blob", DataType::Type::VARSIZED}});
+    auto inferred = op.withInferredSchema({schema});
+
+    auto outputSchema = inferred.getOutputSchema();
+    auto resultField = outputSchema.getFieldByName("result_blob");
+    ASSERT_TRUE(resultField.has_value());
+    EXPECT_EQ(resultField->dataType, (DataType{DataType::Type::VARSIZED, DataType::NULLABLE::NOT_NULLABLE}));
+}
+
 /// Nullable input fields are rejected; non-nullable multi-input is accepted
 TEST_F(InferModelLogicalOperatorTest, NullableInputHandling)
 {

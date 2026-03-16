@@ -336,6 +336,9 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
 using ModelNameOutputRowType = std::tuple<std::string>;
 constexpr std::array<std::string_view, 1> modelNameOutputColumns{"model_name"};
 
+using ModelInfoOutputRowType = std::tuple<std::string, std::string, std::string, std::string>;
+constexpr std::array<std::string_view, 4> modelInfoOutputColumns{"model_name", "path", "input_schema", "output_schema"};
+
 template <>
 struct StatementOutputAssembler<CreateModelStatementResult>
 {
@@ -350,17 +353,17 @@ struct StatementOutputAssembler<CreateModelStatementResult>
 template <>
 struct StatementOutputAssembler<ShowModelsStatementResult>
 {
-    using OutputRowType = ModelNameOutputRowType;
+    using OutputRowType = ModelInfoOutputRowType;
 
     auto convert(const ShowModelsStatementResult& result)
     {
         std::vector<OutputRowType> output;
-        output.reserve(result.modelNames.size());
-        for (const auto& name : result.modelNames)
+        output.reserve(result.models.size());
+        for (const auto& model : result.models)
         {
-            output.emplace_back(name);
+            output.emplace_back(model.name, model.path, model.inputSchema, model.outputSchema);
         }
-        return std::make_pair(modelNameOutputColumns, output);
+        return std::make_pair(modelInfoOutputColumns, output);
     }
 };
 

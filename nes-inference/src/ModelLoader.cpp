@@ -61,7 +61,8 @@ namespace
 {
 
 constexpr size_t pipeBufferSize = 4096;
-constexpr auto processTimeout = std::chrono::seconds(10);
+constexpr auto importTimeout = std::chrono::seconds(10);
+constexpr auto compileTimeout = std::chrono::seconds(20);
 
 struct Tool
 {
@@ -150,15 +151,15 @@ struct ModelMetadataGraph
     /// Function to get next node label if there's exactly one outgoing edge
     std::optional<std::string> findLabelOfUnambiguousSuccessor(auto vertex, const auto& graphRef)
     {
-        auto [ai, ai_end] = adjacent_vertices(vertex, graphRef);
-        if (ai == ai_end)
+        auto [adjIt, adjEnd] = adjacent_vertices(vertex, graphRef);
+        if (adjIt == adjEnd)
         {
             return std::nullopt;
         }
 
-        const auto nextVertex = *ai;
-        ++ai;
-        if (ai != ai_end)
+        const auto nextVertex = *adjIt;
+        ++adjIt;
+        if (adjIt != adjEnd)
         {
             return std::nullopt;
         }
@@ -374,23 +375,37 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             }
         }
 
-        /// Use async_wait with a steady_timer for timeout, avoiding the polling loop race condition.
+        /// Use async_wait with steady_timers for timeout, avoiding the polling loop race condition.
         bool importDone = false;
         bool compileDone = false;
         int importExitCode = -1;
         int compileExitCode = -1;
-        bool timedOut = false;
+        bool importTimedOut = false;
+        bool compileTimedOut = false;
 
-        asio::steady_timer timer(ctx, processTimeout);
-        timer.async_wait(
+        asio::steady_timer importTimer(ctx, importTimeout);
+        importTimer.async_wait(
             [&](const boost::system::error_code& errCode)
             {
                 if (!errCode)
                 {
-                    /// Timer expired before both processes finished.
-                    timedOut = true;
+                    /// Import timer expired before the import process finished.
+                    importTimedOut = true;
                     boost::system::error_code termErrCode;
                     importProc.terminate(termErrCode);
+                    compileProc.terminate(termErrCode);
+                }
+            });
+
+        asio::steady_timer compileTimer(ctx, compileTimeout);
+        compileTimer.async_wait(
+            [&](const boost::system::error_code& errCode)
+            {
+                if (!errCode)
+                {
+                    /// Compile timer expired before the compile process finished.
+                    compileTimedOut = true;
+                    boost::system::error_code termErrCode;
                     compileProc.terminate(termErrCode);
                 }
             });
@@ -400,9 +415,10 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             {
                 importDone = true;
                 importExitCode = exitCode;
+                importTimer.cancel();
                 if (importDone && compileDone)
                 {
-                    timer.cancel();
+                    compileTimer.cancel();
                 }
             });
 
@@ -411,15 +427,16 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             {
                 compileDone = true;
                 compileExitCode = exitCode;
+                compileTimer.cancel();
                 if (importDone && compileDone)
                 {
-                    timer.cancel();
+                    importTimer.cancel();
                 }
             });
 
         ctx.run();
 
-        if (timedOut)
+        if (importTimedOut || compileTimedOut)
         {
             /// Reap any processes that were terminated.
             boost::system::error_code errCode;
@@ -431,7 +448,11 @@ std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath
             {
                 compileProc.wait(errCode);
             }
-            return std::unexpected(ModelLoadError("Model import/compile timed out after 10 seconds"));
+            if (importTimedOut)
+            {
+                return std::unexpected(ModelLoadError("Model import timed out after 10 seconds"));
+            }
+            return std::unexpected(ModelLoadError("Model compile timed out after 20 seconds"));
         }
 
         const bool success = (importExitCode == 0) && (compileExitCode == 0);

@@ -193,13 +193,14 @@ public:
         const Schema& outputSchema,
         const std::vector<std::string>& inputFieldNames,
         const std::vector<std::string>& outputFieldNames,
-        bool varsizedInput)
+        bool varsizedInput,
+        bool varsizedOutput = false)
     {
         auto inputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, MemoryLayoutType::ROW_LAYOUT);
         auto outputBufRef = LowerSchemaProvider::lowerSchema(bufferSize, outputSchema, MemoryLayoutType::ROW_LAYOUT);
 
         ScanPhysicalOperator scan(inputBufRef, inputSchema.getFieldNames());
-        InferModelPhysicalOperator inferModel(OperatorHandlerId(0), inputFieldNames, outputFieldNames, varsizedInput);
+        InferModelPhysicalOperator inferModel(OperatorHandlerId(0), inputFieldNames, outputFieldNames, varsizedInput, varsizedOutput);
         EmitPhysicalOperator emit(OperatorHandlerId(1), outputBufRef);
 
         inferModel.setChild(PhysicalOperator(emit));
@@ -593,6 +594,71 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
 
     EXPECT_EQ(totalRecords, expectedTotalRecords) << "Expected " << expectedTotalRecords << " total output records";
     EXPECT_EQ(correctRecords, expectedTotalRecords) << "All output records should match identity model input";
+}
+
+/// Identity model with 1 record, output collected as a single VARSIZED blob. Interpreted + compiled.
+TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
+{
+    constexpr size_t numFloats = 100;
+
+    /// Input schema: VARSIZED blob of packed floats
+    Schema inputSchema;
+    inputSchema.addField("input_blob", DataType::Type::VARSIZED);
+
+    /// Output schema: input blob + single VARSIZED output blob
+    Schema outputSchema;
+    outputSchema.addField("input_blob", DataType::Type::VARSIZED);
+    outputSchema.addField("output_blob", DataType::Type::VARSIZED);
+
+    auto inputBuffer = createInputBuffer(inputSchema, {makeFloats(numFloats)});
+
+    for (bool compiled : {false, true})
+    {
+        auto [pipeline, handlers] = createInferencePipeline(
+            *identityModel, inputSchema, outputSchema, {"input_blob"}, {"output_blob"}, /*varsizedInput=*/true, /*varsizedOutput=*/true);
+        CompiledExecutablePipelineStage stage(
+            pipeline,
+            handlers,
+            [&]
+            {
+                nautilus::engine::Options opt;
+                opt.setOption("engine.Compilation", compiled);
+                return opt;
+            }());
+
+        folly::Synchronized<std::vector<TupleBuffer>> emittedBuffers;
+        emittedBuffers.wlock()->reserve(16);
+        auto bufMgr = BufferManager::create(bufferSize, 200);
+        MockedPipelineContext pec{emittedBuffers, bufMgr};
+
+        stage.start(pec);
+        stage.execute(inputBuffer, pec);
+        stage.stop(pec);
+
+        size_t totalRecords = 0;
+        auto lockedBuffers = *emittedBuffers.rlock();
+        for (auto& outBuf : lockedBuffers)
+        {
+            Testing::TestTupleBuffer ttb(outputSchema);
+            auto view = ttb.open(outBuf);
+            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            {
+                auto outputBlob = view[r]["output_blob"].as<std::string>();
+                ASSERT_EQ(outputBlob.size(), numFloats * sizeof(float))
+                    << "Output blob size mismatch (compiled=" << compiled << ")";
+
+                /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-float unpacking
+                const auto* floatPtr = reinterpret_cast<const float*>(outputBlob.data());
+                for (size_t i = 0; i < numFloats; ++i)
+                {
+                    EXPECT_NEAR(floatPtr[i], static_cast<float>(i + 1), 1e-5F)
+                        << "Float " << i << " mismatch in output blob (compiled=" << compiled << ")";
+                }
+                ++totalRecords;
+            }
+        }
+        EXPECT_EQ(totalRecords, 1U) << "(compiled=" << compiled << ")";
+    }
 }
 
 }

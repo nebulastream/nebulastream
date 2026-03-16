@@ -14,6 +14,8 @@
 
 #include <Inference/IREEAdapter.hpp>
 
+#include <algorithm>
+#include <bit>
 #include <span>
 #include <Model.hpp>
 
@@ -43,6 +45,28 @@ void IREEAdapter::initializeModel(NES::Model& model)
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
     this->outputData = std::make_unique<std::byte[]>(model.outputSize());
     this->outputSize = model.outputSize();
+}
+
+float IREEAdapter::getResultAt(size_t idx)
+{
+    PRECONDITION(idx < outputSize / sizeof(float), "Index is too large");
+    return std::bit_cast<float*>(outputData.get())[idx];
+}
+
+void IREEAdapter::copyResultTo(std::span<std::byte> content)
+{
+    PRECONDITION(outputSize == content.size(), "Output size does not match");
+    std::ranges::copy_n(outputData.get(), static_cast<std::ptrdiff_t>(std::min(content.size(), outputSize)), content.data());
+}
+
+size_t IREEAdapter::getOutputSize() const
+{
+    return outputSize;
+}
+
+void IREEAdapter::addModelInput(std::span<std::byte> content)
+{
+    std::ranges::copy_n(content.data(), static_cast<std::ptrdiff_t>(std::min(content.size(), inputSize)), inputData.get());
 }
 
 void IREEAdapter::infer()

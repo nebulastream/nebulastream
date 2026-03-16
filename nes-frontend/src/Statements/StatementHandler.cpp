@@ -33,6 +33,7 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -227,7 +228,39 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
 
 std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement&) const
 {
-    return ShowModelsStatementResult{.modelNames = modelCatalog->getModelNames()};
+    auto registeredModels = modelCatalog->getRegisteredModels();
+    std::vector<ModelInfo> models;
+    models.reserve(registeredModels.size());
+    for (const auto& reg : registeredModels)
+    {
+        std::string inputSchema;
+        for (const auto& [fieldName, dataType] : reg.inputs)
+        {
+            if (!inputSchema.empty())
+            {
+                inputSchema += ", ";
+            }
+            inputSchema += fmt::format("{}: {}", fieldName, *dataType);
+        }
+
+        std::string outputSchema;
+        for (const auto& [fieldName, dataType] : reg.outputs)
+        {
+            if (!outputSchema.empty())
+            {
+                outputSchema += ", ";
+            }
+            outputSchema += fmt::format("{}: {}", fieldName, *dataType);
+        }
+
+        models.push_back(ModelInfo{
+            .name = reg.name,
+            .path = reg.path.string(),
+            .inputSchema = std::move(inputSchema),
+            .outputSchema = std::move(outputSchema),
+        });
+    }
+    return ShowModelsStatementResult{.models = std::move(models)};
 }
 
 std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operator()(const DropModelStatement& statement)

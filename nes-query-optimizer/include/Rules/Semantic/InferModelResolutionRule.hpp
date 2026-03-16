@@ -24,10 +24,10 @@ namespace NES
 
 /// Resolves InferModelNameLogicalOperator nodes to InferModelLogicalOperator nodes
 /// by loading the model from the ModelCatalog.
-class ModelInferenceCompilationRule
+class InferModelResolutionRule
 {
 public:
-    explicit ModelInferenceCompilationRule(std::shared_ptr<Inference::ModelCatalog> modelCatalog)
+    explicit InferModelResolutionRule(std::shared_ptr<Inference::ModelCatalog> modelCatalog)
         : modelCatalog(std::move(modelCatalog)) { }
 
     void apply(LogicalPlan& queryPlan) const;
