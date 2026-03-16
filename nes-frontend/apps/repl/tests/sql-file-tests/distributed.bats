@@ -199,6 +199,21 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 }
 
+@test "create model show and drop lifecycle" {
+  setup_distributed tests/topologies/1-node.yaml
+  run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
+  [ "$status" -eq 0 ]
+
+  # lines[0]: CREATE MODEL result
+  assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[0]}"
+  # lines[1]: SHOW MODELS — should contain the model with full metadata
+  assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[1]}"
+  # lines[2]: DROP MODEL result
+  assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[2]}"
+  # lines[3]: SHOW MODELS after drop — should be empty
+  assert_json_equal '[]' "${lines[3]}"
+}
+
 @test "launch bad query should fail" {
   setup_distributed tests/topologies/1-node.yaml
   run DOCKER_NES_REPL tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
