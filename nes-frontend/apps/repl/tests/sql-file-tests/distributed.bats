@@ -110,6 +110,13 @@ EOF
     && apt update -y \
     && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
 
+    # Install IREE compiler tools for ML inference (ONNX -> IREE compilation at runtime)
+    RUN apt-get update && apt-get install -y python3 python3-venv \
+    && python3 -m venv /opt/iree \
+    && /opt/iree/bin/pip install --no-cache-dir iree-base-compiler==3.10.0 iree-turbine onnx \
+    && ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile \
+    && ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx
+
     COPY nes-repl /usr/bin
 EOF
   rm -rf "$repl_ctx"
@@ -214,6 +221,21 @@ assert_json_contains() {
   setup_distributed tests/topologies/1-node.yaml
   run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries.sql
   [ "$status" -eq 0 ]
+}
+
+@test "create model show and drop lifecycle" {
+  setup_distributed tests/topologies/1-node.yaml
+  run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
+  [ "$status" -eq 0 ]
+
+  # lines[0]: CREATE MODEL result
+  assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[0]}"
+  # lines[1]: SHOW MODELS — should contain the model with full metadata
+  assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[1]}"
+  # lines[2]: DROP MODEL result
+  assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[2]}"
+  # lines[3]: SHOW MODELS after drop — should be empty
+  assert_json_equal '[]' "${lines[3]}"
 }
 
 @test "launch bad query should fail" {
