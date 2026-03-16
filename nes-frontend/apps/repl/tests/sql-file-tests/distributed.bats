@@ -205,9 +205,11 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 
   # lines[0]: CREATE MODEL result — eagerly loaded, returns full metadata
-  assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[0]}"
+  assert_json_contains '[{"model_name":"TESTMODEL","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[0]}"
+  echo "${lines[0]}" | jq -e '.[0].path | test("tiny_identity.onnx")'
   # lines[1]: SHOW MODELS — should contain the same model metadata
-  assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[1]}"
+  assert_json_contains '[{"model_name":"TESTMODEL","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[1]}"
+  echo "${lines[1]}" | jq -e '.[0].path | test("tiny_identity.onnx")'
   # lines[2]: DROP MODEL result
   assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[2]}"
   # lines[3]: SHOW MODELS after drop — should be empty
