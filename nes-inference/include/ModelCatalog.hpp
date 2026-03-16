@@ -13,19 +13,18 @@
 */
 
 #pragma once
+#include <Model.hpp>
 #include <ModelLoader.hpp>
 
 #include <filesystem>
 #include <memory>
 #include <ranges>
-#include <stdexcept>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <fmt/format.h>
 #include <ErrorHandling.hpp>
 
 namespace NES::Inference

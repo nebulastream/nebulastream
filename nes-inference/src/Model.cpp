@@ -35,9 +35,10 @@ std::string base64Encode(const std::string& input)
 {
     const auto encodedLen = 4 * ((input.size() + 2) / 3);
     std::string out(encodedLen, '\0');
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+    /// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
     const auto result = EVP_EncodeBlock(
         reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    /// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
     if (result < 0)
     {
         throw NES::CannotDeserialize("EVP_EncodeBlock failed");
@@ -49,9 +50,10 @@ std::string base64Decode(const std::string& input)
 {
     const auto maxDecodedLen = 3 * input.size() / 4;
     std::string out(maxDecodedLen, '\0');
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
+    /// NOLINTBEGIN(cppcoreguidelines-pro-type-reinterpret-cast) OpenSSL EVP API requires unsigned char*
     const auto actualLen = EVP_DecodeBlock(
         reinterpret_cast<unsigned char*>(out.data()), reinterpret_cast<const unsigned char*>(input.data()), static_cast<int>(input.size()));
+    /// NOLINTEND(cppcoreguidelines-pro-type-reinterpret-cast)
     if (actualLen < 0)
     {
         throw NES::CannotDeserialize("EVP_DecodeBlock failed on malformed base64 input");
@@ -94,7 +96,7 @@ Reflected Reflector<Model>::operator()(const Model& model) const
 {
     auto byteCode = model.getByteCode();
     /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-char for base64 encoding
-    std::string rawBytes(reinterpret_cast<const char*>(byteCode.data()), byteCode.size());
+    const std::string rawBytes(reinterpret_cast<const char*>(byteCode.data()), byteCode.size());
 
     std::vector<detail::ReflectedModelOutputField> outputFields;
     outputFields.reserve(model.getOutputs().size());
@@ -126,8 +128,8 @@ Model Unreflector<Model>::operator()(const Reflected& rfl) const
         auto decoded = base64Decode(reflected.byteCode.value());
         /// NOLINTNEXTLINE(modernize-avoid-c-arrays) dynamic byte buffer requires array form
         auto buffer = std::make_shared<std::byte[]>(decoded.size());
-        std::ranges::transform(decoded, buffer.get(), [](char c) { return static_cast<std::byte>(c); });
-        model.byteCode = {std::move(buffer), decoded.size()};
+        std::ranges::transform(decoded, buffer.get(), [](char chr) { return static_cast<std::byte>(chr); });
+        model.byteCode = {.buffer = std::move(buffer), .size = decoded.size()};
     }
     model.functionName = reflected.functionName.value_or("");
     model.shape = reflected.shape.value_or(std::vector<size_t>{});

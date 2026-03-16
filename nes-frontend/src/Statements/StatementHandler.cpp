@@ -23,7 +23,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <DataTypes/DataTypeProvider.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
