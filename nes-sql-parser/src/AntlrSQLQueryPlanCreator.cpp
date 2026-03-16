@@ -670,19 +670,19 @@ void AntlrSQLQueryPlanCreator::exitTumblingWindow(AntlrSQLParser::TumblingWindow
 {
     const auto timeMeasure = buildTimeMeasure(helpers.top().size, helpers.top().timeUnit);
     helpers.top().windowType.emplace(Windowing::TimeBasedWindowType{Windowing::TumblingWindow{timeMeasure}});
-    PRECONDITION(
-        context->timestampParameter()->IDENTIFIER().size() == 1 || context->timestampParameter()->IDENTIFIER().size() == 2,
-        "TimestampParameter must have either one or two identifiers, is the binder in sync with the grammar?");
+    /// No explicit timestamp parameter was given (e.g. TUMBLING(SIZE 1000 MS) without an ON <field> clause), so default to ingestion time.
+    /// A join window needs two time characteristics (one per input); a plain windowed aggregation needs exactly one. The timestampParameter
+    /// child is absent here (it would have set windowTimestamp via exitTimestampParameter), so the arity is derived from the join context.
     if (!helpers.top().windowTimestamp.has_value())
     {
-        if (context->timestampParameter()->IDENTIFIER().size() == 1)
-        {
-            helpers.top().windowTimestamp = Windowing::IngestionTimeCharacteristic{};
-        }
-        else if (context->timestampParameter()->IDENTIFIER().size() == 2)
+        if (helpers.top().isJoinRelation)
         {
             helpers.top().windowTimestamp = std::array<Windowing::UnboundTimeCharacteristic, 2>{
                 Windowing::IngestionTimeCharacteristic{}, Windowing::IngestionTimeCharacteristic{}};
+        }
+        else
+        {
+            helpers.top().windowTimestamp = Windowing::IngestionTimeCharacteristic{};
         }
     }
     AntlrSQLBaseListener::exitTumblingWindow(context);
@@ -817,16 +817,21 @@ void AntlrSQLQueryPlanCreator::enterJoinType(AntlrSQLParser::JoinTypeContext* co
 
 void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* context)
 {
-    const auto joinType = context->getText();
-    auto tokenType = context->getStop()->getType();
-
-    if (joinType.empty() || tokenType == AntlrSQLLexer::INNER)
+    if (context->LEFT() != nullptr)
     {
-        helpers.top().joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN;
+    }
+    else if (context->RIGHT() != nullptr)
+    {
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN;
+    }
+    else if (context->FULL() != nullptr)
+    {
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown join type: {}, resolved to token type: {}", joinType, tokenType);
+        helpers.top().joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
     }
     AntlrSQLBaseListener::exitJoinType(context);
 }

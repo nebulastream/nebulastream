@@ -158,7 +158,10 @@ defaultMapping(const LogicalOperator& logicalOperator, const std::vector<Logical
         {
             auto childFieldMapOpt = newChildIter->second->getTraitSet().tryGet<FieldMappingTrait>();
             INVARIANT(childFieldMapOpt.has_value(), "Field mapping trait not set in field mapping recursion");
-            auto mappingInChildOpt = childFieldMapOpt.value()->getMapping(field.unbound());
+            /// Look up the child's mapping with the child's own field, not this operator's field. An outer join marks the unmatched
+            /// side's output fields nullable, so this operator's field and the child's field share a name but differ in nullability —
+            /// and UnqualifiedUnboundField equality includes the datatype, so keying on this operator's field would miss the entry.
+            auto mappingInChildOpt = childFieldMapOpt.value()->getMapping(fieldInChild.value().unbound());
             INVARIANT(mappingInChildOpt.has_value(), "Field mapping trait does not contain mapping for field");
             auto [_, success] = mapping.try_emplace(field, mappingInChildOpt.value());
             PRECONDITION(success, "Duplicate field name in output schema");

@@ -17,13 +17,14 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
-#include <Join/StreamJoinProbePhysicalOperator.hpp>
-#include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
@@ -39,8 +40,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
-        std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
-        std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
+        std::shared_ptr<TupleBufferRef> leftMemoryProvider,
+        std::shared_ptr<TupleBufferRef> rightMemoryProvider,
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
@@ -50,15 +51,16 @@ protected:
     void performNLJ(
         const PagedVectorRef& outerPagedVector,
         const PagedVectorRef& innerPagedVector,
-        PagedVectorTupleLayout& outerTupleLayout,
-        PagedVectorTupleLayout& innerTupleLayout,
+        TupleBufferRef& outerMemoryProvider,
+        TupleBufferRef& innerMemoryProvider,
         const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
         const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-    std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout;
-    std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout;
+
+    std::shared_ptr<TupleBufferRef> leftMemoryProvider;
+    std::shared_ptr<TupleBufferRef> rightMemoryProvider;
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
 };
