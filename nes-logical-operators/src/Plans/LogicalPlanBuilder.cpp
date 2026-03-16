@@ -14,6 +14,7 @@
 
 #include <Plans/LogicalPlanBuilder.hpp>
 
+#include <algorithm>
 #include <array>
 #include <memory>
 #include <ranges>

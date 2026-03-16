@@ -1,0 +1,39 @@
+# name: join/SlidingWindowFullOuterJoin.test
+# description: Test FULL OUTER JOIN with sliding windows — pass-2 must fire exactly once per window, not N-squared times
+# groups: [WindowOperators, Join, OuterJoin, SlidingWindow]
+
+# Source definitions
+# Left stream: id=1 in slice 1 (t=500), id=2 in slice 1 (t=1500), id=3 in slice 2 (t=2500)
+# Right stream: id2=1 in slice 2 (t=2500) — cross-slice match with left id=1; id2=4 has no left match
+# Window W1=[0,4000): matched (id=1,id2=1), unmatched left (id=2, id=3), unmatched right (id2=4)
+# Window W2=[2000,6000): unmatched left (id=3), unmatched right (id2=1, id2=4)
+# Without Plan 01 fix: pass-2 fires N-squared times producing 4 copies of unmatched-right row for id2=4
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,500
+2,20,1500
+3,30,2500
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,100,2500
+4,400,3500
+
+CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64, stream.value UINT64, stream.timestamp UINT64, stream2.id2 UINT64, stream2.value2 UINT64, stream2.timestamp UINT64) TYPE File;
+
+SELECT *
+FROM (SELECT * FROM stream) FULL OUTER JOIN (SELECT * FROM stream2)
+ON (id = id2)
+WINDOW SLIDING (timestamp, size 4 sec, advance by 2 sec)
+INTO sink;
+----
+0,4000,1,10,500,1,100,2500
+0,4000,2,20,1500,NULL,NULL,NULL
+0,4000,3,30,2500,NULL,NULL,NULL
+0,4000,NULL,NULL,NULL,4,400,3500
+2000,6000,3,30,2500,NULL,NULL,NULL
+2000,6000,NULL,NULL,NULL,1,100,2500
+2000,6000,NULL,NULL,NULL,4,400,3500
+
