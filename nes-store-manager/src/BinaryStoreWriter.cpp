@@ -17,14 +17,15 @@
 #include <atomic>
 #include <cerrno>
 #include <cstdint>
+#include <cstdio>
 #include <cstring>
+#include <string>
 #include <utility>
 
 #include <ErrorHandling.hpp>
 #include <ReplayStoreFormat.hpp>
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -79,12 +80,12 @@ void BinaryStoreWriter::removeFile()
 {
     close();
     const std::string& filePath = config.filePath;
-    std::remove(filePath.c_str());
+    auto ec = std::remove(filePath.c_str());
+    INVARIANT(ec == 0, "Could not remove file: {}", ec);
 }
 
 void BinaryStoreWriter::ensureHeader()
 {
-
     bool expected = false;
     if (!headerWritten.compare_exchange_strong(expected, true, std::memory_order_acq_rel))
     {
@@ -101,7 +102,7 @@ void BinaryStoreWriter::ensureHeader()
     const uint64_t off = tail.fetch_add(buf.size(), std::memory_order_relaxed);
     if (off != 0)
     {
-        return; // another writer raced
+        return; /// another writer raced
     }
     const ssize_t written = ::pwrite(fd, buf.data(), buf.size(), 0);
     if (written < 0 || static_cast<size_t>(written) != buf.size())
@@ -128,4 +129,4 @@ void BinaryStoreWriter::append(const uint8_t* data, size_t len)
     }
 }
 
-} // namespace NES::Replay
+}

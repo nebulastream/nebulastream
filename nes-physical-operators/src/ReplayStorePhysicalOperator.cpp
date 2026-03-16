@@ -14,8 +14,8 @@
 
 #include <ReplayStorePhysicalOperator.hpp>
 
-#include <cstddef>
 #include <cstdint>
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -25,14 +25,17 @@
 #include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <ReplayStoreOperatorHandler.hpp>
 #include <function.hpp>
-#include <static.hpp>
+#include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -59,32 +62,22 @@ void stopHandlerProxy(OperatorHandler* handler, PipelineExecutionContext* pipeli
 
 }
 
-ReplayStorePhysicalOperator::ReplayStorePhysicalOperator(OperatorHandlerId handlerId, const Schema& inputSchema)
-    : handlerId(handlerId), inputSchema(inputSchema)
+/// OperatorState subclass that holds the staging buffer for accumulating parsed records.
+class ReplayStoreState : public OperatorState
 {
-    fieldNames.reserve(this->inputSchema.getNumberOfFields());
-    fieldTypes.reserve(this->inputSchema.getNumberOfFields());
-    fieldSizes.reserve(this->inputSchema.getNumberOfFields());
-    fieldOffsets.reserve(this->inputSchema.getNumberOfFields());
-    uint32_t offset = 0;
-    for (const auto& f : this->inputSchema.getFields())
-    {
-        fieldNames.emplace_back(f.name);
-        fieldTypes.emplace_back(f.dataType);
-        uint32_t sz = 0;
-        switch (f.dataType.type)
-        {
-            case DataType::Type::VARSIZED:
-                sz = 0; /// TODO #11: Add Varsized Support
-                break;
-            default:
-                sz = f.dataType.getSizeInBytesWithoutNull();
-        }
-        fieldSizes.emplace_back(sz);
-        fieldOffsets.emplace_back(offset);
-        offset += sz;
-    }
-    rowWidth = offset;
+public:
+    explicit ReplayStoreState(const RecordBuffer& resultBuffer)
+        : resultBuffer(resultBuffer), bufferMemoryArea(resultBuffer.getMemArea()) { }
+
+    nautilus::val<uint64_t> outputIndex = 0;
+    RecordBuffer resultBuffer;
+    nautilus::val<int8_t*> bufferMemoryArea;
+};
+
+ReplayStorePhysicalOperator::ReplayStorePhysicalOperator(
+    OperatorHandlerId handlerId, const Schema& inputSchema, std::shared_ptr<TupleBufferRef> bufferRef)
+    : handlerId(handlerId), inputSchema(inputSchema), bufferRef(std::move(bufferRef))
+{
 }
 
 void ReplayStorePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
@@ -102,61 +95,53 @@ void ReplayStorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
     {
         openChild(executionCtx, recordBuffer);
     }
-    auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
-    nautilus::invoke(
-        +[](OperatorHandler* h, PipelineExecutionContext* pctx)
-        {
-            if (!h || !pctx)
-            {
-                return;
-            }
-            if (auto* store = dynamic_cast<ReplayStoreOperatorHandler*>(h))
-            {
-                store->ensureHeader(*pctx);
-            }
-        },
-        handler,
-        executionCtx.pipelineContext);
-}
 
-void ReplayStorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& executionCtx) const
-{
-    auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
-
-    /// Get a reusable row buffer from the handler.
-    auto bufferPtr = nautilus::invoke(
-        +[](OperatorHandler* h, uint32_t width) -> int8_t*
-        {
-            return dynamic_cast<ReplayStoreOperatorHandler*>(h)->getRowBuffer(width);
-        },
-        handler,
-        nautilus::val<uint32_t>(rowWidth));
-
-    /// Write each field into the buffer at its precomputed offset.
-    for (nautilus::static_val<size_t> i = 0; i < fieldNames.size(); ++i)
-    {
-        if (fieldSizes[i] == 0)
-        {
-            /// TODO #11: Add Varsized Support
-            continue;
-        }
-        const auto& vv = record.read(fieldNames[i]);
-        vv.writeToMemory(bufferPtr + nautilus::static_val<int32_t>(fieldOffsets[i]));
-    }
-
-    /// Commit the encoded row to the store.
-    nautilus::invoke(
-        +[](OperatorHandler* h, uint32_t len)
-        {
-            dynamic_cast<ReplayStoreOperatorHandler*>(h)->commitRow(len);
-        },
-        handler,
-        nautilus::val<uint32_t>(rowWidth));
+    /// Allocate a staging buffer and create state to accumulate parsed records
+    const auto stagingBufferRef = executionCtx.allocateBuffer();
+    const auto stagingBuffer = RecordBuffer(stagingBufferRef);
+    auto state = std::make_unique<ReplayStoreState>(stagingBuffer);
+    executionCtx.setLocalOperatorState(id, std::move(state));
 }
 
 void ReplayStorePhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
-    encodeAndAppend(record, executionCtx);
+    auto* const state = dynamic_cast<ReplayStoreState*>(executionCtx.getLocalState(id));
+
+    /// If staging buffer is full, flush it to the store and allocate a new one
+    if (state->outputIndex >= getMaxRecordsPerBuffer())
+    {
+        state->resultBuffer.setNumRecords(state->outputIndex);
+        /// Write the full staging buffer to the store
+        auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
+        auto tbRef = state->resultBuffer.getReference();
+        nautilus::invoke(
+            +[](TupleBuffer* tb, OperatorHandler* handler)
+            {
+                if (!tb || !handler)
+                {
+                    return;
+                }
+                if (auto* storeHandler = dynamic_cast<ReplayStoreOperatorHandler*>(handler))
+                {
+                    TupleBuffer buffer(*tb);
+                    storeHandler->writeBuffer(std::move(buffer));
+                }
+            },
+            tbRef,
+            handler);
+
+        /// Allocate a fresh staging buffer
+        const auto newBufferRef = executionCtx.allocateBuffer();
+        state->resultBuffer = RecordBuffer(newBufferRef);
+        state->bufferMemoryArea = state->resultBuffer.getMemArea();
+        state->outputIndex = nautilus::val<uint64_t>(0);
+    }
+
+    /// Write the parsed record into the staging buffer
+    bufferRef->writeRecord(state->outputIndex, state->resultBuffer, record, executionCtx.pipelineMemoryProvider.bufferProvider);
+    state->outputIndex = state->outputIndex + 1;
+
+    /// Forward the record to the child (pass-through)
     if (child.has_value())
     {
         executeChild(executionCtx, record);
@@ -169,6 +154,29 @@ void ReplayStorePhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
     {
         closeChild(executionCtx, recordBuffer);
     }
+
+    /// Write the remaining records in the staging buffer to the store
+    auto* const state = dynamic_cast<ReplayStoreState*>(executionCtx.getLocalState(id));
+    state->resultBuffer.setNumRecords(state->outputIndex);
+
+    auto handler = executionCtx.getGlobalOperatorHandler(handlerId);
+    auto tbRef = state->resultBuffer.getReference();
+    nautilus::invoke(
+        +[](TupleBuffer* tb, OperatorHandler* handler)
+        {
+            if (!tb || !handler)
+            {
+                return;
+            }
+            if (auto* storeHandler = dynamic_cast<ReplayStoreOperatorHandler*>(handler))
+            {
+                TupleBuffer buffer(*tb);
+                NES_DEBUG("ReplayStorePhysicalOperator::close: writing {} tuples to store", buffer.getNumberOfTuples());
+                storeHandler->writeBuffer(std::move(buffer));
+            }
+        },
+        tbRef,
+        handler);
 }
 
 void ReplayStorePhysicalOperator::terminate(ExecutionContext& executionCtx) const
@@ -180,14 +188,19 @@ void ReplayStorePhysicalOperator::terminate(ExecutionContext& executionCtx) cons
     }
 }
 
+uint64_t ReplayStorePhysicalOperator::getMaxRecordsPerBuffer() const
+{
+    return bufferRef->getCapacity();
+}
+
 std::optional<PhysicalOperator> ReplayStorePhysicalOperator::getChild() const
 {
     return child;
 }
 
-void ReplayStorePhysicalOperator::setChild(PhysicalOperator c)
+void ReplayStorePhysicalOperator::setChild(PhysicalOperator child)
 {
-    child = std::move(c);
+    this->child = std::move(child);
 }
 
 }

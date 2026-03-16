@@ -1,12 +1,21 @@
 /*
     Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
 */
 
 #include <Sources/ReplaySource.hpp>
 
 #include <cstdint>
 #include <cstring>
-#include <ios>
 #include <iosfwd>
 #include <memory>
 #include <ostream>
@@ -17,8 +26,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -28,7 +36,7 @@
 #include <ReplayStoreReader.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
+#include <StoreRegistry.hpp>
 
 namespace NES
 {
@@ -37,6 +45,9 @@ ReplaySource::ReplaySource(const SourceDescriptor& sourceDescriptor)
     : filePath(
           sourceDescriptor.getConfig().contains("file_path") ? std::get<std::string>(sourceDescriptor.getConfig().at("file_path"))
                                                              : std::string())
+    , storeName(
+          sourceDescriptor.getConfig().contains("store_name") ? std::get<std::string>(sourceDescriptor.getConfig().at("store_name"))
+                                                              : std::string())
     , schema(*sourceDescriptor.getLogicalSource().getSchema())
 {
 }
@@ -45,7 +56,18 @@ ReplaySource::~ReplaySource() = default;
 
 void ReplaySource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    NES_DEBUG("ReplaySource: opening {}", filePath);
+    if (!storeName.empty())
+    {
+        auto registeredStore = StoreManager::StoreRegistry::instance().getStore(storeName);
+        if (registeredStore.has_value())
+        {
+            store = registeredStore.value();
+            NES_DEBUG("ReplaySource: using registered store '{}'", storeName);
+            return;
+        }
+    }
+
+    NES_DEBUG("ReplaySource: opening file {}", filePath);
     reader = std::make_unique<StoreManager::ReplayStoreReader>(filePath);
     reader->open();
     reader->verifySchema(schema);
@@ -54,6 +76,10 @@ void ReplaySource::open(std::shared_ptr<AbstractBufferProvider>)
 
 void ReplaySource::close()
 {
+    if (store.has_value())
+    {
+        store.reset();
+    }
     if (reader)
     {
         reader->close();
@@ -63,63 +89,13 @@ void ReplaySource::close()
 
 Source::FillTupleBufferResult ReplaySource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
-    const auto startPos = reader->getPosition();
-    NES_DEBUG("ReplaySource: fill called at pos {}", static_cast<long long>(startPos));
-    if (reader->isEof())
+    PRECONDITION(store.has_value(), "Replay source requires underlying store type!");
+    if (!store->hasMore())
     {
         return FillTupleBufferResult::eos();
     }
-
-    // Build RowLayout using current buffer size and the logical source schema
-    auto rowLayout = LowerSchemaProvider::lowerSchema(tupleBuffer.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
-    const auto capacity = rowLayout->getCapacity();
-
-    // Delegate row reading to the ReplayStoreReader
-    char* dest = tupleBuffer.getAvailableMemoryArea<char>().data();
-    const uint32_t tupleSize = rowLayout->getTupleSize();
-    const uint64_t tuplesWritten = reader->readRows(dest, capacity, tupleSize, schema);
-
-    // Calculate row width for bytes tracking
-    uint32_t rowWidthBytes = 0;
-    for (size_t i = 0; i < schema.getNumberOfFields(); ++i)
-    {
-        auto type = schema.getFieldAt(i).dataType;
-        if (type.isType(DataType::Type::VARSIZED))
-        {
-            rowWidthBytes += sizeof(uint32_t);
-        }
-        else
-        {
-            rowWidthBytes += type.getSizeInBytes();
-        }
-    }
-
-    const size_t bytesRead = static_cast<size_t>(tuplesWritten) * static_cast<size_t>(rowWidthBytes);
-    tupleBuffer.setNumberOfTuples(tuplesWritten);
-
-    bool reachedEnd = false;
-    if (reader->isEof())
-    {
-        reader->clearErrors();
-        if (startPos != std::streampos(-1))
-        {
-            reader->seekTo(static_cast<std::streamoff>(startPos) + static_cast<std::streamoff>(bytesRead));
-        }
-        reachedEnd = true;
-        tupleBuffer.setLastChunk(true);
-    }
-    else
-    {
-        if (reader->peek() == std::char_traits<char>::eof())
-        {
-            reachedEnd = true;
-            tupleBuffer.setLastChunk(true);
-        }
-    }
-
-    NES_DEBUG("ReplaySource: read {} bytes ({} tuples), eof={}", bytesRead, tuplesWritten, reachedEnd);
-
-    if (tuplesWritten == 0 && reachedEnd)
+    const uint64_t tuplesWritten = store->read(tupleBuffer, schema);
+    if (tuplesWritten == 0)
     {
         return FillTupleBufferResult::eos();
     }
@@ -138,7 +114,7 @@ uint32_t ReplaySource::getRowWidthBytes() const
         }
         else
         {
-            rowWidth += type.getSizeInBytes();
+            rowWidth += type.getSizeInBytesWithNull();
         }
     }
     return rowWidth;
@@ -151,12 +127,19 @@ Schema ReplaySource::readSchemaFromFile(const std::string& filePath)
 
 DescriptorConfig::Config ReplaySource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    if (config.find("file_path") == config.end())
+    if (config.find("file_path") == config.end() && config.find("store_name") == config.end())
     {
-        throw InvalidConfigParameter("ReplaySource requires 'file_path'");
+        throw InvalidConfigParameter("ReplaySource requires 'file_path' or 'store_name'");
     }
     DescriptorConfig::Config validated;
-    validated.emplace("file_path", DescriptorConfig::ConfigType(config.at("file_path")));
+    if (static_cast<unsigned int>(config.contains("file_path")) != 0U)
+    {
+        validated.emplace("file_path", DescriptorConfig::ConfigType(config.at("file_path")));
+    }
+    if (static_cast<unsigned int>(config.contains("store_name")) != 0U)
+    {
+        validated.emplace("store_name", DescriptorConfig::ConfigType(config.at("store_name")));
+    }
     validated.emplace("number_of_buffers_in_local_pool", DescriptorConfig::ConfigType(static_cast<int64_t>(-1)));
     validated.emplace("max_inflight_buffers", DescriptorConfig::ConfigType(SourceDescriptor::INVALID_MAX_INFLIGHT_BUFFERS));
     return validated;
@@ -164,7 +147,14 @@ DescriptorConfig::Config ReplaySource::validateAndFormat(std::unordered_map<std:
 
 std::ostream& ReplaySource::toString(std::ostream& str) const
 {
-    str << fmt::format("ReplaySource(filePath: {}, bytesRead: {})", filePath, reader ? reader->getTotalBytesRead() : 0);
+    if (store.has_value())
+    {
+        str << fmt::format("ReplaySource(store: {})", storeName);
+    }
+    else
+    {
+        str << fmt::format("ReplaySource(filePath: {}, bytesRead: {})", filePath, reader ? reader->getTotalBytesRead() : 0);
+    }
     return str;
 }
 
@@ -173,6 +163,7 @@ SourceValidationRegistryReturnType RegisterReplaySourceValidation(SourceValidati
     return ReplaySource::validateAndFormat(std::move(args.config));
 }
 
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterReplaySource(SourceRegistryArguments args)
 {
     return std::make_unique<ReplaySource>(args.sourceDescriptor);

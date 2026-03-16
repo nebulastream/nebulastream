@@ -14,48 +14,40 @@
 
 #pragma once
 
-#include <cstddef>
 #include <cstdint>
 #include <string>
-#include <vector>
 
+#include <DataTypes/Schema.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <BinaryStoreWriter.hpp>
-#include "Runtime/QueryTerminationType.hpp"
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Store.hpp>
 
 namespace NES
 {
 
-/// Operator handler that delagates file I/O to ReplayStoreWriter
+/// Operator handler that delegates store I/O to a type-erased Store.
 class ReplayStoreOperatorHandler final : public OperatorHandler
 {
 public:
     struct Config
     {
         std::string storeName;
-        std::string filePath;
-        std::string schemaText;
+        Schema schema;
     };
 
-    explicit ReplayStoreOperatorHandler(Config cfg);
+    ReplayStoreOperatorHandler(Config cfg, StoreManager::Store store);
     ~ReplayStoreOperatorHandler() override = default;
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
-    void ensureHeader(PipelineExecutionContext& pec);
-
-    void append(const uint8_t* data, size_t len);
-
-    /// Returns a pointer to a reusable row buffer of at least `rowWidth` bytes.
-    int8_t* getRowBuffer(uint32_t rowWidth);
-
-    /// Appends the current row buffer contents to the store.
-    void commitRow(uint32_t len);
+    /// Write a TupleBuffer to the store.
+    void writeBuffer(TupleBuffer buffer);
 
 private:
-    StoreManager::BinaryStoreWriter writer;
-    std::vector<uint8_t> rowBuffer;
+    StoreManager::Store store;
+    Config config;
 };
 
 }

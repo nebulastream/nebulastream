@@ -16,6 +16,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <string>
@@ -24,10 +25,11 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
-#include "Runtime/TupleBuffer.hpp"
+#include <Store.hpp>
 
 namespace NES::StoreManager
 {
@@ -37,7 +39,7 @@ class ReplayStoreReader;
 namespace NES
 {
 
-/// Reads rows produced by Store from a binary file, delegating I/O to ReplayStoreReader.
+/// Reads rows from a Store or a binary file, delegating I/O as appropriate.
 class ReplaySource final : public Source
 {
 public:
@@ -62,6 +64,8 @@ protected:
 
 private:
     std::string filePath;
+    std::string storeName;
+    std::optional<StoreManager::Store> store;
     std::unique_ptr<StoreManager::ReplayStoreReader> reader;
     Schema schema;
 };

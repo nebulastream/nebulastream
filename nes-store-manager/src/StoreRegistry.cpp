@@ -14,14 +14,23 @@
 
 #include <StoreRegistry.hpp>
 
-#include <chrono>
 #include <filesystem>
-#include <iomanip>
+#include <format>
 #include <mutex>
 #include <optional>
 #include <shared_mutex>
-#include <sstream>
 #include <string>
+#include <system_error>
+#include <utility>
+
+#include <DataTypes/Schema.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
+#include <FileStore.hpp>
+#include <FlushPolicy.hpp>
+#include <MemoryStore.hpp>
+#include <Store.hpp>
+#include <StoreTransformationRegistry.hpp>
 
 namespace NES::StoreManager
 {
@@ -32,28 +41,38 @@ StoreRegistry& StoreRegistry::instance()
     return registry;
 }
 
-std::string StoreRegistry::registerStore(const std::string& storeName)
+void StoreRegistry::registerStore(const std::string& storeName, Store store)
 {
     const std::unique_lock lock(mutex);
-
-    std::filesystem::create_directories(STORE_MANAGER_WORKING_DIR);
-
-    const auto now = std::chrono::system_clock::now();
-    const auto timeT = std::chrono::system_clock::to_time_t(now);
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(now.time_since_epoch()) % 1000;
-    std::ostringstream ts;
-    ts << std::put_time(std::localtime(&timeT), "%Y%m%d_%H%M%S") << '_' << std::setfill('0') << std::setw(3) << ms.count();
-
-    std::string filePath = std::string(STORE_MANAGER_WORKING_DIR) + "/replay_" + storeName + "_" + ts.str() + ".bin";
-
-    stores[storeName] = filePath;
-    latestStoreId = storeName;
-    return filePath;
+    stores.emplace(storeName, std::move(store));
 }
 
-std::optional<std::string> StoreRegistry::getFilePath(const std::string& storeName) const
+void StoreRegistry::registerDefaultStore(const std::string& storeName, const Schema& schema, const std::string& schemaText)
+{
+    const std::unique_lock lock(mutex);
+    NES_DEBUG("Registering default store with name {} and schema {}", storeName, schemaText);
+
+    const auto storeDir = generateStoreDir(storeName);
+
+    /// Validate that a transformation exists for MemoryStore -> FileStore
+    auto transformation = StoreTransformationRegistry::instance().findTransformation("MemoryStore", "FileStore");
+    PRECONDITION(transformation.has_value(), "No transformation registered for 'MemoryStore' -> 'FileStore'");
+
+    /// Build the chain bottom-up: FileStore (tail) <- MemoryStore (head)
+    auto fileStore
+        = makeStore<FileStore>(FileStore::Config{.storeName = storeName, .storeDir = storeDir, .schemaText = schemaText}, schema);
+
+    const FlushPolicy policy{.type = FlushPolicy::Type::SIZE_THRESHOLD};
+
+    auto headStore = makeStore<MemoryStore>(schema, MemoryStore::Config{}, std::move(fileStore), policy);
+
+    stores.emplace(storeName, headStore);
+}
+
+std::optional<Store> StoreRegistry::getStore(const std::string& storeName) const
 {
     const std::shared_lock lock(mutex);
+    NES_DEBUG("Getting store with name {}", storeName);
     auto it = stores.find(storeName);
     if (it != stores.end())
     {
@@ -62,47 +81,53 @@ std::optional<std::string> StoreRegistry::getFilePath(const std::string& storeNa
     return std::nullopt;
 }
 
-std::optional<std::string> StoreRegistry::getLatestStorePath() const
-{
-    const std::shared_lock lock(mutex);
-    if (latestStoreId.empty())
-    {
-        return std::nullopt;
-    }
-    auto it = stores.find(latestStoreId);
-    if (it != stores.end())
-    {
-        return it->second;
-    }
-    return std::nullopt;
-}
-
-void StoreRegistry::unregisterStore(const std::string& storeId)
+void StoreRegistry::unregisterStore(const std::string& storeName)
 {
     const std::unique_lock lock(mutex);
-    stores.erase(storeId);
-    if (latestStoreId == storeId)
-    {
-        latestStoreId.clear();
-    }
+    NES_DEBUG("Unregistering store with the id {}", storeName);
+    stores.erase(storeName);
 }
 
 void StoreRegistry::clear()
 {
     const std::unique_lock lock(mutex);
     stores.clear();
-    latestStoreId.clear();
 }
 
 void StoreRegistry::clearAndDeleteFiles()
 {
     const std::unique_lock lock(mutex);
-    for (const auto& [name, filePath] : stores)
+    for (auto& [name, store] : stores)
     {
-        std::filesystem::remove(filePath);
+        if (auto fileStore = store.tryGetAs<FileStore>())
+        {
+            fileStore->getMutable().removeFile();
+        }
+        store.close();
+    }
+    if (std::filesystem::exists(STORE_MANAGER_WORKING_DIR))
+    {
+        for (const auto& entry : std::filesystem::directory_iterator(STORE_MANAGER_WORKING_DIR))
+        {
+            if (entry.path().extension() == ".bin")
+            {
+                std::filesystem::remove(entry.path());
+            }
+        }
     }
     stores.clear();
-    latestStoreId.clear();
 }
 
-} // namespace NES::Replay
+std::string StoreRegistry::generateStoreDir(const std::string& storeName)
+{
+    const std::string storeDir = std::format("{}{}", STORE_MANAGER_WORKING_DIR, storeName);
+    std::error_code err;
+    std::filesystem::create_directories(storeDir, err);
+    if (err)
+    {
+        throw StoreManagerInitFailure("Could not create " + storeName + " directory: " + err.message());
+    }
+    return storeDir;
+}
+
+}

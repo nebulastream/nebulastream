@@ -50,8 +50,8 @@
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <ErrorHandling.hpp>
 #include <QuerySubmitter.hpp>
-#include <StoreRegistry.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <StoreRegistry.hpp>
 #include <SystestBinder.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestProgressTracker.hpp>

@@ -19,7 +19,6 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
-#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -44,6 +43,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/ReplayStoreLogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
@@ -70,8 +70,6 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-#include <Operators/ReplayStoreLogicalOperator.hpp>
-#include <ReplayStoreReader.hpp>
 #include <StoreRegistry.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
@@ -826,16 +824,69 @@ struct SystestBinder::Impl
     }
 
     /// Pre-register replay stores found in the parsed plan so that subsequent queries can reference them by name.
-    static void preRegisterReplayStores(const LogicalPlan& plan)
+    /// Must be called AFTER setSinks so that the SinkLogicalOperator has its descriptor (and thus schema) set.
+    /// For each ReplayStoreLogicalOperator, registers:
+    ///   1. A logical source in the SourceCatalog (so SourceInferenceRule finds it for read queries)
+    ///   2. A Replay-typed physical source (so LogicalSourceExpansionRule produces a working SourceDescriptor)
+    ///   3. A fully initialized store in the StoreRegistry (MemoryStore -> FileStore hierarchy, ready for writes)
+    static void preRegisterReplaySources(const LogicalPlan& plan, const std::shared_ptr<SourceCatalog>& sourceCatalog)
     {
-        for (const auto& storeOp : getOperatorByType<ReplayStoreLogicalOperator>(plan))
+        for (const auto& root : plan.getRootOperators())
         {
-            const auto& config = storeOp->getConfig();
+            const auto children = root.getChildren();
+            if (children.empty())
+            {
+                continue;
+            }
+
+            const auto storeOp = children.front().tryGetAs<ReplayStoreLogicalOperator>();
+            if (!storeOp.has_value())
+            {
+                continue;
+            }
+
+            const auto& config = storeOp.value()->getConfig();
             const auto storeName = std::get<std::string>(config.at("store_name"));
-            StoreManager::StoreRegistry::instance().registerStore(storeName);
+
+            /// Get the schema from the sink ancestor (the root operator).
+            const auto sinkOp = root.tryGetAs<SinkLogicalOperator>();
+            INVARIANT(sinkOp.has_value(), "ReplayStoreLogicalOperator must have exactly one SinkLogicalOperator as parent");
+            INVARIANT(
+                sinkOp.value()->getSinkDescriptor().has_value(),
+                "Sink must have a descriptor (setSinks must run before preRegisterReplaySources)");
+
+            const auto& sinkSchema
+                = *sinkOp.value()->getSinkDescriptor().value().getSchema(); /// NOLINT(bugprone-unchecked-optional-access)
+
+            /// Build unqualified schema for the store's logical source.
+            /// The sink schema has source-qualified names (e.g. stream$id); addLogicalSource will
+            /// re-qualify them with the store name (e.g. store1$id).
+            Schema storeSchema;
+            for (const auto& field : sinkSchema.getFields())
+            {
+                storeSchema.addField(field.getUnqualifiedName(), field.dataType);
+            }
+
+            /// Register the store as a logical source so that read queries (SELECT ... FROM store_name)
+            /// resolve through the standard SourceInferenceRule -> LogicalSourceExpansionRule pipeline.
+            auto logicalSource = sourceCatalog->addLogicalSource(storeName, storeSchema);
+            INVARIANT(logicalSource.has_value(), "Failed to register store '{}' as a logical source", storeName);
+
+            auto physicalSource
+                = sourceCatalog->addPhysicalSource(*logicalSource, "Replay", Host("localhost"), {{"store_name", storeName}}, {{"type", "CSV"}});
+            INVARIANT(physicalSource.has_value(), "Failed to register Replay physical source for store '{}'", storeName);
+
+            /// Create and initialize the store in the StoreRegistry so it is ready for writes
+            /// with no setup overhead in ReplayStoreOperatorHandler::open().
+            std::stringstream schemaStream;
+            schemaStream << storeSchema;
+            StoreManager::StoreRegistry::instance().registerDefaultStore(storeName, storeSchema, schemaStream.str());
         }
     }
 
+    /// Replace SourceNameLogicalOperator nodes that reference a registered store with
+    /// InlineSourceLogicalOperator("Replay", ...) so the read path uses the store
+    /// without going through SourceInferenceRule (which would add source-name qualification).
     [[nodiscard]] static LogicalOperator
     replaceTimeTravelReadSource(const LogicalOperator& current, const std::shared_ptr<SourceCatalog>& sourceCatalog)
     {
@@ -847,35 +898,28 @@ struct SystestBinder::Impl
 
         if (const auto sourceOp = current.tryGetAs<SourceNameLogicalOperator>())
         {
-            const auto storePath = StoreManager::StoreRegistry::instance().getFilePath(sourceOp.value()->getLogicalSourceName());
-            if (storePath.has_value())
+            const auto sourceName = sourceOp.value()->getLogicalSourceName();
+            const auto logicalSource = sourceCatalog->getLogicalSource(sourceName);
+            if (logicalSource.has_value())
             {
-                const std::string filePath = storePath.value();
+                /// Check if this logical source has a Replay physical source attached
+                const auto physicalSources = sourceCatalog->getPhysicalSources(*logicalSource);
+                const bool isReplaySource = physicalSources.has_value()
+                    && std::ranges::any_of(*physicalSources, [](const auto& src) { return src.getSourceType() == "Replay"; });
 
-                Schema schema;
+                if (isReplaySource)
                 {
-                    const std::ifstream probe(filePath, std::ios::binary);
-                    if (probe.good())
+                    /// Use the unqualified schema from the logical source
+                    Schema schema;
+                    for (const auto& field : *logicalSource->getSchema())
                     {
-                        schema = StoreManager::ReplayStoreReader::readSchemaFromFile(filePath);
+                        schema.addField(field.getUnqualifiedName(), field.dataType);
                     }
-                    else
-                    {
-                        for (const auto& ls : sourceCatalog->getAllLogicalSources())
-                        {
-                            for (const auto& field : *ls.getSchema())
-                            {
-                                schema.addField(field.getUnqualifiedName(), field.dataType);
-                            }
-                            break;
-                        }
-                    }
+                    std::unordered_map<std::string, std::string> sourceConfig{{"store_name", sourceName}};
+                    std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
+                    const InlineSourceLogicalOperator inlineOp{WeakLogicalOperator{}, "Replay", schema, std::move(sourceConfig), std::move(parserConfig)};
+                    return inlineOp.withChildren(newChildren);
                 }
-
-                std::unordered_map<std::string, std::string> sourceConfig{{"file_path", filePath}};
-                std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
-                const InlineSourceLogicalOperator inlineOp{"Replay", schema, std::move(sourceConfig), std::move(parserConfig)};
-                return inlineOp.withChildren(newChildren);
             }
         }
 
@@ -913,11 +957,10 @@ struct SystestBinder::Impl
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
 
-            preRegisterReplayStores(plan);
-            replaceTimeTravelReadSources(plan, sourceCatalog);
-
             setSinks(plan, currentBuilder, testFileName, sltSinkProvider, currentQueryNumberInTest);
             plan.setQueryId(QueryId::createDistributed(DistributedQueryId(fmt::format("{}:{}", testFileName, currentQueryNumberInTest))));
+            preRegisterReplaySources(plan, sourceCatalog);
+            replaceTimeTravelReadSources(plan, sourceCatalog);
             setInlineSources(plan);
             currentBuilder.setBoundPlan(std::move(plan));
         }
@@ -1035,7 +1078,14 @@ struct SystestBinder::Impl
                 auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
                 lastMergedConfigOverrides = mergedConfigOverrides;
                 queryCallback(
-                    testFileName, plans, sltSinkProvider, sourceCatalog, query, currentQueryNumberInTest, mergedConfigOverrides, sequentialExecution);
+                    testFileName,
+                    plans,
+                    sltSinkProvider,
+                    sourceCatalog,
+                    query,
+                    currentQueryNumberInTest,
+                    mergedConfigOverrides,
+                    sequentialExecution);
                 configOverrides = {ConfigurationOverride{}};
             });
 

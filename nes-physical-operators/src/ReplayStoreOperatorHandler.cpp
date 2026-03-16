@@ -12,59 +12,40 @@
     limitations under the License.
 */
 
-#include <cstddef>
+#include <ReplayStoreOperatorHandler.hpp>
+
 #include <cstdint>
 #include <utility>
-#include <ReplayStoreOperatorHandler.hpp>
-#include "Runtime/Execution/OperatorHandler.hpp"
 
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Store.hpp>
 
 namespace NES
 {
 
-ReplayStoreOperatorHandler::ReplayStoreOperatorHandler(Config cfg)
-    : writer(StoreManager::BinaryStoreWriter::Config{
-          .storeName = std::move(cfg.storeName),
-          .filePath = std::move(cfg.filePath),
-          .schemaText = std::move(cfg.schemaText),
-      })
+ReplayStoreOperatorHandler::ReplayStoreOperatorHandler(Config cfg, StoreManager::Store store)
+    : store(std::move(store)), config(std::move(cfg))
 {
 }
 
 void ReplayStoreOperatorHandler::start(PipelineExecutionContext&, uint32_t)
 {
-    writer.open();
-    writer.ensureHeader();
+    store.open();
 }
 
 void ReplayStoreOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
 {
-    writer.close();
+    store.flush();
+    store.close();
 }
 
-void ReplayStoreOperatorHandler::ensureHeader(PipelineExecutionContext&)
+void ReplayStoreOperatorHandler::writeBuffer(TupleBuffer buffer)
 {
-    writer.ensureHeader();
-}
-
-void ReplayStoreOperatorHandler::append(const uint8_t* data, size_t len)
-{
-    writer.append(data, len);
-}
-
-int8_t* ReplayStoreOperatorHandler::getRowBuffer(uint32_t rowWidth)
-{
-    if (rowBuffer.size() < rowWidth)
-    {
-        rowBuffer.resize(rowWidth);
-    }
-    return reinterpret_cast<int8_t*>(rowBuffer.data());
-}
-
-void ReplayStoreOperatorHandler::commitRow(uint32_t len)
-{
-    writer.append(rowBuffer.data(), static_cast<size_t>(len));
+    NES_DEBUG("ReplayStoreOperatorHandler::writeBuffer: {} tuples, store={}", buffer.getNumberOfTuples(), config.storeName);
+    store.write(std::move(buffer), config.schema);
 }
 
 }

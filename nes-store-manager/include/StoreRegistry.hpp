@@ -19,25 +19,26 @@
 #include <string>
 #include <unordered_map>
 
+#include <DataTypes/Schema.hpp>
+#include <Store.hpp>
+
 namespace NES::StoreManager
 {
 
-/// Manages multiple replay store files, allowing concurrent TIME_TRAVEL queries
-/// to each write to their own file without overwriting each other.
+/// Manages named store instances, allowing concurrent TIME_TRAVEL queries to each use their own store.
 class StoreRegistry
 {
 public:
-    static StoreRegistry&  instance();
+    static StoreRegistry& instance();
 
-    /// Register a new store, generating a unique file path under the given base directory.
-    /// Returns the generated file path.
-    std::string registerStore(const std::string& storeName);
+    /// Register a store under a name.
+    void registerStore(const std::string& storeName, Store store);
 
-    /// Look up the file path for a given store name.
-    [[nodiscard]] std::optional<std::string> getFilePath(const std::string& storeName) const;
+    /// Register a default hierarchical store (MemoryStore -> FileStore).
+    void registerDefaultStore(const std::string& storeName, const Schema& schema, const std::string& schemaText);
 
-    /// Get the file path of the most recently registered store.
-    [[nodiscard]] std::optional<std::string> getLatestStorePath() const;
+    /// Look up the store for a given name.
+    [[nodiscard]] std::optional<Store> getStore(const std::string& storeName) const;
 
     /// Remove a store registration.
     void unregisterStore(const std::string& storeName);
@@ -45,15 +46,17 @@ public:
     /// Clear all registrations.
     void clear();
 
-    /// Delete all registered store files from disk and clear the registry.
+    /// Close and delete all registered store files from disk and clear the registry.
     void clearAndDeleteFiles();
 
 private:
     StoreRegistry() = default;
 
+    /// Generate a unique file path for a store.
+    static std::string generateStoreDir(const std::string& storeName);
+
     mutable std::shared_mutex mutex;
-    std::unordered_map<std::string, std::string> stores;
-    std::string latestStoreId;
+    std::unordered_map<std::string, Store> stores; /// store name -> Store instance
 };
 
-} // namespace NES::Replay
+}

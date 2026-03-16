@@ -23,10 +23,10 @@
 #include <utility>
 #include <vector>
 
+#include <DataTypes/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include "DataTypes/Schema.hpp"
-#include "ReplayStoreFormat.hpp"
+#include <ReplayStoreFormat.hpp>
 
 namespace NES::StoreManager
 {
@@ -90,7 +90,6 @@ void ReplayStoreReader::verifySchema(const Schema& expectedSchema) const
         const auto& fileField = fileSchema.getFieldAt(i);
         const auto& expectedField = expectedSchema.getFieldAt(i);
 
-        // Compare unqualified field names
         auto fileName = fileField.name;
         if (const auto pos = fileName.rfind('$'); pos != std::string::npos)
         {
@@ -121,7 +120,6 @@ void ReplayStoreReader::verifySchema(const Schema& expectedSchema) const
 
 uint64_t ReplayStoreReader::readRows(char* dest, uint64_t maxRows, uint32_t tupleSize, const Schema& schema)
 {
-    // Calculate field layout: offsets and sizes within each row as stored in the binary file
     std::vector<uint64_t> fieldOffsets;
     std::vector<uint64_t> fieldSizes;
     uint64_t currentOffset = 0;
@@ -137,7 +135,7 @@ uint64_t ReplayStoreReader::readRows(char* dest, uint64_t maxRows, uint32_t tupl
         }
         else
         {
-            size = type.getSizeInBytes();
+            size = type.getSizeInBytesWithNull();
         }
         fieldSizes.push_back(size);
         currentOffset += size;
@@ -227,4 +225,4 @@ Schema ReplayStoreReader::readSchemaFromFile(const std::string& filePath)
     return parseSchemaFromText(fileHeader.schemaText);
 }
 
-} // namespace NES::Replay
+}
