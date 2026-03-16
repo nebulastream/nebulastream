@@ -108,9 +108,7 @@ assert_json_contains() {
 }
 
 @test "nebucli dump with model inference topology" {
-  touch /tmp/iris.onnx
   run $NES_CLI -t tests/good/infer-model.yaml dump
-  rm -f /tmp/iris.onnx
   [ "$status" -eq 0 ]
 }
 
