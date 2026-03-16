@@ -22,43 +22,6 @@
 namespace NES
 {
 
-// class StaticSharedDiffState
-// {
-// public:
-//     bool probe(int32_t patientId, const std::string_view& bezeichnung, const std::string_view& gruppe, double value, uint64_t timestamp)
-//     {
-//         std::scoped_lock lock(mutex);
-//         std::string valueString{bezeichnung};
-//         valueString.append(gruppe);
-//
-//         // if (const auto prior = this->baselineMap.find(std::make_pair(patientId, valueString)); prior != this->baselineMap.end())
-//         if (const auto patientMap = this->baselineMap.find(patientId); prior != this->baselineMap.end())
-//         {
-//             if (const auto prior = patientMap->second.find(valueString); prior != patientMap->second.end())
-//             {
-//                 if (prior->second.value * 2 >= value)
-//                 {
-//                     return true;
-//                 }
-//                 return false;
-//             }
-//             /// set baseline
-//             patientMap->second.emplace(
-//                 std::make_pair(valueString, BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value}));
-//             return false;
-//         }
-//         /// set new patient map (with first baseline value)
-//         std::unordered_map<std::string, BaselineValues> newPatientMap;
-//         newPatientMap.emplace(std::make_pair(valueString, BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value}));
-//         this->baselineMap.emplace(std::make_pair(patientId, newPatientMap));
-//         return false;
-//     }
-//
-// private:
-//     std::unordered_map<uint64_t, std::unordered_map<std::string, BaselineValues>> baselineMap;
-//     std::mutex mutex{};
-// };
-
 struct BaselineValues
 {
     int32_t patientId;
@@ -78,13 +41,19 @@ public:
         {
             if (patientBaseline->second.value * 2 <= newBaselineValue.value)
             {
+                /// Acute_kidney_injury_creatinine_criterion,"KREATININ, Zeitpunkt",( ( Serum_creatinine(t1) >= 2*Serum_creatinine(t0) ) == TRUE ) AND ( ( t1 < t0 + 7 days ) == TRUE ) ) == TRUE,
+                /// "Serum_creatinine(t0): chronologically first serum creatinine value recorded per hospital stay (-> per mlife_ANR), Serum_creatinine(t1):
+                /// most recently recorded serum creatinine value. The second condition, regarding the time delta between measurement points
+                /// (i.e., the serum creatinine increase has to happen within the first 7 days to be classified as acute renal injury), would be nice to have but is not absolutely necessary.
+                /// In other words, the creatinine surge could also happen beyond the first 7 days but this would be less correct. To be on the safer side, specificy ""Gruppe"" for this one --> labs[""Gruppe""] == ""Retention"""
                 std::string alertMessage
                     = fmt::format(
-                          "serum_Kreatinin value of {}, measured at {} is (more than) twice as large as baseline value of {}, measured at {}.",
+                          "Acute kidney injury detected for patient {} at time: {}. Reason: serum_Kreatinin value of {} is (more than) twice as large as baseline value of {} measured at {}.",
+                          newBaselineValue.patientId,
+                          unixTsToFormattedDatetime(newBaselineValue.timestamp),
                           newBaselineValue.value,
-                          newBaselineValue.timestamp,
                           patientBaseline->second.value,
-                          patientBaseline->second.timestamp);
+                          unixTsToFormattedDatetime(patientBaseline->second.timestamp));
                 constexpr size_t sevenDaysInMilliseconds = 604800000;
                 if (newBaselineValue.timestamp - patientBaseline->second.timestamp >= sevenDaysInMilliseconds)
                 {
@@ -102,6 +71,24 @@ public:
 private:
     std::unordered_map<uint64_t, BaselineValues> patienBaselinetMap;
     std::mutex mutex{};
+
+    std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
+    {
+        auto tp = std::chrono::sys_seconds{std::chrono::seconds(unixTimestamp)};
+        auto dp = std::chrono::floor<std::chrono::days>(tp);
+        std::chrono::year_month_day ymd{dp};
+        std::chrono::hh_mm_ss hms{tp - dp};
+
+        std::ostringstream oss;
+        oss << std::setfill('0')
+            << std::setw(2) << static_cast<unsigned>(ymd.day())   << "."
+            << std::setw(2) << static_cast<unsigned>(ymd.month()) << "."
+            << static_cast<int>(ymd.year())                        << " "
+            << std::setw(2) << hms.hours().count()                 << ":"
+            << std::setw(2) << hms.minutes().count();
+
+        return oss.str();
+    }
 };
 
 static StaticSharedDiffState staticSharedDiffState;
@@ -154,11 +141,6 @@ public:
             return varSizedString;
         }
         throw FieldNotFound("BaseLine2xDiffPhysicalFunction require 'Wert' field");
-        // auto variableSized = arena.allocateVariableSizedData(2);
-        // *variableSized.getContent() = 'o';
-        // *variableSized.getContent() +1 = 'k';
-        // const auto leftValue = child.execute(record, arena).cast<nautilus::val<double>>();
-        // return variableSized;
     }
 
 private:
