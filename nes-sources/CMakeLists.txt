@@ -15,7 +15,7 @@ get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 # PUBLIC nes-input-formatter-provider: SourceDescriptor's public API exposes InputFormatterDescriptor by value.
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings nes-input-formatter-provider)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings nes-input-formatter-provider nes-store-manager)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

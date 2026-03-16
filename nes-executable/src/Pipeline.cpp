@@ -20,6 +20,7 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>

@@ -26,8 +26,8 @@ add_source_files(nes-physical-operators
         WindowBasedOperatorHandler.cpp
         WindowBuildPhysicalOperator.cpp
         WindowProbePhysicalOperator.cpp
-        StoreOperatorHandler.cpp
-        StorePhysicalOperator.cpp)
+        ReplayStoreOperatorHandler.cpp
+        ReplayStorePhysicalOperator.cpp)
 
 add_subdirectory(Aggregation)
 add_subdirectory(Watermark)

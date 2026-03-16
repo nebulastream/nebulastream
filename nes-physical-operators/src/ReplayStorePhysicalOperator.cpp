@@ -12,26 +12,28 @@
     limitations under the License.
 */
 
-#include <StorePhysicalOperator.hpp>
+#include <ReplayStorePhysicalOperator.hpp>
 
 #include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
-#include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
+
+#include <DataTypes/Schema.hpp>
+#include <Interface/BufferRef/TupleBufferRef.hpp>
+#include <Interface/Record.hpp>
+#include <Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <StoreOperatorHandler.hpp>
+#include <ReplayStoreOperatorHandler.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
-#include "CompilationContext.hpp"
-#include "DataTypes/Schema.hpp"
 
 namespace NES
 {
@@ -57,7 +59,7 @@ void stopHandlerProxy(OperatorHandler* handler, PipelineExecutionContext* pipeli
 
 }
 
-StorePhysicalOperator::StorePhysicalOperator(OperatorHandlerId handlerId, const Schema& inputSchema)
+ReplayStorePhysicalOperator::ReplayStorePhysicalOperator(OperatorHandlerId handlerId, const Schema& inputSchema)
     : handlerId(handlerId), inputSchema(inputSchema)
 {
     fieldNames.reserve(this->inputSchema.getNumberOfFields());
@@ -85,7 +87,7 @@ StorePhysicalOperator::StorePhysicalOperator(OperatorHandlerId handlerId, const 
     rowWidth = offset;
 }
 
-void StorePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void ReplayStorePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     if (child.has_value())
     {
@@ -94,7 +96,7 @@ void StorePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationCon
     nautilus::invoke(setupHandlerProxy, executionCtx.getGlobalOperatorHandler(handlerId), executionCtx.pipelineContext);
 }
 
-void StorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ReplayStorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     if (child.has_value())
     {
@@ -108,7 +110,7 @@ void StorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& r
             {
                 return;
             }
-            if (auto* store = dynamic_cast<StoreOperatorHandler*>(h))
+            if (auto* store = dynamic_cast<ReplayStoreOperatorHandler*>(h))
             {
                 store->ensureHeader(*pctx);
             }
@@ -117,7 +119,7 @@ void StorePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& r
         executionCtx.pipelineContext);
 }
 
-void StorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& executionCtx) const
+void ReplayStorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& executionCtx) const
 {
     std::vector<uint8_t> row;
     row.resize(rowWidth);
@@ -141,7 +143,7 @@ void StorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& ex
     nautilus::invoke(
         +[](OperatorHandler* h, int8_t* data, uint32_t len)
         {
-            if (auto* store = dynamic_cast<StoreOperatorHandler*>(h))
+            if (auto* store = dynamic_cast<ReplayStoreOperatorHandler*>(h))
             {
                 store->append(reinterpret_cast<const uint8_t*>(data), static_cast<size_t>(len));
             }
@@ -151,7 +153,7 @@ void StorePhysicalOperator::encodeAndAppend(Record& record, ExecutionContext& ex
         nautilus::val<uint32_t>(rowWidth));
 }
 
-void StorePhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
+void ReplayStorePhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     encodeAndAppend(record, executionCtx);
     if (child.has_value())
@@ -160,7 +162,7 @@ void StorePhysicalOperator::execute(ExecutionContext& executionCtx, Record& reco
     }
 }
 
-void StorePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+void ReplayStorePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     if (child.has_value())
     {
@@ -168,7 +170,7 @@ void StorePhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer& 
     }
 }
 
-void StorePhysicalOperator::terminate(ExecutionContext& executionCtx) const
+void ReplayStorePhysicalOperator::terminate(ExecutionContext& executionCtx) const
 {
     nautilus::invoke(stopHandlerProxy, executionCtx.getGlobalOperatorHandler(handlerId), executionCtx.pipelineContext);
     if (child.has_value())
@@ -177,12 +179,12 @@ void StorePhysicalOperator::terminate(ExecutionContext& executionCtx) const
     }
 }
 
-std::optional<PhysicalOperator> StorePhysicalOperator::getChild() const
+std::optional<PhysicalOperator> ReplayStorePhysicalOperator::getChild() const
 {
     return child;
 }
 
-void StorePhysicalOperator::setChild(PhysicalOperator c)
+void ReplayStorePhysicalOperator::setChild(PhysicalOperator c)
 {
     child = std::move(c);
 }

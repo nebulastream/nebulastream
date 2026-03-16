@@ -30,19 +30,19 @@ namespace NES::Nautilus
 BinaryRowEncoder::BinaryRowEncoder(const Schema& schema)
 {
     fields.reserve(schema.getNumberOfFields());
-    for (const auto& f : schema.getFields())
+    for (const auto& field : schema.getFields())
     {
         uint32_t fsz = 0;
-        switch (f.dataType.type)
+        switch (field.dataType.type)
         {
             case DataType::Type::VARSIZED:
                 fsz = 0;
                 break;
             default:
-                fsz = f.dataType.getSizeInBytesWithoutNull();
+                fsz = field.dataType.getSizeInBytesWithoutNull();
                 break;
         }
-        fields.push_back(FieldInfo{.name = f.name, .type = f.dataType, .fixedSize = fsz});
+        fields.push_back(FieldInfo{.name = field.name, .type = field.dataType, .fixedSize = fsz});
     }
 }
 

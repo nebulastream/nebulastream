@@ -12,27 +12,31 @@
     limitations under the License.
 */
 
-#include <LoweringRules/LowerToPhysical/LowerToPhysicalStore.hpp>
+#include <LoweringRules/LowerToPhysical/LowerToPhysicalReplayStore.hpp>
 
 #include <memory>
 #include <sstream>
+#include <utility>
+#include <Configurations/Descriptor.hpp>
+#include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
-#include <Operators/StoreLogicalOperator.hpp>
+#include <Operators/ReplayStoreLogicalOperator.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
-#include <StoreOperatorHandler.hpp>
-#include <StorePhysicalOperator.hpp>
+#include <ReplayStoreOperatorHandler.hpp>
+#include <ReplayStorePhysicalOperator.hpp>
 
 namespace NES
 {
 
-LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOperator)
+LoweringRuleResultSubgraph LowerToPhysicalReplayStore::apply(LogicalOperator logicalOperator)
 {
-    PRECONDITION(logicalOperator.tryGetAs<StoreLogicalOperator>(), "Expected a StoreLogicalOperator");
-    auto store = logicalOperator.getAs<StoreLogicalOperator>();
+    PRECONDITION(logicalOperator.tryGetAs<ReplayStoreLogicalOperator>(), "Expected a ReplayStoreLogicalOperator");
+    auto store = logicalOperator.getAs<ReplayStoreLogicalOperator>();
 
     auto cfgCopy = DescriptorConfig::Config(store->getConfig());
     Descriptor logicalCfg(std::move(cfgCopy));
@@ -41,17 +45,17 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
     std::stringstream schemaStream;
     schemaStream << logicalOperator.getOutputSchema();
 
-    StoreOperatorHandler::Config handlerCfg{
+    const ReplayStoreOperatorHandler::Config handlerCfg{
         .filePath = filePath,
         .schemaText = schemaStream.str(),
     };
 
     auto handlerId = getNextOperatorHandlerId();
-    auto handler = std::make_shared<StoreOperatorHandler>(handlerCfg);
+    auto handler = std::make_shared<ReplayStoreOperatorHandler>(handlerCfg);
 
     const auto inputSchema = logicalOperator.getInputSchemas()[0];
     const auto outputSchema = logicalOperator.getOutputSchema();
-    auto physicalOperator = StorePhysicalOperator(handlerId, inputSchema);
+    auto physicalOperator = ReplayStorePhysicalOperator(handlerId, inputSchema);
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
@@ -70,9 +74,9 @@ LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOp
 }
 
 std::unique_ptr<AbstractLoweringRule>
-LoweringRuleGeneratedRegistrar::RegisterStoreLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
+LoweringRuleGeneratedRegistrar::RegisterReplayStoreLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
-    return std::make_unique<LowerToPhysicalStore>(argument.conf);
+    return std::make_unique<LowerToPhysicalReplayStore>(argument.conf);
 }
 
 }

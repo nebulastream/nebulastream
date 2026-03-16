@@ -19,6 +19,7 @@
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
+#include <fstream>
 #include <functional>
 #include <iostream>
 #include <iterator>
@@ -53,7 +54,6 @@
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <Sources/BinaryStoreSource.hpp>
 #include <Sources/SourceDataProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
@@ -70,6 +70,8 @@
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <ReplayStoreReader.hpp>
+#include <StoreRegistry.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -835,14 +837,15 @@ struct SystestBinder::Impl
         {
             if (sourceOp.value()->getLogicalSourceName() == "TIME_TRAVEL_READ")
             {
-                const std::string filePath = "/tmp/REPLAY-NebulaStream/store_read_out.bin";
+                auto latestPath = StoreManager::StoreRegistry::instance().getLatestStorePath();
+                const std::string filePath = latestPath.value_or("/tmp/REPLAY-NebulaStream/store_read_out.bin");
 
                 Schema schema;
                 {
-                    std::ifstream probe(filePath, std::ios::binary);
+                    const std::ifstream probe(filePath, std::ios::binary);
                     if (probe.good())
                     {
-                        schema = BinaryStoreSource::readSchemaFromFile(filePath);
+                        schema = StoreManager::ReplayStoreReader::readSchemaFromFile(filePath);
                     }
                     else
                     {
@@ -859,7 +862,7 @@ struct SystestBinder::Impl
 
                 std::unordered_map<std::string, std::string> sourceConfig{{"file_path", filePath}};
                 std::unordered_map<std::string, std::string> parserConfig{{"type", "NATIVE"}};
-                const InlineSourceLogicalOperator inlineOp{"BinaryStore", schema, std::move(sourceConfig), std::move(parserConfig)};
+                const InlineSourceLogicalOperator inlineOp{"Replay", schema, std::move(sourceConfig), std::move(parserConfig)};
                 return inlineOp.withChildren(newChildren);
             }
         }

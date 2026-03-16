@@ -14,19 +14,19 @@
 
 #pragma once
 
-#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <string>
 
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <BinaryStoreWriter.hpp>
 #include "Runtime/QueryTerminationType.hpp"
 
 namespace NES
 {
 
-/// POSIX-based writer operator handler for the Store operator.
-class StoreOperatorHandler final : public OperatorHandler
+/// Operator handler that delagates file I/O to ReplayStoreWriter
+class ReplayStoreOperatorHandler final : public OperatorHandler
 {
 public:
     struct Config
@@ -35,8 +35,8 @@ public:
         std::string schemaText;
     };
 
-    explicit StoreOperatorHandler(Config cfg);
-    ~StoreOperatorHandler() override = default;
+    explicit ReplayStoreOperatorHandler(Config cfg);
+    ~ReplayStoreOperatorHandler() override = default;
 
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
@@ -46,16 +46,7 @@ public:
     void append(const uint8_t* data, size_t len);
 
 private:
-    void openFile();
-    void writeHeaderIfNeeded();
-    static uint64_t fnv1a64(const char* data, size_t len);
-
-    int fd{-1};
-    std::atomic<uint64_t> tail{0};
-    std::atomic<bool> headerWritten{false};
-    Config config;
-    static constexpr uint64_t FNVOffsetBasis = 14695981039346656037ULL;
-    static constexpr uint64_t FNVPrime = 1099511628211ULL;
+    StoreManager::BinaryStoreWriter writer;
 };
 
 }

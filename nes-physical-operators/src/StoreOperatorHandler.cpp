@@ -26,7 +26,6 @@
 #include "Runtime/Execution/OperatorHandler.hpp"
 
 #include <fcntl.h>
-#include <stdio.h>
 #include <unistd.h>
 #include <sys/stat.h>
 
@@ -164,3 +163,4 @@ uint64_t StoreOperatorHandler::fnv1a64(const char* data, size_t len)
 }
 
 }
+

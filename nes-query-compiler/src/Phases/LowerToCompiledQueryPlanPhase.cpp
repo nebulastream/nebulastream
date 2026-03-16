@@ -28,6 +28,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/DumpMode.hpp>
 #include <Util/ExecutionMode.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -61,22 +62,17 @@ void LowerToCompiledQueryPlanPhase::processSource(const std::shared_ptr<Pipeline
     const auto sourceOperator = pipeline->getRootOperator().get<SourcePhysicalOperator>();
 
     auto desc = sourceOperator.getDescriptor();
-    auto parserCfg = desc.getParserConfig();
-    if ((desc.getSourceType() == "BinaryStore") && (parserCfg.parserType.empty()))
-    {
-        parserCfg.parserType = "Native";
-    }
 
     std::vector<std::weak_ptr<ExecutablePipeline>> executableSuccessorPipelines;
     NES_DEBUG(
-        "LowerToCompiledQueryPlanPhase: Source originId={} type={} parserType={}",
+        "LowerToCompiledQueryPlanPhase: Source originId={} type={} inputFormatter={}",
         desc.getPhysicalSourceId().getRawValue(),
         desc.getSourceType(),
-        parserCfg.parserType);
-    const bool isBinaryStore = (desc.getSourceType() == "BinaryStore");
+        desc.getInputFormatterDescriptor().getInputFormatterType());
+    const bool isReplaySource = (desc.getSourceType() == "Replay");
     const bool isInterpreter = (pipelineQueryPlan->getExecutionMode() == ExecutionMode::INTERPRETER);
 
-    if (isBinaryStore && isInterpreter)
+    if (isReplaySource && isInterpreter)
     {
         std::vector<std::weak_ptr<ExecutablePipeline>> firstStages;
         const Predecessor predecessor = OperatorId{sourceOperator.getOriginId().getRawValue()};
