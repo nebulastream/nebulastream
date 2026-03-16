@@ -531,22 +531,28 @@ TEST_F(StatementBinderTest, ShowSinks)
 
 TEST_F(StatementBinderTest, BindCreateModel)
 {
-    const std::string createModelStatement = "CREATE MODEL iris ('/dev/null') "
-                                             "INPUT (p1 FLOAT32, p2 FLOAT32, p3 FLOAT32, p4 FLOAT32) "
-                                             "OUTPUT (setosa FLOAT32, versicolor FLOAT32, virginica FLOAT32)";
+    const std::string modelPath = std::string(INFERENCE_TEST_DATA) + "/tiny_identity.onnx";
+    const std::string createModelStatement = "CREATE MODEL identity ('" + modelPath
+        + "') "
+          "INPUT (f1 FLOAT32) "
+          "OUTPUT (o1 FLOAT32)";
     const auto statement = binder->parseAndBindSingle(createModelStatement);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<CreateModelStatement>(*statement));
 
     const auto& createModel = std::get<CreateModelStatement>(*statement);
-    ASSERT_EQ(createModel.name, "IRIS");
-    ASSERT_EQ(createModel.path, "/dev/null");
-    ASSERT_EQ(createModel.inputs.size(), 4);
-    ASSERT_EQ(createModel.outputs.size(), 3);
+    ASSERT_EQ(createModel.name, "IDENTITY");
+    ASSERT_EQ(createModel.path, modelPath);
+    ASSERT_EQ(createModel.inputs.size(), 1);
+    ASSERT_EQ(createModel.outputs.size(), 1);
 
+    /// CREATE MODEL eagerly loads the model and returns full metadata
     const auto createdResult = modelStatementHandler->apply(createModel);
     ASSERT_TRUE(createdResult.has_value());
-    ASSERT_EQ(createdResult.value().name, "IRIS");
+    ASSERT_EQ(createdResult.value().name, "IDENTITY");
+    ASSERT_EQ(createdResult.value().path, modelPath);
+    ASSERT_FALSE(createdResult.value().inputSchema.empty());
+    ASSERT_FALSE(createdResult.value().outputSchema.empty());
 
     /// Verify SHOW MODELS returns the registered model with metadata
     const auto showStatement = binder->parseAndBindSingle("SHOW MODELS");
@@ -555,25 +561,32 @@ TEST_F(StatementBinderTest, BindCreateModel)
     const auto showResult = modelStatementHandler->apply(std::get<ShowModelsStatement>(*showStatement));
     ASSERT_TRUE(showResult.has_value());
     ASSERT_EQ(showResult.value().models.size(), 1);
-    ASSERT_EQ(showResult.value().models.at(0).name, "IRIS");
-    ASSERT_EQ(showResult.value().models.at(0).path, "/dev/null");
+    ASSERT_EQ(showResult.value().models.at(0).name, "IDENTITY");
+    ASSERT_EQ(showResult.value().models.at(0).path, modelPath);
 
     /// Verify duplicate model registration fails
     const auto duplicateResult = modelStatementHandler->apply(createModel);
     ASSERT_FALSE(duplicateResult.has_value());
 
     /// Verify DROP MODEL removes the model
-    const auto dropStatement = binder->parseAndBindSingle("DROP MODEL WHERE NAME = 'IRIS'");
+    const auto dropStatement = binder->parseAndBindSingle("DROP MODEL WHERE NAME = 'IDENTITY'");
     ASSERT_TRUE(dropStatement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropModelStatement>(*dropStatement));
     const auto dropResult = modelStatementHandler->apply(std::get<DropModelStatement>(*dropStatement));
     ASSERT_TRUE(dropResult.has_value());
-    ASSERT_EQ(dropResult.value().name, "IRIS");
+    ASSERT_EQ(dropResult.value().name, "IDENTITY");
 
     /// Verify SHOW MODELS is now empty
     const auto showAfterDrop = modelStatementHandler->apply(std::get<ShowModelsStatement>(*showStatement));
     ASSERT_TRUE(showAfterDrop.has_value());
     ASSERT_EQ(showAfterDrop.value().models.size(), 0);
+
+    /// Verify registering with an invalid path fails
+    const auto badStatement
+        = binder->parseAndBindSingle("CREATE MODEL badModel ('/nonexistent/path.onnx') INPUT (f1 FLOAT32) OUTPUT (o1 FLOAT32)");
+    ASSERT_TRUE(badStatement.has_value());
+    const auto badResult = modelStatementHandler->apply(std::get<CreateModelStatement>(*badStatement));
+    ASSERT_FALSE(badResult.has_value());
 }
 
 TEST_F(StatementBinderTest, ExplainStatement)

@@ -342,11 +342,12 @@ constexpr std::array<std::string_view, 4> modelInfoOutputColumns{"model_name", "
 template <>
 struct StatementOutputAssembler<CreateModelStatementResult>
 {
-    using OutputRowType = ModelNameOutputRowType;
+    using OutputRowType = ModelInfoOutputRowType;
 
     auto convert(const CreateModelStatementResult& result)
     {
-        return std::make_pair(modelNameOutputColumns, std::vector{std::make_tuple(result.name)});
+        return std::make_pair(
+            modelInfoOutputColumns, std::vector{std::make_tuple(result.name, result.path, result.inputSchema, result.outputSchema)});
     }
 };
 

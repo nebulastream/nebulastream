@@ -195,6 +195,39 @@ ModelStatementHandler::ModelStatementHandler(std::shared_ptr<Inference::ModelCat
 {
 }
 
+namespace
+{
+ModelInfo toModelInfo(const Inference::RegisteredModel& reg)
+{
+    std::string inputSchema;
+    for (const auto& [fieldName, dataType] : reg.inputs)
+    {
+        if (!inputSchema.empty())
+        {
+            inputSchema += ", ";
+        }
+        inputSchema += fmt::format("{}: {}", fieldName, *dataType);
+    }
+
+    std::string outputSchema;
+    for (const auto& [fieldName, dataType] : reg.outputs)
+    {
+        if (!outputSchema.empty())
+        {
+            outputSchema += ", ";
+        }
+        outputSchema += fmt::format("{}: {}", fieldName, *dataType);
+    }
+
+    return ModelInfo{
+        .name = reg.name,
+        .path = reg.path.string(),
+        .inputSchema = std::move(inputSchema),
+        .outputSchema = std::move(outputSchema),
+    };
+}
+}
+
 std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
 {
     if (modelCatalog->hasModel(statement.name))
@@ -216,14 +249,23 @@ std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::oper
         outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
     }
 
-    modelCatalog->registerModel(Inference::RegisteredModel{
+    Inference::RegisteredModel reg{
         .name = statement.name,
         .path = statement.path,
         .inputs = std::move(inputs),
         .outputs = std::move(outputs),
-    });
+    };
 
-    return CreateModelStatementResult{.name = statement.name};
+    try
+    {
+        modelCatalog->registerModel(reg);
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toModelInfo(reg);
 }
 
 std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement&) const
@@ -233,32 +275,7 @@ std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::opera
     models.reserve(registeredModels.size());
     for (const auto& reg : registeredModels)
     {
-        std::string inputSchema;
-        for (const auto& [fieldName, dataType] : reg.inputs)
-        {
-            if (!inputSchema.empty())
-            {
-                inputSchema += ", ";
-            }
-            inputSchema += fmt::format("{}: {}", fieldName, *dataType);
-        }
-
-        std::string outputSchema;
-        for (const auto& [fieldName, dataType] : reg.outputs)
-        {
-            if (!outputSchema.empty())
-            {
-                outputSchema += ", ";
-            }
-            outputSchema += fmt::format("{}: {}", fieldName, *dataType);
-        }
-
-        models.push_back(ModelInfo{
-            .name = reg.name,
-            .path = reg.path.string(),
-            .inputSchema = std::move(inputSchema),
-            .outputSchema = std::move(outputSchema),
-        });
+        models.push_back(toModelInfo(reg));
     }
     return ShowModelsStatementResult{.models = std::move(models)};
 }

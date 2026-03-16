@@ -64,7 +64,30 @@ inline void ModelCatalog::registerModel(const RegisteredModel& model)
     {
         throw NES::InvalidStatement("Model path does not exist: {}", model.path);
     }
-    catalogImpl.erase(model.name);
+
+    auto result = Inference::load(model.path, {});
+    if (!result)
+    {
+        throw NES::CannotLoadModel("Failed to load model '{}': {}", model.name, result.error().message);
+    }
+
+    std::vector<NES::DataType> inputTypes;
+    inputTypes.reserve(model.inputs.size());
+    for (const auto& [name, dt] : model.inputs)
+    {
+        inputTypes.push_back(*dt);
+    }
+    result->setInputs(std::move(inputTypes));
+
+    std::vector<std::pair<std::string, NES::DataType>> outputFields;
+    outputFields.reserve(model.outputs.size());
+    for (const auto& [name, dt] : model.outputs)
+    {
+        outputFields.emplace_back(name, *dt);
+    }
+    result->setOutputs(std::move(outputFields));
+
+    catalogImpl.insert_or_assign(model.name, *result);
     registeredModels.insert_or_assign(model.name, model);
 }
 
@@ -111,34 +134,6 @@ inline Model ModelCatalog::load(const std::string& modelName) const
     if (auto it = catalogImpl.find(modelName); it != catalogImpl.end())
     {
         return it->second;
-    }
-
-    if (auto it = registeredModels.find(modelName); it != registeredModels.end())
-    {
-        const auto& reg = it->second;
-        auto result = Inference::load(reg.path, {});
-        if (result)
-        {
-            std::vector<NES::DataType> inputTypes;
-            inputTypes.reserve(reg.inputs.size());
-            for (const auto& [name, dt] : reg.inputs)
-            {
-                inputTypes.push_back(*dt);
-            }
-            result->setInputs(std::move(inputTypes));
-
-            std::vector<std::pair<std::string, NES::DataType>> outputFields;
-            outputFields.reserve(reg.outputs.size());
-            for (const auto& [name, dt] : reg.outputs)
-            {
-                outputFields.emplace_back(name, *dt);
-            }
-            result->setOutputs(std::move(outputFields));
-
-            catalogImpl.emplace(modelName, *result);
-            return *result;
-        }
-        throw CannotLoadModel("Failed to load model '{}': {}", modelName, result.error().message);
     }
     throw UnknownModelName("Model '{}' was never registered", modelName);
 }
