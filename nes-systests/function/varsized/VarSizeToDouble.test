@@ -1,0 +1,43 @@
+# name: VarSizedToDouble conversion
+# description: Checks if the conversion from VARSIZED strings to double works
+# groups: [Function]
+
+# SUCCESS CASES
+
+CREATE LOGICAL SOURCE varSizedDoubleStream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedDoubleStream TYPE File;
+ATTACH INLINE
+14.5
+ 14.5
+14.5
+1 234.56
+12?3
+-42.75
+0
+000123.4500
+ ? 7 ? . ? 5 ?
+
+SELECT VARSIZEDTODOUBLE(value) AS value_out FROM varSizedDoubleStream INTO FILE();
+----
+14.5
+14.5
+14.5
+1234.56
+123
+-42.75
+0
+123.45
+7.5
+
+
+# ERROR CASES
+
+# different data type than VARSIZED
+CREATE LOGICAL SOURCE wrongDataTypeStream(value UINT64);
+CREATE PHYSICAL SOURCE FOR wrongDataTypeStream TYPE File;
+ATTACH INLINE
+123
+
+SELECT VARSIZEDTODOUBLE(value) AS value_out FROM wrongDataTypeStream INTO FILE();
+----
+Error 2006
