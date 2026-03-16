@@ -204,9 +204,9 @@ assert_json_contains() {
   run DOCKER_NES_REPL tests/sql-file-tests/good/create_model.sql
   [ "$status" -eq 0 ]
 
-  # lines[0]: CREATE MODEL result
-  assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[0]}"
-  # lines[1]: SHOW MODELS — should contain the model with full metadata
+  # lines[0]: CREATE MODEL result — eagerly loaded, returns full metadata
+  assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[0]}"
+  # lines[1]: SHOW MODELS — should contain the same model metadata
   assert_json_contains '[{"model_name":"TESTMODEL","path":"tests/testdata/model/tiny_identity.onnx","input_schema":"F1: FLOAT32","output_schema":"O1: FLOAT32"}]' "${lines[1]}"
   # lines[2]: DROP MODEL result
   assert_json_equal '[{"model_name":"TESTMODEL"}]' "${lines[2]}"

@@ -113,11 +113,6 @@ struct DropQueryStatementResult
     QueryId id;
 };
 
-struct CreateModelStatementResult
-{
-    std::string name;
-};
-
 struct ModelInfo
 {
     std::string name;
@@ -125,6 +120,8 @@ struct ModelInfo
     std::string inputSchema;
     std::string outputSchema;
 };
+
+using CreateModelStatementResult = ModelInfo;
 
 struct ShowModelsStatementResult
 {
