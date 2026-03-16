@@ -72,12 +72,14 @@ set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
 foreach (joinStrategy IN LISTS joinStrategies)
     ExternalData_Add_Test(test-data
             NAME systest_interpreter_${joinStrategy}
-            COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${joinStrategy} --exclude-groups large --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=INTERPRETER)
+            COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/interpreter_${joinStrategy} --exclude-groups large --data ${EXPANDED_TEST_DATA_PATH} --optimizer join_strategy=${joinStrategy} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=INTERPRETER)
+    set_tests_properties(systest_interpreter_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 endforeach ()
 if (NOT CODE_COVERAGE)
     ExternalData_Add_Test(test-data
             NAME systest_compiler
-            COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large CompilationIntensive --data ${EXPANDED_TEST_DATA_PATH} -- --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true)
+            COMMAND systest -n 20 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/compiler --exclude-groups large CompilationIntensive --data ${EXPANDED_TEST_DATA_PATH} -- --worker.query_engine.number_of_worker_threads=4 --worker.default_query_execution.execution_mode=COMPILER --enable_event_trace=true)
+    set_tests_properties(systest_compiler PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif (NOT CODE_COVERAGE)
 
 
@@ -89,12 +91,13 @@ if (ENABLE_LARGE_TESTS)
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_${joinStrategy}
             COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000)
+    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 
     ExternalData_Add_Test(test-data
-            # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
+            # currently, 16 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_benchmark_${joinStrategy}
             COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.number_of_buffers_in_global_buffer_manager=2000000)
-
+    set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 16)
 
     # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
     # is still small enough to finish the test in minutes.
@@ -102,38 +105,41 @@ if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large_${joinStrategy}
             COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} -t ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.number_of_buffers_in_global_buffer_manager=2000000)
+    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
 endif ()
 
 
 if (NOT CODE_COVERAGE)
     ## We run all join and aggregation tests with different no. worker threads and different join strategies
-    set(workerThreads 1 2 4)
-    set(joinStrategies NESTED_LOOP_JOIN HASH_JOIN)
-    foreach (workerThreads IN LISTS workerThreads)
-        foreach (joinStrategy IN LISTS joinStrategies)
+    foreach (workerThreads IN ITEMS 1 2 4)
+        foreach (joinStrategy IN ITEMS NESTED_LOOP_JOIN HASH_JOIN)
             ExternalData_Add_Test(test-data
                     NAME systest_join_${workerThreads}_${joinStrategy}_interpreter
                     COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_interpreter_join --data ${EXPANDED_TEST_DATA_PATH}
                     --optimizer join_strategy=${joinStrategy}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000)
+            set_tests_properties(systest_join_${workerThreads}_${joinStrategy}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
             ExternalData_Add_Test(test-data
                     NAME systest_join_${workerThreads}_${joinStrategy}_compiler
                     COMMAND systest -n 6 --show-query-performance --groups Join --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_${joinStrategy}_compiler_join --data ${EXPANDED_TEST_DATA_PATH}
                     --optimizer join_strategy=${joinStrategy}
                     --
                     --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000)
+            set_tests_properties(systest_join_${workerThreads}_${joinStrategy}_compiler PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
         endforeach ()
         ExternalData_Add_Test(test-data
                 NAME systest_agg_${workerThreads}_interpreter
                 COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups large --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_interpreter_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                 --
                 --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=INTERPRETER --worker.number_of_buffers_in_global_buffer_manager=20000)
+        set_tests_properties(systest_agg_${workerThreads}_interpreter PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
         ExternalData_Add_Test(test-data
                 NAME systest_agg_${workerThreads}_compiler
                 COMMAND systest -n 6 --show-query-performance --groups Aggregation --exclude-groups large CompilationIntensive --workingDir=${CMAKE_CURRENT_BINARY_DIR}/${workerThreads}_compiler_aggregation --data ${EXPANDED_TEST_DATA_PATH}
                 --
                 --worker.query_engine.number_of_worker_threads=${workerThreads} --worker.default_query_execution.execution_mode=COMPILER --worker.number_of_buffers_in_global_buffer_manager=20000)
+        set_tests_properties(systest_agg_${workerThreads}_compiler PROPERTIES LABELS "Systest" PROCESSORS ${workerThreads})
     endforeach ()
 endif (NOT CODE_COVERAGE)
 

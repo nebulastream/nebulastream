@@ -62,13 +62,31 @@ jobs:
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DALL_HASHMAP_TESTS=1
             cmake --build build -j  -- -k 0
       - uses: ./.github/steps/run-in-container
-        name: Run Tests
+        name: Run Unit Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
-            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+            # Run unit tests in parallel. Timeout after 40 minutes.
+            # We run here all tests that are not a Syster or DockerCompose
+            ctest --test-dir build -j -LE "Systest|DockerCompose" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run System Tests
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # Each systest uses PROCESSORS 4, so ctest -j will schedule them respecting core limits.
+            # Timeout after 80 minutes.
+            ctest --test-dir build -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # Run Docker-based tests sequentially. Timeout after 40 minutes.
+            ctest --test-dir build -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
@@ -86,7 +104,7 @@ jobs:
           slug: nebulastream/nebulastream
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
-          files: build/junit.xml
+          files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml
 
   # We want to test if our cmake log level flag works correctly. Therefore, we need to build and run the tests with different log levels.
   # As we can not do this in a unit test (because the log level is set at compile time), we need to run the tests in a separate job.
