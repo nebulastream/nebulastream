@@ -17,22 +17,12 @@ query: |
 
 models:
   - name: iris
-    path: /tmp/iris.onnx
+    path: tests/testdata/model/tiny_identity.onnx
     input:
       - name: p1
         type: FLOAT32
-      - name: p2
-        type: FLOAT32
-      - name: p3
-        type: FLOAT32
-      - name: p4
-        type: FLOAT32
     output:
-      - name: setosa
-        type: FLOAT32
-      - name: versicolor
-        type: FLOAT32
-      - name: virginica
+      - name: o1
         type: FLOAT32
 
 sinks:
