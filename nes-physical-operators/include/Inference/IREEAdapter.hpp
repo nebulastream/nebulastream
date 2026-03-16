@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <bit>
 #include <cstddef>
 #include <memory>
 #include <span>
@@ -44,23 +45,14 @@ public:
         std::bit_cast<T*>(inputData.get())[index] = value;
     }
 
-    float getResultAt(size_t idx)
-    {
-        PRECONDITION(idx < outputSize / sizeof(float), "Index is too large");
-        return std::bit_cast<float*>(outputData.get())[idx];
-    }
+    float getResultAt(size_t idx);
 
-    void copyResultTo(std::span<std::byte> content)
-    {
-        PRECONDITION(outputSize == content.size(), "Output size does not match");
-        std::ranges::copy_n(outputData.get(), static_cast<std::ptrdiff_t>(std::min(content.size(), outputSize)), content.data());
-    }
+    void copyResultTo(std::span<std::byte> content);
+
+    [[nodiscard]] size_t getOutputSize() const;
 
     /// Copies up to inputSize bytes from content, truncating if content is larger (e.g., for varsized inputs).
-    void addModelInput(std::span<std::byte> content)
-    {
-        std::ranges::copy_n(content.data(), static_cast<std::ptrdiff_t>(std::min(content.size(), inputSize)), inputData.get());
-    }
+    void addModelInput(std::span<std::byte> content);
 
     void infer();
 

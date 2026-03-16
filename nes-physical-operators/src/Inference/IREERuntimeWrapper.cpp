@@ -15,27 +15,36 @@
 #include <Inference/IREERuntimeWrapper.hpp>
 
 #include <cstddef>
+#include <memory>
 #include <span>
 #include <string>
+#include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
 #include <ErrorHandling.hpp>
 #include <scope_guard.hpp>
 
-#define IREE_CHECK_STATUS(status, msg) \
-    if (!iree_status_is_ok(status)) \
-    { \
-        throw InferenceRuntime(msg); \
-    }
-
 namespace NES::Inference
 {
 
-IREERuntimeWrapper::IREERuntimeWrapper(IREERuntimeWrapper&& other) noexcept
-    : inputShape(std::move(other.inputShape)), nDim(other.nDim), instance(other.instance), session(other.session), function(other.function)
+namespace
 {
-    other.instance = nullptr;
-    other.session = nullptr;
+void ireeCheckStatus(iree_status_t status, const char* msg)
+{
+    if (!iree_status_is_ok(status))
+    {
+        throw InferenceRuntime(msg);
+    }
+}
+} /// anonymous namespace
+
+IREERuntimeWrapper::IREERuntimeWrapper(IREERuntimeWrapper&& other) noexcept
+    : inputShape(std::move(other.inputShape))
+    , nDim(other.nDim)
+    , instance(std::move(other.instance))
+    , session(std::move(other.session))
+    , function(other.function)
+{
     other.function = {};
 }
 
@@ -43,38 +52,15 @@ IREERuntimeWrapper& IREERuntimeWrapper::operator=(IREERuntimeWrapper&& other) no
 {
     if (this != &other)
     {
-        if (session != nullptr)
-        {
-            iree_runtime_session_release(session);
-        }
-        if (instance != nullptr)
-        {
-            iree_runtime_instance_release(instance);
-        }
-
         inputShape = std::move(other.inputShape);
         nDim = other.nDim;
-        instance = other.instance;
-        session = other.session;
+        session = std::move(other.session);
+        instance = std::move(other.instance);
         function = other.function;
 
-        other.instance = nullptr;
-        other.session = nullptr;
         other.function = {};
     }
     return *this;
-}
-
-IREERuntimeWrapper::~IREERuntimeWrapper()
-{
-    if (session != nullptr)
-    {
-        iree_runtime_session_release(session);
-    }
-    if (instance != nullptr)
-    {
-        iree_runtime_instance_release(instance);
-    }
 }
 
 void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
@@ -84,14 +70,14 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_instance_options_use_all_available_drivers(&instanceOptions);
     iree_runtime_instance_t* inst = nullptr;
     iree_status_t status = iree_runtime_instance_create(&instanceOptions, iree_allocator_system(), &inst);
-    IREE_CHECK_STATUS(status, "Model Setup failed. Could not create IREE runtime instance");
+    ireeCheckStatus(status, "Model Setup failed. Could not create IREE runtime instance");
+    std::unique_ptr<iree_runtime_instance_t, InstanceDeleter> instPtr(inst);
     NES_DEBUG("Created IREE runtime instance")
 
     iree_hal_device_t* dev = nullptr;
-    status = iree_runtime_instance_try_create_default_device(inst, iree_make_cstring_view("local-sync"), &dev);
+    status = iree_runtime_instance_try_create_default_device(instPtr.get(), iree_make_cstring_view("local-sync"), &dev);
     if (!iree_status_is_ok(status) || dev == nullptr)
     {
-        iree_runtime_instance_release(inst);
         throw InferenceRuntime("Model Setup failed. Could not create IREE device");
     }
     NES_DEBUG("Created IREE device")
@@ -99,28 +85,27 @@ void IREERuntimeWrapper::setup(iree_const_byte_span_t compiledModel)
     iree_runtime_session_options_t sessionOptions;
     iree_runtime_session_options_initialize(&sessionOptions);
     iree_runtime_session_t* sess = nullptr;
-    status = iree_runtime_session_create_with_device(inst, &sessionOptions, dev, iree_runtime_instance_host_allocator(inst), &sess);
+    status = iree_runtime_session_create_with_device(
+        instPtr.get(), &sessionOptions, dev, iree_runtime_instance_host_allocator(instPtr.get()), &sess);
     /// Session takes a reference to the device, so we release our reference
     iree_hal_device_release(dev);
     NES_DEBUG("Created IREE session")
 
     if (!iree_status_is_ok(status))
     {
-        iree_runtime_instance_release(inst);
         throw InferenceRuntime("Model Setup failed. Could not create Session");
     }
+    std::unique_ptr<iree_runtime_session_t, SessionDeleter> sessPtr(sess);
 
-    status = iree_runtime_session_append_bytecode_module_from_memory(sess, compiledModel, iree_allocator_null());
+    status = iree_runtime_session_append_bytecode_module_from_memory(sessPtr.get(), compiledModel, iree_allocator_null());
     if (!iree_status_is_ok(status))
     {
-        iree_runtime_session_release(sess);
-        iree_runtime_instance_release(inst);
         throw InferenceRuntime("Model Setup failed. Could not Load model");
     }
 
     NES_DEBUG("Read the model from the bytecode buffer");
-    this->instance = inst;
-    this->session = sess;
+    this->instance = std::move(instPtr);
+    this->session = std::move(sessPtr);
 }
 
 void IREERuntimeWrapper::execute(const std::string& functionName, std::span<const std::byte> input, std::span<std::byte> output)
@@ -128,14 +113,14 @@ void IREERuntimeWrapper::execute(const std::string& functionName, std::span<cons
     iree_runtime_call_t call;
     if (this->function.module == nullptr)
     {
-        auto* status = iree_runtime_call_initialize_by_name(session, iree_make_cstring_view(functionName.c_str()), &call);
-        IREE_CHECK_STATUS(status, "Model Execution failed. Could not initialize function call");
+        auto* status = iree_runtime_call_initialize_by_name(session.get(), iree_make_cstring_view(functionName.c_str()), &call);
+        ireeCheckStatus(status, "Model Execution failed. Could not initialize function call");
         this->function = call.function;
     }
     else
     {
-        auto* status = iree_runtime_call_initialize(session, function, &call);
-        IREE_CHECK_STATUS(status, "Model Execution failed. Could not initialize cached function call");
+        auto* status = iree_runtime_call_initialize(session.get(), function, &call);
+        ireeCheckStatus(status, "Model Execution failed. Could not initialize cached function call");
     }
     /// Ensure call resources are released on all exit paths (including exceptions)
     SCOPE_EXIT
@@ -143,8 +128,8 @@ void IREERuntimeWrapper::execute(const std::string& functionName, std::span<cons
         iree_runtime_call_deinitialize(&call);
     };
 
-    iree_hal_device_t* dev = iree_runtime_session_device(session);
-    iree_hal_allocator_t* deviceAllocator = iree_runtime_session_device_allocator(session);
+    iree_hal_device_t* dev = iree_runtime_session_device(session.get());
+    iree_hal_allocator_t* deviceAllocator = iree_runtime_session_device_allocator(session.get());
     iree_status_t status = iree_ok_status();
 
     iree_hal_buffer_view_t* view = nullptr;
@@ -163,21 +148,21 @@ void IREERuntimeWrapper::execute(const std::string& functionName, std::span<cons
             .min_alignment = 0},
         iree_make_const_byte_span(input.data(), input.size()),
         &view);
-    IREE_CHECK_STATUS(status, "Model Execution failed. Could not copy input tensor");
+    ireeCheckStatus(status, "Model Execution failed. Could not copy input tensor");
     SCOPE_EXIT
     {
         iree_hal_buffer_view_release(view);
     };
 
     status = iree_runtime_call_inputs_push_back_buffer_view(&call, view);
-    IREE_CHECK_STATUS(status, "Model Execution failed. Could not push input tensor");
+    ireeCheckStatus(status, "Model Execution failed. Could not push input tensor");
 
     status = iree_runtime_call_invoke(&call, 0);
-    IREE_CHECK_STATUS(status, "Model Execution failed. Could not invoke model");
+    ireeCheckStatus(status, "Model Execution failed. Could not invoke model");
 
     iree_hal_buffer_view_t* outputView = nullptr;
     status = iree_runtime_call_outputs_pop_front_buffer_view(&call, &outputView);
-    IREE_CHECK_STATUS(status, "Model Execution failed. Could not pop output buffer");
+    ireeCheckStatus(status, "Model Execution failed. Could not pop output buffer");
     SCOPE_EXIT
     {
         iree_hal_buffer_view_release(outputView);
@@ -189,7 +174,7 @@ void IREERuntimeWrapper::execute(const std::string& functionName, std::span<cons
         throw InferenceRuntime("Model Execution failed. Model output size exceeds buffer capacity");
     }
     status = iree_hal_device_transfer_d2h(
-        iree_runtime_session_device(session),
+        iree_runtime_session_device(session.get()),
         iree_hal_buffer_view_buffer(outputView),
         0,
         output.data(),
@@ -197,7 +182,7 @@ void IREERuntimeWrapper::execute(const std::string& functionName, std::span<cons
         IREE_HAL_TRANSFER_BUFFER_FLAG_DEFAULT,
         iree_infinite_timeout());
 
-    IREE_CHECK_STATUS(status, "Model Execution failed. Could not copy output tensor");
+    ireeCheckStatus(status, "Model Execution failed. Could not copy output tensor");
 }
 
 void IREERuntimeWrapper::setInputShape(std::vector<size_t> shape)

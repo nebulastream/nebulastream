@@ -13,7 +13,7 @@
 find_package(Boost REQUIRED COMPONENTS graph filesystem process)
 find_package(OpenSSL REQUIRED)
 
-add_library(nes-inference Model.cpp ModelLoader.cpp)
+add_library(nes-inference src/Model.cpp src/ModelLoader.cpp)
 target_include_directories(nes-inference PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include/nebulastream/>
