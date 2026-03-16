@@ -65,7 +65,10 @@ public:
     enum class JoinType : uint8_t
     {
         INNER_JOIN,
-        CARTESIAN_PRODUCT
+        CARTESIAN_PRODUCT,
+        OUTER_LEFT_JOIN,
+        OUTER_RIGHT_JOIN,
+        OUTER_FULL_JOIN
     };
 
     explicit JoinLogicalOperator(
@@ -147,6 +150,12 @@ private:
 };
 
 static_assert(LogicalOperatorConcept<JoinLogicalOperator>);
+
+[[nodiscard]] inline bool isOuterJoin(JoinLogicalOperator::JoinType joinType) noexcept
+{
+    return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
+        || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+}
 
 template <>
 struct Reflector<TypedLogicalOperator<JoinLogicalOperator>>

@@ -32,3 +32,5 @@ if (ENABLE_IREE_TESTS)
 
     add_nes_inference_physical_operator_test(InferModelPhysicalOperatorTest InferModelPhysicalOperatorTest.cpp)
 endif ()
+
+add_nes_physical_operator_test(StreamJoinProbePhysicalOperatorTest StreamJoinProbePhysicalOperatorTest.cpp)

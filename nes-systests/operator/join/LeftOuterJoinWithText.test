@@ -1,0 +1,32 @@
+# name: join/LeftOuterJoinWithText.test
+# description: LEFT OUTER JOIN where the nullable (right) side has a VARSIZED field — should trigger makeNullVarVal for VARSIZED type
+# groups: [WindowOperators, Join, OuterJoin]
+
+# Left source: ids 1, 2, 3 — id 2 has no match on the right
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,10,100
+2,20,200
+3,30,300
+
+# Right source: has a VARSIZED (text) field; only ids 1 and 3 present
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, label VARSIZED NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+1,hello,150
+3,world,350
+
+# Sink: right-side label is nullable (no NOT NULL) because unmatched left rows get NULL-filled right fields
+CREATE SINK sink(streamstream2.start UINT64 NOT NULL, streamstream2.end UINT64 NOT NULL, stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.id2 UINT64, stream2.label VARSIZED, stream2.timestamp UINT64) TYPE File;
+
+# Left id=2 has no right match, so stream2.label must be NULL-filled — this hits the missing VARSIZED case in makeNullVarVal
+SELECT *
+FROM (SELECT * FROM stream) LEFT OUTER JOIN (SELECT * FROM stream2)
+ON (id = id2)
+WINDOW TUMBLING (timestamp, size 10 sec)
+INTO sink;
+----
+0,10000,1,10,100,1,hello,150
+0,10000,2,20,200,NULL,NULL,NULL
+0,10000,3,30,300,3,world,350

@@ -17,6 +17,7 @@
 #include <bit>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -24,6 +25,7 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
@@ -34,12 +36,27 @@
 namespace NES
 {
 
+/// Identifies what kind of work a probe task should perform.
+/// NOLINTNEXTLINE(performance-enum-size) uint64_t required for struct alignment and Nautilus readValueFromMemRef compatibility
+enum class ProbeTaskType : uint64_t
+{
+    MATCH_PAIRS = 0, /// Inner-join-style: emit only matched pairs
+    LEFT_NULL_FILL = 1, /// Iterate left (preserved) maps, check all right maps, emit null-fill for unmatched left
+    RIGHT_NULL_FILL = 2 /// Iterate right (preserved) maps, check all left maps, emit null-fill for unmatched right
+};
+
 /// This task models the information for a hash join based window trigger
 struct EmittedHJWindowTrigger
 {
     EmittedHJWindowTrigger(
-        const WindowInfo windowInfo, const std::vector<HashMap*>& leftHashMaps, const std::vector<HashMap*>& rightHashMaps)
-        : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
+        const WindowInfo windowInfo,
+        const std::vector<HashMap*>& leftHashMaps,
+        const std::vector<HashMap*>& rightHashMaps,
+        ProbeTaskType probeTaskType)
+        : windowInfo(windowInfo)
+        , leftNumberOfHashMaps(leftHashMaps.size())
+        , rightNumberOfHashMaps(rightHashMaps.size())
+        , probeTaskType(probeTaskType)
     {
         /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
         const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(HashMap*);
@@ -54,6 +71,7 @@ struct EmittedHJWindowTrigger
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
+    ProbeTaskType probeTaskType;
     HashMap** leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
     HashMap**
         rightHashMaps; /// Pointer to the stored pointers of all hash maps of the right input stream that the probe should iterate over
@@ -66,7 +84,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        JoinLogicalOperator::JoinType joinType);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -85,6 +104,13 @@ private:
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
 
 
+    /// For outer joins, we override triggerSlices to emit:
+    /// 1. N×N MATCH_PAIRS tasks (same as inner join, parallelizable)
+    /// 2. Per-slice null-fill tasks that check one slice's keys against ALL opposite-side maps
+    void triggerSlices(
+        const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
+        PipelineExecutionContext* pipelineCtx) override;
+
     void emitSlicesToProbe(
         Slice& sliceLeft,
         Slice& sliceRight,
@@ -92,6 +118,22 @@ private:
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
 
+    /// Handles outer join task emission for a single window
+    void triggerOuterJoinWindow(
+        const WindowInfoAndSequenceNumber& windowInfo,
+        const std::vector<std::shared_ptr<Slice>>& allSlices,
+        PipelineExecutionContext* pipelineCtx);
+
+    /// Emits a probe buffer with the given hash maps and task type
+    void emitProbeBuffer(
+        const std::vector<HashMap*>& leftHashMaps,
+        const std::vector<HashMap*>& rightHashMaps,
+        const WindowInfo& windowInfo,
+        const SequenceData& sequenceData,
+        ProbeTaskType probeTaskType,
+        PipelineExecutionContext* pipelineCtx);
+
+    JoinLogicalOperator::JoinType joinType;
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
 };

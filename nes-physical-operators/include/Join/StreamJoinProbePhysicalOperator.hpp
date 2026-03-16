@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <vector>
+#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -47,6 +48,15 @@ protected:
         const nautilus::val<Timestamp>& windowEnd,
         const std::vector<Record::RecordFieldIdentifier>& projectionsOuter,
         const std::vector<Record::RecordFieldIdentifier>& projectionsInner) const;
+
+    /// Creates a joined record for an unmatched outer tuple: preserved-side fields are written
+    /// normally; null-side fields are filled with typed null VarVals.
+    [[nodiscard]] Record createNullFilledJoinedRecord(
+        const Record& preservedRecord,
+        const nautilus::val<Timestamp>& windowStart,
+        const nautilus::val<Timestamp>& windowEnd,
+        const std::vector<Record::RecordFieldIdentifier>& preservedProjections,
+        const Schema& nullSideSchema) const;
 
     PhysicalFunction joinFunction;
     JoinSchema joinSchema;
