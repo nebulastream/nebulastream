@@ -18,6 +18,7 @@ vcpkg_from_github(
         PATCHES
         0001-disable-ubsan-function-call-check.patch
         0002-nautilus-compilation-cache.patch
+        0003-dynamic-pointer-substitution.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
