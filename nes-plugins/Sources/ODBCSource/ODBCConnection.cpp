@@ -325,7 +325,7 @@ size_t ODBCConnection::syncRowCount()
 }
 
 void ODBCConnection::connect(
-    const std::string& connectionString, const std::string_view syncTable, const std::string_view query, const bool readOnlyNewRows)
+    const std::string& connectionString, const std::string_view syncTable, const std::string_view query, const bool readOnlyNewRows, const bool useCheckpoint)
 {
     SQLCHAR outConnectionString[1024];
     SQLSMALLINT outConnectionStringLength;
@@ -366,20 +366,27 @@ void ODBCConnection::connect(
     /// fetch the current number of rows to read only newly added rows
     if (readOnlyNewRows)
     {
-        const auto checkpoint = readCheckpointRowCount();
-        if (checkpoint > 0)
+        if (useCheckpoint)
         {
-            this->rowCountTracker = checkpoint;
-            NES_DEBUG("Using checkpoint rowcount: {}", checkpoint);
-            std::cout << "Using checkpoint rowcount: " << checkpoint << '\n';
+            const auto checkpoint = readCheckpointRowCount();
+            if (checkpoint > 0)
+            {
+                this->rowCountTracker = checkpoint;
+                NES_DEBUG("Using checkpoint rowcount: {}", checkpoint);
+                std::cout << "Using checkpoint rowcount: " << checkpoint << '\n';
+            }
+            else
+            {
+                this->rowCountTracker = 0;
+                NES_DEBUG("No checkpoint found, starting from the first row (rowCountTracker=0)");
+                std::cout << "No checkpoint found, starting from the first row\n";
+            }
         }
         else
         {
-            // this->rowCountTracker = syncRowCount();
-            // NES_DEBUG("No checkpoint found, using COUNT(*) rowcount: {}", this->rowCountTracker);
-            this->rowCountTracker = 0;
-            NES_DEBUG("No checkpoint found, starting from the first row (rowCountTracker=0)");
-            std::cout << "No checkpoint found, starting from the first row\n";
+            this->rowCountTracker = syncRowCount();
+            NES_DEBUG("use_checkpoint=false, using COUNT(*) rowcount: {}", this->rowCountTracker);
+            std::cout << "use_checkpoint=false, using COUNT(*) rowcount: " << this->rowCountTracker << '\n';
         }
     }
 }
