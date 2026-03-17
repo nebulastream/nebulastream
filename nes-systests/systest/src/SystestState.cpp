@@ -59,7 +59,7 @@ SystestQuery::resultFile(const std::filesystem::path& workingDir, std::string_vi
     auto resultDir = workingDir / "results";
     if (not is_directory(resultDir))
     {
-        create_directory(resultDir);
+        create_directories(resultDir);
         std::cout << "Created working directory: file://" << resultDir.string() << "\n";
     }
 
@@ -71,7 +71,7 @@ std::filesystem::path SystestQuery::sourceFile(const std::filesystem::path& work
     auto sourceDir = workingDir / "sources";
     if (not is_directory(sourceDir))
     {
-        create_directory(sourceDir);
+        create_directories(sourceDir);
         std::cout << "Created working directory: file://" << sourceDir.string() << "\n";
     }
 
