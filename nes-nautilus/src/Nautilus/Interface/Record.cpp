@@ -44,6 +44,23 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
     return recordFields.at(recordFieldIdentifier);
 }
 
+const VarVal& Record::readUnqualified(const RecordFieldIdentifier& unqualifiedRecordFieldIdentifier) const
+{
+    for (const auto& [recordField, val] : nautilus::static_iterable(recordFields))
+    {
+        if (recordField.contains(unqualifiedRecordFieldIdentifier))
+        {
+            return val;
+        }
+    }
+    const std::string allFields = std::accumulate(
+        recordFields.begin(),
+        recordFields.end(),
+        std::string{},
+        [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
+    throw FieldNotFound("Field {} not found in record {}.", unqualifiedRecordFieldIdentifier, allFields);
+}
+
 void Record::write(const RecordFieldIdentifier& recordFieldIdentifier, const VarVal& varVal)
 {
     /// We can not use the insert_or_assign method, as we otherwise run into a tracing exception, as this might result in incorrect code.
