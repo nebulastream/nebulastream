@@ -52,8 +52,12 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 }
 }
 
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
+ExecutionContext::ExecutionContext(
+    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+    const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
+    const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
+    , runtimeInputFormatterRegistry(runtimeInputFormatterRegistry)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)

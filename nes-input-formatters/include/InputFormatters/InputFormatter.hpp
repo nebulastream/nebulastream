@@ -33,7 +33,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <PipelineExecutionContext.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
@@ -122,14 +122,14 @@ public:
     [[nodiscard]] nautilus::val<bool> indexBuffer(
         const RecordBuffer& recordBuffer,
         const ArenaRef& arenaRef,
-        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
         const uint64_t inputFormatterKey) const
     {
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
             indexLeadingSpanningTupleAndBufferProxy,
             recordBuffer.getReference(),
-            pipelineContext,
+            runtimeInputFormatterRegistry,
             nautilus::val<uint64_t>(inputFormatterKey),
             arenaRef.getArena()));
 
@@ -319,10 +319,11 @@ private:
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
 
-    static InputFormatter* getRuntimeInputFormatter(const PipelineExecutionContext* pipelineContext, const uint64_t inputFormatterKey)
+    static InputFormatter*
+    getRuntimeInputFormatter(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry, const uint64_t inputFormatterKey)
     {
-        PRECONDITION(pipelineContext != nullptr, "pipeline execution context is null");
-        auto* inputFormatter = reinterpret_cast<InputFormatter*>(pipelineContext->getRuntimeInputFormatterHandle(inputFormatterKey));
+        PRECONDITION(runtimeInputFormatterRegistry != nullptr, "runtime input formatter registry is null");
+        auto* inputFormatter = reinterpret_cast<InputFormatter*>(runtimeInputFormatterRegistry->getHandle(inputFormatterKey));
         if (inputFormatter == nullptr)
         {
             throw CannotFormatSourceData("Missing runtime input formatter handle for key {}", inputFormatterKey);
@@ -332,11 +333,11 @@ private:
 
     static bool indexTrailingSpanningTupleProxy(
         const TupleBuffer* tupleBuffer,
-        const PipelineExecutionContext* pipelineContext,
+        const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry,
         const uint64_t inputFormatterKey,
         Arena* arenaRef)
     {
-        auto* inputFormatter = getRuntimeInputFormatter(pipelineContext, inputFormatterKey);
+        auto* inputFormatter = getRuntimeInputFormatter(runtimeInputFormatterRegistry, inputFormatterKey);
 
         /// the buffer does not have a trailing SpanningTuple, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
         const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
@@ -362,11 +363,11 @@ private:
 
     static IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
         const TupleBuffer* tupleBuffer,
-        const PipelineExecutionContext* pipelineContext,
+        const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry,
         const uint64_t inputFormatterKey,
         Arena* arenaRef)
     {
-        auto* inputFormatter = getRuntimeInputFormatter(pipelineContext, inputFormatterKey);
+        auto* inputFormatter = getRuntimeInputFormatter(runtimeInputFormatterRegistry, inputFormatterKey);
 
         IndexPhaseResultBuilder::startBuildingIndex();
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
@@ -470,7 +471,7 @@ private:
         const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
             indexTrailingSpanningTupleProxy,
             recordBuffer.getReference(),
-            executionCtx.pipelineContext,
+            executionCtx.runtimeInputFormatterRegistry,
             nautilus::val<uint64_t>(inputFormatterKey),
             executionCtx.pipelineMemoryProvider.arena.getArena());
 

@@ -88,17 +88,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             operatorHandlers = &opHandlers;
         }
 
-        void setRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey, const std::uintptr_t runtimeHandle) override
-        {
-            runtimeInputFormatterHandles.insert_or_assign(runtimeInputFormatterKey, runtimeHandle);
-        }
-
-        [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey) const override
-        {
-            const auto handleIterator = runtimeInputFormatterHandles.find(runtimeInputFormatterKey);
-            return handleIterator == runtimeInputFormatterHandles.end() ? 0 : handleIterator->second;
-        }
-
         MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
@@ -110,7 +99,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
-        std::unordered_map<uint64_t, std::uintptr_t> runtimeInputFormatterHandles;
     };
 
 public:
@@ -139,9 +127,10 @@ public:
     {
         MockedPipelineContext pec{buffers, bm};
         pec.setOperatorHandlers(handlers);
+        RuntimeInputFormatterRegistry runtimeInputFormatterRegistry;
         Arena arena(bm);
 
-        ExecutionContext executionContext{&pec, &arena};
+        ExecutionContext executionContext{&pec, &runtimeInputFormatterRegistry, &arena};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();

@@ -289,22 +289,6 @@ struct DefaultPEC final : PipelineExecutionContext
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
     }
-
-    void setRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey, const std::uintptr_t runtimeHandle) override
-    {
-        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        runtimeInputFormatterHandles.insert_or_assign(runtimeInputFormatterKey, runtimeHandle);
-    }
-
-    [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle(const uint64_t runtimeInputFormatterKey) const override
-    {
-        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        const auto handleIterator = runtimeInputFormatterHandles.find(runtimeInputFormatterKey);
-        return handleIterator == runtimeInputFormatterHandles.end() ? 0 : handleIterator->second;
-    }
-
-private:
-    std::unordered_map<uint64_t, std::uintptr_t> runtimeInputFormatterHandles;
 };
 
 /// Lifetime of the ThreadPool:

@@ -36,10 +36,10 @@ void InputFormatterTupleBufferRef::readBuffer(
 nautilus::val<bool> InputFormatterTupleBufferRef::indexBuffer(
     RecordBuffer& recordBuffer,
     ArenaRef& arenaRef,
-    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+    const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
     const uint64_t runtimeInputFormatterKey) const
 {
-    return this->inputFormatter->indexBuffer(recordBuffer, arenaRef, pipelineContext, runtimeInputFormatterKey);
+    return this->inputFormatter->indexBuffer(recordBuffer, arenaRef, runtimeInputFormatterRegistry, runtimeInputFormatterKey);
 }
 
 std::uintptr_t InputFormatterTupleBufferRef::getRuntimeInputFormatterHandle() const

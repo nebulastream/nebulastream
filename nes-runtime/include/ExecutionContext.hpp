@@ -30,6 +30,7 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
@@ -83,7 +84,10 @@ enum class OpenReturnState : uint8_t
 /// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
+    explicit ExecutionContext(
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
+        const nautilus::val<Arena*>& arena);
 
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
@@ -105,6 +109,7 @@ struct ExecutionContext final
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
+    const nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.

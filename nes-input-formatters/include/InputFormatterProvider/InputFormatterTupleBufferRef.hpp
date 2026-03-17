@@ -26,8 +26,8 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <PipelineExecutionContext.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -89,7 +89,7 @@ public:
     nautilus::val<bool> indexBuffer(
         RecordBuffer& recordBuffer,
         ArenaRef& arenaRef,
-        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
         uint64_t runtimeInputFormatterKey) const;
 
     [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
@@ -106,9 +106,11 @@ public:
             const ExecuteChildFn& executeChild,
             uint64_t runtimeInputFormatterKey) const
             = 0;
-        virtual nautilus::val<bool>
-        indexBuffer(RecordBuffer&, ArenaRef&, const nautilus::val<PipelineExecutionContext*>&, uint64_t runtimeInputFormatterKey) const
-            = 0;
+        virtual nautilus::val<bool> indexBuffer(
+            RecordBuffer&,
+            ArenaRef&,
+            const nautilus::val<const RuntimeInputFormatterRegistry*>&,
+            uint64_t runtimeInputFormatterKey) const = 0;
         [[nodiscard]] virtual std::uintptr_t getRuntimeInputFormatterHandle() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
@@ -122,10 +124,10 @@ public:
         nautilus::val<bool> indexBuffer(
             RecordBuffer& recordBuffer,
             ArenaRef& arena,
-            const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+            const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
             const uint64_t runtimeInputFormatterKey) const override
         {
-            return InputFormatter.indexBuffer(recordBuffer, arena, pipelineContext, runtimeInputFormatterKey);
+            return InputFormatter.indexBuffer(recordBuffer, arena, runtimeInputFormatterRegistry, runtimeInputFormatterKey);
         }
 
         std::ostream& toString(std::ostream& os) const override { return InputFormatter.toString(os); }

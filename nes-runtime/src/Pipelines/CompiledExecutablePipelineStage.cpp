@@ -93,8 +93,9 @@ private:
 
 void registerRuntimeInputFormatterHandlesForOperator(
     const PhysicalOperator& physicalOperator,
-    PipelineExecutionContext& pipelineExecutionContext,
-    std::unordered_set<uint64_t>& seenRuntimeInputFormatterSlots)
+    RuntimeInputFormatterRegistry& runtimeInputFormatterRegistry,
+    std::unordered_set<uint64_t>& seenRuntimeInputFormatterSlots,
+    const PipelineId pipelineId)
 {
     if (const auto scanOperator = physicalOperator.tryGet<ScanPhysicalOperator>(); scanOperator)
     {
@@ -102,25 +103,24 @@ void registerRuntimeInputFormatterHandlesForOperator(
         {
             const auto runtimeInputFormatterSlot = scanOperator->getRuntimeInputFormatterSlot();
             const auto [_, isNewSlot] = seenRuntimeInputFormatterSlots.insert(runtimeInputFormatterSlot);
-            PRECONDITION(
-                isNewSlot,
-                "Duplicate runtime input formatter slot {} in pipeline {}",
-                runtimeInputFormatterSlot,
-                pipelineExecutionContext.getPipelineId().getRawValue());
-            pipelineExecutionContext.setRuntimeInputFormatterHandle(runtimeInputFormatterSlot, runtimeInputFormatterHandle);
+            PRECONDITION(isNewSlot, "Duplicate runtime input formatter slot {} in pipeline {}", runtimeInputFormatterSlot, pipelineId.getRawValue());
+            runtimeInputFormatterRegistry.registerHandle(runtimeInputFormatterSlot, runtimeInputFormatterHandle);
         }
     }
 
     if (const auto childOperator = physicalOperator.getChild(); childOperator)
     {
-        registerRuntimeInputFormatterHandlesForOperator(*childOperator, pipelineExecutionContext, seenRuntimeInputFormatterSlots);
+        registerRuntimeInputFormatterHandlesForOperator(*childOperator, runtimeInputFormatterRegistry, seenRuntimeInputFormatterSlots, pipelineId);
     }
 }
 
-void registerRuntimeInputFormatterHandles(const std::shared_ptr<Pipeline>& pipeline, PipelineExecutionContext& pipelineExecutionContext)
+RuntimeInputFormatterRegistry createRuntimeInputFormatterRegistry(const std::shared_ptr<Pipeline>& pipeline)
 {
+    RuntimeInputFormatterRegistry runtimeInputFormatterRegistry;
     std::unordered_set<uint64_t> seenRuntimeInputFormatterSlots;
-    registerRuntimeInputFormatterHandlesForOperator(pipeline->getRootOperator(), pipelineExecutionContext, seenRuntimeInputFormatterSlots);
+    registerRuntimeInputFormatterHandlesForOperator(
+        pipeline->getRootOperator(), runtimeInputFormatterRegistry, seenRuntimeInputFormatterSlots, pipeline->getPipelineId());
+    return runtimeInputFormatterRegistry;
 }
 }
 
@@ -162,13 +162,17 @@ uint64_t CompiledExecutablePipelineStage::getCompilationCount()
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
-    registerRuntimeInputFormatterHandles(pipeline, pipelineExecutionContext);
+    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
+    compiledPipelineFunction(
+        std::addressof(pipelineExecutionContext),
+        std::addressof(runtimeInputFormatterRegistry),
+        std::addressof(inputTupleBuffer),
+        std::addressof(arena));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const RuntimeInputFormatterRegistry*, const TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     CPPTRACE_TRY
@@ -176,13 +180,18 @@ CompiledExecutablePipelineStage::compilePipeline() const
         /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
         /// Additionally, we can NOT use const or const references for the parameters of the lambda function
         /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
+        const std::function<void(
+            nautilus::val<PipelineExecutionContext*>,
+            nautilus::val<const RuntimeInputFormatterRegistry*>,
+            nautilus::val<const TupleBuffer*>,
+            nautilus::val<const Arena*>)>
             compiledFunction = [this](
                                    nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
+                                   nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry,
                                    nautilus::val<const TupleBuffer*> recordBufferRef,
                                    nautilus::val<const Arena*> arenaRef)
         {
-            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+            auto ctx = ExecutionContext(pipelineExecutionContext, runtimeInputFormatterRegistry, arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
 
             pipeline->getRootOperator().open(ctx, recordBuffer);
@@ -215,8 +224,10 @@ CompiledExecutablePipelineStage::compilePipeline() const
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    ExecutionContext ctx(
+        std::addressof(pipelineExecutionContext), std::addressof(runtimeInputFormatterRegistry), std::addressof(arena));
     pipeline->getRootOperator().terminate(ctx);
 }
 
@@ -228,8 +239,10 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    ExecutionContext ctx(
+        std::addressof(pipelineExecutionContext), std::addressof(runtimeInputFormatterRegistry), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
     const auto compileStart = std::chrono::steady_clock::now();

@@ -47,7 +47,10 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
     if (not inputFormatterBufferRef->indexBuffer(
-            recordBuffer, executionCtx.pipelineMemoryProvider.arena, executionCtx.pipelineContext, runtimeInputFormatterSlot))
+            recordBuffer,
+            executionCtx.pipelineMemoryProvider.arena,
+            executionCtx.runtimeInputFormatterRegistry,
+            runtimeInputFormatterSlot))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
