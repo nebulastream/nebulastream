@@ -113,7 +113,8 @@ Supported markers:
 Notes:
 - Inline events only work with inline data on TCP physical sources. The systest runner injects `socket_host`/`socket_port`
   automatically; keep the source type as `TCP` and do not override these settings.
-- Crash/restart scripts require running against a local worker so the runner can control the process lifecycle.
+- Crash/restart scripts work for both local and remote/distributed systest runs. In remote mode the runner stops and re-registers the
+  distributed query through the query manager; tuples scripted while the query is down are dropped.
 
 Example:
 ```sql

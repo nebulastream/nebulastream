@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -61,11 +61,20 @@ if [ ! -f "$1" ]; then
   exit 1
 fi
 
-# Check if yq is installed
-if ! command -v yq &>/dev/null; then
-  echo "Error: yq is required. Install with: sudo snap install yq"
+run_yq() {
+  if command -v yq &>/dev/null; then
+    yq "$@"
+    return
+  fi
+
+  if command -v nix &>/dev/null; then
+    nix develop "$NES_DIR" -c yq "$@"
+    return
+  fi
+
+  echo "Error: yq is required"
   exit 1
-fi
+}
 
 WORKERS_FILE=$1
 
@@ -94,18 +103,18 @@ services:
 EOF
 
 # Read workers and generate services
-WORKER_COUNT=$(yq '.workers | length' "$WORKERS_FILE")
+WORKER_COUNT=$(run_yq '.workers | length' "$WORKERS_FILE")
 
 for i in $(seq 0 $((WORKER_COUNT - 1))); do
-  GRPC=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
+  GRPC=$(run_yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $GRPC | cut -d':' -f1)
   GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
-  DATA=$(yq -r ".workers[$i].data" "$WORKERS_FILE")
+  CONNECTION=$(run_yq -r ".workers[$i].connection" "$WORKERS_FILE")
 
-  HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
-  CONFIG_ARG=""
+  HAS_CONFIG=$(run_yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
+  COMMAND_ARGS=$(printf '      "--grpc=%s",\n      "--connection=%s"' "$HOST_NAME:$GRPC_PORT" "$CONNECTION")
   if [ "$HAS_CONFIG" = "true" ]; then
-    CONFIG_ARG="\"--configPath=$CONTAINER_WORKDIR/configs/$HOST_NAME.yaml\","
+    COMMAND_ARGS=$(printf '%s,\n      "--configPath=%s/configs/%s.yaml"' "$COMMAND_ARGS" "$CONTAINER_WORKDIR" "$HOST_NAME")
   fi
 
   cat <<EOF
@@ -120,9 +129,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       retries: 3
       start_period: 0s
     command: [
-      "--grpc=$HOST_NAME:$GRPC_PORT",
-      "--data=$DATA",
-      $CONFIG_ARG
+$COMMAND_ARGS
     ]
     volumes:
       - $TESTDATA_VOLUME:/data

@@ -64,7 +64,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
-/// Run queries locally ie not on single-node-worker in a separate process
+/// Run queries locally ie not on single-node-worker in a separate process.
+/// Inline crash/restart event scripts are executed through the same runner and fall back to dedicated per-query worker lifecycles when needed.
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
@@ -73,20 +74,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const SingleNodeWorkerConfiguration& configuration,
     SystestProgressTracker& progressTracker);
 
-/// @return true if the query contains inline events that require crashing or restarting the worker
-[[nodiscard]] bool hasInlineEventWorkerRestart(const SystestQuery& query);
-
-/// Run queries that include inline crash/restart events. Each query is executed on its own embedded worker instance and the worker
-/// is restarted once when the inline event is triggered.
-[[nodiscard]] std::vector<RunningQuery> runInlineEventQueriesWithWorkerRestart(
-    const std::vector<SystestQuery>& queries, const SingleNodeWorkerConfiguration& configuration, SystestProgressTracker& progressTracker);
-
-/// Run queries that include inline crash/restart events against a remote cluster.
-/// Restart events stop/unregister and re-register/start the distributed query through gRPC.
-[[nodiscard]] std::vector<RunningQuery> runInlineEventQueriesWithWorkerRestartRemote(
-    const std::vector<SystestQuery>& queries, const SystestClusterConfiguration& clusterConfig, SystestProgressTracker& progressTracker);
-
-/// Run queries remote on the single-node-worker specified by the URI
+/// Run queries remote on the single-node-worker specified by the URI.
+/// Inline crash/restart event scripts use the same execution flow and restart the distributed query through the query manager when required.
 /// @return returns a collection of failed queries
 [[nodiscard]] std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,

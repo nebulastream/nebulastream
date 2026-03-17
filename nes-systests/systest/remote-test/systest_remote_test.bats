@@ -167,14 +167,14 @@ teardown() {
 function setup_distributed() {
   # Extract per-worker configs from the topology YAML and copy them into the test volume.
   local topology="$1"
-  local worker_count=$(yq '.workers | length' "$topology")
+  local worker_count=$(run_yq '.workers | length' "$topology")
   local config_dir=$(mktemp -d)
 
   for i in $(seq 0 $((worker_count - 1))); do
-    local has_config=$(yq ".workers[$i] | has(\"config\")" "$topology")
+    local has_config=$(run_yq ".workers[$i] | has(\"config\")" "$topology")
     if [ "$has_config" = "true" ]; then
-      local host=$(yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
-      yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
+      local host=$(run_yq -r ".workers[$i].host" "$topology" | cut -d':' -f1)
+      run_yq ".workers[$i].config" "$topology" > "$config_dir/$host.yaml"
     fi
   done
 
@@ -191,6 +191,21 @@ function setup_distributed() {
   docker compose up -d --wait
 }
 
+run_yq() {
+  if command -v yq >/dev/null 2>&1; then
+    yq "$@"
+    return
+  fi
+
+  if command -v nix >/dev/null 2>&1; then
+    nix develop "$NES_DIR" -c yq "$@"
+    return
+  fi
+
+  echo "ERROR: yq is required" >&2
+  return 1
+}
+
 DOCKER_SYSTEST() {
   docker compose exec systest systest --log-path $CONTAINER_WORKDIR/systest.log --data /data  --workingDir $CONTAINER_WORKDIR/systest-workdir "$@" >&3
 }
@@ -204,6 +219,12 @@ DOCKER_SYSTEST() {
 @test "8 node systest" {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
   run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
+  [ "$status" -eq 0 ]
+}
+
+@test "inline event restart on remote worker" {
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
+  run DOCKER_SYSTEST -t $NES_DIR/nes-systests/systest/tests/testdata/InlineEventRestart.dummy --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
