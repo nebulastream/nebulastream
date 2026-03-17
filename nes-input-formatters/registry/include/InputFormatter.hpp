@@ -33,17 +33,18 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Arena.hpp>
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterDynamicPointer.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -120,18 +121,11 @@ public:
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
     [[nodiscard]] nautilus::val<bool> indexBuffer(
-        const RecordBuffer& recordBuffer,
-        const ArenaRef& arenaRef,
-        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-        const uint64_t inputFormatterKey) const
+        const RecordBuffer& recordBuffer, const ArenaRef& arenaRef, const uint64_t inputFormatterKey) const
     {
-        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
+        const auto inputFormatter = getDynamicInputFormatter(inputFormatterKey);
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
-            indexLeadingSpanningTupleAndBufferProxy,
-            recordBuffer.getReference(),
-            runtimeInputFormatterRegistry,
-            nautilus::val<uint64_t>(inputFormatterKey),
-            arenaRef.getArena()));
+            indexLeadingSpanningTupleAndBufferProxy, recordBuffer.getReference(), inputFormatter, arenaRef.getArena()));
 
         if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
         {
@@ -319,25 +313,13 @@ private:
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
 
-    static InputFormatter*
-    getRuntimeInputFormatter(const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry, const uint64_t inputFormatterKey)
+    [[nodiscard]] nautilus::val<InputFormatter*> getDynamicInputFormatter(const uint64_t inputFormatterKey) const
     {
-        PRECONDITION(runtimeInputFormatterRegistry != nullptr, "runtime input formatter registry is null");
-        auto* inputFormatter = reinterpret_cast<InputFormatter*>(runtimeInputFormatterRegistry->getHandle(inputFormatterKey));
-        if (inputFormatter == nullptr)
-        {
-            throw CannotFormatSourceData("Missing runtime input formatter handle for key {}", inputFormatterKey);
-        }
-        return inputFormatter;
+        return nautilus::use_dynamic_pointer(createRuntimeInputFormatterName(inputFormatterKey), const_cast<InputFormatter*>(this));
     }
 
-    static bool indexTrailingSpanningTupleProxy(
-        const TupleBuffer* tupleBuffer,
-        const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry,
-        const uint64_t inputFormatterKey,
-        Arena* arenaRef)
+    static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
     {
-        auto* inputFormatter = getRuntimeInputFormatter(runtimeInputFormatterRegistry, inputFormatterKey);
 
         /// the buffer does not have a trailing SpanningTuple, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
         const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
@@ -362,13 +344,8 @@ private:
     }
 
     static IndexPhaseResult* indexLeadingSpanningTupleAndBufferProxy(
-        const TupleBuffer* tupleBuffer,
-        const RuntimeInputFormatterRegistry* runtimeInputFormatterRegistry,
-        const uint64_t inputFormatterKey,
-        Arena* arenaRef)
+        const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
     {
-        auto* inputFormatter = getRuntimeInputFormatter(runtimeInputFormatterRegistry, inputFormatterKey);
-
         IndexPhaseResultBuilder::startBuildingIndex();
         const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
             = IndexPhaseResultBuilder::indexRawBuffer(*inputFormatter, *tupleBuffer);
@@ -468,12 +445,9 @@ private:
         const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
         const uint64_t inputFormatterKey) const
     {
+        const auto inputFormatter = getDynamicInputFormatter(inputFormatterKey);
         const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
-            indexTrailingSpanningTupleProxy,
-            recordBuffer.getReference(),
-            executionCtx.runtimeInputFormatterRegistry,
-            nautilus::val<uint64_t>(inputFormatterKey),
-            executionCtx.pipelineMemoryProvider.arena.getArena());
+            indexTrailingSpanningTupleProxy, recordBuffer.getReference(), inputFormatter, executionCtx.pipelineMemoryProvider.arena.getArena());
 
         if (hasTrailingSpanningTuple)
         {

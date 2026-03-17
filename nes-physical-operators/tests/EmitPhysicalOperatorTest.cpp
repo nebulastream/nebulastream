@@ -127,10 +127,9 @@ public:
     {
         MockedPipelineContext pec{buffers, bm};
         pec.setOperatorHandlers(handlers);
-        RuntimeInputFormatterRegistry runtimeInputFormatterRegistry;
         Arena arena(bm);
 
-        ExecutionContext executionContext{&pec, &runtimeInputFormatterRegistry, &arena};
+        ExecutionContext executionContext{&pec, &arena};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();

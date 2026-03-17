@@ -13,26 +13,31 @@
 */
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
+#include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
-#include <nautilus/val_ptr.hpp>
 #include <CompilationContext.hpp>
 #include <Engine.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterDynamicPointer.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <function.hpp>
@@ -47,6 +52,8 @@ std::atomic<uint64_t> compilationCount{0};
 std::atomic<int64_t> compilationWallTimeNanoseconds{0};
 std::atomic<uint64_t> activeCompilationCount{0};
 std::atomic<int64_t> compilationWallIntervalStartNanoseconds{0};
+std::atomic<uint64_t> nextDynamicPointerBindingFileId{0};
+constexpr std::string_view kDynamicPointerBindingVersion = "nautilus.mlirbc.dynptr.bindings.v1";
 
 int64_t getNanosecondsSinceEpoch(std::chrono::steady_clock::time_point timePoint)
 {
@@ -91,9 +98,11 @@ private:
     bool hasCompilationEndNanoseconds;
 };
 
-void registerRuntimeInputFormatterHandlesForOperator(
+using DynamicPointerBindings = std::unordered_map<std::string, std::uintptr_t>;
+
+void collectDynamicPointerBindingsForOperator(
     const PhysicalOperator& physicalOperator,
-    RuntimeInputFormatterRegistry& runtimeInputFormatterRegistry,
+    DynamicPointerBindings& dynamicPointerBindings,
     std::unordered_set<uint64_t>& seenRuntimeInputFormatterSlots,
     const PipelineId pipelineId)
 {
@@ -104,23 +113,68 @@ void registerRuntimeInputFormatterHandlesForOperator(
             const auto runtimeInputFormatterSlot = scanOperator->getRuntimeInputFormatterSlot();
             const auto [_, isNewSlot] = seenRuntimeInputFormatterSlots.insert(runtimeInputFormatterSlot);
             PRECONDITION(isNewSlot, "Duplicate runtime input formatter slot {} in pipeline {}", runtimeInputFormatterSlot, pipelineId.getRawValue());
-            runtimeInputFormatterRegistry.registerHandle(runtimeInputFormatterSlot, runtimeInputFormatterHandle);
+            dynamicPointerBindings.emplace(createRuntimeInputFormatterName(runtimeInputFormatterSlot), runtimeInputFormatterHandle);
         }
     }
 
     if (const auto childOperator = physicalOperator.getChild(); childOperator)
     {
-        registerRuntimeInputFormatterHandlesForOperator(*childOperator, runtimeInputFormatterRegistry, seenRuntimeInputFormatterSlots, pipelineId);
+        collectDynamicPointerBindingsForOperator(*childOperator, dynamicPointerBindings, seenRuntimeInputFormatterSlots, pipelineId);
     }
 }
 
-RuntimeInputFormatterRegistry createRuntimeInputFormatterRegistry(const std::shared_ptr<Pipeline>& pipeline)
+DynamicPointerBindings collectDynamicPointerBindings(const std::shared_ptr<Pipeline>& pipeline)
 {
-    RuntimeInputFormatterRegistry runtimeInputFormatterRegistry;
+    DynamicPointerBindings dynamicPointerBindings;
     std::unordered_set<uint64_t> seenRuntimeInputFormatterSlots;
-    registerRuntimeInputFormatterHandlesForOperator(
-        pipeline->getRootOperator(), runtimeInputFormatterRegistry, seenRuntimeInputFormatterSlots, pipeline->getPipelineId());
-    return runtimeInputFormatterRegistry;
+    collectDynamicPointerBindingsForOperator(
+        pipeline->getRootOperator(), dynamicPointerBindings, seenRuntimeInputFormatterSlots, pipeline->getPipelineId());
+    return dynamicPointerBindings;
+}
+
+std::filesystem::path createDynamicPointerBindingPath(const PipelineId pipelineId)
+{
+    auto bindingPath = std::filesystem::temp_directory_path();
+    bindingPath /= fmt::format(
+        "nes-nautilus-dynptr-{}-{}-{}.bindings",
+        pipelineId.getRawValue(),
+        getNanosecondsSinceEpoch(std::chrono::steady_clock::now()),
+        nextDynamicPointerBindingFileId.fetch_add(1));
+    return bindingPath;
+}
+
+std::filesystem::path writeDynamicPointerBindings(const DynamicPointerBindings& dynamicPointerBindings, const PipelineId pipelineId)
+{
+    const auto bindingPath = createDynamicPointerBindingPath(pipelineId);
+    std::filesystem::create_directories(bindingPath.parent_path());
+
+    std::ofstream output(bindingPath);
+    PRECONDITION(output.is_open(), "Could not open dynamic pointer binding file {}", bindingPath.string());
+    output << kDynamicPointerBindingVersion << "\n";
+
+    std::vector<std::pair<std::string, std::uintptr_t>> sortedBindings(dynamicPointerBindings.begin(), dynamicPointerBindings.end());
+    std::ranges::sort(sortedBindings, {}, [](const auto& binding) { return binding.first; });
+    for (const auto& [name, pointerValue] : sortedBindings)
+    {
+        PRECONDITION(pointerValue != 0, "Dynamic pointer binding {} must not be null", name);
+        output << name << "\t" << fmt::format("{:#x}", static_cast<uint64_t>(pointerValue)) << "\n";
+    }
+    PRECONDITION(output.good(), "Could not write dynamic pointer binding file {}", bindingPath.string());
+    return bindingPath;
+}
+
+nautilus::engine::Options
+configureOptionsForDynamicPointerBindings(const std::shared_ptr<Pipeline>& pipeline, nautilus::engine::Options options)
+{
+    const auto dynamicPointerBindings = collectDynamicPointerBindings(pipeline);
+    if (dynamicPointerBindings.empty())
+    {
+        return options;
+    }
+
+    const auto bindingPath = writeDynamicPointerBindings(dynamicPointerBindings, pipeline->getPipelineId());
+    options.setOption("engine.Blob.DynamicPointerBindingPath", bindingPath.string());
+    return options;
 }
 }
 
@@ -128,7 +182,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : engine(std::move(options))
+    : engine(configureOptionsForDynamicPointerBindings(pipeline, std::move(options)))
     , compiledPipelineFunction(nullptr)
     , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
@@ -161,37 +215,23 @@ uint64_t CompiledExecutablePipelineStage::getCompilationCount()
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
-    /// we call the compiled pipeline function with an input buffer and the execution context
-    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    compiledPipelineFunction(
-        std::addressof(pipelineExecutionContext),
-        std::addressof(runtimeInputFormatterRegistry),
-        std::addressof(inputTupleBuffer),
-        std::addressof(arena));
+    compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
 
-nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const RuntimeInputFormatterRegistry*, const TupleBuffer*, const Arena*>
+nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
 {
     CPPTRACE_TRY
     {
-        /// We must capture the operatorPipeline by value to ensure it is not destroyed before the function is called
-        /// Additionally, we can NOT use const or const references for the parameters of the lambda function
-        /// NOLINTBEGIN(performance-unnecessary-value-param)
-        const std::function<void(
-            nautilus::val<PipelineExecutionContext*>,
-            nautilus::val<const RuntimeInputFormatterRegistry*>,
-            nautilus::val<const TupleBuffer*>,
-            nautilus::val<const Arena*>)>
+        const std::function<void(nautilus::val<PipelineExecutionContext*>, nautilus::val<const TupleBuffer*>, nautilus::val<const Arena*>)>
             compiledFunction = [this](
                                    nautilus::val<PipelineExecutionContext*> pipelineExecutionContext,
-                                   nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry,
                                    nautilus::val<const TupleBuffer*> recordBufferRef,
                                    nautilus::val<const Arena*> arenaRef)
         {
-            auto ctx = ExecutionContext(pipelineExecutionContext, runtimeInputFormatterRegistry, arenaRef);
+            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
 
             pipeline->getRootOperator().open(ctx, recordBuffer);
@@ -211,7 +251,6 @@ CompiledExecutablePipelineStage::compilePipeline() const
                 }
             }
         };
-        /// NOLINTEND(performance-unnecessary-value-param)
         return engine.registerFunction(compiledFunction);
     }
     CPPTRACE_CATCH(...)
@@ -224,10 +263,8 @@ CompiledExecutablePipelineStage::compilePipeline() const
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(
-        std::addressof(pipelineExecutionContext), std::addressof(runtimeInputFormatterRegistry), std::addressof(arena));
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     pipeline->getRootOperator().terminate(ctx);
 }
 
@@ -239,10 +276,8 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    auto runtimeInputFormatterRegistry = createRuntimeInputFormatterRegistry(pipeline);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(
-        std::addressof(pipelineExecutionContext), std::addressof(runtimeInputFormatterRegistry), std::addressof(arena));
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
     const auto compileStart = std::chrono::steady_clock::now();

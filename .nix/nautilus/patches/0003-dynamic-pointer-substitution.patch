@@ -1,0 +1,534 @@
+diff --git a/nautilus/include/nautilus/tracing/TracingUtil.hpp b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+index b7d0b87a02..5707fc2206 100644
+--- a/nautilus/include/nautilus/tracing/TracingUtil.hpp
++++ b/nautilus/include/nautilus/tracing/TracingUtil.hpp
+@@ -10,6 +10,7 @@
+ #include <array>
+ #include <cstdint>
+ #include <iosfwd>
++#include <string_view>
+ #include <vector>
+ 
+ namespace nautilus::tracing {
+@@ -53,4 +54,5 @@ void pushStaticVal(void* ptr);
+ void popStaticVal();
+ void allocateValRef(ValueRef ref);
+ void freeValRef(ValueRef ref);
++void registerDynamicPointer(void* pointer, std::string_view name);
+ } // namespace nautilus::tracing
+diff --git a/nautilus/include/nautilus/val_ptr.hpp b/nautilus/include/nautilus/val_ptr.hpp
+index e0fdb76835..bf0022c0a2 100644
+--- a/nautilus/include/nautilus/val_ptr.hpp
++++ b/nautilus/include/nautilus/val_ptr.hpp
+@@ -7,6 +7,7 @@
+ #include "nautilus/val.hpp"
+ #include "nautilus/val_concepts.hpp"
+ #include <cstdint>
++#include <string_view>
+ #include <utility>
+ 
+ namespace nautilus {
+@@ -529,4 +530,14 @@ private:
+ 	friend val<ptrType>;
+ };
+ 
++template <typename T>
++val<T*> use_dynamic_pointer(std::string_view name, T* ptr) {
++#ifdef ENABLE_TRACING
++	if (tracing::inTracer()) {
++		tracing::registerDynamicPointer(reinterpret_cast<void*>(ptr), name);
++	}
++#endif
++	return val<T*>(ptr);
++}
++
+ } // namespace nautilus
+diff --git a/nautilus/src/nautilus/compiler/JITCompiler.cpp b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+index 3154f24ba0..bb4b34ae27 100644
+--- a/nautilus/src/nautilus/compiler/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+@@ -5,6 +5,7 @@
+ #include "nautilus/config.hpp"
+ #include "nautilus/exceptions/RuntimeException.hpp"
+ #include "nautilus/logging.hpp"
++#include <algorithm>
+ #include <chrono>
+ #include <cerrno>
+ #include <cstdint>
+@@ -78,6 +79,7 @@ void setBlobLoadOptions(engine::Options& options, const std::filesystem::path& b
+ 	options.setOption("engine.Blob.Path", blobPath.string());
+ 	options.setOption("engine.Blob.SymbolMapPath", getBlobSymbolMapPath(blobPath).string());
+ 	options.setOption("engine.Blob.ConstPtrRelocationPath", std::string {});
++	options.setOption("engine.Blob.DynamicPointerRelocationPath", std::string {});
+ }
+ 
+ void setBlobEmitOptions(engine::Options& options, const std::filesystem::path& blobPath) {
+@@ -85,6 +87,7 @@ void setBlobEmitOptions(engine::Options& options, const std::filesystem::path& b
+ 	options.setOption("engine.Blob.Path", blobPath.string());
+ 	options.setOption("engine.Blob.SymbolMapPath", getBlobSymbolMapPath(blobPath).string());
+ 	options.setOption("engine.Blob.ConstPtrRelocationPath", std::string {});
++	options.setOption("engine.Blob.DynamicPointerRelocationPath", std::string {});
+ }
+ 
+ enum class BlobCacheKeyMode { PointerSensitive, Stable };
+@@ -119,6 +122,7 @@ std::filesystem::path getBlobCachePathForExplicitKey(const std::filesystem::path
+ }
+ 
+ constexpr std::string_view kBlobConstPtrRelocationVersion = "nautilus.mlirbc.constptr.v1";
++constexpr std::string_view kBlobDynamicPointerRelocationVersion = "nautilus.mlirbc.dynptr.v1";
+ 
+ struct ConstPtrRelocationEntry {
+ 	uint64_t pointerValue;
+@@ -139,6 +143,12 @@ std::filesystem::path getBlobConstPtrRelocationMetadataPath(const std::filesyste
+ 	return metadataPath;
+ }
+ 
++std::filesystem::path getBlobDynamicPointerRelocationMetadataPath(const std::filesystem::path& blobPath) {
++	auto metadataPath = blobPath;
++	metadataPath += ".dynptrmap";
++	return metadataPath;
++}
++
+ std::string normalizeModulePath(std::string modulePath) {
+ 	if (modulePath.empty()) {
+ 		return modulePath;
+@@ -192,7 +202,9 @@ bool tryGetAddressModuleInfo(void* address, std::string& modulePath, uint64_t& m
+ 	return true;
+ }
+ 
+-std::vector<ConstPtrRelocationEntry> collectConstPtrRelocationEntries(const std::shared_ptr<ir::IRGraph>& irGraph) {
++std::vector<ConstPtrRelocationEntry> collectConstPtrRelocationEntries(
++    const std::shared_ptr<ir::IRGraph>& irGraph,
++    const std::unordered_map<uint64_t, std::string>& dynamicPointerNamesByValue) {
+ 	std::vector<ConstPtrRelocationEntry> entries;
+ 	std::unordered_set<uint64_t> seenPointers;
+ 	const auto& rootOperation = irGraph->getRootOperation();
+@@ -203,7 +215,7 @@ std::vector<ConstPtrRelocationEntry> collectConstPtrRelocationEntries(const std:
+ 				if (!seenPointers.emplace(pointerValue).second) {
+ 					continue;
+ 				}
+-				if (pointerValue == 0) {
++				if (pointerValue == 0 || dynamicPointerNamesByValue.contains(pointerValue)) {
+ 					continue;
+ 				}
+ 				ConstPtrRelocationEntry entry {pointerValue, {}, 0, false};
+@@ -268,6 +280,53 @@ void writeBlobConstPtrRelocationMetadata(const std::filesystem::path& blobPath,
+ 	}
+ }
+ 
++void writeBlobDynamicPointerRelocationMetadata(
++    const std::filesystem::path& blobPath,
++    const std::unordered_map<uint64_t, std::string>& dynamicPointerNamesByValue) {
++	const auto metadataPath = getBlobDynamicPointerRelocationMetadataPath(blobPath);
++	if (dynamicPointerNamesByValue.empty()) {
++		std::error_code cleanupEc;
++		std::filesystem::remove(metadataPath, cleanupEc);
++		return;
++	}
++	const auto metadataDir = metadataPath.parent_path();
++	if (!metadataDir.empty()) {
++		std::error_code ec;
++		std::filesystem::create_directories(metadataDir, ec);
++	}
++
++	auto tmpPath = metadataPath;
++	const auto uniqueSuffix =
++	    std::to_string(std::chrono::steady_clock::now().time_since_epoch().count()) + "."
++	    + std::to_string(std::hash<std::thread::id> {}(std::this_thread::get_id()));
++	tmpPath += ".tmp." + uniqueSuffix;
++
++	std::ofstream output(tmpPath.string(), std::ios::binary);
++	if (!output.is_open()) {
++		return;
++	}
++	std::vector<std::pair<uint64_t, std::string>> entries(dynamicPointerNamesByValue.begin(), dynamicPointerNamesByValue.end());
++	std::ranges::sort(entries, {}, [](const auto& entry) { return entry.first; });
++	output << kBlobDynamicPointerRelocationVersion << "\n";
++	for (const auto& [pointerValue, name] : entries) {
++		output << toHexUint64(pointerValue) << "\t" << name << "\n";
++	}
++	if (!output.good()) {
++		output.close();
++		std::error_code cleanupEc;
++		std::filesystem::remove(tmpPath, cleanupEc);
++		return;
++	}
++	output.close();
++
++	std::error_code renameEc;
++	std::filesystem::rename(tmpPath, metadataPath, renameEc);
++	if (renameEc) {
++		std::error_code cleanupEc;
++		std::filesystem::remove(tmpPath, cleanupEc);
++	}
++}
++
+ ConstPtrRelocationMetadataState evaluateConstPtrRelocationMetadata(const std::filesystem::path& blobPath,
+                                                                    std::filesystem::path& metadataPath) {
+ 	metadataPath = getBlobConstPtrRelocationMetadataPath(blobPath);
+@@ -318,12 +377,21 @@ ConstPtrRelocationMetadataState evaluateConstPtrRelocationMetadata(const std::fi
+ 	return ConstPtrRelocationMetadataState::AllPointersRelocatable;
+ }
+ 
+-void fnv1a64AppendConstPointerLiterals(uint64_t& hash, const std::shared_ptr<ir::IRGraph>& irGraph) {
++void fnv1a64AppendConstPointerLiterals(
++    uint64_t& hash,
++    const std::shared_ptr<ir::IRGraph>& irGraph,
++    const std::unordered_map<uint64_t, std::string>& dynamicPointerNamesByValue) {
+ 	const auto& rootOperation = irGraph->getRootOperation();
+ 	for (const auto& basicBlock : rootOperation.getBasicBlocks()) {
+ 		for (const auto& operation : basicBlock->getOperations()) {
+ 			if (const auto* constPtrOp = operation->dynCast<ir::ConstPtrOperation>()) {
+ 				const auto ptrValue = static_cast<uint64_t>(reinterpret_cast<uintptr_t>(constPtrOp->getValue()));
++				if (const auto dynamicPointerIt = dynamicPointerNamesByValue.find(ptrValue);
++				    dynamicPointerIt != dynamicPointerNamesByValue.end()) {
++					hash = fnv1a64Append(hash, "\ndyn_ptr=");
++					hash = fnv1a64Append(hash, dynamicPointerIt->second);
++					continue;
++				}
+ 				hash = fnv1a64Append(hash, "\nconst_ptr=");
+ 				hash = fnv1a64Append(hash, hex64(ptrValue));
+ 			}
+@@ -398,6 +466,11 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 				if (constPtrRelocationMetadataState == ConstPtrRelocationMetadataState::AllPointersRelocatable) {
+ 					setBlobLoadOptions(compileOptions, blobPath);
+ 					compileOptions.setOption("engine.Blob.ConstPtrRelocationPath", constPtrRelocationMetadataPath.string());
++					const auto dynamicPointerRelocationMetadataPath = getBlobDynamicPointerRelocationMetadataPath(blobPath);
++					if (std::filesystem::exists(dynamicPointerRelocationMetadataPath)) {
++						compileOptions.setOption(
++						    "engine.Blob.DynamicPointerRelocationPath", dynamicPointerRelocationMetadataPath.string());
++					}
+ 					try {
+ 						auto executable = backend->compile(std::shared_ptr<ir::IRGraph> {}, dumpHandler, compileOptions);
+ 						executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
+@@ -416,6 +489,7 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 
+ 	// derive trace from function
+ 	auto executionTrace = tracing::TraceContext::trace(function, options);
++	auto dynamicPointerNamesByValue = executionTrace->getDynamicPointerNamesByValue();
+ 	dumpHandler.dump("after_tracing", "trace", [&]() { return executionTrace->toString(); });
+ 
+ 	// create ssa
+@@ -434,7 +508,7 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 	}
+ 	std::vector<ConstPtrRelocationEntry> explicitBlobConstPtrRelocationEntries;
+ 	if (explicitBlobPath.has_value()) {
+-		explicitBlobConstPtrRelocationEntries = collectConstPtrRelocationEntries(ir);
++		explicitBlobConstPtrRelocationEntries = collectConstPtrRelocationEntries(ir, dynamicPointerNamesByValue);
+ 	}
+ 
+ 	dumpHandler.dump("after_ir_creation", "ir", [&]() { return irText.empty() ? ir->toString() : irText; });
+@@ -450,7 +524,7 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 			appendCompilationBackendOptionsToHash(hash, backendName, options);
+ 			hash = fnv1a64Append(hash, irText.empty() ? ir->toString() : irText);
+ 			if (cacheKeyMode == BlobCacheKeyMode::PointerSensitive) {
+-				fnv1a64AppendConstPointerLiterals(hash, ir);
++				fnv1a64AppendConstPointerLiterals(hash, ir, dynamicPointerNamesByValue);
+ 			}
+ 
+ 			auto blobPath = cacheRoot / (hex64(hash) + ".mlirbc");
+@@ -470,6 +544,7 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 	if (explicitBlobPath.has_value()
+ 	    && compileOptions.getOptionOrDefault<std::string>("engine.Blob.Mode", std::string("off")) == "emit") {
+ 		writeBlobConstPtrRelocationMetadata(*explicitBlobPath, explicitBlobConstPtrRelocationEntries);
++		writeBlobDynamicPointerRelocationMetadata(*explicitBlobPath, dynamicPointerNamesByValue);
+ 	}
+ 	executable->setGeneratedFiles(dumpHandler.getGeneratedFiles());
+ 	return executable;
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+index 0dbc751d8f..6aba633598 100644
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp
+@@ -48,6 +48,8 @@ namespace nautilus::compiler::mlir {
+ namespace {
+ constexpr std::string_view kBlobSymbolMapVersion = "nautilus.mlirbc.sym.v2";
+ constexpr std::string_view kBlobConstPtrRelocationVersion = "nautilus.mlirbc.constptr.v1";
++constexpr std::string_view kBlobDynamicPointerRelocationVersion = "nautilus.mlirbc.dynptr.v1";
++constexpr std::string_view kDynamicPointerBindingVersion = "nautilus.mlirbc.dynptr.bindings.v1";
+ 
+ std::filesystem::path getBlobSymbolMapPath(const engine::Options& options, const std::string& blobPath) {
+ 	const auto explicitSymbolMapPath = options.getOptionOrDefault<std::string>("engine.Blob.SymbolMapPath", std::string {});
+@@ -367,6 +369,110 @@ bool tryLoadBlobConstPtrRelocationMap(const std::filesystem::path& relocationPat
+ 	return true;
+ }
+ 
++bool tryLoadDynamicPointerBindings(const std::filesystem::path& bindingPath,
++                                  std::unordered_map<std::string, uint64_t>& bindings) {
++	if (bindingPath.empty() || !std::filesystem::exists(bindingPath)) {
++		return false;
++	}
++
++	std::ifstream input(bindingPath.string());
++	if (!input.is_open()) {
++		return false;
++	}
++
++	std::string versionLine;
++	if (!std::getline(input, versionLine)) {
++		return false;
++	}
++	if (versionLine != kDynamicPointerBindingVersion) {
++		return false;
++	}
++
++	std::unordered_map<std::string, uint64_t> loadedBindings;
++	std::string line;
++	while (std::getline(input, line)) {
++		if (line.empty()) {
++			continue;
++		}
++		const auto separatorPos = line.find('\t');
++		if (separatorPos == std::string::npos || line.find('\t', separatorPos + 1) != std::string::npos) {
++			return false;
++		}
++		const std::string_view lineView(line);
++		auto name = std::string(lineView.substr(0, separatorPos));
++		const auto pointerHex = lineView.substr(separatorPos + 1);
++		uint64_t pointerValue = 0;
++		if (name.empty() || !tryParseHexUint64(pointerHex, pointerValue) || pointerValue == 0) {
++			return false;
++		}
++		const auto [it, inserted] = loadedBindings.emplace(name, pointerValue);
++		if (!inserted && it->second != pointerValue) {
++			return false;
++		}
++	}
++
++	bindings = std::move(loadedBindings);
++	return true;
++}
++
++bool tryLoadBlobDynamicPointerRelocationMap(
++    const std::filesystem::path& relocationPath,
++    const std::filesystem::path& bindingPath,
++    std::unordered_map<uint64_t, uint64_t>& relocations) {
++	if (relocationPath.empty() || !std::filesystem::exists(relocationPath)) {
++		return false;
++	}
++
++	std::unordered_map<std::string, uint64_t> bindings;
++	if (!tryLoadDynamicPointerBindings(bindingPath, bindings)) {
++		return false;
++	}
++
++	std::ifstream input(relocationPath.string());
++	if (!input.is_open()) {
++		return false;
++	}
++
++	std::string versionLine;
++	if (!std::getline(input, versionLine)) {
++		return false;
++	}
++	if (versionLine != kBlobDynamicPointerRelocationVersion) {
++		return false;
++	}
++
++	std::unordered_map<uint64_t, uint64_t> loadedRelocations;
++	std::string line;
++	while (std::getline(input, line)) {
++		if (line.empty()) {
++			continue;
++		}
++		const auto separatorPos = line.find('\t');
++		if (separatorPos == std::string::npos || line.find('\t', separatorPos + 1) != std::string::npos) {
++			return false;
++		}
++
++		const std::string_view lineView(line);
++		const auto pointerHex = lineView.substr(0, separatorPos);
++		auto name = std::string(lineView.substr(separatorPos + 1));
++		uint64_t pointerValue = 0;
++		if (name.empty() || !tryParseHexUint64(pointerHex, pointerValue) || pointerValue == 0) {
++			return false;
++		}
++		const auto bindingIt = bindings.find(name);
++		if (bindingIt == bindings.end()) {
++			return false;
++		}
++		const auto [it, inserted] = loadedRelocations.emplace(pointerValue, bindingIt->second);
++		if (!inserted && it->second != bindingIt->second) {
++			return false;
++		}
++	}
++
++	relocations = std::move(loadedRelocations);
++	return true;
++}
++
+ bool tryApplyBlobConstPtrRelocations(::mlir::ModuleOp module, const std::unordered_map<uint64_t, uint64_t>& relocations) {
+ 	bool matchedAnyPointerLiteral = false;
+ 	for (auto intToPtrOp : module.getOps<::mlir::LLVM::IntToPtrOp>()) {
+@@ -512,6 +618,10 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 	const auto blobSymbolMapPath = getBlobSymbolMapPath(options, blobPath);
+ 	const auto blobConstPtrRelocationPath =
+ 	    options.getOptionOrDefault<std::string>("engine.Blob.ConstPtrRelocationPath", std::string {});
++	const auto blobDynamicPointerRelocationPath =
++	    options.getOptionOrDefault<std::string>("engine.Blob.DynamicPointerRelocationPath", std::string {});
++	const auto dynamicPointerBindingPath =
++	    options.getOptionOrDefault<std::string>("engine.Blob.DynamicPointerBindingPath", std::string {});
+ 
+ 	::mlir::OwningOpRef<::mlir::ModuleOp> mlirModule;
+ 	bool loadedFromBlob = false;
+@@ -544,13 +654,37 @@ std::unique_ptr<Executable> MLIRCompilationBackend::compile(const std::shared_pt
+ 			tmpBlock.front().remove();
+ 			mlirModule = moduleOp;
+ 			loadedFromBlob = true;
++			std::unordered_map<uint64_t, uint64_t> pointerRelocations;
+ 			if (!blobConstPtrRelocationPath.empty()) {
+ 				std::unordered_map<uint64_t, uint64_t> constPtrRelocations;
+-				if (!tryLoadBlobConstPtrRelocationMap(blobConstPtrRelocationPath, constPtrRelocations)
+-				    || !tryApplyBlobConstPtrRelocations(*mlirModule, constPtrRelocations)) {
++				if (!tryLoadBlobConstPtrRelocationMap(blobConstPtrRelocationPath, constPtrRelocations)) {
++					throw RuntimeException(
++					    "Failed to load const-pointer relocation for blob load: " + blobConstPtrRelocationPath);
++				}
++				for (const auto& [pointerValue, relocatedPointerValue] : constPtrRelocations) {
++					const auto [it, inserted] = pointerRelocations.emplace(pointerValue, relocatedPointerValue);
++					if (!inserted && it->second != relocatedPointerValue) {
++						throw RuntimeException("Conflicting const-pointer relocations for blob load");
++					}
++				}
++			}
++			if (!blobDynamicPointerRelocationPath.empty()) {
++				std::unordered_map<uint64_t, uint64_t> dynamicPointerRelocations;
++				if (!tryLoadBlobDynamicPointerRelocationMap(
++				        blobDynamicPointerRelocationPath, dynamicPointerBindingPath, dynamicPointerRelocations)) {
+ 					throw RuntimeException(
+-					    "Failed to apply const-pointer relocation for blob load: " + blobConstPtrRelocationPath);
++					    "Failed to load dynamic-pointer relocation for blob load: " + blobDynamicPointerRelocationPath);
+ 				}
++				for (const auto& [pointerValue, relocatedPointerValue] : dynamicPointerRelocations) {
++					const auto [it, inserted] = pointerRelocations.emplace(pointerValue, relocatedPointerValue);
++					if (!inserted && it->second != relocatedPointerValue) {
++						throw RuntimeException("Conflicting dynamic-pointer relocations for blob load");
++					}
++				}
++			}
++			if ((!blobConstPtrRelocationPath.empty() || !blobDynamicPointerRelocationPath.empty())
++			    && !tryApplyBlobConstPtrRelocations(*mlirModule, pointerRelocations)) {
++				throw RuntimeException("Failed to apply pointer relocation for blob load");
+ 			}
+ 
+ 			symbolMapLoadedFromFile = tryLoadBlobSymbolMap(blobSymbolMapPath, jitProxyFunctionSymbols, jitProxyTargetAddresses);
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+index 9657ea5413..d63dd0250d 100644
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+@@ -232,6 +232,30 @@ uint16_t ExecutionTrace::getNextValueRef() {
+ 	return ++lastValueRef;
+ }
+ 
++void ExecutionTrace::registerDynamicPointer(uint64_t pointerValue, std::string name) {
++	if (pointerValue == 0) {
++		return;
++	}
++	if (const auto valueIt = dynamicPointerNamesByValue.find(pointerValue); valueIt != dynamicPointerNamesByValue.end()) {
++		if (valueIt->second != name) {
++			throw RuntimeException("Dynamic pointer value registered with conflicting names");
++		}
++		return;
++	}
++	if (const auto nameIt = dynamicPointerValuesByName.find(name); nameIt != dynamicPointerValuesByName.end()) {
++		if (nameIt->second != pointerValue) {
++			throw RuntimeException("Dynamic pointer name registered with conflicting pointer values");
++		}
++		return;
++	}
++	dynamicPointerValuesByName.emplace(name, pointerValue);
++	dynamicPointerNamesByValue.emplace(pointerValue, std::move(name));
++}
++
++const std::unordered_map<uint64_t, std::string>& ExecutionTrace::getDynamicPointerNamesByValue() const {
++	return dynamicPointerNamesByValue;
++}
++
+ operation_identifier ExecutionTrace::getNextOperationIdentifier() {
+ 	currentOperationIndex = getCurrentBlock().operations.size() - 1;
+ 	return {currentBlockIndex, (uint16_t) currentOperationIndex};
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.hpp b/nautilus/src/nautilus/tracing/ExecutionTrace.hpp
+index ce6e757d88..cfac5cff36 100644
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.hpp
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.hpp
+@@ -5,6 +5,7 @@
+ #include "TraceOperation.hpp"
+ #include "tag/TagRecorder.hpp"
+ #include <memory>
++#include <string>
+ #include <unordered_map>
+ 
+ namespace nautilus::tracing {
+@@ -173,6 +174,9 @@ public:
+ 	 */
+ 	uint16_t getNextValueRef();
+ 
++	void registerDynamicPointer(uint64_t pointerValue, std::string name);
++	const std::unordered_map<uint64_t, std::string>& getDynamicPointerNamesByValue() const;
++
+ private:
+ 	/**
+ 	 * @brief Adds a tag for the given snapshot
+@@ -189,6 +193,8 @@ public:
+ 	uint16_t lastValueRef = 0;
+ 	std::unordered_map<Snapshot, operation_identifier> globalTagMap;
+ 	std::unordered_map<Snapshot, operation_identifier> localTagMap;
++	std::unordered_map<uint64_t, std::string> dynamicPointerNamesByValue;
++	std::unordered_map<std::string, uint64_t> dynamicPointerValuesByName;
+ 
+ 	/**
+ 	 * @brief Gets the next available operation identifier
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+index 66a890b912..41e14d816d 100644
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp
+@@ -235,6 +235,13 @@ void TraceContext::freeValRef(ValueRef ref) {
+ 	aliveVars.decrement(ref);
+ }
+ 
++void TraceContext::registerDynamicPointer(void* pointer, std::string_view name) {
++	if (pointer == nullptr || name.empty()) {
++		return;
++	}
++	state->executionTrace.registerDynamicPointer(static_cast<uint64_t>(reinterpret_cast<uintptr_t>(pointer)), std::string(name));
++}
++
+ std::string TraceContext::getMangledName(void* fnptr) {
+ 	if (const auto it = mangledNameCache.find(fnptr); it != mangledNameCache.end()) {
+ 		return it->second;
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/TraceContext.hpp
+index 1bc6da0c3d..51887b24d8 100644
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp
++++ b/nautilus/src/nautilus/tracing/TraceContext.hpp
+@@ -11,6 +11,7 @@
+ #include <cstdint>
+ #include <functional>
+ #include <memory>
++#include <string_view>
+ 
+ namespace nautilus::tracing {
+ class ExecutionTrace;
+@@ -230,6 +231,7 @@ public:
+ 	std::vector<StaticVarHolder>& getStaticVars();
+ 	void allocateValRef(ValueRef ref);
+ 	void freeValRef(ValueRef ref);
++	void registerDynamicPointer(void* pointer, std::string_view name);
+ 
+ 	std::string getMangledName(void* fnptr);
+ 	std::string getFunctionName(void* fnptr, const std::string& mangledNamed);
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+index 3b3e2e7c62..dc67a7dc65 100644
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+@@ -43,6 +43,12 @@ void freeValRef(ValueRef ref) {
+ 	}
+ }
+ 
++void registerDynamicPointer(void* pointer, std::string_view name) {
++	if (auto* ctx = TraceContext::get()) {
++		ctx->registerDynamicPointer(pointer, name);
++	}
++}
++
+ TypedValueRef traceCopy(const TypedValueRef& state) {
+ 	if (auto* ctx = TraceContext::get()) {
+ 		return ctx->traceCopy(state);

@@ -30,7 +30,6 @@
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
@@ -45,10 +44,6 @@
 namespace NES
 {
 
-/// Struct that combines the arena and the buffer provider. This struct combines the functionality of the arena and the buffer provider,
-/// allowing the operator to allocate two different types of memory, in regard to their lifetime.
-/// 1. Memory for a pipeline invocation: Arena
-/// 2. Memory for a query: bufferProvider
 struct PipelineMemoryProvider
 {
     explicit PipelineMemoryProvider(const nautilus::val<Arena*>& arena, const nautilus::val<AbstractBufferProvider*>& bufferProvider)
@@ -65,58 +60,36 @@ struct PipelineMemoryProvider
     nautilus::val<AbstractBufferProvider*> bufferProvider;
 };
 
-/// Determines whether the CompiledExecutablePipelineStage continues after the open() call (with close()) or calls the 'repeatTask()' of the
-/// pipeline execution context, putting the task back into the task queue for later execution
-/// This is useful, e.g., to prevent a call to 'close()', which may emit a TupleBuffer in an unfinished state
 enum class OpenReturnState : uint8_t
 {
     CONTINUE,
     REPEAT,
 };
 
-/// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
-/// as access to operator states from the nautilus-runtime.
-/// We differentiate between local and global operator state.
-/// Local operator state lives throughout one pipeline invocation, i.e., over one tuple buffer. It gets initialized in the open call and cleared in the close call.
-/// An example is to store the pointer to the current window in a local state so that the window can be accessed when processing the next tuple.
-/// Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
-/// As the pipeline exists as long as the query exists, the global operator state exists as long as the query runs.
-/// An example is to store the windows of a window operator in the global state so that the windows can be accessed in the next pipeline invocation.
 struct ExecutionContext final
 {
-    explicit ExecutionContext(
-        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
-        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-        const nautilus::val<Arena*>& arena);
+    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
 
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
 
     [[nodiscard]] nautilus::val<OperatorHandler*> getGlobalOperatorHandler(OperatorHandlerId handlerIndex) const;
-    /// Use allocateBuffer if you want to allocate space that lives for multiple pipeline invocations, i.e., query lifetime.
-    /// You must take care of the memory management yourself, i.e., when/how should the tuple buffer be returned to the buffer provider.
     [[nodiscard]] nautilus::val<TupleBuffer*> allocateBuffer() const;
-
-    /// Use allocateMemory if you want to allocate memory that lives for one pipeline invocation, i.e., tuple buffer lifetime.
-    /// You do not have to take care of the memory management yourself, as the memory is automatically destroyed after the pipeline invocation.
     [[nodiscard]] nautilus::val<int8_t*> allocateMemory(const nautilus::val<size_t>& sizeInBytes);
 
-
-    /// Emit a record buffer to the successor pipeline(s) or sink(s)
     void emitBuffer(const RecordBuffer& buffer) const;
 
     void setOpenReturnState(OpenReturnState openReturnState);
     [[nodiscard]] OpenReturnState getOpenReturnState() const;
 
     const nautilus::val<PipelineExecutionContext*> pipelineContext;
-    const nautilus::val<const RuntimeInputFormatterRegistry*> runtimeInputFormatterRegistry;
     nautilus::val<WorkerThreadId> workerThreadId;
     PipelineMemoryProvider pipelineMemoryProvider;
-    nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<Timestamp> currentTs; /// Stores the current timestamp. This is set by a time function
-    nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
+    nautilus::val<OriginId> originId;
+    nautilus::val<Timestamp> watermarkTs;
+    nautilus::val<Timestamp> currentTs;
+    nautilus::val<SequenceNumber> sequenceNumber;
+    nautilus::val<ChunkNumber> chunkNumber;
     nautilus::val<bool> lastChunk;
 
 private:

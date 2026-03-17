@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
 #include <concepts>
@@ -27,7 +28,6 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterRegistry.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -39,8 +39,6 @@ namespace NES
 {
 class RawTupleBuffer;
 
-/// Type-erased wrapper around InputFormatter implementing the TupleBufferRef interface, enabling streamlined access to tuple buffers via
-/// TupleBufferRefs/MemoryLayouts
 class InputFormatterTupleBufferRef final : public TupleBufferRef
 {
     using ExecuteChildFn = std::function<void(ExecutionContext& executionCtx, Record& record)>;
@@ -86,17 +84,12 @@ public:
         std::unreachable();
     }
 
-    nautilus::val<bool> indexBuffer(
-        RecordBuffer& recordBuffer,
-        ArenaRef& arenaRef,
-        const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-        uint64_t runtimeInputFormatterKey) const;
+    nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef, uint64_t runtimeInputFormatterKey) const;
 
     [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatterTupleBufferRef& inputFormatterTupleBufferRef);
 
-    /// Describes what a InputFormatter that is in the InputFormatterTupleBufferRef does (interface).
     struct InputFormatterConcept
     {
         virtual ~InputFormatterConcept() = default;
@@ -106,28 +99,19 @@ public:
             const ExecuteChildFn& executeChild,
             uint64_t runtimeInputFormatterKey) const
             = 0;
-        virtual nautilus::val<bool> indexBuffer(
-            RecordBuffer&,
-            ArenaRef&,
-            const nautilus::val<const RuntimeInputFormatterRegistry*>&,
-            uint64_t runtimeInputFormatterKey) const = 0;
+        virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&, uint64_t runtimeInputFormatterKey) const = 0;
         [[nodiscard]] virtual std::uintptr_t getRuntimeInputFormatterHandle() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
-    /// Defines the concrete behavior of the InputFormatterConcept, i.e., which specific functions from T to call.
     template <typename T>
     struct InputFormatterModel final : InputFormatterConcept
     {
         explicit InputFormatterModel(T&& inputFormatter) : InputFormatter(std::move(inputFormatter)) { }
 
-        nautilus::val<bool> indexBuffer(
-            RecordBuffer& recordBuffer,
-            ArenaRef& arena,
-            const nautilus::val<const RuntimeInputFormatterRegistry*>& runtimeInputFormatterRegistry,
-            const uint64_t runtimeInputFormatterKey) const override
+        nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arena, const uint64_t runtimeInputFormatterKey) const override
         {
-            return InputFormatter.indexBuffer(recordBuffer, arena, runtimeInputFormatterRegistry, runtimeInputFormatterKey);
+            return InputFormatter.indexBuffer(recordBuffer, arena, runtimeInputFormatterKey);
         }
 
         std::ostream& toString(std::ostream& os) const override { return InputFormatter.toString(os); }
