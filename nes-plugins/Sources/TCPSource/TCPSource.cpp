@@ -16,6 +16,7 @@
 
 #include <cerrno> /// For socket error
 #include <chrono>
+#include <cstdlib>
 #include <cstring>
 #include <exception>
 #include <memory>
@@ -51,6 +52,14 @@
 
 namespace NES
 {
+namespace
+{
+std::string getSystestTCPSourceHost()
+{
+    const char* envHost = std::getenv("NES_SYSTEST_INLINE_EVENT_HOST");
+    return (envHost != nullptr && *envHost != '\0') ? envHost : "localhost";
+}
+}
 
 TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
     : errBuffer{}
@@ -354,7 +363,7 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, getSystestTCPSourceHost());
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
@@ -380,7 +389,7 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
 
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, getSystestTCPSourceHost());
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
