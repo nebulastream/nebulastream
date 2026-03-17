@@ -38,8 +38,8 @@ public:
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
     {
-        auto patientIdVal = record.read("ODBC_SOURCE$MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
-        const auto zeitpunktVal = record.read("ODBC_SOURCE$ZEITPUNKT").cast<nautilus::val<uint64_t>>();
+        auto patientIdVal = record.readUnqualified("MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
+        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
         nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
             +[](const int32_t patientId, uint64_t unixTimestamp, Arena* arenaPtr)
             {
