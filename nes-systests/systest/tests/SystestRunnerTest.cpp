@@ -299,12 +299,7 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
     std::ofstream(query2.resultFile()) << "\n";
     std::ofstream(query3.resultFile()) << "\n";
 
-    const auto result = runQueries(
-        {query1, query2, query3},
-        4,
-        submitter,
-        progressTracker,
-        discardPerformanceMessage);
+    const auto result = runQueries({query1, query2, query3}, 4, submitter, progressTracker, discardPerformanceMessage);
 
     EXPECT_TRUE(result.empty());
 }

@@ -173,7 +173,7 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
         });
 
     parser.registerOnQueryCallback(
-        [&queryCallbackCalled, &expectedQueries](const std::string& query, const SystestQueryId currentQueryIdInTest)
+        [&queryCallbackCalled, &expectedQueries](const std::string& query, const SystestQueryId currentQueryIdInTest, bool)
         {
             queryCallbackCalled = true;
             /// Query numbers start at QueryId::INITIAL, which is 1
