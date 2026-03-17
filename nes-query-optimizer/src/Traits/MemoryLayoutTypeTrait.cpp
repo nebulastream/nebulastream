@@ -46,10 +46,8 @@ const std::type_info& MemoryLayoutTypeTrait::getType() const
 SerializableTrait MemoryLayoutTypeTrait::serialize() const
 {
     SerializableTrait trait;
-    SerializableEnumWrapper wrappedImplType;
-    wrappedImplType.set_value(magic_enum::enum_name(memoryLayout));
     SerializableVariantDescriptor variant{};
-    variant.set_allocated_enum_value(&wrappedImplType);
+    variant.mutable_enum_value()->set_value(magic_enum::enum_name(memoryLayout));
     (*trait.mutable_config())["memoryLayoutType"] = variant;
     return trait;
 }

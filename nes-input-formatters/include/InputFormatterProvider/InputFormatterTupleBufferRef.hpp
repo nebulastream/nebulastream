@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <PipelineExecutionContext.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Arena.hpp>
@@ -76,7 +77,7 @@ public:
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const ExecuteChildFn& executeChild,
-        std::uintptr_t runtimeInputFormatterHandle) const;
+        uint64_t runtimeInputFormatterKey) const;
 
     void
     writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override
@@ -85,7 +86,11 @@ public:
         std::unreachable();
     }
 
-    nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef, std::uintptr_t runtimeInputFormatterHandle) const;
+    nautilus::val<bool> indexBuffer(
+        RecordBuffer& recordBuffer,
+        ArenaRef& arenaRef,
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        uint64_t runtimeInputFormatterKey) const;
 
     [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
 
@@ -99,9 +104,11 @@ public:
             ExecutionContext& executionCtx,
             const RecordBuffer& recordBuffer,
             const ExecuteChildFn& executeChild,
-            std::uintptr_t runtimeInputFormatterHandle) const
+            uint64_t runtimeInputFormatterKey) const
             = 0;
-        virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&, std::uintptr_t runtimeInputFormatterHandle) const = 0;
+        virtual nautilus::val<bool>
+        indexBuffer(RecordBuffer&, ArenaRef&, const nautilus::val<PipelineExecutionContext*>&, uint64_t runtimeInputFormatterKey) const
+            = 0;
         [[nodiscard]] virtual std::uintptr_t getRuntimeInputFormatterHandle() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
@@ -112,10 +119,13 @@ public:
     {
         explicit InputFormatterModel(T&& inputFormatter) : InputFormatter(std::move(inputFormatter)) { }
 
-        nautilus::val<bool>
-        indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arena, const std::uintptr_t runtimeInputFormatterHandle) const override
+        nautilus::val<bool> indexBuffer(
+            RecordBuffer& recordBuffer,
+            ArenaRef& arena,
+            const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+            const uint64_t runtimeInputFormatterKey) const override
         {
-            return InputFormatter.indexBuffer(recordBuffer, arena, runtimeInputFormatterHandle);
+            return InputFormatter.indexBuffer(recordBuffer, arena, pipelineContext, runtimeInputFormatterKey);
         }
 
         std::ostream& toString(std::ostream& os) const override { return InputFormatter.toString(os); }
@@ -124,9 +134,9 @@ public:
             ExecutionContext& executionCtx,
             const RecordBuffer& recordBuffer,
             const ExecuteChildFn& executeChild,
-            const std::uintptr_t runtimeInputFormatterHandle) const override
+            const uint64_t runtimeInputFormatterKey) const override
         {
-            return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild, runtimeInputFormatterHandle);
+            return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild, runtimeInputFormatterKey);
         }
 
         [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const override

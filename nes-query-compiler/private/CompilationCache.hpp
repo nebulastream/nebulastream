@@ -57,7 +57,6 @@ private:
     [[nodiscard]] std::string createExplicitCacheKey(const std::shared_ptr<Pipeline>& pipeline);
 
     [[nodiscard]] static std::string createCacheKeySeed(const PhysicalPlan& physicalPlan);
-    [[nodiscard]] static std::string createHandlerCacheSignature(const Pipeline& pipeline);
 
     Settings settings;
     std::optional<std::string> binaryFingerprint;

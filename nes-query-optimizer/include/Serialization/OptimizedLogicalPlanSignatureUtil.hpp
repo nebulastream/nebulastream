@@ -11,28 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <memory>
-#include <optional>
-#include <Nautilus/Interface/Record.hpp>
-#include <Sinks/SinkDescriptor.hpp>
-#include <PhysicalOperator.hpp>
+#include <string>
+#include <Plans/LogicalPlan.hpp>
+#include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
-class SinkPhysicalOperator final : public PhysicalOperatorConcept
+class OptimizedLogicalPlanSignatureUtil
 {
 public:
-    explicit SinkPhysicalOperator(const SinkDescriptor& descriptor);
-    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
-    void setChild(PhysicalOperator) override;
-
-    [[nodiscard]] SinkDescriptor getDescriptor() const;
-
-    bool operator==(const SinkPhysicalOperator& other) const;
-
-private:
-    SinkDescriptor descriptor;
+    [[nodiscard]] static std::string create(const LogicalPlan& optimizedPlan, const QueryExecutionConfiguration& configuration);
 };
 }

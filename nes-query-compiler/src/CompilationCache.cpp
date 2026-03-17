@@ -14,19 +14,16 @@
 
 #include <CompilationCache.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <filesystem>
 #include <optional>
-#include <ranges>
 #include <sstream>
 #include <string>
-#include <typeinfo>
 #include <utility>
-#include <vector>
 
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <options.hpp>
@@ -105,8 +102,9 @@ uint64_t CompilationCache::getStablePipelineOrdinal(const std::shared_ptr<Pipeli
 
 std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipeline>& pipeline)
 {
+    PRECONDITION(!cacheKeySeed.empty(), "Compilation cache requires a non-empty optimized logical plan seed");
+
     const auto pipelineOrdinal = getStablePipelineOrdinal(pipeline);
-    const auto handlerCacheSignature = createHandlerCacheSignature(*pipeline);
 
     std::ostringstream keyBuilder;
     keyBuilder << "nes:auto";
@@ -114,12 +112,8 @@ std::string CompilationCache::createExplicitCacheKey(const std::shared_ptr<Pipel
     {
         keyBuilder << "|binary=" << *binaryFingerprint;
     }
-    if (!cacheKeySeed.empty())
-    {
-        keyBuilder << ":q=" << cacheKeySeed;
-    }
+    keyBuilder << ":q=" << cacheKeySeed;
     keyBuilder << ":o=" << pipelineOrdinal;
-    keyBuilder << ":h=" << handlerCacheSignature;
     return keyBuilder.str();
 }
 
@@ -136,39 +130,11 @@ void CompilationCache::configureEngineOptionsForPipeline(nautilus::engine::Optio
 
 std::string CompilationCache::createCacheKeySeed(const PhysicalPlan& physicalPlan)
 {
-    return physicalPlan.getSignature();
-}
-
-std::string CompilationCache::createHandlerCacheSignature(const Pipeline& pipeline)
-{
-    std::vector<std::pair<uint64_t, std::string>> handlerEntries;
-    handlerEntries.reserve(pipeline.getOperatorHandlers().size());
-    for (const auto& [handlerId, handler] : pipeline.getOperatorHandlers())
-    {
-        std::ostringstream entryBuilder;
-        entryBuilder << handlerId.getRawValue() << '=';
-        if (handler)
-        {
-            const auto* handlerPtr = handler.get();
-            entryBuilder << typeid(*handlerPtr).name();
-        }
-        else
-        {
-            entryBuilder << "<null>";
-        }
-        handlerEntries.emplace_back(handlerId.getRawValue(), entryBuilder.str());
-    }
-
-    std::ranges::sort(handlerEntries, [](const auto& lhs, const auto& rhs) { return lhs.first < rhs.first; });
-
-    std::ostringstream signatureBuilder;
-    signatureBuilder << "h[";
-    for (const auto& handlerEntry : handlerEntries)
-    {
-        signatureBuilder << handlerEntry.second << ';';
-    }
-    signatureBuilder << ']';
-    return signatureBuilder.str();
+    const auto& compilationCacheSeed = physicalPlan.getCompilationCacheSeed();
+    PRECONDITION(
+        compilationCacheSeed.has_value() && !compilationCacheSeed->empty(),
+        "Compilation cache requires a non-empty optimized logical plan seed attached to the physical plan");
+    return *compilationCacheSeed;
 }
 
 }

@@ -15,6 +15,7 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <string>
 #include <vector>
@@ -41,7 +42,8 @@ public:
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
     [[nodiscard]] const std::string& getOriginalSql() const;
-    [[nodiscard]] std::string getSignature() const;
+    [[nodiscard]] const std::optional<std::string>& getCompilationCacheSeed() const;
+    void setCompilationCacheSeed(std::string seed);
 
 private:
     QueryId queryId;
@@ -49,6 +51,7 @@ private:
     ExecutionMode executionMode;
     uint64_t operatorBufferSize;
     std::string originalSql;
+    std::optional<std::string> compilationCacheSeed;
 
     [[nodiscard]] std::string toString() const;
 

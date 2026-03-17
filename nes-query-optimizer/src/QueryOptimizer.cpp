@@ -18,6 +18,7 @@
 #include <Phases/DecideMemoryLayout.hpp>
 #include <Phases/LowerToPhysicalOperators.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Serialization/OptimizedLogicalPlanSignatureUtil.hpp>
 #include <PhysicalPlan.hpp>
 
 namespace NES
@@ -35,7 +36,9 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     DecideMemoryLayout memoryLayoutDecider;
     auto optimizedPlan = joinTypeDecider.apply(plan);
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
-    return LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
+    auto physicalPlan = LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
+    physicalPlan.setCompilationCacheSeed(OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, defaultQueryExecution));
+    return physicalPlan;
 }
 
 }

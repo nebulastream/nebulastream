@@ -30,7 +30,6 @@ public:
 
     [[nodiscard]] SourceDescriptor getDescriptor() const;
     [[nodiscard]] OriginId getOriginId() const;
-    [[nodiscard]] std::string getSignature() const;
 
     bool operator==(const SourcePhysicalOperator& other) const;
 

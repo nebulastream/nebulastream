@@ -11,4 +11,4 @@
 # limitations under the License.
 
 
-add_source_files(nes-query-optimizer TraitSetSerializationUtil.cpp)
+add_source_files(nes-query-optimizer TraitSetSerializationUtil.cpp OptimizedLogicalPlanSignatureUtil.cpp)

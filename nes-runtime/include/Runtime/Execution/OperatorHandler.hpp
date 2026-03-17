@@ -13,7 +13,6 @@
 */
 
 #pragma once
-#include <atomic>
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -26,11 +25,16 @@ class PipelineExecutionContext;
 using OperatorHandlerId = NESStrongType<uint64_t, struct OperatorHandlerId_, 0, 1>;
 static constexpr OperatorHandlerId INVALID_OPERATOR_HANDLER_ID = INVALID<OperatorHandlerId>;
 static constexpr OperatorHandlerId INITIAL_OPERATOR_HANDLER_ID = INITIAL<OperatorHandlerId>;
+inline thread_local uint64_t nextOperatorHandlerId = INITIAL_OPERATOR_HANDLER_ID.getRawValue();
+
+inline void resetOperatorHandlerIdCounter()
+{
+    nextOperatorHandlerId = INITIAL_OPERATOR_HANDLER_ID.getRawValue();
+}
 
 inline OperatorHandlerId getNextOperatorHandlerId()
 {
-    static std::atomic_uint64_t id = INITIAL_OPERATOR_HANDLER_ID.getRawValue();
-    return OperatorHandlerId(id++);
+    return OperatorHandlerId(nextOperatorHandlerId++);
 }
 
 /**

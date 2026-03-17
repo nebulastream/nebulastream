@@ -20,23 +20,38 @@ NebulaStream generates an explicit cache key string and passes it to Nautilus vi
 - `engine.Blob.CacheDir = <compilation_cache_dir>`
 - `engine.Blob.CacheKey = <explicit_key>`
 
-The explicit key is built from three main parts:
+The explicit key is built from two main parts:
 
 1. A **query seed** (`cacheKeySeed`) shared by all pipelines of a query.
 2. A **stable pipeline ordinal** that disambiguates multiple pipelines within one query.
-3. An **operator-handler signature** to avoid loading a blob compiled for a different runtime handler setup.
 
 ### 1) Query Seed (`cacheKeySeed`)
 
-`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` uses `PhysicalPlan::getSignature()`, which constructs a
-string intended to be stable for the same physical plan, including:
+`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` requires a precomputed seed attached by the optimizer.
+`QueryOptimizer::optimize(...)` computes this seed from a canonical serialization of the optimized logical plan
+(after join-type and memory-layout decisions, before lowering to physical operators) via
+`OptimizedLogicalPlanSignatureUtil::create(...)`.
 
-- execution mode and operator buffer size
-- number of root operators
-- a recursive signature of the physical operator plan, including:
-  - `PhysicalOperator::getSignature()`
-  - input/output schema and memory layout
-  - pipeline location and child structure
+The canonical optimized logical-plan seed includes:
+
+- codegen-relevant query-execution settings that are not encoded in the logical plan itself:
+  - execution mode
+  - operator buffer size
+  - page size
+  - number of records per key
+  - max number of buckets
+- a recursive, id-free serialization of the optimized logical operator tree, including:
+  - operator type, schemas, traits, and config
+  - logical functions and aggregation functions
+  - window metadata and other serialized config values
+  - child structure using stable structural ordinals instead of generated operator ids
+- canonicalized source/sink descriptors that strip runtime-only identity fields:
+  - sources keep source type, schema, and parser config
+  - sinks keep sink type, schema, and input format when present
+- trait serialization excludes `OutputOriginIds`, whose ids are not stable across runs and are not codegen-relevant
+
+If no precomputed seed is attached, compilation-cache key generation now fails fast instead of silently falling back
+to a physical-plan signature.
 
 The resulting seed is stored on the query compiler’s `CompilationCache` instance (owned by `QueryCompiler`) and used as
 the query-level input for all per-pipeline cache keys.
@@ -46,18 +61,11 @@ the query-level input for all per-pipeline cache keys.
 `CompilationCache` assigns a stable ordinal (`o=<n>`) the first time a `Pipeline` is encountered during lowering. This
 disambiguates pipelines within the same query without relying on non-stable identifiers.
 
-### 3) Operator-Handler Signature (`h=...`)
-
-Operator handlers are runtime state that compiled pipelines may depend on. To prevent loading an artifact that was
-compiled for a different handler configuration, the key includes a deterministic signature of the handler set
-(`CompilationCache::createHandlerCacheSignature`), built from sorted `(handlerId, handlerTypeName)` entries where
-`handlerTypeName` comes from `typeid(*handler).name()`.
-
 ### Final Explicit Key Format
 
 The explicit key string has the shape:
 
-`nes:auto:q=<cacheKeySeed>:o=<stageOrdinal>:h=h[...];`
+`nes:auto:q=<cacheKeySeed>:o=<stageOrdinal>`
 
 Note: this string is not used as a filename. Nautilus hashes it to generate a stable file path.
 
@@ -92,8 +100,6 @@ If loading fails, Nautilus falls back to recompiling.
 - The cache key also includes a binary fingerprint derived from the current executable path, file size, and modification
   time.
   This avoids using stale artifacts produced by a different binary.
-- `typeid(...).name()` is implementation-defined and may change between compilers/standard libraries, which affects key
-  stability.
 - The cache directory is not automatically cleaned; remove it to evict entries.
-- Changes in SQL, operator parameters, schemas, memory layouts, handler types/ids, or compiler/backend options are
-  expected to produce cache misses.
+- Changes in SQL, operator parameters, schemas, memory layouts, pipeline structure/order, or compiler/backend options
+  are expected to produce cache misses.

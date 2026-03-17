@@ -61,10 +61,8 @@ const std::type_info& JoinImplementationTypeTrait::getType() const
 SerializableTrait JoinImplementationTypeTrait::serialize() const
 {
     SerializableTrait trait;
-    SerializableEnumWrapper wrappedImplType;
-    wrappedImplType.set_value(magic_enum::enum_name(implementationType));
     SerializableVariantDescriptor variant{};
-    variant.set_allocated_enum_value(&wrappedImplType);
+    variant.mutable_enum_value()->set_value(magic_enum::enum_name(implementationType));
     (*trait.mutable_config())["implementationJoinType"] = variant;
     return trait;
 }

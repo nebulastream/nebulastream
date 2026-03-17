@@ -25,6 +25,7 @@
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -72,6 +73,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
     CPPTRACE_TRY
     {
         plan.setQueryId(QueryId(queryIdCounter++));
+        resetOperatorHandlerIdCounter();
         auto queryPlan = optimizer->optimize(plan);
         listener->onEvent(SubmitQuerySystemEvent{queryPlan.getQueryId(), explain(plan, ExplainVerbosity::Debug)});
         const DumpMode dumpMode(

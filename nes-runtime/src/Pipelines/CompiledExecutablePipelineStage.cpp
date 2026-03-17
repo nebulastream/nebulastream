@@ -20,6 +20,7 @@
 #include <memory>
 #include <ostream>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -33,6 +34,7 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
+#include <ScanPhysicalOperator.hpp>
 #include <function.hpp>
 #include <options.hpp>
 
@@ -88,6 +90,38 @@ private:
     int64_t compilationEndNanoseconds;
     bool hasCompilationEndNanoseconds;
 };
+
+void registerRuntimeInputFormatterHandlesForOperator(
+    const PhysicalOperator& physicalOperator,
+    PipelineExecutionContext& pipelineExecutionContext,
+    std::unordered_set<uint64_t>& seenRuntimeInputFormatterSlots)
+{
+    if (const auto scanOperator = physicalOperator.tryGet<ScanPhysicalOperator>(); scanOperator)
+    {
+        if (const auto runtimeInputFormatterHandle = scanOperator->getRuntimeInputFormatterHandle(); runtimeInputFormatterHandle != 0)
+        {
+            const auto runtimeInputFormatterSlot = scanOperator->getRuntimeInputFormatterSlot();
+            const auto [_, isNewSlot] = seenRuntimeInputFormatterSlots.insert(runtimeInputFormatterSlot);
+            PRECONDITION(
+                isNewSlot,
+                "Duplicate runtime input formatter slot {} in pipeline {}",
+                runtimeInputFormatterSlot,
+                pipelineExecutionContext.getPipelineId().getRawValue());
+            pipelineExecutionContext.setRuntimeInputFormatterHandle(runtimeInputFormatterSlot, runtimeInputFormatterHandle);
+        }
+    }
+
+    if (const auto childOperator = physicalOperator.getChild(); childOperator)
+    {
+        registerRuntimeInputFormatterHandlesForOperator(*childOperator, pipelineExecutionContext, seenRuntimeInputFormatterSlots);
+    }
+}
+
+void registerRuntimeInputFormatterHandles(const std::shared_ptr<Pipeline>& pipeline, PipelineExecutionContext& pipelineExecutionContext)
+{
+    std::unordered_set<uint64_t> seenRuntimeInputFormatterSlots;
+    registerRuntimeInputFormatterHandlesForOperator(pipeline->getRootOperator(), pipelineExecutionContext, seenRuntimeInputFormatterSlots);
+}
 }
 
 CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
@@ -128,6 +162,7 @@ uint64_t CompiledExecutablePipelineStage::getCompilationCount()
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
     /// we call the compiled pipeline function with an input buffer and the execution context
+    registerRuntimeInputFormatterHandles(pipeline, pipelineExecutionContext);
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
