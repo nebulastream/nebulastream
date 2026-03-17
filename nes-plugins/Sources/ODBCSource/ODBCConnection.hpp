@@ -66,6 +66,10 @@ public:
 
     size_t syncRowCount();
 
+    /// Read the persisted checkpoint rowcount from dbo.nes_checkpoint.
+    /// Returns 0 if the table doesn't exist or has no data.
+    uint64_t readCheckpointRowCount();
+
     void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows);
 
     template <typename T>
@@ -103,6 +107,7 @@ private:
     SQLHSTMT hstmtCount = SQL_NULL_HSTMT;
     FetchedSchema fetchedSchema;
     uint64_t rowCountTracker{0};
+    uint64_t batchStartRowCount{0};  ///< rowCountTracker before the current buffer's += update
     uint64_t numberOfLeftoverTuples{0};
     std::string countQuery;
 };
