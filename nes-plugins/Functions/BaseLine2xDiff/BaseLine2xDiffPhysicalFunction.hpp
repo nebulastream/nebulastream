@@ -106,41 +106,35 @@ public:
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
     {
-        // [x] Todo: determine if it is possible to get all fields from the record
-        //      - looks good
-        if (record.hasField("ODBC_SOURCE$WERT"))
-        {
-            /// get Wert as double
-            const auto valueVal = child.execute(record, arena).cast<nautilus::val<double>>();
-            auto patientIdVal = record.read("ODBC_SOURCE$MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
-            const auto bezeichnungVal = record.read("ODBC_SOURCE$BEZ").cast<VariableSizedData>();
-            const auto zeitpunktVal = record.read("ODBC_SOURCE$ZEITPUNKT").cast<nautilus::val<uint64_t>>();
-            nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
-                +[](int32_t patientId, char* bez, size_t bezLength, double value, uint64_t timestamp, Arena* arenaPtr)
-                {
-                    thread_local auto result = VarSizedResult{};
-                    const std::string_view bezSV{bez, bezLength};
-                    // Todo: can remove check
-                    INVARIANT(bezSV == "Kreatinin", "Function only works for Kreatinin values, apply WHERE filter first");
-                    const std::string probeResult
-                        = staticSharedDiffState.probe(BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value});
-                    const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
-                    std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
-                    result = VarSizedResult{.varSizedPointer = allocatedMemory, .size = probeResult.size()};
-                    return &result;
-                },
-                patientIdVal,
-                bezeichnungVal.getContent(),
-                bezeichnungVal.getSize(),
-                valueVal,
-                zeitpunktVal,
-                arena.getArena());
-            VariableSizedData varSizedString{
-                *getMemberWithOffset<int8_t*>(probeResult, offsetof(VarSizedResult, varSizedPointer)),
-                *getMemberWithOffset<uint64_t>(probeResult, offsetof(VarSizedResult, size))};
-            return varSizedString;
-        }
-        throw FieldNotFound("BaseLine2xDiffPhysicalFunction require 'Wert' field");
+        /// get Wert as double
+        const auto valueVal = child.execute(record, arena).cast<nautilus::val<double>>();
+        auto patientIdVal = record.readUnqualified("MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
+        const auto bezeichnungVal = record.readUnqualified("BEZ").cast<VariableSizedData>();
+        const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
+        nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
+            +[](int32_t patientId, char* bez, size_t bezLength, double value, uint64_t timestamp, Arena* arenaPtr)
+            {
+                thread_local auto result = VarSizedResult{};
+                const std::string_view bezSV{bez, bezLength};
+                // Todo: can remove check
+                INVARIANT(bezSV == "Kreatinin", "Function only works for Kreatinin values, apply WHERE filter first");
+                const std::string probeResult
+                    = staticSharedDiffState.probe(BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value});
+                const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
+                std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
+                result = VarSizedResult{.varSizedPointer = allocatedMemory, .size = probeResult.size()};
+                return &result;
+            },
+            patientIdVal,
+            bezeichnungVal.getContent(),
+            bezeichnungVal.getSize(),
+            valueVal,
+            zeitpunktVal,
+            arena.getArena());
+        VariableSizedData varSizedString{
+            *getMemberWithOffset<int8_t*>(probeResult, offsetof(VarSizedResult, varSizedPointer)),
+            *getMemberWithOffset<uint64_t>(probeResult, offsetof(VarSizedResult, size))};
+        return varSizedString;
     }
 
 private:
