@@ -47,6 +47,8 @@
 namespace NES
 {
 
+std::mutex HTTPSink::logMutex;
+
 HTTPSink::HTTPSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController)), curl(nullptr)
 {
@@ -99,8 +101,11 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 
     /// Log the message to file if it is non-empty, then flush immediately
     /// so the data is persisted even if the container crashes right after.
+    /// The mutex ensures concurrent writes from multiple sink instances
+    /// (different queries sharing the same log file) do not interleave.
     if (!fBuffer.empty())
     {
+        const std::lock_guard<std::mutex> lock(logMutex);
         logFile << fBuffer << '\n';
         logFile.flush();
     }
