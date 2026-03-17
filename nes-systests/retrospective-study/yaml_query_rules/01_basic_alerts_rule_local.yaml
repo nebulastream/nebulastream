@@ -1,15 +1,9 @@
-# Local development version - uses host.docker.internal to reach compose services
-# from a CLion Docker toolchain container.
-#
-# ODBC source: host.docker.internal:1434 (target-db exposed port)
-# HTTP sink:   host.docker.internal:8090 (famedly exposed port)
-#
 #  [01] PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
 query: |
-  SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
-  FROM odbc_source
-  WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
-  INTO HTTP('JSON' AS `SINK`.INPUT_FORMAT, "host.docker.internal" AS `SINK`.IP_ADDRESS, "8090" AS `SINK`.PORT, "nesNotification" AS `SINK`.ENDPOINT);
+  SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, Bez, VarSizedToDouble(Wert) AS wert_double, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID
+  FROM odbc_source_01
+  WHERE Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
+  INTO File('/tmp/results/output_01.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
 logical:
   - name: odbc_source_01
     schema:
@@ -45,14 +39,14 @@ physical:
     parser_config:
       type: Native
     source_config:
-      host: "host.docker.internal"
+      host: "127.0.0.1"
       port: "1434"
       database: "master"
       username: "sa"
       password: "samplePassword1!"
       driver: "ODBC Driver 18 for SQL Server"
       sync_table: "dbo.v_Labor_null"
-      poll_interval_ms: 10000
+      poll_interval_ms: 1000
       query: "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"
       trust_server_certificate: true
 sinks: []
