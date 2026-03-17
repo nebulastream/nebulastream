@@ -75,6 +75,7 @@ pub mod ffi {
         type ReceiverDataChannel;
 
         fn enable_memcom();
+        fn shutdown_network_services(connection_addr: String) -> Result<()>;
         fn init_receiver_service(
             connection_addr: String,
             worker_id: String,
@@ -143,6 +144,38 @@ fn enable_memcom() {
     }
     *use_memcom = true;
 }
+
+fn shutdown_network_services(connection_addr: String) -> Result<(), String> {
+    let this_connection =
+        ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
+
+    let (receiver, sender) = {
+        let mut services = SERVICES.lock().unwrap();
+        (
+            services.receivers.remove(&this_connection),
+            services.senders.remove(&this_connection),
+        )
+    };
+
+    if let Some((service, _)) = receiver {
+        let shutdown_result = match service {
+            ReceiverService::MemCom(service) => service.shutdown(),
+            ReceiverService::Tcp(service) => service.shutdown(),
+        };
+        shutdown_result.map_err(|e| e.to_string())?;
+    }
+
+    if let Some((service, _)) = sender {
+        let shutdown_result = match service {
+            SenderService::MemCom(service) => service.shutdown(),
+            SenderService::Tcp(service) => service.shutdown(),
+        };
+        shutdown_result.map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 /// Lazy singleton types, initialized on first use in a thread-safe way
 static SERVICES: std::sync::LazyLock<Mutex<Services>> =
     std::sync::LazyLock::new(|| Mutex::default());

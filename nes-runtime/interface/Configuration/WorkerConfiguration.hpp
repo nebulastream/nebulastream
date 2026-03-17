@@ -23,10 +23,10 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/DumpMode.hpp>
-#include <fmt/format.h>
 #include <NetworkConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
@@ -38,6 +38,7 @@ public:
 
     QueryEngineConfiguration queryEngine = {"query_engine", "Configuration for the query engine"};
     QueryExecutionConfiguration defaultQueryExecution = {"default_query_execution", "Default configuration for query executions"};
+    QueryOptimizerConfiguration defaultQueryOptimization = {"default_query_optimization", "Default configuration for query optimizations"};
     NetworkConfiguration network = {"network", "Default configuration for network sources and sinks"};
 
     /// The number of buffers in the global buffer manager. Controls how much memory is consumed by the system.
@@ -68,6 +69,7 @@ private:
         return {
             &queryEngine,
             &defaultQueryExecution,
+            &defaultQueryOptimization,
             &network,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,

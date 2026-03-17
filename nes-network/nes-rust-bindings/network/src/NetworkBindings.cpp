@@ -42,6 +42,11 @@ void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
     init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
 }
 
+void shutdownNetworkServices(const std::string& connectionAddr) /// NOLINT(misc-use-internal-linkage)
+{
+    shutdown_network_services(rust::String(connectionAddr));
+}
+
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
 {
     buffer.setSequenceNumber(NES::SequenceNumber(metaData.sequence_number));

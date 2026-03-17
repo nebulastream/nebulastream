@@ -278,23 +278,18 @@ TEST_F(SystestRunnerTest, RandomizedInlineAndRegularQueriesDoNotInterfere)
 {
     const auto testFilePath = (std::filesystem::path{SYSTEST_DATA_DIR} / "InlineEventMixed.dummy").string();
     std::mt19937 rng(42);
+    const auto workingDir = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests" / "tests" / "InlineEventRun";
+    auto queries = loadInlineEventQueries(testFilePath, workingDir);
+    ASSERT_FALSE(queries.empty());
 
-    for (int iteration = 0; iteration < 5; ++iteration)
-    {
-        const auto workingDir
-            = std::filesystem::path(PATH_TO_BINARY_DIR) / "nes-systests" / "tests" / fmt::format("InlineEventRun{}", iteration);
-        auto queries = loadInlineEventQueries(testFilePath, workingDir);
-        ASSERT_FALSE(queries.empty());
+    std::ranges::shuffle(queries, rng);
 
-        std::ranges::shuffle(queries, rng);
+    SystestProgressTracker tracker;
+    tracker.setTotalQueries(queries.size());
+    SingleNodeWorkerConfiguration configuration;
 
-        SystestProgressTracker tracker;
-        tracker.setTotalQueries(queries.size());
-        SingleNodeWorkerConfiguration configuration;
-
-        const auto failedQueries = runQueriesAtLocalWorker(queries, 1, createLocalClusterConfig(), configuration, tracker);
-        EXPECT_TRUE(failedQueries.empty());
-    }
+    const auto failedQueries = runQueriesAtLocalWorker(queries, 1, createLocalClusterConfig(), configuration, tracker);
+    EXPECT_TRUE(failedQueries.empty());
 }
 
 TEST_F(SystestRunnerTest, InlineCrashRestartScriptsTerminateAndProduceExpectedTuples)

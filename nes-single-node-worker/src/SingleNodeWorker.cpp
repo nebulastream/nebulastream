@@ -47,11 +47,24 @@
 #include <WorkerStatus.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
+extern void shutdownNetworkServices(const std::string& connectionAddr);
 
 namespace NES
 {
 
-SingleNodeWorker::~SingleNodeWorker() = default;
+SingleNodeWorker::~SingleNodeWorker()
+{
+    std::experimental::get_underlying(compiler).reset();
+    std::experimental::get_underlying(optimizer).reset();
+    std::experimental::get_underlying(nodeEngine).reset();
+    std::experimental::get_underlying(listener).reset();
+
+    if (!configuration.data.getValue().empty())
+    {
+        shutdownNetworkServices(configuration.data.getValue());
+    }
+}
+
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
