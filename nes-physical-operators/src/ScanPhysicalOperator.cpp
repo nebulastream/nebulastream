@@ -28,6 +28,7 @@
 #include <ExecutionContext.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
+#include <Runtime/Execution/RuntimeInputFormatterDynamicPointer.hpp>
 #include <val.hpp>
 
 namespace NES
@@ -96,13 +97,17 @@ uint64_t ScanPhysicalOperator::getRuntimeInputFormatterSlot() const
     return runtimeInputFormatterSlot;
 }
 
-std::uintptr_t ScanPhysicalOperator::getRuntimeInputFormatterHandle() const
+std::optional<RuntimeDynamicPointerBinding> ScanPhysicalOperator::getRuntimeInputFormatterBinding() const
 {
     if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(bufferRef))
     {
-        return inputFormatterBufferRef->getRuntimeInputFormatterHandle();
+        if (const auto* runtimeInputFormatterPointer = inputFormatterBufferRef->getRuntimeInputFormatterPointer(); runtimeInputFormatterPointer)
+        {
+            return RuntimeDynamicPointerBinding::create(
+                createRuntimeInputFormatterName(runtimeInputFormatterSlot), bufferRef, runtimeInputFormatterPointer);
+        }
     }
-    return 0;
+    return std::nullopt;
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

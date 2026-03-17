@@ -37,7 +37,6 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
-#include <Runtime/Execution/RuntimeInputFormatterDynamicPointer.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <function.hpp>
@@ -98,7 +97,7 @@ private:
     bool hasCompilationEndNanoseconds;
 };
 
-using DynamicPointerBindings = std::unordered_map<std::string, std::uintptr_t>;
+using DynamicPointerBindings = std::vector<RuntimeDynamicPointerBinding>;
 
 void collectDynamicPointerBindingsForOperator(
     const PhysicalOperator& physicalOperator,
@@ -108,12 +107,12 @@ void collectDynamicPointerBindingsForOperator(
 {
     if (const auto scanOperator = physicalOperator.tryGet<ScanPhysicalOperator>(); scanOperator)
     {
-        if (const auto runtimeInputFormatterHandle = scanOperator->getRuntimeInputFormatterHandle(); runtimeInputFormatterHandle != 0)
+        if (const auto runtimeInputFormatterBinding = scanOperator->getRuntimeInputFormatterBinding(); runtimeInputFormatterBinding)
         {
             const auto runtimeInputFormatterSlot = scanOperator->getRuntimeInputFormatterSlot();
             const auto [_, isNewSlot] = seenRuntimeInputFormatterSlots.insert(runtimeInputFormatterSlot);
             PRECONDITION(isNewSlot, "Duplicate runtime input formatter slot {} in pipeline {}", runtimeInputFormatterSlot, pipelineId.getRawValue());
-            dynamicPointerBindings.emplace(createRuntimeInputFormatterName(runtimeInputFormatterSlot), runtimeInputFormatterHandle);
+            dynamicPointerBindings.emplace_back(*runtimeInputFormatterBinding);
         }
     }
 
@@ -152,27 +151,25 @@ std::filesystem::path writeDynamicPointerBindings(const DynamicPointerBindings& 
     PRECONDITION(output.is_open(), "Could not open dynamic pointer binding file {}", bindingPath.string());
     output << kDynamicPointerBindingVersion << "\n";
 
-    std::vector<std::pair<std::string, std::uintptr_t>> sortedBindings(dynamicPointerBindings.begin(), dynamicPointerBindings.end());
-    std::ranges::sort(sortedBindings, {}, [](const auto& binding) { return binding.first; });
-    for (const auto& [name, pointerValue] : sortedBindings)
+    auto sortedBindings = dynamicPointerBindings;
+    std::ranges::sort(sortedBindings, {}, [](const auto& binding) { return binding.getName(); });
+    for (const auto& binding : sortedBindings)
     {
-        PRECONDITION(pointerValue != 0, "Dynamic pointer binding {} must not be null", name);
-        output << name << "\t" << fmt::format("{:#x}", static_cast<uint64_t>(pointerValue)) << "\n";
+        output << binding.getName() << "\t" << fmt::format("{:#x}", binding.getPointerValue()) << "\n";
     }
     PRECONDITION(output.good(), "Could not write dynamic pointer binding file {}", bindingPath.string());
     return bindingPath;
 }
 
 nautilus::engine::Options
-configureOptionsForDynamicPointerBindings(const std::shared_ptr<Pipeline>& pipeline, nautilus::engine::Options options)
+configureOptionsForDynamicPointerBindings(const DynamicPointerBindings& dynamicPointerBindings, const PipelineId pipelineId, nautilus::engine::Options options)
 {
-    const auto dynamicPointerBindings = collectDynamicPointerBindings(pipeline);
     if (dynamicPointerBindings.empty())
     {
         return options;
     }
 
-    const auto bindingPath = writeDynamicPointerBindings(dynamicPointerBindings, pipeline->getPipelineId());
+    const auto bindingPath = writeDynamicPointerBindings(dynamicPointerBindings, pipelineId);
     options.setOption("engine.Blob.DynamicPointerBindingPath", bindingPath.string());
     return options;
 }
@@ -182,7 +179,8 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
     std::shared_ptr<Pipeline> pipeline,
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
     nautilus::engine::Options options)
-    : engine(configureOptionsForDynamicPointerBindings(pipeline, std::move(options)))
+    : dynamicPointerBindings(collectDynamicPointerBindings(pipeline))
+    , engine(configureOptionsForDynamicPointerBindings(dynamicPointerBindings, pipeline->getPipelineId(), std::move(options)))
     , compiledPipelineFunction(nullptr)
     , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))

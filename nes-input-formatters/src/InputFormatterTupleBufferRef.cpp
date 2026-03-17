@@ -39,9 +39,9 @@ InputFormatterTupleBufferRef::indexBuffer(RecordBuffer& recordBuffer, ArenaRef& 
     return this->inputFormatter->indexBuffer(recordBuffer, arenaRef, runtimeInputFormatterKey);
 }
 
-std::uintptr_t InputFormatterTupleBufferRef::getRuntimeInputFormatterHandle() const
+const void* InputFormatterTupleBufferRef::getRuntimeInputFormatterPointer() const
 {
-    return this->inputFormatter->getRuntimeInputFormatterHandle();
+    return this->inputFormatter->getRuntimeInputFormatterPointer();
 }
 
 std::ostream& operator<<(std::ostream& os, const InputFormatterTupleBufferRef& inputFormatterTupleBufferRef)

@@ -22,12 +22,11 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <PhysicalOperator.hpp>
+#include <Runtime/Execution/RuntimeDynamicPointerBinding.hpp>
 
 namespace NES
 {
 
-/// @brief This basic scan operator extracts records from a base tuple buffer according to a memory layout.
-/// Furthermore, it supports projection push down to eliminate unneeded reads
 class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
@@ -39,7 +38,7 @@ public:
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::shared_ptr<TupleBufferRef> getBufferRef() const;
     [[nodiscard]] uint64_t getRuntimeInputFormatterSlot() const;
-    [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
+    [[nodiscard]] std::optional<RuntimeDynamicPointerBinding> getRuntimeInputFormatterBinding() const;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

@@ -20,6 +20,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeDynamicPointerBinding.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
 #include <ExecutablePipelineStage.hpp>
@@ -53,6 +54,7 @@ protected:
 private:
     [[nodiscard]] nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
     compilePipeline() const;
+    std::vector<RuntimeDynamicPointerBinding> dynamicPointerBindings;
     nautilus::engine::NautilusEngine engine;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;

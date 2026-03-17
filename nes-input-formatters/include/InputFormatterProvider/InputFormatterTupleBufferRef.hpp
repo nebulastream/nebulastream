@@ -86,7 +86,7 @@ public:
 
     nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef, uint64_t runtimeInputFormatterKey) const;
 
-    [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const;
+    [[nodiscard]] const void* getRuntimeInputFormatterPointer() const;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatterTupleBufferRef& inputFormatterTupleBufferRef);
 
@@ -100,7 +100,7 @@ public:
             uint64_t runtimeInputFormatterKey) const
             = 0;
         virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&, uint64_t runtimeInputFormatterKey) const = 0;
-        [[nodiscard]] virtual std::uintptr_t getRuntimeInputFormatterHandle() const = 0;
+        [[nodiscard]] virtual const void* getRuntimeInputFormatterPointer() const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -125,10 +125,7 @@ public:
             return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild, runtimeInputFormatterKey);
         }
 
-        [[nodiscard]] std::uintptr_t getRuntimeInputFormatterHandle() const override
-        {
-            return reinterpret_cast<std::uintptr_t>(std::addressof(InputFormatter));
-        }
+        [[nodiscard]] const void* getRuntimeInputFormatterPointer() const override { return std::addressof(InputFormatter); }
 
     private:
         T InputFormatter;
