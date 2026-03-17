@@ -46,20 +46,20 @@ ATTACH INLINE
 38,1009,1705325000,1,Blutgase arteriell,O2-SAETTIGUNG,45,%,19224-5,S009,1705323200,1705325800,109
 
 # [01] PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetimeTesting(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
 INTO File();
 ----
-Detected low PO2(50 < 60 mmHg) for patient 1003 at 15.01.2024 10:01(1705312900)
+Detected low PO2(50 < 60 mmHg) for patient 1003. Timestamps(Creation: 15.01.2024 10:01(1705312900) MLIFE(Clone) Insertion: 15.01.2024 09:30(1705311000) System Ingestion: 15.01.2024 10:15(1705313700))
 
 # [02] PaCO2,Arterial blood,PCO2,Blutgase arteriell,mmHg,2019-8,>52 mmHg,3
-SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PCO2("), Wert), VARSIZED(" > 52 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high PCO2("), Wert), VARSIZED(" > 52 mmHg) for patient ")), UnixTimestampToDatetimeTesting(VarSizedToDouble(Wert))) as datetime
 FROM odbc_source
 WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PCO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(52)
 INTO File();
 ----
-Detected high PCO2(54 > 52 mmHg) for patient 1003 at 15.01.2024 10:03(1705313000)
+Detected high PCO2(54 > 52 mmHg) for patient 1003. Timestamps(Creation: 15.01.2024 10:03(1705313000) MLIFE(Clone) Insertion: 15.01.2024 09:30(1705311000) System Ingestion: 15.01.2024 10:15(1705313700))
 
 # [03] pH,Arterial blood,PH,Blutgase arteriell,1,2744-1,<7.2,1
 SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PH("), Wert), VARSIZED(" < 7.2) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime

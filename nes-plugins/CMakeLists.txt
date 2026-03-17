@@ -30,6 +30,7 @@ activate_optional_plugin("Functions/IsNaN" ON)
 activate_optional_plugin("Functions/BaseLine2xDiff" ON)
 activate_optional_plugin("Functions/HighAnionGap" ON)
 activate_optional_plugin("Functions/UnixTimestampToDatetime" ON)
+activate_optional_plugin("Functions/UnixTimestampToDatetimeTesting" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

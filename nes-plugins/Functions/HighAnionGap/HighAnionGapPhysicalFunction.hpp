@@ -161,7 +161,7 @@ private:
 class StaticSharedDiffState
 {
 public:
-    std::string probe(const AnionGapValue& newAnionGapValue)
+    std::string probe(const AnionGapValue& newAnionGapValue, const uint64_t insertionTs, const uint64_t ingestionTs)
     {
         std::scoped_lock lock(mutex);
 
@@ -179,16 +179,20 @@ public:
 
                 /// if ( (pH<7.3) AND (base excess<-6) AND (Sodium - Chloride - Bicarbonate > 12) ) == TRUE
                 std::string alertMessage = std::format(
-                    "High anion gap detected for patient {} at time: {}. Reason: if( ( PH({}) < 7.3) AND (Base Excess({}) < -6) AND (Sodium({}) - "
-                    "Chloride({}) - Bicarbonate({}) > 12)).",
+                    "High anion gap detected for patient {}. Reason: if( ( PH({}) < 7.3) AND (Base Excess({}) < -6) AND (Sodium({}) - "
+                    "Chloride({}) - Bicarbonate({}) > 12)). Timestamps(Creation: {}, MLIFE(Clone) insertion: {}, System Ingestion: {}, "
+                    "Alarm: {})",
                     newAnionGapValue.patientId,
-                    // std::chrono::sys_seconds{std::chrono::seconds(phVal.first)},
-                    unixTsToFormattedDatetime(phVal.first),
                     phVal.second,
                     abecVal.second,
                     natriumVal.second,
                     chloridVal.second,
-                    hco3Val.second);
+                    hco3Val.second,
+                    unixTsToFormattedDatetime(phVal.first),
+                    unixTsToFormattedDatetime(insertionTs),
+                    unixTsToFormattedDatetime(ingestionTs),
+                    unixTsToFormattedDatetime(
+                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
                 return alertMessage;
             }
             return "";
@@ -211,12 +215,9 @@ private:
         std::chrono::hh_mm_ss hms{tp - dp};
 
         std::ostringstream oss;
-        oss << std::setfill('0')
-            << std::setw(2) << static_cast<unsigned>(ymd.day())   << "."
-            << std::setw(2) << static_cast<unsigned>(ymd.month()) << "."
-            << static_cast<int>(ymd.year())                        << " "
-            << std::setw(2) << hms.hours().count()                 << ":"
-            << std::setw(2) << hms.minutes().count();
+        oss << std::setfill('0') << std::setw(2) << static_cast<unsigned>(ymd.day()) << "." << std::setw(2)
+            << static_cast<unsigned>(ymd.month()) << "." << static_cast<int>(ymd.year()) << " " << std::setw(2) << hms.hours().count()
+            << ":" << std::setw(2) << hms.minutes().count();
 
         return oss.str();
     }
@@ -242,12 +243,22 @@ public:
         auto patientIdVal = record.readUnqualified("MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
         const auto bezeichnungVal = record.readUnqualified("BEZ").cast<VariableSizedData>();
         const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
+        const auto insertionTs = record.readUnqualified("TSFAIL").cast<nautilus::val<uint64_t>>();
+        const auto ingestionTs = record.readUnqualified("TSLOG").cast<nautilus::val<uint64_t>>();
         nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
-            +[](int32_t patientId, char* bez, size_t bezLength, double value, uint64_t timestamp, Arena* arenaPtr)
+            +[](int32_t patientId,
+                char* bez,
+                size_t bezLength,
+                double value,
+                uint64_t timestamp,
+                uint64_t insertionTs,
+                uint64_t ingestionTs,
+                Arena* arenaPtr)
             {
                 thread_local auto result = VarSizedResult{};
                 const std::string_view bezSV{bez, bezLength};
-                const std::string probeResult = staticSharedDiffState.probe(AnionGapValue{patientId, timestamp, value, bezSV});
+                const std::string probeResult
+                    = staticSharedDiffState.probe(AnionGapValue{patientId, timestamp, value, bezSV}, insertionTs, ingestionTs);
                 const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
                 std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
                 result = VarSizedResult{.varSizedPointer = allocatedMemory, .size = probeResult.size()};
@@ -258,6 +269,8 @@ public:
             bezeichnungVal.getSize(),
             valueVal,
             zeitpunktVal,
+            insertionTs,
+            ingestionTs,
             arena.getArena());
         VariableSizedData varSizedString{
             *getMemberWithOffset<int8_t*>(probeResult, offsetof(VarSizedResult, varSizedPointer)),

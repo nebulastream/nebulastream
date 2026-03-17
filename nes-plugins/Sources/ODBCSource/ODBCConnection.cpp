@@ -244,6 +244,7 @@ void ODBCConnection::fetchColumns(std::string_view connectionString)
         SQLDescribeCol(hstmt, i, colName, sizeof(colName), &nameLength, &dataType, &columnSize, &decimalDigits, &nullable);
         /// fetchedSchema.columnTypes.emplace_back(getColumnType(dataType));
         fetchedSchema.columnTypes.emplace_back(getTypeInfo(dataType, columnSize));
+        fetchedSchema.columnNames.emplace_back(std::string{reinterpret_cast<char*>(colName), static_cast<size_t>(nameLength)});
         ++fetchedSchema.numColumns;
         NES_WARNING(
             "Increasing odbc schema size from {} by {} to {}",
@@ -362,6 +363,7 @@ SQLRETURN ODBCConnection::readVarSized(
 SQLRETURN ODBCConnection::readDataIntoBuffer(
     const size_t colIdx,
     const TypeInfo& typeInfo,
+    const std::string_view colName,
     SQLLEN& indicator,
     TupleBuffer& buffer,
     AbstractBufferProvider& bufferProvider,
@@ -406,9 +408,20 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
         case SQL_TYPE_TIMESTAMP: {
             SQL_TIMESTAMP_STRUCT timestamp;
             const auto ret = SQLGetData(hstmt, colIdx, SQL_TYPE_TIMESTAMP, &timestamp, sizeof(SQL_TIMESTAMP_STRUCT), &indicator);
-            const uint64_t timestampAsUint64 = timestampStructToUnix(timestamp);
-            currentTuple = fmt::format("{}, {}", currentTuple, timestampAsUint64);
-            *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = timestampAsUint64;
+            if (colName == "TSLog")
+            {
+                const auto currentUnixTsInMs
+                    = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+                currentTuple = fmt::format("{}, {}", currentTuple, currentUnixTsInMs);
+                NES_DEBUG("Overwriting TSLog with current unix ts: {}", currentUnixTsInMs);
+                *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = currentUnixTsInMs;
+            }
+            else
+            {
+                const uint64_t timestampAsUint64 = timestampStructToUnix(timestamp);
+                currentTuple = fmt::format("{}, {}", currentTuple, timestampAsUint64);
+                *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = timestampAsUint64;
+            }
             buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
             return ret;
         }
@@ -504,7 +517,7 @@ ODBCPollStatus ODBCConnection::executeQuery(
         {
             SQLLEN indicator{};
             /// ODBC column indexes start at >1<
-            readDataIntoBuffer(columnIdx + 1, columnType, indicator, tupleBuffer, bufferProvider, currentTuple);
+            readDataIntoBuffer(columnIdx + 1, columnType, fetchedSchema.columnNames.at(columnIdx), indicator, tupleBuffer, bufferProvider, currentTuple);
             if (fetchReturn != SQL_SUCCESS and fetchReturn != SQL_SUCCESS_WITH_INFO)
             {
                 throw UnknownDataType("Not supporting {} type in ODBC source", magic_enum::enum_name(columnType.nesType));

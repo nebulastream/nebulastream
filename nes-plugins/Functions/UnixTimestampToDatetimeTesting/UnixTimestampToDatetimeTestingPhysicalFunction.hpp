@@ -48,10 +48,10 @@ inline std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
     return timestamps;
 }
 
-class UnixTimestampToDatetimePhysicalFunction final
+class UnixTimestampToDatetimeTestingPhysicalFunction final
 {
 public:
-    UnixTimestampToDatetimePhysicalFunction(PhysicalFunction child);
+    UnixTimestampToDatetimeTestingPhysicalFunction(PhysicalFunction child);
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const
     {
@@ -64,15 +64,12 @@ public:
             {
                 thread_local auto result = VarSizedResult{};
 
-                const auto currentTs
-                    = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 const auto probeResult = fmt::format(
-                    "{}. Timestamps(Creation: {}, MLIFE(Clone) Insertion: {}, System Ingestion: {}, Alarm: {})",
+                    "{}. Timestamps(Creation: {}, MLIFE(Clone) Insertion: {}, System Ingestion: {})",
                     patientId,
                     unixTsToFormattedDatetime(unixTimestamp),
                     unixTsToFormattedDatetime(insertionTs),
-                    unixTsToFormattedDatetime(ingestionTs),
-                    unixTsToFormattedDatetime(currentTs));
+                    unixTsToFormattedDatetime(ingestionTs));
 
                 const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
                 std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());

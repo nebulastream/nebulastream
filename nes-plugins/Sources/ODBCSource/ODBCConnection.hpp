@@ -53,6 +53,7 @@ class ODBCConnection
         size_t numColumns{0};
         size_t sizeOfRow{0};
         std::vector<TypeInfo> columnTypes;
+        std::vector<std::string> columnNames;
     };
 
 public:
@@ -84,6 +85,7 @@ public:
     SQLRETURN readDataIntoBuffer(
         size_t colIdx,
         const TypeInfo& typeInfo,
+        const std::string_view colName,
         SQLLEN& indicator,
         TupleBuffer& buffer,
         AbstractBufferProvider& bufferProvider,
