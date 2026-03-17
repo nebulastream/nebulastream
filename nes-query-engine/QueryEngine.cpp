@@ -34,7 +34,6 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -203,7 +202,6 @@ using Queue = folly::MPMCQueue<Task>;
 
 struct DefaultPEC final : PipelineExecutionContext
 {
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
     std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
     std::shared_ptr<AbstractBufferProvider> bm;
@@ -277,18 +275,6 @@ struct DefaultPEC final : PipelineExecutionContext
         return pipelineId;
     }
 
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
-    {
-        PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
-        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        return *operatorHandlers;
-    }
-
-    void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
-    {
-        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
-        operatorHandlers = std::addressof(handlers);
-    }
 };
 
 /// Lifetime of the ThreadPool:

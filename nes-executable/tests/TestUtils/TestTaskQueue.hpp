@@ -24,14 +24,12 @@
 #include <queue>
 #include <string>
 #include <thread>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Timer.hpp>
 #include <folly/MPMCQueue.h>
@@ -101,13 +99,6 @@ public:
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
 
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; };
-
-    void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers) override
-    {
-        this->operatorHandlers = operatorHandlers;
-    }
-
     void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override;
 
     WorkerThreadId workerThreadId;
@@ -116,7 +107,6 @@ public:
 private:
     std::function<void()> repeatTaskCallback;
     std::shared_ptr<AbstractBufferProvider> bufferManager;
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     /// Different threads have different TestPipelineExecutionContexts. All threads share the same pointer to the result buffers.
     /// Each thread writes its own results in a dedicated slot. This keeps results in a single place and does not require awkward logic
     /// to get the result buffers out of the TestPipelineExecutionContexts.

@@ -78,16 +78,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
 
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
-        {
-            return *operatorHandlers;
-        }
-
-        void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& opHandlers) override
-        {
-            operatorHandlers = &opHandlers;
-        }
-
         MockedPipelineContext(folly::Synchronized<std::vector<TupleBuffer>>& buffers, std::shared_ptr<BufferManager> bufferManager)
             : buffers(buffers), bufferManager(std::move(bufferManager))
         {
@@ -98,7 +88,6 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
     };
 
 public:
@@ -126,10 +115,9 @@ public:
     void run(const std::function<void(ExecutionContext&, RecordBuffer&)>& test, TupleBuffer buffer)
     {
         MockedPipelineContext pec{buffers, bm};
-        pec.setOperatorHandlers(handlers);
         Arena arena(bm);
 
-        ExecutionContext executionContext{&pec, &arena};
+        ExecutionContext executionContext{&pec, &handlers, &arena};
         executionContext.chunkNumber = buffer.getChunkNumber();
         executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();

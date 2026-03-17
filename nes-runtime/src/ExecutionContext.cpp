@@ -27,6 +27,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeOperatorHandlerDynamicPointer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -52,7 +53,10 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 }
 }
 
-ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
+ExecutionContext::ExecutionContext(
+    const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+    const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* globalOperatorHandlers,
+    const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
@@ -62,6 +66,7 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , sequenceNumber(INVALID<SequenceNumber>)
     , chunkNumber(INVALID<ChunkNumber>)
     , lastChunk(true)
+    , globalOperatorHandlers(globalOperatorHandlers)
 {
 }
 
@@ -129,16 +134,13 @@ void ExecutionContext::setLocalOperatorState(const OperatorId operatorId, std::u
     localStateMap.emplace(operatorId, std::move(state));
 }
 
-static OperatorHandler* getGlobalOperatorHandlerProxy(PipelineExecutionContext* pipelineCtx, const OperatorHandlerId index)
-{
-    auto handlers = pipelineCtx->getOperatorHandlers();
-    return handlers[index].get();
-}
-
 nautilus::val<OperatorHandler*> ExecutionContext::getGlobalOperatorHandler(const OperatorHandlerId handlerIndex) const
 {
-    const auto handlerIndexValue = nautilus::val<uint64_t>(handlerIndex.getRawValue());
-    return nautilus::invoke(getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
+    PRECONDITION(globalOperatorHandlers != nullptr, "Global operator handlers were not set");
+    const auto handlerEntry = globalOperatorHandlers->find(handlerIndex);
+    PRECONDITION(handlerEntry != globalOperatorHandlers->end(), "No operator handler registered for id {}", handlerIndex.getRawValue());
+    PRECONDITION(handlerEntry->second != nullptr, "Operator handler {} must not be null", handlerIndex.getRawValue());
+    return nautilus::use_dynamic_pointer(createRuntimeOperatorHandlerName(handlerIndex), handlerEntry->second.get());
 }
 
 }

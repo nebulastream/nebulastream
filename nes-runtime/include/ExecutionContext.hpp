@@ -68,7 +68,10 @@ enum class OpenReturnState : uint8_t
 
 struct ExecutionContext final
 {
-    explicit ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena);
+    explicit ExecutionContext(
+        const nautilus::val<PipelineExecutionContext*>& pipelineContext,
+        const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* globalOperatorHandlers,
+        const nautilus::val<Arena*>& arena);
 
     void setLocalOperatorState(OperatorId operatorId, std::unique_ptr<OperatorState> state);
     OperatorState* getLocalState(OperatorId operatorId);
@@ -93,6 +96,7 @@ struct ExecutionContext final
     nautilus::val<bool> lastChunk;
 
 private:
+    const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* globalOperatorHandlers;
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;
     OpenReturnState openReturnState{OpenReturnState::CONTINUE};
 };

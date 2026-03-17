@@ -127,7 +127,7 @@ std::unique_ptr<ExecutablePipelineStage> LowerToCompiledQueryPlanPhase::getStage
     options.setOption("dump.graph", dumpQueryCompilationIR.isDumpGraphEnabled());
 
     compilationCache.configureEngineOptionsForPipeline(options, pipeline);
-    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, pipeline->getOperatorHandlers(), options);
+    return std::make_unique<CompiledExecutablePipelineStage>(pipeline, options);
 }
 
 std::shared_ptr<ExecutablePipeline> LowerToCompiledQueryPlanPhase::processOperatorPipeline(const std::shared_ptr<Pipeline>& pipeline)

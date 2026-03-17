@@ -28,6 +28,7 @@
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeOperatorHandlerDynamicPointer.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
@@ -97,9 +98,20 @@ private:
 
 using DynamicPointerBindings = std::vector<RuntimeDynamicPointerBinding>;
 
+void collectOperatorHandlerDynamicPointerBindings(const Pipeline& pipeline, DynamicPointerBindings& dynamicPointerBindings)
+{
+    for (const auto& [operatorHandlerId, operatorHandler] : pipeline.getOperatorHandlers())
+    {
+        PRECONDITION(operatorHandler != nullptr, "Operator handler {} must not be null", operatorHandlerId.getRawValue());
+        dynamicPointerBindings.emplace_back(
+            RuntimeDynamicPointerBinding::create(createRuntimeOperatorHandlerName(operatorHandlerId), operatorHandler, operatorHandler.get()));
+    }
+}
+
 DynamicPointerBindings collectDynamicPointerBindings(const std::shared_ptr<Pipeline>& pipeline)
 {
     DynamicPointerBindings dynamicPointerBindings;
+    collectOperatorHandlerDynamicPointerBindings(*pipeline, dynamicPointerBindings);
     pipeline->getRootOperator().collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
     return dynamicPointerBindings;
 }
@@ -151,14 +163,10 @@ configureOptionsForDynamicPointerBindings(const DynamicPointerBindings& dynamicP
 }
 }
 
-CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
-    std::shared_ptr<Pipeline> pipeline,
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers,
-    nautilus::engine::Options options)
+CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(std::shared_ptr<Pipeline> pipeline, nautilus::engine::Options options)
     : dynamicPointerBindings(collectDynamicPointerBindings(pipeline))
     , engine(configureOptionsForDynamicPointerBindings(dynamicPointerBindings, pipeline->getPipelineId(), std::move(options)))
     , compiledPipelineFunction(nullptr)
-    , operatorHandlers(std::move(operatorHandlers))
     , pipeline(std::move(pipeline))
 {
 }
@@ -189,7 +197,6 @@ uint64_t CompiledExecutablePipelineStage::getCompilationCount()
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
@@ -205,7 +212,7 @@ CompiledExecutablePipelineStage::compilePipeline() const
                                    nautilus::val<const TupleBuffer*> recordBufferRef,
                                    nautilus::val<const Arena*> arenaRef)
         {
-            auto ctx = ExecutionContext(pipelineExecutionContext, arenaRef);
+            auto ctx = ExecutionContext(pipelineExecutionContext, std::addressof(pipeline->getOperatorHandlers()), arenaRef);
             RecordBuffer recordBuffer(recordBufferRef);
 
             pipeline->getRootOperator().open(ctx, recordBuffer);
@@ -236,9 +243,8 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(pipeline->getOperatorHandlers()), std::addressof(arena));
     pipeline->getRootOperator().terminate(ctx);
 }
 
@@ -249,9 +255,8 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
-    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
-    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
+    ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(pipeline->getOperatorHandlers()), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
     const auto compileStart = std::chrono::steady_clock::now();

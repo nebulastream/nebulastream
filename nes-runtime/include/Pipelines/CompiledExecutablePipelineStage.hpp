@@ -17,9 +17,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
-#include <unordered_map>
 #include <vector>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/RuntimeDynamicPointerBinding.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/Engine.hpp>
@@ -34,10 +32,7 @@ class DumpHelper;
 class CompiledExecutablePipelineStage final : public ExecutablePipelineStage
 {
 public:
-    CompiledExecutablePipelineStage(
-        std::shared_ptr<Pipeline> pipeline,
-        std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
-        nautilus::engine::Options options);
+    CompiledExecutablePipelineStage(std::shared_ptr<Pipeline> pipeline, nautilus::engine::Options options);
 
     static void resetCompilationMetrics();
     [[nodiscard]] static std::chrono::nanoseconds getTotalCompilationTime();
@@ -57,7 +52,6 @@ private:
     std::vector<RuntimeDynamicPointerBinding> dynamicPointerBindings;
     nautilus::engine::NautilusEngine engine;
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*> compiledPipelineFunction;
-    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
 };
 
