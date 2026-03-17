@@ -246,9 +246,13 @@ SystestClusterConfiguration createLocalClusterConfig()
 {
     return SystestClusterConfiguration{
         .workers = {WorkerConfig{
-            .host = WorkerId("localhost:8080"), .connection = "", .capacity = DefaultWorkerCapacity, .downstream = {}, .config = {}}},
-        .allowSourcePlacement = {WorkerId("localhost:8080")},
-        .allowSinkPlacement = {WorkerId("localhost:8080")}};
+            .host = Host("localhost:8080"),
+            .data = "localhost:9090",
+            .maxOperators = Capacity(CapacityKind::Limited{DefaultWorkerCapacity}),
+            .downstream = {},
+            .config = {}}},
+        .allowSourcePlacement = {Host("localhost:8080")},
+        .allowSinkPlacement = {Host("localhost:8080")}};
 }
 
 std::vector<SystestQuery> loadInlineEventQueries(const std::string& testFilePath, const std::filesystem::path& workingDir)

@@ -143,11 +143,11 @@ void ForkedWorkerQueryManager::spawnChild(const SingleNodeWorkerConfiguration& c
 
 void ForkedWorkerQueryManager::resetGrpcClient(const SingleNodeWorkerConfiguration& configuration, const uint16_t port)
 {
-    const auto address = WorkerId(fmt::format("localhost:{}", port));
+    const auto address = Host(fmt::format("localhost:{}", port));
     grpcManager = std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{
         .host = std::move(address),
-        .connection = configuration.connection.getValue(),
-        .capacity = 10000,
+        .data = configuration.data.getValue(),
+        .maxOperators = Capacity(CapacityKind::Limited{10000}),
         .downstream = {},
         .config = configuration});
 }

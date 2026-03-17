@@ -109,10 +109,10 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   GRPC=$(run_yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $GRPC | cut -d':' -f1)
   GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
-  CONNECTION=$(run_yq -r ".workers[$i].connection" "$WORKERS_FILE")
+  DATA=$(run_yq -r ".workers[$i].data" "$WORKERS_FILE")
 
   HAS_CONFIG=$(run_yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
-  COMMAND_ARGS=$(printf '      "--grpc=%s",\n      "--connection=%s"' "$HOST_NAME:$GRPC_PORT" "$CONNECTION")
+  COMMAND_ARGS=$(printf '      "--grpc=%s",\n      "--data=%s"' "$HOST_NAME:$GRPC_PORT" "$DATA")
   if [ "$HAS_CONFIG" = "true" ]; then
     COMMAND_ARGS=$(printf '%s,\n      "--configPath=%s/configs/%s.yaml"' "$COMMAND_ARGS" "$CONTAINER_WORKDIR" "$HOST_NAME")
   fi

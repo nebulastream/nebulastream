@@ -148,7 +148,7 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
     std::unordered_map<SystestQueryId, std::vector<std::string>> queryResultMap;
 
     parser.registerOnCreateCallback(
-        [&](const std::string& query, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>& testData)
+        [&](const std::string& query, const std::optional<TestData>& testData)
         {
             if (query.starts_with("CREATE LOGICAL SOURCE"))
             {
@@ -159,9 +159,9 @@ TEST_F(SystestParserValidTestFileTest, Nullable1TestFile)
             {
                 createPhysicalSourceCallbackCalled = true;
                 EXPECT_TRUE(testData.has_value());
-                EXPECT_EQ(TestDataIngestionType::INLINE, testData.value().first);
-                EXPECT_EQ(expectedInlineData.size(), testData.value().second.size());
-                ASSERT_TRUE(testData.value().second == expectedInlineData);
+                EXPECT_EQ(TestDataIngestionType::INLINE, testData->ingestionType);
+                EXPECT_EQ(expectedInlineData.size(), testData->tuples.size());
+                ASSERT_TRUE(testData->tuples == expectedInlineData);
             }
             if (query.starts_with("CREATE SINK"))
             {

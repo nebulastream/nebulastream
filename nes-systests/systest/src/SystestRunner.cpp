@@ -254,7 +254,11 @@ private:
         {
             newManager = std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
                 WorkerConfig{
-                    .host = WorkerId("localhost:8080"), .connection = "", .capacity = INFINITE_CAPACITY, .downstream = {}, .config = {}},
+                    .host = Host("localhost:8080"),
+                    .data = "localhost:9090",
+                    .maxOperators = Capacity(CapacityKind::Unlimited{}),
+                    .downstream = {},
+                    .config = {}},
                 configuration);
         }
         CPPTRACE_CATCH(const Exception& e)
@@ -456,13 +460,13 @@ private:
 
 DistributedException createSystestDistributedException(const Exception& exception)
 {
-    return DistributedException({{WorkerId("systest"), std::vector{exception}}});
+    return DistributedException({{Host("systest"), std::vector{exception}}});
 }
 
 DistributedQueryStatus
 createDistributedQueryStatus(const QueryId& localQueryId, const DistributedQueryId& queryId, const LocalQueryStatus& status)
 {
-    return DistributedQueryStatus{.localStatusSnapshots = {{WorkerId("systest"), {{localQueryId, status}}}}, .queryId = queryId};
+    return DistributedQueryStatus{.localStatusSnapshots = {{Host("systest"), {{localQueryId, status}}}}, .queryId = queryId};
 }
 
 void processQueryWithError(
@@ -824,7 +828,7 @@ std::shared_ptr<WorkerCatalog> createWorkerCatalogForLocalExecution(const Systes
     auto catalog = std::make_shared<WorkerCatalog>();
     if (clusterConfig.workers.empty())
     {
-        catalog->addWorker(WorkerId("localhost"), "", INFINITE_CAPACITY, {}, {});
+        catalog->addWorker(Host("localhost:8080"), "localhost:9090", Capacity(CapacityKind::Unlimited{}), {}, {});
         return catalog;
     }
 
@@ -1232,7 +1236,7 @@ runInlineEventQueryWithLocalWorkerRestart(const SystestQuery& query, const Singl
 
     auto forkedWorkerConfiguration = configuration;
     forkedWorkerConfiguration.grpcAddressUri.setValue("localhost:0");
-    forkedWorkerConfiguration.connection.setValue("");
+    forkedWorkerConfiguration.data.setValue("");
 
     auto runPlan = [&](const DistributedLogicalPlan& plan, const std::filesystem::path& resultFile)
     { return runSingleInlineRestartableQuery(query, forkedWorkerConfiguration, plan.getGlobalPlan(), resultFile); };

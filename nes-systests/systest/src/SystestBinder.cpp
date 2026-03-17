@@ -79,7 +79,7 @@ namespace NES::Systest
 class SLTSinkFactory
 {
 public:
-    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<WorkerId> possibleSinkPlacements)
+    explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog, std::vector<Host> possibleSinkPlacements)
         : sinkCatalog(std::move(sinkCatalog)), possibleSinkPlacements(std::move(possibleSinkPlacements))
     {
     }
@@ -108,7 +108,7 @@ public:
                 }
 
                 const auto sink
-                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, WorkerId(host), std::move(config));
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(config));
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -146,7 +146,7 @@ public:
 
 private:
     SharedPtr<SinkCatalog> sinkCatalog;
-    std::vector<WorkerId> possibleSinkPlacements;
+    std::vector<Host> possibleSinkPlacements;
     std::unordered_map<std::string, std::function<std::expected<SinkDescriptor, Exception>(std::string_view, std::filesystem::path)>>
         sinkProviders;
 };
@@ -641,7 +641,7 @@ struct SystestBinder::Impl
         if (const auto created = sourceCatalog->addPhysicalSource(
                 *logicalSource,
                 physicalSourceConfig.type,
-                WorkerId(host),
+                Host(host),
                 physicalSourceConfig.sourceConfig,
                 physicalSourceConfig.parserConfig))
         {
