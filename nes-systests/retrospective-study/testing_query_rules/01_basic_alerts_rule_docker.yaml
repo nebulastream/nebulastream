@@ -6,7 +6,7 @@
 #
 #  [01] PaO2,Arterial blood,PO2,Blutgase arteriell,mmHg,2703-7,<60 mmHg,1
 query: |
-  SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as alert
+  SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as alert, Lab_ID AS rowcount
   FROM odbc_source_01
   WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
   INTO HTTP('JSON' AS `SINK`.INPUT_FORMAT, "localhost" AS `SINK`.IP_ADDRESS, "8090" AS `SINK`.PORT, "nesNotification" AS `SINK`.ENDPOINT, "test.log" AS `SINK`.LOG_FILE_PATH);

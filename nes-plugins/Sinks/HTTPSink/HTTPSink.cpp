@@ -83,7 +83,7 @@ void HTTPSink::start(PipelineExecutionContext&)
 
     /// Open log file in append mode so data survives restarts
     logFile.open(logFilePath, std::ios::out | std::ios::app);
-    PRECONDITION(logFile.is_open(), fmt::format("Failed to open log file: {}", logFilePath));
+    PRECONDITION(logFile.is_open(), "Failed to open log file: {}", logFilePath);
     NES_DEBUG("Opened log file for HTTP sink: {}", logFilePath);
 
     isOpen = true;

@@ -273,7 +273,7 @@ uint64_t ODBCConnection::readCheckpointRowCount()
         return 0;
     }
 
-    std::string checkpointQuery = "SELECT rowcount FROM dbo.nes_checkpoint WHERE id = 1";
+    std::string checkpointQuery = "SELECT [rowcount] FROM dbo.nes_checkpoint WHERE id = 1";
     ret = SQLExecDirect(
         hstmtCheckpoint, reinterpret_cast<SQLCHAR*>(checkpointQuery.data()), static_cast<SQLINTEGER>(checkpointQuery.size()));
     if (!SQL_SUCCEEDED(ret))
@@ -375,9 +375,11 @@ void ODBCConnection::connect(
         }
         else
         {
-            this->rowCountTracker = syncRowCount();
-            NES_DEBUG("No checkpoint found, using COUNT(*) rowcount: {}", this->rowCountTracker);
-            std::cout << "No checkpoint found, using COUNT(*) rowcount: " << this->rowCountTracker << '\n';
+            // this->rowCountTracker = syncRowCount();
+            // NES_DEBUG("No checkpoint found, using COUNT(*) rowcount: {}", this->rowCountTracker);
+            this->rowCountTracker = 0;
+            NES_DEBUG("No checkpoint found, starting from the first row (rowCountTracker=0)");
+            std::cout << "No checkpoint found, starting from the first row\n";
         }
     }
 }
@@ -528,7 +530,12 @@ std::vector<SQLCHAR> ODBCConnection::buildNewRowFetchSting(const std::string_vie
     const auto trimmedQuery = trimWhiteSpaces(userQuery);
     const auto selectSplit = splitWithStringDelimiter<std::string_view>(trimmedQuery, "SELECT");
     INVARIANT(selectSplit.size() == 1, "Query '{}' did not contain exactly one SELECT statement at the start.", trimmedQuery);
-    std::string selectTopNRows = fmt::format("SELECT TOP {} {} ORDER BY LabVal_ID DESC", numRowsToFetch, selectSplit.at(0));
+    /// Inner query: grab the N newest rows (DESC).  Outer query: re-sort ascending so
+    /// SQLFetch returns rows in the same order they appear in the target-db.
+    std::string selectTopNRows = fmt::format(
+        "SELECT * FROM (SELECT TOP {} {} ORDER BY LabVal_ID DESC) AS t ORDER BY t.LabVal_ID ASC",
+        numRowsToFetch,
+        selectSplit.at(0));
     std::vector<SQLCHAR> queryBuffer(selectTopNRows.begin(), selectTopNRows.end());
     queryBuffer.push_back('\0');
     return queryBuffer;
@@ -569,8 +576,6 @@ ODBCPollStatus ODBCConnection::executeQuery(
         INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
         this->numberOfLeftoverTuples -= nextRowsToFetch;
     }
-    // Todo: fetches rows in reverse order (when fetching 58 tuples (100-157), it reads 157,156,155,..
-    // - since we may emit multiple tuples (when results don't fit in a single buffer, we send buffers out of order (wrong sequence numbers!)
     NES_DEBUG("Reading {} rows, with {} rows left", nextRowsToFetch, this->numberOfLeftoverTuples);
     for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < nextRowsToFetch; ++bufferLocalRowCount)
     {
