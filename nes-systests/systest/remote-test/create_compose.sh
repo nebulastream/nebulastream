@@ -88,6 +88,10 @@ fi
 #   TESTDATA_VOLUME:   test input data -> /data
 #   TESTCONFIG_VOLUME: contains /nes-systests/* -> $NES_DIR (reconstructs $NES_DIR/nes-systests/*)
 #   TEST_VOLUME:       test working directory -> $CONTAINER_WORKDIR
+NIX_STORE_MOUNT=''
+if [ -d /nix/store ]; then
+  NIX_STORE_MOUNT='      - /nix/store:/nix/store:ro'
+fi
 cat <<EOF
 services:
   systest:
@@ -96,8 +100,11 @@ services:
     stop_grace_period: 0s
     command: ["sleep", "infinity"]
     working_dir: $CONTAINER_WORKDIR
+    environment:
+      NES_SYSTEST_INLINE_EVENT_HOST: systest
     volumes:
       - $TESTDATA_VOLUME:/data
+$NIX_STORE_MOUNT
       - $TESTCONFIG_VOLUME:$NES_DIR
       - $TEST_VOLUME:$CONTAINER_WORKDIR
 EOF
@@ -133,6 +140,7 @@ $COMMAND_ARGS
     ]
     volumes:
       - $TESTDATA_VOLUME:/data
+$NIX_STORE_MOUNT
       - $TEST_VOLUME:$CONTAINER_WORKDIR
       - $TESTCONFIG_VOLUME:$NES_DIR
 EOF
