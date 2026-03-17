@@ -28,6 +28,15 @@
 namespace NES
 {
 
+PhysicalPlanSignature::PhysicalPlanSignature(std::string value) : value(std::move(value))
+{
+}
+
+const std::string& PhysicalPlanSignature::getRawValue() const
+{
+    return value;
+}
+
 PhysicalPlan::PhysicalPlan(
     QueryId id,
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> rootOperators,
@@ -82,14 +91,15 @@ const std::string& PhysicalPlan::getOriginalSql() const
     return originalSql;
 }
 
-const std::optional<std::string>& PhysicalPlan::getCompilationCacheSeed() const
+const PhysicalPlanSignature& PhysicalPlan::getSignature() const
 {
-    return compilationCacheSeed;
+    PRECONDITION(signature.has_value(), "PhysicalPlan requires a precomputed signature");
+    return *signature;
 }
 
-void PhysicalPlan::setCompilationCacheSeed(std::string seed)
+void PhysicalPlan::setSignature(PhysicalPlanSignature signature)
 {
-    compilationCacheSeed = std::move(seed);
+    this->signature = std::move(signature);
 }
 
 std::ostream& operator<<(std::ostream& os, const PhysicalPlan& plan)

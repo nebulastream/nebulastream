@@ -130,11 +130,11 @@ void CompilationCache::configureEngineOptionsForPipeline(nautilus::engine::Optio
 
 std::string CompilationCache::createCacheKeySeed(const PhysicalPlan& physicalPlan)
 {
-    const auto& compilationCacheSeed = physicalPlan.getCompilationCacheSeed();
+    const auto& signature = physicalPlan.getSignature();
     PRECONDITION(
-        compilationCacheSeed.has_value() && !compilationCacheSeed->empty(),
-        "Compilation cache requires a non-empty optimized logical plan seed attached to the physical plan");
-    return *compilationCacheSeed;
+        !signature.getRawValue().empty(),
+        "Compilation cache requires a non-empty physical plan signature attached to the physical plan");
+    return signature.getRawValue();
 }
 
 }

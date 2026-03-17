@@ -27,9 +27,9 @@ The explicit key is built from two main parts:
 
 ### 1) Query Seed (`cacheKeySeed`)
 
-`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` requires a precomputed seed attached by the optimizer.
-`QueryOptimizer::optimize(...)` computes this seed from a canonical serialization of the optimized logical plan
-(after join-type and memory-layout decisions, before lowering to physical operators) via
+`CompilationCache::createCacheKeySeed(const PhysicalPlan&)` reads a precomputed `PhysicalPlanSignature` attached by
+the optimizer. `QueryOptimizer::optimize(...)` computes this signature from a canonical serialization of the optimized
+logical plan (after join-type and memory-layout decisions, before lowering to physical operators) via
 `OptimizedLogicalPlanSignatureUtil::create(...)`.
 
 The canonical optimized logical-plan seed includes:
@@ -50,11 +50,11 @@ The canonical optimized logical-plan seed includes:
   - sinks keep sink type, schema, and input format when present
 - trait serialization excludes `OutputOriginIds`, whose ids are not stable across runs and are not codegen-relevant
 
-If no precomputed seed is attached, compilation-cache key generation now fails fast instead of silently falling back
-to a physical-plan signature.
+If no precomputed `PhysicalPlanSignature` is attached, compilation-cache key generation now fails fast instead of
+silently falling back to any ad-hoc physical-plan string.
 
-The resulting seed is stored on the query compiler’s `CompilationCache` instance (owned by `QueryCompiler`) and used as
-the query-level input for all per-pipeline cache keys.
+The resulting canonical string is wrapped in `PhysicalPlanSignature`, attached to the `PhysicalPlan`, stored on the
+query compiler’s `CompilationCache` instance, and used as the query-level input for all per-pipeline cache keys.
 
 ### 2) Stable Pipeline Ordinal (`o=...`)
 

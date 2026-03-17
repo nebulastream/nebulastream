@@ -37,7 +37,7 @@ PhysicalPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryExecut
     auto optimizedPlan = joinTypeDecider.apply(plan);
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
     auto physicalPlan = LowerToPhysicalOperators::apply(optimizedPlan, defaultQueryExecution);
-    physicalPlan.setCompilationCacheSeed(OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, defaultQueryExecution));
+    physicalPlan.setSignature(PhysicalPlanSignature(OptimizedLogicalPlanSignatureUtil::create(optimizedPlan, defaultQueryExecution)));
     return physicalPlan;
 }
 

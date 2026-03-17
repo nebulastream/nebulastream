@@ -26,6 +26,17 @@
 
 namespace NES
 {
+class PhysicalPlanSignature final
+{
+public:
+    explicit PhysicalPlanSignature(std::string value);
+
+    [[nodiscard]] const std::string& getRawValue() const;
+
+private:
+    std::string value;
+};
+
 /// Stores the physical (executable) plan. This plan holds the output of the query optimizer and the input to the
 /// query compiler. It holds the roots of the plan as PhysicalOperatorWrapper containing the actual PhysicalOperator
 /// and additional information needed during query compilation.
@@ -42,8 +53,8 @@ public:
     [[nodiscard]] ExecutionMode getExecutionMode() const;
     [[nodiscard]] uint64_t getOperatorBufferSize() const;
     [[nodiscard]] const std::string& getOriginalSql() const;
-    [[nodiscard]] const std::optional<std::string>& getCompilationCacheSeed() const;
-    void setCompilationCacheSeed(std::string seed);
+    [[nodiscard]] const PhysicalPlanSignature& getSignature() const;
+    void setSignature(PhysicalPlanSignature signature);
 
 private:
     QueryId queryId;
@@ -51,7 +62,7 @@ private:
     ExecutionMode executionMode;
     uint64_t operatorBufferSize;
     std::string originalSql;
-    std::optional<std::string> compilationCacheSeed;
+    std::optional<PhysicalPlanSignature> signature;
 
     [[nodiscard]] std::string toString() const;
 
