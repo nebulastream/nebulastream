@@ -340,8 +340,99 @@
                 ./scripts/format.sh -i
               '';
             };
+            clangTidyDiffScript = pkgs.fetchurl {
+              url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${lib.getVersion llvm.clang-tools}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
+              hash = "sha256-+64k7MRZjQOFQVltm8sEZMhu3VEYfYax+86MxOAO2sU=";
+            };
+            clangTidyDiffRunner = pkgs.writeShellApplication {
+              name = "clang-tidy-diff-19.py";
+              runtimeInputs = [ pkgs.python3 ];
+              text = ''
+                exec python3 ${clangTidyDiffScript} "$@"
+              '';
+            };
+            clangTidyFixRunner = pkgs.writeShellApplication {
+              name = "nes-clang-tidy-fix";
+              runtimeInputs = llvmTools;
+              text = ''
+                exec clang-tidy --fix-errors --fix-notes "$@"
+              '';
+            };
+            clangTidyRunner = pkgs.writeShellApplication {
+              name = "nes-clang-tidy";
+              runtimeInputs = [ pkgs.coreutils pkgs.git pkgs.gnugrep pkgs.nix clangTidyDiffRunner clangTidyFixRunner ];
+              text = ''
+                set -euo pipefail
+
+                usage() {
+                  printf '%s\n' 'Run the official clang-tidy-diff.py workflow inside the Nix development shell and apply fixes in place.'
+                  printf '\n'
+                  printf '%s\n' 'Usage:' '  nix run .#clang-tidy -- [<base-ref>]'
+                  printf '\n'
+                  printf '%s\n' 'Defaults:' '  <base-ref> = origin/main'
+                  printf '\n'
+                  printf '%s\n' 'Behavior:' '  Runs clang-tidy-diff.py with --fix and clang-tidy with --fix-errors --fix-notes'
+                }
+
+                if [ ! -x ./.nix/nix-cmake.sh ] || [ ! -x ./.nix/nix-run.sh ]; then
+                  echo "nes-clang-tidy: run this command from the NebulaStream repository root" >&2
+                  exit 1
+                fi
+
+                if [ "$#" -gt 1 ]; then
+                  usage >&2
+                  exit 1
+                fi
+
+                if [ "$#" -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+                  usage
+                  exit 0
+                fi
+
+                base_ref="''${1:-origin/main}"
+                jobs="$(nproc)"
+
+                if ! git diff --name-only "$base_ref" -- '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' ':!*.inc' | grep -q .; then
+                  echo "nes-clang-tidy: no changed C/C++ files relative to $base_ref"
+                  exit 0
+                fi
+
+                echo "nes-clang-tidy: configuring build/"
+                ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
+
+                echo "nes-clang-tidy: building generated headers"
+                ./.nix/nix-cmake.sh --build build -j -- -k 0
+
+                echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
+                git diff -U0 "$base_ref" -- ':!*.inc' | \
+                  clang-tidy-diff-19.py \
+                    -clang-tidy-binary nes-clang-tidy-fix \
+                    -p1 \
+                    -path build \
+                    -checks='-*,readability-duplicate-include' \
+                    -config-file .clang-tidy \
+                    -use-color \
+                    -fix \
+                    -j "$jobs"
+
+                echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
+                git diff -U0 "$base_ref" -- ':!*.inc' | \
+                  clang-tidy-diff-19.py \
+                    -clang-tidy-binary nes-clang-tidy-fix \
+                    -p1 \
+                    -path build \
+                    -config-file .clang-tidy \
+                    -use-color \
+                    -fix \
+                    -j "$jobs"
+              '';
+            };
           in
           {
+            clang-tidy = {
+              type = "app";
+              program = "${clangTidyRunner}/bin/nes-clang-tidy";
+            };
             clion-setup = {
               type = "app";
               program = "${clionSetupScript}/bin/clion-setup";
