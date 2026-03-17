@@ -1,0 +1,52 @@
+#  [31] Phosphate,Serum/Plasma,ANORGANISCHER PHOSPHOR,Elektrolyte,mmol/L,2777-1,<0.5 mM/L,24
+query: |
+  SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low ANORGANISCHER PHOSPHOR("), Wert), VARSIZED(" < 0.5 mmol/L) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+  FROM odbc_source_31
+  WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("ANORGANISCHER PHOSPHOR") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(0.5)
+  INTO File('results/output_31.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
+logical:
+  - name: odbc_source_31
+    schema:
+      - name: LabVal_ID
+        type: INT32
+      - name: mlife_FallNr
+        type: INT32
+      - name: Zeitpunkt
+        type: UINT64
+      - name: GruppenNr
+        type: INT32
+      - name: Gruppe
+        type: VARSIZED
+      - name: Bez
+        type: VARSIZED
+      - name: Wert
+        type: VARSIZED
+      - name: Einheit
+        type: VARSIZED
+      - name: Wertebereich
+        type: VARSIZED
+      - name: SampleNr
+        type: VARSIZED
+      - name: TSFail
+        type: UINT64
+      - name: TSLog
+        type: UINT64
+      - name: Lab_ID
+        type: INT32
+physical:
+  - logical: odbc_source_31
+    type: ODBC
+    parser_config:
+      type: Native
+    source_config:
+      host: "localhost"
+      port: "1433"
+      database: "master"
+      username: "sa"
+      password: "samplePassword1!"
+      driver: "ODBC Driver 18 for SQL Server"
+      sync_table: "dbo.v_Labor_null"
+      poll_interval_ms: 1000
+      query: "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"
+      trust_server_certificate: true
+sinks: []

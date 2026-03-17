@@ -1,0 +1,52 @@
+#  [26] INR,Plasma,INR,Gerinnung,1,6301-6,>4.5,24
+query: |
+  SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected high INR("), Wert), VARSIZED(" > 4.5) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as datetime
+  FROM odbc_source_26
+  WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("INR") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) > FLOAT64(4.5)
+  INTO File('results/output_26.csv' AS `SINK`.FILE_PATH,'CSV' as `SINK`.INPUT_FORMAT)
+logical:
+  - name: odbc_source_26
+    schema:
+      - name: LabVal_ID
+        type: INT32
+      - name: mlife_FallNr
+        type: INT32
+      - name: Zeitpunkt
+        type: UINT64
+      - name: GruppenNr
+        type: INT32
+      - name: Gruppe
+        type: VARSIZED
+      - name: Bez
+        type: VARSIZED
+      - name: Wert
+        type: VARSIZED
+      - name: Einheit
+        type: VARSIZED
+      - name: Wertebereich
+        type: VARSIZED
+      - name: SampleNr
+        type: VARSIZED
+      - name: TSFail
+        type: UINT64
+      - name: TSLog
+        type: UINT64
+      - name: Lab_ID
+        type: INT32
+physical:
+  - logical: odbc_source_26
+    type: ODBC
+    parser_config:
+      type: Native
+    source_config:
+      host: "localhost"
+      port: "1433"
+      database: "master"
+      username: "sa"
+      password: "samplePassword1!"
+      driver: "ODBC Driver 18 for SQL Server"
+      sync_table: "dbo.v_Labor_null"
+      poll_interval_ms: 1000
+      query: "SELECT LabVal_ID, mlife_FallNr, Zeitpunkt, GruppenNr, Gruppe, Bez, Wert, Einheit, Wertebereich, SampleNr, TSFail, TSLog, Lab_ID FROM dbo.v_Labor_null"
+      trust_server_certificate: true
+sinks: []
