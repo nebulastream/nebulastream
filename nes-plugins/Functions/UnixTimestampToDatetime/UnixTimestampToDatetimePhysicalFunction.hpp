@@ -20,6 +20,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Time/UnixTsToDatetime.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
@@ -30,23 +31,6 @@ struct VarSizedResult
     const char* varSizedPointer;
     uint64_t size{};
 };
-
-inline std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
-{
-    auto tp = std::chrono::sys_seconds{std::chrono::seconds(unixTimestamp)};
-    auto dp = std::chrono::floor<std::chrono::days>(tp);
-    const std::chrono::year_month_day ymd{dp};
-    const std::chrono::hh_mm_ss hms{tp - dp};
-    const std::string timestamps = fmt::format(
-        "{:02d}.{:02d}.{} {:02d}:{:02d}({})",
-        static_cast<unsigned>(ymd.day()),
-        static_cast<unsigned>(ymd.month()),
-        static_cast<int>(ymd.year()),
-        hms.hours().count(),
-        hms.minutes().count(),
-        unixTimestamp);
-    return timestamps;
-}
 
 class UnixTimestampToDatetimePhysicalFunction final
 {
