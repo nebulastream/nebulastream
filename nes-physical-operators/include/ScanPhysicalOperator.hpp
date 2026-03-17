@@ -36,9 +36,8 @@ public:
         uint64_t runtimeInputFormatterSlot = 1);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
+    void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override;
     [[nodiscard]] std::shared_ptr<TupleBufferRef> getBufferRef() const;
-    [[nodiscard]] uint64_t getRuntimeInputFormatterSlot() const;
-    [[nodiscard]] std::optional<RuntimeDynamicPointerBinding> getRuntimeInputFormatterBinding() const;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 

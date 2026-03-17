@@ -68,6 +68,14 @@ void PhysicalOperatorConcept::execute(ExecutionContext& executionCtx, Record& re
     executeChild(executionCtx, record);
 }
 
+void PhysicalOperatorConcept::collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
+{
+    if (const auto child = getChild(); child)
+    {
+        child->collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
+    }
+}
+
 void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     INVARIANT(getChild().has_value(), "Child operator is not set");
@@ -148,6 +156,11 @@ void PhysicalOperator::terminate(ExecutionContext& executionCtx) const
 void PhysicalOperator::execute(ExecutionContext& executionCtx, Record& record) const
 {
     self->execute(executionCtx, record);
+}
+
+void PhysicalOperator::collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
+{
+    self->collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
 }
 
 std::string PhysicalOperator::toString() const

@@ -29,6 +29,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/RuntimeDynamicPointerBinding.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <CompilationContext.hpp>
@@ -77,6 +78,8 @@ struct PhysicalOperatorConcept
     /// Executes the operator on the given record.
     virtual void execute(ExecutionContext& executionCtx, Record& record) const;
 
+    virtual void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const;
+
     /// Unique identifier for this operator.
     const OperatorId id = INVALID_OPERATOR_ID;
 
@@ -123,6 +126,7 @@ struct PhysicalOperator
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void terminate(ExecutionContext& executionCtx) const;
     void execute(ExecutionContext& executionCtx, Record& record) const;
+    void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const;
     [[nodiscard]] std::string toString() const;
 
     [[nodiscard]] OperatorId getId() const;
@@ -198,6 +202,11 @@ private:
         void terminate(ExecutionContext& executionCtx) const override { data.terminate(executionCtx); }
 
         void execute(ExecutionContext& executionCtx, Record& record) const override { data.execute(executionCtx, record); }
+
+        void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override
+        {
+            data.collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
+        }
 
         [[nodiscard]] std::string toString() const override { return fmt::format("PhysicalOperator({})", NAMEOF_TYPE(OperatorType)); }
     };

@@ -92,22 +92,17 @@ std::shared_ptr<TupleBufferRef> ScanPhysicalOperator::getBufferRef() const
     return bufferRef;
 }
 
-uint64_t ScanPhysicalOperator::getRuntimeInputFormatterSlot() const
-{
-    return runtimeInputFormatterSlot;
-}
-
-std::optional<RuntimeDynamicPointerBinding> ScanPhysicalOperator::getRuntimeInputFormatterBinding() const
+void ScanPhysicalOperator::collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
 {
     if (const auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(bufferRef))
     {
         if (const auto* runtimeInputFormatterPointer = inputFormatterBufferRef->getRuntimeInputFormatterPointer(); runtimeInputFormatterPointer)
         {
-            return RuntimeDynamicPointerBinding::create(
-                createRuntimeInputFormatterName(runtimeInputFormatterSlot), bufferRef, runtimeInputFormatterPointer);
+            dynamicPointerBindings.emplace_back(RuntimeDynamicPointerBinding::create(
+                createRuntimeInputFormatterName(runtimeInputFormatterSlot), bufferRef, runtimeInputFormatterPointer));
         }
     }
-    return std::nullopt;
+    PhysicalOperatorConcept::collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
 }
 
 std::optional<PhysicalOperator> ScanPhysicalOperator::getChild() const

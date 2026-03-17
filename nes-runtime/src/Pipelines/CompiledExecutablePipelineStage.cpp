@@ -24,7 +24,6 @@
 #include <ostream>
 #include <string>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -38,7 +37,6 @@
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
 #include <Pipeline.hpp>
-#include <ScanPhysicalOperator.hpp>
 #include <function.hpp>
 #include <options.hpp>
 
@@ -99,35 +97,10 @@ private:
 
 using DynamicPointerBindings = std::vector<RuntimeDynamicPointerBinding>;
 
-void collectDynamicPointerBindingsForOperator(
-    const PhysicalOperator& physicalOperator,
-    DynamicPointerBindings& dynamicPointerBindings,
-    std::unordered_set<uint64_t>& seenRuntimeInputFormatterSlots,
-    const PipelineId pipelineId)
-{
-    if (const auto scanOperator = physicalOperator.tryGet<ScanPhysicalOperator>(); scanOperator)
-    {
-        if (const auto runtimeInputFormatterBinding = scanOperator->getRuntimeInputFormatterBinding(); runtimeInputFormatterBinding)
-        {
-            const auto runtimeInputFormatterSlot = scanOperator->getRuntimeInputFormatterSlot();
-            const auto [_, isNewSlot] = seenRuntimeInputFormatterSlots.insert(runtimeInputFormatterSlot);
-            PRECONDITION(isNewSlot, "Duplicate runtime input formatter slot {} in pipeline {}", runtimeInputFormatterSlot, pipelineId.getRawValue());
-            dynamicPointerBindings.emplace_back(*runtimeInputFormatterBinding);
-        }
-    }
-
-    if (const auto childOperator = physicalOperator.getChild(); childOperator)
-    {
-        collectDynamicPointerBindingsForOperator(*childOperator, dynamicPointerBindings, seenRuntimeInputFormatterSlots, pipelineId);
-    }
-}
-
 DynamicPointerBindings collectDynamicPointerBindings(const std::shared_ptr<Pipeline>& pipeline)
 {
     DynamicPointerBindings dynamicPointerBindings;
-    std::unordered_set<uint64_t> seenRuntimeInputFormatterSlots;
-    collectDynamicPointerBindingsForOperator(
-        pipeline->getRootOperator(), dynamicPointerBindings, seenRuntimeInputFormatterSlots, pipeline->getPipelineId());
+    pipeline->getRootOperator().collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
     return dynamicPointerBindings;
 }
 
@@ -153,9 +126,12 @@ std::filesystem::path writeDynamicPointerBindings(const DynamicPointerBindings& 
 
     auto sortedBindings = dynamicPointerBindings;
     std::ranges::sort(sortedBindings, {}, [](const auto& binding) { return binding.getName(); });
+    std::string previousBindingName;
     for (const auto& binding : sortedBindings)
     {
+        PRECONDITION(previousBindingName != binding.getName(), "Duplicate dynamic pointer binding {} in pipeline {}", binding.getName(), pipelineId.getRawValue());
         output << binding.getName() << "\t" << fmt::format("{:#x}", binding.getPointerValue()) << "\n";
+        previousBindingName = binding.getName();
     }
     PRECONDITION(output.good(), "Could not write dynamic pointer binding file {}", bindingPath.string());
     return bindingPath;
