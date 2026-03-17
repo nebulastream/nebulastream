@@ -23,4 +23,6 @@ SELECT * FROM (
 WHERE alarm != VARSIZED("")
 INTO File();
 ----
-High anion gap detected for patient 1002 at time: 16.03.2026 10:32. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)).
+High anion gap detected for patient 1002. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)). Timestamps(Creation: 16.03.2026 10:32 MLIFE(Clone) insertion: 15.01.2024 08:45 System Ingestion: 15.01.2024 09:30 Alarm: 17.03.2026 09:51)
+
+# fails, because Alarm: <timestamp> mismatches

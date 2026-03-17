@@ -20,6 +20,7 @@ SELECT * FROM (
 WHERE alarm != VARSIZED("")
 INTO File();
 ----
-Acute kidney injury detected for patient 1002 at time: 15.01.2024 09:15. Reason: serum_Kreatinin value of 2 is (more than) twice as large as baseline value of 1 measured at 15.01.2024 09:15.
-Acute kidney injury detected for patient 1002 at time: 16.03.2043 09:15. Reason: serum_Kreatinin value of 2.5 is (more than) twice as large as baseline value of 1 measured at 15.01.2024 09:15. Note: Values were measure more than one week apart.
+Acute kidney injury detected for patient 1002. Reason: serum_Kreatinin value of 2 is (more than) twice as large as baseline value of 1. Timestamps(Creation: 15.01.2024 09:15 MLIFE(Clone) insertion: 15.01.2024 08:45 System Ingestion: 15.01.2024 09:30 Alarm: 17.03.2026 09:53)
+Acute kidney injury detected for patient 1002. Reason: serum_Kreatinin value of 2.5 is (more than) twice as large as baseline value of 1. Timestamps(Creation: 15.01.2024 09:15 MLIFE(Clone) insertion: 15.01.2024 08:45 System Ingestion: 15.01.2024 09:30 Alarm: 17.03.2026 09:53) Note: Values were measure more than one week apart.
 
+# fails, because Alarm: <timestamp> mismatches

@@ -14,8 +14,6 @@ import re
 import sys
 from pathlib import Path
 
-import yaml
-
 
 def parse_schema(create_line: str) -> tuple[str, list[dict[str, str]]]:
     """Parse a CREATE LOGICAL SOURCE line into (source_name, schema_fields)."""
@@ -93,7 +91,9 @@ def render_yaml(
     unique_source_name = f"{original_source_name}_{query_num:02d}"
 
     # Replace source name in SQL, strip trailing semicolons, and replace File() sink
-    modified_sql = sql.replace(f"FROM {original_source_name}", f"FROM {unique_source_name}")
+    # Convert testing function to production function
+    modified_sql = sql.replace("UnixTimestampToDatetimeTesting", "UnixTimestampToDatetime")
+    modified_sql = modified_sql.replace(f"FROM {original_source_name}", f"FROM {unique_source_name}")
     modified_sql = modified_sql.rstrip().rstrip(";")
     modified_sql = modified_sql.replace(
         "INTO File()",
@@ -160,8 +160,6 @@ def main():
         sys.exit(1)
 
     physical_source_text = physical_source_file.read_text()
-    # Validate it's valid YAML
-    yaml.safe_load(physical_source_text)
 
     # Default output dir: yaml_query_rules/ next to the test file
     if args.output_dir:
