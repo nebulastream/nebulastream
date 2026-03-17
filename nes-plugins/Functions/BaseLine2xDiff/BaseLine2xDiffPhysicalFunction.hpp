@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <chrono>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -32,7 +33,7 @@ struct BaselineValues
 class StaticSharedDiffState
 {
 public:
-    std::string probe(const BaselineValues& newBaselineValue)
+    std::string probe(const BaselineValues& newBaselineValue, const uint64_t insertionTs, const uint64_t ingestionTs)
     {
         std::scoped_lock lock(mutex);
 
@@ -46,14 +47,17 @@ public:
                 /// most recently recorded serum creatinine value. The second condition, regarding the time delta between measurement points
                 /// (i.e., the serum creatinine increase has to happen within the first 7 days to be classified as acute renal injury), would be nice to have but is not absolutely necessary.
                 /// In other words, the creatinine surge could also happen beyond the first 7 days but this would be less correct. To be on the safer side, specificy ""Gruppe"" for this one --> labs[""Gruppe""] == ""Retention"""
-                std::string alertMessage
-                    = fmt::format(
-                          "Acute kidney injury detected for patient {} at time: {}. Reason: serum_Kreatinin value of {} is (more than) twice as large as baseline value of {} measured at {}.",
-                          newBaselineValue.patientId,
-                          unixTsToFormattedDatetime(newBaselineValue.timestamp),
-                          newBaselineValue.value,
-                          patientBaseline->second.value,
-                          unixTsToFormattedDatetime(patientBaseline->second.timestamp));
+                std::string alertMessage = fmt::format(
+                    "Acute kidney injury detected for patient {}. Reason: serum_Kreatinin value of {} is (more than) twice as "
+                    "large as baseline value of {}. Timestamps(Creation: {}, MLIFE(Clone) insertion: {}, System Ingestion: {}, Alarm: {})",
+                    newBaselineValue.patientId,
+                    newBaselineValue.value,
+                    patientBaseline->second.value,
+                    unixTsToFormattedDatetime(patientBaseline->second.timestamp),
+                    unixTsToFormattedDatetime(insertionTs),
+                    unixTsToFormattedDatetime(ingestionTs),
+                    unixTsToFormattedDatetime(
+                        std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
                 constexpr size_t sevenDaysInMilliseconds = 604800000;
                 if (newBaselineValue.timestamp - patientBaseline->second.timestamp >= sevenDaysInMilliseconds)
                 {
@@ -80,12 +84,9 @@ private:
         std::chrono::hh_mm_ss hms{tp - dp};
 
         std::ostringstream oss;
-        oss << std::setfill('0')
-            << std::setw(2) << static_cast<unsigned>(ymd.day())   << "."
-            << std::setw(2) << static_cast<unsigned>(ymd.month()) << "."
-            << static_cast<int>(ymd.year())                        << " "
-            << std::setw(2) << hms.hours().count()                 << ":"
-            << std::setw(2) << hms.minutes().count();
+        oss << std::setfill('0') << std::setw(2) << static_cast<unsigned>(ymd.day()) << "." << std::setw(2)
+            << static_cast<unsigned>(ymd.month()) << "." << static_cast<int>(ymd.year()) << " " << std::setw(2) << hms.hours().count()
+            << ":" << std::setw(2) << hms.minutes().count();
 
         return oss.str();
     }
@@ -111,15 +112,24 @@ public:
         auto patientIdVal = record.readUnqualified("MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
         const auto bezeichnungVal = record.readUnqualified("BEZ").cast<VariableSizedData>();
         const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
+        const auto insertionTs = record.readUnqualified("TSFAIL").cast<nautilus::val<uint64_t>>();
+        const auto ingestionTs = record.readUnqualified("TSLOG").cast<nautilus::val<uint64_t>>();
         nautilus::val<VarSizedResult*> probeResult = nautilus::invoke(
-            +[](int32_t patientId, char* bez, size_t bezLength, double value, uint64_t timestamp, Arena* arenaPtr)
+            +[](const int32_t patientId,
+                char* bez,
+                const size_t bezLength,
+                const double value,
+                const uint64_t timestamp,
+                const uint64_t insertionTs,
+                const uint64_t ingestionTs,
+                Arena* arenaPtr)
             {
                 thread_local auto result = VarSizedResult{};
                 const std::string_view bezSV{bez, bezLength};
                 // Todo: can remove check
                 INVARIANT(bezSV == "Kreatinin", "Function only works for Kreatinin values, apply WHERE filter first");
                 const std::string probeResult
-                    = staticSharedDiffState.probe(BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value});
+                    = staticSharedDiffState.probe(BaselineValues{.patientId = patientId, .timestamp = timestamp, .value = value}, insertionTs, ingestionTs);
                 const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
                 std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
                 result = VarSizedResult{.varSizedPointer = allocatedMemory, .size = probeResult.size()};
@@ -130,6 +140,8 @@ public:
             bezeichnungVal.getSize(),
             valueVal,
             zeitpunktVal,
+            insertionTs,
+            ingestionTs,
             arena.getArena());
         VariableSizedData varSizedString{
             *getMemberWithOffset<int8_t*>(probeResult, offsetof(VarSizedResult, varSizedPointer)),
