@@ -79,6 +79,7 @@ private:
     bool trustServerCertificate{};
     size_t maxRetries;
     bool readOnlyNewRows{};
+    bool useCheckpoint{true};
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
     size_t fetchedSizeOfRow{0};
@@ -154,6 +155,14 @@ struct ConfigParametersODBC
         true,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(READ_ONLY_NEW_ROWS, config); }};
 
+    /// When true (default), the ODBC source reads the persisted checkpoint from
+    /// dbo.nes_checkpoint on startup.  Set to false for queries (like alert
+    /// reminders) that should start from the current COUNT(*) instead.
+    static inline const DescriptorConfig::ConfigParameter<bool> USE_CHECKPOINT{
+        "use_checkpoint",
+        true,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(USE_CHECKPOINT, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
@@ -168,7 +177,8 @@ struct ConfigParametersODBC
             DATABASE,
             TRUST_SERVER_CERTIFICATE,
             MAX_RETRIES,
-            READ_ONLY_NEW_ROWS);
+            READ_ONLY_NEW_ROWS,
+            USE_CHECKPOINT);
 };
 
 }
