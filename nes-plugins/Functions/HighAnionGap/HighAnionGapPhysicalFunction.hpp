@@ -18,6 +18,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Time/UnixTsToDatetime.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
@@ -206,21 +207,6 @@ public:
 private:
     std::unordered_map<uint64_t, AnionGapTrigger> patienBaselinetMap;
     std::mutex mutex{};
-
-    std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
-    {
-        auto tp = std::chrono::sys_seconds{std::chrono::seconds(unixTimestamp)};
-        auto dp = std::chrono::floor<std::chrono::days>(tp);
-        std::chrono::year_month_day ymd{dp};
-        std::chrono::hh_mm_ss hms{tp - dp};
-
-        std::ostringstream oss;
-        oss << std::setfill('0') << std::setw(2) << static_cast<unsigned>(ymd.day()) << "." << std::setw(2)
-            << static_cast<unsigned>(ymd.month()) << "." << static_cast<int>(ymd.year()) << " " << std::setw(2) << hms.hours().count()
-            << ":" << std::setw(2) << hms.minutes().count();
-
-        return oss.str();
-    }
 };
 
 static StaticSharedDiffState staticSharedDiffState;
