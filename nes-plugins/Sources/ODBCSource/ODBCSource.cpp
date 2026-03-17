@@ -94,6 +94,7 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , trustServerCertificate(sourceDescriptor.getFromConfig(ConfigParametersODBC::TRUST_SERVER_CERTIFICATE))
     , maxRetries(sourceDescriptor.getFromConfig(ConfigParametersODBC::MAX_RETRIES))
     , readOnlyNewRows(sourceDescriptor.getFromConfig(ConfigParametersODBC::READ_ONLY_NEW_ROWS))
+    , useCheckpoint(sourceDescriptor.getFromConfig(ConfigParametersODBC::USE_CHECKPOINT))
 {
 }
 
@@ -122,7 +123,7 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider> bufferProviderPtr)
         (this->trustServerCertificate) ? "yes" : "no");
 
     /// We don't want to catch errors here, but further up in the query engine
-    connection->connect(connectionString, this->syncTable, this->query, this->readOnlyNewRows);
+    connection->connect(connectionString, this->syncTable, this->query, this->readOnlyNewRows, this->useCheckpoint);
     this->fetchedSizeOfRow = this->connection->getFetchedSizeOfRow();
     if (this->fetchedSizeOfRow == 0)
     {

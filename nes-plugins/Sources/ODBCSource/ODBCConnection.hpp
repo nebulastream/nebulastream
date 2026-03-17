@@ -70,7 +70,7 @@ public:
     /// Returns 0 if the table doesn't exist or has no data.
     uint64_t readCheckpointRowCount();
 
-    void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows);
+    void connect(const std::string& connectionString, std::string_view syncTable, std::string_view query, bool readOnlyNewRows, bool useCheckpoint = true);
 
     template <typename T>
     SQLRETURN readVal(const size_t colIdx, NES::TupleBuffer& buffer, const TypeInfo& typeInfo, SQLLEN& indicator, std::string& currentTuple) const
