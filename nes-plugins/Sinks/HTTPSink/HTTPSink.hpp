@@ -18,6 +18,7 @@
 #include <cstdint>
 #include <fstream>
 #include <memory>
+#include <mutex>
 #include <optional>
 #include <ostream>
 #include <string>
@@ -70,6 +71,10 @@ private:
     bool isOpen = false;
     std::unique_ptr<Format> formatter;
     std::ofstream logFile;
+
+    /// Shared across all HTTPSink instances so concurrent writes to the
+    /// same log file do not interleave and corrupt lines.
+    static std::mutex logMutex;
 };
 
 struct ConfigParametersMatrix
