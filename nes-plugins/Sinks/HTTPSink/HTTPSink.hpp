@@ -65,9 +65,11 @@ protected:
 
 private:
     std::string url;
+    std::string logFilePath;
     CURL* curl;
     bool isOpen = false;
     std::unique_ptr<Format> formatter;
+    std::ofstream logFile;
 };
 
 struct ConfigParametersMatrix
@@ -85,8 +87,13 @@ struct ConfigParametersMatrix
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ENDPOINT, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> LOG_FILE_PATH{
+        "log_file_path",
+        std::nullopt,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LOG_FILE_PATH, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, IPADDRESS, PORT, ENDPOINT);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, IPADDRESS, PORT, ENDPOINT, LOG_FILE_PATH);
 };
 
 }

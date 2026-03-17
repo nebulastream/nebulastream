@@ -56,13 +56,15 @@ HTTPSink::HTTPSink(BackpressureController backpressureController, const SinkDesc
         sinkDescriptor.getFromConfig(ConfigParametersMatrix::PORT),
         sinkDescriptor.getFromConfig(ConfigParametersMatrix::ENDPOINT));
 
+    logFilePath = sinkDescriptor.getFromConfig(ConfigParametersMatrix::LOG_FILE_PATH);
+
     /// We default to json output format here since it seems to be more accesible for further usage of the data
     formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
 }
 
 std::ostream& HTTPSink::toString(std::ostream& str) const
 {
-    str << fmt::format("HTTPSink(url: {})", url);
+    str << fmt::format("HTTPSink(url: {}, logFile: {})", url, logFilePath);
     return str;
 }
 
@@ -71,6 +73,19 @@ void HTTPSink::start(PipelineExecutionContext&)
     NES_DEBUG("Setting up http sink: {}", *this);
     curl = curl_easy_init();
     PRECONDITION(curl, "curl_easy_init failed");
+
+    /// Create parent directories if they don't exist
+    const auto logDir = std::filesystem::path(logFilePath).parent_path();
+    if (!logDir.empty())
+    {
+        std::filesystem::create_directories(logDir);
+    }
+
+    /// Open log file in append mode so data survives restarts
+    logFile.open(logFilePath, std::ios::out | std::ios::app);
+    PRECONDITION(logFile.is_open(), fmt::format("Failed to open log file: {}", logFilePath));
+    NES_DEBUG("Opened log file for HTTP sink: {}", logFilePath);
+
     isOpen = true;
 }
 
@@ -82,9 +97,13 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     /// Format buffer
     const auto fBuffer = formatter->getFormattedBuffer(inputTupleBuffer);
 
-    // Todo: write buffer to file (use FileSink logic)
-    // Todo: look at buffer content and string and improve alert msg
-    // -> could use concat idea, otherwise, just hardcode map to produce expected result
+    /// Log the message to file if it is non-empty, then flush immediately
+    /// so the data is persisted even if the container crashes right after.
+    if (!fBuffer.empty())
+    {
+        logFile << fBuffer << '\n';
+        logFile.flush();
+    }
 
     curl_slist* headers = nullptr;
     /// Set newline delimited json as content type
@@ -104,6 +123,12 @@ void HTTPSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 void HTTPSink::stop(PipelineExecutionContext&)
 {
     NES_DEBUG("Closing http sink.");
+    if (logFile.is_open())
+    {
+        logFile.flush();
+        logFile.close();
+        NES_DEBUG("Closed log file: {}", logFilePath);
+    }
     curl_easy_cleanup(curl);
 }
 

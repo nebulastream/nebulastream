@@ -9,7 +9,7 @@ query: |
   SELECT CONCAT(CONCAT(CONCAT(VARSIZED("Detected low PO2("), Wert), VARSIZED(" < 60 mmHg) for patient ")), UnixTimestampToDatetime(VarSizedToDouble(Wert))) as alert
   FROM odbc_source_01
   WHERE Gruppe == VARSIZED("Blutgase arteriell") AND Bez = VARSIZED("PO2") AND not (IsNaN(VarSizedToDouble(Wert))) AND VarSizedToDouble(Wert) < FLOAT64(60)
-  INTO HTTP('JSON' AS `SINK`.INPUT_FORMAT, "localhost" AS `SINK`.IP_ADDRESS, "8090" AS `SINK`.PORT, "nesNotification" AS `SINK`.ENDPOINT);
+  INTO HTTP('JSON' AS `SINK`.INPUT_FORMAT, "localhost" AS `SINK`.IP_ADDRESS, "8090" AS `SINK`.PORT, "nesNotification" AS `SINK`.ENDPOINT, "test.log" AS `SINK`.LOG_FILE_PATH);
 logical:
   - name: odbc_source_01
     schema:
