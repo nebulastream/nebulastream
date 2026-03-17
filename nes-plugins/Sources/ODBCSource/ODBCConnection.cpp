@@ -263,6 +263,45 @@ void ODBCConnection::fetchColumns(std::string_view connectionString)
     }
 }
 
+uint64_t ODBCConnection::readCheckpointRowCount()
+{
+    SQLHSTMT hstmtCheckpoint = SQL_NULL_HSTMT;
+    SQLRETURN ret = SQLAllocHandle(SQL_HANDLE_STMT, hdbc, &hstmtCheckpoint);
+    if (!SQL_SUCCEEDED(ret))
+    {
+        NES_DEBUG("Could not allocate checkpoint statement handle");
+        return 0;
+    }
+
+    std::string checkpointQuery = "SELECT rowcount FROM dbo.nes_checkpoint WHERE id = 1";
+    ret = SQLExecDirect(
+        hstmtCheckpoint, reinterpret_cast<SQLCHAR*>(checkpointQuery.data()), static_cast<SQLINTEGER>(checkpointQuery.size()));
+    if (!SQL_SUCCEEDED(ret))
+    {
+        NES_DEBUG("Checkpoint table not found or query failed — will fall back to COUNT(*)");
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmtCheckpoint);
+        return 0;
+    }
+
+    uint64_t rowCount = 0;
+    ret = SQLFetch(hstmtCheckpoint);
+    if (ret == SQL_NO_DATA)
+    {
+        SQLCloseCursor(hstmtCheckpoint);
+        SQLFreeHandle(SQL_HANDLE_STMT, hstmtCheckpoint);
+        return 0;
+    }
+
+    SQLLEN indicator{};
+    SQLGetData(hstmtCheckpoint, 1, SQL_C_SBIGINT, &rowCount, sizeof(uint64_t), &indicator);
+    SQLCloseCursor(hstmtCheckpoint);
+    SQLFreeHandle(SQL_HANDLE_STMT, hstmtCheckpoint);
+
+    NES_DEBUG("Read checkpoint rowcount: {}", rowCount);
+    std::cout << "Read checkpoint rowcount: " << rowCount << '\n';
+    return rowCount;
+}
+
 size_t ODBCConnection::syncRowCount()
 {
     SQLRETURN ret = SQLExecDirect(hstmtCount, reinterpret_cast<SQLCHAR*>(countQuery.data()), static_cast<SQLINTEGER>(countQuery.size()));
@@ -327,7 +366,19 @@ void ODBCConnection::connect(
     /// fetch the current number of rows to read only newly added rows
     if (readOnlyNewRows)
     {
-        this->rowCountTracker = syncRowCount();
+        const auto checkpoint = readCheckpointRowCount();
+        if (checkpoint > 0)
+        {
+            this->rowCountTracker = checkpoint;
+            NES_DEBUG("Using checkpoint rowcount: {}", checkpoint);
+            std::cout << "Using checkpoint rowcount: " << checkpoint << '\n';
+        }
+        else
+        {
+            this->rowCountTracker = syncRowCount();
+            NES_DEBUG("No checkpoint found, using COUNT(*) rowcount: {}", this->rowCountTracker);
+            std::cout << "No checkpoint found, using COUNT(*) rowcount: " << this->rowCountTracker << '\n';
+        }
     }
 }
 
@@ -391,6 +442,20 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
             return readVal<int16_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_INTEGER: {
+            if (colName == "Lab_ID")
+            {
+                /// Read and discard the original value (advance the ODBC cursor)
+                int32_t originalVal{};
+                const auto ret = SQLGetData(hstmt, colIdx, typeInfo.sqlType, &originalVal, typeInfo.nesTypeSize, &indicator);
+                /// Overwrite with batchStartRowCount — the rowcount BEFORE this buffer's rows,
+                /// so that a crash mid-batch causes re-processing from this point.
+                const auto rowcount = static_cast<int32_t>(batchStartRowCount);
+                *reinterpret_cast<int32_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = rowcount;
+                buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
+                currentTuple = fmt::format("{}, {}", currentTuple, rowcount);
+                NES_DEBUG("Overwriting Lab_ID with batch start rowcount: {}", rowcount);
+                return ret;
+            }
             return readVal<int32_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
         }
         case SQL_C_SBIGINT: {
@@ -477,6 +542,7 @@ ODBCPollStatus ODBCConnection::executeQuery(
     if (this->numberOfLeftoverTuples > 0)
     {
         nextRowsToFetch = std::min(numberOfLeftoverTuples, rowsPerBuffer);
+        this->batchStartRowCount = this->rowCountTracker;
         this->rowCountTracker += nextRowsToFetch;
         INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
         this->numberOfLeftoverTuples -= nextRowsToFetch;
@@ -498,6 +564,7 @@ ODBCPollStatus ODBCConnection::executeQuery(
         /// There are new rows, Execute the SQL statement
         const SQLRETURN ret = SQLExecDirect(hstmt, queryBuffer.data(), static_cast<SQLINTEGER>(queryBuffer.size()));
         checkError(ret, SQL_HANDLE_STMT, hstmt, "Execute SQL statement");
+        this->batchStartRowCount = this->rowCountTracker;
         this->rowCountTracker += nextRowsToFetch;
         INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
         this->numberOfLeftoverTuples -= nextRowsToFetch;
