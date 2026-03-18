@@ -1,8 +1,0 @@
-# Seeds for failure cases proptest has generated in the past. It is
-# automatically read and these particular cases re-run before any
-# novel cases are generated.
-#
-# It is recommended to check this file in to source control so that
-# everyone who runs the test benefits from these saved cases.
-cc 2cc7783e569ea79e601d37c0289919e23aeae4a87bc4749bffb3a28208bfb651 # shrinks to n_queries = 2, stop_mode = Graceful
-cc 3aff775cdf7ebea8b73d9069386bd227fe7befb1098be7f581a13b12e1fedc72 # shrinks to req = CreateQuery { name: "a-0", sql_statement: "SELECT a FROM a", block_until: Pending }
