@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <cctype>
 #include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <functional>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <ranges>
@@ -54,6 +54,7 @@
 #include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/ranges.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
@@ -154,30 +155,27 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
-    std::unordered_map<std::string, std::string> optimizer;
+    YAML::Node optimizer;
     std::vector<WorkerConfig> workers;
 };
 }
 
 namespace
 {
-/// TODO #1427: Remove once we support optimizer configs in the topology file.
-/// Recursively flattens a nested YAML map into dot-separated key-value pairs.
-/// e.g., {worker: {receiver_queue_size: 2}} -> {"worker.receiver_queue_size": "2"}
-void flattenYAMLNode(const YAML::Node& node, const std::string& prefix, std::unordered_map<std::string, std::string>& result)
+/// Validates that a YAML map node contains only the expected keys. Throws InvalidConfigParameter if an unknown key is found.
+void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Node& node)
 {
-    if (node.IsMap())
+    if (!node.IsMap())
     {
-        for (const auto& entry : node)
-        {
-            auto key = entry.first.as<std::string>();
-            auto childPrefix = prefix.empty() ? key : fmt::format("{}.{}", prefix, key);
-            flattenYAMLNode(entry.second, childPrefix, result);
-        }
+        return;
     }
-    else if (node.IsScalar())
+    for (const auto& entry : node)
     {
-        result[prefix] = node.as<std::string>();
+        const auto key = entry.first.as<std::string>();
+        if (std::ranges::find(allowed, key) == allowed.end())
+        {
+            throw NES::InvalidConfigParameter("Unknown key '{}'. Expected one of: {}", key, fmt::join(allowed, ", "));
+        }
     }
 }
 }
@@ -189,6 +187,7 @@ struct convert<NES::CLI::SchemaField>
 {
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
+        acceptKeys({"name", "type"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.type = stringToFieldType(node["type"].as<std::string>());
         return true;
@@ -200,6 +199,7 @@ struct convert<NES::CLI::Sink>
 {
     static bool decode(const Node& node, NES::CLI::Sink& rhs)
     {
+        acceptKeys({"name", "type", "schema", "host", "config", "parser_config"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
@@ -215,6 +215,7 @@ struct convert<NES::CLI::LogicalSource>
 {
     static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
     {
+        acceptKeys({"name", "schema"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         return true;
@@ -226,6 +227,7 @@ struct convert<NES::CLI::PhysicalSource>
 {
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
+        acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
         rhs.logical = bindIdentifierName(node["logical"].as<std::string>());
         rhs.type = node["type"].as<std::string>();
         rhs.host = node["host"].as<std::string>();
@@ -240,6 +242,7 @@ struct convert<NES::CLI::WorkerConfig>
 {
     static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
     {
+        acceptKeys({"host", "data", "max_operators", "downstream", "config"}, node);
         if (node["max_operators"].IsDefined())
         {
             rhs.maxOperators = node["max_operators"].as<size_t>();
@@ -250,10 +253,6 @@ struct convert<NES::CLI::WorkerConfig>
         }
         rhs.host = node["host"].as<std::string>();
         rhs.data = node["data"].IsDefined() ? node["data"].as<std::string>() : "";
-        if (node["config"].IsDefined())
-        {
-            flattenYAMLNode(node["config"], "", rhs.config);
-        }
         return true;
     }
 };
@@ -263,13 +262,14 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
+        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers"}, node);
         rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
 
         if (node["optimizer"].IsDefined())
         {
-            rhs.optimizer = node["optimizer"].as<std::unordered_map<std::string, std::string>>();
+            rhs.optimizer = node["optimizer"];
         }
         rhs.query = {};
         if (node["query"].IsDefined())
@@ -444,7 +444,10 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
 {
     NES::QueryOptimizerConfiguration configuration;
-    configuration.overwriteConfigWithCommandLineInput(topologyConfig.optimizer);
+    if (topologyConfig.optimizer.IsDefined())
+    {
+        configuration.overwriteConfigWithYAMLNode(topologyConfig.optimizer);
+    }
     return configuration;
 }
 
