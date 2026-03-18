@@ -1,0 +1,17 @@
+[[test]]
+title = "partition"
+timeout = 600
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Query"
+  num_queries = 1
+  begin = 44
+
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 42
+  end = 50
+  partition_rate = 0.25
+

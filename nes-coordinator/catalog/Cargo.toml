@@ -1,0 +1,23 @@
+[package]
+name = "catalog"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+common.workspace = true
+madsim.workspace = true
+model.workspace = true
+migration.workspace = true
+tokio.workspace = true
+sea-orm.workspace = true
+anyhow.workspace = true
+tokio-retry.workspace = true
+tracing.workspace = true
+serde_json.workspace = true
+
+[features]
+testing = ["model/testing"]
+
+[dev-dependencies]
+model = { workspace = true, features = ["testing"] }
+proptest = "1.5"

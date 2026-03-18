@@ -1,0 +1,12 @@
+[[test]]
+title = "no_faults"
+timeout = 200
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Query"
+  num_queries = 100
+  end = 120
+  drop_fraction = 0.25
+  drop_begin = 60

@@ -1,0 +1,25 @@
+[package]
+name = "controller"
+version = "0.1.0"
+edition = "2024"
+
+[features]
+testing = ["model/testing"]
+[dependencies]
+common.workspace = true
+madsim.workspace = true
+model.workspace = true
+catalog.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+thiserror.workspace = true
+flume.workspace = true
+tonic.workspace = true
+prost.workspace = true
+tokio-retry.workspace = true
+anyhow.workspace = true
+chrono.workspace = true
+futures-util = "0.3"
+
+[build-dependencies]
+tonic-build.workspace = true

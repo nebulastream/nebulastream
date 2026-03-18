@@ -1,0 +1,10 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc a7ff43350a7bd84b43be68a7bdd0baeec44ceb0e433bcc6456828a120a4c05f8 # shrinks to create_source = CreateLogicalSource { name: "", schema: Schema { fields: [] } }
+cc c77942df17262d846d9663baba2c47fe91c25512b6c10dd79d91f1d5c58ee780 # shrinks to req = PhysicalSourceWithRefs { logical: CreateLogicalSource { name: "aa_", schema: Schema { fields: [("a", INT32)] } }, worker: CreateWorker { host_addr: NetworkAddr { host: "a00", port: 1024 }, grpc_addr: NetworkAddr { host: "a00", port: 1024 }, capacity: 0, peers: [] }, physical: CreatePhysicalSource { logical_source: "aa_", host_addr: NetworkAddr { host: "a00", port: 1024 }, source_type: File, source_config: Object {}, parser_config: Object {} } }
+cc 3bd023c73a3b54354c3038d19d8ac3ccf72c71b570d3b73556c37392971a105d # shrinks to req = PhysicalSourceWithRefs { logical: CreateLogicalSource { name: "aaa", schema: Schema { fields: [("a", INT32)] } }, worker: CreateWorker { host_addr: NetworkAddr { host: "aa0", port: 1024 }, grpc_addr: NetworkAddr { host: "aa0", port: 1024 }, capacity: 0, peers: [] }, physical: CreatePhysicalSource { logical_source: "aaa", host_addr: NetworkAddr { host: "aa0", port: 1024 }, source_type: File, source_config: Object {}, parser_config: Object {} } }
+cc 1961e01fe3be226fefc8c087f5f89d4259d5c62d23fd77e9059c73c33a3e98cf # shrinks to create_source = CreateLogicalSource { name: "", schema: Schema { fields: [] } }

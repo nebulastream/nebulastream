@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 2bf4d478024c5fdf63a1c36249ca67c737e444bdfc3bfaae4df67bacb10b88d5 # shrinks to req = PhysicalSourceWithRefs { logical: CreateLogicalSource { source_name: "", schema: Schema { fields: [] } }, worker: CreateWorker { host_name: "00a", grpc_port: 1, data_port: 2, capacity: 0, peers: [NetworkAddr { host: "0", port: 1 }] }, physical: CreatePhysicalSource { logical_source: "", placement_host_name: "00a", placement_grpc_port: 1, source_type: File, source_config: {}, parser_config: {} } }
+cc 8e4df5314e86286a7fe72d06e6a422804029d81990e7711a36eb03a963722ff1 # shrinks to req = PhysicalSourceWithRefs { logical: CreateLogicalSource { source_name: "", schema: Schema { fields: [] } }, worker: CreateWorker { host_name: "a0a", grpc_port: 1, data_port: 2, capacity: 0, peers: [NetworkAddr { host: "a", port: 1 }] }, physical: CreatePhysicalSource { logical_source: "", placement_host_name: "a0a", placement_grpc_port: 1, source_type: File, source_config: {}, parser_config: {} } }

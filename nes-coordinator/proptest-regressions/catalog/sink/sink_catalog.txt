@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc dc882b7ea06f62c34b02097d9109633ad96bd2b773aa62555811ef8ec94a4d6f # shrinks to req = SinkWithRefs { worker: CreateWorker { host_name: "0a0", grpc_port: 1, data_port: 2, capacity: 0, peers: [] }, sink: CreateSink { name: "a", placement_host_name: "0a0", placement_grpc_port: 1, sink_type: File, config: {} } }
+cc 48b4b00bd23e522c11133ddea764e0f4af09f2cd107bd76554ac6f682ead3a06 # shrinks to req = SinkWithRefs { worker: CreateWorker { host_name: "00a", grpc_port: 1, data_port: 2, capacity: 0, peers: [] }, sink: CreateSink { name: "a", placement_host_name: "00a", placement_grpc_port: 1, sink_type: File, config: {} } }

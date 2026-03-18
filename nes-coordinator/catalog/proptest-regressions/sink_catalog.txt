@@ -1,0 +1,9 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 2e78b57526983239e3f66b74b97a39d1b2725c5c895fbca91f85066ebc67cccd # shrinks to req = SinkWithRefs { worker: CreateWorker { host_addr: NetworkAddr { host: "a00", port: 1024 }, grpc_addr: NetworkAddr { host: "a00", port: 1024 }, capacity: 0, peers: [] }, sink: CreateSink { name: "aaa", host_addr: NetworkAddr { host: "a00", port: 1024 }, sink_type: File, config: Object {} } }
+cc 43e8c16ae460589954ce014ac5eea7622619dfa2f558c6b0cf3597a6a3744bea # shrinks to req = SinkWithRefs { worker: CreateWorker { host_addr: NetworkAddr { host: "a0a", port: 1024 }, grpc_addr: NetworkAddr { host: "a0a", port: 1024 }, capacity: 0, peers: [] }, sink: CreateSink { name: "a__", host_addr: NetworkAddr { host: "a0a", port: 1024 }, sink_type: File, config: Object {} } }
+cc 5470f26b423ba8ca88aaf55adaafba3f8786fb3c3b0d7e8c510aa23f0f084b5a # shrinks to req = SinkWithRefs { worker: CreateWorker { host_addr: NetworkAddr { host: "aa0", port: 1024 }, grpc_addr: NetworkAddr { host: "aa0", port: 1024 }, capacity: 0, peers: [] }, sink: CreateSink { name: "a_a", host_addr: NetworkAddr { host: "aa0", port: 1024 }, sink_type: File, config: Object {} } }
