@@ -1,0 +1,58 @@
+diff --git a/nautilus/src/nautilus/compiler/JITCompiler.cpp b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+index bb4b34ae27..5612e2aa80 100644
+--- a/nautilus/src/nautilus/compiler/JITCompiler.cpp
++++ b/nautilus/src/nautilus/compiler/JITCompiler.cpp
+@@ -17,12 +17,15 @@
+ #include <fmt/core.h>
+ #include <iomanip>
+ #include <link.h>
++#include <memory>
++#include <mutex>
+ #include <optional>
+ #include <random>
+ #include <sstream>
+ #include <string>
+ #include <string_view>
+ #include <thread>
++#include <unordered_map>
+ #include <unordered_set>
+ #include <vector>
+ 
+@@ -149,6 +152,19 @@ std::filesystem::path getBlobDynamicPointerRelocationMetadataPath(const std::fil
+ 	return metadataPath;
+ }
+ 
++std::shared_ptr<std::mutex> getBlobCompilationMutex(const std::filesystem::path& blobPath) {
++	static std::mutex mutexMapMutex;
++	static std::unordered_map<std::string, std::weak_ptr<std::mutex>> mutexesByBlobPath;
++	const auto blobPathKey = blobPath.lexically_normal().string();
++	std::lock_guard guard(mutexMapMutex);
++	auto sharedMutex = mutexesByBlobPath[blobPathKey].lock();
++	if (!sharedMutex) {
++		sharedMutex = std::make_shared<std::mutex>();
++		mutexesByBlobPath[blobPathKey] = sharedMutex;
++	}
++	return sharedMutex;
++}
++
+ std::string normalizeModulePath(std::string modulePath) {
+ 	if (modulePath.empty()) {
+ 		return modulePath;
+@@ -450,6 +466,8 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 	const auto explicitCacheKey = options.getOptionOrDefault<std::string>("engine.Blob.CacheKey", std::string {});
+ 	const auto explicitCacheFunctionTypeName = std::string(function.target_type().name());
+ 	std::optional<std::filesystem::path> explicitBlobPath;
++	std::shared_ptr<std::mutex> explicitBlobCompilationMutex;
++	std::unique_lock<std::mutex> explicitBlobCompilationLock;
+ 
+ 	if (cacheEnabled && !explicitCacheKey.empty()) {
+ 		std::error_code ec;
+@@ -459,6 +477,8 @@ std::unique_ptr<Executable> JITCompiler::compile(JITCompiler::wrapper_function f
+ 			auto blobPath =
+ 			    getBlobCachePathForExplicitKey(cacheRoot, backendName, options, explicitCacheKey, explicitCacheFunctionTypeName);
+ 			explicitBlobPath = blobPath;
++			explicitBlobCompilationMutex = getBlobCompilationMutex(blobPath);
++			explicitBlobCompilationLock = std::unique_lock<std::mutex>(*explicitBlobCompilationMutex);
+ 			if (std::filesystem::exists(blobPath)) {
+ 				std::filesystem::path constPtrRelocationMetadataPath;
+ 				const auto constPtrRelocationMetadataState =

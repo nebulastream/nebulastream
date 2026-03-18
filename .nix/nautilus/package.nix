@@ -66,6 +66,7 @@ let
       ./patches/0001-disable-ubsan-function-call-check.patch
       ./patches/0002-nautilus-compilation-cache.patch
       ./patches/0003-dynamic-pointer-substitution.patch
+      ./patches/0004-serialize-blob-cache-publication.patch
     ];
 
     nativeBuildInputs = [

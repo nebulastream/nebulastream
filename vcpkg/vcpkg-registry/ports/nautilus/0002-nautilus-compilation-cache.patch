@@ -818,43 +818,43 @@ index d1c5c38..0dbc751 100644
 +
 +bool tryApplyBlobConstPtrRelocations(::mlir::ModuleOp module, const std::unordered_map<uint64_t, uint64_t>& relocations) {
 +	bool matchedAnyPointerLiteral = false;
-+	for (auto intToPtrOp : module.getOps<::mlir::LLVM::IntToPtrOp>()) {
++	module.walk([&](::mlir::LLVM::IntToPtrOp intToPtrOp) {
 +		if (intToPtrOp->getNumOperands() != 1) {
-+			continue;
++			return;
 +		}
 +		auto sourceValue = intToPtrOp->getOperand(0);
-+		auto sourceConstantOp = sourceValue.getDefiningOp<::mlir::arith::ConstantOp>();
-+		if (!sourceConstantOp) {
-+			continue;
-+		}
-+		auto sourceIntegerAttr = llvm::dyn_cast<::mlir::IntegerAttr>(sourceConstantOp.getValue());
++		::mlir::IntegerAttr sourceIntegerAttr;
++		if (auto sourceArithConstantOp = sourceValue.getDefiningOp<::mlir::arith::ConstantOp>()) {
++			sourceIntegerAttr = llvm::dyn_cast<::mlir::IntegerAttr>(sourceArithConstantOp.getValue());
++		} else if (auto sourceLLVMConstantOp = sourceValue.getDefiningOp<::mlir::LLVM::ConstantOp>())
++			sourceIntegerAttr = llvm::dyn_cast<::mlir::IntegerAttr>(sourceLLVMConstantOp.getValueAttr());
 +		if (!sourceIntegerAttr || sourceIntegerAttr.getType().getIntOrFloatBitWidth() != 64) {
-+			continue;
++			return;
 +		}
 +
 +		const auto oldPointerValue = sourceIntegerAttr.getValue().getZExtValue();
 +		if (oldPointerValue == 0) {
-+			continue;
++			return;
 +		}
 +		const auto relocationIt = relocations.find(oldPointerValue);
 +		if (relocationIt == relocations.end()) {
-+			continue;
++			return;
 +		}
 +		matchedAnyPointerLiteral = true;
 +
 +		const auto relocatedPointerValue = relocationIt->second;
 +		if (relocatedPointerValue == oldPointerValue) {
-+			continue;
++			return;
 +		}
 +
 +		::mlir::OpBuilder builder(intToPtrOp);
 +		builder.setInsertionPoint(intToPtrOp);
-+		auto relocatedPointerConstant = builder.create<::mlir::arith::ConstantOp>(
++		auto relocatedPointerConstant = builder.create<::mlir::LLVM::ConstantOp>(
 +		    intToPtrOp.getLoc(),
 +		    builder.getI64Type(),
-+		    builder.getIntegerAttr(builder.getI64Type(), static_cast<int64_t>(relocatedPointerValue)));
++		    static_cast<int64_t>(relocatedPointerValue));
 +		intToPtrOp->setOperand(0, relocatedPointerConstant);
-+	}
++	});
 +
 +	return relocations.empty() || matchedAnyPointerLiteral;
 +}
