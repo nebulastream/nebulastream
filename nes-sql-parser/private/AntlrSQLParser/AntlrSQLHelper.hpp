@@ -63,6 +63,7 @@ public:
     bool hasMultipleAttributes = false;
     bool hasUnnamedAggregation = false;
     bool asterisk = false;
+    bool isDereference = false;
 
     [[nodiscard]] bool isInFunctionCall() const { return not functionBuilder.empty(); }
 
