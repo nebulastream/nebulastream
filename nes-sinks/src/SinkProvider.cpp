@@ -21,19 +21,55 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>
+#include <TokioSinkRegistry.hpp>
 
 namespace NES
 {
 
-std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+SinkProvider::SinkProvider(uint32_t defaultChannelCapacity) : defaultChannelCapacity(defaultChannelCapacity) {}
+
+std::unique_ptr<Sink> SinkProvider::lower(
+    BackpressureController backpressureController,
+    const SinkDescriptor& sinkDescriptor) const
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
+    const auto& sinkType = sinkDescriptor.getSinkType();
+
+    // Check TokioSinkRegistry first -- Rust async sinks.
+    // Note: TokioSinkRegistryArguments does NOT include BackpressureController.
+    // Factory functions construct a default BackpressureController{} internally.
+    if (TokioSinkRegistry::instance().contains(sinkType))
+    {
+        auto tokioArgs = TokioSinkRegistryArguments{
+            sinkDescriptor,
+            defaultChannelCapacity};
+        if (auto sink = TokioSinkRegistry::instance().create(sinkType, std::move(tokioArgs)))
+        {
+            return std::move(sink.value());
+        }
+        throw UnknownSinkType("TokioSinkRegistry contains '{}' but factory returned nullopt", sinkType);
+    }
+
+    // Fall through to standard SinkRegistry
     auto sinkArguments = SinkRegistryArguments(std::move(backpressureController), sinkDescriptor);
-    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.getSinkType(), std::move(sinkArguments)); sink.has_value())
+    if (auto sink = SinkRegistry::instance().create(sinkType, std::move(sinkArguments)))
     {
         return std::move(sink.value());
     }
-    throw UnknownSinkType("Unknown Sink Descriptor Type: {}", sinkDescriptor.getSinkType());
+    throw UnknownSinkType("Unknown Sink Descriptor Type: {}", sinkType);
+}
+
+bool SinkProvider::contains(const std::string& sinkType) const
+{
+    return SinkRegistry::instance().contains(sinkType)
+        || TokioSinkRegistry::instance().contains(sinkType);
+}
+
+// Compatibility wrapper -- delegates to SinkProvider with default channel capacity.
+std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+{
+    static SinkProvider provider;
+    return provider.lower(std::move(backpressureController), sinkDescriptor);
 }
 
 }

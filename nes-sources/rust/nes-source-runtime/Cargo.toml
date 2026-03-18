@@ -1,0 +1,17 @@
+[package]
+name = "nes_source_runtime"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+nes_io_bindings = { path = "../nes-source-bindings" }
+cxx = "1.0"
+tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time", "macros", "fs", "io-util"] }
+tokio-util = { version = "0.7.13", features = ["rt"] }
+async-channel = "2.3.1"
+tracing = "0.1"
+atomic-waker = "1.1"
+dashmap = "6.1"
+
+[dev-dependencies]
+tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time", "macros", "test-util"] }
