@@ -401,8 +401,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         std::string queryPerformanceMessage;
         if (ranQueries.back()->passed)
         {
-            queryPerformanceMessage
-                = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
+            queryPerformanceMessage = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
         }
         progressTracker.incrementQueryCounter();
         printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), progressTracker, queryPerformanceMessage);
