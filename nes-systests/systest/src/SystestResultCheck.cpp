@@ -429,11 +429,27 @@ private:
     size_t totalResultLinesSize = 0;
 };
 
+/// Compare two fields by uppercased name and data type, ignoring case-sensitivity differences.
+/// The CSV header format does not preserve case-sensitivity information, so re-parsed identifiers
+/// may differ in their caseSensitive flag from the original query identifiers.
+bool fieldsMatchCaseInsensitive(const NES::UnqualifiedUnboundField& lhs, const NES::UnqualifiedUnboundField& rhs)
+{
+    if (lhs.getDataType() != rhs.getDataType())
+    {
+        return false;
+    }
+    return NES::toUpperCase(fmt::format("{}", lhs.getFullyQualifiedName()))
+        == NES::toUpperCase(fmt::format("{}", rhs.getFullyQualifiedName()));
+}
+
 ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResultSchema, const ActualResultSchema& actualResultSchema)
 {
     ExpectedToActualFieldMap expectedToActualFieldMap{};
-    /// Check if schemas are equal. If not populate the error stream
-    if (/* hasMatchingSchema */ expectedResultSchema.getRawValue() != actualResultSchema.getRawValue())
+    /// Check if schemas are equal using case-insensitive field name matching,
+    /// since the CSV header format does not preserve identifier case-sensitivity.
+    const bool schemasMatch
+        = std::ranges::equal(expectedResultSchema.getRawValue(), actualResultSchema.getRawValue(), fieldsMatchCaseInsensitive);
+    if (!schemasMatch)
     {
         expectedToActualFieldMap.schemaErrorStream << fmt::format(
             "\n{} != {}", fmt::join(expectedResultSchema.getRawValue(), ", "), fmt::join(actualResultSchema.getRawValue(), ", "));
@@ -450,7 +466,7 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
         for (auto it = begin; it != end; ++it)
         {
             const auto idx = static_cast<size_t>(std::distance(begin, it));
-            if (*it == expectedField and not matchedActualResultFields.contains(idx))
+            if (fieldsMatchCaseInsensitive(*it, expectedField) and not matchedActualResultFields.contains(idx))
             {
                 matchingFieldIt = it;
                 break;

@@ -15,28 +15,17 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 
 #include <span>
-#include <utility>
-#include <variant>
-#include <ErrorHandling.hpp>
-#include <nameof.hpp>
+#include <vector>
+#include <Identifiers/Identifier.hpp>
 
 namespace NES
 {
 
 QualifiedIdentifier
-Unreflector<QualifiedIdentifierBase<std::dynamic_extent>>::operator()(const Reflected& reflectable, const ReflectionContext&) const
+Unreflector<QualifiedIdentifierBase<std::dynamic_extent>>::operator()(const Reflected& reflectable, const ReflectionContext& context) const
 {
-    if (auto stringResult = reflectable->to_string(); stringResult.has_value())
-    {
-        auto idListExp = QualifiedIdentifier::tryParse(stringResult.value());
-        if (!idListExp.has_value())
-        {
-            throw std::move(idListExp).error();
-        }
-        return idListExp.value();
-    }
-    throw CannotDeserialize(
-        "Expected string for QualifiedIdentifier, but got {} instead",
-        std::visit([](const auto& actual) { return NAMEOF_TYPE(decltype(actual)); }, reflectable->get()));
+    /// Mirror of Reflector<QualifiedIdentifierBase>: each Identifier is unreflected via Unreflector<Identifier>,
+    /// which restores the case-sensitivity flag from the serialized representation.
+    return QualifiedIdentifier{context.unreflect<std::vector<Identifier>>(reflectable)};
 }
 }
