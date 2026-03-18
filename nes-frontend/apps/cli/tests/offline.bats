@@ -294,3 +294,18 @@ TOPEOF
   [ "$status" -eq 1 ]
   grep "invalid config parameter; Enum for INVALID was not found." nes-cli.log
 }
+
+@test "yaml parser should reject unknown keys" {
+  run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys1.yaml dump
+  [ "$status" -eq 1 ]
+  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: query, sinks, logical, physical, optimizer, workers" nes-cli.log
+
+  run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys2.yaml dump
+  [ "$status" -eq 1 ]
+  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: name, schema" nes-cli.log
+
+  run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys3.yaml dump
+  [ "$status" -eq 1 ]
+  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: host, data, max_operators, downstream, config" nes-cli.log
+}
+
