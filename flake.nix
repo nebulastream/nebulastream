@@ -91,6 +91,19 @@
         defaultStdlibName = "libstdcxx";
 
         antlr4Version = "4.13.2";
+        simdjsonBasePkg =
+          let
+            version = "4.0.7";
+          in
+          pkgs.simdjson.overrideAttrs (_: {
+            inherit version;
+            src = pkgs.fetchFromGitHub {
+              owner = "simdjson";
+              repo = "simdjson";
+              rev = "v${version}";
+              hash = "sha256-8pmFtMpML7tTXbH1E3aIpSTQkNF8TFcIPOm2nwnKxkA=";
+            };
+          });
 
         packagesForStdlib = { stdlib, extraInputs ? [ ], sanitizer ? sanitizerOptions.none }:
           let
@@ -151,6 +164,19 @@
             magicEnumPkg = pkgs.magic-enum;
             boostPkg = overrideStdenv pkgs.boost;
             tbbPkg = overrideStdenv pkgs.tbb;
+            simdjsonPkg = overrideStdenv simdjsonBasePkg;
+            reflectCppPkg = reflectCppPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
+            nameofPkg = nameofPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
+            scopeGuardPkg = scopeGuardPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
             follyPkg = follyPackages.withSanitizer {
               extraBuildInputs = extraInputs;
               inherit useLibcxx fmtPkg;
@@ -161,6 +187,7 @@
               [
                 fmtPkg
                 spdlogPkg
+                simdjsonPkg
                 grpcPkg
                 protobufPkg
                 abseilPkg
@@ -174,6 +201,9 @@
                 tbbPkg
                 follyPkg
                 re2Pkg
+                reflectCppPkg
+                nameofPkg
+                scopeGuardPkg
               ]
               ++ [
                 pkgs.openssl.dev
@@ -184,6 +214,7 @@
                 pkgs.libxml2
                 pkgs.python3
                 pkgs.openjdk21
+                pkgs.howard-hinnant-date
                 pkgs.libuuid
               ];
           in {
@@ -213,6 +244,9 @@
         cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
         argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
         libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
+        reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
+        nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix { };
+        scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
         spdlogPackages = pkgs.callPackage ./.nix/spdlog/package.nix { };
         follyPackages = pkgs.callPackage ./.nix/folly/package.nix { };
 

@@ -15,8 +15,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "5fa4c9043d961238d283bf129b82c59e1476974a";
-    hash = "sha512-woWgqYDU5SW2hqMh/VhDD9adUt1XFI2K75YOeIW7Yi/fDEmX59bOXmlk4z1nbPJqVFPip7pPJkCvWEZ+WmM/cg==";
+    rev = "d75a6816436c824090c85191a0c1e39239cf2479";
+    hash = "sha256-M0OOYKk/bCegCv2RpuvJ4Q9gSccpW78r3C9xtrGIHe0=";
   };
 
   baseBuildInputs = [
@@ -52,8 +52,7 @@ let
 
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
-        ./patches/0002-fix-ambiguous-val-overload.patch
-        ./patches/0003-ubsan-fix-variadic-expansion.patch
+        ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
       ];
 
       nativeBuildInputs = [
@@ -68,6 +67,9 @@ let
       postPatch = ''
         substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp \
           --replace "context.allowsUnregisteredDialects();" "(void)context.allowsUnregisteredDialects();"
+        substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp \
+          --replace "auto mlirOp =" "[[maybe_unused]] auto mlirOp =" \
+          --replace "mlirOp.setWeights(weights);" "(void)weights;"
       '';
 
       cmakeFlags = [
@@ -85,6 +87,7 @@ let
         "-DENABLE_MLIR_BACKEND=ON"
         "-DENABLE_C_BACKEND=ON"
         "-DENABLE_BC_BACKEND=OFF"
+        "-DENABLE_INLINING_PASS=OFF"
         "-DENABLE_TESTS=OFF"
         "-DMLIR_DIR=${mlirBinary}/lib/cmake/mlir"
         "-DLLVM_DIR=${mlirBinary}/lib/cmake/llvm"
