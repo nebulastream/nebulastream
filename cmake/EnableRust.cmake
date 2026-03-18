@@ -59,6 +59,15 @@ corrosion_import_crate(
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
 
+# Import source bindings Rust crate
+corrosion_import_crate(
+        MANIFEST_PATH nes-sources/rust/Cargo.toml
+        CRATES nes_source_lib
+        IMPORTED_CRATES SOURCE_CRATES
+        CRATE_TYPES staticlib
+        FLAGS ${ADDITIONAL_CARGOFLAGS}
+)
+
 # Arguments are passed to cargo via an environment which we attach to the  nes_rust_bindings target and is loaded by corrosion
 list(JOIN CXXFLAGS_LIST " " ADDITIONAL_CXXFLAGS)
 list(JOIN RUSTFLAGS_LIST " " ADDITIONAL_RUSTFLAGS)
@@ -78,5 +87,8 @@ if (NOT "${ENV_VARS_LIST}" STREQUAL "")
     message(STATUS "Additional Corrosion Environment Variables: ${ENV_VARS}")
     set_property(
             TARGET nes_rust_bindings
+            PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
+    set_property(
+            TARGET nes_source_lib
             PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
 endif ()

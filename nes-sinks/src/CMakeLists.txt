@@ -24,3 +24,7 @@ add_plugin(File Sink nes-sinks FileSink.cpp)
 add_plugin(File SinkValidation nes-sinks FileSink.cpp)
 add_plugin(Print Sink nes-sinks PrintSink.cpp)
 add_plugin(Print SinkValidation nes-sinks PrintSink.cpp)
+
+# Register Tokio-based Rust sinks
+add_plugin(TokioFileSink TokioSink nes-sinks TokioFileSink.cpp)
+add_plugin(TokioFileSink SinkValidation nes-sinks TokioFileSink.cpp)

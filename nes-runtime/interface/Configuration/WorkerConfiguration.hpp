@@ -57,6 +57,13 @@ public:
            "SourceDescriptor).",
            {std::make_shared<NumberValidation>()}};
 
+    /// Default bounded channel capacity for Tokio async sinks. May be overwritten by a sink-specific configuration.
+    UIntOption defaultChannelCapacity
+        = {"default_channel_capacity",
+           "64",
+           "Default bounded channel capacity for Tokio async sinks.",
+           {std::make_shared<NumberValidation>()}};
+
     EnumOption<DumpMode::Options> dumpQueryCompilationIR
         = {"dump_compilation_result",
            DumpMode::Options::NONE,
@@ -74,6 +81,7 @@ private:
             &network,
             &numberOfBuffersInGlobalBufferManager,
             &defaultMaxInflightBuffers,
+            &defaultChannelCapacity,
             &dumpQueryCompilationIR,
             &dumpGraph};
     }

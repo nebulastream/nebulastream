@@ -18,7 +18,7 @@ get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable)
+target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable PRIVATE nes-sources)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -29,4 +29,4 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sinks REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Sink SinkValidation)
+create_registries_for_component(Sink SinkValidation TokioSink)

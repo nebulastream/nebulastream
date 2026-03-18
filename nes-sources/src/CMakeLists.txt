@@ -12,6 +12,8 @@
 
 add_source_files(nes-sources
         SourceThread.cpp
+        TokioSource.cpp
+        TokioSink.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp
@@ -25,6 +27,10 @@ add_source_files(nes-sources
 # Register plugins
 add_plugin(File Source nes-sources FileSource.cpp)
 add_plugin(File SourceValidation nes-sources FileSource.cpp)
+
+# Register Tokio-based Rust sources
+add_plugin(TokioGenerator TokioSource nes-sources TokioGeneratorSource.cpp)
+add_plugin(TokioGenerator SourceValidation nes-sources TokioGeneratorSource.cpp)
 
 # Systest adaptors
 add_plugin(File InlineData nes-sources FileSource.cpp)
