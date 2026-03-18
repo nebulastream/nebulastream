@@ -96,19 +96,19 @@ private:
     TraitSet traitSet;
     Schema inputSchema, outputSchema;
 
-    friend Reflector<ProjectionLogicalOperator>;
+    friend Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>;
 };
 
 template <>
-struct Reflector<ProjectionLogicalOperator>
+struct Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
-    Reflected operator()(const ProjectionLogicalOperator& op) const;
+    Reflected operator()(const TypedLogicalOperator<ProjectionLogicalOperator>& op) const;
 };
 
 template <>
-struct Unreflector<ProjectionLogicalOperator>
+struct Unreflector<TypedLogicalOperator<ProjectionLogicalOperator>>
 {
-    ProjectionLogicalOperator operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    TypedLogicalOperator<ProjectionLogicalOperator> operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
 static_assert(LogicalOperatorConcept<ProjectionLogicalOperator>);

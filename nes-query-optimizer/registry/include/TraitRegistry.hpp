@@ -31,7 +31,7 @@ struct TraitRegistryArguments
     Reflected reflected;
 };
 
-class TraitRegistry : public BaseRegistry<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
+class TraitRegistry : public BaseRegistryWithUnreflection<TraitRegistry, std::string, TraitRegistryReturnType, TraitRegistryArguments>
 {
 };
 }

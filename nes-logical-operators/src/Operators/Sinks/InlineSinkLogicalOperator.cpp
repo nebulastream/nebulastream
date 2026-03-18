@@ -112,13 +112,15 @@ InlineSinkLogicalOperator::InlineSinkLogicalOperator(
 {
 }
 
-Reflected Reflector<InlineSinkLogicalOperator>::operator()(const InlineSinkLogicalOperator&) const
+Reflected
+Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const TypedLogicalOperator<InlineSinkLogicalOperator>&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
 }
 
-InlineSinkLogicalOperator Unreflector<InlineSinkLogicalOperator>::operator()(const Reflected&, const ReflectionContext&) const
+TypedLogicalOperator<InlineSinkLogicalOperator>
+Unreflector<TypedLogicalOperator<InlineSinkLogicalOperator>>::operator()(const Reflected&, const ReflectionContext&) const
 {
     PRECONDITION(false, "no serialize for InlineSinkLogicalOperator defined. Serialization happens with SinkLogicalOperator");
     std::unreachable();
