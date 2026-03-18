@@ -15,7 +15,8 @@
         lib = pkgs.lib;
         llvm = pkgs.llvmPackages_19;
         clangToolsVersion = lib.getVersion llvm.clang-tools;
-        clangTidyDiffCommand = "clang-tidy-diff-${lib.versions.major clangToolsVersion}.py";
+        llvmToolchainVersion = lib.versions.major clangToolsVersion;
+        clangTidyDiffCommand = "clang-tidy-diff-${llvmToolchainVersion}.py";
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
@@ -220,17 +221,17 @@
           ccache
         ];
 
-        # LLVM 19 toolchain with versioned symlinks for vcpkg
+        # LLVM toolchain with versioned symlinks for vcpkg
         clangWithVersions = pkgs.symlinkJoin {
           name = "clang-with-versions";
           paths = [ llvm.clang ];
           postBuild = ''
-            ln -s $out/bin/clang $out/bin/clang-19
-            ln -s $out/bin/clang++ $out/bin/clang++-19
+            ln -s $out/bin/clang $out/bin/clang-${llvmToolchainVersion}
+            ln -s $out/bin/clang++ $out/bin/clang++-${llvmToolchainVersion}
           '';
         };
 
-        # LLVM 19 toolchain
+        # LLVM toolchain
         llvmTools = [
           llvm.llvm
           clangWithVersions
@@ -269,7 +270,7 @@
             "-DUSE_LOCAL_MLIR=ON"
             "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
             "-DNES_USE_SYSTEM_DEPS=ON"
-            "-DLLVM_TOOLCHAIN_VERSION=19"
+            "-DLLVM_TOOLCHAIN_VERSION=${llvmToolchainVersion}"
             "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
             "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
             "-DNES_ENABLES_TESTS=ON"
@@ -452,7 +453,7 @@
             buildInputs = thirdPartyDeps ++ [ mlirBinary ];
             nativeBuildInputs = buildTools ++ llvmTools;
             packages = devTools;
-            LLVM_TOOLCHAIN_VERSION = "19";
+            LLVM_TOOLCHAIN_VERSION = llvmToolchainVersion;
             CMAKE_GENERATOR = "Ninja";
             VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
             NES_USE_SYSTEM_DEPS = "ON";
@@ -464,7 +465,7 @@
               "-DNES_USE_SYSTEM_DEPS=ON"
               "-DUSE_LOCAL_MLIR=ON"
               "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
-              "-DLLVM_TOOLCHAIN_VERSION=19"
+              "-DLLVM_TOOLCHAIN_VERSION=${llvmToolchainVersion}"
               "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
               "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
               "-DANTLR4_JAR_LOCATION=${antlr4Jar}"
