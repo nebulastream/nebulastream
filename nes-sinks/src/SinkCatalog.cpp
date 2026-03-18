@@ -57,7 +57,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     const auto lockedSinks = sinks.wlock();
     auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
 
-    ///TODO: #1504 duplicate sinks are not registered
+    /// TODO #1504: duplicate sinks are not registered
     lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
     return sinkDescriptor;
 }

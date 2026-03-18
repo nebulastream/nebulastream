@@ -287,7 +287,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
         Systest::SystestBinder binder{
-            config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue(),config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}), config.clusterConfig};
+            config.workingDir.getValue(),
+            config.testDataDir.getValue(),
+            config.configDir.getValue(),
+            config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{}),
+            config.clusterConfig};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {

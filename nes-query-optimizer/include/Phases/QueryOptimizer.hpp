@@ -18,8 +18,8 @@
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
