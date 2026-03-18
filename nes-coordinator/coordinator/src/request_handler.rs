@@ -1,7 +1,7 @@
 use crate::coordinator::{CoordinatorRequest, CreateQueryRequest, DropQueryRequest};
 use catalog::Catalog;
 use catalog::Reconcilable;
-use common::request::Request;
+use model::request::Request;
 use model::query;
 use model::query::query_state::QueryState;
 use model::query::{GetQuery, QueryId};

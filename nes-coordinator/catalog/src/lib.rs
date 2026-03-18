@@ -1,4 +1,5 @@
 pub mod database;
+pub mod error;
 pub mod notification;
 pub mod query_catalog;
 pub mod sink_catalog;

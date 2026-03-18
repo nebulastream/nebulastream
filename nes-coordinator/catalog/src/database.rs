@@ -1,5 +1,5 @@
 use anyhow::Result;
-use common::error::Retryable;
+use crate::error::Retryable;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection, DbErr};
 use std::future::Future;

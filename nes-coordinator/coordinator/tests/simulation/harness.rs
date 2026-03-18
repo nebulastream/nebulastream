@@ -2,7 +2,7 @@
 use crate::spec::NetworkConfig;
 use crate::worker::{HealthServer, HealthServiceImpl, SingleNodeWorker, WorkerRpcServiceServer};
 use anyhow::Result;
-use common::request::Request;
+use model::request::Request;
 use coordinator::coordinator::{CoordinatorRequest, start_for_sim};
 use madsim::net::NetSim;
 use madsim::runtime::Handle;

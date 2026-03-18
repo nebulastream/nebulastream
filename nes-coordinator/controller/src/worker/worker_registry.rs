@@ -1,5 +1,5 @@
 use crate::worker::worker_task::{Rpc, WorkerClientErr};
-use common::error::Retryable;
+use catalog::error::Retryable;
 use model::query::fragment::FragmentError;
 use model::worker::endpoint::{GrpcAddr, HostAddr};
 use std::collections::HashMap;

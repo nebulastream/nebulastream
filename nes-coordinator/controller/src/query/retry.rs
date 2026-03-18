@@ -1,7 +1,7 @@
 use crate::worker::worker_task::{Rpc, WorkerClientErr};
 use crate::worker::worker_registry::{WorkerError, WorkerRegistryHandle};
 use catalog::Catalog;
-use common::error::Retryable;
+use catalog::error::Retryable;
 use model::query::fragment::{self, FragmentId};
 use model::worker::endpoint::HostAddr;
 use model::worker::{DesiredWorkerState, GetWorker};

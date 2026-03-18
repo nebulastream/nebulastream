@@ -3,8 +3,8 @@ use anyhow::Result;
 use catalog::Catalog;
 use catalog::database::{Database, StateBackend};
 use controller::worker::worker_controller::WorkerController;
-use common::into_request;
-use common::request::Request;
+use model::into_request;
+use model::request::Request;
 use controller::query::query_controller::QueryController;
 use model::query;
 use model::query::fragment::{self as fragment};
@@ -22,9 +22,9 @@ use controller::worker::poly_join_set::JoinSet;
 use std::pin::Pin;
 use strum::Display;
 use std::sync::Arc;
+use futures_util::FutureExt;
+use std::panic::AssertUnwindSafe;
 use tracing::{Instrument, error, info, info_span};
-
-use common::supervised::supervised;
 
 pub(crate) type CreateLogicalSourceRequest = Request<CreateLogicalSource, Result<logical_source::Model>>;
 pub(crate) type CreatePhysicalSourceRequest =
@@ -162,7 +162,7 @@ impl Supervisor {
             ),
         };
         self.services
-            .spawn(async move { (svc, supervised(fut).await) });
+            .spawn(async move { (svc, AssertUnwindSafe(fut).catch_unwind().await.is_err()) });
     }
 
     async fn run(mut self) {

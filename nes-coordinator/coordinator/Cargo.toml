@@ -7,7 +7,6 @@ edition = "2024"
 testing = ["catalog/testing", "controller/testing"]
 
 [dependencies]
-common.workspace = true
 catalog.workspace = true
 model.workspace = true
 controller.workspace = true

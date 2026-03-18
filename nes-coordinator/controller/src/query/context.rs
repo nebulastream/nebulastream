@@ -4,7 +4,7 @@ use crate::worker::worker_task::{
 };
 use crate::worker::worker_registry::{WorkerError, WorkerRegistryHandle};
 use anyhow::{Result, anyhow};
-use common::error::Retryable;
+use catalog::error::Retryable;
 use catalog::Catalog;
 use futures_util::future;
 use model::Set;

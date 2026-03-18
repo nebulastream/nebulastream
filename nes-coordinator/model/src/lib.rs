@@ -1,4 +1,5 @@
 pub mod query;
+pub mod request;
 pub mod sink;
 pub mod source;
 pub mod worker;

@@ -1,7 +1,7 @@
 use crate::query::context::QueryContext;
 use crate::worker::worker_task::{FragmentError as ProtoError, QueryStatusReply};
 use anyhow::Result;
-use common::error::Retryable;
+use catalog::error::Retryable;
 use model::Set;
 use model::query::fragment::{self, FragmentError, FragmentState};
 use model::query::query_state::QueryState;

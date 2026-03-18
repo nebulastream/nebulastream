@@ -1,6 +1,6 @@
 use crate::worker::worker_registry::WorkerRegistry;
 use catalog::worker_catalog::WorkerCatalog;
-use common::request::Request;
+use model::request::Request;
 use model::query::StopMode;
 use model::query::fragment::FragmentId;
 use model::worker;
