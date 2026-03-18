@@ -24,6 +24,8 @@ async function addSinkToWorker(page: Page, workerNode: Locator) {
 test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE-03)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
     await page.waitForSelector('.react-flow');
   });
 
@@ -81,11 +83,11 @@ test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE
 
   // ── Worker property panel (PROP-01) ─────────────────────────────────
 
-  test('PROP-01: clicking a worker shows property panel with host, gRPC, capacity', async ({ page }) => {
+  test('PROP-01: clicking a worker shows property panel with host, data, max_operators', async ({ page }) => {
     await addWorker(page);
     await page.locator('.react-flow__node').first().click();
     await expect(page.getByText('Host Address')).toBeVisible();
-    await expect(page.getByText('gRPC Address')).toBeVisible();
+    await expect(page.getByText('Data Address')).toBeVisible();
     await expect(page.getByText('Capacity')).toBeVisible();
   });
 
@@ -105,8 +107,8 @@ test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE
     await addSourceToWorker(page, page.locator('.worker-node'));
     await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
     await page.locator('.source-node').click();
-    await expect(page.getByText('Seed')).toBeVisible();
-    await expect(page.getByText('Generator Schema')).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Seed' })).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Generator Schema' })).toBeVisible();
   });
 
   test('PROP-04: changing source type updates config fields', async ({ page }) => {
@@ -116,8 +118,8 @@ test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE
     await page.locator('.source-node').click();
     const sourceTypeSelect = page.locator('select').filter({ has: page.locator('option[value="TCP"]') });
     await sourceTypeSelect.selectOption('TCP');
-    await expect(page.getByText('Socket Host')).toBeVisible();
-    await expect(page.getByText('Socket Port')).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Socket Host' })).toBeVisible();
+    await expect(page.locator('label', { hasText: 'Socket Port' })).toBeVisible();
   });
 
   // ── Sink property panel (PROP-03, PROP-04) ──────────────────────────
