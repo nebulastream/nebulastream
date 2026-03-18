@@ -29,11 +29,11 @@ namespace NES
 /// These values serve as worker-level defaults that apply to all NetworkSources and NetworkSinks on this worker.
 /// Individual queries may override these defaults via per-channel configuration in the sink/source descriptors.
 /// Nested under WorkerConfiguration as `worker.network.*`.
-class NetworkConfiguration final : public BaseConfiguration
+class WorkerNetworkConfiguration final : public BaseConfiguration
 {
 public:
-    NetworkConfiguration() = default;
-    NetworkConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
+    WorkerNetworkConfiguration() = default;
+    WorkerNetworkConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) { };
 
     /// Default size of the sender software queue per network channel.
     /// May be overridden per NetworkSink via query-specific configuration.
