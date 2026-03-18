@@ -154,11 +154,24 @@ void writeValue(
             currentRemainingSize -= amountWritten;
             break;
         }
-        default: {
+        case DataType::Type::INT8:
+        case DataType::Type::INT16:
+        case DataType::Type::INT32:
+        case DataType::Type::INT64:
+        case DataType::Type::UINT8:
+        case DataType::Type::UINT16:
+        case DataType::Type::UINT32:
+        case DataType::Type::UINT64:
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64: {
             const nautilus::val<uint64_t> amountWritten
                 = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::UNDEFINED: {
+            throw UnknownDataType("JSON-OutputFormatting for type UNDEFINED is not supported.");
         }
     }
 }
@@ -248,5 +261,4 @@ OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSO
 {
     return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
 }
-
 }
