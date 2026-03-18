@@ -22,14 +22,18 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/UnpooledChunksManager.hpp>
+#include <absl/functional/any_invocable.h>
 #include <folly/MPMCQueue.h>
 
 namespace NES
 {
+
+using WakerCallback = absl::AnyInvocable<bool()>;
 
 /**
  * @brief The BufferManager is responsible for:
@@ -140,10 +144,13 @@ public:
     */
     void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
+    void notifyOnAvailableBuffer(WakerCallback wake);
+
 private:
     std::vector<NES::detail::MemorySegment> allBuffers;
 
     folly::MPMCQueue<NES::detail::MemorySegment*> availableBuffers;
+    folly::MPMCQueue<WakerCallback> waker{128};
 
     std::shared_ptr<NES::UnpooledChunksManager> unpooledChunksManager;
 

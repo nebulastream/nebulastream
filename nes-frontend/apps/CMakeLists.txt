@@ -19,6 +19,7 @@ target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-embedded-lib argpars
 target_include_directories(nes-repl-embedded
         PUBLIC repl
 )
+target_link_rust(nes-repl-embedded)
 
 # nes-repl
 add_executable(nes-repl repl/ReplStarter.cpp repl/Repl.cpp)
@@ -27,6 +28,7 @@ target_link_libraries(nes-repl PUBLIC nes-frontend-lib argparse::argparse replxx
 target_include_directories(nes-repl
         PUBLIC repl
 )
+target_link_rust(nes-repl)
 
 # nes-cli is the one-shot controller for the nes-single-node-worker, it is completely stateless and intended to deploy
 # and control queries based on a topology specification which contains all state required to perform placement and
@@ -38,6 +40,7 @@ target_link_libraries(nes-cli PUBLIC nes-frontend-lib argparse::argparse yaml-cp
 target_include_directories(nes-cli
         PRIVATE cli
 )
+target_link_rust(nes-cli)
 
 # These are E2E Tests for both the CLI tool and the repl.
 # Because the REPL has both a interactive and non-interactive mode, the REPL is tested in both ways.

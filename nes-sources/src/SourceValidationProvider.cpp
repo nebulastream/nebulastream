@@ -29,7 +29,8 @@ namespace NES::SourceValidationProvider
 std::optional<DescriptorConfig::Config>
 provide(const std::string_view sourceType, std::unordered_map<UppercaseString, std::string> stringConfig)
 {
-    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(std::move(stringConfig));
+    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(
+        std::unordered_map<UppercaseString, std::string>(std::make_move_iterator(stringConfig.begin()), std::make_move_iterator(stringConfig.end())));
     return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 

@@ -47,7 +47,8 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
         return std::nullopt;
     }
 
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
+    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(
+        sinkType, std::unordered_map<UppercaseString, std::string>(std::make_move_iterator(config.begin()), std::make_move_iterator(config.end())));
     if (not descriptorConfigOpt.has_value())
     {
         return std::nullopt;
@@ -86,7 +87,8 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     std::unordered_map<UppercaseString, std::string> config,
     const std::unordered_map<UppercaseString, std::string>& formatConfig) const
 {
-    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
+    auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(
+        sinkType, std::unordered_map<UppercaseString, std::string>(std::make_move_iterator(config.begin()), std::make_move_iterator(config.end())));
 
     const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};
 

@@ -37,6 +37,7 @@
 #include <ErrorHandling.hpp>
 #include <ProtobufHelper.hpp> /// NOLINT
 #include <SinkValidationRegistry.hpp>
+#include "nes-sink-validation-bindings/lib.h"
 
 namespace NES
 {
@@ -108,7 +109,13 @@ Host SinkDescriptor::getHost() const
 std::optional<DescriptorConfig::Config>
 SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<UppercaseString, std::string> configPairs)
 {
-    auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{std::move(configPairs)};
+    auto sinkValidationRegistryArguments
+        = SinkValidationRegistryArguments{.sinkType = std::string(sinkType), .config = std::move(configPairs)};
+
+    if (exists(std::string(sinkType)))
+    {
+        return RegisterTokioSinkValidation(sinkValidationRegistryArguments);
+    }
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));
 }
 
@@ -131,14 +138,15 @@ bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs)
 
 Reflected Reflector<SinkDescriptor>::operator()(const SinkDescriptor& descriptor) const
 {
-    return reflect(detail::ReflectedSinkDescriptor{
-        .sinkName = descriptor.sinkName,
-        .schema = *descriptor.schema,
-        .sinkType = descriptor.sinkType,
-        .host = descriptor.host,
-        .formatConfig = descriptor.formatConfig,
-        .config = descriptor.getReflectedConfig(),
-    });
+    return reflect(
+        detail::ReflectedSinkDescriptor{
+            .sinkName = descriptor.sinkName,
+            .schema = *descriptor.schema,
+            .sinkType = descriptor.sinkType,
+            .host = descriptor.host,
+            .formatConfig = descriptor.formatConfig,
+            .config = descriptor.getReflectedConfig(),
+        });
 }
 
 SinkDescriptor Unreflector<SinkDescriptor>::operator()(const Reflected& reflected) const

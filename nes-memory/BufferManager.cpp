@@ -26,10 +26,12 @@
 #include <optional>
 #include <utility>
 #include <unistd.h>
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <absl/functional/any_invocable.h>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>
@@ -218,11 +220,25 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
     USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
     INVARIANT(couldRecycleBuffer, "should always succeed");
+
+    absl::AnyInvocable<bool()> wake;
+    while (waker.read(wake))
+    {
+        if (wake())
+        {
+            break;
+        }
+    }
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)
 {
     INVARIANT(false, "This method should not be called!");
+}
+
+void BufferManager::notifyOnAvailableBuffer(WakerCallback wake)
+{
+    waker.blockingWrite(std::move(wake));
 }
 
 size_t BufferManager::getBufferSize() const

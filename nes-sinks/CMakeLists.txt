@@ -18,10 +18,16 @@ get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
+add_subdirectory(rust/nes-sink-runtime-bindings)
+add_subdirectory(rust/nes-sink-validation-bindings)
+
+target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable PRIVATE nes-network-bindings nes-io-runtime nes-sink-runtime-bindings nes-sink-validation-bindings)
+target_link_rust_lib(nes-sinks nes_sink_runtime_bindings)
+target_link_rust_lib(nes-sinks nes_sink_validation_bindings)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 

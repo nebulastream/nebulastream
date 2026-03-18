@@ -81,7 +81,7 @@ struct RecordingEmitFunction
                 if constexpr (std::same_as<T, SourceReturnType::Data>)
                 {
                     /// Release old Buffer
-                    return SourceReturnType::Data{Testing::copyBuffer(emitted.buffer, bm)};
+                    return SourceReturnType::Data{Testing::copyBuffer(emitted.buffer, bm), {}};
                 }
                 else
                 {

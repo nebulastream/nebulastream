@@ -1,0 +1,11 @@
+[package]
+name = "nes_io_runtime_bindings"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+cxx.workspace = true
+nes_io_runtime.workspace = true

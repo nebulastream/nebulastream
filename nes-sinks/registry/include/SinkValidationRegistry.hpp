@@ -26,6 +26,7 @@ using SinkValidationRegistryReturnType = DescriptorConfig::Config;
 
 struct SinkValidationRegistryArguments
 {
+    std::string sinkType;
     std::unordered_map<UppercaseString, std::string> config;
 };
 

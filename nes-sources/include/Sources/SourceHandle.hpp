@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <variant>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
@@ -41,15 +42,20 @@ struct SourceRuntimeConfiguration
 /// start(): The underlying source starts consuming data. All queries using the source start processing.
 /// stop(): The underlying source stops consuming data, notifying the QueryEngine,
 /// that decides whether to keep queries, which used the particular source, alive.
+///
+/// Holds either a SourceThread (C++ source) or TokioSource (Rust async source) via std::variant.
+/// All method dispatch uses std::visit so RunningSource and QueryEngine remain unchanged.
 class SourceHandle
 {
 public:
+    /// Construct a SourceHandle wrapping a C++ SourceThread (existing path).
     explicit SourceHandle(
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
         std::unique_ptr<Source> sourceImplementation);
+
 
     ~SourceHandle();
 
@@ -68,8 +74,10 @@ public:
 
 private:
     SourceRuntimeConfiguration configuration;
-    /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
+
+    /// Variant holding either a C++ SourceThread or a Rust TokioSource.
+    /// All method dispatch uses std::visit with the Overloaded{} pattern.
+    std::variant<std::unique_ptr<SourceThread>> impl_;
 };
 
 }

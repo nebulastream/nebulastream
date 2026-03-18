@@ -1,0 +1,43 @@
+# Unified Rust workspace for all NebulaStream Rust crates.
+# Add new crates here when introducing Rust code in any part of the project.
+[workspace]
+resolver = "2"
+members = [
+    "nes-io-runtime/rust/nes-io-runtime",
+    "nes-io-runtime/rust/nes-io-runtime-bindings",
+    "nes-memory/rust/nes-buffer-bindings",
+    "nes-memory/rust/my-buffer-test",
+    "nes-memory/rust/nes-buffer-runtime",
+    "nes-network/nes-network-bindings",
+    "nes-network/network",
+    "nes-network/nes-network-bindings/network",
+    "nes-common/rust/spdlog-bindings",
+    "nes-plugins/Functions/RustAnswer/rust",
+    "nes-sinks/rust/nes-sink-validation-bindings",
+    "nes-sinks/rust/nes-sink-validation",
+    "nes-sinks/rust/nes-sink-runtime-bindings",
+    "nes-sinks/rust/nes-sink-runtime",
+    "nes-plugins/Sinks/FileSink"
+]
+
+# Shared dependency declarations. Member crates use `dep.workspace = true`.
+[workspace.dependencies]
+nes_io_runtime = { path = "nes-io-runtime/rust/nes-io-runtime" }
+nes_io_runtime_bindings = { path = "nes-io-runtime/rust/nes-io-runtime-bindings" }
+nes_buffer_bindings = { path = "nes-memory/rust/nes-buffer-bindings" }
+nes_buffer_runtime = { path = "nes-memory/rust/nes-buffer-runtime" }
+nes_tokio_tcp_source = { path = "nes-plugins/tokio-tcp-source" }
+nes_tokio_file_sink = { path = "nes-plugins/tokio-file-sink" }
+nes_network = { path = "nes-network/network" }
+network_bindings = { path = "nes-network/nes-network-bindings/network" }
+nes_sink_validation_bindings = { path = "nes-sinks/rust/nes-sink-validation-bindings" }
+nes_sink_validation = { path = "nes-sinks/rust/nes-sink-validation" }
+nes_sink_runtime_bindings = { path = "nes-sinks/rust/nes-sink-runtime-bindings" }
+nes_sink_runtime = { path = "nes-sinks/rust/nes-sink-runtime" }
+
+serde_json = "1.0.149"
+tokio = "1.51.1"
+async-trait = "0.1.89"
+cxx = "1.0.194"
+linkme = "0.3.35"
+tracing = "0.1.44"

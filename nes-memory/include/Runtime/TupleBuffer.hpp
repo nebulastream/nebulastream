@@ -187,6 +187,8 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+    friend detail::MemorySegment* toRust(TupleBuffer&);
+    friend TupleBuffer fromRust(detail::MemorySegment*);
 };
 
 /**
@@ -194,4 +196,7 @@ private:
  * @param bufferPointer pointer to the data region of an buffer.
  */
 [[maybe_unused]] bool recycleTupleBuffer(void* bufferPointer);
+
+detail::MemorySegment* toRust(TupleBuffer& buffer);
+TupleBuffer fromRust(detail::MemorySegment*);
 }

@@ -152,7 +152,7 @@ void dataSourceThread(
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
         }
-        emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
+        emit(originId, SourceReturnType::Data{std::move(buffer), {}}, stopToken);
     };
 
     try

@@ -12,6 +12,8 @@
 
 add_source_files(nes-sources
         SourceThread.cpp
+#        TokioSource.cpp
+#        TokioSourceGenericFactory.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp

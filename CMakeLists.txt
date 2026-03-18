@@ -260,11 +260,17 @@ add_custom_target(build_all_plugins)
 file(GLOB NES_DIRECTORIES_ALL RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} "nes-*")
 set(NES_DIRECTORIES)
 foreach (NES_DIR ${NES_DIRECTORIES_ALL})
+    if (${NES_DIR} STREQUAL "nes-plugins")
+        continue()
+    endif ()
+
     if (IS_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR} AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${NES_DIR}/CMakeLists.txt)
         list(APPEND NES_DIRECTORIES ${NES_DIR})
         add_subdirectory(${NES_DIR})
     endif ()
 endforeach ()
+
+add_subdirectory(nes-plugins)
 
 # Other configurations
 project_enable_format()

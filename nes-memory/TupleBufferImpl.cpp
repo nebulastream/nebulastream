@@ -322,4 +322,18 @@ bool BufferControlBlock::loadChildBuffer(
 
     return true;
 }
+
+MemorySegment* BufferControlBlock::getChild(const VariableSizedAccess::Index index) const
+{
+    PRECONDITION(index.index < children.size(), "Index={} is out of range={}", index, children.size());
+    return children[index.index];
+}
+
+VariableSizedAccess::Index BufferControlBlock::storeChild(MemorySegment* segment)
+{
+    segment->controlBlock->retain();
+    size_t index = children.size();
+    children.emplace_back(segment);
+    return VariableSizedAccess::Index{index};
+}
 }

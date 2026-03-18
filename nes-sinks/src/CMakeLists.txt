@@ -26,3 +26,8 @@ add_plugin(Print Sink nes-sinks PrintSink.cpp)
 add_plugin(Print SinkValidation nes-sinks PrintSink.cpp)
 add_plugin(Network Sink nes-sinks NetworkSink.cpp)
 add_plugin(Network SinkValidation nes-sinks NetworkSink.cpp)
+add_plugin(Tokio Sink nes-sinks TokioSink.cpp)
+add_plugin(Tokio SinkValidation nes-sinks TokioSink.cpp)
+
+# Tokio-based Rust sinks — registered automatically at link time via linkme.
+add_source_files(nes-sinks TokioSink.cpp)

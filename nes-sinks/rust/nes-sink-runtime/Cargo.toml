@@ -1,0 +1,17 @@
+[package]
+name = "nes_sink_runtime"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_buffer_bindings.workspace = true
+nes_buffer_runtime.workspace = true
+tracing.workspace = true
+linkme.workspace = true
+nes_sink_validation.workspace = true
+nes_io_runtime.workspace = true
+tokio = { features = ["fs", "io-util", "macros"], workspace = true }
+async-trait = {workspace = true}

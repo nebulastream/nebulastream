@@ -14,6 +14,7 @@ function(add_nes_distributed_test)
     add_nes_unit_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
     target_link_libraries(${TARGET_NAME} nes-distributed nes-test-util)
+    target_link_rust(${TARGET_NAME})
 endfunction()
 
 add_nes_distributed_test(distributed-query-status-test UnitTests/DistributedQueryTest.cpp)

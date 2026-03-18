@@ -18,22 +18,48 @@
 #include <utility>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <Sinks/TokioSink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nes-sink-validation-bindings/lib.h>
 #include <ErrorHandling.hpp>
 #include <SinkRegistry.hpp>
 
 namespace NES
 {
 
-std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+SinkProvider::SinkProvider(uint32_t defaultChannelCapacity) : defaultChannelCapacity(defaultChannelCapacity)
+{
+}
+
+std::unique_ptr<Sink> SinkProvider::lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor) const
 {
     NES_DEBUG("The sinkDescriptor is: {}", sinkDescriptor);
+    const auto& sinkType = sinkDescriptor.getSinkType();
+
+    if (exists(sinkType))
+    {
+        return std::make_unique<TokioSink>(std::move(backpressureController), sinkDescriptor);
+    }
+
+    // Fall through to standard SinkRegistry
     auto sinkArguments = SinkRegistryArguments(std::move(backpressureController), sinkDescriptor);
-    if (auto sink = SinkRegistry::instance().create(sinkDescriptor.getSinkType(), std::move(sinkArguments)); sink.has_value())
+    if (auto sink = SinkRegistry::instance().create(sinkType, std::move(sinkArguments)))
     {
         return std::move(sink.value());
     }
-    throw UnknownSinkType("Unknown Sink Descriptor Type: {}", sinkDescriptor.getSinkType());
+    throw UnknownSinkType("Unknown Sink Descriptor Type: {}", sinkType);
+}
+
+bool SinkProvider::contains(const std::string& sinkType) const
+{
+    return exists(sinkType) || SinkRegistry::instance().contains(sinkType);
+}
+
+// Compatibility wrapper -- delegates to SinkProvider with default channel capacity.
+std::unique_ptr<Sink> lower(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+{
+    static SinkProvider provider;
+    return provider.lower(std::move(backpressureController), sinkDescriptor);
 }
 
 }

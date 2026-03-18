@@ -1,0 +1,21 @@
+use nes_sink_validation::ConfigOptions;
+
+#[cxx::bridge]
+pub mod ffi {
+    extern "Rust" {
+        fn exists(name: String) -> bool;
+        fn validate(name: String, json_conf: String) -> Result<String>;
+    }
+}
+fn exists(name: String) -> bool {
+    nes_sink_validation::exists(&name)
+}
+fn validate(name: String, json_conf: String) -> Result<String, String> {
+    let config = serde_json::from_str::<ConfigOptions>(&json_conf)
+        .expect("FFI serialization error. Could not convert config options to rust representation");
+    nes_sink_validation::validate(&name, &config)
+        .map_err(|e| e.to_string())
+        .map(|config_options| {
+            serde_json::to_string(&config_options).expect("json conversion should not fail")
+        })
+}

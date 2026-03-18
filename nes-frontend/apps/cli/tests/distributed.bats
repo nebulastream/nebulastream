@@ -663,3 +663,25 @@ EOF
   QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
   [ "$QUERY_STATUS" = "Running" ]
 }
+
+#bats test_tags=bats:focus
+@test "test tokio sink" {
+  setup_distributed tests/good/tokio.yaml
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start
+  sync_workdir
+  cat nes-cli.log
+  [ "$status" -eq 0 ]
+
+  sleep 1
+
+  run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml status "$QUERY_ID"
+  [ "$status" -eq 0 ]
+
+  QUERY_STATUS=$(echo "$output" | jq -r --arg query_id "$QUERY_ID" '.[] | select(.query_id == $query_id and (has("local_query_id") | not)) | .query_status')
+  [ "$QUERY_STATUS" = "Running" ]
+
+  sync_workdir
+
+  cat worker-1/test.csv >&3
+}
+

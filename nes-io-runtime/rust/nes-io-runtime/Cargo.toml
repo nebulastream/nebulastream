@@ -1,0 +1,10 @@
+[package]
+name = "nes_io_runtime"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+tokio = { version = "1.40.0", features = ["rt-multi-thread"] }

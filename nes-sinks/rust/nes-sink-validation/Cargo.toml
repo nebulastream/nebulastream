@@ -1,0 +1,10 @@
+[package]
+name = "nes_sink_validation"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+linkme = "0.3.35"

@@ -24,6 +24,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include <Configurations/Descriptor.hpp>
 
 namespace NES
 {
@@ -36,21 +37,24 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 std::unique_ptr<SourceHandle>
 SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
 {
+    const auto& sourceType = sourceDescriptor.getSourceType();
+
+    /// The source-specific configuration of maxInflightBuffers takes priority.
+    /// If not specified (0), we take the NodeEngine-wide configuration.
+    const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
+        ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
+        : defaultMaxInflightBuffers;
+    SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
+
+    // Fall through to standard SourceRegistry — C++ sources wrapped in SourceThread.
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
-    if (auto source = SourceRegistry::instance().create(sourceDescriptor.getSourceType(), sourceArguments))
+    if (auto source = SourceRegistry::instance().create(sourceType, sourceArguments))
     {
-        /// The source-specific configuration of maxInflightBuffers takes priority.
-        /// If not specified (0), we take the NodeEngine-wide configuration.
-        const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
-            ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
-            : defaultMaxInflightBuffers;
-        SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
-
         return std::make_unique<SourceHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
-    throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
+    throw UnknownSourceType("unknown source descriptor type: {}", sourceType);
 }
 
 bool SourceProvider::contains(const std::string& sourceType) const ///NOLINT(readability-convert-member-functions-to-static)

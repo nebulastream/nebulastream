@@ -98,7 +98,7 @@ public:
             {
                 std::unordered_map<UppercaseString, std::string> config{{UppercaseString("FILE_PATH"), std::move(filePath)}};
                 std::unordered_map<UppercaseString, std::string> formatConfig{};
-                if (sinkType == "File")
+                if (sinkType == "File" || sinkType == "TokioFileSink")
                 {
                     config[UppercaseString("OUTPUT_FORMAT")] = "CSV";
                 }

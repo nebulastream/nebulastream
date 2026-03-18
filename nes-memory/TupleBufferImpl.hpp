@@ -113,6 +113,8 @@ public:
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
+    MemorySegment* getChild(VariableSizedAccess::Index index) const;
+    VariableSizedAccess::Index storeChild(MemorySegment* segment);
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept { return children.size(); }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
@@ -243,6 +245,7 @@ private:
      */
 
     uint8_t* ptr{nullptr};
+public:
     uint32_t size{0};
     TaggedPointer<BufferControlBlock> controlBlock{nullptr};
 };
