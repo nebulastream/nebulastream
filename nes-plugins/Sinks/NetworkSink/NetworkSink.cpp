@@ -50,8 +50,11 @@ namespace NES
 BackpressureHandler::BackpressureHandler(size_t upperThreshold, size_t lowerThreshold)
     : upperThreshold(upperThreshold), lowerThreshold(lowerThreshold)
 {
-    PRECONDITION(
-        lowerThreshold < upperThreshold, "lowerThreshold ({}) must be less than upperThreshold ({})", lowerThreshold, upperThreshold);
+    if (this->lowerThreshold > this->upperThreshold)
+    {
+        NES_WARNING("Lower threshold is greater than upper threshold. Setting lower threshold to upper threshold.");
+        std::swap(this->lowerThreshold, this->upperThreshold);
+    }
 }
 
 std::optional<TupleBuffer> BackpressureHandler::onFull(TupleBuffer buffer, BackpressureController& backpressureController)
