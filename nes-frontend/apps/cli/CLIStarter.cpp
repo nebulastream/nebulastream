@@ -446,6 +446,18 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
     std::cout << result.dump(4) << '\n';
 }
 
+void doStopAll(NES::QueryStatementHandler& queryStatementHandler)
+{
+    auto statementResult = queryStatementHandler(NES::DropQueryStatement{.id = std::nullopt});
+    if (!statementResult)
+    {
+        throw std::move(statementResult.error());
+    }
+
+    std::cout << nlohmann::json(NES::StatementOutputAssembler<NES::DropQueryStatementResult>{}.convert(statementResult.value())).dump(4)
+              << '\n';
+}
+
 constexpr NES::GrpcAddr grpcAddr{"localhost:8080"};
 
 NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse::ArgumentParser& program)
@@ -470,20 +482,37 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
-    const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
-        | std::views::transform(
-                             [&stateBackend](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
-                             {
-                                 auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
-                                 auto queryId = stateBackend.load(persistedId);
-                                 return {queryId, persistentIdString};
-                             })
-        | std::ranges::to<std::unordered_map>();
-    const auto state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
+    std::unordered_map<NES::QueryId, std::string> mapping;
+    std::unordered_set<NES::QueryId> state;
+    auto backend = createGRPCBackend(program);
+
+    if (program.is_subcommand_used("stop-all"))
+    {
+        auto workerStatus = backend->workerStatus(std::chrono::system_clock::time_point{});
+        if (!workerStatus)
+        {
+            throw std::move(workerStatus.error());
+        }
+        state = workerStatus->activeQueries | std::views::transform([](const auto& query) { return query.queryId; })
+            | std::ranges::to<std::unordered_set>();
+    }
+    else
+    {
+        mapping = subcommand.get<std::vector<std::string>>("queryId")
+            | std::views::transform(
+                      [&stateBackend](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
+                      {
+                          auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
+                          auto queryId = stateBackend.load(persistedId);
+                          return {queryId, persistentIdString};
+                      })
+            | std::ranges::to<std::unordered_map>();
+        state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
+    }
 
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    const auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(program), NES::QueryManagerState{state});
+    const auto queryManager = std::make_shared<NES::QueryManager>(std::move(backend), NES::QueryManagerState{state});
 
     NES::TopologyStatementHandler topologyHandler{queryManager};
     NES::SourceStatementHandler sourceHandler{sourceCatalog};
@@ -497,6 +526,10 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     if (program.is_subcommand_used("stop"))
     {
         doStop(queryHandler, mapping);
+    }
+    else if (program.is_subcommand_used("stop-all"))
+    {
+        doStopAll(queryHandler);
     }
     else if (program.is_subcommand_used("status"))
     {
@@ -588,6 +621,8 @@ int main(int argc, char** argv)
         ArgumentParser stopQuery("stop");
         stopQuery.add_argument("queryId").nargs(argparse::nargs_pattern::at_least_one);
 
+        ArgumentParser stopAllQuery("stop-all");
+
         ArgumentParser statusQuery("status");
         statusQuery.add_argument("queryId").nargs(argparse::nargs_pattern::any);
 
@@ -596,10 +631,11 @@ int main(int argc, char** argv)
 
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
+        program.add_subparser(stopAllQuery);
         program.add_subparser(statusQuery);
         program.add_subparser(dump);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, statusQuery};
+        std::vector<std::reference_wrapper<ArgumentParser>> queryManagementSubcommands{stopQuery, stopAllQuery, statusQuery};
         std::vector<std::reference_wrapper<ArgumentParser>> querySubmissionCommands{startQuery, dump};
 
         try

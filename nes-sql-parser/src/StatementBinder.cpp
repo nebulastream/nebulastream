@@ -307,6 +307,11 @@ public:
 
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
+        if (dropAst->dropQueryAll() != nullptr)
+        {
+            return DropQueryStatement{std::nullopt};
+        }
+
         const auto* const dropFilter = dropAst->dropFilter();
         PRECONDITION(dropFilter != nullptr, "Drop statement must have a WHERE filter");
         const auto [attr, value] = bindDropFilter(dropFilter);
@@ -344,7 +349,7 @@ public:
                 throw UnknownSourceName("There is no physical source with id {}", std::get<uint64_t>(value));
             }
         }
-        else if (const auto* const dropQueryAst = dropAst->dropSubject()->dropQuery(); dropQueryAst != nullptr)
+        else if (dropAst->dropSubject()->dropQuery() != nullptr)
         {
             if (attr != "ID")
             {

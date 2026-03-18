@@ -322,12 +322,18 @@ TEST_F(StatementBinderTest, BindDropQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), 12);
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id->getRawValue(), 12);
 
-    const std::string queryString2 = "DROP QUERY 1";
-    const auto statement2 = binder->parseAndBindSingle(queryString2);
-    ASSERT_FALSE(statement2.has_value());
-    ASSERT_EQ(statement2.error().code(), ErrorCode::InvalidQuerySyntax);
+    const std::string stopAllQueryString = "DROP QUERY ALL";
+    const auto stopAllStatement = binder->parseAndBindSingle(stopAllQueryString);
+    ASSERT_TRUE(stopAllStatement.has_value());
+    ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*stopAllStatement));
+    ASSERT_FALSE(std::get<DropQueryStatement>(*stopAllStatement).id.has_value());
+
+    const std::string invalidQueryString = "DROP QUERY 1";
+    const auto invalidStatement = binder->parseAndBindSingle(invalidQueryString);
+    ASSERT_FALSE(invalidStatement.has_value());
+    ASSERT_EQ(invalidStatement.error().code(), ErrorCode::InvalidQuerySyntax);
 }
 
 TEST_F(StatementBinderTest, ShowLogicalSources)

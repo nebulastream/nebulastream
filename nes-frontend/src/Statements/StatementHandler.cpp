@@ -14,6 +14,7 @@
 
 #include <Statements/StatementHandler.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <expected>
 #include <memory>
@@ -198,9 +199,29 @@ QueryStatementHandler::QueryStatementHandler(
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
-    return queryManager->stop(statement.id)
-        .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
-        .transform([&statement] { return DropQueryStatementResult{statement.id}; });
+    if (statement.id.has_value())
+    {
+        const auto queryId = *statement.id;
+        return queryManager->stop(queryId)
+            .transform_error([queryId](auto error) { return QueryStopFailed("Could not stop query {}: {}", queryId, error.what()); })
+            .transform([queryId] { return DropQueryStatementResult{.ids = {queryId}}; });
+    }
+
+    auto queryIds = queryManager->getRunningQueries();
+    std::ranges::sort(queryIds);
+
+    std::vector<QueryId> stoppedQueryIds;
+    stoppedQueryIds.reserve(queryIds.size());
+    for (const auto queryId : queryIds)
+    {
+        if (auto stopResult = queryManager->stop(queryId); !stopResult)
+        {
+            return std::unexpected{QueryStopFailed("Could not stop query {}: {}", queryId, stopResult.error().what())};
+        }
+        stoppedQueryIds.push_back(queryId);
+    }
+
+    return DropQueryStatementResult{.ids = std::move(stoppedQueryIds)};
 }
 
 std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
