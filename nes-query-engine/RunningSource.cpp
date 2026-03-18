@@ -61,6 +61,10 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
+                        /// If the source does not provide its own onComplete callback,
+                        /// use the counting semaphore for backpressure (limits inflight buffers).
+                        /// Tokio sources provide their own onComplete, so they bypass the semaphore.
+                        if (!data.onComplete)
                         {
                             /// release the semaphore in case the source wants to terminate
                             const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
@@ -70,12 +74,15 @@ SourceReturnType::EmitFunction emitFunction(
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
                             }
                         }
+                        auto onComplete = data.onComplete
+                            ? TaskCallback::OnComplete(data.onComplete)
+                            : TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); });
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                            TaskCallback{std::move(onComplete)},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())

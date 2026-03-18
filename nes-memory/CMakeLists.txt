@@ -30,4 +30,7 @@ target_include_directories(nes-memory
 )
 find_package(folly REQUIRED)
 target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
+
+add_subdirectory(rust/nes-buffer-bindings)
+
 add_tests_if_enabled(tests)

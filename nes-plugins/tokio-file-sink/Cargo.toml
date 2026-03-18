@@ -1,0 +1,12 @@
+[package]
+name = "nes_tokio_file_sink"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_sink_runtime.workspace = true
+tokio = { version = "1.40.0", features = ["fs", "io-util"] }
+linkme = "0.3"

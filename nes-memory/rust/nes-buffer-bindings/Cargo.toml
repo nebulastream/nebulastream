@@ -1,0 +1,10 @@
+[package]
+name = "nes_buffer_bindings"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+cxx = "1.0"

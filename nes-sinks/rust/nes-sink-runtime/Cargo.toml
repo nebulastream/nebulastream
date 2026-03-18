@@ -1,0 +1,21 @@
+[package]
+name = "nes_sink_runtime"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_buffer_bindings.workspace = true
+nes_buffer_runtime.workspace = true
+nes_source_runtime.workspace = true
+cxx = "1.0"
+tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time", "fs", "io-util"] }
+tokio-util = { version = "0.7.13", features = ["rt"] }
+async-channel = "2.3.1"
+tracing = "0.1"
+linkme = "0.3"
+
+[dev-dependencies]
+tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time", "macros", "test-util"] }

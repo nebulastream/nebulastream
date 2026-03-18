@@ -22,6 +22,7 @@
 #include <utility>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {

@@ -22,3 +22,8 @@ endfunction()
 
 add_nes_source_test(source-thread-test SourceThreadTest.cpp)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)
+add_nes_source_test(tokio-source-test TokioSourceTest.cpp)
+target_link_libraries(tokio-source-test nes-io-runtime-bindings nes-buffer-bindings-headers nes-source-bindings-headers)
+
+add_nes_source_test(tokio-sink-test TokioSinkTest.cpp)
+target_link_libraries(tokio-sink-test nes-sinks nes-io-runtime-bindings nes-buffer-bindings-headers nes-sink-bindings-headers)

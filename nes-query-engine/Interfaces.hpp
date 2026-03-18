@@ -53,5 +53,10 @@ public:
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
+
+    /// Like emitPipelineStop, but safe to call from non-worker threads (e.g., the
+    /// Rust bridge thread). Uses the admission queue instead of the internal task
+    /// queue, avoiding the WorkerThread::id PRECONDITION.
+    virtual void emitPipelineStopFromExternalThread(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
 };
 }

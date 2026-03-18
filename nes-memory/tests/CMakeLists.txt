@@ -25,3 +25,7 @@ target_link_libraries(buffer-manager-destroy-test nes-memory)
 
 add_nes_test(child-buffer-tests ChildBufferTests.cpp)
 target_link_libraries(child-buffer-tests nes-memory)
+
+add_nes_test(buffer-bindings-link-test BufferBindingsLinkTest.cpp)
+target_link_libraries(buffer-bindings-link-test nes-memory nes-buffer-bindings-headers)
+target_link_rust_lib(buffer-bindings-link-test nes_buffer_bindings)

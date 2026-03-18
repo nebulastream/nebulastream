@@ -54,4 +54,8 @@ public:
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
 };
 
+/// Set a callback that is invoked whenever a buffer is returned to the pool.
+/// Used by the Rust source runtime to wake async tasks waiting for buffers.
+void setBufferRecycleNotification(void(*callback)());
+
 }

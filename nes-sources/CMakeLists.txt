@@ -14,7 +14,7 @@ add_subdirectory(src)
 get_source(nes-sources NES_SOURCES_SOURCE_FILES)
 
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
-target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings)
+target_link_libraries(nes-sources PUBLIC nes-common nes-configurations nes-memory nes-executable nes-network-bindings-headers)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -26,5 +26,19 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 create_registries_for_component(Source SourceValidation FileData InlineData)
+
+
+add_subdirectory(rust/nes-source-bindings)
+
+# nes-sources (TokioSource.cpp) includes CXX-generated headers from the source bindings.
+# Use PRIVATE link to get the include directories without creating a PUBLIC circular dependency
+# (nes-source-bindings already links PUBLIC to nes-sources).
+target_link_libraries(nes-sources PRIVATE nes-io-runtime-bindings nes-buffer-bindings-headers nes-source-bindings-headers)
+target_link_rust_lib(nes-sources nes_buffer_bindings)
+target_link_rust_lib(nes-sources nes_source_bindings)
+target_link_rust_lib(nes-sources nes_source_registry)
+target_link_rust_lib(nes-sources nes_tokio_tcp_source)
+target_link_rust_lib(nes-sources nes_io_runtime)
+target_link_rust_lib(nes-sources nes_network_bindings)
 
 add_tests_if_enabled(tests)
