@@ -13,6 +13,7 @@
 add_library(nes-validator STATIC
     src/TopologyValidator.cpp
     src/YamlBinding.cpp
+    src/ConfigMetadata.cpp
 )
 
 # Public API headers
@@ -44,6 +45,9 @@ target_link_libraries(nes-validator
         nes-configurations
         nes-sources-validation
         nes-sinks-validation
+    PRIVATE
+        nes-sources-validation-registry
+        nes-sinks-validation-registry
 )
 
 # C++23 standard (matches NES project standard)

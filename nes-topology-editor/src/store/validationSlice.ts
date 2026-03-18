@@ -1,5 +1,5 @@
 import type { StateCreator } from 'zustand';
-import type { WasmStatus } from '../lib/wasmValidation';
+import type { WasmStatus, ConfigMetadata } from '../lib/wasmValidation';
 
 export interface ValidationSlice {
   /** WASM module lifecycle status. */
@@ -10,12 +10,15 @@ export interface ValidationSlice {
   semanticError: string | null;
   /** Number of WASM load retry attempts so far. */
   wasmRetryCount: number;
+  /** Config metadata from WASM (source/sink types and fields), null if not yet loaded. */
+  configMetadata: ConfigMetadata | null;
 
   setWasmStatus: (status: WasmStatus) => void;
   setWasmError: (error: string | null) => void;
   setSemanticError: (error: string | null) => void;
   incrementRetryCount: () => void;
   resetRetryCount: () => void;
+  setConfigMetadata: (metadata: ConfigMetadata) => void;
 }
 
 export const createValidationSlice: StateCreator<
@@ -28,6 +31,7 @@ export const createValidationSlice: StateCreator<
   wasmError: null,
   semanticError: null,
   wasmRetryCount: 0,
+  configMetadata: null,
 
   setWasmStatus: (status) => set({ wasmStatus: status }),
   setWasmError: (error) => set({ wasmError: error }),
@@ -35,4 +39,5 @@ export const createValidationSlice: StateCreator<
   incrementRetryCount: () =>
     set((state) => ({ wasmRetryCount: state.wasmRetryCount + 1 })),
   resetRetryCount: () => set({ wasmRetryCount: 0 }),
+  setConfigMetadata: (metadata) => set({ configMetadata: metadata }),
 });

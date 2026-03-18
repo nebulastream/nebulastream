@@ -118,12 +118,15 @@ public:
 
         std::optional<ConfigType> getDefaultValue() const { return configParameter->getDefaultValue(); }
 
+        std::string getTypeName() const { return configParameter->getTypeName(); }
+
         /// Describes what a ConfigParameter that is in the ConfigParameterContainer does (interface).
         struct ConfigParameterConcept
         {
             virtual ~ConfigParameterConcept() = default;
             virtual std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const = 0;
             virtual std::optional<ConfigType> getDefaultValue() const = 0;
+            virtual std::string getTypeName() const = 0;
         };
 
         /// Defines the concrete behavior of the ConfigParameterConcept, i.e., which specific functions from T to call.
@@ -138,6 +141,21 @@ public:
             }
 
             std::optional<ConfigType> getDefaultValue() const override { return configParameter.defaultValue; }
+
+            std::string getTypeName() const override
+            {
+                using ValueType = typename T::Type;
+                if constexpr (std::is_same_v<ValueType, std::string>)
+                    return "string";
+                else if constexpr (std::is_same_v<ValueType, bool>)
+                    return "boolean";
+                else if constexpr (std::is_same_v<ValueType, EnumWrapper>)
+                    return "enum";
+                else if constexpr (std::is_same_v<ValueType, char>)
+                    return "string";
+                else
+                    return "number";
+            }
 
         private:
             T configParameter;

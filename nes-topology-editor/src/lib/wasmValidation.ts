@@ -22,8 +22,25 @@ export interface ValidateResponse {
   error: string;
 }
 
+/** Config field metadata from C++ via WASM. */
+export interface WasmFieldDef {
+  name: string;
+  type: 'string' | 'number' | 'boolean' | 'enum';
+  required: boolean;
+  defaultValue?: string;
+}
+
+/** Config metadata sent with the ready message. */
+export interface ConfigMetadata {
+  sourceTypes: string[];
+  sinkTypes: string[];
+  sourceConfigs: Record<string, WasmFieldDef[]>;
+  sinkConfigs: Record<string, WasmFieldDef[]>;
+}
+
 export interface ReadyMessage {
   type: 'ready';
+  configMetadata?: ConfigMetadata;
 }
 
 export interface ErrorMessage {

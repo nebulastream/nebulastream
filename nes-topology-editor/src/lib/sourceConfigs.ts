@@ -1,7 +1,12 @@
 /**
  * NES source/sink form field definitions.
- * Derived from the NES C++ Config classes for each physical source/sink type.
+ *
+ * Contains hardcoded fallback configs (derived from C++ Config classes) and
+ * helpers that convert dynamic WASM config metadata into the same FormFieldDef
+ * format. The UI prefers dynamic metadata when available.
  */
+
+import type { WasmFieldDef, ConfigMetadata } from './wasmValidation';
 
 export interface FormFieldDef {
   key: string;
@@ -14,7 +19,49 @@ export interface FormFieldDef {
 }
 
 // ---------------------------------------------------------------------------
-// Source Configs
+// Dynamic metadata conversion
+// ---------------------------------------------------------------------------
+
+/** Convert a parameter name like "file_path" to a label like "File Path". */
+function nameToLabel(name: string): string {
+  return name
+    .split('_')
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(' ');
+}
+
+/** Map C++ type names to UI form field types. */
+function wasmTypeToFormType(t: WasmFieldDef['type']): FormFieldDef['type'] {
+  switch (t) {
+    case 'string': return 'text';
+    case 'number': return 'number';
+    case 'boolean': return 'boolean';
+    case 'enum': return 'select';
+    default: return 'text';
+  }
+}
+
+/** Convert a WASM field definition to a FormFieldDef. */
+function wasmFieldToFormField(field: WasmFieldDef): FormFieldDef {
+  const def: FormFieldDef = {
+    key: field.name,
+    label: nameToLabel(field.name),
+    type: wasmTypeToFormType(field.type),
+    required: field.required,
+  };
+  if (field.defaultValue !== undefined) {
+    def.defaultValue = field.defaultValue;
+  }
+  return def;
+}
+
+/** Convert an array of WASM field defs to FormFieldDef[]. */
+export function wasmFieldsToFormFields(fields: WasmFieldDef[]): FormFieldDef[] {
+  return fields.map(wasmFieldToFormField);
+}
+
+// ---------------------------------------------------------------------------
+// Source Configs (hardcoded fallback)
 // ---------------------------------------------------------------------------
 
 export const GENERATOR_SOURCE_CONFIG: FormFieldDef[] = [
@@ -132,7 +179,7 @@ export const TCP_SOURCE_CONFIG: FormFieldDef[] = [
     key: 'tuple_delimiter',
     label: 'Tuple Delimiter',
     type: 'text',
-    defaultValue: '\\n',
+    defaultValue: '\n',
   },
   {
     key: 'flush_interval_ms',
@@ -206,14 +253,15 @@ export function buildDefaults(fields: FormFieldDef[]): Record<string, string> {
   return config;
 }
 
-export const SOURCE_CONFIGS: Record<string, FormFieldDef[]> = {
+/** Hardcoded fallback source configs. */
+export const FALLBACK_SOURCE_CONFIGS: Record<string, FormFieldDef[]> = {
   Generator: GENERATOR_SOURCE_CONFIG,
   File: FILE_SOURCE_CONFIG,
   TCP: TCP_SOURCE_CONFIG,
 };
 
 // ---------------------------------------------------------------------------
-// Sink Configs
+// Sink Configs (hardcoded fallback)
 // ---------------------------------------------------------------------------
 
 export const FILE_SINK_CONFIG: FormFieldDef[] = [
@@ -234,6 +282,7 @@ export const FILE_SINK_CONFIG: FormFieldDef[] = [
     key: 'input_format',
     label: 'Input Format',
     type: 'select',
+    defaultValue: 'CSV',
     options: [
       { value: 'CSV', label: 'CSV' },
       { value: 'JSON', label: 'JSON' },
@@ -258,6 +307,7 @@ export const PRINT_SINK_CONFIG: FormFieldDef[] = [
     key: 'input_format',
     label: 'Input Format',
     type: 'select',
+    defaultValue: 'CSV',
     options: [
       { value: 'CSV', label: 'CSV' },
       { value: 'JSON', label: 'JSON' },
@@ -277,7 +327,8 @@ export const CHECKSUM_SINK_CONFIG: FormFieldDef[] = [
   },
 ];
 
-export const SINK_CONFIGS: Record<string, FormFieldDef[]> = {
+/** Hardcoded fallback sink configs. */
+export const FALLBACK_SINK_CONFIGS: Record<string, FormFieldDef[]> = {
   File: FILE_SINK_CONFIG,
   Print: PRINT_SINK_CONFIG,
   Void: VOID_SINK_CONFIG,
@@ -285,8 +336,65 @@ export const SINK_CONFIGS: Record<string, FormFieldDef[]> = {
 };
 
 // ---------------------------------------------------------------------------
-// Type lists for dropdowns
+// Resolved configs: use WASM metadata if available, else fallback
 // ---------------------------------------------------------------------------
 
-export const SOURCE_TYPES: string[] = ['Generator', 'File', 'TCP'];
-export const SINK_TYPES: string[] = ['File', 'Print', 'Void', 'Checksum'];
+/**
+ * Get source config fields for a given type, using dynamic WASM metadata
+ * when available and falling back to hardcoded definitions.
+ */
+export function getSourceFields(type: string, metadata: ConfigMetadata | null): FormFieldDef[] {
+  if (metadata?.sourceConfigs) {
+    // Registry keys are uppercase; try both original and uppercase lookup
+    const fields = metadata.sourceConfigs[type] ?? metadata.sourceConfigs[type.toUpperCase()];
+    if (fields) return wasmFieldsToFormFields(fields);
+  }
+  return FALLBACK_SOURCE_CONFIGS[type] ?? [];
+}
+
+/**
+ * Get sink config fields for a given type, using dynamic WASM metadata
+ * when available and falling back to hardcoded definitions.
+ */
+export function getSinkFields(type: string, metadata: ConfigMetadata | null): FormFieldDef[] {
+  if (metadata?.sinkConfigs) {
+    const fields = metadata.sinkConfigs[type] ?? metadata.sinkConfigs[type.toUpperCase()];
+    if (fields) return wasmFieldsToFormFields(fields);
+  }
+  return FALLBACK_SINK_CONFIGS[type] ?? [];
+}
+
+/**
+ * Get the list of registered source types.
+ * Uses WASM metadata if available, otherwise returns hardcoded list.
+ */
+export function getSourceTypes(metadata: ConfigMetadata | null): string[] {
+  if (metadata?.sourceTypes && metadata.sourceTypes.length > 0) {
+    return metadata.sourceTypes;
+  }
+  return FALLBACK_SOURCE_TYPES;
+}
+
+/**
+ * Get the list of registered sink types.
+ * Uses WASM metadata if available, otherwise returns hardcoded list.
+ */
+export function getSinkTypes(metadata: ConfigMetadata | null): string[] {
+  if (metadata?.sinkTypes && metadata.sinkTypes.length > 0) {
+    return metadata.sinkTypes;
+  }
+  return FALLBACK_SINK_TYPES;
+}
+
+// ---------------------------------------------------------------------------
+// Backward-compatible exports (use fallback values)
+// ---------------------------------------------------------------------------
+
+export const SOURCE_CONFIGS: Record<string, FormFieldDef[]> = FALLBACK_SOURCE_CONFIGS;
+export const SINK_CONFIGS: Record<string, FormFieldDef[]> = FALLBACK_SINK_CONFIGS;
+
+const FALLBACK_SOURCE_TYPES: string[] = ['Generator', 'File', 'TCP'];
+const FALLBACK_SINK_TYPES: string[] = ['File', 'Print', 'Void', 'Checksum'];
+
+export const SOURCE_TYPES: string[] = FALLBACK_SOURCE_TYPES;
+export const SINK_TYPES: string[] = FALLBACK_SINK_TYPES;

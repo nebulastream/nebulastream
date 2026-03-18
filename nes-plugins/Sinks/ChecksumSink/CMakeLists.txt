@@ -19,8 +19,7 @@ target_include_directories(checksum_sink_plugin
         PRIVATE .
 )
 target_include_directories(checksum_sink_validation_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC include ${CMAKE_CURRENT_SOURCE_DIR}/
 )
 
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)

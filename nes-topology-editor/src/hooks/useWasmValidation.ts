@@ -26,6 +26,7 @@ export function useWasmValidation(): void {
   const setSemanticError = useStore((s) => s.setSemanticError);
   const incrementRetryCount = useStore((s) => s.incrementRetryCount);
   const resetRetryCount = useStore((s) => s.resetRetryCount);
+  const setConfigMetadata = useStore((s) => s.setConfigMetadata);
 
   // Topology state for generating YAML
   const workers = useStore((s) => s.workers);
@@ -49,6 +50,9 @@ export function useWasmValidation(): void {
           retryCountRef.current = 0;
           resetRetryCount();
           setWasmStatus('ready');
+          if (msg.configMetadata) {
+            setConfigMetadata(msg.configMetadata);
+          }
           // Trigger initial validation immediately
           triggerValidation();
           break;

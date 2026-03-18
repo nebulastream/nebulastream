@@ -1,18 +1,9 @@
 import type { Sink } from '../../lib/types';
 import { useStore } from '../../store';
-import { SINK_TYPES, SINK_CONFIGS } from '../../lib/sourceConfigs';
+import { getSinkTypes, getSinkFields, buildDefaults } from '../../lib/sourceConfigs';
 import type { FormFieldDef } from '../../lib/sourceConfigs';
 import ConfigForm from './ConfigForm';
-
-function buildDefaults(fields: FormFieldDef[]): Record<string, string> {
-  const result: Record<string, string> = {};
-  for (const f of fields) {
-    if (f.defaultValue !== undefined) {
-      result[f.key] = f.defaultValue;
-    }
-  }
-  return result;
-}
+import SchemaBuilder from './SchemaBuilder';
 
 interface SinkPanelProps {
   sink: Sink;
@@ -21,6 +12,7 @@ interface SinkPanelProps {
 export default function SinkPanel({ sink }: SinkPanelProps) {
   const workers = useStore((s) => s.workers);
   const selectNode = useStore((s) => s.selectNode);
+  const configMetadata = useStore((s) => s.configMetadata);
   const hostWorker = workers.find((w) => w.id === sink.hostWorkerId);
 
   const handleUpdate = (updates: Partial<Omit<Sink, 'id'>>) => {
@@ -28,11 +20,12 @@ export default function SinkPanel({ sink }: SinkPanelProps) {
   };
 
   const handleTypeChange = (newType: string) => {
-    const configFields = SINK_CONFIGS[newType] ?? [];
+    const configFields = getSinkFields(newType, configMetadata);
     handleUpdate({ type: newType, config: buildDefaults(configFields) });
   };
 
-  const sinkFields = SINK_CONFIGS[sink.type] ?? [];
+  const sinkTypes = getSinkTypes(configMetadata);
+  const sinkFields = getSinkFields(sink.type, configMetadata);
 
   return (
     <div>
@@ -78,12 +71,21 @@ export default function SinkPanel({ sink }: SinkPanelProps) {
           value={sink.type}
           onChange={(e) => handleTypeChange(e.target.value)}
         >
-          {SINK_TYPES.map((t) => (
+          {sinkTypes.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
           ))}
         </select>
+      </div>
+
+      {/* Schema */}
+      <div className="mb-4">
+        <h4 className="text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase mb-2">Schema</h4>
+        <SchemaBuilder
+          fields={sink.schema}
+          onChange={(schema) => handleUpdate({ schema })}
+        />
       </div>
 
       {/* Configuration */}

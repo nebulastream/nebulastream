@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import type { PhysicalSource } from '../../lib/types';
 import { useStore } from '../../store';
-import { SOURCE_TYPES, SOURCE_CONFIGS, PARSER_CONFIG, buildDefaults } from '../../lib/sourceConfigs';
+import { getSourceTypes, getSourceFields, PARSER_CONFIG, buildDefaults } from '../../lib/sourceConfigs';
 import ConfigForm from './ConfigForm';
 import LogicalSourceSelect from './LogicalSourceSelect';
 
@@ -13,6 +13,7 @@ export default function SourcePanel({ source }: SourcePanelProps) {
   const [parserOpen, setParserOpen] = useState(true);
   const workers = useStore((s) => s.workers);
   const selectNode = useStore((s) => s.selectNode);
+  const configMetadata = useStore((s) => s.configMetadata);
   const hostWorker = workers.find((w) => w.id === source.hostWorkerId);
 
   const handleUpdate = (updates: Partial<Omit<PhysicalSource, 'id'>>) => {
@@ -20,11 +21,12 @@ export default function SourcePanel({ source }: SourcePanelProps) {
   };
 
   const handleTypeChange = (newType: string) => {
-    const configFields = SOURCE_CONFIGS[newType] ?? [];
+    const configFields = getSourceFields(newType, configMetadata);
     handleUpdate({ type: newType, sourceConfig: buildDefaults(configFields) });
   };
 
-  const sourceFields = SOURCE_CONFIGS[source.type] ?? [];
+  const sourceTypes = getSourceTypes(configMetadata);
+  const sourceFields = getSourceFields(source.type, configMetadata);
 
   return (
     <div>
@@ -67,7 +69,7 @@ export default function SourcePanel({ source }: SourcePanelProps) {
           value={source.type}
           onChange={(e) => handleTypeChange(e.target.value)}
         >
-          {SOURCE_TYPES.map((t) => (
+          {sourceTypes.map((t) => (
             <option key={t} value={t}>
               {t}
             </option>
