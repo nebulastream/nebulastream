@@ -34,7 +34,7 @@ beforeEach(() => {
 });
 
 describe('WASM validator with storeToYaml output', () => {
-  it('accepts empty topology (all empty sections)', () => {
+  it('accepts empty topology (no workers)', () => {
     const yaml = storeToYaml([], [], [], [], []);
     const result = validateTopology(yaml);
     expect(result).toBe('');
@@ -42,14 +42,14 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts topology with only a worker', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', grpc: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const yaml = storeToYaml(workers, [], [], [], []);
     const result = validateTopology(yaml);
     expect(result).toBe('');
   });
 
-  it('accepts topology with logical source only', () => {
+  it('accepts topology without workers even with logical sources', () => {
     const logical: LogicalSource[] = [
       { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }, { name: 'value', type: 'FLOAT64' }] },
     ];
@@ -60,7 +60,7 @@ describe('WASM validator with storeToYaml output', () => {
 
   it('accepts full valid topology with query', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', grpc: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const logical: LogicalSource[] = [
       { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }, { name: 'value', type: 'FLOAT64' }] },
@@ -101,18 +101,43 @@ describe('WASM validator with storeToYaml output', () => {
   });
 
   it('rejects query referencing nonexistent source', () => {
-    const queries: Query[] = [
-      { id: 'q1', name: 'bad', sql: 'SELECT * FROM NONEXISTENT INTO VOID_SINK' },
+    const workers: Worker[] = [
+      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
-    const yaml = storeToYaml([], [], [], [], queries);
+    const sinks: Sink[] = [
+      {
+        id: 's1', name: 'MY_SINK', hostWorkerId: 'w1', type: 'Void',
+        schema: [{ name: 'id', type: 'INT64' }],
+        config: {}, position: { x: 0, y: 0 },
+      },
+    ];
+    const queries: Query[] = [
+      { id: 'q1', name: 'bad', sql: 'SELECT * FROM NONEXISTENT INTO MY_SINK' },
+    ];
+    const yaml = storeToYaml(workers, [], [], sinks, queries);
     const result = validateTopology(yaml);
     expect(result).not.toBe('');
     expect(result).toContain('NONEXISTENT');
   });
 
+  it('accepts sink with empty name (validator does not reject it)', () => {
+    const workers: Worker[] = [
+      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+    ];
+    const sinks: Sink[] = [
+      {
+        id: 's1', name: '', hostWorkerId: 'w1', type: 'Print',
+        schema: [], config: {}, position: { x: 0, y: 0 },
+      },
+    ];
+    const yaml = storeToYaml(workers, [], [], sinks, []);
+    const result = validateTopology(yaml);
+    expect(result).toBe('');
+  });
+
   it('accepts topology with sink and source but no query', () => {
     const workers: Worker[] = [
-      { id: 'w1', host: 'localhost:9090', grpc: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
+      { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } },
     ];
     const logical: LogicalSource[] = [
       { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] },
@@ -156,11 +181,12 @@ describe('default source/sink configs produce valid YAML', () => {
     };
   }
 
-  const worker: Worker = { id: 'w1', host: 'localhost:9090', grpc: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
+  const worker: Worker = { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
   const logical: LogicalSource = { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] };
 
   it('Generator source with defaults is valid when logical source is set', () => {
     const source = makeDefaultSource('Generator', logical.id, worker.id);
+    source.sourceConfig.generator_schema = 'SEQUENCE INT64 0 100 1';
     const yaml = storeToYaml([worker], [logical], [source], [], []);
     const result = validateTopology(yaml);
     expect(result).toBe('');

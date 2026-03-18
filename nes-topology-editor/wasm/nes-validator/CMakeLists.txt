@@ -68,6 +68,7 @@ file(GLOB ANTLR4_GENERATED_SRCS "${CMAKE_CURRENT_SOURCE_DIR}/../spike-antlr4/gen
 set(VALIDATOR_SRCS
     ${NES_ROOT}/nes-validator/src/TopologyValidator.cpp
     ${NES_ROOT}/nes-validator/src/YamlBinding.cpp
+    ${NES_ROOT}/nes-validator/src/ConfigMetadata.cpp
 )
 
 # nes-common sources
