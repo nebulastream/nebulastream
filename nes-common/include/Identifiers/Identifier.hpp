@@ -579,7 +579,21 @@ IdentifierBase<Extent>::operator IdentifierListBase<std::dynamic_extent>() const
 template <size_t Extent>
 struct Reflector<IdentifierListBase<Extent>>
 {
-    Reflected operator()(const IdentifierListBase<Extent>& identifierList) const { return reflect(fmt::format("{}", identifierList)); }
+    Reflected operator()(const IdentifierListBase<Extent>& identifierList) const
+    {
+        /// Use getOriginalString() to preserve quotes for case-sensitive identifiers,
+        /// so that the Unreflector round-trip correctly restores the caseSensitive flag.
+        std::string result;
+        for (const auto& identifier : identifierList.identifiers)
+        {
+            if (!result.empty())
+            {
+                result += '.';
+            }
+            result += identifier.getOriginalString();
+        }
+        return reflect(result);
+    }
 };
 
 template <>
