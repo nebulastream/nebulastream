@@ -32,6 +32,9 @@ struct Error
 struct Data
 {
     TupleBuffer buffer;
+    /// Optional per-buffer callback invoked when the pipeline finishes processing
+    /// this buffer. Used by sources to implement inflight limiting (semaphore release).
+    std::function<void()> onComplete;
 };
 
 struct EoS

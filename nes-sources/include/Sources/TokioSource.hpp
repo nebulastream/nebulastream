@@ -16,6 +16,7 @@
 
 #include <chrono>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <ostream>
 #include <Identifiers/Identifiers.hpp>
@@ -33,18 +34,35 @@ struct ErrorContext;
 /// so that SourceHandle can dispatch to either via std::variant without changing
 /// RunningSource or QueryEngine.
 ///
+/// The SpawnFn captures the Rust source type and its configuration. Different Rust
+/// source implementations (GeneratorSource, etc.) provide their own SpawnFn that
+/// calls the appropriate FFI entry point with the right parameters.
+///
 /// Lifecycle:
-///   1. Constructed with originId, inflightLimit, and bufferProvider
-///   2. start(EmitFunction&&) creates EmitContext/ErrorContext, calls spawn_source FFI
+///   1. Constructed with originId, inflightLimit, bufferProvider, and a SpawnFn
+///   2. start(EmitFunction&&) creates EmitContext/ErrorContext, calls SpawnFn
 ///   3. stop() calls stop_source FFI (non-blocking, cancels CancellationToken)
 ///   4. Destructor calls stop() if still running, then drops Rust SourceTaskHandle
 class TokioSource
 {
 public:
+    /// Opaque Rust handle returned by the spawn function.
+    /// Defined in the .cpp to avoid exposing CXX types.
+    struct RustHandleImpl;
+
+    /// Function that spawns a Rust async source via FFI.
+    /// Arguments: source_id, buffer_provider_ptr, inflight_limit,
+    ///            emit_fn_ptr, emit_ctx_ptr, error_fn_ptr, error_ctx_ptr
+    /// Returns: opaque Rust handle (wrapped in RustHandleImpl by start())
+    using SpawnFn = std::function<std::unique_ptr<RustHandleImpl>(
+        uint64_t, uintptr_t, uint32_t,
+        uintptr_t, uintptr_t, uintptr_t, uintptr_t)>;
+
     explicit TokioSource(
         OriginId originId,
         uint32_t inflightLimit,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider);
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        SpawnFn spawnFn);
 
     ~TokioSource();
 
@@ -55,7 +73,7 @@ public:
     TokioSource& operator=(TokioSource&&) = delete;
 
     /// Start the Rust async source. Creates EmitContext/ErrorContext and calls
-    /// spawn_source FFI. Returns true on success, false on failure.
+    /// the SpawnFn. Returns true on success, false on failure.
     [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
 
     /// Request non-blocking cooperative stop via CancellationToken.
@@ -74,11 +92,8 @@ private:
     OriginId originId;
     uint32_t inflightLimit;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    SpawnFn spawnFn;
 
-    /// Opaque Rust handle returned by spawn_source, stored as PIMPL.
-    /// The actual rust::Box<SourceHandle> is managed in the cpp file
-    /// to avoid exposing CXX types in the public header.
-    struct RustHandleImpl;
     std::unique_ptr<RustHandleImpl> rustHandle;
 
     std::unique_ptr<EmitContext> emitContext;

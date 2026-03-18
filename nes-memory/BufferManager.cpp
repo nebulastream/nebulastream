@@ -205,6 +205,17 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(const size_t bufferS
     return unpooledChunksManager->getUnpooledBuffer(bufferSize, DEFAULT_ALIGNMENT, shared_from_this());
 }
 
+/// Global callback invoked after a buffer is returned to the pool.
+/// Set by the Rust source runtime to wake async tasks waiting for buffers.
+/// Defaults to nullptr (no notification). Uses relaxed ordering since
+/// the callback is set once during init and never changes.
+static std::atomic<void(*)()> g_onBufferRecycled{nullptr};
+
+void setBufferRecycleNotification(void(*callback)())
+{
+    g_onBufferRecycled.store(callback, std::memory_order_release);
+}
+
 void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
 {
     INVARIANT(segment->isAvailable(), "Recycling buffer callback invoked on used memory segment");
@@ -212,6 +223,10 @@ void BufferManager::recyclePooledBuffer(detail::MemorySegment* segment)
         segment->controlBlock->owningBufferRecycler == nullptr, "Buffer should not retain a reference to its parent while not in use");
     USED_IN_DEBUG const auto couldRecycleBuffer = availableBuffers.writeIfNotFull(segment);
     INVARIANT(couldRecycleBuffer, "should always succeed");
+    if (auto callback = g_onBufferRecycled.load(std::memory_order_relaxed))
+    {
+        callback();
+    }
 }
 
 void BufferManager::recycleUnpooledBuffer(detail::MemorySegment*, const AllocationThreadInfo&)

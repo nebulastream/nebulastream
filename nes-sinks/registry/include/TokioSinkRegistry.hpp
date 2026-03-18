@@ -28,11 +28,9 @@ namespace NES
 // The factory .cpp file creates TokioSink internally and returns as std::unique_ptr<Sink>.
 using TokioSinkRegistryReturnType = std::unique_ptr<Sink>;
 
-// Per user decision: exactly 2 fields -- SinkDescriptor and channelCapacity.
-// BackpressureController is NOT included here. Factory functions that need it
-// construct a default BackpressureController{} when creating TokioSink.
 struct TokioSinkRegistryArguments
 {
+    BackpressureController backpressureController;
     SinkDescriptor sinkDescriptor;
     uint32_t channelCapacity;
 };

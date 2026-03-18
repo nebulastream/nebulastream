@@ -14,14 +14,11 @@
 
 #include <RunningSource.hpp>
 
-#include <algorithm>
 #include <chrono>
 #include <cstdint>
 #include <functional>
-#include <limits>
 #include <memory>
 #include <mutex>
-#include <semaphore>
 #include <stop_token>
 #include <utility>
 #include <variant>
@@ -42,15 +39,12 @@ namespace
 {
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
-    size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
-        std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    return [&controller, successors = std::move(successors), source, &emitter, queryId](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -61,21 +55,12 @@ SourceReturnType::EmitFunction emitFunction(
                 {
                     for (const auto& successor : successors)
                     {
-                        {
-                            /// release the semaphore in case the source wants to terminate
-                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
-                            availableBuffer->acquire();
-                            if (stopToken.stop_requested())
-                            {
-                                return SourceReturnType::EmitResult::STOP_REQUESTED;
-                            }
-                        }
                         /// The admission queue might be full, we have to reattempt
                         while (not emitter.emitWork(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                            TaskCallback{TaskCallback::OnComplete(data.onComplete)},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())
@@ -129,13 +114,12 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(emitFunction(queryId, runningSource, std::move(successors), controller, emitter));
     }
     return runningSource;
 }
