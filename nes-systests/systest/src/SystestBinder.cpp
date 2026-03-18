@@ -116,13 +116,13 @@ public:
                     host = hostIt->second;
                 }
 
-                const auto sink = sinkCatalog->addSinkDescriptor(
+                auto sink = sinkCatalog->addSinkDescriptor(
                     std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
-                    return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
+                    return std::unexpected{std::move(sink.error())};
                 }
-                return sink.value();
+                return std::move(sink.value());
             });
         return success;
     }
