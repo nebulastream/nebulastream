@@ -119,6 +119,12 @@ WorkTask::WorkTask(
 {
 }
 
+PreparePipelineTask::PreparePipelineTask(
+    QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
+    : BaseTask(std::move(queryId), std::move(callback)), pipeline(std::move(pipeline)), pipelineId(std::move(pipelineId))
+{
+}
+
 StartPipelineTask::StartPipelineTask(
     QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline)
     : BaseTask(std::move(queryId), std::move(callback)), pipeline(std::move(pipeline)), pipelineId(std::move(pipelineId))

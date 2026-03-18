@@ -348,6 +348,17 @@ public:
         std::unreachable();
     }
 
+    void emitPipelinePrepare(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
+    {
+        auto [complete, failure, success] = std::move(callback).take();
+        auto wrappedCallback = TaskCallback{
+            std::move(complete),
+            std::move(success),
+            TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
+        };
+        addInternalTask(PreparePipelineTask(qid, node->id, std::move(wrappedCallback), node));
+    }
+
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
     {
         auto [complete, failure, success] = std::move(callback).take();
@@ -437,6 +448,7 @@ public:
         bool operator()(WorkTask& task) const;
         bool operator()(StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
+        bool operator()(PreparePipelineTask& preparePipeline) const;
         bool operator()(StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask& pendingPipelineStop) const;
         bool operator()(StopPipelineTask& stopPipelineTask) const;
@@ -531,6 +543,39 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     ENGINE_LOG_WARNING(
         "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
     pool.statistic->onEvent(TaskExpired{WorkerThread::id, task.queryId, task.pipelineId, taskId});
+    return false;
+}
+
+bool ThreadPool::WorkerThread::operator()(PreparePipelineTask& preparePipeline) const
+{
+    LogContext logContext("Task", fmt::format("{}-{}", preparePipeline.queryId, preparePipeline.pipelineId));
+    if (terminating)
+    {
+        ENGINE_LOG_WARNING(
+            "Pipeline Preparation {}-{} was skipped during Termination", preparePipeline.queryId, preparePipeline.pipelineId);
+        return false;
+    }
+
+    if (auto pipeline = preparePipeline.pipeline.lock())
+    {
+        ENGINE_LOG_DEBUG("Prepare Pipeline Task for {}-{}", preparePipeline.queryId, pipeline->id);
+        DefaultPEC pec(
+            pool.numberOfThreads(),
+            WorkerThread::id,
+            pipeline->id,
+            pool.bufferProvider,
+            [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
+            {
+                INVARIANT(false, "Currently we assume that a pipeline cannot emit data during preparation");
+                return false;
+            },
+            [&](const TupleBuffer&, std::chrono::milliseconds)
+            { INVARIANT(false, "Repeat pipeline preparation is currently not supported"); });
+        pipeline->stage->prepare(pec);
+        return true;
+    }
+
+    ENGINE_LOG_WARNING("Prepared pipeline is expired for {}-{}", preparePipeline.queryId, preparePipeline.pipelineId);
     return false;
 }
 

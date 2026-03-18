@@ -27,7 +27,12 @@ class ExecutablePipelineStage
 {
 public:
     virtual ~ExecutablePipelineStage() = default;
+
     /// Prepares the ExecutablePipelineStage for future execution.
+    /// `prepare` may throw to indicate an error.
+    virtual void prepare(PipelineExecutionContext&) { }
+
+    /// Starts the ExecutablePipelineStage after `prepare` completed.
     /// `start` may throw to indicate an error.
     virtual void start(PipelineExecutionContext& pipelineExecutionContext) = 0;
 
@@ -36,7 +41,7 @@ public:
     virtual void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     /// Stops the ExecutablePipelineStage allowing it to flush left over state.
-    /// `stop` should never be called on a pipeline that has not previously been `started`.
+    /// `stop` should never be called on a pipeline that has not previously been `prepared`.
     /// `stop` is not guaranteed to be called, thus the destructor should take care of cleanup.
     /// `stop` may throw to indicate an error.
     virtual void stop(PipelineExecutionContext& pipelineExecutionContext) = 0;
