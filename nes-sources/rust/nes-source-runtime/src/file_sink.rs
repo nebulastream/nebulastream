@@ -37,7 +37,8 @@ impl AsyncSink for AsyncFileSink {
         loop {
             match ctx.recv().await {
                 SinkMessage::Data(buf) => {
-                    file.write_all(buf.as_slice())
+                    let valid_bytes = buf.number_of_tuples() as usize;
+                    file.write_all(&buf.as_slice()[..valid_bytes])
                         .await
                         .map_err(|e| SinkError::new(format!("write failed: {}", e)))?;
                 }

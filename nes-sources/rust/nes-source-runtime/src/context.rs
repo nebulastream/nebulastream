@@ -18,7 +18,6 @@
 
 use std::sync::Arc;
 
-use nes_source_bindings::ffi;
 use tokio::sync::Semaphore;
 use tokio_util::sync::CancellationToken;
 
@@ -29,22 +28,6 @@ use crate::error::SourceError;
 // Production sender type (BridgeMessage channel)
 #[cfg(not(test))]
 use crate::bridge::BridgeMessage;
-
-/// Wrapper to mark a raw pointer as Send for use in spawn_blocking closures.
-///
-/// SAFETY: This is only used for `*mut AbstractBufferProvider`, which is
-/// thread-safe (BufferManager uses folly::MPMCQueue + atomics). The pointer
-/// validity is guaranteed by the C++ SourceHandle's lifetime.
-struct SendPtr(*mut ffi::AbstractBufferProvider);
-
-// SAFETY: See SendPtr doc comment above.
-unsafe impl Send for SendPtr {}
-
-impl SendPtr {
-    fn into_raw(self) -> *mut ffi::AbstractBufferProvider {
-        self.0
-    }
-}
 
 /// Context provided to source `run()` implementations.
 ///
@@ -57,7 +40,7 @@ pub struct SourceContext {
     #[cfg(not(test))]
     sender: async_channel::Sender<BridgeMessage>,
     #[cfg(test)]
-    sender: async_channel::Sender<()>,
+    sender: async_channel::Sender<tokio::sync::OwnedSemaphorePermit>,
     cancellation_token: CancellationToken,
     backpressure: Arc<BackpressureState>,
     semaphore: Arc<Semaphore>,
@@ -109,7 +92,7 @@ impl SourceContext {
     #[cfg(test)]
     pub fn new(
         buffer_provider: BufferProviderHandle,
-        _sender: async_channel::Sender<()>,
+        sender: async_channel::Sender<tokio::sync::OwnedSemaphorePermit>,
         cancellation_token: CancellationToken,
         backpressure: Arc<BackpressureState>,
         semaphore: Arc<Semaphore>,
@@ -117,7 +100,7 @@ impl SourceContext {
     ) -> Self {
         Self {
             buffer_provider,
-            sender: _sender,
+            sender,
             cancellation_token,
             backpressure,
             semaphore,
@@ -127,23 +110,19 @@ impl SourceContext {
 
     /// Allocate a buffer from the C++ BufferProvider.
     ///
-    /// Uses `spawn_blocking` because the C++ `getBufferBlocking()` can block
-    /// indefinitely waiting for a buffer to be recycled. Without
-    /// `spawn_blocking`, this would starve Tokio worker threads.
+    /// Uses non-blocking `tryGetBuffer` + async notification instead of
+    /// `spawn_blocking`. When no buffer is available, the task awaits
+    /// `BUFFER_NOTIFY` which is signaled by C++ whenever a buffer is recycled.
+    /// This avoids spawning blocking threads and scales to many concurrent sources.
     #[cfg(not(test))]
     pub async fn allocate_buffer(&self) -> TupleBufferHandle {
-        let send_ptr = SendPtr(self.buffer_provider.as_raw_ptr());
-        tokio::task::spawn_blocking(move || {
-            // SAFETY: ptr is valid for the source's lifetime (guaranteed by
-            // the C++ SourceHandle that created BufferProviderHandle).
-            // getBufferBlocking is thread-safe (BufferManager uses atomics).
-            let raw = send_ptr.into_raw();
-            let pin = unsafe { std::pin::Pin::new_unchecked(&mut *raw) };
-            let buf_ptr = ffi::getBufferBlocking(pin);
-            TupleBufferHandle::new(buf_ptr)
-        })
-        .await
-        .expect("spawn_blocking task panicked in allocate_buffer")
+        use crate::buffer::BUFFER_NOTIFY;
+        loop {
+            if let Some(buf) = self.buffer_provider.try_get_buffer() {
+                return buf;
+            }
+            BUFFER_NOTIFY.notified().await;
+        }
     }
 
     /// Allocate a buffer (test build).
@@ -181,15 +160,42 @@ impl SourceContext {
             .await
             .map_err(|_| SourceError::new("semaphore closed -- source is shutting down"))?;
 
+        // Forget the permit so it doesn't auto-release on drop.
+        // Instead, we pass an Arc<Semaphore> raw pointer to C++ which calls
+        // nes_release_semaphore_slot (add_permits(1)) when the pipeline is done.
+        std::mem::forget(permit);
+        let semaphore_ptr = std::sync::Arc::into_raw(self.semaphore.clone()) as usize;
+
         // Step 3: Send message through bridge channel
         self.sender
-            .send(BridgeMessage {
+            .send(BridgeMessage::Data {
                 origin_id: self.origin_id,
                 buffer,
-                permit,
+                semaphore_ptr,
             })
             .await
             .map_err(|_| SourceError::new("emit channel closed -- source is shutting down"))
+    }
+
+    /// Send end-of-stream through the bridge channel.
+    ///
+    /// Called by the framework after `AsyncSource::run()` returns EndOfStream.
+    /// Sent through the same channel as data to guarantee ordering: all data
+    /// buffers are delivered before EOS reaches the C++ pipeline.
+    #[cfg(not(test))]
+    pub(crate) async fn emit_eos(&self) {
+        let _ = self.sender
+            .send(BridgeMessage::Eos {
+                origin_id: self.origin_id,
+            })
+            .await;
+    }
+
+    /// Send end-of-stream (test build — no-op since test channel uses unit type).
+    #[cfg(test)]
+    pub(crate) async fn emit_eos(&self) {
+        // In test builds, EOS is not sent through the channel.
+        // The test infrastructure handles lifecycle differently.
     }
 
     /// Emit a filled buffer (test build).
@@ -203,18 +209,18 @@ impl SourceContext {
         self.backpressure.wait_for_release().await;
 
         // Step 2: Acquire semaphore permit (yields when inflight limit reached)
-        let _permit = self
+        let permit = self
             .semaphore
             .clone()
             .acquire_owned()
             .await
             .map_err(|_| SourceError::new("semaphore closed -- source is shutting down"))?;
 
-        // Step 3: In test builds, we signal the unit channel instead of
-        // sending a BridgeMessage (avoids TupleBufferHandle drop -> CXX linker).
-        // The permit is dropped here, releasing the semaphore slot.
+        // Step 3: Send the permit through the channel. The permit stays alive
+        // until the receiver drops it — this mirrors production where the permit
+        // lives inside BridgeMessage until the bridge thread processes it.
         self.sender
-            .send(())
+            .send(permit)
             .await
             .map_err(|_| SourceError::new("emit channel closed -- source is shutting down"))
     }

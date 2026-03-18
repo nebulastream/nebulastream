@@ -18,7 +18,6 @@
 /// No Sink subclass -- the factory creates a TokioSink directly with a SpawnFn
 /// that calls spawn_file_sink FFI.
 
-#include <cstdint>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -29,7 +28,6 @@
 #include <Sources/TokioSink.hpp>
 #include <TokioSinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include <BackpressureChannel.hpp>
 
 namespace NES
 {
@@ -46,10 +44,18 @@ struct ConfigParametersTokioFileSink
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
+    /// Override OUTPUT_FORMAT with a default so it is not mandatory at validation time.
+    /// The systest binder injects output_format=CSV after validation for inline sinks.
+    // NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format", "CSV",
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
+
     // NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
-            FILE_PATH);
+            FILE_PATH, OUTPUT_FORMAT, SinkDescriptor::ADD_TIMESTAMP);
 };
 
 } // namespace NES
@@ -67,20 +73,13 @@ SinkValidationRegistryReturnType RegisterTokioFileSinkSinkValidation(SinkValidat
 }
 
 /// Factory: create a TokioSink with a FileSink SpawnFn.
-/// NOTE: TokioSinkRegistryArguments does NOT contain BackpressureController (per user decision,
-/// the struct has exactly {SinkDescriptor, channelCapacity}). We construct a default
-/// BackpressureController{} here when creating TokioSink, since TokioSink manages its own
-/// internal backpressure via the Rust channel and does not use the C++ backpressure mechanism.
 TokioSinkRegistryReturnType
 TokioSinkGeneratedRegistrar::RegisterTokioFileSinkTokioSink(TokioSinkRegistryArguments args)
 {
     const auto filePath = args.sinkDescriptor.getFromConfig(ConfigParametersTokioFileSink::FILE_PATH);
 
-    // TokioSink manages its own backpressure via the Rust channel, so it does not use the C++
-    // backpressure mechanism. Create a disconnected BackpressureController; the listener is discarded.
-    auto [bpc, _listener] = createBackpressureChannel();
     return std::make_unique<TokioSink>(
-        std::move(bpc),
+        std::move(args.backpressureController),
         makeFileSinkSpawnFn(filePath),
         args.channelCapacity);
 }

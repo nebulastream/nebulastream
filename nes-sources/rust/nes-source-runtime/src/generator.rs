@@ -37,7 +37,7 @@ impl GeneratorSource {
 }
 
 impl AsyncSource for GeneratorSource {
-    async fn run(&mut self, ctx: SourceContext) -> SourceResult {
+    async fn run(&mut self, ctx: &SourceContext) -> SourceResult {
         let cancel = ctx.cancellation_token();
 
         for i in 0..self.count {
@@ -47,11 +47,14 @@ impl AsyncSource for GeneratorSource {
             }
 
             let mut buf = ctx.allocate_buffer().await;
+            // Write CSV text into the buffer — the pipeline's InputFormatter parses CSV.
+            let csv_line = format!("{}\n", i);
+            let bytes = csv_line.as_bytes();
             let slice = buf.as_mut_slice();
-            if slice.len() >= 8 {
-                slice[..8].copy_from_slice(&i.to_le_bytes());
-            }
-            buf.set_number_of_tuples(1);
+            let len = bytes.len().min(slice.len());
+            slice[..len].copy_from_slice(&bytes[..len]);
+            // numberOfTuples = byte count for raw/CSV sources (InputFormatter convention)
+            buf.set_number_of_tuples(len as u64);
 
             if let Err(_) = ctx.emit(buf).await {
                 // Channel closed during shutdown
@@ -80,24 +83,41 @@ mod tests {
     use tokio::sync::Semaphore;
     use tokio_util::sync::CancellationToken;
 
-    /// Spawn a test GeneratorSource using a unit channel to count emits.
+    use tokio::sync::OwnedSemaphorePermit;
+
+    /// Spawn a test GeneratorSource.
     ///
-    /// Returns the receiver so tests can count how many emit() calls happened.
+    /// Returns the receiver so tests can count emits and control permit lifetime.
+    /// Each emit() sends an OwnedSemaphorePermit through the channel — the permit
+    /// stays alive until the receiver drops it, mirroring production behavior.
     fn spawn_generator_test(
         source_id: u64,
         source: GeneratorSource,
     ) -> (
         tokio::task::JoinHandle<SourceResult>,
         CancellationToken,
-        async_channel::Receiver<()>,
+        async_channel::Receiver<OwnedSemaphorePermit>,
+    ) {
+        spawn_generator_test_with_limit(source_id, source, 10)
+    }
+
+    /// Spawn a test GeneratorSource with a custom inflight limit.
+    fn spawn_generator_test_with_limit(
+        source_id: u64,
+        source: GeneratorSource,
+        inflight_limit: usize,
+    ) -> (
+        tokio::task::JoinHandle<SourceResult>,
+        CancellationToken,
+        async_channel::Receiver<OwnedSemaphorePermit>,
     ) {
         let bp_state = backpressure::register_source(source_id);
-        let semaphore = Arc::new(Semaphore::new(10));
+        let semaphore = Arc::new(Semaphore::new(inflight_limit));
         let cancel_token = CancellationToken::new();
 
-        // Bounded channel: each emit() sends () through this channel.
-        // The receiver counts messages to verify emit count.
-        let (sender, receiver) = async_channel::bounded::<()>(1024);
+        // Bounded channel: each emit() sends its semaphore permit through this
+        // channel. The permit stays alive until the receiver drops it.
+        let (sender, receiver) = async_channel::bounded::<OwnedSemaphorePermit>(1024);
 
         let buffer_provider = unsafe { BufferProviderHandle::from_raw(std::ptr::null_mut()) };
         let ctx = SourceContext::new(
@@ -111,7 +131,7 @@ mod tests {
 
         let mut source = source;
         let handle = tokio::spawn(async move {
-            source.run(ctx).await
+            source.run(&ctx).await
         });
 
         (handle, cancel_token, receiver)
@@ -172,5 +192,40 @@ mod tests {
         }
         assert!(count < 1000, "Expected fewer than 1000 emits after cancellation, got {}", count);
         assert!(count > 0, "Expected at least some emits before cancellation");
+    }
+
+    #[tokio::test]
+    async fn inflight_limit_blocks_source() {
+        // Source wants to emit 100 values, but inflight limit is 3.
+        // If we never drain the receiver, the source should block after 3 emits.
+        let source = GeneratorSource::new(100, Duration::from_millis(0));
+        let (handle, _cancel, receiver) = spawn_generator_test_with_limit(30004, source, 3);
+
+        // Give the source time to hit the limit
+        tokio::time::sleep(Duration::from_millis(200)).await;
+
+        // Source should have emitted exactly 3 values (filling the semaphore)
+        // and then blocked on the 4th semaphore acquire.
+        // Channel has capacity 1024, so the channel itself is not the bottleneck.
+        assert_eq!(receiver.len(), 3, "Expected exactly 3 emits (inflight limit), got {}", receiver.len());
+
+        // Now drain one permit — source should emit one more and re-fill to 3
+        let permit = receiver.recv().await.unwrap();
+        drop(permit); // release the semaphore slot
+        tokio::time::sleep(Duration::from_millis(50)).await;
+        assert_eq!(receiver.len(), 3, "Expected 3 in channel after draining one (source should fill the slot)");
+
+        // Clean up: close channel + drain permits to unblock the source.
+        // Source is stuck on semaphore.acquire inside emit(). Draining permits
+        // releases semaphore slots; then channel send fails (closed) → source returns.
+        receiver.close();
+        while let Ok(p) = receiver.try_recv() {
+            drop(p);
+        }
+        let result = tokio::time::timeout(Duration::from_secs(2), handle)
+            .await
+            .expect("source should exit after channel closed")
+            .unwrap();
+        assert!(matches!(result, SourceResult::EndOfStream));
     }
 }

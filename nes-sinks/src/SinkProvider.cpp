@@ -36,11 +36,10 @@ std::unique_ptr<Sink> SinkProvider::lower(
     const auto& sinkType = sinkDescriptor.getSinkType();
 
     // Check TokioSinkRegistry first -- Rust async sinks.
-    // Note: TokioSinkRegistryArguments does NOT include BackpressureController.
-    // Factory functions construct a default BackpressureController{} internally.
     if (TokioSinkRegistry::instance().contains(sinkType))
     {
         auto tokioArgs = TokioSinkRegistryArguments{
+            std::move(backpressureController),
             sinkDescriptor,
             defaultChannelCapacity};
         if (auto sink = TokioSinkRegistry::instance().create(sinkType, std::move(tokioArgs)))

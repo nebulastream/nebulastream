@@ -16,8 +16,11 @@
 
 #include <chrono>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <ostream>
+#include <semaphore>
+#include <stop_token>
 #include <utility>
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
@@ -64,7 +67,44 @@ SourceHandle::~SourceHandle() = default;
 
 bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
-    return std::visit([&](auto& impl) { return impl->start(std::move(emitFunction)); }, impl_);
+    return std::visit(
+        Overloaded{
+            [&](const std::unique_ptr<SourceThread>& st)
+            {
+                // Wrap the emitFunction with a semaphore for inflight limiting.
+                // The semaphore is acquired before each data emit (blocking the source thread)
+                // and released in the onComplete callback after the pipeline processes the buffer.
+                auto sem = std::make_shared<std::counting_semaphore<>>(
+                    std::min(configuration.inflightBufferLimit, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
+                auto wrappedEmit = [sem, emitFn = std::move(emitFunction)](
+                    const OriginId sourceId,
+                    SourceReturnType::SourceReturnType event,
+                    const std::stop_token& stopToken) -> SourceReturnType::EmitResult
+                {
+                    if (auto* data = std::get_if<SourceReturnType::Data>(&event))
+                    {
+                        {
+                            const std::stop_callback callback(stopToken, [&]() { sem->release(); });
+                            sem->acquire();
+                            if (stopToken.stop_requested())
+                            {
+                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                            }
+                        }
+                        data->onComplete = [sem] { sem->release(); };
+                    }
+                    return emitFn(sourceId, std::move(event), stopToken);
+                };
+                return st->start(std::move(wrappedEmit));
+            },
+            [&](const std::unique_ptr<TokioSource>& ts)
+            {
+                // TokioSource handles inflight limiting on the Rust side
+                // via Arc<Semaphore> + onComplete callback in bridge_emit.
+                return ts->start(std::move(emitFunction));
+            }
+        },
+        impl_);
 }
 
 void SourceHandle::stop() const
