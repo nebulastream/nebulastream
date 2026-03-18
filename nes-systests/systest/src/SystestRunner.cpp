@@ -74,7 +74,8 @@ void reportResult(
 
     std::string performanceMessage;
     /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
-    if (performanceMessageBuilder and runningQuery->queryStatus.getGlobalQueryState() == DistributedQueryState::Stopped)
+    if (performanceMessageBuilder and runningQuery->queryStatus.has_value()
+        and runningQuery->queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
@@ -260,7 +261,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery),
+                        std::make_shared<RunningQuery>(nextQuery, nextQuery.planInfoOrException.value().queryPlan.getQueryId()),
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
@@ -279,7 +280,7 @@ std::vector<RunningQuery> runQueries(
                 else
                 {
                     processQueryWithError(
-                        std::make_shared<RunningQuery>(nextQuery),
+                        std::make_shared<RunningQuery>(nextQuery, nextQuery.planInfoOrException.value().queryPlan.getQueryId()),
                         progressTracker,
                         failed,
                         DistributedException(std::unordered_map<Host, std::vector<Exception>>{{Host("systest"), std::vector{reg.error()}}}),
