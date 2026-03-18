@@ -21,10 +21,10 @@
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/Schema.hpp>
-#include <ErrorHandling.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
