@@ -286,7 +286,7 @@ TOPEOF
 @test "optimizer configuration: -t with invalid optimizer configuration name" {
   run $NES_CLI -d -t tests/bad/invalid_optimizer_config_name.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Identifier for: test_invalid_optimizer_config_name is not known." nes-cli.log
+  grep "invalid config parameter; Identifier: test_invalid_optimizer_config_name is not known." nes-cli.log
 }
 
 @test "optimizer configuration: -t with invalid optimizer configuration value" {

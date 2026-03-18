@@ -47,7 +47,8 @@ DistributedLogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
 
     BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(optimizedPlan);
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog)).decompose(optimizedPlan);
+    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+        .decompose(optimizedPlan, defaultQueryOptimization.network);
 }
 
 }

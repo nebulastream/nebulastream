@@ -466,8 +466,8 @@ EOF
   assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
 }
 
-@test "back pressure" {
-  setup_distributed tests/good/backpressure.yaml
+@test "back pressure using worker config" {
+  setup_distributed tests/good/backpressure-worker-config.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -483,12 +483,36 @@ EOF
   done
 
   run DOCKER_NES_CLI stop $query_id
+  # 0 means there is no overwrite and the worker default will be picked.
+  grep "host: worker-2:8080, Config: max_pending_acks: 0, sender_queue_size: 0" worker-2/singleNodeWorker.log
+  grep "Backpressure" worker-2/singleNodeWorker.log
+  [ $status -eq 0 ]
+}
+
+@test "back pressure using optimizer flags" {
+  setup_distributed tests/good/backpressure-optimizer-flags.yaml
+
+  run DOCKER_NES_CLI start
+  [ $status -eq 0 ]
+  query_id=$output
+
+  # Poll until backpressure is observed in the worker log
+  for i in $(seq 1 30); do
+    sleep 1
+    sync_workdir
+    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
+      break
+    fi
+  done
+
+  run DOCKER_NES_CLI stop $query_id
+  grep "host: worker-2:8080, Config: max_pending_acks: 25, sender_queue_size: 32" worker-2/singleNodeWorker.log
   grep "Backpressure" worker-2/singleNodeWorker.log
   [ $status -eq 0 ]
 }
 
 @test "order of worker termination when backpressure is applied. terminate sink" {
-  setup_distributed tests/good/backpressure.yaml
+  setup_distributed tests/good/backpressure-worker-config.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -542,7 +566,7 @@ EOF
 }
 
 @test "order of worker termination when backpressure is applied. terminate source" {
-  setup_distributed tests/good/backpressure.yaml
+  setup_distributed tests/good/backpressure-worker-config.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]

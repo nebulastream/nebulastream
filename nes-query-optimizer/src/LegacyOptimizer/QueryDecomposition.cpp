@@ -42,6 +42,7 @@
 #include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizerNetworkConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 
@@ -53,6 +54,7 @@ namespace
 struct DecompositionContext
 {
     std::unordered_map<NetworkTopology::NodeId, std::vector<LogicalPlan>> plansByNode;
+    const QueryOptimizerNetworkConfiguration& config;
     SharedPtr<const SourceCatalog> sourceCatalog;
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
@@ -86,23 +88,43 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->data;
     const auto& upstreamData = upstreamWorker->data;
 
-    const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        "Network",
-        channel.upstreamOp.getOutputSchema(),
-        {{"type", "Native"}},
-        {{"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"host", channel.downstreamNode.getRawValue()}});
+    auto sourceConfig = std::unordered_map<std::string, std::string>{
+        {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"host", channel.downstreamNode.getRawValue()}};
+    if (context.config.receiverQueueSize.isExplicitlySet())
+    {
+        sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
+    }
+
+    auto sinkConfig = std::unordered_map<std::string, std::string>{
+        {"channel", channel.id.getRawValue()},
+        {"bind", upstreamData},
+        {"host", channel.upstreamNode.getRawValue()},
+        {"data_endpoint", downstreamData},
+        {"output_format", "NATIVE"}};
+
+    if (context.config.maxPendingAcks.isExplicitlySet())
+    {
+        sinkConfig.emplace("max_pending_acks", std::to_string(context.config.maxPendingAcks.getValue()));
+    }
+    if (context.config.senderQueueSize.isExplicitlySet())
+    {
+        sinkConfig.emplace("sender_queue_size", std::to_string(context.config.senderQueueSize.getValue()));
+    }
+    if (context.config.backpressureUpperThreshold.isExplicitlySet())
+    {
+        sinkConfig.emplace("backpressure_upper_threshold", std::to_string(context.config.backpressureUpperThreshold.getValue()));
+    }
+    if (context.config.backpressureLowerThreshold.isExplicitlySet())
+    {
+        sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
+    }
+
+    const auto networkSourceDescriptorOpt
+        = context.sourceCatalog->getInlineSource("Network", channel.upstreamOp.getOutputSchema(), {{"type", "Native"}}, sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
-    auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(
-        channel.upstreamOp.getOutputSchema(),
-        "Network",
-        {{"channel", channel.id.getRawValue()},
-         {"bind", upstreamData},
-         {"host", channel.upstreamNode.getRawValue()},
-         {"data_endpoint", downstreamData},
-         {"output_format", "NATIVE"}},
-        {});
+    auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(channel.upstreamOp.getOutputSchema(), "Network", sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
@@ -188,7 +210,7 @@ QueryDecomposer::QueryDecomposer(
 {
 }
 
-DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan)
+DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& configuration)
 {
     PRECONDITION(placedPlan.getRootOperators().size() == 1, "BUG: query decomposition requires a single root operator");
     PRECONDITION(
@@ -198,6 +220,7 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan)
 
     DecompositionContext context{
         .plansByNode = {},
+        .config = configuration,
         .sourceCatalog = copyPtr(sourceCatalog),
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};

@@ -25,6 +25,7 @@
 namespace NES
 {
 
+class QueryOptimizerNetworkConfiguration;
 using ChannelId = NESStrongUUIDType<struct ChannelId_>;
 
 class QueryDecomposer
@@ -39,7 +40,7 @@ public:
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog);
 
-    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan);
+    DistributedLogicalPlan decompose(const LogicalPlan& placedPlan, const QueryOptimizerNetworkConfiguration& networkConfiguration);
 };
 
 }

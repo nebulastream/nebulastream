@@ -50,6 +50,7 @@ physical:
       generator_schema: |
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
+# Enforces backpressure using the worker configs, which should make the queues so small that backpressure is triggered
 workers:
   - host: worker-1:8080
     data: worker-1:9090

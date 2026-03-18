@@ -24,10 +24,10 @@
 #include <Configurations/Validation/NumberValidation.hpp>
 #include <Util/DumpMode.hpp>
 #include <fmt/format.h>
-#include <WorkerNetworkConfiguration.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryExecutionConfiguration.hpp>
 #include <QueryOptimizerConfiguration.hpp>
+#include <WorkerNetworkConfiguration.hpp>
 
 namespace NES
 {
