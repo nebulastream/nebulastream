@@ -693,6 +693,7 @@ struct SystestBinder::Impl
         if (not sinkExpected.has_value())
         {
             currentBuilder.setException(sinkExpected.error());
+            throw sinkExpected.error();
         }
 
         const auto newOperator = SinkLogicalOperator{sinkExpected.value()};

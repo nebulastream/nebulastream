@@ -25,9 +25,9 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/Schema.hpp>
-#include <ErrorHandling.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
