@@ -462,7 +462,7 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
                 *reinterpret_cast<int32_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = rowcount;
                 buffer.setNumberOfTuples(buffer.getNumberOfTuples() + typeInfo.nesTypeSize);
                 currentTuple = fmt::format("{}, {}", currentTuple, rowcount);
-                NES_DEBUG("Overwriting Lab_ID with batch start rowcount: {}", rowcount);
+                // NES_DEBUG("Overwriting Lab_ID with batch start rowcount: {}", rowcount);
                 return ret;
             }
             return readVal<int32_t>(colIdx, buffer, typeInfo, indicator, currentTuple);
@@ -487,7 +487,7 @@ SQLRETURN ODBCConnection::readDataIntoBuffer(
                 const auto currentUnixTsInMs
                     = std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 currentTuple = fmt::format("{}, {}", currentTuple, currentUnixTsInMs);
-                NES_DEBUG("Overwriting TSLog with current unix ts: {}", currentUnixTsInMs);
+                // NES_DEBUG("Overwriting TSLog with current unix ts: {}", currentUnixTsInMs);
                 *reinterpret_cast<uint64_t*>(&buffer.getAvailableMemoryArea<char>()[buffer.getNumberOfTuples()]) = currentUnixTsInMs;
             }
             else
@@ -583,7 +583,7 @@ ODBCPollStatus ODBCConnection::executeQuery(
         INVARIANT(this->numberOfLeftoverTuples >= nextRowsToFetch, "num tuples left: {}", this->numberOfLeftoverTuples - nextRowsToFetch);
         this->numberOfLeftoverTuples -= nextRowsToFetch;
     }
-    NES_DEBUG("Reading {} rows, with {} rows left", nextRowsToFetch, this->numberOfLeftoverTuples);
+    // NES_DEBUG("Reading {} rows, with {} rows left", nextRowsToFetch, this->numberOfLeftoverTuples);
     for (size_t bufferLocalRowCount = 0; bufferLocalRowCount < nextRowsToFetch; ++bufferLocalRowCount)
     {
         std::string currentTuple{};
