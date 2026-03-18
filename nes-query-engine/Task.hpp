@@ -134,6 +134,14 @@ struct WorkTask : BaseTask
     TupleBuffer buf;
 };
 
+struct PreparePipelineTask : BaseTask
+{
+    PreparePipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline);
+
+    std::weak_ptr<RunningQueryPlanNode> pipeline;
+    PipelineId pipelineId = INVALID<PipelineId>;
+};
+
 struct StartPipelineTask : BaseTask
 {
     StartPipelineTask(QueryId queryId, PipelineId pipelineId, TaskCallback callback, std::weak_ptr<RunningQueryPlanNode> pipeline);
@@ -200,6 +208,7 @@ using Task = std::variant<
     StopSourceTask,
     PendingPipelineStopTask,
     StopPipelineTask,
+    PreparePipelineTask,
     StartPipelineTask>;
 
 void succeedTask(Task& task);

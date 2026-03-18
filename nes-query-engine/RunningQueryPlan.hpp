@@ -60,7 +60,7 @@ struct RunningQueryPlanNode
         std::unique_ptr<ExecutablePipelineStage> stage,
         std::function<void(Exception)> unregisterWithError,
         CallbackRef planRef,
-        CallbackRef setupCallback);
+        CallbackRef preparationCallback);
 
 
     ~RunningQueryPlanNode();
@@ -150,13 +150,15 @@ private:
             std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines,
             std::unique_ptr<ExecutableQueryPlan> qep,
             CallbackOwner all_pipelines_expired,
-            CallbackOwner pipeline_setup_done)
+            CallbackOwner pipeline_preparation_done,
+            CallbackOwner pipeline_start_done)
             : listeners(std::move(listeners))
             , sources(std::move(sources))
             , pipelines(std::move(pipelines))
             , qep(std::move(qep))
             , allPipelinesExpired(std::move(all_pipelines_expired))
-            , allPipelinesStarted(std::move(pipeline_setup_done))
+            , allPipelinesPrepared(std::move(pipeline_preparation_done))
+            , allPipelinesStarted(std::move(pipeline_start_done))
         {
         }
 
@@ -173,20 +175,23 @@ private:
 
         /// The entire graph of the query has been destroyed.
         CallbackOwner allPipelinesExpired;
-        /// All pipelines have been initialized
+        /// All pipelines have been prepared.
+        CallbackOwner allPipelinesPrepared;
+        /// All pipelines have been started.
         CallbackOwner allPipelinesStarted;
     };
 
     folly::Synchronized<Internal, std::recursive_mutex> internal;
 
-    explicit RunningQueryPlan(CallbackOwner allPipelinesExpired, CallbackOwner pipelineSetupDone)
+    explicit RunningQueryPlan(CallbackOwner allPipelinesExpired, CallbackOwner pipelinePreparationDone, CallbackOwner pipelineStartDone)
         : internal(Internal(
               std::vector<std::shared_ptr<QueryLifetimeListener>>{},
               std::unordered_map<OriginId, std::shared_ptr<RunningSource>>{},
               std::vector<std::weak_ptr<RunningQueryPlanNode>>{},
               nullptr,
               std::move(allPipelinesExpired),
-              std::move(pipelineSetupDone)))
+              std::move(pipelinePreparationDone),
+              std::move(pipelineStartDone)))
     {
     }
 };
