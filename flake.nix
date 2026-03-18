@@ -626,6 +626,7 @@
               llvm.clang-tools # clang-format, clang-tidy
             ];
           };
+        llvmTools = (toolchainFor stdlibOptions.${defaultStdlibName}).tools;
 
         # Development tools
         devTools = with pkgs; [
@@ -774,11 +775,29 @@
 
         packages = packageVariants // { default = packageVariants.none; };
 
-        checks = {
-          antlr4 = sanitizerPackageSet.antlr4.withSanitizer sanitizerOptions.none.extraPackages;
-          cpptrace = sanitizerPackageSet.cpptrace.withSanitizer sanitizerOptions.none.extraPackages;
-          nautilus = sanitizerPackageSet.nautilus.withSanitizer sanitizerOptions.none.extraPackages;
-        };
+        checks =
+          let
+            defaultStdlib = stdlibOptions.${defaultStdlibName};
+            defaultSanitizer = sanitizerOptions.none;
+            extraInputs = defaultSanitizer.extraPackages ++ defaultStdlib.extraPackages;
+            useLibcxx = defaultStdlib.name == "libcxx";
+            sanitizerArgs = {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
+            defaultMlirBinary = mlirBinaryFor {
+              sanitizer = defaultSanitizer.cmakeValue;
+              stdlib = defaultStdlib.name;
+            };
+            nautilusPackages = nautilusPackagesFor defaultMlirBinary;
+          in {
+            antlr4 = antlr4Packages.withSanitizer sanitizerArgs;
+            cpptrace = cpptracePackages.withSanitizer sanitizerArgs;
+            argparse = argparsePackages.withSanitizer sanitizerArgs;
+            libcuckoo = libcuckooPackages.withSanitizer sanitizerArgs;
+            nlohmann_json = nlohmannJsonPackages.withSanitizer sanitizerArgs;
+            nautilus = nautilusPackages.withSanitizer sanitizerArgs;
+          };
 
         apps = {
           clang-tidy = {
