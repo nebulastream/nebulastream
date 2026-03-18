@@ -245,12 +245,12 @@ std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operat
 {
     return queryManager->stop(statement.id)
         .transform_error(
-                              [](auto vecOfErrors)
-                              {
-                                  return QueryStopFailed(
-                                      "Could not stop query: {}",
-                                      fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
-                              })
+            [](auto vecOfErrors)
+            {
+                return QueryStopFailed(
+                    "Could not stop query: {}",
+                    fmt::join(std::views::transform(vecOfErrors, [](auto exception) { return exception.what(); }), ", "));
+            })
         .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 

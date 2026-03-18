@@ -31,11 +31,11 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <QueryStatus.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES

@@ -74,7 +74,7 @@ void reportResult(
 
     std::string performanceMessage;
     /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
-    if (performanceMessageBuilder and runningQuery->queryStatus.state == QueryState::Stopped)
+    if (performanceMessageBuilder and runningQuery->queryStatus.getGlobalQueryState() == DistributedQueryState::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
@@ -109,16 +109,14 @@ void processQueryWithError(
             if (auto* expectedError = std::get_if<ExpectedError>(&runningQuery->systestQuery.expectedResultsOrExpectedError))
             {
                 const DistributedException& actualException = runningQuery->exception.value();
-                auto allExceptionByAddress = std::views::join(
-                    std::views::transform(
-                        actualException.details(),
-                        [](auto& exceptionsByAddress)
-                        {
-                            return std::views::transform(
-                                exceptionsByAddress.second,
-                                [address = exceptionsByAddress.first](auto& exception)
-                                { return std::pair{address, std::cref(exception)}; });
-                        }));
+                auto allExceptionByAddress = std::views::join(std::views::transform(
+                    actualException.details(),
+                    [](auto& exceptionsByAddress)
+                    {
+                        return std::views::transform(
+                            exceptionsByAddress.second,
+                            [address = exceptionsByAddress.first](auto& exception) { return std::pair{address, std::cref(exception)}; });
+                    }));
 
                 auto unexpectedErrors = std::ranges::any_of(
                     allExceptionByAddress | std::views::values,
@@ -295,9 +293,8 @@ std::vector<RunningQuery> runQueries(
                     std::make_shared<RunningQuery>(nextQuery),
                     progressTracker,
                     failed,
-                    DistributedException(
-                        std::unordered_map<Host, std::vector<Exception>>{
-                            {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
+                    DistributedException(std::unordered_map<Host, std::vector<Exception>>{
+                        {Host("systest"), std::vector{nextQuery.planInfoOrException.error()}}}),
                     queryPerformanceMessage);
             }
         }

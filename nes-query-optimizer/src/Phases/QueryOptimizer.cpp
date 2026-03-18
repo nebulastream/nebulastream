@@ -15,16 +15,16 @@
 #include <Phases/QueryOptimizer.hpp>
 
 #include <Plans/LogicalPlan.hpp>
-#include <QueryOptimizerConfiguration.hpp>
+#include <Rules/BottomUpPlacement.hpp>
+#include <Rules/QueryDecomposition.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
-#include <Rules/BottomUpPlacement.hpp>
-#include <Rules/QueryDecomposition.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {

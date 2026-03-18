@@ -22,10 +22,10 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <DistributedQuery.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <fmt/format.h>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -35,9 +35,7 @@ class DistributedLogicalPlan
 {
 public:
     DistributedLogicalPlan(std::unordered_map<Host, std::vector<LogicalPlan>> localPlans, LogicalPlan globalPlan)
-        : queryId(globalPlan.getQueryId().getDistributedQueryId())
-        , localPlans(std::move(localPlans))
-        , globalPlan(std::move(globalPlan))
+        : queryId(globalPlan.getQueryId().getDistributedQueryId()), localPlans(std::move(localPlans)), globalPlan(std::move(globalPlan))
     {
         PRECONDITION(not this->localPlans.empty(), "Input plan should not be empty");
     }

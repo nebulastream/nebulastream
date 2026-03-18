@@ -116,9 +116,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator{networkSourceDescriptor}.withTraitSet(ts),
-        SinkLogicalOperator{networkSinkDescriptor.value()}
-            .withTraitSet(ts)
-            .withInferredSchema({channel.upstreamOp.getOutputSchema()})};
+        SinkLogicalOperator{networkSinkDescriptor.value()}.withTraitSet(ts).withInferredSchema({channel.upstreamOp.getOutputSchema()})};
 }
 
 LogicalOperator createNetworkChannel(

@@ -172,9 +172,8 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     statements.reserve(workers.size());
     for (const auto& [host, data, capacity, downstream] : workers)
     {
-        statements.emplace_back(
-            NES::CreateWorkerStatement{
-                .host = host, .data = data.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
+        statements.emplace_back(NES::CreateWorkerStatement{
+            .host = host, .data = data.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {
@@ -189,12 +188,11 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
 
     for (const auto& [logical, host] : physical)
     {
-        statements.emplace_back(
-            NES::CreatePhysicalSourceStatement{
-                .attachedTo = NES::LogicalSourceName(NES::toUpperCase(logical)),
-                .sourceType = "File",
-                .sourceConfig = {{"file_path", "does_not_exist"}, {"host", host}},
-                .parserConfig = {{"type", "CSV"}}});
+        statements.emplace_back(NES::CreatePhysicalSourceStatement{
+            .attachedTo = NES::LogicalSourceName(NES::toUpperCase(logical)),
+            .sourceType = "File",
+            .sourceConfig = {{"file_path", "does_not_exist"}, {"host", host}},
+            .parserConfig = {{"type", "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {
@@ -204,9 +202,8 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
             schema.addField(NES::toUpperCase(schemaField), NES::DataType::Type::UINT64);
         }
 
-        statements.emplace_back(
-            NES::CreateSinkStatement{
-                .name = NES::toUpperCase(name), .sinkType = "Void", .schema = schema, .sinkConfig = {{"host", host}}, .formatConfig = {}});
+        statements.emplace_back(NES::CreateSinkStatement{
+            .name = NES::toUpperCase(name), .sinkType = "Void", .schema = schema, .sinkConfig = {{"host", host}}, .formatConfig = {}});
     }
     statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
     return statements;

@@ -64,8 +64,8 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
@@ -477,7 +477,8 @@ struct SystestBinder::Impl
         std::unordered_set<SystestQueryId> foundQueries;
 
         const SemanticAnalyzer semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
-        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
+        const QueryOptimizer queryOptimizer{
+            queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
