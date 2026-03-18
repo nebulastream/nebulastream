@@ -16,12 +16,12 @@ ATTACH INLINE
 
 # where clause guarantees that only relevant values ever enter HighAnionGap function
 SELECT * FROM (
-    SELECT HighAnionGap(VarSizedToDouble(Wert)) as alarm
-    FROM odbc_source
-    WHERE Gruppe == VARSIZED("Blutgase arteriell") AND (Bez == VARSIZED("PH") OR Bez == VARSIZED("ABEc") OR Bez == VARSIZED("NATRIUM(BG)") OR Bez == VARSIZED("CHLORID(BG)") OR Bez == VARSIZED("HCO3"))
-    )
-WHERE alarm != VARSIZED("")
-INTO File();
+  SELECT HighAnionGap(VarSizedToDouble(Wert)) as alert
+  FROM odbc_source_35
+  WHERE Gruppe == VARSIZED("Blutgase arteriell") AND (Bez == VARSIZED("PH") OR Bez == VARSIZED("ABEc") OR Bez == VARSIZED("NATRIUM(BG)") OR Bez == VARSIZED("CHLORID(BG)") OR Bez == VARSIZED("HCO3"))
+  )
+  WHERE alert != VARSIZED("")
+  INTO HTTP('JSON' AS `SINK`.INPUT_FORMAT, "bridge_famedly_service" AS `SINK`.IP_ADDRESS, "8080" AS `SINK`.PORT, "nesNotification" AS `SINK`.ENDPOINT, "test.log" AS `SINK`.LOG_FILE_PATH);
 ----
 High anion gap detected for patient 1002. Reason: if( ( PH(5) < 7.3) AND (Base Excess(-10) < -6) AND (Sodium(20) - Chloride(2) - Bicarbonate(2) > 12)). Timestamps(Creation: 16.03.2026 10:32 MLIFE(Clone) insertion: 15.01.2024 08:45 System Ingestion: 15.01.2024 09:30 Alarm: 17.03.2026 09:51)
 
