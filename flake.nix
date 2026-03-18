@@ -14,6 +14,8 @@
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
         llvm = pkgs.llvmPackages_19;
+        clangToolsVersion = lib.getVersion llvm.clang-tools;
+        clangTidyDiffCommand = "clang-tidy-diff-${lib.versions.major clangToolsVersion}.py";
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
@@ -341,11 +343,11 @@
               '';
             };
             clangTidyDiffScript = pkgs.fetchurl {
-              url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${lib.getVersion llvm.clang-tools}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
+              url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${clangToolsVersion}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
               hash = "sha256-+64k7MRZjQOFQVltm8sEZMhu3VEYfYax+86MxOAO2sU=";
             };
             clangTidyDiffRunner = pkgs.writeShellApplication {
-              name = "clang-tidy-diff-19.py";
+              name = clangTidyDiffCommand;
               runtimeInputs = [ pkgs.python3 ];
               text = ''
                 exec python3 ${clangTidyDiffScript} "$@"
@@ -405,7 +407,7 @@
 
                 echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
                 git diff -U0 "$base_ref" -- ':!*.inc' | \
-                  clang-tidy-diff-19.py \
+                  ${clangTidyDiffCommand} \
                     -clang-tidy-binary nes-clang-tidy-fix \
                     -p1 \
                     -path build \
@@ -417,7 +419,7 @@
 
                 echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
                 git diff -U0 "$base_ref" -- ':!*.inc' | \
-                  clang-tidy-diff-19.py \
+                  ${clangTidyDiffCommand} \
                     -clang-tidy-binary nes-clang-tidy-fix \
                     -p1 \
                     -path build \
