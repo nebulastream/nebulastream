@@ -33,7 +33,6 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Util/Strings.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
@@ -91,18 +90,12 @@ struct SIMDJSONMetaData
             config.fieldDelimiter,
             config.fieldDelimiter.size());
 
-        /// We expect the names in the json file to not be source qualified
+        /// Format each identifier for JSON field lookup:
+        /// - Unquoted (case-insensitive) identifiers are uppercased to match JSON keys
+        /// - Quoted (case-sensitive) identifiers have their quotes stripped, preserving case
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
-            {
-                const auto adaptedFiledName = replaceAll(fieldName.substr(qualifierPosition + 1), "/", "/");
-                fieldNamesInJson.emplace_back(std::string("/").append(fieldName.substr(qualifierPosition + 1)));
-            }
-            else
-            {
-                fieldNamesInJson.emplace_back(std::string("/").append(fieldName));
-            }
+            fieldNamesInJson.emplace_back(fmt::format("{}", *std::ranges::rbegin(fieldName)));
         }
 
         PRECONDITION(fieldNamesInJson.size() == fieldDataTypes.size(), "No. fields must be equal to no. data types");
@@ -115,7 +108,7 @@ struct SIMDJSONMetaData
 
     [[nodiscard]] const Identifier& getFieldNameAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesOutput[i]; }
 
-    [[nodiscard]] const Identifier& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesInJson[i]; }
+    [[nodiscard]] const std::string& getFieldNameInJsonAt(const nautilus::static_val<uint64_t>& i) const { return fieldNamesInJson[i]; }
 
     [[nodiscard]] const DataType& getFieldDataTypeAt(const nautilus::static_val<uint64_t>& i) const { return fieldDataTypes[i]; }
 
@@ -132,7 +125,7 @@ struct SIMDJSONMetaData
     }
 
 private:
-    std::vector<Identifier> fieldNamesInJson;
+    std::vector<std::string> fieldNamesInJson;
     std::vector<Identifier> fieldNamesOutput;
     std::vector<DataType> fieldDataTypes;
     std::string tupleDelimiter;
@@ -241,7 +234,7 @@ public:
         simdjson::simdjson_result<T> simdJsonValue,
         simdjson::simdjson_result<simdjson::ondemand::value>& rawVal,
         const std::string_view expectedType,
-        const Identifier& expectedField)
+        const std::string_view expectedField)
     {
         if (not simdJsonValue.has_value())
         {
@@ -256,7 +249,7 @@ public:
     }
 
     static simdjson::simdjson_result<simdjson::ondemand::value>
-    accessSIMDJsonFieldOrThrow(simdjson::simdjson_result<simdjson::ondemand::value> simdJsonResult, const Identifier& fieldName)
+    accessSIMDJsonFieldOrThrow(simdjson::simdjson_result<simdjson::ondemand::value> simdJsonResult, const std::string_view fieldName)
     {
         if (not simdJsonResult.has_value())
         {
@@ -266,27 +259,24 @@ public:
         return simdJsonResult;
     }
 
-    /// Navigates to a field using find_field_unordered, splitting the JSON Pointer path
-    /// (e.g., "/KEY" or "/EXTRA_KEY/NAME") into segments and navigating step by step.
+    /// Navigates to a field using find_field_unordered, splitting the field path
+    /// (e.g., "KEY" or "EXTRA_KEY/NAME") on '/' and navigating step by step.
     /// Unlike at_pointer, find_field_unordered does NOT call rewind(), so the parser's
     /// internal string buffer is preserved across calls, allowing VARSIZED string_views
     /// to remain valid until the entire tuple has been processed.
     static simdjson::simdjson_result<simdjson::ondemand::value>
-    navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view jsonPointerPath)
+    navigateToField(simdjson::simdjson_result<simdjson::ondemand::document_reference>& doc, const std::string_view fieldPath)
     {
-        /// Strip leading '/' from the JSON Pointer path
-        auto path = jsonPointerPath.substr(1);
-
-        auto slashPos = path.find('/');
+        auto slashPos = fieldPath.find('/');
         if (slashPos == std::string_view::npos)
         {
             /// Simple (non-nested) field
-            return doc.find_field_unordered(path);
+            return doc.find_field_unordered(fieldPath);
         }
 
         /// Nested field: navigate step by step through each path segment
-        auto result = doc.find_field_unordered(path.substr(0, slashPos));
-        path = path.substr(slashPos + 1);
+        auto result = doc.find_field_unordered(fieldPath.substr(0, slashPos));
+        auto path = fieldPath.substr(slashPos + 1);
 
         for (slashPos = path.find('/'); slashPos != std::string_view::npos; slashPos = path.find('/'))
         {

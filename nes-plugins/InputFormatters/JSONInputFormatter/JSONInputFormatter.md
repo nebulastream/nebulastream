@@ -19,11 +19,11 @@ Every type can be declared nullable (omit `NOT NULL`) or non-nullable (`NOT NULL
 
 ## Basic Usage
 
-Each JSON tuple is a single JSON object. Fields are matched **case-insensitively** by name. Field order in the JSON object does not matter.
+Each JSON tuple is a single JSON object. Unquoted field names are case-insensitive and uppercased internally, so the JSON keys must be uppercase to match. Field order in the JSON object does not matter.
 
 ```sql
-CREATE LOGICAL SOURCE mySource(key UINT64 NOT NULL, value UINT64 NOT NULL, name VARSIZED NOT NULL);
-CREATE PHYSICAL SOURCE FOR mySource TYPE File SET("JSON" AS PARSER.`TYPE`);
+CREATE LOGICAL SOURCE mySource(KEY UINT64 NOT NULL, VALUE UINT64 NOT NULL, NAME VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR mySource TYPE File SET('JSON' AS PARSER."TYPE");
 ```
 
 ```json
@@ -34,17 +34,17 @@ Extra fields in the JSON that are not in the schema are silently ignored. Whites
 
 ## Nested Field Access
 
-Nested JSON objects are accessed by encoding the path in the schema field name using `/` as the separator.
+Nested JSON objects are accessed by encoding the path in the schema field name using `/` as the separator. Since `/` is not valid in unquoted SQL identifiers, nested field names must be double-quoted.
 
 ### Syntax
 
-Use backtick-quoted field names with `/` separating each nesting level:
+Use double-quoted field names with `/` separating each nesting level:
 
 ```sql
 CREATE LOGICAL SOURCE nested(
-    key UINT64,
-    `EXTRA_KEY/NAME` VARSIZED,
-    `milk/cycles/left` FLOAT64
+    KEY UINT64,
+    "EXTRA_KEY/NAME" VARSIZED,
+    "MILK/CYCLES/LEFT" FLOAT64
 );
 ```
 
@@ -54,7 +54,7 @@ This maps to the following JSON structure:
 {
     "KEY": 1,
     "EXTRA_KEY": { "NAME": "max" },
-    "milk": { "cycles": { "left": 0.5 } }
+    "MILK": { "CYCLES": { "LEFT": 0.5 } }
 }
 ```
 
@@ -63,9 +63,9 @@ This maps to the following JSON structure:
 There is no practical limit on nesting depth. Fields at 1, 2, 3, or more levels deep are all supported:
 
 ```sql
-`info/city`              -- 1 level:  {"info": {"city": "berlin"}}
-`milk/cycles/left`       -- 2 levels: {"milk": {"cycles": {"left": 0}}}
-`org/team/lead`          -- 2 levels: {"org": {"team": {"lead": "carol"}}}
+"INFO/CITY"              -- 1 level:  {"INFO": {"CITY": "berlin"}}
+"MILK/CYCLES/LEFT"       -- 2 levels: {"MILK": {"CYCLES": {"LEFT": 0}}}
+"ORG/TEAM/LEAD"          -- 2 levels: {"ORG": {"TEAM": {"LEAD": "carol"}}}
 ```
 
 ### Multiple Fields from Same Parent
@@ -74,15 +74,15 @@ Multiple fields can be extracted from the same nested parent or from sibling par
 
 ```sql
 CREATE LOGICAL SOURCE sensors(
-    `source/name` VARSIZED NOT NULL,
-    `source/location` VARSIZED NOT NULL,
-    `target/name` VARSIZED NOT NULL,
-    `target/location` VARSIZED NOT NULL
+    "SOURCE/NAME" VARSIZED NOT NULL,
+    "SOURCE/LOCATION" VARSIZED NOT NULL,
+    "TARGET/NAME" VARSIZED NOT NULL,
+    "TARGET/LOCATION" VARSIZED NOT NULL
 );
 ```
 
 ```json
-{"source": {"name": "sensor-1", "location": "room-a"}, "target": {"name": "actuator-1", "location": "room-b"}}
+{"SOURCE": {"NAME": "sensor-1", "LOCATION": "room-a"}, "TARGET": {"NAME": "actuator-1", "LOCATION": "room-b"}}
 ```
 
 ## Null Handling
@@ -93,7 +93,7 @@ Nullable fields handle three cases gracefully:
 |----------|--------|
 | Explicit `null` value: `{"KEY": null}` | `NULL` |
 | Missing field: `{"OTHER_KEY": 1}` | `NULL` |
-| Missing parent object (nested): `{"id": 1}` when reading `info/city` | `NULL` |
+| Missing parent object (nested): `{"ID": 1}` when reading `"INFO/CITY"` | `NULL` |
 
 For **non-nullable** fields (`NOT NULL`), any of these cases produces an error (`FieldNotFound`, error code 2004).
 
@@ -127,3 +127,4 @@ SIMDJSON's ondemand parser has a default batch size of **100,000 bytes**. If a s
 - Uses SIMDJSON's `ondemand` parser in single-threaded mode for lazy, streaming evaluation.
 - Field lookup uses `find_field_unordered()` rather than `at_pointer()` to preserve the internal string buffer. This ensures that `string_view` references to variable-sized data remain valid across multiple field accesses within the same tuple.
 - Nested paths are navigated step-by-step (splitting on `/` and calling `find_field_unordered()` at each level) rather than using JSON Pointer, again to preserve buffer lifetime.
+- Unquoted identifiers are uppercased internally, so JSON keys must be uppercase to match. Use double-quoted identifiers for case-sensitive matching.
