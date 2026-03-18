@@ -58,13 +58,14 @@ struct VarSizedResult
 VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<SIMDJSONMetaData*>& metaData,
     const ArenaRef& arenaRef)
 {
     const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
-        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, Arena* arena)
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, Arena* arena)
         {
             thread_local auto result = VarSizedResult{};
+            auto* metaData = fieldIndexFunction->getMetaData();
+            INVARIANT(metaData != nullptr, "SIMDJSON metadata must be available during parsing");
             INVARIANT(
                 fieldIndex < metaData->getNumberOfFields(),
                 "fieldIndex {} is out or bounds for schema keys of size: {}",
@@ -85,7 +86,6 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
         },
         fieldIdx,
         fieldIndexFunction,
-        metaData,
         arenaRef.getArena());
 
     VariableSizedData varSizedString{
@@ -100,61 +100,60 @@ void SIMDJSONFIF::writeValueToRecord(
     const std::string& fieldName,
     const nautilus::val<FieldIndex>& fieldIdx,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<const SIMDJSONMetaData*>& metaData,
     ArenaRef& arenaRef) const
 {
     switch (physicalType)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::CHAR: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction, metaData));
+            record.write(fieldName, parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction));
             return;
         }
         case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData, arenaRef));
+            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, arenaRef));
             return;
         }
         case DataType::Type::UNDEFINED:

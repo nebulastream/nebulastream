@@ -27,6 +27,12 @@ class EqualsPhysicalFunction final : public PhysicalFunctionConcept
 public:
     EqualsPhysicalFunction(PhysicalFunction leftPhysicalFunction, PhysicalFunction rightPhysicalFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    void collectRuntimeDynamicPointerBindings(
+        std::string_view namePrefix, std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override
+    {
+        leftPhysicalFunction.collectRuntimeDynamicPointerBindings(appendDynamicPointerBindingName(namePrefix, ":lhs"), dynamicPointerBindings);
+        rightPhysicalFunction.collectRuntimeDynamicPointerBindings(appendDynamicPointerBindingName(namePrefix, ":rhs"), dynamicPointerBindings);
+    }
 
 private:
     PhysicalFunction leftPhysicalFunction;

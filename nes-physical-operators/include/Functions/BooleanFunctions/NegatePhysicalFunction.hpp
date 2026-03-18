@@ -28,6 +28,11 @@ class NegatePhysicalFunction final : public PhysicalFunctionConcept
 public:
     explicit NegatePhysicalFunction(PhysicalFunction childFunction);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    void collectRuntimeDynamicPointerBindings(
+        std::string_view namePrefix, std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override
+    {
+        childFunction.collectRuntimeDynamicPointerBindings(appendDynamicPointerBindingName(namePrefix, ":child"), dynamicPointerBindings);
+    }
 
 private:
     PhysicalFunction childFunction;

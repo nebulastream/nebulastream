@@ -17,6 +17,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -32,8 +33,18 @@ class ConstantValueVariableSizePhysicalFunction final : public PhysicalFunctionC
 public:
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override;
+    void collectRuntimeDynamicPointerBindings(
+        std::string_view namePrefix, std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override
+    {
+        dynamicPointerName = appendDynamicPointerBindingName(namePrefix, ":data");
+        if (data != nullptr && data->data() != nullptr)
+        {
+            dynamicPointerBindings.emplace_back(RuntimeDynamicPointerBinding::create(dynamicPointerName, data, data->data()));
+        }
+    }
 
 private:
-    std::vector<int8_t> data;
+    std::shared_ptr<std::vector<int8_t>> data;
+    mutable std::string dynamicPointerName;
 };
 }

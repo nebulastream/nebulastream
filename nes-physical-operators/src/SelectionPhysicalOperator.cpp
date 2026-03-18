@@ -13,6 +13,7 @@
 */
 
 #include <optional>
+#include <string>
 #include <utility>
 #include <Nautilus/Interface/Record.hpp>
 #include <ExecutionContext.hpp>
@@ -39,6 +40,13 @@ std::optional<PhysicalOperator> SelectionPhysicalOperator::getChild() const
 void SelectionPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
+}
+
+void SelectionPhysicalOperator::collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
+{
+    function.collectRuntimeDynamicPointerBindings(
+        "selection:" + std::to_string(dynamicPointerBindings.size()), dynamicPointerBindings);
+    PhysicalOperatorConcept::collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
 }
 
 }

@@ -28,6 +28,7 @@ class SelectionPhysicalOperator final : public PhysicalOperatorConcept
 public:
     explicit SelectionPhysicalOperator(PhysicalFunction function) : function(std::move(function)) { };
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;

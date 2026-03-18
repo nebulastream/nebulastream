@@ -154,12 +154,13 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     template <typename T>
     nautilus::val<T> parseNonStringValueIntoNautilusRecord(
         nautilus::val<FieldIndex> fieldIdx,
-        nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
-        nautilus::val<const SIMDJSONMetaData*> metaData) const
+        nautilus::val<SIMDJSONFIF*> fieldIndexFunction) const
     {
         return nautilus::invoke(
-            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+            +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction)
             {
+                const auto* metaData = fieldIndexFunction->getMetaData();
+                INVARIANT(metaData != nullptr, "SIMDJSON metadata must be available during parsing");
                 const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
                 auto currentDoc = *fieldIndexFunction->docStreamIterator;
                 auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
@@ -202,14 +203,12 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 }
             },
             fieldIdx,
-            fieldIndexFunction,
-            metaData);
+            fieldIndexFunction);
     }
 
     static VariableSizedData parseStringIntoNautilusRecord(
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<SIMDJSONMetaData*>& metaData,
         const ArenaRef& arenaRef);
 
     void writeValueToRecord(
@@ -218,7 +217,6 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIdx,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<const SIMDJSONMetaData*>& metaData,
         ArenaRef& arenaRef) const;
 
     template <typename IndexerMetaData>
@@ -248,7 +246,6 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 fieldName,
                 fieldIdx,
                 fieldIndexFunction,
-                nautilus::val<const IndexerMetaData*>(&metaData),
                 arenaRef);
         }
         /// Increment iterator and return record
@@ -267,6 +264,9 @@ public:
     SIMDJSONFIF() = default;
     ~SIMDJSONFIF() = default;
 
+    void setMetaData(const SIMDJSONMetaData* metaData) { this->metaData = metaData; }
+    [[nodiscard]] const SIMDJSONMetaData* getMetaData() const { return metaData; }
+
     /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.
     void markNoTupleDelimiters();
 
@@ -278,6 +278,7 @@ public:
 
 private:
     bool isAtLastTuple{false};
+    const SIMDJSONMetaData* metaData{nullptr};
     size_t numberOfFieldsInSchema{};
     FieldIndex offsetOfFirstTuple{};
     FieldIndex offsetOfLastTuple{};

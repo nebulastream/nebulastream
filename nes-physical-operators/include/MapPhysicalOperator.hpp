@@ -29,6 +29,7 @@ class MapPhysicalOperator final : public PhysicalOperatorConcept
 public:
     MapPhysicalOperator(Record::RecordFieldIdentifier fieldToWriteTo, PhysicalFunction mapFunction);
     void execute(ExecutionContext& ctx, Record& record) const override;
+    void collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override;
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;

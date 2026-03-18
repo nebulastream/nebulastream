@@ -14,11 +14,15 @@
 #pragma once
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 #include <type_traits>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <Runtime/Execution/RuntimeDynamicPointerBinding.hpp>
 #include <nameof.hpp>
 
 namespace NES
@@ -34,7 +38,16 @@ struct PhysicalFunctionConcept
     /// @param arena The arena to allocate memory from.
     /// @return The result of the function evaluation.
     [[nodiscard]] virtual VarVal execute(const Record& record, ArenaRef& arena) const = 0;
+    virtual void collectRuntimeDynamicPointerBindings(
+        std::string_view, std::vector<RuntimeDynamicPointerBinding>&) const
+    {
+    }
 };
+
+inline std::string appendDynamicPointerBindingName(std::string_view prefix, std::string_view suffix)
+{
+    return std::string(prefix) + std::string(suffix);
+}
 
 /// A type-erased wrapper for physical functions.
 /// C.f.: https://sean-parent.stlab.cc/presentations/2017-01-18-runtime-polymorphism/2017-01-18-runtime-polymorphism.pdf
@@ -58,6 +71,11 @@ struct PhysicalFunction
     }
 
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const { return self->execute(record, arena); }
+    void collectRuntimeDynamicPointerBindings(
+        std::string_view namePrefix, std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
+    {
+        self->collectRuntimeDynamicPointerBindings(namePrefix, dynamicPointerBindings);
+    }
 
     /// Attempts to get the underlying function as type FunctionType.
     /// @tparam FunctionType The type to try to get the function as.
@@ -115,6 +133,11 @@ private:
         [[nodiscard]] std::shared_ptr<Concept> clone() const override { return std::make_shared<Model>(data); }
 
         [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const override { return data.execute(record, arena); }
+        void collectRuntimeDynamicPointerBindings(
+            std::string_view namePrefix, std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const override
+        {
+            data.collectRuntimeDynamicPointerBindings(namePrefix, dynamicPointerBindings);
+        }
     };
 
     std::shared_ptr<Concept> self;

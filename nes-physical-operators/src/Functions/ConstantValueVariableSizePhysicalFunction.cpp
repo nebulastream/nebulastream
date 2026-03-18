@@ -25,17 +25,19 @@
 
 namespace NES
 {
-ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size) : data(size)
+ConstantValueVariableSizePhysicalFunction::ConstantValueVariableSizePhysicalFunction(const int8_t* value, const size_t size)
+    : data(std::make_shared<std::vector<int8_t>>(size))
 {
-    /// We copy the value into the data vector owned by the function
-    /// since the value might be destroyed during the lifetime of the function.
-    /// In the constructor, we have allocated the memory for the value via the std::vector ctor.
-    std::memcpy(data.data(), value, size);
+    std::memcpy(data->data(), value, size);
 }
 
 VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRef&) const
 {
-    VariableSizedData result(const_cast<int8_t*>(data.data()), data.size());
+    auto* dataPointer = const_cast<int8_t*>(data->data());
+    VariableSizedData result(
+        dynamicPointerName.empty() || dataPointer == nullptr ? nautilus::val<int8_t*>(dataPointer)
+                                                             : nautilus::use_dynamic_pointer(dynamicPointerName, dataPointer),
+        data->size());
     return result;
 }
 

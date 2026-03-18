@@ -13,6 +13,7 @@
 */
 
 #include <optional>
+#include <string>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -45,6 +46,12 @@ std::optional<PhysicalOperator> MapPhysicalOperator::getChild() const
 void MapPhysicalOperator::setChild(PhysicalOperator child)
 {
     this->child = std::move(child);
+}
+
+void MapPhysicalOperator::collectRuntimeDynamicPointerBindings(std::vector<RuntimeDynamicPointerBinding>& dynamicPointerBindings) const
+{
+    mapFunction.collectRuntimeDynamicPointerBindings("map:" + std::to_string(dynamicPointerBindings.size()), dynamicPointerBindings);
+    PhysicalOperatorConcept::collectRuntimeDynamicPointerBindings(dynamicPointerBindings);
 }
 
 }
