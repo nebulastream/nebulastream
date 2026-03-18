@@ -54,9 +54,10 @@ std::expected<SinkDescriptor, Exception> SinkCatalog::addSinkDescriptor(
 
     const auto lockedSinks = sinks.wlock();
     const auto upperName = toUpperCase(sinkName);
-    if (lockedSinks->contains(upperName))
+    if (const auto it = lockedSinks->find(upperName); it != lockedSinks->end())
     {
-        return std::unexpected{SinkAlreadyExists(sinkName)};
+        NES_DEBUG("Sink '{}' already exists, returning existing descriptor", sinkName);
+        return it->second;
     }
     auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, formatConfig, std::move(descriptorConfigOpt.value())};
     lockedSinks->emplace(upperName, sinkDescriptor);
