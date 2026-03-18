@@ -14,12 +14,14 @@
 
 #pragma once
 #include <atomic>
+#include <expected>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <DataTypes/Schema.hpp>
+#include <ErrorHandling.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
@@ -29,7 +31,7 @@ namespace NES
 class SinkCatalog
 {
 public:
-    std::optional<SinkDescriptor> addSinkDescriptor(
+    std::expected<SinkDescriptor, Exception> addSinkDescriptor(
         std::string sinkName,
         const Schema& schema,
         std::string_view sinkType,

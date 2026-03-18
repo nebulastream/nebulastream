@@ -153,12 +153,13 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(
-            statement.name, statement.schema, statement.sinkType, statement.sinkConfig, statement.formatConfig))
+    auto result = sinkCatalog->addSinkDescriptor(
+        statement.name, statement.schema, statement.sinkType, statement.sinkConfig, statement.formatConfig);
+    if (result.has_value())
     {
-        return CreateSinkStatementResult{created.value()};
+        return CreateSinkStatementResult{std::move(result.value())};
     }
-    return std::unexpected{SinkAlreadyExists(statement.name)};
+    return std::unexpected{std::move(result.error())};
 }
 
 std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operator()(const ShowSinksStatement& statement) const
