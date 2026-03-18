@@ -39,7 +39,6 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -124,16 +123,6 @@ void FileSink::stop(PipelineExecutionContext&)
     const auto stream = outputFileStream.wlock();
     stream->flush();
     stream->close();
-}
-
-DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return FileSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)

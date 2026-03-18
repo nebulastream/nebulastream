@@ -47,14 +47,9 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
                 return false;
             }
 
-            if (value > std::thread::hardware_concurrency())
-            {
-                NES_ERROR(
-                    "Cannot use more worker thread than available cpus: {} vs. {} available CPUs",
-                    value,
-                    std::thread::hardware_concurrency());
-                return false;
-            }
+            /// Note: we intentionally do not check against std::thread::hardware_concurrency() here.
+            /// hardware_concurrency() is unreliable (may return 0 or 1 in containers/WASM),
+            /// and exceeding it is a performance issue, not a configuration error.
 
             return true;
         }

@@ -12,19 +12,22 @@
     limitations under the License.
 */
 
-#include <FileSource.hpp>
+#include <Sources/FileSourceValidation.hpp>
 
+#include <atomic>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
-#include <format>
 #include <fstream>
+#include <format>
 #include <ios>
 #include <istream>
 #include <memory>
 #include <ostream>
 #include <stop_token>
 #include <string>
+#include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
@@ -37,10 +40,37 @@
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
+
+class FileSource final : public Source
+{
+public:
+    static constexpr std::string_view NAME = "File";
+
+    explicit FileSource(const SourceDescriptor& sourceDescriptor);
+    ~FileSource() override = default;
+
+    FileSource(const FileSource&) = delete;
+    FileSource& operator=(const FileSource&) = delete;
+    FileSource(FileSource&&) = delete;
+    FileSource& operator=(FileSource&&) = delete;
+
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+
+    /// Open file socket.
+    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
+    /// Close file socket.
+    void close() override;
+
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
+
+private:
+    std::ifstream inputFile;
+    std::string filePath;
+    std::atomic<size_t> totalNumBytesRead;
+};
 
 FileSource::FileSource(const SourceDescriptor& sourceDescriptor) : filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
 {
@@ -74,20 +104,10 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
-}
-
 std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
-}
-
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)

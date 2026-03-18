@@ -36,7 +36,6 @@
 #include <GeneratorRate.hpp>
 #include <SinusGeneratorRate.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -191,18 +190,6 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
     str << "\n\tseed: " << this->seed;
     str << ")\n";
     return str;
-}
-
-DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
-}
-
-SourceValidationRegistryReturnType
-///NOLINTNEXTLINE (performance-unnecessary-value-param)
-RegisterGeneratorSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return GeneratorSource::validateAndFormat(sourceConfig.config);
 }
 
 ///NOLINTNEXTLINE (performance-unnecessary-value-param)

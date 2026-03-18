@@ -24,7 +24,6 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
-#include <SinkValidationRegistry.hpp>
 
 namespace NES
 {
@@ -45,16 +44,6 @@ void VoidSink::stop(PipelineExecutionContext&)
 void VoidSink::execute([[maybe_unused]] const TupleBuffer& inputTupleBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
-}
-
-DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersVoid>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterVoidSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return VoidSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType RegisterVoidSink(SinkRegistryArguments sinkRegistryArguments)

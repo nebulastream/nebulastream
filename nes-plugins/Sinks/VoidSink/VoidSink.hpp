@@ -25,6 +25,7 @@
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <VoidSinkValidation.hpp>
 
 namespace NES
 {
@@ -41,17 +42,10 @@ public:
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "VoidSink"; }
 };
 
-struct ConfigParametersVoid
-{
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
-};
 }
 
 FMT_OSTREAM(NES::VoidSink);

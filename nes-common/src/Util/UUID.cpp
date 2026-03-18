@@ -17,6 +17,7 @@
 #include <array>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <utility>
@@ -60,6 +61,6 @@ NES::UUID NES::stringToUUIDOrThrow(const std::string& uuidString)
 
 size_t std::hash<NES::UUID>::operator()(const NES::UUID& uuid) const noexcept
 {
-    const auto [right, left] = std::bit_cast<std::array<size_t, 2>>(uuid);
+    const auto [right, left] = std::bit_cast<std::array<uint64_t, 2>>(uuid);
     return folly::hash::hash_combine(right, left);
 }

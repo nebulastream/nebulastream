@@ -1,0 +1,13 @@
+{
+  "name": "nes-wasm",
+  "version-string": "0.2.0",
+  "dependencies": [
+    "antlr4",
+    "yaml-cpp",
+    "spdlog",
+    "fmt",
+    "nameof",
+    "magic-enum",
+    "libuuid"
+  ]
+}

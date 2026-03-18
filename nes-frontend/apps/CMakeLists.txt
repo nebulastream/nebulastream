@@ -33,7 +33,7 @@ target_include_directories(nes-repl
 # optimizations.
 
 add_executable(nes-cli cli/CLIStarter.cpp cli/QueryStateBackend.cpp)
-target_link_libraries(nes-cli PUBLIC nes-frontend-lib argparse::argparse yaml-cpp::yaml-cpp)
+target_link_libraries(nes-cli PUBLIC nes-frontend-lib argparse::argparse yaml-cpp::yaml-cpp nes-validator)
 
 target_include_directories(nes-cli
         PRIVATE cli

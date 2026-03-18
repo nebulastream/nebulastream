@@ -12,13 +12,31 @@
 
 # Set Sinks and Headers
 add_subdirectory(src)
+
+# --- Validation-only target (no runtime deps) ---
+add_library(nes-sinks-validation
+    src/FileSinkValidation.cpp
+    src/PrintSinkValidation.cpp
+)
+target_link_libraries(nes-sinks-validation PUBLIC nes-common nes-configurations nes-data-types)
+target_include_directories(nes-sinks-validation PUBLIC
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+)
+
+# Create sink validation registry
+create_plugin_registry_library(nes-sinks-validation-registry nes-sinks-validation)
+target_link_libraries(nes-sinks-validation PRIVATE nes-sinks-validation-registry)
+generate_plugin_registrars(nes-sinks-validation SinkValidation)
+
+# --- Runtime target ---
 get_source(nes-sinks NES_SINKS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-sinks ${NES_SINKS_SOURCE_FILES})
 
 # Todo: #72 we can potentially remove nes-data-types, if we move parsing/formatting out of nes-sinks
-target_link_libraries(nes-sinks PUBLIC nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
+target_link_libraries(nes-sinks PUBLIC nes-sinks-validation nes-common nes-configurations nes-data-types nes-memory nes-executable nes-network-bindings)
 
 target_include_directories(nes-sinks PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -29,4 +47,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-sinks REUSE_FROM nes-common)
 endif ()
 
-create_registries_for_component(Sink SinkValidation)
+# Runtime registries (Sink only -- SinkValidation owned by validation target)
+create_registries_for_component(Sink)

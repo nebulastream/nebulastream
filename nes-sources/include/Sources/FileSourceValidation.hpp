@@ -14,55 +14,17 @@
 
 #pragma once
 
-#include <atomic>
-#include <cstddef>
-#include <fstream>
-#include <memory>
 #include <optional>
-#include <stop_token>
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Configurations/Descriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
 namespace NES
 {
 
 static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
-
-class FileSource final : public Source
-{
-public:
-    static constexpr std::string_view NAME = "File";
-
-    explicit FileSource(const SourceDescriptor& sourceDescriptor);
-    ~FileSource() override = default;
-
-    FileSource(const FileSource&) = delete;
-    FileSource& operator=(const FileSource&) = delete;
-    FileSource(FileSource&&) = delete;
-    FileSource& operator=(FileSource&&) = delete;
-
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
-
-    /// Open file socket.
-    void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
-    /// Close file socket.
-    void close() override;
-
-    /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
-
-    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
-
-private:
-    std::ifstream inputFile;
-    std::string filePath;
-    std::atomic<size_t> totalNumBytesRead;
-};
 
 struct ConfigParametersCSV
 {
@@ -74,5 +36,8 @@ struct ConfigParametersCSV
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
+
+/// Validates and formats a File source config map.
+DescriptorConfig::Config validateFileSourceConfig(std::unordered_map<std::string, std::string> config);
 
 }

@@ -1,0 +1,8 @@
+cmake_minimum_required(VERSION 3.21)
+project(nes-wasm LANGUAGES CXX)
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+add_subdirectory(spike-cpp23)
+add_subdirectory(spike-embind)
+add_subdirectory(spike-antlr4)
+add_subdirectory(nes-validator)

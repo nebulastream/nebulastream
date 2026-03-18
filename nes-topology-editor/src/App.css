@@ -1,0 +1,132 @@
+.app-container {
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Toolbar */
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.toolbar__btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 12px;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  background: white;
+  font-size: 13px;
+  cursor: pointer;
+  color: #334155;
+}
+
+.toolbar__btn:hover {
+  background: #f1f5f9;
+}
+
+.toolbar__btn--disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.toolbar__btn--disabled:hover {
+  background: white;
+}
+
+/* Main row: canvas + sidebar */
+.main-row {
+  display: flex;
+  flex-direction: row;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.canvas-area {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Canvas container (used by Canvas component) */
+.canvas-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* ===================== Dark Mode ===================== */
+
+/* App container */
+.dark .app-container {
+  background: #111827;
+  color: #f3f4f6;
+}
+
+/* Toolbar */
+.dark .toolbar {
+  background: #1f2937;
+  border-bottom-color: #374151;
+}
+
+.dark .toolbar__btn {
+  background: #374151;
+  border-color: #4b5563;
+  color: #e5e7eb;
+}
+
+.dark .toolbar__btn:hover {
+  background: #4b5563;
+}
+
+.dark .toolbar__btn--disabled {
+  opacity: 0.5;
+}
+
+.dark .toolbar__btn--disabled:hover {
+  background: #374151;
+}
+
+/* React Flow canvas */
+.dark .react-flow {
+  background: #111827 !important;
+}
+
+.dark .react-flow__minimap {
+  background: #1f2937 !important;
+}
+
+.dark .react-flow__controls button {
+  background: #374151 !important;
+  border-color: #4b5563 !important;
+  fill: #e5e7eb !important;
+  color: #e5e7eb !important;
+}
+
+.dark .react-flow__controls button:hover {
+  background: #4b5563 !important;
+}
+
+.dark .react-flow__controls {
+  border-color: #4b5563 !important;
+}
+
+.dark .react-flow__attribution {
+  background: rgba(31, 41, 55, 0.8) !important;
+}
+
+.dark .react-flow__attribution a {
+  color: #9ca3af !important;
+}
+
+/* StatusBar spinner animation */
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
