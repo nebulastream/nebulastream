@@ -2,7 +2,7 @@
 # Contains only the runtime dependencies: libc++, grpc_health_probe, and basic utilities.
 # This image is pre-built and pushed to the registry so that downstream images
 # (worker, CLI, REPL, test containers) can skip network-heavy apt/wget steps at build time.
-FROM ubuntu:24.04
+FROM ubuntu:25.04
 
 ARG LLVM_TOOLCHAIN_VERSION=19
 ARG GRPC_HEALTH_PROBE_VERSION=v0.4.40

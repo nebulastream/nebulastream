@@ -242,24 +242,24 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
 {
     const testing::InSequence seq;
 
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
     SystestProgressTracker progressTracker;
 
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
+    auto [submitter, mockBackend] = createQuerySubmitter();
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
     auto runAfter = std::make_pair(std::string{"test_query"}, SystestQueryId(std::numeric_limits<uint64_t>::max()));
 
     EXPECT_ANY_THROW(
         const auto result = runQueries(
             {makeQuery(
-                SystestQuery::PlanInfo{plan, Schema{}},
+                SystestQuery::PlanInfo{distributedPlan, Schema{}},
                 ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt},
                 runAfter,
                 dummyQueryId)},
@@ -272,12 +272,12 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
 TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 {
     const testing::InSequence seq;
-    constexpr QueryId queryId1{1};
-    constexpr QueryId queryId2{2};
-    constexpr QueryId queryId3{3};
+    const auto queryId1 = randomQueryId();
+    const auto queryId2 = randomQueryId();
+    const auto queryId3 = randomQueryId();
 
-    auto mockBackend = std::make_unique<MockQuerySubmissionBackend>();
 
+    auto [submitter, mockBackend] = createQuerySubmitter();
     EXPECT_CALL(*mockBackend, registerQuery(::testing::_)).WillOnce(testing::Return(std::expected<QueryId, Exception>{queryId1}));
     EXPECT_CALL(*mockBackend, start(queryId1));
 
@@ -300,26 +300,26 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
         .WillRepeatedly(testing::Return(makeSummary(queryId3, QueryState::Stopped, nullptr)));
 
     SystestProgressTracker progressTracker;
-    QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
+    const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
 
-    auto query1 = makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));
+    auto query1 = makeQuery(SystestQuery::PlanInfo{distributedPlan, Schema{}}, std::vector<std::string>{}, std::nullopt, SystestQueryId(1));
 
     auto query2 = makeQuery(
-        SystestQuery::PlanInfo{plan, Schema{}},
+        SystestQuery::PlanInfo{distributedPlan, Schema{}},
         std::vector<std::string>{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(1)),
         SystestQueryId(2));
 
     auto query3 = makeQuery(
-        SystestQuery::PlanInfo{plan, Schema{}},
+        SystestQuery::PlanInfo{distributedPlan, Schema{}},
         std::vector<std::string>{},
         std::make_pair(std::string{"test_query"}, SystestQueryId(2)),
         SystestQueryId(3));

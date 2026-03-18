@@ -139,11 +139,12 @@ teardown() {
 
 function setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  local compose_output
-  compose_output=$(docker compose up -d --wait 2>&1)
-  local exit_code=$?
-  echo "# [docker compose up] (status=$exit_code):" >&3
-  while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+  local compose_output exit_code=0
+  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
+  if [ "$exit_code" -ne 0 ]; then
+    echo "# [docker compose up] (status=$exit_code):" >&3
+    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
+  fi
   return $exit_code
 }
 
