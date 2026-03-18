@@ -389,7 +389,7 @@ void AntlrSQLQueryPlanCreator::exitDereference(AntlrSQLParser::DereferenceContex
 
     /// Build a qualified field name from the dereference expression: base.fieldName -> BASE$FIELDNAME
     /// This supports the table.column syntax for disambiguating fields from different join sides.
-    const auto* const baseColumnRef = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(context->base);
+    auto* const baseColumnRef = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(context->base);
     if (baseColumnRef == nullptr)
     {
         throw InvalidQuerySyntax("Only simple table.column dereference is supported, but got: {}", context->getText());
