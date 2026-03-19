@@ -14,6 +14,10 @@
 
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -24,8 +28,34 @@
 namespace NES
 {
 
+const std::type_info& InlineSinkBindingRule::getType()
+{
+    return typeid(InlineSinkBindingRule);
+}
 
-void InlineSinkBindingRule::apply(LogicalPlan& queryPlan) const
+std::string_view InlineSinkBindingRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> InlineSinkBindingRule::dependsOn() const
+{
+    return {};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> InlineSinkBindingRule::requiredBy() const
+{
+    return {};
+}
+
+bool InlineSinkBindingRule::operator==(const InlineSinkBindingRule& other) const
+{
+    return sinkCatalog == other.sinkCatalog;
+}
+
+LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRootOperators;
     for (const auto& rootOperator : queryPlan.getRootOperators())
@@ -54,7 +84,7 @@ void InlineSinkBindingRule::apply(LogicalPlan& queryPlan) const
         }
     }
 
-    queryPlan = queryPlan.withRootOperators(newRootOperators);
+    return queryPlan.withRootOperators(newRootOperators);
 }
 
 

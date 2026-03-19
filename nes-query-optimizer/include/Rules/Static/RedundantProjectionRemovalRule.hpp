@@ -14,7 +14,12 @@
 
 #pragma once
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
@@ -25,6 +30,15 @@ namespace NES
 class RedundantProjectionRemovalRule
 {
 public:
-    void apply(LogicalPlan& queryPlan) const;
+    static constexpr std::string_view NAME = "RedundantProjectionRemovalRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const RedundantProjectionRemovalRule& other) const;
 };
+
+static_assert(PlanRuleConcept<RedundantProjectionRemovalRule>);
 }

@@ -14,17 +14,31 @@
 
 #pragma once
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
 
 /**
- * @brief This rule removes redundant unions with only a single child.
+ * @brief This pass removes redundant unions with only a single child.
  */
 class RedundantUnionRemovalRule
 {
 public:
-    void apply(LogicalPlan& queryPlan) const; ///NOLINT(readability-convert-member-functions-to-static)
+    static constexpr std::string_view NAME = "RedundantUnionRemovalRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const RedundantUnionRemovalRule& other) const;
 };
+
+static_assert(PlanRuleConcept<RedundantUnionRemovalRule>);
 }

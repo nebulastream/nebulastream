@@ -14,9 +14,14 @@
 
 #pragma once
 #include <memory>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES
@@ -30,11 +35,19 @@ class InlineSourceBindingRule
 public:
     explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
-    void apply(LogicalPlan& queryPlan) const;
+    static constexpr std::string_view NAME = "InlineSourceBindingRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    bool operator==(const InlineSourceBindingRule& other) const;
 
 private:
     [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 
+static_assert(PlanRuleConcept<InlineSourceBindingRule>);
 }

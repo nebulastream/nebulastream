@@ -17,6 +17,10 @@
 #include <algorithm>
 #include <iterator>
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <unordered_set>
 #include <utility>
 #include <vector>
@@ -26,6 +30,8 @@
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSourceBindingRule.hpp>
+#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -70,7 +76,35 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-void OriginIdInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+const std::type_info& OriginIdInferenceRule::getType()
+{
+    return typeid(OriginIdInferenceRule);
+}
+
+std::string_view OriginIdInferenceRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> OriginIdInferenceRule::dependsOn() const
+{
+    return {typeid(InlineSourceBindingRule), typeid(LogicalSourceExpansionRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> OriginIdInferenceRule::requiredBy() const
+{
+    return {};
+}
+
+bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
+{
+    return true;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};
@@ -81,6 +115,6 @@ void OriginIdInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(reada
     {
         newSinks.push_back(propagateOriginIds(sinkOperator, originIdCounter));
     }
-    queryPlan = queryPlan.withRootOperators(newSinks);
+    return queryPlan.withRootOperators(newSinks);
 }
 }
