@@ -363,7 +363,7 @@
             };
             clangTidyRunner = pkgs.writeShellApplication {
               name = "nes-clang-tidy";
-              runtimeInputs = [ pkgs.coreutils pkgs.git pkgs.gnugrep pkgs.nix clangTidyDiffRunner clangTidyFixRunner ];
+              runtimeInputs = [ pkgs.coreutils pkgs.git pkgs.gnugrep pkgs.nix ];
               text = ''
                 set -euo pipefail
 
@@ -400,34 +400,41 @@
                   exit 0
                 fi
 
-                echo "nes-clang-tidy: configuring build/"
-                ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
+                # shellcheck disable=SC2016
+                exec ./.nix/nix-run.sh bash -lc '
+                  set -euo pipefail
+                  base_ref="$1"
+                  jobs="$2"
 
-                echo "nes-clang-tidy: building generated headers"
-                ./.nix/nix-cmake.sh --build build -j -- -k 0
+                  echo "nes-clang-tidy: configuring build/"
+                  ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
 
-                echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
-                git diff -U0 "$base_ref" -- ':!*.inc' | \
-                  ${clangTidyDiffCommand} \
-                    -clang-tidy-binary nes-clang-tidy-fix \
-                    -p1 \
-                    -path build \
-                    -checks='-*,readability-duplicate-include' \
-                    -config-file .clang-tidy \
-                    -use-color \
-                    -fix \
-                    -j "$jobs"
+                  echo "nes-clang-tidy: building generated headers"
+                  ./.nix/nix-cmake.sh --build build -j -- -k 0
 
-                echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
-                git diff -U0 "$base_ref" -- ':!*.inc' | \
-                  ${clangTidyDiffCommand} \
-                    -clang-tidy-binary nes-clang-tidy-fix \
-                    -p1 \
-                    -path build \
-                    -config-file .clang-tidy \
-                    -use-color \
-                    -fix \
-                    -j "$jobs"
+                  echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
+                  git diff -U0 "$base_ref" -- ":!*.inc" | \
+                    ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
+                      -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                      -p1 \
+                      -path build \
+                      -checks="-*,readability-duplicate-include" \
+                      -config-file .clang-tidy \
+                      -use-color \
+                      -fix \
+                      -j "$jobs"
+
+                  echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
+                  git diff -U0 "$base_ref" -- ":!*.inc" | \
+                    ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
+                      -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                      -p1 \
+                      -path build \
+                      -config-file .clang-tidy \
+                      -use-color \
+                      -fix \
+                      -j "$jobs"
+                ' bash "$base_ref" "$jobs"
               '';
             };
           in
