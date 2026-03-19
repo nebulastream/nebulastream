@@ -19,6 +19,7 @@
 #include <mutex>
 #include <source_location>
 #include <stop_token>
+#include <string>
 #include <thread>
 #include <vector>
 
@@ -35,7 +36,7 @@
 
 // CXX-generated headers for Rust FFI
 #include <nes-source-bindings/lib.h>  // init_source_runtime
-#include <nes-source-lib/src/lib.h>   // spawn_generator_source, stop_source, SourceHandle
+#include <nes-source-lib/src/lib.h>   // spawn_source_by_name, stop_source, SourceHandle
 
 // IoBindings provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
 #include <IoBindings.hpp>
@@ -73,6 +74,16 @@ void wait_for_emits(TokioRecorder& recorder, size_t count, std::source_location 
     }
     EXPECT_TRUE(recorder.cv.wait_for(records.as_lock(), WAIT_TIMEOUT, [&]() { return records->size() >= count; }))
         << "Timeout waiting for " << count << " emits, got " << records->size();
+}
+
+/// Helper: build config vectors for spawn_source_by_name.
+std::pair<std::vector<std::string>, std::vector<std::string>>
+makeGeneratorConfig(uint64_t count, uint64_t intervalMs)
+{
+    return {
+        {"generator_count", "generator_interval_ms"},
+        {std::to_string(count), std::to_string(intervalMs)}
+    };
 }
 
 } // anonymous namespace
@@ -126,10 +137,12 @@ TEST_F(TokioSourceTest, GeneratorEmitsIncrementingValues)
 
     auto errorContext = std::make_unique<ErrorContext>(ErrorContext{SOURCE_ID});
 
-    auto handle = ::spawn_generator_source(
+    auto [keys, values] = makeGeneratorConfig(COUNT, INTERVAL_MS);
+    auto handle = ::spawn_source_by_name(
+        std::string("TokioGenerator"),
         SOURCE_ID,
-        COUNT,
-        INTERVAL_MS,
+        keys,
+        values,
         reinterpret_cast<uintptr_t>(bm.get()),
         INFLIGHT_LIMIT,
         reinterpret_cast<uintptr_t>(bridge_emit),
@@ -201,10 +214,12 @@ TEST_F(TokioSourceTest, BackpressureStability)
 
     auto errorContext = std::make_unique<ErrorContext>(ErrorContext{SOURCE_ID});
 
-    auto handle = ::spawn_generator_source(
+    auto [keys, values] = makeGeneratorConfig(COUNT, INTERVAL_MS);
+    auto handle = ::spawn_source_by_name(
+        std::string("TokioGenerator"),
         SOURCE_ID,
-        COUNT,
-        INTERVAL_MS,
+        keys,
+        values,
         reinterpret_cast<uintptr_t>(bm.get()),
         INFLIGHT_LIMIT,
         reinterpret_cast<uintptr_t>(bridge_emit),
@@ -267,10 +282,12 @@ TEST_F(TokioSourceTest, ShutdownMidEmit)
 
     auto errorContext = std::make_unique<ErrorContext>(ErrorContext{SOURCE_ID});
 
-    auto handle = ::spawn_generator_source(
+    auto [keys, values] = makeGeneratorConfig(COUNT, INTERVAL_MS);
+    auto handle = ::spawn_source_by_name(
+        std::string("TokioGenerator"),
         SOURCE_ID,
-        COUNT,
-        INTERVAL_MS,
+        keys,
+        values,
         reinterpret_cast<uintptr_t>(bm.get()),
         INFLIGHT_LIMIT,
         reinterpret_cast<uintptr_t>(bridge_emit),

@@ -126,3 +126,158 @@ function(create_registries_for_component)
     target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
     generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
 endfunction()
+
+# Register a Rust-backed Tokio source. Zero C++ code per source.
+#
+# Usage:
+#   add_rust_tokio_source(TokioGenerator nes_source_runtime::generator::create_generator_source)
+#   add_rust_tokio_source(TokioTcp nes_tokio_tcp_source::create_tcp_source /path/to/crate)
+#
+# The optional 3rd argument is the absolute path to an external plugin crate.
+# Sources in nes_source_runtime don't need it (it's a dependency of the registry by default).
+function(add_rust_tokio_source plugin_name rust_factory_path)
+    add_plugin(${plugin_name} TokioSource nes-sources)
+    add_plugin(${plugin_name} SourceValidation nes-sources)
+
+    set_property(GLOBAL APPEND PROPERTY NES_RUST_TOKIO_SOURCE_NAMES "${plugin_name}")
+    set_property(GLOBAL APPEND PROPERTY NES_RUST_TOKIO_SOURCE_FACTORIES "${rust_factory_path}")
+
+    # Optional: external crate path (for plugin crates outside nes-sources)
+    if(ARGC GREATER 2)
+        # Extract crate name from factory path (first :: segment)
+        string(REPLACE "::" ";" _parts "${rust_factory_path}")
+        list(GET _parts 0 _crate_name)
+        set_property(GLOBAL APPEND PROPERTY NES_RUST_TOKIO_SOURCE_CRATE_NAMES "${_crate_name}")
+        set_property(GLOBAL APPEND PROPERTY NES_RUST_TOKIO_SOURCE_CRATE_PATHS "${ARGV2}")
+    endif()
+endfunction()
+
+# Generate a standalone registry crate + C++ RustTokioSources.inc from accumulated
+# add_rust_tokio_source() calls. Called via cmake_language(DEFER) after all
+# CMakeLists.txt files are processed.
+#
+# The registry crate is a separate Rust crate that:
+#   - Depends on nes_source_runtime + all plugin crates
+#   - Contains the AnySource enum with dispatch
+#   - Exports extern "C" functions (#[no_mangle]) for spawn + validate
+#   - Is linked at link time via the umbrella crate (nes_source_lib has no
+#     compile-time dependency on plugin crates)
+function(generate_rust_tokio_source_registry)
+    get_property(source_names GLOBAL PROPERTY NES_RUST_TOKIO_SOURCE_NAMES)
+    get_property(factory_paths GLOBAL PROPERTY NES_RUST_TOKIO_SOURCE_FACTORIES)
+    get_property(crate_names GLOBAL PROPERTY NES_RUST_TOKIO_SOURCE_CRATE_NAMES)
+    get_property(crate_paths GLOBAL PROPERTY NES_RUST_TOKIO_SOURCE_CRATE_PATHS)
+
+    if(NOT source_names)
+        return()
+    endif()
+
+    set(registry_dir "${CMAKE_BINARY_DIR}/rust/nes-source-registry")
+    file(MAKE_DIRECTORY "${registry_dir}/src")
+
+    # --- Build Cargo.toml for registry crate ---
+
+    set(cargo_deps "nes_source_runtime = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-runtime\" }\nnes_io_bindings = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-bindings\" }\n")
+    if(crate_names)
+        list(LENGTH crate_names num_crates)
+        math(EXPR last_crate "${num_crates} - 1")
+        foreach(cidx RANGE 0 ${last_crate})
+            list(GET crate_names ${cidx} cname)
+            list(GET crate_paths ${cidx} cpath)
+            string(APPEND cargo_deps "${cname} = { path = \"${cpath}\" }\n")
+        endforeach()
+    endif()
+
+    file(WRITE "${registry_dir}/Cargo.toml"
+"[package]
+name = \"nes_source_registry\"
+version = \"0.1.0\"
+edition = \"2024\"
+
+[lib]
+crate-type = [\"rlib\"]
+
+[dependencies]
+${cargo_deps}")
+
+    # --- Build enum variants and match arms ---
+
+    set(rust_enum_variants "")
+    set(rust_match_run "")
+    set(rust_match_create "")
+    set(rust_match_schema "")
+
+    list(LENGTH source_names num_sources)
+    math(EXPR last_idx "${num_sources} - 1")
+
+    foreach(idx RANGE 0 ${last_idx})
+        list(GET source_names ${idx} name)
+        list(GET factory_paths ${idx} factory_path)
+
+        string(REPLACE "::" ";" path_parts "${factory_path}")
+        list(LENGTH path_parts num_parts)
+
+        math(EXPR fn_idx "${num_parts} - 1")
+        list(GET path_parts ${fn_idx} factory_fn)
+
+        math(EXPR mod_end "${num_parts} - 2")
+        set(module_parts "")
+        foreach(part_idx RANGE 0 ${mod_end})
+            list(GET path_parts ${part_idx} part)
+            if(module_parts)
+                set(module_parts "${module_parts}::${part}")
+            else()
+                set(module_parts "${part}")
+            endif()
+        endforeach()
+
+        # Derive PascalCase type name from factory function name
+        string(REGEX REPLACE "^create_" "" type_suffix "${factory_fn}")
+        string(REPLACE "_" ";" type_words "${type_suffix}")
+        set(pascal_name "")
+        foreach(word ${type_words})
+            string(SUBSTRING ${word} 0 1 first_char)
+            string(TOUPPER ${first_char} first_char)
+            string(SUBSTRING ${word} 1 -1 rest)
+            set(pascal_name "${pascal_name}${first_char}${rest}")
+        endforeach()
+
+        set(full_type "${module_parts}::${pascal_name}")
+        set(full_factory "${module_parts}::${factory_fn}")
+        set(full_schema "${module_parts}::CONFIG_SCHEMA")
+
+        string(APPEND rust_enum_variants "    ${name}(${full_type}),\n")
+        string(APPEND rust_match_run "            Self::${name}(s) => s.run(ctx).await,\n")
+        string(APPEND rust_match_create "        \"${name}\" => Ok(AnySource::${name}(\n            ${full_factory}(config)?\n        )),\n")
+        string(APPEND rust_match_schema "        \"${name}\" => Ok(${full_schema}),\n")
+    endforeach()
+
+    # --- Write src/lib.rs via configure_file to avoid CMake escaping issues ---
+
+    set(RUST_ENUM_VARIANTS "${rust_enum_variants}")
+    set(RUST_MATCH_RUN "${rust_match_run}")
+    set(RUST_MATCH_CREATE "${rust_match_create}")
+    set(RUST_MATCH_SCHEMA "${rust_match_schema}")
+
+    configure_file(
+        "${PROJECT_SOURCE_DIR}/cmake/tokio_source_registry_template.rs.in"
+        "${registry_dir}/src/lib.rs"
+        @ONLY
+    )
+
+    # Register for umbrella generation. The registry crate is NOT imported via Corrosion
+    # (it's an rlib, not a staticlib). It's compiled as a dependency of the per-executable
+    # umbrella crate, which is where all Rust crates are unified and linked.
+    register_rust_crate(nes_source_registry "${registry_dir}")
+    target_link_rust_lib(nes-sources nes_source_registry)
+
+    # --- Generate C++ RustTokioSources.inc ---
+
+    set(inc_content "// AUTO-GENERATED by CMake. Do not edit.\n")
+    foreach(name IN LISTS source_names)
+        string(APPEND inc_content "RUST_TOKIO_SOURCE_IMPL(${name})\n")
+    endforeach()
+
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/nes-sources")
+    file(WRITE "${CMAKE_BINARY_DIR}/nes-sources/RustTokioSources.inc" "${inc_content}")
+endfunction()

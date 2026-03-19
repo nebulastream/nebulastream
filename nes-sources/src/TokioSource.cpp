@@ -13,6 +13,7 @@
 */
 
 #include <Sources/TokioSource.hpp>
+#include <TokioSourceImpl.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -33,16 +34,6 @@
 
 namespace NES
 {
-
-/// PIMPL wrapper to hide rust::Box<SourceHandle> from the public header.
-/// This avoids exposing CXX types (rust/cxx.h) in the nes-sources public API.
-struct TokioSource::RustHandleImpl
-{
-    rust::Box<::SourceHandle> handle;
-
-    explicit RustHandleImpl(rust::Box<::SourceHandle> h)
-        : handle(std::move(h)) {}
-};
 
 TokioSource::TokioSource(
     OriginId originId,
@@ -161,23 +152,6 @@ OriginId TokioSource::getSourceId() const
 std::ostream& operator<<(std::ostream& out, const TokioSource& source)
 {
     return out << "TokioSource{originId=" << source.originId << "}";
-}
-
-/// Helper to create a SpawnFn that calls spawn_generator_source with captured config.
-TokioSource::SpawnFn makeGeneratorSpawnFn(uint64_t count, uint64_t intervalMs)
-{
-    return [count, intervalMs](
-        uint64_t sourceId, uintptr_t bufferProviderPtr, uint32_t inflightLimit,
-        uintptr_t emitFnPtr, uintptr_t emitCtxPtr, uintptr_t errorFnPtr, uintptr_t errorCtxPtr)
-        -> std::unique_ptr<TokioSource::RustHandleImpl>
-    {
-        auto boxedHandle = ::spawn_generator_source(
-            sourceId, count, intervalMs,
-            bufferProviderPtr, inflightLimit,
-            emitFnPtr, emitCtxPtr, errorFnPtr, errorCtxPtr);
-
-        return std::make_unique<TokioSource::RustHandleImpl>(std::move(boxedHandle));
-    };
 }
 
 } // namespace NES
