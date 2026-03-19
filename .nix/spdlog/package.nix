@@ -5,19 +5,27 @@
   ninja,
   pkg-config,
   fetchFromGitHub,
+  fmt_11,
 }:
 
 let
-  llvmPackages = llvmPackages_19;
-  clangStdenv = llvmPackages.stdenv;
-  libcxxStdenv = llvmPackages.libcxxStdenv;
+  llvm = llvmPackages_19;
+  clangStdenv = llvm.stdenv;
+  libcxxStdenv = llvm.libcxxStdenv;
+
+  concatFlags = flags: if flags == [ ] then "" else lib.concatStringsSep " " flags;
 
   build =
     {
       extraBuildInputs ? [ ],
       useLibcxx ? false,
+      fmtPkg ? null,
+      compilerFlags ? [ ],
+      linkerFlags ? [ ],
     }:
     let
+      stdenv = if useLibcxx then libcxxStdenv else clangStdenv;
+      selectedFmt = if fmtPkg != null then fmtPkg else fmt_11;
       libcxxFlags = lib.optionals useLibcxx [
         "-DCMAKE_CXX_FLAGS=-stdlib=libc++"
         "-DCMAKE_EXE_LINKER_FLAGS=-stdlib=libc++"
@@ -25,15 +33,15 @@ let
         "-DCMAKE_MODULE_LINKER_FLAGS=-stdlib=libc++"
       ];
     in
-    (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation rec {
-      pname = "argparse";
-      version = "3.2";
+    stdenv.mkDerivation rec {
+      pname = "spdlog";
+      version = "1.15.3";
 
       src = fetchFromGitHub {
-        owner = "p-ranav";
-        repo = "argparse";
+        owner = "gabime";
+        repo = "spdlog";
         rev = "v${version}";
-        hash = "sha512-TGSBdWib2WSlIZp8hqYVC4YzcZDaGICPLlUfxg1XFIUAyV4v1L3gKxKtiy1w0aTCdRxFZwt++mnEdv4AX+zjdw==";
+        hash = "sha512-FFV/vkIEEaZ5nCNU4akdcvTDWAI+JC3EIkPhS/DTvvoV1O8MvXXzbz7Y75nYl06IV9g+cJlNE/ueC2gxGwp14g==";
       };
 
       nativeBuildInputs = [
@@ -41,24 +49,29 @@ let
         ninja
         pkg-config
       ];
-      buildInputs = extraBuildInputs;
+      buildInputs = lib.unique ([ selectedFmt ] ++ extraBuildInputs);
 
       cmakeFlags = [
         "-G"
         "Ninja"
-        "-DARGPARSE_BUILD_TESTS=OFF"
-        "-DARGPARSE_INSTALL_CMAKE_DIR=lib/cmake/argparse"
-        "-DARGPARSE_INSTALL_PKGCONFIG_DIR=lib/pkgconfig"
-        "-DCMAKE_INSTALL_INCLUDEDIR=include"
+        "-DSPDLOG_FMT_EXTERNAL=ON"
+        "-DSPDLOG_BUILD_TESTS=OFF"
+        "-DSPDLOG_BUILD_EXAMPLE=OFF"
+        "-DSPDLOG_BUILD_BENCH=OFF"
       ]
       ++ libcxxFlags;
 
+      env = lib.optionalAttrs (compilerFlags != [ ]) {
+        NIX_CFLAGS_COMPILE = concatFlags compilerFlags;
+      };
+
       enableParallelBuilding = true;
       strictDeps = true;
+      doCheck = false;
 
       meta = with lib; {
-        description = "Header-only C++17 argument parser";
-        homepage = "https://github.com/p-ranav/argparse";
+        description = "Very fast, header-only/compiled, C++ logging library";
+        homepage = "https://github.com/gabime/spdlog";
         license = licenses.mit;
         platforms = platforms.linux;
       };
@@ -70,6 +83,9 @@ let
       {
         extraBuildInputs = arg;
         useLibcxx = false;
+        fmtPkg = null;
+        compilerFlags = [ ];
+        linkerFlags = [ ];
       }
     else if builtins.isAttrs arg then
       {
@@ -81,11 +97,17 @@ let
           else
             [ ];
         useLibcxx = arg.useLibcxx or false;
+        fmtPkg = arg.fmtPkg or null;
+        compilerFlags = arg.compilerFlags or [ ];
+        linkerFlags = arg.linkerFlags or [ ];
       }
     else
       {
         extraBuildInputs = [ ];
         useLibcxx = false;
+        fmtPkg = null;
+        compilerFlags = [ ];
+        linkerFlags = [ ];
       };
 
 in
@@ -96,7 +118,5 @@ in
     let
       cfg = parseWithSanitizerArgs arg;
     in
-    build {
-      inherit (cfg) extraBuildInputs useLibcxx;
-    };
+    build cfg;
 }

@@ -24,23 +24,25 @@ let
       ];
     in
     (if useLibcxx then libcxxStdenv else clangStdenv).mkDerivation (finalAttrs: {
-      pname = "nameof";
-      version = "0.10.4";
+      pname = "magic-enum";
+      version = "0.9.7";
 
       src = fetchFromGitHub {
         owner = "Neargye";
-        repo = "nameof";
-        tag = "v${finalAttrs.version}";
-        hash = "sha256-g3VwgCloqFnghG7OB7aK3uB/1RNKe8h6Nu7pbIGqrEQ=";
+        repo = "magic_enum";
+        rev = "d468f23408f1207a4c63b370bb34e4cfabffad83";
+        hash = "sha256-KSP84pQ6cceohquLvU7cn/vaxnz/AacUSIHBAe4Vqas=";
       };
+
+      patches = [ ./patches/0001-disable-magic-enum-value.patch ];
 
       nativeBuildInputs = [ cmake ];
       buildInputs = extraBuildInputs;
 
       cmakeFlags = [
-        (lib.cmakeFeature "NAMEOF_OPT_BUILD_EXAMPLES" "OFF")
-        (lib.cmakeFeature "NAMEOF_OPT_BUILD_TESTS" "OFF")
-        (lib.cmakeFeature "NAMEOF_OPT_INSTALL" "ON")
+        (lib.cmakeFeature "MAGIC_ENUM_OPT_BUILD_TESTS" "OFF")
+        (lib.cmakeFeature "MAGIC_ENUM_OPT_BUILD_EXAMPLES" "OFF")
+        (lib.cmakeFeature "MAGIC_ENUM_OPT_INSTALL" "ON")
         (lib.cmakeFeature "CMAKE_INSTALL_INCLUDEDIR" "include")
         (lib.cmakeFeature "CMAKE_INSTALL_LIBDIR" "lib")
       ] ++ libcxxFlags;
@@ -48,9 +50,8 @@ let
       passthru.updateScript = nix-update-script { };
 
       meta = {
-        description = "Nameof operator for modern C++, simply obtain the name of a variable, type, function, macro, and enum";
-        homepage = "https://github.com/Neargye/nameof";
-        changelog = "https://github.com/Neargye/nameof/releases/tag/v${finalAttrs.version}";
+        description = "Static reflection for enums";
+        homepage = "https://github.com/Neargye/magic_enum";
         license = lib.licenses.mit;
       };
     });
