@@ -1,5 +1,5 @@
 [package]
-name = "nes_source_lib"
+name = "nes_sink_bindings"
 version = "0.1.0"
 edition = "2024"
 
@@ -9,5 +9,5 @@ crate-type = ["rlib", "staticlib"]
 [dependencies]
 cxx = "1.0"
 async-channel = "2.3.1"
-nes_io_bindings = { path = "../nes-source-bindings" }
+nes_buffer_bindings = { path = "../nes-buffer-bindings" }
 nes_source_runtime = { path = "../nes-source-runtime" }

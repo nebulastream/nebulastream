@@ -36,7 +36,7 @@ fn get_config_schema(name: &str) -> Result<&'static [ConfigParam], String> {
 }
 
 // ---------------------------------------------------------------------------
-// extern "C" interface — called by nes_source_lib at link time.
+// extern "C" interface — called by nes_source_bindings at link time.
 // ---------------------------------------------------------------------------
 
 const NUL: u8 = 0;
@@ -101,7 +101,7 @@ pub unsafe extern "C" fn nes_registry_spawn(
         std::mem::transmute::<usize, nes_source_runtime::source::ErrorFnPtr>(error_fn_ptr);
     let error_ctx = error_ctx_ptr as *mut c_void;
     let buffer_provider = nes_source_runtime::BufferProviderHandle::from_raw(
-        buffer_provider_ptr as *mut nes_io_bindings::ffi::AbstractBufferProvider
+        buffer_provider_ptr as *mut nes_buffer_bindings::ffi::AbstractBufferProvider
     );
 
     let task_handle = nes_source_runtime::source::spawn_source(

@@ -26,11 +26,11 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-// CXX-generated header for the Phase 2 bridge (ffi_source module in nes-source-lib)
-#include <nes-io-bindings/lib.h>
+// CXX-generated header for the ffi_source module
+#include <nes-source-bindings/lib.h>
 
-// IoBindings.hpp provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
-#include <IoBindings.hpp>
+// SourceBindings.hpp provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
+#include <SourceBindings.hpp>
 
 namespace NES
 {

@@ -1,13 +1,10 @@
-// nes_source_lib: Static library crate linking CXX bridge to Rust runtime.
+// nes_source_bindings: CXX bridge for source lifecycle management.
 //
-// This crate defines Phase 2+ CXX bridge declarations that reference types
-// from nes_source_runtime (which depends on nes_io_bindings). Placing
-// the bridge here avoids a circular dependency between bindings and runtime.
-//
-// The Phase 1 bridge (init_source_runtime) remains in nes_io_bindings
-// because it has no runtime crate dependencies.
+// Bridges Rust source spawn/stop/validate to C++ via CXX and the link-time
+// registry interface. Depends on nes_buffer_bindings (buffer types) and
+// nes_source_runtime (AsyncSource framework).
 
-pub use nes_io_bindings::*;
+pub use nes_buffer_bindings::*;
 pub use nes_source_runtime::*;
 
 // ---------------------------------------------------------------------------
@@ -17,7 +14,7 @@ pub use nes_source_runtime::*;
 // directory) provides these symbols via #[no_mangle] extern "C". The umbrella
 // crate links both this crate and the registry crate, resolving the symbols.
 //
-// This means nes_source_lib has ZERO compile-time knowledge of plugin crates.
+// This means nes_source_bindings has ZERO compile-time knowledge of plugin crates.
 // ---------------------------------------------------------------------------
 unsafe extern "C" {
     /// Spawn a registered source by name.
@@ -105,11 +102,11 @@ unsafe fn read_registry_error(error_ptr: *mut u8, error_len: usize) -> String {
     msg
 }
 
-/// Phase 2 CXX bridge for source lifecycle management.
+/// Source lifecycle CXX bridge.
 #[cxx::bridge]
 pub mod ffi_source {
     unsafe extern "C++" {
-        include!("IoBindings.hpp");
+        include!("SourceBindings.hpp");
     }
 
     extern "Rust" {
@@ -268,130 +265,4 @@ fn on_backpressure_applied(source_id: u64) {
 
 fn on_backpressure_released(source_id: u64) {
     nes_source_runtime::backpressure::on_backpressure_released(source_id);
-}
-
-// --- Phase 5: Sink CXX bridge (unchanged) ---
-
-#[cxx::bridge]
-pub mod ffi_sink {
-    #[derive(Debug, PartialEq)]
-    enum SendResult {
-        Success,
-        Full,
-        Closed,
-    }
-
-    unsafe extern "C++" {
-        include!("IoBindings.hpp");
-    }
-
-    extern "Rust" {
-        type SinkHandle;
-
-        fn sink_send_buffer(handle: &SinkHandle, buffer_ptr: usize) -> SendResult;
-        fn stop_sink_bridge(handle: &SinkHandle) -> bool;
-        fn is_sink_done_bridge(handle: &SinkHandle) -> bool;
-
-        fn spawn_devnull_sink(
-            sink_id: u64,
-            channel_capacity: u32,
-            error_fn_ptr: usize,
-            error_ctx_ptr: usize,
-        ) -> Result<Box<SinkHandle>>;
-
-        fn spawn_file_sink(
-            sink_id: u64,
-            file_path: &str,
-            channel_capacity: u32,
-            error_fn_ptr: usize,
-            error_ctx_ptr: usize,
-        ) -> Result<Box<SinkHandle>>;
-    }
-}
-
-pub struct SinkHandle {
-    inner: nes_source_runtime::sink_handle::SinkTaskHandle,
-}
-
-fn sink_send_buffer(handle: &SinkHandle, buffer_ptr: usize) -> ffi_sink::SendResult {
-    use nes_source_runtime::sink_context::SinkMessage;
-
-    let raw_ptr = buffer_ptr as *mut nes_io_bindings::ffi::TupleBuffer;
-    let unique = unsafe { cxx::UniquePtr::from_raw(raw_ptr) };
-    let buf_handle = nes_source_runtime::buffer::TupleBufferHandle::new(unique);
-    let msg = SinkMessage::Data(buf_handle);
-
-    match handle.inner.sender().try_send(msg) {
-        Ok(()) => ffi_sink::SendResult::Success,
-        Err(async_channel::TrySendError::Full(msg)) => {
-            std::mem::forget(msg);
-            ffi_sink::SendResult::Full
-        }
-        Err(async_channel::TrySendError::Closed(msg)) => {
-            std::mem::forget(msg);
-            ffi_sink::SendResult::Closed
-        }
-    }
-}
-
-fn stop_sink_bridge(handle: &SinkHandle) -> bool {
-    nes_source_runtime::sink_handle::stop_sink(&handle.inner)
-}
-
-fn is_sink_done_bridge(handle: &SinkHandle) -> bool {
-    nes_source_runtime::sink_handle::is_sink_done(&handle.inner)
-}
-
-fn spawn_devnull_sink(
-    sink_id: u64,
-    channel_capacity: u32,
-    error_fn_ptr: usize,
-    error_ctx_ptr: usize,
-) -> Result<Box<SinkHandle>, String> {
-    let error_fn: nes_source_runtime::sink::ErrorFnPtr = unsafe {
-        std::mem::transmute::<usize, nes_source_runtime::sink::ErrorFnPtr>(error_fn_ptr)
-    };
-    let error_ctx = error_ctx_ptr as *mut std::ffi::c_void;
-
-    let sink = DevNullSink;
-    let inner = nes_source_runtime::sink::spawn_sink(
-        sink_id, sink, channel_capacity as usize, error_fn, error_ctx,
-    );
-    Ok(Box::new(SinkHandle { inner: *inner }))
-}
-
-fn spawn_file_sink(
-    sink_id: u64,
-    file_path: &str,
-    channel_capacity: u32,
-    error_fn_ptr: usize,
-    error_ctx_ptr: usize,
-) -> Result<Box<SinkHandle>, String> {
-    let error_fn: nes_source_runtime::sink::ErrorFnPtr = unsafe {
-        std::mem::transmute::<usize, nes_source_runtime::sink::ErrorFnPtr>(error_fn_ptr)
-    };
-    let error_ctx = error_ctx_ptr as *mut std::ffi::c_void;
-
-    let sink = nes_source_runtime::AsyncFileSink::new(std::path::PathBuf::from(file_path));
-    let inner = nes_source_runtime::sink::spawn_sink(
-        sink_id, sink, channel_capacity as usize, error_fn, error_ctx,
-    );
-    Ok(Box::new(SinkHandle { inner: *inner }))
-}
-
-struct DevNullSink;
-
-impl nes_source_runtime::AsyncSink for DevNullSink {
-    async fn run(
-        &mut self,
-        ctx: &nes_source_runtime::SinkContext,
-    ) -> Result<(), nes_source_runtime::SinkError> {
-        loop {
-            match ctx.recv().await {
-                nes_source_runtime::SinkMessage::Data(_buf) => {}
-                nes_source_runtime::SinkMessage::Flush => {}
-                nes_source_runtime::SinkMessage::Close => return Ok(()),
-            }
-        }
-    }
 }

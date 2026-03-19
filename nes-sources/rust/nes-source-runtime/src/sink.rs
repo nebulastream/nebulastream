@@ -144,12 +144,13 @@ async fn sink_monitoring_task(
 mod tests {
     use super::*;
     use crate::buffer::TupleBufferHandle;
+    use crate::buffer_iterator::BufferIterator;
     use std::sync::{Arc, Mutex};
     use std::time::Duration;
 
     // ---- Test sink implementations ----
 
-    /// Mock sink that collects buffer data.
+    /// Mock sink that collects all data segments.
     struct MockCollectorSink {
         collected: Arc<Mutex<Vec<Vec<u8>>>>,
     }
@@ -158,11 +159,14 @@ mod tests {
         async fn run(&mut self, ctx: &SinkContext) -> Result<(), SinkError> {
             loop {
                 match ctx.recv().await {
-                    SinkMessage::Data(buf) => {
-                        let data = buf.as_slice().to_vec();
-                        self.collected.lock().unwrap().push(data);
+                    SinkMessage::Data(mut iter) => {
+                        let mut all_bytes = Vec::new();
+                        while let Some(segment) = iter.next_segment() {
+                            all_bytes.extend_from_slice(segment);
+                        }
+                        self.collected.lock().unwrap().push(all_bytes);
                     }
-                    SinkMessage::Flush => {} // no-op for mock
+                    SinkMessage::Flush => {}
                     SinkMessage::Close => return Ok(()),
                 }
             }
@@ -337,13 +341,15 @@ mod tests {
             error_ctx,
         );
 
-        // Send 3 data buffers with distinct content
+        // Send 3 data segments with distinct content
         for i in 0..3u64 {
             let mut buf = TupleBufferHandle::new_test();
             buf.as_mut_slice()[..8].copy_from_slice(&i.to_le_bytes());
+            buf.set_number_of_tuples(8);
+            let iter = BufferIterator::new(buf);
             handle
                 .sender()
-                .send(SinkMessage::Data(buf))
+                .send(SinkMessage::Data(iter))
                 .await
                 .unwrap();
         }
@@ -358,10 +364,10 @@ mod tests {
         // Wait for completion
         tokio::time::sleep(Duration::from_millis(100)).await;
 
-        // Verify all 3 buffers collected
+        // Verify all 3 segments collected
         let data = collected.lock().unwrap();
         assert_eq!(data.len(), 3);
-        // Verify ordering (first 8 bytes of each buffer)
+        // Verify ordering (first 8 bytes of each segment)
         for (i, buf_data) in data.iter().enumerate() {
             let val = u64::from_le_bytes(buf_data[..8].try_into().unwrap());
             assert_eq!(val, i as u64);

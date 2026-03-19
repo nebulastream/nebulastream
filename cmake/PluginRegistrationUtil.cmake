@@ -160,7 +160,7 @@ endfunction()
 #   - Depends on nes_source_runtime + all plugin crates
 #   - Contains the AnySource enum with dispatch
 #   - Exports extern "C" functions (#[no_mangle]) for spawn + validate
-#   - Is linked at link time via the umbrella crate (nes_source_lib has no
+#   - Is linked at link time via the umbrella crate (nes_source_bindings has no
 #     compile-time dependency on plugin crates)
 function(generate_rust_tokio_source_registry)
     get_property(source_names GLOBAL PROPERTY NES_RUST_TOKIO_SOURCE_NAMES)
@@ -177,7 +177,7 @@ function(generate_rust_tokio_source_registry)
 
     # --- Build Cargo.toml for registry crate ---
 
-    set(cargo_deps "nes_source_runtime = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-runtime\" }\nnes_io_bindings = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-bindings\" }\n")
+    set(cargo_deps "nes_source_runtime = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-runtime\" }\nnes_buffer_bindings = { path = \"${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-buffer-bindings\" }\n")
     if(crate_names)
         list(LENGTH crate_names num_crates)
         math(EXPR last_crate "${num_crates} - 1")

@@ -11,7 +11,7 @@
 
 use std::pin::Pin;
 
-use nes_io_bindings::ffi;
+use nes_buffer_bindings::ffi;
 
 // ---- TupleBufferHandle: production build (wraps cxx::UniquePtr<TupleBuffer>) ----
 
@@ -95,6 +95,20 @@ impl TupleBufferHandle {
         // is dropped.
         unsafe { pinned.get_unchecked_mut() as *mut ffi::TupleBuffer }
     }
+
+    /// Get the number of child buffers attached to this buffer.
+    pub fn num_child_buffers(&self) -> u32 {
+        ffi::getNumberOfChildBuffers(&*self.inner)
+    }
+
+    /// Load a child buffer by index.
+    ///
+    /// Child buffers store variable-sized data (e.g. overflow from the output
+    /// formatter). Each child's `number_of_tuples()` is the valid byte count.
+    pub fn load_child_buffer(&self, index: u32) -> TupleBufferHandle {
+        let child = ffi::loadChildBuffer(&*self.inner, index);
+        TupleBufferHandle::new(child)
+    }
 }
 
 #[cfg(not(test))]
@@ -172,6 +186,16 @@ impl TupleBufferHandle {
 
     pub(crate) fn as_raw_ptr(&mut self) -> *mut ffi::TupleBuffer {
         std::ptr::null_mut() as *mut ffi::TupleBuffer
+    }
+
+    /// Test stub: test buffers have no children.
+    pub fn num_child_buffers(&self) -> u32 {
+        0
+    }
+
+    /// Test stub: panics since test buffers have no children.
+    pub fn load_child_buffer(&self, _index: u32) -> TupleBufferHandle {
+        panic!("test TupleBufferHandle has no child buffers")
     }
 }
 

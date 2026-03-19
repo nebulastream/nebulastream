@@ -315,7 +315,7 @@ mod tests {
     unsafe extern "C" fn mock_emit_fn(
         _ctx: *mut c_void,
         _origin_id: u64,
-        _buffer: *mut nes_io_bindings::ffi::TupleBuffer,
+        _buffer: *mut nes_buffer_bindings::ffi::TupleBuffer,
         _semaphore_ptr: usize,
     ) -> u8 {
         0

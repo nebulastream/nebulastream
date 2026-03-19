@@ -149,7 +149,15 @@ private:
 /// Create a SpawnFn for a DevNull sink (test helper and default implementation).
 TokioSink::SpawnFn makeDevNullSinkSpawnFn();
 
-/// Create a SpawnFn for a file sink that writes raw binary to the given path.
-TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath);
+/// Schema field descriptor passed to the Rust file sink at spawn time.
+struct SinkSchemaField
+{
+    std::string name;
+    std::string dataType;
+    bool nullable;
+};
+
+/// Create a SpawnFn for a file sink that writes to the given path with schema header.
+TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath, std::vector<SinkSchemaField> schema);
 
 } // namespace NES

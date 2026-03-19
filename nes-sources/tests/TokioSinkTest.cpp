@@ -31,11 +31,11 @@
 #include <BaseUnitTest.hpp>
 
 // CXX-generated headers
-#include <nes-io-bindings/io_bridge.h>  // init_source_runtime
-#include <nes-io-bindings/lib.h>        // spawn_devnull_sink, SinkHandle, SendResult
+#include <nes-buffer-bindings/lib.h>    // init_source_runtime
+#include <nes-sink-bindings/lib.h>      // spawn_devnull_sink, SinkHandle, SendResult
 
-// IoBindings provides ErrorContext, on_sink_error_callback
-#include <IoBindings.hpp>
+// SinkBindings provides ErrorContext, on_sink_error_callback
+#include <SinkBindings.hpp>
 
 namespace NES
 {

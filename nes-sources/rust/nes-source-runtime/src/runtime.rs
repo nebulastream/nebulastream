@@ -1,12 +1,12 @@
 // Tokio runtime management for the source framework.
 //
-// Delegates to nes_io_bindings which owns the OnceLock<Runtime> singleton.
+// Delegates to nes_buffer_bindings which owns the OnceLock<Runtime> singleton.
 // This module re-exports init_source_runtime and source_runtime so that
 // downstream code within the runtime crate can use them without depending
-// on nes_io_bindings directly.
+// on nes_buffer_bindings directly.
 
-pub use nes_io_bindings::init_source_runtime;
-pub use nes_io_bindings::source_runtime;
+pub use nes_buffer_bindings::init_source_runtime;
+pub use nes_buffer_bindings::source_runtime;
 
 #[cfg(test)]
 mod tests {

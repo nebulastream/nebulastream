@@ -1,12 +1,13 @@
 [package]
-name = "nes_io_bindings"
+name = "nes_source_bindings"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
-path = "lib.rs"
+crate-type = ["rlib", "staticlib"]
 
 [dependencies]
 cxx = "1.0"
-tokio = { version = "1.40.0", features = ["rt-multi-thread"] }
-tracing = "0.1"
+async-channel = "2.3.1"
+nes_buffer_bindings = { path = "../nes-buffer-bindings" }
+nes_source_runtime = { path = "../nes-source-runtime" }

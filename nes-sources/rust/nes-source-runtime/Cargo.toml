@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-nes_io_bindings = { path = "../nes-source-bindings" }
+nes_buffer_bindings = { path = "../nes-buffer-bindings" }
 cxx = "1.0"
 tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time", "macros", "fs", "io-util"] }
 tokio-util = { version = "0.7.13", features = ["rt"] }

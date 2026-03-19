@@ -30,7 +30,7 @@ use crate::buffer::TupleBufferHandle;
 ///
 /// Returns: 0 on success, non-zero on error.
 pub type EmitFnPtr =
-    unsafe extern "C" fn(ctx: *mut std::ffi::c_void, origin_id: u64, buffer: *mut nes_io_bindings::ffi::TupleBuffer, semaphore_ptr: usize) -> u8;
+    unsafe extern "C" fn(ctx: *mut std::ffi::c_void, origin_id: u64, buffer: *mut nes_buffer_bindings::ffi::TupleBuffer, semaphore_ptr: usize) -> u8;
 
 /// Per-source emit callback entry in the global registry.
 ///
@@ -188,7 +188,7 @@ pub fn ensure_bridge() -> &'static async_channel::Sender<BridgeMessage> {
 /// `false` if the source was not registered (message dropped with warning).
 ///
 /// Extracted from `bridge_loop` for testability without C++ linker dependencies.
-pub(crate) fn dispatch_message(origin_id: u64, buffer_ptr: *mut nes_io_bindings::ffi::TupleBuffer, semaphore_ptr: usize) -> bool {
+pub(crate) fn dispatch_message(origin_id: u64, buffer_ptr: *mut nes_buffer_bindings::ffi::TupleBuffer, semaphore_ptr: usize) -> bool {
     if let Some(entry) = EMIT_REGISTRY.get(&origin_id) {
         unsafe {
             (entry.emit_fn)(
@@ -321,7 +321,7 @@ mod tests {
     unsafe extern "C" fn mock_emit_callback(
         ctx: *mut std::ffi::c_void,
         origin_id: u64,
-        _buffer: *mut nes_io_bindings::ffi::TupleBuffer,
+        _buffer: *mut nes_buffer_bindings::ffi::TupleBuffer,
         _semaphore_ptr: usize,
     ) -> u8 {
         // SAFETY: ctx was created from Box::into_raw(Box::new(Arc<Mutex<Vec>>))
