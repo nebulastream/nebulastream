@@ -18,13 +18,14 @@
 #include <utility>
 #include <vector>
 #include <Functions/LogicalFunction.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <CommonParserFunctions.hpp>
 
 namespace NES::Parsers
 {
 
 /// Getter and Setter for the map/list entries of each clause
-std::string AntlrSQLHelper::getSource() const
+std::optional<Identifier> AntlrSQLHelper::getSource() const
 {
     return this->source;
 }
@@ -40,17 +41,17 @@ std::vector<LogicalFunction>& AntlrSQLHelper::getHavingClauses()
 }
 
 /// methods to update the clauses maps/lists
-void AntlrSQLHelper::setSource(std::string sourceName)
+void AntlrSQLHelper::setSource(Identifier sourceName)
 {
-    this->source = sourceName;
+    this->source = std::move(sourceName);
 }
 
-void AntlrSQLHelper::setInlineSource(const std::string& type, const ConfigMap& parameters)
+void AntlrSQLHelper::setInlineSource(const Identifier& type, const ConfigMap& parameters)
 {
     this->inlineSourceConfig = std::make_pair(type, parameters);
 }
 
-std::pair<std::string, ConfigMap> AntlrSQLHelper::getInlineSourceConfig()
+std::optional<std::pair<Identifier, ConfigMap>> AntlrSQLHelper::getInlineSourceConfig()
 {
     return this->inlineSourceConfig;
 }
@@ -65,7 +66,7 @@ void AntlrSQLHelper::addHavingClause(LogicalFunction expressionNode)
     this->havingClauses.emplace_back(std::move(expressionNode));
 }
 
-void AntlrSQLHelper::addProjection(std::optional<FieldIdentifier> identifier, LogicalFunction logicalFunction)
+void AntlrSQLHelper::addProjection(std::optional<Identifier> identifier, LogicalFunction logicalFunction)
 {
     this->projectionBuilder.emplace_back(std::move(identifier), std::move(logicalFunction));
 }

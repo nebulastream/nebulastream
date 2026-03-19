@@ -74,7 +74,7 @@ static constexpr size_t LARGE_NUMBER_OF_THREADS = 8;
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIMEOUT = std::chrono::milliseconds(1000);
 constexpr std::chrono::milliseconds DEFAULT_LONG_AWAIT_TIMEOUT = std::chrono::milliseconds(10000);
 
-/// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using `verifyIdentifier`.
+/// Creates raw TupleBuffer data based on a recognizable pattern which can later be identified using \"verifyIdentifier\".
 std::vector<std::byte> identifiableData(size_t identifier);
 bool verifyIdentifier(const TupleBuffer& buffer, size_t identifier);
 
@@ -86,8 +86,8 @@ public:
     MOCK_METHOD(void, onEvent, (Event), (override));
 };
 
-/// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. `Running`, `Stopped`.
-/// Note that the `Register` event will never be emitted by the `QueryEngine` as this is not handled by the `QueryEngine`
+/// Mock implementation for the QueryStatusListener. This allows to verify query status events, e.g. \"Running\", \"Stopped\".
+/// Note that the \"Register\" event will never be emitted by the \"QueryEngine\" as this is not handled by the \"QueryEngine\"
 struct ExpectStats
 {
     std::shared_ptr<TestQueryStatisticListener> listener;
@@ -327,7 +327,7 @@ struct TestSinkController
     {
     }
 
-    /// Waits for *at least* `numberOfExpectedBuffers`
+    /// Waits for *at least* \"numberOfExpectedBuffers\"
     testing::AssertionResult waitForNumberOfReceivedBuffersOrMore(size_t numberOfExpectedBuffers);
 
     void insertBuffer(TupleBuffer&& buffer);
@@ -522,20 +522,20 @@ struct TestingHarness
     std::unordered_map<QueryPlanBuilder::identifier_t, OriginId> sourceIds;
     std::unordered_map<QueryPlanBuilder::identifier_t, PipelineId> pipelineIds;
 
-    /// Constructs a new builder to create a new query. Once building the query plan is done it is submitted to the `addNewQuery` method.
+    /// Constructs a new builder to create a new query. Once building the query plan is done it is submitted to the \"addNewQuery\" method.
     /// The Identifier returned by add{Source,Sink,Pipeline} are used to index into the corresponding controller maps.
-    /// ```c++
+    /// \"\"\"c++
     ///   TestingHarness test;
     ///   auto builder = test.buildNewQuery();
     ///   auto source = builder.addSource();
     ///   auto sourceCtrl = test.sourceControls[source]; /// get controller for source
     ///   auto sink = builder.addSink({source});
     ///   auto query = test.addNewQuery(std::move(builder));
-    /// ```
+    /// \"\"\"
     QueryPlanBuilder buildNewQuery() const;
     std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
-    /// List of status events to be emitted by a query with QueryId `id`
+    /// List of status events to be emitted by a query with QueryId \"id\"
     void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states);
 
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
@@ -544,15 +544,15 @@ struct TestingHarness
 
     /// Starts the query engine and initializes internal futures used to track query termination events.
     /// All expected query runtime events should be declared beforehand
-    /// ```c++
+    /// \"\"\"c++
     ///  test.expectQueryStatusEvents(QueryId(1), {QueryStatus::Running});
     ///  test.start();
-    /// ```
+    /// \"\"\"
     void start();
 
-    /// Inserts a new Query into the Query Engine. Requires `start` to be called beforehand.
+    /// Inserts a new Query into the Query Engine. Requires \"start\" to be called beforehand.
     void startQuery(std::unique_ptr<ExecutableQueryPlan> query) const;
-    /// Stops a Query. Requires `start` to be called beforehand.
+    /// Stops a Query. Requires \"start\" to be called beforehand.
     void stopQuery(QueryId id) const;
 
     /// Shuts the query engine down by calling its destructor

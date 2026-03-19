@@ -19,7 +19,7 @@ ATTACH INLINE
 6,4,test1,test2
 8,5,test1,test2
 
-CREATE SINK sinkStreamWithText(streamWithText.id UINT64 NOT NULL, streamWithText.value UINT64 NOT NULL, streamWithText.text1 VARSIZED NOT NULL, streamWithText.text2 VARSIZED NOT NULL) TYPE File;
+CREATE SINK sinkStreamWithText(id UINT64 NOT NULL, value UINT64 NOT NULL, text1 VARSIZED NOT NULL, text2 VARSIZED NOT NULL) TYPE File;
 
 
 # Simple text query

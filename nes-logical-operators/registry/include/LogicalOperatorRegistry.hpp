@@ -14,11 +14,9 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Reflection.hpp>
@@ -31,8 +29,7 @@ using LogicalOperatorRegistryReturnType = LogicalOperator;
 
 struct LogicalOperatorRegistryArguments
 {
-    std::vector<Schema> inputSchemas;
-    Schema outputSchema;
+    std::vector<LogicalOperator> children;
     Reflected reflected;
 };
 

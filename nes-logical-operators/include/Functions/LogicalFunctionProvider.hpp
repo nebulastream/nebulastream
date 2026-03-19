@@ -20,6 +20,8 @@
 
 namespace NES::LogicalFunctionProvider
 {
+
 LogicalFunction provide(const std::string& functionName, std::vector<LogicalFunction> arguments);
 std::optional<LogicalFunction> tryProvide(const std::string& functionName, std::vector<LogicalFunction> arguments);
+
 }

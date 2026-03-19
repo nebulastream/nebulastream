@@ -19,8 +19,10 @@
 #include <string_view>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,13 +34,12 @@ class DivLogicalFunction final
 public:
     static constexpr std::string_view NAME = "Div";
 
-    DivLogicalFunction(const LogicalFunction& left, LogicalFunction right);
+    DivLogicalFunction(LogicalFunction left, LogicalFunction right);
 
     [[nodiscard]] bool operator==(const DivLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] DivLogicalFunction withDataType(const DataType& dataType) const;
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] DivLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;

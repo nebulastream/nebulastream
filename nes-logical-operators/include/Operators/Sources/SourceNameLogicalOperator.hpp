@@ -14,13 +14,19 @@
 
 #pragma once
 
+#include <cstddef>
+#include <functional>
 #include <string>
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -32,18 +38,14 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator
+class SourceNameLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, Identifier logicalSourceName);
 
     static void inferInputOrigins();
 
-    [[nodiscard]] std::string getLogicalSourceName() const;
-
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] SourceNameLogicalOperator withSchema(const Schema& schema) const;
+    [[nodiscard]] Identifier getLogicalSourceName() const;
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
@@ -54,21 +56,21 @@ public:
     [[nodiscard]] SourceNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] static Schema<Field, Unordered> getOutputSchema();
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceNameLogicalOperator withInferredSchema() const;
 
 private:
     static constexpr std::string_view NAME = "Source";
-    std::string logicalSourceName;
 
     std::vector<LogicalOperator> children;
+    Identifier logicalSourceName;
+
     TraitSet traitSet;
-    Schema schema, inputSchema, outputSchema;
+    friend struct std::hash<SourceNameLogicalOperator>;
 
     friend Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>;
 };
@@ -88,3 +90,9 @@ struct Unreflector<TypedLogicalOperator<SourceNameLogicalOperator>>
 static_assert(LogicalOperatorConcept<SourceNameLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::SourceNameLogicalOperator>
+{
+    std::size_t operator()(const NES::SourceNameLogicalOperator& sourceNameLogicalOperator) const;
+};

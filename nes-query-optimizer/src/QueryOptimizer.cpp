@@ -14,6 +14,10 @@
 
 #include <QueryOptimizer.hpp>
 
+#include <Phases/DecideFieldMappings.hpp>
+
+#include <LegacyOptimizer/TypeInferencePhase.hpp>
+#include <Phases/DecideFieldOrder.hpp>
 #include <Phases/DecideJoinTypes.hpp>
 #include <Phases/DecideMemoryLayout.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -34,8 +38,16 @@ OptimizedPlan QueryOptimizer::optimize(const LogicalPlan& plan, const QueryOptim
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
     DecideJoinTypes joinTypeDecider(defaultQueryOptimization.joinStrategy);
     DecideMemoryLayout memoryLayoutDecider;
+    constexpr DecideFieldOrder fieldOrderDecider;
+    constexpr auto typeInference = TypeInferencePhase{};
+
     auto optimizedPlan = joinTypeDecider.apply(plan);
-    return OptimizedPlan{memoryLayoutDecider.apply(optimizedPlan)};
+    optimizedPlan = DecideFieldMappings{}.apply(optimizedPlan);
+    optimizedPlan = fieldOrderDecider.apply(optimizedPlan);
+    optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
+    typeInference.apply(optimizedPlan);
+
+    return OptimizedPlan{optimizedPlan};
 }
 
 }

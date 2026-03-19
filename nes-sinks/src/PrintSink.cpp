@@ -23,6 +23,9 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
@@ -43,13 +46,14 @@ PrintSink::PrintSink(BackpressureController backpressureController, const SinkDe
     , outputStream(&std::cout)
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {
+    const auto schema = get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema());
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(ConfigParametersPrint::INPUT_FORMAT))
     {
         case InputFormat::CSV:
-            outputParser = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+            outputParser = std::make_unique<CSVFormat>(*schema);
             break;
         case InputFormat::JSON:
-            outputParser = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+            outputParser = std::make_unique<JSONFormat>(*schema);
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));

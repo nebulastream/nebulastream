@@ -28,6 +28,9 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -49,13 +52,14 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
 {
+    const auto schema = get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema());
     switch (const auto inputFormat = sinkDescriptor.getFromConfig(SinkDescriptor::INPUT_FORMAT))
     {
         case InputFormat::CSV:
-            formatter = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+            formatter = std::make_unique<CSVFormat>(*schema);
             break;
         case InputFormat::JSON:
-            formatter = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+            formatter = std::make_unique<JSONFormat>(*schema);
             break;
         default:
             throw UnknownSinkFormat(fmt::format("Sink format: {} not supported.", magic_enum::enum_name(inputFormat)));

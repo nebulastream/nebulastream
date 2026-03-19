@@ -13,12 +13,12 @@
 add_source_files(nes-query-optimizer
         InlineSinkBindingPhase.cpp
         InlineSourceBindingPhase.cpp
-        SourceInferencePhase.cpp
         LogicalSourceExpansionRule.cpp
         RedundantUnionRemovalRule.cpp
         RedundantProjectionRemovalRule.cpp
         OriginIdInferencePhase.cpp
         TypeInferencePhase.cpp
         SinkBindingRule.cpp
+        CalcTargetOrderPhase.cpp
         LegacyOptimizer.cpp
 )

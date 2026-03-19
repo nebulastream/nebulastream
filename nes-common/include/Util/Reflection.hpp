@@ -17,9 +17,11 @@
 ///NOLINTBEGIN(misc-include-cleaner)
 #include <cstddef>
 #include <utility>
+#include <Util/Reflection/NESStrongTypeReflection.hpp>
 #include <Util/Reflection/OptionalReflection.hpp>
 #include <Util/Reflection/PairReflection.hpp>
 #include <Util/Reflection/ReflectionCore.hpp>
+#include <Util/Reflection/StringViewReflection.hpp>
 #include <Util/Reflection/UnorderedMapReflection.hpp>
 #include <Util/Reflection/VariantReflection.hpp>
 #include <Util/Reflection/VectorReflection.hpp>

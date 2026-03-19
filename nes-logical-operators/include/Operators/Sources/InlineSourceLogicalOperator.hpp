@@ -13,13 +13,21 @@
 */
 
 #pragma once
+#include <cstdint>
+#include <functional>
+#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Field.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -31,14 +39,15 @@ namespace NES
 /// sources defined in separate create statements. The InlineSourceLogicalOperator objects contain all necessary configurations to
 /// build a SourceDescriptorLogicalOperator within the InlineSourceBindingPhase of the optimizer.
 
-class InlineSourceLogicalOperator
+class InlineSourceLogicalOperator : public ManagedByOperator
 {
 public:
     explicit InlineSourceLogicalOperator(
-        std::string type,
-        const Schema& schema,
-        std::unordered_map<std::string, std::string> sourceConfig,
-        std::unordered_map<std::string, std::string> parserConfig);
+        WeakLogicalOperator self,
+        Identifier type,
+        Schema<UnqualifiedUnboundField, Ordered> sourceSchema,
+        std::unordered_map<Identifier, std::string> sourceConfig,
+        std::unordered_map<Identifier, std::string> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
 
@@ -48,30 +57,32 @@ public:
     [[nodiscard]] InlineSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] static Schema<Field, Unordered> getOutputSchema();
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] static InlineSourceLogicalOperator withInferredSchema();
 
-    [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSourceConfig() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getParserConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] Identifier getSourceType() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getSourceConfig() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getParserConfig() const;
+    [[nodiscard]] Schema<UnqualifiedUnboundField, Ordered> getSourceSchema() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSource";
 
+    Schema<UnqualifiedUnboundField, Ordered> sourceSchema;
+    Identifier sourceType;
+    std::unordered_map<Identifier, std::string> sourceConfig;
+    std::unordered_map<Identifier, std::string> parserConfig;
+
     std::vector<LogicalOperator> children;
+
     TraitSet traitSet;
 
-    Schema schema;
-
-    std::string sourceType;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
+    /// Set during schema inference
+    std::optional<Schema<UnqualifiedUnboundField, Unordered>> outputSchema;
 
     friend Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>;
 };
@@ -85,9 +96,15 @@ struct Reflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
 template <>
 struct Unreflector<TypedLogicalOperator<InlineSourceLogicalOperator>>
 {
-    TypedLogicalOperator<InlineSourceLogicalOperator> operator()(const Reflected&) const;
+    TypedLogicalOperator<InlineSourceLogicalOperator> operator()(const Reflected&, const ReflectionContext&) const;
 };
 
 static_assert(LogicalOperatorConcept<InlineSourceLogicalOperator>);
 
 }
+
+template <>
+struct std::hash<NES::InlineSourceLogicalOperator>
+{
+    uint64_t operator()(const NES::InlineSourceLogicalOperator& op) const noexcept;
+};

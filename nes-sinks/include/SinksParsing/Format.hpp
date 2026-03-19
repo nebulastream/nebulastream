@@ -20,13 +20,17 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/DataType.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
+#include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
@@ -36,7 +40,7 @@ namespace NES
 class Format
 {
 public:
-    explicit Format(const Schema& schema) : schema(schema) { }
+    explicit Format(const Schema<UnqualifiedUnboundField, Ordered>& schema) : schema(schema) { }
 
     virtual ~Format() noexcept = default;
 
@@ -53,17 +57,22 @@ public:
     /// Returns the schema of formatted according to the specific SinkFormat represented as string.
     [[nodiscard]] std::string getFormattedSchema() const
     {
-        PRECONDITION(schema.hasFields(), "Encountered schema without fields.");
-        std::stringstream ss;
-        ss << schema.getFields().front().name << ":" << magic_enum::enum_name(schema.getFields().front().dataType.type) << ":"
-           << magic_enum::enum_name(
-                  schema.getFields().front().dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-        for (const auto& field : schema.getFields() | std::views::drop(1))
-        {
-            ss << ',' << field.name << ':' << magic_enum::enum_name(field.dataType.type) << ":"
-               << magic_enum::enum_name(field.dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
-        }
-        return fmt::format("{}\n", ss.str());
+        PRECONDITION(!std::ranges::empty(schema), "Encountered schema without fields.");
+        return fmt::format(
+            "{}\n",
+            fmt::join(
+                schema
+                    | std::views::transform(
+                        [](const auto& field)
+                        {
+                            return fmt::format(
+                                "{}:{}:{}",
+                                field.getFullyQualifiedName(),
+                                magic_enum::enum_name(field.getDataType().type),
+                                magic_enum::enum_name(
+                                    field.getDataType().nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE));
+                        }),
+                ","));
     }
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
@@ -74,7 +83,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Format& obj) { return obj.toString(os); }
 
 protected:
-    Schema schema;
+    Schema<UnqualifiedUnboundField, Ordered> schema;
 };
 
 }

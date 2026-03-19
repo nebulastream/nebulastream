@@ -31,6 +31,7 @@
 #include <vector>
 #include <unistd.h>
 
+#include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)

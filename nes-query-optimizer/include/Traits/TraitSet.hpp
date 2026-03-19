@@ -83,6 +83,13 @@ public:
         return success;
     }
 
+    template <TraitConcept TraitType>
+    void insert(TraitType trait)
+    {
+        const auto [iter, success] = traitMap.try_emplace(typeid(TraitType), std::move(trait));
+        PRECONDITION(success, "Trait {} already present", NAMEOF_TYPE(TraitType));
+    }
+
     friend bool operator==(const TraitSet& lhs, const TraitSet& rhs);
 
     [[nodiscard]] auto begin() const { return traitMap.cbegin(); }

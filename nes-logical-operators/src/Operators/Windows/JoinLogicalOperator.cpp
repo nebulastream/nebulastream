@@ -14,7 +14,12 @@
 
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 
+#include <array>
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -24,35 +29,97 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
+/// NOLINTNEXTLINE(misc-include-cleaner)
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
-#include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/LogicalOperatorFwd.hpp>
+#include <Schema/Binder.hpp>
+#include <Schema/Field.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
-#include <Serialization/WindowTypeReflection.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/Hash.hpp> /// NOLINT(misc-include-cleaner)
+#include <Util/Overloaded.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Types/SlidingWindow.hpp>
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
+#include <folly/hash/Hash.h>
 #include <ErrorHandling.hpp>
 #include <LogicalOperatorRegistry.hpp>
 
 namespace NES
 {
 
-JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
-    : joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
+
+std::optional<JoinTimeCharacteristic> JoinLogicalOperator::createJoinTimeCharacteristic(
+    const std::array<std::variant<Windowing::UnboundTimeCharacteristic, Windowing::BoundTimeCharacteristic>, 2>& timestampFields)
 {
+    return std::visit(
+        Overloaded{
+            [&timestampFields](const Windowing::UnboundTimeCharacteristic& unbound)
+            {
+                return std::visit(
+                    Overloaded{
+                        [&unbound](const Windowing::UnboundTimeCharacteristic& unbound2) -> std::optional<JoinTimeCharacteristic>
+                        { return std::make_optional<JoinTimeCharacteristic>(std::array{unbound, unbound2}); },
+                        [](const Windowing::BoundTimeCharacteristic&) -> std::optional<JoinTimeCharacteristic>
+                        { return std::optional<JoinTimeCharacteristic>{}; }},
+                    timestampFields[1]);
+            },
+            [&timestampFields](Windowing::BoundTimeCharacteristic bound)
+            {
+                return std::visit(
+                    Overloaded{
+                        [&bound](const Windowing::BoundTimeCharacteristic& bound2) -> std::optional<JoinTimeCharacteristic>
+                        { return std::make_optional<JoinTimeCharacteristic>(std::array{bound, bound2}); },
+                        [](const Windowing::UnboundTimeCharacteristic&) -> std::optional<JoinTimeCharacteristic>
+                        { return std::optional<JoinTimeCharacteristic>{}; }},
+                    timestampFields[1]);
+            }},
+        timestampFields[0]);
+}
+
+JoinLogicalOperator::JoinLogicalOperator(
+    WeakLogicalOperator self,
+    LogicalFunction joinFunction,
+    Windowing::TimeBasedWindowType windowType,
+    JoinType joinType,
+    JoinTimeCharacteristic timeCharacteristics)
+    : ManagedByOperator(std::move(self))
+    , windowType(std::move(windowType))
+    , joinType(joinType)
+    , joinFunction(std::move(joinFunction))
+    , timestampFields(std::move(timeCharacteristics))
+{
+}
+
+JoinLogicalOperator::JoinLogicalOperator(
+    WeakLogicalOperator self,
+    std::array<LogicalOperator, 2> children,
+    LogicalFunction joinFunction,
+    Windowing::TimeBasedWindowType windowType,
+    const JoinType joinType,
+    JoinTimeCharacteristic timeCharacteristics)
+    : ManagedByOperator(std::move(self))
+    , windowType(std::move(windowType))
+    , joinType(joinType)
+    , children(std::move(children))
+    , joinFunction(std::move(joinFunction))
+    , timestampFields(std::move(timeCharacteristics))
+{
+    inferLocalSchema();
 }
 
 std::string_view JoinLogicalOperator::getName() const noexcept
@@ -62,8 +129,8 @@ std::string_view JoinLogicalOperator::getName() const noexcept
 
 bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 {
-    return *getWindowType() == *rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and getOutputSchema() == rhs.outputSchema
-        and getRightSchema() == rhs.getRightSchema() and getLeftSchema() == rhs.getLeftSchema() and getTraitSet() == rhs.getTraitSet();
+    return getWindowType() == rhs.getWindowType() and getJoinFunction() == rhs.getJoinFunction() and outputSchema == rhs.outputSchema
+        and getTraitSet() == rhs.getTraitSet();
 }
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
@@ -71,63 +138,78 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {}, traitSet: {})",
+            "Join(opId: {}, windowType: {}, joinFunction: {}, windowMetadata: (startField: {}, endField: {}), traitSet: {})",
             id,
-            getWindowType()->toString(),
+            getWindowType(),
             getJoinFunction().explain(verbosity),
-            windowMetaData.windowStartFieldName,
-            windowMetaData.windowEndFieldName,
+            startEndFields.at(0),
+            startEndFields.at(1),
             traitSet.explain(verbosity));
     }
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
 
-JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
 {
-    const auto& leftInputSchema = inputSchemas[0];
-    const auto& rightInputSchema = inputSchemas[1];
+    return joinType;
+}
 
-    auto copy = *this;
-    copy.outputSchema = Schema{};
-    copy.leftInputSchema = leftInputSchema;
-    copy.rightInputSchema = rightInputSchema;
+void JoinLogicalOperator::inferLocalSchema()
+{
+    PRECONDITION(children.has_value(), "Child not set when calling schema inference");
+    const std::vector<Field> inputFields = *children | std::views::transform([](const auto& child) { return child.getOutputSchema(); })
+        | std::views::join | std::ranges::to<std::vector>();
 
-    const auto newQualifierForSystemField = [](const Schema& leftSchema, const Schema& rightSchema)
+    auto inputSchemaOrCollisions = Schema<Field, Unordered>::tryCreateCollisionFree(inputFields);
+
+    if (!inputSchemaOrCollisions.has_value())
     {
-        const auto sourceNameLeft = leftSchema.getSourceNameQualifier();
-        const auto sourceNameRight = rightSchema.getSourceNameQualifier();
-        if (not(sourceNameLeft and sourceNameRight))
+        throw CannotInferSchema(
+            "Found collisions in input schemas: " + Schema<Field, Unordered>::createCollisionString(inputSchemaOrCollisions.error()));
+    }
+    const auto& inputSchema = inputSchemaOrCollisions.value();
+    this->timestampFields = std::visit(
+        [&](const auto& tsFields)
         {
-            throw TypeInferenceException("Schemas of Join operator must have source names.");
-        }
-        return sourceNameLeft.value() + sourceNameRight.value() + Schema::ATTRIBUTE_NAME_SEPARATOR;
-    }(leftInputSchema, rightInputSchema);
+            return std::array{
+                Windowing::TimeCharacteristicWrapper{tsFields[0]}.withInferredSchema(inputSchema),
+                Windowing::TimeCharacteristicWrapper{tsFields[1]}.withInferredSchema(inputSchema)};
+        },
+        this->timestampFields);
 
-    copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
-    copy.windowMetaData.windowEndFieldName = newQualifierForSystemField + "END";
-    copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
-    copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
+    this->joinFunction = this->joinFunction.withInferredDataType(inputSchemaOrCollisions.value());
 
-    for (const auto& field : leftInputSchema.getFields())
+    std::vector<UnqualifiedUnboundField> outputFields
+        = inputFields | std::views::transform([](const Field& field) { return field.unbound(); }) | std::ranges::to<std::vector>();
+
+    outputFields.emplace_back(startEndFields[0].getFullyQualifiedName(), startEndFields[0].getDataType());
+    outputFields.emplace_back(startEndFields[1].getFullyQualifiedName(), startEndFields[1].getDataType());
+
+    auto outputSchemaOrCollisions = Schema<UnqualifiedUnboundField, Unordered>::tryCreateCollisionFree(outputFields);
+
+    if (!outputSchemaOrCollisions.has_value())
     {
-        copy.outputSchema.addField(field.name, field.dataType);
-    }
-    for (const auto& field : rightInputSchema.getFields())
-    {
-        copy.outputSchema.addField(field.name, field.dataType);
+        throw CannotInferSchema(
+            "Found collisions in input schemas with added fields from windows join: "
+            + Schema<UnqualifiedUnboundField, Unordered>::createCollisionString(outputSchemaOrCollisions.error()));
     }
 
-    auto inputSchema = leftInputSchema;
-    inputSchema.appendFieldsFromOtherSchema(rightInputSchema);
-    copy.joinFunction = joinFunction.withInferredDataType(inputSchema);
-    copy.windowType->inferStamp(inputSchema);
+    this->outputSchema = outputSchemaOrCollisions.value();
+}
+
+JoinLogicalOperator JoinLogicalOperator::withInferredSchema() const
+{
+    PRECONDITION(children.has_value(), "Child not set when calling schema inference");
+    auto copy = *this;
+    copy.children = {(*copy.children)[0].withInferredSchema(), (*copy.children)[1].withInferredSchema()};
+    copy.inferLocalSchema();
     return copy;
 }
 
 JoinLogicalOperator JoinLogicalOperator::withTraitSet(TraitSet traitSet) const
 {
     auto copy = *this;
-    copy.traitSet = traitSet;
+    copy.traitSet = std::move(traitSet);
     return copy;
 }
 
@@ -138,54 +220,46 @@ TraitSet JoinLogicalOperator::getTraitSet() const
 
 JoinLogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperator> children) const
 {
+    PRECONDITION(children.size() == 2, "Can only set exactly two child for join, got {}", children.size());
     auto copy = *this;
-    copy.children = children;
+    copy.children = std::array{std::move(children.at(0)), std::move(children.at(1))};
     return copy;
 }
 
-std::vector<Schema> JoinLogicalOperator::getInputSchemas() const
+Schema<Field, Unordered> JoinLogicalOperator::getOutputSchema() const
 {
-    return {leftInputSchema, rightInputSchema};
-};
-
-Schema JoinLogicalOperator::getOutputSchema() const
-{
-    return outputSchema;
+    PRECONDITION(outputSchema.has_value(), "Accessed output schema before calling schema inference");
+    return NES::bind(self.lock(), outputSchema.value());
 }
 
 std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
 {
-    return children;
+    if (children.has_value())
+    {
+        return *children | std::ranges::to<std::vector>();
+    }
+    return {};
 }
 
-Schema JoinLogicalOperator::getLeftSchema() const
+std::array<LogicalOperator, 2> JoinLogicalOperator::getBothChildren() const
 {
-    return leftInputSchema;
+    PRECONDITION(children.has_value(), "Children not set when trying to retrieve join children");
+    return *children;
 }
 
-Schema JoinLogicalOperator::getRightSchema() const
-{
-    return rightInputSchema;
-}
-
-std::shared_ptr<Windowing::WindowType> JoinLogicalOperator::getWindowType() const
+Windowing::TimeBasedWindowType JoinLogicalOperator::getWindowType() const
 {
     return windowType;
 }
 
-std::string JoinLogicalOperator::getWindowStartFieldName() const
+const UnqualifiedUnboundField& JoinLogicalOperator::getStartField() const
 {
-    return windowMetaData.windowStartFieldName;
+    return startEndFields[0];
 }
 
-std::string JoinLogicalOperator::getWindowEndFieldName() const
+const UnqualifiedUnboundField& JoinLogicalOperator::getEndField() const
 {
-    return windowMetaData.windowEndFieldName;
-}
-
-const WindowMetaData& JoinLogicalOperator::getWindowMetaData() const
-{
-    return windowMetaData;
+    return startEndFields[1];
 }
 
 LogicalFunction JoinLogicalOperator::getJoinFunction() const
@@ -193,31 +267,43 @@ LogicalFunction JoinLogicalOperator::getJoinFunction() const
     return joinFunction;
 }
 
+JoinTimeCharacteristic JoinLogicalOperator::getJoinTimeCharacteristics() const
+{
+    return timestampFields;
+}
+
 Reflected Reflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const TypedLogicalOperator<JoinLogicalOperator>& op) const
 {
     return reflect(detail::ReflectedJoinLogicalOperator{
-        .joinFunction = op->getJoinFunction(), .windowType = reflectWindowType(*op->getWindowType()), .joinType = op->joinType});
+        .operatorId = op.getId(),
+        .joinFunction = op->getJoinFunction(),
+        .windowType = op->getWindowType(),
+        .timestampFields = op->getJoinTimeCharacteristics(),
+        .joinType = op->getJoinType()});
+}
+
+Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::Unreflector(ContextType operatorMapping) : plan(std::move(operatorMapping))
+{
 }
 
 TypedLogicalOperator<JoinLogicalOperator>
 Unreflector<TypedLogicalOperator<JoinLogicalOperator>>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [joinFunction, reflectedWindowType, joinType] = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
-
-    const auto windowType = unreflectWindowType(reflectedWindowType, context);
-
-    return TypedLogicalOperator<JoinLogicalOperator>{JoinLogicalOperator(joinFunction, windowType, joinType)};
+    auto [operatorId, joinFunction, windowType, timestampFields, joinType]
+        = context.unreflect<detail::ReflectedJoinLogicalOperator>(reflected);
+    auto foundChildren = plan->getChildrenFor(operatorId, context);
+    return TypedLogicalOperator<JoinLogicalOperator>{
+        std::array{foundChildren.at(0), foundChildren.at(1)}, std::move(joinFunction), windowType, joinType, std::move(timestampFields)};
 }
 
-LogicalOperatorRegistryReturnType LogicalOperatorGeneratedRegistrar::RegisterJoinLogicalOperator(LogicalOperatorRegistryArguments arguments)
+}
+
+std::size_t std::hash<NES::JoinLogicalOperator>::operator()(const NES::JoinLogicalOperator& joinLogicalOperator) const noexcept
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return ReflectionContext{}.unreflect<TypedLogicalOperator<JoinLogicalOperator>>(arguments.reflected);
-    }
-
-    PRECONDITION(false, "Operator is only build directly via parser or via reflection, not using the registry");
-    std::unreachable();
-}
-
+    return folly::hash::hash_combine(
+        joinLogicalOperator.joinType,
+        joinLogicalOperator.joinFunction,
+        joinLogicalOperator.windowType,
+        joinLogicalOperator.timestampFields,
+        joinLogicalOperator.startEndFields);
 }

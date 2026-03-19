@@ -7,8 +7,8 @@ CREATE LOGICAL SOURCE lrb(creationTS UINT64 NOT NULL, vehicle INT16 NOT NULL, sp
 CREATE PHYSICAL SOURCE FOR lrb TYPE File;
 ATTACH FILE large/lrb/linear_road_benchmark_560K.csv
 
-CREATE SINK q1Checksum(lrb.start UINT64 NOT NULL, lrb.end UINT64 NOT NULL, lrb.highway INT16 NOT NULL, lrb.direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, lrb.avgSpeed FLOAT64 NOT NULL)  TYPE Checksum;
-CREATE SINK q2Checksum(lrb.start UINT64 NOT NULL, lrb.end UINT64 NOT NULL, lrb.vehicle INT16 NOT NULL, lrb.highway INT16 NOT NULL, lrb.direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, lrb.cntSpeed UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, avgSpeed FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q2Checksum(start UINT64 NOT NULL, end UINT64 NOT NULL, vehicle INT16 NOT NULL, highway INT16 NOT NULL, direction INT16 NOT NULL, positionDiv5280 INT32 NOT NULL, cntSpeed UINT64 NOT NULL)  TYPE Checksum;
 
 # Query 1
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed

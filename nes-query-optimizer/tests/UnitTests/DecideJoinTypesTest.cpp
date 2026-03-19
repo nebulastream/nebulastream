@@ -12,12 +12,21 @@
     limitations under the License.
 */
 
+#include <array>
 #include <cstdint>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
+#include <Sources/LogicalSource.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
@@ -25,28 +34,32 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
+#include <Operators/SelectionLogicalOperator.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Plans/LogicalPlanBuilder.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Traits/JoinImplementationTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/TumblingWindow.hpp>
-#include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES
 {
 namespace
 {
 
+/// NOLINTBEGIN(bugprone-unchecked-optional-access)
 class DecideJoinTypesTest : public Testing::BaseUnitTest
 {
 public:
@@ -54,37 +67,61 @@ public:
 
     static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
-    /// Helper to create a simple source plan with a schema containing an "id" field
-    static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
+    static Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::string& prefix)
     {
-        return LogicalPlanBuilder::createLogicalPlan(sourceType, schema, {}, {});
+        return Schema<UnqualifiedUnboundField, Ordered>{
+            {Identifier::parse(prefix + "_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {Identifier::parse(prefix + "_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+            {Identifier::parse(prefix + "_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
     }
 
-    static Schema createSchema(const std::string& prefix)
+    static Windowing::TimeBasedWindowType createTumblingWindow()
     {
-        Schema schema;
-        schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        schema.addField(prefix + ".ts", DataTypeProvider::provideDataType(DataType::Type::UINT64));
-        return schema;
+        return Windowing::TimeBasedWindowType{Windowing::TumblingWindow{Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS)}};
     }
 
-    static std::shared_ptr<Windowing::WindowType> createTumblingWindow()
+    static LogicalSource
+    createLogicalSource(SourceCatalog& sourceCatalog, const Identifier& sourceName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
     {
-        return std::make_shared<Windowing::TumblingWindow>(
-            Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(TUMBLING_WINDOW_SIZE_MS));
+        return sourceCatalog.addLogicalSource(sourceName, schema).value();
+    }
+
+    static SourceDescriptor createSourceDescriptor(SourceCatalog& sourceCatalog, const LogicalSource& logicalSource)
+    {
+        const std::unordered_map<Identifier, std::string> sourceConfig{{Identifier::parse("FILE_PATH"), "/dev/null"}};
+        const std::unordered_map<Identifier, std::string> parserConfig{{Identifier::parse("TYPE"), "CSV"}};
+        return sourceCatalog.addPhysicalSource(logicalSource, Identifier::parse("file"), sourceConfig, parserConfig).value();
+    }
+
+    static SinkDescriptor
+    createSinkDescriptor(SinkCatalog& sinkCatalog, const Identifier& sinkName, const Schema<UnqualifiedUnboundField, Ordered>& schema)
+    {
+        const std::unordered_map<Identifier, std::string> sinkConfig{
+            {Identifier::parse("FILE_PATH"), "/dev/null"}, {Identifier::parse("INPUT_FORMAT"), "CSV"}};
+        return sinkCatalog.addSinkDescriptor(sinkName, schema, Identifier::parse("file"), sinkConfig).value();
     }
 };
 
 /// A simple Selection → InlineSource plan. Verify all operators get CHOICELESS.
 TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 {
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
     auto schema = createSchema("src");
-    auto plan = createSourcePlan("TEST", schema);
-    auto selectionFn = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("src.id")}, LogicalFunction{FieldAccessLogicalFunction("src.id")})};
-    plan = LogicalPlanBuilder::addSelection(selectionFn, plan);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto logicalSource = createLogicalSource(sourceCatalog, Identifier::parse("TEST"), schema);
+    auto sourceDescriptor = createSourceDescriptor(sourceCatalog, logicalSource);
+    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), schema);
+
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceOp{sourceDescriptor};
+
+    auto selectionFn = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{sourceOp->getOutputSchema().getFieldByName(Identifier::parse("src_id")).value()},
+        FieldAccessLogicalFunction{sourceOp->getOutputSchema().getFieldByName(Identifier::parse("src_id")).value()}};
+
+    auto selectionOp = TypedLogicalOperator<SelectionLogicalOperator>{selectionFn}.withChildren({sourceOp});
+    auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}.withChildren({selectionOp});
+    const LogicalPlan plan{sinkOp->withInferredSchema()};
 
     DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = phase.apply(plan);
@@ -100,17 +137,50 @@ TEST_F(DecideJoinTypesTest, NonJoinPlanGetChoicelessTrait)
 /// Build a join with Equals(FieldAccess, FieldAccess). Verify HASH_JOIN trait.
 TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 {
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
 
-    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> leftSourceOp{leftSourceDescriptor};
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> rightSourceOp{rightSourceDescriptor};
+
+    auto joinFunction = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+
+    auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+
+    auto joinOp = TypedLogicalOperator<JoinLogicalOperator>{
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value()};
+
+    /// Create a sink schema that includes all fields from both sources plus window boundaries
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        {Identifier::parse("left_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+
+    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}.withChildren({joinOp});
+    const LogicalPlan plan{sinkOp->withInferredSchema()};
 
     DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = phase.apply(plan);
@@ -124,17 +194,49 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
 /// Same join but with NESTED_LOOP_JOIN strategy. Verify NLJ trait.
 TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 {
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
 
-    auto joinFunction = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> leftSourceOp{leftSourceDescriptor};
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> rightSourceOp{rightSourceDescriptor};
+
+    auto joinFunction = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+
+    auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+
+    auto joinOp = TypedLogicalOperator<JoinLogicalOperator>{
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value()};
+
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        {Identifier::parse("left_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+
+    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}.withChildren({joinOp});
+    const LogicalPlan plan{sinkOp->withInferredSchema()};
 
     DecideJoinTypes phase(StreamJoinStrategy::NESTED_LOOP_JOIN);
     auto result = phase.apply(plan);
@@ -148,19 +250,53 @@ TEST_F(DecideJoinTypesTest, ForcedNLJStrategyProducesNLJTrait)
 /// Join with a non-field-access leaf in condition + HASH_JOIN strategy. Verify fallback to NLJ.
 TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 {
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
+
+    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
+
+    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> leftSourceOp{leftSourceDescriptor};
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> rightSourceOp{rightSourceDescriptor};
 
     /// Use Equals(Add(field, field), FieldAccess) — Add is not a valid hash-join leaf
-    auto addFunc = LogicalFunction{AddLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("left.value")})};
-    auto joinFunction = LogicalFunction{EqualsLogicalFunction(addFunc, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
+    auto addFunc = AddLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_value")).value()}};
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto joinFunction = EqualsLogicalFunction{
+        addFunc, FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+
+    auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+
+    auto joinOp = TypedLogicalOperator<JoinLogicalOperator>{
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value()};
+
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        {Identifier::parse("left_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+
+    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}.withChildren({joinOp});
+    const LogicalPlan plan{sinkOp->withInferredSchema()};
 
     DecideJoinTypes phase(StreamJoinStrategy::HASH_JOIN);
     auto result = phase.apply(plan);
@@ -174,20 +310,55 @@ TEST_F(DecideJoinTypesTest, ForcedHJWithUnsupportedConditionFallsBackToNLJ)
 /// Equals(field, field) AND Equals(field, field). Verify HASH_JOIN.
 TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 {
+    SourceCatalog sourceCatalog;
+    SinkCatalog sinkCatalog;
+
     auto leftSchema = createSchema("left");
     auto rightSchema = createSchema("right");
-    auto leftPlan = createSourcePlan("TEST", leftSchema);
-    auto rightPlan = createSourcePlan("TEST", rightSchema);
 
-    auto eq1 = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.id")}, LogicalFunction{FieldAccessLogicalFunction("right.id")})};
-    auto eq2 = LogicalFunction{EqualsLogicalFunction(
-        LogicalFunction{FieldAccessLogicalFunction("left.value")}, LogicalFunction{FieldAccessLogicalFunction("right.value")})};
-    auto joinFunction = LogicalFunction{AndLogicalFunction(eq1, eq2)};
+    auto leftLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("LEFT_TEST"), leftSchema);
+    auto leftSourceDescriptor = createSourceDescriptor(sourceCatalog, leftLogicalSource);
 
-    auto plan
-        = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
-    plan = LogicalPlanBuilder::addSink("test_sink", plan);
+    auto rightLogicalSource = createLogicalSource(sourceCatalog, Identifier::parse("RIGHT_TEST"), rightSchema);
+    auto rightSourceDescriptor = createSourceDescriptor(sourceCatalog, rightLogicalSource);
+
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> leftSourceOp{leftSourceDescriptor};
+    const TypedLogicalOperator<SourceDescriptorLogicalOperator> rightSourceOp{rightSourceDescriptor};
+
+    auto eq1 = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_id")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_id")).value()}};
+
+    auto eq2 = EqualsLogicalFunction{
+        FieldAccessLogicalFunction{leftSourceOp->getOutputSchema().getFieldByName(Identifier::parse("left_value")).value()},
+        FieldAccessLogicalFunction{rightSourceOp->getOutputSchema().getFieldByName(Identifier::parse("right_value")).value()}};
+
+    auto joinFunction = AndLogicalFunction{eq1, eq2};
+
+    auto characteristics = JoinLogicalOperator::createJoinTimeCharacteristic(
+        {Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}},
+         Windowing::BoundTimeCharacteristic{Windowing::IngestionTimeCharacteristic{}}});
+
+    auto joinOp = TypedLogicalOperator<JoinLogicalOperator>{
+        std::array<LogicalOperator, 2>{leftSourceOp, rightSourceOp},
+        joinFunction,
+        createTumblingWindow(),
+        JoinLogicalOperator::JoinType::INNER_JOIN,
+        characteristics.value()};
+
+    const Schema<UnqualifiedUnboundField, Ordered> sinkSchema{
+        {Identifier::parse("left_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("left_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_id"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_value"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("right_ts"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("START"), DataTypeProvider::provideDataType(DataType::Type::UINT64)},
+        {Identifier::parse("END"), DataTypeProvider::provideDataType(DataType::Type::UINT64)}};
+
+    auto sinkDescriptor = createSinkDescriptor(sinkCatalog, Identifier::parse("test_sink"), sinkSchema);
+    auto sinkOp = TypedLogicalOperator<SinkLogicalOperator>{sinkDescriptor}.withChildren({joinOp});
+    const LogicalPlan plan{sinkOp->withInferredSchema()};
 
     DecideJoinTypes phase(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = phase.apply(plan);
@@ -200,3 +371,5 @@ TEST_F(DecideJoinTypesTest, ComplexAndConditionProducesHashJoin)
 
 }
 }
+
+/// NOLINTEND(bugprone-unchecked-optional-access)

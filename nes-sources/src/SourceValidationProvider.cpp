@@ -15,21 +15,25 @@
 #include <Sources/SourceValidationProvider.hpp>
 
 #include <optional>
+#include <ranges>
 #include <string>
 #include <string_view>
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>
 
 namespace NES::SourceValidationProvider
 {
 
-std::optional<DescriptorConfig::Config>
-provide(const std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig)
+std::optional<DescriptorConfig::Config> provide(const std::string_view sourceType, std::unordered_map<Identifier, std::string> configMap)
 {
-    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(std::move(stringConfig));
+    const std::unordered_map<std::string, std::string> stringConfigMap = configMap
+        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
+        | std::ranges::to<std::unordered_map>();
+    auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(stringConfigMap);
     return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 }
