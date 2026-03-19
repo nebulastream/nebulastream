@@ -27,10 +27,8 @@
 #include <unordered_map>
 #include <vector>
 
-#include <DataTypes/SchemaBase.hpp>
-#include <DataTypes/SchemaBaseFwd.hpp>
-#include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifier.hpp>
+#include <DataTypes/LegacySchema.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -148,9 +146,8 @@ public:
 };
 
 /// Generates field names (for field N: Field_N)
-Schema<UnqualifiedUnboundField, Ordered> createSchema(const std::vector<TestDataTypes>& testDataTypes);
-Schema<UnqualifiedUnboundField, Ordered>
-createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<Identifier>& testFieldNames);
+LegacySchema createSchema(const std::vector<TestDataTypes>& testDataTypes);
+LegacySchema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames);
 
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
@@ -160,7 +157,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const LegacySchema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     size_t numberOfRequiredSourceBuffers);
 
@@ -172,14 +169,14 @@ bool compareFiles(const std::filesystem::path& file1, const std::filesystem::pat
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const ParserConfig& parserConfiguration,
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const LegacySchema& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,
     bool isCompiled);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const std::unordered_map<std::string, std::string>& parserConfiguration,
-    const Schema<UnqualifiedUnboundField, Ordered>& schema,
+    const LegacySchema& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,
     bool isCompiled);
@@ -191,8 +188,8 @@ struct TestHandle
     std::shared_ptr<BufferManager> testBufferManager;
     std::shared_ptr<BufferManager> formattedBufferManager;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
-    Schema<UnqualifiedUnboundField, Ordered> schema;
-    MemoryLayoutType memoryLayoutType;
+    LegacySchema schema;
+    const MemoryLayoutType memoryLayoutType;
     std::unique_ptr<SingleThreadedTestTaskQueue> testTaskQueue;
     std::vector<TupleBuffer> inputBuffers;
     std::vector<std::vector<TupleBuffer>> expectedResultVectors;
@@ -203,7 +200,7 @@ struct TestHandle
         expectedResultVectors.clear();
         resultBuffers->clear();
         testTaskQueue.reset();
-        schema = Schema<UnqualifiedUnboundField, Ordered>{};
+        schema = LegacySchema{};
     }
 };
 
@@ -226,8 +223,8 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 class TupleIterator
 {
 public:
-    TupleIterator(std::vector<TupleBuffer> buffers, Schema<QualifiedUnboundField, Ordered> schema, const MemoryLayoutType layoutType)
-        : schema(std::move(schema))
+    TupleIterator(std::vector<TupleBuffer> buffers, const LegacySchema& schema, const MemoryLayoutType layoutType)
+        : schema(convertLegacySchema(schema))
         , buffers(std::move(buffers))
         , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType))
     {
@@ -260,8 +257,8 @@ private:
 };
 
 /// Expects tuple buffers with matching sequence numbers contain the same tuples in the same order
-inline bool compareTestTupleBuffersOrderSensitive(
-    std::vector<TupleBuffer>& actualResult, std::vector<TupleBuffer>& expectedResult, const Schema<QualifiedUnboundField, Ordered>& schema)
+inline bool
+compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, std::vector<TupleBuffer>& expectedResult, LegacySchema schema)
 {
     InputFormatterTestUtil::sortTupleBuffers(actualResult);
     InputFormatterTestUtil::sortTupleBuffers(expectedResult);
@@ -388,12 +385,11 @@ inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleB
 /// Unfolds the tuples into the TestTupleBuffer.
 /// Example usage (assumes a bufferManager (shared_ptr to BufferManager object) is available):
 ///     using TestTuple = std::tuple<int, bool>;
-///     SchemaPtr schema = Schema<Field, Unordered>::create()->addField("INT", DataType::Type::INT32)->addField("BOOL", DataType::Type::BOOLEAN);
+///     SchemaPtr schema = Schema::create()->addField("INT", DataType::Type::INT32)->addField("BOOL", DataType::Type::BOOLEAN);
 ///     auto testTupleBuffer = TestUtil::createTupleBufferFromTuples(schema, *bufferManager,
 ///         TestTuple(42, true), TestTuple(43, false), TestTuple(44, true), TestTuple(45, false));
 template <typename TupleSchema, bool PrintDebug = false>
-TupleBuffer createTupleBufferFromTuples(
-    const Schema<QualifiedUnboundField, Ordered>& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
+TupleBuffer createTupleBufferFromTuples(const LegacySchema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
     auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
@@ -442,7 +438,7 @@ bool validateResult(TestHandle<TupleSchemaTemplate>& testHandle)
                 printTupleBuffer(" Expected result buffer:\n", testHandle.expectedResultVectors[taskIndex][bufferIndex], *tupleBufferRef);
             }
             isValid &= checkIfBuffersAreEqual(
-                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeInBytes());
+                actualResultBuffer, testHandle.expectedResultVectors[taskIndex][bufferIndex], testHandle.schema.getSizeOfSchemaInBytes());
             ++bufferIndex;
         }
         ++taskIndex;

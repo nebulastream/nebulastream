@@ -16,7 +16,6 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
-#include <../../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
@@ -31,6 +30,8 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
+#include <Windowing/WindowMetaData.hpp>
+
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>

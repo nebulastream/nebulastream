@@ -27,6 +27,7 @@
 #include <DataTypes/SchemaBase.hpp>
 #include <DataTypes/SchemaBaseFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/CSVFormat.hpp>
@@ -46,7 +47,7 @@ ChecksumSink::ChecksumSink(BackpressureController backpressureController, const 
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
     , formatter(std::make_unique<CSVFormat>(
-          *get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema()), true))
+          convertLegacySchema(*sinkDescriptor.getSchema()), true))
 {
 }
 
@@ -82,8 +83,8 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 {
     NES_INFO("Checksum Sink completed. Checksum: {}", fmt::streamed(checksum));
 
-    outputFileStream << "Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
-                     << ",Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
+    outputFileStream << "S$Count:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE)
+                     << ",S$Checksum:UINT64:" << magic_enum::enum_name(DataType::NULLABLE::NOT_NULLABLE) << '\n';
     outputFileStream << checksum.numberOfTuples << "," << checksum.checksum << '\n';
     outputFileStream.close();
     isOpen = false;

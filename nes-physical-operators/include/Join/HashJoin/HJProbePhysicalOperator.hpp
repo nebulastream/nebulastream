@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <../../../../nes-logical-operators/include/Operators/Windows/WindowMetaData.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>

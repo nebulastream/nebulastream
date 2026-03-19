@@ -30,10 +30,7 @@
 #include <vector>
 
 #include <Configuration/WorkerConfiguration.hpp>
-#include <DataTypes/SchemaBase.hpp>
-#include <DataTypes/SchemaBaseFwd.hpp>
-#include <DataTypes/UnboundField.hpp>
-#include <Identifiers/Identifier.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -53,17 +50,17 @@
 
 namespace
 {
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema<NES::QualifiedUnboundField, NES::Ordered>& schema)
+std::vector<size_t> getVarSizedFieldOffsets(const NES::LegacySchema& schema)
 {
     size_t priorFieldOffset = 0;
     std::vector<size_t> varSizedFieldOffsets;
     for (const auto& field : schema)
     {
-        if (field.getDataType().isType(NES::DataType::Type::VARSIZED))
+        if (field.dataType.isType(NES::DataType::Type::VARSIZED))
         {
             varSizedFieldOffsets.emplace_back(priorFieldOffset);
         }
-        priorFieldOffset += field.getDataType().getSizeInBytesWithNull();
+        priorFieldOffset += field.dataType.getSizeInBytesWithNull();
     }
     return varSizedFieldOffsets;
 }
@@ -168,7 +165,7 @@ public:
 
     struct SetupResult
     {
-        Schema<UnqualifiedUnboundField, Ordered> schema;
+        LegacySchema schema;
         MemoryLayoutType memoryLayoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;
@@ -193,11 +190,7 @@ public:
     SetupResult setupTest(const TestConfig& testConfig, InputFormatterTestUtil::ThreadSafeVector<TupleBuffer>& rawBuffers)
     {
         const auto currentTestFile = testFileMap.at(testConfig.testFileName);
-        const auto schema = InputFormatterTestUtil::createSchema(
-            currentTestFile.schemaFieldTypes,
-            currentTestFile.schemaFieldNames
-                | std::views::transform([](const auto& name) { return Identifier::parse(fmt::format("\"{}\"", name)); })
-                | std::ranges::to<std::vector>());
+        const auto schema = InputFormatterTestUtil::createSchema(currentTestFile.schemaFieldTypes, currentTestFile.schemaFieldNames);
 
         const auto testDirPath = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / testConfig.fileEnding;
         const auto testFilePath = [](const TestFile& currentTestFile, const std::filesystem::path& testDirPath, std::string_view fileEnding)
@@ -211,7 +204,7 @@ public:
         }(currentTestFile, testDirPath, testConfig.fileEnding);
 
         const auto sizeOfFormattedBuffers = WorkerConfiguration().defaultQueryExecution.operatorBufferSize.getValue();
-        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeInBytes());
+        const auto numberOfExpectedRawBuffers = getNumberOfExpectedBuffers(testConfig, testFilePath, schema.getSizeOfSchemaInBytes());
         rawBuffers.reserve(numberOfExpectedRawBuffers);
 
         /// Create file source, start it using the emit function, and wait for the file source to fill the result buffer vector
@@ -271,11 +264,11 @@ public:
         {
             const auto tmpExpectedResultsPath
                 = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-            writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
+            writeTupleBuffersToFile(resultBufferVec, convertLegacySchema(setupResult.schema), tmpExpectedResultsPath, varSizedFieldOffsets);
         }
         const auto expectedResultsPath
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-        auto expectedBuffers = loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
+        auto expectedBuffers = loadTupleBuffersFromFile(testBufferManager, convertLegacySchema(setupResult.schema), expectedResultsPath, varSizedFieldOffsets);
         return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
     }
 
