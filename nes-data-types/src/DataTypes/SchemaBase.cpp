@@ -12,20 +12,9 @@
     limitations under the License.
 */
 
-#pragma once
-
-#include <memory>
-
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
+#include <DataTypes/SchemaBase.hpp>
 
 namespace NES
 {
 
-std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
-
-bool contains(const std::string& parserType);
 }

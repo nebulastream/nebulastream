@@ -21,7 +21,6 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/LegacySchema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>

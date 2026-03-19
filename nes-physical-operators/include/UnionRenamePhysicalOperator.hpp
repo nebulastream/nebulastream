@@ -16,6 +16,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <Identifiers/Identifier.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <PhysicalOperator.hpp>
 
@@ -24,7 +25,7 @@ namespace NES
 class UnionRenamePhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    UnionRenamePhysicalOperator(std::vector<std::string> inputFields, std::vector<std::string> outputFields);
+    UnionRenamePhysicalOperator(std::vector<IdentifierList> inputFields, std::vector<IdentifierList> outputFields);
 
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
@@ -32,8 +33,8 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    std::vector<std::string> inputFields;
-    std::vector<std::string> outputFields;
+    std::vector<IdentifierList> inputFields;
+    std::vector<IdentifierList> outputFields;
     std::optional<PhysicalOperator> child;
 };
 }

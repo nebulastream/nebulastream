@@ -22,9 +22,13 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/LegacySchema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <DataTypes/UnboundSchema.hpp> /// NOLINT(misc-include-cleaner)
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
+#include <fmt/format.h>
 #include <google/protobuf/message_lite.h>
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
@@ -46,14 +50,15 @@ void to_json(nlohmann::json& jsonOutput, const DataType& dataType)
     jsonOutput = magic_enum::enum_name(dataType.type);
 }
 
-void to_json(nlohmann::json& jsonOutput, const LegacySchema::Field& str)
+void to_json(nlohmann::json& jsonOutput, const QualifiedUnboundField& str)
 {
-    jsonOutput = nlohmann::json{{"name", str.name}, {"type", str.dataType}};
-}
+    jsonOutput["name"] = fmt::format("{}", str.getFullyQualifiedName());
+    jsonOutput["type"] = str.getDataType();
+};
 
-void to_json(nlohmann::json& jsonOutput, const LegacySchema& schema)
+void to_json(nlohmann::json& jsonOutput, const Schema<QualifiedUnboundField, Ordered>& schema)
 {
-    jsonOutput = nlohmann::json{schema.getFields()};
+    jsonOutput = nlohmann::json{std::vector{schema}};
 }
 
 void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& windowInfos)

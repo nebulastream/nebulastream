@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <DataTypes/LegacySchema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 
 namespace NES
@@ -33,7 +35,8 @@ enum class MemoryLayoutType : uint8_t
 class LowerSchemaProvider
 {
 public:
-    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const LegacySchema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const LegacySchema& legacySchema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);
 };
 
 }

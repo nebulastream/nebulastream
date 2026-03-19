@@ -19,6 +19,8 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/LegacySchema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -50,6 +52,10 @@ public:
         const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
         const std::vector<Record::RecordFieldIdentifier>& fieldNameValues);
 
+    static std::pair<std::vector<FieldOffsets>, std::vector<FieldOffsets>> createFieldOffsets(
+        const Schema<QualifiedUnboundField, Ordered>& schema,
+        const std::vector<Record::RecordFieldIdentifier>& fieldNameKeys,
+        const std::vector<Record::RecordFieldIdentifier>& fieldNameValues);
 
     [[nodiscard]] VarVal
     readVarVal(const nautilus::val<ChainedHashMapEntry*>& entryRef, const Record::RecordFieldIdentifier& fieldName) const;

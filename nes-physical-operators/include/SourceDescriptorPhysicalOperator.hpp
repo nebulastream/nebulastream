@@ -11,21 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
 #include <memory>
-
+#include <optional>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
+#include <PhysicalOperator.hpp>
 
 namespace NES
 {
+class SourceDescriptorPhysicalOperator final : public PhysicalOperatorConcept
+{
+public:
+    explicit SourceDescriptorPhysicalOperator(SourceDescriptor descriptor, OriginId id);
+    [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
+    void setChild(PhysicalOperator child) override;
 
-std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
+    [[nodiscard]] SourceDescriptor getDescriptor() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
-bool contains(const std::string& parserType);
+    bool operator==(const SourceDescriptorPhysicalOperator& other) const;
+
+private:
+    std::optional<PhysicalOperator> child;
+    OriginId originId;
+    SourceDescriptor descriptor;
+};
 }

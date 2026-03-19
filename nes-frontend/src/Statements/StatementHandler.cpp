@@ -29,6 +29,7 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -49,16 +50,16 @@ SourceStatementHandler::operator()(const CreateLogicalSourceStatement& statement
     {
         return CreateLogicalSourceStatementResult{created.value()};
     }
-    return std::unexpected{SourceAlreadyExists(statement.name)};
+    return std::unexpected{SourceAlreadyExists(statement.name.asCanonicalString())};
 }
 
 std::expected<CreatePhysicalSourceStatementResult, Exception>
 SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statement)
 {
-    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo.getRawValue());
+    auto logicalSource = sourceCatalog->getLogicalSource(statement.attachedTo);
     if (!logicalSource)
     {
-        return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
+        return std::unexpected{UnknownSourceName(fmt::format("{}", statement.attachedTo))};
     }
 
     if (const auto created
@@ -96,7 +97,7 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (not statement.id and statement.logicalSource)
     {
-        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource.value()))
         {
             if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
             {
@@ -107,7 +108,7 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
     }
     if (statement.logicalSource and statement.id)
     {
-        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource->getRawValue()))
+        if (const auto logicalSource = sourceCatalog->getLogicalSource(statement.logicalSource.value()))
         {
             if (const auto foundSources = sourceCatalog->getPhysicalSources(*logicalSource))
             {
@@ -127,14 +128,14 @@ SourceStatementHandler::operator()(const ShowPhysicalSourcesStatement& statement
 
 std::expected<DropLogicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropLogicalSourceStatement& statement)
 {
-    if (auto logical = sourceCatalog->getLogicalSource(statement.source.getRawValue()))
+    if (auto logical = sourceCatalog->getLogicalSource(statement.source))
     {
         if (sourceCatalog->removeLogicalSource(*logical))
         {
             return DropLogicalSourceStatementResult{.dropped = statement.source, .schema = *logical->getSchema()};
         }
     }
-    return std::unexpected{UnknownSourceName(statement.source.getRawValue())};
+    return std::unexpected{UnknownSourceName(statement.source.asCanonicalString())};
 }
 
 std::expected<DropPhysicalSourceStatementResult, Exception> SourceStatementHandler::operator()(const DropPhysicalSourceStatement& statement)
@@ -156,7 +157,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
     {
         return CreateSinkStatementResult{created.value()};
     }
-    return std::unexpected{SinkAlreadyExists(statement.name)};
+    return std::unexpected{SinkAlreadyExists(statement.name.asCanonicalString())};
 }
 
 std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operator()(const ShowSinksStatement& statement) const
@@ -183,7 +184,7 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     {
         return DropSinkStatementResult{sink.value()};
     }
-    return std::unexpected{UnknownSinkName(statement.name)};
+    return std::unexpected{UnknownSinkName(statement.name.asCanonicalString())};
 }
 
 QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer)

@@ -24,7 +24,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/LegacySchema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -189,12 +191,12 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 
 inline void writeTupleBuffersToFile(
     std::vector<TupleBuffer>& resultBufferVec,
-    const LegacySchema& schema,
+    const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& actualResultFilePath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
     sortTupleBuffers(resultBufferVec);
-    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
+    const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
 
     const std::vector<TupleBufferChunk> pagedSizedChunkOffsets
         = [](const std::vector<TupleBuffer>& resultBufferVec, const size_t sizeOfSchemaInBytes)
@@ -254,11 +256,11 @@ inline void updateChildBufferIdx(
 
 inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
     AbstractBufferProvider& bufferProvider,
-    const LegacySchema& schema,
+    const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::filesystem::path& filepath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
-    const auto sizeOfSchemaInBytes = schema.getSizeOfSchemaInBytes();
+    const auto sizeOfSchemaInBytes = schema.getSizeInBytes();
     if (std::ifstream file(filepath, std::ifstream::binary); file.is_open())
     {
         const auto fileHeader = [](std::ifstream& file, const std::filesystem::path& filepath)

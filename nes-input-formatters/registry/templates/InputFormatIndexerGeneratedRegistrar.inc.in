@@ -21,7 +21,6 @@
 
 #include <memory>
 #include <string>
-#include <DataTypes/LegacySchema.hpp>
 #include <Util/Registry.hpp>
 
 namespace NES

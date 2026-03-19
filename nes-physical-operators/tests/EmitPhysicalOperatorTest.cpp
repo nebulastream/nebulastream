@@ -49,6 +49,10 @@
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
 
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
+#include <DataTypes/UnboundField.hpp>
+#include <Identifiers/Identifier.hpp>
 #include <BaseUnitTest.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
@@ -101,7 +105,7 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
 
         void repeatTask(const TupleBuffer&, std::chrono::milliseconds) override { INVARIANT(false, "This function should not be called"); }
 
-        ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the `run` method.
+        ///NOLINTNEXTLINE(cppcoreguidelines-avoid-const-or-ref-data-members) lifetime is ensured by the \"run\" method.
         folly::Synchronized<std::vector<TupleBuffer>>& buffers;
         std::shared_ptr<BufferManager> bufferManager;
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
@@ -125,7 +129,7 @@ public:
 
     EmitPhysicalOperator createUUT()
     {
-        auto schema = LegacySchema{}.addField("A_FIELD", DataType::Type::UINT32);
+        auto schema = Schema<QualifiedUnboundField, Ordered>{QualifiedUnboundField{Identifier::parse("A_FIELD"), DataType::Type::UINT32}};
         auto bufferRef = LowerSchemaProvider::lowerSchema(512, schema, MemoryLayoutType::ROW_LAYOUT);
         EmitPhysicalOperator emit{OperatorHandlerId(0), std::move(bufferRef)};
         handlers.insert_or_assign(OperatorHandlerId(0), std::make_shared<EmitOperatorHandler>());
