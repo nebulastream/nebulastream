@@ -75,6 +75,7 @@ connections.  Valid values include dns:///localhost:1234,
 
     bool excludeGroupsConfiguredInDisableConfig = false;
     bool excludedGroupsProvidedOnCommandLine = false;
+    std::vector<std::string> globalExcludedGroups;
 
     std::optional<SingleNodeWorkerConfiguration> singleNodeWorkerConfig;
     std::optional<QueryOptimizerConfiguration> queryOptimizerConfig;
