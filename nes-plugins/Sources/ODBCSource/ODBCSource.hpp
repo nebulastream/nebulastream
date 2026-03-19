@@ -80,6 +80,7 @@ private:
     size_t maxRetries;
     bool readOnlyNewRows{};
     bool useCheckpoint{true};
+    bool logTuples{false};
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 
     size_t fetchedSizeOfRow{0};
@@ -163,6 +164,12 @@ struct ConfigParametersODBC
         true,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(USE_CHECKPOINT, config); }};
 
+
+    static inline const DescriptorConfig::ConfigParameter<bool> LOG_TUPLES{
+        "log_tuples",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LOG_TUPLES, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
@@ -178,7 +185,8 @@ struct ConfigParametersODBC
             TRUST_SERVER_CERTIFICATE,
             MAX_RETRIES,
             READ_ONLY_NEW_ROWS,
-            USE_CHECKPOINT);
+            USE_CHECKPOINT,
+            LOG_TUPLES);
 };
 
 }
