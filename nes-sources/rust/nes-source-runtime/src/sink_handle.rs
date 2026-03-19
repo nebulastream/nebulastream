@@ -99,6 +99,7 @@ pub fn is_sink_done(handle: &SinkTaskHandle) -> bool {
 mod tests {
     use super::*;
     use crate::buffer::TupleBufferHandle;
+    use crate::buffer_iterator::BufferIterator;
 
     fn _assert_send<T: Send>() {}
 
@@ -139,7 +140,7 @@ mod tests {
 
         // Fill the channel with a Data message
         sender
-            .send(SinkMessage::Data(TupleBufferHandle::new_test()))
+            .send(SinkMessage::Data(BufferIterator::new(TupleBufferHandle::new_test())))
             .await
             .unwrap();
 

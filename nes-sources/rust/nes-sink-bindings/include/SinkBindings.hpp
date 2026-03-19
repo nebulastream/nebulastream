@@ -14,20 +14,13 @@
 
 #pragma once
 
-#include <Sources/TokioSource.hpp>
-#include <nes-source-bindings/lib.h>
+#include <BufferBindings.hpp>
 
-namespace NES
-{
-
-/// PIMPL wrapper to hide rust::Box<SourceHandle> from the public header.
-/// This avoids exposing CXX types (rust/cxx.h) in the nes-sources public API.
-struct TokioSource::RustHandleImpl
-{
-    rust::Box<::SourceHandle> handle;
-
-    explicit RustHandleImpl(rust::Box<::SourceHandle> h)
-        : handle(std::move(h)) {}
-};
-
-} // namespace NES
+extern "C" {
+    /// Called by Rust monitoring task when a sink errors or panics.
+    void on_sink_error_callback(
+        void* context,        // ErrorContext*
+        uint64_t sink_id,
+        const char* message
+    );
+}

@@ -71,17 +71,31 @@ corrosion_import_crate(
         CRATE_TYPES staticlib
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
+
+# Generate the nes-sources Rust workspace Cargo.toml from the member list.
+# This replaces a hand-maintained file — developers should not edit it directly.
+set(_NES_SOURCES_RUST_DIR "${PROJECT_SOURCE_DIR}/nes-sources/rust")
+generate_rust_workspace("${_NES_SOURCES_RUST_DIR}"
+    nes-buffer-bindings nes-source-bindings nes-sink-bindings nes-source-runtime)
+
 corrosion_import_crate(
         MANIFEST_PATH nes-sources/rust/Cargo.toml
-        CRATES nes_source_lib
+        CRATES nes_buffer_bindings nes_source_bindings nes_sink_bindings
         IMPORTED_CRATES SOURCE_CRATES
         CRATE_TYPES staticlib
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
 
 # Register Rust crate source locations for umbrella generation
-register_rust_crate(nes_source_lib "${PROJECT_SOURCE_DIR}/nes-sources/rust/nes-source-lib")
+register_rust_crate(nes_buffer_bindings "${_NES_SOURCES_RUST_DIR}/nes-buffer-bindings")
+register_rust_crate(nes_source_bindings "${_NES_SOURCES_RUST_DIR}/nes-source-bindings")
+register_rust_crate(nes_sink_bindings "${_NES_SOURCES_RUST_DIR}/nes-sink-bindings")
+register_rust_crate(nes_source_runtime "${_NES_SOURCES_RUST_DIR}/nes-source-runtime")
 register_rust_crate(nes_rust_bindings "${PROJECT_SOURCE_DIR}/nes-network/nes-rust-bindings")
+
+# Add Rust unit tests to ctest (one test per crate, run via `cargo test`)
+add_rust_cargo_tests("${_NES_SOURCES_RUST_DIR}"
+    nes_buffer_bindings nes_source_bindings nes_sink_bindings nes_source_runtime)
 
 # Detect the CXX version used by the cxxbridge CLI so the umbrella can pin the same version.
 # All Rust workspaces MUST use the same CXX version (align via Cargo.lock).
@@ -122,6 +136,12 @@ if (NOT "${ENV_VARS_LIST}" STREQUAL "")
             TARGET nes_rust_bindings
             PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
     set_property(
-            TARGET nes_source_lib
+            TARGET nes_buffer_bindings
+            PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
+    set_property(
+            TARGET nes_source_bindings
+            PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
+    set_property(
+            TARGET nes_sink_bindings
             PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
 endif ()

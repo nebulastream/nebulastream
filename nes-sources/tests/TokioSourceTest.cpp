@@ -35,11 +35,11 @@
 #include <MemoryTestUtils.hpp>
 
 // CXX-generated headers for Rust FFI
-#include <nes-io-bindings/io_bridge.h>  // init_source_runtime
-#include <nes-io-bindings/lib.h>        // spawn_source_by_name, stop_source, SourceHandle
+#include <nes-buffer-bindings/lib.h>    // init_source_runtime
+#include <nes-source-bindings/lib.h>    // spawn_source_by_name, stop_source, SourceHandle
 
-// IoBindings provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
-#include <IoBindings.hpp>
+// SourceBindings provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
+#include <SourceBindings.hpp>
 
 namespace NES
 {
@@ -153,7 +153,8 @@ TEST_F(TokioSourceTest, GeneratorEmitsIncrementingValues)
 
     wait_for_emits(*recorder, COUNT);
 
-    // Verify 5 emits with correct u64 values in order
+    // Verify 5 emits with correct CSV values in order.
+    // GeneratorSource writes CSV text "i\n" and sets numberOfTuples = byte count.
     auto emits = recorder->emits.lock();
     ASSERT_GE(emits->size(), COUNT) << "Expected at least " << COUNT << " emits";
 
@@ -161,13 +162,15 @@ TEST_F(TokioSourceTest, GeneratorEmitsIncrementingValues)
     {
         auto& emitted = (*emits)[i];
         EXPECT_EQ(emitted.originId, OriginId(SOURCE_ID)) << "Origin ID mismatch at emit " << i;
-        EXPECT_EQ(emitted.numberOfTuples, 1u) << "Number of tuples mismatch at emit " << i;
 
-        // GeneratorSource writes u64::to_le_bytes() at offset 0
-        ASSERT_GE(emitted.data.size(), sizeof(uint64_t)) << "Buffer too small at emit " << i;
-        uint64_t value = 0;
-        std::memcpy(&value, emitted.data.data(), sizeof(uint64_t));
-        EXPECT_EQ(value, i) << "Expected value " << i << " at emit " << i;
+        // numberOfTuples = byte count of the CSV line (e.g. "0\n" = 2 bytes)
+        std::string expected = std::to_string(i) + "\n";
+        EXPECT_EQ(emitted.numberOfTuples, expected.size()) << "Byte count mismatch at emit " << i;
+
+        // Verify the CSV content
+        ASSERT_GE(emitted.data.size(), expected.size()) << "Buffer too small at emit " << i;
+        std::string actual(emitted.data.begin(), emitted.data.begin() + static_cast<long>(expected.size()));
+        EXPECT_EQ(actual, expected) << "CSV content mismatch at emit " << i;
     }
 
     ::stop_source(*handle);
@@ -206,6 +209,11 @@ TEST_F(TokioSourceTest, BackpressureStability)
                 };
                 recorder->emits.lock()->emplace_back(std::move(emitted));
                 recorder->cv.notify_one();
+                // Release the inflight semaphore slot (simulates pipeline onComplete).
+                if (data->onComplete)
+                {
+                    data->onComplete();
+                }
             }
             return SourceReturnType::EmitResult::SUCCESS;
         },
@@ -234,13 +242,13 @@ TEST_F(TokioSourceTest, BackpressureStability)
     auto emits = recorder->emits.lock();
     ASSERT_EQ(emits->size(), COUNT) << "Expected exactly " << COUNT << " emits";
 
-    // Verify all values arrived in order (backpressure should not reorder)
+    // Verify all CSV values arrived in order (backpressure should not reorder)
     for (uint64_t i = 0; i < COUNT; ++i)
     {
-        ASSERT_GE((*emits)[i].data.size(), sizeof(uint64_t)) << "Buffer too small at emit " << i;
-        uint64_t value = 0;
-        std::memcpy(&value, (*emits)[i].data.data(), sizeof(uint64_t));
-        EXPECT_EQ(value, i) << "Expected value " << i << " at emit " << i;
+        std::string expected = std::to_string(i) + "\n";
+        ASSERT_GE((*emits)[i].data.size(), expected.size()) << "Buffer too small at emit " << i;
+        std::string actual((*emits)[i].data.begin(), (*emits)[i].data.begin() + static_cast<long>(expected.size()));
+        EXPECT_EQ(actual, expected) << "Expected CSV value at emit " << i;
     }
 
     ::stop_source(*handle);

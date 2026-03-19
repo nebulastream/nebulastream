@@ -38,7 +38,7 @@
 #include <SourceValidationRegistry.hpp>
 
 // CXX-generated header for the ffi_source module
-#include <nes-io-bindings/lib.h>
+#include <nes-source-bindings/lib.h>
 
 namespace NES
 {

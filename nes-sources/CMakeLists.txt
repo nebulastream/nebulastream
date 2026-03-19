@@ -33,12 +33,15 @@ cmake_language(DEFER DIRECTORY "${PROJECT_SOURCE_DIR}" CALL generate_rust_tokio_
 # Include generated C++ RustTokioSources.inc directory
 target_include_directories(nes-sources PRIVATE "${CMAKE_BINARY_DIR}/nes-sources")
 
+add_subdirectory(rust/nes-buffer-bindings)
 add_subdirectory(rust/nes-source-bindings)
+add_subdirectory(rust/nes-sink-bindings)
 
-# nes-sources (TokioSource.cpp) includes CXX-generated headers from nes-io-bindings.
+# nes-sources (TokioSource.cpp, TokioSink.cpp) includes CXX-generated headers from the bindings.
 # Use PRIVATE link to get the include directories without creating a PUBLIC circular dependency
-# (nes-io-bindings already links PUBLIC to nes-sources for the SourceReturnType headers).
-target_link_libraries(nes-sources PRIVATE nes-io-bindings)
-target_link_rust_lib(nes-sources nes_source_lib)
+# (nes-source-bindings and nes-sink-bindings already link PUBLIC to nes-sources).
+target_link_libraries(nes-sources PRIVATE nes-buffer-bindings nes-source-bindings nes-sink-bindings)
+target_link_rust_lib(nes-sources nes_source_bindings)
+target_link_rust_lib(nes-sources nes_sink_bindings)
 
 add_tests_if_enabled(tests)

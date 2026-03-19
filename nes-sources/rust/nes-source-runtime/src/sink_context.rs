@@ -13,19 +13,22 @@
 
 use tokio_util::sync::CancellationToken;
 
-use crate::buffer::TupleBufferHandle;
+use crate::buffer_iterator::BufferIterator;
 use crate::sink_error::SinkError;
 
 /// Message delivered through the per-sink bounded channel.
 ///
-/// Data carries a buffer to process. Flush is an advisory request
-/// to flush internal state. Close signals no more data -- the sink
-/// should flush internal state and return from run().
+/// Data carries a BufferIterator that yields byte slices of valid data
+/// from the main buffer and any child buffers. Sink authors iterate
+/// segments without knowing about TupleBuffer internals.
+///
+/// Flush is an advisory request to flush internal state.
+/// Close signals no more data -- the sink should flush and return from run().
 /// Close is sent through the same channel as Data to guarantee
 /// ordering: all data is delivered before Close.
 pub enum SinkMessage {
-    /// A buffer to process.
-    Data(TupleBufferHandle),
+    /// Data segments to process. Use `iter.next_segment()` to get each `&[u8]`.
+    Data(BufferIterator),
     /// Advisory flush request. Sinks should flush internal state but this is not blocking/required.
     Flush,
     /// No more data. Sink should flush and return.
@@ -99,6 +102,14 @@ impl SinkContext {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::buffer::TupleBufferHandle;
+
+    fn make_test_iter(data: &[u8], content_len: u64) -> BufferIterator {
+        let mut buf = TupleBufferHandle::new_test();
+        buf.as_mut_slice()[..data.len()].copy_from_slice(data);
+        buf.set_number_of_tuples(content_len);
+        BufferIterator::new(buf)
+    }
 
     #[test]
     fn sink_context_is_send() {
@@ -114,19 +125,17 @@ mod tests {
 
     #[test]
     fn sink_context_has_cancellation_token() {
-        // Compile-time signature check: cancellation_token() returns CancellationToken.
         fn _check_signature(ctx: &SinkContext) -> CancellationToken {
             ctx.cancellation_token()
         }
     }
 
     #[test]
-    fn sink_message_data_contains_buffer() {
-        // Compile-time check that SinkMessage::Data holds TupleBufferHandle.
+    fn sink_message_data_contains_buffer_iterator() {
         fn _assert_data_variant(msg: &SinkMessage) {
             match msg {
-                SinkMessage::Data(buf) => {
-                    let _: &TupleBufferHandle = buf;
+                SinkMessage::Data(iter) => {
+                    let _: &BufferIterator = iter;
                 }
                 SinkMessage::Flush => {}
                 SinkMessage::Close => {}
@@ -141,20 +150,17 @@ mod tests {
         let ctx = SinkContext::new(receiver, token);
 
         sender
-            .send(SinkMessage::Data(TupleBufferHandle::new_test()))
+            .send(SinkMessage::Data(make_test_iter(&[], 0)))
             .await
             .unwrap();
         sender.send(SinkMessage::Close).await.unwrap();
 
-        // First recv should return Data
         match ctx.recv().await {
-            SinkMessage::Data(_) => {} // expected
+            SinkMessage::Data(_) => {}
             other => panic!("expected Data, got {:?}", std::mem::discriminant(&other)),
         }
-
-        // Second recv should return Close
         match ctx.recv().await {
-            SinkMessage::Close => {} // expected
+            SinkMessage::Close => {}
             other => panic!("expected Close, got {:?}", std::mem::discriminant(&other)),
         }
     }
@@ -165,12 +171,10 @@ mod tests {
         let token = CancellationToken::new();
         let ctx = SinkContext::new(receiver, token);
 
-        // Drop the sender without sending Close
         drop(sender);
 
-        // recv() should return Close (implicit close on broken channel)
         match ctx.recv().await {
-            SinkMessage::Close => {} // expected
+            SinkMessage::Close => {}
             other => panic!("expected Close on broken channel, got {:?}", std::mem::discriminant(&other)),
         }
     }
@@ -181,21 +185,17 @@ mod tests {
         let token = CancellationToken::new();
         let ctx = SinkContext::new(receiver, token);
 
-        // Send 3 Data messages with distinct content (index written into first 8 bytes)
         for i in 0u64..3 {
-            let mut buf = TupleBufferHandle::new_test();
-            buf.as_mut_slice()[..8].copy_from_slice(&i.to_le_bytes());
-            sender.send(SinkMessage::Data(buf)).await.unwrap();
+            sender.send(SinkMessage::Data(make_test_iter(&i.to_le_bytes(), 8))).await.unwrap();
         }
         sender.send(SinkMessage::Close).await.unwrap();
 
-        // Verify FIFO ordering by checking buffer content
         for expected_index in 0u64..3 {
             match ctx.recv().await {
-                SinkMessage::Data(buf) => {
-                    let mut index_bytes = [0u8; 8];
-                    index_bytes.copy_from_slice(&buf.as_slice()[..8]);
-                    let actual_index = u64::from_le_bytes(index_bytes);
+                SinkMessage::Data(mut iter) => {
+                    let segment = iter.next_segment().expect("should have main segment");
+                    assert!(segment.len() >= 8);
+                    let actual_index = u64::from_le_bytes(segment[..8].try_into().unwrap());
                     assert_eq!(
                         actual_index, expected_index,
                         "FIFO violation: expected index {}, got {}",
@@ -211,9 +211,8 @@ mod tests {
             }
         }
 
-        // Final message should be Close
         match ctx.recv().await {
-            SinkMessage::Close => {} // expected
+            SinkMessage::Close => {}
             other => panic!("expected final Close, got {:?}", std::mem::discriminant(&other)),
         }
     }

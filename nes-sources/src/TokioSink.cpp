@@ -32,10 +32,12 @@
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
+// CXX runtime for rust::Vec, rust::Slice, rust::String
+#include <rust/cxx.h>
 // CXX-generated header for ffi_sink module
-#include <nes-io-bindings/lib.h>
-// IoBindings provides ErrorContext, on_sink_error_callback
-#include <IoBindings.hpp>
+#include <nes-sink-bindings/lib.h>
+// SinkBindings provides ErrorContext, on_sink_error_callback
+#include <SinkBindings.hpp>
 
 namespace NES
 {
@@ -322,14 +324,26 @@ TokioSink::SpawnFn makeDevNullSinkSpawnFn()
     };
 }
 
-TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath)
+TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath, std::vector<SinkSchemaField> schema)
 {
-    return [filePath = std::move(filePath)](
+    return [filePath = std::move(filePath), schema = std::move(schema)](
         uint64_t sinkId, uint32_t channelCapacity,
         uintptr_t errorFnPtr, uintptr_t errorCtxPtr)
         -> std::unique_ptr<TokioSink::RustSinkHandleImpl>
     {
-        auto boxedHandle = ::spawn_file_sink(sinkId, filePath, channelCapacity, errorFnPtr, errorCtxPtr);
+        // Convert C++ schema to CXX-bridged type.
+        std::vector<::FfiSchemaField> ffiSchema;
+        ffiSchema.reserve(schema.size());
+        for (const auto& field : schema)
+        {
+            ffiSchema.push_back(::FfiSchemaField{
+                rust::String(field.name),
+                rust::String(field.dataType),
+                field.nullable});
+        }
+        auto boxedHandle = ::spawn_file_sink(sinkId, filePath,
+            rust::Slice<const ::FfiSchemaField>(ffiSchema.data(), ffiSchema.size()),
+            channelCapacity, errorFnPtr, errorCtxPtr);
         return std::make_unique<TokioSink::RustSinkHandleImpl>(std::move(boxedHandle));
     };
 }

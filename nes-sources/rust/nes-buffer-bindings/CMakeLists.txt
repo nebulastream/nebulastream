@@ -10,11 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-corrosion_add_cxxbridge(nes-source-bindings CRATE nes_source_bindings FILES lib.rs)
-cxxbridge_remove_rust_link(nes-source-bindings nes_source_bindings)
-target_sources(nes-source-bindings PRIVATE src/SourceBindings.cpp)
-target_include_directories(nes-source-bindings
+corrosion_add_cxxbridge(nes-buffer-bindings CRATE nes_buffer_bindings FILES lib.rs)
+cxxbridge_remove_rust_link(nes-buffer-bindings nes_buffer_bindings)
+target_sources(nes-buffer-bindings PRIVATE src/BufferBindings.cpp)
+target_include_directories(nes-buffer-bindings
         PRIVATE .
         PUBLIC include
 )
-target_link_libraries(nes-source-bindings PUBLIC nes-sources nes-buffer-bindings)
+target_link_libraries(nes-buffer-bindings PUBLIC nes-memory nes-executable)

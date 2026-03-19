@@ -1,7 +1,7 @@
 #[cxx::bridge]
 pub mod ffi {
     unsafe extern "C++" {
-        include!("IoBindings.hpp");
+        include!("BufferBindings.hpp");
 
         type TupleBuffer;
 
@@ -23,6 +23,12 @@ pub mod ffi {
         fn getReferenceCounter(buf: &TupleBuffer) -> u32;
         #[allow(non_snake_case)]
         fn cloneTupleBuffer(buf: &TupleBuffer) -> UniquePtr<TupleBuffer>;
+
+        // Child buffer access for variable-sized data (e.g. multi-segment output)
+        #[allow(non_snake_case)]
+        fn getNumberOfChildBuffers(buf: &TupleBuffer) -> u32;
+        #[allow(non_snake_case)]
+        fn loadChildBuffer(buf: &TupleBuffer, index: u32) -> UniquePtr<TupleBuffer>;
 
         type AbstractBufferProvider;
 

@@ -24,16 +24,18 @@
 #include <utility>
 
 #include <Configurations/Descriptor.hpp>
+#include <DataTypes/Schema.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/TokioSink.hpp>
 #include <TokioSinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <magic_enum/magic_enum.hpp>
 
 namespace NES
 {
 
-// Declared in TokioSink.cpp
-TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath);
+// Declared in TokioSink.hpp
+// TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath, std::vector<SinkSchemaField> schema);
 
 /// Config parameters for TokioFileSink.
 struct ConfigParametersTokioFileSink
@@ -78,9 +80,22 @@ TokioSinkGeneratedRegistrar::RegisterTokioFileSinkTokioSink(TokioSinkRegistryArg
 {
     const auto filePath = args.sinkDescriptor.getFromConfig(ConfigParametersTokioFileSink::FILE_PATH);
 
+    // Build structured schema for the Rust sink.
+    std::vector<SinkSchemaField> schemaFields;
+    if (const auto& schema = args.sinkDescriptor.getSchema())
+    {
+        for (const auto& field : schema->getFields())
+        {
+            schemaFields.push_back({
+                field.name,
+                std::string(magic_enum::enum_name(field.dataType.type)),
+                field.dataType.nullable});
+        }
+    }
+
     return std::make_unique<TokioSink>(
         std::move(args.backpressureController),
-        makeFileSinkSpawnFn(filePath),
+        makeFileSinkSpawnFn(filePath, std::move(schemaFields)),
         args.channelCapacity);
 }
 

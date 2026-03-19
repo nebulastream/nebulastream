@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <IoBindings.hpp>
+#include <SourceBindings.hpp>
 
 #include <chrono>
 #include <cstdint>
@@ -25,94 +25,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <nes-io-bindings/io_bridge.h>
-
-namespace NES::IoBindings {
-
-void retain(NES::TupleBuffer& buf)
-{
-    buf.retain();
-}
-
-void release(NES::TupleBuffer& buf)
-{
-    buf.release();
-}
-
-const uint8_t* getDataPtr(const NES::TupleBuffer& buf)
-{
-    return buf.getAvailableMemoryArea<uint8_t>().data();
-}
-
-uint8_t* getDataPtrMut(NES::TupleBuffer& buf)
-{
-    return buf.getAvailableMemoryArea<uint8_t>().data();
-}
-
-uint64_t getCapacity(const NES::TupleBuffer& buf)
-{
-    return buf.getBufferSize();
-}
-
-uint64_t getNumberOfTuples(const NES::TupleBuffer& buf)
-{
-    return buf.getNumberOfTuples();
-}
-
-void setNumberOfTuples(NES::TupleBuffer& buf, uint64_t count)
-{
-    buf.setNumberOfTuples(count);
-}
-
-uint32_t getReferenceCounter(const NES::TupleBuffer& buf)
-{
-    return buf.getReferenceCounter();
-}
-
-std::unique_ptr<NES::TupleBuffer> cloneTupleBuffer(const NES::TupleBuffer& buf)
-{
-    return std::make_unique<NES::TupleBuffer>(buf);
-}
-
-std::unique_ptr<NES::TupleBuffer> getBufferBlocking(NES::AbstractBufferProvider& provider)
-{
-    auto tb = provider.getBufferBlocking();
-    return std::make_unique<NES::TupleBuffer>(std::move(tb));
-}
-
-std::unique_ptr<NES::TupleBuffer> tryGetBuffer(NES::AbstractBufferProvider& provider)
-{
-    auto opt = provider.getBufferNoBlocking();
-    if (opt.has_value())
-    {
-        return std::make_unique<NES::TupleBuffer>(std::move(opt.value()));
-    }
-    return nullptr;
-}
-
-uint64_t getBufferSize(const NES::AbstractBufferProvider& provider)
-{
-    return static_cast<uint64_t>(provider.getBufferSize());
-}
-
-// Defined in Rust with #[no_mangle] extern "C" linkage
-extern "C" void nes_on_buffer_recycled();
-
-void installBufferRecycleNotification()
-{
-    NES::setBufferRecycleNotification(nes_on_buffer_recycled);
-}
-
-void waitForBackpressure(const BackpressureListener& listener)
-{
-    // Uses a default never-stopping token. Phase 2 will refine this to accept
-    // a cancellable stop_token when implementing the async BackpressureFuture.
-    listener.wait(std::stop_token{});
-}
-
-} // namespace NES::IoBindings
-
-// --- Phase 2: C-linkage callback implementations ---
+// --- C-linkage callback implementations ---
 
 uint8_t bridge_emit(
     void* context,
@@ -185,14 +98,4 @@ void on_source_error_callback(
     auto* ctx = static_cast<NES::ErrorContext*>(context);
     NES_ERROR("TokioSource {} (ctx sourceId={}): source error: {}",
               source_id, ctx->sourceId, message);
-}
-
-void on_sink_error_callback(
-    void* context,
-    uint64_t sink_id,
-    const char* message)
-{
-    auto* ctx = static_cast<NES::ErrorContext*>(context);
-    NES_ERROR("TokioSink {} (ctx sinkId={}): sink error: {}",
-              sink_id, ctx->sourceId, message);
 }
