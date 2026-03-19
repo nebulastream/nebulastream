@@ -66,7 +66,7 @@ let
     in
     stdenv.mkDerivation rec {
       pname = "folly";
-      version = "unstable-2024-09-04";
+      version = "2021.10.11.00";
 
       src = fetchFromGitHub {
         owner = "facebook";
