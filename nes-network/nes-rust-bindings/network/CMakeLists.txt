@@ -15,6 +15,7 @@ corrosion_add_cxxbridge(
         CRATE nes_rust_bindings
         FILES ../network/lib.rs
 )
+cxxbridge_remove_rust_link(nes-network-bindings nes_rust_bindings)
 target_sources(nes-network-bindings PRIVATE src/NetworkBindings.cpp)
 target_include_directories(nes-network-bindings
         PRIVATE .

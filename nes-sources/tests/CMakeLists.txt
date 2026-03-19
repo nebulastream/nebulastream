@@ -24,11 +24,6 @@ add_nes_source_test(source-thread-test SourceThreadTest.cpp)
 add_nes_source_test(source-catalog-test SourceCatalogTest.cpp)
 add_nes_source_test(tokio-source-test TokioSourceTest.cpp)
 target_link_libraries(tokio-source-test nes-io-bindings)
-# Two Rust crates (nes_rust_bindings, nes_source_lib) both statically link the CXX runtime,
-# resulting in duplicate cxxbridge symbols. Allow the linker to resolve this by keeping the
-# first definition (both are identical -- same CXX version's runtime glue).
-target_link_options(tokio-source-test PRIVATE "LINKER:--allow-multiple-definition")
 
 add_nes_source_test(tokio-sink-test TokioSinkTest.cpp)
 target_link_libraries(tokio-sink-test nes-io-bindings)
-target_link_options(tokio-sink-test PRIVATE "LINKER:--allow-multiple-definition")

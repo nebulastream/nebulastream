@@ -34,3 +34,4 @@ target_link_libraries(nes-single-node-worker-lib
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib)
+target_link_rust(nes-single-node-worker)

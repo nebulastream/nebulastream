@@ -18,6 +18,7 @@ corrosion_add_cxxbridge(
         CRATE nes_rust_bindings
         FILES ../spdlog/lib.rs
 )
+cxxbridge_remove_rust_link(nes-logger-bindings nes_rust_bindings)
 target_sources(nes-logger-bindings PRIVATE src/LoggerBindings.cpp)
 target_link_libraries(nes-logger-bindings PUBLIC nes-common spdlog::spdlog magic_enum::magic_enum)
 target_include_directories(nes-logger-bindings PUBLIC include)
