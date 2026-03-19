@@ -35,8 +35,8 @@
 #include <MemoryTestUtils.hpp>
 
 // CXX-generated headers for Rust FFI
-#include <nes-source-bindings/lib.h>  // init_source_runtime
-#include <nes-source-lib/src/lib.h>   // spawn_source_by_name, stop_source, SourceHandle
+#include <nes-io-bindings/io_bridge.h>  // init_source_runtime
+#include <nes-io-bindings/lib.h>        // spawn_source_by_name, stop_source, SourceHandle
 
 // IoBindings provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
 #include <IoBindings.hpp>

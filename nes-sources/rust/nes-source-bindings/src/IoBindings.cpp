@@ -25,7 +25,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 
-#include <nes-source-bindings/lib.h>
+#include <nes-io-bindings/io_bridge.h>
 
 namespace NES::IoBindings {
 

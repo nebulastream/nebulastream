@@ -15,7 +15,7 @@
 #pragma once
 
 #include <Sources/TokioSource.hpp>
-#include <nes-source-lib/src/lib.h>
+#include <nes-io-bindings/lib.h>
 
 namespace NES
 {
