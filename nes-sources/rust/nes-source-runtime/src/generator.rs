@@ -4,11 +4,35 @@
 // each written as little-endian bytes into a TupleBuffer, with a configurable
 // interval between emissions. Respects CancellationToken for cooperative shutdown.
 
+use std::collections::HashMap;
 use std::time::Duration;
 
+use crate::config::{ConfigParam, ParamType};
 use crate::context::SourceContext;
 use crate::error::SourceResult;
 use crate::source::AsyncSource;
+
+/// Declarative config schema for GeneratorSource.
+pub const CONFIG_SCHEMA: &[ConfigParam] = &[
+    ConfigParam { name: "generator_count", param_type: ParamType::U64, default: Some("10") },
+    ConfigParam { name: "generator_interval_ms", param_type: ParamType::U64, default: Some("0") },
+];
+
+/// Factory function: create a GeneratorSource from a validated config map.
+///
+/// The config is expected to have been validated against `CONFIG_SCHEMA` already,
+/// so parse errors here indicate a bug in the validation layer.
+pub fn create_generator_source(config: &HashMap<String, String>) -> Result<GeneratorSource, String> {
+    let count = config.get("generator_count")
+        .unwrap_or(&"10".to_string())
+        .parse::<u64>()
+        .map_err(|e| format!("invalid generator_count: {e}"))?;
+    let interval_ms = config.get("generator_interval_ms")
+        .unwrap_or(&"0".to_string())
+        .parse::<u64>()
+        .map_err(|e| format!("invalid generator_interval_ms: {e}"))?;
+    Ok(GeneratorSource::new(count, Duration::from_millis(interval_ms)))
+}
 
 /// A source that emits `count` sequential u64 values with a configurable interval.
 ///

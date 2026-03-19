@@ -1,0 +1,13 @@
+[package]
+name = "nes_tokio_tcp_source"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_source_runtime = { path = "../../nes-sources/rust/nes-source-runtime" }
+tokio = { version = "1.40.0", features = ["net", "time", "io-util"] }
+tokio-util = { version = "0.7.13", features = ["rt"] }
+tracing = "0.1"

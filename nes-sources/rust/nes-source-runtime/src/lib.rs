@@ -1,6 +1,7 @@
 pub mod backpressure;
 pub mod bridge;
 pub mod buffer;
+pub mod config;
 pub mod context;
 pub mod error;
 pub mod file_sink;
