@@ -17,6 +17,7 @@ CREATE SINK sinkQualifiedTimestamps(stream.id UINT64 NOT NULL, stream.timestamp 
 SELECT id, stream.timestamp, stream2.timestamp FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkQualifiedTimestamps;
 ----
 4 1002 1102
+4 1002 1112
 12 1001 1011
 1 2000 2010
 11 2001 2301
