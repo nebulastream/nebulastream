@@ -1,0 +1,26 @@
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+@@ -705,19 +705,19 @@ void MLIRLoweringProvider::generateMLIR(ir::IfOperation* ifOp, ValueFrame& frame
+ 
+ 	builder->restoreInsertionPoint(parentBlockInsertionPoint);
+ 	// create cond branch operation, which evaluates the condition and branches to the true or false block
+-	auto mlirOp =
++	[[maybe_unused]] auto mlirOp =
+ 	    builder->create<mlir::cf::CondBranchOp>(getNameLoc("branch"), frame.getValue(ifOp->getValue()->getIdentifier()),
+ 	                                            trueBlock, trueBlockArgs, elseBlock, elseBlockArgs);
+ 
+ 	// set the branch weights for branches by using the branch probabilities
+ 	// The if probability indicates how likely the true branch is taken and is derived from the val<bool> condition
+ 	// during tracing.
+ 	// We only set weights if the probability is not neutral (0.5)
+ 	if (ifOp->getProbability() < 0.4 || ifOp->getProbability() > 0.6) {
+ 		::llvm::SmallVector<int32_t, 2> weights;
+ 		weights.push_back(static_cast<int32_t>(ifOp->getProbability() * 1000));
+ 		weights.push_back(static_cast<int32_t>((1.0 - ifOp->getProbability()) * 1000));
+-		mlirOp.setWeights(weights);
++		(void)weights;
+ 	}
+ }
+ 
+ void MLIRLoweringProvider::generateMLIR(ir::BranchOperation* branchOp, ValueFrame& frame) {

@@ -53,6 +53,7 @@ let
       patches = [
         ./patches/0001-disable-ubsan-function-call-check.patch
         ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
+        ./patches/0003-disable-cond-branch-weights.patch
       ];
 
       nativeBuildInputs = [
@@ -63,14 +64,6 @@ let
       buildInputs = baseBuildInputs ++ extraBuildInputs;
 
       CMAKE_CXX_FLAGS = "-Wno-error=unused-result";
-
-      postPatch = ''
-        substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRCompilationBackend.cpp \
-          --replace "context.allowsUnregisteredDialects();" "(void)context.allowsUnregisteredDialects();"
-        substituteInPlace nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp \
-          --replace "auto mlirOp =" "[[maybe_unused]] auto mlirOp =" \
-          --replace "mlirOp.setWeights(weights);" "(void)weights;"
-      '';
 
       cmakeFlags = [
         "-G"

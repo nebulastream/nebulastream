@@ -161,7 +161,10 @@
             };
             yamlPkg = overrideStdenv pkgs.yaml-cpp;
             replxxPkg = overrideStdenv pkgs.replxx;
-            magicEnumPkg = pkgs.magic-enum;
+            magicEnumPkg = magicEnumPackages.withSanitizer {
+              extraBuildInputs = extraInputs;
+              inherit useLibcxx;
+            };
             boostPkg = overrideStdenv pkgs.boost;
             tbbPkg = overrideStdenv pkgs.tbb;
             simdjsonPkg = overrideStdenv simdjsonBasePkg;
@@ -244,6 +247,7 @@
         cpptracePackages = pkgs.callPackage ./.nix/cpptrace/package.nix { };
         argparsePackages = pkgs.callPackage ./.nix/argparse/package.nix { };
         libcuckooPackages = pkgs.callPackage ./.nix/libcuckoo/package.nix { };
+        magicEnumPackages = pkgs.callPackage ./.nix/magic_enum/package.nix { };
         reflectCppPackages = pkgs.callPackage ./.nix/reflect_cpp/package.nix { };
         nameofPackages = pkgs.callPackage ./.nix/nameof/package.nix { };
         scopeGuardPackages = pkgs.callPackage ./.nix/scope_guard/package.nix { };
