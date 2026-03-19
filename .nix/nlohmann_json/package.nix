@@ -29,8 +29,6 @@ let
         hash = "sha256-cECvDOLxgX7Q9R3IE86Hj9JJUxraDQvhoyPDF03B2CY=";
       };
 
-      patches = [ ./patches/0001-fix-missing-cstdio-header-for-missing-EOF.patch ];
-
       nativeBuildInputs = [ pkgs.cmake ];
       buildInputs = extraBuildInputs;
 
