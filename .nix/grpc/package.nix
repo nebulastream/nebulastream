@@ -43,6 +43,11 @@ let
       in
       {
         buildInputs = lib.unique ((old.buildInputs or [ ]) ++ extraBuildInputs);
+        cmakeFlags = (old.cmakeFlags or [ ]) ++ [
+          "-DgRPC_BUILD_TESTS=OFF"
+          "-DgRPC_BENCHMARK_PROVIDER=none"
+        ];
+        doCheck = false;
         env = oldEnv // {
           NIX_CFLAGS_COMPILE = mergeFlags compilerFlags (oldEnv.NIX_CFLAGS_COMPILE or "");
         };
