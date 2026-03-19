@@ -98,7 +98,7 @@ public:
     std::vector<SQLCHAR> buildNewRowFetchSting(std::string_view userQuery, uint64_t numRowsToFetch);
 
     ODBCPollStatus
-    executeQuery(std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, size_t rowsPerBuffer);
+    executeQuery(std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, size_t rowsPerBuffer, bool logTuples);
 
 private:
     SQLHENV henv = SQL_NULL_HENV;
