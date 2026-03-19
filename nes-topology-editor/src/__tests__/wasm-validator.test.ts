@@ -77,7 +77,7 @@ describe('WASM validator with storeToYaml output', () => {
       {
         id: 's1', name: 'VOID_SINK', hostWorkerId: 'w1', type: 'Void',
         schema: [{ name: 'SENSOR$ID', type: 'INT64' }, { name: 'SENSOR$VALUE', type: 'FLOAT64' }],
-        config: {}, position: { x: 0, y: 0 },
+        config: {}, parserConfig: {}, position: { x: 0, y: 0 },
       },
     ];
     const queries: Query[] = [
@@ -108,7 +108,7 @@ describe('WASM validator with storeToYaml output', () => {
       {
         id: 's1', name: 'MY_SINK', hostWorkerId: 'w1', type: 'Void',
         schema: [{ name: 'id', type: 'INT64' }],
-        config: {}, position: { x: 0, y: 0 },
+        config: {}, parserConfig: {}, position: { x: 0, y: 0 },
       },
     ];
     const queries: Query[] = [
@@ -127,7 +127,7 @@ describe('WASM validator with storeToYaml output', () => {
     const sinks: Sink[] = [
       {
         id: 's1', name: '', hostWorkerId: 'w1', type: 'Print',
-        schema: [], config: {}, position: { x: 0, y: 0 },
+        schema: [], config: {}, parserConfig: {}, position: { x: 0, y: 0 },
       },
     ];
     const yaml = storeToYaml(workers, [], [], sinks, []);
@@ -146,7 +146,7 @@ describe('WASM validator with storeToYaml output', () => {
       {
         id: 's1', name: 'VOID_SINK', hostWorkerId: 'w1', type: 'Void',
         schema: [{ name: 'SENSOR$ID', type: 'INT64' }],
-        config: {}, position: { x: 0, y: 0 },
+        config: {}, parserConfig: {}, position: { x: 0, y: 0 },
       },
     ];
     const yaml = storeToYaml(workers, logical, [], sinks, []);
@@ -177,6 +177,7 @@ describe('default source/sink configs produce valid YAML', () => {
       type,
       schema: [{ name: 'id', type: 'INT64' }],
       config: buildDefaults(SINK_CONFIGS[type] ?? []),
+      parserConfig: {},
       position: { x: 0, y: 0 },
     };
   }

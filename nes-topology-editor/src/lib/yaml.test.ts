@@ -22,7 +22,7 @@ beforeEach(() => {
 describe('storeToYaml', () => {
   it('emits all sections even when empty', () => {
     const result = storeToYaml([], [], [], [], []);
-    expect(result).toContain('queries: []');
+    expect(result).toContain('query: []');
     expect(result).toContain('sinks: []');
     expect(result).toContain('logical: []');
     expect(result).toContain('physical: []');
@@ -34,7 +34,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -43,8 +43,8 @@ describe('storeToYaml', () => {
     const result = storeToYaml(workers, [], [], [], []);
     expect(result).toContain('workers:');
     expect(result).toContain('host: worker-1:9090');
-    expect(result).toContain('grpc: worker-1:8080');
-    expect(result).toContain('capacity: 10000');
+    expect(result).toContain('data: worker-1:8080');
+    expect(result).toContain('max_operators: 10000');
     expect(result).not.toContain('downstream');
   });
 
@@ -53,7 +53,7 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: ['w2'],
         position: { x: 0, y: 0 },
@@ -61,7 +61,7 @@ describe('storeToYaml', () => {
       {
         id: 'w2',
         host: 'worker-2:9090',
-        grpc: 'worker-2:8080',
+        data: 'worker-2:8080',
         capacity: 5000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -72,22 +72,33 @@ describe('storeToYaml', () => {
     expect(result).toContain('worker-2:9090');
   });
 
-  it('serializes queries in future format', () => {
+  it('serializes queries as query: string[]', () => {
     const queries: Query[] = [
       { id: 'q1', name: 'myQuery', sql: 'SELECT * FROM src' },
     ];
     const result = storeToYaml([], [], [], [], queries);
-    expect(result).toContain('queries:');
-    expect(result).toContain('query: SELECT * FROM src');
-    expect(result).toContain('name: myQuery');
+    expect(result).toContain('query:');
+    expect(result).toContain('- SELECT * FROM src');
+    // Should NOT use the queries: [{query, name}] format
+    expect(result).not.toContain('queries:');
   });
 
-  it('serializes sinks with host UUID resolved', () => {
+  it('serializes multiple queries as query: string[]', () => {
+    const queries: Query[] = [
+      { id: 'q1', name: '', sql: 'SELECT * FROM src1 INTO sink1' },
+      { id: 'q2', name: '', sql: 'SELECT * FROM src2 INTO sink2' },
+    ];
+    const result = storeToYaml([], [], [], [], queries);
+    expect(result).toContain('- SELECT * FROM src1 INTO sink1');
+    expect(result).toContain('- SELECT * FROM src2 INTO sink2');
+  });
+
+  it('serializes sinks with host UUID resolved and all required fields', () => {
     const workers: Worker[] = [
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -101,6 +112,7 @@ describe('storeToYaml', () => {
         type: 'Void',
         schema: [{ name: 'field1', type: 'FLOAT64' }],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       },
     ];
@@ -109,6 +121,9 @@ describe('storeToYaml', () => {
     expect(result).toContain('name: VOID_SINK');
     expect(result).toContain('host: worker-1:9090');
     expect(result).toContain('type: Void');
+    // CLI requires config and parser_config
+    expect(result).toContain('config: {}');
+    expect(result).toContain('parser_config: {}');
   });
 
   it('serializes logical sources', () => {
@@ -124,12 +139,12 @@ describe('storeToYaml', () => {
     expect(result).toContain('name: GENERATOR_SOURCE');
   });
 
-  it('serializes physical sources with UUID resolution', () => {
+  it('serializes physical sources with UUID resolution and all required fields', () => {
     const workers: Worker[] = [
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -154,6 +169,9 @@ describe('storeToYaml', () => {
     expect(result).toContain('logical: GENERATOR_SOURCE');
     expect(result).toContain('host: worker-1:9090');
     expect(result).toContain('type: Generator');
+    // CLI requires parser_config and source_config
+    expect(result).toContain('parser_config:');
+    expect(result).toContain('source_config:');
   });
 
   it('emits empty arrays for missing sections alongside populated ones', () => {
@@ -161,14 +179,14 @@ describe('storeToYaml', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
       },
     ];
     const result = storeToYaml(workers, [], [], [], []);
-    expect(result).toContain('queries: []');
+    expect(result).toContain('query: []');
     expect(result).toContain('sinks: []');
     expect(result).toContain('logical: []');
     expect(result).toContain('physical: []');
@@ -176,12 +194,12 @@ describe('storeToYaml', () => {
     expect(result).toContain('host: worker-1:9090');
   });
 
-  it('follows key ordering: queries, sinks, logical, physical, workers', () => {
+  it('follows key ordering: query, sinks, logical, physical, workers', () => {
     const workers: Worker[] = [
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: [],
         position: { x: 0, y: 0 },
@@ -194,10 +212,10 @@ describe('storeToYaml', () => {
       { id: 'q1', name: 'q', sql: 'SELECT 1' },
     ];
     const result = storeToYaml(workers, logical, [], [], queries);
-    const queriesIdx = result.indexOf('queries:');
+    const queryIdx = result.indexOf('query:');
     const logicalIdx = result.indexOf('logical:');
     const workersIdx = result.indexOf('workers:');
-    expect(queriesIdx).toBeLessThan(logicalIdx);
+    expect(queryIdx).toBeLessThan(logicalIdx);
     expect(logicalIdx).toBeLessThan(workersIdx);
   });
 });
@@ -207,13 +225,13 @@ describe('yamlToStore', () => {
     const yaml = `
 workers:
   - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+    data: worker-1:8080
+    max_operators: 10000
 `;
     const result = yamlToStore(yaml);
     expect(result.workers).toHaveLength(1);
     expect(result.workers[0]!.host).toBe('worker-1:9090');
-    expect(result.workers[0]!.grpc).toBe('worker-1:8080');
+    expect(result.workers[0]!.data).toBe('worker-1:8080');
     expect(result.workers[0]!.capacity).toBe(10000);
     expect(result.workers[0]!.id).toBe('uuid-1');
     expect(result.workers[0]!.position).toEqual({ x: 0, y: 0 });
@@ -223,13 +241,13 @@ workers:
     const yaml = `
 workers:
   - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+    data: worker-1:8080
+    max_operators: 10000
     downstream:
       - worker-2:9090
   - host: worker-2:9090
-    grpc: worker-2:8080
-    capacity: 5000
+    data: worker-2:8080
+    max_operators: 5000
 `;
     const result = yamlToStore(yaml);
     expect(result.workers[0]!.downstream).toEqual([result.workers[1]!.id]);
@@ -255,8 +273,8 @@ logical:
     const yaml = `
 workers:
   - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+    data: worker-1:8080
+    max_operators: 10000
 logical:
   - name: GENERATOR_SOURCE
     schema: []
@@ -283,8 +301,8 @@ physical:
     const yaml = `
 workers:
   - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+    data: worker-1:8080
+    max_operators: 10000
 sinks:
   - name: VOID_SINK
     host: worker-1:9090
@@ -293,27 +311,17 @@ sinks:
         type: FLOAT64
     type: Void
     config: {}
+    parser_config: {}
 `;
     const result = yamlToStore(yaml);
     expect(result.sinks).toHaveLength(1);
     expect(result.sinks[0]!.name).toBe('VOID_SINK');
     expect(result.sinks[0]!.hostWorkerId).toBe(result.workers[0]!.id);
     expect(result.sinks[0]!.type).toBe('Void');
+    expect(result.sinks[0]!.parserConfig).toEqual({});
   });
 
-  it('parses new queries format (queries: [{query, name}])', () => {
-    const yaml = `
-queries:
-  - query: SELECT * FROM src
-    name: myQuery
-`;
-    const result = yamlToStore(yaml);
-    expect(result.queries).toHaveLength(1);
-    expect(result.queries[0]!.sql).toBe('SELECT * FROM src');
-    expect(result.queries[0]!.name).toBe('myQuery');
-  });
-
-  it('parses old query format (query: string)', () => {
+  it('parses query: string', () => {
     const yaml = `
 query: SELECT * FROM src
 `;
@@ -323,7 +331,7 @@ query: SELECT * FROM src
     expect(result.queries[0]!.name).toBe('');
   });
 
-  it('parses old query format (query: string[])', () => {
+  it('parses query: string[]', () => {
     const yaml = `
 query:
   - SELECT * FROM src1
@@ -360,7 +368,7 @@ describe('roundtrip', () => {
       {
         id: 'w1',
         host: 'worker-1:9090',
-        grpc: 'worker-1:8080',
+        data: 'worker-1:8080',
         capacity: 10000,
         downstream: ['w2'],
         position: { x: 100, y: 200 },
@@ -368,7 +376,7 @@ describe('roundtrip', () => {
       {
         id: 'w2',
         host: 'worker-2:9090',
-        grpc: 'worker-2:8080',
+        data: 'worker-2:8080',
         capacity: 5000,
         downstream: [],
         position: { x: 300, y: 200 },
@@ -400,11 +408,12 @@ describe('roundtrip', () => {
         type: 'Void',
         schema: [{ name: 'src$field', type: 'FLOAT64' }],
         config: {},
+        parserConfig: {},
         position: { x: 50, y: 300 },
       },
     ];
     const queries: Query[] = [
-      { id: 'q1', name: 'testQuery', sql: 'SELECT * FROM GENERATOR_SOURCE' },
+      { id: 'q1', name: '', sql: 'SELECT * FROM GENERATOR_SOURCE' },
     ];
 
     const yamlStr = storeToYaml(workers, logical, physical, sinks, queries);
@@ -434,6 +443,7 @@ describe('roundtrip', () => {
     expect(result.queries[0]!.sql).toBe(
       'SELECT * FROM GENERATOR_SOURCE',
     );
-    expect(result.queries[0]!.name).toBe('testQuery');
+    // query: format doesn't preserve names
+    expect(result.queries[0]!.name).toBe('');
   });
 });

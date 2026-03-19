@@ -52,6 +52,7 @@ export default function WorkerPanel({ worker }: WorkerPanelProps) {
       type: defaultSinkType,
       schema: [],
       config: buildDefaults(SINK_CONFIGS[defaultSinkType] ?? []),
+      parserConfig: {},
       position: { x: worker.position.x + 300, y: worker.position.y + sinkIndex * 80 },
     });
     // Select the newly created sink
@@ -80,12 +81,12 @@ export default function WorkerPanel({ worker }: WorkerPanelProps) {
       </div>
 
       <div className="mb-3">
-        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">gRPC Address</label>
+        <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-1">Data Address</label>
         <input
           type="text"
           className="w-full px-2 py-1.5 border border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-100 rounded text-sm focus:outline-none focus:ring-1 focus:ring-blue-500"
-          value={worker.grpc}
-          onChange={(e) => handleChange('grpc', e.target.value)}
+          value={worker.data}
+          onChange={(e) => handleChange('data', e.target.value)}
         />
       </div>
 

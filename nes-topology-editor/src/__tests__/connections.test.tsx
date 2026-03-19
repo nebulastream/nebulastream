@@ -28,15 +28,15 @@ const { mockFns, rfProps } = vi.hoisted(() => ({
 
 const WORKER_A = {
   id: 'w-a', type: 'worker', position: { x: 0, y: 0 },
-  data: { worker: { id: 'w-a', host: 'a:9090', grpc: 'a:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } } },
+  data: { worker: { id: 'w-a', host: 'a:9090', data: 'a:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } } },
 };
 const WORKER_B = {
   id: 'w-b', type: 'worker', position: { x: 200, y: 0 },
-  data: { worker: { id: 'w-b', host: 'b:9090', grpc: 'b:8080', capacity: 10000, downstream: [], position: { x: 200, y: 0 } } },
+  data: { worker: { id: 'w-b', host: 'b:9090', data: 'b:8080', capacity: 10000, downstream: [], position: { x: 200, y: 0 } } },
 };
 const WORKER_C = {
   id: 'w-c', type: 'worker', position: { x: 400, y: 0 },
-  data: { worker: { id: 'w-c', host: 'c:9090', grpc: 'c:8080', capacity: 10000, downstream: [], position: { x: 400, y: 0 } } },
+  data: { worker: { id: 'w-c', host: 'c:9090', data: 'c:8080', capacity: 10000, downstream: [], position: { x: 400, y: 0 } } },
 };
 const SOURCE_1 = {
   id: 's-1', type: 'source', position: { x: 0, y: 200 },
@@ -44,7 +44,7 @@ const SOURCE_1 = {
 };
 const SINK_1 = {
   id: 'k-1', type: 'sink', position: { x: 200, y: 200 },
-  data: { sink: { id: 'k-1', name: 'Sink', hostWorkerId: '', type: 'Print', schema: [], config: {}, position: { x: 200, y: 200 } } },
+  data: { sink: { id: 'k-1', name: 'Sink', hostWorkerId: '', type: 'Print', schema: [], config: {}, parserConfig: {}, position: { x: 200, y: 200 } } },
 };
 
 let testNodes = [WORKER_A, WORKER_B, WORKER_C, SOURCE_1, SINK_1];

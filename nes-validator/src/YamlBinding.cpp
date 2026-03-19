@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <initializer_list>
 #include <ranges>
 #include <stdexcept>
 #include <string>
@@ -23,6 +24,8 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace
 {
@@ -62,6 +65,25 @@ std::string bindIdentifierName(std::string_view identifier)
     verifyAllowedCharacters(identifier);
     return NES::toUpperCase(identifier);
 }
+
+/// Validates that a YAML map node contains only the expected keys.
+/// Throws InvalidConfigParameter if an unknown key is found.
+/// Ported from CLIStarter.cpp::acceptKeys.
+void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Node& node)
+{
+    if (!node.IsMap())
+    {
+        return;
+    }
+    for (const auto& entry : node)
+    {
+        const auto key = entry.first.as<std::string>();
+        if (std::find(allowed.begin(), allowed.end(), key) == allowed.end())
+        {
+            throw NES::InvalidConfigParameter("Unknown key '{}'. Expected one of: {}", key, fmt::join(allowed, ", "));
+        }
+    }
+}
 } // namespace
 
 namespace YAML
@@ -69,6 +91,7 @@ namespace YAML
 
 bool convert<NES::Validator::SchemaField>::decode(const Node& node, NES::Validator::SchemaField& rhs)
 {
+    acceptKeys({"name", "type"}, node);
     rhs.name = bindIdentifierName(node["name"].as<std::string>());
     rhs.type = stringToFieldType(node["type"].as<std::string>());
     return true;
@@ -76,16 +99,19 @@ bool convert<NES::Validator::SchemaField>::decode(const Node& node, NES::Validat
 
 bool convert<NES::Validator::SinkConfig>::decode(const Node& node, NES::Validator::SinkConfig& rhs)
 {
+    acceptKeys({"name", "type", "schema", "host", "config", "parser_config"}, node);
     rhs.name = bindIdentifierName(node["name"].as<std::string>());
     rhs.type = node["type"].as<std::string>();
-    rhs.schema = node["schema"] ? node["schema"].as<std::vector<NES::Validator::SchemaField>>() : std::vector<NES::Validator::SchemaField>{};
-    rhs.config = node["config"] ? node["config"].as<std::unordered_map<std::string, std::string>>() : std::unordered_map<std::string, std::string>{};
-    rhs.parserConfig = node["parser_config"] ? node["parser_config"].as<std::unordered_map<std::string, std::string>>() : std::unordered_map<std::string, std::string>{};
+    rhs.schema = node["schema"].as<std::vector<NES::Validator::SchemaField>>();
+    rhs.host = node["host"].as<std::string>();
+    rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
+    rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
     return true;
 }
 
 bool convert<NES::Validator::LogicalSourceConfig>::decode(const Node& node, NES::Validator::LogicalSourceConfig& rhs)
 {
+    acceptKeys({"name", "schema"}, node);
     rhs.name = bindIdentifierName(node["name"].as<std::string>());
     rhs.schema = node["schema"].as<std::vector<NES::Validator::SchemaField>>();
     return true;
@@ -93,33 +119,40 @@ bool convert<NES::Validator::LogicalSourceConfig>::decode(const Node& node, NES:
 
 bool convert<NES::Validator::PhysicalSourceConfig>::decode(const Node& node, NES::Validator::PhysicalSourceConfig& rhs)
 {
+    acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
     rhs.logical = bindIdentifierName(node["logical"].as<std::string>());
-    rhs.host = node["host"] ? node["host"].as<std::string>() : "";
     rhs.type = node["type"].as<std::string>();
-    rhs.parserConfig = node["parser_config"] ? node["parser_config"].as<std::unordered_map<std::string, std::string>>() : std::unordered_map<std::string, std::string>{};
-    rhs.sourceConfig = node["source_config"] ? node["source_config"].as<std::unordered_map<std::string, std::string>>() : std::unordered_map<std::string, std::string>{};
+    rhs.host = node["host"].as<std::string>();
+    rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
+    rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
+    return true;
+}
+
+bool convert<NES::Validator::WorkerConfig>::decode(const Node& node, NES::Validator::WorkerConfig& rhs)
+{
+    acceptKeys({"host", "data", "max_operators", "downstream", "config"}, node);
+    rhs.host = node["host"].as<std::string>();
+    rhs.data = node["data"].IsDefined() ? node["data"].as<std::string>() : "";
+    if (node["max_operators"].IsDefined())
+    {
+        rhs.maxOperators = node["max_operators"].as<size_t>();
+    }
+    if (node["downstream"].IsDefined())
+    {
+        rhs.downstream = node["downstream"].as<std::vector<std::string>>();
+    }
     return true;
 }
 
 bool convert<NES::Validator::TopologyConfig>::decode(const Node& node, NES::Validator::TopologyConfig& rhs)
 {
-    rhs.sinks = node["sinks"] ? node["sinks"].as<std::vector<NES::Validator::SinkConfig>>() : std::vector<NES::Validator::SinkConfig>{};
-    rhs.logical = node["logical"] ? node["logical"].as<std::vector<NES::Validator::LogicalSourceConfig>>() : std::vector<NES::Validator::LogicalSourceConfig>{};
-    rhs.physical = node["physical"] ? node["physical"].as<std::vector<NES::Validator::PhysicalSourceConfig>>() : std::vector<NES::Validator::PhysicalSourceConfig>{};
+    acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers"}, node);
+    rhs.sinks = node["sinks"].as<std::vector<NES::Validator::SinkConfig>>();
+    rhs.logical = node["logical"].as<std::vector<NES::Validator::LogicalSourceConfig>>();
+    rhs.physical = node["physical"].as<std::vector<NES::Validator::PhysicalSourceConfig>>();
+    rhs.workers = node["workers"].as<std::vector<NES::Validator::WorkerConfig>>();
     rhs.query = {};
-    // Support new format: queries: [{query: "...", name: "..."}]
-    if (node["queries"].IsDefined() && node["queries"].IsSequence())
-    {
-        for (const auto& q : node["queries"])
-        {
-            if (q["query"].IsDefined())
-            {
-                rhs.query.emplace_back(q["query"].as<std::string>());
-            }
-        }
-    }
-    // Support old format: query: "..." or query: ["..."]
-    else if (node["query"].IsDefined())
+    if (node["query"].IsDefined())
     {
         if (node["query"].IsSequence())
         {

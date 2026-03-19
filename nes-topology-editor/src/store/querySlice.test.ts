@@ -125,6 +125,7 @@ describe('Topology Slice - Update Actions', () => {
         type: 'File',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       });
       const { sinks } = useStore.getState();

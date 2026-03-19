@@ -21,7 +21,7 @@ export default function SinkPanel({ sink }: SinkPanelProps) {
 
   const handleTypeChange = (newType: string) => {
     const configFields = getSinkFields(newType, configMetadata);
-    handleUpdate({ type: newType, config: buildDefaults(configFields) });
+    handleUpdate({ type: newType, config: buildDefaults(configFields), parserConfig: sink.parserConfig });
   };
 
   const sinkTypes = getSinkTypes(configMetadata);

@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <cstddef>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -25,6 +27,8 @@ namespace NES::Validator
 
 /// Types used as YAML deserialization targets for topology configuration.
 /// Ported from nes-frontend/apps/cli/CLIStarter.cpp (NES::CLI namespace).
+/// These MUST match the CLI types exactly to ensure the validator rejects
+/// the same invalid YAML that the CLI would reject.
 
 struct SchemaField
 {
@@ -52,8 +56,17 @@ struct SinkConfig
     std::string name;
     std::vector<SchemaField> schema;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> config;
     std::unordered_map<std::string, std::string> parserConfig;
+};
+
+struct WorkerConfig
+{
+    std::string host;
+    std::string data;
+    std::optional<size_t> maxOperators;
+    std::vector<std::string> downstream;
 };
 
 struct TopologyConfig
@@ -62,6 +75,7 @@ struct TopologyConfig
     std::vector<SinkConfig> sinks;
     std::vector<LogicalSourceConfig> logical;
     std::vector<PhysicalSourceConfig> physical;
+    std::vector<WorkerConfig> workers;
 };
 
 } // namespace NES::Validator
@@ -92,6 +106,12 @@ template <>
 struct convert<NES::Validator::PhysicalSourceConfig>
 {
     static bool decode(const Node& node, NES::Validator::PhysicalSourceConfig& rhs);
+};
+
+template <>
+struct convert<NES::Validator::WorkerConfig>
+{
+    static bool decode(const Node& node, NES::Validator::WorkerConfig& rhs);
 };
 
 template <>

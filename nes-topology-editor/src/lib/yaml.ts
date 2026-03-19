@@ -71,57 +71,40 @@ export function storeToYaml(
 
   const doc: Record<string, unknown> = {};
 
-  // Queries (future format: queries: [{query, name}])
-  doc.queries = queries.map((q) => ({
-    query: q.sql,
-    name: q.name,
-  }));
+  // Queries: array of SQL strings (matches CLI `query:` key)
+  doc.query = queries.map((q) => q.sql);
 
-  // Sinks
-  doc.sinks = sinks.map((s) => {
-    const sinkDefaults = defaultsMap(SINK_CONFIGS[s.type] ?? []);
-    const config = stripDefaults(s.config, sinkDefaults);
-    const entry: Record<string, unknown> = {
-      name: s.name,
-      host: workerHostMap.get(s.hostWorkerId) ?? '',
-      schema: s.schema.map((f) => ({ name: f.name, type: f.type })),
-      type: s.type,
-    };
-    if (Object.keys(config).length > 0) entry.config = config;
-    return entry;
-  });
+  // Sinks — all fields required by CLI: name, type, schema, host, config, parser_config
+  doc.sinks = sinks.map((s) => ({
+    name: s.name,
+    type: s.type,
+    schema: s.schema.map((f) => ({ name: f.name, type: f.type })),
+    host: workerHostMap.get(s.hostWorkerId) ?? '',
+    config: s.config,
+    parser_config: s.parserConfig ?? {},
+  }));
 
   // Logical sources
   doc.logical = logicalSources.map((ls) => ({
     name: ls.name,
-    schema: ls.schema.map((f) => ({ name: f.name, type: f.type })),
+    schema: ls.schema.map((f) => ({ name: f.name, type: f.type, ...(f.nullable ? { nullable: true } : {}) })),
   }));
 
-  // Physical sources
-  doc.physical = physicalSources.map((ps) => {
-    const srcFields = SOURCE_CONFIGS[ps.type] ?? [];
-    const sourceConfig = stripDefaults(ps.sourceConfig, defaultsMap(srcFields), requiredKeys(srcFields));
-    const parserConfig = stripDefaults(ps.parserConfig, parserDefaults, parserRequired);
-    const entry: Record<string, unknown> = {
-      logical: logicalNameMap.get(ps.logicalSourceId) ?? '',
-      host: workerHostMap.get(ps.hostWorkerId) ?? '',
-      type: ps.type,
-    };
-    if (Object.keys(sourceConfig).length > 0) {
-      entry.source_config = sourceConfig;
-    }
-    if (Object.keys(parserConfig).length > 0) {
-      entry.parser_config = parserConfig;
-    }
-    return entry;
-  });
+  // Physical sources — all fields required by CLI: logical, type, host, parser_config, source_config
+  doc.physical = physicalSources.map((ps) => ({
+    logical: logicalNameMap.get(ps.logicalSourceId) ?? '',
+    type: ps.type,
+    host: workerHostMap.get(ps.hostWorkerId) ?? '',
+    parser_config: stripDefaults(ps.parserConfig, parserDefaults, parserRequired),
+    source_config: ps.sourceConfig,
+  }));
 
   // Workers
   doc.workers = workers.map((w) => {
     const entry: Record<string, unknown> = {
       host: w.host,
-      grpc: w.grpc,
-      capacity: w.capacity,
+      data: w.data,
+      max_operators: w.capacity,
     };
     if (w.downstream.length > 0) {
       entry.downstream = w.downstream.map(
@@ -161,8 +144,8 @@ export function yamlToStore(yamlStr: string): ParseResult {
     return {
       id,
       host: w.host ?? '',
-      grpc: w.grpc ?? '',
-      capacity: w.capacity ?? 10000,
+      data: w.data ?? '',
+      capacity: w.max_operators ?? 10000,
       downstream: [],
       position: { x: 0, y: 0 },
     };
@@ -184,7 +167,7 @@ export function yamlToStore(yamlStr: string): ParseResult {
   ).map((ls) => {
     const id = generateId();
     logicalNameToId.set(ls.name, id);
-    return { id, name: ls.name, schema: ls.schema ?? [] };
+    return { id, name: ls.name, schema: (ls.schema ?? []).map((f: any) => ({ name: f.name, type: f.type, ...(f.nullable ? { nullable: true } : {}) })) };
   });
 
   // 4. Parse physical sources (resolve logical name -> UUID, host -> UUID)
@@ -206,22 +189,15 @@ export function yamlToStore(yamlStr: string): ParseResult {
     name: s.name ?? '',
     hostWorkerId: hostToId.get(s.host) ?? '',
     type: s.type ?? '',
-    schema: s.schema ?? [],
+    schema: (s.schema ?? []).map((f: any) => ({ name: f.name, type: f.type, ...(f.nullable ? { nullable: true } : {}) })),
     config: s.config ?? {},
+    parserConfig: s.parser_config ?? {},
     position: { x: 0, y: 0 },
   }));
 
-  // 6. Parse queries (support both old and new format)
+  // 6. Parse queries: query: string | string[] (CLI format)
   let queries: Query[] = [];
-  if (doc.queries && Array.isArray(doc.queries)) {
-    // New format: queries: [{query, name}]
-    queries = (doc.queries as any[]).map((q) => ({
-      id: generateId(),
-      name: q.name ?? '',
-      sql: q.query ?? '',
-    }));
-  } else if (doc.query) {
-    // Old format: query: string | string[]
+  if (doc.query) {
     const rawQueries = Array.isArray(doc.query)
       ? (doc.query as string[])
       : [doc.query as string];

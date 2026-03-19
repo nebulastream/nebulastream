@@ -6,7 +6,7 @@ export interface Position {
 export interface Worker {
   id: string;
   host: string;
-  grpc: string;
+  data: string;
   capacity: number;
   downstream: string[];
   position: Position;
@@ -15,6 +15,7 @@ export interface Worker {
 export interface SchemaField {
   name: string;
   type: string;
+  nullable?: boolean;
 }
 
 export interface LogicalSource {
@@ -40,6 +41,7 @@ export interface Sink {
   type: 'File' | 'Void' | 'Print' | 'Checksum' | string;
   schema: SchemaField[];
   config: Record<string, string>;
+  parserConfig: Record<string, string>;
   position: Position;
 }
 

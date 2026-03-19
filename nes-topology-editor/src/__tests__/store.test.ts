@@ -21,8 +21,8 @@ describe('Topology Store', () => {
       state.addWorker();
       const updated = useStore.getState();
       expect(updated.workers).toHaveLength(1);
-      expect(updated.workers[0]!.host).toBe('worker-1:9090');
-      expect(updated.workers[0]!.grpc).toBe('worker-1:8080');
+      expect(updated.workers[0]!.host).toBe('worker-1:8080');
+      expect(updated.workers[0]!.data).toBe('worker-1:9090');
       expect(updated.workers[0]!.capacity).toBe(10000);
       expect(updated.workers[0]!.downstream).toEqual([]);
     });
@@ -34,9 +34,9 @@ describe('Topology Store', () => {
       state.addWorker();
       const updated = useStore.getState();
       expect(updated.workers).toHaveLength(3);
-      expect(updated.workers[0]!.host).toBe('worker-1:9090');
-      expect(updated.workers[1]!.host).toBe('worker-2:9090');
-      expect(updated.workers[2]!.host).toBe('worker-3:9090');
+      expect(updated.workers[0]!.host).toBe('worker-1:8080');
+      expect(updated.workers[1]!.host).toBe('worker-2:8080');
+      expect(updated.workers[2]!.host).toBe('worker-3:8080');
     });
 
     it('addWorker accepts optional position', () => {
@@ -55,7 +55,7 @@ describe('Topology Store', () => {
       afterAdd.removeWorker(workerId);
       const updated = useStore.getState();
       expect(updated.workers).toHaveLength(1);
-      expect(updated.workers[0]!.host).toBe('worker-2:9090');
+      expect(updated.workers[0]!.host).toBe('worker-2:8080');
     });
 
     it('removeWorker clears downstream references to removed worker', () => {
@@ -162,6 +162,7 @@ describe('Topology Store', () => {
         type: 'Print',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       });
       const afterAdd = useStore.getState();
@@ -196,6 +197,7 @@ describe('Topology Store', () => {
         type: 'Void',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       });
       const afterAdd = useStore.getState();
@@ -244,6 +246,7 @@ describe('Topology Store', () => {
         type: 'File',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       });
       const afterAdd = useStore.getState();
@@ -272,6 +275,7 @@ describe('Topology Store', () => {
         type: 'Print',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 300, y: 300 },
       });
 
@@ -316,6 +320,7 @@ describe('Topology Store', () => {
         type: 'Print',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 250, y: 50 },
       });
 
@@ -358,6 +363,7 @@ describe('Topology Store', () => {
         type: 'Print',
         schema: [],
         config: {},
+        parserConfig: {},
         position: { x: 0, y: 0 },
       });
 

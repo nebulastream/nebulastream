@@ -30,6 +30,7 @@ const mockSink: Sink = {
   type: 'File',
   schema: [],
   config: {},
+  parserConfig: {},
   position: { x: 0, y: 0 },
 };
 

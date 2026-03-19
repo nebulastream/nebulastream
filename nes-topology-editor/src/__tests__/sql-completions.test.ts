@@ -21,9 +21,9 @@ const SOURCES: LogicalSource[] = [
 ];
 
 const SINKS: Sink[] = [
-  { id: 'sk-1', name: 'output_file', hostWorkerId: 'w-1', type: 'File', schema: [], config: {}, position: { x: 0, y: 0 } },
-  { id: 'sk-2', name: 'printer', hostWorkerId: 'w-1', type: 'Print', schema: [], config: {}, position: { x: 0, y: 0 } },
-  { id: 'sk-3', name: '', hostWorkerId: 'w-1', type: 'Void', schema: [], config: {}, position: { x: 0, y: 0 } },
+  { id: 'sk-1', name: 'output_file', hostWorkerId: 'w-1', type: 'File', schema: [], config: {}, parserConfig: {}, position: { x: 0, y: 0 } },
+  { id: 'sk-2', name: 'printer', hostWorkerId: 'w-1', type: 'Print', schema: [], config: {}, parserConfig: {}, position: { x: 0, y: 0 } },
+  { id: 'sk-3', name: '', hostWorkerId: 'w-1', type: 'Void', schema: [], config: {}, parserConfig: {}, position: { x: 0, y: 0 } },
 ];
 
 // ---------------------------------------------------------------------------
@@ -75,9 +75,9 @@ describe('detectContext', () => {
 describe('buildInlineSnippet', () => {
   it('generates HOST as first param with double quotes', () => {
     const result = buildInlineSnippet('SINK', 'Print', [], [
-      { key: 'HOST', placeholder: 'worker:9090', quote: true },
+      { key: 'HOST', placeholder: 'worker:8080', quote: true },
     ]);
-    expect(result.text).toContain('"${1:worker:9090}" AS `SINK`.`HOST`');
+    expect(result.text).toContain('"${1:worker:8080}" AS `SINK`.`HOST`');
   });
 
   it('quotes non-numeric fields with single quotes', () => {

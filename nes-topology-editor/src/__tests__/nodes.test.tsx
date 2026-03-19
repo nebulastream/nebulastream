@@ -31,7 +31,7 @@ describe('WorkerNode', () => {
     worker: {
       id: 'w1',
       host: 'worker-1:9090',
-      grpc: 'worker-1:8080',
+      data: 'worker-1:8080',
       capacity: 10000,
       downstream: [],
       position: { x: 0, y: 0 },
@@ -101,6 +101,7 @@ describe('SinkNode', () => {
       type: 'Print',
       schema: [],
       config: {},
+      parserConfig: {},
       position: { x: 0, y: 0 },
     },
   };
@@ -127,7 +128,7 @@ describe('Visual distinctness (CANV-07)', () => {
   it('all three node types produce different CSS classes', () => {
     const workerData = {
       worker: {
-        id: 'w1', host: 'w:9090', grpc: 'w:8080', capacity: 10,
+        id: 'w1', host: 'w:9090', data: 'w:8080', capacity: 10,
         downstream: [], position: { x: 0, y: 0 },
       },
     };
@@ -141,7 +142,7 @@ describe('Visual distinctness (CANV-07)', () => {
     const sinkData = {
       sink: {
         id: 'sk1', name: 'Sink', hostWorkerId: '', type: 'Print',
-        schema: [], config: {}, position: { x: 0, y: 0 },
+        schema: [], config: {}, parserConfig: {}, position: { x: 0, y: 0 },
       },
     };
 

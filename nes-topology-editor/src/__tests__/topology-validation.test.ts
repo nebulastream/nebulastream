@@ -7,7 +7,7 @@ function makeWorker(overrides: Partial<Worker> = {}): Worker {
   return {
     id: 'w1',
     host: 'localhost',
-    grpc: '4000',
+    data: '4000',
     capacity: 4,
     downstream: [],
     position: { x: 0, y: 0 },
@@ -51,6 +51,7 @@ function makeSink(overrides: Partial<Sink> = {}): Sink {
     type: 'File',
     schema: [],
     config: { file_path: '/tmp/out.csv' },
+    parserConfig: {},
     position: { x: 0, y: 0 },
     ...overrides,
   };
