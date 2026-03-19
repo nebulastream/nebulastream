@@ -381,7 +381,7 @@ export function getSourceTypes(metadata: ConfigMetadata | null): string[] {
  */
 export function getSinkTypes(metadata: ConfigMetadata | null): string[] {
   if (metadata?.sinkTypes && metadata.sinkTypes.length > 0) {
-    return metadata.sinkTypes.filter((t) => !HIDDEN_TYPES.has(t.toUpperCase()));
+    return metadata.sinkTypes;
   }
   return FALLBACK_SINK_TYPES;
 }
