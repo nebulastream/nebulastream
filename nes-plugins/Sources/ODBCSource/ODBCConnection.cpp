@@ -549,7 +549,7 @@ std::vector<SQLCHAR> ODBCConnection::buildNewRowFetchSting(const std::string_vie
 }
 
 ODBCPollStatus ODBCConnection::executeQuery(
-    const std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer)
+    const std::string_view query, TupleBuffer& tupleBuffer, AbstractBufferProvider& bufferProvider, const size_t rowsPerBuffer, const bool logTuples)
 {
     size_t nextRowsToFetch = 0;
     /// if there are still rows to read, fetch and read these first, otherwise try to get new rows
@@ -606,7 +606,10 @@ ODBCPollStatus ODBCConnection::executeQuery(
                 throw UnknownDataType("Not supporting null types in ODBC source");
             }
         }
-        NES_DEBUG("Tuple {}: ({})", bufferLocalRowCount, currentTuple);
+        if (logTuples)
+        {
+            NES_DEBUG("Tuple {}: ({})", bufferLocalRowCount, currentTuple);
+        }
     }
     if (this->numberOfLeftoverTuples == 0)
     {

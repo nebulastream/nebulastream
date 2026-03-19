@@ -95,6 +95,7 @@ ODBCSource::ODBCSource(const SourceDescriptor& sourceDescriptor)
     , maxRetries(sourceDescriptor.getFromConfig(ConfigParametersODBC::MAX_RETRIES))
     , readOnlyNewRows(sourceDescriptor.getFromConfig(ConfigParametersODBC::READ_ONLY_NEW_ROWS))
     , useCheckpoint(sourceDescriptor.getFromConfig(ConfigParametersODBC::USE_CHECKPOINT))
+    , logTuples(sourceDescriptor.getFromConfig(ConfigParametersODBC::LOG_TUPLES))
 {
 }
 
@@ -143,7 +144,7 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
     {
         /// wait for data to arrive
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
-        pollStatus = this->connection->executeQuery(this->query, tupleBuffer, *bufferProvider, maxRowsPerBuffer);
+        pollStatus = this->connection->executeQuery(this->query, tupleBuffer, *bufferProvider, maxRowsPerBuffer, this->logTuples);
 
         if (++retryCount >= maxRetries)
         {
