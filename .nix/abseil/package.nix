@@ -33,6 +33,8 @@ let
       in
       {
         buildInputs = lib.unique ((old.buildInputs or [ ]) ++ extraBuildInputs);
+        cmakeFlags = (old.cmakeFlags or [ ]) ++ [ "-DBUILD_TESTING=OFF" ];
+        doCheck = false;
         env = oldEnv // {
           NIX_CFLAGS_COMPILE = mergeFlags compilerFlags (oldEnv.NIX_CFLAGS_COMPILE or "");
         };
