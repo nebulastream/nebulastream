@@ -17,13 +17,17 @@ use tonic::transport::{Channel, Endpoint};
 use tracing::{Instrument, debug, error, info, instrument, warn};
 
 pub mod worker_rpc_service {
-    tonic::include_proto!("worker_rpc");
+    pub mod nes {
+        tonic::include_proto!("nes");
+    }
+    tonic::include_proto!("_");
 }
 
 pub mod health_proto {
     tonic::include_proto!("grpc.health.v1");
 }
 
+use worker_rpc_service::nes::SerializableQueryId;
 use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
 use worker_rpc_service::{
     QueryStatusRequest, RegisterQueryReply, RegisterQueryRequest, StartQueryRequest,
@@ -32,6 +36,10 @@ use worker_rpc_service::{
 
 pub(crate) use worker_rpc_service::Error as FragmentError;
 pub(crate) use worker_rpc_service::QueryStatusReply;
+
+fn query_id(id: FragmentId) -> Option<SerializableQueryId> {
+    Some(SerializableQueryId { id })
+}
 
 #[derive(Error, Debug)]
 pub(crate) enum WorkerClientErr {
@@ -252,7 +260,12 @@ impl WorkerTask {
             }) => {
                 dispatch!(
                     self.addr(), client, tx, register_query,
-                    RegisterQueryRequest { query_id: u64::try_from(id).unwrap() }
+                    RegisterQueryRequest {
+                        query_plan: Some(worker_rpc_service::nes::SerializableQueryPlan {
+                            query_id: query_id(id),
+                            ..Default::default()
+                        }),
+                    }
                 );
             }
             Rpc::StartFragment(Request {
@@ -261,7 +274,7 @@ impl WorkerTask {
             }) => {
                 dispatch!(
                     self.addr(), client, tx, start_query,
-                    StartQueryRequest { query_id: u64::try_from(id).unwrap() }
+                    StartQueryRequest { query_id: query_id(id) }
                 );
             }
             Rpc::StopFragment(Request {
@@ -271,7 +284,7 @@ impl WorkerTask {
                 dispatch!(
                     self.addr(), client, tx, stop_query,
                     StopQueryRequest {
-                        query_id: u64::try_from(id).unwrap(),
+                        query_id: query_id(id),
                         termination_type: stop_mode.into(),
                     }
                 );
@@ -282,7 +295,7 @@ impl WorkerTask {
             }) => {
                 dispatch!(
                     self.addr(), client, tx, request_query_status,
-                    QueryStatusRequest { query_id: u64::try_from(id).unwrap() }
+                    QueryStatusRequest { query_id: query_id(id) }
                 );
             }
         }

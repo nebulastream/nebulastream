@@ -296,7 +296,7 @@ impl TestHarness {
                 };
                 let mut client = WorkerRpcServiceClient::new(channel);
                 let req = tonic::Request::new(worker_rpc_service::WorkerStatusRequest {
-                    after_unix_timestamp_in_ms: 0,
+                    after_unix_timestamp_in_milli_seconds: 0,
                 });
                 match client.request_status(req).await {
                     Ok(resp) => {
@@ -304,7 +304,7 @@ impl TestHarness {
                             .into_inner()
                             .active_queries
                             .iter()
-                            .map(|aq| aq.query_id)
+                            .filter_map(|aq| aq.query_id.as_ref().map(|q| q.id as u64))
                             .collect();
                         result.insert(addr.clone(), ids);
                     }

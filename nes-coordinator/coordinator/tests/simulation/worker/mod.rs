@@ -11,6 +11,7 @@ use controller::worker::worker_task::worker_rpc_service;
 use worker_rpc_service::worker_rpc_service_server::WorkerRpcService;
 pub use worker_rpc_service::worker_rpc_service_server::WorkerRpcServiceServer;
 use worker_rpc_service::worker_status_response::{ActiveQuery, TerminatedQuery};
+use worker_rpc_service::nes::SerializableQueryId;
 use worker_rpc_service::{
     QueryLogReply, QueryLogRequest, QueryStatusReply, QueryStatusRequest, RegisterQueryReply,
     RegisterQueryRequest, StartQueryRequest, StopQueryRequest, WorkerStatusRequest,
@@ -20,10 +21,18 @@ use worker_rpc_service::stop_query_request::QueryTerminationType;
 
 pub use health_proto::health_server::HealthServer;
 
-type FragmentId = u64;
+type FragmentId = i64;
 
 const STARTUP_DELAY_LO_MS: u64 = 10;
 const STARTUP_DELAY_HI_MS: u64 = 500;
+
+fn query_id(id: FragmentId) -> Option<SerializableQueryId> {
+    Some(SerializableQueryId { id })
+}
+
+fn extract_id(req_id: &Option<SerializableQueryId>) -> FragmentId {
+    req_id.as_ref().map(|q| q.id).unwrap_or(0)
+}
 
 #[derive(Clone)]
 struct StateChange {
@@ -126,23 +135,29 @@ impl WorkerRpcService for SingleNodeWorker {
         &self,
         request: Request<RegisterQueryRequest>,
     ) -> Result<Response<RegisterQueryReply>, Status> {
-        let id = request.get_ref().query_id;
+        let id = request
+            .get_ref()
+            .query_plan
+            .as_ref()
+            .and_then(|p| p.query_id.as_ref())
+            .map(|q| q.id)
+            .unwrap_or(0);
         let mut fragments = self.fragments.write().unwrap();
         if fragments.contains_key(&id) {
             debug!("register_query: query {id} already registered, ignoring");
-            return Ok(Response::new(RegisterQueryReply {}));
+            return Ok(Response::new(RegisterQueryReply { query_id: query_id(id) }));
         }
         fragments.insert(id, QueryFragment::new());
         debug!("registered query {id}");
-        Ok(Response::new(RegisterQueryReply {}))
+        Ok(Response::new(RegisterQueryReply { query_id: query_id(id) }))
     }
 
-    #[instrument(skip(self, request), fields(query_id = %request.get_ref().query_id))]
+    #[instrument(skip(self, request), fields(query_id = extract_id(&request.get_ref().query_id)))]
     async fn start_query(
         &self,
         request: Request<StartQueryRequest>,
     ) -> Result<Response<()>, Status> {
-        let query_id = request.get_ref().query_id;
+        let query_id = extract_id(&request.get_ref().query_id);
 
         {
             let mut fragments = self.fragments.write().unwrap();
@@ -178,25 +193,25 @@ impl WorkerRpcService for SingleNodeWorker {
         Ok(Response::new(()))
     }
 
-    #[instrument(skip(self), fields(query_id = %request.get_ref().query_id))]
+    #[instrument(skip(self), fields(query_id = extract_id(&request.get_ref().query_id)))]
     async fn stop_query(
         &self,
         request: Request<StopQueryRequest>,
     ) -> Result<Response<()>, Status> {
-        let query_id = request.get_ref().query_id;
+        let id = extract_id(&request.get_ref().query_id);
         let termination_type =
             QueryTerminationType::try_from(request.get_ref().termination_type).ok();
 
         let mut fragments = self.fragments.write().unwrap();
-        let Some(fragment) = fragments.get_mut(&query_id) else {
-            debug!("stop_query: query {query_id} not found, ignoring");
+        let Some(fragment) = fragments.get_mut(&id) else {
+            debug!("stop_query: query {id} not found, ignoring");
             return Ok(Response::new(()));
         };
 
         if fragment.state == QueryState::Stopped as i32
             || fragment.state == QueryState::Failed as i32
         {
-            debug!("stop_query: query {query_id} already terminal, ignoring");
+            debug!("stop_query: query {id} already terminal, ignoring");
             return Ok(Response::new(()));
         }
 
@@ -205,38 +220,38 @@ impl WorkerRpcService for SingleNodeWorker {
         } else {
             fragment.record_transition(QueryState::Stopped as i32, None);
         }
-        debug!("stopped query {query_id}");
+        debug!("stopped query {id}");
         Ok(Response::new(()))
     }
 
-    #[instrument(skip(self), fields(query_id = %request.get_ref().query_id))]
+    #[instrument(skip(self), fields(query_id = extract_id(&request.get_ref().query_id)))]
     async fn request_query_status(
         &self,
         request: Request<QueryStatusRequest>,
     ) -> Result<Response<QueryStatusReply>, Status> {
-        let query_id = request.get_ref().query_id;
+        let id = extract_id(&request.get_ref().query_id);
         let fragments = self.fragments.read().unwrap();
         let fragment = fragments
-            .get(&query_id)
-            .ok_or_else(|| Status::not_found(format!("query {query_id} not found")))?;
+            .get(&id)
+            .ok_or_else(|| Status::not_found(format!("query {id} not found")))?;
 
         Ok(Response::new(QueryStatusReply {
-            query_id,
+            query_id: query_id(id),
             state: fragment.state,
             metrics: Some(fragment.metrics()),
         }))
     }
 
-    #[instrument(skip(self), fields(query_id = %request.get_ref().query_id))]
+    #[instrument(skip(self), fields(query_id = extract_id(&request.get_ref().query_id)))]
     async fn request_query_log(
         &self,
         request: Request<QueryLogRequest>,
     ) -> Result<Response<QueryLogReply>, Status> {
-        let query_id = request.get_ref().query_id;
+        let id = extract_id(&request.get_ref().query_id);
         let fragments = self.fragments.read().unwrap();
         let fragment = fragments
-            .get(&query_id)
-            .ok_or_else(|| Status::not_found(format!("query {query_id} not found")))?;
+            .get(&id)
+            .ok_or_else(|| Status::not_found(format!("query {id} not found")))?;
 
         let entries = fragment
             .log
@@ -256,7 +271,7 @@ impl WorkerRpcService for SingleNodeWorker {
         &self,
         request: Request<WorkerStatusRequest>,
     ) -> Result<Response<WorkerStatusResponse>, Status> {
-        let after = request.get_ref().after_unix_timestamp_in_ms;
+        let after = request.get_ref().after_unix_timestamp_in_milli_seconds;
         let fragments = self.fragments.read().unwrap();
 
         let mut active_queries = Vec::new();
@@ -270,16 +285,16 @@ impl WorkerRpcService for SingleNodeWorker {
             if state == QueryState::Started as i32 || state == QueryState::Running as i32 {
                 if fragment.started_at >= after {
                     active_queries.push(ActiveQuery {
-                        query_id: id,
-                        started_unix_timestamp_in_ms: fragment.started_at,
+                        query_id: query_id(id),
+                        started_unix_timestamp_in_milli_seconds: Some(fragment.started_at),
                     });
                 }
             } else if state == QueryState::Stopped as i32 || state == QueryState::Failed as i32 {
                 if fragment.stopped_at >= after {
                     terminated_queries.push(TerminatedQuery {
-                        query_id: id,
-                        started_unix_timestamp_in_ms: fragment.started_at,
-                        terminated_unix_timestamp_in_ms: fragment.stopped_at,
+                        query_id: query_id(id),
+                        started_unix_timestamp_in_milli_seconds: Some(fragment.started_at),
+                        terminated_unix_timestamp_in_milli_seconds: fragment.stopped_at,
                         error: fragment.error.clone(),
                     });
                 }
@@ -287,8 +302,8 @@ impl WorkerRpcService for SingleNodeWorker {
         }
 
         Ok(Response::new(WorkerStatusResponse {
-            after_unix_timestamp_in_ms: after,
-            until_unix_timestamp_in_ms: current_timestamp_ms(),
+            after_unix_timestamp_in_milli_seconds: after,
+            until_unix_timestamp_in_milli_seconds: current_timestamp_ms(),
             active_queries,
             terminated_queries,
         }))

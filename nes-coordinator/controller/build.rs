@@ -4,10 +4,10 @@ fn main() {
     tonic_build::configure()
         .compile_protos(
             &[
-                "../proto/SingleNodeWorkerRPCService.proto",
-                "../proto/health.proto",
+                "../../grpc/SingleNodeWorkerRPCService.proto",
+                "../../grpc/health.proto",
             ],
-            &["../proto"],
+            &["../../grpc"],
         )
         .unwrap();
 }

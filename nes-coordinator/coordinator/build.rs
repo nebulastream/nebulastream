@@ -3,8 +3,8 @@ fn main() {
 
     tonic_build::configure()
         .compile_protos(
-            &["../proto/SingleNodeWorkerRPCService.proto"],
-            &["../proto"],
+            &["../../grpc/SingleNodeWorkerRPCService.proto"],
+            &["../../grpc"],
         )
         .unwrap();
 }
