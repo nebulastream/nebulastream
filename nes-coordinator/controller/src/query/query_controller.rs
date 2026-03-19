@@ -52,10 +52,6 @@ impl QueryController {
         }
     }
 
-    // Queries have desired_state=Completed (run to completion) or desired_state=Stopped
-    // (explicitly dropped). Since current_state progresses through Pending → Planned →
-    // Registered → Running, any non-terminal query is a mismatch. This means after a
-    // coordinator restart, all in-flight queries are re-discovered and reconciled.
     async fn reconcile(&mut self) {
         let mismatches = match self.catalog.query.get_mismatch().await {
             Ok(m) => m,

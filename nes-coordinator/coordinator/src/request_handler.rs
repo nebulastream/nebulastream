@@ -362,7 +362,7 @@ mod tests {
         }
 
         for &id in &query_ids {
-            handle.advance_to(id, QueryState::Planned).await;
+            handle.advance_to(id, QueryState::Pending).await;
             handle.advance_to(id, QueryState::Registered).await;
             handle.advance_to(id, QueryState::Running).await;
         }
@@ -396,7 +396,6 @@ mod tests {
         #[test]
         fn blocking_create_resolves_correctly(
             block_until in prop_oneof![
-                Just(QueryState::Planned),
                 Just(QueryState::Registered),
                 Just(QueryState::Running),
                 Just(QueryState::Completed),

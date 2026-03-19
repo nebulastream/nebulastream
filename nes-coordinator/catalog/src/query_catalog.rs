@@ -109,9 +109,10 @@ impl QueryCatalog {
                                 .exec(txn)
                                 .await?;
 
-                                let mut am: query::ActiveModel = query.into();
-                                am.current_state = Set(QueryState::Planned);
-                                let updated = am.update(txn).await?;
+                                let updated = query::Entity::find_by_id(query.id)
+                                    .one(txn)
+                                    .await?
+                                    .ok_or(sea_orm::DbErr::RecordNotFound("query not found".into()))?;
                                 let fragments = fragment::Entity::find()
                                     .filter(fragment::Column::QueryId.eq(updated.id))
                                     .all(txn)
@@ -946,7 +947,6 @@ mod tests {
 
         let completed_path = vec![
             QueryState::Pending,
-            QueryState::Planned,
             QueryState::Registered,
             QueryState::Running,
             QueryState::Completed,
@@ -982,7 +982,7 @@ mod tests {
         }
     }
 
-    async fn prop_create_fragments_transitions_to_planned(req: CreateQuery, setup: ValidFragments) {
+    async fn prop_create_fragments_keeps_pending(req: CreateQuery, setup: ValidFragments) {
         let catalog = Catalog::for_test().await;
         for w in &setup.workers {
             catalog.worker.create_worker(w.clone()).await.unwrap();
@@ -997,7 +997,7 @@ mod tests {
             .await
             .unwrap();
 
-        assert_eq!(updated_query.current_state, QueryState::Planned);
+        assert_eq!(updated_query.current_state, QueryState::Pending);
 
         let refetched = catalog
             .query
@@ -1558,12 +1558,12 @@ mod tests {
         }
 
         #[test]
-        fn create_fragments_transitions_to_planned(
+        fn create_fragments_keeps_pending(
             req in CreateQuery::generate(),
             setup in ValidFragments::generate(),
         ) {
             test_prop(|| async move {
-                prop_create_fragments_transitions_to_planned(req, setup).await;
+                prop_create_fragments_keeps_pending(req, setup).await;
             });
         }
 

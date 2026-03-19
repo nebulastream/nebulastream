@@ -4,17 +4,14 @@ CREATE TRIGGER IF NOT EXISTS validate_query_state_transition
     WHEN NEW.current_state != OLD.current_state
 BEGIN
     SELECT CASE
-        WHEN OLD.current_state = 'Pending' AND NEW.current_state NOT IN ('Planned', 'Stopped', 'Failed') THEN
-            RAISE(ABORT, 'Invalid state transition: Pending must transition to one of (Planned, Stopped, Failed)')
+        WHEN OLD.current_state = 'Pending' AND NEW.current_state NOT IN ('Registered', 'Stopped', 'Failed') THEN
+            RAISE(ABORT, 'Invalid state transition: Pending must transition to one of (Registered, Stopped, Failed)')
 
-        WHEN OLD.current_state = 'Planned' AND NEW.current_state NOT IN ('Registered', 'Stopped', 'Failed') THEN
-            RAISE(ABORT, 'Invalid state transition: Planned must transition to one of (Registered, Stopped, Failed)')
+        WHEN OLD.current_state = 'Registered' AND NEW.current_state NOT IN ('Pending', 'Running', 'Stopped', 'Failed') THEN
+            RAISE(ABORT, 'Invalid state transition: Registered must transition to one of (Pending, Running, Stopped, Failed)')
 
-        WHEN OLD.current_state = 'Registered' AND NEW.current_state NOT IN ('Planned', 'Running', 'Stopped', 'Failed') THEN
-            RAISE(ABORT, 'Invalid state transition: Registered must transition to one of (Planned, Running, Stopped, Failed)')
-
-        WHEN OLD.current_state = 'Running' AND NEW.current_state NOT IN ('Planned', 'Stopped', 'Completed', 'Failed') THEN
-            RAISE(ABORT, 'Invalid state transition: Running must transition to one of (Planned, Stopped, Completed, Failed)')
+        WHEN OLD.current_state = 'Running' AND NEW.current_state NOT IN ('Pending', 'Stopped', 'Completed', 'Failed') THEN
+            RAISE(ABORT, 'Invalid state transition: Running must transition to one of (Pending, Stopped, Completed, Failed)')
 
         WHEN OLD.current_state IN ('Completed', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid state transition: Cannot transition from a terminal state')
@@ -71,7 +68,7 @@ BEGIN
             WHEN EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state = 'Failed')
                 THEN 'Failed'
             WHEN EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state = 'Pending')
-                THEN 'Planned'
+                THEN 'Pending'
             WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state != 'Completed')
                 THEN 'Completed'
             WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Completed', 'Stopped'))

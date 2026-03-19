@@ -31,7 +31,6 @@ use strum::{Display, EnumString, IntoEnumIterator};
 pub enum QueryState {
     #[default]
     Pending,
-    Planned,
     Registered,
     Running,
     Completed,
@@ -96,21 +95,16 @@ impl QueryState {
     pub fn transitions(&self) -> Vec<QueryState> {
         match self {
             QueryState::Pending => {
-                vec![QueryState::Planned, QueryState::Stopped, QueryState::Failed]
+                vec![QueryState::Registered, QueryState::Stopped, QueryState::Failed]
             }
-            QueryState::Planned => vec![
-                QueryState::Registered,
-                QueryState::Stopped,
-                QueryState::Failed,
-            ],
             QueryState::Registered => vec![
-                QueryState::Planned,
+                QueryState::Pending,
                 QueryState::Running,
                 QueryState::Stopped,
                 QueryState::Failed,
             ],
             QueryState::Running => vec![
-                QueryState::Planned,
+                QueryState::Pending,
                 QueryState::Completed,
                 QueryState::Stopped,
                 QueryState::Failed,
@@ -133,13 +127,11 @@ impl crate::Generate for Vec<QueryState> {
         use proptest::prelude::*;
         use QueryState::*;
         prop_oneof![
-            Just(vec![Pending, Planned, Registered, Running, Completed]),
-            Just(vec![Pending, Planned, Registered, Running, Stopped]),
-            Just(vec![Pending, Planned, Registered, Running, Failed]),
-            Just(vec![Pending, Planned, Registered, Stopped]),
-            Just(vec![Pending, Planned, Registered, Failed]),
-            Just(vec![Pending, Planned, Stopped]),
-            Just(vec![Pending, Planned, Failed]),
+            Just(vec![Pending, Registered, Running, Completed]),
+            Just(vec![Pending, Registered, Running, Stopped]),
+            Just(vec![Pending, Registered, Running, Failed]),
+            Just(vec![Pending, Registered, Stopped]),
+            Just(vec![Pending, Registered, Failed]),
             Just(vec![Pending, Stopped]),
             Just(vec![Pending, Failed]),
         ]

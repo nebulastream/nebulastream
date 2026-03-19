@@ -42,25 +42,27 @@ pub async fn advance_all_fragments(
     query
 }
 
+/// Walk a query through a state path by manipulating fragments.
+/// The first element of `path` must be `Pending`. Fragments are created
+/// from `setup` before the first transition (they exist while the query is still Pending).
 pub async fn walk_query_via_fragments(
     catalog: &Catalog,
     created: &query::Model,
     setup: &ValidFragments,
     path: &[QueryState],
 ) -> Vec<query::Model> {
-    let mut models = vec![created.clone()];
+    assert_eq!(path.first(), Some(&QueryState::Pending));
+    let reqs = setup.create_fragments(created.id);
+    let (updated, _) = catalog
+        .query
+        .create_fragments(created, reqs)
+        .await
+        .expect("create_fragments should succeed");
+    let mut models = vec![updated];
+
     for &target in &path[1..] {
         let current = models.last().unwrap();
         let updated = match target {
-            QueryState::Planned => {
-                let reqs = setup.create_fragments(current.id);
-                let (updated, _) = catalog
-                    .query
-                    .create_fragments(current, reqs)
-                    .await
-                    .expect("create_fragments should succeed");
-                updated
-            }
             QueryState::Registered => {
                 advance_all_fragments(catalog, current.id, FragmentState::Registered).await
             }
@@ -113,7 +115,7 @@ pub async fn advance_query_to(catalog: &Arc<Catalog>, query_id: i64, target: Que
         .unwrap();
 
     match target {
-        QueryState::Planned => {
+        QueryState::Pending => {
             let workers = catalog.worker.get_worker(Default::default()).await.unwrap();
             let w = workers.first().expect("need at least one worker");
             catalog
@@ -162,6 +164,5 @@ pub async fn advance_query_to(catalog: &Arc<Catalog>, query_id: i64, target: Que
                 advance_all_fragments(catalog, query_id, FragmentState::Failed).await;
             }
         }
-        QueryState::Pending => unreachable!(),
     }
 }

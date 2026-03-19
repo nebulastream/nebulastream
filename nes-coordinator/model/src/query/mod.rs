@@ -240,7 +240,6 @@ impl crate::Generate for CreateQuery {
             statement,
             prop_oneof![
                 Just(QueryState::Pending),
-                Just(QueryState::Planned),
                 Just(QueryState::Registered),
                 Just(QueryState::Running),
                 Just(QueryState::Completed),
