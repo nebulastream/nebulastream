@@ -47,7 +47,7 @@
 #include <CommonTokenStream.h>
 #include <Exceptions.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>

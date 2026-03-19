@@ -22,7 +22,7 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -34,7 +34,7 @@ namespace NES
 {
 
 
-InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+InlineSourceLogicalOperator InlineSourceLogicalOperator::withInferredSchema(const std::vector<LegacySchema>&) const
 {
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
     return *this;
@@ -55,7 +55,7 @@ std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getPar
     return parserConfig;
 }
 
-Schema InlineSourceLogicalOperator::getSchema() const
+LegacySchema InlineSourceLogicalOperator::getSchema() const
 {
     return schema;
 }
@@ -99,12 +99,12 @@ InlineSourceLogicalOperator InlineSourceLogicalOperator::withChildren(std::vecto
     return copy;
 }
 
-std::vector<Schema> InlineSourceLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> InlineSourceLogicalOperator::getInputSchemas() const
 {
     return {schema};
 };
 
-Schema InlineSourceLogicalOperator::getOutputSchema() const
+LegacySchema InlineSourceLogicalOperator::getOutputSchema() const
 {
     return schema;
 }
@@ -117,7 +117,7 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
     WeakLogicalOperator self,
     std::string type,
-    const Schema& schema,
+    const LegacySchema& schema,
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
     : ManagedByOperator(std::move(self))

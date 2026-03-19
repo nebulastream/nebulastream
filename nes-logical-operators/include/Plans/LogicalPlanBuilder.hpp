@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -41,7 +41,7 @@ public:
 
     static LogicalPlan createLogicalPlan(
         std::string inlineSourceType,
-        const Schema& schema,
+        const LegacySchema& schema,
         std::unordered_map<std::string, std::string> sourceConfig,
         std::unordered_map<std::string, std::string> parserConfig);
 
@@ -86,7 +86,7 @@ public:
 
     static LogicalPlan addSink(std::string sinkName, const LogicalPlan& queryPlan);
     static LogicalPlan addInlineSink(
-        std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
+        std::string type, const LegacySchema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.
     /// If a watermark operator exists in the queryPlan and if not adds a watermark strategy to the queryPlan.

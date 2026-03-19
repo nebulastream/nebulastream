@@ -22,7 +22,7 @@
 
 #include <fmt/format.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -32,7 +32,7 @@
 
 namespace NES
 {
-InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+InlineSinkLogicalOperator InlineSinkLogicalOperator::withInferredSchema(const std::vector<LegacySchema>&) const
 {
     PRECONDITION(false, "Schema inference should happen on SinkLogicalOperator");
     return *this;
@@ -48,7 +48,7 @@ std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getSinkC
     return sinkConfig;
 }
 
-Schema InlineSinkLogicalOperator::getSchema() const
+LegacySchema InlineSinkLogicalOperator::getSchema() const
 {
     return schema;
 }
@@ -91,12 +91,12 @@ InlineSinkLogicalOperator InlineSinkLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> InlineSinkLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> InlineSinkLogicalOperator::getInputSchemas() const
 {
     return {schema};
 };
 
-Schema InlineSinkLogicalOperator::getOutputSchema() const
+LegacySchema InlineSinkLogicalOperator::getOutputSchema() const
 {
     return schema;
 }
@@ -107,7 +107,7 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 }
 
 InlineSinkLogicalOperator::InlineSinkLogicalOperator(
-    WeakLogicalOperator self, std::string type, const Schema& schema, std::unordered_map<std::string, std::string> config)
+    WeakLogicalOperator self, std::string type, const LegacySchema& schema, std::unordered_map<std::string, std::string> config)
     : ManagedByOperator(std::move(self)), schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config))
 {
 }

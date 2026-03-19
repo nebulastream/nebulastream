@@ -23,7 +23,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -56,7 +56,7 @@ DivLogicalFunction DivLogicalFunction::withDataType(const DataType& dataType) co
     return copy;
 };
 
-LogicalFunction DivLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction DivLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();

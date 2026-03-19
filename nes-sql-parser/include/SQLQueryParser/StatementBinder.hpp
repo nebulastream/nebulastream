@@ -30,7 +30,7 @@
 #include <Plans/LogicalPlan.hpp>
 
 #include <AntlrSQLParser.h>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/LogicalSource.hpp>
@@ -56,7 +56,7 @@ enum class StatementOutputFormat : uint8_t
 struct CreateLogicalSourceStatement
 {
     std::string name;
-    Schema schema;
+    LegacySchema schema;
 };
 
 struct CreatePhysicalSourceStatement
@@ -72,7 +72,7 @@ struct CreateSinkStatement
 {
     std::string name;
     std::string sinkType;
-    Schema schema;
+    LegacySchema schema;
     std::unordered_map<std::string, std::string> sinkConfig;
 };
 

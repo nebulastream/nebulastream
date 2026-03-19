@@ -92,7 +92,7 @@ std::string_view SinkLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "Sink should have at least one input");
@@ -108,7 +108,7 @@ SinkLogicalOperator SinkLogicalOperator::withInferredSchema(std::vector<Schema> 
 
     if (sinkDescriptor.has_value() && sinkDescriptor.value().isInline() && sinkDescriptor.value().getSchema()->getFields().empty())
     {
-        copy.sinkDescriptor->schema = std::make_shared<const Schema>(firstSchema);
+        copy.sinkDescriptor->schema = std::make_shared<const LegacySchema>(firstSchema);
     }
     else if (copy.sinkDescriptor.has_value() && *copy.sinkDescriptor->getSchema() != firstSchema)
     {
@@ -168,14 +168,14 @@ SinkLogicalOperator SinkLogicalOperator::withChildren(std::vector<LogicalOperato
     return copy;
 }
 
-std::vector<Schema> SinkLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> SinkLogicalOperator::getInputSchemas() const
 {
     INVARIANT(!children.empty(), "Sink should have at least one child");
     return children | std::ranges::views::transform([](const LogicalOperator& child) { return child.getOutputSchema(); })
         | std::ranges::to<std::vector>();
 };
 
-Schema SinkLogicalOperator::getOutputSchema() const
+LegacySchema SinkLogicalOperator::getOutputSchema() const
 {
     INVARIANT(this->sinkDescriptor.has_value(), "Logical Sink must have a valid descriptor (with a schema).");
     return *this->sinkDescriptor.value().getSchema();

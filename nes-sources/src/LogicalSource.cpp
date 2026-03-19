@@ -20,7 +20,7 @@
 #include <ostream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 
@@ -28,12 +28,12 @@ namespace NES
 {
 
 
-LogicalSource::LogicalSource(std::string logicalSourceName, const Schema& schema)
-    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<Schema>(schema))
+LogicalSource::LogicalSource(std::string logicalSourceName, const LegacySchema& schema)
+    : logicalSourceName(std::move(logicalSourceName)), schema(std::make_shared<LegacySchema>(schema))
 {
 }
 
-std::shared_ptr<const Schema> LogicalSource::getSchema() const
+std::shared_ptr<const LegacySchema> LogicalSource::getSchema() const
 {
     return schema;
 }
@@ -60,7 +60,7 @@ Reflected Reflector<LogicalSource>::operator()(const LogicalSource& logicalSourc
 
 LogicalSource Unreflector<LogicalSource>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
-    auto [logicalSourceName, schema] = context.unreflect<std::pair<std::string, Schema>>(rfl);
+    auto [logicalSourceName, schema] = context.unreflect<std::pair<std::string, LegacySchema>>(rfl);
     return LogicalSource{std::move(logicalSourceName), schema};
 }
 }

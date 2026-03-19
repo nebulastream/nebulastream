@@ -20,7 +20,7 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -55,7 +55,7 @@ std::string MaxAggregationLogicalFunction::toString() const
     return fmt::format("WindowAggregation: onField={} asField={}", onField, asField);
 }
 
-MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
+MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(const LegacySchema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
@@ -69,16 +69,16 @@ MaxAggregationLogicalFunction MaxAggregationLogicalFunction::withInferredStamp(c
     const auto asFieldName = this->getAsField().getFieldName();
 
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
     std::string newAsFieldName;
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    if (asFieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
         newAsFieldName = attributeNameResolver + asFieldName;
     }
     else
     {
-        auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        auto fieldName = asFieldName.substr(asFieldName.find_last_of(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
     auto newFinalAggregationStamp = newOnField.getDataType();

@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -60,15 +60,15 @@ public:
     [[nodiscard]] ProjectionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
     [[nodiscard]] std::vector<std::string> getAccessedFields() const;
 
-    [[nodiscard]] ProjectionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] ProjectionLogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const;
 
     struct ConfigParameters
     {
@@ -94,7 +94,7 @@ private:
     bool asterisk = false;
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    LegacySchema inputSchema, outputSchema;
 
     friend Reflector<TypedLogicalOperator<ProjectionLogicalOperator>>;
 };

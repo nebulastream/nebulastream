@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/OriginIdAssigner.hpp>
@@ -50,13 +50,13 @@ public:
     [[nodiscard]] SourceDescriptorLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceDescriptorLogicalOperator withInferredSchema(const std::vector<LegacySchema>& inputSchemas) const;
 
 private:
     static constexpr std::string_view NAME = "Source";

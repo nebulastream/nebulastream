@@ -20,7 +20,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -48,7 +48,7 @@ std::string NegateLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction NegateLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction NegateLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     auto newChild = child.withInferredDataType(schema);
     if (not newChild.getDataType().isType(DataType::Type::BOOLEAN))

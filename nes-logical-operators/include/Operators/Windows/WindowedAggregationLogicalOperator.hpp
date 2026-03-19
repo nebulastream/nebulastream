@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -74,13 +74,13 @@ public:
     [[nodiscard]] WindowedAggregationLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] WindowedAggregationLogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const;
 
 private:
     static constexpr std::string_view NAME = "WindowedAggregation";
@@ -91,7 +91,7 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    Schema inputSchema, outputSchema;
+    LegacySchema inputSchema, outputSchema;
 
     friend Reflector<TypedLogicalOperator<WindowedAggregationLogicalOperator>>;
 };

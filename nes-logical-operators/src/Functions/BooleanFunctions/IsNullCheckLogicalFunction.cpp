@@ -20,7 +20,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -47,7 +47,7 @@ std::string IsNullCheckLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fmt::format("NOT({})", child.explain(verbosity));
 }
 
-LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction IsNullCheckLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     auto newChild = child.withInferredDataType(schema);
     return withDataType(getDataType()).withChildren({newChild});

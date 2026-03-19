@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
 #include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
@@ -34,13 +34,13 @@ enum class JoinBuildSideType : uint8_t
 /// This stores the left, right and output schema for a binary join
 struct JoinSchema
 {
-    JoinSchema(Schema leftSchema, Schema rightSchema, Schema joinSchema)
+    JoinSchema(LegacySchema leftSchema, LegacySchema rightSchema, LegacySchema joinSchema)
         : leftSchema(std::move(leftSchema)), rightSchema(std::move(rightSchema)), joinSchema(std::move(joinSchema))
     {
     }
 
-    Schema leftSchema;
-    Schema rightSchema;
-    Schema joinSchema;
+    LegacySchema leftSchema;
+    LegacySchema rightSchema;
+    LegacySchema joinSchema;
 };
 }

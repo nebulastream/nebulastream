@@ -20,7 +20,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/ArithmeticalFunctions/PowLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -54,7 +54,7 @@ ExpLogicalFunction ExpLogicalFunction::withDataType(const DataType& dataType) co
     return copy;
 };
 
-LogicalFunction ExpLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction ExpLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     /// Instead of having our own ExpPhysicalFunction, we use the existing Pow(e, childFunction)
     const auto newChild = child.withInferredDataType(schema);

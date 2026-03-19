@@ -26,7 +26,7 @@
 #include <variant>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <fmt/ostream.h>
@@ -41,12 +41,12 @@ namespace NES
 {
 
 SinkDescriptor::SinkDescriptor(
-    std::variant<std::string, uint64_t> sinkName, const Schema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
-    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<Schema>(schema)), sinkType(sinkType)
+    std::variant<std::string, uint64_t> sinkName, const LegacySchema& schema, const std::string_view sinkType, DescriptorConfig::Config config)
+    : Descriptor(std::move(config)), sinkName(std::move(sinkName)), schema(std::make_shared<LegacySchema>(schema)), sinkType(sinkType)
 {
 }
 
-std::shared_ptr<const Schema> SinkDescriptor::getSchema() const
+std::shared_ptr<const LegacySchema> SinkDescriptor::getSchema() const
 {
     return schema;
 }

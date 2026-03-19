@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
@@ -43,7 +43,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] MaxAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const;
     [[nodiscard]] MaxAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
     [[nodiscard]] MaxAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;

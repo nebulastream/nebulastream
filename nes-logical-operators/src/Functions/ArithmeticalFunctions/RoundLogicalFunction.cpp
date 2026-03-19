@@ -22,7 +22,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -63,7 +63,7 @@ RoundLogicalFunction RoundLogicalFunction::withDataType(const DataType& dataType
     return copy;
 };
 
-LogicalFunction RoundLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction RoundLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();

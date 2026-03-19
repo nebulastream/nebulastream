@@ -100,7 +100,7 @@ public:
 
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
-    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", {{"input_format", "CSV"}}).value();
+    SinkDescriptor dummySinkDescriptor = SinkCatalog{}.addSinkDescriptor("dummySink", LegacySchema{}, "Print", {{"input_format", "CSV"}}).value();
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend
@@ -148,7 +148,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", LegacySchema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
@@ -156,7 +156,7 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})};
 
     const auto result
-        = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
+        = runQueries({makeQuery(SystestQuery::PlanInfo{plan, LegacySchema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
 
     ASSERT_EQ(result.size(), 1);
     EXPECT_FALSE(result.front().passed);
@@ -179,7 +179,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     QuerySubmitter submitter{std::make_unique<QueryManager>(std::move(mockBackend))};
     SourceCatalog sourceCatalog;
-    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
+    auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", LegacySchema{});
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
@@ -187,7 +187,7 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})};
 
     const auto result = runQueries(
-        {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
+        {makeQuery(SystestQuery::PlanInfo{plan, LegacySchema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},
         1,
         submitter,
         progressTracker,

@@ -18,7 +18,7 @@
 #include <ostream>
 #include <tuple>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>

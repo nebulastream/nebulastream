@@ -20,7 +20,7 @@
 #include <ranges>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -40,7 +40,7 @@
 namespace
 {
 NES::ScanPhysicalOperator
-createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::Schema& inputSchema)
+createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::LegacySchema& inputSchema)
 {
     const auto sourceOperators
         = projectionOp.getChildren()

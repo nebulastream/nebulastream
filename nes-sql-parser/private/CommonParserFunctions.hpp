@@ -22,12 +22,12 @@
 #include <vector>
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 
 namespace NES
 {
 using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
-using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<Literal, Schema>>>;
+using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::variant<Literal, LegacySchema>>>;
 
 std::string bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
 std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
@@ -36,8 +36,8 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
 std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions);
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions);
 std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions);
-std::optional<Schema> getSourceSchema(ConfigMap configOptions);
-std::optional<Schema> getSinkSchema(ConfigMap configOptions);
+std::optional<LegacySchema> getSourceSchema(ConfigMap configOptions);
+std::optional<LegacySchema> getSinkSchema(ConfigMap configOptions);
 
 Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST);
 bool bindBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* booleanLiteral);
@@ -48,7 +48,7 @@ int64_t bindIntegerLiteral(AntlrSQLParser::IntegerLiteralContext* integerLiteral
 std::string bindStringLiteral(AntlrSQLParser::StringLiteralContext* stringLiteral);
 std::string bindStringLiteral(antlr4::Token* stringLiteral);
 
-Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
+LegacySchema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST);
 
 DataType bindDataType(AntlrSQLParser::TypeDefinitionContext* typeDefAST, DataType::NULLABLE isNullable);
 

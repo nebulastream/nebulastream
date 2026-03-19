@@ -20,7 +20,7 @@
 #include <memory>
 #include <string>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 
@@ -34,12 +34,12 @@ class LogicalSource
     friend SourceCatalog;
     friend OperatorSerializationUtil;
     friend struct Unreflector<LogicalSource>;
-    explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
+    explicit LogicalSource(std::string logicalSourceName, const LegacySchema& schema);
 
 public:
     [[nodiscard]] std::string getLogicalSourceName() const;
 
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::shared_ptr<const LegacySchema> getSchema() const;
     friend std::ostream& operator<<(std::ostream& os, const LogicalSource& logicalSource);
 
     friend bool operator==(const LogicalSource& lhs, const LogicalSource& rhs);
@@ -48,7 +48,7 @@ public:
 private:
     std::string logicalSourceName;
     /// Keep schemas in logical sources dynamically allocated to avoid unnecessary copies
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const LegacySchema> schema;
 };
 
 template <>

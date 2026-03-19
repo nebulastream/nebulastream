@@ -18,7 +18,7 @@
 #include <string>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Reflection.hpp>
@@ -31,7 +31,7 @@ TimeCharacteristic::TimeCharacteristic(const Type type) : type(type), unit(TimeU
 {
 }
 
-TimeCharacteristic::TimeCharacteristic(const Type type, Schema::Field field, const TimeUnit& unit)
+TimeCharacteristic::TimeCharacteristic(const Type type, LegacySchema::Field field, const TimeUnit& unit)
     : field(std::move(field)), type(type), unit(unit)
 {
 }
@@ -43,7 +43,7 @@ TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalF
 
 TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalFunction& fieldAccess, const TimeUnit& unit)
 {
-    auto keyField = Schema::Field(fieldAccess.getFieldName(), fieldAccess.getDataType());
+    auto keyField = LegacySchema::Field(fieldAccess.getFieldName(), fieldAccess.getDataType());
     return {Type::EventTime, keyField, unit};
 }
 
@@ -91,7 +91,7 @@ namespace NES
 
 struct ReflectedTimeCharacteristic
 {
-    Schema::Field field;
+    LegacySchema::Field field;
     Windowing::TimeCharacteristic::Type type;
     Windowing::TimeUnit timeUnit;
 };

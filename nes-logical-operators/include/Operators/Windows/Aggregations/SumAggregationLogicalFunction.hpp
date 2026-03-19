@@ -18,7 +18,7 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -44,7 +44,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getOnField() const;
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
-    [[nodiscard]] SumAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] SumAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const;
     [[nodiscard]] SumAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] SumAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
     [[nodiscard]] SumAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;

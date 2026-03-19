@@ -18,7 +18,7 @@
 #include <gtest/gtest.h>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -33,7 +33,7 @@ namespace NES
 class ProjectionLogicalOperatorTest : public ::testing::Test
 {
 protected:
-    Schema schema = Schema{}.addField("stream.a", DataType::Type::UINT64).addField("stream.b", DataType::Type::UINT64);
+    LegacySchema schema = LegacySchema{}.addField("stream.a", DataType::Type::UINT64).addField("stream.b", DataType::Type::UINT64);
 };
 
 /// Two projections with the same explicit alias must be rejected with CannotInferSchema (code 2003).

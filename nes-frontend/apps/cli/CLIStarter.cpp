@@ -32,7 +32,7 @@
 #include <unistd.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
@@ -327,7 +327,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     std::vector<NES::Statement> statements;
     for (const auto& [name, schemaFields] : logical)
     {
-        NES::Schema schema;
+        NES::LegacySchema schema;
         for (const auto& schemaField : schemaFields)
         {
             schema.addField(schemaField.name, schemaField.type);
@@ -343,7 +343,7 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     }
     for (const auto& [name, schemaFields, type, config] : sinks)
     {
-        NES::Schema schema;
+        NES::LegacySchema schema;
         for (const auto& schemaField : schemaFields)
         {
             schema.addField(schemaField.name, schemaField.type);

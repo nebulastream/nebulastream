@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -41,24 +41,24 @@ public:
     [[nodiscard]] UnionLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] UnionLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] UnionLogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const;
 
     /// Set the schemas directly without inference used for operator registration
-    [[nodiscard]] UnionLogicalOperator setInputSchemas(std::vector<Schema> inputSchemas) const;
-    [[nodiscard]] UnionLogicalOperator setOutputSchema(const Schema& outputSchema) const;
+    [[nodiscard]] UnionLogicalOperator setInputSchemas(std::vector<LegacySchema> inputSchemas) const;
+    [[nodiscard]] UnionLogicalOperator setOutputSchema(const LegacySchema& outputSchema) const;
 
 private:
     static constexpr std::string_view NAME = "Union";
 
     std::vector<LogicalOperator> children;
-    std::vector<Schema> inputSchemas;
-    Schema outputSchema;
+    std::vector<LegacySchema> inputSchemas;
+    LegacySchema outputSchema;
     TraitSet traitSet;
 
     friend Reflector<TypedLogicalOperator<UnionLogicalOperator>>;

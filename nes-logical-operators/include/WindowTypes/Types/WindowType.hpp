@@ -16,7 +16,7 @@
 
 #include <string>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 
 namespace NES::Windowing
 {
@@ -31,7 +31,7 @@ public:
 
     virtual bool operator==(const WindowType& otherWindowType) const = 0;
 
-    virtual bool inferStamp(const Schema& schema) = 0;
+    virtual bool inferStamp(const LegacySchema& schema) = 0;
 };
 
 }

@@ -20,7 +20,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -36,7 +36,7 @@ namespace NES
 class Format
 {
 public:
-    explicit Format(const Schema& schema) : schema(schema) { }
+    explicit Format(const LegacySchema& schema) : schema(schema) { }
 
     virtual ~Format() noexcept = default;
 
@@ -74,7 +74,7 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const Format& obj) { return obj.toString(os); }
 
 protected:
-    Schema schema;
+    LegacySchema schema;
 };
 
 }

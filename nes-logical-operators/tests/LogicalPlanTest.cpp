@@ -52,7 +52,7 @@ protected:
         , sourceOp2(
               [this]
               {
-                  const auto dummySchema = Schema{};
+                  const auto dummySchema = LegacySchema{};
                   const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
                   const std::unordered_map<std::string, std::string> dummyParserConfig
                       = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
@@ -273,9 +273,9 @@ struct TestOperatorWithSelfAccess final : public ManagedByOperator
 
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return children; }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {}; }
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const { return {}; }
 
-    [[nodiscard]] Schema getOutputSchema() const { return Schema{}; }
+    [[nodiscard]] LegacySchema getOutputSchema() const { return LegacySchema{}; }
 
     [[nodiscard]] std::string explain(ExplainVerbosity, OperatorId id) const
     {
@@ -284,7 +284,7 @@ struct TestOperatorWithSelfAccess final : public ManagedByOperator
 
     [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
 
-    [[nodiscard]] TestOperatorWithSelfAccess withInferredSchema(const std::vector<Schema>&) const { return *this; }
+    [[nodiscard]] TestOperatorWithSelfAccess withInferredSchema(const std::vector<LegacySchema>&) const { return *this; }
 
     [[nodiscard]] std::optional<LogicalOperator> getSelf() const { return self.tryLock(); }
 

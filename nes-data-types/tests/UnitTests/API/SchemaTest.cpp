@@ -16,7 +16,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -52,13 +52,13 @@ public:
         std::random_device rd;
         std::mt19937 mt(RND_SEED);
 
-        std::vector<Schema::Field> rndFields;
+        std::vector<LegacySchema::Field> rndFields;
         for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
         {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
             const auto isNullable = (rand() % 2) ? NES::DataType::NULLABLE::IS_NULLABLE : NES::DataType::NULLABLE::NOT_NULLABLE;
-            rndFields.emplace_back(Schema::Field{fieldName, DataTypeProvider::provideDataType(basicType, isNullable)});
+            rndFields.emplace_back(LegacySchema::Field{fieldName, DataTypeProvider::provideDataType(basicType, isNullable)});
         }
 
         return rndFields;
@@ -71,7 +71,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field that is nullable
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
+            const auto testSchema = LegacySchema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             NES_DEBUG("{}", testSchema);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
@@ -81,7 +81,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding one field that is not nullable
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal);
+            const auto testSchema = LegacySchema{}.addField("field", basicTypeVal);
             NES_DEBUG("{}", testSchema);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
@@ -93,7 +93,7 @@ TEST_F(SchemaTest, addFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        Schema testSchema;
+        LegacySchema testSchema;
         for (const auto& field : rndFields)
         {
             testSchema.addField(field.name, field.dataType);
@@ -114,18 +114,18 @@ TEST_F(SchemaTest, addFieldTest)
 TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
 {
     const auto field1
-        = Schema::Field{"bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+        = LegacySchema::Field{"bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
     const auto field2
-        = Schema::Field{"bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+        = LegacySchema::Field{"bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
     const auto field3
-        = Schema::Field{"bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+        = LegacySchema::Field{"bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
     const auto field4
-        = Schema::Field{"auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+        = LegacySchema::Field{"auction$id", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
     const auto field5
-        = Schema::Field{"auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
+        = LegacySchema::Field{"auction$initialbid", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE)};
 
     const auto schemaUnderTest
-        = Schema{}
+        = LegacySchema{}
               .addField("bidbid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
               .addField("bidbid$end", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
               .addField("bid$start", DataTypeProvider::provideDataType(DataType::Type::UINT64, DataType::NULLABLE::IS_NULLABLE))
@@ -158,10 +158,10 @@ TEST_F(SchemaTest, getFieldByNameWithSimilarFieldNames)
 
 TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
 {
-    const auto field1 = Schema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
-    const auto field2 = Schema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field1 = LegacySchema::Field{"stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field2 = LegacySchema::Field{"stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
 
-    const auto schemaUnderTest = Schema{}
+    const auto schemaUnderTest = LegacySchema{}
                                      .addField("stream$PREFIXabc", DataTypeProvider::provideDataType(DataType::Type::UINT64))
                                      .addField("stream$abc", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
@@ -179,9 +179,9 @@ TEST_F(SchemaTest, getFieldByNameWithSameSuffix)
 
 TEST_F(SchemaTest, getFieldByNameWithSameName)
 {
-    const auto field = Schema::Field{"stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
+    const auto field = LegacySchema::Field{"stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64)};
 
-    const auto schemaUnderTest = Schema{}
+    const auto schemaUnderTest = LegacySchema{}
                                      .addField("stream1$name", DataTypeProvider::provideDataType(DataType::Type::UINT64))
                                      .addField("stream2$name", DataTypeProvider::provideDataType(DataType::Type::UINT64));
 
@@ -192,8 +192,8 @@ TEST_F(SchemaTest, getFieldByNameWithSameName)
 
 TEST_F(SchemaTest, getUnqualifiedNameFromField)
 {
-    const auto field1 = Schema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
-    const auto field2 = Schema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+    const auto field1 = LegacySchema::Field{"stream$field1", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
+    const auto field2 = LegacySchema::Field{"field2", DataTypeProvider::provideDataType(DataType::Type::BOOLEAN)};
 
     EXPECT_EQ("field1", field1.getUnqualifiedName());
     EXPECT_EQ("field2", field2.getUnqualifiedName());
@@ -205,7 +205,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Replacing one field with a random one
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
+            auto testSchema = LegacySchema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             EXPECT_EQ(testSchema.getNumberOfFields(), 1);
             EXPECT_EQ(testSchema.getFieldAt(0).name, "field");
             EXPECT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE));
@@ -221,7 +221,7 @@ TEST_F(SchemaTest, replaceFieldTest)
         /// Adding multiple fields
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
-        Schema testSchema;
+        LegacySchema testSchema;
         for (const auto& field : rndFields)
         {
             testSchema.addField(field.name, field.dataType);
@@ -259,7 +259,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         /// Calculating the schema size for each data type that can be null
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
+            const auto testSchema = LegacySchema{}.addField("field", basicTypeVal, DataType::NULLABLE::IS_NULLABLE);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal, DataType::NULLABLE::IS_NULLABLE));
@@ -271,7 +271,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
         /// Calculating the schema size for each data type that can not be null
         for (const auto& basicTypeVal : magic_enum::enum_values<DataType::Type>())
         {
-            const auto testSchema = Schema{}.addField("field", basicTypeVal);
+            const auto testSchema = LegacySchema{}.addField("field", basicTypeVal);
             ASSERT_EQ(testSchema.getNumberOfFields(), 1);
             ASSERT_EQ(testSchema.getFieldAt(0).name, "field");
             ASSERT_EQ(testSchema.getFieldAt(0).dataType, DataTypeProvider::provideDataType(basicTypeVal));
@@ -282,7 +282,7 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
     {
         using enum DataType::Type;
         /// Calculating the schema size for multiple fields
-        const auto testSchema = Schema{}
+        const auto testSchema = LegacySchema{}
                                     .addField("field1", UINT8)
                                     .addField("field2", UINT16)
                                     .addField("field3", INT32)
@@ -297,14 +297,14 @@ TEST_F(SchemaTest, containsTest)
     using enum DataType::Type;
     {
         /// Checking contains for one fieldName
-        const auto testSchema = Schema{}.addField("field1", UINT8);
+        const auto testSchema = LegacySchema{}.addField("field1", UINT8);
         EXPECT_TRUE(testSchema.contains("field1"));
         EXPECT_FALSE(testSchema.contains("notExistingField1"));
     }
 
     {
         /// Checking contains with multiple fields
-        const auto testSchema = Schema{}
+        const auto testSchema = LegacySchema{}
                                     .addField("field1", UINT8)
                                     .addField("field2", UINT16)
                                     .addField("field3", INT32)
@@ -324,7 +324,7 @@ TEST_F(SchemaTest, getFieldByNameTestInSchemaWithSourceName)
     using enum DataType::Type;
 
     /// Checking contains for one fieldName but with fields containing already a source name, e.g., after a join
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("streamstream2$start", UINT64)
                                 .addField("streamstream2$end", UINT64)
                                 .addField("stream$id", UINT64)
@@ -342,7 +342,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
     using enum DataType::Type;
     /// TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField(sourceName + "$field1", UINT8)
                                 .addField(sourceName + "$field2", UINT16)
                                 .addField(sourceName + "$field3", INT32)
@@ -355,7 +355,7 @@ TEST_F(SchemaTest, getSourceNameQualifierTest)
 
 TEST_F(SchemaTest, copyTest)
 {
-    const auto testSchema = Schema{}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
+    const auto testSchema = LegacySchema{}.addField("field1", DataType::Type::UINT8).addField("field2", DataType::Type::UINT16);
     const auto& testSchemaCopy = testSchema;
 
     ASSERT_EQ(testSchema.getSizeOfSchemaInBytes(), testSchemaCopy.getSizeOfSchemaInBytes());
@@ -374,23 +374,23 @@ TEST_F(SchemaTest, copyTest)
 TEST_F(SchemaTest, withoutSourceQualifierTest)
 {
     {
-        const auto schema = Schema{}.addField("source1$id", DataType::Type::INT64).addField("source1$source2$test", DataType::Type::INT32);
-        const auto expected = Schema{}.addField("id", DataType::Type::INT64).addField("test", DataType::Type::INT32);
+        const auto schema = LegacySchema{}.addField("source1$id", DataType::Type::INT64).addField("source1$source2$test", DataType::Type::INT32);
+        const auto expected = LegacySchema{}.addField("id", DataType::Type::INT64).addField("test", DataType::Type::INT32);
         EXPECT_NE(schema, expected);
         EXPECT_EQ(withoutSourceQualifier(schema), expected);
     }
     {
-        const auto schema1 = Schema{}
+        const auto schema1 = LegacySchema{}
                                  .addField("source1$id", DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)
                                  .addField("test", DataType::Type::INT32);
-        const auto schema2 = Schema{}
+        const auto schema2 = LegacySchema{}
                                  .addField("source2$id", DataType::Type::INT64, DataType::NULLABLE::IS_NULLABLE)
                                  .addField("source2$test", DataType::Type::INT32);
         EXPECT_NE(schema1, schema2);
         EXPECT_EQ(withoutSourceQualifier(schema1), withoutSourceQualifier(schema2));
     }
     {
-        const auto schema = Schema{}
+        const auto schema = LegacySchema{}
                                 .addField("source1$id", DataType::Type::INT64)
                                 .addField("source2$id", DataType::Type::INT64)
                                 .addField("source1$source2$test", DataType::Type::INT32);

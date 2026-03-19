@@ -135,7 +135,7 @@ std::string ProjectionLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     return builder.str();
 }
 
-ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     if (inputSchemas.empty())
     {
@@ -172,7 +172,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
     }
 
     /// Resolve the output schema of the Projection. If an asterisk is used we propagate the entire input schema.
-    auto initial = Schema{};
+    auto initial = LegacySchema{};
     if (asterisk)
     {
         initial.appendFieldsFromOtherSchema(copy.inputSchema);
@@ -181,7 +181,7 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withInferredSchema(std::vec
         copy.projections.begin(),
         copy.projections.end(),
         initial,
-        [](Schema schema, const auto& projection)
+        [](LegacySchema schema, const auto& projection)
         {
             INVARIANT(projection.first.has_value(), "Projection identifier must be set after inference");
             return schema.addField(projection.first->getFieldName(), projection.second.getDataType());
@@ -209,12 +209,12 @@ ProjectionLogicalOperator ProjectionLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> ProjectionLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> ProjectionLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 };
 
-Schema ProjectionLogicalOperator::getOutputSchema() const
+LegacySchema ProjectionLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }

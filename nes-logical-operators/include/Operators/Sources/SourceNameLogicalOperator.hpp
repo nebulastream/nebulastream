@@ -18,7 +18,7 @@
 #include <string_view>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -36,14 +36,14 @@ class SourceNameLogicalOperator : public ManagedByOperator
 {
 public:
     explicit SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const LegacySchema& schema);
 
     static void inferInputOrigins();
 
     [[nodiscard]] std::string getLogicalSourceName() const;
 
-    [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] SourceNameLogicalOperator withSchema(const Schema& schema) const;
+    [[nodiscard]] LegacySchema getSchema() const;
+    [[nodiscard]] SourceNameLogicalOperator withSchema(const LegacySchema& schema) const;
 
 
     [[nodiscard]] bool operator==(const SourceNameLogicalOperator& rhs) const;
@@ -54,13 +54,13 @@ public:
     [[nodiscard]] SourceNameLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] SourceNameLogicalOperator withInferredSchema(const std::vector<LegacySchema>& inputSchemas) const;
 
 private:
     static constexpr std::string_view NAME = "Source";
@@ -68,7 +68,7 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    Schema schema, inputSchema, outputSchema;
+    LegacySchema schema, inputSchema, outputSchema;
 
     friend Reflector<TypedLogicalOperator<SourceNameLogicalOperator>>;
 };

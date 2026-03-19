@@ -18,7 +18,7 @@
 #include <memory>
 #include <ostream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/Logger/Formatter.hpp>
@@ -39,7 +39,7 @@ public:
         EventTime
     };
     explicit TimeCharacteristic(Type type);
-    TimeCharacteristic(Type type, Schema::Field field, const TimeUnit& unit);
+    TimeCharacteristic(Type type, LegacySchema::Field field, const TimeUnit& unit);
 
     /// @brief Factory to create a time characteristic for ingestion time window
     /// @param unit the time unit of the ingestion time
@@ -64,7 +64,7 @@ public:
 
     void setTimeUnit(const TimeUnit& unit);
 
-    Schema::Field field;
+    LegacySchema::Field field;
 
 private:
     Type type;

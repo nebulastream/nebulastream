@@ -27,7 +27,7 @@
 
 #include <simdjson.h>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -90,7 +90,7 @@ struct SIMDJSONMetaData
         /// We expect the names in the json file to not be source qualified
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
         {
-            if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
+            if (const auto& qualifierPosition = fieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {
                 fieldNamesInJson.emplace_back(fieldName.substr(qualifierPosition + 1));
             }

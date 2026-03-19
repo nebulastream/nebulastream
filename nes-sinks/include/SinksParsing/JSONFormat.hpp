@@ -20,7 +20,7 @@
 #include <string>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES
@@ -40,7 +40,7 @@ public:
         std::vector<DataType> physicalTypes;
     };
 
-    explicit JSONFormat(const Schema& schema);
+    explicit JSONFormat(const LegacySchema& schema);
 
     /// Return formatted content of TupleBuffer, contains timestamp if specified in config.
     [[nodiscard]] std::string getFormattedBuffer(const TupleBuffer& inputBuffer) const override;

@@ -20,7 +20,7 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -57,24 +57,24 @@ Reflected CountAggregationLogicalFunction::reflect() const
     return NES::reflect(this);
 }
 
-CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
+CountAggregationLogicalFunction CountAggregationLogicalFunction::withInferredStamp(const LegacySchema& schema) const
 {
     if (const auto sourceNameQualifier = schema.getSourceNameQualifier())
     {
         /// We infer the data type from the schema for the on field
         auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
-        const auto attributeNameResolver = sourceNameQualifier.value() + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR);
+        const auto attributeNameResolver = sourceNameQualifier.value() + std::string(LegacySchema::ATTRIBUTE_NAME_SEPARATOR);
         const auto asFieldName = this->getAsField().getFieldName();
 
         std::string newAsFieldName;
         ///If on and as field name are different then append the attribute name resolver from on field to the as field
-        if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+        if (asFieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
         {
             newAsFieldName = attributeNameResolver + asFieldName;
         }
         else
         {
-            const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+            const auto fieldName = asFieldName.substr(asFieldName.find_last_of(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) + 1);
             newAsFieldName = attributeNameResolver + fieldName;
         }
 

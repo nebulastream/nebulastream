@@ -27,7 +27,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Sinks/SinkCatalog.hpp>
@@ -53,9 +53,9 @@ public:
 
     void SetUp() override { BaseUnitTest::SetUp(); }
 
-    static Schema createSchema()
+    static LegacySchema createSchema()
     {
-        Schema schema;
+        LegacySchema schema;
         schema.addField("test.id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         schema.addField("test.value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         return schema;

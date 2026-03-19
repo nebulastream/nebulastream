@@ -18,7 +18,7 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -35,8 +35,8 @@ struct ReflectedOperator
     std::vector<uint64_t> childrenIds;
     Reflected config;
     TraitSet traitSet;
-    std::vector<Schema> inputSchemas;
-    std::optional<Schema> outputSchema;
+    std::vector<LegacySchema> inputSchemas;
+    std::optional<LegacySchema> outputSchema;
 };
 
 /// The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a corresponding ReflectedOperator object.

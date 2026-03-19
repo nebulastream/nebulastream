@@ -74,7 +74,7 @@ bool EventTimeWatermarkAssignerLogicalOperator::operator==(const EventTimeWaterm
 }
 
 EventTimeWatermarkAssignerLogicalOperator
-EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+EventTimeWatermarkAssignerLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     auto copy = *this;
     if (inputSchemas.size() != 1)
@@ -108,12 +108,12 @@ EventTimeWatermarkAssignerLogicalOperator::withChildren(std::vector<LogicalOpera
     return copy;
 }
 
-std::vector<Schema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> EventTimeWatermarkAssignerLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 };
 
-Schema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
+LegacySchema EventTimeWatermarkAssignerLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }

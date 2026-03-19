@@ -55,7 +55,7 @@ public:
 TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
 
@@ -67,7 +67,7 @@ TEST_F(SourceCatalogTest, AddInspectLogicalSource)
 TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
 
@@ -113,7 +113,7 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
 
@@ -126,7 +126,7 @@ TEST_F(SourceCatalogTest, AddInvalidPhysicalSource)
 TEST_F(SourceCatalogTest, RemoveLogicalSource)
 {
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
 
@@ -163,7 +163,7 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
     constexpr size_t operationsPerThread = 1000;
     constexpr unsigned int concurrentLogicalSourceNames = 3;
     auto sourceCatalog = SourceCatalog{};
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     schema.addField("stringField", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     schema.addField("intField", DataTypeProvider::provideDataType(DataType::Type::INT32));
 

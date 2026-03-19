@@ -34,7 +34,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -198,8 +198,8 @@ using ExpectedResultTuple = ResultTuple<ExpectedResultField, struct ExpectedResu
 using ActualResultTuple = ResultTuple<ActualResultField, struct ActualResultTuple_>;
 using ExpectedResultTuples = ResultTuples<ExpectedResultIndex, ExpectedResultTuple>;
 using ActualResultTuples = ResultTuples<ActualResultIndex, ActualResultTuple>;
-using ExpectedResultSchema = ResultCheckStrongType<NES::Schema, struct ExpectedResultSchema_>;
-using ActualResultSchema = ResultCheckStrongType<NES::Schema, struct ActualResultSchema_>;
+using ExpectedResultSchema = ResultCheckStrongType<NES::LegacySchema, struct ExpectedResultSchema_>;
+using ActualResultSchema = ResultCheckStrongType<NES::LegacySchema, struct ActualResultSchema_>;
 using SchemaErrorString = ResultCheckStrongType<std::string, struct SchemaErrorString_>;
 using ResultErrorString = ResultCheckStrongType<std::string, struct ResultErrorString_>;
 using SchemaErrorStream = ErrorStream<SchemaErrorString, struct SchemaErrorStream_>;
@@ -243,11 +243,11 @@ bool compareStringAsTypeWithError(const NES::DataType::Type type, const Expected
     std::unreachable();
 }
 
-NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
+NES::LegacySchema parseFieldNames(const std::string_view fieldNamesRawLine)
 {
     /// Assumes the field and type to be similar to
     /// window$val_i8_i8:INT32:IS_NULLABLE, window$val_i8_i8_plus_1:INT16:NOT_NULLABLE
-    NES::Schema schema;
+    NES::LegacySchema schema;
     for (const auto& field : std::ranges::split_view(fieldNamesRawLine, ',')
              | std::views::transform([](auto splitNameAndType)
                                      { return std::string_view(splitNameAndType.begin(), splitNameAndType.end()); })
@@ -295,7 +295,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
 
 struct QueryResult
 {
-    NES::Schema schema;
+    NES::LegacySchema schema;
     std::vector<std::string> result;
 };
 

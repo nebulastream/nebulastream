@@ -39,7 +39,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
@@ -74,7 +74,7 @@ class SLTSinkFactory
 public:
     explicit SLTSinkFactory(std::shared_ptr<SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
-    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const Schema& schema)
+    bool registerSink(const std::string& sinkType, const std::string_view sinkNameInFile, const LegacySchema& schema)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
@@ -97,7 +97,7 @@ public:
     }
 
     std::optional<SinkDescriptor>
-    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    getInlineSink(const LegacySchema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
     {
         return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config));
     }
@@ -113,9 +113,9 @@ public:
         return sinkProviderIter->second(std::string{assignedSinkName}, filePath);
     }
 
-    static inline const Schema checksumSchema = []
+    static inline const LegacySchema checksumSchema = []
     {
-        Schema checksumSinkSchema;
+        LegacySchema checksumSinkSchema;
         checksumSinkSchema.addField("S$Count", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         checksumSinkSchema.addField("S$Checksum", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         return checksumSinkSchema;
@@ -317,7 +317,7 @@ private:
     std::optional<Exception> exception;
     std::optional<LogicalPlan> optimizedPlan;
     std::optional<std::unordered_map<SourceDescriptor, std::pair<SourceInputFile, uint64_t>>> sourcesToFilePathsAndCounts;
-    std::optional<Schema> sinkOutputSchema;
+    std::optional<LegacySchema> sinkOutputSchema;
     std::optional<std::variant<std::vector<std::string>, ExpectedError>> expectedResultsOrError;
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
@@ -525,7 +525,7 @@ struct SystestBinder::Impl
 
     static void createSink(SLTSinkFactory& sltSinkProvider, const CreateSinkStatement& statement)
     {
-        Schema schema;
+        LegacySchema schema;
         for (const auto& field : statement.schema.getFields())
         {
             schema.addField(field.name, field.dataType);

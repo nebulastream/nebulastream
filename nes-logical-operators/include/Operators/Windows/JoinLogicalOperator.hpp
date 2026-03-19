@@ -22,7 +22,7 @@
 #include <vector>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -51,8 +51,8 @@ public:
         WeakLogicalOperator self, LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType);
 
     [[nodiscard]] LogicalFunction getJoinFunction() const;
-    [[nodiscard]] Schema getLeftSchema() const;
-    [[nodiscard]] Schema getRightSchema() const;
+    [[nodiscard]] LegacySchema getLeftSchema() const;
+    [[nodiscard]] LegacySchema getRightSchema() const;
     [[nodiscard]] std::shared_ptr<Windowing::WindowType> getWindowType() const;
     [[nodiscard]] std::string getWindowStartFieldName() const;
     [[nodiscard]] std::string getWindowEndFieldName() const;
@@ -67,13 +67,13 @@ public:
     [[nodiscard]] JoinLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId) const;
     [[nodiscard]] std::string_view getName() const noexcept;
 
-    [[nodiscard]] JoinLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
+    [[nodiscard]] JoinLogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const;
 
 private:
     static constexpr std::string_view NAME = "Join";
@@ -84,7 +84,7 @@ private:
 
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
-    Schema leftInputSchema, rightInputSchema, outputSchema;
+    LegacySchema leftInputSchema, rightInputSchema, outputSchema;
 
     friend Reflector<TypedLogicalOperator<JoinLogicalOperator>>;
 };

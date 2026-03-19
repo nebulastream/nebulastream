@@ -26,7 +26,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -122,7 +122,7 @@ bool WindowedAggregationLogicalOperator::operator==(const WindowedAggregationLog
         && getTraitSet() == rhs.getTraitSet();
 }
 
-WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     auto copy = *this;
     INVARIANT(!inputSchemas.empty(), "WindowAggregation should have at least one input");
@@ -146,7 +146,7 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withInfer
 
     copy.windowType->inferStamp(firstSchema);
     copy.inputSchema = firstSchema;
-    copy.outputSchema = Schema{};
+    copy.outputSchema = LegacySchema{};
 
     if (dynamic_cast<Windowing::TimeBasedWindowType*>(getWindowType().get()) != nullptr)
     {
@@ -200,12 +200,12 @@ WindowedAggregationLogicalOperator WindowedAggregationLogicalOperator::withChild
     return copy;
 }
 
-std::vector<Schema> WindowedAggregationLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> WindowedAggregationLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 };
 
-Schema WindowedAggregationLogicalOperator::getOutputSchema() const
+LegacySchema WindowedAggregationLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }

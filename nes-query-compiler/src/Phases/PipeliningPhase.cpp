@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -55,7 +55,7 @@ using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipel
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
 PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
-    const std::optional<Schema>& inputSchema,
+    const std::optional<LegacySchema>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
     const uint64_t configuredBufferSize)
 {

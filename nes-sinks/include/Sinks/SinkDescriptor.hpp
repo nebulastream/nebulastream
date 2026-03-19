@@ -28,7 +28,7 @@
 #include <variant>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 
@@ -62,16 +62,16 @@ public:
     /// Optional, since not every sink type uses an INPUT_FORMAT parameter.
     [[nodiscard]] std::optional<std::string_view> getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
+    [[nodiscard]] std::shared_ptr<const LegacySchema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
 
 private:
     explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+        std::variant<std::string, uint64_t> sinkName, const LegacySchema& schema, std::string_view sinkType, DescriptorConfig::Config config);
 
     std::variant<std::string, uint64_t> sinkName;
-    std::shared_ptr<const Schema> schema;
+    std::shared_ptr<const LegacySchema> schema;
     std::string sinkType;
 
     friend Reflector<SinkDescriptor>;
@@ -136,7 +136,7 @@ namespace NES::detail
 struct ReflectedSinkDescriptor
 {
     std::variant<std::string, uint64_t> sinkName;
-    Schema schema;
+    LegacySchema schema;
     std::string sinkType;
     Reflected config;
 };

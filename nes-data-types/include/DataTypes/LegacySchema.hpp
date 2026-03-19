@@ -34,7 +34,7 @@
 namespace NES
 {
 
-class Schema
+class LegacySchema
 {
 public:
     struct Field
@@ -67,15 +67,15 @@ public:
     /// schema qualifier separator
     constexpr static auto ATTRIBUTE_NAME_SEPARATOR = "$";
 
-    explicit Schema() = default;
-    ~Schema() = default;
+    explicit LegacySchema() = default;
+    ~LegacySchema() = default;
 
-    [[nodiscard]] bool operator==(const Schema& other) const = default;
-    friend std::ostream& operator<<(std::ostream& os, const Schema& schema);
+    [[nodiscard]] bool operator==(const LegacySchema& other) const = default;
+    friend std::ostream& operator<<(std::ostream& os, const LegacySchema& schema);
 
-    Schema addField(std::string name, const DataType& dataType);
-    Schema addField(std::string name, DataType::Type type);
-    Schema addField(std::string name, DataType::Type type, DataType::NULLABLE);
+    LegacySchema addField(std::string name, const DataType& dataType);
+    LegacySchema addField(std::string name, DataType::Type type);
+    LegacySchema addField(std::string name, DataType::Type type, DataType::NULLABLE);
 
     /// Replaces the type of the field
     [[nodiscard]] bool replaceTypeOfField(const std::string& name, DataType type);
@@ -101,7 +101,7 @@ public:
     [[nodiscard]] size_t getNumberOfFields() const;
     [[nodiscard]] std::vector<std::string> getFieldNames() const;
     [[nodiscard]] const std::vector<Field>& getFields() const;
-    void appendFieldsFromOtherSchema(const Schema& otherSchema);
+    void appendFieldsFromOtherSchema(const LegacySchema& otherSchema);
     [[nodiscard]] bool renameField(const std::string& oldFieldName, std::string_view newFieldName);
 
     [[nodiscard]] size_t getSizeOfSchemaInBytes() const;
@@ -118,7 +118,7 @@ private:
 };
 
 /// Returns a copy of the input schema without any source qualifier on the schema fields
-Schema withoutSourceQualifier(const Schema& input);
+LegacySchema withoutSourceQualifier(const LegacySchema& input);
 
 namespace detail
 {
@@ -130,42 +130,42 @@ struct ReflectedField
 
 struct ReflectedSchema
 {
-    std::vector<Schema::Field> fields;
+    std::vector<LegacySchema::Field> fields;
 };
 
 }
 
 template <>
-struct Reflector<Schema::Field>
+struct Reflector<LegacySchema::Field>
 {
-    Reflected operator()(const Schema::Field& field) const;
+    Reflected operator()(const LegacySchema::Field& field) const;
 };
 
 template <>
-struct Unreflector<Schema::Field>
+struct Unreflector<LegacySchema::Field>
 {
-    Schema::Field operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    LegacySchema::Field operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 template <>
-struct Reflector<Schema>
+struct Reflector<LegacySchema>
 {
-    Reflected operator()(const Schema& schema) const;
+    Reflected operator()(const LegacySchema& schema) const;
 };
 
 template <>
-struct Unreflector<Schema>
+struct Unreflector<LegacySchema>
 {
-    Schema operator()(const Reflected& rfl, const ReflectionContext& context) const;
+    LegacySchema operator()(const Reflected& rfl, const ReflectionContext& context) const;
 };
 
 }
 
 template <>
-struct std::hash<NES::Schema::Field>
+struct std::hash<NES::LegacySchema::Field>
 {
-    size_t operator()(const NES::Schema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.dataType); }
+    size_t operator()(const NES::LegacySchema::Field& field) const noexcept { return folly::hash::hash_combine(field.name, field.dataType); }
 };
 
-FMT_OSTREAM(NES::Schema);
-FMT_OSTREAM(NES::Schema::Field);
+FMT_OSTREAM(NES::LegacySchema);
+FMT_OSTREAM(NES::LegacySchema::Field);

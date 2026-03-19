@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 
 #include <cstddef>
 #include <iostream>
@@ -33,18 +33,18 @@
 namespace NES
 {
 
-Schema::Field::Field(std::string name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
+LegacySchema::Field::Field(std::string name, DataType dataType) : name(std::move(name)), dataType(std::move(dataType))
 {
 }
 
-std::ostream& operator<<(std::ostream& os, const Schema::Field& field)
+std::ostream& operator<<(std::ostream& os, const LegacySchema::Field& field)
 {
     return os << fmt::format("Field(name: {}, DataType: {})", field.name, field.dataType);
 }
 
-std::string Schema::Field::getUnqualifiedName() const
+std::string LegacySchema::Field::getUnqualifiedName() const
 {
-    const auto separatorPosition = name.find(Schema::ATTRIBUTE_NAME_SEPARATOR);
+    const auto separatorPosition = name.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR);
     if (separatorPosition == std::string::npos)
     {
         return name;
@@ -52,17 +52,17 @@ std::string Schema::Field::getUnqualifiedName() const
     return name.substr(separatorPosition + 1);
 }
 
-Schema Schema::addField(std::string name, const DataType& dataType)
+LegacySchema LegacySchema::addField(std::string name, const DataType& dataType)
 {
     return addField(std::move(name), dataType.type, dataType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE);
 }
 
-Schema Schema::addField(std::string name, const DataType::Type type)
+LegacySchema LegacySchema::addField(std::string name, const DataType::Type type)
 {
     return addField(std::move(name), type, DataType::NULLABLE::NOT_NULLABLE);
 }
 
-Schema Schema::addField(std::string name, const DataType::Type type, const DataType::NULLABLE isNullable)
+LegacySchema LegacySchema::addField(std::string name, const DataType::Type type, const DataType::NULLABLE isNullable)
 {
     DataType dataType{type, isNullable};
     sizeOfSchemaInBytes += dataType.getSizeInBytesWithNull();
@@ -72,7 +72,7 @@ Schema Schema::addField(std::string name, const DataType::Type type, const DataT
 }
 
 /// No need to repopulate nameToField, since the key does not change
-bool Schema::replaceTypeOfField(const std::string& name, DataType type)
+bool LegacySchema::replaceTypeOfField(const std::string& name, DataType type)
 {
     if (const auto fieldIdx = nameToField.find(name); fieldIdx != nameToField.end())
     {
@@ -85,7 +85,7 @@ bool Schema::replaceTypeOfField(const std::string& name, DataType type)
     return false;
 }
 
-std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName) const
+std::optional<LegacySchema::Field> LegacySchema::getFieldByName(const std::string& fieldName) const
 {
     /// Check if nameToField contains fully qualified name
     if (const auto field = nameToField.find(fieldName); field != nameToField.end())
@@ -124,7 +124,7 @@ std::optional<Schema::Field> Schema::getFieldByName(const std::string& fieldName
     return matchingFields.front();
 }
 
-Schema::Field Schema::getFieldAt(const size_t index) const
+LegacySchema::Field LegacySchema::getFieldAt(const size_t index) const
 {
     if (index < fields.size())
     {
@@ -133,13 +133,13 @@ Schema::Field Schema::getFieldAt(const size_t index) const
     throw FieldNotFound("field with index {}  does not exist", std::to_string(index));
 }
 
-std::ostream& operator<<(std::ostream& os, const Schema& schema)
+std::ostream& operator<<(std::ostream& os, const LegacySchema& schema)
 {
     os << fmt::format("Schema(fields({}), size in bytes: {})", fmt::join(schema.fields, ","), schema.sizeOfSchemaInBytes);
     return os;
 }
 
-std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
+std::string LegacySchema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const
 {
     if (const auto qualifierName = getSourceNameQualifier(); qualifierName.has_value())
     {
@@ -149,17 +149,17 @@ std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() cons
     throw CannotInferStamp("Could not find qualifier for schema: {}", *this);
 }
 
-const std::vector<Schema::Field>& Schema::getFields() const
+const std::vector<LegacySchema::Field>& LegacySchema::getFields() const
 {
     return fields;
 }
 
-size_t Schema::getNumberOfFields() const
+size_t LegacySchema::getNumberOfFields() const
 {
     return fields.size();
 }
 
-std::optional<std::string> Schema::getSourceNameQualifier() const
+std::optional<std::string> LegacySchema::getSourceNameQualifier() const
 {
     if (fields.empty())
     {
@@ -169,18 +169,18 @@ std::optional<std::string> Schema::getSourceNameQualifier() const
     return fields.front().name.substr(0, fields.front().name.find(ATTRIBUTE_NAME_SEPARATOR));
 }
 
-bool Schema::contains(const std::string& qualifiedFieldName) const
+bool LegacySchema::contains(const std::string& qualifiedFieldName) const
 {
     return nameToField.contains(qualifiedFieldName);
 }
 
-std::vector<std::string> Schema::getFieldNames() const
+std::vector<std::string> LegacySchema::getFieldNames() const
 {
     auto namesView = this->fields | std::views::transform([](const Field& field) { return field.name; });
     return {namesView.begin(), namesView.end()};
 }
 
-void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
+void LegacySchema::appendFieldsFromOtherSchema(const LegacySchema& otherSchema)
 {
     this->fields.reserve(this->fields.size() + otherSchema.fields.size());
     this->nameToField.reserve(this->fields.size() + otherSchema.fields.size());
@@ -192,7 +192,7 @@ void Schema::appendFieldsFromOtherSchema(const Schema& otherSchema)
     this->sizeOfSchemaInBytes += otherSchema.sizeOfSchemaInBytes;
 }
 
-bool Schema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
+bool LegacySchema::renameField(const std::string& oldFieldName, const std::string_view newFieldName)
 {
     if (auto fieldToRename = nameToField.extract(oldFieldName))
     {
@@ -204,17 +204,17 @@ bool Schema::renameField(const std::string& oldFieldName, const std::string_view
     return false;
 }
 
-size_t Schema::getSizeOfSchemaInBytes() const
+size_t LegacySchema::getSizeOfSchemaInBytes() const
 {
     return sizeOfSchemaInBytes;
 }
 
-Schema withoutSourceQualifier(const Schema& input)
+LegacySchema withoutSourceQualifier(const LegacySchema& input)
 {
-    Schema withoutPrefix{};
+    LegacySchema withoutPrefix{};
     auto stripPrefix = [](const std::string& name)
     {
-        if (const auto pos = name.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR); pos != std::string::npos)
+        if (const auto pos = name.find_last_of(LegacySchema::ATTRIBUTE_NAME_SEPARATOR); pos != std::string::npos)
         {
             return name.substr(pos + 1);
         }
@@ -235,41 +235,41 @@ Schema withoutSourceQualifier(const Schema& input)
     return withoutPrefix;
 }
 
-bool Schema::hasFields() const
+bool LegacySchema::hasFields() const
 {
     return not fields.empty();
 }
 
-auto Schema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin())
+auto LegacySchema::begin() const -> decltype(std::declval<std::vector<Field>>().cbegin())
 {
     return fields.cbegin();
 }
 
-auto Schema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
+auto LegacySchema::end() const -> decltype(std::declval<std::vector<Field>>().cend())
 {
     return fields.cend();
 }
 
-Reflected Reflector<Schema::Field>::operator()(const Schema::Field& field) const
+Reflected Reflector<LegacySchema::Field>::operator()(const LegacySchema::Field& field) const
 {
     return reflect(detail::ReflectedField{.name = field.name, .type = field.dataType});
 }
 
-Schema::Field Unreflector<Schema::Field>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+LegacySchema::Field Unreflector<LegacySchema::Field>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto [name, type] = context.unreflect<detail::ReflectedField>(rfl);
-    return Schema::Field{std::move(name), type};
+    return LegacySchema::Field{std::move(name), type};
 }
 
-Reflected Reflector<Schema>::operator()(const Schema& schema) const
+Reflected Reflector<LegacySchema>::operator()(const LegacySchema& schema) const
 {
     return reflect(detail::ReflectedSchema{.fields = schema.getFields()});
 }
 
-Schema Unreflector<Schema>::operator()(const Reflected& rfl, const ReflectionContext& context) const
+LegacySchema Unreflector<LegacySchema>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto [fields] = context.unreflect<detail::ReflectedSchema>(rfl);
-    Schema schema{};
+    LegacySchema schema{};
     for (const auto& field : fields)
     {
         schema.addField(field.name, field.dataType);

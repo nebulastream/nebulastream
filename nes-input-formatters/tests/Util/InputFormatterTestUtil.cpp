@@ -33,7 +33,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -62,7 +62,7 @@
 namespace NES::InputFormatterTestUtil
 {
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
+LegacySchema createSchema(const std::vector<TestDataTypes>& testDataTypes)
 {
     const auto fieldNamesOther = testDataTypes | NES::views::enumerate
         | std::views::transform([](const auto& idxDataTypePair) { return fmt::format("Field_{}", std::get<0>(idxDataTypePair)); })
@@ -71,9 +71,9 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes)
     return createSchema(testDataTypes, fieldNamesOther);
 }
 
-Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
+LegacySchema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::vector<std::string>& testFieldNames)
 {
-    auto schema = Schema{};
+    auto schema = LegacySchema{};
     for (const auto& [fieldNumber, dataType] : testDataTypes | NES::views::enumerate)
     {
         switch (dataType)
@@ -174,7 +174,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
     const std::string& filePath,
-    const Schema& schema,
+    const LegacySchema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
@@ -203,7 +203,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const std::unordered_map<std::string, std::string>& parserConfiguration,
-    const Schema& schema,
+    const LegacySchema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)
@@ -214,7 +214,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     const ParserConfig& parserConfiguration,
-    const Schema& schema,
+    const LegacySchema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
     const bool isCompiled)

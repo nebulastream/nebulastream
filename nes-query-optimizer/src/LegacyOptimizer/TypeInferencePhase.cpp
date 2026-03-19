@@ -15,7 +15,7 @@
 #include <LegacyOptimizer/TypeInferencePhase.hpp>
 
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 
@@ -32,7 +32,7 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     }
 
     std::vector<LogicalOperator> newChildren;
-    std::vector<Schema> childSchemas;
+    std::vector<LegacySchema> childSchemas;
     for (const auto& child : children)
     {
         const LogicalOperator childWithSchema = propagateSchema(child);

@@ -15,7 +15,7 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 
 #include <utility>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <ErrorHandling.hpp>
 
@@ -26,7 +26,7 @@ TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristic timeCharacteristic) 
 {
 }
 
-bool TimeBasedWindowType::inferStamp(const Schema& schema)
+bool TimeBasedWindowType::inferStamp(const LegacySchema& schema)
 {
     if (timeCharacteristic.getType() == TimeCharacteristic::Type::EventTime)
     {

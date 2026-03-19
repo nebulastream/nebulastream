@@ -22,7 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -72,7 +72,7 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
     return fieldName;
 }
 
-LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     const auto existingField = schema.getFieldByName(fieldName);
     if (!existingField)

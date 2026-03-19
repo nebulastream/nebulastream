@@ -20,7 +20,7 @@
 #include <utility>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -50,7 +50,7 @@ std::string_view MinAggregationLogicalFunction::getName() const noexcept
     return NAME;
 }
 
-MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(const Schema& schema) const
+MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(const LegacySchema& schema) const
 {
     /// We first infer the dataType of the input field and set the output dataType as the same.
     auto newOnField = this->getOnField().withInferredDataType(schema).getAs<FieldAccessLogicalFunction>().get();
@@ -63,17 +63,17 @@ MinAggregationLogicalFunction MinAggregationLogicalFunction::withInferredStamp(c
     const auto onFieldName = newOnField.getFieldName();
     const auto asFieldName = this->getAsField().getFieldName();
 
-    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+    const auto attributeNameResolver = onFieldName.substr(0, onFieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) + 1);
 
     std::string newAsFieldName;
     ///If on and as field name are different then append the attribute name resolver from on field to the as field
-    if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
+    if (asFieldName.find(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
         newAsFieldName = attributeNameResolver + asFieldName;
     }
     else
     {
-        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
+        const auto fieldName = asFieldName.substr(asFieldName.find_last_of(LegacySchema::ATTRIBUTE_NAME_SEPARATOR) + 1);
         newAsFieldName = attributeNameResolver + fieldName;
     }
     auto newFinalAggregationStamp = newOnField.getDataType();

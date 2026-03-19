@@ -30,7 +30,7 @@
 #include <vector>
 
 #include <Configuration/WorkerConfiguration.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -50,7 +50,7 @@
 
 namespace
 {
-std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
+std::vector<size_t> getVarSizedFieldOffsets(const NES::LegacySchema& schema)
 {
     size_t priorFieldOffset = 0;
     std::vector<size_t> varSizedFieldOffsets;
@@ -165,7 +165,7 @@ public:
 
     struct SetupResult
     {
-        Schema schema;
+        LegacySchema schema;
         MemoryLayoutType memoryLayoutType;
         size_t sizeOfFormattedBuffers;
         size_t numberOfExpectedRawBuffers;

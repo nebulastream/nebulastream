@@ -19,7 +19,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -162,8 +162,8 @@ std::string PhysicalOperator::toString() const
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    LegacySchema inputSchema,
+    LegacySchema outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType)
     : physicalOperator(std::move(physicalOperator))
@@ -177,8 +177,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    LegacySchema inputSchema,
+    LegacySchema outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     const PipelineLocation pipelineLocation)
@@ -193,8 +193,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    LegacySchema inputSchema,
+    LegacySchema outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -213,8 +213,8 @@ PhysicalOperatorWrapper::PhysicalOperatorWrapper(
 
 PhysicalOperatorWrapper::PhysicalOperatorWrapper(
     PhysicalOperator physicalOperator,
-    Schema inputSchema,
-    Schema outputSchema,
+    LegacySchema inputSchema,
+    LegacySchema outputSchema,
     MemoryLayoutType inputMemoryLayoutType,
     MemoryLayoutType outputMemoryLayoutType,
     std::optional<OperatorHandlerId> handlerId,
@@ -257,12 +257,12 @@ const PhysicalOperator& PhysicalOperatorWrapper::getPhysicalOperator() const
     return physicalOperator;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getInputSchema() const
+const std::optional<LegacySchema>& PhysicalOperatorWrapper::getInputSchema() const
 {
     return inputSchema;
 }
 
-const std::optional<Schema>& PhysicalOperatorWrapper::getOutputSchema() const
+const std::optional<LegacySchema>& PhysicalOperatorWrapper::getOutputSchema() const
 {
     return outputSchema;
 }

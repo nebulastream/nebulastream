@@ -19,7 +19,7 @@
 #include <string>
 #include <string_view>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
@@ -45,7 +45,7 @@ public:
     [[nodiscard]] FieldAccessLogicalFunction getAsField() const;
 
     [[nodiscard]] Reflected reflect() const;
-    [[nodiscard]] CountAggregationLogicalFunction withInferredStamp(const Schema& schema) const;
+    [[nodiscard]] CountAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const;
     [[nodiscard]] CountAggregationLogicalFunction withInputStamp(DataType inputStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const;
     [[nodiscard]] CountAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const;

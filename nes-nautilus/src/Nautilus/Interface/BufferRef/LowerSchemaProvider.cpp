@@ -19,7 +19,7 @@
 #include <numeric>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
@@ -28,7 +28,7 @@
 namespace NES
 {
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const LegacySchema& schema, const MemoryLayoutType layoutType)
 {
     PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
 
@@ -59,7 +59,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 schema.begin(),
                 schema.end(),
                 0UL,
-                [](auto size, const Schema::Field& field) { return size + field.dataType.getSizeInBytesWithNull(); });
+                [](auto size, const LegacySchema::Field& field) { return size + field.dataType.getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
 
             const uint64_t capacity = bufferSize / tupleSize;

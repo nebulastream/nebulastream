@@ -70,7 +70,7 @@ std::string SelectionLogicalOperator::explain(ExplainVerbosity verbosity, Operat
     return fmt::format("SELECTION({})", predicate.explain(verbosity));
 }
 
-SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+SelectionLogicalOperator SelectionLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     auto copy = *this;
     if (inputSchemas.empty())
@@ -116,12 +116,12 @@ SelectionLogicalOperator SelectionLogicalOperator::withChildren(std::vector<Logi
     return copy;
 }
 
-std::vector<Schema> SelectionLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> SelectionLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 };
 
-Schema SelectionLogicalOperator::getOutputSchema() const
+LegacySchema SelectionLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }

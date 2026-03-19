@@ -22,7 +22,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -91,7 +91,7 @@ public:
 TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataType::Type::UINT64)
                                 .addField("value3", DataType::Type::UINT64);
@@ -108,7 +108,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
 TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value3", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
@@ -126,7 +126,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 {
     /// We need to increase the number of buffers, otherwise we run out of them for this test
     bufferManager = BufferManager::create(8 * 1024, 10 * 1000);
-    const auto testSchema = Schema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
+    const auto testSchema = LegacySchema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
     constexpr auto pageSize = 16UL;
     constexpr auto sizeVarSizedData = 2 * pageSize;
@@ -143,7 +143,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
 TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value3", DataType::Type::FLOAT64);
@@ -160,7 +160,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}.addField("value1", DataType::Type::UINT64).addField("value2", DataType::Type::UINT64);
+    const auto testSchema = LegacySchema{}.addField("value1", DataType::Type::UINT64).addField("value2", DataType::Type::UINT64);
     constexpr auto pageSize = 73UL;
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
@@ -174,7 +174,7 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     const auto entrySize = testSchema.getSizeOfSchemaInBytes();
@@ -203,7 +203,7 @@ TEST_P(PagedVectorTest, appendAllPagesTwoVectors)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value3", DataType::Type::FLOAT64);
@@ -233,7 +233,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectors)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value3", DataType::Type::FLOAT64);
@@ -263,7 +263,7 @@ TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsColumnarLayout)
 TEST_P(PagedVectorTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
     bufferManager = BufferManager::create();
-    const auto testSchema = Schema{}
+    const auto testSchema = LegacySchema{}
                                 .addField("value1", DataType::Type::UINT64)
                                 .addField("value2", DataTypeProvider::provideDataType(DataType::Type::VARSIZED))
                                 .addField("value3", DataType::Type::FLOAT64);

@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <WindowTypes/Measures/TimeMeasure.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
@@ -44,7 +44,7 @@ public:
     /// @brief Infer dataType of time based window type
     /// @param schema : the schema of the window
     /// @return true if success else false
-    bool inferStamp(const Schema& schema) override;
+    bool inferStamp(const LegacySchema& schema) override;
 
 protected:
     TimeCharacteristic timeCharacteristic;

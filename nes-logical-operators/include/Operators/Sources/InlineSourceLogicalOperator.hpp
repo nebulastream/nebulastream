@@ -17,7 +17,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
@@ -37,7 +37,7 @@ public:
     explicit InlineSourceLogicalOperator(
         WeakLogicalOperator self,
         std::string type,
-        const Schema& schema,
+        const LegacySchema& schema,
         std::unordered_map<std::string, std::string> sourceConfig,
         std::unordered_map<std::string, std::string> parserConfig);
 
@@ -49,18 +49,18 @@ public:
     [[nodiscard]] InlineSourceLogicalOperator withChildren(std::vector<LogicalOperator> children) const;
     [[nodiscard]] std::vector<LogicalOperator> getChildren() const;
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const;
-    [[nodiscard]] Schema getOutputSchema() const;
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const;
+    [[nodiscard]] LegacySchema getOutputSchema() const;
 
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId id) const;
     [[nodiscard]] static std::string_view getName() noexcept;
 
-    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
+    [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<LegacySchema>& inputSchemas) const;
 
     [[nodiscard]] std::string getSourceType() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getSourceConfig() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getParserConfig() const;
-    [[nodiscard]] Schema getSchema() const;
+    [[nodiscard]] LegacySchema getSchema() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSource";
@@ -68,7 +68,7 @@ private:
     std::vector<LogicalOperator> children;
     TraitSet traitSet;
 
-    Schema schema;
+    LegacySchema schema;
 
     std::string sourceType;
     std::unordered_map<std::string, std::string> sourceConfig;

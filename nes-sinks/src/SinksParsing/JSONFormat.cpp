@@ -21,7 +21,7 @@
 #include <span>
 #include <sstream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
@@ -33,7 +33,7 @@
 namespace NES
 {
 
-JSONFormat::JSONFormat(const Schema& pSchema) : Format(pSchema)
+JSONFormat::JSONFormat(const LegacySchema& pSchema) : Format(pSchema)
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;

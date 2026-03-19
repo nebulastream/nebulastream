@@ -27,7 +27,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -83,17 +83,17 @@ std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId 
     return fmt::format("Join({})", getJoinFunction().explain(verbosity));
 }
 
-JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     const auto& leftInputSchema = inputSchemas[0];
     const auto& rightInputSchema = inputSchemas[1];
 
     auto copy = *this;
-    copy.outputSchema = Schema{};
+    copy.outputSchema = LegacySchema{};
     copy.leftInputSchema = leftInputSchema;
     copy.rightInputSchema = rightInputSchema;
 
-    const auto newQualifierForSystemField = [](const Schema& leftSchema, const Schema& rightSchema)
+    const auto newQualifierForSystemField = [](const LegacySchema& leftSchema, const LegacySchema& rightSchema)
     {
         const auto sourceNameLeft = leftSchema.getSourceNameQualifier();
         const auto sourceNameRight = rightSchema.getSourceNameQualifier();
@@ -101,7 +101,7 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> 
         {
             throw TypeInferenceException("Schemas of Join operator must have source names.");
         }
-        return sourceNameLeft.value() + sourceNameRight.value() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+        return sourceNameLeft.value() + sourceNameRight.value() + LegacySchema::ATTRIBUTE_NAME_SEPARATOR;
     }(leftInputSchema, rightInputSchema);
 
     copy.windowMetaData.windowStartFieldName = newQualifierForSystemField + "START";
@@ -144,12 +144,12 @@ JoinLogicalOperator JoinLogicalOperator::withChildren(std::vector<LogicalOperato
     return copy;
 }
 
-std::vector<Schema> JoinLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> JoinLogicalOperator::getInputSchemas() const
 {
     return {leftInputSchema, rightInputSchema};
 };
 
-Schema JoinLogicalOperator::getOutputSchema() const
+LegacySchema JoinLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }
@@ -159,12 +159,12 @@ std::vector<LogicalOperator> JoinLogicalOperator::getChildren() const
     return children;
 }
 
-Schema JoinLogicalOperator::getLeftSchema() const
+LegacySchema JoinLogicalOperator::getLeftSchema() const
 {
     return leftInputSchema;
 }
 
-Schema JoinLogicalOperator::getRightSchema() const
+LegacySchema JoinLogicalOperator::getRightSchema() const
 {
     return rightInputSchema;
 }

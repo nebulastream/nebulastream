@@ -22,7 +22,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -44,7 +44,7 @@ std::string_view SourceDescriptorLogicalOperator::getName() const noexcept
     return NAME;
 }
 
-SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withInferredSchema(const std::vector<LegacySchema>&) const
 {
     PRECONDITION(false, "Schema is already given by SourceDescriptor. No call ot InferSchema needed");
     return *this;
@@ -85,12 +85,12 @@ SourceDescriptorLogicalOperator SourceDescriptorLogicalOperator::withChildren(st
     return copy;
 }
 
-std::vector<Schema> SourceDescriptorLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> SourceDescriptorLogicalOperator::getInputSchemas() const
 {
     return {*sourceDescriptor.getLogicalSource().getSchema()};
 };
 
-Schema SourceDescriptorLogicalOperator::getOutputSchema() const
+LegacySchema SourceDescriptorLogicalOperator::getOutputSchema() const
 {
     return {*sourceDescriptor.getLogicalSource().getSchema()};
 }

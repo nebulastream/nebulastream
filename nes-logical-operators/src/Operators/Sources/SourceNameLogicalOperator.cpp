@@ -23,7 +23,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
@@ -41,7 +41,7 @@ SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, s
 {
 }
 
-SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema)
+SourceNameLogicalOperator::SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const LegacySchema& schema)
     : ManagedByOperator(std::move(self)), logicalSourceName(std::move(logicalSourceName)), schema(schema)
 {
 }
@@ -52,7 +52,7 @@ bool SourceNameLogicalOperator::operator==(const SourceNameLogicalOperator& rhs)
         && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
 }
 
-SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema(const std::vector<Schema>&) const
+SourceNameLogicalOperator SourceNameLogicalOperator::withInferredSchema(const std::vector<LegacySchema>&) const
 {
     PRECONDITION(false, "Schema inference should happen on SourceDescriptorLogicalOperator");
     return *this;
@@ -78,12 +78,12 @@ std::string_view SourceNameLogicalOperator::getName() const noexcept
     return "Source";
 }
 
-Schema SourceNameLogicalOperator::getSchema() const
+LegacySchema SourceNameLogicalOperator::getSchema() const
 {
     return schema;
 }
 
-SourceNameLogicalOperator SourceNameLogicalOperator::withSchema(const Schema& schema) const
+SourceNameLogicalOperator SourceNameLogicalOperator::withSchema(const LegacySchema& schema) const
 {
     auto copy = *this;
     copy.schema = schema;
@@ -109,12 +109,12 @@ SourceNameLogicalOperator SourceNameLogicalOperator::withChildren(std::vector<Lo
     return copy;
 }
 
-std::vector<Schema> SourceNameLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> SourceNameLogicalOperator::getInputSchemas() const
 {
     return {inputSchema};
 };
 
-Schema SourceNameLogicalOperator::getOutputSchema() const
+LegacySchema SourceNameLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }

@@ -26,7 +26,7 @@
 #include <type_traits>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Traits/Trait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -68,7 +68,7 @@ concept LogicalOperatorConcept = requires(
     std::vector<LogicalOperator> children,
     TraitSet traitSet,
     const T& rhs,
-    std::vector<Schema> inputSchemas) {
+    std::vector<LegacySchema> inputSchemas) {
     /// Returns a string representation of the operator
     { thisOperator.explain(verbosity, operatorId) } -> std::convertible_to<std::string>;
 
@@ -94,10 +94,10 @@ concept LogicalOperatorConcept = requires(
     { thisOperator.getTraitSet() } -> std::convertible_to<TraitSet>;
 
     /// Returns the input schemas of the operator
-    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<Schema>>;
+    { thisOperator.getInputSchemas() } -> std::convertible_to<std::vector<LegacySchema>>;
 
     /// Returns the output schema of the operator
-    { thisOperator.getOutputSchema() } -> std::convertible_to<Schema>;
+    { thisOperator.getOutputSchema() } -> std::convertible_to<LegacySchema>;
 
     /// Creates a new operator with inferred schema based on input schemas
     { thisOperator.withInferredSchema(inputSchemas) } -> std::convertible_to<T>;
@@ -123,9 +123,9 @@ struct ErasedLogicalOperator : std::enable_shared_from_this<ErasedLogicalOperato
     [[nodiscard]] virtual std::string_view getName() const noexcept = 0;
     [[nodiscard]] virtual Reflected reflect() const = 0;
     [[nodiscard]] virtual TraitSet getTraitSet() const = 0;
-    [[nodiscard]] virtual std::vector<Schema> getInputSchemas() const = 0;
-    [[nodiscard]] virtual Schema getOutputSchema() const = 0;
-    [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const = 0;
+    [[nodiscard]] virtual std::vector<LegacySchema> getInputSchemas() const = 0;
+    [[nodiscard]] virtual LegacySchema getOutputSchema() const = 0;
+    [[nodiscard]] virtual LogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const = 0;
     [[nodiscard]] virtual bool equals(const ErasedLogicalOperator& other) const = 0;
     [[nodiscard]] virtual OperatorId getOperatorId() const = 0;
     [[nodiscard]] virtual LogicalOperator withOperatorId(OperatorId id) const = 0;
@@ -322,11 +322,11 @@ struct TypedLogicalOperator
 
     [[nodiscard]] TraitSet getTraitSet() const { return self->getTraitSet(); }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return self->getInputSchemas(); }
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const { return self->getInputSchemas(); }
 
-    [[nodiscard]] Schema getOutputSchema() const { return self->getOutputSchema(); }
+    [[nodiscard]] LegacySchema getOutputSchema() const { return self->getOutputSchema(); }
 
-    [[nodiscard]] TypedLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const
+    [[nodiscard]] TypedLogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const
     {
         return self->withInferredSchema(std::move(inputSchemas));
     }
@@ -516,11 +516,11 @@ struct OperatorModel : ErasedLogicalOperator
 
     [[nodiscard]] TraitSet getTraitSet() const override { return impl.getTraitSet(); }
 
-    [[nodiscard]] std::vector<Schema> getInputSchemas() const override { return impl.getInputSchemas(); }
+    [[nodiscard]] std::vector<LegacySchema> getInputSchemas() const override { return impl.getInputSchemas(); }
 
-    [[nodiscard]] Schema getOutputSchema() const override { return impl.getOutputSchema(); }
+    [[nodiscard]] LegacySchema getOutputSchema() const override { return impl.getOutputSchema(); }
 
-    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const override
+    [[nodiscard]] LogicalOperator withInferredSchema(std::vector<LegacySchema> inputSchemas) const override
     {
         return impl.withInferredSchema(inputSchemas);
     }

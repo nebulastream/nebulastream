@@ -18,7 +18,7 @@
 #include <ranges>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -38,7 +38,7 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
     {
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
-        auto schema = Schema();
+        auto schema = LegacySchema();
         auto logicalSourceOpt = sourceCatalog->getLogicalSource(source->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
@@ -46,7 +46,7 @@ void SourceInferencePhase::apply(LogicalPlan& queryPlan) const
         }
         const auto& logicalSource = logicalSourceOpt.value();
         schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
-        auto qualifierName = source->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
+        auto qualifierName = source->getLogicalSourceName() + LegacySchema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution
         std::ranges::for_each(
             schema.getFields()

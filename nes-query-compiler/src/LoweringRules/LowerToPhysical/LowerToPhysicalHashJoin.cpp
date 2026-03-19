@@ -24,7 +24,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -79,7 +79,7 @@ struct FieldNamesExtension
 };
 
 std::pair<std::vector<FieldNamesExtension>, std::vector<FieldNamesExtension>>
-getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rightInputSchema, LogicalFunction& joinFunction)
+getJoinFieldExtensionsLeftRight(const LegacySchema& leftInputSchema, const LegacySchema& rightInputSchema, LogicalFunction& joinFunction)
 {
     /// Tuple  of left, right join fields and the combined data type, e.g., i32 and i8 --> i32
     std::vector<FieldNamesExtension> leftJoinNames;
@@ -159,10 +159,10 @@ getJoinFieldExtensionsLeftRight(const Schema& leftInputSchema, const Schema& rig
 }
 
 /// Creates for each field a map operator that has as its function a cast to the correct data type
-std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
-    const Schema& inputSchemaOfJoin, const std::vector<FieldNamesExtension>& fieldNameExtensions, const MemoryLayoutType& memoryLayoutType)
+std::pair<LegacySchema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapOperators(
+    const LegacySchema& inputSchemaOfJoin, const std::vector<FieldNamesExtension>& fieldNameExtensions, const MemoryLayoutType& memoryLayoutType)
 {
-    Schema inputSchemaOfMap(inputSchemaOfJoin);
+    LegacySchema inputSchemaOfMap(inputSchemaOfJoin);
     std::vector<std::shared_ptr<PhysicalOperatorWrapper>> mapPhysicalOperators;
     for (const auto& [oldName, newName, oldDataType, newDataType] : fieldNameExtensions)
     {
@@ -177,7 +177,7 @@ std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapO
         const PhysicalFunction castedPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction);
 
         /// Get a copy of the current input schema before adding to the inputSchemaOfMap the newly added field
-        const Schema copyOfInputSchemaOfMap(inputSchemaOfMap);
+        const LegacySchema copyOfInputSchemaOfMap(inputSchemaOfMap);
         inputSchemaOfMap.addField(newName, newDataType);
 
         /// Create a new map operator with the cast as its function
@@ -193,7 +193,7 @@ std::pair<Schema, std::vector<std::shared_ptr<PhysicalOperatorWrapper>>> addMapO
 }
 
 HashMapOptions
-createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, Schema& inputSchema, const QueryExecutionConfiguration& conf)
+createHashMapOptions(std::vector<FieldNamesExtension>& joinFieldExtensions, LegacySchema& inputSchema, const QueryExecutionConfiguration& conf)
 {
     uint64_t keySize = 0;
     constexpr auto valueSize = sizeof(PagedVector);

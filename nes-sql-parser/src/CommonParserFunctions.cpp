@@ -30,7 +30,7 @@
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/Overloaded.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
@@ -74,9 +74,9 @@ ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpress
         }
         const auto rootIdentifier = bindIdentifier(configOption->name->strictIdentifier().at(0));
         auto optionName = bindIdentifier(configOption->name->strictIdentifier().at(1));
-        boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<std::string, std::variant<Literal, Schema>>{});
+        boundConfigOptions.try_emplace(rootIdentifier, std::unordered_map<std::string, std::variant<Literal, LegacySchema>>{});
 
-        std::variant<Literal, Schema> value{};
+        std::variant<Literal, LegacySchema> value{};
 
         if (configOption->constant() != nullptr)
         {
@@ -141,15 +141,15 @@ std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& conf
 
 namespace
 {
-std::optional<Schema> getSchema(ConfigMap configOptions, const std::string& configName)
+std::optional<LegacySchema> getSchema(ConfigMap configOptions, const std::string& configName)
 {
     if (const auto sourceConfigIter = configOptions.find(configName); sourceConfigIter != configOptions.end())
     {
         if (const auto schemaIter = sourceConfigIter->second.find("SCHEMA"); schemaIter != sourceConfigIter->second.end())
         {
-            if (std::holds_alternative<Schema>(schemaIter->second))
+            if (std::holds_alternative<LegacySchema>(schemaIter->second))
             {
-                return std::get<Schema>(schemaIter->second);
+                return std::get<LegacySchema>(schemaIter->second);
             }
         }
     }
@@ -157,12 +157,12 @@ std::optional<Schema> getSchema(ConfigMap configOptions, const std::string& conf
 }
 }
 
-std::optional<Schema> getSourceSchema(ConfigMap configOptions)
+std::optional<LegacySchema> getSourceSchema(ConfigMap configOptions)
 {
     return getSchema(std::move(configOptions), "SOURCE");
 }
 
-std::optional<Schema> getSinkSchema(ConfigMap configOptions)
+std::optional<LegacySchema> getSinkSchema(ConfigMap configOptions)
 {
     return getSchema(std::move(configOptions), "SINK");
 }
@@ -243,9 +243,9 @@ Literal bindLiteral(AntlrSQLParser::ConstantContext* literalAST)
     std::unreachable();
 }
 
-Schema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
+LegacySchema bindSchema(AntlrSQLParser::SchemaDefinitionContext* schemaDefAST)
 {
-    Schema schema{};
+    LegacySchema schema{};
 
     for (auto* const column : schemaDefAST->columnDefinition())
     {

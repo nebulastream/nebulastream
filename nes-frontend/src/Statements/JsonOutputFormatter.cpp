@@ -22,7 +22,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
 #include <Sources/SourceDescriptor.hpp>
 #include <google/protobuf/message_lite.h>
@@ -46,12 +46,12 @@ void to_json(nlohmann::json& jsonOutput, const DataType& dataType)
     jsonOutput = magic_enum::enum_name(dataType.type);
 }
 
-void to_json(nlohmann::json& jsonOutput, const Schema::Field& str)
+void to_json(nlohmann::json& jsonOutput, const LegacySchema::Field& str)
 {
     jsonOutput = nlohmann::json{{"name", str.name}, {"type", str.dataType}};
 }
 
-void to_json(nlohmann::json& jsonOutput, const Schema& schema)
+void to_json(nlohmann::json& jsonOutput, const LegacySchema& schema)
 {
     jsonOutput = nlohmann::json{schema.getFields()};
 }

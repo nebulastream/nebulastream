@@ -22,7 +22,7 @@
 #include <span>
 #include <sstream>
 #include <string>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <SinksParsing/Format.hpp>
@@ -34,11 +34,11 @@
 
 namespace NES
 {
-CSVFormat::CSVFormat(const Schema& schema) : CSVFormat(schema, false)
+CSVFormat::CSVFormat(const LegacySchema& schema) : CSVFormat(schema, false)
 {
 }
 
-CSVFormat::CSVFormat(const Schema& pSchema, const bool escapeStrings) : Format(pSchema), escapeStrings(escapeStrings)
+CSVFormat::CSVFormat(const LegacySchema& pSchema, const bool escapeStrings) : Format(pSchema), escapeStrings(escapeStrings)
 {
     PRECONDITION(schema.getNumberOfFields() != 0, "Formatter expected a non-empty schema");
     size_t offset = 0;

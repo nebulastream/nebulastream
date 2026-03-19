@@ -24,7 +24,7 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -189,7 +189,7 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
 
 inline void writeTupleBuffersToFile(
     std::vector<TupleBuffer>& resultBufferVec,
-    const Schema& schema,
+    const LegacySchema& schema,
     const std::filesystem::path& actualResultFilePath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {
@@ -254,7 +254,7 @@ inline void updateChildBufferIdx(
 
 inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
     AbstractBufferProvider& bufferProvider,
-    const Schema& schema,
+    const LegacySchema& schema,
     const std::filesystem::path& filepath,
     const std::vector<size_t>& varSizedFieldOffsets)
 {

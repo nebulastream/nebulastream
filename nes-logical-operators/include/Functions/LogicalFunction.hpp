@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -55,7 +55,7 @@ concept LogicalFunctionConcept = requires(
     ExplainVerbosity verbosity,
     std::vector<LogicalFunction> children,
     DataType dataType,
-    Schema schema,
+    LegacySchema schema,
     const T& rhs) {
     /// Returns a string representation of the function
     { thisFunction.explain(verbosity) } -> std::convertible_to<std::string>;
@@ -95,7 +95,7 @@ struct ErasedLogicalFunction
     [[nodiscard]] virtual std::string explain(ExplainVerbosity verbosity) const = 0;
     [[nodiscard]] virtual DataType getDataType() const = 0;
     [[nodiscard]] virtual LogicalFunction withDataType(const DataType& dataType) const = 0;
-    [[nodiscard]] virtual LogicalFunction withInferredDataType(const Schema& schema) const = 0;
+    [[nodiscard]] virtual LogicalFunction withInferredDataType(const LegacySchema& schema) const = 0;
     [[nodiscard]] virtual std::vector<LogicalFunction> getChildren() const = 0;
     [[nodiscard]] virtual LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const = 0;
     [[nodiscard]] virtual std::string_view getType() const = 0;
@@ -258,7 +258,7 @@ struct TypedLogicalFunction
 
     [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const { return self->withDataType(dataType); };
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const { return self->withInferredDataType(schema); };
+    [[nodiscard]] LogicalFunction withInferredDataType(const LegacySchema& schema) const { return self->withInferredDataType(schema); };
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const { return self->getChildren(); };
 
@@ -305,7 +305,7 @@ struct FunctionModel : ErasedLogicalFunction
 
     [[nodiscard]] FunctionType get() const { return impl; }
 
-    [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const override { return impl.withInferredDataType(schema); }
+    [[nodiscard]] LogicalFunction withInferredDataType(const LegacySchema& schema) const override { return impl.withInferredDataType(schema); }
 
     [[nodiscard]] LogicalFunction withDataType(const DataType& dataType) const override { return impl.withDataType(dataType); }
 

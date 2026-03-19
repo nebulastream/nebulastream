@@ -21,7 +21,7 @@
 #include <string_view>
 #include <utility>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Util/DynamicBase.hpp>
 #include <Util/Reflection.hpp>
@@ -46,7 +46,7 @@ using WindowAggregationLogicalFunction = TypedWindowAggregationLogicalFunction<>
 /// planning and optimization.
 template <typename T>
 concept WindowAggregationFunctionConcept = requires(
-    const T& thisFunction, const Schema& schema, DataType dataType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
+    const T& thisFunction, const LegacySchema& schema, DataType dataType, FieldAccessLogicalFunction fieldAccessLogicalFunction, const T& rhs) {
     { thisFunction.getInputStamp() } -> std::convertible_to<DataType>;
 
     { thisFunction.getPartialAggregateStamp() } -> std::convertible_to<DataType>;
@@ -98,7 +98,7 @@ struct ErasedWindowAggregationFunction
     [[nodiscard]] virtual FieldAccessLogicalFunction getAsField() const = 0;
 
     [[nodiscard]] virtual bool shallIncludeNullValues() const noexcept = 0;
-    [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const = 0;
+    [[nodiscard]] virtual WindowAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withInputStamp(DataType inputStamp) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withPartialAggregateStamp(DataType partialAggregateStamp) const = 0;
     [[nodiscard]] virtual WindowAggregationLogicalFunction withFinalAggregateStamp(DataType finalAggregateStamp) const = 0;
@@ -270,7 +270,7 @@ struct TypedWindowAggregationLogicalFunction
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept { return self->shallIncludeNullValues(); }
 
-    [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const
+    [[nodiscard]] TypedWindowAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const
     {
         return self->withInferredStamp(schema);
     }
@@ -338,7 +338,7 @@ struct WindowAggregationFunctionModel : ErasedWindowAggregationFunction
 
     [[nodiscard]] bool shallIncludeNullValues() const noexcept override { return impl.shallIncludeNullValues(); }
 
-    [[nodiscard]] WindowAggregationLogicalFunction withInferredStamp(const Schema& schema) const override
+    [[nodiscard]] WindowAggregationLogicalFunction withInferredStamp(const LegacySchema& schema) const override
     {
         return impl.withInferredStamp(schema);
     }

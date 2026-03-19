@@ -24,7 +24,7 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -61,7 +61,7 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::string inlineSourceType,
-    const Schema& schema,
+    const LegacySchema& schema,
     std::unordered_map<std::string, std::string> sourceConfig,
     std::unordered_map<std::string, std::string> parserConfig)
 {
@@ -185,7 +185,7 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan&
 }
 
 LogicalPlan LogicalPlanBuilder::addInlineSink(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan)
+    std::string type, const LegacySchema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(
         queryPlan, TypedLogicalOperator<InlineSinkLogicalOperator>{std::move(type), schema, std::move(sinkConfig)});

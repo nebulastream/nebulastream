@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
@@ -56,7 +56,7 @@
 namespace NES
 {
 
-static auto getJoinFieldNames(const Schema& inputSchema, const LogicalFunction& joinFunction)
+static auto getJoinFieldNames(const LegacySchema& inputSchema, const LogicalFunction& joinFunction)
 {
     return BFSRange(joinFunction)
         | std::views::filter([](const auto& child) { return child.template tryGetAs<FieldAccessLogicalFunction>().has_value(); })

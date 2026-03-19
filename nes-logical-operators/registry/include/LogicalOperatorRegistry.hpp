@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Reflection.hpp>
@@ -31,8 +31,8 @@ using LogicalOperatorRegistryReturnType = LogicalOperator;
 
 struct LogicalOperatorRegistryArguments
 {
-    std::vector<Schema> inputSchemas;
-    Schema outputSchema;
+    std::vector<LegacySchema> inputSchemas;
+    LegacySchema outputSchema;
     Reflected reflected;
 };
 

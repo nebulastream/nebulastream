@@ -25,7 +25,7 @@
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/Trait.hpp>
@@ -65,7 +65,7 @@ std::string UnionLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId
     return "UnionWith";
 }
 
-UnionLogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
+UnionLogicalOperator UnionLogicalOperator::withInferredSchema(std::vector<LegacySchema> inputSchemas) const
 {
     PRECONDITION(!inputSchemas.empty(), "Union expects at least one child");
     auto copy = *this;
@@ -115,12 +115,12 @@ UnionLogicalOperator UnionLogicalOperator::withChildren(std::vector<LogicalOpera
     return copy;
 }
 
-std::vector<Schema> UnionLogicalOperator::getInputSchemas() const
+std::vector<LegacySchema> UnionLogicalOperator::getInputSchemas() const
 {
     return inputSchemas;
 };
 
-Schema UnionLogicalOperator::getOutputSchema() const
+LegacySchema UnionLogicalOperator::getOutputSchema() const
 {
     return outputSchema;
 }
@@ -130,7 +130,7 @@ std::vector<LogicalOperator> UnionLogicalOperator::getChildren() const
     return children;
 }
 
-UnionLogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> inputSchemas) const
+UnionLogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<LegacySchema> inputSchemas) const
 {
     if (inputSchemas.empty())
     {
@@ -141,7 +141,7 @@ UnionLogicalOperator UnionLogicalOperator::setInputSchemas(std::vector<Schema> i
     return copy;
 }
 
-UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const Schema& outputSchema) const
+UnionLogicalOperator UnionLogicalOperator::setOutputSchema(const LegacySchema& outputSchema) const
 {
     auto copy = *this;
     copy.outputSchema.appendFieldsFromOtherSchema(outputSchema);

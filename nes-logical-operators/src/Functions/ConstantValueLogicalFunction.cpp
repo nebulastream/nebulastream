@@ -21,7 +21,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -83,7 +83,7 @@ std::string ConstantValueLogicalFunction::getConstantValue() const
     return constantValue;
 }
 
-LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const Schema&) const
+LogicalFunction ConstantValueLogicalFunction::withInferredDataType(const LegacySchema&) const
 {
     /// the dataType of constant value functions is defined by the constant value type.
     /// thus it is already assigned correctly when the function node is created.

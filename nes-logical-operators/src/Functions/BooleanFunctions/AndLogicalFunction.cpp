@@ -22,7 +22,7 @@
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
@@ -83,7 +83,7 @@ std::string AndLogicalFunction::explain(ExplainVerbosity verbosity) const
     return fmt::format("{} AND {}", left.explain(verbosity), right.explain(verbosity));
 }
 
-LogicalFunction AndLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction AndLogicalFunction::withInferredDataType(const LegacySchema& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();

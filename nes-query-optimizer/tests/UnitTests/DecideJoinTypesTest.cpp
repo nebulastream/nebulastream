@@ -25,7 +25,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/AndLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
@@ -55,14 +55,14 @@ public:
     static constexpr uint64_t TUMBLING_WINDOW_SIZE_MS = 1000;
 
     /// Helper to create a simple source plan with a schema containing an "id" field
-    static LogicalPlan createSourcePlan(const std::string& sourceType, const Schema& schema)
+    static LogicalPlan createSourcePlan(const std::string& sourceType, const LegacySchema& schema)
     {
         return LogicalPlanBuilder::createLogicalPlan(sourceType, schema, {}, {});
     }
 
-    static Schema createSchema(const std::string& prefix)
+    static LegacySchema createSchema(const std::string& prefix)
     {
-        Schema schema;
+        LegacySchema schema;
         schema.addField(prefix + ".id", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         schema.addField(prefix + ".value", DataTypeProvider::provideDataType(DataType::Type::UINT64));
         schema.addField(prefix + ".ts", DataTypeProvider::provideDataType(DataType::Type::UINT64));

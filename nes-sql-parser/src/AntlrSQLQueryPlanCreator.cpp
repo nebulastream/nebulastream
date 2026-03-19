@@ -31,7 +31,7 @@
 #include <AntlrSQLParser/AntlrSQLHelper.hpp>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Functions/ArithmeticalFunctions/AddLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/DivLogicalFunction.hpp>
 #include <Functions/ArithmeticalFunctions/ModuloLogicalFunction.hpp>
@@ -94,7 +94,7 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
                 const auto& [type, configOptions] = inlineSink;
                 const auto sinkConfig = getSinkConfig(configOptions);
                 const auto schemaOpt = getSinkSchema(configOptions);
-                const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
+                const LegacySchema schema = (schemaOpt.has_value() ? schemaOpt.value() : LegacySchema{});
                 return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, queryPlans.top());
             }},
         sinks.front());

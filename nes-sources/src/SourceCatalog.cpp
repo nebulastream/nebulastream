@@ -26,7 +26,7 @@
 #include <unordered_set>
 #include <utility>
 
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/LegacySchema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -38,12 +38,12 @@
 namespace NES
 {
 
-std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const Schema& schema)
+std::optional<LogicalSource> SourceCatalog::addLogicalSource(const std::string& logicalSourceName, const LegacySchema& schema)
 {
-    Schema newSchema;
+    LegacySchema newSchema;
     for (const auto& field : schema.getFields())
     {
-        newSchema.addField(logicalSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
+        newSchema.addField(logicalSourceName + LegacySchema::ATTRIBUTE_NAME_SEPARATOR + field.name, field.dataType);
         if (field.name.find(logicalSourceName) != std::string::npos)
         {
             NES_DEBUG(
@@ -144,7 +144,7 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
 
 std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const std::string& sourceType,
-    const Schema& schema,
+    const LegacySchema& schema,
     std::unordered_map<std::string, std::string> parserConfigMap,
     std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
