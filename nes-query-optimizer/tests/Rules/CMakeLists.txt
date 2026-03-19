@@ -10,7 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-query-optimizer
-        SemanticAnalyzer.cpp
-        QueryOptimizer.cpp
-)
+add_subdirectory(Static)
+
+add_nes_optimizer_test(RuleManagerTest RuleManagerTest.cpp)
