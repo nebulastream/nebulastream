@@ -18,6 +18,7 @@
 #include <exception>
 #include <filesystem>
 #include <iostream>
+#include <ranges>
 #include <sstream>
 #include <stdexcept>
 #include <string>
@@ -135,6 +136,9 @@ void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration&
         config.excludeGroupsConfiguredInDisableConfig
             = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
         config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
+        config.globalExcludedGroups = config.excludeGroups.getValues()
+            | std::views::transform([](const auto& value) { return value.getValue(); }) | std::ranges::to<std::vector<std::string>>();
+        config.excludeGroups.clear();
     }
     catch (const std::exception& err)
     {
