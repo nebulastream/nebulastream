@@ -30,7 +30,8 @@
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
-#include <yaml-cpp/yaml.h>
+#include <yaml-cpp/node/node.h>
+#include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
