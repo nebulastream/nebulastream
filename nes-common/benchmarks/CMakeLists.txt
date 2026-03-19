@@ -13,3 +13,4 @@
 find_package(benchmark REQUIRED)
 add_executable(exception-benchmark ExceptionBenchmark.cpp)
 target_link_libraries(exception-benchmark PRIVATE nes-common benchmark::benchmark)
+target_link_rust(exception-benchmark)

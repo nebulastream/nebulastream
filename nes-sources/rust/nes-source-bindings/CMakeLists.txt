@@ -15,6 +15,7 @@ corrosion_add_cxxbridge(
         CRATE nes_source_lib
         FILES ../nes-source-bindings/lib.rs ../nes-source-lib/src/lib.rs
 )
+cxxbridge_remove_rust_link(nes-io-bindings nes_source_lib)
 target_sources(nes-io-bindings PRIVATE src/IoBindings.cpp)
 target_include_directories(nes-io-bindings
         PRIVATE .
