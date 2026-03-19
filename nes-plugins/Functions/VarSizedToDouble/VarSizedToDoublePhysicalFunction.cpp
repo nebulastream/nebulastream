@@ -46,7 +46,11 @@ double convertVarSizedToDouble(const char* varSizedPtr, const uint32_t varSizedL
     auto inputCopy = std::string{varSizedSV};
     inputCopy.erase(std::ranges::remove(inputCopy, '?').begin(), inputCopy.end());
     inputCopy.erase(std::ranges::remove(inputCopy, ' ').begin(), inputCopy.end());
-    const auto splitSV = splitWithStringDelimiter<std::string_view>(varSizedSV, "?");
+    if (varSizedSV != inputCopy)
+    {
+        NES_WARNING("Processed 'Wert' with leading whitespaces or '?': {}", varSizedSV);
+    }
+    // const auto splitSV = splitWithStringDelimiter<std::string_view>(varSizedSV, "?");
     try
     {
         const auto doubleVal = from_chars_with_exception<double>(inputCopy);

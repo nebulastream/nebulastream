@@ -250,11 +250,13 @@ std::vector<LogicalOperator> getParents(const LogicalPlan& plan, const LogicalOp
 
 std::string explain(const LogicalPlan& plan, ExplainVerbosity verbosity)
 {
+    verbosity = ExplainVerbosity::Short;
     std::stringstream stringstream;
     if (verbosity == ExplainVerbosity::Short)
     {
         auto dumpHandler = PlanRenderer<LogicalPlan, LogicalOperator>(stringstream, ExplainVerbosity::Short);
         dumpHandler.dump(plan);
+        NES_DEBUG("{}", stringstream.str());
     }
     else
     {
