@@ -33,7 +33,7 @@
 #include <PipelineExecutionContext.hpp>
 
 // CXX-generated header for ffi_sink module
-#include <nes-source-lib/src/lib.h>
+#include <nes-io-bindings/lib.h>
 // IoBindings provides ErrorContext, on_sink_error_callback
 #include <IoBindings.hpp>
 

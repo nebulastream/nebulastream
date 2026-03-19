@@ -27,7 +27,7 @@
 #include <TokioSourceRegistry.hpp>
 
 // CXX-generated header for init_source_runtime
-#include <nes-source-bindings/lib.h>
+#include <nes-io-bindings/io_bridge.h>
 
 namespace NES
 {

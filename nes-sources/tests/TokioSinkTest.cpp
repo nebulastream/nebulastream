@@ -31,8 +31,8 @@
 #include <BaseUnitTest.hpp>
 
 // CXX-generated headers
-#include <nes-source-bindings/lib.h>   // init_source_runtime
-#include <nes-source-lib/src/lib.h>   // spawn_devnull_sink, SinkHandle, SendResult
+#include <nes-io-bindings/io_bridge.h>  // init_source_runtime
+#include <nes-io-bindings/lib.h>        // spawn_devnull_sink, SinkHandle, SendResult
 
 // IoBindings provides ErrorContext, on_sink_error_callback
 #include <IoBindings.hpp>

@@ -27,7 +27,7 @@
 #include <Util/Logger/Logger.hpp>
 
 // CXX-generated header for the Phase 2 bridge (ffi_source module in nes-source-lib)
-#include <nes-source-lib/src/lib.h>
+#include <nes-io-bindings/lib.h>
 
 // IoBindings.hpp provides EmitContext, ErrorContext, bridge_emit, on_source_error_callback
 #include <IoBindings.hpp>

@@ -10,22 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Corrosion resolves FILES as <manifest_dir>/src/<path>, so ../nes-source-bindings/lib.rs
-# becomes nes-source-lib/src/../nes-source-bindings/lib.rs = nes-source-lib/nes-source-bindings/lib.rs.
-# The directory component also controls the generated header include path (e.g. <nes-source-lib/src/lib.h>).
-# Create symlinks inside nes-source-lib/ so the source paths resolve on a fresh clone.
-set(_lib_dir "${CMAKE_CURRENT_SOURCE_DIR}/../nes-source-lib")
-if(NOT EXISTS "${_lib_dir}/nes-source-bindings")
-    file(CREATE_LINK "${CMAKE_CURRENT_SOURCE_DIR}" "${_lib_dir}/nes-source-bindings" SYMBOLIC)
-endif()
-if(NOT EXISTS "${_lib_dir}/nes-source-lib")
-    file(CREATE_LINK "${_lib_dir}" "${_lib_dir}/nes-source-lib" SYMBOLIC)
-endif()
-
+# Both bridge .rs files live in nes-source-lib/src/ so Corrosion resolves them
+# directly as <manifest_dir>/src/<file>. Generated headers are placed under the
+# target name: <nes-io-bindings/io_bridge.h> and <nes-io-bindings/lib.h>.
 corrosion_add_cxxbridge(
         nes-io-bindings
         CRATE nes_source_lib
-        FILES ../nes-source-bindings/lib.rs ../nes-source-lib/src/lib.rs
+        FILES io_bridge.rs lib.rs
 )
 cxxbridge_remove_rust_link(nes-io-bindings nes_source_lib)
 target_sources(nes-io-bindings PRIVATE src/IoBindings.cpp)
