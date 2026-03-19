@@ -42,6 +42,7 @@
 #include <Util/Strings.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h> ///NOLINT: required by fmt
+#include <SystestConfiguration.hpp>
 
 #include <Identifiers/NESStrongType.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -165,6 +166,113 @@ struct TestGroupFiles
     std::vector<std::filesystem::path> files;
 };
 
+namespace
+{
+template <class OptionRange>
+std::unordered_set<std::string> toLowerSet(const OptionRange& vec)
+{
+    return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
+        | std::views::transform(toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
+}
+
+bool isDisabledTestFile(const std::unordered_set<std::string>& disabledTestFiles, const TestFile& testFile)
+{
+    const auto lowerPath = toLowerCase(testFile.file.string());
+    const auto lowerFileName = toLowerCase(testFile.file.filename().string());
+    return std::ranges::any_of(
+        disabledTestFiles,
+        [&](const auto& disabledTestFile)
+        {
+            if (disabledTestFile == lowerFileName || disabledTestFile == lowerPath)
+            {
+                return true;
+            }
+            return (disabledTestFile.find('/') != std::string::npos || disabledTestFile.find('\\') != std::string::npos)
+                && lowerPath.ends_with(disabledTestFile);
+        });
+}
+
+void printDisabledTestFileSkip(const TestFile& testFile)
+{
+    std::cout << fmt::format(
+        "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n", testFile.getLogFilePath());
+}
+
+std::string excludedGroupsSourceSuffix(const SystestConfiguration& config)
+{
+    if (config.excludedGroupsProvidedOnCommandLine)
+    {
+        return " (from --exclude-groups)";
+    }
+    if (config.excludeGroupsConfiguredInDisableConfig)
+    {
+        return " (from disable config file)";
+    }
+    return {};
+}
+
+TestFileMap loadDirectlySpecifiedTestFileMap(const SystestConfiguration& config, const std::unordered_set<std::string>& disabledTestFiles)
+{
+    const auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
+    if (config.testQueryNumbers.empty())
+    {
+        const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+        if (isDisabledTestFile(disabledTestFiles, testfile))
+        {
+            printDisabledTestFileSkip(testfile);
+            return {};
+        }
+        return TestFileMap{{testfile.file, testfile}};
+    }
+
+    const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
+        config.testQueryNumbers.getValues() | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
+    const auto testfile
+        = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
+    if (isDisabledTestFile(disabledTestFiles, testfile))
+    {
+        printDisabledTestFileSkip(testfile);
+        return {};
+    }
+
+    return TestFileMap{{testfile.file, testfile}};
+}
+
+bool shouldSkipDiscoveredTestFile(
+    const TestFile& testFile,
+    const std::unordered_set<std::string>& includedGroups,
+    const std::unordered_set<std::string>& excludedGroups,
+    const std::unordered_set<std::string>& disabledTestFiles,
+    const std::string& excludedGroupSource)
+{
+    if (!includedGroups.empty()
+        && std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
+    {
+        std::cout << fmt::format(
+            "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
+        return true;
+    }
+
+    if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
+    {
+        std::cout << fmt::format(
+            "Skipping file://{} because it is part of the {:} excluded groups{}\n",
+            testFile.getLogFilePath(),
+            excludedGroups,
+            excludedGroupSource);
+        return true;
+    }
+
+    if (isDisabledTestFile(disabledTestFiles, testFile))
+    {
+        printDisabledTestFileSkip(testFile);
+        return true;
+    }
+
+    return false;
+}
+}
+
 std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 {
     std::unordered_map<std::string, std::vector<std::filesystem::path>> groupFilesMap;
@@ -188,118 +296,23 @@ std::vector<TestGroupFiles> collectTestGroups(const TestFileMap& testMap)
 
 TestFileMap loadTestFileMap(const SystestConfiguration& config)
 {
-    auto toLowerSet = [](const auto& vec)
-    {
-        return vec | std::views::transform([](const auto& scalarOption) { return scalarOption.getValue(); })
-            | std::views::transform(toLowerCase) | std::ranges::to<std::unordered_set<std::string>>();
-    };
-
     const auto includedGroups = toLowerSet(config.testGroups.getValues());
     const auto excludedGroups = toLowerSet(config.excludeGroups.getValues());
     const auto disabledTestFiles = toLowerSet(config.disabledTestFiles.getValues());
-    const auto isDisabledTestFile = [&](const TestFile& testFile)
+    if (not config.directlySpecifiedTestFiles.getValue().empty())
     {
-        const auto lowerPath = toLowerCase(testFile.file.string());
-        const auto lowerFileName = toLowerCase(testFile.file.filename().string());
-        return std::ranges::any_of(
-            disabledTestFiles,
-            [&](const auto& disabledTestFile)
-            {
-                if (disabledTestFile == lowerFileName || disabledTestFile == lowerPath)
-                {
-                    return true;
-                }
-                if ((disabledTestFile.find('/') != std::string::npos || disabledTestFile.find('\\') != std::string::npos)
-                    && lowerPath.ends_with(disabledTestFile))
-                {
-                    return true;
-                }
-                return false;
-            });
-    };
-
-    if (not config.directlySpecifiedTestFiles.getValue().empty()) /// load specifc test file
-    {
-        auto directlySpecifiedTestFiles = config.directlySpecifiedTestFiles.getValue();
-
-        if (config.testQueryNumbers.empty()) /// case: load all tests
-        {
-            const auto testfile = TestFile(directlySpecifiedTestFiles, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-            if (isDisabledTestFile(testfile))
-            {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
-                    testfile.getLogFilePath());
-                return {};
-            }
-            return TestFileMap{{testfile.file, testfile}};
-        }
-        /// case: load a concrete set of tests
-        auto scalarTestNumbers = config.testQueryNumbers.getValues();
-        const auto testNumbers = std::ranges::to<std::unordered_set<SystestQueryId>>(
-            scalarTestNumbers | std::views::transform([](const auto& option) { return SystestQueryId(option.getValue()); }));
-
-        const auto testfile
-            = TestFile(directlySpecifiedTestFiles, testNumbers, std::make_shared<SourceCatalog>(), std::make_shared<SinkCatalog>());
-        if (isDisabledTestFile(testfile))
-        {
-            std::cout << fmt::format(
-                "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
-                testfile.getLogFilePath());
-            return {};
-        }
-        return TestFileMap{{testfile.file, testfile}};
+        return loadDirectlySpecifiedTestFileMap(config, disabledTestFiles);
     }
 
-    auto testsDiscoverDir = config.testsDiscoverDir.getValue();
-    auto testFileExtension = config.testFileExtension.getValue();
-    auto testMap = discoverTestsRecursively(testsDiscoverDir, testFileExtension);
-
+    auto testMap = discoverTestsRecursively(config.testsDiscoverDir.getValue(), config.testFileExtension.getValue());
+    const auto excludedGroupSource = excludedGroupsSourceSuffix(config);
     std::erase_if(
         testMap,
         [&](const auto& nameAndFile)
         {
             const auto& [name, testFile] = nameAndFile;
-            const auto excludedGroupsSourceSuffix = [&]()
-            {
-                if (config.excludedGroupsProvidedOnCommandLine)
-                {
-                    return std::string{" (from --exclude-groups)"};
-                }
-                if (config.excludeGroupsConfiguredInDisableConfig)
-                {
-                    return std::string{" (from disable config file)"};
-                }
-                return std::string{};
-            }();
-            if (!includedGroups.empty())
-            {
-                if (std::ranges::none_of(testFile.groups, [&](const auto& group) { return includedGroups.contains(toLowerCase(group)); }))
-                {
-                    std::cout << fmt::format(
-                        "Skipping file://{} because it is not part of the {:} groups\n", testFile.getLogFilePath(), includedGroups);
-                    return true;
-                }
-            }
-            if (std::ranges::any_of(testFile.groups, [&](const auto& group) { return excludedGroups.contains(toLowerCase(group)); }))
-            {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is part of the {:} excluded groups{}\n",
-                    testFile.getLogFilePath(),
-                    excludedGroups,
-                    excludedGroupsSourceSuffix);
-                return true;
-            }
-            if (isDisabledTestFile(testFile))
-            {
-                std::cout << fmt::format(
-                    "Skipping file://{} because it is configured in disabled_test_files in the disable config file\n",
-                    testFile.getLogFilePath());
-                return true;
-            }
-            return false;
+            return shouldSkipDiscoveredTestFile(testFile, includedGroups, excludedGroups, disabledTestFiles, excludedGroupSource);
         });
-
     return testMap;
 }
 
@@ -360,7 +373,6 @@ std::string RunningQuery::getThroughput() const
     double tuplesPerSecond = NAN;
     if (bytesProcessed.value() > 0 and tuplesProcessed.value() > 0)
     {
-        /// Calculating the throughput in bytes per second and tuples per second
         const std::chrono::duration<double> duration = stop.value() - running.value();
         bytesPerSecond = static_cast<double>(bytesProcessed.value()) / duration.count();
         tuplesPerSecond = static_cast<double>(tuplesProcessed.value()) / duration.count();
@@ -368,7 +380,6 @@ std::string RunningQuery::getThroughput() const
 
     auto formatUnits = [](double throughput)
     {
-        /// Format throughput in SI units, e.g. 1.234 MB/s instead of 1234000 B/s
         const std::array<std::string, 5> units = {"", "k", "M", "G", "T"};
         uint64_t unitIndex = 0;
         constexpr auto nextUnit = 1000;
@@ -386,19 +397,14 @@ std::string TestFile::getLogFilePath() const
 {
     if (const char* hostNebulaStreamRoot = std::getenv("HOST_NEBULASTREAM_ROOT"))
     {
-        /// Set the correct logging path when using docker
-        /// To do this, we need to combine the path to the host's nebula-stream root with the path to the file.
-        /// We assume that the last part of hostNebulaStreamRoot is the common folder name.
         auto commonFolder = std::filesystem::path(hostNebulaStreamRoot).filename();
 
-        /// Find the position of the common folder in the file path
         auto filePathIter = file.begin();
         if (const auto it = std::ranges::find(file, commonFolder); it != file.end())
         {
             filePathIter = std::next(it);
         }
 
-        /// Combining the path to the host's nebula-stream root with the path to the file
         std::filesystem::path resultPath(hostNebulaStreamRoot);
         for (; filePathIter != file.end(); ++filePathIter)
         {
@@ -408,7 +414,6 @@ std::string TestFile::getLogFilePath() const
         return resultPath.string();
     }
 
-    /// Set the correct logging path without docker
     return std::filesystem::path(file);
 }
 }
