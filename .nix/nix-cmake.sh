@@ -79,7 +79,7 @@ if [ -z "$IN_NIX_RUN" ]; then
         REQUESTED_SANITIZER="$CACHE_SANITIZER"
       fi
       if [ -z "$REQUESTED_STDLIB" ]; then
-        CACHE_STDLIB=$(sed -n 's/^USE_LIBCXX:BOOL=\(.*\)$/\1/p' "$CACHE_FILE" | head -n 1)
+        CACHE_STDLIB=$(sed -n 's/^USE_LIBCXX_IF_AVAILABLE:BOOL=\(.*\)$/\1/p' "$CACHE_FILE" | head -n 1)
         if [ -n "$CACHE_STDLIB" ]; then
           REQUESTED_STDLIB="$CACHE_STDLIB"
         fi
@@ -95,8 +95,8 @@ if [ -z "$IN_NIX_RUN" ]; then
     REQUESTED_STDLIB="$NES_STDLIB"
   fi
 
-  if [ -z "USE_LIBCXX_IF_AVAILABLE" ] && [ -n "${USE_LIBCXX_IF_AVAILABLE:-}" ]; then
-    REQUESTED_STDLIB="USE_LIBCXX_IF_AVAILABLE"
+  if [ -z "$REQUESTED_STDLIB" ] && [ -n "${USE_LIBCXX_IF_AVAILABLE:-}" ]; then
+    REQUESTED_STDLIB="$USE_LIBCXX_IF_AVAILABLE"
   fi
 
   SANITIZER_SELECTOR=""

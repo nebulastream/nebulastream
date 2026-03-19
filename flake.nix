@@ -713,6 +713,7 @@
                 "-DCMAKE_BUILD_TYPE=Release"
                 "-DNES_ENABLES_TESTS=ON"
                 "-DUSE_CCACHE_IF_AVAILABLE=OFF"
+                "-DCMAKE_FIND_PACKAGE_PREFER_CONFIG=ON"
               ]
               ++ cmakeCommonFlags combo;
             envVars =
