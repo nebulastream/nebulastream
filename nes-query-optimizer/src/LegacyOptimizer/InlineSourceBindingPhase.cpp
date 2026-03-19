@@ -45,8 +45,8 @@ LogicalOperator InlineSourceBindingPhase::bindInlineSourceLogicalOperators(const
             throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
         }
         const auto& descriptor = descriptorOpt.value();
-        const SourceDescriptorLogicalOperator sourceDescriptorLogicalOperator{descriptor};
-        return sourceDescriptorLogicalOperator.withChildren(newChildren);
+        const TypedLogicalOperator<SourceDescriptorLogicalOperator> sourceDescriptorLogicalOperator{descriptor};
+        return sourceDescriptorLogicalOperator->withChildren(newChildren);
     }
 
     return current.withChildren(newChildren);

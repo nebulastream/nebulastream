@@ -28,10 +28,10 @@
 namespace NES
 {
 
-class UnionLogicalOperator
+class UnionLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit UnionLogicalOperator();
+    explicit UnionLogicalOperator(WeakLogicalOperator self);
 
     [[nodiscard]] bool operator==(const UnionLogicalOperator& rhs) const;
 

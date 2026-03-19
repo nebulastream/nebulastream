@@ -28,6 +28,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -151,8 +152,8 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})};
 
     const auto result
         = runQueries({makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, {})}, 1, submitter, progressTracker, discardPerformanceMessage);
@@ -182,8 +183,8 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
     const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
     auto testPhysicalSource
         = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", {{"file_path", "/dev/null"}}, parserConfig);
-    auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
-    const LogicalPlan plan{SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})};
+    auto sourceOperator = TypedLogicalOperator<SourceDescriptorLogicalOperator>{testPhysicalSource.value()};
+    const LogicalPlan plan{TypedLogicalOperator<SinkLogicalOperator>{dummySinkDescriptor} -> withChildren({sourceOperator})};
 
     const auto result = runQueries(
         {makeQuery(SystestQuery::PlanInfo{plan, Schema{}}, ExpectedError{.code = ErrorCode::InvalidQuerySyntax, .message = std::nullopt})},

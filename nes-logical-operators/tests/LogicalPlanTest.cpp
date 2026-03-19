@@ -13,11 +13,14 @@
 */
 
 #include <cstddef>
+#include <optional>
 #include <ranges>
 #include <sstream>
 
+#include <string>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
@@ -35,6 +38,8 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/Trait.hpp>
+#include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
 using namespace NES;
@@ -43,7 +48,7 @@ class LogicalPlanTest : public ::testing::Test
 {
 protected:
     LogicalPlanTest()
-        : sourceOp{SourceNameLogicalOperator("Source")}
+        : sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>{"Source"}}
         , sourceOp2(
               [this]
               {
@@ -53,10 +58,10 @@ protected:
                       = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
                   auto dummySourceDescriptor
                       = sourceCatalog.addPhysicalSource(logicalSource, "File", {{"file_path", "/dev/null"}}, dummyParserConfig).value();
-                  return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
+                  return LogicalOperator{TypedLogicalOperator<SourceDescriptorLogicalOperator>(std::move(dummySourceDescriptor))};
               }())
-        , selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"))}
-        , sinkOp{SinkLogicalOperator()}
+        , selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("logicalfunction"))}
+        , sinkOp{TypedLogicalOperator<SinkLogicalOperator>()}
     {
     }
 
@@ -95,8 +100,8 @@ TEST_F(LogicalPlanTest, CopyConstructor)
 
 TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
+    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("field"))};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResultPlan = promoteOperatorToRoot(plan, selectionOp);
     EXPECT_EQ(*promoteResultPlan.getRootOperators()[0], *selectionOp);
@@ -105,8 +110,8 @@ TEST_F(LogicalPlanTest, PromoteOperatorToRoot)
 
 TEST_F(LogicalPlanTest, ReplaceOperator)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator sourceOp2{SourceNameLogicalOperator("source2")};
+    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
+    const LogicalOperator sourceOp2{TypedLogicalOperator<SourceNameLogicalOperator>("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceOperator(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
@@ -115,8 +120,8 @@ TEST_F(LogicalPlanTest, ReplaceOperator)
 
 TEST_F(LogicalPlanTest, replaceSubtree)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator sourceOp2{SourceNameLogicalOperator("source2")};
+    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
+    const LogicalOperator sourceOp2{TypedLogicalOperator<SourceNameLogicalOperator>("source2")};
     const auto plan = LogicalPlan(sourceOp);
     const auto result = replaceSubtree(plan, sourceOp.getId(), sourceOp2);
     EXPECT_TRUE(result.has_value());
@@ -125,8 +130,8 @@ TEST_F(LogicalPlanTest, replaceSubtree)
 
 TEST_F(LogicalPlanTest, GetParents)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator("source")};
-    const LogicalOperator selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("field"))};
+    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
+    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>(FieldAccessLogicalFunction("field"))};
     const auto plan = LogicalPlan(sourceOp);
     const auto promoteResult = promoteOperatorToRoot(plan, selectionOp);
     const auto parents = getParents(promoteResult, sourceOp);
@@ -136,7 +141,7 @@ TEST_F(LogicalPlanTest, GetParents)
 
 TEST_F(LogicalPlanTest, GetOperatorByType)
 {
-    const auto sourceOp = LogicalOperator{SourceNameLogicalOperator("source")};
+    const auto sourceOp = LogicalOperator{TypedLogicalOperator<SourceNameLogicalOperator>("source")};
     const auto plan = LogicalPlan(sourceOp);
     const auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(plan);
     EXPECT_EQ(sourceOperators.size(), 1);
@@ -145,9 +150,10 @@ TEST_F(LogicalPlanTest, GetOperatorByType)
 
 TEST_F(LogicalPlanTest, GetOperatorsById)
 {
-    const LogicalOperator sourceOp{SourceNameLogicalOperator{"TestSource"}};
-    const LogicalOperator selectionOp{SelectionLogicalOperator{FieldAccessLogicalFunction{"fn"}}.withChildren({sourceOp})};
-    const LogicalOperator sinkOp{SinkLogicalOperator{"TestSink"}.withChildren({selectionOp})};
+    const LogicalOperator sourceOp{TypedLogicalOperator<SourceNameLogicalOperator>{"TestSource"}};
+    const LogicalOperator selectionOp{TypedLogicalOperator<SelectionLogicalOperator>{FieldAccessLogicalFunction{"fn"}}
+                                      -> withChildren({sourceOp})};
+    const LogicalOperator sinkOp{TypedLogicalOperator<SinkLogicalOperator>{"TestSink"} -> withChildren({selectionOp})};
     const LogicalPlan plan(sinkOp);
     const auto op1 = getOperatorById(plan, sourceOp.getId());
     EXPECT_TRUE(op1.has_value());
@@ -169,6 +175,7 @@ struct TestTrait final : DefaultTrait<TestTrait>
 
     [[nodiscard]] std::string_view getName() const override { return NAME; }
 };
+
 }
 
 template <>
@@ -237,3 +244,100 @@ TEST_F(LogicalPlanTest, OutputOperator)
     ss << plan;
     EXPECT_FALSE(ss.str().empty());
 }
+
+namespace
+{
+/// Test operator that exposes the self reference for testing
+/// NOLINTBEGIN(readability-convert-member-functions-to-static)
+struct TestOperatorWithSelfAccess final : public ManagedByOperator
+{
+    explicit TestOperatorWithSelfAccess(WeakLogicalOperator self) : ManagedByOperator(std::move(self)) { };
+
+    [[nodiscard]] bool operator==(const TestOperatorWithSelfAccess& rhs) const { return this == &rhs; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withTraitSet(TraitSet traitSet) const
+    {
+        auto copy = *this;
+        copy.traitSet = std::move(traitSet);
+        return copy;
+    }
+
+    [[nodiscard]] TraitSet getTraitSet() const { return traitSet; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withChildren(std::vector<LogicalOperator> children) const
+    {
+        auto copy = *this;
+        copy.children = std::move(children);
+        return copy;
+    }
+
+    [[nodiscard]] std::vector<LogicalOperator> getChildren() const { return children; }
+
+    [[nodiscard]] std::vector<Schema> getInputSchemas() const { return {}; }
+
+    [[nodiscard]] Schema getOutputSchema() const { return Schema{}; }
+
+    [[nodiscard]] std::string explain(ExplainVerbosity, OperatorId id) const
+    {
+        return "TestOperator(id=" + std::to_string(id.getRawValue()) + ")";
+    }
+
+    [[nodiscard]] std::string_view getName() const noexcept { return NAME; }
+
+    [[nodiscard]] TestOperatorWithSelfAccess withInferredSchema(const std::vector<Schema>&) const { return *this; }
+
+    [[nodiscard]] std::optional<LogicalOperator> getSelf() const { return self.tryLock(); }
+
+private:
+    static constexpr std::string_view NAME = "TestOperatorWithSelfAccess";
+    std::vector<LogicalOperator> children;
+    TraitSet traitSet;
+};
+
+///NOLINTEND(readability-convert-member-functions-to-static)
+}
+
+template <>
+struct Reflector<TypedLogicalOperator<TestOperatorWithSelfAccess>>
+{
+    Reflected operator()(const TypedLogicalOperator<TestOperatorWithSelfAccess>&) const { return Reflected{}; };
+};
+
+template <>
+struct Unreflector<TypedLogicalOperator<TestOperatorWithSelfAccess>>
+{
+    TypedLogicalOperator<TestOperatorWithSelfAccess> operator()(const Reflected&) const
+    {
+        return TypedLogicalOperator<TestOperatorWithSelfAccess>{};
+    };
+};
+
+///NOLINTBEGIN(bugprone-unchecked-optional-access)
+TEST_F(LogicalPlanTest, WeakSelfReferenceReturnsCorrectOperator)
+{
+    const TypedLogicalOperator<TestOperatorWithSelfAccess> testOp{};
+    const auto typedOp = testOp.getAs<TestOperatorWithSelfAccess>();
+    const auto selfOpt = typedOp->getSelf();
+
+    ASSERT_TRUE(selfOpt.has_value());
+    EXPECT_EQ(selfOpt->getId(), testOp.getId());
+    EXPECT_EQ(selfOpt.value(), testOp);
+}
+
+TEST_F(LogicalPlanTest, WeakSelfReferenceAfterCopy)
+{
+    const TypedLogicalOperator<TestOperatorWithSelfAccess> originalOp{};
+    const LogicalOperator copiedOp = originalOp->withChildren({sourceOp});
+    const auto typedCopied = copiedOp.withChildren({}).getAs<TestOperatorWithSelfAccess>();
+
+    const auto selfOpt = typedCopied->getSelf();
+    ASSERT_TRUE(selfOpt.has_value());
+
+    EXPECT_EQ(typedCopied, selfOpt.value());
+    EXPECT_EQ(typedCopied.getId(), selfOpt.value().getId());
+
+    EXPECT_NE(originalOp, selfOpt.value());
+    EXPECT_NE(originalOp.getId(), selfOpt.value().getId());
+}
+
+///NOLINTEND(bugprone-unchecked-optional-access)

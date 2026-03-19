@@ -42,8 +42,8 @@ namespace NES
 {
 
 EventTimeWatermarkAssignerLogicalOperator::EventTimeWatermarkAssignerLogicalOperator(
-    LogicalFunction onField, const Windowing::TimeUnit& unit)
-    : onField(std::move(onField)), unit(unit)
+    WeakLogicalOperator self, LogicalFunction onField, const Windowing::TimeUnit& unit)
+    : ManagedByOperator(std::move(self)), onField(std::move(onField)), unit(unit)
 {
 }
 
@@ -134,7 +134,7 @@ Unreflector<TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>>::op
     const Reflected& reflected, const ReflectionContext& context) const
 {
     auto [onField, timeUnit] = context.unreflect<detail::ReflectedEventTimeWatermarkAssignerLogicalOperator>(reflected);
-    return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{EventTimeWatermarkAssignerLogicalOperator{onField, timeUnit}};
+    return TypedLogicalOperator<EventTimeWatermarkAssignerLogicalOperator>{onField, timeUnit};
 }
 
 LogicalOperatorRegistryReturnType

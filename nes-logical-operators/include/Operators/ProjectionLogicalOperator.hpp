@@ -34,7 +34,7 @@ namespace NES
 {
 
 /// Combines both selecting the fields to project and renaming/mapping of fields
-class ProjectionLogicalOperator
+class ProjectionLogicalOperator : public ManagedByOperator
 {
 public:
     class Asterisk
@@ -48,7 +48,7 @@ public:
     };
 
     using Projection = std::pair<std::optional<FieldIdentifier>, LogicalFunction>;
-    ProjectionLogicalOperator(std::vector<Projection> projections, Asterisk asterisk);
+    ProjectionLogicalOperator(WeakLogicalOperator self, std::vector<Projection> projections, Asterisk asterisk);
 
     [[nodiscard]] const std::vector<Projection>& getProjections() const;
 

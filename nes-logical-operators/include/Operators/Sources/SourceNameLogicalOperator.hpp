@@ -32,11 +32,11 @@ namespace NES
 /// In the LogicalSourceExpansionRule, we use the logical source name as input to the source catalog, to retrieve all (physical) source descriptors
 /// configured for the specific logical source name. We then expand 1 SourceNameLogicalOperator to N SourceDescriptorLogicalOperators,
 /// one SourceDescriptorLogicalOperator for each descriptor found in the source catalog with the logical source name as input.
-class SourceNameLogicalOperator
+class SourceNameLogicalOperator : public ManagedByOperator
 {
 public:
-    explicit SourceNameLogicalOperator(std::string logicalSourceName);
-    explicit SourceNameLogicalOperator(std::string logicalSourceName, Schema schema);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName);
+    explicit SourceNameLogicalOperator(WeakLogicalOperator self, std::string logicalSourceName, const Schema& schema);
 
     static void inferInputOrigins();
 

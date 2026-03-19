@@ -34,8 +34,8 @@
 
 namespace NES
 {
-SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(SourceDescriptor sourceDescriptor)
-    : sourceDescriptor(std::move(sourceDescriptor))
+SourceDescriptorLogicalOperator::SourceDescriptorLogicalOperator(WeakLogicalOperator self, SourceDescriptor sourceDescriptor)
+    : ManagedByOperator(std::move(self)), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
@@ -115,6 +115,6 @@ TypedLogicalOperator<SourceDescriptorLogicalOperator>
 Unreflector<TypedLogicalOperator<SourceDescriptorLogicalOperator>>::operator()(const Reflected& rfl, const ReflectionContext& context) const
 {
     auto sourceDescriptor = context.unreflect<SourceDescriptor>(rfl);
-    return TypedLogicalOperator<SourceDescriptorLogicalOperator>{SourceDescriptorLogicalOperator(std::move(sourceDescriptor))};
+    return TypedLogicalOperator<SourceDescriptorLogicalOperator>{std::move(sourceDescriptor)};
 }
 }
