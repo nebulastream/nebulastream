@@ -1,0 +1,138 @@
+# name: milestone/Nexmark_fulltest
+# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
+# We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
+# groups: [milestone, benchmark, large, Aggregation, Join, lazy]
+
+# Source definition. We have removed some columns that are not needed in our queries
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File;
+ATTACH FILE large/nexmark/bid_6GB.csv
+
+CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
+CREATE PHYSICAL SOURCE FOR auction TYPE File;
+ATTACH FILE large/nexmark/auction_707MB.csv
+
+CREATE LOGICAL SOURCE person(personId INT32 NOT NULL, name VARSIZED NOT NULL, email_address VARSIZED NOT NULL, credit_card VARSIZED NOT NULL, city VARSIZED NOT NULL, state VARSIZED NOT NULL, timestamp UINT64 NOT NULL, extra VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR person TYPE File;
+ATTACH FILE large/nexmark/person_840MB.csv
+
+CREATE SINK bidCheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q1CheckSum(bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q2CheckSum(bid.auctionId INT32 NOT NULL, bid.price FLOAT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q5Checksum(bidbid.start UINT64 NOT NULL, bidbid.end UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.num UINT64 NOT NULL, bid.max_tmp UINT64 NOT NULL)  TYPE Checksum;
+CREATE SINK q8CheckSum(personauction.start UINT64 NOT NULL, personauction.end UINT64 NOT NULL, person.id INT32 NOT NULL, person.name VARSIZED NOT NULL)  TYPE Checksum;
+CREATE SINK q8VariantCheckSum(bidauction.start UINT64 NOT NULL, bidauction.end UINT64 NOT NULL, bid.timestamp UINT64 NOT NULL, bid.auctionId INT32 NOT NULL, bid.bidder INT32 NOT NULL, bid.price FLOAT64 NOT NULL, bid.timestamp UINT64 NOT NULL, auction.id INT32 NOT NULL, auction.initialbid INT32 NOT NULL, auction.reserve INT32 NOT NULL, auction.expires UINT64 NOT NULL, auction.seller INT32 NOT NULL, auction.category INT32 NOT NULL)  TYPE Checksum;
+
+
+# q0
+# Will definitely benefit from LazyVals, needs no parsing
+SELECT * FROM bid INTO CHECKSUM();
+----
+183991721 353216217968
+
+# q1
+# Lazy Value only needs 1 out of 4 parses here. Should lead to gains
+SELECT timestamp, auctionId, bidder, price * FLOAT64(908) / FLOAT64(1000) AS price FROM bid INTO CHECKSUM();
+----
+183991721 370730288260
+
+# q2
+# AuctionId will currently be parsed, because this creates a redundant pipeline for the projection. Lazy Values should still perform better as parsing of auction id is postponed until the filter was executed, leading to less parses overall.
+SELECT auctionId, price FROM bid WHERE auctionId % INT32(123) = INT32(0) INTO CHECKSUM();
+----
+1511777 1211558031
+
+#q3: Could benefit from lazy value for the 2 selections before the join. Neither of the 2 most inner queries need any parses before the emit
+SELECT name, city, state, id
+    FROM (SELECT id, seller, timestamp FROM auction WHERE category == INT32(10))
+INNER JOIN
+    (SELECT personId, name, city, state, timestamp FROM person WHERE (state == VARSIZED("or")) or (state == VARSIZED("id")) or (state == VARSIZED("ca")))
+ON seller = personId WINDOW TUMBLING (timestamp, size 10 sec)
+INTO CHECKSUM();
+----
+1103504 3170594445
+
+#q4: In comparison to the original query, this introduces tumbling windows for each join and aggregation.
+# Probably lazy-value neutral
+SELECT start, end, category, AVG(final) AS avg_final FROM
+(SELECT start, MAX(price) AS final, category, id
+FROM
+(SELECT * FROM (SELECT * FROM auction) INNER JOIN (SELECT * FROM bid) ON id = auctionId WINDOW TUMBLING(timestamp, size 10 sec))
+GROUP BY (id, category)
+WINDOW TUMBLING(start, size 10 sec))
+GROUP BY category
+WINDOW TUMBLING(start, size 10 sec)
+INTO CHECKSUM();
+----
+10005 9272907
+
+# Query 5
+# Likely lazy-value neutral
+SELECT start, end, auctionId, num, max_tmp
+FROM (SELECT auctionId, COUNT(auctionId) AS num, start, end
+      FROM bid
+      GROUP BY auctionId
+      WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+INNER JOIN (SELECT MAX(num_ids) AS max_tmp, start, end
+              FROM
+                    (SELECT auctionId, COUNT(auctionId) AS num_ids, start
+                     FROM bid
+                     GROUP BY auctionId
+                     WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC))
+              WINDOW TUMBLING(start, SIZE 2 SEC))
+ON num == max_tmp
+WINDOW TUMBLING(start, SIZE 2 SEC)
+INTO q5Checksum;
+----
+10589 23372488
+
+#q6: Left out due to unsupported window type
+
+#q7
+# Likely lazy value neutral
+SELECT auctionId, price, bidder, timestamp FROM
+(SELECT * FROM bid)
+INNER JOIN
+(SELECT start AS timestamp, end, MAX(price) AS max_price FROM bid WINDOW TUMBLING(timestamp, size 10 sec))
+ON (price = max_price)
+WINDOW TUMBLING(timestamp, size 10 sec)
+INTO CHECKSUM();
+----
+2011 4125458
+
+# Query 8
+# Until PR #755 is not merged, we need to do another subquery to project the required fields
+# Likely lazy value neutral
+SELECT start, end, id, name
+FROM (
+        SELECT *
+            FROM (SELECT * FROM person)
+        INNER JOIN
+            (SELECT * FROM auction)
+        ON id = seller WINDOW TUMBLING (timestamp, size 10 sec)
+    )
+INTO q8CheckSum;
+----
+10999751 33652579169
+
+
+# Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
+# Likely lazy value neutral
+SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
+    FROM (SELECT * FROM bid)
+INNER JOIN
+    (SELECT * FROM auction)
+ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
+----
+182197843 1176742157900
+
+# q12 Not in original suite: Number of bids per bidder in 10 second interval
+# Replaced ingestion with event time
+# Likely lazy value neutral
+SELECT start, end, bidder, COUNT(bidder) AS bid_count
+FROM bid
+GROUP BY bidder
+WINDOW TUMBLING (timestamp, size 10 sec)
+INTO CHECKSUM();
+----
+5669633 10769139014
