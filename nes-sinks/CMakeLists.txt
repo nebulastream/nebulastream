@@ -30,3 +30,5 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 create_registries_for_component(Sink SinkValidation)
+
+add_subdirectory(tests)
