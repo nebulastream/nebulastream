@@ -118,21 +118,23 @@ INTO q8CheckSum;
 
 # Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
 # Likely lazy value neutral
-SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
-    FROM (SELECT * FROM bid)
-INNER JOIN
-    (SELECT * FROM auction)
-ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
-----
-182197843 1176742157900
-
-# q12 Not in original suite: Number of bids per bidder in 10 second interval
-# Replaced ingestion with event time
-# Likely lazy value neutral
-SELECT start, end, bidder, COUNT(bidder) AS bid_count
-FROM bid
-GROUP BY bidder
-WINDOW TUMBLING (timestamp, size 10 sec)
-INTO CHECKSUM();
-----
-5669633 10769139014
+# Disabled: Query 4 does this but adds even more operations
+#SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
+#    FROM (SELECT * FROM bid)
+#INNER JOIN
+#    (SELECT * FROM auction)
+#ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
+#
+#
+#
+## q12 Not in original suite: Number of bids per bidder in 10 second interval
+## Replaced ingestion with event time
+# Disabled due to not being part of the original benchmark
+## Likely lazy value neutral
+#SELECT start, end, bidder, COUNT(bidder) AS bid_count
+#FROM bid
+#GROUP BY bidder
+#WINDOW TUMBLING (timestamp, size 10 sec)
+#INTO CHECKSUM();
+#
+#
