@@ -133,7 +133,7 @@ void ODBCSource::open(std::shared_ptr<AbstractBufferProvider> bufferProviderPtr)
     NES_DEBUG("ODBCSource connected successfully.");
 }
 
-Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stop)
 {
     /// fetch as many rows as possible until buffer is full
     const size_t maxRowsPerBuffer = tupleBuffer.getBufferSize() / this->fetchedSizeOfRow;
@@ -142,6 +142,10 @@ Source::FillTupleBufferResult ODBCSource::fillTupleBuffer(TupleBuffer& tupleBuff
     size_t retryCount = 0;
     while (pollStatus == ODBCPollStatus::NO_NEW_ROWS or retryCount >= maxRetries)
     {
+        if (stop.stop_requested()) {
+            NES_DEBUG("Stopping ODBC Source with query: {}", this->query);
+            return FillTupleBufferResult::eos();
+        }
         /// wait for data to arrive
         std::this_thread::sleep_for(std::chrono::milliseconds(pollIntervalMs));
         pollStatus = this->connection->executeQuery(this->query, tupleBuffer, *bufferProvider, maxRowsPerBuffer, this->logTuples);
