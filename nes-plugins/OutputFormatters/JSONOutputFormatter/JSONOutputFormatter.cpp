@@ -214,6 +214,7 @@ void writeValue(
                 written += amountWritten;
                 currentRemainingSize -= amountWritten;
             }
+            break;
         }
         case DataType::Type::UNDEFINED: {
             throw UnknownDataType("JSON-OutputFormatting for type UNDEFINED is not supported.");
