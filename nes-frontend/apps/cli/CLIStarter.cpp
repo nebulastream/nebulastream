@@ -295,7 +295,8 @@ NES::CLI::QueryConfig getTopologyPath(const argparse::ArgumentParser& parser)
             NES_WARNING("{} is not a valid yaml file: {} ({}:{})", option, e.what(), e.mark.line, e.mark.column);
         }
     }
-    throw NES::InvalidConfigParameter("Could not find topology file");
+    return NES::CLI::QueryConfig{};
+    // throw NES::InvalidConfigParameter("Could not find topology file");
 }
 
 std::vector<std::string> loadQueries(
@@ -451,12 +452,15 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     const auto topologyConfig = getTopologyPath(program);
     NES::CLI::QueryStateBackend stateBackend;
 
+    const bool useTopology = not(program.is_used("-r"));
+
     const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
         | std::views::transform(
-                             [&stateBackend](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
+                             [&stateBackend,useTopology](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
                              {
                                  auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
-                                 auto queryId = stateBackend.load(persistedId);
+                                 auto queryId = (useTopology) ? stateBackend.load(persistedId) : persistedId.queryId;
+                                 // auto queryId = stateBackend.load(persistedId);
                                  return {queryId, persistentIdString};
                              })
         | std::ranges::to<std::unordered_map>();
@@ -559,6 +563,7 @@ int main(int argc, char** argv)
         program.add_argument("-s", "--server").help("Worker gRPC endpoint URL (default: localhost:8080 or NES_WORKER_GRPC_ADDR if set)");
         program.add_argument("-t").help(
             "Path to the topology file. If this flag is not used it will fallback to the NES_TOPOLOGY_FILE environment");
+        program.add_argument("-r", "--retrospective").flag().help("Allows skipping topology resolution for single-node setup");
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);
