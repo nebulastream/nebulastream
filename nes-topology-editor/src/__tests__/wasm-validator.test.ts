@@ -239,3 +239,103 @@ describe('default source/sink configs produce valid YAML', () => {
     expect(result).not.toBe('');
   });
 });
+
+describe('WASM validator rejects invalid YAML (CLI parity)', () => {
+  it('rejects unknown top-level key "queries"', () => {
+    const yaml = `queries:\n  - query: SELECT 1\n    name: ""\nworkers: []\nsinks: []\nlogical: []\nphysical: []`;
+    const result = validateTopology(yaml);
+    expect(result).toContain("Unknown key 'queries'");
+  });
+
+  it('rejects unknown key on a sink node', () => {
+    const yaml = [
+      'query: []',
+      'sinks:',
+      '  - name: MY_SINK',
+      '    type: Void',
+      '    schema: []',
+      '    host: localhost:8080',
+      '    config: {}',
+      '    parser_config: {}',
+      '    bogus_key: oops',
+      'logical: []',
+      'physical: []',
+      'workers:',
+      '  - host: localhost:8080',
+      '    data: localhost:9090',
+      '    max_operators: 100',
+    ].join('\n');
+    const result = validateTopology(yaml);
+    expect(result).toContain("Unknown key 'bogus_key'");
+  });
+
+  it('rejects unknown key on a physical source node', () => {
+    const yaml = [
+      'query: []',
+      'sinks: []',
+      'logical:',
+      '  - name: SRC',
+      '    schema: []',
+      'physical:',
+      '  - logical: SRC',
+      '    type: File',
+      '    host: localhost:8080',
+      '    parser_config: {}',
+      '    source_config: {}',
+      '    extra_field: bad',
+      'workers:',
+      '  - host: localhost:8080',
+      '    data: localhost:9090',
+      '    max_operators: 100',
+    ].join('\n');
+    const result = validateTopology(yaml);
+    expect(result).toContain("Unknown key 'extra_field'");
+  });
+
+  it('rejects sink missing required parser_config', () => {
+    const yaml = [
+      'query: []',
+      'sinks:',
+      '  - name: MY_SINK',
+      '    type: Print',
+      '    schema: []',
+      '    host: localhost:8080',
+      '    config:',
+      '      input_format: CSV',
+      'logical: []',
+      'physical: []',
+      'workers:',
+      '  - host: localhost:8080',
+      '    data: localhost:9090',
+      '    max_operators: 100',
+    ].join('\n');
+    const result = validateTopology(yaml);
+    expect(result).not.toBe('');
+  });
+
+  it('accepts topology with multiple queries', () => {
+    const worker: Worker = { id: 'w1', host: 'localhost:9090', data: 'localhost:8080', capacity: 10000, downstream: [], position: { x: 0, y: 0 } };
+    const logical: LogicalSource = { id: 'ls1', name: 'sensor', schema: [{ name: 'id', type: 'INT64' }] };
+    const source: PhysicalSource = {
+      id: 'ps1', logicalSourceId: logical.id, hostWorkerId: worker.id, type: 'Generator',
+      sourceConfig: { ...buildDefaults(SOURCE_CONFIGS['Generator'] ?? []), generator_schema: 'SEQUENCE INT64 0 100 1' },
+      parserConfig: buildDefaults(PARSER_CONFIG),
+      position: { x: 0, y: 0 },
+    };
+    const sink1: Sink = {
+      id: 's1', name: 'SINK_A', hostWorkerId: worker.id, type: 'Void',
+      schema: [{ name: 'SENSOR$ID', type: 'INT64' }], config: {}, parserConfig: {}, position: { x: 0, y: 0 },
+    };
+    const sink2: Sink = {
+      id: 's2', name: 'SINK_B', hostWorkerId: worker.id, type: 'Void',
+      schema: [{ name: 'SENSOR$ID', type: 'INT64' }], config: {}, parserConfig: {}, position: { x: 0, y: 0 },
+    };
+    const queries: Query[] = [
+      { id: 'q1', name: '', sql: 'SELECT * FROM SENSOR INTO SINK_A' },
+      { id: 'q2', name: '', sql: 'SELECT * FROM SENSOR INTO SINK_B' },
+    ];
+    const yaml = storeToYaml([worker], [logical], [source], [sink1, sink2], queries);
+    const result = validateTopology(yaml);
+    expect(result).toBe('');
+  });
+});
