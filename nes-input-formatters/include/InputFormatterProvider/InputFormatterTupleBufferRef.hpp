@@ -67,7 +67,11 @@ public:
         std::unreachable();
     }
 
-    Record readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const override
+    Record readRecord(
+        const std::vector<Record::RecordFieldIdentifier>&,
+        const RecordBuffer&,
+        nautilus::val<uint64_t>&,
+        const nautilus::val<uint64_t>) const override
     {
         INVARIANT(false, "Does not implement 'readRecord()'");
         std::unreachable();
@@ -75,8 +79,12 @@ public:
 
     void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const;
 
-    void
-    writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override
+    void writeRecord(
+        nautilus::val<uint64_t>&,
+        const RecordBuffer&,
+        const Record&,
+        const nautilus::val<AbstractBufferProvider*>&,
+        const nautilus::val<uint64_t>) const override
     {
         INVARIANT(false, "unsupported operation on InputFormatterBufferRef");
         std::unreachable();

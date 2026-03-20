@@ -83,8 +83,8 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     /// Create buffer manager
     bufferManager = BufferManager::create();
 
-    /// Resetting the entriesPerPage, as we have a paged vector as the value.
-    valueSize = sizeof(PagedVector);
+    /// Resetting the entriesPerPage, as we have a child buffer index (corresponding to a paged vector) as the value.
+    valueSize = sizeof(uint32_t);
     const auto totalSizeOfEntry = (sizeof(ChainedHashMapEntry) + keySize + valueSize);
     entriesPerPage = params.pageSize / (totalSizeOfEntry);
 

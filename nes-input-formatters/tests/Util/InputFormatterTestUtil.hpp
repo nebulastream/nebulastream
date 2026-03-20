@@ -362,7 +362,7 @@ void writeFieldToBuffer(
 
     const nautilus::val<AbstractBufferProvider*> bufferProviderVal{std::addressof(bufferProvider)};
     auto recordIndex = recordBuffer.getNumRecords();
-    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
+    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal, 0);
 }
 
 inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const TupleBufferRef& tupleBufferRef)

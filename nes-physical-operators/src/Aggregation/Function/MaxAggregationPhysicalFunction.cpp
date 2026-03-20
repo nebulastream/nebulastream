@@ -38,7 +38,10 @@ MaxAggregationPhysicalFunction::MaxAggregationPhysicalFunction(
 }
 
 void MaxAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    nautilus::val<TupleBuffer*>,
+    const Record& record)
 {
     /// Reading the old max value from the aggregation state.
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -55,6 +58,8 @@ void MaxAggregationPhysicalFunction::lift(
 void MaxAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*>,
+    nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider&)
 {
     /// Reading the max value from the first aggregation state
@@ -72,7 +77,8 @@ void MaxAggregationPhysicalFunction::combine(
     }
 }
 
-Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record MaxAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Reading the max value from the aggregation state
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -84,16 +90,13 @@ Record MaxAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return record;
 }
 
-void MaxAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MaxAggregationPhysicalFunction::reset(
+    nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Resetting the max value to the minimum value
     const auto memAreaMax = static_cast<nautilus::val<int8_t*>>(aggregationState);
     const auto max = createNautilusMinValue(inputType.type);
     max.writeToMemory(memAreaMax);
-}
-
-void MaxAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
-{
 }
 
 size_t MaxAggregationPhysicalFunction::getSizeOfStateInBytes() const

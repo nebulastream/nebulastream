@@ -27,7 +27,7 @@
 namespace NES
 {
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType, uint64_t headerSize)
 {
     /// For now, we assume that the fields lie in the exact same order as in the Schema. Later on, we can have a separate optimizer phase
     /// that can change the order, alignment or even the datatype implementation, e.g., u32 instead of u8.
@@ -47,7 +47,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 fields.end(),
                 0UL,
                 [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
-            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize, headerSize});
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
@@ -66,7 +66,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 0UL,
                 [](auto size, const ColumnTupleBufferRef::Field& field) { return size + field.type.getSizeInBytes(); });
 
-            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize, headerSize});
         }
     }
     std::unreachable();

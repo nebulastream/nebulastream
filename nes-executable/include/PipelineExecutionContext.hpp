@@ -63,6 +63,7 @@ public:
 
     /// @brief Pins a buffer to the Pipeline Execution Context.
     /// This is necessary when Nautilus needs to get a reference to a TupleBuffer directly, when no object instances persist at runtime (views).
+    /// Use this when there is not logical parent buffer for the buffer you want to pin. If the buffer is already a child to another buffer, then use the geChildRef() method on the parent to get a persistent reference to the child buffer.
     [[nodiscard]] virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
 };
 }

@@ -22,9 +22,11 @@
 #include <memory>
 #include <span>
 #include <string>
+
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <boost/asio/detail/socket_ops.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -376,6 +378,41 @@ ChainedHashMapEntry* ChainedHashMap::getChain(uint64_t pos)
 {
     auto chainsArray = chains();
     return chainsArray[pos];
+}
+
+void ChainedHashMap::printHeader() const
+{
+    const auto head = header();
+    std::cout << "Metadata:" << std::endl;
+    std::cout << "\t numBuckets: " << head.numBuckets << std::endl;
+    std::cout << "\t numChains: " << head.numChains << std::endl;
+    std::cout << "\t numTuples: " << head.numTuples << std::endl;
+    std::cout << "\t entriesPerPage: " << head.entriesPerPage << std::endl;
+    std::cout << "\t entrySize: " << head.entrySize << std::endl;
+    std::cout << "\t pageSize: " << head.pageSize << std::endl;
+    std::cout << "\t mask: " << head.mask << std::endl;
+    std::cout << "\t storageSpaceIndex: " << head.storageSpaceIndex << std::endl;
+    std::cout << "\t varSizedSpaceIndex: " << head.varSizedSpaceIndex << std::endl;
+}
+
+void ChainedHashMap::printContentInfo() const
+{
+    const auto head = header();
+    std::cout << "Contents:" << std::endl;
+    std::cout << "\t numTuples: " << head.numTuples << std::endl;
+    std::cout << "\t entrySize: " << head.entrySize << std::endl;
+    std::cout << "\t entriesPerPage: " << head.entriesPerPage << std::endl;
+    std::cout << "\t pageSize: " << head.pageSize << std::endl;
+    if (head.storageSpaceIndex != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        auto storageSpace = buffer.loadChildBuffer(head.storageSpaceIndex);
+        std::cout << "\t storageSpacePagesNum: " << storageSpace.getNumberOfChildBuffers() << std::endl;
+    }
+    if (head.varSizedSpaceIndex != TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
+    {
+        auto varSizedSpace = buffer.loadChildBuffer(head.varSizedSpaceIndex);
+        std::cout << "\t varSizedSpacePagesNum: " << varSizedSpace.getNumberOfChildBuffers() << std::endl;
+    }
 }
 
 }

@@ -30,23 +30,23 @@ namespace NES
 class NLJSlice final : public Slice
 {
 public:
-    NLJSlice(SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfWorkerThreads);
+    NLJSlice(AbstractBufferProvider* bufferProvider, SliceStart sliceStart, SliceEnd sliceEnd, uint64_t numberOfWorkerThreads);
 
     /// Returns the number of tuples in this slice on either side.
     [[nodiscard]] uint64_t getNumberOfTuplesLeft() const;
     [[nodiscard]] uint64_t getNumberOfTuplesRight() const;
 
     /// Returns the pointer to the PagedVector on either side.
-    [[nodiscard]] PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
-    [[nodiscard]] PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] const TupleBuffer* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] const TupleBuffer* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
+    [[nodiscard]] const TupleBuffer* getPagedVectorTupleBufferRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();
 
 private:
-    std::vector<std::unique_ptr<PagedVector>> leftPagedVectors;
-    std::vector<std::unique_ptr<PagedVector>> rightPagedVectors;
+    std::vector<TupleBuffer> leftPagedVectorBuffers;
+    std::vector<TupleBuffer> rightPagedVectorBuffers;
     std::mutex combinePagedVectorsMutex;
 };
 }

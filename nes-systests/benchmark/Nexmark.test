@@ -1,6 +1,7 @@
 # name: milestone/Nexmark.test
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
 # groups: [milestone, benchmark, large, Aggregation, Join]
+GlobalConfiguration worker.number_of_buffers_in_global_buffer_manager: [100000]
 
 # Source definitions
 CREATE LOGICAL SOURCE bid(timestamp UINT64, auctionId INT32, bidder INT32, datetime INT64, price FLOAT64);

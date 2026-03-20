@@ -41,7 +41,7 @@ class ColumnTupleBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
-    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize);
+    explicit ColumnTupleBufferRef(std::vector<Field> fields, uint64_t capacity, uint64_t bufferSize, uint64_t headerSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
@@ -57,13 +57,15 @@ public:
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex) const override;
+        nautilus::val<uint64_t>& recordIndex,
+        nautilus::val<uint64_t> headerSize = 0) const override;
 
     void writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        nautilus::val<uint64_t> headerSize = 0) const override;
 };
 
 }

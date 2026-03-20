@@ -186,6 +186,7 @@ VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) no
 
 TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept
 {
+    /// TODO #1263 optimize this in combinatoin with getChildRef so that already pinned buffers are returned directly and not constructed
     TupleBuffer childBuffer;
     const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
     INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
@@ -233,6 +234,15 @@ uint32_t TupleBuffer::getNumberOfChildBuffers() const noexcept
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
     return controlBlock->getChunkNumber();
+}
+
+TupleBuffer& TupleBuffer::getChildRef(VariableSizedAccess::Index bufferIndex) noexcept
+{
+    TupleBuffer childBuffer;
+    const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
+    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
+    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(childBuffer));
+    return *pinnedBuffers.back();
 }
 
 

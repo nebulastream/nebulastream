@@ -40,7 +40,7 @@ CountAggregationPhysicalFunction::CountAggregationPhysicalFunction(
 }
 
 void CountAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, const Record&)
+    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider&, nautilus::val<TupleBuffer*>, const Record&)
 {
     /// Reading the old count from the aggregation state.
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -56,6 +56,8 @@ void CountAggregationPhysicalFunction::lift(
 void CountAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*>,
+    nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider&)
 {
     /// Reading the count from the first aggregation state
@@ -73,7 +75,8 @@ void CountAggregationPhysicalFunction::combine(
     newCount.writeToMemory(memAreaCount1);
 }
 
-Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record CountAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Reading the count from the aggregation state
     const auto memAreaCount = static_cast<nautilus::val<int8_t*>>(aggregationState);
@@ -86,15 +89,12 @@ Record CountAggregationPhysicalFunction::lower(const nautilus::val<AggregationSt
     return record;
 }
 
-void CountAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void CountAggregationPhysicalFunction::reset(
+    nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Resetting the count and count to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
-}
-
-void CountAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
-{
 }
 
 size_t CountAggregationPhysicalFunction::getSizeOfStateInBytes() const

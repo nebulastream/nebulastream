@@ -2,6 +2,7 @@
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
 # We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
 # groups: [milestone, benchmark, large, Aggregation, Join]
+GlobalConfiguration worker.number_of_buffers_in_global_buffer_manager: [500000]
 
 # Source definition. We have removed some columns that are not needed in our queries
 CREATE LOGICAL SOURCE bid(timestamp UINT64, auctionId INT32, bidder INT32, price FLOAT64);
@@ -82,14 +83,3 @@ INNER JOIN
 ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
 ----
 182197843 1176742157900
-
-
-SELECT id, COUNT(email_address) AS num, start, end
-      FROM person
-      GROUP BY id WINDOW SLIDING(timestamp, SIZE 10 SEC, ADVANCE BY 2 SEC) INTO Checksum ();
-----
-42 42
-
-SELECT * from person WHERE  INTO Checksum ();
-----
-42 42

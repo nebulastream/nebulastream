@@ -17,6 +17,8 @@
 #include <cstdint>
 #include <functional>
 #include <vector>
+
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -58,19 +60,43 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 [&](const nautilus::val<AbstractHashMapEntry*>& entry)
                 {
                     const ChainedHashMapRef::ChainedEntryRef ref(entry, hashMapBuffer, fieldKeys, fieldValues);
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea)
+                    auto childBufferIndexVal = nautilus::invoke(
+                        +[](AbstractBufferProvider* bufferManager, TupleBuffer* hashMapBuffer)
                         {
                             /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            new (pagedVector) PagedVector();
+                            /// get a new buffer for the paged vector for the new entry
+                            if (auto pagedVectorBuffer = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+                            {
+                                /// initialize paged vector buffer and attach it to the hash map
+                                PagedVector pagedVector = PagedVector::init(pagedVectorBuffer.value());
+                                auto childBufferIdx = hashMapBuffer->storeChildBuffer(pagedVectorBuffer.value());
+                                return childBufferIdx.getRawIndex();
+                            }
+                            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map entry's paged vector!");
                         },
-                        ref.getValueMemArea());
+                        bufferManagerVal,
+                        hashMapBuffer);
+                    /// store the child buffer index the entry's memory area
+                    const auto memArea = ref.getValueMemArea();
+                    nautilus::invoke(
+                        +[](int8_t* memArea, uint32_t idx) -> void { *reinterpret_cast<uint32_t*>(memArea) = idx; },
+                        memArea,
+                        childBufferIndexVal);
                 },
                 bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapBuffer, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            auto entryMemArea = ref.getValueMemArea();
+            const auto childBufferIndexVal = readValueFromMemRef<uint32_t>(entryMemArea);
+            const auto pagedVectorBuffer = invoke(
+                +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+                {
+                    VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+                    return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+                },
+                hashMapBuffer,
+                childBufferIndexVal);
+            const PagedVectorRef pagedVectorRef(pagedVectorBuffer, inputBufferRef);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
@@ -103,12 +129,22 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapBuffer, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            auto entryMemArea = ref.getValueMemArea();
+            const auto childBufferIndexVal = readValueFromMemRef<uint32_t>(entryMemArea);
+            const auto pagedVectorBuffer = invoke(
+                +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+                {
+                    VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+                    return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+                },
+                hashMapBuffer,
+                childBufferIndexVal);
+            const PagedVectorRef pagedVectorRef(pagedVectorBuffer, inputBufferRef);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                inputBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                inputBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal, 0);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }

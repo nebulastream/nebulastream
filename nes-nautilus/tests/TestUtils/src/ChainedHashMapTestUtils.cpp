@@ -26,6 +26,7 @@
 #include <sstream>
 #include <tuple>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -34,6 +35,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -106,7 +108,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    inputBufferRef = LowerSchemaProvider::lowerSchema(
+        bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT, PagedVector::Page::getHeaderSize());
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
@@ -207,7 +210,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer() const
                 outputRecord.reassignFields(valueRecord);
 
                 RecordBuffer recordBufferOutput(outputBufferForValues);
-                inputBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
+                inputBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal, 0);
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
@@ -238,7 +241,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator() co
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
-                inputBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
+                inputBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider, 0);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }

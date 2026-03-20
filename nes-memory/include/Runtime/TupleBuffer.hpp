@@ -185,6 +185,8 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    [[nodiscard]] TupleBuffer& getChildRef(VariableSizedAccess::Index bufferIndex) noexcept;
+
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
@@ -194,6 +196,7 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
 };
 
 /**

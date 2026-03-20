@@ -104,6 +104,9 @@ public:
     /// view and without using its access methods
     [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
 
+    void printHeader() const;
+    void printContentInfo() const;
+
 protected:
     void appendPage(AbstractBufferProvider* bufferProvider);
     void allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, size_t neededSize);

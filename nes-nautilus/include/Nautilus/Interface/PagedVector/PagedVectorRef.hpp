@@ -36,7 +36,7 @@ class PagedVectorRef
 public:
     /// Declaring PagedVectorRefIter a friend class such that we can access the private members
     friend class PagedVectorRefIter;
-    PagedVectorRef(const nautilus::val<PagedVector*>& pagedVectorRef, const std::shared_ptr<TupleBufferRef>& bufferRef);
+    PagedVectorRef(const nautilus::val<TupleBuffer*>& pagedVectorBuffer, const std::shared_ptr<TupleBufferRef>& bufferRef);
 
     /// Writes a new record to the pagedVectorRef
     /// @param record the new record to be written
@@ -55,7 +55,7 @@ public:
     [[nodiscard]] nautilus::val<uint64_t> getNumberOfTuples() const;
 
 private:
-    nautilus::val<PagedVector*> pagedVectorRef;
+    nautilus::val<TupleBuffer*> pagedVectorBuffer;
     std::shared_ptr<TupleBufferRef> bufferRef;
 };
 

@@ -18,14 +18,18 @@
 #include <cstdint>
 #include <memory>
 #include <utility>
+
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <experimental/propagate_const>
 #include <nautilus/function.hpp>
+
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
@@ -47,47 +51,108 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
 }
 
 void MedianAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    nautilus::val<TupleBuffer*> hashMapBuffer,
+    const Record& record)
 {
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
+    /// Reading the PagedVector child buffer index from the aggregation state
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
-    const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
+    const auto childBufferIndexVal = readValueFromMemRef<uint32_t>(memArea);
+    /// Getting the paged vector buffer from the hash map buffer
+    const auto pagedVectorBuffer = invoke(
+        +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+        {
+            VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+            auto pagedVectorBuffer = hashMapBuffer->getChildRef(childBufferIndex);
+            return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+        },
+        hashMapBuffer,
+        childBufferIndexVal);
+    const PagedVectorRef pagedVectorRef(pagedVectorBuffer, bufferRefPagedVector);
     pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
 }
 
 void MedianAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*> hashMapBuffer1,
+    nautilus::val<TupleBuffer*> hashMapBuffer2,
     PipelineMemoryProvider&)
 {
-    /// Getting the paged vectors from the aggregation states
-    const auto memArea1 = static_cast<nautilus::val<PagedVector*>>(aggregationState1);
-    const auto memArea2 = static_cast<nautilus::val<PagedVector*>>(aggregationState2);
+    /// Reading the PagedVector child buffer index from the aggregation state
+    const auto memArea1 = static_cast<nautilus::val<int8_t*>>(aggregationState1);
+    const auto memArea2 = static_cast<nautilus::val<int8_t*>>(aggregationState2);
+    const auto childBufferIndexVal1 = readValueFromMemRef<uint32_t>(memArea1);
+    const auto childBufferIndexVal2 = readValueFromMemRef<uint32_t>(memArea2);
+
+    /// Getting the paged vector buffer from the hash map buffer
+    const auto pagedVectorBuffer1 = invoke(
+        +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+        {
+            VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+            return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+        },
+        hashMapBuffer1,
+        childBufferIndexVal1);
+
+    const auto pagedVectorBuffer2 = invoke(
+        +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+        {
+            VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+            return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+        },
+        hashMapBuffer2,
+        childBufferIndexVal2);
 
     /// Calling the copyFrom function of the paged vector to combine the two paged vectors by copying the content of the second paged vector to the first paged vector
-    nautilus::invoke(+[](PagedVector* vector1, const PagedVector* vector2) -> void { vector1->copyFrom(*vector2); }, memArea1, memArea2);
+    invoke(
+        +[](TupleBuffer* pagedVectorBuffer1, TupleBuffer* pagedVectorBuffer2)
+        {
+            PagedVector pv1 = PagedVector::load(*pagedVectorBuffer1);
+            PagedVector pv2 = PagedVector::load(*pagedVectorBuffer2);
+            pv1.movePagesFrom(pv2);
+        },
+        pagedVectorBuffer1,
+        pagedVectorBuffer2);
 }
 
 Record MedianAggregationPhysicalFunction::lower(
-    const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider& pipelineMemoryProvider)
+    const nautilus::val<AggregationState*> aggregationState,
+    nautilus::val<TupleBuffer*> hashMapBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    /// Getting the paged vector from the aggregation state
-    const auto pagedVectorPtr = static_cast<nautilus::val<PagedVector*>>(aggregationState);
-    const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
+    /// Reading the PagedVector child buffer index from the aggregation state
+    const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
+    const auto childBufferIndexVal = readValueFromMemRef<uint32_t>(memArea);
+
+    /// Getting the paged vector buffer from the hash map buffer
+    const auto pagedVectorBuffer = invoke(
+        +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+        {
+            VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+            return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+        },
+        hashMapBuffer,
+        childBufferIndexVal);
+
+    const PagedVectorRef pagedVectorRef(pagedVectorBuffer, bufferRefPagedVector);
     const auto allFieldNames = bufferRefPagedVector->getAllFieldNames();
     const auto numberOfEntries = invoke(
-        +[](const PagedVector* pagedVector)
+        +[](const TupleBuffer* pagedVectorBuffer)
         {
-            const auto numberOfEntriesVal = pagedVector->getTotalNumberOfEntries();
+            PagedVector pv = PagedVector::load(*pagedVectorBuffer);
+            const auto numberOfEntriesVal = pv.getTotalNumberOfEntries();
             INVARIANT(numberOfEntriesVal > 0, "The number of entries in the paged vector must be greater than 0");
             return numberOfEntriesVal;
         },
-        pagedVectorPtr);
+        pagedVectorBuffer);
 
     /// Iterating in two nested loops over all the records in the paged vector to get the median.
     /// We pick a candidate and then count for each item, if the candidate is smaller and also if the candidate is less than the item.
-    const nautilus::val<int64_t> medianPos1 = (numberOfEntries - 1) / 2;
-    const nautilus::val<int64_t> medianPos2 = numberOfEntries / 2;
+    const nautilus::val<uint64_t> medianPos1 = (numberOfEntries - 1) / 2;
+    const nautilus::val<uint64_t> medianPos2 = numberOfEntries / 2;
     nautilus::val<uint64_t> medianItemPos1 = 0;
     nautilus::val<uint64_t> medianItemPos2 = 0;
     nautilus::val<bool> medianFound1(false);
@@ -98,8 +163,8 @@ Record MedianAggregationPhysicalFunction::lower(
     const auto endIt = pagedVectorRef.end(allFieldNames);
     for (auto candidateIt = pagedVectorRef.begin(allFieldNames); candidateIt != endIt; ++candidateIt)
     {
-        nautilus::val<int64_t> countLessThan = 0;
-        nautilus::val<int64_t> countEqual = 0;
+        nautilus::val<uint64_t> countLessThan = 0;
+        nautilus::val<uint64_t> countEqual = 0;
         const auto candidateRecord = *candidateIt;
         const auto candidateValue = inputFunction.execute(candidateRecord, pipelineMemoryProvider.arena);
 
@@ -157,33 +222,37 @@ Record MedianAggregationPhysicalFunction::lower(
     return resultRecord;
 }
 
-void MedianAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void MedianAggregationPhysicalFunction::reset(
+    nautilus::val<AggregationState*> aggregationState,
+    nautilus::val<TupleBuffer*> hashMapBuffer,
+    PipelineMemoryProvider& pipelineMemoryProvider)
 {
-    nautilus::invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
+    const nautilus::val<uint32_t> childBufferIndexVal = nautilus::invoke(
+        +[](AbstractBufferProvider* bufferProvider, TupleBuffer* hashMapBuffer)
         {
-            /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-            new (pagedVector) PagedVector();
+            if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getBufferSize()))
+            {
+                /// initialize the PagedVector buffer
+                PagedVector pv = PagedVector::init(pagedVectorBuffer.value());
+                /// attach to the chained hash map buffer and keep the child index
+                auto childBufferIndex = hashMapBuffer->storeChildBuffer(pagedVectorBuffer.value());
+                return childBufferIndex.getRawIndex();
+            }
+            else
+            {
+                throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+            }
         },
-        aggregationState);
-}
-
-void MedianAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*> aggregationState)
-{
-    invoke(
-        +[](AggregationState* pagedVectorMemArea) -> void
-        {
-            /// Calls the destructor of the PagedVector
-            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea); /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-            pagedVector->~PagedVector();
-        },
-        aggregationState);
+        pipelineMemoryProvider.bufferProvider,
+        hashMapBuffer);
+    /// write the child buffer index for the paged vector in the aggregation state mem space
+    auto memArea = static_cast<nautilus::val<uint32_t*>>(aggregationState);
+    *memArea = childBufferIndexVal;
 }
 
 size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 {
-    return sizeof(PagedVector);
+    return sizeof(uint32_t);
 }
 
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(

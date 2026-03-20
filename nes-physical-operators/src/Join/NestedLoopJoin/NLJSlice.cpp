@@ -27,50 +27,82 @@
 namespace NES
 {
 
-NLJSlice::NLJSlice(const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads) : Slice(sliceStart, sliceEnd)
+NLJSlice::NLJSlice(
+    AbstractBufferProvider* bufferProvider, const SliceStart sliceStart, const SliceEnd sliceEnd, const uint64_t numberOfWorkerThreads)
+    : Slice(sliceStart, sliceEnd)
 {
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        leftPagedVectors.emplace_back(std::make_unique<PagedVector>());
+        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getBufferSize()))
+        {
+            /// initialize the paged vector tuple buffer
+            PagedVector pagedVector = PagedVector::init(pagedVectorBuffer.value());
+            /// attach to the hash map tuple buffer
+            auto pv = PagedVector::init(pagedVectorBuffer.value());
+            leftPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+        }
     }
 
     for (uint64_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        rightPagedVectors.emplace_back(std::make_unique<PagedVector>());
+        if (auto pagedVectorBuffer = bufferProvider->getUnpooledBuffer(PagedVector::getBufferSize()))
+        {
+            /// initialize the paged vector tuple buffer
+            PagedVector pagedVector = PagedVector::init(pagedVectorBuffer.value());
+            /// attach to the hash map tuple buffer
+            auto pv = PagedVector::init(pagedVectorBuffer.value());
+            rightPagedVectorBuffers.emplace_back(pagedVectorBuffer.value());
+        }
+        else
+        {
+            throw BufferAllocationFailure("No unpooled TupleBuffer available for chained hash map child buffer!");
+        }
     }
 }
 
 uint64_t NLJSlice::getNumberOfTuplesLeft() const
 {
     return std::accumulate(
-        leftPagedVectors.begin(),
-        leftPagedVectors.end(),
+        leftPagedVectorBuffers.begin(),
+        leftPagedVectorBuffers.end(),
         0,
-        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+        [](uint64_t sum, const TupleBuffer& buf)
+        {
+            auto pv = PagedVector::load(buf);
+            return sum + pv.getTotalNumberOfEntries();
+        });
 }
 
 uint64_t NLJSlice::getNumberOfTuplesRight() const
 {
     return std::accumulate(
-        rightPagedVectors.begin(),
-        rightPagedVectors.end(),
+        rightPagedVectorBuffers.begin(),
+        rightPagedVectorBuffers.end(),
         0,
-        [](uint64_t sum, const auto& pagedVector) { return sum + pagedVector->getTotalNumberOfEntries(); });
+        [](uint64_t sum, const TupleBuffer& buf)
+        {
+            auto pv = PagedVector::load(buf);
+            return sum + pv.getTotalNumberOfEntries();
+        });
 }
 
-PagedVector* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
+const TupleBuffer* NLJSlice::getPagedVectorRefLeft(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % leftPagedVectors.size();
-    return leftPagedVectors[pos].get();
+    const auto pos = workerThreadId % leftPagedVectorBuffers.size();
+    return &leftPagedVectorBuffers[pos];
 }
 
-PagedVector* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
+const TupleBuffer* NLJSlice::getPagedVectorRefRight(const WorkerThreadId workerThreadId) const
 {
-    const auto pos = workerThreadId % rightPagedVectors.size();
-    return rightPagedVectors[pos].get();
+    const auto pos = workerThreadId % rightPagedVectorBuffers.size();
+    return &rightPagedVectorBuffers[pos];
 }
 
-PagedVector* NLJSlice::getPagedVectorRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
+const TupleBuffer* NLJSlice::getPagedVectorTupleBufferRef(const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide) const
 {
     switch (joinBuildSide)
     {
@@ -91,23 +123,27 @@ void NLJSlice::combinePagedVectors()
 
     /// Append all PagedVectors on the left join side and erase all items except for the first one
     /// We do this to ensure that we have only one PagedVector for each side during the probing phase
-    if (leftPagedVectors.size() > 1)
+    if (leftPagedVectorBuffers.size() > 1)
     {
-        for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
+        for (uint64_t i = 1; i < leftPagedVectorBuffers.size(); ++i)
         {
-            leftPagedVectors[0]->moveAllPages(*leftPagedVectors[i]);
+            auto firstLeftPagedVector = PagedVector::load(leftPagedVectorBuffers[0]);
+            auto currLeftPagedVector = PagedVector::load(leftPagedVectorBuffers[i]);
+            firstLeftPagedVector.movePagesFrom(currLeftPagedVector);
         }
-        leftPagedVectors.erase(leftPagedVectors.begin() + 1, leftPagedVectors.end());
+        leftPagedVectorBuffers.erase(leftPagedVectorBuffers.begin() + 1, leftPagedVectorBuffers.end());
     }
 
     /// Append all PagedVectors on the right join side and remove all items except for the first one
-    if (rightPagedVectors.size() > 1)
+    if (rightPagedVectorBuffers.size() > 1)
     {
-        for (uint64_t i = 1; i < rightPagedVectors.size(); ++i)
+        for (uint64_t i = 1; i < rightPagedVectorBuffers.size(); ++i)
         {
-            rightPagedVectors[0]->moveAllPages(*rightPagedVectors[i]);
+            auto firstRightPagedVector = PagedVector::load(rightPagedVectorBuffers[0]);
+            auto currRightPagedVector = PagedVector::load(rightPagedVectorBuffers[i]);
+            firstRightPagedVector.movePagesFrom(currRightPagedVector);
         }
-        rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
+        rightPagedVectorBuffers.erase(rightPagedVectorBuffers.begin() + 1, rightPagedVectorBuffers.end());
     }
 }
 }

@@ -1,0 +1,26 @@
+# name: window/WindowAggregationMedianTestMinimal.test
+# description: Minimal test for median over a sliding window without a key, producing fractional medians
+# groups: [Aggregation, WindowOperators]
+
+
+CREATE LOGICAL SOURCE stream(i8 INT8, ts UINT64);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH INLINE
+1,100
+2,150
+
+CREATE SINK sinkAggregationMedian(stream.start UINT64, stream.end UINT64, stream.i8_out FLOAT64) TYPE File;
+
+# Checking if median over a sliding window works without a key, with fractional result
+SELECT start, end, MEDIAN(i8) as i8_out
+FROM stream WINDOW SLIDING(ts, size 100 ms, advance by 50 ms) INTO sinkAggregationMedian;
+----
+50,150,1.0
+100,200,1.5
+150,250,2.0
+
+# Checking if median over a sliding window works without a key, with fractional result
+SELECT start, end, MEDIAN(i8) as i8_out
+FROM stream WINDOW SLIDING(ts, size 200 ms, advance by 200 ms) INTO sinkAggregationMedian;
+----
+0,200,1.5

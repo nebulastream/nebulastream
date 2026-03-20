@@ -29,7 +29,7 @@ namespace NES::TestUtils
 
 
 void runStoreTest(
-    PagedVector& pagedVector,
+    TupleBuffer pagedVectorBuffer,
     const Schema& testSchema,
     const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
@@ -39,7 +39,7 @@ void runStoreTest(
     AbstractBufferProvider& bufferManager);
 
 void runRetrieveTest(
-    PagedVector& pagedVector,
+    TupleBuffer pagedVectorBuffer,
     const Schema& testSchema,
     const MemoryLayoutType& memoryLayout,
     uint64_t pageSize,
