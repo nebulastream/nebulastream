@@ -95,7 +95,7 @@ public:
     {
         /// get Wert as double
         const auto valueVal = child.execute(record, arena).cast<nautilus::val<double>>();
-        auto patientIdVal = record.readUnqualified("MLIFE_FALLNR").cast<nautilus::val<int32_t>>();
+        auto patientIdVal = record.readUnqualified("MLIFE_PID").cast<nautilus::val<int32_t>>();
         const auto bezeichnungVal = record.readUnqualified("BEZ").cast<VariableSizedData>();
         const auto zeitpunktVal = record.readUnqualified("ZEITPUNKT").cast<nautilus::val<uint64_t>>();
         const auto insertionTs = record.readUnqualified("TSFAIL").cast<nautilus::val<uint64_t>>();
