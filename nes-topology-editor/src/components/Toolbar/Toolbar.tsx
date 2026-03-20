@@ -1,17 +1,24 @@
 import React, { useCallback } from 'react';
 import { useReactFlow } from '@xyflow/react';
-import { Plus, Code, Sun, Moon } from 'lucide-react';
+import { Plus, Code, Sun, Moon, RotateCcw } from 'lucide-react';
 import { useStore } from '../../store';
 import { applyAutoLayout } from '../../lib/autoLayout';
 
 const Toolbar: React.FC = () => {
   const addWorker = useStore((s) => s.addWorker);
+  const resetTopology = useStore((s) => s.resetTopology);
+  const resetQueries = useStore((s) => s.resetQueries);
   const toggleYamlOverlay = useStore((s) => s.toggleYamlOverlay);
   const yamlOverlayVisible = useStore((s) => s.yamlOverlayVisible);
   const darkMode = useStore((s) => s.darkMode);
   const toggleDarkMode = useStore((s) => s.toggleDarkMode);
 
   const { screenToFlowPosition } = useReactFlow();
+
+  const handleReset = useCallback(() => {
+    resetTopology();
+    resetQueries();
+  }, [resetTopology, resetQueries]);
 
   const handleAddWorker = useCallback(() => {
     // Place new worker at center of current viewport
@@ -33,6 +40,15 @@ const Toolbar: React.FC = () => {
       >
         <Plus size={16} />
         <span>Add Worker</span>
+      </button>
+      <button
+        className="toolbar__btn"
+        onClick={handleReset}
+        title="Reset topology"
+        data-testid="reset-btn"
+      >
+        <RotateCcw size={16} />
+        <span>Reset</span>
       </button>
       <button
         className="toolbar__btn"

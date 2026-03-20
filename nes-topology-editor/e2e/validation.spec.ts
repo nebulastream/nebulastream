@@ -63,6 +63,8 @@ async function assignLogicalSource(page: Page, logicalName: string) {
 test.describe('WASM validation in browser', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
     await page.waitForSelector('.react-flow');
     await waitForValidator(page);
   });
@@ -182,6 +184,8 @@ test.describe('WASM validation in browser', () => {
 test.describe('source types with required fields produce valid YAML', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
     await page.waitForSelector('.react-flow');
     await waitForValidator(page);
 
@@ -285,6 +289,8 @@ test.describe('source types with required fields produce valid YAML', () => {
 test.describe('sink types with required fields produce valid YAML', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
     await page.waitForSelector('.react-flow');
     await waitForValidator(page);
 

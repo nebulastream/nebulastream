@@ -6,7 +6,7 @@ import type { SchemaField } from '../../lib/types';
 const NES_TYPES = [
   'INT8', 'INT16', 'INT32', 'INT64',
   'UINT8', 'UINT16', 'UINT32', 'UINT64',
-  'FLOAT32', 'FLOAT64', 'BOOLEAN', 'CHAR', 'TEXT',
+  'FLOAT32', 'FLOAT64', 'BOOLEAN', 'CHAR', 'VARSIZED',
 ];
 
 describe('SchemaBuilder', () => {
@@ -36,14 +36,14 @@ describe('SchemaBuilder', () => {
 
     expect(onChange).toHaveBeenCalledWith([
       { name: 'id', type: 'INT64' },
-      { name: '', type: 'INT32' },
+      { name: '', type: 'INT32', nullable: false },
     ]);
   });
 
   it('clicking remove button calls onChange with field removed', () => {
     const fields: SchemaField[] = [
       { name: 'a', type: 'INT32' },
-      { name: 'b', type: 'TEXT' },
+      { name: 'b', type: 'VARSIZED' },
     ];
     const onChange = vi.fn();
     render(<SchemaBuilder fields={fields} onChange={onChange} />);
@@ -51,7 +51,7 @@ describe('SchemaBuilder', () => {
     const removeBtns = screen.getAllByRole('button', { name: /remove/i });
     fireEvent.click(removeBtns[0]!);
 
-    expect(onChange).toHaveBeenCalledWith([{ name: 'b', type: 'TEXT' }]);
+    expect(onChange).toHaveBeenCalledWith([{ name: 'b', type: 'VARSIZED' }]);
   });
 
   it('typing in name input calls onChange with updated field', () => {

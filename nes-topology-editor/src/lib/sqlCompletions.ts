@@ -144,7 +144,7 @@ export function getCompletions(
         });
       }
       // Inline source snippets
-      const hostField = { key: 'HOST', placeholder: 'worker:9090', quote: true };
+      const hostField = { key: 'HOST', placeholder: 'worker:8080', quote: true };
       for (const [srcType, fields] of Object.entries(SOURCE_CONFIGS)) {
         const allFields = [...fields, ...PARSER_CONFIG];
         const snippet = buildInlineSnippet('SOURCE', srcType, allFields, [hostField]);
@@ -173,7 +173,7 @@ export function getCompletions(
           });
         }
       }
-      const sinkHostField = { key: 'HOST', placeholder: 'worker:9090', quote: true };
+      const sinkHostField = { key: 'HOST', placeholder: 'worker:8080', quote: true };
       for (const [sinkType, fields] of Object.entries(SINK_CONFIGS)) {
         const snippet = buildInlineSnippet('SINK', sinkType, fields, [sinkHostField]);
         suggestions.push({

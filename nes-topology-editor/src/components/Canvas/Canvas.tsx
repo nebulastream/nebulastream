@@ -400,7 +400,7 @@ const Canvas: React.FC = () => {
             position: 'absolute',
             top: 12,
             right: 12,
-            zIndex: 1000,
+            zIndex: 10,
             display: 'flex',
             alignItems: 'center',
             gap: 6,

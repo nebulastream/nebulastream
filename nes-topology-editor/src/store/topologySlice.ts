@@ -42,6 +42,7 @@ export interface TopologySlice {
     physicalSources: PhysicalSource[];
     sinks: Sink[];
   }) => void;
+  resetTopology: () => void;
 }
 
 export const createTopologySlice: StateCreator<
@@ -58,11 +59,11 @@ export const createTopologySlice: StateCreator<
   addWorker: (position?: Position) =>
     set((state) => {
       const host = generateWorkerHost(state.workers);
-      const hostBase = host.replace(':9090', '');
+      const hostBase = host.replace(':8080', '');
       const worker: Worker = {
         id: generateId(),
         host,
-        grpc: `${hostBase}:8080`,
+        data: `${hostBase}:9090`,
         capacity: 10000,
         downstream: [],
         position: position ?? { x: 0, y: 0 },
@@ -251,5 +252,13 @@ export const createTopologySlice: StateCreator<
       logicalSources: data.logicalSources,
       physicalSources: data.physicalSources,
       sinks: data.sinks,
+    })),
+
+  resetTopology: () =>
+    set(() => ({
+      workers: [],
+      logicalSources: [],
+      physicalSources: [],
+      sinks: [],
     })),
 });

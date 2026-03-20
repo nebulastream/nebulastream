@@ -9,6 +9,7 @@ export interface QuerySlice {
   removeQuery: (id: string) => void;
   updateQuery: (id: string, updates: Partial<Omit<Query, 'id'>>) => void;
   replaceQueries: (queries: Query[]) => void;
+  resetQueries: () => void;
 }
 
 export const createQuerySlice: StateCreator<QuerySlice, [], [], QuerySlice> = (
@@ -37,4 +38,6 @@ export const createQuerySlice: StateCreator<QuerySlice, [], [], QuerySlice> = (
     })),
 
   replaceQueries: (queries: Query[]) => set({ queries }),
+
+  resetQueries: () => set({ queries: [] }),
 });

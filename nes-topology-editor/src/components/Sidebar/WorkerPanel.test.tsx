@@ -27,7 +27,7 @@ import WorkerPanel from './WorkerPanel';
 const mockWorker: Worker = {
   id: 'w1',
   host: '127.0.0.1',
-  grpc: '4000',
+  data: '4000',
   capacity: 8,
   downstream: [],
   position: { x: 0, y: 0 },
@@ -47,9 +47,9 @@ describe('WorkerPanel (PROP-01)', () => {
     expect(input).toBeDefined();
   });
 
-  it('renders gRPC input with label "gRPC Address" and initial value', () => {
+  it('renders data address input with label "Data Address" and initial value', () => {
     render(<WorkerPanel worker={mockWorker} />);
-    const label = screen.getByText('gRPC Address');
+    const label = screen.getByText('Data Address');
     expect(label).toBeDefined();
     const input = screen.getByDisplayValue('4000');
     expect(input).toBeDefined();

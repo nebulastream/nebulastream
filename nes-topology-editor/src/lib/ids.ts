@@ -14,5 +14,5 @@ export function generateWorkerHost(existingWorkers: Worker[]): string {
 
   const next =
     existingNumbers.length > 0 ? Math.max(...existingNumbers) + 1 : 1;
-  return `worker-${next}:9090`;
+  return `worker-${next}:8080`;
 }

@@ -48,6 +48,8 @@ async function dragNodeOnto(page: Page, src: Locator, tgt: Locator) {
 test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    await page.evaluate(() => localStorage.clear());
+    await page.reload();
     await page.waitForSelector('.react-flow');
   });
 
