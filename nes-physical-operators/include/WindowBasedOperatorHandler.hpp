@@ -18,15 +18,19 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <folly/Synchronized.h>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -64,8 +68,6 @@ public:
 
     ~WindowBasedOperatorHandler() override = default;
 
-    /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
-    void setWorkerThreads(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 
@@ -86,6 +88,11 @@ public:
     [[nodiscard]] virtual std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const = 0;
 
+    /// Allocates memory for a slice cache and returns a pointer to the allocated memory.
+    /// Each call allocates a new buffer, so multiple build sides (e.g., left/right join) each get their own memory.
+    /// Also, this method is being called via a nautilus::invoke(), thus, we require a raw pointer
+    int8_t* allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
+
 protected:
     /// Gets called if slices should be triggered once a window is ready to be emitted.
     /// Each window operator can be specific about what to do if the given slices are ready to be emitted
@@ -100,5 +107,8 @@ protected:
     uint64_t numberOfWorkerThreads;
     const OriginId outputOriginId;
     const std::vector<OriginId> inputOrigins;
+
+    /// We have here a vector, as we might have more than a single input pipeline with concurrent access
+    folly::Synchronized<std::unordered_map<PipelineId, std::unique_ptr<TupleBuffer>>> sliceCacheBuffers;
 };
 }

@@ -20,14 +20,17 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 #include <function.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -67,9 +70,17 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
-    : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
+static void initSliceCacheMemoryAndSetup(OperatorHandler* ptrOpHandler, const PipelineExecutionContext* pipelineCtx, SliceCache* sliceCache)
 {
+    PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    PRECONDITION(pipelineCtx->getBufferManager() != nullptr, "bufferProvider should not be null!");
+    auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
+
+    /// The order is important. First, we need to set the number of worker threads, as the slice cache depends on it.
+    sliceCache->setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
+    auto* const memory = opHandler->allocateSpaceForSliceCache(
+        sliceCache->getCacheMemorySize(), pipelineCtx->getPipelineId(), *pipelineCtx->getBufferManager());
+    sliceCache->setStartOfEntries(reinterpret_cast<SliceCacheEntry*>(memory));
 }
 
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
@@ -89,9 +100,12 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(registerActivePipeline, operatorHandlerMemRef);
-};
+    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(registerActivePipeline, operatorHandler);
+
+    nautilus::invoke(
+        initSliceCacheMemoryAndSetup, operatorHandler, executionCtx.pipelineContext, nautilus::val<SliceCache*>{sliceCache.get()});
+}
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
@@ -100,7 +114,7 @@ void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuf
 
     /// Creating the local state for the window operator build.
     const auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler));
+    executionCtx.setLocalOperatorState(id, std::make_unique<WindowOperatorBuildLocalState>(operatorHandler, *sliceCache));
 }
 
 void WindowBuildPhysicalOperator::terminate(ExecutionContext& executionCtx) const
@@ -119,11 +133,23 @@ void WindowBuildPhysicalOperator::setChild(PhysicalOperator child)
     this->child = std::move(child);
 }
 
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId,
+    std::unique_ptr<TimeFunction> timeFunction,
+    const SliceCacheConfiguration& sliceCacheConfiguration)
+    : operatorHandlerId(operatorHandlerId)
+    , timeFunction(std::move(timeFunction))
+    , sliceCache(SliceCache::createSliceCache(sliceCacheConfiguration))
+{
+}
+
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)
+    /// If we copy this operator, we need to clone the slice cache, as each slice cache belongs to exactly one build operator
+    , sliceCache(other.sliceCache->clone())
 {
 }
 }
