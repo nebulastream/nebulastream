@@ -99,10 +99,20 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedSizeValues)
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType, 0);
+    if (auto pagedVectorBufferOpt = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+    {
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector pagedVector = PagedVector::init(pagedVectorBuffer);
+        TestUtils::runStoreTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+        TestUtils::runRetrieveTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for the paged vector test!");
+    }
 }
 
 TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
@@ -116,10 +126,20 @@ TEST_P(PagedVectorTest, storeAndRetrieveVarSizeValues)
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType, 0);
+    if (auto pagedVectorBufferOpt = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+    {
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector pagedVector = PagedVector::init(pagedVectorBuffer);
+        TestUtils::runStoreTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+        TestUtils::runRetrieveTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for the paged vector test!");
+    }
 }
 
 TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
@@ -128,16 +148,26 @@ TEST_P(PagedVectorTest, storeAndRetrieveLargeValues)
     bufferManager = BufferManager::create(8 * 1024, 10 * 1000);
     const auto testSchema = Schema{}.addField("value1", DataTypeProvider::provideDataType(DataType::Type::VARSIZED));
     /// smallest possible pageSize ensures that the text is split over multiple pages
-    constexpr auto pageSize = 16UL;
-    constexpr auto sizeVarSizedData = 2 * pageSize;
+    const auto pageSize = PagedVector::Page::getHeaderSize() + 16UL;
+    const auto sizeVarSizedData = 2 * pageSize;
 
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager, sizeVarSizedData);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType, 0);
+    if (auto pagedVectorBufferOpt = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+    {
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector pagedVector = PagedVector::init(pagedVectorBuffer);
+        TestUtils::runStoreTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+        TestUtils::runRetrieveTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for the paged vector test!");
+    }
 }
 
 TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
@@ -151,10 +181,20 @@ TEST_P(PagedVectorTest, storeAndRetrieveMixedValueTypes)
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType, 0);
+    if (auto pagedVectorBufferOpt = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+    {
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector pagedVector = PagedVector::init(pagedVectorBuffer);
+        TestUtils::runStoreTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+        TestUtils::runRetrieveTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for the paged vector test!");
+    }
 }
 
 TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
@@ -165,10 +205,20 @@ TEST_P(PagedVectorTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
     const auto projections = testSchema.getFieldNames();
     const auto allRecords = createMonotonicallyIncreasingValues(testSchema, layoutType, numberOfItems, *bufferManager);
 
-    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType);
-    PagedVector pagedVector;
-    TestUtils::runStoreTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
-    TestUtils::runRetrieveTest(pagedVector, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    const auto memoryProvider = LowerSchemaProvider::lowerSchema(pageSize, testSchema, layoutType, 0);
+    if (auto pagedVectorBufferOpt = bufferManager->getUnpooledBuffer(PagedVector::getBufferSize()))
+    {
+        auto pagedVectorBuffer = pagedVectorBufferOpt.value();
+        PagedVector pagedVector = PagedVector::init(pagedVectorBuffer);
+        TestUtils::runStoreTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+        TestUtils::runRetrieveTest(
+            pagedVectorBuffer, testSchema, layoutType, pageSize, projections, allRecords, *nautilusEngine, *bufferManager);
+    }
+    else
+    {
+        throw BufferAllocationFailure("No unpooled TupleBuffer available for the paged vector test!");
+    }
 }
 
 TEST_P(PagedVectorTest, appendAllPagesTwoVectors)

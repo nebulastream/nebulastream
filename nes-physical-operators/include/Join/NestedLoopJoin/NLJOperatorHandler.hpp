@@ -48,7 +48,7 @@ public:
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-    getCreateNewSlicesFunction(AbstractBufferProvider*, const CreateNewSlicesArguments&) const override;
+    getCreateNewSlicesFunction(AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments&) const override;
 
 private:
     void emitSlicesToProbe(

@@ -35,7 +35,7 @@ public:
 
     /// Compiles a function that iterates over all keys and writes all values for one key to the output buffer.
     /// We use the findOrCreateEntry() method of the hash map interface.
-    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
+    [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, TupleBuffer*>
     compileWriteAllRecordsIntoOutputBuffer(
         const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const;
 };

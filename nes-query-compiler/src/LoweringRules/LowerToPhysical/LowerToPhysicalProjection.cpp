@@ -55,7 +55,7 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
     const auto memoryLayoutTypeTrait = projectionOp.getTraitSet().tryGet<NES::MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType);
+    const auto memoryProvider = NES::LowerSchemaProvider::lowerSchema(bufferSize, inputSchema, memoryLayoutType, 0);
     if (sourceOperators.size() == 1)
     {
         const auto inputFormatterConfig = sourceOperators.front().getParserConfig();

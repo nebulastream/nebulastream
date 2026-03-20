@@ -33,8 +33,9 @@
 namespace NES
 {
 
-RowTupleBufferRef::RowTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
+RowTupleBufferRef::RowTupleBufferRef(
+    std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize, const uint64_t headerSize)
+    : TupleBufferRef((bufferSize - headerSize) / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
 {
 }
 
@@ -50,11 +51,12 @@ nautilus::val<int8_t*> calculateFieldAddress(const nautilus::val<int8_t*>& recor
 Record RowTupleBufferRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
-    nautilus::val<uint64_t>& recordIndex) const
+    nautilus::val<uint64_t>& recordIndex,
+    const nautilus::val<uint64_t> headerSize) const
 {
     Record record;
     const auto bufferAddress = recordBuffer.getMemArea();
-    const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
+    const auto recordOffset = bufferAddress + headerSize + (tupleSize * recordIndex);
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& [name, type, fieldOffset] = fields.at(i);
@@ -73,7 +75,8 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<uint64_t> headerSize) const
 {
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
@@ -81,7 +84,7 @@ TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     if (recordIndex < capacity)
     {
         const auto bufferAddress = recordBuffer.getMemArea();
-        const auto recordOffset = bufferAddress + (tupleSize * recordIndex);
+        const auto recordOffset = bufferAddress + headerSize + (tupleSize * recordIndex);
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
             const auto& [name, type, fieldOffset] = fields.at(i);

@@ -84,8 +84,8 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
     /// Create buffer manager
     bufferManager = BufferManager::create();
 
-    /// Resetting the entriesPerPage, as we have a paged vector as the value.
-    valueSize = sizeof(PagedVector);
+    /// Resetting the entriesPerPage, as we have a child buffer index (corresponding to a paged vector) as the value.
+    valueSize = sizeof(uint32_t);
     const auto totalSizeOfEntry = (sizeof(ChainedHashMapEntry) + keySize + valueSize);
     entriesPerPage = params.pageSize / (totalSizeOfEntry);
 
@@ -185,7 +185,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
 
         /// Create a buffer ref for the outputbuffer, as its size may differ from the pooled buffer size
         const auto outputBufferRef
-            = LowerSchemaProvider::lowerSchema(outputBuffer.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+            = LowerSchemaProvider::lowerSchema(outputBuffer.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT, 0);
 
         auto writeAllRecordsIntoOutputBuffer = compileWriteAllRecordsIntoOutputBuffer(projectionAllFields, outputBufferRef);
 

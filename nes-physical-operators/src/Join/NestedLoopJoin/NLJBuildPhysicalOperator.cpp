@@ -74,11 +74,11 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
         executionCtx.pipelineMemoryProvider.bufferProvider,
         operatorHandler,
         timestamp);
-    const auto nljPagedVectorMemRef = invoke(
+    const auto nljPagedVectorTupleBuffer = invoke(
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+            return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
         },
         sliceReference,
         executionCtx.workerThreadId,
@@ -86,7 +86,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
 
     /// Write record to the pagedVector
-    const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
+    const PagedVectorRef pagedVectorRef(nljPagedVectorTupleBuffer, bufferRef);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

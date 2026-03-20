@@ -38,6 +38,24 @@ TupleBuffer::TupleBuffer(const TupleBuffer& other) noexcept : controlBlock(other
     }
 }
 
+void TupleBuffer::deepCopy(TupleBuffer& targetBuffer) const noexcept
+{
+    INVARIANT(targetBuffer.getBufferSize() == this->getBufferSize(), "Buffer sizes must match for deep copy!");
+    INVARIANT(targetBuffer.controlBlock != nullptr, "Target buffer has uninitialzed control block during deep copy.");
+    INVARIANT(this != &targetBuffer, "Can not deep copy a buffer into itself.");
+    if (controlBlock != nullptr)
+    {
+        std::memcpy(targetBuffer.ptr, this->ptr, this->size);
+        targetBuffer.setNumberOfTuples(this->getNumberOfTuples());
+        targetBuffer.setWatermark(this->getWatermark());
+        targetBuffer.setCreationTimestampInMS(this->getCreationTimestampInMS());
+        targetBuffer.setSequenceNumber(this->getSequenceNumber());
+        targetBuffer.setChunkNumber(this->getChunkNumber());
+        targetBuffer.setLastChunk(this->isLastChunk());
+        targetBuffer.setOriginId(this->getOriginId());
+    }
+}
+
 TupleBuffer& TupleBuffer::operator=(const TupleBuffer& other) noexcept
 {
     if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
@@ -186,6 +204,7 @@ VariableSizedAccess::Index TupleBuffer::storeChildBuffer(TupleBuffer& buffer) no
 
 TupleBuffer TupleBuffer::loadChildBuffer(VariableSizedAccess::Index bufferIndex) const noexcept
 {
+    /// TODO #1263 optimize this in combinatoin with getChildRef so that already pinned buffers are returned directly and not constructed
     TupleBuffer childBuffer;
     const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
     INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
@@ -233,6 +252,15 @@ uint32_t TupleBuffer::getNumberOfChildBuffers() const noexcept
 ChunkNumber TupleBuffer::getChunkNumber() const noexcept
 {
     return controlBlock->getChunkNumber();
+}
+
+TupleBuffer& TupleBuffer::getChildRef(VariableSizedAccess::Index bufferIndex) noexcept
+{
+    TupleBuffer childBuffer;
+    const auto ret = controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size);
+    INVARIANT(ret, "Cannot load tuple buffer with index={}", bufferIndex);
+    pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(childBuffer));
+    return *pinnedBuffers.back();
 }
 
 

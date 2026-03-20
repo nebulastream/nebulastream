@@ -129,12 +129,11 @@ public:
     [[nodiscard]] uint64_t numInputStreams() const;
     [[nodiscard]] uint64_t numHashMapsPerInputStream() const;
     [[nodiscard]] VariableSizedAccess::Index getHashMapChildBufferIndex(uint64_t pos) const;
+    [[nodiscard]] TupleBuffer* getHashMapTupleBufferRef(VariableSizedAccess::Index childBufferIndex);
     [[nodiscard]] TupleBuffer loadHashMapBuffer(VariableSizedAccess::Index childBufferIndex) const;
 
 protected:
     CreateNewHashMapSliceArgs createNewHashMapSliceArgs;
-
-private:
     HashMapDirectory hashMapDirectory;
 };
 }

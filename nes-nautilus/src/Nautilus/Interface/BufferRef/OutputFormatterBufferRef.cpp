@@ -42,8 +42,8 @@ OutputFormatterBufferRef::OutputFormatterBufferRef(
 {
 }
 
-Record
-OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&) const
+Record OutputFormatterBufferRef::readRecord(
+    const std::vector<Record::RecordFieldIdentifier>&, const RecordBuffer&, nautilus::val<uint64_t>&, const nautilus::val<uint64_t>) const
 {
     INVARIANT(false, "OutputFormatterBufferRef should not be able to read records.");
     std::unreachable();
@@ -53,7 +53,8 @@ TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const nautilus::val<uint64_t>) const
 {
     nautilus::val<bool> successful{true};
     /// This will be incremented by the amount of bytes written for each field to calculate the field address

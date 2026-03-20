@@ -16,13 +16,9 @@ CREATE PHYSICAL SOURCE FOR generator_text2 TYPE GENERATOR SET(
     'RANDOMSTR 1 6, SEQUENCE UINT64 0 2 1' AS `SOURCE`.GENERATOR_SCHEMA
 );
 
-# Sink must include all output fields from the windowed join:
-# - start and end from the window
-# - all fields from generator_text1 (random_word_s1, ts)
-# - all fields from generator_text2 (random_word_s2, ts)
 CREATE SINK generator_sink_inline(
-    generator_text1generator_text2.start UINT64,
-    generator_text1generator_text2.end UINT64,
+    generator_text1generator_text2.start UINT64 NOT NULL,
+    generator_text1generator_text2.end UINT64 NOT NULL,
     generator_text1.random_word_s1 VARSIZED,
     generator_text1.ts UINT64,
     generator_text2.random_word_s2 VARSIZED,

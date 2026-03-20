@@ -221,7 +221,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
 {
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
-    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
+    auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType, 0);
     auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider), schema.getFieldNames());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
 

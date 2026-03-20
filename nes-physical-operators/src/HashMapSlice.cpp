@@ -91,6 +91,11 @@ TupleBuffer HashMapSlice::loadHashMapBuffer(const VariableSizedAccess::Index chi
     return childBuffer;
 }
 
+TupleBuffer* HashMapSlice::getHashMapTupleBufferRef(const VariableSizedAccess::Index childBufferIndex)
+{
+    return std::addressof(hashMapDirectory.mainBuffer.getChildRef(childBufferIndex));
+}
+
 uint64_t HashMapSlice::numberOfHashMaps() const
 {
     return hashMapDirectory.header().numHashMaps;

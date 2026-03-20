@@ -27,6 +27,7 @@
 #include <tuple>
 #include <unordered_map>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -35,6 +36,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -107,7 +109,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    inputBufferRef = LowerSchemaProvider::lowerSchema(
+        bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT, PagedVector::Page::getHeaderSize());
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
@@ -210,7 +213,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr
                 outputRecord.reassignFields(valueRecord);
 
                 RecordBuffer recordBufferOutput(outputBufferForValues);
-                tupleBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
+                tupleBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal, 0);
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
@@ -241,7 +244,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(cons
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
-                tupleBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
+                tupleBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider, 0);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
@@ -371,7 +374,8 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     }
     auto bufferOutput = bufferOutputOpt.value();
     std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
-    const auto outputBufferRef = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    const auto outputBufferRef
+        = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT, 0);
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator(outputBufferRef);
     findAndWriteToOutputBuffer(std::addressof(bufferOutput), hashMap.getBuffer(), bufferManager.get());
@@ -404,7 +408,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
         std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
         /// Create a buffer ref for the outputbuffer, as its size may differ from the pooled buffer size
         const auto outputBufferRef
-            = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+            = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT, 0);
         auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBuffer(outputBufferRef);
         findAndWriteToOutputBuffer(std::addressof(inputBuffer), std::addressof(bufferOutput), bufferManager.get(), hashMap.getBuffer());
 

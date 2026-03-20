@@ -63,10 +63,12 @@ public:
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be read
+    /// @param headerSize The size of the buffer's header (if any) in bytes
     virtual Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex) const
+        nautilus::val<uint64_t>& recordIndex,
+        nautilus::val<uint64_t> headerSize = 0) const
         = 0;
 
     /// Returned by writeRecord
@@ -82,11 +84,13 @@ public:
     /// @param recordBuffer: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getMemArea()
     /// @param recordIndex: Index of the record to be stored to
     /// @param rec: Record to be stored
+    /// @param headerSize The size of the buffer's header (if any) in bytes
     virtual WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        nautilus::val<uint64_t> headerSize) const
         = 0;
 
     [[nodiscard]] uint64_t getCapacity() const;

@@ -22,9 +22,11 @@
 #include <memory>
 #include <span>
 #include <string>
+
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <boost/asio/detail/socket_ops.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -57,7 +59,7 @@ uint64_t calcCapacity(const uint64_t numberOfKeys, const double loadFactor)
 }
 
 ChainedHashMap
-ChainedHashMap::init(TupleBuffer &tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
+ChainedHashMap::init(TupleBuffer& tupleBuffer, const uint64_t entrySize, const uint64_t numberOfBuckets, const uint64_t pageSize)
 {
     const uint64_t entriesPerPage = pageSize / entrySize;
     const uint64_t numberOfChains = calcCapacity(numberOfBuckets, assumedLoadFactor);
@@ -149,7 +151,7 @@ ChainedHashMap ChainedHashMap::load(TupleBuffer& tupleBuffer)
     return chm;
 }
 
-void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize) const
+void ChainedHashMap::allocateNewVarSizedPage(AbstractBufferProvider* bufferProvider, const size_t neededSize)
 {
     auto newPage = bufferProvider->getUnpooledBuffer(neededSize * NUMBER_OF_PRE_ALLOCATED_VAR_SIZED_ITEMS);
     if (!newPage)

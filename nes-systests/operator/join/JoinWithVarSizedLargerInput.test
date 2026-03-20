@@ -92,8 +92,8 @@ falseKey1,otherKey566CoolText,49,49,49,49,49,49,49,49,49,49,548
 falseKey1,otherKey566CoolText,50,50,50,50,50,50,50,50,50,50,549
 
 CREATE SINK sinkStream1Stream2(
-  stream1stream2.start UINT64,
-  stream1stream2.end UINT64,
+  stream1stream2.start UINT64 NOT NULL,
+  stream1stream2.end UINT64 NOT NULL,
   stream1.key1_s1 VARSIZED,
   stream1.key2_s1 VARSIZED,
   stream1.i8_s1 INT8,

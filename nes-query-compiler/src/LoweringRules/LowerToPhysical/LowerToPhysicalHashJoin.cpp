@@ -273,9 +273,9 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto [newLeftInputSchema, leftMapOperators] = addMapOperators(join->getLeftSchema(), leftJoinFields, memoryLayoutType);
     auto [newRightInputSchema, rightMapOperators] = addMapOperators(join->getRightSchema(), rightJoinFields, memoryLayoutType);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * newLeftInputSchema.getSizeOfSchemaInBytes(), newLeftInputSchema, memoryLayoutType, 0);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(
-        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType);
+        conf.numberOfRecordsPerKey.getValue() * newRightInputSchema.getSizeOfSchemaInBytes(), newRightInputSchema, memoryLayoutType, 0);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 

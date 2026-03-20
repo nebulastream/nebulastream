@@ -2,6 +2,7 @@
 # description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
 # We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
 # groups: [milestone, benchmark, large, Aggregation, Join]
+GlobalConfiguration worker.number_of_buffers_in_global_buffer_manager: [500000]
 
 # Source definition. We have removed some columns that are not needed in our queries
 CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);

@@ -66,7 +66,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
 }
 
 std::shared_ptr<TupleBufferRef>
-LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType)
+LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema, const MemoryLayoutType layoutType, uint64_t headerSize)
 {
     PRECONDITION(schema.hasFields(), "We can not lower an empty schema!");
 
@@ -89,7 +89,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 0UL,
                 [](auto size, const RowTupleBufferRef::Field& field) { return size + field.type.getSizeInBytesWithNull(); });
             INVARIANT(tupleSize > 0, "Tuplesize must be larger than 0B");
-            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<RowTupleBufferRef>(RowTupleBufferRef{std::move(fields), tupleSize, bufferSize, headerSize});
         }
 
         case MemoryLayoutType::COLUMNAR_LAYOUT: {
@@ -110,7 +110,7 @@ LowerSchemaProvider::lowerSchema(const uint64_t bufferSize, const Schema& schema
                 columnOffset += (field.dataType.getSizeInBytesWithNull() * capacity);
             }
 
-            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize});
+            return std::make_shared<ColumnTupleBufferRef>(ColumnTupleBufferRef{std::move(fields), tupleSize, bufferSize, headerSize});
         }
     }
     std::unreachable();

@@ -101,6 +101,12 @@ public:
         other.size = 0;
     }
 
+    /// @brief Deep copies the tuple buffer into the target buffer.
+    /// The target must have *excactly* as much memory as the buffer being copied.
+    /// @Warning 1: Child buffers are ignored (not copied).
+    /// @Warning 2: Pinned Buffers are ignored (not copied).
+    void deepCopy(TupleBuffer& targetBuffer) const noexcept;
+
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
     TupleBuffer& operator=(const TupleBuffer& other) noexcept;
 
@@ -182,6 +188,8 @@ public:
 
     [[nodiscard]] uint32_t getNumberOfChildBuffers() const noexcept;
 
+    [[nodiscard]] TupleBuffer& getChildRef(VariableSizedAccess::Index bufferIndex) noexcept;
+
 private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
@@ -191,6 +199,7 @@ private:
     detail::BufferControlBlock* controlBlock = nullptr;
     uint8_t* ptr = nullptr;
     uint32_t size = 0;
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
 };
 
 /**

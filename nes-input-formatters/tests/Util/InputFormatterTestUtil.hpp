@@ -225,7 +225,7 @@ public:
     TupleIterator(std::vector<TupleBuffer> buffers, const Schema& schema, const MemoryLayoutType layoutType)
         : schema(std::move(schema))
         , buffers(std::move(buffers))
-        , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType))
+        , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType, 0))
     {
     }
 
@@ -263,7 +263,7 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
     InputFormatterTestUtil::sortTupleBuffers(expectedResult);
 
     bool allTuplesMatch = true;
-    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto bufferRef = LowerSchemaProvider::lowerSchema(expectedResult.at(0).getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT, 0);
     TupleIterator expectedResultTupleIt(std::move(expectedResult), schema, MemoryLayoutType::ROW_LAYOUT);
     TupleIterator actualResultTupleIt(std::move(actualResult), schema, MemoryLayoutType::ROW_LAYOUT);
     while (const auto actualResultTuple = actualResultTupleIt.getNextTuple())
@@ -360,7 +360,7 @@ void writeFieldToBuffer(
 
     const nautilus::val<AbstractBufferProvider*> bufferProviderVal{std::addressof(bufferProvider)};
     auto recordIndex = recordBuffer.getNumRecords();
-    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
+    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal, 0);
 }
 
 inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const TupleBufferRef& tupleBufferRef)
@@ -391,7 +391,7 @@ template <typename TupleSchema, bool PrintDebug = false>
 TupleBuffer createTupleBufferFromTuples(const Schema& schema, BufferManager& bufferManager, const std::vector<TupleSchema>& tuples)
 {
     PRECONDITION(bufferManager.getNumberOfAvailableBuffers() != 0, "Cannot create a test tuple buffer, if there are no buffers available");
-    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT);
+    auto tupleBufferRef = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, MemoryLayoutType::ROW_LAYOUT, 0);
     auto tupleBuffer = bufferManager.getBufferBlocking();
 
     for (const auto& tuple : tuples)
@@ -431,8 +431,8 @@ bool validateResult(TestHandle<TupleSchemaTemplate>& testHandle)
             if (PrintDebug)
             {
                 /// If specified, print the contents of the buffers.
-                auto tupleBufferRef
-                    = LowerSchemaProvider::lowerSchema(actualResultBuffer.getBufferSize(), testHandle.schema, MemoryLayoutType::ROW_LAYOUT);
+                auto tupleBufferRef = LowerSchemaProvider::lowerSchema(
+                    actualResultBuffer.getBufferSize(), testHandle.schema, MemoryLayoutType::ROW_LAYOUT, 0);
                 printTupleBuffer("\n Actual result buffer:\n", actualResultBuffer, *tupleBufferRef);
                 printTupleBuffer(" Expected result buffer:\n", testHandle.expectedResultVectors[taskIndex][bufferIndex], *tupleBufferRef);
             }

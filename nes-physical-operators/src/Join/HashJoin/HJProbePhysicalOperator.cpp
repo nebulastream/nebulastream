@@ -90,17 +90,15 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     {
         /// Pin the current left hashmap buffer
         auto pinnedLeftBuffer = nautilus::invoke(
-            +[](const TupleBuffer* parent, uint32_t leftHashMapIndex, PipelineExecutionContext* pec)
+            +[](TupleBuffer* parent, uint32_t leftHashMapIndex)
             {
                 INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
                 /// Left buffers start at index 0
                 VariableSizedAccess::Index bufferIndex{leftHashMapIndex};
-                auto buffer = parent->loadChildBuffer(bufferIndex);
-                return std::addressof(pec->pinBuffer(std::move(buffer)));
+                return std::addressof(parent->getChildRef(std::move(bufferIndex)));
             },
             recordBuffer.getReference(),
-            leftHashMapIndex,
-            executionCtx.pipelineContext);
+            leftHashMapIndex);
 
         ChainedHashMapRef leftHashMap{
             pinnedLeftBuffer,
@@ -114,18 +112,16 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
             /// Pin the current right hashmap buffer
             /// Right buffers start after all left buffers
             auto pinnedRightBuffer = nautilus::invoke(
-                +[](const TupleBuffer* parent, uint32_t leftNumberOfHashMaps, uint32_t rightHashMapIndex, PipelineExecutionContext* pec)
+                +[](TupleBuffer* parent, uint32_t leftNumberOfHashMaps, uint32_t rightHashMapIndex)
                 {
                     INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
                     /// Right buffers start after all left buffers
                     VariableSizedAccess::Index bufferIndex{leftNumberOfHashMaps + rightHashMapIndex};
-                    auto buffer = parent->loadChildBuffer(bufferIndex);
-                    return std::addressof(pec->pinBuffer(std::move(buffer)));
+                    return std::addressof(parent->getChildRef(std::move(bufferIndex)));
                 },
                 recordBuffer.getReference(),
                 leftNumberOfHashMaps,
-                rightHashMapIndex,
-                executionCtx.pipelineContext);
+                rightHashMapIndex);
 
             const ChainedHashMapRef rightHashMap{
                 pinnedRightBuffer,
@@ -139,7 +135,16 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
                     rightEntry, pinnedRightBuffer, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
                 auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
+                const auto rightChildBufferIndexVal = readValueFromMemRef<uint32_t>(rightPagedVectorMem);
+                const auto rightPagedVectorBuffer = invoke(
+                    +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+                    {
+                        VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+                        return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+                    },
+                    pinnedRightBuffer,
+                    rightChildBufferIndexVal);
+                const PagedVectorRef rightPagedVector{rightPagedVectorBuffer, rightBufferRef};
                 const auto rightFields = rightBufferRef->getAllFieldNames();
                 auto rightItStart = rightPagedVector.begin(rightFields);
                 auto rightItEnd = rightPagedVector.end(rightFields);
@@ -151,7 +156,16 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         leftEntry, pinnedLeftBuffer, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
+                    const auto leftChildBufferIndexVal = readValueFromMemRef<uint32_t>(leftPagedVectorMem);
+                    const auto leftPagedVectorBuffer = invoke(
+                        +[](TupleBuffer* hashMapBuffer, const uint32_t childBufferIndexVal)
+                        {
+                            VariableSizedAccess::Index childBufferIndex{childBufferIndexVal};
+                            return std::addressof(hashMapBuffer->getChildRef(childBufferIndex));
+                        },
+                        pinnedLeftBuffer,
+                        leftChildBufferIndexVal);
+                    const PagedVectorRef leftPagedVector{leftPagedVectorBuffer, leftBufferRef};
                     const auto leftFields = leftBufferRef->getAllFieldNames();
 
                     for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)

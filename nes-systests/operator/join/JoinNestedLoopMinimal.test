@@ -22,7 +22,7 @@ ATTACH INLINE
 9,508
 10,509
 
-CREATE SINK sinkStream1Stream2(stream1stream2.start UINT64, stream1stream2.end UINT64, stream1.i8_s1 INT8, stream1.ts UINT64, stream2.i8_s2 INT8, stream2.ts UINT64)  TYPE File;
+CREATE SINK sinkStream1Stream2(stream1stream2.start UINT64 NOT NULL, stream1stream2.end UINT64 NOT NULL, stream1.i8_s1 INT8, stream1.ts UINT64, stream2.i8_s2 INT8, stream2.ts UINT64)  TYPE File;
 
 
 

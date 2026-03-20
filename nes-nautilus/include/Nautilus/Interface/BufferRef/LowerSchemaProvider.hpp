@@ -44,7 +44,8 @@ public:
         const std::string& outputFormatterType,
         const std::unordered_map<std::string, std::string>& config);
 
-    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<TupleBufferRef>
+    lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType, uint64_t headerSize);
 };
 
 }

@@ -40,7 +40,10 @@ SumAggregationPhysicalFunction::SumAggregationPhysicalFunction(
 }
 
 void SumAggregationPhysicalFunction::lift(
-    const nautilus::val<AggregationState*>& aggregationState, PipelineMemoryProvider& pipelineMemoryProvider, const Record& record)
+    const nautilus::val<AggregationState*>& aggregationState,
+    PipelineMemoryProvider& pipelineMemoryProvider,
+    nautilus::val<TupleBuffer*>,
+    const Record& record)
 {
     const auto value = inputFunction.execute(record, pipelineMemoryProvider.arena);
     if (inputType.nullable)
@@ -70,6 +73,8 @@ void SumAggregationPhysicalFunction::lift(
 void SumAggregationPhysicalFunction::combine(
     const nautilus::val<AggregationState*> aggregationState1,
     const nautilus::val<AggregationState*> aggregationState2,
+    nautilus::val<TupleBuffer*>,
+    nautilus::val<TupleBuffer*>,
     PipelineMemoryProvider&)
 {
     if (inputType.nullable)
@@ -107,7 +112,8 @@ void SumAggregationPhysicalFunction::combine(
     }
 }
 
-Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+Record SumAggregationPhysicalFunction::lower(
+    const nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     if (inputType.nullable)
     {
@@ -134,15 +140,12 @@ Record SumAggregationPhysicalFunction::lower(const nautilus::val<AggregationStat
     return record;
 }
 
-void SumAggregationPhysicalFunction::reset(const nautilus::val<AggregationState*> aggregationState, PipelineMemoryProvider&)
+void SumAggregationPhysicalFunction::reset(
+    nautilus::val<AggregationState*> aggregationState, nautilus::val<TupleBuffer*>, PipelineMemoryProvider&)
 {
     /// Resetting the sum to 0
     const auto memArea = static_cast<nautilus::val<int8_t*>>(aggregationState);
     nautilus::memset(memArea, 0, getSizeOfStateInBytes());
-}
-
-void SumAggregationPhysicalFunction::cleanup(nautilus::val<AggregationState*>)
-{
 }
 
 size_t SumAggregationPhysicalFunction::getSizeOfStateInBytes() const

@@ -75,7 +75,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             {
                 throw CannotAllocateBuffer("{}B for the hash join window trigger were requested", neededFinalBufferSize);
             }
-            /// initialize a view over the final hash map tuple buffer
+            /// initialize the final hash map tuple buffer
             ChainedHashMap finalChainedHashMap
                 = ChainedHashMap::init(finalHashMapTupleBuffer.value(), chm.getEntrySize(), chm.getNumberOfBuckets(), chm.getPageSize());
             /// pin and return the address
@@ -93,16 +93,14 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     {
         /// Pin the current hashmap buffer
         auto pinnedCurrentBuffer = nautilus::invoke(
-            +[](const TupleBuffer* parent, uint32_t curHashMap, PipelineExecutionContext* pec)
+            +[](TupleBuffer* parent, uint32_t curHashMap)
             {
                 INVARIANT(parent != nullptr, "Parent Tuplebuffer MUST NOT be null at this point");
                 VariableSizedAccess::Index bufferIndex{curHashMap};
-                auto buffer = parent->loadChildBuffer(bufferIndex);
-                return std::addressof(pec->pinBuffer(std::move(buffer)));
+                return std::addressof(parent->getChildRef(bufferIndex));
             },
             recordBuffer.getReference(),
-            curHashMap,
-            executionCtx.pipelineContext);
+            curHashMap);
 
         const ChainedHashMapRef currentMap(
             pinnedCurrentBuffer,
@@ -110,7 +108,6 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
             hashMapOptions.fieldValues,
             hashMapOptions.entriesPerPage,
             hashMapOptions.entrySize);
-
         for (const auto entry : currentMap)
         {
             const ChainedHashMapRef::ChainedEntryRef entryRef(
@@ -126,15 +123,17 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
+                 pinnedFinalBuffer = pinnedFinalBuffer,
                  pinnedCurrentBuffer = pinnedCurrentBuffer](const nautilus::val<AbstractHashMapEntry*>& entryOnUpdate)
                 {
                     /// Combining the aggregation states of the current entry with the aggregation states of the final hash map
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, pinnedCurrentBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnUpdate, pinnedFinalBuffer, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefState = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
-                        aggFunction->combine(globalState, entryRefState, executionCtx.pipelineMemoryProvider);
+                        aggFunction->combine(
+                            globalState, entryRefState, pinnedFinalBuffer, pinnedCurrentBuffer, executionCtx.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefState = entryRefState + aggFunction->getSizeOfStateInBytes();
                     }
@@ -144,18 +143,20 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
                  &executionCtx,
                  &entryRef,
                  &aggregationPhysicalFunctions = aggregationPhysicalFunctions,
+                 pinnedFinalBuffer = pinnedFinalBuffer,
                  pinnedCurrentBuffer = pinnedCurrentBuffer](const nautilus::val<AbstractHashMapEntry*>& entryOnInsert)
                 {
                     /// If the entry for the provided key has not been seen by this hash map / worker thread, we need
                     /// to create a new one and initialize the aggregation states. After that, we can combine the aggregation states.
-                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, pinnedCurrentBuffer, fieldKeys, fieldValues);
+                    const ChainedHashMapRef::ChainedEntryRef entryRefOnInsert(entryOnInsert, pinnedFinalBuffer, fieldKeys, fieldValues);
                     auto globalState = static_cast<nautilus::val<AggregationState*>>(entryRefOnInsert.getValueMemArea());
                     auto entryRefStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
                     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
                     {
                         /// In contrast to the lambda method above, we have to reset the aggregation state before combining it with the other state
-                        aggFunction->reset(globalState, executionCtx.pipelineMemoryProvider);
-                        aggFunction->combine(globalState, entryRefStatePtr, executionCtx.pipelineMemoryProvider);
+                        aggFunction->reset(globalState, pinnedFinalBuffer, executionCtx.pipelineMemoryProvider);
+                        aggFunction->combine(
+                            globalState, entryRefStatePtr, pinnedFinalBuffer, pinnedCurrentBuffer, executionCtx.pipelineMemoryProvider);
                         globalState = globalState + aggFunction->getSizeOfStateInBytes();
                         entryRefStatePtr = entryRefStatePtr + aggFunction->getSizeOfStateInBytes();
                     }
@@ -173,7 +174,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
-            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, executionCtx.pipelineMemoryProvider));
+            outputRecord.reassignFields(aggFunction->lower(finalStatePtr, pinnedFinalBuffer, executionCtx.pipelineMemoryProvider));
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
         }
 
@@ -186,7 +187,6 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
         for (auto finalStatePtr = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
              const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
         {
-            aggFunction->cleanup(finalStatePtr);
             finalStatePtr = finalStatePtr + aggFunction->getSizeOfStateInBytes();
         }
     }

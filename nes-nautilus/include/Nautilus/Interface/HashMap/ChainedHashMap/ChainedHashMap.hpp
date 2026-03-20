@@ -72,7 +72,7 @@ public:
     /// @brief Loads a ChainedHashMap view from a pre-filled TupleBuffer
     static ChainedHashMap load(TupleBuffer& tupleBuffer);
 
-    std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, size_t neededSize);
+    std::span<std::byte> allocateSpaceForVarSized(AbstractBufferProvider* bufferProvider, const size_t neededSize);
     AbstractHashMapEntry* insertEntry(HashFunction::HashValue::raw_type hash, AbstractBufferProvider* bufferProvider) override;
 
     [[nodiscard]] uint64_t getNumberOfTuples() const override { return header().numTuples; }
@@ -103,6 +103,9 @@ public:
     /// @warning Be super careful with this. Sometimes you need a pointer to the TupleBuffer but you should never alter it outside of this
     /// view and without using its access methods
     [[nodiscard]] TupleBuffer* getBuffer() { return std::addressof(buffer); }
+
+    void printHeader() const;
+    void printContentInfo() const;
 
 protected:
     void appendPage(AbstractBufferProvider* bufferProvider);

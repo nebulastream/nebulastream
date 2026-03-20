@@ -62,12 +62,14 @@ public:
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
-        nautilus::val<uint64_t>& recordIndex) const override;
+        nautilus::val<uint64_t>& recordIndex,
+        nautilus::val<uint64_t>) const override;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& bytesWritten,
         const RecordBuffer& recordBuffer,
         const Record& rec,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+        nautilus::val<uint64_t>) const override;
 };
 }

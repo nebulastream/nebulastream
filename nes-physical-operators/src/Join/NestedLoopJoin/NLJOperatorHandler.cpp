@@ -44,17 +44,17 @@ NLJOperatorHandler::NLJOperatorHandler(
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
-NLJOperatorHandler::getCreateNewSlicesFunction(AbstractBufferProvider*, const CreateNewSlicesArguments&) const
+NLJOperatorHandler::getCreateNewSlicesFunction(AbstractBufferProvider* bufferProvider, const CreateNewSlicesArguments&) const
 {
     PRECONDITION(
         numberOfWorkerThreads > 0, "Number of worker threads not set for window based operator. Was setWorkerThreads() being called?");
     return std::function(
-        [numberOfWorkerThreads = numberOfWorkerThreads,
-         outputOriginId = outputOriginId](SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
+        [numberOfWorkerThreads = numberOfWorkerThreads, outputOriginId = outputOriginId, bufferProvider](
+            SliceStart sliceStart, SliceEnd sliceEnd) -> std::vector<std::shared_ptr<Slice>>
         {
             NES_TRACE(
                 "Creating new NLJ slice for sliceStart {} and sliceEnd {} for output origin {}", sliceStart, sliceEnd, outputOriginId);
-            return {std::make_shared<NLJSlice>(sliceStart, sliceEnd, numberOfWorkerThreads)};
+            return {std::make_shared<NLJSlice>(bufferProvider, sliceStart, sliceEnd, numberOfWorkerThreads)};
         });
 }
 

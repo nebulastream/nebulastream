@@ -52,7 +52,6 @@ namespace
 {
 TupleBuffer getNewBufferForVarSized(AbstractBufferProvider& tupleBufferProvider, const uint64_t newBufferSize)
 {
-    /// TODO #1368: This optimization leads to too many buffers being allocated
     /// If the fixed size buffers are not large enough, we get an unpooled buffer
     if (tupleBufferProvider.getBufferSize() > newBufferSize)
     {

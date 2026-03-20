@@ -65,7 +65,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
     auto writeResult
-        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider, 0);
     /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
     /// We emit and create a new record buffer
     if (!writeResult.successful)
@@ -78,7 +78,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
         writeResult
-            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider, 0);
     }
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }

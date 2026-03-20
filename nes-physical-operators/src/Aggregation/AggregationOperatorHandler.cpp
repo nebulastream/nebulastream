@@ -84,20 +84,17 @@ void AggregationOperatorHandler::triggerSlices(
             const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(slice);
             for (uint64_t hashMapIdx = 0; hashMapIdx < aggregationSlice->numberOfHashMaps(); ++hashMapIdx)
             {
-                auto tupleBufferOpt = aggregationSlice->getHashMapTupleBuffer(WorkerThreadId(hashMapIdx));
-                if (tupleBufferOpt.has_value())
+                auto hashMapChildIndex = aggregationSlice->getWorkerHashMapIndex(WorkerThreadId(hashMapIdx));
+                auto hashMapTupleBuffer = aggregationSlice->loadHashMapBuffer(hashMapChildIndex);
+                /// Get the hashmap pointer from the tuple buffer to check if it has tuples
+                ChainedHashMap chainedHashMap = ChainedHashMap::load(hashMapTupleBuffer);
+                HashMap* hashMap = &chainedHashMap;
+                if (hashMap->getNumberOfTuples() > 0)
                 {
-                    auto tupleBuffer = tupleBufferOpt.value();
-                    /// Get the hashmap pointer from the tuple buffer to check if it has tuples
-                    ChainedHashMap chainedHashMap = ChainedHashMap::load(tupleBuffer);
-                    HashMap* hashMap = &chainedHashMap;
-                    if (hashMap->getNumberOfTuples() > 0)
-                    {
-                        /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
-                        rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
-                        allTupleBuffers.emplace_back(tupleBuffer);
-                        totalNumberOfTuples += hashMap->getNumberOfTuples();
-                    }
+                    /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
+                    rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
+                    allTupleBuffers.emplace_back(hashMapTupleBuffer);
+                    totalNumberOfTuples += hashMap->getNumberOfTuples();
                 }
             }
         }

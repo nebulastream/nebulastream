@@ -122,8 +122,8 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
         PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
         const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-        auto bufferRef
-            = LowerSchemaProvider::lowerSchema(configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType);
+        auto bufferRef = LowerSchemaProvider::lowerSchema(
+            configuration.pageSize.getValue(), logicalOperator.getInputSchemas()[0], memoryLayoutType, 0);
 
         auto name = descriptor->getName();
         auto aggregationArguments = AggregationPhysicalFunctionRegistryArguments(

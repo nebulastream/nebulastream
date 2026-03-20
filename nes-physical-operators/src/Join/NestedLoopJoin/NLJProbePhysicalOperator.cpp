@@ -170,7 +170,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+            return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
         },
         sliceRefLeft,
         workerThreadIdForPages,
@@ -179,7 +179,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
         {
             PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
+            return nljSlice->getPagedVectorTupleBufferRef(workerThreadId, joinBuildSide);
         },
         sliceRefRight,
         workerThreadIdForPages,

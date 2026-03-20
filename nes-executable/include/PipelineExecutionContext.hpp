@@ -53,6 +53,7 @@ public:
 
     virtual TupleBuffer allocateTupleBuffer() = 0;
     /// Pins a buffer, meaning the returned reference should be valid throughout the lifetime of the pipeline execution context
+    /// Use this when there is not logical parent buffer for the buffer you want to pin. If the buffer is already a child to another buffer, then use the geChildRef() method on the parent to get a persistent reference to the child buffer.
     virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
     [[nodiscard]] virtual WorkerThreadId getId() const = 0;
     [[nodiscard]] virtual uint64_t getNumberOfWorkerThreads() const = 0;
@@ -62,9 +63,5 @@ public:
     /// TODO #30 Remove OperatorHandler from the pipeline execution context
     virtual std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() = 0;
     virtual void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>&) = 0;
-
-    /// @brief Pins a buffer to the Pipeline Execution Context.
-    /// This is necessary when Nautilus needs to get a reference to a TupleBuffer directly, when no object instances persist at runtime (views).
-    [[nodiscard]] virtual TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) = 0;
 };
 }

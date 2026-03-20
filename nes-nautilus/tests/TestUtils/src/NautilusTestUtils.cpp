@@ -92,7 +92,7 @@ std::vector<TupleBuffer> NautilusTestUtils::createMonotonicallyIncreasingValues(
     const uint64_t maxSizeVarSizedData)
 {
     /// Creating here the memory provider for the tuple buffers that store the data
-    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout);
+    const auto memoryProviderInputBuffer = LowerSchemaProvider::lowerSchema(bufferManager.getBufferSize(), schema, memoryLayout, 0);
 
 
     /// If we have large number of tuples, we should compile the query otherwise, it is faster to run it in the interpreter.
@@ -232,7 +232,7 @@ void NautilusTestUtils::compileFillBufferFunction(
                 }
             }
             auto currentIndex = nautilus::val<uint64_t>(outputIndex[i]);
-            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider);
+            memoryProviderInputBuffer->writeRecord(currentIndex, recordBuffer, record, bufferProvider, 0);
             recordBuffer.setNumRecords(i + 1);
         }
     };

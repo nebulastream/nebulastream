@@ -50,19 +50,6 @@ HashMap* AggregationSlice::getHashMapPtr(const WorkerThreadId workerThreadId) co
     return reinterpret_cast<HashMap*>(childBuffer.getAvailableMemoryArea<>().data());
 }
 
-std::optional<TupleBuffer> AggregationSlice::getHashMapTupleBuffer(const WorkerThreadId workerThreadId) const
-{
-    const auto pos = workerThreadId % numberOfHashMaps();
-    INVARIANT(pos < numberOfHashMaps(), "The worker thread id should be smaller than the number of hashmaps");
-    auto childBufferIndex = getHashMapChildBufferIndex(pos);
-    if (childBufferIndex == TupleBuffer::INVALID_CHILD_BUFFER_INDEX_VALUE)
-    {
-        return std::nullopt;
-    }
-    auto childBuffer = loadHashMapBuffer(childBufferIndex);
-    return childBuffer;
-}
-
 VariableSizedAccess::Index AggregationSlice::getWorkerHashMapIndex(const WorkerThreadId workerThreadId) const
 {
     const uint64_t pos = workerThreadId % numberOfHashMaps();

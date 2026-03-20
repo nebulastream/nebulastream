@@ -76,58 +76,14 @@ TupleBuffer* getAggHashMapProxy(
     /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
     const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
     INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    auto hashMapTupleBuffer = aggregationSlice->loadHashMapBuffer(aggregationSlice->getWorkerHashMapIndex(workerThreadId));
+    auto hashMapChildIndex = aggregationSlice->getWorkerHashMapIndex(workerThreadId);
+    auto hashMapTupleBuffer = aggregationSlice->loadHashMapBuffer(hashMapChildIndex);
     return std::addressof(pec->pinBuffer(std::move(hashMapTupleBuffer)));
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
     WindowBuildPhysicalOperator::setup(executionCtx, compilationContext);
-
-    /// Creating the cleanup function for the slice of current stream
-    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
-    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
-    auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(
-        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
-    if (bool expectedValue = false; operatorHandler->setupAlreadyCalled.compare_exchange_strong(expectedValue, true))
-    {
-        operatorHandler->cleanupStateNautilusFunction
-            = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-                [copyOfHashMapOptions = hashMapOptions,
-                 copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
-                {
-                    auto tupleBuffer = nautilus::invoke(
-                        +[](HashMap* hm)
-                        {
-                            auto& chm = dynamic_cast<ChainedHashMap&>(*hm);
-                            return chm.getBuffer();
-                        },
-                        hashMap);
-
-                    const ChainedHashMapRef hashMapRef(
-                        tupleBuffer,
-                        copyOfHashMapOptions.fieldKeys,
-                        copyOfHashMapOptions.fieldValues,
-                        copyOfHashMapOptions.entriesPerPage,
-                        copyOfHashMapOptions.entrySize);
-                    for (const auto entry : hashMapRef)
-                    {
-                        const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                            entry, tupleBuffer, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
-                        auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                        {
-                            aggFunction->cleanup(state);
-                            state = state + aggFunction->getSizeOfStateInBytes();
-                        }
-                    }
-                })));
-    }
-
-
-    /// NOLINTEND(performance-unnecessary-value-param)
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -170,7 +126,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
             for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
             {
-                aggFunction->reset(state, ctx.pipelineMemoryProvider);
+                aggFunction->reset(state, hashMapTupleBuffer, ctx.pipelineMemoryProvider);
                 state = state + aggFunction->getSizeOfStateInBytes();
             }
         },
@@ -183,7 +139,7 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto state = static_cast<nautilus::val<AggregationState*>>(entryRef.getValueMemArea());
     for (const auto& aggFunction : nautilus::static_iterable(aggregationPhysicalFunctions))
     {
-        aggFunction->lift(state, ctx.pipelineMemoryProvider, record);
+        aggFunction->lift(state, ctx.pipelineMemoryProvider, hashMapTupleBuffer, record);
         state = state + aggFunction->getSizeOfStateInBytes();
     }
 }
