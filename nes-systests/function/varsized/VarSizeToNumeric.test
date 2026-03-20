@@ -1,0 +1,125 @@
+# name: VarSizedToNumeric conversion
+# description: Checks if the conversion from VARSIZED strings to numeric target types works
+# groups: [Function]
+
+# SUCCESS CASES
+
+# FLOAT64
+CREATE LOGICAL SOURCE varSizedNumericFloat64Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericFloat64Stream TYPE File;
+ATTACH INLINE
+14.5
+ 14.5
+14.5
+1 234.56
+12?3
+-42.75
+0
+000123.4500
+ ? 7 ? . ? 5 ?
+
+SELECT VARSIZEDTONUMERIC(value, FLOAT64) AS value_out FROM varSizedNumericFloat64Stream INTO FILE();
+----
+14.5
+14.5
+14.5
+1234.56
+123
+-42.75
+0
+123.45
+7.5
+
+
+# FLOAT32
+CREATE LOGICAL SOURCE varSizedNumericFloat32Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericFloat32Stream TYPE File;
+ATTACH INLINE
+3.5
+0
+-7.25
+1?2?.5
+
+SELECT VARSIZEDTONUMERIC(value, FLOAT32) AS value_out FROM varSizedNumericFloat32Stream INTO FILE();
+----
+3.5
+0
+-7.25
+12.5
+
+
+# INT32
+CREATE LOGICAL SOURCE varSizedNumericInt32Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt32Stream TYPE File;
+ATTACH INLINE
+123
+ 123
+-42
+1?2?3
+00077
+
+SELECT VARSIZEDTONUMERIC(value, INT32) AS value_out FROM varSizedNumericInt32Stream INTO FILE();
+----
+123
+123
+-42
+123
+77
+
+
+# INT64
+CREATE LOGICAL SOURCE varSizedNumericInt64Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt64Stream TYPE File;
+ATTACH INLINE
+922337203685477580
+-922337203685477580
+12?3
+
+SELECT VARSIZEDTONUMERIC(value, INT64) AS value_out FROM varSizedNumericInt64Stream INTO FILE();
+----
+922337203685477580
+-922337203685477580
+123
+
+
+# UINT32
+CREATE LOGICAL SOURCE varSizedNumericUInt32Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt32Stream TYPE File;
+ATTACH INLINE
+123
+0
+4?2
+
+SELECT VARSIZEDTONUMERIC(value, UINT32) AS value_out FROM varSizedNumericUInt32Stream INTO FILE();
+----
+123
+0
+42
+
+
+# UINT64
+CREATE LOGICAL SOURCE varSizedNumericUInt64Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt64Stream TYPE File;
+ATTACH INLINE
+184467440737095516
+0
+1?2?3
+
+SELECT VARSIZEDTONUMERIC(value, UINT64) AS value_out FROM varSizedNumericUInt64Stream INTO FILE();
+----
+184467440737095516
+0
+123
+
+
+# ERROR CASES
+
+# different input data type than VARSIZED
+CREATE LOGICAL SOURCE wrongInputDataTypeStream(value UINT64);
+CREATE PHYSICAL SOURCE FOR wrongInputDataTypeStream TYPE File;
+ATTACH INLINE
+123
+
+SELECT VARSIZEDTONUMERIC(value, FLOAT64) AS value_out FROM wrongInputDataTypeStream INTO FILE();
+----
+Error 2006

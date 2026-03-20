@@ -14,23 +14,25 @@
 
 #pragma once
 
+#include <DataTypes/DataType.hpp>
+#include <ExecutionContext.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <ExecutionContext.hpp>
 
 namespace NES
-{
+    {
 
-class VarSizedToDoublePhysicalFunction final
-{
-public:
-    explicit VarSizedToDoublePhysicalFunction(PhysicalFunction child);
+        class VarSizedToNumericPhysicalFunction final
+        {
+        public:
+            VarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType);
 
-    VarVal execute(const Record& record, ArenaRef& arena) const;
+            VarVal execute(const Record& record, ArenaRef& arena) const;
 
-private:
-    PhysicalFunction child;
-};
+        private:
+            PhysicalFunction child;
+            DataType outputType;
+        };
 
-}
+    }
