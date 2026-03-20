@@ -14,8 +14,8 @@
 
 #include <Phases/PipeliningPhase.hpp>
 
-#include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <stdexcept>
@@ -26,29 +26,23 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
-#include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
-#include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <EmitOperatorHandler.hpp>
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
-#include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <Pipeline.hpp>
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
-#include <SelectionPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
-#include <UnionRenamePhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -57,6 +51,36 @@ namespace
 {
 
 using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipeline>>;
+using MergePointSet = std::unordered_set<OperatorId>;
+
+/// Finds all operators in the DAG that have in-degree > 1 (i.e., are children of multiple parents).
+/// These are merge points where a pipeline break is required, because multiple input pipelines
+/// converge and the downstream operators must not be duplicated across pipelines.
+MergePointSet findMergePoints(const std::vector<std::shared_ptr<PhysicalOperatorWrapper>>& roots)
+{
+    std::unordered_set<OperatorId> visited;
+    MergePointSet mergePoints;
+    std::function<void(const std::shared_ptr<PhysicalOperatorWrapper>&)> traverse
+        = [&](const std::shared_ptr<PhysicalOperatorWrapper>& wrapper)
+    {
+        const auto opId = wrapper->getPhysicalOperator().getId();
+        if (!visited.insert(opId).second)
+        {
+            /// Already visited — this operator has in-degree > 1
+            mergePoints.insert(opId);
+            return;
+        }
+        for (const auto& child : wrapper->getChildren())
+        {
+            traverse(child);
+        }
+    };
+    for (const auto& root : roots)
+    {
+        traverse(root);
+    }
+    return mergePoints;
+}
 
 /// Helper function to add a default scan operator
 /// This is used only when the wrapped operator does not already provide a scan
@@ -112,7 +136,8 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
 /// This is used only when the wrapped operator does not already provide an emit
 /// @note Once we have refactored the memory layout and schema we can get rid of the configured buffer size.
 /// Do not add further parameters here that should be part of the QueryExecutionConfiguration.
-void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, uint64_t configuredBufferSize)
+void addDefaultEmit(
+    const std::shared_ptr<Pipeline>& pipeline, const PhysicalOperatorWrapper& wrappedOp, const uint64_t configuredBufferSize)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
     const auto& schema = wrappedOp.getOutputSchema();
@@ -132,7 +157,7 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
 void addOutputFormattingEmit(
     const std::shared_ptr<Pipeline>& pipeline,
     const PhysicalOperatorWrapper& wrappedOp,
-    uint64_t configuredBufferSize,
+    const uint64_t configuredBufferSize,
     const std::string& outputFormat,
     const std::unordered_map<std::string, std::string>& config)
 {
@@ -160,7 +185,8 @@ void buildPipelineRecursively(
     const std::shared_ptr<Pipeline>& currentPipeline,
     OperatorPipelineMap& pipelineMap,
     PipelinePolicy policy,
-    uint64_t configuredBufferSize)
+    uint64_t configuredBufferSize,
+    const MergePointSet& mergePoints)
 {
     /// Check if we've already seen this operator
     const OperatorId opId = opWrapper->getPhysicalOperator().getId();
@@ -212,9 +238,9 @@ void buildPipelineRecursively(
         const auto newPipelinePtr = currentPipeline->getSuccessors().back();
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
+            buildPipelineRecursively(
+                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         }
-
         return;
     }
 
@@ -236,7 +262,8 @@ void buildPipelineRecursively(
 
             for (auto& child : opWrapper->getChildren())
             {
-                buildPipelineRecursively(child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+                buildPipelineRecursively(
+                    child, opWrapper, newPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
             }
         }
         else
@@ -248,7 +275,8 @@ void buildPipelineRecursively(
             }
             for (auto& child : opWrapper->getChildren())
             {
-                buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+                buildPipelineRecursively(
+                    child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
             }
         }
 
@@ -324,9 +352,18 @@ void buildPipelineRecursively(
         pipelineMap.emplace(opId, newPipelinePtr);
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
+            buildPipelineRecursively(
+                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         }
         return;
+    }
+
+    /// Force a pipeline break for DAG merge points (operators with multiple parents).
+    /// Without this, the operator would be fused into the first parent's pipeline, and the second
+    /// parent's data would incorrectly flow through the first parent's operators.
+    if (policy != PipelinePolicy::ForceNew && mergePoints.contains(opId))
+    {
+        policy = PipelinePolicy::ForceNew;
     }
 
     /// Case 4: Forced new pipeline (pipeline breaker) for fusible operators
@@ -349,7 +386,8 @@ void buildPipelineRecursively(
             createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize));
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
+            buildPipelineRecursively(
+                child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         }
         return;
     }
@@ -378,7 +416,8 @@ void buildPipelineRecursively(
     {
         for (auto& child : opWrapper->getChildren())
         {
-            buildPipelineRecursively(child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
+            buildPipelineRecursively(
+                child, opWrapper, currentPipeline, pipelineMap, PipelinePolicy::Continue, configuredBufferSize, mergePoints);
         }
     }
 }
@@ -391,6 +430,7 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
     auto pipelinedPlan = std::make_shared<PipelinedQueryPlan>(physicalPlan.getQueryId(), physicalPlan.getExecutionMode());
 
     OperatorPipelineMap pipelineMap;
+    const auto mergePoints = findMergePoints(physicalPlan.getRootOperators());
 
     for (const auto& rootWrapper : physicalPlan.getRootOperators())
     {
@@ -401,7 +441,8 @@ std::shared_ptr<PipelinedQueryPlan> apply(const PhysicalPlan& physicalPlan)
 
         for (const auto& child : rootWrapper->getChildren())
         {
-            buildPipelineRecursively(child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize);
+            buildPipelineRecursively(
+                child, nullptr, rootPipeline, pipelineMap, PipelinePolicy::ForceNew, configuredBufferSize, mergePoints);
         }
     }
 
