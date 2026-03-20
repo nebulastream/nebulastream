@@ -10,13 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(add_nes_physical_operator_test)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-data-types nes-physical-operators nes-memory-test-utils nes-test-util)
-endfunction()
-
-add_nes_physical_operator_test(EmitPhysicalOperatorTest EmitPhysicalOperatorTest.cpp)
-add_nes_physical_operator_test(AndOrPhysicalFunctionTest AndOrPhysicalFunctionTest.cpp)
-add_nes_physical_operator_test(SliceAssignerTest SliceAssignerTest.cpp)
-add_nes_physical_operator_test(SliceCacheTest SliceCacheTest.cpp)
+add_source_files(nes-physical-operators
+        SliceCache.cpp
+        SliceCacheNone.cpp
+        SliceCacheSecondChance.cpp
+)
