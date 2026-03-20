@@ -159,6 +159,7 @@ void dataSourceThread(
     {
         result.set_value_at_thread_exit(
             dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+        NES_DEBUG("Stopped source: {}", *source);
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
