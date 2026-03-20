@@ -333,10 +333,10 @@ void SystestParser::applySubstitutionRules(std::string& line)
             /// Check word boundaries: the character immediately before and after the keyword
             /// must not be alphanumeric or underscore. This prevents replacing substrings of
             /// longer identifiers (e.g., replacing "we" inside "producedPower").
-            const bool leftBoundary = pos == 0 || !(std::isalnum(static_cast<unsigned char>(line[pos - 1])) || line[pos - 1] == '_');
+            const bool leftBoundary = pos == 0 || (std::isalnum(static_cast<unsigned char>(line[pos - 1])) == 0 && line[pos - 1] != '_');
             const auto endPos = pos + keyword.length();
             const bool rightBoundary
-                = endPos >= line.size() || !(std::isalnum(static_cast<unsigned char>(line[endPos])) || line[endPos] == '_');
+                = endPos >= line.size() || (std::isalnum(static_cast<unsigned char>(line[endPos])) == 0 && line[endPos] != '_');
 
             if (leftBoundary && rightBoundary)
             {
