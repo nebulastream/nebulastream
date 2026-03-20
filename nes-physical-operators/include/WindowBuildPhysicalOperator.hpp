@@ -18,11 +18,14 @@
 #include <memory>
 #include <optional>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <OperatorState.hpp>
 #include <PhysicalOperator.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <val.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -31,12 +34,19 @@ namespace NES
 class WindowOperatorBuildLocalState : public OperatorState
 {
 public:
-    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler) : operatorHandler(operatorHandler) { }
+    explicit WindowOperatorBuildLocalState(const nautilus::val<OperatorHandler*>& operatorHandler, SliceCache& sliceCache)
+        : operatorHandler(operatorHandler), sliceCache(sliceCache)
+    {
+    }
 
     nautilus::val<OperatorHandler*> getOperatorHandler() { return operatorHandler; }
 
+    [[nodiscard]] SliceCache& getSliceCache() const { return sliceCache; }
+
 private:
     nautilus::val<OperatorHandler*> operatorHandler;
+    /// Having here a reference is fine, as the WindowOperatorBuildLocalState never outlives the WindowBuildPhysicalOperator
+    SliceCache& sliceCache;
 };
 
 /// Is the general probe operator for window operators. It is responsible for emitting slices and windows to the second phase (probe).
@@ -44,7 +54,10 @@ private:
 class WindowBuildPhysicalOperator : public PhysicalOperatorConcept
 {
 public:
-    explicit WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction);
+    explicit WindowBuildPhysicalOperator(
+        OperatorHandlerId operatorHandlerId,
+        std::unique_ptr<TimeFunction> timeFunction,
+        const SliceCacheConfiguration& sliceCacheConfiguration);
     WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other);
 
     /// This setup function can be called in a multithreaded environment. Meaning that if
@@ -68,6 +81,7 @@ protected:
     std::optional<PhysicalOperator> child;
     const OperatorHandlerId operatorHandlerId;
     const std::unique_ptr<TimeFunction> timeFunction;
+    std::unique_ptr<SliceCache> sliceCache;
 };
 
 }

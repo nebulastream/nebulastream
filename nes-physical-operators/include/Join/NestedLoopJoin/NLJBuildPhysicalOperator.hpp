@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
@@ -36,7 +37,8 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef);
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        SliceCacheConfiguration sliceCacheConfiguration);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };

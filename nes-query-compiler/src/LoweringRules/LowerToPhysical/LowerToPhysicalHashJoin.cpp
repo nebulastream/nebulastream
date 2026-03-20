@@ -282,9 +282,19 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     /// Creating the left and right hash join build operator
     auto handlerId = getNextOperatorHandlerId();
     const HJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, leftHashMapOptions};
+        handlerId,
+        JoinBuildSideType::Left,
+        timeStampFieldLeft.toTimeFunction(),
+        leftBufferRef,
+        leftHashMapOptions,
+        conf.sliceCacheConfiguration};
     const HJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, rightHashMapOptions};
+        handlerId,
+        JoinBuildSideType::Right,
+        timeStampFieldRight.toTimeFunction(),
+        rightBufferRef,
+        rightHashMapOptions,
+        conf.sliceCacheConfiguration};
 
     /// Creating the hash join probe
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);

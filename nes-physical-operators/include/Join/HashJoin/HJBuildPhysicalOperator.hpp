@@ -22,16 +22,19 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
 class HJBuildPhysicalOperator;
-HashMap* getHashJoinHashMapProxy(
+void getHashJoinHashMapProxy(
+    SliceCacheEntry* entryToReplace,
     const HJOperatorHandler* operatorHandler,
     Timestamp timestamp,
     WorkerThreadId workerThreadId,
@@ -44,7 +47,8 @@ HashMap* getHashJoinHashMapProxy(
 class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
 {
 public:
-    friend HashMap* getHashJoinHashMapProxy(
+    friend void getHashJoinHashMapProxy(
+        SliceCacheEntry* entryToReplace,
         const HJOperatorHandler* operatorHandler,
         Timestamp timestamp,
         WorkerThreadId workerThreadId,
@@ -54,8 +58,9 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<TupleBufferRef>& bufferRef,
-        HashMapOptions hashMapOptions);
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        HashMapOptions hashMapOptions,
+        SliceCacheConfiguration sliceCacheConfiguration);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
