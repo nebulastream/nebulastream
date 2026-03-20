@@ -13,8 +13,10 @@
 */
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <utility>
+#include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
@@ -23,14 +25,17 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceCache/SliceCache.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <nautilus/val_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 #include <function.hpp>
+#include <val_ptr.hpp>
 
 namespace NES
 {
@@ -50,8 +55,10 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef))
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    SliceCacheConfiguration sliceCacheConfiguration)
+    : StreamJoinBuildPhysicalOperator(
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceCacheConfiguration))
 {
 }
 
@@ -66,26 +73,36 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Get the current slice / pagedVector that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(executionCtx, record);
-    const auto sliceReference = invoke(
-        +[](OperatorHandler* ptrOpHandler, const Timestamp timestampVal)
-        {
-            PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
-            const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-            const auto createFunction = opHandler->getCreateNewSlicesFunction({});
-            return dynamic_cast<NLJSlice*>(opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction)[0].get());
-        },
-        operatorHandler,
-        timestamp);
-    const auto nljPagedVectorMemRef = invoke(
-        +[](const NLJSlice* nljSlice, const WorkerThreadId workerThreadId, const JoinBuildSideType joinBuildSide)
-        {
-            PRECONDITION(nljSlice != nullptr, "nlj slice pointer should not be null!");
-            return nljSlice->getPagedVectorRef(workerThreadId, joinBuildSide);
-        },
-        sliceReference,
+    const auto nljPagedVectorMemRef = localState->getSliceCache().getDataStructureRef(
+        timestamp,
         executionCtx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide));
+        [&](const nautilus::val<SliceCacheEntry*>& entryToReplace)
+        {
+            nautilus::invoke(
+                +[](SliceCacheEntry* entryToReplace,
+                    const NLJOperatorHandler* opHandler,
+                    const Timestamp timestampVal,
+                    const WorkerThreadId workerThreadId,
+                    const JoinBuildSideType joinBuildSide)
+                {
+                    PRECONDITION(opHandler != nullptr, "opHandler context should not be null!");
+                    const auto createFunction = opHandler->getCreateNewSlicesFunction({});
+                    const auto newSlices = opHandler->getSliceAndWindowStore().getSlicesOrCreate(timestampVal, createFunction);
+                    INVARIANT(newSlices.size() == 1, "We expect exactly one slice for the NLJ");
+                    const auto newNLJSlice = std::dynamic_pointer_cast<NLJSlice>(newSlices[0]);
 
+                    /// Updating the slice cache entry
+                    entryToReplace->sliceStart = newNLJSlice->getSliceStart().getRawValue();
+                    entryToReplace->sliceEnd = newNLJSlice->getSliceEnd().getRawValue();
+                    entryToReplace->dataStructure
+                        = reinterpret_cast<int8_t*>(newNLJSlice->getPagedVectorRef(workerThreadId, joinBuildSide));
+                },
+                entryToReplace,
+                operatorHandler,
+                timestamp,
+                executionCtx.workerThreadId,
+                nautilus::val<JoinBuildSideType>(joinBuildSide));
+        });
 
     /// Write record to the pagedVector
     const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);

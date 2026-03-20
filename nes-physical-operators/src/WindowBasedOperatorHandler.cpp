@@ -14,16 +14,20 @@
 
 #include <WindowBasedOperatorHandler.hpp>
 
+#include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
+#include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -34,22 +38,17 @@ WindowBasedOperatorHandler::WindowBasedOperatorHandler(
     const OriginId outputOriginId,
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
     : sliceAndWindowStore(std::move(sliceAndWindowStore))
+    , watermarkProcessorBuild(std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins))
+    , watermarkProcessorProbe(std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId}))
     , numberOfWorkerThreads(0)
     , outputOriginId(outputOriginId)
     , inputOrigins(inputOrigins)
 {
 }
 
-void WindowBasedOperatorHandler::setWorkerThreads(const uint64_t numberOfWorkerThreads)
-{
-    WindowBasedOperatorHandler::numberOfWorkerThreads = numberOfWorkerThreads;
-}
-
 void WindowBasedOperatorHandler::start(PipelineExecutionContext& pipelineExecutionContext, uint32_t)
 {
     numberOfWorkerThreads = pipelineExecutionContext.getNumberOfWorkerThreads();
-    watermarkProcessorBuild = std::make_unique<MultiOriginWatermarkProcessor>(inputOrigins);
-    watermarkProcessorProbe = std::make_unique<MultiOriginWatermarkProcessor>(std::vector{outputOriginId});
 }
 
 void WindowBasedOperatorHandler::stop(QueryTerminationType, PipelineExecutionContext&)
@@ -98,6 +97,24 @@ void WindowBasedOperatorHandler::triggerAllWindows(PipelineExecutionContext* pip
     const auto slicesAndWindowInfo = sliceAndWindowStore->getAllNonTriggeredSlices();
     NES_TRACE("Triggering {} windows for origin: {}", slicesAndWindowInfo.size(), outputOriginId);
     triggerSlices(slicesAndWindowInfo, pipelineCtx);
+}
+
+int8_t* WindowBasedOperatorHandler::allocateSpaceForSliceCache(
+    const uint64_t sliceCacheMemorySize, const PipelineId pipelineId, AbstractBufferProvider& bufferProvider)
+{
+    INVARIANT(not sliceCacheBuffers.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
+
+    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
+    if (not buffer.has_value())
+    {
+        throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
+    }
+
+    /// We set everything to 0, as there might be old data in the tuple buffer
+    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
+    auto* result = reinterpret_cast<int8_t*>(buffer.value().getAvailableMemoryArea().data());
+    sliceCacheBuffers.wlock()->emplace(pipelineId, std::make_unique<TupleBuffer>(buffer.value()));
+    return result;
 }
 
 }
