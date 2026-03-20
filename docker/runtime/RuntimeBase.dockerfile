@@ -18,3 +18,15 @@ RUN apt update -y && apt install curl wget gpg -y \
 
 RUN wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-$(dpkg --print-architecture) \
     && chmod +x /bin/grpc_health_probe
+
+# Install IREE compiler tools for ML inference (ONNX → IREE compilation at runtime)
+ARG IREE_COMPILER_VERSION=3.10.0
+RUN apt-get update && apt-get install -y python3 python3-venv && \
+    python3 -m venv /opt/iree && \
+    /opt/iree/bin/pip install --no-cache-dir \
+        iree-base-compiler==${IREE_COMPILER_VERSION} \
+        iree-turbine \
+        onnx && \
+    ln -s /opt/iree/bin/iree-compile /usr/local/bin/iree-compile && \
+    ln -s /opt/iree/bin/iree-import-onnx /usr/local/bin/iree-import-onnx && \
+    apt clean && rm -rf /var/lib/apt/lists/*
