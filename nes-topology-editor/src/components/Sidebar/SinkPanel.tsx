@@ -1,7 +1,6 @@
 import type { Sink } from '../../lib/types';
 import { useStore } from '../../store';
 import { getSinkTypes, getSinkFields, buildDefaults } from '../../lib/sourceConfigs';
-import type { FormFieldDef } from '../../lib/sourceConfigs';
 import ConfigForm from './ConfigForm';
 import SchemaBuilder from './SchemaBuilder';
 

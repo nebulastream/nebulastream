@@ -75,7 +75,6 @@ const stableState: Record<string, unknown> = {
   physicalSources: [],
   sinks: [],
   logicalSources: [],
-  clipboard: null,
   selectedNodeId: null,
   selectNode: vi.fn(),
   setSidebarTab: vi.fn(),

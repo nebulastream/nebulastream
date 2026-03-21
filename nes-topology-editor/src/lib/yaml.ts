@@ -7,7 +7,7 @@ import type {
   Sink,
   Query,
 } from './types';
-import { SOURCE_CONFIGS, SINK_CONFIGS, PARSER_CONFIG } from './sourceConfigs';
+import { PARSER_CONFIG } from './sourceConfigs';
 import type { FormFieldDef } from './sourceConfigs';
 
 /** Build key->defaultValue map from field definitions. */

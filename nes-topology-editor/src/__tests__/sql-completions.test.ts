@@ -4,7 +4,6 @@ import {
   buildInlineSnippet,
   buildTimestampChoice,
   getCompletions,
-  SQL_KEYWORDS,
 } from '../lib/sqlCompletions';
 import type { LogicalSource, Sink } from '../lib/types';
 
