@@ -15,10 +15,11 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <DataTypes/MemoryLayoutType.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>

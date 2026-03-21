@@ -8,6 +8,7 @@
     "fmt",
     "nameof",
     "magic-enum",
-    "libuuid"
+    "libuuid",
+    "highs"
   ]
 }

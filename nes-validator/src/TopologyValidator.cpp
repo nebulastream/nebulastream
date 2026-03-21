@@ -20,10 +20,10 @@
 #include <string>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/Sources/SourceNameLogicalOperator.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SQLQueryParser/StatementBinder.hpp>
+#include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES::Validator
@@ -68,25 +68,32 @@ std::string validateTopology(const std::string& yamlString)
             }
         }
 
-        // 3. Validate SQL queries
+        // 3. Populate sink catalog from parsed config
+        auto sinkCatalog = std::make_shared<SinkCatalog>();
+
+        for (const auto& sinkConfig : config.sinks)
+        {
+            Schema schema;
+            for (const auto& field : sinkConfig.schema)
+            {
+                schema.addField(field.name, field.type);
+            }
+            auto addResult = sinkCatalog->addSinkDescriptor(
+                sinkConfig.name, schema, sinkConfig.type, Host(sinkConfig.host), sinkConfig.config, sinkConfig.parserConfig);
+            if (!addResult)
+            {
+                return "Invalid sink configuration: " + sinkConfig.name;
+            }
+        }
+
+        // 4. Parse and validate SQL queries through the full semantic analysis pipeline
+        //    (same as nes-cli dump: type inference, sink/source binding, schema propagation)
+        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog);
+
         for (const auto& query : config.query)
         {
-            // Parse SQL and create logical query plan — throws on invalid SQL syntax.
-            // Uses the same code path as nes-cli (createLogicalQueryPlanFromSQLString).
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-
-            // Validate that all source names referenced in the query exist in the catalog.
-            // The ANTLR parser creates SourceNameLogicalOperator nodes with names but does
-            // not check the catalog — that is done later by the optimizer in the real engine.
-            auto sourceOps = getOperatorByType<SourceNameLogicalOperator>(plan);
-            for (const auto& sourceOp : sourceOps)
-            {
-                const auto& sourceName = sourceOp->getLogicalSourceName();
-                if (!sourceCatalog->containsLogicalSource(sourceName))
-                {
-                    return "Unknown source in query: " + sourceName;
-                }
-            }
+            [[maybe_unused]] auto analysedPlan = semanticAnalyzer.analyse(plan);
         }
 
         return ""; // success

@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_nes_unit_test(topology-validator-test "UnitTests/TopologyValidatorTest.cpp")
-target_link_libraries(topology-validator-test nes-validator)
+target_link_libraries(topology-validator-test nes-validator nes-query-optimizer)
 
 add_nes_unit_test(config-metadata-test "UnitTests/ConfigMetadataTest.cpp")
-target_link_libraries(config-metadata-test nes-validator)
+target_link_libraries(config-metadata-test nes-validator nes-query-optimizer)

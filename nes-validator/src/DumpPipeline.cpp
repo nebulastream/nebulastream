@@ -13,15 +13,123 @@
 */
 
 #include <Validator/DumpPipeline.hpp>
+#include "YamlBinding.hpp"
+
+#include <exception>
+#include <memory>
+#include <ranges>
+#include <sstream>
 #include <string>
+#include <vector>
+#include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
+#include <WorkerCatalog.hpp>
+#include <fmt/format.h>
 
 namespace NES::Validator
 {
 
-std::string explainTopology([[maybe_unused]] const std::string& yamlString)
+std::string explainTopology(const std::string& yamlString)
 {
-    /// TODO(Phase 9): Implement full dump pipeline with optimizer integration
-    return "Error: explainTopology not yet implemented";
+    try
+    {
+        auto config = YAML::Load(yamlString).as<TopologyConfig>();
+
+        // 1. Populate source catalog
+        auto sourceCatalog = std::make_shared<SourceCatalog>();
+        for (const auto& logicalSource : config.logical)
+        {
+            Schema schema;
+            for (const auto& field : logicalSource.schema)
+            {
+                schema.addField(field.name, field.type);
+            }
+            if (!sourceCatalog->addLogicalSource(logicalSource.name, schema))
+            {
+                return "Error: Duplicate logical source: " + logicalSource.name;
+            }
+        }
+        for (const auto& physicalSource : config.physical)
+        {
+            auto logicalOpt = sourceCatalog->getLogicalSource(physicalSource.logical);
+            if (!logicalOpt)
+            {
+                return "Error: Unknown logical source: " + physicalSource.logical;
+            }
+            auto result = sourceCatalog->addPhysicalSource(
+                *logicalOpt, physicalSource.type, Host(physicalSource.host), physicalSource.sourceConfig, physicalSource.parserConfig);
+            if (!result)
+            {
+                return "Error: " + std::string(result.error().what());
+            }
+        }
+
+        // 2. Populate sink catalog
+        auto sinkCatalog = std::make_shared<SinkCatalog>();
+        for (const auto& sinkConfig : config.sinks)
+        {
+            Schema schema;
+            for (const auto& field : sinkConfig.schema)
+            {
+                schema.addField(field.name, field.type);
+            }
+            if (!sinkCatalog->addSinkDescriptor(
+                    sinkConfig.name, schema, sinkConfig.type, Host(sinkConfig.host), sinkConfig.config, sinkConfig.parserConfig))
+            {
+                return "Error: Invalid sink configuration: " + sinkConfig.name;
+            }
+        }
+
+        // 3. Populate worker catalog from topology
+        auto workerCatalog = std::make_shared<WorkerCatalog>();
+        for (const auto& worker : config.workers)
+        {
+            auto downstream = worker.downstream | std::views::transform([](const auto& d) { return Host(d); })
+                | std::ranges::to<std::vector>();
+            auto capacity = worker.maxOperators.has_value() ? Capacity(CapacityKind::Limited{*worker.maxOperators})
+                                                           : Capacity(CapacityKind::Unlimited{});
+            workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
+        }
+
+        // 4. Run semantic analysis + full optimizer (same as nes-cli dump)
+        auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog);
+        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog);
+
+        std::stringstream output;
+        for (const auto& query : config.query)
+        {
+            auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
+            fmt::println(output, "Query:\n{}", query);
+            fmt::println(output, "Initial Logical Plan:\n{}", plan);
+
+            auto analysedPlan = semanticAnalyzer.analyse(plan);
+            auto distributedPlan = queryOptimizer.optimize(analysedPlan);
+
+            fmt::println(output, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
+
+            fmt::println(output, "Decomposed Plans:");
+            for (const auto& [worker, plans] : distributedPlan)
+            {
+                fmt::println(output, "{} plans on {}:", plans.size(), worker);
+                for (size_t i = 0; i < plans.size(); ++i)
+                {
+                    fmt::println(output, "{}:\n{}\n", i, plans[i]);
+                }
+            }
+        }
+
+        return output.str();
+    }
+    catch (const std::exception& e)
+    {
+        return std::string("Error: ") + e.what();
+    }
 }
 
 } // namespace NES::Validator

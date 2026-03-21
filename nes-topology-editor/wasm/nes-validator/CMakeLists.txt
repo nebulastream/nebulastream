@@ -69,6 +69,7 @@ set(VALIDATOR_SRCS
     ${NES_ROOT}/nes-validator/src/TopologyValidator.cpp
     ${NES_ROOT}/nes-validator/src/YamlBinding.cpp
     ${NES_ROOT}/nes-validator/src/ConfigMetadata.cpp
+    ${NES_ROOT}/nes-validator/src/DumpPipeline.cpp
 )
 
 # nes-common sources
@@ -156,9 +157,43 @@ set(NES_CONFIGURATIONS_SRCS
 # nes-input-formatters: not needed in WASM (StatementBinder excluded, formatters stubbed)
 set(NES_INPUT_FORMATTERS_SRCS "")
 
-# nes-query-optimizer (TraitSet needed by logical operators)
+# nes-query-optimizer: full optimizer pipeline (same as nes-cli dump)
 set(NES_QUERY_OPTIMIZER_SRCS
+    # Traits
     ${NES_ROOT}/nes-query-optimizer/src/Traits/TraitSet.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Traits/Trait.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Traits/OutputOriginIdsTrait.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Traits/PlacementTrait.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Traits/ImplementationTypeTrait.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Traits/MemoryLayoutTypeTrait.cpp
+    # Phases
+    ${NES_ROOT}/nes-query-optimizer/src/Phases/SemanticAnalyzer.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Phases/QueryOptimizer.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Phases/QueryDecomposition.cpp
+    # Semantic rules
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/InlineSinkBindingRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/SinkBindingRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/InlineSourceBindingRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/SourceInferenceRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/LogicalSourceExpansionRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/TypeInferenceRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Semantic/OriginIdInferenceRule.cpp
+    # Static optimization rules
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/DecideJoinTypesRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/DecideMemoryLayoutRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/RedundantProjectionRemovalRule.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/Static/RedundantUnionRemovalRule.cpp
+    # Placement
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/BottomUpPlacement.cpp
+    ${NES_ROOT}/nes-query-optimizer/src/Rules/OperatorPlacement.cpp
+)
+
+# nes-distributed sources (topology, worker catalog, distributed query types)
+set(NES_DISTRIBUTED_SRCS
+    ${NES_ROOT}/nes-distributed/src/NetworkTopology.cpp
+    ${NES_ROOT}/nes-distributed/src/WorkerCatalog.cpp
+    ${NES_ROOT}/nes-distributed/src/DistributedQuery.cpp
+    ${NES_ROOT}/nes-distributed/src/DistributedQueryIdGenerator.cpp
 )
 
 # nes-logical-operators serialization (only WindowTypeReflection, needed by window operators)
@@ -183,6 +218,7 @@ add_executable(nes-validator-wasm
     ${NES_CONFIGURATIONS_SRCS}
     ${NES_INPUT_FORMATTERS_SRCS}
     ${NES_QUERY_OPTIMIZER_SRCS}
+    ${NES_DISTRIBUTED_SRCS}
     ${NES_LOGICAL_OPS_SERIALIZATION_SRCS}
     ${ANTLR4_GENERATED_SRCS}
 )
@@ -213,6 +249,11 @@ target_include_directories(nes-validator-wasm PRIVATE
     ${NES_ROOT}/nes-configurations/include
     ${NES_ROOT}/nes-input-formatters/include
     ${NES_ROOT}/nes-query-optimizer/include
+    ${NES_ROOT}/nes-query-optimizer/interface
+    ${NES_ROOT}/nes-distributed/include
+    ${NES_ROOT}/nes-single-node-worker/interface
+    ${NES_ROOT}/nes-runtime/interface
+    ${NES_ROOT}/nes-network/interface
     ${NES_ROOT}/nes-data-types/registry/include
     ${NES_ROOT}/nes-logical-operators/registry/include
     ${NES_ROOT}/nes-query-optimizer/registry/include
@@ -240,11 +281,19 @@ target_include_directories(nes-validator-wasm PRIVATE
 # ============================================================================
 # Link libraries
 # ============================================================================
+# HiGHS LP solver (used by BottomUpPlacement for operator placement ILP)
+find_package(highs CONFIG REQUIRED)
+
+# scope-guard (used by BottomUpPlacement for RAII cleanup of HiGHS solver)
+find_package(scope-guard CONFIG REQUIRED)
+
 target_link_libraries(nes-validator-wasm PRIVATE
     antlr4_static
     yaml-cpp::yaml-cpp
     spdlog::spdlog
     fmt::fmt
+    highs::highs
+    scope_guard
     $<$<TARGET_EXISTS:unofficial::UUID::uuid>:unofficial::UUID::uuid>
     $<$<NOT:$<TARGET_EXISTS:unofficial::UUID::uuid>>:${LIBUUID_LIBRARIES}>
 )
