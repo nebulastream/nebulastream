@@ -64,7 +64,7 @@ GROUP BY category
 WINDOW TUMBLING(start, size 10 sec)
 INTO CHECKSUM();
 ----
-10005 9272907
+10005 23501712
 
 # Query 5
 # Likely lazy-value neutral
@@ -102,39 +102,14 @@ INTO CHECKSUM();
 
 # Query 8
 # Until PR #755 is not merged, we need to do another subquery to project the required fields
-# Likely lazy value neutral
 SELECT start, end, id, name
 FROM (
         SELECT *
             FROM (SELECT * FROM person)
         INNER JOIN
             (SELECT * FROM auction)
-        ON id = seller WINDOW TUMBLING (timestamp, size 10 sec)
+        ON personId = seller WINDOW TUMBLING (timestamp, size 10 sec)
     )
-INTO q8CheckSum;
+INTO CHECKSUM();
 ----
-10999751 33652579169
-
-
-# Query 8 Variant (We are not using the actual Q8 but a variant, as we have swapped the Person stream with the Bid stream)
-# Likely lazy value neutral
-# Disabled: Query 4 does this but adds even more operations
-#SELECT start, end, timestamp, auctionId, bidder, price, timestamp, id, initialbid, reserve, expires, seller, category
-#    FROM (SELECT * FROM bid)
-#INNER JOIN
-#    (SELECT * FROM auction)
-#ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
-#
-#
-#
-## q12 Not in original suite: Number of bids per bidder in 10 second interval
-## Replaced ingestion with event time
-# Disabled due to not being part of the original benchmark
-## Likely lazy value neutral
-#SELECT start, end, bidder, COUNT(bidder) AS bid_count
-#FROM bid
-#GROUP BY bidder
-#WINDOW TUMBLING (timestamp, size 10 sec)
-#INTO CHECKSUM();
-#
-#
+10999751 33943851751
