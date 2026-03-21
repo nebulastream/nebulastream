@@ -19,62 +19,62 @@
 #include <Serialization/LogicalFunctionReflection.hpp>
 
 namespace NES
-    {
+{
 
-        class VarSizedToNumericLogicalFunction final
-        {
-        public:
-            static constexpr std::string_view NAME = "VarSizedToNumeric";
+class VarSizedToNumericLogicalFunction final
+{
+public:
+    static constexpr std::string_view NAME = "VarSizedToNumeric";
 
-            VarSizedToNumericLogicalFunction(const LogicalFunction& child, const DataType& targetType);
+    VarSizedToNumericLogicalFunction(const LogicalFunction& child, const DataType& targetType);
 
-            DataType getDataType() const;
+    DataType getDataType() const;
 
-            VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
+    VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
 
-            LogicalFunction withInferredDataType(const Schema& schema) const;
+    LogicalFunction withInferredDataType(const Schema& schema) const;
 
-            std::vector<LogicalFunction> getChildren() const;
+    std::vector<LogicalFunction> getChildren() const;
 
-            VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+    VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-            std::string_view getType() const;
+    std::string_view getType() const;
 
-            bool operator==(const VarSizedToNumericLogicalFunction& rhs) const;
+    bool operator==(const VarSizedToNumericLogicalFunction& rhs) const;
 
-            std::string explain(ExplainVerbosity verbosity) const;
+    std::string explain(ExplainVerbosity verbosity) const;
 
-            DataType getTargetType() const;
+    DataType getTargetType() const;
 
-        private:
-            static bool isSupportedNumericType(DataType::Type type);
+private:
+    static bool isSupportedNumericType(DataType::Type type);
 
-            DataType outputType;
-            DataType targetType;
-            LogicalFunction child;
-        };
+    DataType outputType;
+    DataType targetType;
+    LogicalFunction child;
+};
 
-        namespace detail
-        {
+namespace detail
+{
 
-        struct ReflectedVarSizedToNumericLogicalFunction
-        {
-            LogicalFunction child;
-            DataType targetType;
-        };
+struct ReflectedVarSizedToNumericLogicalFunction
+{
+    LogicalFunction child;
+    DataType targetType;
+};
 
-        }
+}
 
-        template<>
-        struct Reflector<VarSizedToNumericLogicalFunction>
-        {
-            Reflected operator()(const VarSizedToNumericLogicalFunction& function) const;
-        };
+template <>
+struct Reflector<VarSizedToNumericLogicalFunction>
+{
+    Reflected operator()(const VarSizedToNumericLogicalFunction& function) const;
+};
 
-        template<>
-        struct Unreflector<VarSizedToNumericLogicalFunction>
-        {
-            VarSizedToNumericLogicalFunction operator()(const Reflected& reflected) const;
-        };
+template <>
+struct Unreflector<VarSizedToNumericLogicalFunction>
+{
+    VarSizedToNumericLogicalFunction operator()(const Reflected& reflected) const;
+};
 
-    }
+}

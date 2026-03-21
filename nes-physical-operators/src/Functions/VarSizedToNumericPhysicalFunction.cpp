@@ -14,50 +14,53 @@
 
 #include <Functions/VarSizedToNumericPhysicalFunction.hpp>
 
-#include <algorithm>
+#include <cctype>
 #include <cstdint>
 #include <string>
-#include <string_view>
-#include <type_traits>
 #include <utility>
 
-#include <Arena.hpp>
 #include <DataTypes/DataType.hpp>
-#include <ErrorHandling.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <PhysicalFunctionRegistry.hpp>
 #include <Util/Strings.hpp>
+#include <Arena.hpp>
+#include <ErrorHandling.hpp>
+#include <PhysicalFunctionRegistry.hpp>
 #include <function.hpp>
 
 namespace NES
+{
+namespace
+{
+
+std::string normalizeVarSizedNumericInput(const std::string& varSized)
+{
+    /// Remove all characters that are not digits, '.', '+', '-', or 'e'/'E' (for scientific notation)
+    std::string inputCopy{varSized};
+    std::erase_if(
+        inputCopy,
+        [](const char c)
+        { return not std::isdigit(static_cast<unsigned char>(c)) && c != '.' && c != '+' && c != '-' && c != 'e' && c != 'E'; });
+
+    const auto trimmed = NES::trimWhiteSpaces(inputCopy);
+    if (trimmed.empty())
     {
-        namespace
+        throw FormattingError("VarSizedToNumeric: cannot convert '{}' to a numeric value", varSized);
+    }
+
+    return std::string{trimmed};
+}
+
+template <typename NumericType>
+VarVal invokeConvertAndWrap(const nautilus::val<uint64_t>& size, const nautilus::val<const char*>& ptr, bool nullable)
+{
+    const auto parsedValue = nautilus::invoke(
+        +[](const uint64_t stringSize, const char* stringPtr) -> NumericType
         {
-
-        std::string normalizeVarSizedNumericInput(const char* varSizedPtr, const uint32_t varSizedLen)
-        {
-            std::string_view varSizedSV{varSizedPtr, varSizedLen};
-            auto inputCopy = std::string{varSizedSV};
-
-            /// Remove all occurrences of '?' and spaces ' '
-            inputCopy.erase(std::ranges::remove(inputCopy, '?').begin(), inputCopy.end());
-            inputCopy.erase(std::ranges::remove(inputCopy, ' ').begin(), inputCopy.end());
-
-            const auto trimmed = NES::trimWhiteSpaces(inputCopy);
-            if (trimmed.empty())
-            {
-                throw FormattingError("VarSizedToNumeric: cannot convert '{}' to a numeric value", varSizedSV);
-            }
-
-            return std::string{trimmed};
-        }
-
-        template<typename NumericType>
-        NumericType parseNormalizedNumeric(std::string_view normalizedInput)
-        {
+            const std::string varSizedSV{stringPtr, stringSize};
+            const auto normalizedInput = normalizeVarSizedNumericInput(varSizedSV);
             try
             {
                 return from_chars_with_exception<NumericType>(normalizedInput);
@@ -65,163 +68,68 @@ namespace NES
             catch (const Exception&)
             {
                 throw FormattingError("VarSizedToNumeric: cannot convert '{}' to target numeric type", normalizedInput);
-            }
-        }
+            };
+        },
+        size,
+        ptr);
+    return VarVal{parsedValue, nullable, false};
+}
 
-        template<typename NumericType>
-        NumericType convertVarSizedToNumeric(const char* varSizedPtr, const uint32_t varSizedLen)
-        {
-            const auto normalizedInput = normalizeVarSizedNumericInput(varSizedPtr, varSizedLen);
-            return parseNormalizedNumeric<NumericType>(normalizedInput);
-        }
+}
 
-        }
+VarVal VarSizedToNumericPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+{
+    const auto value = child.execute(record, arena);
 
-        VarSizedToNumericPhysicalFunction::VarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType)
-            : child(std::move(child)), outputType(std::move(outputType))
-        {
-        }
-
-        VarVal VarSizedToNumericPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
-        {
-            const auto value = child.execute(record, arena);
-
-            if (value.isNullable() && value.isNull())
-            {
-                return VarVal{0, true, true}.castToType(outputType.type);
-            }
-
-            const auto var = value.getRawValueAs<VariableSizedData>();
-            const auto size = var.getSize();
-            const auto ptr = var.getContent();
-
-            switch (outputType.type)
-            {
-                case DataType::Type::INT8:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> int8_t
-                        {
-                            return convertVarSizedToNumeric<int8_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::INT16:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> int16_t
-                        {
-                            return convertVarSizedToNumeric<int16_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::INT32:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> int32_t
-                        {
-                            return convertVarSizedToNumeric<int32_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::INT64:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> int64_t
-                        {
-                            return convertVarSizedToNumeric<int64_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::UINT8:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> uint8_t
-                        {
-                            return convertVarSizedToNumeric<uint8_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::UINT16:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> uint16_t
-                        {
-                            return convertVarSizedToNumeric<uint16_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::UINT32:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> uint32_t
-                        {
-                            return convertVarSizedToNumeric<uint32_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::UINT64:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> uint64_t
-                        {
-                            return convertVarSizedToNumeric<uint64_t>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::FLOAT32:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> float
-                        {
-                            return convertVarSizedToNumeric<float>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                case DataType::Type::FLOAT64:
-                {
-                    const auto parsedValue = nautilus::invoke(
-                        +[](const uint32_t stringSize, const char* stringPtr) -> double
-                        {
-                            return convertVarSizedToNumeric<double>(stringPtr, stringSize);
-                        },
-                        size,
-                        ptr);
-                    return VarVal{parsedValue, false, false};
-                }
-                default:
-                    throw FormattingError("VarSizedToNumeric: unsupported target type {}", outputType);
-            }
-        }
-
-        PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericPhysicalFunction(
-            PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
-        {
-            PRECONDITION(
-                physicalFunctionRegistryArguments.childFunctions.size() == 1,
-                "VarSizedToNumeric function must have exactly one child function");
-
-            return VarSizedToNumericPhysicalFunction(
-                physicalFunctionRegistryArguments.childFunctions[0],
-                physicalFunctionRegistryArguments.outputType);
-        }
-
+    if (value.isNullable() && value.isNull())
+    {
+        return VarVal{0, true, true}.castToType(outputType.type);
     }
+
+    const auto var = value.getRawValueAs<VariableSizedData>();
+    const auto size = var.getSize();
+    const auto ptr = var.getContent();
+
+    switch (outputType.type)
+    {
+        case DataType::Type::INT8:
+            return invokeConvertAndWrap<int8_t>(size, ptr, outputType.nullable);
+        case DataType::Type::INT16:
+            return invokeConvertAndWrap<int16_t>(size, ptr, outputType.nullable);
+        case DataType::Type::INT32:
+            return invokeConvertAndWrap<int32_t>(size, ptr, outputType.nullable);
+        case DataType::Type::INT64:
+            return invokeConvertAndWrap<int64_t>(size, ptr, outputType.nullable);
+        case DataType::Type::UINT8:
+            return invokeConvertAndWrap<uint8_t>(size, ptr, outputType.nullable);
+        case DataType::Type::UINT16:
+            return invokeConvertAndWrap<uint16_t>(size, ptr, outputType.nullable);
+        case DataType::Type::UINT32:
+            return invokeConvertAndWrap<uint32_t>(size, ptr, outputType.nullable);
+        case DataType::Type::UINT64:
+            return invokeConvertAndWrap<uint64_t>(size, ptr, outputType.nullable);
+        case DataType::Type::FLOAT32:
+            return invokeConvertAndWrap<float>(size, ptr, outputType.nullable);
+        case DataType::Type::FLOAT64:
+            return invokeConvertAndWrap<double>(size, ptr, outputType.nullable);
+        default:
+            throw FormattingError("VarSizedToNumeric: unsupported target type {}", outputType);
+    }
+}
+
+VarSizedToNumericPhysicalFunction::VarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType)
+    : child(std::move(child)), outputType(std::move(outputType))
+{
+}
+
+PhysicalFunctionRegistryReturnType PhysicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericPhysicalFunction(
+    PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+{
+    PRECONDITION(
+        physicalFunctionRegistryArguments.childFunctions.size() == 1, "VarSizedToNumeric function must have exactly one child function");
+
+    return VarSizedToNumericPhysicalFunction(
+        physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
+}
+
+}
