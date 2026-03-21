@@ -13,10 +13,13 @@
 */
 
 #include <Inference/IREEAdapter.hpp>
+#include <iree/base/allocator.h>
 
 #include <algorithm>
 #include <bit>
 #include <cstddef>
+#include <cstdint>
+#include <memory>
 #include <span>
 #include <ErrorHandling.hpp>
 #include <Model.hpp>
@@ -32,9 +35,10 @@ std::shared_ptr<IREEAdapter> IREEAdapter::create()
 void IREEAdapter::initializeModel(NES::Model& model)
 {
     this->runtimeWrapper = IREERuntimeWrapper();
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) IREE API requires uint8_t*
     runtimeWrapper.setup(iree_const_byte_span_t{
-        .data = reinterpret_cast<const uint8_t*>(model.getByteCode().data()), .data_length = model.getByteCode().size()});
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) IREE API requires const uint8_t* but byte code is stored as std::byte
+        .data = reinterpret_cast<const uint8_t*>(model.getByteCode().data()),
+        .data_length = model.getByteCode().size()});
 
     runtimeWrapper.setInputShape(model.getInputShape());
     runtimeWrapper.setNDim(model.getNDim());

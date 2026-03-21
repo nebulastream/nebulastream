@@ -53,7 +53,7 @@ void InferModelResolutionRule::apply(LogicalPlan& queryPlan) const
         auto inferModelOp = InferModelLogicalOperator(std::move(model), std::move(inputFieldNames));
         /// Preserve children from the original operator
         inferModelOp = inferModelOp.withChildren(op.getChildren());
-        auto replacement = LogicalOperator(std::move(inferModelOp));
+        auto replacement = LogicalOperator(inferModelOp);
 
         auto replaceResult = replaceSubtree(queryPlan, inferModelNameOp.getId(), replacement);
         INVARIANT(replaceResult.has_value(), "Failed to replace InferModelNameLogicalOperator with InferModelLogicalOperator");

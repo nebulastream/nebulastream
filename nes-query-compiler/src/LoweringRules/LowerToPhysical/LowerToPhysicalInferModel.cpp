@@ -16,6 +16,8 @@
 
 #include <memory>
 #include <ranges>
+#include <string>
+#include <vector>
 #include <Inference/IREEInferenceOperatorHandler.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/InferModelLogicalOperator.hpp>

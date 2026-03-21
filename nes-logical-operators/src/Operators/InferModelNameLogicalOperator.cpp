@@ -40,6 +40,7 @@ InferModelNameLogicalOperator::InferModelNameLogicalOperator(std::string modelNa
 {
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string_view InferModelNameLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -61,6 +62,7 @@ bool InferModelNameLogicalOperator::operator==(const InferModelNameLogicalOperat
         && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string InferModelNameLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     if (verbosity == ExplainVerbosity::Debug)
@@ -75,6 +77,7 @@ std::string InferModelNameLogicalOperator::explain(ExplainVerbosity verbosity, O
     return fmt::format("INFER_MODEL_NAME(model: {}, inputFields: [{}])", modelName, fmt::join(inputFieldNames, ", "));
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static, performance-unnecessary-value-param) — satisfies LogicalOperatorConcept, cannot be static; signature is fixed by concept
 InferModelNameLogicalOperator InferModelNameLogicalOperator::withInferredSchema([[maybe_unused]] std::vector<Schema> inputSchemas) const
 {
     throw CannotInferSchema("InferModelName requires model resolution before schema inference");
@@ -132,7 +135,9 @@ InferModelNameLogicalOperator Unreflector<InferModelNameLogicalOperator>::operat
     return InferModelNameLogicalOperator(modelNameOpt.value(), inputFieldNamesOpt.value());
 }
 
+/// generated registry interface requires by-value argument
 LogicalOperatorRegistryReturnType
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 LogicalOperatorGeneratedRegistrar::RegisterInferModelNameLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())

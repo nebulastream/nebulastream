@@ -21,12 +21,11 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <openssl/evp.h>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <val.hpp>
+#include <val_arith.hpp>
 
 namespace NES
 {
@@ -42,6 +41,8 @@ namespace
 /// Returns the actual decoded size written to outputPtr.
 uint64_t decodeBase64(int8_t* inputPtr, uint64_t inputSize, int8_t* outputPtr)
 {
+    /// OpenSSL EVP API requires unsigned char* but we use int8_t* throughout
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto decodedLen = EVP_DecodeBlock(
         reinterpret_cast<unsigned char*>(outputPtr), reinterpret_cast<const unsigned char*>(inputPtr), static_cast<int>(inputSize));
 
@@ -52,10 +53,16 @@ uint64_t decodeBase64(int8_t* inputPtr, uint64_t inputSize, int8_t* outputPtr)
 
     /// EVP_DecodeBlock doesn't account for padding — subtract padding bytes
     auto actualLen = static_cast<uint64_t>(decodedLen);
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) index into caller-provided buffer to check base64 padding characters
     if (inputSize >= 1 && inputPtr[inputSize - 1] == '=')
+    {
         --actualLen;
+    }
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) index into caller-provided buffer to check base64 padding characters
     if (inputSize >= 2 && inputPtr[inputSize - 2] == '=')
+    {
         --actualLen;
+    }
     return actualLen;
 }
 }

@@ -18,7 +18,6 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
-#include <ExecutionContext.hpp>
 
 namespace NES
 {

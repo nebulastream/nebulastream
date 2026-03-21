@@ -50,9 +50,12 @@ public:
     [[nodiscard]] std::vector<Schema> getInputSchemas() const;
     [[nodiscard]] Schema getOutputSchema() const;
 
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity, OperatorId opId) const;
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
     [[nodiscard]] std::string_view getName() const noexcept;
 
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
     [[nodiscard]] InferModelNameLogicalOperator withInferredSchema(std::vector<Schema> inputSchemas) const;
 
 private:

@@ -77,7 +77,8 @@ private:
     struct Impl
     {
         Schema schema;
-        TupleBuffer& buffer;
+        TupleBuffer&
+            buffer; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members) intentional reference: Impl always outlived by the TupleBuffer it wraps
         AbstractBufferProvider* bufferProvider;
         std::shared_ptr<TupleBufferRef> bufRef;
     };
@@ -205,9 +206,9 @@ void TestTupleBufferView::append(Args&&... values)
         throw TestException("append requires exactly {} arguments, got {}", impl->schema.getNumberOfFields(), sizeof...(Args));
     }
     const auto& fields = impl->schema.getFields();
-    size_t i = 0;
+    size_t idx = 0;
     /// NOLINTNEXTLINE(modernize-avoid-c-arrays) pack-expanded initializer list requires C-array
-    const FieldValue fieldValues[] = {toFieldValue(std::forward<Args>(values), fields[i++].dataType.type)...};
+    const FieldValue fieldValues[] = {toFieldValue(std::forward<Args>(values), fields[idx++].dataType.type)...};
     appendImpl(fieldValues, sizeof...(Args));
 }
 

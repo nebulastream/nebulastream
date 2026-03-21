@@ -34,17 +34,20 @@ class FromBase64LogicalFunction final
 public:
     static constexpr std::string_view NAME = "FROM_BASE64";
 
+    /// NOLINTNEXTLINE(modernize-pass-by-value)
     explicit FromBase64LogicalFunction(const LogicalFunction& child);
 
     [[nodiscard]] bool operator==(const FromBase64LogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
     [[nodiscard]] FromBase64LogicalFunction withDataType(const DataType& dataType) const;
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
     [[nodiscard]] FromBase64LogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
+    /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 

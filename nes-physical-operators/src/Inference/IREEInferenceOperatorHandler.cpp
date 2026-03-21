@@ -14,7 +14,14 @@
 
 #include <Inference/IREEInferenceOperatorHandler.hpp>
 
+#include <cstddef>
+#include <cstdint>
+#include <memory>
+#include <utility>
+
+#include <Identifiers/Identifiers.hpp>
 #include <Inference/IREEAdapter.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES::Inference

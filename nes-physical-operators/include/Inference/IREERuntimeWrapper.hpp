@@ -37,8 +37,8 @@ public:
 
     void setup(iree_const_byte_span_t compiledModel);
     void execute(const std::string& functionName, std::span<const std::byte> input, std::span<std::byte> output);
-    void setInputShape(std::vector<size_t> inputShape);
-    void setNDim(size_t nDim);
+    void setInputShape(std::vector<size_t> shape);
+    void setNDim(size_t numDims);
 
 private:
     std::vector<size_t> inputShape;

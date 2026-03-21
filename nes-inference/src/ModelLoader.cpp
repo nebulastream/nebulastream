@@ -27,6 +27,7 @@
 #include <fstream>
 #include <functional>
 #include <iterator>
+#include <memory>
 #include <numeric>
 #include <optional>
 #include <ranges>
@@ -35,17 +36,27 @@
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
+#include <unistd.h>
 #include <Util/Logger/Logger.hpp>
+#include <boost/asio/buffer.hpp>
+#include <boost/asio/impl/connect_pipe.hpp>
 #include <boost/asio/io_context.hpp>
 #include <boost/asio/readable_pipe.hpp>
 #include <boost/asio/steady_timer.hpp>
 #include <boost/asio/writable_pipe.hpp>
 #include <boost/graph/adjacency_list.hpp>
+#include <boost/graph/detail/adjacency_list.hpp>
+#include <boost/graph/graph_selectors.hpp>
 #include <boost/graph/graphviz.hpp>
 #include <boost/process/v2/environment.hpp>
 #include <boost/process/v2/process.hpp>
 #include <boost/process/v2/stdio.hpp>
+#include <boost/property_map/dynamic_property_map.hpp>
+#include <boost/range/iterator_range_core.hpp>
+#include <boost/system/detail/error_code.hpp>
+#include <boost/system/system_error.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
@@ -285,6 +296,7 @@ bool enabled()
     return IsAvailable;
 }
 
+/// NOLINTNEXTLINE(readability-function-cognitive-complexity) complexity reflects inherent process management logic; refactoring would reduce clarity
 std::expected<Model, ModelLoadError> load(const std::filesystem::path& modelPath, const ModelOptions& options)
 {
     std::vector<std::string> importArgs;

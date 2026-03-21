@@ -209,6 +209,7 @@ void TestTupleBufferView::appendImpl(const FieldValue* values, const size_t coun
     const auto& fields = impl->schema.getFields();
     for (size_t i = 0; i < count; ++i)
     {
+        /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic) iterating caller-provided array by index
         record.write(fields[i].name, fieldValueToVarVal(values[i], fields[i].dataType.type));
     }
 
@@ -221,18 +222,18 @@ void TestTupleBufferView::appendImpl(const FieldValue* values, const size_t coun
 FieldView TestTupleBufferRecordView::operator[](const std::string& fieldName)
 {
     const auto& fields = impl->schema.getFields();
-    auto it = std::ranges::find_if(fields, [&fieldName](const auto& f) { return f.name == fieldName; });
+    auto it = std::ranges::find_if(fields, [&fieldName](const auto& field) { return field.name == fieldName; });
     if (it == fields.end())
     {
         throw FieldNotFound("TestTupleBufferRecordView: field '{}' not found in schema", fieldName);
     }
 
-    FieldView fv;
-    fv.implWeak = impl;
-    fv.recordIndex = recordIndex;
-    fv.fieldName = fieldName;
-    fv.dataType = it->dataType;
-    return fv;
+    FieldView fieldVal;
+    fieldVal.implWeak = impl;
+    fieldVal.recordIndex = recordIndex;
+    fieldVal.fieldName = fieldName;
+    fieldVal.dataType = it->dataType;
+    return fieldVal;
 }
 
 /// ---- FieldView ----

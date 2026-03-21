@@ -18,6 +18,7 @@
 #include <cstddef>
 #include <memory>
 #include <span>
+#include <string>
 #include <Inference/IREERuntimeWrapper.hpp>
 #include <ErrorHandling.hpp>
 

@@ -18,7 +18,9 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <CompilationContext.hpp>
 #include <PhysicalOperator.hpp>
 
 namespace NES

@@ -22,18 +22,19 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/DataTypeSerializationUtil.hpp> /// NOLINT(misc-include-cleaner)
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
-#include <SerializableVariantDescriptor.pb.h>
+#include <SerializableVariantDescriptor.pb.h> /// NOLINT(misc-include-cleaner)
 
 namespace NES
 {
 
+/// NOLINTNEXTLINE(modernize-pass-by-value)
 FromBase64LogicalFunction::FromBase64LogicalFunction(const LogicalFunction& child)
     : dataType(DataTypeProvider::provideDataType(DataType::Type::VARSIZED)), child(child)
 {
@@ -61,12 +62,13 @@ FromBase64LogicalFunction FromBase64LogicalFunction::withDataType(const DataType
     return copy;
 };
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalFunction FromBase64LogicalFunction::withInferredDataType(const Schema& schema) const
 {
     std::vector<LogicalFunction> newChildren;
-    for (auto& c : getChildren())
+    for (auto& chr : getChildren())
     {
-        newChildren.push_back(c.withInferredDataType(schema));
+        newChildren.push_back(chr.withInferredDataType(schema));
     }
     return withChildren(newChildren);
 };
@@ -83,6 +85,7 @@ FromBase64LogicalFunction FromBase64LogicalFunction::withChildren(const std::vec
     return copy;
 };
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::string_view FromBase64LogicalFunction::getType() const
 {
     return NAME;

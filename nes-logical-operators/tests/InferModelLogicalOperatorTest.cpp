@@ -28,11 +28,14 @@
 #include <Operators/InferModelNameLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <ErrorHandling.hpp>
 #include <Model.hpp>
 
 namespace NES
 {
 
+/// NOLINTBEGIN(readability-magic-numbers, bugprone-unchecked-optional-access)
 class InferModelLogicalOperatorTest : public ::testing::Test
 {
 protected:
@@ -64,7 +67,7 @@ protected:
     static Schema makeSchema(const std::vector<std::pair<std::string, DataType::Type>>& fields)
     {
         Schema schema;
-        for (auto& [name, type] : fields)
+        for (const auto& [name, type] : fields)
         {
             schema = schema.addField(name, DataType{type, DataType::NULLABLE::NOT_NULLABLE});
         }
@@ -167,11 +170,11 @@ TEST_F(InferModelLogicalOperatorTest, ReflectionRoundTrip)
     auto op = makeOp();
 
     /// Reflect
-    Reflector<InferModelLogicalOperator> reflector;
+    const Reflector<InferModelLogicalOperator> reflector;
     auto reflected = reflector(op);
 
     /// Unreflect
-    Unreflector<InferModelLogicalOperator> unreflector;
+    const Unreflector<InferModelLogicalOperator> unreflector;
     auto restored = unreflector(reflected);
 
     /// Verify preserved state
@@ -302,5 +305,7 @@ TEST_F(InferModelLogicalOperatorTest, NameCollisionReplacesFieldType)
     EXPECT_EQ(valueField->dataType, (DataType{DataType::Type::INT32, DataType::NULLABLE::NOT_NULLABLE}));
     validateOutputSchema(outputSchema, {"value"});
 }
+
+/// NOLINTEND(readability-magic-numbers, bugprone-unchecked-optional-access)
 
 }

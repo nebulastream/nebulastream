@@ -19,6 +19,7 @@
 #include <span>
 #include <string>
 #include <utility>
+#include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <iree/runtime/api.h>
 #include <ErrorHandling.hpp>

@@ -340,6 +340,7 @@ public:
         throw InvalidStatement("Unrecognized SHOW statement");
     }
 
+    /// NOLINTNEXTLINE(readability-function-cognitive-complexity) complexity reflects the number of supported DROP variants; refactoring would reduce clarity
     Statement bindDropStatement(AntlrSQLParser::DropStatementContext* dropAst) const
     {
         const auto* const dropFilter = dropAst->dropFilter();

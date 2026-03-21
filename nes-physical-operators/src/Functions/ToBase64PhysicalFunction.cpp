@@ -21,12 +21,11 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/std/cstring.h>
 #include <openssl/evp.h>
+#include <Arena.hpp>
 #include <ErrorHandling.hpp>
-#include <ExecutionContext.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <val.hpp>
+#include <val_arith.hpp>
 
 namespace NES
 {
@@ -42,6 +41,8 @@ namespace
 /// Returns the actual encoded size written to outputPtr.
 uint64_t encodeBase64(int8_t* inputPtr, uint64_t inputSize, int8_t* outputPtr)
 {
+    /// OpenSSL EVP API requires unsigned char* but we use int8_t* throughout
+    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast)
     const auto encodedLen = EVP_EncodeBlock(
         reinterpret_cast<unsigned char*>(outputPtr), reinterpret_cast<const unsigned char*>(inputPtr), static_cast<int>(inputSize));
     return static_cast<uint64_t>(encodedLen);

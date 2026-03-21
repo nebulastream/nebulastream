@@ -24,6 +24,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstdlib>
 #include <memory>
 #include <numeric>
 #include <optional>
@@ -35,6 +36,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -46,12 +48,13 @@
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <folly/Synchronized.h>
 #include <gtest/gtest.h>
-#include <nautilus/Engine.hpp>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
+#include <Model.hpp>
 #include <Pipeline.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <TestTupleBuffer.hpp>
+#include <options.hpp>
 
 namespace NES
 {
@@ -60,6 +63,7 @@ constexpr size_t bufferSize = 8192;
 
 class InferModelPhysicalOperatorTest : public Testing::BaseUnitTest
 {
+    /// NOLINTBEGIN(readability-magic-numbers, readability-identifier-length, bugprone-unchecked-optional-access, fuchsia-default-arguments-declarations)
 protected:
     struct MockedPipelineContext final : PipelineExecutionContext
     {
@@ -93,7 +97,7 @@ protected:
 
         TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
         {
-            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+            pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(std::move(tupleBuffer)));
             return *pinnedBuffers.back();
         }
 
@@ -151,9 +155,10 @@ public:
     {
         /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) float-to-byte packing
         const char* rawData = reinterpret_cast<const char*>(floats.data());
-        return std::string(rawData, floats.size() * sizeof(float));
+        return {rawData, floats.size() * sizeof(float)};
     }
 
+    /// NOLINTNEXTLINE(fuchsia-default-arguments-declarations) test convenience default
     static std::vector<float> makeFloats(size_t count, float startValue = 1.0F)
     {
         std::vector<float> vec(count);
@@ -203,7 +208,7 @@ public:
 
         ScanPhysicalOperator scan(inputBufRef, inputSchema.getFieldNames());
         InferModelPhysicalOperator inferModel(OperatorHandlerId(0), inputFieldNames, outputFieldNames, varsizedInput, varsizedOutput);
-        EmitPhysicalOperator emit(OperatorHandlerId(1), outputBufRef);
+        const EmitPhysicalOperator emit(OperatorHandlerId(1), outputBufRef);
 
         inferModel.setChild(PhysicalOperator(emit));
         scan.setChild(PhysicalOperator(inferModel));
@@ -218,7 +223,7 @@ public:
     }
 
     /// Creates an input TupleBuffer with VARSIZED records, each containing packed floats.
-    TupleBuffer createInputBuffer(const Schema& inputSchema, const std::vector<std::vector<float>>& recordFloats) const
+    static TupleBuffer createInputBuffer(const Schema& inputSchema, const std::vector<std::vector<float>>& recordFloats)
     {
         auto bufMgr = BufferManager::create(bufferSize, 200);
         auto tupleBuffer = bufMgr->getBufferBlocking();
@@ -244,6 +249,7 @@ public:
 /// Identity model with 1 record of 100 floats. Output matches input. Interpreted + compiled.
 TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
 {
+    ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
     const auto outputFieldNames = makeOutputFieldNames(numFloats);
     const auto [inputSchema, outputSchema] = makeSchemas(outputFieldNames);
@@ -278,11 +284,11 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
         {
             Testing::TestTupleBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
-            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
                 for (size_t i = 0; i < numFloats; ++i)
                 {
-                    EXPECT_NEAR(view[r]["out_" + std::to_string(i)].as<float>(), static_cast<float>(i + 1), 1e-5F)
+                    EXPECT_NEAR(view[row]["out_" + std::to_string(i)].as<float>(), static_cast<float>(i + 1), 1e-5F)
                         << "Field out_" << i << " mismatch (compiled=" << compiled << ")";
                 }
                 ++totalRecords;
@@ -295,6 +301,7 @@ TEST_F(InferModelPhysicalOperatorTest, IdentityModelCorrectness)
 /// Reduction model (100->10) with 1 record. Outputs are zeros. Interpreted + compiled.
 TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
 {
+    ASSERT_TRUE(reductionModel.has_value());
     constexpr size_t numOutputFloats = 10;
     const auto outputFieldNames = makeOutputFieldNames(numOutputFloats);
     const auto [inputSchema, outputSchema] = makeSchemas(outputFieldNames);
@@ -329,11 +336,11 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
         {
             Testing::TestTupleBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
-            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
                 for (size_t i = 0; i < numOutputFloats; ++i)
                 {
-                    EXPECT_NEAR(view[r]["out_" + std::to_string(i)].as<float>(), 0.0F, 1e-5F)
+                    EXPECT_NEAR(view[row]["out_" + std::to_string(i)].as<float>(), 0.0F, 1e-5F)
                         << "Field out_" << i << " expected zero (compiled=" << compiled << ")";
                 }
                 ++totalRecords;
@@ -346,6 +353,7 @@ TEST_F(InferModelPhysicalOperatorTest, ReductionModelCorrectness)
 /// Expansion model (10->100) with 1 record. Outputs are zeros. Interpreted + compiled.
 TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
 {
+    ASSERT_TRUE(expansionModel.has_value());
     constexpr size_t numOutputFloats = 100;
     const auto outputFieldNames = makeOutputFieldNames(numOutputFloats);
     const auto [inputSchema, outputSchema] = makeSchemas(outputFieldNames);
@@ -380,11 +388,11 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
         {
             Testing::TestTupleBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
-            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
                 for (size_t i = 0; i < numOutputFloats; ++i)
                 {
-                    EXPECT_NEAR(view[r]["out_" + std::to_string(i)].as<float>(), 0.0F, 1e-5F)
+                    EXPECT_NEAR(view[row]["out_" + std::to_string(i)].as<float>(), 0.0F, 1e-5F)
                         << "Field out_" << i << " expected zero (compiled=" << compiled << ")";
                 }
                 ++totalRecords;
@@ -397,6 +405,7 @@ TEST_F(InferModelPhysicalOperatorTest, ExpansionModelCorrectness)
 /// Identity model with 5 records per buffer. Per-record correctness. Interpreted + compiled.
 TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 {
+    ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
     constexpr size_t numRecords = 5;
     const auto outputFieldNames = makeOutputFieldNames(numFloats);
@@ -404,9 +413,9 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 
     std::vector<std::vector<float>> inputs;
     inputs.reserve(numRecords);
-    for (size_t r = 0; r < numRecords; ++r)
+    for (size_t row = 0; row < numRecords; ++row)
     {
-        inputs.push_back(makeFloats(numFloats, static_cast<float>((r * numFloats) + 1)));
+        inputs.push_back(makeFloats(numFloats, static_cast<float>((row * numFloats) + 1)));
     }
     auto inputBuffer = createInputBuffer(inputSchema, inputs);
 
@@ -439,12 +448,12 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
         {
             Testing::TestTupleBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
-            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
                 for (size_t i = 0; i < numFloats; ++i)
                 {
                     const auto expected = static_cast<float>((totalRecords * numFloats) + i + 1);
-                    EXPECT_NEAR(view[r]["out_" + std::to_string(i)].as<float>(), expected, 1e-5F)
+                    EXPECT_NEAR(view[row]["out_" + std::to_string(i)].as<float>(), expected, 1e-5F)
                         << "Record " << totalRecords << " field out_" << i << " (compiled=" << compiled << ")";
                 }
                 ++totalRecords;
@@ -457,6 +466,7 @@ TEST_F(InferModelPhysicalOperatorTest, MultiRecordIdentity)
 /// Zero-record buffer produces zero output records. Interpreted + compiled.
 TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
 {
+    ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
     const auto outputFieldNames = makeOutputFieldNames(numFloats);
     const auto [inputSchema, outputSchema] = makeSchemas(outputFieldNames);
@@ -500,6 +510,7 @@ TEST_F(InferModelPhysicalOperatorTest, ZeroRecordBuffer)
 /// 8 threads, 200 buffers each, shared compiled pipeline. Verifies correctness under concurrency.
 TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
 {
+    ASSERT_TRUE(identityModel.has_value());
     constexpr size_t numFloats = 100;
     constexpr size_t numThreads = 8;
     constexpr size_t buffersPerThread = 200;
@@ -527,17 +538,17 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
 
     /// Pre-create input buffers with unique sequence numbers
     std::vector<std::vector<TupleBuffer>> threadInputBuffers(numThreads);
-    for (size_t t = 0; t < numThreads; ++t)
+    for (size_t tid = 0; tid < numThreads; ++tid)
     {
-        threadInputBuffers[t].reserve(buffersPerThread);
-        for (size_t b = 0; b < buffersPerThread; ++b)
+        threadInputBuffers[tid].reserve(buffersPerThread);
+        for (size_t buf = 0; buf < buffersPerThread; ++buf)
         {
-            auto buf = createInputBuffer(inputSchema, {inputFloats});
-            buf.setSequenceNumber(SequenceNumber((t * buffersPerThread) + b + 1));
-            buf.setChunkNumber(INITIAL_CHUNK_NUMBER);
-            buf.setLastChunk(true);
-            buf.setOriginId(INITIAL<OriginId>);
-            threadInputBuffers[t].push_back(std::move(buf));
+            auto inputBuf = createInputBuffer(inputSchema, {inputFloats});
+            inputBuf.setSequenceNumber(SequenceNumber((tid * buffersPerThread) + buf + 1));
+            inputBuf.setChunkNumber(INITIAL_CHUNK_NUMBER);
+            inputBuf.setLastChunk(true);
+            inputBuf.setOriginId(INITIAL<OriginId>);
+            threadInputBuffers[tid].push_back(std::move(inputBuf));
         }
     }
 
@@ -545,16 +556,16 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     std::vector<std::jthread> threads;
     threads.reserve(numThreads);
 
-    for (size_t t = 0; t < numThreads; ++t)
+    for (size_t tid = 0; tid < numThreads; ++tid)
     {
         threads.emplace_back(
-            [t, &threadInputBuffers, &stage, &emittedBuffers, &bufMgr, &startBarrier]()
+            [tid, &threadInputBuffers, &stage, &emittedBuffers, &bufMgr, &startBarrier]()
             {
-                MockedPipelineContext threadPec{emittedBuffers, bufMgr, WorkerThreadId(t), static_cast<uint64_t>(numThreads)};
+                MockedPipelineContext threadPec{emittedBuffers, bufMgr, WorkerThreadId(tid), static_cast<uint64_t>(numThreads)};
                 startBarrier.arrive_and_wait();
-                for (auto& buf : threadInputBuffers[t])
+                for (auto& inputBuf : threadInputBuffers[tid])
                 {
-                    stage.execute(buf, threadPec);
+                    stage.execute(inputBuf, threadPec);
                 }
             });
     }
@@ -576,12 +587,12 @@ TEST_F(InferModelPhysicalOperatorTest, ConcurrentStressTest)
     {
         Testing::TestTupleBuffer ttb(outputSchema);
         auto view = ttb.open(outBuf);
-        for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+        for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
         {
             bool recordCorrect = true;
             for (size_t i = 0; i < numFloats; ++i)
             {
-                if (std::abs(view[r]["out_" + std::to_string(i)].as<float>() - static_cast<float>(i + 1)) > 1e-5F)
+                if (std::abs(view[row]["out_" + std::to_string(i)].as<float>() - static_cast<float>(i + 1)) > 1e-5F)
                 {
                     recordCorrect = false;
                     break;
@@ -645,15 +656,16 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
         {
             Testing::TestTupleBuffer ttb(outputSchema);
             auto view = ttb.open(outBuf);
-            for (size_t r = 0; r < view.getNumberOfTuples(); ++r)
+            for (size_t row = 0; row < view.getNumberOfTuples(); ++row)
             {
-                auto outputBlob = view[r]["output_blob"].as<std::string>();
+                auto outputBlob = view[row]["output_blob"].as<std::string>();
                 ASSERT_EQ(outputBlob.size(), numFloats * sizeof(float)) << "Output blob size mismatch (compiled=" << compiled << ")";
 
                 /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) byte-to-float unpacking
                 const auto* floatPtr = reinterpret_cast<const float*>(outputBlob.data());
                 for (size_t i = 0; i < numFloats; ++i)
                 {
+                    /// NOLINTNEXTLINE(cppcoreguidelines-pro-bounds-pointer-arithmetic)
                     EXPECT_NEAR(floatPtr[i], static_cast<float>(i + 1), 1e-5F)
                         << "Float " << i << " mismatch in output blob (compiled=" << compiled << ")";
                 }
@@ -663,5 +675,7 @@ TEST_F(InferModelPhysicalOperatorTest, VarsizedOutputCorrectness)
         EXPECT_EQ(totalRecords, 1U) << "(compiled=" << compiled << ")";
     }
 }
+
+/// NOLINTEND(readability-magic-numbers, readability-identifier-length, bugprone-unchecked-optional-access, fuchsia-default-arguments-declarations)
 
 }

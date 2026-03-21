@@ -42,6 +42,7 @@ InferModelLogicalOperator::InferModelLogicalOperator(Model model, std::vector<st
 {
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string_view InferModelLogicalOperator::getName() const noexcept
 {
     return NAME;
@@ -63,6 +64,7 @@ bool InferModelLogicalOperator::operator==(const InferModelLogicalOperator& rhs)
         && getInputSchemas() == rhs.getInputSchemas() && getTraitSet() == rhs.getTraitSet();
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId opId) const
 {
     if (verbosity == ExplainVerbosity::Debug)
@@ -73,6 +75,7 @@ std::string InferModelLogicalOperator::explain(ExplainVerbosity verbosity, Opera
     return fmt::format("INFER_MODEL(inputFields: [{}])", fmt::join(inputFieldNames, ", "));
 }
 
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static) — satisfies LogicalOperatorConcept, cannot be static
 InferModelLogicalOperator InferModelLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
 {
     auto copy = *this;
@@ -177,7 +180,9 @@ InferModelLogicalOperator Unreflector<InferModelLogicalOperator>::operator()(con
     return InferModelLogicalOperator(Unreflector<Model>{}(reflected.model.value()), reflected.inputFieldNames.value());
 }
 
+/// generated registry interface requires by-value argument
 LogicalOperatorRegistryReturnType
+/// NOLINTNEXTLINE(performance-unnecessary-value-param)
 LogicalOperatorGeneratedRegistrar::RegisterInferModelLogicalOperator(LogicalOperatorRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())

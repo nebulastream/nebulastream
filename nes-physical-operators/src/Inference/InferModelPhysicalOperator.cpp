@@ -15,10 +15,12 @@
 #include <InferModelPhysicalOperator.hpp>
 
 #include <cstddef>
+#include <cstdint>
 #include <memory>
-#include <ranges>
+#include <optional>
 #include <span>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Inference/IREEAdapter.hpp>
@@ -26,9 +28,14 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <nautilus/function.hpp>
 #include <Arena.hpp>
+#include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
+#include <PhysicalOperator.hpp>
+#include <static.hpp>
+#include <val_arith.hpp>
 
 namespace NES
 {

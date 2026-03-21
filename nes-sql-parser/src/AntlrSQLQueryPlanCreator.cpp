@@ -1033,7 +1033,7 @@ LogicalPlan buildModelInferencePlan(AntlrSQLParser::ModelInferenceSourceContext*
     auto modelName = bindIdentifier(ctx->modelName);
 
     auto* input = ctx->modelInferenceInput();
-    LogicalPlan childPlan = [&]() -> LogicalPlan
+    const LogicalPlan childPlan = [&]() -> LogicalPlan
     {
         if (auto* streamName = dynamic_cast<AntlrSQLParser::ModelInferenceStreamNameContext*>(input))
         {
@@ -1041,7 +1041,9 @@ LogicalPlan buildModelInferencePlan(AntlrSQLParser::ModelInferenceSourceContext*
             for (auto* part : streamName->multipartIdentifier()->parts)
             {
                 if (!name.empty())
+                {
                     name += "$";
+                }
                 name += bindIdentifier(part->identifier());
             }
             return LogicalPlanBuilder::createLogicalPlan(std::move(name));

@@ -14,10 +14,12 @@
 
 #pragma once
 
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Model.hpp>
 
 namespace NES::Inference
@@ -29,6 +31,7 @@ class IREEInferenceOperatorHandler : public OperatorHandler
 public:
     explicit IREEInferenceOperatorHandler(NES::Model model);
 
+    /// NOLINTNEXTLINE(readability-inconsistent-declaration-parameter-name) definition uses abbreviated names; base class declaration kept for clarity
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 

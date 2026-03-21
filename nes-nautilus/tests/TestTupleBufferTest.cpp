@@ -50,6 +50,8 @@ public:
     std::shared_ptr<BufferManager> bufferManager;
 };
 
+/// NOLINTBEGIN(readability-magic-numbers)
+
 TEST_F(TestTupleBufferTest, AppendAndReadSingleField)
 {
     auto schema = Schema().addField("value", DataType::Type::INT64);
@@ -304,5 +306,7 @@ TEST_F(TestTupleBufferTest, AppendImplicitCastStringToNumericThrows)
 
     EXPECT_ANY_THROW(view.append("not a number"));
 }
+
+/// NOLINTEND(readability-magic-numbers)
 
 }

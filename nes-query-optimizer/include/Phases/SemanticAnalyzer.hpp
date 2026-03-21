@@ -39,7 +39,7 @@ public:
     explicit SemanticAnalyzer(
         std::shared_ptr<SourceCatalog> sourceCatalog,
         std::shared_ptr<SinkCatalog> sinkCatalog,
-        std::shared_ptr<Inference::ModelCatalog> modelCatalog = nullptr)
+        std::shared_ptr<Inference::ModelCatalog> modelCatalog)
         : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
     {
     }
