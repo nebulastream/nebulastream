@@ -22,8 +22,11 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Schema/Field.hpp>
+#include <Schema/Schema.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
@@ -76,7 +79,7 @@ bool VarSizedToNumericLogicalFunction::isSupportedNumericType(const DataType::Ty
     }
 }
 
-LogicalFunction VarSizedToNumericLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction VarSizedToNumericLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren()
         | std::views::transform([&schema](auto& currentChild) { return currentChild.withInferredDataType(schema); })
@@ -144,22 +147,21 @@ Reflected Reflector<VarSizedToNumericLogicalFunction>::operator()(const VarSized
     });
 }
 
-VarSizedToNumericLogicalFunction Unreflector<VarSizedToNumericLogicalFunction>::operator()(const Reflected& reflected) const
+VarSizedToNumericLogicalFunction
+Unreflector<VarSizedToNumericLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    auto [childFunction, targetType] = unreflect<detail::ReflectedVarSizedToNumericLogicalFunction>(reflected);
-    return VarSizedToNumericLogicalFunction(childFunction, targetType);
+    auto [childFunction, targetType] = context.unreflect<detail::ReflectedVarSizedToNumericLogicalFunction>(reflected);
+    return VarSizedToNumericLogicalFunction{childFunction, targetType};
 }
 
+/// NOLINTBEGIN(performance-unnecessary-value-param)
 LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionGeneratedRegistrar::RegisterVarSizedToNumericLogicalFunction(LogicalFunctionRegistryArguments)
 {
-    if (!arguments.reflected.isEmpty())
-    {
-        return unreflect<VarSizedToNumericLogicalFunction>(arguments.reflected);
-    }
-
-    throw CannotDeserialize("VarSizedToNumericLogicalFunction requires a reflected target type argument. "
-                            "Creating it from children only is not supported.");
+    PRECONDITION(false, "Function is only built directly via parser or via reflection, not using the registry");
+    std::unreachable();
 }
+
+/// NOLINTEND(performance-unnecessary-value-param)
 
 }

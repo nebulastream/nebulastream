@@ -50,6 +50,7 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
 #include <Functions/UnboundFieldAccessLogicalFunction.hpp>
+#include <Functions/VarSizedToNumericLogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Windows/Aggregations/AvgAggregationLogicalFunction.hpp>
@@ -982,6 +983,17 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                 helpers.top().constantBuilder.pop_back();
                 auto constFunctionItem = ConstantValueLogicalFunction(*dataType, std::move(value));
                 helpers.top().functionBuilder.emplace_back(constFunctionItem);
+            }
+            else if (funcName == "VARSIZEDTONUMERIC" && context->targetType != nullptr)
+            {
+                const auto targetDataType = bindDataType(context->targetType, DataType::NULLABLE::NOT_NULLABLE);
+                if (helpers.top().functionBuilder.empty())
+                {
+                    throw InvalidQuerySyntax("VarSizedToNumeric requires exactly one child expression at {}", context->getText());
+                }
+                auto child = std::move(helpers.top().functionBuilder.back());
+                helpers.top().functionBuilder.pop_back();
+                helpers.top().functionBuilder.emplace_back(VarSizedToNumericLogicalFunction{child, targetDataType});
             }
             else
             {

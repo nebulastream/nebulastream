@@ -48,6 +48,42 @@ SELECT VARSIZEDTONUMERIC(value, FLOAT32) AS value_out FROM varSizedNumericFloat3
 12.5
 
 
+# INT8
+CREATE LOGICAL SOURCE varSizedNumericInt8Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt8Stream TYPE File;
+ATTACH INLINE
+42
+-1
+0
+1?2?7
+ 0 0 5
+
+SELECT VARSIZEDTONUMERIC(value, INT8) AS value_out FROM varSizedNumericInt8Stream INTO FILE();
+----
+42
+-1
+0
+127
+5
+
+
+# INT16
+CREATE LOGICAL SOURCE varSizedNumericInt16Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericInt16Stream TYPE File;
+ATTACH INLINE
+32000
+-32000
+0
+1?2?3
+
+SELECT VARSIZEDTONUMERIC(value, INT16) AS value_out FROM varSizedNumericInt16Stream INTO FILE();
+----
+32000
+-32000
+0
+123
+
+
 # INT32
 CREATE LOGICAL SOURCE varSizedNumericInt32Stream(value VARSIZED NOT NULL);
 CREATE PHYSICAL SOURCE FOR varSizedNumericInt32Stream TYPE File;
@@ -79,6 +115,36 @@ SELECT VARSIZEDTONUMERIC(value, INT64) AS value_out FROM varSizedNumericInt64Str
 ----
 922337203685477580
 -922337203685477580
+123
+
+
+# UINT8
+CREATE LOGICAL SOURCE varSizedNumericUInt8Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt8Stream TYPE File;
+ATTACH INLINE
+255
+0
+4?2
+
+SELECT VARSIZEDTONUMERIC(value, UINT8) AS value_out FROM varSizedNumericUInt8Stream INTO FILE();
+----
+255
+0
+42
+
+
+# UINT16
+CREATE LOGICAL SOURCE varSizedNumericUInt16Stream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR varSizedNumericUInt16Stream TYPE File;
+ATTACH INLINE
+65535
+0
+1?2?3
+
+SELECT VARSIZEDTONUMERIC(value, UINT16) AS value_out FROM varSizedNumericUInt16Stream INTO FILE();
+----
+65535
+0
 123
 
 
@@ -123,3 +189,25 @@ ATTACH INLINE
 SELECT VARSIZEDTONUMERIC(value, FLOAT64) AS value_out FROM wrongInputDataTypeStream INTO FILE();
 ----
 Error 2006
+
+
+# non-numeric string
+CREATE LOGICAL SOURCE nonNumericStream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR nonNumericStream TYPE File;
+ATTACH INLINE
+abc
+
+SELECT VARSIZEDTONUMERIC(value, INT32) AS value_out FROM nonNumericStream INTO FILE();
+----
+Error 4003
+
+
+# overflow: value too large for INT8
+CREATE LOGICAL SOURCE overflowStream(value VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR overflowStream TYPE File;
+ATTACH INLINE
+999
+
+SELECT VARSIZEDTONUMERIC(value, INT8) AS value_out FROM overflowStream INTO FILE();
+----
+Error 4003

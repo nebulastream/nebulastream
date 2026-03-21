@@ -14,9 +14,17 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <vector>
 #include <DataTypes/DataType.hpp>
+#include <DataTypes/SchemaBase.hpp>
+#include <DataTypes/SchemaBaseFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
-#include <Serialization/LogicalFunctionReflection.hpp>
+#include <Schema/Field.hpp>
+#include <Util/Logger/Formatter.hpp>
+#include <Util/PlanRenderer.hpp>
+#include <Util/Reflection.hpp>
 
 namespace NES
 {
@@ -28,23 +36,19 @@ public:
 
     VarSizedToNumericLogicalFunction(const LogicalFunction& child, const DataType& targetType);
 
-    DataType getDataType() const;
+    [[nodiscard]] bool operator==(const VarSizedToNumericLogicalFunction& rhs) const;
 
-    VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
+    [[nodiscard]] DataType getDataType() const;
+    [[nodiscard]] VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
+    [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
-    LogicalFunction withInferredDataType(const Schema& schema) const;
+    [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
-    std::vector<LogicalFunction> getChildren() const;
+    [[nodiscard]] std::string_view getType() const;
+    [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
-    VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
-
-    std::string_view getType() const;
-
-    bool operator==(const VarSizedToNumericLogicalFunction& rhs) const;
-
-    std::string explain(ExplainVerbosity verbosity) const;
-
-    DataType getTargetType() const;
+    [[nodiscard]] DataType getTargetType() const;
 
 private:
     static bool isSupportedNumericType(DataType::Type type);
@@ -74,7 +78,11 @@ struct Reflector<VarSizedToNumericLogicalFunction>
 template <>
 struct Unreflector<VarSizedToNumericLogicalFunction>
 {
-    VarSizedToNumericLogicalFunction operator()(const Reflected& reflected) const;
+    VarSizedToNumericLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
+static_assert(LogicalFunctionConcept<VarSizedToNumericLogicalFunction>);
+
 }
+
+FMT_OSTREAM(NES::VarSizedToNumericLogicalFunction);
