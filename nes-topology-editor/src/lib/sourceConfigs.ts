@@ -8,6 +8,12 @@
 
 import type { WasmFieldDef, ConfigMetadata } from './wasmValidation';
 
+/** Normalize WASM type names (e.g. "PRINT" → "Print", "TCP" → "TCP"). */
+function toTitleCase(s: string): string {
+  if (s.length <= 3) return s; // Keep short acronyms like TCP, CSV as-is
+  return s.charAt(0).toUpperCase() + s.slice(1).toLowerCase();
+}
+
 export interface FormFieldDef {
   key: string;
   label: string;
@@ -51,6 +57,7 @@ function wasmFieldToFormField(field: WasmFieldDef): FormFieldDef {
   };
   if (field.defaultValue !== undefined) {
     def.defaultValue = field.defaultValue;
+    def.placeholder = field.defaultValue;
   }
   return def;
 }
@@ -370,7 +377,7 @@ export function getSinkFields(type: string, metadata: ConfigMetadata | null): Fo
  */
 export function getSourceTypes(metadata: ConfigMetadata | null): string[] {
   if (metadata?.sourceTypes && metadata.sourceTypes.length > 0) {
-    return metadata.sourceTypes;
+    return metadata.sourceTypes.map(toTitleCase);
   }
   return FALLBACK_SOURCE_TYPES;
 }
@@ -381,7 +388,7 @@ export function getSourceTypes(metadata: ConfigMetadata | null): string[] {
  */
 export function getSinkTypes(metadata: ConfigMetadata | null): string[] {
   if (metadata?.sinkTypes && metadata.sinkTypes.length > 0) {
-    return metadata.sinkTypes;
+    return metadata.sinkTypes.map(toTitleCase);
   }
   return FALLBACK_SINK_TYPES;
 }
