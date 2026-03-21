@@ -7,6 +7,7 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
+    "build:wasm": "cd wasm && export EMSDK=$PWD/emsdk && export PATH=\"$EMSDK:$EMSDK/upstream/emscripten:$EMSDK/node/22.16.0_64bit/bin:$PATH\" && cmake -B build -G Ninja -DCMAKE_TOOLCHAIN_FILE=/vcpkg_input/vcpkg_repository/scripts/buildsystems/vcpkg.cmake -DVCPKG_CHAINLOAD_TOOLCHAIN_FILE=$EMSDK/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake -DVCPKG_TARGET_TRIPLET=wasm32-emscripten -DVCPKG_OVERLAY_TRIPLETS=$PWD/triplets -DVCPKG_OVERLAY_PORTS=../../vcpkg/vcpkg-registry/ports -DCMAKE_BUILD_TYPE=Release \"-DVCPKG_INSTALL_OPTIONS=--allow-unsupported\" && ninja -C build -j$(nproc)",
     "test": "vitest run",
     "test:watch": "vitest",
     "deploy": "vite build --base /topology-editor/ && cd dist && git init -b gh-pages && git add -A && git commit -m Deploy && git push -f https://github.com/ls-1801/topology-editor.git gh-pages && rm -rf .git"

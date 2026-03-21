@@ -3,12 +3,15 @@
   "version-string": "0.2.0",
   "dependencies": [
     "antlr4",
-    "yaml-cpp",
-    "spdlog",
+    "boost-url",
     "fmt",
-    "nameof",
-    "magic-enum",
+    "highs",
     "libuuid",
-    "highs"
+    "magic-enum",
+    "nameof",
+    "nlohmann-json",
+    "scope-guard",
+    "spdlog",
+    "yaml-cpp"
   ]
 }

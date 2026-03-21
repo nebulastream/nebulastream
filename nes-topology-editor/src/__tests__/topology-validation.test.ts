@@ -50,7 +50,7 @@ function makeSink(overrides: Partial<Sink> = {}): Sink {
     hostWorkerId: 'w1',
     type: 'File',
     schema: [],
-    config: { file_path: '/tmp/out.csv' },
+    config: { file_path: '/tmp/out.csv', output_format: 'CSV' },
     parserConfig: {},
     position: { x: 0, y: 0 },
     ...overrides,

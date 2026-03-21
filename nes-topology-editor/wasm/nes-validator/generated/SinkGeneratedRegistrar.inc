@@ -29,6 +29,7 @@ namespace NES
 
 /// declaration of register functions for 'Sinks'
 SinkRegistryReturnType RegisterVoidSink(SinkRegistryArguments);
+SinkRegistryReturnType RegisterNetworkSink(SinkRegistryArguments);
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments);
 SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments);
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments);
@@ -42,6 +43,7 @@ inline void Registrar<SinkRegistry, std::string, SinkRegistryReturnType, SinkReg
 {
     /// using namespace NES;
     registry.addEntry("Void", RegisterVoidSink);
+	registry.addEntry("Network", RegisterNetworkSink);
 	registry.addEntry("Checksum", RegisterChecksumSink);
 	registry.addEntry("File", RegisterFileSink);
 	registry.addEntry("Print", RegisterPrintSink);

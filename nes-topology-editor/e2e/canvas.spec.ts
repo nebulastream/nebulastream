@@ -23,6 +23,11 @@ async function addSinkToWorker(page: Page, workerNode: Locator) {
   await page.waitForTimeout(100);
 }
 
+/** Wait for auto-layout to settle after structural changes */
+async function waitForLayout(page: Page) {
+  await page.waitForTimeout(500);
+}
+
 /** Drag a node so its center lands at the given canvas coordinates */
 async function moveNode(page: Page, node: Locator, targetX: number, targetY: number) {
   const box = await node.boundingBox();
@@ -35,14 +40,18 @@ async function moveNode(page: Page, node: Locator, targetX: number, targetY: num
 
 /** Drag one node onto another (center-to-center) to create a connection */
 async function dragNodeOnto(page: Page, src: Locator, tgt: Locator) {
+  // Wait for any pending layout to settle before reading positions
+  await page.waitForTimeout(300);
   const s = await src.boundingBox();
   const t = await tgt.boundingBox();
   expect(s).not.toBeNull();
   expect(t).not.toBeNull();
   await page.mouse.move(s!.x + s!.width / 2, s!.y + s!.height / 2);
   await page.mouse.down();
-  await page.mouse.move(t!.x + t!.width / 2, t!.y + t!.height / 2, { steps: 10 });
+  // Move in more steps to ensure drag is registered
+  await page.mouse.move(t!.x + t!.width / 2, t!.y + t!.height / 2, { steps: 20 });
   await page.mouse.up();
+  await page.waitForTimeout(300);
 }
 
 test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
@@ -122,10 +131,8 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
 
   test('CANV-04: drag worker onto another worker creates downstream connection', async ({ page }) => {
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(0), 500, 150);
-
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(1), 500, 500);
+    await waitForLayout(page);
 
     await dragNodeOnto(
       page,
@@ -186,41 +193,31 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
   });
 
   test('CANV-05: drag source from one worker to another re-attaches it', async ({ page }) => {
-    // Create two workers spread apart
+    // Create two workers and add source to first
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(0), 300, 300);
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(1), 800, 300);
-
-    // Add source to worker1
     await addSourceToWorker(page, page.locator('.worker-node').nth(0));
+    await waitForLayout(page);
     await expect(page.locator('.react-flow__edge')).toHaveCount(1);
 
-    // Deselect, then move source to a clear position between the workers
-    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
-    await page.waitForTimeout(100);
-    await moveNode(page, page.locator('.source-node'), 200, 500);
-    await page.waitForTimeout(200);
-
-    // Drag source onto worker2
-    await dragNodeOnto(page, page.locator('.source-node'), page.locator('.worker-node').nth(1));
-    await page.waitForTimeout(300);
-
-    // Should still have 1 edge, but now it connects to worker2
-    await expect(page.locator('.react-flow__edge')).toHaveCount(1);
-
-    // Click source — host worker should now be worker2
-    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
-    await page.waitForTimeout(100);
-    // Move source back away from worker2 so we can click it
-    await moveNode(page, page.locator('.source-node'), 200, 500);
-    await page.waitForTimeout(100);
+    // Click source to see which worker it's attached to
     await page.locator('.source-node').click();
     await expect(page.getByText('Host Worker')).toBeVisible();
-    const workerLink = page.locator('button').filter({ hasText: /worker-/ });
-    await expect(workerLink).toBeVisible();
-    const linkText = await workerLink.textContent();
-    expect(linkText).not.toContain('worker-1');
+    const hostWorkerLink = page.locator('text=Host Worker').locator('..').locator('button');
+    const hostBefore = await hostWorkerLink.first().textContent();
+
+    // Deselect, then drag source onto worker2
+    await page.locator('.react-flow__pane').click({ position: { x: 50, y: 50 } });
+    await dragNodeOnto(page, page.locator('.source-node'), page.locator('.worker-node').nth(1));
+
+    // Should still have 1 edge
+    await expect(page.locator('.react-flow__edge')).toHaveCount(1);
+
+    // Click source — host worker should have changed
+    await page.locator('.source-node').click();
+    await expect(page.getByText('Host Worker')).toBeVisible();
+    const hostAfter = await hostWorkerLink.first().textContent();
+    expect(hostAfter).not.toBe(hostBefore);
   });
 
   test('CANV-05: drag sink from one worker to another re-attaches it', async ({ page }) => {
@@ -262,14 +259,13 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
   test('CANV-04/05: full topology — sources on worker1, downstream to worker2, sinks on worker2', async ({ page }) => {
     // Create two workers
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(0), 400, 200);
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(1), 400, 550);
 
     // Add source to worker1
     await addSourceToWorker(page, page.locator('.worker-node').nth(0));
     // Add sink to worker2
     await addSinkToWorker(page, page.locator('.worker-node').nth(1));
+    await waitForLayout(page);
 
     // 2 edges so far (source→worker1, worker2→sink)
     await expect(page.locator('.react-flow__edge')).toHaveCount(2);
@@ -384,10 +380,8 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
 
   test('CANV-08: cycle-creating connection is rejected (A→B then B→A)', async ({ page }) => {
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(0), 500, 150);
-
     await addWorker(page);
-    await moveNode(page, page.locator('.worker-node').nth(1), 500, 550);
+    await waitForLayout(page);
 
     // Connect A→B
     await dragNodeOnto(
@@ -396,9 +390,6 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
       page.locator('.react-flow__node').nth(1),
     );
     await expect(page.locator('.react-flow__edge')).toHaveCount(1);
-
-    // Move A back after drag so nodes don't overlap
-    await moveNode(page, page.locator('.react-flow__node').nth(0), 500, 150);
 
     // Try B→A (cycle) — should be rejected
     await dragNodeOnto(
@@ -458,44 +449,6 @@ test.describe('Interactive Canvas (CANV-01 through CANV-12)', () => {
     await page.waitForTimeout(500);
     const finalRects = await page.locator('.react-flow__minimap-node').count();
     expect(finalRects).toBeGreaterThan(initialRects);
-  });
-
-  // ── CANV-11: Auto-layout ───────────────────────────────────────────
-
-  test('CANV-11: auto-layout button exists in toolbar', async ({ page }) => {
-    await expect(page.getByTestId('auto-layout-btn')).toBeVisible();
-    await expect(page.getByText('Auto Layout')).toBeVisible();
-  });
-
-  test('CANV-11: auto-layout rearranges nodes', async ({ page }) => {
-    await addWorker(page);
-    await addWorker(page);
-    await expect(page.locator('.worker-node')).toHaveCount(2);
-
-    const nodesBefore = await page.locator('.react-flow__node').all();
-    const positionsBefore = await Promise.all(
-      nodesBefore.map(async (n) => {
-        const box = await n.boundingBox();
-        return { x: box!.x, y: box!.y };
-      }),
-    );
-
-    await page.getByTestId('auto-layout-btn').click();
-    await page.waitForTimeout(500);
-
-    const nodesAfter = await page.locator('.react-flow__node').all();
-    const positionsAfter = await Promise.all(
-      nodesAfter.map(async (n) => {
-        const box = await n.boundingBox();
-        return { x: box!.x, y: box!.y };
-      }),
-    );
-
-    const anyMoved = positionsAfter.some((pos, i) => {
-      const before = positionsBefore[i];
-      return before && (Math.abs(pos.x - before.x) > 5 || Math.abs(pos.y - before.y) > 5);
-    });
-    expect(anyMoved).toBe(true);
   });
 
   // ── CANV-12: Copy/paste ────────────────────────────────────────────

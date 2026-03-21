@@ -26,6 +26,7 @@ namespace NES::TraitGeneratedRegistrar
 TraitRegistryReturnType RegisterJoinImplementationTypeTrait(TraitRegistryArguments);
 TraitRegistryReturnType RegisterMemoryLayoutTypeTrait(TraitRegistryArguments);
 TraitRegistryReturnType RegisterOutputOriginIdsTrait(TraitRegistryArguments);
+TraitRegistryReturnType RegisterPlacementTrait(TraitRegistryArguments);
 
 }
 
@@ -38,6 +39,7 @@ inline void Registrar<TraitRegistry, std::string, TraitRegistryReturnType, Trait
     registry.addEntry("JoinImplementationType", RegisterJoinImplementationTypeTrait);
 	registry.addEntry("MemoryLayoutType", RegisterMemoryLayoutTypeTrait);
 	registry.addEntry("OutputOriginIds", RegisterOutputOriginIdsTrait);
+	registry.addEntry("Placement", RegisterPlacementTrait);
 	
 }
 }

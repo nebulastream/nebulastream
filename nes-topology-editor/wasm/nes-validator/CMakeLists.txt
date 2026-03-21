@@ -4,35 +4,9 @@
 set(NES_ROOT "${CMAKE_CURRENT_SOURCE_DIR}/../../..")
 
 # ============================================================================
-# ANTLR4 C++ runtime via vcpkg (migrated from FetchContent per locked decision)
+# ANTLR4 C++ runtime via vcpkg
 # ============================================================================
-find_package(antlr4-runtime CONFIG QUIET)
-
-if(antlr4-runtime_FOUND AND TARGET antlr4_static)
-    message(STATUS "ANTLR4 C++ runtime found via vcpkg")
-    # Apply -fwasm-exceptions to antlr4_static from vcpkg
-    target_compile_options(antlr4_static PRIVATE -fwasm-exceptions -w)
-else()
-    message(WARNING "ANTLR4 vcpkg port not found for wasm32-emscripten -- falling back to FetchContent")
-    include(FetchContent)
-    FetchContent_Declare(
-        antlr4-runtime
-        GIT_REPOSITORY https://github.com/antlr/antlr4.git
-        GIT_TAG        4.13.2
-        GIT_SHALLOW    TRUE
-        SOURCE_SUBDIR  runtime/Cpp
-    )
-    set(ANTLR4_INSTALL OFF CACHE BOOL "" FORCE)
-    set(ANTLR_BUILD_CPP_TESTS OFF CACHE BOOL "" FORCE)
-    set(WITH_DEMO OFF CACHE BOOL "" FORCE)
-    set(ANTLR_BUILD_SHARED OFF CACHE BOOL "" FORCE)
-    set(ANTLR_BUILD_STATIC ON CACHE BOOL "" FORCE)
-    FetchContent_MakeAvailable(antlr4-runtime)
-
-    if(TARGET antlr4_static)
-        target_compile_options(antlr4_static PRIVATE -fwasm-exceptions -w)
-    endif()
-endif()
+find_package(antlr4-runtime CONFIG REQUIRED)
 
 # ============================================================================
 # yaml-cpp via vcpkg
@@ -152,6 +126,8 @@ set(NES_CONFIGURATIONS_SRCS
     ${NES_ROOT}/nes-configurations/src/Configurations/BaseConfiguration.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/BaseOption.cpp
     ${NES_ROOT}/nes-configurations/src/Configurations/Validation/EndpointValidation.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/NumberValidation.cpp
+    ${NES_ROOT}/nes-configurations/src/Configurations/Validation/FloatValidation.cpp
 )
 
 # nes-input-formatters: not needed in WASM (StatementBinder excluded, formatters stubbed)
@@ -196,6 +172,16 @@ set(NES_DISTRIBUTED_SRCS
     ${NES_ROOT}/nes-distributed/src/DistributedQueryIdGenerator.cpp
 )
 
+# nes-single-node-worker interface sources
+set(NES_SINGLE_NODE_WORKER_SRCS
+    ${NES_ROOT}/nes-single-node-worker/interface/SingleNodeWorkerConfiguration.cpp
+)
+
+# nes-query-engine interface sources
+set(NES_QUERY_ENGINE_SRCS
+    ${NES_ROOT}/nes-query-engine/interface/QueryEngineConfiguration.cpp
+)
+
 # nes-logical-operators serialization (only WindowTypeReflection, needed by window operators)
 set(NES_LOGICAL_OPS_SERIALIZATION_SRCS
     ${NES_ROOT}/nes-logical-operators/src/Serialization/WindowTypeReflection.cpp
@@ -219,6 +205,8 @@ add_executable(nes-validator-wasm
     ${NES_INPUT_FORMATTERS_SRCS}
     ${NES_QUERY_OPTIMIZER_SRCS}
     ${NES_DISTRIBUTED_SRCS}
+    ${NES_SINGLE_NODE_WORKER_SRCS}
+    ${NES_QUERY_ENGINE_SRCS}
     ${NES_LOGICAL_OPS_SERIALIZATION_SRCS}
     ${ANTLR4_GENERATED_SRCS}
 )
@@ -254,6 +242,8 @@ target_include_directories(nes-validator-wasm PRIVATE
     ${NES_ROOT}/nes-single-node-worker/interface
     ${NES_ROOT}/nes-runtime/interface
     ${NES_ROOT}/nes-network/interface
+    ${NES_ROOT}/nes-query-engine/interface
+    ${NES_ROOT}/nes-query-compiler/interface
     ${NES_ROOT}/nes-data-types/registry/include
     ${NES_ROOT}/nes-logical-operators/registry/include
     ${NES_ROOT}/nes-query-optimizer/registry/include
@@ -284,8 +274,7 @@ target_include_directories(nes-validator-wasm PRIVATE
 # HiGHS LP solver (used by BottomUpPlacement for operator placement ILP)
 find_package(highs CONFIG REQUIRED)
 
-# scope-guard (used by BottomUpPlacement for RAII cleanup of HiGHS solver)
-find_package(scope-guard CONFIG REQUIRED)
+# scope-guard is header-only (scope_guard.hpp), found via vcpkg include path
 
 target_link_libraries(nes-validator-wasm PRIVATE
     antlr4_static
@@ -293,7 +282,6 @@ target_link_libraries(nes-validator-wasm PRIVATE
     spdlog::spdlog
     fmt::fmt
     highs::highs
-    scope_guard
     $<$<TARGET_EXISTS:unofficial::UUID::uuid>:unofficial::UUID::uuid>
     $<$<NOT:$<TARGET_EXISTS:unofficial::UUID::uuid>>:${LIBUUID_LIBRARIES}>
 )
@@ -311,6 +299,7 @@ target_compile_definitions(nes-validator-wasm PRIVATE NES_LOGLEVEL_NONE SYSTEST_
 target_compile_options(nes-validator-wasm PRIVATE
     -fwasm-exceptions
     -O2
+    -sUSE_ZLIB=0
     -Wno-deprecated-declarations
     -Wno-deprecated-copy
     -Wno-unused-parameter

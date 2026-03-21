@@ -173,7 +173,17 @@ const Canvas: React.FC = () => {
 
   const onEdgesChange: OnEdgesChange = useCallback(
     (changes) => {
-      setRfEdges((eds) => applyEdgeChanges(changes, eds));
+      setRfEdges((eds) => {
+        // Filter out remove changes for non-deletable edges (source→worker, sink→worker)
+        const filtered = changes.filter((c) => {
+          if (c.type === 'remove') {
+            const edge = eds.find((e) => e.id === c.id);
+            return edge?.deletable !== false;
+          }
+          return true;
+        });
+        return applyEdgeChanges(filtered, eds);
+      });
     },
     [],
   );
@@ -292,6 +302,14 @@ const Canvas: React.FC = () => {
       }
     },
     [rfNodes, connectDownstream, attachSourceToWorker, attachSinkToWorker],
+  );
+
+  // Prevent ReactFlow from deleting non-deletable edges (source→worker, sink→worker)
+  const onBeforeDelete = useCallback(
+    async ({ nodes, edges }: { nodes: Node[]; edges: Edge[] }) => {
+      return { nodes, edges: edges.filter((e) => e.deletable !== false) };
+    },
+    [],
   );
 
   const onDelete: OnDelete = useCallback(
@@ -434,6 +452,7 @@ const Canvas: React.FC = () => {
         onNodeDrag={onNodeDrag}
         onNodeDragStop={onNodeDragStop}
         onConnect={onConnect}
+        onBeforeDelete={onBeforeDelete}
         onDelete={onDelete}
         isValidConnection={isValidConnection}
         snapToGrid

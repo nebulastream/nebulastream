@@ -31,6 +31,7 @@ namespace NES::SourceGeneratedRegistrar
 /// declaration of register functions for 'Sources'
 SourceRegistryReturnType RegisterTCPSource(SourceRegistryArguments);
 SourceRegistryReturnType RegisterGeneratorSource(SourceRegistryArguments);
+SourceRegistryReturnType RegisterNetworkSource(SourceRegistryArguments);
 SourceRegistryReturnType RegisterFileSource(SourceRegistryArguments);
 
 }
@@ -46,6 +47,7 @@ Registrar<SourceRegistry, std::string, SourceRegistryReturnType, SourceRegistryA
     /// the SourceRegistry calls registerAll and thereby all the below functions that register Sources in the SourceRegistry
     registry.addEntry("TCP", RegisterTCPSource);
 	registry.addEntry("Generator", RegisterGeneratorSource);
+	registry.addEntry("Network", RegisterNetworkSource);
 	registry.addEntry("File", RegisterFileSource);
 	
 }

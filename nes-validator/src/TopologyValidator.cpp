@@ -17,14 +17,18 @@
 
 #include <exception>
 #include <memory>
+#include <ranges>
 #include <string>
+#include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace NES::Validator
 {
@@ -86,14 +90,26 @@ std::string validateTopology(const std::string& yamlString)
             }
         }
 
-        // 4. Parse and validate SQL queries through the full semantic analysis pipeline
-        //    (same as nes-cli dump: type inference, sink/source binding, schema propagation)
+        // 4. Populate worker catalog from topology
+        auto workerCatalog = std::make_shared<WorkerCatalog>();
+        for (const auto& worker : config.workers)
+        {
+            auto downstream = worker.downstream | std::views::transform([](const auto& d) { return Host(d); })
+                | std::ranges::to<std::vector>();
+            auto capacity = worker.maxOperators.has_value() ? Capacity(CapacityKind::Limited{*worker.maxOperators})
+                                                           : Capacity(CapacityKind::Unlimited{});
+            workerCatalog->addWorker(Host(worker.host), worker.data, capacity, downstream);
+        }
+
+        // 5. Parse and validate SQL queries through semantic analysis + placement
         auto semanticAnalyzer = SemanticAnalyzer(sourceCatalog, sinkCatalog);
+        auto queryOptimizer = QueryOptimizer(QueryOptimizerConfiguration{}, sourceCatalog, sinkCatalog, workerCatalog);
 
         for (const auto& query : config.query)
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
-            [[maybe_unused]] auto analysedPlan = semanticAnalyzer.analyse(plan);
+            auto analysedPlan = semanticAnalyzer.analyse(plan);
+            [[maybe_unused]] auto distributedPlan = queryOptimizer.optimize(analysedPlan);
         }
 
         return ""; // success

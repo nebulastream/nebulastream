@@ -286,9 +286,10 @@ export const FILE_SINK_CONFIG: FormFieldDef[] = [
     defaultValue: 'false',
   },
   {
-    key: 'input_format',
-    label: 'Input Format',
+    key: 'output_format',
+    label: 'Output Format',
     type: 'select',
+    required: true,
     defaultValue: 'CSV',
     options: [
       { value: 'CSV', label: 'CSV' },
@@ -305,20 +306,21 @@ export const FILE_SINK_CONFIG: FormFieldDef[] = [
 
 export const PRINT_SINK_CONFIG: FormFieldDef[] = [
   {
-    key: 'ingestion',
-    label: 'Ingestion',
-    type: 'number',
-    defaultValue: '0',
-  },
-  {
-    key: 'input_format',
-    label: 'Input Format',
+    key: 'output_format',
+    label: 'Output Format',
     type: 'select',
+    required: true,
     defaultValue: 'CSV',
     options: [
       { value: 'CSV', label: 'CSV' },
       { value: 'JSON', label: 'JSON' },
     ],
+  },
+  {
+    key: 'ingestion',
+    label: 'Ingestion',
+    type: 'number',
+    defaultValue: '0',
   },
 ];
 

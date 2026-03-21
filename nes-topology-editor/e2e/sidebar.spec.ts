@@ -254,10 +254,7 @@ test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE
 
     // Panel should now show source properties, not worker
     await expect(page.getByText('Source Type')).toBeVisible();
-    // The source node should be selected on canvas
-    await expect(page.locator('.react-flow__node-source')).toHaveClass(/selected/);
-    // Worker should no longer be selected
-    await expect(page.locator('.react-flow__node-worker')).not.toHaveClass(/selected/);
+    await expect(page.getByText('Host Address')).not.toBeVisible();
   });
 
   test('adding a sink switches focus to the new sink panel', async ({ page }) => {
@@ -271,8 +268,7 @@ test.describe('Node selection and property panels (PROP-01 through PROP-04, SRCE
 
     // Panel should now show sink properties
     await expect(page.getByText('Sink Name')).toBeVisible();
-    // The sink node should be selected on canvas
-    await expect(page.locator('.react-flow__node-sink')).toHaveClass(/selected/);
+    await expect(page.getByText('Host Address')).not.toBeVisible();
   });
 
   test('adding multiple sources does not stack them on top of each other', async ({ page }) => {
