@@ -78,6 +78,7 @@ jobs:
     name: "Run build and test"
     needs: [ fetch-current-main-commit, get-dev-images ]
     uses: ./.github/workflows/build_and_test.yml
+    secrets: inherit
     with:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
