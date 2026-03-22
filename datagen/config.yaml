@@ -1,0 +1,35 @@
+data_rate: 1 # tuples per period
+period: 1000 # period length in ms
+chunk_size: 1000 # max tuples per send
+
+pattern:
+  - type: burst
+  - fraction: 0.5
+  - distribution: 0.5
+
+data_source:
+  #type: "csv"
+  #file: "data/nexmark/bid.csv"
+  # For image folders use:
+  type: "image_folder"
+  file: "data/img"
+  encoding: "base64" # or "hex"
+
+duration: 60
+host: "0.0.0.0"
+ports:
+  - 8080
+  - 8081
+  - 8082
+
+mqtt:
+  enabled: false
+  host: 172.26.0.1
+  port: 1882
+  topic: "bid"
+
+# Zipf options (optional; used only when type=zipfian)
+zipf:
+  period_ms: 1000
+  s: 1.4
+  stochastic: true

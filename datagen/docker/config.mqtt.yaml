@@ -1,0 +1,31 @@
+data_rate: 1
+period: 1000
+chunk_size: 1000
+
+pattern:
+  - type: burst
+  - fraction: 0.5
+  - distribution: 0.5
+
+data_source:
+  type: "image_folder"
+  file: "/app/data/img"
+  encoding: "base64"
+
+duration: 60
+host: "0.0.0.0"
+ports:
+  - 8080
+  - 8081
+  - 8082
+
+mqtt:
+  enabled: true
+  host: "mosquitto"
+  port: 1883
+  topic: "bid"
+
+zipf:
+  period_ms: 1000
+  s: 1.4
+  stochastic: true

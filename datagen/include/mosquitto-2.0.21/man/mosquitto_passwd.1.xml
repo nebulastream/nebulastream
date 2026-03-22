@@ -1,0 +1,234 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<?xml-stylesheet type="text/xsl" href="manpage.xsl"?>
+
+<refentry xml:id="mosquitto_passwd" xmlns:xlink="http://www.w3.org/1999/xlink">
+	<refmeta>
+		<refentrytitle>mosquitto_passwd</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class="source">Mosquitto Project</refmiscinfo>
+		<refmiscinfo class="manual">Commands</refmiscinfo>
+	</refmeta>
+
+	<refnamediv>
+		<refname>mosquitto_passwd</refname>
+		<refpurpose>manage password files for mosquitto</refpurpose>
+	</refnamediv>
+
+	<refsynopsisdiv>
+		<cmdsynopsis>
+			<command>mosquitto_passwd</command>
+			<group>
+				<arg choice='plain'><option>-H</option> <replaceable>hash</replaceable></arg>
+			</group>
+			<group>
+				<arg choice='plain'><option>-c</option></arg>
+				<arg choice='plain'><option>-D</option></arg>
+			</group>
+			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
+			<arg choice='plain'><replaceable>username</replaceable></arg>
+		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_passwd</command>
+			<group>
+				<arg choice='plain'><option>-H</option> <replaceable>hash</replaceable></arg>
+			</group>
+			<arg choice='plain'><option>-b</option></arg>
+			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
+			<arg choice='plain'><replaceable>username</replaceable></arg>
+			<arg choice='plain'><replaceable>password</replaceable></arg>
+		</cmdsynopsis>
+		<cmdsynopsis>
+			<command>mosquitto_passwd</command>
+			<arg choice='plain'><option>-U</option></arg>
+			<arg choice='plain'><replaceable>passwordfile</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
+
+	<refsect1>
+		<title>Description</title>
+		<para><command>mosquitto_passwd</command> is a tool for managing
+			password files for the mosquitto MQTT broker.</para>
+		<para>Usernames must not contain ":". Passwords are stored in a similar
+			format to
+		<citerefentry><refentrytitle><link xlink:href="https://linux.die.net/man/3/crypt">crypt</link></refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>
+	</refsect1>
+
+	<refsect1>
+		<title>Options</title>
+		<variablelist>
+			<varlistentry>
+				<term><option>-b</option></term>
+				<listitem>
+					<para>Run in batch mode. This allows the password to be
+						provided at the command line which can be convenient
+						but should be used with care because the password will
+						be visible on the command line and in command
+						history.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-c</option></term>
+				<listitem>
+					<para>Create a new password file. If the file already
+						exists, it will be overwritten.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-D</option></term>
+				<listitem>
+					<para>Delete the specified user from the password
+						file.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-H</option></term>
+				<listitem>
+					<para>Choose the hash to use. Can be one of
+						<replaceable>sha512-pbkdf2</replaceable> or
+						<replaceable>sha512</replaceable>. Defaults to
+						<replaceable>sha512-pbkdf2</replaceable>. The
+						<replaceable>sha512</replaceable> option is provided for
+						creating password files for use with Mosquitto 1.6
+						and earlier.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-U</option></term>
+				<listitem>
+					<para>This option can be used to upgrade/convert a password
+						file with plain text passwords into one using hashed
+						passwords. It will modify the specified file. It does
+						not detect whether passwords are already hashed, so
+						using it on a password file that already contains
+						hashed passwords will generate new hashes based on the
+						old hashes and render the password file
+						unusable.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>passwordfile</option></term>
+				<listitem>
+					<para>The password file to modify.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>username</option></term>
+				<listitem>
+					<para>The username to add/update/delete.</para>
+				</listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>password</option></term>
+				<listitem>
+					<para>The password to use when in batch mode.</para>
+				</listitem>
+			</varlistentry>
+		</variablelist>
+	</refsect1>
+
+
+	<refsect1>
+		<title>Exit Status</title>
+            <para>
+                mosquitto_sub returns zero on success, or non-zero on error. If
+                the connection is refused by the broker at the MQTT level, then
+                the exit code is the CONNACK reason code. If another error
+                occurs, the exit code is a libmosquitto return value.
+            </para>
+
+			<para>MQTT v3.1.1 CONNACK codes:</para>
+			<itemizedlist mark="circle">
+				<listitem><para><option>0</option> Success</para></listitem>
+				<listitem><para><option>1</option> Connection refused: Bad protocol version</para></listitem>
+				<listitem><para><option>2</option> Connection refused: Identifier rejected</para></listitem>
+				<listitem><para><option>3</option> Connection refused: Server unavailable</para></listitem>
+				<listitem><para><option>4</option> Connection refused: Bad username/password</para></listitem>
+				<listitem><para><option>5</option> Connection refused: Not authorized</para></listitem>
+			</itemizedlist>
+
+			<para>MQTT v5 CONNACK codes:</para>
+			<itemizedlist>
+				<listitem><para><option>0</option> Success</para></listitem>
+				<listitem><para><option>128</option> Unspecified error</para></listitem>
+				<listitem><para><option>129</option> Malformed packet</para></listitem>
+				<listitem><para><option>130</option> Protocol error</para></listitem>
+				<listitem><para><option>131</option> Implementation specific error</para></listitem>
+				<listitem><para><option>132</option> Unsupported protocol version</para></listitem>
+				<listitem><para><option>133</option> Client ID not valid</para></listitem>
+				<listitem><para><option>134</option> Bad username or password</para></listitem>
+				<listitem><para><option>135</option> Not authorized</para></listitem>
+				<listitem><para><option>136</option> Server unavailable</para></listitem>
+				<listitem><para><option>137</option> Server busy</para></listitem>
+				<listitem><para><option>138</option> Banned</para></listitem>
+				<listitem><para><option>139</option> Server shutting down</para></listitem>
+				<listitem><para><option>140</option> Bad authentication method</para></listitem>
+				<listitem><para><option>141</option> Keep alive timeout</para></listitem>
+				<listitem><para><option>142</option> Session taken over</para></listitem>
+				<listitem><para><option>143</option> Topic filter invalid</para></listitem>
+				<listitem><para><option>144</option> Topic name invalid</para></listitem>
+				<listitem><para><option>147</option> Receive maximum exceeded</para></listitem>
+				<listitem><para><option>148</option> Topic alias invalid</para></listitem>
+				<listitem><para><option>149</option> Packet too large</para></listitem>
+				<listitem><para><option>148</option> Message rate too high</para></listitem>
+				<listitem><para><option>151</option> Quota exceeded</para></listitem>
+				<listitem><para><option>152</option> Administrative action</para></listitem>
+				<listitem><para><option>153</option> Payload format invalid</para></listitem>
+				<listitem><para><option>154</option> Retain not supported</para></listitem>
+				<listitem><para><option>155</option> QoS not supported</para></listitem>
+				<listitem><para><option>156</option> Use another server</para></listitem>
+				<listitem><para><option>157</option> Server moved</para></listitem>
+				<listitem><para><option>158</option> Shared subscriptions not supported</para></listitem>
+				<listitem><para><option>159</option> Connection rate exceeded</para></listitem>
+				<listitem><para><option>160</option> Maximum connect time</para></listitem>
+				<listitem><para><option>161</option> Subscription IDs not supported</para></listitem>
+				<listitem><para><option>162</option> Wildcard subscriptions not supported</para></listitem>
+			</itemizedlist>
+	</refsect1>
+
+	<refsect1>
+		<title>Examples</title>
+		<para>Add a user to a new password file:</para>
+		<itemizedlist mark="circle">
+			<listitem><para>mosquitto_passwd <literal>-c</literal> /etc/mosquitto/passwd <literal>ral</literal></para></listitem>
+		</itemizedlist>
+		<para>Delete a user from a password file</para>
+		<itemizedlist mark="circle">
+			<listitem><para>mosquitto_passwd <literal>-D</literal> /etc/mosquitto/passwd <literal>ral</literal></para></listitem>
+		</itemizedlist>
+	</refsect1>
+
+	<refsect1>
+		<title>Bugs</title>
+		<para><command>mosquitto</command> bug information can be found at
+			<ulink url="https://github.com/eclipse/mosquitto/issues"/></para>
+	</refsect1>
+
+	<refsect1>
+		<title>See Also</title>
+		<simplelist type="inline">
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto-8.html">mosquitto</link></refentrytitle>
+					<manvolnum>8</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mosquitto-conf-5.html">mosquitto.conf</link></refentrytitle>
+					<manvolnum>5</manvolnum>
+				</citerefentry>
+			</member>
+			<member>
+				<citerefentry>
+					<refentrytitle><link xlink:href="mqtt-7.html">mqtt</link></refentrytitle>
+					<manvolnum>7</manvolnum>
+				</citerefentry>
+			</member>
+		</simplelist>
+	</refsect1>
+
+	<refsect1>
+		<title>Author</title>
+		<para>Roger Light <email>roger@atchoo.org</email></para>
+	</refsect1>
+</refentry>

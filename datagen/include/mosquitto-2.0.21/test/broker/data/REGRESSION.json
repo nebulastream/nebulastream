@@ -1,0 +1,49 @@
+[
+	{
+		"group": "REGRESSIONS",
+		"tests": [
+			{ "name": "subscribe-unsubscribe-crash part 1", "ver":4, "expect_disconnect":false, "msgs": [
+				{"type":"send", "payload":"82 26 1234 0009 64 72 61 73 68 2F 31 2F 23 00 0009 65 72 61 73 68 2F 32 2F 23 00 0009 63 72 61 73 68 2F 33 2F 23 00"},
+				{"type":"recv", "payload":"90 05 1234 00 00 00"},
+				{"type":"send", "payload":"A2 0D 1234 0009 64 72 61 73 68 2F 31 2F 23"},
+				{"type":"recv", "payload":"B0 02 1234"}
+			], "comment": "Must be used with part 2 immediately after",
+			"comment2": "Requires WITH_ASAN=yes"},
+			{ "name": "subscribe-unsubscribe-crash part 2", "ver":4, "expect_disconnect":false, "msgs": [
+				{"type":"send", "payload":"82 0E 1234 0009 63 72 61 73 68 2F 33 2F 23 00"},
+				{"type":"recv", "payload":"90 03 1234 00"}
+			], "comment": "https://github.com/eclipse/mosquitto/issues/2885"}
+		]
+	},
+	{
+		"group": "REGRESSIONS",
+		"tests": [
+			{
+				"name": "mismatched-shared-normal-subscribe-unsubscribe-leak", "ver":4, "expect_disconnect":false, "msgs": [
+					{"type":"send", "payload":"82 1a 0001 0015 24 73 68 61 72 65 2f 73 68 61 72 65 6e 61 6d 65 2f 74 65 73 74 01"},
+					{"type":"recv", "payload":"90 03 0001 01"},
+					{"type":"send", "payload":"82 09 0002 0004 74 65 73 74 00"},
+					{"type":"recv", "payload":"90 03 0002 00"},
+					{"type":"send", "payload":"A2 08 0007 0004 74 65 73 74"},
+					{"type":"recv", "payload":"B0 02 0007"}
+				],
+				"comment": "Also part one of the next two tests"
+			},
+			{
+				"name": "acl-check-uaf", "ver":4, "expect_disconnect":false, "msgs": [
+					{"type":"send", "payload":"30 0D 0004 74657374 7061796C6F6164"}
+				]
+			},
+			{
+				"name": "shared-sub-uaf", "ver":4, "expect_disconnect":false, "msgs": [
+					{"type":"send", "payload":"82 1a 0001 0015 24 73 68 61 72 65 2f 73 68 61 72 65 6e 61 6d 65 2f 74 65 73 74 01"},
+					{"type":"recv", "payload":"90 03 0001 01"},
+					{"type":"send", "payload":"82 09 0002 0004 74 65 73 74 00"},
+					{"type":"recv", "payload":"90 03 0002 00"},
+					{"type":"send", "payload":"A2 08 0007 0004 74 65 73 74"},
+					{"type":"recv", "payload":"B0 02 0007"}
+				]
+			}
+		]
+	}
+]

@@ -1,0 +1,26 @@
+LD_LIBRARY_PATH=../lib ./mosquitto_pub \
+	\
+	-t asdf -V mqttv5 -m '{"key":"value"}' \
+	\
+	-D connect authentication-data password \
+	-D connect authentication-method something \
+	-D connect maximum-packet-size 0191 \
+	-D connect receive-maximum 1000 \
+	-D connect request-problem-information 1 \
+	-D connect request-response-information 1 \
+	-D connect session-expiry-interval 39 \
+	-D connect topic-alias-maximum 123 \
+	-D connect user-property connect up \
+	\
+	-D publish content-type application/json \
+	-D publish correlation-data some-data \
+	-D publish message-expiry-interval 59 \
+	-D publish payload-format-indicator 1 \
+	-D publish response-topic /dev/null \
+	-D publish topic-alias 4 \
+	-D publish user-property publish up \
+	\
+	-D disconnect reason-string "reason" \
+	-D disconnect session-expiry-interval 40 \
+	-D disconnect user-property disconnect up
+

@@ -1,0 +1,69 @@
+'\" t
+.\"     Title: mosquitto_ctrl_dynsec
+.\"    Author: [see the "Author" section]
+.\" Generator: DocBook XSL Stylesheets vsnapshot <http://docbook.sf.net/>
+.\"      Date: 03/06/2025
+.\"    Manual: Commands
+.\"    Source: Mosquitto Project
+.\"  Language: English
+.\"
+.TH "MOSQUITTO_CTRL_DYNSE" "1" "03/06/2025" "Mosquitto Project" "Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+mosquitto_ctrl_dynsec \- mosquitto_ctrl module for controlling the Mosquitto Dynamic Security plugin\&.
+.SH "SYNOPSIS"
+.HP \w'\fBmosquitto_ctrl\fR\ 'u
+\fBmosquitto_ctrl\fR [connection\-options] dynsec dynsec\-command [command\-options]
+.SH "DESCRIPTION"
+.PP
+This page describes the
+\fBdynsec\fR
+module for
+\fBmosquitto_ctrl\fR(1)\&. See the mosquitto_ctrl man page for details of the options for connecting to remote brokers, in particular since this module works with authentication and access control, it is crucial that secure encrypted connections are used\&.
+.SH "COMMANDS"
+.SS "Configuration file initialisation"
+.PP
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+mosquitto_ctrl dynsec init
+config\-filename
+admin\-user
+[admin\-password]
+.RE
+.SH "BUGS"
+.PP
+\fBmosquitto\fR
+bug information can be found at
+\m[blue]\fB\%https://github.com/eclipse/mosquitto/issues\fR\m[]
+.SH "SEE ALSO"
+\fBmqtt\fR(7), \fBmosquitto_rr\fR(1), \fBmosquitto_pub\fR(1), \fBmosquitto_sub\fR(1), \fBmosquitto\fR(8), \fBlibmosquitto\fR(3), \fBmosquitto-tls\fR(7)
+.SH "AUTHOR"
+.PP
+Roger Light
+<roger@atchoo\&.org>

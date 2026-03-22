@@ -1,0 +1,59 @@
+LD_LIBRARY_PATH=../lib ./mosquitto_sub \
+	-h test.mosquitto.org \
+	--retained-only \
+	--remove-retained \
+	-t FW/# \
+	-W 1>/dev/null 2>/dev/null
+
+LD_LIBRARY_PATH=../lib ./mosquitto_pub \
+	-h test.mosquitto.org \
+	-D publish content-type "application/json" \
+	-D publish message-expiry-interval 360000 \
+	-D publish payload-format-indicator 1 \
+	-D publish response-topic response-topic \
+	-m ABCDEFGHIJKLMNOPQRSTUVWXYZ \
+	-q 2 \
+	-r \
+	-t FW/truncate \
+	-V 5
+
+LD_LIBRARY_PATH=../lib ./mosquitto_pub \
+	-h test.mosquitto.org \
+	-D publish content-type "null" \
+	-D publish message-expiry-interval 3600 \
+	-D publish payload-format-indicator 1 \
+	-D publish response-topic r-t \
+	-m Off \
+	-q 2 \
+	-r \
+	-t FW/expire \
+	-V 5
+
+LD_LIBRARY_PATH=../lib ./mosquitto_pub \
+	-h test.mosquitto.org \
+	-D publish payload-format-indicator 1 \
+	-D publish response-topic rt \
+	-m Offline \
+	-q 2 \
+	-r \
+	-t FW/1 \
+	-V 5
+
+LD_LIBRARY_PATH=../lib ./mosquitto_sub \
+	-h test.mosquitto.org \
+	-C 3 \
+	-F "| %10t | %-10t | %7x | %-7x | %08x | %7X | %-7X | %08X | %8p | %-8p | %3m | %-3m | %03m | %3l | %-3l | %03l | %2F | %-2F | %02F | %5C | %-5C | %5E | %-5E | %05E | %5A | %5R | %-5R |" \
+	-q 2 \
+	-t 'FW/#' \
+	-V 5
+
+echo
+
+LD_LIBRARY_PATH=../lib ./mosquitto_sub \
+	-h test.mosquitto.org \
+	-C 3 \
+	-F "| %10.10t | %.5t | %-10.10t | %7x | %-7x | %08x | %7X | %-7X | %08X | %8p | %-8p | %3m | %-3m | %03m | %3l | %-3l | %03l | %2F | %-2F | %02F | %5C | %-5C | %5E | %-5E | %05E | %5.5A | %5.5R | %-5.5R |" \
+	-q 2 \
+	-t 'FW/#' \
+	-V 5
+

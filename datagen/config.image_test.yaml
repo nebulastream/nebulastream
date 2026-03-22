@@ -1,0 +1,19 @@
+data_rate: 1
+period: 1000
+chunk_size: 1
+
+pattern:
+  type: uniform
+
+data_source:
+  type: image_folder
+  file: data/img
+  encoding: base64
+
+duration: 8
+host: "127.0.0.1"
+ports:
+  - 18080
+
+mqtt:
+  enabled: false

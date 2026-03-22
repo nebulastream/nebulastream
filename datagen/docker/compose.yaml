@@ -1,0 +1,35 @@
+name: datagen
+
+services:
+  datagen:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    image: datagen:local
+    container_name: datagen
+    restart: unless-stopped
+    environment:
+      DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/config/config.yaml}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+    volumes:
+      - ./config.yaml:/app/config/config.yaml:ro
+      - ./config.mqtt.yaml:/app/config/config.mqtt.yaml:ro
+      - ../data:/app/data:ro
+    depends_on:
+      mosquitto:
+        condition: service_started
+        required: false
+
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: datagen-mosquitto
+    profiles:
+      - mqtt
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro

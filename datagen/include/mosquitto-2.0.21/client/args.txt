@@ -1,0 +1,52 @@
+A - PUB,RR,SUB     (bind to address)
+a
+B
+b
+C - SUB            (message count)
+c - PUB,RR,SUB     (clean session)
+D - PUB,RR,SUB     (properties)
+d - PUB,RR,SUB     (debug log)
+E - SUB            (exit after subscribe)
+e - RR             (response topic)
+F - RR,SUB         (output format)
+f - PUB,RR         (file input)
+G
+g
+H
+h - PUB,RR,SUB     (host)
+I - PUB,RR,SUB     (client id prefix)
+i - PUB,RR,SUB     (client id)
+J
+j
+K
+k - PUB,RR,SUB     (keepalive)
+L - PUB,RR,SUB     (connect url)
+l - PUB            (stdin input)
+M - PUB,RR,SUB     (max inflight)
+m - PUB,RR         (message input)
+N - RR,SUB         (no end of line)
+n - PUB,RR         (null message)
+O
+o - CTRL           (options file)
+P - PUB,RR,SUB     (password)
+p - PUB,RR,SUB     (port)
+Q
+q - PUB,RR,SUB     (qos)
+R - RR,SUB         (don't show retained)
+r - PUB,RR         (retain)
+S - PUB,RR,SUB     (SRV lookups)
+s - PUB,RR         (stdin input)
+T - SUB            (filter out topic)
+t - PUB,RR,SUB     (topic)
+U - SUB            (unsubscribe)
+u - PUB,RR,SUB     (username)
+V - PUB,RR,SUB     (version output)
+v - RR,SUB         (verbose)
+W - SUB            (timeout)
+w
+X
+x - PUB,RR,SUB     (session-expiry-interval)
+Y
+y
+Z
+z
