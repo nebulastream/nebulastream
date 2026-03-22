@@ -188,7 +188,11 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(NetworkLink::TargetHostAddr)
                             .string()
-                            .not_null(),
+                            .not_null()
+                            .check(
+                                Expr::col(NetworkLink::TargetHostAddr)
+                                    .ne(Expr::col(NetworkLink::SourceHostAddr)),
+                            ),
                     )
                     .primary_key(
                         MigrationIndex::create()

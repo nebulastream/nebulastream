@@ -1,5 +1,5 @@
-use anyhow::Result;
 use crate::error::Retryable;
+use anyhow::Result;
 use migration::{Migrator, MigratorTrait};
 use sea_orm::{ConnectOptions, DatabaseConnection, DbErr};
 use std::future::Future;
@@ -9,6 +9,7 @@ use tokio_retry::strategy::{ExponentialBackoff, jitter};
 use tracing::warn;
 
 const SQLITE_MAX_CONNECTIONS: u32 = 8;
+const BASE_RETRY_DURATION_MS: u64 = 10;
 const RETRY_BACKOFF_FACTOR: u64 = 2;
 const MAX_RETRIES: usize = 5;
 
@@ -77,8 +78,12 @@ impl Database {
 
     #[cfg(any(test, feature = "testing"))]
     pub async fn for_test() -> Self {
-        let this = Self::with(StateBackend::Memory).await.unwrap();
-        Migrator::up(&this.conn, None).await.unwrap();
+        let this = Self::with(StateBackend::Memory)
+            .await
+            .expect("could not connect to the database");
+        Migrator::up(&this.conn, None)
+            .await
+            .expect("could not apply migrations");
         this
     }
 
@@ -93,11 +98,14 @@ impl Database {
         Fut: Future<Output = Result<T, DbErr>>,
     {
         RetryIf::spawn(
-            ExponentialBackoff::from_millis(50).factor(RETRY_BACKOFF_FACTOR).map(jitter).take(MAX_RETRIES),
+            ExponentialBackoff::from_millis(BASE_RETRY_DURATION_MS)
+                .factor(RETRY_BACKOFF_FACTOR)
+                .map(jitter)
+                .take(MAX_RETRIES),
             || op(self.conn.clone()),
             |err: &DbErr| {
                 if err.retryable() {
-                    warn!("transient database error, retrying: {err}");
+                    warn!("retrying: {err}");
                     return true;
                 }
                 false

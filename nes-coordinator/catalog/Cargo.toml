@@ -4,7 +4,6 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
-madsim.workspace = true
 model.workspace = true
 migration.workspace = true
 tokio.workspace = true

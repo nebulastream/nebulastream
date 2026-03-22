@@ -8,7 +8,7 @@ use model::query::query_state::{DesiredQueryState, QueryState};
 use model::query::{CreateQuery, DropQuery, GetQuery, fragment};
 use model::{IntoCondition, query};
 use sea_orm::sea_query::Expr;
-use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Set, TransactionTrait};
+use sea_orm::{ActiveModelTrait, ColumnTrait, EntityTrait, QueryFilter, Related, Set, TransactionTrait};
 use std::sync::Arc;
 use tokio::sync::watch;
 
@@ -26,15 +26,9 @@ impl QueryCatalog {
     }
 
     pub async fn create_query(&self, req: CreateQuery) -> Result<query::Model> {
-        let model = self
-            .db
-            .with_retry(|conn| {
-                let req = req.clone();
-                async move { query::ActiveModel::from(req).insert(&conn).await }
-            })
-            .await?;
+        let query = query::ActiveModel::from(req).insert(&self.db.conn).await?;
         self.listeners.notify_intent();
-        Ok(model)
+        Ok(query)
     }
 
     pub async fn drop_query(&self, req: DropQuery) -> Result<Vec<query::Model>> {
@@ -73,64 +67,10 @@ impl QueryCatalog {
     }
 
     pub async fn get_query(&self, req: GetQuery) -> Result<Vec<query::Model>> {
-        Ok(self
-            .db
-            .with_retry(|conn| {
-                let req = req.clone();
-                async move {
-                    query::Entity::find()
-                        .filter(req.into_condition())
-                        .all(&conn)
-                        .await
-                }
-            })
+        Ok(query::Entity::find()
+            .filter(req.into_condition())
+            .all(&self.db.conn)
             .await?)
-    }
-
-    pub async fn create_fragments(
-        &self,
-        query: &query::Model,
-        requests: Vec<CreateFragment>,
-    ) -> Result<(query::Model, Vec<fragment::Model>)> {
-        anyhow::ensure!(!requests.is_empty(), "no active workers available for fragment placement");
-
-        let result = self
-            .db
-            .with_retry(|conn| {
-                let requests = requests.clone();
-                let query = query.clone();
-                async move {
-                    conn.transaction::<_, (query::Model, Vec<fragment::Model>), sea_orm::DbErr>(
-                        |txn| {
-                            Box::pin(async move {
-                                fragment::Entity::insert_many(
-                                    requests.into_iter().map(fragment::ActiveModel::from),
-                                )
-                                .exec(txn)
-                                .await?;
-
-                                let updated = query::Entity::find_by_id(query.id)
-                                    .one(txn)
-                                    .await?
-                                    .ok_or(sea_orm::DbErr::RecordNotFound("query not found".into()))?;
-                                let fragments = fragment::Entity::find()
-                                    .filter(fragment::Column::QueryId.eq(updated.id))
-                                    .all(txn)
-                                    .await?;
-                                Ok((updated, fragments))
-                            })
-                        },
-                    )
-                    .await
-                    .map_err(|e| match e {
-                        sea_orm::TransactionError::Connection(e)
-                        | sea_orm::TransactionError::Transaction(e) => e,
-                    })
-                }
-            })
-            .await?;
-        self.listeners.notify_state();
-        Ok(result)
     }
 
     pub async fn get_query_with_fragments(
@@ -152,6 +92,52 @@ impl QueryCatalog {
             .await?)
     }
 
+    pub async fn create_fragments_for_query(
+        &self,
+        requests: Vec<CreateFragment>,
+    ) -> Result<Vec<fragment::Model>> {
+        anyhow::ensure!(
+            !requests.is_empty(),
+            "a query must have at least one fragment"
+        );
+        let query_id = requests.first().unwrap().query_id;
+        debug_assert!(requests.iter().all(|r| r.query_id == query_id));
+
+        let result = self
+            .db
+            .with_retry(|conn| {
+                let requests = requests.clone();
+                async move {
+                    conn.transaction::<_, Vec<fragment::Model>, sea_orm::DbErr>(
+                        |txn| {
+                            Box::pin(async move {
+                                fragment::Entity::insert_many(
+                                    requests.into_iter().map(fragment::ActiveModel::from),
+                                )
+                                .exec(txn)
+                                .await?;
+
+                                fragment::Entity::find()
+                                    .filter(fragment::Column::QueryId.eq(query_id))
+                                    .all(txn)
+                                    .await
+                            })
+                        },
+                    )
+                    .await
+                    .map_err(|e| match e {
+                        sea_orm::TransactionError::Connection(e)
+                        | sea_orm::TransactionError::Transaction(e) => e,
+                    })
+                }
+            })
+            .await?;
+        self.listeners.notify_state();
+        Ok(result)
+    }
+
+
+
     pub async fn get_fragments(&self, query_id: i64) -> Result<Vec<fragment::Model>> {
         let (_, fragments) = self
             .db
@@ -168,49 +154,13 @@ impl QueryCatalog {
         Ok(fragments)
     }
 
-    pub async fn stop_pending_query(&self, query: &query::Model) -> Result<query::Model> {
-        let updated = self
-            .db
-            .with_retry(|conn| {
-                let query = query.clone();
-                async move {
-                    let mut am: query::ActiveModel = query.into();
-                    am.current_state = Set(QueryState::Stopped);
-                    am.update(&conn).await
-                }
-            })
-            .await?;
-        self.listeners.notify_state();
-        Ok(updated)
-    }
-
-    pub async fn fail_pending_query(
-        &self,
-        query: query::Model,
-        error: String,
-    ) -> Result<query::Model> {
-        let updated = self
-            .db
-            .with_retry(|conn| {
-                let query = query.clone();
-                let error = error.clone();
-                async move {
-                    let mut am: query::ActiveModel = query.into();
-                    am.current_state = Set(QueryState::Failed);
-                    am.error = Set(Some(serde_json::Value::String(error)));
-                    am.update(&conn).await
-                }
-            })
-            .await?;
-        self.listeners.notify_state();
-        Ok(updated)
-    }
-
     pub async fn update_fragment_states(
         &self,
         query_id: i64,
         updates: Vec<fragment::ActiveModel>,
     ) -> Result<(query::Model, Vec<fragment::Model>)> {
+        debug_assert!(updates.iter().all(|u| u.query_id.clone().unwrap() == query_id));
+
         let result = self
             .db
             .with_retry(|conn| {
@@ -280,7 +230,6 @@ impl Reconcilable for QueryCatalog {
     fn subscribe_intent(&self) -> watch::Receiver<()> {
         self.listeners.subscribe_intent()
     }
-
     fn subscribe_state(&self) -> watch::Receiver<()> {
         self.listeners.subscribe_state()
     }
@@ -330,14 +279,7 @@ impl QueryCatalog {
             FragmentState::Failed => vec![FragmentState::Failed],
         };
         for state in path {
-            let updates: Vec<_> = fragments
-                .iter()
-                .map(|f| {
-                    let mut am: fragment::ActiveModel = f.clone().into();
-                    am.current_state = Set(state);
-                    am
-                })
-                .collect();
+            let updates: Vec<_> = fragments.iter().map(|f| f.with_state(state)).collect();
             self.update_fragment_states(query_id, updates)
                 .await
                 .unwrap();
@@ -348,8 +290,8 @@ impl QueryCatalog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Catalog;
-    use crate::testing::{test_prop, walk_query_via_fragments};
+    use crate::{test_prop, Catalog};
+    use crate::testing::walk_query_via_fragments;
     use model::Generate;
     use model::query::StopMode;
     use model::query::fragment::ValidFragments;
@@ -411,8 +353,7 @@ mod tests {
         assert!(
             catalog
                 .query
-                .create_fragments(
-                    &query,
+                .create_fragments_for_query(
                     vec![CreateFragment {
                         query_id: query.id,
                         host_addr: worker.host_addr,
@@ -436,8 +377,7 @@ mod tests {
         assert!(
             catalog
                 .query
-                .create_fragments(
-                    &query,
+                .create_fragments_for_query(
                     vec![CreateFragment {
                         query_id: query.id,
                         host_addr: worker.host_addr,
@@ -463,8 +403,7 @@ mod tests {
 
         catalog
             .query
-            .create_fragments(
-                &query,
+            .create_fragments_for_query(
                 vec![
                     CreateFragment {
                         query_id: query.id,
@@ -503,8 +442,7 @@ mod tests {
 
         catalog
             .query
-            .create_fragments(
-                &query,
+            .create_fragments_for_query(
                 vec![CreateFragment {
                     query_id: query.id,
                     host_addr: worker.host_addr,
@@ -539,7 +477,7 @@ mod tests {
 
         catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -573,9 +511,9 @@ mod tests {
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
         let total_used: i32 = fragment_reqs.iter().map(|f| f.used_capacity).sum();
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -603,14 +541,8 @@ mod tests {
             "Capacity should be unchanged during non-terminal transitions"
         );
 
-        let terminal_updates: Vec<_> = fragments
-            .iter()
-            .map(|f| {
-                let mut am: fragment::ActiveModel = f.clone().into();
-                am.current_state = Set(terminal_state);
-                am
-            })
-            .collect();
+        let terminal_updates: Vec<_> =
+            fragments.iter().map(|f| f.with_state(terminal_state)).collect();
         catalog
             .query
             .update_fragment_states(query.id, terminal_updates)
@@ -712,9 +644,9 @@ mod tests {
         let created_query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(created_query.id);
 
-        let (_, created) = catalog
+        let created = catalog
             .query
-            .create_fragments(&created_query, fragment_reqs.clone())
+            .create_fragments_for_query(fragment_reqs.clone())
             .await
             .expect("fragment creation with valid refs should succeed");
 
@@ -746,23 +678,12 @@ mod tests {
         for w in &setup.workers {
             catalog.worker.create_worker(w.clone()).await.unwrap();
         }
-        let fake_query = query::Model {
-            id: i64::MAX,
-            name: "fake".to_string(),
-            statement: "fake".to_string(),
-            current_state: QueryState::Pending,
-            desired_state: DesiredQueryState::Completed,
-            start_timestamp: None,
-            stop_timestamp: None,
-            stop_mode: None,
-            error: None,
-        };
         let fragment_reqs = setup.create_fragments(i64::MAX);
 
         assert!(
             catalog
                 .query
-                .create_fragments(&fake_query, fragment_reqs)
+                .create_fragments_for_query(fragment_reqs)
                 .await
                 .is_err(),
             "Fragments referencing non-existent query should be rejected"
@@ -776,7 +697,7 @@ mod tests {
 
         assert!(
             catalog
-                .create_fragments(&created_query, fragment_reqs)
+                .create_fragments_for_query(fragment_reqs)
                 .await
                 .is_err(),
             "Fragments referencing non-existent workers should be rejected"
@@ -797,9 +718,9 @@ mod tests {
 
         let created_query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(created_query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&created_query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -853,9 +774,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, created) = catalog
+        let created = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -885,9 +806,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, created) = catalog
+        let created = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -906,11 +827,7 @@ mod tests {
         let updates: Vec<fragment::ActiveModel> = created
             .iter()
             .filter(|f| updated_ids.contains(&f.id))
-            .map(|f| {
-                let mut am: fragment::ActiveModel = f.clone().into();
-                am.current_state = Set(target_state);
-                am
-            })
+            .map(|f| f.with_state(target_state))
             .collect();
 
         catalog
@@ -991,13 +908,11 @@ mod tests {
         assert_eq!(query.current_state, QueryState::Pending);
 
         let fragment_reqs = setup.create_fragments(query.id);
-        let (updated_query, _) = catalog
+        catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
-
-        assert_eq!(updated_query.current_state, QueryState::Pending);
 
         let refetched = catalog
             .query
@@ -1005,7 +920,7 @@ mod tests {
             .await
             .unwrap();
         assert_eq!(refetched.len(), 1);
-        assert_eq!(refetched[0], updated_query);
+        assert_eq!(refetched[0].current_state, QueryState::Pending);
     }
 
     async fn prop_fragment_state_derives_query_state(req: CreateQuery, setup: ValidFragments) {
@@ -1015,9 +930,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -1045,11 +960,7 @@ mod tests {
             async move {
                 let updates: Vec<_> = fragments
                     .iter()
-                    .map(|f| {
-                        let mut am: fragment::ActiveModel = f.clone().into();
-                        am.current_state = Set(state);
-                        am
-                    })
+                    .map(|f| f.with_state(state))
                     .collect();
                 catalog
                     .query
@@ -1079,9 +990,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -1090,20 +1001,14 @@ mod tests {
             .walk_fragments_to_state(query.id, &fragments, FragmentState::Running)
             .await;
 
-        let mut updates: Vec<fragment::ActiveModel> = fragments
+        let mut updates: Vec<_> = fragments
             .iter()
-            .map(|f| {
-                let mut am: fragment::ActiveModel = f.clone().into();
-                am.current_state = Set(FragmentState::Running);
-                am
-            })
+            .map(|f| f.with_state(FragmentState::Running))
             .collect();
-        let mut failed = updates[0].clone();
-        failed.current_state = Set(FragmentState::Failed);
-        failed.error = Set(Some(FragmentError::WorkerCommunication {
+        updates[0].current_state = Set(FragmentState::Failed);
+        updates[0].error = Set(Some(FragmentError::WorkerCommunication {
             msg: "connection lost".to_string(),
         }));
-        updates[0] = failed;
 
         let (query, _) = catalog
             .query
@@ -1131,9 +1036,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -1144,11 +1049,7 @@ mod tests {
 
         let mut updates: Vec<fragment::ActiveModel> = fragments
             .iter()
-            .map(|f| {
-                let mut am: fragment::ActiveModel = f.clone().into();
-                am.current_state = Set(FragmentState::Running);
-                am
-            })
+            .map(|f| f.with_state(FragmentState::Running))
             .collect();
         updates[0].current_state = Set(FragmentState::Failed);
         updates[0].error = Set(Some(FragmentError::WorkerInternal {
@@ -1180,9 +1081,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -1254,9 +1155,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, fragments) = catalog
+        let fragments = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 
@@ -1346,9 +1247,9 @@ mod tests {
         }
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let (_, created) = catalog
+        let created = catalog
             .query
-            .create_fragments(&query, fragment_reqs)
+            .create_fragments_for_query(fragment_reqs)
             .await
             .unwrap();
 

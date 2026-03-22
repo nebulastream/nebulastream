@@ -41,3 +41,17 @@ impl Catalog {
         Self::from(Database::for_test().await)
     }
 }
+
+#[cfg(any(test, feature = "testing"))]
+pub fn test_prop<F, Fut>(f: F)
+where
+    F: FnOnce() -> Fut,
+    Fut: Future<Output = ()>,
+{
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .build()
+        .expect("failed to create tokio runtime")
+        .block_on(f());
+}
+

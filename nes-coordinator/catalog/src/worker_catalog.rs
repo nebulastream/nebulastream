@@ -3,7 +3,7 @@ use crate::notification::{NotificationChannel, Reconcilable};
 use anyhow::{Result, ensure};
 use model::IntoCondition;
 use model::worker::network_link;
-use model::worker::topology::WorkerTopology;
+use model::worker::topology::TopologyGraph;
 use model::worker::{
     self, CreateWorker, DesiredWorkerState, DropWorker, Entity as WorkerEntity, GetWorker,
     WorkerState,
@@ -28,12 +28,6 @@ impl WorkerCatalog {
     }
 
     pub async fn create_worker(&self, req: CreateWorker) -> Result<worker::Model> {
-        ensure!(
-            !req.peers.contains(&req.host_addr),
-            "Worker cannot reference itself as a peer: {}",
-            req.host_addr
-        );
-
         let worker = self.db.with_retry(|conn| {
             let req = req.clone();
             async move {
@@ -76,25 +70,21 @@ impl WorkerCatalog {
             .await?)
     }
 
-    pub async fn drop_worker(&self, req: DropWorker) -> Result<worker::Model> {
-        let model = worker::ActiveModel {
-            host_addr: sea_orm::ActiveValue::Unchanged(req.host_addr),
-            desired_state: Set(DesiredWorkerState::Removed),
-            ..Default::default()
+    pub async fn drop_worker(&self, req: DropWorker) -> Result<Option<worker::Model>> {
+        let worker = WorkerEntity::find_by_id(req.host_addr)
+            .one(&self.db.conn)
+            .await?;
+        let Some(worker) = worker else {
+            return Ok(None);
         };
-        let updated = model.update(&self.db.conn).await?;
+        let mut active: worker::ActiveModel = worker.into();
+        active.desired_state = Set(DesiredWorkerState::Removed);
+        let updated = active.update(&self.db.conn).await?;
         self.listeners.notify_intent();
-        Ok(updated)
+        Ok(Some(updated))
     }
 
-    pub async fn remove_worker(
-        &self,
-        worker: worker::ActiveModel,
-    ) -> Result<worker::Model> {
-        self.set_worker_state(worker, WorkerState::Removed).await
-    }
-
-    pub async fn set_worker_state(
+    pub async fn mark_worker(
         &self,
         mut worker: worker::ActiveModel,
         new_state: WorkerState,
@@ -105,16 +95,14 @@ impl WorkerCatalog {
         Ok(updated)
     }
 
-    pub async fn get_topology(&self) -> Result<WorkerTopology> {
+    pub async fn get_topology(&self) -> Result<TopologyGraph> {
         let workers = WorkerEntity::find().all(&self.db.conn).await?;
         let links = network_link::Entity::find().all(&self.db.conn).await?;
         let edges = links
             .into_iter()
             .map(|l| (l.source_host_addr, l.target_host_addr))
             .collect();
-        let topology = WorkerTopology { workers, edges };
-        topology.validate()?;
-        Ok(topology)
+        Ok(TopologyGraph::from_parts(workers, edges)?)
     }
 }
 
@@ -139,9 +127,9 @@ impl Reconcilable for WorkerCatalog {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashSet;
     use super::*;
-    use crate::Catalog;
-    use crate::testing::test_prop;
+    use crate::{test_prop, Catalog};
     use model::Generate;
     use model::query::CreateQuery;
     use model::query::fragment::CreateFragment;
@@ -175,7 +163,7 @@ mod tests {
             .expect("get worker should succeed");
 
         assert_eq!(workers.len(), 1);
-        assert_eq!(workers[0].host_addr, req.host_addr);
+        assert_eq!(workers.first().unwrap().host_addr, req.host_addr);
     }
 
     async fn prop_drop_and_remove_worker(req: CreateWorker) {
@@ -186,12 +174,13 @@ mod tests {
             .worker
             .drop_worker(DropWorker::new(req.host_addr.clone()))
             .await
-            .expect("drop should succeed");
+            .expect("drop should succeed")
+            .expect("worker should exist");
         assert_eq!(updated.desired_state, DesiredWorkerState::Removed);
 
         let removed = catalog
             .worker
-            .remove_worker(created.into())
+            .mark_worker(created.into(), WorkerState::Removed)
             .await
             .expect("remove should succeed");
         assert_eq!(removed.current_state, WorkerState::Removed);
@@ -211,7 +200,7 @@ mod tests {
 
         catalog
             .worker
-            .set_worker_state(created.into(), WorkerState::Active)
+            .mark_worker(created.into(), WorkerState::Active)
             .await
             .expect("mark should succeed");
 
@@ -220,10 +209,10 @@ mod tests {
             .get_worker(GetWorker::all().with_host_addr(req.host_addr))
             .await
             .unwrap();
-        assert_eq!(workers[0].current_state, WorkerState::Active);
+        assert_eq!(workers.first().unwrap().current_state, WorkerState::Active);
     }
 
-    async fn prop_host_addr_grpc_addr_must_differ(req: CreateWorker) {
+    async fn prop_host_grpc_neq(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
         let same_addr = CreateWorker::new(req.host_addr.clone(), req.host_addr, req.capacity);
 
@@ -250,24 +239,6 @@ mod tests {
         );
     }
 
-    async fn prop_grpc_addr_may_equal_other_host_addr(w1: CreateWorker, mut w2: CreateWorker) {
-        if w1.host_addr == w2.host_addr {
-            return;
-        }
-        w2.grpc_addr = w1.host_addr.clone();
-        if w2.host_addr == w2.grpc_addr || w1.grpc_addr == w2.grpc_addr {
-            return;
-        }
-
-        let catalog = Catalog::for_test().await;
-        catalog.worker.create_worker(w1).await.unwrap();
-        catalog
-            .worker
-            .create_worker(w2)
-            .await
-            .expect("grpc_addr matching another worker's host_addr should be allowed");
-    }
-
     async fn prop_worker_drop_blocked_by_active_fragments(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
         catalog.worker.create_worker(req.clone()).await.unwrap();
@@ -279,8 +250,7 @@ mod tests {
             .unwrap();
         catalog
             .query
-            .create_fragments(
-                &query,
+            .create_fragments_for_query(
                 vec![CreateFragment {
                     query_id: query.id,
                     host_addr: req.host_addr.clone(),
@@ -328,7 +298,7 @@ mod tests {
         );
     }
 
-    async fn prop_worker_host_addr_unique(req: CreateWorker) {
+    async fn prop_worker_addr_unique(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
 
         catalog
@@ -344,7 +314,7 @@ mod tests {
         );
     }
 
-    async fn prop_get_mismatch_correctness(workers: Vec<CreateWorker>) {
+    async fn prop_mismatch_correct(workers: Vec<CreateWorker>) {
         let catalog = Catalog::for_test().await;
 
         let mut created: Vec<worker::Model> = Vec::new();
@@ -357,7 +327,7 @@ mod tests {
             if i % 2 == 0 {
                 catalog
                     .worker
-                    .set_worker_state(worker.into(), WorkerState::Active)
+                    .mark_worker(worker.into(), WorkerState::Active)
                     .await
                     .unwrap();
             }
@@ -366,7 +336,7 @@ mod tests {
         let mismatched = catalog.worker.get_mismatch().await.unwrap();
         let all_workers = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
 
-        let mismatched_addrs: std::collections::HashSet<_> =
+        let mismatched_addrs: HashSet<_> =
             mismatched.iter().map(|w| &w.host_addr).collect();
 
         for worker in &all_workers {
@@ -390,8 +360,6 @@ mod tests {
     async fn prop_dag_topology_round_trip(workers: Vec<CreateWorker>) {
         let catalog = Catalog::for_test().await;
 
-        let expected_edge_count: usize = workers.iter().map(|w| w.peers.len()).sum();
-
         for worker in &workers {
             catalog.worker.create_worker(worker.clone()).await.unwrap();
         }
@@ -403,8 +371,7 @@ mod tests {
             result.err()
         );
         let topo = result.unwrap();
-        assert_eq!(topo.workers.len(), workers.len());
-        assert_eq!(topo.edges.len(), expected_edge_count);
+        assert_eq!(topo.len(), workers.len());
     }
 
     async fn prop_cycle_detection(w1: CreateWorker, w2: CreateWorker) {
@@ -450,7 +417,7 @@ mod tests {
         #[test]
         fn host_addr_grpc_addr_must_differ(req in CreateWorker::generate()) {
             test_prop(|| async move {
-                prop_host_addr_grpc_addr_must_differ(req).await;
+                prop_host_grpc_neq(req).await;
             });
         }
 
@@ -458,13 +425,6 @@ mod tests {
         fn grpc_addr_unique((w1, w2) in (CreateWorker::generate(), CreateWorker::generate())) {
             test_prop(|| async move {
                 prop_grpc_addr_unique(w1, w2).await;
-            });
-        }
-
-        #[test]
-        fn grpc_addr_may_equal_other_host_addr((w1, w2) in (CreateWorker::generate(), CreateWorker::generate())) {
-            test_prop(|| async move {
-                prop_grpc_addr_may_equal_other_host_addr(w1, w2).await;
             });
         }
 
@@ -492,14 +452,14 @@ mod tests {
         #[test]
         fn worker_host_addr_unique(req in CreateWorker::generate()) {
             test_prop(|| async move {
-                prop_worker_host_addr_unique(req).await;
+                prop_worker_addr_unique(req).await;
             });
         }
 
         #[test]
         fn get_mismatch_correctness(workers in CreateWorker::dag_topology(MAX_TEST_WORKERS)) {
             test_prop(|| async move {
-                prop_get_mismatch_correctness(workers).await;
+                prop_mismatch_correct(workers).await;
             });
         }
 

@@ -32,25 +32,27 @@ impl SourceCatalog {
     pub async fn get_logical_source(
         &self,
         req: GetLogicalSource,
-    ) -> Result<Option<logical_source::Model>> {
-        Ok(LogicalSourceEntity::find_by_id(req.with_name)
-            .one(&self.db.conn)
+    ) -> Result<Vec<logical_source::Model>> {
+        Ok(LogicalSourceEntity::find()
+            .filter(req.into_condition())
+            .all(&self.db.conn)
             .await?)
     }
 
     pub async fn drop_logical_source(
         &self,
         req: DropLogicalSource,
-    ) -> Result<Option<logical_source::Model>> {
-        let model = LogicalSourceEntity::find_by_id(req.with_name.clone())
-            .one(&self.db.conn)
+    ) -> Result<Vec<logical_source::Model>> {
+        let condition = req.into_condition();
+        let logical_sources = LogicalSourceEntity::find()
+            .filter(condition.clone())
+            .all(&self.db.conn)
             .await?;
-        if model.is_some() {
-            LogicalSourceEntity::delete_by_id(req.with_name)
-                .exec(&self.db.conn)
-                .await?;
-        }
-        Ok(model)
+        LogicalSourceEntity::delete_many()
+            .filter(condition)
+            .exec(&self.db.conn)
+            .await?;
+        Ok(logical_sources)
     }
 
     pub async fn create_physical_source(
@@ -76,7 +78,7 @@ impl SourceCatalog {
         &self,
         req: DropPhysicalSource,
     ) -> Result<Vec<physical_source::Model>> {
-        let models = PhysicalSourceEntity::find()
+        let physical_sources = PhysicalSourceEntity::find()
             .filter(req.clone().into_condition())
             .all(&self.db.conn)
             .await?;
@@ -84,18 +86,17 @@ impl SourceCatalog {
             .filter(req.into_condition())
             .exec(&self.db.conn)
             .await?;
-        Ok(models)
+        Ok(physical_sources)
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Catalog;
-    use crate::testing::test_prop;
-    use model::source::physical_source::DropPhysicalSource;
-    use model::source::logical_source::CreateLogicalSource;
+    use crate::{test_prop, Catalog};
     use model::Generate;
+    use model::source::logical_source::CreateLogicalSource;
+    use model::source::physical_source::DropPhysicalSource;
     use model::source::physical_source::PhysicalSourceWithRefs;
     use model::worker::CreateWorker;
     use proptest::prelude::*;
@@ -115,13 +116,11 @@ mod tests {
 
         let fetched = catalog
             .source
-            .get_logical_source(GetLogicalSource {
-                with_name: create_source.name.clone(),
-            })
+            .get_logical_source(GetLogicalSource::all().with_name(create_source.name.clone()))
             .await
             .expect("get should not fail");
 
-        let fetched = fetched.expect("get request should return a value");
+        let fetched = fetched.first().expect("get request should return a value");
         assert_eq!(fetched.name, create_source.name);
         assert_eq!(fetched.schema, create_source.schema);
     }
@@ -130,7 +129,7 @@ mod tests {
         let catalog = Catalog::for_test().await;
 
         let mut negative = worker.clone();
-        negative.capacity = -(worker.capacity.max(1));
+        negative.capacity = -worker.capacity.max(1);
 
         assert!(
             catalog.worker.create_worker(negative).await.is_err(),
@@ -255,7 +254,7 @@ mod tests {
             .expect("physical source creation should succeed");
 
         let drop_request = DropLogicalSource {
-            with_name: req.logical.name.clone(),
+            with_name: Some(req.logical.name.clone()),
         };
 
         assert!(
@@ -276,23 +275,16 @@ mod tests {
             .create_logical_source(req.logical)
             .await
             .unwrap();
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .unwrap();
+        catalog.worker.create_worker(req.worker).await.unwrap();
         let created = catalog
             .source
             .create_physical_source(req.physical)
             .await
             .unwrap();
 
-        let drop_req = DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(created.id));
-        let dropped = catalog
-            .source
-            .drop_physical_source(drop_req)
-            .await
-            .unwrap();
+        let drop_req =
+            DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(created.id));
+        let dropped = catalog.source.drop_physical_source(drop_req).await.unwrap();
 
         assert_eq!(dropped.len(), 1);
         assert_eq!(dropped[0].id, created.id);
@@ -317,11 +309,7 @@ mod tests {
             .create_logical_source(req.logical.clone())
             .await
             .unwrap();
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .unwrap();
+        catalog.worker.create_worker(req.worker).await.unwrap();
         catalog
             .source
             .create_physical_source(req.physical)
@@ -330,11 +318,7 @@ mod tests {
 
         let drop_req = DropPhysicalSource::all()
             .with_filters(GetPhysicalSource::all().with_logical_source(req.logical.name.clone()));
-        let dropped = catalog
-            .source
-            .drop_physical_source(drop_req)
-            .await
-            .unwrap();
+        let dropped = catalog.source.drop_physical_source(drop_req).await.unwrap();
 
         assert_eq!(dropped.len(), 1);
         assert_eq!(dropped[0].logical_source, req.logical.name);
@@ -371,12 +355,9 @@ mod tests {
             .await
             .unwrap();
 
-        let drop_req = DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(999999));
-        let dropped = catalog
-            .source
-            .drop_physical_source(drop_req)
-            .await
-            .unwrap();
+        let drop_req =
+            DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(999999));
+        let dropped = catalog.source.drop_physical_source(drop_req).await.unwrap();
         assert!(dropped.is_empty());
 
         let remaining = catalog
@@ -398,23 +379,16 @@ mod tests {
             .create_logical_source(req.logical)
             .await
             .unwrap();
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .unwrap();
+        catalog.worker.create_worker(req.worker).await.unwrap();
         let first = catalog
             .source
             .create_physical_source(req.physical.clone())
             .await
             .unwrap();
 
-        let drop_req = DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(first.id));
-        catalog
-            .source
-            .drop_physical_source(drop_req)
-            .await
-            .unwrap();
+        let drop_req =
+            DropPhysicalSource::all().with_filters(GetPhysicalSource::all().with_id(first.id));
+        catalog.source.drop_physical_source(drop_req).await.unwrap();
 
         catalog
             .source
@@ -432,7 +406,7 @@ mod tests {
             .expect("first create should succeed");
 
         let drop_request = DropLogicalSource {
-            with_name: create_source.name.clone(),
+            with_name: Some(create_source.name.clone()),
         };
 
         catalog

@@ -27,12 +27,13 @@ impl SinkCatalog {
     }
 
     pub async fn drop_sink(&self, req: DropSink) -> Result<Vec<sink::Model>> {
+        let condition = req.into_condition();
         let models = SinkEntity::find()
-            .filter(req.clone().into_condition())
+            .filter(condition.clone())
             .all(&self.db.conn)
             .await?;
         SinkEntity::delete_many()
-            .filter(req.into_condition())
+            .filter(condition)
             .exec(&self.db.conn)
             .await?;
         Ok(models)
@@ -42,8 +43,7 @@ impl SinkCatalog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::Catalog;
-    use crate::testing::test_prop;
+    use crate::{test_prop, Catalog};
     use model::Generate;
     use model::sink::SinkWithRefs;
     use proptest::proptest;
@@ -68,7 +68,7 @@ mod tests {
 
         let sinks = catalog
             .sink
-            .get_sink(GetSink::all().by_name(req.sink.name.clone()))
+            .get_sink(GetSink::all().with_name(req.sink.name.clone()))
             .await
             .expect("get sink should succeed");
 
@@ -85,7 +85,7 @@ mod tests {
 
         let dropped = catalog
             .sink
-            .drop_sink(DropSink::all().with_name(req.sink.name.clone()))
+            .drop_sink(DropSink { name: req.sink.name.clone() })
             .await
             .expect("drop should succeed");
 
@@ -94,7 +94,7 @@ mod tests {
 
         let sinks = catalog
             .sink
-            .get_sink(GetSink::all().by_name(req.sink.name))
+            .get_sink(GetSink::all().with_name(req.sink.name))
             .await
             .unwrap();
         assert!(sinks.is_empty(), "Sink should be deleted");
@@ -158,7 +158,7 @@ mod tests {
             .await
             .expect("first sink creation should succeed");
 
-        let drop_req = DropSink::all().with_name(req.sink.name.clone());
+        let drop_req = DropSink { name: req.sink.name.clone() };
         catalog
             .sink
             .drop_sink(drop_req)
