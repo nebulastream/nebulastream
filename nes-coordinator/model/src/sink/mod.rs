@@ -11,7 +11,7 @@ use crate::worker::CreateWorker;
 
 pub type SinkName = String;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "sink")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -67,9 +67,7 @@ impl From<CreateSink> for ActiveModel {
 
 #[derive(Clone, Debug, Default)]
 pub struct GetSink {
-    pub by_name: Option<SinkName>,
-    pub by_host_addr: Option<HostAddr>,
-    pub by_type: Option<SinkType>,
+    pub name: Option<SinkName>,
 }
 
 impl GetSink {
@@ -77,18 +75,8 @@ impl GetSink {
         Self::default()
     }
 
-    pub fn by_name(mut self, name: SinkName) -> Self {
-        self.by_name = Some(name);
-        self
-    }
-
-    pub fn by_host_addr(mut self, host_addr: HostAddr) -> Self {
-        self.by_host_addr = Some(host_addr);
-        self
-    }
-
-    pub fn by_sink_type(mut self, sink_type: SinkType) -> Self {
-        self.by_type = Some(sink_type);
+    pub fn with_name(mut self, name: SinkName) -> Self {
+        self.name = Some(name);
         self
     }
 }
@@ -96,46 +84,19 @@ impl GetSink {
 impl crate::IntoCondition for GetSink {
     fn into_condition(self) -> Condition {
         Condition::all()
-            .add_option(self.by_name.map(|v| Column::Name.eq(v)))
-            .add_option(self.by_host_addr.map(|v| Column::HostAddr.eq(v)))
-            .add_option(self.by_type.map(|v| Column::SinkType.eq(v)))
+            .add_option(self.name.map(|v| Column::Name.eq(v)))
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug)]
 pub struct DropSink {
-    pub with_name: Option<SinkName>,
-    pub with_host_addr: Option<HostAddr>,
-    pub with_type: Option<SinkType>,
-}
-
-impl DropSink {
-    pub fn all() -> Self {
-        Self::default()
-    }
-
-    pub fn with_name(mut self, name: SinkName) -> Self {
-        self.with_name = Some(name);
-        self
-    }
-
-    pub fn with_host_addr(mut self, host_addr: HostAddr) -> Self {
-        self.with_host_addr = Some(host_addr);
-        self
-    }
-
-    pub fn with_sink_type(mut self, sink_type: SinkType) -> Self {
-        self.with_type = Some(sink_type);
-        self
-    }
+    pub name: SinkName,
 }
 
 impl crate::IntoCondition for DropSink {
     fn into_condition(self) -> Condition {
         Condition::all()
-            .add_option(self.with_name.map(|v| Column::Name.eq(v)))
-            .add_option(self.with_host_addr.map(|v| Column::HostAddr.eq(v)))
-            .add_option(self.with_type.map(|v| Column::SinkType.eq(v)))
+            .add(Column::Name.eq(self.name))
     }
 }
 

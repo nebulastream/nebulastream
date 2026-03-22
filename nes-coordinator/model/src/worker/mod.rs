@@ -8,7 +8,7 @@ use sea_orm::entity::prelude::*;
 use sea_orm::{Condition, NotSet};
 use strum::{Display, EnumIter};
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Display, EnumIter, serde::Serialize, DeriveActiveEnum)]
 #[sea_orm(
     rs_type = "String",
     db_type = "Text",
@@ -22,7 +22,7 @@ pub enum WorkerState {
     Removed,
 }
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Display, EnumIter, serde::Serialize, DeriveActiveEnum)]
 #[sea_orm(
     rs_type = "String",
     db_type = "Text",
@@ -34,7 +34,7 @@ pub enum DesiredWorkerState {
     Removed,
 }
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "worker")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -96,6 +96,7 @@ pub struct CreateWorker {
     pub grpc_addr: GrpcAddr,
     pub capacity: i32,
     pub peers: Vec<HostAddr>,
+    pub config: serde_json::Value,
 }
 
 impl CreateWorker {
@@ -105,6 +106,7 @@ impl CreateWorker {
             grpc_addr,
             capacity,
             peers: Vec::new(),
+            config: serde_json::Value::Object(Default::default()),
         }
     }
 
@@ -129,7 +131,6 @@ impl From<CreateWorker> for ActiveModel {
 #[derive(Debug, Clone, Default)]
 pub struct GetWorker {
     pub host_addr: Option<HostAddr>,
-    pub current_state: Option<WorkerState>,
     pub desired_state: Option<DesiredWorkerState>,
 }
 
@@ -143,11 +144,6 @@ impl GetWorker {
         self
     }
 
-    pub fn with_current_state(mut self, state: WorkerState) -> Self {
-        self.current_state = Some(state);
-        self
-    }
-
     pub fn with_desired_state(mut self, state: DesiredWorkerState) -> Self {
         self.desired_state = Some(state);
         self
@@ -158,12 +154,11 @@ impl crate::IntoCondition for GetWorker {
     fn into_condition(self) -> Condition {
         Condition::all()
             .add_option(self.host_addr.map(|v| Column::HostAddr.eq(v)))
-            .add_option(self.current_state.map(|v| Column::CurrentState.eq(v)))
             .add_option(self.desired_state.map(|v| Column::DesiredState.eq(v)))
     }
 }
 
-#[derive(Debug)]
+#[derive(Clone, Debug)]
 pub struct DropWorker {
     pub host_addr: HostAddr,
 }

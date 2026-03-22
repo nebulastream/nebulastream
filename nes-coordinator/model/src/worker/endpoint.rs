@@ -13,7 +13,7 @@ use sea_orm::{
     ColIdx, ColumnType, DbErr, QueryResult, TryFromU64, TryGetError, TryGetable, Value, sea_query,
 };
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize)]
 pub struct NetworkAddr {
     pub host: HostName,
     pub port: u16,

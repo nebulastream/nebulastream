@@ -15,7 +15,7 @@ use uuid::Uuid;
 pub type QueryName = String;
 pub type QueryId = i64;
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -107,7 +107,7 @@ impl CreateQuery {
         self
     }
 
-    pub fn should_block(&self) -> bool {
+    pub fn blocking(&self) -> bool {
         self.block_until != QueryState::Pending
     }
 }
@@ -131,7 +131,6 @@ impl From<CreateQuery> for ActiveModel {
 #[derive(Clone, Debug, Default)]
 pub struct DropQuery {
     pub stop_mode: StopMode,
-    pub should_block: bool,
     pub filters: GetQuery,
 }
 
@@ -149,23 +148,12 @@ impl DropQuery {
         self.stop_mode = stop_mode;
         self
     }
-
-    pub fn blocking(mut self) -> Self {
-        self.should_block = true;
-        self
-    }
-
-    pub fn should_block(&self) -> bool {
-        self.should_block
-    }
 }
 
 #[derive(Clone, Debug, Default)]
 pub struct GetQuery {
     pub ids: Option<Vec<QueryId>>,
     pub name: Option<QueryName>,
-    pub current_state: Option<QueryState>,
-    pub desired_state: Option<DesiredQueryState>,
     pub with_fragments: bool,
 }
 
@@ -189,16 +177,6 @@ impl GetQuery {
         self
     }
 
-    pub fn with_current_state(mut self, state: QueryState) -> Self {
-        self.current_state = Some(state);
-        self
-    }
-
-    pub fn with_desired_state(mut self, state: DesiredQueryState) -> Self {
-        self.desired_state = Some(state);
-        self
-    }
-
     pub fn with_fragments(mut self) -> Self {
         self.with_fragments = true;
         self
@@ -210,8 +188,6 @@ impl IntoCondition for GetQuery {
         Condition::all()
             .add_option(self.ids.map(|ids| Column::Id.is_in(ids)))
             .add_option(self.name.map(|v| Column::Name.eq(v)))
-            .add_option(self.current_state.map(|v| Column::CurrentState.eq(v)))
-            .add_option(self.desired_state.map(|v| Column::DesiredState.eq(v)))
     }
 }
 

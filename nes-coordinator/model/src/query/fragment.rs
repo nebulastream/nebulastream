@@ -19,7 +19,7 @@ pub enum FragmentError {
     WorkerCommunication { msg: String },
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "fragment")]
 pub struct Model {
     #[sea_orm(primary_key, auto_increment = true)]
@@ -70,6 +70,14 @@ impl Related<crate::worker::Entity> for Entity {
 }
 
 impl ActiveModelBehavior for ActiveModel {}
+
+impl Model {
+    pub fn with_state(&self, state: FragmentState) -> ActiveModel {
+        let mut am: ActiveModel = self.clone().into();
+        am.current_state = Set(state);
+        am
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct CreateFragment {

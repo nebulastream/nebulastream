@@ -240,7 +240,7 @@ int main(int argc, char** argv)
         auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
         std::shared_ptr<NES::QueryManager> queryManager{};
         auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
 #ifdef EMBED_ENGINE
         enable_memcom();

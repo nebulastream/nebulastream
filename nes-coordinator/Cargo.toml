@@ -5,7 +5,8 @@ members = [
     "model",
     "catalog",
     "controller",
-    "migration"
+    "migration",
+    "bridge"
 ]
 
 [workspace.dependencies]

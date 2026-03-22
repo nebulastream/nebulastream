@@ -10,7 +10,7 @@ use strum::Display;
 
 pub type PhysicalSourceId = i64;
 
-#[derive(Clone, Debug, PartialEq, Eq, DeriveEntityModel)]
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "physical_source")]
 pub struct Model {
     #[sea_orm(primary_key)]
@@ -85,7 +85,6 @@ pub struct GetPhysicalSource {
     pub id: Option<PhysicalSourceId>,
     pub host_addr: Option<HostAddr>,
     pub logical_source: Option<LogicalSourceName>,
-    pub source_type: Option<SourceType>,
 }
 
 impl GetPhysicalSource {
@@ -107,11 +106,6 @@ impl GetPhysicalSource {
         self.logical_source = Some(logical_source);
         self
     }
-
-    pub fn with_source_type(mut self, source_type: SourceType) -> Self {
-        self.source_type = Some(source_type);
-        self
-    }
 }
 
 impl crate::IntoCondition for GetPhysicalSource {
@@ -120,7 +114,6 @@ impl crate::IntoCondition for GetPhysicalSource {
             .add_option(self.id.map(|v| Column::Id.eq(v)))
             .add_option(self.host_addr.map(|v| Column::HostAddr.eq(v)))
             .add_option(self.logical_source.map(|v| Column::LogicalSource.eq(v)))
-            .add_option(self.source_type.map(|v| Column::SourceType.eq(v)))
     }
 }
 
