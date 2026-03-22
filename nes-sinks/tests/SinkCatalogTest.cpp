@@ -18,8 +18,8 @@
 #include <unordered_map>
 
 #include <DataTypes/Schema.hpp>
-#include <ErrorHandling.hpp>
 #include <Sinks/SinkCatalog.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -35,8 +35,8 @@ protected:
 /// Adding a valid sink descriptor should succeed.
 TEST_F(SinkCatalogTest, addValidSinkDescriptor)
 {
-    auto result = sinkCatalog.addSinkDescriptor(
-        "mySink", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
+    auto result
+        = sinkCatalog.addSinkDescriptor("mySink", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value().getSinkName(), "mySink");
 }
@@ -44,8 +44,8 @@ TEST_F(SinkCatalogTest, addValidSinkDescriptor)
 /// Sink names that consist only of digits are reserved and should be rejected.
 TEST_F(SinkCatalogTest, rejectDigitOnlySinkName)
 {
-    auto result = sinkCatalog.addSinkDescriptor(
-        "123", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
+    auto result
+        = sinkCatalog.addSinkDescriptor("123", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code(), ErrorCode::InvalidConfigParameter);
 }
