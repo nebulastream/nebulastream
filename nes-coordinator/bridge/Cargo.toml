@@ -1,0 +1,16 @@
+[package]
+name = "coordinator-bridge"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["staticlib"]
+
+[dependencies]
+coordinator = { path = "../coordinator" }
+model = { path = "../model" }
+catalog = { path = "../catalog" }
+cxx = "1.0"
+flume.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
