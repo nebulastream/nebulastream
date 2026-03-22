@@ -251,4 +251,36 @@ SELECT id * UINT32(2) * UINT32(5) AS id, value, timestamp FROM stream INTO strea
     ASSERT_TRUE(differentialQueryCallbackCalled) << "The differential query callback was never called.";
 }
 
+/// Regression test for issue #945: substitution rules must not replace substrings inside longer identifiers.
+/// For example, a substitution rule for keyword "we" must not modify "producedPower" to "producedPowe<replaced>r".
+TEST_F(SystestParserTest, testSubstitutionRuleRespectsWordBoundaries)
+{
+    SystestParser parser{};
+
+    /// Register a substitution rule for the short keyword "we"
+    parser.registerSubstitutionRule({.keyword = "we", .ruleFunction = [](std::string& substitute) { substitute = "REPLACED"; }});
+
+    /// The query contains "producedPower" which has "we" as a substring, and also "INTO we" which is an exact word match.
+    static constexpr std::string_view TestContent = R"(
+SELECT producedPower, timestamp FROM source INTO we;
+----
+100,1000
+)";
+
+    std::string receivedQuery;
+    parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId, bool) { receivedQuery = queryOut; });
+    parser.registerOnCreateCallback(
+        [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
+    parser.registerOnResultTuplesCallback([](std::vector<std::string>&& tuples, SystestQueryId) { (void)std::move(tuples); });
+
+    ASSERT_TRUE(parser.loadString(std::string(TestContent)));
+    EXPECT_NO_THROW(parser.parse());
+
+    /// "producedPower" must NOT be modified, but "we" as a standalone word must be replaced
+    EXPECT_NE(receivedQuery.find("producedPower"), std::string::npos)
+        << "producedPower was incorrectly modified by substitution rule. Query: " << receivedQuery;
+    EXPECT_NE(receivedQuery.find("INTO REPLACED"), std::string::npos) << "Standalone 'we' was not replaced. Query: " << receivedQuery;
+    EXPECT_EQ(receivedQuery.find("INTO we"), std::string::npos) << "Standalone 'we' should have been replaced. Query: " << receivedQuery;
+}
+
 }
