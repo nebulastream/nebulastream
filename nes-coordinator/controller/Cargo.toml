@@ -6,7 +6,6 @@ edition = "2024"
 [features]
 testing = ["model/testing"]
 [dependencies]
-madsim.workspace = true
 model.workspace = true
 catalog.workspace = true
 tokio.workspace = true

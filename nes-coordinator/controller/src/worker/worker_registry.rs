@@ -1,4 +1,4 @@
-use crate::worker::worker_task::{Rpc, WorkerClientErr};
+use crate::worker::worker_task::{Rpc, WorkerTaskError};
 use catalog::error::Retryable;
 use model::query::fragment::FragmentError;
 use model::worker::endpoint::{GrpcAddr, HostAddr};
@@ -12,7 +12,7 @@ pub(crate) enum WorkerError {
     ClientUnavailable(GrpcAddr),
 
     #[error("RPC error")]
-    ClientError(#[from] WorkerClientErr),
+    ClientError(#[from] WorkerTaskError),
 
     #[error("Worker '{0}' has been removed")]
     WorkerRemoved(HostAddr),
@@ -22,7 +22,7 @@ impl WorkerError {
     pub(crate) fn fragment_not_found(&self) -> bool {
         matches!(
             self,
-            Self::ClientError(WorkerClientErr::Grpc { status, .. })
+            Self::ClientError(WorkerTaskError::Grpc { status, .. })
             if status.code() == tonic::Code::NotFound
         )
     }
@@ -31,10 +31,10 @@ impl WorkerError {
 impl Retryable for WorkerError {
     fn retryable(&self) -> bool {
         match self {
-            Self::ClientUnavailable(_) | Self::ClientError(WorkerClientErr::Connection(..)) => {
+            Self::ClientUnavailable(_) | Self::ClientError(WorkerTaskError::Connection { .. }) => {
                 true
             }
-            Self::ClientError(WorkerClientErr::Grpc { status, .. }) => matches!(
+            Self::ClientError(WorkerTaskError::Grpc { status, .. }) => matches!(
                 status.code(),
                 tonic::Code::Unavailable
                     | tonic::Code::DeadlineExceeded
@@ -64,12 +64,12 @@ impl From<WorkerError> for FragmentError {
             WorkerError::WorkerRemoved(addr) => FragmentError::WorkerCommunication {
                 msg: format!("Worker '{addr}' removed"),
             },
-            WorkerError::ClientError(WorkerClientErr::Connection(err, addr)) => {
+            WorkerError::ClientError(WorkerTaskError::Connection { addr, err }) => {
                 FragmentError::WorkerCommunication {
                     msg: format!("Connection to '{addr}' failed: {err}"),
                 }
             }
-            WorkerError::ClientError(WorkerClientErr::Grpc { addr, status })
+            WorkerError::ClientError(WorkerTaskError::Grpc { addr, status })
                 if matches!(
                     status.code(),
                     tonic::Code::Unavailable
@@ -81,7 +81,7 @@ impl From<WorkerError> for FragmentError {
                     msg: format!("gRPC error at '{addr}': {status}"),
                 }
             }
-            WorkerError::ClientError(WorkerClientErr::Grpc { status, .. }) => {
+            WorkerError::ClientError(WorkerTaskError::Grpc { status, .. }) => {
                 FragmentError::WorkerInternal {
                     code: meta_str(&status, "code").parse().unwrap_or(0),
                     msg: status.message().to_string(),

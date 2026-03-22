@@ -1,6 +1,5 @@
 use crate::worker::worker_registry::WorkerRegistry;
 use catalog::worker_catalog::WorkerCatalog;
-use model::request::Request;
 use model::query::StopMode;
 use model::query::fragment::FragmentId;
 use model::worker;
@@ -42,29 +41,54 @@ fn query_id(id: FragmentId) -> Option<SerializableQueryId> {
 }
 
 #[derive(Error, Debug)]
-pub(crate) enum WorkerClientErr {
-    #[error("Failed to connect to {1}: {0}")]
-    Connection(tonic::transport::Error, GrpcAddr),
+pub(crate) enum WorkerTaskError {
+    #[error("failed to connect to {addr}: {err}")]
+    Connection {
+        addr: GrpcAddr,
+        err: tonic::transport::Error,
+    },
 
-    #[error("gRPC error at '{addr}': {status}")]
+    #[error("gRPC error at {addr}: {status}")]
     Grpc {
         addr: GrpcAddr,
         status: tonic::Status,
     },
 }
 
-impl WorkerClientErr {
-    pub(crate) fn grpc_error(addr: GrpcAddr, status: tonic::Status) -> Self {
-        WorkerClientErr::Grpc { addr, status }
+pub(crate) struct Request<P, R> {
+    pub payload: P,
+    pub reply_to: oneshot::Sender<R>,
+}
+
+impl<P, R> Request<P, R> {
+    pub fn new(payload: P) -> (oneshot::Receiver<R>, Self) {
+        let (tx, rx) = oneshot::channel();
+        (
+            rx,
+            Self {
+                payload,
+                reply_to: tx,
+            },
+        )
+    }
+}
+
+fn reply_to<R, E>(tx: oneshot::Sender<Result<R, WorkerTaskError>>, res: Result<R, E>)
+where
+    E: Into<WorkerTaskError>,
+{
+    let res = res.map_err(|e| e.into());
+    if tx.send(res).is_err() {
+        debug!("requesting task dropped the receiver channel");
     }
 }
 
 pub(crate) type RegisterFragmentRequest =
-    Request<FragmentId, Result<RegisterQueryReply, WorkerClientErr>>;
-pub(crate) type StartFragmentRequest = Request<FragmentId, Result<(), WorkerClientErr>>;
-pub(crate) type StopFragmentRequest = Request<(FragmentId, StopMode), Result<(), WorkerClientErr>>;
+    Request<FragmentId, Result<RegisterQueryReply, WorkerTaskError>>;
+pub(crate) type StartFragmentRequest = Request<FragmentId, Result<(), WorkerTaskError>>;
+pub(crate) type StopFragmentRequest = Request<(FragmentId, StopMode), Result<(), WorkerTaskError>>;
 pub(crate) type GetFragmentStatusRequest =
-    Request<FragmentId, Result<QueryStatusReply, WorkerClientErr>>;
+    Request<FragmentId, Result<QueryStatusReply, WorkerTaskError>>;
 
 pub(crate) enum Rpc {
     RegisterFragment(RegisterFragmentRequest),
@@ -75,7 +99,7 @@ pub(crate) enum Rpc {
 
 pub(crate) const RPC_TIMEOUT: Duration = Duration::from_secs(2);
 const CONNECT_TIMEOUT: Duration = Duration::from_secs(5);
-const CONNECT_MAX_RETRIES: usize = 8;
+const CONNECT_MAX_RETRIES: usize = 10;
 const CONNECT_MAX_DELAY: Duration = Duration::from_secs(5);
 pub(crate) const HEALTH_CHECK_INTERVAL: Duration = Duration::from_secs(5);
 const PROBE_TIMEOUT: Duration = Duration::from_secs(1);
@@ -84,9 +108,12 @@ const RPC_CHANNEL_CAPACITY: usize = 64;
 const ENDPOINT_KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(60);
 const ENDPOINT_KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(60);
 
-async fn connect(grpc_addr: &GrpcAddr) -> Result<Channel, WorkerClientErr> {
+async fn connect(grpc_addr: &GrpcAddr) -> Result<Channel, WorkerTaskError> {
     let endpoint = Endpoint::from_shared(format!("http://{}", grpc_addr))
-        .map_err(|e| WorkerClientErr::Connection(e, grpc_addr.clone()))?
+        .map_err(|e| WorkerTaskError::Connection {
+            addr: grpc_addr.clone(),
+            err: e,
+        })?
         .http2_keep_alive_interval(ENDPOINT_KEEP_ALIVE_INTERVAL)
         .keep_alive_timeout(ENDPOINT_KEEP_ALIVE_TIMEOUT)
         .connect_timeout(CONNECT_TIMEOUT);
@@ -95,7 +122,10 @@ async fn connect(grpc_addr: &GrpcAddr) -> Result<Channel, WorkerClientErr> {
     Retry::spawn(connect_retry_strategy(), || async {
         endpoint.connect().await.map_err(|e| {
             debug!("retrying connection");
-            WorkerClientErr::Connection(e, grpc_addr.clone())
+            WorkerTaskError::Connection {
+                addr: grpc_addr.clone(),
+                err: e,
+            }
         })
     })
     .await
@@ -108,39 +138,23 @@ fn connect_retry_strategy() -> impl Iterator<Item = Duration> {
         .take(CONNECT_MAX_RETRIES)
 }
 
-fn reply_to<R, E>(tx: oneshot::Sender<Result<R, WorkerClientErr>>, res: Result<R, E>)
-where
-    E: Into<WorkerClientErr>,
-{
-    let res = res.map_err(|e| e.into());
-    if tx.send(res).is_err() {
-        debug!("requesting task dropped the receiver channel");
-    }
-}
-
 // Spawns an RPC call on a separate task so the active loop isn't blocked.
 // The caller (QueryController) awaits the result via the oneshot in the Request.
-macro_rules! dispatch {
-    ($grpc_addr:expr, $client:expr, $tx:expr, $method:ident, $req:expr) => {
-        let addr: GrpcAddr = $grpc_addr.clone();
+macro_rules! send_wait_reply {
+    ($addr:expr, $client:expr, $tx:expr, $method:ident, $req:expr) => {
+        let addr: GrpcAddr = $addr.clone();
+        let mut client = $client.clone();
         let span = tracing::Span::current();
         tokio::spawn(
             async move {
-                let res = match tokio::time::timeout(
-                    RPC_TIMEOUT,
-                    $client.$method($req),
-                )
-                .await
-                {
+                let res = match tokio::time::timeout(RPC_TIMEOUT, client.$method($req)).await {
                     Ok(r) => r
                         .map(|resp| resp.into_inner())
-                        .map_err(|status| {
-                            WorkerClientErr::grpc_error(addr, status)
-                        }),
-                    Err(_) => Err(WorkerClientErr::grpc_error(
+                        .map_err(|status| WorkerTaskError::Grpc { addr, status }),
+                    Err(_) => Err(WorkerTaskError::Grpc {
                         addr,
-                        tonic::Status::deadline_exceeded("RPC timeout"),
-                    )),
+                        status: tonic::Status::deadline_exceeded("RPC timeout"),
+                    }),
                 };
                 reply_to($tx, res);
             }
@@ -164,7 +178,11 @@ impl WorkerTask {
         catalog: Arc<WorkerCatalog>,
         registry: WorkerRegistry,
     ) -> Self {
-        Self { worker, catalog, registry }
+        Self {
+            worker,
+            catalog,
+            registry,
+        }
     }
 
     fn addr(&self) -> &GrpcAddr {
@@ -179,7 +197,7 @@ impl WorkerTask {
                 Err(e) => {
                     error!("failed to connect: {e}");
                     self.catalog
-                        .set_worker_state(self.worker.clone().into(), WorkerState::Unreachable)
+                        .mark_worker(self.worker.clone().into(), WorkerState::Unreachable)
                         .await
                         .ok();
                 }
@@ -203,7 +221,7 @@ impl WorkerTask {
 
         if let Err(e) = self
             .catalog
-            .set_worker_state(self.worker.clone().into(), WorkerState::Active)
+            .mark_worker(self.worker.clone().into(), WorkerState::Active)
             .await
         {
             warn!("failed to mark worker active: {e}");
@@ -211,16 +229,16 @@ impl WorkerTask {
         }
         info!("worker active");
 
-        // Skip the first immediate tick so we don't health-check before any RPC
+        // Skip the first immediate tick so we don't health check before any RPC
         let mut health_interval = tokio::time::interval(HEALTH_CHECK_INTERVAL);
         health_interval.tick().await;
 
         loop {
             select! {
-                // QueryController sends RPCs via the flume channel
+                // Cancellation-safe - no requests will be lost if we cancel future on health tick
                 rpc = rpc_receiver.recv_async() => {
                     match rpc {
-                        Ok(rpc) => self.dispatch_rpc(&worker_client, rpc),
+                        Ok(rpc) => self.send(&worker_client, rpc),
                         // All senders dropped — WorkerController removed this worker
                         Err(_) => {
                             debug!("RPC channel closed");
@@ -229,14 +247,8 @@ impl WorkerTask {
                     }
                 }
                 _ = health_interval.tick() => {
-                    let req = tonic::Request::new(
-                        health_proto::HealthCheckRequest { service: String::new() }
-                    );
-                    let healthy = match tokio::time::timeout(PROBE_TIMEOUT, health_client.check(req)).await {
-                        Ok(Ok(_)) => true,
-                        _ => false,
-                    };
-                    if !healthy {
+                    let req = tonic::Request::new(health_proto::HealthCheckRequest::default());
+                    if !matches!(tokio::time::timeout(PROBE_TIMEOUT, health_client.check(req)).await, Ok(Ok(_))) {
                         warn!("health check failed");
                         break;
                     }
@@ -245,21 +257,23 @@ impl WorkerTask {
         }
 
         self.catalog
-            .set_worker_state(self.worker.clone().into(), WorkerState::Unreachable)
+            .mark_worker(self.worker.clone().into(), WorkerState::Unreachable)
             .await
             .ok();
-        info!("worker unreachable");
+        warn!("worker unreachable");
     }
 
-    fn dispatch_rpc(&self, client: &WorkerRpcServiceClient<Channel>, rpc: Rpc) {
-        let mut client = client.clone();
+    fn send(&self, client: &WorkerRpcServiceClient<Channel>, rpc: Rpc) {
         match rpc {
             Rpc::RegisterFragment(Request {
                 payload: id,
                 reply_to: tx,
             }) => {
-                dispatch!(
-                    self.addr(), client, tx, register_query,
+                send_wait_reply!(
+                    self.addr(),
+                    client,
+                    tx,
+                    register_query,
                     RegisterQueryRequest {
                         query_plan: Some(worker_rpc_service::nes::SerializableQueryPlan {
                             query_id: query_id(id),
@@ -272,17 +286,25 @@ impl WorkerTask {
                 payload: id,
                 reply_to: tx,
             }) => {
-                dispatch!(
-                    self.addr(), client, tx, start_query,
-                    StartQueryRequest { query_id: query_id(id) }
+                send_wait_reply!(
+                    self.addr(),
+                    client,
+                    tx,
+                    start_query,
+                    StartQueryRequest {
+                        query_id: query_id(id)
+                    }
                 );
             }
             Rpc::StopFragment(Request {
                 payload: (id, stop_mode),
                 reply_to: tx,
             }) => {
-                dispatch!(
-                    self.addr(), client, tx, stop_query,
+                send_wait_reply!(
+                    self.addr(),
+                    client,
+                    tx,
+                    stop_query,
                     StopQueryRequest {
                         query_id: query_id(id),
                         termination_type: stop_mode.into(),
@@ -293,9 +315,14 @@ impl WorkerTask {
                 payload: id,
                 reply_to: tx,
             }) => {
-                dispatch!(
-                    self.addr(), client, tx, request_query_status,
-                    QueryStatusRequest { query_id: query_id(id) }
+                send_wait_reply!(
+                    self.addr(),
+                    client,
+                    tx,
+                    request_query_status,
+                    QueryStatusRequest {
+                        query_id: query_id(id)
+                    }
                 );
             }
         }

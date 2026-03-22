@@ -1,6 +1,6 @@
 use crate::query::retry::RetryPolicy;
 use crate::worker::worker_task::{
-    GetFragmentStatusRequest, QueryStatusReply, Rpc, StopFragmentRequest, WorkerClientErr,
+    GetFragmentStatusRequest, QueryStatusReply, Rpc, StopFragmentRequest, WorkerTaskError,
 };
 use crate::worker::worker_registry::{WorkerError, WorkerRegistryHandle};
 use anyhow::{Result, anyhow};
@@ -50,7 +50,7 @@ impl QueryContext {
         retry: &RetryPolicy,
     ) -> Vec<Result<Rsp, WorkerError>>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerClientErr>>, Rpc),
+        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let mk_rpc = &mk_rpc;
@@ -69,7 +69,7 @@ impl QueryContext {
         target: FragmentState,
     ) -> Result<()>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerClientErr>>, Rpc),
+        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let mk_rpc = &mk_rpc;

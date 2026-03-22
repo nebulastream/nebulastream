@@ -1,10 +1,10 @@
 use crate::worker::poly_join_set::TaskMap;
-use crate::worker::worker_task::WorkerTask;
 use crate::worker::worker_registry::WorkerRegistry;
+use crate::worker::worker_task::WorkerTask;
 use catalog::Reconcilable;
 use catalog::worker_catalog::WorkerCatalog;
-use model::worker::{DesiredWorkerState, GetWorker};
 use model::worker::endpoint::GrpcAddr;
+use model::worker::{DesiredWorkerState, GetWorker, WorkerState};
 use std::sync::Arc;
 use std::time::Duration;
 use tokio::select;
@@ -71,6 +71,7 @@ impl WorkerController {
         }
     }
 
+    // Ensures that for each worker that should be active, we have one corresponding task running
     async fn ensure_tracked(&mut self) {
         let workers = match self
             .worker_catalog
@@ -86,14 +87,11 @@ impl WorkerController {
 
         for worker in workers {
             let addr = worker.grpc_addr.clone();
-            if !self.tasks.contains_key(&addr) {
-                let task = WorkerTask::new(
-                    worker,
-                    self.worker_catalog.clone(),
-                    self.registry.clone(),
-                );
-                self.tasks.spawn(addr, (), task.run());
-            }
+            self.tasks.spawn_if_untracked(
+                addr,
+                (),
+                WorkerTask::new(worker, self.worker_catalog.clone(), self.registry.clone()).run(),
+            );
         }
     }
 
@@ -107,25 +105,25 @@ impl WorkerController {
             }
         };
 
-        for mismatch in mismatched_workers {
-            let addr = mismatch.grpc_addr.clone();
-            match mismatch.desired_state {
+        for mismatched_worker in mismatched_workers {
+            match mismatched_worker.desired_state {
                 DesiredWorkerState::Active => {
-                    // Only spawn if we don't already have a task for this address
-                    if !self.tasks.contains_key(&addr) {
-                        let task = WorkerTask::new(
-                            mismatch,
+                    self.tasks.spawn_if_untracked(
+                        mismatched_worker.grpc_addr.clone(),
+                        (),
+                        WorkerTask::new(
+                            mismatched_worker,
                             self.worker_catalog.clone(),
                             self.registry.clone(),
-                        );
-                        self.tasks.spawn(addr, (), task.run());
-                    }
+                        )
+                        .run(),
+                    );
                 }
                 DesiredWorkerState::Removed => {
                     // Abort drops the RegistryGuard inside worker_task → auto-unregisters
-                    self.tasks.abort(&addr);
+                    self.tasks.abort(&mismatched_worker.grpc_addr);
                     self.worker_catalog
-                        .remove_worker(mismatch.into())
+                        .mark_worker(mismatched_worker.into(), WorkerState::Removed)
                         .await
                         .expect("failed to mark worker as removed");
                 }

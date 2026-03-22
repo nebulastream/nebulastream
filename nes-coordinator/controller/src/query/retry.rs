@@ -1,4 +1,4 @@
-use crate::worker::worker_task::{Rpc, WorkerClientErr};
+use crate::worker::worker_task::{Rpc, WorkerTaskError};
 use crate::worker::worker_registry::{WorkerError, WorkerRegistryHandle};
 use catalog::Catalog;
 use catalog::error::Retryable;
@@ -11,7 +11,7 @@ use tokio::sync::oneshot;
 use tokio_retry::RetryIf;
 use tokio_retry::strategy::{ExponentialBackoff, jitter};
 
-const MAX_RPC_ATTEMPTS: usize = 6;
+const MAX_RPC_ATTEMPTS: usize = 5;
 const BACKOFF_FACTOR: u64 = 2;
 const ROLLBACK_RETRY_MAX: Duration = Duration::from_secs(30);
 const EXECUTE_TIMEOUT: Duration = Duration::from_secs(30);
@@ -46,7 +46,7 @@ impl RetryPolicy {
         fragment: &fragment::Model,
     ) -> Result<Rsp, WorkerError>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerClientErr>>, Rpc),
+        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let (rx, rpc) = mk_rpc(fragment.id);
@@ -78,7 +78,7 @@ impl RetryPolicy {
         fragment: &fragment::Model,
     ) -> Result<Rsp, WorkerError>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerClientErr>>, Rpc),
+        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let addr = fragment.grpc_addr.clone();

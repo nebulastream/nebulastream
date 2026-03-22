@@ -103,6 +103,20 @@ impl<K: Eq + Hash + Clone + Send + 'static, V> TaskMap<K, V> {
         }
     }
 
+    pub fn spawn_if_untracked<F>(&mut self, key: K, value: V, task: F)
+    where
+        F: Future<Output = ()> + Send + 'static,
+    {
+        if !self.contains_key(&key) {
+            let k = key.clone();
+            let handle = self.tasks.spawn(async move {
+                let _ = AssertUnwindSafe(task).catch_unwind().await;
+                k
+            });
+            self.entries.insert(key, (handle, value));
+        }
+    }
+
     pub fn spawn<F>(&mut self, key: K, value: V, task: F)
     where
         F: Future<Output = ()> + Send + 'static,
