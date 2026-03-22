@@ -148,7 +148,7 @@ impl QueryWorkload {
             QueryOp::CreateQuery(idx) => {
                 let mut query = arb(CreateQuery::generate());
                 query.block_until = QueryState::Pending;
-                let resp: anyhow::Result<query::Model> = harness.send(query).await;
+                let resp = harness.create_query(query).await;
                 match resp {
                     Ok(q) => {
                         debug!("[{i}] create({idx}) -> id={}", q.id);
@@ -160,8 +160,8 @@ impl QueryWorkload {
             QueryOp::DropQuery(idx) => {
                 if let Some(qid) = created_ids[idx] {
                     let stop_mode: StopMode = arb(any::<StopMode>());
-                    let resp: anyhow::Result<Vec<query::Model>> = harness
-                        .send(
+                    let resp = harness
+                        .drop_queries(
                             DropQuery::all()
                                 .stop_mode(stop_mode)
                                 .with_filters(GetQuery::all().with_id(qid)),

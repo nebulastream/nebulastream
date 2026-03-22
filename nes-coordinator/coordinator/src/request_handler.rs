@@ -1,42 +1,13 @@
-use crate::coordinator::{CoordinatorRequest, CreateQueryRequest, DropQueryRequest};
 use catalog::Catalog;
 use catalog::Reconcilable;
-use model::request::Request;
 use model::query;
 use model::query::query_state::QueryState;
 use model::query::{GetQuery, QueryId};
+use model::request::{Request, Statement, StatementResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
 use tracing::{debug, info, instrument};
-
-macro_rules! dispatch {
-    ($self:ident, $req:expr, $field:ident . $method:ident) => {{
-        debug!("received: {:?}", $req);
-        let Request { payload, reply_to } = $req;
-        let _ = reply_to.send($self.catalog.$field.$method(payload).await);
-    }};
-}
-
-macro_rules! dispatch_blocking {
-    ($self:ident, $req:expr, $field:ident . $method:ident, |$result:ident, $request:ident| $store:expr) => {{
-        debug!("received: {:?}", $req);
-        let Request { payload, reply_to } = $req;
-        match $self.catalog.$field.$method(payload.clone()).await {
-            Ok($result) => {
-                if payload.should_block() {
-                    let $request = Request { payload, reply_to };
-                    $store
-                } else {
-                    let _ = reply_to.send(Ok($result));
-                }
-            }
-            Err(e) => {
-                let _ = reply_to.send(Err(e));
-            }
-        }
-    }};
-}
 
 #[derive(Error, Debug)]
 #[error("Query '{query_id}' terminated with state {state} before reaching target state")]
@@ -46,28 +17,26 @@ struct EarlyTermination {
     model: query::Model,
 }
 
-struct PendingQueryDrop {
-    query_ids: Vec<QueryId>,
-    request: DropQueryRequest,
+struct PendingCreate {
+    block_until: QueryState,
+    reply_to: tokio::sync::oneshot::Sender<anyhow::Result<StatementResponse>>,
 }
 
 pub(super) struct RequestHandler {
-    receiver: flume::Receiver<CoordinatorRequest>,
+    receiver: flume::Receiver<Request>,
     catalog: Arc<Catalog>,
-    pending_query_creates: HashMap<QueryId, CreateQueryRequest>,
-    pending_query_drops: Vec<PendingQueryDrop>,
+    pending_query_creates: HashMap<QueryId, PendingCreate>,
 }
 
 impl RequestHandler {
     pub(super) fn new(
-        receiver: flume::Receiver<CoordinatorRequest>,
+        receiver: flume::Receiver<Request>,
         catalog: Arc<Catalog>,
     ) -> RequestHandler {
         Self {
             receiver,
             catalog,
             pending_query_creates: HashMap::new(),
-            pending_query_drops: Vec::new(),
         }
     }
 
@@ -78,7 +47,7 @@ impl RequestHandler {
         loop {
             tokio::select! {
                 recv_result = self.receiver.recv_async() => match recv_result {
-                    Ok(req) => self.handle_recv(req).await,
+                    Ok(req) => self.handle(req).await,
                     Err(_) => {
                         info!("all clients have been dropped, shutting down...");
                         return;
@@ -91,28 +60,46 @@ impl RequestHandler {
         }
     }
 
+    #[instrument(skip_all)]
+    async fn handle(&mut self, req: Request) {
+        debug!("received: {:?}", req);
+        let Request { statement, reply_to } = req;
+
+        // CreateQuery with blocking: defer the reply until the query reaches the target state
+        if let Statement::CreateQuery(ref q) = statement {
+            if q.blocking() {
+                let block_until = q.block_until;
+                match self.execute(statement).await {
+                    Ok(StatementResponse::CreatedQuery(model)) => {
+                        self.pending_query_creates.insert(
+                            model.id,
+                            PendingCreate { block_until, reply_to },
+                        );
+                    }
+                    other => {
+                        let _ = reply_to.send(other);
+                    }
+                }
+                return;
+            }
+        }
+
+        let result = self.execute(statement).await;
+        let _ = reply_to.send(result);
+    }
+
     #[instrument(skip(self))]
     async fn resolve_pending_queries(&mut self) {
-        if self.pending_query_creates.is_empty() && self.pending_query_drops.is_empty() {
+        if self.pending_query_creates.is_empty() {
             return;
         }
 
-        let all_ids: Vec<_> = self
-            .pending_query_creates
-            .keys()
-            .copied()
-            .chain(
-                self.pending_query_drops
-                    .iter()
-                    .flat_map(|drop| &drop.query_ids)
-                    .copied(),
-            )
-            .collect();
+        let ids: Vec<_> = self.pending_query_creates.keys().copied().collect();
 
         let Ok(queries) = self
             .catalog
             .query
-            .get_query(GetQuery::all().with_ids(all_ids))
+            .get_query(GetQuery::all().with_ids(ids))
             .await
         else {
             return;
@@ -120,147 +107,138 @@ impl RequestHandler {
         let queries: HashMap<QueryId, query::Model> =
             queries.into_iter().map(|m| (m.id, m)).collect();
 
-        self.find_remove_created(&queries);
-        self.find_remove_dropped(&queries);
-    }
-
-    fn find_remove_created(&mut self, queries: &HashMap<QueryId, query::Model>) {
-        let resolved_create_ids: Vec<QueryId> = queries
+        let resolved_ids: Vec<QueryId> = queries
             .iter()
             .filter(|(id, model)| {
                 self.pending_query_creates
                     .get(id)
-                    .is_some_and(|req| model.current_state >= req.payload.block_until)
+                    .is_some_and(|pending| model.current_state >= pending.block_until)
             })
             .map(|(&id, _)| id)
             .collect();
 
-        for id in resolved_create_ids {
-            let req = self.pending_query_creates.remove(&id).unwrap();
+        for id in resolved_ids {
+            let pending = self.pending_query_creates.remove(&id).unwrap();
             let model = queries[&id].clone();
 
-            if model.current_state.is_terminal() && model.current_state != req.payload.block_until {
-                let _ = req.reply_to.send(Err(EarlyTermination {
+            if model.current_state.is_terminal() && model.current_state != pending.block_until {
+                let _ = pending.reply_to.send(Err(EarlyTermination {
                     query_id: model.id,
                     state: model.current_state,
                     model,
                 }
                 .into()));
             } else {
-                let _ = req.reply_to.send(Ok(model));
+                let _ = pending
+                    .reply_to
+                    .send(Ok(StatementResponse::CreatedQuery(model)));
             }
         }
     }
 
-    fn find_remove_dropped(&mut self, queries: &HashMap<QueryId, query::Model>) {
-        let resolved_drop_indices: Vec<usize> = self
-            .pending_query_drops
-            .iter()
-            .enumerate()
-            .filter(|(_, drop)| {
-                drop.query_ids.iter().all(|id| {
-                    queries
-                        .get(id)
-                        .is_some_and(|m| m.current_state.is_terminal())
-                })
-            })
-            .map(|(i, _)| i)
-            .collect();
-
-        for i in resolved_drop_indices.into_iter().rev() {
-            let drop = self.pending_query_drops.swap_remove(i);
-            let drop_models = drop
-                .query_ids
-                .iter()
-                .map(|id| queries[id].clone())
-                .collect();
-            let _ = drop.request.reply_to.send(Ok(drop_models));
-        }
-    }
-
-    #[instrument(skip_all)]
-    async fn handle_recv(&mut self, req: CoordinatorRequest) {
-        match req {
-            CoordinatorRequest::CreateLogicalSource(r) => {
-                dispatch!(self, r, source.create_logical_source)
+    async fn execute(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
+        match statement {
+            Statement::Sql(sql) => {
+                // TODO: call C++ SqlPlanner via FFI, convert result to structured variant
+                anyhow::bail!("SqlPlanner not yet integrated: {sql}")
             }
-            CoordinatorRequest::CreatePhysicalSource(r) => {
-                dispatch!(self, r, source.create_physical_source)
+            Statement::CreateWorker(w) => {
+                let model = self.catalog.worker.create_worker(w).await?;
+                Ok(StatementResponse::CreatedWorker(model))
             }
-            CoordinatorRequest::CreateSink(r) => {
-                dispatch!(self, r, sink.create_sink)
+            Statement::GetWorker(g) => {
+                let workers = self.catalog.worker.get_worker(g).await?;
+                Ok(StatementResponse::Workers(workers))
             }
-            CoordinatorRequest::CreateWorker(r) => {
-                dispatch!(self, r, worker.create_worker)
+            Statement::DropWorker(d) => {
+                let worker = self.catalog.worker.drop_worker(d).await?;
+                Ok(StatementResponse::DroppedWorker(worker))
             }
-            CoordinatorRequest::DropLogicalSource(r) => {
-                dispatch!(self, r, source.drop_logical_source)
+            Statement::CreateQuery(q) => {
+                let model = self.catalog.query.create_query(q).await?;
+                #[cfg(madsim)]
+                {
+                    use model::query::fragment::CreateFragment;
+                    use model::worker::GetWorker;
+                    let workers = self.catalog.worker.get_worker(GetWorker::all()).await?;
+                    let fragments = CreateFragment::for_models(&model, &workers);
+                    self.catalog.query.create_fragments_for_query(fragments).await?;
+                }
+                Ok(StatementResponse::CreatedQuery(model))
             }
-            CoordinatorRequest::DropPhysicalSource(r) => {
-                dispatch!(self, r, source.drop_physical_source)
+            Statement::ExplainQuery(_sql) => {
+                // TODO: call C++ SqlPlanner in explain mode, return plan explanation
+                anyhow::bail!("ExplainQuery not yet implemented")
             }
-            CoordinatorRequest::DropSink(r) => {
-                dispatch!(self, r, sink.drop_sink)
-            }
-            CoordinatorRequest::DropWorker(r) => {
-                dispatch!(self, r, worker.drop_worker)
-            }
-            CoordinatorRequest::GetLogicalSource(r) => {
-                dispatch!(self, r, source.get_logical_source)
-            }
-            CoordinatorRequest::GetPhysicalSource(r) => {
-                dispatch!(self, r, source.get_physical_source)
-            }
-            CoordinatorRequest::GetSink(r) => {
-                dispatch!(self, r, sink.get_sink)
-            }
-            CoordinatorRequest::GetQuery(r) => {
-                let Request { payload, reply_to } = r;
-                let result = if payload.with_fragments {
-                    self.catalog.query.get_query_with_fragments(payload).await
+            Statement::GetQuery(g) => {
+                if g.with_fragments {
+                    let results = self.catalog.query.get_query_with_fragments(g).await?;
+                    Ok(StatementResponse::Queries(results))
                 } else {
-                    self.catalog
-                        .query
-                        .get_query(payload)
-                        .await
-                        .map(|qs| qs.into_iter().map(|q| (q, vec![])).collect())
-                };
-                let _ = reply_to.send(result);
+                    let queries = self.catalog.query.get_query(g).await?;
+                    let results = queries.into_iter().map(|q| (q, vec![])).collect();
+                    Ok(StatementResponse::Queries(results))
+                }
             }
-            CoordinatorRequest::GetWorker(r) => {
-                dispatch!(self, r, worker.get_worker)
+            Statement::DropQuery(d) => {
+                let queries = self.catalog.query.drop_query(d).await?;
+                Ok(StatementResponse::DroppedQueries(queries))
             }
-            CoordinatorRequest::CreateQuery(r) => {
-                dispatch_blocking!(self, r, query.create_query, |result, request| {
-                    self.pending_query_creates.insert(result.id, request);
-                })
+            Statement::CreateLogicalSource(c) => {
+                let model = self.catalog.source.create_logical_source(c).await?;
+                Ok(StatementResponse::CreatedLogicalSource(model))
             }
-            CoordinatorRequest::DropQuery(r) => {
-                dispatch_blocking!(self, r, query.drop_query, |result, request| {
-                    self.pending_query_drops.push(PendingQueryDrop {
-                        query_ids: result.iter().map(|q| q.id).collect(),
-                        request,
-                    });
-                })
+            Statement::GetLogicalSource(g) => {
+                let model = self.catalog.source.get_logical_source(g).await?;
+                Ok(StatementResponse::LogicalSource(model))
+            }
+            Statement::DropLogicalSource(d) => {
+                let model = self.catalog.source.drop_logical_source(d).await?;
+                Ok(StatementResponse::DroppedLogicalSources(model))
+            }
+            Statement::CreatePhysicalSource(c) => {
+                let model = self.catalog.source.create_physical_source(c).await?;
+                Ok(StatementResponse::CreatedPhysicalSource(model))
+            }
+            Statement::GetPhysicalSource(g) => {
+                let sources = self.catalog.source.get_physical_source(g).await?;
+                Ok(StatementResponse::PhysicalSources(sources))
+            }
+            Statement::DropPhysicalSource(d) => {
+                let sources = self.catalog.source.drop_physical_source(d).await?;
+                Ok(StatementResponse::DroppedPhysicalSources(sources))
+            }
+            Statement::CreateSink(c) => {
+                let model = self.catalog.sink.create_sink(c).await?;
+                Ok(StatementResponse::CreatedSink(model))
+            }
+            Statement::GetSink(g) => {
+                let sinks = self.catalog.sink.get_sink(g).await?;
+                Ok(StatementResponse::Sinks(sinks))
+            }
+            Statement::DropSink(d) => {
+                let sinks = self.catalog.sink.drop_sink(d).await?;
+                Ok(StatementResponse::DroppedSinks(sinks))
             }
         }
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catalog::testing::{advance_query_to, test_prop};
+    use catalog::testing::advance_query_to;
     use model::query::query_state::QueryState;
-    use model::query::{CreateQuery, DropQuery, GetQuery, StopMode};
-    use model::Generate;
+    use model::query::{CreateQuery, GetQuery};
+    use model::request::{Request, Statement, StatementResponse};
     use model::worker::CreateWorker;
     use model::worker::endpoint::NetworkAddr;
+    use model::Generate;
     use proptest::prelude::*;
+    use catalog::test_prop;
 
     struct TestHandle {
-        sender: flume::Sender<CoordinatorRequest>,
+        sender: flume::Sender<Request>,
         catalog: Arc<Catalog>,
     }
 
@@ -279,14 +257,10 @@ mod tests {
             Self { sender, catalog }
         }
 
-        async fn send<P, R>(&self, payload: P) -> tokio::sync::oneshot::Receiver<R>
-        where
-            P: std::fmt::Debug,
-            Request<P, R>: Into<CoordinatorRequest>,
-        {
-            let (rx, request) = Request::new(payload);
+        async fn send(&self, statement: Statement) -> tokio::sync::oneshot::Receiver<anyhow::Result<StatementResponse>> {
+            let (rx, request) = Request::new(statement);
             self.sender
-                .send_async(request.into())
+                .send_async(request)
                 .await
                 .expect("handler should be running");
             rx
@@ -301,9 +275,12 @@ mod tests {
         let handle = TestHandle::new().await;
         let statement = req.sql_statement.clone();
         let name = req.name.clone();
-        let rx = handle.send(req).await;
-        let result: anyhow::Result<model::query::Model> = rx.await.unwrap();
-        let model = result.unwrap();
+        let rx = handle.send(Statement::CreateQuery(req)).await;
+        let result = rx.await.unwrap().unwrap();
+        let model = match result {
+            StatementResponse::CreatedQuery(m) => m,
+            other => panic!("expected CreatedQuery, got {other:?}"),
+        };
         assert_eq!(model.current_state, QueryState::Pending);
         assert_eq!(model.statement, statement);
         assert_eq!(model.name, name);
@@ -315,7 +292,7 @@ mod tests {
     ) {
         let handle = TestHandle::new().await;
         let req = CreateQuery::new("SELECT 1".to_string()).block_until(block_until);
-        let rx = handle.send(req).await;
+        let rx = handle.send(Statement::CreateQuery(req)).await;
         tokio::task::yield_now().await;
 
         let queries = handle
@@ -326,15 +303,19 @@ mod tests {
             .unwrap();
         let query = queries.into_iter().next().unwrap();
 
-        for &state in &path[1..] {
+        for &state in &path {
             handle.advance_to(query.id, state).await;
         }
 
-        let result: anyhow::Result<model::query::Model> = rx.await.unwrap();
+        let result = rx.await.unwrap();
         let path_contains_target = path.contains(&block_until);
 
         if path_contains_target {
-            let model = result.expect("expected Ok when path contains block_until");
+            let resp = result.expect("expected Ok when path contains block_until");
+            let model = match resp {
+                StatementResponse::CreatedQuery(m) => m,
+                other => panic!("expected CreatedQuery, got {other:?}"),
+            };
             assert!(model.current_state >= block_until);
         } else {
             let err = result.expect_err("expected EarlyTermination when path skips block_until");
@@ -344,43 +325,6 @@ mod tests {
             assert!(early.state.is_terminal());
             assert!(early.state >= block_until);
             assert_ne!(early.state, block_until);
-        }
-    }
-
-    async fn prop_blocking_drop_resolves_when_all_terminal(
-        n_queries: usize,
-        stop_mode: StopMode,
-    ) {
-        let handle = TestHandle::new().await;
-
-        let mut query_ids = Vec::new();
-        for i in 0..n_queries {
-            let create = CreateQuery::new(format!("SELECT {i}"));
-            let rx = handle.send(create).await;
-            let result: anyhow::Result<model::query::Model> = rx.await.unwrap();
-            query_ids.push(result.unwrap().id);
-        }
-
-        for &id in &query_ids {
-            handle.advance_to(id, QueryState::Pending).await;
-            handle.advance_to(id, QueryState::Registered).await;
-            handle.advance_to(id, QueryState::Running).await;
-        }
-
-        let drop = DropQuery::all().stop_mode(stop_mode).blocking();
-        let drop_rx = handle.send(drop).await;
-        tokio::task::yield_now().await;
-
-        for &id in &query_ids {
-            handle.advance_to(id, QueryState::Stopped).await;
-        }
-
-        let dropped: anyhow::Result<Vec<model::query::Model>> = drop_rx.await.unwrap();
-        let dropped = dropped.unwrap();
-        assert_eq!(dropped.len(), n_queries);
-        for model in &dropped {
-            assert!(model.current_state.is_terminal());
-            assert!(query_ids.contains(&model.id));
         }
     }
 
@@ -404,16 +348,6 @@ mod tests {
         ) {
             test_prop(|| async move {
                 prop_blocking_create_resolves_correctly(block_until, path).await;
-            });
-        }
-
-        #[test]
-        fn blocking_drop_resolves_when_all_terminal(
-            n_queries in 2..=100usize,
-            stop_mode in any::<StopMode>(),
-        ) {
-            test_prop(|| async move {
-                prop_blocking_drop_resolves_when_all_terminal(n_queries, stop_mode).await;
             });
         }
     }

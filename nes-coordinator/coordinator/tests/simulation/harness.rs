@@ -2,16 +2,18 @@
 use crate::spec::NetworkConfig;
 use crate::worker::{HealthServer, HealthServiceImpl, SingleNodeWorker, WorkerRpcServiceServer};
 use anyhow::Result;
-use model::request::Request;
-use coordinator::coordinator::{CoordinatorRequest, start_for_sim};
+use model::request::{Request, Statement, StatementResponse};
+use coordinator::start_for_sim;
 use madsim::net::NetSim;
 use madsim::runtime::Handle;
 use model::worker;
 use model::worker::endpoint::{GrpcAddr, NetworkAddr};
-use model::worker::{CreateWorker, GetWorker, WorkerState};
+use model::query;
+use model::query::fragment;
+use model::query::{CreateQuery, DropQuery, GetQuery};
+use model::worker::{CreateWorker, DropWorker, GetWorker, WorkerState};
 use proptest::strategy::{Strategy, ValueTree};
 use proptest::test_runner::{RngAlgorithm, TestRng, TestRunner};
-use std::fmt::Debug;
 use std::sync::Arc;
 use std::time::Duration;
 use tokio_retry::Retry;
@@ -57,7 +59,7 @@ pub fn arb<S: Strategy>(strategy: S) -> S::Value {
 
 pub struct TestHarness {
     workers: Vec<CreateWorker>,
-    coordinator_sender: Arc<std::sync::Mutex<Option<flume::Sender<CoordinatorRequest>>>>,
+    coordinator_sender: Arc<std::sync::Mutex<Option<flume::Sender<Request>>>>,
     test_dir: std::path::PathBuf,
 }
 
@@ -131,7 +133,7 @@ impl TestHarness {
         COORDINATOR_NAME
     }
 
-    async fn wait_for_coordinator(&self) -> flume::Sender<CoordinatorRequest> {
+    async fn wait_for_coordinator(&self) -> flume::Sender<Request> {
         let deadline = tokio::time::Instant::now() + COORDINATOR_READY_TIMEOUT;
         loop {
             {
@@ -151,25 +153,63 @@ impl TestHarness {
         }
     }
 
-    pub async fn send<P, R>(&self, payload: P) -> R
-    where
-        P: Debug,
-        Request<P, R>: Into<CoordinatorRequest>,
-    {
+    async fn send(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
         let sender = self.wait_for_coordinator().await;
-        let (rx, req) = Request::new(payload);
-        sender.send_async(req.into()).await.unwrap();
+        let (rx, req) = Request::new(statement);
+        sender.send_async(req).await.unwrap();
         tokio::time::timeout(SEND_TIMEOUT, rx)
             .await
             .expect("coordinator did not respond within timeout")
             .expect("coordinator dropped the request")
     }
 
+    pub async fn create_worker(&self, worker: &CreateWorker) -> anyhow::Result<worker::Model> {
+        match self.send(Statement::CreateWorker(worker.clone())).await? {
+            StatementResponse::CreatedWorker(m) => Ok(m),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
+    pub async fn get_workers(&self) -> anyhow::Result<Vec<worker::Model>> {
+        match self.send(Statement::GetWorker(GetWorker::all())).await? {
+            StatementResponse::Workers(v) => Ok(v),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
+    pub async fn drop_worker(&self, host: NetworkAddr) -> anyhow::Result<Option<worker::Model>> {
+        match self.send(Statement::DropWorker(DropWorker::new(host))).await? {
+            StatementResponse::DroppedWorker(m) => Ok(m),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
+    pub async fn create_query(&self, query: CreateQuery) -> anyhow::Result<query::Model> {
+        match self.send(Statement::CreateQuery(query)).await? {
+            StatementResponse::CreatedQuery(m) => Ok(m),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
+    pub async fn drop_queries(&self, drop_query: DropQuery) -> anyhow::Result<Vec<query::Model>> {
+        match self.send(Statement::DropQuery(drop_query)).await? {
+            StatementResponse::DroppedQueries(v) => Ok(v),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
+    pub async fn get_queries(&self, filter: GetQuery) -> anyhow::Result<Vec<(query::Model, Vec<fragment::Model>)>> {
+        match self.send(Statement::GetQuery(filter)).await? {
+            StatementResponse::Queries(v) => Ok(v),
+            other => anyhow::bail!("unexpected response: {other:?}"),
+        }
+    }
+
     async fn start_coordinator(
         net: &Handle,
         db_path: &str,
-    ) -> Arc<std::sync::Mutex<Option<flume::Sender<CoordinatorRequest>>>> {
-        let shared_sender: Arc<std::sync::Mutex<Option<flume::Sender<CoordinatorRequest>>>> =
+    ) -> Arc<std::sync::Mutex<Option<flume::Sender<Request>>>> {
+        let shared_sender: Arc<std::sync::Mutex<Option<flume::Sender<Request>>>> =
             Arc::new(std::sync::Mutex::new(None));
 
         let (ready_tx, ready_rx) = flume::bounded(1);
@@ -228,9 +268,7 @@ impl TestHarness {
         let strategy = ExponentialBackoff::from_millis(50).factor(10).map(jitter).take(10);
         for worker in &self.workers {
             Retry::spawn(strategy.clone(), || async {
-                let result: anyhow::Result<worker::Model> =
-                    self.send(worker.clone()).await;
-                result
+                self.create_worker(worker).await
             })
             .await
             .expect("worker registration failed after retries");
@@ -239,7 +277,7 @@ impl TestHarness {
         let num_workers = self.workers.len();
         let deadline = tokio::time::Instant::now() + WORKER_REGISTRATION_TIMEOUT;
         loop {
-            let workers: Vec<worker::Model> = self.send(GetWorker::all()).await.unwrap();
+            let workers = self.get_workers().await.unwrap();
             let active_count = workers
                 .iter()
                 .filter(|w| w.current_state == WorkerState::Active)
@@ -268,7 +306,7 @@ impl TestHarness {
     pub async fn active_fragments_by_worker(
         &self,
     ) -> HashMap<GrpcAddr, HashSet<u64>> {
-        let workers: Vec<worker::Model> = self.send(GetWorker::all()).await.unwrap();
+        let workers = self.get_workers().await.unwrap();
 
         let (tx, rx) = flume::bounded(1);
         let addrs: Vec<GrpcAddr> = workers

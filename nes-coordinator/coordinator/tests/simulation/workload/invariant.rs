@@ -34,8 +34,8 @@ impl InvariantContext {
             .copied()
             .collect();
 
-        let queries: Vec<(query::Model, Vec<fragment::Model>)> = harness
-            .send(GetQuery::all().with_ids(all_ids).with_fragments())
+        let queries = harness
+            .get_queries(GetQuery::all().with_ids(all_ids).with_fragments())
             .await
             .unwrap();
 

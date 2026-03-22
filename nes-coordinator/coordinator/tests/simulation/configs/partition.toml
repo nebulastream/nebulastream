@@ -14,4 +14,3 @@ run_failure_workloads = false
   begin = 42
   end = 50
   partition_rate = 0.25
-

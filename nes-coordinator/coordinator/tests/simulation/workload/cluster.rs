@@ -6,7 +6,7 @@ use crate::workload::{
 };
 use async_trait::async_trait;
 use model::worker;
-use model::worker::{DesiredWorkerState, DropWorker, GetWorker, WorkerState};
+use model::worker::{DesiredWorkerState, WorkerState};
 use proptest::prelude::*;
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -155,13 +155,11 @@ impl ClusterWorkload {
                 harness.restart_worker(idx);
                 let worker = harness.worker_config(idx);
 
-                let workers: Vec<worker::Model> =
-                    harness.send(GetWorker::all()).await.unwrap();
+                let workers = harness.get_workers().await.unwrap();
                 let exists = workers.iter().any(|w| w.host_addr == worker.host_addr);
 
                 if !exists {
-                    let resp: anyhow::Result<worker::Model> =
-                        harness.send(worker).await;
+                    let resp = harness.create_worker(&worker).await;
                     match resp {
                         Ok(_) => {
                             info!("cluster[{i}]: CreateWorker({idx}) succeeded");
@@ -177,8 +175,7 @@ impl ClusterWorkload {
             ClusterOp::DropWorker(idx) => {
                 info!("cluster[{i}]: DropWorker({idx})");
                 let host = harness.worker_host(idx);
-                let resp: anyhow::Result<worker::Model> =
-                    harness.send(DropWorker::new(host)).await;
+                let resp = harness.drop_worker(host).await;
                 match resp {
                     Ok(_) => info!("cluster[{i}]: DropWorker({idx}) succeeded"),
                     Err(e) => info!("cluster[{i}]: DropWorker({idx}) rejected: {e}"),
@@ -232,7 +229,7 @@ impl Invariant for WorkerConvergence {
     }
 
     async fn check(&self, harness: &TestHarness, _ctx: &InvariantContext) {
-        let workers: Vec<worker::Model> = harness.send(GetWorker::all()).await.unwrap();
+        let workers = harness.get_workers().await.unwrap();
         for w in &workers {
             match w.desired_state {
                 DesiredWorkerState::Active => {
