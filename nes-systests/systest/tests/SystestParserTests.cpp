@@ -268,7 +268,7 @@ SELECT producedPower, timestamp FROM source INTO we;
 )";
 
     std::string receivedQuery;
-    parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId) { receivedQuery = queryOut; });
+    parser.registerOnQueryCallback([&](const std::string& queryOut, SystestQueryId, bool) { receivedQuery = queryOut; });
     parser.registerOnCreateCallback(
         [&](const std::string&, const std::optional<std::pair<TestDataIngestionType, std::vector<std::string>>>&) { });
     parser.registerOnResultTuplesCallback([](std::vector<std::string>&& tuples, SystestQueryId) { (void)std::move(tuples); });
