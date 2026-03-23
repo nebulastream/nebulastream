@@ -92,27 +92,11 @@ grpc::Status GRPCServer::RegisterQuery(grpc::ServerContext* context, const Regis
 {
     return handleGrpcRequest(
         context,
-        [&](grpc::ServerContext* ctx)
-        {
-            auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
-            auto result = delegate.registerQuery(std::move(fullySpecifiedQueryPlan));
-            if (result.has_value())
-            {
-                response->set_queryid(result->getRawValue());
-                return grpc::Status::OK;
-            }
-            return handleError(result.error(), ctx);
-        });
-}
-
-grpc::Status GRPCServer::UnregisterQuery(grpc::ServerContext* context, const UnregisterQueryRequest* request, google::protobuf::Empty*)
-{
-    return handleGrpcRequest(
-        context,
         [&](grpc::ServerContext*)
         {
-            const auto queryId = QueryId(request->queryid());
-            getValueOrThrow(delegate.unregisterQuery(queryId));
+            auto fullySpecifiedQueryPlan = QueryPlanSerializationUtil::deserializeQueryPlan(request->queryplan());
+            auto result = getValueOrThrow(delegate.registerQuery(std::move(fullySpecifiedQueryPlan)));
+            response->set_queryid(result->getRawValue());
             return grpc::Status::OK;
         });
 }
@@ -181,41 +165,6 @@ grpc::Status GRPCServer::RequestQueryStatus(grpc::ServerContext* context, const 
                     errorProto->set_code(error->code());
                     errorProto->set_location(
                         std::string{error->where()->filename} + ":" + std::to_string(error->where()->line.value_or(0)));
-                }
-                return grpc::Status::OK;
-            }
-            return grpc::Status{grpc::NOT_FOUND, "Query does not exist"};
-        });
-}
-
-grpc::Status GRPCServer::RequestQueryLog(grpc::ServerContext* context, const QueryLogRequest* request, QueryLogReply* reply)
-{
-    return handleGrpcRequest(
-        context,
-        [&](grpc::ServerContext*)
-        {
-            auto queryId = QueryId(request->queryid());
-            auto log = delegate.getQueryLog(queryId);
-            if (log.has_value())
-            {
-                for (const auto& entry : *log)
-                {
-                    QueryLogEntry logEntry;
-                    logEntry.set_state(static_cast<::QueryState>(entry.state));
-                    logEntry.set_unixtimeinms(
-                        std::chrono::duration_cast<std::chrono::milliseconds>(entry.timestamp.time_since_epoch()).count());
-                    if (entry.exception.has_value())
-                    {
-                        Error error;
-                        error.set_message(entry.exception.value().what());
-                        error.set_stacktrace(entry.exception.value().trace().to_string());
-                        error.set_code(entry.exception.value().code());
-                        error.set_location(
-                            std::string(entry.exception.value().where()->filename) + ":"
-                            + std::to_string(entry.exception.value().where()->line.value_or(0)));
-                        logEntry.mutable_error()->CopyFrom(error);
-                    }
-                    reply->add_entries()->CopyFrom(logEntry);
                 }
                 return grpc::Status::OK;
             }

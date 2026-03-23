@@ -178,21 +178,4 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
-std::expected<void, Exception> GRPCQuerySubmissionBackend::unregister(QueryId queryId)
-{
-    grpc::ClientContext context;
-    UnregisterQueryRequest request;
-    google::protobuf::Empty response;
-    request.set_queryid(queryId.getRawValue());
-
-    const auto status = stub->UnregisterQuery(&context, request, &response);
-    if (status.ok())
-    {
-        NES_DEBUG("Unregister of query {} on node {} was successful.", queryId, workerConfig.grpc);
-        return {};
-    }
-
-    return std::unexpected{QueryUnregistrationFailed(
-        "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
-}
 }

@@ -14,6 +14,9 @@
         pkgs = import nixpkgs { inherit system; };
         lib = pkgs.lib;
         llvm = pkgs.llvmPackages_19;
+        clangToolsVersion = lib.getVersion llvm.clang-tools;
+        llvmToolchainVersion = lib.versions.major clangToolsVersion;
+        clangTidyDiffCommand = "clang-tidy-diff-${llvmToolchainVersion}.py";
         clangStdenv = llvm.stdenv;
         mkShellClang = pkgs.mkShell.override { stdenv = clangStdenv; };
 
@@ -218,17 +221,17 @@
           ccache
         ];
 
-        # LLVM 19 toolchain with versioned symlinks for vcpkg
+        # LLVM toolchain with versioned symlinks for vcpkg
         clangWithVersions = pkgs.symlinkJoin {
           name = "clang-with-versions";
           paths = [ llvm.clang ];
           postBuild = ''
-            ln -s $out/bin/clang $out/bin/clang-19
-            ln -s $out/bin/clang++ $out/bin/clang++-19
+            ln -s $out/bin/clang $out/bin/clang-${llvmToolchainVersion}
+            ln -s $out/bin/clang++ $out/bin/clang++-${llvmToolchainVersion}
           '';
         };
 
-        # LLVM 19 toolchain
+        # LLVM toolchain
         llvmTools = [
           llvm.llvm
           clangWithVersions
@@ -267,7 +270,7 @@
             "-DUSE_LOCAL_MLIR=ON"
             "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
             "-DNES_USE_SYSTEM_DEPS=ON"
-            "-DLLVM_TOOLCHAIN_VERSION=19"
+            "-DLLVM_TOOLCHAIN_VERSION=${llvmToolchainVersion}"
             "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
             "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
             "-DNES_ENABLES_TESTS=ON"
@@ -340,8 +343,106 @@
                 ./scripts/format.sh -i
               '';
             };
+            clangTidyDiffScript = pkgs.fetchurl {
+              url = "https://raw.githubusercontent.com/llvm/llvm-project/llvmorg-${clangToolsVersion}/clang-tools-extra/clang-tidy/tool/clang-tidy-diff.py";
+              hash = "sha256-+64k7MRZjQOFQVltm8sEZMhu3VEYfYax+86MxOAO2sU=";
+            };
+            clangTidyDiffRunner = pkgs.writeShellApplication {
+              name = clangTidyDiffCommand;
+              runtimeInputs = [ pkgs.python3 ];
+              text = ''
+                exec python3 ${clangTidyDiffScript} "$@"
+              '';
+            };
+            clangTidyFixRunner = pkgs.writeShellApplication {
+              name = "nes-clang-tidy-fix";
+              runtimeInputs = llvmTools;
+              text = ''
+                exec clang-tidy --fix-errors --fix-notes "$@"
+              '';
+            };
+            clangTidyRunner = pkgs.writeShellApplication {
+              name = "nes-clang-tidy";
+              runtimeInputs = [ pkgs.coreutils pkgs.git pkgs.gnugrep pkgs.nix ];
+              text = ''
+                set -euo pipefail
+
+                usage() {
+                  printf '%s\n' 'Run the official clang-tidy-diff.py workflow inside the Nix development shell and apply fixes in place.'
+                  printf '\n'
+                  printf '%s\n' 'Usage:' '  nix run .#clang-tidy -- [<base-ref>]'
+                  printf '\n'
+                  printf '%s\n' 'Defaults:' '  <base-ref> = origin/main'
+                  printf '\n'
+                  printf '%s\n' 'Behavior:' '  Runs clang-tidy-diff.py with --fix and clang-tidy with --fix-errors --fix-notes'
+                }
+
+                if [ ! -x ./.nix/nix-cmake.sh ] || [ ! -x ./.nix/nix-run.sh ]; then
+                  echo "nes-clang-tidy: run this command from the NebulaStream repository root" >&2
+                  exit 1
+                fi
+
+                if [ "$#" -gt 1 ]; then
+                  usage >&2
+                  exit 1
+                fi
+
+                if [ "$#" -eq 1 ] && { [ "$1" = "-h" ] || [ "$1" = "--help" ]; }; then
+                  usage
+                  exit 0
+                fi
+
+                base_ref="''${1:-origin/main}"
+                jobs="$(nproc)"
+
+                if ! git diff --name-only "$base_ref" -- '*.c' '*.cc' '*.cpp' '*.cxx' '*.h' '*.hh' '*.hpp' ':!*.inc' | grep -q .; then
+                  echo "nes-clang-tidy: no changed C/C++ files relative to $base_ref"
+                  exit 0
+                fi
+
+                # shellcheck disable=SC2016
+                exec ./.nix/nix-run.sh bash -lc '
+                  set -euo pipefail
+                  base_ref="$1"
+                  jobs="$2"
+
+                  echo "nes-clang-tidy: configuring build/"
+                  ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
+
+                  echo "nes-clang-tidy: building generated headers"
+                  ./.nix/nix-cmake.sh --build build -j -- -k 0
+
+                  echo "nes-clang-tidy: running readability-duplicate-include pre-check with fixes against $base_ref"
+                  git diff -U0 "$base_ref" -- ":!*.inc" | \
+                    ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
+                      -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                      -p1 \
+                      -path build \
+                      -checks="-*,readability-duplicate-include" \
+                      -config-file .clang-tidy \
+                      -use-color \
+                      -fix \
+                      -j "$jobs"
+
+                  echo "nes-clang-tidy: running full clang-tidy diff with fixes against $base_ref"
+                  git diff -U0 "$base_ref" -- ":!*.inc" | \
+                    ${clangTidyDiffRunner}/bin/${clangTidyDiffCommand} \
+                      -clang-tidy-binary ${clangTidyFixRunner}/bin/nes-clang-tidy-fix \
+                      -p1 \
+                      -path build \
+                      -config-file .clang-tidy \
+                      -use-color \
+                      -fix \
+                      -j "$jobs"
+                ' bash "$base_ref" "$jobs"
+              '';
+            };
           in
           {
+            clang-tidy = {
+              type = "app";
+              program = "${clangTidyRunner}/bin/nes-clang-tidy";
+            };
             clion-setup = {
               type = "app";
               program = "${clionSetupScript}/bin/clion-setup";
@@ -359,7 +460,7 @@
             buildInputs = thirdPartyDeps ++ [ mlirBinary ];
             nativeBuildInputs = buildTools ++ llvmTools;
             packages = devTools;
-            LLVM_TOOLCHAIN_VERSION = "19";
+            LLVM_TOOLCHAIN_VERSION = llvmToolchainVersion;
             CMAKE_GENERATOR = "Ninja";
             VCPKG_ENV_PASSTHROUGH = "MLIR_DIR;LLVM_DIR;CMAKE_PREFIX_PATH";
             NES_USE_SYSTEM_DEPS = "ON";
@@ -371,7 +472,7 @@
               "-DNES_USE_SYSTEM_DEPS=ON"
               "-DUSE_LOCAL_MLIR=ON"
               "-DUSE_LIBCXX_IF_AVAILABLE=OFF"
-              "-DLLVM_TOOLCHAIN_VERSION=19"
+              "-DLLVM_TOOLCHAIN_VERSION=${llvmToolchainVersion}"
               "-DMLIR_DIR=${commonCmakeEnv.MLIR_DIR}"
               "-DLLVM_DIR=${commonCmakeEnv.LLVM_DIR}"
               "-DANTLR4_JAR_LOCATION=${antlr4Jar}"

@@ -231,3 +231,15 @@ JSONEOF
   run bash -c "cat tests/good/crazy-join.yaml | $NES_CLI -t - dump"
   [ "$status" -eq 0 ]
 }
+
+@test "optimizer configuration: -t with invalid optimizer configuration name" {
+  run $NES_CLI -d -t tests/bad/invalid_optimizer_config_name.yaml dump
+  [ "$status" -eq 1 ]
+  grep "invalid config parameter; Identifier for: test_invalid_optimizer_config_name is not known." nes-cli.log
+}
+
+@test "optimizer configuration: -t with invalid optimizer configuration value" {
+  run $NES_CLI -d -t tests/bad/invalid_optimizer_config_value.yaml dump
+  [ "$status" -eq 1 ]
+  grep "invalid config parameter; Enum for INVALID was not found." nes-cli.log
+}

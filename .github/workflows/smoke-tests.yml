@@ -28,9 +28,15 @@ jobs:
   build-and-test-linux:
     name: "Build and test"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
         MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       # TODO #401 Investigate rootless docker containers
       options: --user root
       volumes:
@@ -48,10 +54,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
-      - name: ccache
-        uses: hendrikmuhs/ccache-action@v1.2.18
-        with:
-          key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
       - name: Choose a number of concurrent jobs
         id: number-of-jobs
         shell: bash
@@ -66,7 +68,12 @@ jobs:
         shell: bash
         run: |
           source .github/.env/test-${{matrix.sanitizer}}.env
+          echo "=== sccache config before build ==="
+          sccache --show-stats
           cmake --build build -j ${{steps.number-of-jobs.outputs.number_of_jobs}}  -- -k 0
+          echo "=== sccache stats after build ==="
+          sccache --show-stats
+          sccache --stop-server
       - name: Run Tests
         # timeout of 1200 seconds due to systest. Increase this number only if we encounter timeouts in our systests.
         shell: bash

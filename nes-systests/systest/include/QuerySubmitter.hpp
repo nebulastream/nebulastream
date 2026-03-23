@@ -31,7 +31,6 @@ public:
     std::expected<QueryId, Exception> registerQuery(const LogicalPlan& plan);
     void startQuery(QueryId query);
     void stopQuery(QueryId query);
-    void unregisterQuery(QueryId query);
     LocalQueryStatus waitForQueryTermination(QueryId query);
 
     /// Blocks until atleast one query has finished (or potentially failed)

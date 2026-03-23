@@ -41,12 +41,6 @@ class SinkCatalog;
 namespace NES
 {
 
-enum class InputFormat : uint8_t
-{
-    CSV,
-    JSON
-};
-
 class SinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
@@ -59,29 +53,35 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
-    /// Optional, since not every sink type uses an INPUT_FORMAT parameter.
-    [[nodiscard]] std::optional<std::string_view> getFormatType() const;
+    /// Will return "Native" as fallback, if the sink config does not use the OUTPUT_FORMAT parameter.
+    [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
+    [[nodiscard]] std::unordered_map<std::string, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName, const Schema& schema, std::string_view sinkType, DescriptorConfig::Config config);
+        std::variant<std::string, uint64_t> sinkName,
+        const Schema& schema,
+        std::string_view sinkType,
+        const std::unordered_map<std::string, std::string>& formatConfig,
+        DescriptorConfig::Config config);
 
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+    std::unordered_map<std::string, std::string> formatConfig;
 
     friend Reflector<SinkDescriptor>;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> INPUT_FORMAT{
-        "input_format",
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INPUT_FORMAT, config); }};
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
@@ -92,7 +92,7 @@ public:
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(INPUT_FORMAT, ADD_TIMESTAMP);
+        = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
 
     /// Well-known property for any sink that sends its data to a file
     /// NOLINTNEXTLINE(cert-err58-cpp)
@@ -138,6 +138,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
+    std::unordered_map<std::string, std::string> formatConfig;
     Reflected config;
 };
 }
