@@ -696,8 +696,9 @@ struct SystestBinder::Impl
         auto sinkExpected = sltSinkProvider.createActualSink(toUpperCase(sinkName), sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
-            currentBuilder.setException(sinkExpected.error());
-            throw sinkExpected.error();
+            auto error = sinkExpected.error();
+            currentBuilder.setException(error);
+            throw error;
         }
 
         const auto newOperator = SinkLogicalOperator{sinkExpected.value()};

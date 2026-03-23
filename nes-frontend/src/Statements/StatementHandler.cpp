@@ -157,7 +157,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
         statement.name, statement.schema, statement.sinkType, statement.sinkConfig, statement.formatConfig);
     if (result.has_value())
     {
-        return CreateSinkStatementResult{std::move(result.value())};
+        return CreateSinkStatementResult{result.value()};
     }
     return std::unexpected{std::move(result.error())};
 }
