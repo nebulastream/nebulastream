@@ -1,5 +1,5 @@
 query: |
-  SELECT ID AS ID, TIMESTAMP AS TIMESTAMP, WIDTH AS WIDTH, HEIGHT AS HEIGHT, DATA AS DATA
+  SELECT ID AS ID, TIMESTAMP AS TIMESTAMP, WIDTH AS WIDTH, HEIGHT AS HEIGHT
   FROM VIDEO
   INTO KAFKA_SINK;
 sinks:
@@ -14,8 +14,6 @@ sinks:
         type: UINT64
       - name: HEIGHT
         type: UINT64
-      - name: DATA
-        type: VARSIZED
     config:
       brokers: 'broker:29092'
       topic: process-intelligence
