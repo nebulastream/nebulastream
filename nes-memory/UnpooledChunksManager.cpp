@@ -186,7 +186,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     if (leakedMemSegment->controlBlock->prepare(bufferRecycler))
     {
-        return TupleBuffer(leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, neededSize);
+        return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");
 }

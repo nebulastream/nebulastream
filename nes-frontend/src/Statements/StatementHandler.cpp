@@ -23,6 +23,8 @@
 #include <utility>
 #include <vector>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -32,7 +34,6 @@
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -152,7 +153,8 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    if (const auto created = sinkCatalog->addSinkDescriptor(statement.name, statement.schema, statement.sinkType, statement.sinkConfig))
+    if (const auto created = sinkCatalog->addSinkDescriptor(
+            statement.name, statement.schema, statement.sinkType, statement.sinkConfig, statement.formatConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }
@@ -186,19 +188,19 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer)
-    : queryManager(std::move(queryManager)), optimizer(std::move(optimizer))
+QueryStatementHandler::QueryStatementHandler(
+    SharedPtr<QueryManager> queryManager,
+    SharedPtr<const SemanticAnalyzer> semanticAnalyser,
+    SharedPtr<const QueryOptimizer> queryOptimizer)
+    : queryManager(std::move(queryManager)), semanticAnalyser(std::move(semanticAnalyser)), queryOptimizer(std::move(queryOptimizer))
 {
 }
 
 std::expected<DropQueryStatementResult, Exception> QueryStatementHandler::operator()(const DropQueryStatement& statement)
 {
-    auto stopResult = queryManager->stop(statement.id)
-                          .and_then([&statement, this] { return queryManager->unregister(statement.id); })
-                          .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
-                          .transform([&statement] { return DropQueryStatementResult{statement.id}; });
-
-    return stopResult;
+    return queryManager->stop(statement.id)
+        .transform_error([](auto error) { return QueryStopFailed("Could not stop query: {}", error.what()); })
+        .transform([&statement] { return DropQueryStatementResult{statement.id}; });
 }
 
 std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::operator()(const ExplainQueryStatement& statement)
@@ -209,9 +211,10 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
         fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
 
-        const auto optimizedPlan = optimizer->optimize(statement.plan);
+        auto plan = semanticAnalyser->analyse(statement.plan);
+        plan = queryOptimizer->optimize(plan);
 
-        fmt::println(explainMessage, "Optimized Global Plan:\n{}", optimizedPlan);
+        fmt::println(explainMessage, "Optimized Global Plan:\n{}", plan);
 
         return ExplainQueryStatementResult{explainMessage.str()};
     }
@@ -226,13 +229,14 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto optimizedPlan = optimizer->optimize(statement.plan);
+        auto plan = semanticAnalyser->analyse(statement.plan);
+        plan = queryOptimizer->optimize(plan);
 
         if (statement.id)
         {
-            optimizedPlan.setQueryId(QueryId(*statement.id));
+            plan.setQueryId(QueryId(*statement.id));
         }
-        const auto queryResult = queryManager->registerQuery(optimizedPlan);
+        const auto queryResult = queryManager->registerQuery(plan);
         return queryResult
             .and_then(
                 [this](const auto& query)

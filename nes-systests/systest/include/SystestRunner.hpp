@@ -70,7 +70,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
-    SystestProgressTracker& progressTracker);
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
 /// Run queries remote on the single-node-worker specified by the URI
 /// @return returns a collection of failed queries
@@ -78,7 +79,8 @@ inline std::string discardPerformanceMessage(RunningQuery&)
     const std::vector<SystestQuery>& queries,
     uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    SystestProgressTracker& progressTracker);
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage);
 
 /// Run queries sequentially locally and benchmark the run time of each query.
 /// @return vector containing failed queries

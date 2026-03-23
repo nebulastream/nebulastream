@@ -96,7 +96,7 @@ assert_json_contains() {
 
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
   assert_json_equal '[{"parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
-  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"input_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
+  assert_json_equal '[{"format_config":{},"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
 
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
@@ -118,4 +118,16 @@ assert_json_contains() {
   run $NES_REPL -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type.sql
   [ "$status" -ne 0 ]
   grep "invalid query syntax" nes-repl.log
+}
+
+@test "Fail on invalid optimizer config name" {
+  run $NES_REPL --optimizer test_invalid_config_name=INVALID
+  [ "$status" -ne 0 ]
+  grep "invalid config parameter; Identifier for: test_invalid_config_name is not known." nes-repl.log
+}
+
+@test "Fail on invalid optimizer config value" {
+  run $NES_REPL --optimizer join_strategy=INVALID
+  [ "$status" -ne 0 ]
+  grep "invalid config parameter; Enum for INVALID was not found." nes-repl.log
 }

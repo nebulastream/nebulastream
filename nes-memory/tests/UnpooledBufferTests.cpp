@@ -74,10 +74,6 @@ void runAllocations(
     /// Running all allocations concurrently for #numberOfThreads
     std::vector<std::thread> threads;
     const auto chunkSize = numberOfThreads / numberOfRandomAllocationSizes;
-    for (auto& allocation : randomAllocations)
-    {
-        allocation.buffer = bufferManager->getUnpooledBuffer(allocation.neededSize);
-    }
     for (size_t i = 0; i < numberOfThreads; ++i)
     {
         size_t start = i * chunkSize;
@@ -106,7 +102,7 @@ void runAllocations(
     for (const auto& allocation : randomAllocations)
     {
         ASSERT_TRUE(allocation.buffer.has_value());
-        ASSERT_EQ(allocation.buffer.value().getBufferSize(), allocation.neededSize);
+        ASSERT_GE(allocation.buffer.value().getBufferSize(), allocation.neededSize);
     }
 }
 

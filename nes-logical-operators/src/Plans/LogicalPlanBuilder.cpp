@@ -182,9 +182,14 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan&
 }
 
 LogicalPlan LogicalPlanBuilder::addInlineSink(
-    std::string type, const Schema& schema, std::unordered_map<std::string, std::string> sinkConfig, const LogicalPlan& queryPlan)
+    std::string type,
+    const Schema& schema,
+    std::unordered_map<std::string, std::string> sinkConfig,
+    std::unordered_map<std::string, std::string> formatConfig,
+    const LogicalPlan& queryPlan)
 {
-    return promoteOperatorToRoot(queryPlan, InlineSinkLogicalOperator(std::move(type), schema, std::move(sinkConfig)));
+    return promoteOperatorToRoot(
+        queryPlan, InlineSinkLogicalOperator(std::move(type), schema, std::move(sinkConfig), std::move(formatConfig)));
 }
 
 LogicalPlan

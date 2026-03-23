@@ -88,7 +88,7 @@ CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
     'out.csv' as `SINK`.FILE_PATH,
-    'CSV' as `SINK`.INPUT_FORMAT
+    'CSV' as `SINK`.OUTPUT_FORMAT
 );
 
 -- 4. Check queries (should be empty initially)
@@ -180,7 +180,7 @@ CREATE SINK someSink(ENDLESS.TS UINT64)
 TYPE File
 SET(
     'out.csv' as `SINK`.FILE_PATH,
-    'CSV' as `SINK`.INPUT_FORMAT,
+    'CSV' as `SINK`.OUTPUT_FORMAT,
     "sink-node:9090" AS `SINK`.`HOST`  -- Specify target host
 );
 
@@ -319,6 +319,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -363,6 +364,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -404,6 +406,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
@@ -451,6 +454,7 @@ sinks:
         type: FLOAT64
     type: Void
     config: { }
+    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE

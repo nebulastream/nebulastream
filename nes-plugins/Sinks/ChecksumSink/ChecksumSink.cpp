@@ -18,6 +18,7 @@
 #include <filesystem>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <string>
 #include <system_error>
 #include <unordered_map>
@@ -25,11 +26,13 @@
 #include <Configurations/Descriptor.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
-#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/BufferIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
+#include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
@@ -39,10 +42,7 @@ namespace NES
 {
 
 ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
-    : Sink(std::move(backpressureController))
-    , isOpen(false)
-    , outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
-    , formatter(std::make_unique<CSVFormat>(*sinkDescriptor.getSchema(), true))
+    : Sink(std::move(backpressureController)), isOpen(false), outputFilePath(sinkDescriptor.getFromConfig(SinkDescriptor::FILE_PATH))
 {
 }
 
@@ -88,8 +88,18 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    const std::string formatted = formatter->getFormattedBuffer(inputBuffer);
-    checksum.add(formatted);
+    /// Create a buffer iterator to help iterate through the tuplebuffer and its children
+    BufferIterator iterator{inputBuffer};
+
+    std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
+    while (element.has_value())
+    {
+        /// Create string out of formatted buffer
+        const std::string formatted{element.value().buffer.getAvailableMemoryArea<char>().data(), element.value().contentLength};
+        checksum.add(formatted);
+        /// Get the next buffer
+        element = iterator.getNextElement();
+    }
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
