@@ -36,7 +36,13 @@ std::optional<float> from_chars<float>(const std::string_view input)
     const std::string str(trimWhiteSpaces(input));
     try
     {
-        return std::stof(str);
+        std::size_t pos = 0;
+        const auto value = std::stof(str, &pos);
+        if (pos != str.size())
+        {
+            return {};
+        }
+        return value;
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
@@ -47,7 +53,7 @@ std::optional<float> from_chars<float>(const std::string_view input)
 template <>
 std::optional<bool> from_chars<bool>(const std::string_view input)
 {
-    auto trimmed = trimWhiteSpaces(input);
+    const auto trimmed = trimWhiteSpaces(input);
     if (toLowerCase(trimmed) == "true" || trimmed == "1")
     {
         return true;
@@ -129,7 +135,13 @@ std::optional<double> from_chars<double>(const std::string_view input)
     const std::string str(trimWhiteSpaces(input));
     try
     {
-        return std::stod(str);
+        std::size_t pos = 0;
+        const auto value = std::stod(str, &pos);
+        if (pos != str.size())
+        {
+            return {};
+        }
+        return value;
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
