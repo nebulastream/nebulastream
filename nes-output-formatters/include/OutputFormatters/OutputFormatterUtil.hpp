@@ -22,6 +22,8 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <zmij.h>
+
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
@@ -107,7 +109,10 @@ static uint64_t writeValAsString(
     std::string stringFormattedValue;
     if constexpr (std::is_same_v<removedCVRefT, float> || std::is_same_v<removedCVRefT, double>)
     {
-        stringFormattedValue = formatFloat(val);
+        stringFormattedValue = std::string(zmij::double_buffer_size + 1, '\0');
+        auto size = zmij::write(stringFormattedValue.data(), stringFormattedValue.size(), val);
+        stringFormattedValue.resize(size);
+        // stringFormattedValue = formatFloat(val);
     }
     else if constexpr (std::is_same_v<removedCVRefT, bool>)
     {
@@ -127,7 +132,7 @@ static uint64_t writeValAsString(
 }
 
 /// Converts the varval value of the given physical type into a string representation.
-/// The string is then written into the memory of the record buffer, starting from address. HEAD
+/// The string is then written into the memory of the record buffer, starting from address.
 /// Child buffers might be allocated to fit the whole string into the buffer.
 /// Returns the amount of bytes written in the record buffer itself, children excluded.
 inline nautilus::val<uint64_t> formatAndWriteVal(

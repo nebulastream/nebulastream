@@ -11,13 +11,24 @@
 # limitations under the License.
 
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+include(FetchContent)
+FetchContent_Declare(
+        zmij
+        GIT_REPOSITORY https://github.com/vitaut/zmij.git
+        GIT_TAG        v1.0
+)
+FetchContent_MakeAvailable(zmij)
+if(TARGET zmij)
+    target_compile_options(zmij PRIVATE -w)
+endif()
+
 add_subdirectory(src)
 get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-output-formatters ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
 
-target_link_libraries(nes-output-formatters PUBLIC nes-common nes-data-types nes-memory nes-nautilus)
+target_link_libraries(nes-output-formatters PUBLIC nes-common nes-data-types nes-memory nes-nautilus zmij)
 
 target_include_directories(nes-output-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
