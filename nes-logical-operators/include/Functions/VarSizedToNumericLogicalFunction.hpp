@@ -13,6 +13,7 @@
 */
 
 #pragma once
+
 #include <string>
 #include <string_view>
 #include <vector>
@@ -28,56 +29,57 @@
 namespace NES
 {
 
-/// Casts the input to the provided data type
-class CastToTypeLogicalFunction final
+class VarSizedToNumericLogicalFunction final
 {
 public:
-    static constexpr std::string_view NAME = "CastToType";
+    static constexpr std::string_view NAME = "VarSizedToNumeric";
 
-    CastToTypeLogicalFunction(DataType dataType, LogicalFunction child);
+    VarSizedToNumericLogicalFunction(LogicalFunction child, const DataType& targetType);
 
-    [[nodiscard]] bool operator==(const CastToTypeLogicalFunction& rhs) const;
+    [[nodiscard]] bool operator==(const VarSizedToNumericLogicalFunction& rhs) const;
 
     [[nodiscard]] DataType getDataType() const;
-    [[nodiscard]] CastToTypeLogicalFunction withDataType(const DataType& dataType) const;
+    [[nodiscard]] VarSizedToNumericLogicalFunction withDataType(const DataType& newDataType) const;
     [[nodiscard]] LogicalFunction withInferredDataType(const Schema<Field, Unordered>& schema) const;
 
     [[nodiscard]] std::vector<LogicalFunction> getChildren() const;
-    [[nodiscard]] CastToTypeLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
+    [[nodiscard]] VarSizedToNumericLogicalFunction withChildren(const std::vector<LogicalFunction>& children) const;
 
     [[nodiscard]] std::string_view getType() const;
     [[nodiscard]] std::string explain(ExplainVerbosity verbosity) const;
 
 private:
-    DataType castToType;
+    static bool isSupportedNumericType(DataType::Type type);
+
+    DataType targetType;
     LogicalFunction child;
 };
 
 namespace detail
 {
 
-struct ReflectedCastToTypeLogicalFunction
+struct ReflectedVarSizedToNumericLogicalFunction
 {
     LogicalFunction child;
-    DataType castToType;
+    DataType targetType;
 };
 
 }
 
 template <>
-struct Reflector<CastToTypeLogicalFunction>
+struct Reflector<VarSizedToNumericLogicalFunction>
 {
-    Reflected operator()(const CastToTypeLogicalFunction& function) const;
+    Reflected operator()(const VarSizedToNumericLogicalFunction& function) const;
 };
 
 template <>
-struct Unreflector<CastToTypeLogicalFunction>
+struct Unreflector<VarSizedToNumericLogicalFunction>
 {
-    CastToTypeLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
+    VarSizedToNumericLogicalFunction operator()(const Reflected& reflected, const ReflectionContext& context) const;
 };
 
-static_assert(LogicalFunctionConcept<CastToTypeLogicalFunction>);
+static_assert(LogicalFunctionConcept<VarSizedToNumericLogicalFunction>);
 
 }
 
-FMT_OSTREAM(NES::CastToTypeLogicalFunction);
+FMT_OSTREAM(NES::VarSizedToNumericLogicalFunction);

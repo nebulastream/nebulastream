@@ -22,8 +22,10 @@
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/SchemaFwd.hpp>
 #include <Functions/LogicalFunction.hpp>
+#include <Functions/VarSizedToNumericLogicalFunction.hpp>
 #include <Schema/Field.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 #include <fmt/format.h>
@@ -55,9 +57,20 @@ CastToTypeLogicalFunction CastToTypeLogicalFunction::withDataType(const DataType
     return copy;
 }
 
-LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema<Field, Unordered>&) const
+LogicalFunction CastToTypeLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
-    return *this;
+    auto inferredChild = child.withInferredDataType(schema);
+    auto childDataType = inferredChild.getDataType();
+
+    /// If the child is VARSIZED and the target is numeric, delegate to VarSizedToNumericLogicalFunction
+    if (childDataType.type == DataType::Type::VARSIZED && castToType.isNumeric())
+    {
+        return VarSizedToNumericLogicalFunction{inferredChild, castToType}.withInferredDataType(schema);
+    }
+
+    auto copy = *this;
+    copy.child = inferredChild;
+    return copy;
 }
 
 std::vector<LogicalFunction> CastToTypeLogicalFunction::getChildren() const
@@ -94,16 +107,19 @@ LogicalFunctionGeneratedRegistrar::RegisterCastToTypeLogicalFunction(LogicalFunc
     std::unreachable();
 }
 
-Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction&) const
+Reflected Reflector<CastToTypeLogicalFunction>::operator()(const CastToTypeLogicalFunction& function) const
 {
-    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be reflected");
-    std::unreachable();
+    return reflect(detail::ReflectedCastToTypeLogicalFunction{
+        .child = function.getChildren()[0],
+        .castToType = function.getDataType(),
+    });
 }
 
-CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected&, const ReflectionContext&) const
+CastToTypeLogicalFunction
+Unreflector<CastToTypeLogicalFunction>::operator()(const Reflected& reflected, const ReflectionContext& context) const
 {
-    PRECONDITION(false, "CastToTypeLogicalFunction not expected to be unreflected");
-    std::unreachable();
+    auto [childFunction, castToType] = context.unreflect<detail::ReflectedCastToTypeLogicalFunction>(reflected);
+    return CastToTypeLogicalFunction{castToType, childFunction};
 }
 
 }

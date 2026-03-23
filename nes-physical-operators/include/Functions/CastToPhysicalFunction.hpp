@@ -23,10 +23,10 @@
 namespace NES
 {
 
-class CastFieldPhysicalFunction
+class CastToPhysicalFunction
 {
 public:
-    explicit CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
+    explicit CastToPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
@@ -34,6 +34,6 @@ private:
     PhysicalFunction childFunction;
 };
 
-static_assert(PhysicalFunctionConcept<CastFieldPhysicalFunction>);
+static_assert(PhysicalFunctionConcept<CastToPhysicalFunction>);
 
 }

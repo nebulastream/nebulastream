@@ -41,6 +41,7 @@
 #include <Functions/BooleanFunctions/EqualsLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
+#include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
@@ -727,6 +728,18 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
 void AntlrSQLQueryPlanCreator::enterFunctionCall(AntlrSQLParser::FunctionCallContext* context)
 {
     AntlrSQLBaseListener::enterFunctionCall(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitCastExpression(AntlrSQLParser::CastExpressionContext* context)
+{
+    const auto targetDataType = bindDataType(context->targetType, DataType::NULLABLE::NOT_NULLABLE);
+    if (helpers.top().functionBuilder.empty())
+    {
+        throw InvalidQuerySyntax("CAST requires exactly one child expression at {}", context->getText());
+    }
+    auto child = std::move(helpers.top().functionBuilder.back());
+    helpers.top().functionBuilder.pop_back();
+    helpers.top().functionBuilder.emplace_back(CastToTypeLogicalFunction{targetDataType, child});
 }
 
 void AntlrSQLQueryPlanCreator::enterHavingClause(AntlrSQLParser::HavingClauseContext* context)
