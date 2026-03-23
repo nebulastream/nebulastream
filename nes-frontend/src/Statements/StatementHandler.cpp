@@ -195,7 +195,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
         toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig);
     if (result.has_value())
     {
-        return CreateSinkStatementResult{std::move(result.value())};
+        return CreateSinkStatementResult{result.value()};
     }
     return std::unexpected{std::move(result.error())};
 }

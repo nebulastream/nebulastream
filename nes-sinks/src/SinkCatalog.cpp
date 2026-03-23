@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
