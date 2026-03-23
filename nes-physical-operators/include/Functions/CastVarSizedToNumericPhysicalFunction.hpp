@@ -13,27 +13,26 @@
 */
 
 #pragma once
+
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Arena.hpp>
 #include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-class CastFieldPhysicalFunction
+class CastVarSizedToNumericPhysicalFunction final
 {
 public:
-    explicit CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType);
-    [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    CastVarSizedToNumericPhysicalFunction(PhysicalFunction child, DataType outputType);
+
+    VarVal execute(const Record& record, ArenaRef& arena) const;
 
 private:
-    DataType castToType;
-    PhysicalFunction childFunction;
+    PhysicalFunction child;
+    DataType outputType;
 };
-
-static_assert(PhysicalFunctionConcept<CastFieldPhysicalFunction>);
 
 }

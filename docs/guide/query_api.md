@@ -599,13 +599,12 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Base**
 
-| Function                      | Example                                      |
-|-------------------------------|----------------------------------------------|
-| Access a field                | `SELECT x FROM s INTO sink`                  |
-| Define a constant             | `SELECT INT32(42) FROM s INTO sink`          |
-| Rename an input function      | `SELECT x AS x1 FROM s INTO sink`            |
-| Cast an input function        | `SELECT x FROM s INTO sink`                  |
-| Cast string to unix timestamp | `SELECT CASTTOUNIXTS(ts) FROM s INTO sink`   |
+| Function                 | Example                                      |
+|-------------------------------|-------------------------------------------------------|
+| Access a field           | `SELECT x FROM s INTO sink`                  |
+| Define a constant        | `SELECT INT32(42) FROM s INTO sink`          |
+| Rename an input function | `SELECT x AS x1 FROM s INTO sink`            |
+| Cast an input function   | `SELECT CAST(x AS FLOAT64) FROM s INTO sink` || Cast string to unix timestamp | `SELECT CASTTOUNIXTS(ts) FROM s INTO sink`   |
 | Cast unix timestamp to string | `SELECT CASTFROMUNIXTS(ts) FROM s INTO sink` |
 
 #### **Arithmetical**
@@ -640,15 +639,29 @@ Functions are either unary (one input) or binary (two inputs).
 
 #### **Other**
 
-| Description                     | Example                                            |
-|---------------------------------|----------------------------------------------------|
-| Concatenate variable-sized data | `SELECT CONCAT(text1, text2) FROM s INTO sink`     |
-| Encode to base64                | `SELECT TO_BASE64(data) FROM s INTO sink`          |
-| Decode from base64              | `SELECT FROM_BASE64(encoded) FROM s INTO sink`     |
+| Description                     | Example                                              |
+|---------------------------------|------------------------------------------------------|
+| Concatenate variable-sized data | `SELECT CONCAT(text1, text2) FROM s INTO sink`       |
+| Encode to base64                | `SELECT TO_BASE64(data) FROM s INTO sink`            |
+| Decode from base64              | `SELECT FROM_BASE64(encoded) FROM s INTO sink`       |
+| Cast to a different type        | `SELECT CAST(x AS FLOAT64) FROM s INTO sink`         |
 
 `TO_BASE64` and `FROM_BASE64` convert between raw binary data (`VARSIZED`) and base64-encoded text (`VARSIZED`).
 They use OpenSSL's EVP base64 implementation. These functions are particularly useful with `MODEL_INFERENCE` to
 pass binary tensor data through SQL queries (see [MODEL_INFERENCE](#model_inference)).
+
+`CAST` converts a field from one type to another using standard SQL syntax: `CAST(field AS TargetType)`.
+For numeric-to-numeric conversions (e.g., `INT32` to `FLOAT64`), a direct type cast is performed.
+When casting from `VARSIZED` (string) to a numeric type, all characters except digits (`0-9`), `.`, `+`, `-`, `e`, and `E` (scientific notation) are stripped before parsing.
+For example, `"1 234.56"` becomes `1234.56` and `"12?3"` becomes `123`.
+
+```sql
+SELECT CAST(price AS FLOAT64) FROM s INTO sink
+```
+
+```sql
+SELECT CAST(text_value AS INT32) AS parsed_value FROM s INTO sink
+```
 
 We can combine functions into nested structures:
 ```sql

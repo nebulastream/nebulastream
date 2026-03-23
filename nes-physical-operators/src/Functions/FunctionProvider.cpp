@@ -20,7 +20,6 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Functions/CastFieldPhysicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
 #include <Functions/ConstantValuePhysicalFunction.hpp>
