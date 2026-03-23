@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Functions/CastFieldPhysicalFunction.hpp>
+#include <Functions/CastToPhysicalFunction.hpp>
 
 #include <utility>
 #include <DataTypes/DataType.hpp>
@@ -26,22 +26,22 @@
 namespace NES
 {
 
-CastFieldPhysicalFunction::CastFieldPhysicalFunction(PhysicalFunction childFunction, DataType castToType)
+CastToPhysicalFunction::CastToPhysicalFunction(PhysicalFunction childFunction, DataType castToType)
     : castToType(std::move(castToType)), childFunction(std::move(childFunction))
 {
 }
 
-VarVal CastFieldPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
+VarVal CastToPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
     const auto value = childFunction.execute(record, arena);
     return value.castToType(castToType.type);
 }
 
 PhysicalFunctionRegistryReturnType
-PhysicalFunctionGeneratedRegistrar::RegisterCastPhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
+PhysicalFunctionGeneratedRegistrar::RegisterCastToTypePhysicalFunction(PhysicalFunctionRegistryArguments physicalFunctionRegistryArguments)
 {
     PRECONDITION(physicalFunctionRegistryArguments.childFunctions.size() == 1, "Cast function must have exactly one child functions");
-    return CastFieldPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
+    return CastToPhysicalFunction(physicalFunctionRegistryArguments.childFunctions[0], physicalFunctionRegistryArguments.outputType);
 }
 
 }

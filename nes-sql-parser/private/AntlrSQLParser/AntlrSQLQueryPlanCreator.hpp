@@ -50,6 +50,7 @@ public:
     void exitComparison(AntlrSQLParser::ComparisonContext* context) override;
     void enterFunctionCall(AntlrSQLParser::FunctionCallContext* context) override;
     void exitFunctionCall(AntlrSQLParser::FunctionCallContext* context) override;
+    void exitCastExpression(AntlrSQLParser::CastExpressionContext* context) override;
     void enterHavingClause(AntlrSQLParser::HavingClauseContext* context) override;
     void exitHavingClause(AntlrSQLParser::HavingClauseContext* context) override;
     void enterJoinRelation(AntlrSQLParser::JoinRelationContext* context) override;
