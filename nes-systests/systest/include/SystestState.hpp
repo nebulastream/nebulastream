@@ -204,6 +204,7 @@ struct SystestQuery
     std::shared_ptr<const std::vector<std::jthread>> additionalSourceThreads;
     ConfigurationOverride configurationOverride;
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<std::pair<TestName, SystestQueryId>> runAfter;
 };
 
 struct RunningQuery

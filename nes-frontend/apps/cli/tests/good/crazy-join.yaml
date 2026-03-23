@@ -122,8 +122,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream2
     parser_config:
       type: CSV
@@ -135,8 +135,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream3
     parser_config:
       type: CSV
@@ -148,8 +148,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream4
     parser_config:
       type: CSV
@@ -161,8 +161,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream5
     parser_config:
       type: CSV
@@ -174,8 +174,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream6
     parser_config:
       type: CSV
@@ -187,8 +187,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream7
     parser_config:
       type: CSV
@@ -200,8 +200,8 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
   - logical: stream8
     parser_config:
       type: CSV
@@ -213,7 +213,7 @@ physical:
       stop_generator_when_sequence_finishes: ONE
       seed: 1
       generator_schema: |
-        SEQUENCE UINT64 0 100000 1000
-        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100000000 1000
+        SEQUENCE UINT64 0 100000 1
 optimizer:
   join_strategy: HASH_JOIN

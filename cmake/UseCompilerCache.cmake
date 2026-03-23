@@ -10,21 +10,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(USE_CCACHE_IF_AVAILABLE "Use ccache to speed up rebuilds" ON)
+option(USE_BUILD_CACHE "Use sccache or ccache to speed up rebuilds" ON)
+
+if (NOT USE_BUILD_CACHE)
+    message(STATUS "Compiler cache disabled")
+    return()
+endif ()
+
+# Prefer sccache over ccache
+find_program(SCCACHE_EXECUTABLE sccache)
 find_program(CCACHE_EXECUTABLE ccache)
-if (CCACHE_EXECUTABLE AND ${USE_CCACHE_IF_AVAILABLE})
+
+if (SCCACHE_EXECUTABLE)
+    message(STATUS "Using sccache: ${SCCACHE_EXECUTABLE}")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${SCCACHE_EXECUTABLE}")
+    set(CMAKE_C_COMPILER_LAUNCHER "${SCCACHE_EXECUTABLE}")
+elseif (CCACHE_EXECUTABLE)
     message(STATUS "Using ccache: ${CCACHE_EXECUTABLE}")
     set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}")
 
     if (NES_ENABLE_PRECOMPILED_HEADERS)
         set(CMAKE_PCH_INSTANTIATE_TEMPLATES ON)
-        # Need to set these to enable interplay between ccache and precompiled headers
-        # https://ccache.dev/manual/4.8.html#_precompiled_headers
         set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Xclang -fno-pch-timestamp")
         set(ENV{CCACHE_SLOPPINESS} "pch_defines,time_macros,include_file_ctime,include_file_mtime")
         message("CCACHE_SLOPPINESS: $ENV{CCACHE_SLOPPINESS}")
     endif ()
-
 else ()
-    message(STATUS "Not using ccache")
+    message(STATUS "No compiler cache found (looked for sccache, ccache)")
 endif ()

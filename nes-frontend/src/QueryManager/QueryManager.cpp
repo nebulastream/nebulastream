@@ -82,7 +82,7 @@ std::expected<void, Exception> QueryManager::start(QueryId queryId)
         /// The query is expected to be moved into the started state pretty quickly after lowering, it is very unlikely to even observe
         /// the status not changing immediatly, so a rapid polling interval is appropriate.
         constexpr auto statusPollInterval = std::chrono::milliseconds(10);
-        constexpr size_t statusRetries = 15;
+        constexpr size_t statusRetries = 17;
         NES_DEBUG("Starting query {} was successful. Waiting for state to change", queryId);
         for (size_t i = 0; i < statusRetries; ++i)
         {

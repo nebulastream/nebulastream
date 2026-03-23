@@ -1,0 +1,39 @@
+name: Setup sccache
+description: |
+  Configures sccache environment variables for S3-compatible (R2) remote caching.
+  sccache must already be installed in the container image.
+
+inputs:
+  bucket:
+    description: 'S3/R2 bucket name for the sccache cache'
+    required: true
+  endpoint:
+    description: 'S3-compatible endpoint URL'
+    required: true
+  access_key:
+    description: 'AWS/R2 access key ID'
+    required: true
+  secret_key:
+    description: 'AWS/R2 secret access key'
+    required: true
+  region:
+    description: 'S3/R2 region'
+    required: false
+    default: 'auto'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Export sccache environment
+      shell: bash
+      run: |
+        # S3/R2 configuration
+        echo "SCCACHE_BUCKET=${{ inputs.bucket }}" >> "$GITHUB_ENV"
+        echo "SCCACHE_ENDPOINT=${{ inputs.endpoint }}" >> "$GITHUB_ENV"
+        echo "SCCACHE_REGION=${{ inputs.region }}" >> "$GITHUB_ENV"
+        echo "SCCACHE_S3_USE_SSL=true" >> "$GITHUB_ENV"
+        echo "AWS_ACCESS_KEY_ID=${{ inputs.access_key }}" >> "$GITHUB_ENV"
+        echo "AWS_SECRET_ACCESS_KEY=${{ inputs.secret_key }}" >> "$GITHUB_ENV"
+
+        # Run without daemon so sccache works across docker run boundaries
+        echo "SCCACHE_NO_DAEMON=1" >> "$GITHUB_ENV"

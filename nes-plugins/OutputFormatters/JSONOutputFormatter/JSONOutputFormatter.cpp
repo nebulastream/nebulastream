@@ -113,74 +113,65 @@ void writeValue(
     nautilus::val<uint64_t>& written,
     nautilus::val<uint64_t>& currentRemainingSize)
 {
-    /// If value is NULL, write "NULL" and return
-    nautilus::val<bool> wroteNull{false};
-    if (value.isNullable())
+    switch (fieldType.type)
     {
-        if (value.isNull())
-        {
+        case DataType::Type::BOOLEAN: {
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeValueToBuffer,
-                nautilus::val<const char*>{"NULL"},
+                writeBool,
+                fieldPointer + written,
                 currentRemainingSize,
+                value.getRawValueAs<nautilus::val<bool>>(),
                 recordBuffer.getReference(),
-                bufferProvider,
-                fieldPointer + written);
+                bufferProvider);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
-            wroteNull = true;
+            break;
         }
-    }
+        case DataType::Type::CHAR: {
+            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                writeChar,
+                fieldPointer + written,
+                currentRemainingSize,
+                value.getRawValueAs<nautilus::val<char>>(),
+                recordBuffer.getReference(),
+                bufferProvider);
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::VARSIZED: {
+            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
+            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                writeVarsized,
+                fieldPointer + written,
+                currentRemainingSize,
+                varSizedValue.getContent(),
+                varSizedValue.getSize(),
+                recordBuffer.getReference(),
+                bufferProvider);
 
-    if (!wroteNull)
-    {
-        switch (fieldType.type)
-        {
-            case DataType::Type::BOOLEAN: {
-                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                    writeBool,
-                    fieldPointer + written,
-                    currentRemainingSize,
-                    value.getRawValueAs<nautilus::val<bool>>(),
-                    recordBuffer.getReference(),
-                    bufferProvider);
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-                break;
-            }
-            case DataType::Type::CHAR: {
-                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                    writeChar,
-                    fieldPointer + written,
-                    currentRemainingSize,
-                    value.getRawValueAs<nautilus::val<char>>(),
-                    recordBuffer.getReference(),
-                    bufferProvider);
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-                break;
-            }
-            case DataType::Type::VARSIZED: {
-                const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                    writeVarsized,
-                    fieldPointer + written,
-                    currentRemainingSize,
-                    varSizedValue.getContent(),
-                    varSizedValue.getSize(),
-                    recordBuffer.getReference(),
-                    bufferProvider);
-
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-                break;
-            }
-            default: {
-                const nautilus::val<uint64_t> amountWritten
-                    = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-            }
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::INT8:
+        case DataType::Type::INT16:
+        case DataType::Type::INT32:
+        case DataType::Type::INT64:
+        case DataType::Type::UINT8:
+        case DataType::Type::UINT16:
+        case DataType::Type::UINT32:
+        case DataType::Type::UINT64:
+        case DataType::Type::FLOAT32:
+        case DataType::Type::FLOAT64: {
+            const nautilus::val<uint64_t> amountWritten
+                = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+            written += amountWritten;
+            currentRemainingSize -= amountWritten;
+            break;
+        }
+        case DataType::Type::UNDEFINED: {
+            throw UnknownDataType("JSON-OutputFormatting for type UNDEFINED is not supported.");
         }
     }
 }
@@ -270,5 +261,4 @@ OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSO
 {
     return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
 }
-
 }

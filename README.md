@@ -69,6 +69,8 @@ Configure, build, and test through the Nix-wrapped helpers:
 ./.nix/ctest --test-dir cmake-build-debug -j
 ```
 
+For formatting and clang-tidy fixes, run `nix run .#format` and `nix run .#clang-tidy`.
+
 #### Use the development container
 Build or reuse the local development image (installs the current user inside the container to avoid permission issues):
 
