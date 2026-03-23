@@ -21,18 +21,15 @@
 #include <format>
 #include <fstream>
 #include <ios>
+#include <iterator>
 #include <memory>
-#include <ostream>
-#include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <fcntl.h>
 #include <unistd.h>
 #include <Configurations/Descriptor.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -72,14 +69,14 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
             throw InvalidConfigParameter("Could not open file for mmap: {} - {}", realPath.get(), std::strerror(errno));
         }
 
-        struct stat st;
-        if (fstat(mmapFd, &st) < 0)
+        struct stat fileStat{};
+        if (fstat(mmapFd, &fileStat) < 0)
         {
             ::close(mmapFd);
             mmapFd = -1;
             throw InvalidConfigParameter("Could not stat file: {} - {}", realPath.get(), std::strerror(errno));
         }
-        fileSize = static_cast<size_t>(st.st_size);
+        fileSize = static_cast<size_t>(fileStat.st_size);
 
         mmapBase = ::mmap(nullptr, fileSize, PROT_READ, MAP_PRIVATE, mmapFd, 0);
         if (mmapBase == MAP_FAILED)
@@ -139,7 +136,9 @@ Source::FillTupleBufferResult BenchmarkSource::fillTupleBuffer(TupleBuffer& tupl
 
     const auto bytesToCopy = std::min(tupleBuffer.getBufferSize(), fileSize - readOffset);
 
-    const char* srcPtr = (mode == "mmap") ? static_cast<const char*>(mmapBase) + readOffset : preloadedData.data() + readOffset;
+    const char* basePtr = (mode == "mmap") ? static_cast<const char*>(mmapBase) : preloadedData.data();
+    const char* srcPtr
+        = std::next(basePtr, static_cast<std::ptrdiff_t>(readOffset)); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
 
     std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data(), srcPtr, bytesToCopy);
 
@@ -172,7 +171,7 @@ SourceValidationRegistryReturnType RegisterBenchmarkSourceValidation(SourceValid
     return BenchmarkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(SourceRegistryArguments args)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(const SourceRegistryArguments& args)
 {
     return std::make_unique<BenchmarkSource>(args.sourceDescriptor);
 }
