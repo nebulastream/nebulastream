@@ -392,11 +392,27 @@ private:
     size_t totalResultLinesSize = 0;
 };
 
+/// Compare two fields by uppercased name and data type, ignoring case-sensitivity differences.
+/// The CSV header format does not preserve case-sensitivity information, so re-parsed identifiers
+/// may differ in their caseSensitive flag from the original query identifiers.
+bool fieldsMatchCaseInsensitive(const NES::UnqualifiedUnboundField& lhs, const NES::UnqualifiedUnboundField& rhs)
+{
+    if (lhs.getDataType() != rhs.getDataType())
+    {
+        return false;
+    }
+    return NES::toUpperCase(fmt::format("{}", lhs.getFullyQualifiedName()))
+        == NES::toUpperCase(fmt::format("{}", rhs.getFullyQualifiedName()));
+}
+
 ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResultSchema, const ActualResultSchema& actualResultSchema)
 {
     ExpectedToActualFieldMap expectedToActualFieldMap{};
-    /// Check if schemas are equal. If not populate the error stream
-    if (/* hasMatchingSchema */ expectedResultSchema.getRawValue() != actualResultSchema.getRawValue())
+    /// Check if schemas are equal using case-insensitive field name matching,
+    /// since the CSV header format does not preserve identifier case-sensitivity.
+    const bool schemasMatch
+        = std::ranges::equal(expectedResultSchema.getRawValue(), actualResultSchema.getRawValue(), fieldsMatchCaseInsensitive);
+    if (!schemasMatch)
     {
         expectedToActualFieldMap.schemaErrorStream << fmt::format(
             "\n{} != {}", fmt::join(expectedResultSchema.getRawValue(), ", "), fmt::join(actualResultSchema.getRawValue(), ", "));
@@ -404,7 +420,8 @@ ExpectedToActualFieldMap compareSchemas(const ExpectedResultSchema& expectedResu
     std::unordered_set<size_t> matchedActualResultFields;
     for (const auto& [expectedFieldIdx, expectedField] : expectedResultSchema.getRawValue() | NES::views::enumerate)
     {
-        if (const auto& matchingFieldIt = std::ranges::find(actualResultSchema.getRawValue(), expectedField);
+        if (const auto& matchingFieldIt = std::ranges::find_if(
+                actualResultSchema.getRawValue(), [&](const auto& f) { return fieldsMatchCaseInsensitive(expectedField, f); });
             matchingFieldIt != actualResultSchema.getRawValue().end())
         {
             auto offset = std::ranges::distance(actualResultSchema.getRawValue().begin(), matchingFieldIt);
