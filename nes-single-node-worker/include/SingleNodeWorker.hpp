@@ -28,7 +28,6 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
-#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 
@@ -43,7 +42,6 @@ class SingleNodeWorker
 {
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
-    UniquePtr<QueryOptimizer> optimizer;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
     SingleNodeWorkerConfiguration configuration;
 
@@ -74,10 +72,6 @@ public:
     /// @param queryId identifies the registered query
     /// @param terminationType dictates what happens with in in-flight data
     std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
-
-    /// Unregisters a stopped Query.
-    /// @param queryId identifies the registered stopped query
-    std::expected<void, Exception> unregisterQuery(QueryId queryId) noexcept;
 
     /// Complete history of query status changes.
     [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;

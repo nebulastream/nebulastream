@@ -154,8 +154,18 @@ public:
                       [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
+        std::unordered_map<std::string, std::string> formatOptions{};
+        if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
+        {
+            formatOptions
+                = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+                | std::views::transform(
+                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+        }
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
-        return CreateSinkStatement{.name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions};
+        return CreateSinkStatement{
+            .name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions, .formatConfig = formatOptions};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -421,7 +431,7 @@ public:
 
 StatementBinder::StatementBinder(
     const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept
+    const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder)
     : impl(std::make_unique<Impl>(sourceCatalog, queryPlanBinder))
 {
 }
@@ -442,13 +452,13 @@ StatementBinder& StatementBinder::operator=(StatementBinder&& other) noexcept
 
 StatementBinder::~StatementBinder() = default;
 
-std::expected<Statement, Exception> StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST) const noexcept
+std::expected<Statement, Exception> StatementBinder::bind(AntlrSQLParser::StatementContext* statementAST) const
 {
     return impl->bind(statementAST);
 }
 
 std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
-StatementBinder::parseAndBind(const std::string_view statementString) const noexcept
+StatementBinder::parseAndBind(const std::string_view statementString) const
 {
     try
     {
@@ -456,7 +466,10 @@ StatementBinder::parseAndBind(const std::string_view statementString) const noex
         AntlrSQLLexer lexer(&input);
         antlr4::CommonTokenStream tokens(&lexer);
         AntlrSQLParser parser(&tokens);
-        /// Enable that antlr throws exeptions on parsing errors
+        /// Remove default error listeners that print to stdout/stderr
+        lexer.removeErrorListeners();
+        parser.removeErrorListeners();
+        /// Enable that antlr throws exceptions on parsing errors
         parser.setErrorHandler(std::make_shared<antlr4::BailErrorStrategy>());
         AntlrSQLParser::MultipleStatementsContext* tree = parser.multipleStatements();
         if (tree == nullptr)
@@ -474,7 +487,7 @@ StatementBinder::parseAndBind(const std::string_view statementString) const noex
     }
 }
 
-std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::string_view statementStrings) const noexcept
+std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::string_view statementStrings) const
 {
     auto allParsed = parseAndBind(statementStrings);
     if (allParsed.has_value())

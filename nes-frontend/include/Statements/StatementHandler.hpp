@@ -21,9 +21,12 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -33,7 +36,6 @@
 #include <Util/Pointers.hpp>
 #include <experimental/propagate_const>
 #include <ErrorHandling.hpp>
-#include <LegacyOptimizer.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -135,14 +137,14 @@ class StatementHandler
 public:
     template <typename Statement>
     requires(std::invocable<HandlerImpl, const Statement&>)
-    [[nodiscard]] auto apply(const Statement& statement) const noexcept -> decltype(std::declval<HandlerImpl>()(statement))
+    [[nodiscard]] auto apply(const Statement& statement) const -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
     }
 
     template <typename Statement>
     requires(std::invocable<HandlerImpl, const Statement&>)
-    auto apply(const Statement& statement) noexcept -> decltype(std::declval<HandlerImpl>()(statement))
+    auto apply(const Statement& statement) -> decltype(std::declval<HandlerImpl>()(statement))
     {
         return static_cast<HandlerImpl*>(this)->operator()(statement);
     }
@@ -178,10 +180,14 @@ public:
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
-    SharedPtr<const LegacyOptimizer> optimizer;
+    SharedPtr<const SemanticAnalyzer> semanticAnalyser;
+    SharedPtr<const QueryOptimizer> queryOptimizer;
 
 public:
-    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const LegacyOptimizer> optimizer);
+    explicit QueryStatementHandler(
+        SharedPtr<QueryManager> queryManager,
+        SharedPtr<const SemanticAnalyzer> semanticAnalyser,
+        SharedPtr<const QueryOptimizer> queryOptimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);

@@ -26,7 +26,7 @@ Let's start with key terminology.
 | **Operator**         | Transforms a stream of tuples (e.g., filtering, aggregating).                               | `SELECT`, `WHERE`, `GROUP BY`, `JOIN`, [See Operators](#operators)               |
 | **Function**         | Operation applied to one or more fields (or input functions) within an operator.            | `SUM`, `AVG`, `+`, `-`, `CONCAT`, [See Functions](#functions)                    |
 | **Window**           | Partition an unbounded stream into finite chunks for stateful operations like aggregations. | `WINDOW (TUMBLING\|SLIDING) (timestamp, [duration][unit])`                       |
-| **Output Formatter** | Encodes tuples into a specific format to prepare for a sink.                                | [See Input Formatters](#input-formatters)                                        |
+| **Output Formatter** | Encodes tuples into a specific format to prepare for a sink.                                | [See Output Formatters](#output-formatters)                                      |
 | **Sink**             | Connector that **exports** query results out of NebulaStream.                               | `INTO`, [See Sinks](#data-sinks-defining-the-output)                             |
 
 ---
@@ -62,9 +62,11 @@ sinks:
         type: FLOAT64
     type: File
     config:
-      input_format: CSV
+      output_format: CSV
       file_path: "<path>"
       append: false
+    parser_config:
+      quote_strings: false
 
 logical:
   - name: lrb
@@ -153,8 +155,9 @@ CREATE SINK csv_sink(
 ) TYPE File SET(
   'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
-  'CSV' as `SINK`.INPUT_FORMAT,
-  FALSE as `SINK`.APPEND
+  'CSV' as `SINK`.OUTPUT_FORMAT,
+  FALSE as `SINK`.APPEND,
+  FALSE as `PARSER`.QUOTE_STRINGS
 );
 
 SELECT start, end, highway, direction, positionDiv5280, AVG(speed) AS avgSpeed
@@ -266,7 +269,7 @@ CREATE SINK csv_sink(
 ) TYPE File SET(
   'localhost:9090' AS `SINK`.`HOST`, 
   '<path>' as `SINK`.FILE_PATH,
-  'CSV' as `SINK`.INPUT_FORMAT,
+  'CSV' as `SINK`.OUTPUT_FORMAT,
   FALSE as `SINK`.APPEND
 );
 ```
@@ -281,6 +284,8 @@ For a `File` sink, this includes the file path and the data format for the outpu
 
 The `HOST` configuration parameter specifies the worker node which hosts the physical source/sink.
 
+- The sink itself can be configured via `SINK.*` parameters.
+- The output formatter can be configured via `PARSER.*` parameters.
 ---
 ## Input Formatters
 Tuples can arrive in a variety of formats.
@@ -301,6 +306,25 @@ CREATE PHYSICAL SOURCE FOR source_name TYPE TCP SET(
 
 Currently, we support the text-based CSV format, with JSON following in an upcoming release.
 
+---
+## Output Formatters
+The output formatter component converts records with values in our native in-memory format into the desired output format of a sink.
+They are employed by sinks that utilize the `OUTPUT_FORMAT` parameter to configure the format of the result tuples.
+
+Out-of-the-box available output formats are:
+- CSV
+- JSON
+
+Some output formats may be configurable via parameters. For instance, the bool parameter `QUOTE_STRINGS` controls how the CSVOutputFormatter
+represents strings.
+All required parameters can be specified via `PARSER.*` in each sink.
+```sql
+CREATE SINK sink_name TYPE FILE SET(
+       'CSV' as `SINK`.OUTPUT_FORMAT,
+       TRUE as `PARSER`.QUOTE_STRINGS,
+       ...
+);
+```
 ---
 ## Data Types
 In NebulaStream, each field is associated with exactly one data type.
