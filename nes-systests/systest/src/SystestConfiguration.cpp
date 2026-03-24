@@ -29,6 +29,7 @@ std::vector<BaseOption*> SystestConfiguration::getOptions()
         &randomQueryOrder,
         &numberConcurrentQueries,
         &testGroups,
+        &disabledTestFiles,
         &testDataDir,
         &endlessMode,
         &excludeGroups,

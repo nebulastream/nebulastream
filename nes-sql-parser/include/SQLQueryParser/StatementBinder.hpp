@@ -74,6 +74,7 @@ struct CreateSinkStatement
     std::string sinkType;
     Schema schema;
     std::unordered_map<std::string, std::string> sinkConfig;
+    std::unordered_map<std::string, std::string> formatConfig;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,
@@ -182,7 +183,7 @@ class StatementBinder
 public:
     explicit StatementBinder(
         const std::shared_ptr<const SourceCatalog>& sourceCatalog,
-        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder) noexcept;
+        const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 
     StatementBinder(const StatementBinder& other) = delete;
     StatementBinder& operator=(const StatementBinder& other) = delete;
@@ -192,10 +193,10 @@ public:
     /// If the destructor was implicitly defaulted, it would call the destructor of the unique ptr, which would require the definition of Impl.
     /// Deferring the destructor default to the implementation, where also the definition of Impl is, solves this problem.
     ~StatementBinder();
-    [[nodiscard]] std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const noexcept;
+    [[nodiscard]] std::expected<Statement, Exception> bind(AntlrSQLParser::StatementContext* statementAST) const;
     [[nodiscard]] std::expected<std::vector<std::expected<Statement, Exception>>, Exception>
-    parseAndBind(std::string_view statementString) const noexcept;
-    [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const noexcept;
+    parseAndBind(std::string_view statementString) const;
+    [[nodiscard]] std::expected<Statement, Exception> parseAndBindSingle(std::string_view statementStrings) const;
 };
 }
 
@@ -206,7 +207,7 @@ struct formatter<std::unordered_map<std::string, std::string>>
 {
     [[nodiscard]] static constexpr auto parse(const format_parse_context& ctx) noexcept -> decltype(ctx.begin()) { return ctx.begin(); }
 
-    static constexpr auto format(const std::unordered_map<std::string, std::string>& mapToFormat, format_context& ctx) noexcept
+    static constexpr auto format(const std::unordered_map<std::string, std::string>& mapToFormat, format_context& ctx)
         -> decltype(ctx.out())
     {
         auto out = ctx.out();

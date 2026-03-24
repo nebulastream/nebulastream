@@ -37,7 +37,6 @@ public:
     [[nodiscard]] std::expected<QueryId, Exception> registerQuery(LogicalPlan) override;
     std::expected<void, Exception> start(QueryId) override;
     std::expected<void, Exception> stop(QueryId) override;
-    std::expected<void, Exception> unregister(QueryId) override;
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> status(QueryId) const override;
     [[nodiscard]] std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const override;
 };

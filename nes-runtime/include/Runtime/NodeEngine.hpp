@@ -30,7 +30,7 @@ class QueryTracker;
 
 /// @brief this class represents the interface and entrance point into the
 /// query processing part of NES. It provides basic functionality
-/// such as registering, unregistering, starting, and stopping.
+/// such as registering, starting, and stopping.
 class NodeEngine
 {
     friend class NodeEngineBuilder;
@@ -49,7 +49,6 @@ public:
         std::unique_ptr<SourceProvider> sourceProvider);
 
     void registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan);
-    void unregisterQuery(QueryId queryId);
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.

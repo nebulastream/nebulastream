@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cctype>
 #include <cstddef>
 #include <cstring>
 #include <filesystem>
@@ -134,6 +135,7 @@ static constexpr std::string_view ErrorToken = "ERROR"sv;
 static constexpr std::string_view DifferentialToken = "===="sv;
 static constexpr std::string_view ConfigurationToken = "CONFIGURATION"sv;
 static constexpr std::string_view GlobalConfigurationToken = "GLOBALCONFIGURATION"sv;
+static constexpr std::string_view SequentialExecutionToken = "SEQUENTIAL_EXECUTION"sv;
 
 static const std::array stringToToken = std::to_array<std::pair<std::string_view, TokenType>>(
     {{CreateToken, TokenType::CREATE},
@@ -142,7 +144,8 @@ static const std::array stringToToken = std::to_array<std::pair<std::string_view
      {ErrorToken, TokenType::ERROR_EXPECTATION},
      {ConfigurationToken, TokenType::CONFIGURATION},
      {GlobalConfigurationToken, TokenType::GLOBAL_CONFIGURATION},
-     {DifferentialToken, TokenType::DIFFERENTIAL}});
+     {DifferentialToken, TokenType::DIFFERENTIAL},
+     {SequentialExecutionToken, TokenType::SEQUENTIAL_EXECUTION}});
 
 void SystestParser::registerSubstitutionRule(const SubstitutionRule& rule)
 {
@@ -233,6 +236,7 @@ void SystestParser::registerOnDifferentialQueryBlockCallback(DifferentialQueryBl
 void SystestParser::parse()
 {
     SystestQueryIdAssigner queryIdAssigner{};
+    bool sequentialExecution = false;
     while (auto token = getNextToken())
     {
         switch (token.value())
@@ -251,7 +255,7 @@ void SystestParser::parse()
                 lastParsedQueryId = queryId;
                 if (onQueryCallback)
                 {
-                    onQueryCallback(query, queryId);
+                    onQueryCallback(query, queryId, sequentialExecution);
                 }
                 break;
             }
@@ -307,6 +311,10 @@ void SystestParser::parse()
                 }
                 break;
             }
+            case TokenType::SEQUENTIAL_EXECUTION: {
+                sequentialExecution = not sequentialExecution;
+                break;
+            }
             case TokenType::ERROR_EXPECTATION:
                 throw TestException(
                     "Should never run into the ERROR_EXPECTATION token during systest file parsing, but got line: {}", lines[currentLine]);
@@ -322,10 +330,25 @@ void SystestParser::applySubstitutionRules(std::string& line)
         const std::string& keyword = rule.keyword;
         while ((pos = line.find(keyword, pos)) != std::string::npos)
         {
-            std::string substring = line.substr(pos, keyword.length());
-            rule.ruleFunction(substring);
-            line.replace(pos, keyword.length(), substring);
-            pos += substring.length();
+            /// Check word boundaries: the character immediately before and after the keyword
+            /// must not be alphanumeric or underscore. This prevents replacing substrings of
+            /// longer identifiers (e.g., replacing "we" inside "producedPower").
+            const bool leftBoundary = pos == 0 || (std::isalnum(static_cast<unsigned char>(line[pos - 1])) == 0 && line[pos - 1] != '_');
+            const auto endPos = pos + keyword.length();
+            const bool rightBoundary
+                = endPos >= line.size() || (std::isalnum(static_cast<unsigned char>(line[endPos])) == 0 && line[endPos] != '_');
+
+            if (leftBoundary && rightBoundary)
+            {
+                std::string substring = line.substr(pos, keyword.length());
+                rule.ruleFunction(substring);
+                line.replace(pos, keyword.length(), substring);
+                pos += substring.length();
+            }
+            else
+            {
+                pos += keyword.length();
+            }
         }
     }
 }

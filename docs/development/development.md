@@ -266,6 +266,14 @@ that wrap build tools to run inside the Nix development shell.
    ./.nix/nix-cmake.sh --build cmake-build-debug
    ```
 
+3. **Run the clang-tidy diff workflow** against `origin/main`:
+   ```shell
+   nix run .#clang-tidy
+   ```
+   Pass another base ref after `--` to compare against a different branch or commit, for example
+   `nix run .#clang-tidy -- upstream/main`. The command uses the official `clang-tidy-diff.py` workflow, applies fixes
+   in place, and configures and builds `build/`.
+
 ### CLion Integration with Nix
 
 To use the Nix development environment with CLion:

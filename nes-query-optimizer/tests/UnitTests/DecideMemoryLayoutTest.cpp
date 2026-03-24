@@ -21,7 +21,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 
-#include <Phases/DecideMemoryLayout.hpp>
+#include <Rules/Static/DecideMemoryLayoutRule.hpp>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
@@ -81,8 +81,8 @@ TEST_F(DecideMemoryLayoutTest, SingleOperatorGetsRowLayout)
     auto plan = createSourcePlan("TEST", schema);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideMemoryLayout phase;
-    auto result = phase.apply(plan);
+    DecideMemoryLayoutRule rule;
+    auto result = rule.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {
@@ -107,8 +107,8 @@ TEST_F(DecideMemoryLayoutTest, BinaryPlanAllGetRowLayout)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideMemoryLayout phase;
-    auto result = phase.apply(plan);
+    DecideMemoryLayoutRule rule;
+    auto result = rule.apply(plan);
 
     for (const auto& op : BFSRange(result.getRootOperators()[0]))
     {

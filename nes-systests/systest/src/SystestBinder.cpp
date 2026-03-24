@@ -46,6 +46,8 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
+#include <Phases/QueryOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -60,7 +62,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
-#include <LegacyOptimizer.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 #include <SystestParser.hpp>
 #include <SystestState.hpp>
 
@@ -82,11 +84,17 @@ public:
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
+                std::unordered_map<std::string, std::string> formatConfig{};
                 if (sinkType == "File")
                 {
-                    config["input_format"] = "CSV";
+                    config["output_format"] = "CSV";
                 }
-                const auto sink = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config));
+                else if (toUpperCase(sinkType) == "CHECKSUM")
+                {
+                    formatConfig["quote_strings"] = "true";
+                }
+                const auto sink
+                    = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -96,10 +104,13 @@ public:
         return success;
     }
 
-    std::optional<SinkDescriptor>
-    getInlineSink(const Schema& schema, std::string_view sinkType, std::unordered_map<std::string, std::string> config)
+    std::optional<SinkDescriptor> getInlineSink(
+        const Schema& schema,
+        std::string_view sinkType,
+        std::unordered_map<std::string, std::string> config,
+        const std::unordered_map<std::string, std::string>& formatConfig)
     {
-        return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config));
+        return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config), formatConfig);
     }
 
     std::expected<SinkDescriptor, Exception>
@@ -163,6 +174,8 @@ public:
 
     void setException(const Exception& exception) { this->exception = exception; }
 
+    void setRunAfter(std::pair<TestName, SystestQueryId> runAfter) { this->runAfter = runAfter; }
+
     std::expected<LogicalPlan, Exception> getBoundPlan() const
     {
         if (boundPlan.has_value())
@@ -221,7 +234,7 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
-    void optimizeQueries(const NES::LegacyOptimizer& optimizer)
+    void optimizeQueries(const NES::SemanticAnalyzer& semanticAnalyser, const NES::QueryOptimizer& queryOptimizer)
     {
         if (!boundPlan.has_value())
         {
@@ -229,7 +242,9 @@ public:
         }
         try
         {
-            setOptimizedPlan(optimizer.optimize(boundPlan.value()));
+            auto plan = semanticAnalyser.analyse(boundPlan.value());
+            plan = queryOptimizer.optimize(plan);
+            setOptimizedPlan(std::move(plan));
         }
         catch (Exception& e)
         {
@@ -242,8 +257,9 @@ public:
         {
             try
             {
-                auto optimizedDiff = optimizer.optimize(differentialQueryPlan.value());
-                setDifferentialQueryPlan(std::move(optimizedDiff));
+                auto plan = semanticAnalyser.analyse(differentialQueryPlan.value());
+                plan = queryOptimizer.optimize(plan);
+                setDifferentialQueryPlan(std::move(plan));
             }
             catch (Exception& e)
             {
@@ -299,7 +315,8 @@ public:
                  .expectedResultsOrExpectedError = expectedResultsValue,
                  .additionalSourceThreads = additionalSourceThreads.value(),
                  .configurationOverride = std::move(configurationOverride),
-                 .differentialQueryPlan = differentialQueryPlan});
+                 .differentialQueryPlan = differentialQueryPlan,
+                 .runAfter = runAfter});
         }
         return queries;
     }
@@ -322,13 +339,21 @@ private:
     std::optional<std::shared_ptr<std::vector<std::jthread>>> additionalSourceThreads;
     std::vector<ConfigurationOverride> configurationOverrides{ConfigurationOverride{}};
     std::optional<LogicalPlan> differentialQueryPlan;
+    std::optional<std::pair<TestName, SystestQueryId>> runAfter;
     bool built = false;
 };
 
 struct SystestBinder::Impl
 {
-    explicit Impl(std::filesystem::path workingDir, std::filesystem::path testDataDir, std::filesystem::path configDir)
-        : workingDir(std::move(workingDir)), testDataDir(std::move(testDataDir)), configDir(std::move(configDir))
+    explicit Impl(
+        std::filesystem::path workingDir,
+        std::filesystem::path testDataDir,
+        std::filesystem::path configDir,
+        QueryOptimizerConfiguration queryOptimizerConfiguration)
+        : workingDir(std::move(workingDir))
+        , testDataDir(std::move(testDataDir))
+        , configDir(std::move(configDir))
+        , queryOptimizerConfiguration(std::move(queryOptimizerConfiguration))
     {
     }
 
@@ -415,7 +440,8 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const LegacyOptimizer optimizer{testfile.sourceCatalog, testfile.sinkCatalog};
+        const SemanticAnalyzer semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
+        const QueryOptimizer queryOptimizer{queryOptimizerConfiguration};
 
         std::vector<SystestQuery> buildSystests;
         for (auto& builder : loadedSystests)
@@ -428,7 +454,7 @@ struct SystestBinder::Impl
             }
 
             foundQueries.insert(builder.getSystemTestQueryId());
-            builder.optimizeQueries(optimizer);
+            builder.optimizeQueries(semanticAnalyser, queryOptimizer);
             for (auto& query : std::move(builder).build())
             {
                 buildSystests.emplace_back(std::move(query));
@@ -627,16 +653,21 @@ struct SystestBinder::Impl
         const auto resultFile = SystestQuery::resultFile(workingDir, testFileName, currentQueryNumberInTest);
 
         auto sinkConfig = sinkOperator->getSinkConfig();
+        auto formatConfig = sinkOperator->getFormatConfig();
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
         sinkConfig.emplace("file_path", resultFile);
 
-        if (not(sinkConfig.contains("input_format")) and sinkOperator->getSinkType() != "CHECKSUM")
+        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
         {
-            sinkConfig.emplace("input_format", "CSV");
+            sinkConfig.emplace("output_format", "CSV");
+        }
+        if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
+        {
+            formatConfig["quote_strings"] = "true";
         }
 
-        auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig);
+        auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);
         if (not sinkDescriptor.has_value())
         {
             throw InvalidConfigParameter("Failed to create inline sink of type {}", sinkOperator->getSinkType());
@@ -708,11 +739,16 @@ struct SystestBinder::Impl
         SLTSinkFactory& sltSinkProvider,
         const std::string& query,
         const SystestQueryId& currentQueryNumberInTest,
-        const std::vector<ConfigurationOverride>& configOverrides) const
+        const std::vector<ConfigurationOverride>& configOverrides,
+        const bool sequentialExecution) const
     {
         SystestQueryBuilder currentBuilder{currentQueryNumberInTest};
         currentBuilder.setQueryDefinition(query);
         currentBuilder.setConfigurationOverrides(configOverrides);
+        if (sequentialExecution)
+        {
+            currentBuilder.setRunAfter(std::make_pair(TestName(testFileName), SystestQueryId{currentQueryNumberInTest.getRawValue() - 1}));
+        }
         try
         {
             auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query);
@@ -822,12 +858,13 @@ struct SystestBinder::Impl
 
         SystestQueryId lastParsedQueryId = INVALID_SYSTEST_QUERY_ID;
         parser.registerOnQueryCallback(
-            [&](std::string query, SystestQueryId currentQueryNumberInTest)
+            [&](const std::string& query, SystestQueryId currentQueryNumberInTest, bool sequentialExecution)
             {
                 lastParsedQueryId = currentQueryNumberInTest;
                 auto mergedConfigOverrides = mergeConfigurations(configOverrides, globalConfigOverrides);
                 lastMergedConfigOverrides = mergedConfigOverrides;
-                queryCallback(testFileName, plans, sltSinkProvider, std::move(query), currentQueryNumberInTest, mergedConfigOverrides);
+                queryCallback(
+                    testFileName, plans, sltSinkProvider, query, currentQueryNumberInTest, mergedConfigOverrides, sequentialExecution);
                 configOverrides = {ConfigurationOverride{}};
             });
 
@@ -910,11 +947,15 @@ private:
     std::filesystem::path workingDir;
     std::filesystem::path testDataDir;
     std::filesystem::path configDir;
+    QueryOptimizerConfiguration queryOptimizerConfiguration;
 };
 
 SystestBinder::SystestBinder(
-    const std::filesystem::path& workingDir, const std::filesystem::path& testDataDir, const std::filesystem::path& configDir)
-    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir))
+    const std::filesystem::path& workingDir,
+    const std::filesystem::path& testDataDir,
+    const std::filesystem::path& configDir,
+    const QueryOptimizerConfiguration& queryOptimizerConfiguration)
+    : impl(std::make_unique<Impl>(workingDir, testDataDir, configDir, queryOptimizerConfiguration))
 {
 }
 

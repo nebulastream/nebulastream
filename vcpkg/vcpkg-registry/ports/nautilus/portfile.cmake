@@ -13,11 +13,10 @@
 vcpkg_from_github(
         OUT_SOURCE_PATH SOURCE_PATH
         REPO nebulastream/nautilus
-		REF d75a6816436c824090c85191a0c1e39239cf2479
-        SHA512 68c6315bbab9a1fe8855977db2b4ff3ed8fed097cd73e3eef089eb4d487bb09f503c0f348ee36a340a65319617e573f9993cad582a6b5b9b4a53edc0b3dd17f0
+		REF 85c19150d9bb7e8cca3051e67e04e76045462379
+        SHA512 a7183af0239111531763144648749a6a07dc3a8ca01b656ca4ad3a819e8d75de940035a77c29fb318d8beab6166f4146a8028a8aeff5d4566592561e2ed40b9e
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
-		0002-increase-typed-value-ref-u16-to-u32.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")
