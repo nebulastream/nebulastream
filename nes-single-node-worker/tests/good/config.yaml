@@ -1,0 +1,31 @@
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+
+#    https://www.apache.org/licenses/LICENSE-2.0
+
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+worker:
+  query_engine:
+    number_of_worker_threads: 4
+    admission_queue_size: 1024
+  default_query_execution:
+    execution_mode: COMPILER
+    page_size: 4096
+    number_of_partitions: 4
+    number_of_records_per_key: 1024
+    max_number_of_buckets: 1024
+    operator_buffer_size: 4096
+  default_query_optimization:
+    join_strategy: HASH_JOIN
+  number_of_buffers_in_global_buffer_manager: 1024
+  default_max_inflight_buffers: 64
+  dump_compilation_result: FILE
+  dump_graph: true
+grpc: 0.0.0.0:8080
+enable_event_trace: true
