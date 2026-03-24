@@ -68,16 +68,16 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     get_property(plugin_registry_plugin_sources_final GLOBAL PROPERTY ${plugin_registry}_plugin_sources)
     get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
 
-    # add the deferred source files from add_plugin() to the component
-    if (plugin_registry_plugin_sources_final)
-        if (TARGET ${plugin_registry_component})
-            foreach (source ${plugin_registry_plugin_sources_final})
-                set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${source})
-            endforeach ()
-        else ()
-            set_property(GLOBAL APPEND PROPERTY "${plugin_registry_component}_SOURCE_PROP" ${plugin_registry_plugin_sources_final})
-        endif ()
+    # add the deferred source files from add_plugin() to the component target.
+    # The target must exist at this point because generate_plugin_registrar runs via
+    # cmake_language(DEFER) at the end of configuration, after all add_library() calls.
+    if (NOT TARGET ${plugin_registry_component})
+        message(FATAL_ERROR "Target '${plugin_registry_component}' does not exist. "
+            "Ensure add_library(${plugin_registry_component} ...) is called before create_registries_for_component().")
     endif ()
+    foreach (source ${plugin_registry_plugin_sources_final})
+        set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${source})
+    endforeach ()
 
     # first, read the Configuration(RETURN_TYPE, ARGUMENTS) from the '.in' file
     file(READ ${registrar_header_template_path} registrar_header_file_data)
