@@ -18,10 +18,10 @@
 #include <string>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Interface/Record.hpp>
 #include <val_ptr.hpp>
-#include <DataTypes/DataType.hpp>
 
 namespace NES::Nautilus
 {

@@ -16,17 +16,17 @@
 
 #include <utility>
 #include <Operators/LogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
+#include <LoweringRules/AbstractLoweringRule.hpp>
 #include <QueryExecutionConfiguration.hpp>
 
 namespace NES
 {
 
-struct LowerToPhysicalStore : AbstractRewriteRule
+struct LowerToPhysicalStore : AbstractLoweringRule
 {
     explicit LowerToPhysicalStore(QueryExecutionConfiguration conf) : conf(std::move(conf)) { }
 
-    RewriteRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
+    LoweringRuleResultSubgraph apply(LogicalOperator logicalOperator) override;
 
 private:
     QueryExecutionConfiguration conf;

@@ -12,24 +12,24 @@
     limitations under the License.
 */
 
-#include <RewriteRules/LowerToPhysical/LowerToPhysicalStore.hpp>
+#include <LoweringRules/LowerToPhysical/LowerToPhysicalStore.hpp>
 
 #include <memory>
 #include <sstream>
+#include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/StoreLogicalOperator.hpp>
-#include <RewriteRules/AbstractRewriteRule.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <ErrorHandling.hpp>
+#include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
-#include <RewriteRuleRegistry.hpp>
 #include <StoreOperatorHandler.hpp>
 #include <StorePhysicalOperator.hpp>
 
 namespace NES
 {
 
-RewriteRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOperator)
+LoweringRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOperator)
 {
     PRECONDITION(logicalOperator.tryGetAs<StoreLogicalOperator>(), "Expected a StoreLogicalOperator");
     auto store = logicalOperator.getAs<StoreLogicalOperator>();
@@ -69,8 +69,8 @@ RewriteRuleResultSubgraph LowerToPhysicalStore::apply(LogicalOperator logicalOpe
     return {.root = wrapper, .leafs = leafs};
 }
 
-std::unique_ptr<AbstractRewriteRule>
-RewriteRuleGeneratedRegistrar::RegisterStoreRewriteRule(RewriteRuleRegistryArguments argument) /// NOLINT
+std::unique_ptr<AbstractLoweringRule>
+LoweringRuleGeneratedRegistrar::RegisterStoreLoweringRule(LoweringRuleRegistryArguments argument) /// NOLINT
 {
     return std::make_unique<LowerToPhysicalStore>(argument.conf);
 }

@@ -112,36 +112,6 @@ bool StoreLogicalOperator::operator==(const StoreLogicalOperator& rhs) const
         && config == rhs.config;
 }
 
-/*
-void StoreLogicalOperator::serialize(SerializableOperator& serializableOperator) const
-{
-    SerializableLogicalOperator proto;
-
-    proto.set_operator_type(NAME);
-
-    for (const auto& inputSchema : getInputSchemas())
-    {
-        auto* schProto = proto.add_input_schemas();
-        SchemaSerializationUtil::serializeSchema(inputSchema, schProto);
-    }
-
-    auto* outSch = proto.mutable_output_schema();
-    SchemaSerializationUtil::serializeSchema(getOutputSchema(), outSch);
-
-    for (auto& child : getChildren())
-    {
-        serializableOperator.add_children_ids(child.getId().getRawValue());
-    }
-
-    for (const auto& [key, value] : config)
-    {
-        (*serializableOperator.mutable_config())[key] = descriptorConfigTypeToProto(value);
-    }
-
-    serializableOperator.mutable_operator_()->CopyFrom(proto);
-}
-*/
-
 StoreLogicalOperator StoreLogicalOperator::withConfig(DescriptorConfig::Config validatedConfig) const
 {
     auto copy = *this;
@@ -175,8 +145,7 @@ LogicalOperatorGeneratedRegistrar::RegisterStoreLogicalOperator(LogicalOperatorR
 {
     if (!arguments.reflected.isEmpty())
     {
-        const auto op = unreflect<StoreLogicalOperator>(arguments.reflected);
-        return op.withInferredSchema(arguments.inputSchemas);
+        return unreflect<StoreLogicalOperator>(arguments.reflected);
     }
     PRECONDITION(false, "Operator is only built directly via parser or via reflection, not using the registry");
     std::unreachable();

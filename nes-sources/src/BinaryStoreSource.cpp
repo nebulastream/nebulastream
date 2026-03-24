@@ -120,27 +120,27 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
     const auto capacity = rowLayout->getCapacity();
     uint64_t tuplesWritten = 0;
 
-    std::vector<uint64_t> fieldOffsets;
-    std::vector<uint64_t> fieldSizes;
-    uint64_t currentOffset = 0;
+    std::vector<uint64_t> bufferFieldOffsets; /// offsets within the tuple buffer row (with null byte)
+    std::vector<uint64_t> fileFieldSizes; /// sizes in the binary file (without null byte)
+    uint64_t bufferOffset = 0;
     uint32_t rowWidthBytes = 0;
 
     for (size_t i = 0; i < schema.getNumberOfFields(); ++i)
     {
-        fieldOffsets.push_back(currentOffset);
+        bufferFieldOffsets.push_back(bufferOffset);
         auto type = schema.getFieldAt(i).dataType;
-        uint64_t size = 0;
+        uint64_t fileSize = 0;
         if (type.isType(DataType::Type::VARSIZED))
         {
-            size = sizeof(uint32_t);
+            fileSize = sizeof(uint32_t);
         }
         else
         {
-            size = type.getSizeInBytesWithNull();
+            fileSize = type.getSizeInBytesWithoutNull();
         }
-        fieldSizes.push_back(size);
-        currentOffset += size;
-        rowWidthBytes += size;
+        fileFieldSizes.push_back(fileSize);
+        bufferOffset += type.getSizeInBytesWithNull();
+        rowWidthBytes += fileSize;
     }
 
     for (; tuplesWritten < capacity; ++tuplesWritten)
@@ -149,8 +149,8 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
         for (size_t fieldIdx = 0; fieldIdx < schema.getNumberOfFields(); ++fieldIdx)
         {
             auto type = schema.getFieldAt(fieldIdx).dataType;
-            const auto fieldSize = fieldSizes[fieldIdx];
-            const auto offset = tuplesWritten * rowLayout->getTupleSize() + fieldOffsets[fieldIdx];
+            const auto fileSize = fileFieldSizes[fieldIdx];
+            const auto offset = tuplesWritten * rowLayout->getTupleSize() + bufferFieldOffsets[fieldIdx];
             char* dest = tupleBuffer.getAvailableMemoryArea<char>().data() + offset;
 
             if (type.isType(DataType::Type::VARSIZED))
@@ -170,11 +170,19 @@ Source::FillTupleBufferResult BinaryStoreSource::fillTupleBuffer(TupleBuffer& tu
                     rowOk = false;
                     break;
                 }
-                std::memset(dest, 0, fieldSize);
+                std::memset(dest, 0, type.getSizeInBytesWithNull());
             }
             else
             {
-                inputFile.read(dest, static_cast<std::streamsize>(fieldSize));
+                /// The tuple buffer layout is [null_flag (1 byte)][data] for nullable fields.
+                const bool isNullable = type.getSizeInBytesWithNull() > fileSize;
+                char* dataStart = dest;
+                if (isNullable)
+                {
+                    dest[0] = 0; /// null flag: 0 = not null
+                    dataStart = dest + 1;
+                }
+                inputFile.read(dataStart, static_cast<std::streamsize>(fileSize));
                 if (!inputFile)
                 {
                     rowOk = false;
@@ -268,7 +276,7 @@ Schema BinaryStoreSource::readSchemaFromFile(const std::string& filePath)
     }
 
     Schema schema;
-    const std::regex fieldRegex(R"(Field\(name:\s*([\w.$]+),\s*DataType:\s*DataType\(type:\s*(\w+)\)\))");
+    const std::regex fieldRegex(R"(Field\(name:\s*([\w.$]+),\s*DataType:\s*DataType\(type:\s*(\w+)(?:\s+nullable:\s*(\w+))?\)\))");
     auto begin = std::sregex_iterator(schemaText.begin(), schemaText.end(), fieldRegex);
     auto end = std::sregex_iterator();
     for (auto it = begin; it != end; ++it)
@@ -279,7 +287,8 @@ Schema BinaryStoreSource::readSchemaFromFile(const std::string& filePath)
         {
             fieldName = fieldName.substr(pos + 1);
         }
-        schema.addField(fieldName, DataTypeProvider::provideDataType(match[2].str()));
+        const auto nullable = match[3].matched && match[3].str() == "true" ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
+        schema.addField(fieldName, DataTypeProvider::provideDataType(match[2].str(), nullable));
     }
     if (schema.getNumberOfFields() == 0)
     {
