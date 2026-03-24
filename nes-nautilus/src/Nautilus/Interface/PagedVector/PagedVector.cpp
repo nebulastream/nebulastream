@@ -74,6 +74,11 @@ void PagedVector::moveAllPages(PagedVector& other)
     other.pages.clearPages();
 }
 
+void PagedVector::updateTimestamp(const Timestamp& timestamp)
+{
+    sourceInsertionTimestamp = std::max(sourceInsertionTimestamp, timestamp);
+}
+
 void PagedVector::copyFrom(const PagedVector& other)
 {
     pages.addPages(other.pages);

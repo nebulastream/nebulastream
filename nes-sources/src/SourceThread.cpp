@@ -62,6 +62,8 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
     /// set the creation timestamp
     buffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    buffer.setSourceCreationTimestampInMS(Timestamp(
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     /// Set the sequence number of this buffer.
     /// A data source generates a monotonic increasing sequence number
     buffer.setSequenceNumber(sequenceNumber);

@@ -31,7 +31,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -74,6 +76,8 @@ void AggregationOperatorHandler::triggerSlices(
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
         /// Getting all hashmaps for each slice that has at least one tuple
+        /// At the same time, we get the maximum sourceInsertionTimestamp of all the populated hashmaps and use it as sourceInsertionTimestamp for the resulting buffer
+        Timestamp inferredSourceInsertionTimestamp{0_u64};
         std::unique_ptr<ChainedHashMap> finalHashMap;
         std::vector<HashMap*> allHashMaps;
         uint64_t totalNumberOfTuples = 0;
@@ -85,6 +89,8 @@ void AggregationOperatorHandler::triggerSlices(
                 if (auto* hashMap = aggregationSlice->getHashMapPtr(WorkerThreadId(hashMapIdx));
                     (hashMap != nullptr) and hashMap->getNumberOfTuples() > 0)
                 {
+                    const auto asChained = dynamic_cast<ChainedHashMap*>(hashMap);
+                    inferredSourceInsertionTimestamp = std::max(inferredSourceInsertionTimestamp, asChained->getTimestamp());
                     /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
                     rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
 
@@ -124,6 +130,7 @@ void AggregationOperatorHandler::triggerSlices(
         tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
         tupleBuffer.setCreationTimestampInMS(Timestamp(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+        tupleBuffer.setSourceCreationTimestampInMS(inferredSourceInsertionTimestamp);
 
 
         /// Writing all necessary information for the aggregation probe to the buffer via the placement new constructor

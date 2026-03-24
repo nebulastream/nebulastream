@@ -57,6 +57,7 @@ void AggregationProbePhysicalOperator::open(ExecutionContext& executionCtx, Reco
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.sourceCreationTimestamp = recordBuffer.getSourceCreationTs();
     openChild(executionCtx, recordBuffer);
 
     /// Getting necessary values from the record buffer

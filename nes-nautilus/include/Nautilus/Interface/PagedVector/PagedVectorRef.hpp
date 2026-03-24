@@ -49,6 +49,8 @@ public:
     [[nodiscard]] Record
     readRecord(const nautilus::val<uint64_t>& pos, const std::vector<Record::RecordFieldIdentifier>& projections) const;
 
+    void updateSourceCreationTimestamp(const nautilus::val<Timestamp>& ts) const;
+
     [[nodiscard]] PagedVectorRefIter begin(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     [[nodiscard]] PagedVectorRefIter end(const std::vector<Record::RecordFieldIdentifier>& projections) const;
     nautilus::val<bool> operator==(const PagedVectorRef& other) const;

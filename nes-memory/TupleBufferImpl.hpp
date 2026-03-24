@@ -110,6 +110,8 @@ public:
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
+    Timestamp getSourceCreationTimestampInMS() const noexcept;
+    void setSourceCreationTimestampInMS(Timestamp sourceCreationTS) noexcept;
     [[nodiscard]] Timestamp getCreationTimestamp() const noexcept;
     [[nodiscard]] VariableSizedAccess::Index storeChildBuffer(BufferControlBlock* control);
     [[nodiscard]] bool loadChildBuffer(VariableSizedAccess::Index index, BufferControlBlock*& control, uint8_t*& ptr, uint32_t& size) const;
@@ -127,6 +129,7 @@ private:
     ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
     bool lastChunk = true;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
+    Timestamp sourceCreationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;
 

@@ -1,0 +1,59 @@
+name = "Yahoo Projection Benchmark"
+description = "Testing projection queries on Yahoo dataset"
+
+[system]
+binary_path = "/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-single-node-worker/nes-single-node-worker"
+working_directory = "/home/rudi/dima/nebulastream-public"
+startup_delay_ms = 3000
+
+[system.parameters]
+"worker.queryEngine.numberOfWorkerThreads" = "23"
+"worker.queryEngine.admissionQueueSize" = "5000"
+"worker.queryEngine.taskQueueSize" = "100000"
+"worker.defaultQueryExecution.executionMode" = "COMPILER"
+"worker.numberOfBuffersInGlobalBufferManager" = "800000"
+"worker.bufferSizeInBytes" = "65536"
+
+[[tcp_servers]]
+name = "yahoo_tcp"
+host = "localhost"
+port = 1111
+file_path = "/home/rudi/dima/nebulastream-public/cmake-build-relwithdebinfo/nes-systests/testdata/large/ysb/ysb_1k_data_474M.csv"
+#file_path = "/home/rudi/dima/yahoo_data.csv"
+repeat_count = 1
+buffer_size = 65536
+
+[[queries]]
+id = "projection_blocking"
+yaml_path = "/home/rudi/dima/nebulastream-public/testing/q-projection_yahoo_tcp_blocking.yaml"
+tcp_sources = ["yahoo_tcp"]
+
+[[benchmark_sequence]]
+type = "StartSystem"
+
+[[benchmark_sequence]]
+type = "StartTcpServers"
+servers = ["yahoo_tcp"]
+
+[[benchmark_sequence]]
+type = "Wait"
+duration_ms = 3000
+
+[[benchmark_sequence]]
+type = "SubmitQuery"
+query_id = "projection_blocking"
+count = 1
+delay_between_ms = 100
+
+[[benchmark_sequence]]
+type = "WaitForCompletion"
+timeout_ms = 60000
+
+[[benchmark_sequence]]
+type = "StopSystem"
+
+[output]
+results_dir = "/home/rudi/dima/nebulastream-public/testing/output"
+log_dir = "/home/rudi/dima/nebulastream-public/testing/logs"
+metrics_file = "/home/rudi/dima/nebulastream-public/testing/metrics.json"
+save_query_outputs = true

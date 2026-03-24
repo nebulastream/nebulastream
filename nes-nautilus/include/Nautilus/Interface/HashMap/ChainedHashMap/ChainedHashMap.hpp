@@ -93,6 +93,9 @@ public:
     /// might allocate its own memory. Thus, the destructor of the value type should be called to release the memory.
     void setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback);
 
+    void updateTimestamp(const Timestamp& timestamp);
+    [[nodiscard]] Timestamp getTimestamp() const;
+
     /// Creates a new chained hash map with the same configuration, i.e., pageSize, entrySize, entriesPerPage and numberOfChains
     static std::unique_ptr<ChainedHashMap> createNewMapWithSameConfiguration(const ChainedHashMap& other);
 
@@ -112,5 +115,6 @@ private:
     ChainedHashMapEntry** entries; /// Stores the pointers to the first entry in each chain
     HashFunction::HashValue::raw_type mask; /// Mask to calculate the bucket position from the hash value. Always a (power of 2)-1
     std::function<void(ChainedHashMapEntry*)> destructorCallBack; /// Callback function to be executed, once the destructor is called
+    Timestamp sourceCreationTimeStamp;
 };
 }

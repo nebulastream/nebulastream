@@ -22,9 +22,11 @@
 #include <memory>
 #include <span>
 #include <string>
+
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Util/StdInt.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -65,6 +67,7 @@ ChainedHashMap::ChainedHashMap(uint64_t entrySize, const uint64_t numberOfBucket
     , entries(nullptr)
     , mask(numberOfChains - 1)
     , destructorCallBack(nullptr)
+    , sourceCreationTimeStamp(0_u64)
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
@@ -91,6 +94,7 @@ ChainedHashMap::ChainedHashMap(const uint64_t keySize, const uint64_t valueSize,
     , entries(nullptr)
     , mask(numberOfChains - 1)
     , destructorCallBack({})
+    , sourceCreationTimeStamp(0_u64)
 {
     PRECONDITION(entrySize > 0, "Entry size has to be greater than 0. Entry size is set to small for entry size {}", entrySize);
     PRECONDITION(
@@ -116,6 +120,16 @@ ChainedHashMap::~ChainedHashMap()
 void ChainedHashMap::setDestructorCallback(const std::function<void(ChainedHashMapEntry*)>& callback)
 {
     destructorCallBack = callback;
+}
+
+void ChainedHashMap::updateTimestamp(const Timestamp& timestamp)
+{
+    sourceCreationTimeStamp = std::max(sourceCreationTimeStamp, timestamp);
+}
+
+Timestamp ChainedHashMap::getTimestamp() const
+{
+    return sourceCreationTimeStamp;
 }
 
 std::unique_ptr<ChainedHashMap> ChainedHashMap::createNewMapWithSameConfiguration(const ChainedHashMap& other)

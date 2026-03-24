@@ -40,6 +40,7 @@ public:
     [[nodiscard]] PagedVector* getPagedVectorRefLeft(WorkerThreadId workerThreadId) const;
     [[nodiscard]] PagedVector* getPagedVectorRefRight(WorkerThreadId workerThreadId) const;
     [[nodiscard]] PagedVector* getPagedVectorRef(WorkerThreadId workerThreadId, JoinBuildSideType joinBuildSide) const;
+    [[nodiscard]] Timestamp getMaximumTimestamp() const;
 
     /// Moves all tuples in this slice to the PagedVector at 0th index on both sides.
     void combinePagedVectors();

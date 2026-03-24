@@ -67,6 +67,8 @@ public:
     /// Get the creation timestamp of the underlying tuple buffer. The creation timestamp is the point in time when the tuple buffer was created.
     nautilus::val<Timestamp> getCreatingTs();
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
+    nautilus::val<Timestamp> getSourceCreationTs();
+    void setSourceCreationTs(const nautilus::val<Timestamp>& sourceCreationTs);
 
     ~RecordBuffer() = default;
 

@@ -147,6 +147,7 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.sourceCreationTimestamp = recordBuffer.getSourceCreationTs();
     openChild(executionCtx, recordBuffer);
 
     /// Getting all needed info from the recordBuffer
