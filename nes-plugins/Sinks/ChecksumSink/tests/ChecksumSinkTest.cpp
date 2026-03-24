@@ -37,7 +37,7 @@ TEST_F(ChecksumSinkTest, validateAndFormatWithFilePath)
 TEST_F(ChecksumSinkTest, validateAndFormatMissingFilePathThrows)
 {
     /// ChecksumSink requires a file_path parameter; missing it should cause an error
-    std::unordered_map<std::string, std::string> config;
+    const std::unordered_map<std::string, std::string> config;
     EXPECT_THROW((void)ChecksumSink::validateAndFormat(config), Exception);
 }
 

@@ -14,7 +14,7 @@
 
 #include <chrono>
 #include <cstdint>
-#include <optional>
+#include <random>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -26,6 +26,8 @@
 #include <Generator.hpp>
 #include <GeneratorFields.hpp>
 #include <SinusGeneratorRate.hpp>
+
+/// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp) -- test values and deterministic seeds are intentional
 
 namespace NES
 {
@@ -39,7 +41,7 @@ class SequenceFieldTest : public ::testing::Test
 TEST_F(SequenceFieldTest, generateUint64Sequence)
 {
     GeneratorFields::SequenceField field("SEQUENCE UINT64 0 5 1");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     field.generate(oss, rng);
@@ -57,7 +59,7 @@ TEST_F(SequenceFieldTest, generateUint64Sequence)
 TEST_F(SequenceFieldTest, generateInt32Sequence)
 {
     GeneratorFields::SequenceField field("SEQUENCE INT32 10 15 2");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     field.generate(oss, rng);
@@ -75,7 +77,7 @@ TEST_F(SequenceFieldTest, generateInt32Sequence)
 TEST_F(SequenceFieldTest, sequenceStopsAtEnd)
 {
     GeneratorFields::SequenceField field("SEQUENCE UINT64 0 3 1");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     EXPECT_FALSE(field.stop);
@@ -109,7 +111,7 @@ class NormalDistributionFieldTest : public ::testing::Test
 TEST_F(NormalDistributionFieldTest, generateFloat64Values)
 {
     GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION FLOAT64 0.0 1.0");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     field.generate(oss, rng);
@@ -119,7 +121,7 @@ TEST_F(NormalDistributionFieldTest, generateFloat64Values)
 TEST_F(NormalDistributionFieldTest, generateInt64Values)
 {
     GeneratorFields::NormalDistributionField field("NORMAL_DISTRIBUTION INT64 100 0.5");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     field.generate(oss, rng);
@@ -149,21 +151,21 @@ class RandomStrFieldTest : public ::testing::Test
 TEST_F(RandomStrFieldTest, generateStringWithinBounds)
 {
     GeneratorFields::RandomStrField field("RANDOMSTR 5 10");
-    std::mt19937 rng(42);
+    std::mt19937 rng(42U);
     std::ostringstream oss;
 
     field.generate(oss, rng);
     const auto result = oss.str();
-    EXPECT_GE(result.size(), 5u);
-    EXPECT_LE(result.size(), 10u);
+    EXPECT_GE(result.size(), 5U);
+    EXPECT_LE(result.size(), 10U);
 }
 
 TEST_F(RandomStrFieldTest, generateDeterministicWithSameSeed)
 {
     GeneratorFields::RandomStrField field1("RANDOMSTR 5 10");
     GeneratorFields::RandomStrField field2("RANDOMSTR 5 10");
-    std::mt19937 rng1(42);
-    std::mt19937 rng2(42);
+    std::mt19937 rng1(42U);
+    std::mt19937 rng2(42U);
     std::ostringstream oss1;
     std::ostringstream oss2;
 
@@ -196,7 +198,7 @@ class GeneratorTest : public ::testing::Test
 
 TEST_F(GeneratorTest, generateTupleWithSequenceField)
 {
-    Generator generator(42, GeneratorStop::NONE, "SEQUENCE UINT64 0 10 1");
+    Generator generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 10 1");
     std::ostringstream oss;
 
     generator.generateTuple(oss);
@@ -209,7 +211,7 @@ TEST_F(GeneratorTest, generateTupleWithSequenceField)
 
 TEST_F(GeneratorTest, generateTupleWithMultipleFields)
 {
-    Generator generator(42, GeneratorStop::NONE, "SEQUENCE UINT64 0 10 1,SEQUENCE UINT64 100 200 10");
+    Generator generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 10 1,SEQUENCE UINT64 100 200 10");
     std::ostringstream oss;
 
     generator.generateTuple(oss);
@@ -222,7 +224,7 @@ TEST_F(GeneratorTest, generateTupleWithMultipleFields)
 
 TEST_F(GeneratorTest, shouldStopWhenAllSequencesComplete)
 {
-    Generator generator(42, GeneratorStop::ALL, "SEQUENCE UINT64 0 2 1");
+    Generator generator(42U, GeneratorStop::ALL, "SEQUENCE UINT64 0 2 1");
     std::ostringstream oss;
 
     EXPECT_FALSE(generator.shouldStop());
@@ -233,7 +235,7 @@ TEST_F(GeneratorTest, shouldStopWhenAllSequencesComplete)
 
 TEST_F(GeneratorTest, shouldStopWhenOneSequenceCompletes)
 {
-    Generator generator(42, GeneratorStop::ONE, "SEQUENCE UINT64 0 2 1,SEQUENCE UINT64 0 100 1");
+    Generator generator(42U, GeneratorStop::ONE, "SEQUENCE UINT64 0 2 1,SEQUENCE UINT64 0 100 1");
     std::ostringstream oss;
 
     EXPECT_FALSE(generator.shouldStop());
@@ -244,7 +246,7 @@ TEST_F(GeneratorTest, shouldStopWhenOneSequenceCompletes)
 
 TEST_F(GeneratorTest, shouldNotStopWithNonePolicy)
 {
-    Generator generator(42, GeneratorStop::NONE, "SEQUENCE UINT64 0 2 1");
+    Generator generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 2 1");
     std::ostringstream oss;
 
     generator.generateTuple(oss);
@@ -255,7 +257,7 @@ TEST_F(GeneratorTest, shouldNotStopWithNonePolicy)
 
 TEST_F(GeneratorTest, invalidSchemaThrows)
 {
-    EXPECT_THROW(Generator(42, GeneratorStop::NONE, "INVALID_TYPE 0 10 1"), Exception);
+    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "INVALID_TYPE 0 10 1"), Exception);
 }
 
 /// --- FixedGeneratorRate Tests ---
@@ -292,7 +294,7 @@ TEST_F(FixedGeneratorRateTest, calcNumberOfTuplesForInterval)
     const auto start = std::chrono::system_clock::now();
     const auto end = start + std::chrono::seconds(1);
     const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
-    EXPECT_EQ(tuples, 1000u);
+    EXPECT_EQ(tuples, 1000U);
 }
 
 TEST_F(FixedGeneratorRateTest, calcNumberOfTuplesForHalfSecond)
@@ -301,7 +303,7 @@ TEST_F(FixedGeneratorRateTest, calcNumberOfTuplesForHalfSecond)
     const auto start = std::chrono::system_clock::now();
     const auto end = start + std::chrono::milliseconds(500);
     const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
-    EXPECT_EQ(tuples, 500u);
+    EXPECT_EQ(tuples, 500U);
 }
 
 /// --- SinusGeneratorRate Tests ---
@@ -314,7 +316,7 @@ TEST_F(SinusGeneratorRateTest, parseValidConfigString)
 {
     const auto result = SinusGeneratorRate::parseAndValidateConfigString("amplitude 100,frequency 1.0");
     ASSERT_TRUE(result.has_value());
-    auto [amplitude, frequency] = result.value();
+    const auto [amplitude, frequency] = result.value();
     EXPECT_DOUBLE_EQ(amplitude, 100.0);
     EXPECT_DOUBLE_EQ(frequency, 1.0);
 }
@@ -334,7 +336,9 @@ TEST_F(SinusGeneratorRateTest, calcNumberOfTuplesReturnsNonNegative)
     /// The sinus integral over any interval should produce a non-negative count
     const auto tuples = rate.calcNumberOfTuplesForInterval(start, end);
     /// We just check it does not crash and returns some value (uint64_t is always >= 0)
-    EXPECT_GE(tuples, 0u);
+    EXPECT_GE(tuples, 0U);
 }
 
 }
+
+/// NOLINTEND(readability-magic-numbers,cert-msc51-cpp)
