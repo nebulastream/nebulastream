@@ -77,7 +77,13 @@ public:
 
 NodeEngine::~NodeEngine()
 {
+    NES_DEBUG("Shutting down NodeEngine");
     queryEngine.reset();
+    sourceProvider.reset();
+    queryTracker.reset();
+
+    bufferManager->destroy();
+    bufferManager.reset();
 }
 
 NodeEngine::NodeEngine(

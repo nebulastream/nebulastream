@@ -61,6 +61,11 @@ std::shared_ptr<BufferManager> BufferManager::create(
 
 BufferManager::~BufferManager()
 {
+    destroy();
+}
+
+void BufferManager::destroy()
+{
     bool expected = false;
     NES_DEBUG("Calling BufferManager::destroy()");
     if (isDestroyed.compare_exchange_strong(expected, true))
@@ -78,6 +83,7 @@ BufferManager::~BufferManager()
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
                 buffer.controlBlock->dumpOwningThreadInfo();
 #endif
+                NES_ERROR("[BufferManager] leaked buffer detected: segment at {}", fmt::ptr(buffer.ptr));
                 success = false;
             }
         }
