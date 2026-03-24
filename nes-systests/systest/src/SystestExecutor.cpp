@@ -271,7 +271,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
         std::filesystem::create_directory(config.workingDir.getValue());
 
         auto discoveredTestFiles = Systest::loadTestFileMap(config);
-        Systest::SystestBinder binder{config.workingDir.getValue(), config.testDataDir.getValue(), config.configDir.getValue()};
+        Systest::SystestBinder binder{
+            config.workingDir.getValue(),
+            config.testDataDir.getValue(),
+            config.configDir.getValue(),
+            config.queryOptimizerConfig.value_or(QueryOptimizerConfiguration{})};
         auto [queries, loadedFiles] = binder.loadOptimizeQueries(discoveredTestFiles);
         if (loadedFiles != discoveredTestFiles.size())
         {
@@ -311,7 +315,11 @@ SystestExecutorResult SystestExecutor::executeSystests()
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
-            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker);
+            const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+                ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
+                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+            auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker, performanceMessage);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
@@ -378,8 +386,12 @@ SystestExecutorResult SystestExecutor::executeSystests()
                     {
                         configCopy.overwriteConfigWithCommandLineInput({{key, value}});
                     }
-
-                    auto failed = runQueriesAtLocalWorker(queriesForConfig, numberConcurrentQueries, configCopy, progressTracker);
+                    const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
+                        ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
+                                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                        : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+                    auto failed = runQueriesAtLocalWorker(
+                        queriesForConfig, numberConcurrentQueries, configCopy, progressTracker, performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 }
             }

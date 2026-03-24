@@ -39,6 +39,13 @@ jobs:
         with:
           username: ${{ secrets.DOCKER_USER_NAME }}
           password: ${{ secrets.DOCKER_SECRET }}
+      - name: Build Runtime Base Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
+          context: .
+          file: ${{ github.workspace }}/docker/runtime/RuntimeBase.dockerfile
       - name: Build CLI Image
         uses: docker/build-push-action@v6
         with:
@@ -46,6 +53,7 @@ jobs:
           tags: nebulastream/nes-cli:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
           file: ${{ github.workspace }}/docker/frontend/cli.dockerfile
       - name: Build REPL Image
@@ -55,6 +63,7 @@ jobs:
           tags: nebulastream/nes-repl:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
           file: ${{ github.workspace }}/docker/frontend/repl.dockerfile
       - name: Build Embedded REPL Image
@@ -64,6 +73,7 @@ jobs:
           tags: nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
           file: ${{ github.workspace }}/docker/frontend/repl-embedded.dockerfile
       - name: Build single-node worker
@@ -73,6 +83,7 @@ jobs:
           tags: nebulastream/worker:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           build-args: |
             TAG=${{ needs.get-dev-images.outputs.image-tag }}
+            RUNTIME_TAG=${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
           file: ${{ github.workspace }}/docker/single-node-worker/SingleNodeWorker.dockerfile
 
@@ -91,6 +102,10 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Combine Manifests
         run: |
+          docker buildx imagetools create -t nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }} \
+            nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-x64 \
+            nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-arm64
+
           docker buildx imagetools create -t nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }} \
             nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-x64 \
             nebulastream/nes-repl-embedded:${{ inputs.dockerhub-tag }}-arm64
