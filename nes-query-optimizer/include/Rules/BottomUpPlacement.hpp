@@ -13,23 +13,25 @@
 */
 #pragma once
 
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
-#include <WorkerCatalog.hpp>
 
 namespace NES
 {
+
+struct CatalogRef;
+class NetworkTopology;
 
 /// Placement that traverses the topology from bottom-to-top based on the given capacities of the nodes.
 /// This does not change the structure of the plan in any way, it only assigns placement traits with node placements to the given
 /// logical operators.
 class BottomUpOperatorPlacer final
 {
-    SharedPtr<const WorkerCatalog> workerCatalog;
+    const CatalogRef& catalog;
+    const NetworkTopology& topology;
 
 public:
-    explicit BottomUpOperatorPlacer(SharedPtr<const WorkerCatalog> workerCatalog) : workerCatalog(std::move(workerCatalog)) { }
+    BottomUpOperatorPlacer(const CatalogRef& catalog, const NetworkTopology& topology)
+        : catalog(catalog), topology(topology) { }
 
     void apply(LogicalPlan& logicalPlan);
 };

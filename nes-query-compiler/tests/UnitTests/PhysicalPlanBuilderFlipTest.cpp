@@ -30,8 +30,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
@@ -70,12 +71,13 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor
-            = sourceCatalog.getInlineSource("File", schema, {{"type", "CSV"}}, {{"file_path", "/dev/null"}, {"host", "localhost"}});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sourceOp = SourcePhysicalOperator(
-            std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
-            OriginId(nextOriginId++));
+        auto descriptorConfig = SourceValidationProvider::provide("File", {{"file_path", "/dev/null"}});
+        EXPECT_TRUE(descriptorConfig.has_value());
+        auto parserConfig = ParserConfig::create({{"type", "CSV"}});
+        auto physicalId = PhysicalSourceId{nextOriginId};
+        LogicalSource logicalSource{physicalId.toString(), schema};
+        SourceDescriptor descriptor{physicalId, logicalSource, "File", Host("localhost"), std::move(descriptorConfig.value()), parserConfig};
+        auto sourceOp = SourcePhysicalOperator(std::move(descriptor), OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
@@ -84,9 +86,10 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getInlineSink(schema, "Print", {{"output_format", "CSV"}, {"host", "localhost"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto descriptorConfig = SinkDescriptor::validateAndFormatConfig("Print", {{"output_format", "CSV"}});
+        EXPECT_TRUE(descriptorConfig.has_value());
+        SinkDescriptor descriptor{nextSinkId++, schema, "Print", Host("localhost"), {}, std::move(descriptorConfig.value())};
+        auto sinkOp = SinkPhysicalOperator(std::move(descriptor));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
@@ -157,9 +160,8 @@ public:
         return visited.size();
     }
 
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
     uint64_t nextOriginId = 1;
+    mutable uint64_t nextSinkId = 1;
 };
 
 /// Sink -> Source. After finalize(), verify source is root with sink as descendant.

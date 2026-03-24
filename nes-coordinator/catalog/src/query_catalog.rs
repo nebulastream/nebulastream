@@ -300,7 +300,7 @@ mod tests {
     use model::worker::{CreateWorker, GetWorker};
     use proptest::prelude::*;
     use sea_orm::sqlx::types::chrono;
-    use std::collections::HashMap;
+    use std::collections::{HashMap, HashSet};
 
     async fn prop_create_and_get_query(req: CreateQuery) {
         let catalog = Catalog::for_test().await.query.clone();
@@ -370,6 +370,9 @@ mod tests {
     }
 
     async fn prop_fragment_exceeding_capacity_rejected(worker: CreateWorker, req: CreateQuery) {
+        if worker.capacity.is_none() {
+            return;
+        }
         let catalog = Catalog::for_test().await;
         catalog.worker.create_worker(worker.clone()).await.unwrap();
         let query = catalog.query.create_query(req).await.unwrap();
@@ -383,7 +386,7 @@ mod tests {
                         host_addr: worker.host_addr,
                         grpc_addr: worker.grpc_addr,
                         plan: serde_json::json!({}),
-                        used_capacity: worker.capacity + 1,
+                        used_capacity: worker.capacity.unwrap() + 1,
                         has_source: false,
                     }]
                 )
@@ -394,12 +397,15 @@ mod tests {
     }
 
     async fn prop_fragment_exactly_exhausts_capacity(worker: CreateWorker, req: CreateQuery) {
+        if worker.capacity.is_none() {
+            return;
+        }
         let catalog = Catalog::for_test().await;
         catalog.worker.create_worker(worker.clone()).await.unwrap();
         let query = catalog.query.create_query(req).await.unwrap();
 
-        let half = worker.capacity / 2;
-        let rest = worker.capacity - half;
+        let half = worker.capacity.unwrap() / 2;
+        let rest = worker.capacity.unwrap() - half;
 
         catalog
             .query
@@ -431,11 +437,11 @@ mod tests {
             .get_worker(GetWorker::all().with_host_addr(worker.host_addr))
             .await
             .unwrap();
-        assert_eq!(workers[0].capacity, 0);
+        assert_eq!(workers[0].capacity, Some(0));
     }
 
     async fn prop_fragment_zero_capacity(worker: CreateWorker, req: CreateQuery) {
-        let zero_worker = CreateWorker::new(worker.host_addr.clone(), worker.grpc_addr.clone(), 0);
+        let zero_worker = CreateWorker::new(worker.host_addr.clone(), worker.grpc_addr.clone(), Some(0));
         let catalog = Catalog::for_test().await;
         catalog.worker.create_worker(zero_worker).await.unwrap();
         let query = catalog.query.create_query(req).await.unwrap();
@@ -483,16 +489,16 @@ mod tests {
 
         let workers = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
         for w in &workers {
-            let initial = initial_capacities.get(&w.host_addr).copied().unwrap_or(0);
+            let initial = initial_capacities.get(&w.host_addr).copied().flatten();
             let used = expected_usage.get(&w.host_addr).copied().unwrap_or(0);
+            let expected = initial.map(|cap| cap - used);
             assert_eq!(
                 w.capacity,
-                initial - used,
-                "Worker {} capacity should be {} - {} = {}",
+                expected,
+                "Worker {} capacity mismatch: initial={:?}, used={}",
                 w.host_addr,
                 initial,
-                used,
-                initial - used
+                used
             );
         }
     }
@@ -506,11 +512,21 @@ mod tests {
         for w in &setup.workers {
             catalog.worker.create_worker(w.clone()).await.unwrap();
         }
-        let initial_total: i32 = setup.workers.iter().map(|w| w.capacity).sum();
+        let initial_total: i32 = setup.workers.iter().filter_map(|w| w.capacity).sum();
+        let capped_workers: HashSet<_> = setup
+            .workers
+            .iter()
+            .filter(|w| w.capacity.is_some())
+            .map(|w| &w.host_addr)
+            .collect();
 
         let query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(query.id);
-        let total_used: i32 = fragment_reqs.iter().map(|f| f.used_capacity).sum();
+        let total_used: i32 = fragment_reqs
+            .iter()
+            .filter(|f| capped_workers.contains(&f.host_addr))
+            .map(|f| f.used_capacity)
+            .sum();
         let fragments = catalog
             .query
             .create_fragments_for_query(fragment_reqs)
@@ -521,7 +537,7 @@ mod tests {
             let catalog = catalog.clone();
             async move {
                 let workers = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
-                workers.iter().map(|w| w.capacity).sum::<i32>()
+                workers.iter().filter_map(|w| w.capacity).sum::<i32>()
             }
         };
 
@@ -714,7 +730,7 @@ mod tests {
         for w in &setup.workers {
             catalog.worker.create_worker(w.clone()).await.unwrap();
         }
-        let initial_total: i32 = setup.workers.iter().map(|w| w.capacity).sum();
+        let initial_total: i32 = setup.workers.iter().filter_map(|w| w.capacity).sum();
 
         let created_query = catalog.query.create_query(req).await.unwrap();
         let fragment_reqs = setup.create_fragments(created_query.id);
@@ -734,7 +750,7 @@ mod tests {
             .get_worker(model::worker::GetWorker::all())
             .await
             .unwrap();
-        let final_total: i32 = workers.iter().map(|w| w.capacity).sum();
+        let final_total: i32 = workers.iter().filter_map(|w| w.capacity).sum();
 
         assert_eq!(
             initial_total, final_total,

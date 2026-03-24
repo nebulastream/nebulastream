@@ -21,13 +21,12 @@ namespace NES
 {
 
 SqlPlanner::SqlPlanner(
-    std::shared_ptr<const SourceCatalog> sourceCatalog,
-    std::shared_ptr<const SinkCatalog> sinkCatalog,
-    std::shared_ptr<const WorkerCatalog> workerCatalog,
+    const CatalogRef& catalog,
+    const NetworkTopology& topology,
     QueryOptimizerConfiguration optimizerConfig)
     : binder([](auto* queryCtx) { return AntlrSQLQueryParser::bindLogicalQueryPlan(queryCtx); })
-    , analyzer(sourceCatalog, sinkCatalog)
-    , optimizer(optimizerConfig, std::move(sourceCatalog), std::move(sinkCatalog), std::move(workerCatalog))
+    , analyzer(catalog)
+    , optimizer(std::move(optimizerConfig), catalog, topology)
 {
 }
 
@@ -65,7 +64,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             [](const CreatePhysicalSourceStatement& s) -> std::expected<StatementResult, Exception>
             {
                 return CreatePhysicalSourceResult{
-                    .logicalSourceName = std::string(s.attachedTo),
+                    .logicalSourceName = s.attachedTo.getRawValue(),
                     .sourceType = s.sourceType,
                     .sourceConfig = s.sourceConfig,
                     .parserConfig = s.parserConfig,
@@ -95,7 +94,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             // --- Drop: extract identifiers ---
             [](const DropLogicalSourceStatement& s) -> std::expected<StatementResult, Exception>
             {
-                return DropLogicalSourceResult{.name = std::string(s.source)};
+                return DropLogicalSourceResult{.name = s.source.getRawValue()};
             },
             [](const DropPhysicalSourceStatement& s) -> std::expected<StatementResult, Exception>
             {
@@ -122,7 +121,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             [](const ShowPhysicalSourcesStatement& s) -> std::expected<StatementResult, Exception>
             {
                 return ShowPhysicalSourcesResult{
-                    .logicalSourceName = s.logicalSource ? std::optional(std::string(*s.logicalSource)) : std::nullopt,
+                    .logicalSourceName = s.logicalSource ? std::optional(s.logicalSource->getRawValue()) : std::nullopt,
                     .id = s.id,
                 };
             },

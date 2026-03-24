@@ -17,20 +17,17 @@
 #include <Phases/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/BottomUpPlacement.hpp>
-#include <Rules/QueryDecomposition.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
-#include <Util/Pointers.hpp>
-#include <DistributedLogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
-DistributedLogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
+std::unordered_map<Host, std::vector<LogicalPlan>> QueryOptimizer::optimize(const LogicalPlan& plan) const
 {
     /// In the future, we will have a real rule matching engine / rule driver for our optimizer.
     /// For now, we just decide the join type (if one exists in the query), set the memory layout type and lower to physical operators in a pure function.
@@ -47,8 +44,8 @@ DistributedLogicalPlan QueryOptimizer::optimize(const LogicalPlan& plan) const
     optimizedPlan = joinTypeDecider.apply(optimizedPlan);
     optimizedPlan = memoryLayoutDecider.apply(optimizedPlan);
 
-    BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(optimizedPlan);
-    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog)).decompose(optimizedPlan);
+    BottomUpOperatorPlacer(catalog, topology).apply(optimizedPlan);
+    return QueryDecomposer(catalog, topology).decompose(optimizedPlan, defaultQueryOptimization.network);
 }
 
 }

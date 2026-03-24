@@ -11,7 +11,8 @@
 # limitations under the License.
 
 add_library(sql-planner)
-target_sources(sql-planner PRIVATE src/SqlPlanner.cpp)
+target_sources(sql-planner PRIVATE src/SqlPlanner.cpp src/CatalogReadInterface.cpp)
 target_include_directories(sql-planner PUBLIC include/)
 target_link_libraries(sql-planner
-    PUBLIC nes-sql-parser nes-query-optimizer nes-common)
+    PUBLIC nes-sql-parser nes-query-optimizer nes-common
+    PRIVATE nes-coordinator-bridge)

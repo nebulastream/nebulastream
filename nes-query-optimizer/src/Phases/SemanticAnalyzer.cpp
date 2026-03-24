@@ -28,11 +28,11 @@ namespace NES
 LogicalPlan SemanticAnalyzer::analyse(const LogicalPlan& plan) const
 {
     auto newPlan = LogicalPlan{plan};
-    const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
-    const auto inlineSinkBindingRule = InlineSinkBindingRule{sinkCatalog};
-    const auto inlineSourceBindingRule = InlineSourceBindingRule{sourceCatalog};
-    const auto sourceInference = SourceInferenceRule{sourceCatalog};
-    const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
+    const auto sinkBindingRule = SinkBindingRule{catalog};
+    const auto inlineSinkBindingRule = InlineSinkBindingRule{};
+    const auto inlineSourceBindingRule = InlineSourceBindingRule{};
+    const auto sourceInference = SourceInferenceRule{catalog};
+    const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{catalog};
     constexpr auto typeInferenceRule = TypeInferenceRule{};
     constexpr auto originIdInferenceRule = OriginIdInferenceRule{};
 

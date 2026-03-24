@@ -13,11 +13,8 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
@@ -28,13 +25,10 @@ namespace NES
 class InlineSourceBindingRule
 {
 public:
-    explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
-
     void apply(LogicalPlan& queryPlan) const;
 
 private:
     [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
 
 }

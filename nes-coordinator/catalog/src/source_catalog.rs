@@ -126,10 +126,13 @@ mod tests {
     }
 
     async fn prop_capacity_constraints(worker: CreateWorker) {
+        if worker.capacity.is_none() {
+            return;
+        }
         let catalog = Catalog::for_test().await;
 
         let mut negative = worker.clone();
-        negative.capacity = -worker.capacity.max(1);
+        negative.capacity = Some(-worker.capacity.unwrap().max(1));
 
         assert!(
             catalog.worker.create_worker(negative).await.is_err(),

@@ -1,6 +1,5 @@
 pub mod endpoint;
 pub mod network_link;
-pub mod topology;
 
 use endpoint::{GrpcAddr, HostAddr};
 use sea_orm::ActiveValue::Set;
@@ -41,7 +40,7 @@ pub struct Model {
     pub host_addr: HostAddr,
     #[sea_orm(unique)]
     pub grpc_addr: GrpcAddr,
-    pub capacity: i32,
+    pub capacity: Option<i32>,
     pub current_state: WorkerState,
     pub desired_state: DesiredWorkerState,
 }
@@ -94,13 +93,13 @@ impl ActiveModelBehavior for ActiveModel {
 pub struct CreateWorker {
     pub host_addr: HostAddr,
     pub grpc_addr: GrpcAddr,
-    pub capacity: i32,
+    pub capacity: Option<i32>,
     pub peers: Vec<HostAddr>,
     pub config: serde_json::Value,
 }
 
 impl CreateWorker {
-    pub fn new(host_addr: HostAddr, grpc_addr: GrpcAddr, capacity: i32) -> Self {
+    pub fn new(host_addr: HostAddr, grpc_addr: GrpcAddr, capacity: Option<i32>) -> Self {
         Self {
             host_addr,
             grpc_addr,
@@ -193,13 +192,14 @@ impl crate::Generate for CreateWorker {
 
 #[cfg(feature = "testing")]
 impl CreateWorker {
-    fn arb_capacity() -> impl proptest::prelude::Strategy<Value = i32> {
+    fn arb_capacity() -> impl proptest::prelude::Strategy<Value = Option<i32>> {
         use proptest::prelude::*;
         prop_oneof![
-            1 => Just(0i32),
-            5 => 1..=16i32,
-            3 => 17..=128i32,
-            1 => 129..=1024i32,
+            1 => Just(None),
+            1 => Just(Some(0i32)),
+            5 => (1..=16i32).prop_map(Some),
+            3 => (17..=128i32).prop_map(Some),
+            1 => (129..=1024i32).prop_map(Some),
         ]
     }
 

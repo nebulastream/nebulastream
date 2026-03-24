@@ -15,7 +15,7 @@
 
 # nes-repl-embedded
 add_executable(nes-repl-embedded repl/ReplStarter.cpp repl/Repl.cpp)
-target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-embedded-lib argparse::argparse replxx::replxx)
+target_link_libraries(nes-repl-embedded PUBLIC nes-frontend-lib argparse::argparse replxx::replxx)
 target_include_directories(nes-repl-embedded
         PUBLIC repl
 )

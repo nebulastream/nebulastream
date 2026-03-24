@@ -37,7 +37,6 @@
 namespace NES
 {
 class OperatorSerializationUtil;
-class SinkCatalog;
 }
 
 namespace NES
@@ -45,17 +44,24 @@ namespace NES
 
 class SinkDescriptor final : public Descriptor
 {
-    friend SinkCatalog;
     friend OperatorSerializationUtil;
     friend Unreflector<SinkDescriptor>;
+    friend Reflector<SinkDescriptor>;
 
 public:
     ~SinkDescriptor() = default;
 
+    SinkDescriptor(
+        std::variant<std::string, uint64_t> sinkName,
+        const Schema& schema,
+        std::string_view sinkType,
+        Host host,
+        const std::unordered_map<std::string, std::string>& formatConfig,
+        DescriptorConfig::Config config);
+
     friend std::ostream& operator<<(std::ostream& out, const SinkDescriptor& sinkDescriptor);
     friend bool operator==(const SinkDescriptor& lhs, const SinkDescriptor& rhs);
 
-    /// Will return "Native" as fallback, if the sink config does not use the OUTPUT_FORMAT parameter.
     [[nodiscard]] std::string getFormatType() const;
     [[nodiscard]] std::string getSinkType() const;
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
@@ -65,21 +71,11 @@ public:
     [[nodiscard]] std::unordered_map<std::string, std::string> getOutputFormatterConfig() const;
 
 private:
-    SinkDescriptor(
-        std::variant<std::string, uint64_t> sinkName,
-        const Schema& schema,
-        std::string_view sinkType,
-        Host host,
-        const std::unordered_map<std::string, std::string>& formatConfig,
-        DescriptorConfig::Config config);
-
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
     Host host;
     std::unordered_map<std::string, std::string> formatConfig;
-
-    friend Reflector<SinkDescriptor>;
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)

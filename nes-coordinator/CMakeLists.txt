@@ -14,6 +14,6 @@ add_subdirectory(sql-planner)
 
 corrosion_add_cxxbridge(
         nes-coordinator-bridge
-        CRATE coordinator-bridge
-        FILES bridge/src/lib.rs
+        CRATE coordinator_bridge
+        FILES lib.rs
 )

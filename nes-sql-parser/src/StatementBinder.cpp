@@ -334,7 +334,7 @@ public:
                 {
                     throw InvalidQuerySyntax("Filter value for SHOW QUERIES NAME must be a string");
                 }
-                return ShowQueriesStatement{.name = std::get<std::string>(value), .format = format};
+                return ShowQueriesStatement{.name = std::get<std::string>(value), .id = std::nullopt, .format = format};
             }
             if (attr == "ID")
             {
@@ -342,11 +342,11 @@ public:
                 {
                     throw InvalidQuerySyntax("Filter value for SHOW QUERIES ID must be an integer");
                 }
-                return ShowQueriesStatement{.id = std::get<int64_t>(value), .format = format};
+                return ShowQueriesStatement{.name = std::nullopt, .id = std::get<int64_t>(value), .format = format};
             }
             throw InvalidQuerySyntax("Filter for SHOW QUERIES must be on NAME or ID attribute");
         }
-        return ShowQueriesStatement{.format = format};
+        return ShowQueriesStatement{.name = std::nullopt, .id = std::nullopt, .format = format};
     }
 
     Statement bindShowStatement(AntlrSQLParser::ShowStatementContext* showAST) const
@@ -391,7 +391,7 @@ public:
                 }
                 return ShowWorkersStatement{.host = std::get<std::string>(value), .format = format};
             }
-            return ShowWorkersStatement{.format = format};
+            return ShowWorkersStatement{.host = std::nullopt, .format = format};
         }
         throw InvalidStatement("Unrecognized SHOW statement");
     }

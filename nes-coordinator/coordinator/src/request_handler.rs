@@ -248,7 +248,7 @@ mod tests {
             let worker = CreateWorker::new(
                 NetworkAddr::new("test-host".to_string(), 9000),
                 NetworkAddr::new("test-host".to_string(), 9001),
-                100,
+                Some(100),
             );
             catalog.worker.create_worker(worker).await.unwrap();
             let (sender, receiver) = flume::bounded(16);

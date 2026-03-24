@@ -32,10 +32,8 @@
 namespace NES
 {
 
-// Forward declarations — these will be provided by Rust-backed adapters via the FFI bridge.
-class SourceCatalog;
-class SinkCatalog;
-class WorkerCatalog;
+struct CatalogRef;
+class NetworkTopology;
 
 /// --------------------------------------------------------------------------
 /// StatementResult: the output of the SqlPlanner.
@@ -107,7 +105,7 @@ struct QueryPlanResult
 {
     /// User-provided query name from SQL.
     std::optional<std::string> name;
-    DistributedLogicalPlan plan;
+    std::unordered_map<Host, std::vector<LogicalPlan>> plan;
 };
 
 struct ExplainQueryResult
@@ -179,9 +177,8 @@ class SqlPlanner
 {
 public:
     SqlPlanner(
-        std::shared_ptr<const SourceCatalog> sourceCatalog,
-        std::shared_ptr<const SinkCatalog> sinkCatalog,
-        std::shared_ptr<const WorkerCatalog> workerCatalog,
+        const CatalogRef& catalog,
+        const NetworkTopology& topology,
         QueryOptimizerConfiguration optimizerConfig = {});
 
     /// Parse and plan a single SQL statement.

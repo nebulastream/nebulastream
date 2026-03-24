@@ -16,6 +16,7 @@
 
 #include <ranges>
 #include <vector>
+#include <CatalogReadInterface.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
@@ -40,7 +41,7 @@ void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
                     return sinkOperator.value();
                 }
 
-                const auto sinkDescriptor = sinkCatalog->getSinkDescriptor(sinkOperator->get().getSinkName());
+                const auto sinkDescriptor = getSinkDescriptor(catalog, sinkOperator->get().getSinkName());
                 if (not sinkDescriptor.has_value())
                 {
                     throw UnknownSinkName("{}", sinkOperator->get().getSinkName());

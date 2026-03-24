@@ -13,31 +13,22 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
 
 #include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
-class SinkCatalog;
-class SourceCatalog;
-}
 
-namespace NES
-{
+struct CatalogRef;
+
 class SemanticAnalyzer
 {
 public:
     [[nodiscard]] LogicalPlan analyse(const LogicalPlan& plan) const;
 
-    explicit SemanticAnalyzer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
-    {
-    }
+    explicit SemanticAnalyzer(const CatalogRef& catalog) : catalog(catalog) { }
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const CatalogRef& catalog;
 };
 }

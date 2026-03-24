@@ -2,8 +2,8 @@ use crate::database::Database;
 use crate::notification::{NotificationChannel, Reconcilable};
 use anyhow::{Result, ensure};
 use model::IntoCondition;
+use model::worker::endpoint::HostAddr;
 use model::worker::network_link;
-use model::worker::topology::TopologyGraph;
 use model::worker::{
     self, CreateWorker, DesiredWorkerState, DropWorker, Entity as WorkerEntity, GetWorker,
     WorkerState,
@@ -95,14 +95,14 @@ impl WorkerCatalog {
         Ok(updated)
     }
 
-    pub async fn get_topology(&self) -> Result<TopologyGraph> {
+    pub async fn get_topology(&self) -> Result<(Vec<worker::Model>, Vec<(HostAddr, HostAddr)>)> {
         let workers = WorkerEntity::find().all(&self.db.conn).await?;
         let links = network_link::Entity::find().all(&self.db.conn).await?;
         let edges = links
             .into_iter()
             .map(|l| (l.source_host_addr, l.target_host_addr))
             .collect();
-        Ok(TopologyGraph::from_parts(workers, edges)?)
+        Ok((workers, edges))
     }
 }
 
@@ -133,7 +133,6 @@ mod tests {
     use model::Generate;
     use model::query::CreateQuery;
     use model::query::fragment::CreateFragment;
-    use model::worker::topology::CycleDetected;
     use proptest::prelude::*;
 
     /// Upper bound on workers generated per test case. Kept low because potential
@@ -357,41 +356,6 @@ mod tests {
         }
     }
 
-    async fn prop_dag_topology_round_trip(workers: Vec<CreateWorker>) {
-        let catalog = Catalog::for_test().await;
-
-        for worker in &workers {
-            catalog.worker.create_worker(worker.clone()).await.unwrap();
-        }
-
-        let result = catalog.worker.get_topology().await;
-        assert!(
-            result.is_ok(),
-            "Generated DAG should validate: {:?}",
-            result.err()
-        );
-        let topo = result.unwrap();
-        assert_eq!(topo.len(), workers.len());
-    }
-
-    async fn prop_cycle_detection(w1: CreateWorker, w2: CreateWorker) {
-        if w1.host_addr == w2.host_addr || w1.grpc_addr == w2.grpc_addr {
-            return;
-        }
-
-        let catalog = Catalog::for_test().await;
-
-        let w1 = w1.with_peers(vec![w2.host_addr.clone()]);
-        let w2 = w2.with_peers(vec![w1.host_addr.clone()]);
-        catalog.worker.create_worker(w1).await.unwrap();
-        catalog.worker.create_worker(w2).await.unwrap();
-
-        let result = catalog.worker.get_topology().await;
-        assert!(result.is_err(), "Mutual peers should form a cycle");
-        let err = result.unwrap_err();
-        assert!(err.downcast_ref::<CycleDetected>().is_some());
-    }
-
     proptest! {
         #[test]
         fn create_and_get_worker(req in CreateWorker::generate()) {
@@ -463,18 +427,5 @@ mod tests {
             });
         }
 
-        #[test]
-        fn dag_topology_round_trip(workers in CreateWorker::dag_topology(MAX_TEST_WORKERS)) {
-            test_prop(|| async move {
-                prop_dag_topology_round_trip(workers).await;
-            });
-        }
-
-        #[test]
-        fn cycle_detection((w1, w2) in (CreateWorker::generate(), CreateWorker::generate())) {
-            test_prop(|| async move {
-                prop_cycle_detection(w1, w2).await;
-            });
-        }
     }
 }

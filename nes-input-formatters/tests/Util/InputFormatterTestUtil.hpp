@@ -154,7 +154,6 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
 ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
-    SourceCatalog& sourceCatalog,
     const std::string& filePath,
     const Schema& schema,
     std::shared_ptr<BufferManager> sourceBufferPool,

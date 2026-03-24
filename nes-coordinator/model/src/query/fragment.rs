@@ -234,7 +234,7 @@ impl crate::Generate for ValidFragments {
         )
             .prop_map(|(workers, fragment_params)| {
                 let mut remaining_capacity: Vec<i32> =
-                    workers.iter().map(|w| w.capacity).collect();
+                    workers.iter().map(|w| w.capacity.unwrap_or(i32::MAX)).collect();
                 let num_workers = workers.len();
 
                 let mut fragment_specs = Vec::new();

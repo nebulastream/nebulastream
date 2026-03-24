@@ -46,7 +46,8 @@ CREATE TRIGGER IF NOT EXISTS acquire_worker_capacity
 BEGIN
     UPDATE worker
     SET capacity = capacity - NEW.used_capacity
-    WHERE host_addr = NEW.host_addr;
+    WHERE host_addr = NEW.host_addr
+    AND capacity IS NOT NULL;
 END;
 
 CREATE TRIGGER IF NOT EXISTS release_fragment_capacity
@@ -56,7 +57,8 @@ CREATE TRIGGER IF NOT EXISTS release_fragment_capacity
 BEGIN
     UPDATE worker
     SET capacity = capacity + NEW.used_capacity
-    WHERE host_addr = NEW.host_addr;
+    WHERE host_addr = NEW.host_addr
+    AND capacity IS NOT NULL;
 END;
 
 CREATE TRIGGER IF NOT EXISTS derive_query_state_on_fragment_update

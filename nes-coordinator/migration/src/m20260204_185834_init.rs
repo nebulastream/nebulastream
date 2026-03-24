@@ -80,8 +80,8 @@ impl MigrationTrait for Migration {
                     .col(
                         ColumnDef::new(Worker::Capacity)
                             .integer()
-                            .not_null()
-                            .check(Expr::col(Worker::Capacity).gte(0)),
+                            .null()
+                            .check(Expr::col(Worker::Capacity).is_null().or(Expr::col(Worker::Capacity).gte(0))),
                     )
                     .col(
                         ColumnDef::new(Worker::CurrentState)

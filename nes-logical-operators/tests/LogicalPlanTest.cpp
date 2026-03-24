@@ -32,8 +32,8 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/Reflection.hpp>
 #include <Util/UUID.hpp>
@@ -52,16 +52,14 @@ protected:
     LogicalPlanTest()
         : sourceOp{SourceNameLogicalOperator("Source")}
         , sourceOp2(
-              [this]
+              []
               {
                   const auto dummySchema = Schema{};
-                  const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
-                  const std::unordered_map<std::string, std::string> dummyParserConfig
-                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
-                  auto dummySourceDescriptor
-                      = sourceCatalog
-                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)
-                            .value();
+                  LogicalSource logicalSource{"Source", dummySchema};
+                  auto parserConfig = ParserConfig::create({{"type", "CSV"}});
+                  auto descriptorConfig = SourceValidationProvider::provide("File", {{"file_path", "/dev/null"}});
+                  SourceDescriptor dummySourceDescriptor{
+                      PhysicalSourceId{1}, logicalSource, "File", Host("localhost"), std::move(descriptorConfig.value()), parserConfig};
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())
         , selectionOp{SelectionLogicalOperator(FieldAccessLogicalFunction("logicalfunction"))}
@@ -69,7 +67,6 @@ protected:
     {
     }
 
-    SourceCatalog sourceCatalog;
     LogicalOperator sourceOp;
     LogicalOperator sourceOp2;
     LogicalOperator selectionOp;
