@@ -23,7 +23,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/val.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <val_ptr.hpp>
+#include <Time/Timestamp.hpp>
 
 namespace NES
 {
@@ -87,6 +89,15 @@ Record PagedVectorRef::readRecord(const nautilus::val<uint64_t>& pos, const std:
     auto recordEntry = invoke(getBufferPosForEntryProxy, pagedVectorRef, pos);
     const auto record = bufferRef->readRecord(projections, recordBuffer, recordEntry);
     return record;
+}
+
+void updateTimestamp(const Timestamp timestamp, PagedVector* vec)
+{
+    vec->updateTimestamp(timestamp);
+}
+void PagedVectorRef::updateSourceCreationTimestamp(const nautilus::val<Timestamp>& ts) const
+{
+    nautilus::invoke(updateTimestamp, ts, pagedVectorRef);
 }
 
 PagedVectorRefIter PagedVectorRef::begin(const std::vector<Record::RecordFieldIdentifier>& projections) const

@@ -67,6 +67,10 @@ void NLJOperatorHandler::emitSlicesToProbe(
 {
     auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
     auto& nljSliceRight = dynamic_cast<NLJSlice&>(sliceRight);
+    /// Infer the source creation timestamp for this buffer by taking the maximum timestamp of all involved paged vectors
+    const Timestamp leftMaxTimestamp = nljSliceLeft.getMaximumTimestamp();
+    const Timestamp rightMaxTimestamp = nljSliceRight.getMaximumTimestamp();
+    const Timestamp inferredSourceInsertionTimestamp = std::max(leftMaxTimestamp, rightMaxTimestamp);
 
     nljSliceLeft.combinePagedVectors();
     nljSliceRight.combinePagedVectors();
@@ -84,6 +88,8 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    tupleBuffer.setSourceCreationTimestampInMS(inferredSourceInsertionTimestamp);
+
     new (tupleBuffer.getAvailableMemoryArea().data())
         EmittedNLJWindowTrigger{windowInfo, sliceLeft.getSliceEnd(), sliceRight.getSliceEnd()};
 

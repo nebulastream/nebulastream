@@ -111,4 +111,14 @@ void RecordBuffer::setCreationTs(const nautilus::val<Timestamp>& creationTs)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setCreationTimestampInMS, tupleBufferRef, creationTs);
 }
 
+nautilus::val<Timestamp> RecordBuffer::getSourceCreationTs()
+{
+    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSourceCreationTimestampInMS, tupleBufferRef)};
+}
+
+void RecordBuffer::setSourceCreationTs(const nautilus::val<Timestamp>& sourceCreationTs)
+{
+    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSourceCreationTimestampInMS, tupleBufferRef, sourceCreationTs);
+}
+
 }

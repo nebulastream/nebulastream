@@ -43,6 +43,7 @@ nes-asp/data/*.csv
 *.undo
 
 scripts/__pycache__
+testing/rustServer/target
 .ccache
 
 # Ignore nix symlinks

@@ -23,6 +23,7 @@
 #include <memory>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
@@ -31,9 +32,12 @@
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
+#include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp"
 
 namespace NES
 {
@@ -114,6 +118,9 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// Counting how many tuples the probe has to check for this probe task
     uint64_t totalNumberOfTuples = 0;
 
+    /// Maximum source insertion timestamp of all hashmaps
+    Timestamp inferredSourceInsertionTimestamp{0_u64};
+
     /// Getting all hash maps for the left and right slice
     auto getHashMapsForSlice = [&](const Slice& slice, const JoinBuildSideType& buildSide)
     {
@@ -125,6 +132,8 @@ void HJOperatorHandler::emitSlicesToProbe(
             if (auto* hashMap = hashJoinSlice->getHashMapPtr(WorkerThreadId(hashMapIdx), buildSide);
                 hashMap and hashMap->getNumberOfTuples() > 0)
             {
+                const auto asChained = dynamic_cast<ChainedHashMap*>(hashMap);
+                inferredSourceInsertionTimestamp = std::max(inferredSourceInsertionTimestamp, asChained->getTimestamp());
                 /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
                 rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
 
@@ -158,6 +167,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
+    tupleBuffer.setSourceCreationTimestampInMS(inferredSourceInsertionTimestamp);
 
     /// Writing all necessary information for the probe to the buffer via the placement constructor
     new (tupleBuffer.getAvailableMemoryArea().data()) EmittedHJWindowTrigger{windowInfo, leftHashMaps, rightHashMaps};
