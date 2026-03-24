@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # The Development CI image installs a github runner specific user
 ARG TAG=latest
 FROM nebulastream/nes-development:${TAG}

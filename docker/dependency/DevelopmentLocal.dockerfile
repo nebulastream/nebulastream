@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # This image is build locally on a developers machine. It installs the current user into the container instead of
 # relying on the root user. Ubuntu 24 by default installs the ubuntu user which is replaced.
 ARG TAG=latest

@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # The benchmarking image adds common benchmarking tools and python modules need to run the benchmarking scripts and
 # upload the results
 ARG TAG=latest

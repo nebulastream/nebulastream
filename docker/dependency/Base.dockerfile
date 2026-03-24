@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # The Base Dockerfile installs and configures all relevant tooling to build the dependencies and NebulaStream.
 # Currently our compiler toolchain is based on llvm-18 using libc++.
 # Additionally we install a recent CMake version and the mold linker.
