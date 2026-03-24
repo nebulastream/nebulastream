@@ -15,13 +15,10 @@ add_plugin_as_library(Void Sink nes-sinks-registry void_sink_plugin VoidSink.cpp
 add_plugin_as_library(Void SinkValidation nes-sinks-registry void_sink_validation_plugin VoidSink.cpp)
 
 target_include_directories(void_sink_plugin
-        PUBLIC include .
+        PUBLIC include
+        PRIVATE .
 )
 target_include_directories(void_sink_validation_plugin
-        PUBLIC include .
+        PUBLIC include
+        PRIVATE .
 )
-
-target_link_libraries(void_sink_plugin PUBLIC nes-sinks)
-target_link_libraries(void_sink_validation_plugin PUBLIC nes-sinks)
-
-add_tests_if_enabled(tests)

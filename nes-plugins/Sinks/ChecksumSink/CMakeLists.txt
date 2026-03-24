@@ -15,15 +15,13 @@ add_plugin_as_library(Checksum Sink nes-sinks-registry checksum_sink_plugin Chec
 add_plugin_as_library(Checksum SinkValidation nes-sinks-registry checksum_sink_validation_plugin ChecksumSink.cpp)
 
 target_include_directories(checksum_sink_plugin
-        PUBLIC include .
+        PUBLIC include
+        PRIVATE .
 )
 target_include_directories(checksum_sink_validation_plugin
-        PUBLIC include .
+        PUBLIC include
+        PRIVATE .
 )
 
-target_link_libraries(checksum_sink_plugin PUBLIC nes-sinks)
-target_link_libraries(checksum_sink_validation_plugin PUBLIC nes-sinks)
-target_link_libraries(checksum_sink_plugin PUBLIC systest-checksum)
-target_link_libraries(checksum_sink_validation_plugin PUBLIC systest-checksum)
-
-add_tests_if_enabled(tests)
+target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
+target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
