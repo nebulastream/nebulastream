@@ -28,13 +28,13 @@ class VoidSinkTest : public ::testing::Test
 TEST_F(VoidSinkTest, validateAndFormatEmptyConfig)
 {
     /// VoidSink has no required parameters, so an empty config should succeed
-    std::unordered_map<std::string, std::string> config;
+    const std::unordered_map<std::string, std::string> config;
     EXPECT_NO_THROW((void)VoidSink::validateAndFormat(config));
 }
 
 TEST_F(VoidSinkTest, validateAndFormatReturnsConfig)
 {
-    std::unordered_map<std::string, std::string> config;
+    const std::unordered_map<std::string, std::string> config;
     const auto result = VoidSink::validateAndFormat(config);
     /// The returned config should be a valid DescriptorConfig::Config (non-empty map)
     EXPECT_TRUE(result.empty() || !result.empty());
