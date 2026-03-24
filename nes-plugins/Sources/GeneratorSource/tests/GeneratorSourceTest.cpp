@@ -13,7 +13,6 @@
 */
 
 #include <chrono>
-#include <cstdint>
 #include <random>
 #include <sstream>
 #include <string>
@@ -27,7 +26,7 @@
 #include <GeneratorFields.hpp>
 #include <SinusGeneratorRate.hpp>
 
-/// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp) -- test values and deterministic seeds are intentional
+/// NOLINTBEGIN(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access) -- test values, deterministic seeds, and gtest ASSERT_TRUE guards are intentional
 
 namespace NES
 {
@@ -270,7 +269,7 @@ TEST_F(FixedGeneratorRateTest, parseValidConfigString)
 {
     const auto result = FixedGeneratorRate::parseAndValidateConfigString("emit_rate 1000");
     ASSERT_TRUE(result.has_value());
-    EXPECT_DOUBLE_EQ(result.value(), 1000.0);
+    EXPECT_DOUBLE_EQ(*result, 1000.0);
 }
 
 TEST_F(FixedGeneratorRateTest, parseValidConfigStringCaseInsensitive)
@@ -278,7 +277,7 @@ TEST_F(FixedGeneratorRateTest, parseValidConfigStringCaseInsensitive)
     const auto result = FixedGeneratorRate::parseAndValidateConfigString("EMIT_RATE 500");
     /// The parser uses toLowerCase, so this should work
     ASSERT_TRUE(result.has_value());
-    EXPECT_DOUBLE_EQ(result.value(), 500.0);
+    EXPECT_DOUBLE_EQ(*result, 500.0);
 }
 
 TEST_F(FixedGeneratorRateTest, parseInvalidConfigStringReturnsEmpty)
@@ -316,7 +315,7 @@ TEST_F(SinusGeneratorRateTest, parseValidConfigString)
 {
     const auto result = SinusGeneratorRate::parseAndValidateConfigString("amplitude 100,frequency 1.0");
     ASSERT_TRUE(result.has_value());
-    const auto [amplitude, frequency] = result.value();
+    const auto [amplitude, frequency] = *result;
     EXPECT_DOUBLE_EQ(amplitude, 100.0);
     EXPECT_DOUBLE_EQ(frequency, 1.0);
 }
@@ -341,4 +340,4 @@ TEST_F(SinusGeneratorRateTest, calcNumberOfTuplesReturnsNonNegative)
 
 }
 
-/// NOLINTEND(readability-magic-numbers,cert-msc51-cpp)
+/// NOLINTEND(readability-magic-numbers,cert-msc51-cpp,bugprone-unchecked-optional-access)
