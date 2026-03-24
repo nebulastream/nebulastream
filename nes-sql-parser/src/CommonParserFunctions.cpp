@@ -136,7 +136,7 @@ configOptionToValue(const std::pair<const std::string, std::variant<Literal, Sch
 }
 } /// namespace
 
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
+std::unordered_map<std::string, std::string> parseInputFormatterConfig(const ConfigMap& configOptions)
 {
     auto parserConfig = std::unordered_map<std::string, std::string>{};
 
@@ -148,6 +148,22 @@ std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& co
     }
     return parserConfig;
 }
+
+std::unordered_map<std::string, std::string> parseOutputFormatterConfig(const ConfigMap& configOptions)
+{
+    auto parserConfig = std::unordered_map<std::string, std::string>{};
+
+    if (const auto parserConfigIter = configOptions.find("OUTPUT_FORMATTER"); parserConfigIter != configOptions.end())
+    {
+        parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
+            | std::views::filter([](const auto& opt) { return opt.has_value(); })
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+    }
+    return parserConfig;
+}
+
+
+
 
 std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)
 {

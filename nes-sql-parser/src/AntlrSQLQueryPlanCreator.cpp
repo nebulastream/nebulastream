@@ -93,7 +93,7 @@ LogicalPlan AntlrSQLQueryPlanCreator::getQueryPlan() const
             {
                 const auto& [type, configOptions] = inlineSink;
                 const auto sinkConfig = getSinkConfig(configOptions);
-                const auto formatConfig = getParserConfig(configOptions);
+                const auto formatConfig = parseOutputFormatterConfig(configOptions);
                 const auto schemaOpt = getSinkSchema(configOptions);
                 const Schema schema = (schemaOpt.has_value() ? schemaOpt.value() : Schema{});
                 return LogicalPlanBuilder::addInlineSink(type, schema, sinkConfig, formatConfig, queryPlans.top());
@@ -470,7 +470,7 @@ void AntlrSQLQueryPlanCreator::exitPrimaryQuery(AntlrSQLParser::PrimaryQueryCont
         if (helpers.top().getSource().empty())
         {
             const auto [type, configOptions] = helpers.top().getInlineSourceConfig();
-            const auto parserConfig = getParserConfig(configOptions);
+            const auto parserConfig = parseInputFormatterConfig(configOptions);
             const auto sourceConfig = getSourceConfig(configOptions);
             const auto schema = getSourceSchema(configOptions);
             if (!schema.has_value())

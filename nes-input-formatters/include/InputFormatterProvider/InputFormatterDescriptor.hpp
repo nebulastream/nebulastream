@@ -29,11 +29,11 @@ enum class InputFormatterThreadingMode : uint8_t
 };
 
 /// Descriptor that stores the configuration parameters of a specific InputFormatter instance
-/// Currently, there are no parameters that are shared by all types of InputFormatters.
 /// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
 class InputFormatterDescriptor final : public Descriptor
 {
     static constexpr std::string_view TYPE_STRING{"type"};
+
 public:
     ~InputFormatterDescriptor() = default;
 
@@ -62,51 +62,51 @@ public:
     /// A user may overwrite the parsing function for every input type
     static inline const DescriptorConfig::ConfigParameter<std::string> INT8_PARSER{
         "int8_parser",
-        "Default",
+        "DefaultINT8",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INT8_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> INT16_PARSER{
         "int16_parser",
-        "Default",
+        "DefaultINT16",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INT16_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> INT32_PARSER{
         "int32_parser",
-        "Default",
+        "DefaultINT32",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INT32_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> INT64_PARSER{
         "int64_parser",
-        "Default",
+        "DefaultINT64",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INT64_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> UINT8_PARSER{
         "uint8_parser",
-        "Default",
+        "DefaultUINT8",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(UINT8_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> UINT16_PARSER{
         "uint16_parser",
-        "Default",
+        "DefaultUINT16",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(UINT16_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> UINT32_PARSER{
         "uint32_parser",
-        "Default",
+        "DefaultUINT32",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(UINT32_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> UINT64_PARSER{
         "uint64_parser",
-        "Default",
+        "DefaultUINT64",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(UINT64_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> F32_PARSER{
         "f32_parser",
-        "Default",
+        "DefaultF32",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(F32_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> F64_PARSER{
         "f64_parser",
-        "Default",
+        "DefaultF64",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(F64_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> BOOL_PARSER{
         "bool_parser",
-        "Default",
+        "DefaultBOOL",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BOOL_PARSER, config); }};
     static inline const DescriptorConfig::ConfigParameter<std::string> CHAR_PARSER{
         "char_parser",
-        "Default",
+        "DefaultCHAR",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHAR_PARSER, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap

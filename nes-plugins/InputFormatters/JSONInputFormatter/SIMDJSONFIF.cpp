@@ -102,56 +102,57 @@ void SIMDJSONFIF::writeValueToRecord(
     const std::string& fieldName,
     const nautilus::val<FieldIndex>& fieldIndex,
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-    const nautilus::val<const SIMDJSONMetaData*>& metaData) const
+    const nautilus::val<const SIMDJSONMetaData*>& metaData,
+    const std::string& parserType) const
 {
     switch (dataType.type)
     {
         case DataType::Type::INT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int8_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<int8_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::INT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int16_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<int16_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::INT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int32_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<int32_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::INT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<int64_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<int64_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::UINT8: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint8_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<uint8_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::UINT16: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint16_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<uint16_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::UINT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint32_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<uint32_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::UINT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<uint64_t>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<uint64_t>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<float>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<float>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<double>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<double>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::CHAR: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<char>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<char>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseJsonFixedSizeIntoVarVal<bool>(dataType.nullable, fieldIndex, fieldIndexFunction, metaData));
+            parseJsonFixedSizeIntoVarVal<bool>(dataType, record, fieldName, fieldIndex, fieldIndexFunction, metaData, parserType);
             return;
         }
         case DataType::Type::VARSIZED: {

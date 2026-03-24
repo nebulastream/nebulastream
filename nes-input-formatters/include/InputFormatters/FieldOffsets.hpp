@@ -81,7 +81,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+        nautilus::val<FieldOffsets*> fieldOffsetsPtr,
+        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -107,7 +108,14 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             parseRawValueIntoRecord(
-                fieldDataType, record, fieldAddress, fieldSize, fieldName, metaData.getNullValues(), metaData.getQuotationType());
+                fieldDataType,
+                record,
+                fieldAddress,
+                fieldSize,
+                fieldName,
+                metaData.getNullValues(),
+                metaData.getQuotationType(),
+                parserTypes.at(fieldDataType.type));
         }
         return record;
     }
@@ -118,7 +126,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        const nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
+        const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
+        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
@@ -144,7 +153,14 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             parseRawValueIntoRecord(
-                fieldDataType, record, fieldAddress, fieldSize, fieldName, metaData.getNullValues(), metaData.getQuotationType());
+                fieldDataType,
+                record,
+                fieldAddress,
+                fieldSize,
+                fieldName,
+                metaData.getNullValues(),
+                metaData.getQuotationType(),
+                parserTypes.at(fieldDataType.type));
         }
         return record;
     }
