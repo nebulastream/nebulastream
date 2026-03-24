@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <chrono>
+#include <cstdint>
 #include <random>
 #include <sstream>
 #include <string>
@@ -257,6 +259,85 @@ TEST_F(GeneratorTest, shouldNotStopWithNonePolicy)
 TEST_F(GeneratorTest, invalidSchemaThrows)
 {
     EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "INVALID_TYPE 0 10 1"), Exception);
+}
+
+/// Sequence continues past its end when stop policy is NONE (wraps silently).
+TEST_F(GeneratorTest, sequenceFieldContinuesPastEndWithNonePolicy)
+{
+    Generator generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 2 1");
+    std::ostringstream oss;
+
+    generator.generateTuple(oss); /// 0
+    oss.str("");
+    generator.generateTuple(oss); /// 1
+    oss.str("");
+    generator.generateTuple(oss); /// past end, still produces output
+    EXPECT_FALSE(oss.str().empty());
+}
+
+/// Deterministic: same seed produces identical output across multiple tuples.
+TEST_F(GeneratorTest, deterministicOutputWithSameSeed)
+{
+    auto run = [](uint64_t seed)
+    {
+        Generator gen(seed, GeneratorStop::NONE, "NORMAL_DISTRIBUTION FLOAT64 0 1,SEQUENCE UINT64 0 1000 1");
+        std::ostringstream oss;
+        for (int i = 0; i < 10; ++i)
+        {
+            gen.generateTuple(oss);
+        }
+        return oss.str();
+    };
+
+    EXPECT_EQ(run(123U), run(123U));
+    EXPECT_NE(run(123U), run(456U));
+}
+
+/// Mixed field types: sequence + random string in a single row.
+TEST_F(GeneratorTest, mixedFieldTypesProduceCorrectDelimiters)
+{
+    Generator generator(42U, GeneratorStop::NONE, "SEQUENCE UINT64 0 100 1,RANDOMSTR 3 3");
+    std::ostringstream oss;
+
+    generator.generateTuple(oss);
+    const auto output = oss.str();
+    /// Should have exactly one comma (two fields) and end with newline
+    EXPECT_EQ(std::count(output.begin(), output.end(), ','), 1);
+    EXPECT_EQ(output.back(), '\n');
+}
+
+/// ALL stop policy requires all sequences to finish before stopping.
+TEST_F(GeneratorTest, allStopPolicyWaitsForAllSequences)
+{
+    /// First field: 3 values (0,1,2), second field: 5 values (0,1,2,3,4)
+    Generator generator(42U, GeneratorStop::ALL, "SEQUENCE UINT64 0 3 1,SEQUENCE UINT64 0 5 1");
+    std::ostringstream oss;
+
+    /// After 3 tuples, first sequence is done but second isn't — should not stop yet
+    for (int i = 0; i < 3; ++i)
+    {
+        generator.generateTuple(oss);
+    }
+    EXPECT_FALSE(generator.shouldStop());
+
+    /// After 5 tuples, both sequences are done — should stop
+    for (int i = 0; i < 2; ++i)
+    {
+        generator.generateTuple(oss);
+    }
+    EXPECT_TRUE(generator.shouldStop());
+}
+
+/// Empty schema line within a multi-field schema is rejected.
+TEST_F(GeneratorTest, emptySchemaThrows)
+{
+    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, ""), Exception);
+}
+
+/// Schema with only whitespace is rejected.
+TEST_F(GeneratorTest, whitespaceOnlySchemaThrows)
+{
+    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "   "), Exception);
 }
 
 /// --- FixedGeneratorRate Tests ---
