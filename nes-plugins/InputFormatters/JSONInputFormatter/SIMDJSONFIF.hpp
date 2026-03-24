@@ -51,10 +51,12 @@ class SIMDJSONFIF;
 struct SIMDJSONMetaData;
 
 template <typename T>
-struct ParseResultFixed
+struct RawResultFixed
 {
-    T value;
+    T nullValue;
     bool isNull;
+    const int8_t* ptrToRawJson;
+    uint64_t sizeOfRawJson;
 };
 
 struct ParsedResultVariableSized
@@ -65,11 +67,7 @@ struct ParsedResultVariableSized
 };
 
 template <typename T, bool Nullable>
-requires(
-    not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
-        || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResultFixed<T>*
-parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData);
+RawResultFixed<T>* getRawJsonWithNullCheck(FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData);
 
 bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData) noexcept;
 
@@ -133,8 +131,8 @@ struct SIMDJSONMetaData
 
     [[nodiscard]] static const std::vector<std::string>& getNullValues()
     {
-        INVARIANT(false, "This method should not be called, as SIMDJson has a is_null() method");
-        std::unreachable();
+        static std::vector<std::string> nullValues{""};
+        return nullValues;
     }
 
     [[nodiscard]] uint64_t getNumberOfFields() const
@@ -166,24 +164,42 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction);
 
     template <typename T>
-    [[nodiscard]] VarVal parseJsonFixedSizeIntoVarVal(
-        const bool nullable,
+    void parseJsonFixedSizeIntoVarVal(
+        const DataType dataType,
+        Record& record,
+        const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<const SIMDJSONMetaData*>& metaData) const
+        const nautilus::val<const SIMDJSONMetaData*>& metaData,
+        const std::string& parserType) const
     {
-        if (nullable)
+        if (dataType.nullable)
         {
-            const auto parseResult = nautilus::invoke(
-                {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, true>, fieldIndex, fieldIndexFunction, metaData);
-            const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-            const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
-            return VarVal{nautilusValue, nullable, isNull};
+            /// We need to do a nullcheck
+            /// We use the SIMDJSON interface for this and return early, if the value is null
+            const auto parseResult
+                = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, true>, fieldIndex, fieldIndexFunction, metaData);
+            const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(RawResultFixed<T>, nullValue));
+            const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(RawResultFixed<T>, isNull));
+            if (isNull)
+            {
+                record.write(fieldName, VarVal{nautilusValue, nautilus::val<bool>{true}, isNull});
+            }
+            else
+            {
+                /// Get the ptr and size of the raw value and let the raw value parser handle the rest
+                const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
+                const nautilus::val<uint64_t> size
+                    = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
+                parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+            }
+            return;
         }
-        const auto parseResult = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, false>, fieldIndex, fieldIndexFunction, metaData);
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-        return VarVal{nautilusValue, nullable, false};
+        const auto parseResult
+            = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
+        const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
+        const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
+        parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
     }
 
     static VarVal parseJsonVarSized(
@@ -198,7 +214,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const std::string& fieldName,
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
-        const nautilus::val<const SIMDJSONMetaData*>& metaData) const;
+        const nautilus::val<const SIMDJSONMetaData*>& metaData,
+        const std::string& parserType) const;
 
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
@@ -206,7 +223,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<int8_t*>&,
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,
-        nautilus::val<SIMDJSONFIF*> fieldIndexFunction) const
+        nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
+        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
     {
         Record record;
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
@@ -221,7 +239,13 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             auto fieldIndex = static_cast<nautilus::val<FieldIndex>>(i);
             const auto& fieldDataType = metaData.getFieldDataTypeAt(i);
             writeValueToRecord(
-                fieldDataType, record, fieldName, fieldIndex, fieldIndexFunction, nautilus::val<const IndexerMetaData*>(&metaData));
+                fieldDataType,
+                record,
+                fieldName,
+                fieldIndex,
+                fieldIndexFunction,
+                nautilus::val<const IndexerMetaData*>(&metaData),
+                parserTypes.at(fieldDataType.type));
         }
         /// Increment iterator and return record
         nautilus::invoke(
@@ -299,29 +323,14 @@ private:
 
 static_assert(std::is_standard_layout_v<SIMDJSONFIF>, "SIMDJSONFIF must have a standard layout");
 
-/// (Proxy) functions being called via nautius::invoke() can not be member functions. Thus, we need to implement them outside of the class
+/// Get a raw pointer and the size of the current field. If required, perform a null check.
+/// If the null check succeeds, a null value of the provided type T will be returned instead
 template <typename T, bool Nullable>
-requires(
-    not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
-        || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResultFixed<T>*
-parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+RawResultFixed<T>* getRawJsonWithNullCheck(const FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
 {
-    auto returnNullValueOrParsed = [](std::optional<T> parsedValue, ParseResultFixed<T>& result) -> ParseResultFixed<T>*
-    {
-        if (not parsedValue.has_value())
-        {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
-        }
-        result.value = static_cast<T>(parsedValue.value());
-        return &result;
-    };
-
     /// We use the thread local to return multiple values.
     /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
-    thread_local static ParseResultFixed<T> result;
+    thread_local static RawResultFixed<T> result;
     result.isNull = false;
 
     /// Checking if the field is null but only if the field is nullable
@@ -330,63 +339,23 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
         if (checkIsNullJsonProxy(fieldIndex, fieldIndexFunction, metaData))
         {
             result.isNull = true;
-            result.value = T{0};
+            result.nullValue = T{0};
+            result.ptrToRawJson = nullptr;
+            result.sizeOfRawJson = 0;
             return &result;
         }
+        result.isNull = false;
+        result.nullValue = T{0};
     }
 
     const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
     auto currentDoc = *fieldIndexFunction->getDocStreamIterator();
     auto simdJsonResult = SIMDJSONFIF::accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
-    /// Order is important, since signed_integral<char> is true and unsigned_integral<bool> is true
-    if constexpr (std::same_as<T, bool>)
-    {
-        const auto parsedValue
-            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_bool(), simdJsonResult, "bool", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
-    }
-    else if constexpr (std::same_as<T, char>)
-    {
-        const auto parsedValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow<std::string_view, Nullable>(
-            simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
-        if (not parsedValue.has_value())
-        {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
-        }
-        PRECONDITION(parsedValue.value().size() == 1, "Cannot take {} as character, because size is not 1", parsedValue.value());
-        result.value = static_cast<T>(parsedValue.value()[0]);
-        return &result;
-    }
-    else if constexpr (std::signed_integral<T>)
-    {
-        const auto parsedValue
-            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<int64_t, Nullable>(simdJsonResult.get_int64(), simdJsonResult, "integer", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
-    }
-    else if constexpr (std::unsigned_integral<T>)
-    {
-        const auto parsedValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow<uint64_t, Nullable>(
-            simdJsonResult.get_uint64(), simdJsonResult, "unsigned", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
-    }
-    else if constexpr (std::is_same_v<T, double>)
-    {
-        const auto parsedValue
-            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<T, Nullable>(simdJsonResult.get_double(), simdJsonResult, "double", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
-    }
-    else if constexpr (std::is_same_v<T, float>)
-    {
-        const auto parsedValue
-            = SIMDJSONFIF::parseSIMDJsonValueOrThrow<double, Nullable>(simdJsonResult.get_double(), simdJsonResult, "float", fieldName);
-        return returnNullValueOrParsed(parsedValue, result);
-    }
-    else
-    {
-        throw UnknownDataType("Can not parse {}", NAMEOF_TYPE(T));
-    }
+    /// Get the raw string view over the SIMD json value and return a ptr to it
+    const auto rawSimdJsonResult = simdJsonResult.raw_json().value();
+    result.ptrToRawJson = reinterpret_cast<const int8_t*>(rawSimdJsonResult.data());
+    result.sizeOfRawJson = rawSimdJsonResult.size();
+    return &result;
 }
 
 template <bool Nullable>

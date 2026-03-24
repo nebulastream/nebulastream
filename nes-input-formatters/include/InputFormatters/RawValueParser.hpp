@@ -28,12 +28,12 @@
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <InputParserRegistry.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
-#include <Util/InvokeMacro.hpp>
 
 namespace NES
 {
@@ -44,13 +44,6 @@ enum class QuotationType : uint8_t
     DOUBLE_QUOTE
 };
 
-template <typename T>
-struct ParseResult
-{
-    T value;
-    bool isNull;
-};
-
 void parseRawValueIntoRecord(
     DataType dataType,
     Record& record,
@@ -58,85 +51,25 @@ void parseRawValueIntoRecord(
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
     const std::vector<std::string>& nullValues,
-    QuotationType quotationType);
+    QuotationType quotationType,
+    const std::string& parserType);
 
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
 
-template <typename T, bool Nullable>
-requires(
-    not(std::is_same_v<T, int8_t*> || std::is_same_v<T, uint8_t*> || std::is_same_v<T, std::byte*> || std::is_same_v<T, char*>
-        || std::is_same_v<T, unsigned char*> || std::is_same_v<T, signed char*>))
-ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
-{
-    PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
-
-    /// We use the thread local to return multiple values.
-    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
-    thread_local static ParseResult<T> result;
-    result.isNull = false;
-
-    /// Checking if the field is null but only if the field is nullable
-    if constexpr (Nullable)
-    {
-        if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))
-        {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
-        }
-    }
-
-    try
-    {
-        const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
-        const auto trimmedFieldAsString = trimWhiteSpaces(fieldAsString);
-        result.value = NES::from_chars_with_exception<T>(trimmedFieldAsString);
-    }
-    catch (const Exception& ex)
-    {
-        /// If the field is nullable, we return a null value, otherwise we throw an exception
-        if constexpr (not Nullable)
-        {
-            throw;
-        }
-        result.isNull = true;
-        result.value = T{0};
-    }
-    return &result;
-}
-
-template <typename T>
-VarVal parseFixedSizeIntoVarVal(
+/// Instantiate the input parser for this value and parse the value with it
+inline VarVal parseFixedSizeIntoVarVal(
     const bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
-    const std::vector<std::string>& nullValues)
+    const std::vector<std::string>& nullValues,
+    const std::string& parserType)
 {
-    /// As this is a C++ variable, this branch does not impact our tracing or the execution.
-    if (nullable)
+    constexpr InputParserRegistryArguments args{};
+    if (const auto parser = InputParserRegistry::instance().create(parserType, args))
     {
-        const auto parseResult = NAUTILUS_TAGGED_INVOKE("parse_null", parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        // const auto parseResult = nautilus::invoke(
-            // parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        /// alternative with function attributes:
-        // nautilus::FunctionAttributes funcAttr{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true};
-        // const auto parseResult = nautilus::invoke(
-        //     funcAttr, parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        /// alternative with inline tag
-        // const auto parseResult = NAUTILUS_INLINE nautilus::invoke(
-        //     parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
-        return VarVal{nautilusValue, nullable, isNull};
+        return parser.value()->parseToVarVal(nullable, fieldAddress, fieldSize, nullValues);
     }
-    const auto kek = InvokeConfig::instance();
-    (void) kek;
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-    // const auto parseResult = nautilus::invoke(
-    //     parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-    return VarVal{nautilusValue, nullable, false};
+    throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
 }
 }

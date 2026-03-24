@@ -27,9 +27,11 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -113,6 +115,21 @@ public:
         {
             sequenceShredder = std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size());
         }
+        parserTypes[DataType::Type::BOOLEAN] = config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
+        parserTypes[DataType::Type::CHAR] = config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
+        parserTypes[DataType::Type::FLOAT32] = config.getFromConfig(InputFormatterDescriptor::F32_PARSER);
+        parserTypes[DataType::Type::FLOAT64] = config.getFromConfig(InputFormatterDescriptor::F64_PARSER);
+        parserTypes[DataType::Type::INT8] = config.getFromConfig(InputFormatterDescriptor::INT8_PARSER);
+        parserTypes[DataType::Type::INT16] = config.getFromConfig(InputFormatterDescriptor::INT16_PARSER);
+        parserTypes[DataType::Type::INT32] = config.getFromConfig(InputFormatterDescriptor::INT32_PARSER);
+        parserTypes[DataType::Type::INT64] = config.getFromConfig(InputFormatterDescriptor::INT64_PARSER);
+        parserTypes[DataType::Type::UINT8] = config.getFromConfig(InputFormatterDescriptor::UINT8_PARSER);
+        parserTypes[DataType::Type::UINT16] = config.getFromConfig(InputFormatterDescriptor::UINT16_PARSER);
+        parserTypes[DataType::Type::UINT32] = config.getFromConfig(InputFormatterDescriptor::UINT32_PARSER);
+        parserTypes[DataType::Type::UINT64] = config.getFromConfig(InputFormatterDescriptor::UINT64_PARSER);
+        /// Setting these even though they will probably not be used
+        parserTypes[DataType::Type::VARSIZED] = "";
+        parserTypes[DataType::Type::UNDEFINED] = "";
     }
 
     ~InputFormatter() = default;
@@ -137,7 +154,7 @@ public:
     }
 
     [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
-    requires (not FormatterType::IsSequential)
+    requires(not FormatterType::IsSequential)
     {
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
@@ -224,6 +241,7 @@ private:
     /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
     [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
         accumulatedSpanningTupleBuffers;
+    std::unordered_map<DataType::Type, std::string> parserTypes;
 
     struct IndexPhaseResult
     {
@@ -520,7 +538,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, parserTypes);
             executeChild(executionCtx, record);
         }
     }
@@ -538,7 +556,7 @@ private:
         while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
         {
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction);
+                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, parserTypes);
             executeChild(executionCtx, record);
             bufferRecordIdx += 1;
         }
@@ -565,7 +583,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, parserTypes);
             executeChild(executionCtx, record);
         }
     }

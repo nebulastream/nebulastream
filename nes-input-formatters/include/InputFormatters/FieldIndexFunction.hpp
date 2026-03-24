@@ -16,6 +16,7 @@
 
 #include <cstddef>
 #include <cstdint>
+#include <unordered_map>
 #include <vector>
 
 #include <Nautilus/Interface/Record.hpp>
@@ -24,6 +25,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <DataTypes/DataType.hpp>
 
 namespace NES
 {
@@ -76,10 +78,11 @@ public:
         const nautilus::val<int8_t*>& recordBufferPtr,
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
-        nautilus::val<Derived*> fieldIndexFunction) const
+        nautilus::val<Derived*> fieldIndexFunction,
+        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
     {
         return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
-            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction);
+            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, parserTypes);
     }
 };
 
