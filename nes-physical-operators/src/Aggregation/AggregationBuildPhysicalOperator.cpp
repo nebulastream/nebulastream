@@ -85,17 +85,16 @@ void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationCo
     compileChild(compilationContext);
 
     std::call_once(
-        cleanupStateNautilusFunctionOnce,
+        cleanupState->once,
         [this, &compilationContext]
         {
-            cleanupStateNautilusFunction
+            cleanupState->cleanupStateNautilusFunction
                 = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
                     [copyOfHashMapOptions = hashMapOptions,
                      copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                     {
-                        auto currentHashMap = hashMap;
                         const ChainedHashMapRef hashMapRef(
-                            currentHashMap,
+                            hashMap,
                             copyOfHashMapOptions.fieldKeys,
                             copyOfHashMapOptions.fieldValues,
                             copyOfHashMapOptions.entriesPerPage,
@@ -103,7 +102,7 @@ void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationCo
                         for (const auto entry : hashMapRef)
                         {
                             const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                                entry, currentHashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
+                                entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
                             auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
                             for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
                             {
@@ -119,12 +118,13 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) con
 {
     WindowBuildPhysicalOperator::setup(executionCtx);
 
-    PRECONDITION(cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for aggregation build operator");
+    PRECONDITION(
+        cleanupState->cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for aggregation build operator");
 
     auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(
         nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
     PRECONDITION(operatorHandler != nullptr, "Expected AggregationOperatorHandler for {}", operatorHandlerId);
-    operatorHandler->trySetCleanupStateNautilusFunction(cleanupStateNautilusFunction);
+    operatorHandler->trySetCleanupStateNautilusFunction(cleanupState->cleanupStateNautilusFunction);
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -185,7 +185,7 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapOptions(std::move(hashMapOptions))
-    , cleanupStateNautilusFunction(nullptr)
+    , cleanupState(std::make_unique<CleanupState>())
 {
 }
 
@@ -193,7 +193,7 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(const Aggrega
     : WindowBuildPhysicalOperator(other)
     , aggregationPhysicalFunctions(other.aggregationPhysicalFunctions)
     , hashMapOptions(other.hashMapOptions)
-    , cleanupStateNautilusFunction(nullptr)
+    , cleanupState(std::make_unique<CleanupState>())
 {
 }
 

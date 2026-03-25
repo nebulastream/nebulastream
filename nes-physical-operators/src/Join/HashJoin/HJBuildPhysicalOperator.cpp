@@ -81,10 +81,10 @@ void HJBuildPhysicalOperator::compile(CompilationContext& compilationContext) co
     compileChild(compilationContext);
 
     std::call_once(
-        cleanupStateNautilusFunctionOnce,
+        cleanupState->once,
         [this, &compilationContext]
         {
-            cleanupStateNautilusFunction
+            cleanupState->cleanupStateNautilusFunction
                 = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
                     [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
                     {
@@ -115,12 +115,12 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
     StreamJoinBuildPhysicalOperator::setup(executionCtx);
 
-    PRECONDITION(cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for hash join build operator");
+    PRECONDITION(cleanupState->cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for hash join build operator");
 
     auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(
         nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
     PRECONDITION(operatorHandler != nullptr, "Expected HJOperatorHandler for {}", operatorHandlerId);
-    operatorHandler->trySetNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
+    operatorHandler->trySetNautilusCleanupExec(cleanupState->cleanupStateNautilusFunction, joinBuildSide);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -194,12 +194,12 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     HashMapOptions hashMapOptions)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))
-    , cleanupStateNautilusFunction(nullptr)
+    , cleanupState(std::make_unique<CleanupState>())
 {
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other)
-    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions), cleanupStateNautilusFunction(nullptr)
+    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions), cleanupState(std::make_unique<CleanupState>())
 {
 }
 

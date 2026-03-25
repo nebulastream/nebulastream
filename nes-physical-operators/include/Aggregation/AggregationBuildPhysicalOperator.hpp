@@ -59,10 +59,15 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
+    struct CleanupState
+    {
+        std::once_flag once;
+        std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
+    };
+
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
-    mutable std::once_flag cleanupStateNautilusFunctionOnce;
-    mutable std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
+    std::unique_ptr<CleanupState> cleanupState;
 };
 
 }
