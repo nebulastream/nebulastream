@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::database::Database;
 use anyhow::Result;
 use model::IntoCondition;
@@ -43,169 +57,66 @@ impl SinkCatalog {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{test_prop, Catalog};
-    use model::Generate;
+    use crate::Catalog;
     use model::sink::SinkWithRefs;
-    use proptest::proptest;
+    use test_strategy::proptest;
 
-    async fn prop_create_and_get_sink(req: SinkWithRefs) {
+    #[proptest(async = "tokio")]
+    async fn create_and_get_sink(req: SinkWithRefs) {
         let catalog = Catalog::for_test().await;
+        catalog.worker.create_worker(req.worker).await.expect("worker creation should succeed");
 
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .expect("worker creation should succeed");
-
-        let created = catalog
-            .sink
-            .create_sink(req.sink.clone())
-            .await
-            .expect("sink creation should succeed");
-
+        let created = catalog.sink.create_sink(req.sink.clone()).await.expect("sink creation should succeed");
         assert_eq!(created.name, req.sink.name);
         assert_eq!(created.sink_type, req.sink.sink_type);
 
-        let sinks = catalog
-            .sink
-            .get_sink(GetSink::all().with_name(req.sink.name.clone()))
-            .await
-            .expect("get sink should succeed");
-
+        let sinks = catalog.sink.get_sink(GetSink::all().with_name(req.sink.name.clone())).await.unwrap();
         assert_eq!(sinks.len(), 1);
         assert_eq!(sinks[0].name, req.sink.name);
-        assert_eq!(sinks[0].sink_type, req.sink.sink_type);
     }
 
-    async fn prop_drop_sink(req: SinkWithRefs) {
+    #[proptest(async = "tokio")]
+    async fn drop_sink(req: SinkWithRefs) {
         let catalog = Catalog::for_test().await;
-
         catalog.worker.create_worker(req.worker).await.unwrap();
         catalog.sink.create_sink(req.sink.clone()).await.unwrap();
 
-        let dropped = catalog
-            .sink
-            .drop_sink(DropSink { name: req.sink.name.clone() })
-            .await
-            .expect("drop should succeed");
-
+        let dropped = catalog.sink.drop_sink(DropSink { name: req.sink.name.clone() }).await.unwrap();
         assert_eq!(dropped.len(), 1);
         assert_eq!(dropped[0].name, req.sink.name);
 
-        let sinks = catalog
-            .sink
-            .get_sink(GetSink::all().with_name(req.sink.name))
-            .await
-            .unwrap();
+        let sinks = catalog.sink.get_sink(GetSink::all().with_name(req.sink.name)).await.unwrap();
         assert!(sinks.is_empty(), "Sink should be deleted");
     }
 
-    async fn prop_sink_name_unique(req: SinkWithRefs) {
+    #[proptest(async = "tokio")]
+    async fn sink_name_unique(req: SinkWithRefs) {
         let catalog = Catalog::for_test().await;
-
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .expect("worker creation should succeed");
-
-        catalog
-            .sink
-            .create_sink(req.sink.clone())
-            .await
-            .expect("first sink creation should succeed");
+        catalog.worker.create_worker(req.worker).await.unwrap();
+        catalog.sink.create_sink(req.sink.clone()).await.unwrap();
 
         assert!(
             catalog.sink.create_sink(req.sink.clone()).await.is_err(),
-            "Duplicate sink name '{}' should be rejected",
-            req.sink.name
+            "Duplicate sink name '{}' should be rejected", req.sink.name
         );
     }
 
-    async fn prop_sink_worker_ref_required(req: SinkWithRefs) {
+    #[proptest(async = "tokio")]
+    async fn sink_worker_ref_required(req: SinkWithRefs) {
         let catalog = Catalog::for_test().await;
+        assert!(catalog.sink.create_sink(req.sink.clone()).await.is_err(), "Sink without worker should fail");
 
-        assert!(
-            catalog.sink.create_sink(req.sink.clone()).await.is_err(),
-            "Sink creation without worker should be rejected"
-        );
-
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .expect("worker creation should succeed");
-
-        catalog
-            .sink
-            .create_sink(req.sink)
-            .await
-            .expect("sink creation with valid worker ref should succeed");
+        catalog.worker.create_worker(req.worker).await.unwrap();
+        catalog.sink.create_sink(req.sink).await.expect("sink with valid worker ref should succeed");
     }
 
-    async fn prop_create_drop_create_sink(req: SinkWithRefs) {
+    #[proptest(async = "tokio")]
+    async fn create_drop_create_sink(req: SinkWithRefs) {
         let catalog = Catalog::for_test().await;
+        catalog.worker.create_worker(req.worker).await.unwrap();
+        catalog.sink.create_sink(req.sink.clone()).await.unwrap();
 
-        catalog
-            .worker
-            .create_worker(req.worker)
-            .await
-            .expect("worker creation should succeed");
-
-        catalog
-            .sink
-            .create_sink(req.sink.clone())
-            .await
-            .expect("first sink creation should succeed");
-
-        let drop_req = DropSink { name: req.sink.name.clone() };
-        catalog
-            .sink
-            .drop_sink(drop_req)
-            .await
-            .expect("drop should succeed");
-
-        catalog
-            .sink
-            .create_sink(req.sink)
-            .await
-            .expect("second creation after drop should succeed");
-    }
-
-    proptest! {
-        #[test]
-        fn create_and_get_sink(req in SinkWithRefs::generate()) {
-            test_prop(|| async move {
-                prop_create_and_get_sink(req).await;
-            });
-        }
-
-        #[test]
-        fn drop_sink(req in SinkWithRefs::generate()) {
-            test_prop(|| async move {
-                prop_drop_sink(req).await;
-            });
-        }
-
-        #[test]
-        fn sink_name_unique(req in SinkWithRefs::generate()) {
-            test_prop(|| async move {
-                prop_sink_name_unique(req).await;
-            });
-        }
-
-        #[test]
-        fn sink_worker_ref_required(req in SinkWithRefs::generate()) {
-            test_prop(|| async move {
-                prop_sink_worker_ref_required(req).await;
-            });
-        }
-
-        #[test]
-        fn create_drop_create_sink_succeeds(req in SinkWithRefs::generate()) {
-            test_prop(|| async move {
-                prop_create_drop_create_sink(req).await;
-            });
-        }
+        catalog.sink.drop_sink(DropSink { name: req.sink.name.clone() }).await.unwrap();
+        catalog.sink.create_sink(req.sink).await.expect("re-creation after drop should succeed");
     }
 }

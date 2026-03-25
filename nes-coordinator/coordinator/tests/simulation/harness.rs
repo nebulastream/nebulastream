@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #![cfg(madsim)]
 use crate::spec::NetworkConfig;
 use crate::worker::{HealthServer, HealthServiceImpl, SingleNodeWorker, WorkerRpcServiceServer};
@@ -7,7 +21,7 @@ use coordinator::start_for_sim;
 use madsim::net::NetSim;
 use madsim::runtime::Handle;
 use model::worker;
-use model::worker::endpoint::{GrpcAddr, NetworkAddr};
+use model::worker::endpoint::NetworkAddr;
 use model::query;
 use model::query::fragment;
 use model::query::{CreateQuery, DropQuery, GetQuery};
@@ -305,14 +319,14 @@ impl TestHarness {
 
     pub async fn active_fragments_by_worker(
         &self,
-    ) -> HashMap<GrpcAddr, HashSet<u64>> {
+    ) -> HashMap<NetworkAddr, HashSet<u64>> {
         let workers = self.get_workers().await.unwrap();
 
         let (tx, rx) = flume::bounded(1);
-        let addrs: Vec<GrpcAddr> = workers
+        let addrs: Vec<NetworkAddr> = workers
             .into_iter()
             .filter(|w| w.current_state == WorkerState::Active)
-            .map(|w| w.grpc_addr)
+            .map(|w| w.host_addr)
             .collect();
 
         let coordinator_node = Handle::current()

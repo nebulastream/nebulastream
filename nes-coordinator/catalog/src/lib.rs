@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 pub mod database;
 pub mod error;
 pub mod notification;
@@ -6,11 +20,7 @@ pub mod sink_catalog;
 pub mod source_catalog;
 pub mod worker_catalog;
 
-#[cfg(any(test, feature = "testing"))]
-pub mod testing;
-
 pub use notification::Reconcilable;
-
 use database::Database;
 use query_catalog::QueryCatalog;
 use sink_catalog::SinkCatalog;
@@ -36,22 +46,8 @@ impl Catalog {
         })
     }
 
-    #[cfg(any(test, feature = "testing"))]
     pub async fn for_test() -> Arc<Self> {
         Self::from(Database::for_test().await)
     }
-}
-
-#[cfg(any(test, feature = "testing"))]
-pub fn test_prop<F, Fut>(f: F)
-where
-    F: FnOnce() -> Fut,
-    Fut: Future<Output = ()>,
-{
-    tokio::runtime::Builder::new_current_thread()
-        .enable_all()
-        .build()
-        .expect("failed to create tokio runtime")
-        .block_on(f());
 }
 

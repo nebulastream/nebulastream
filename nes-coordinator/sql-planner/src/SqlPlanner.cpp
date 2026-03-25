@@ -30,7 +30,7 @@ SqlPlanner::SqlPlanner(
 {
 }
 
-std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view sql) const
+std::expected<StatementResult, Exception> SqlPlanner::execute(const std::string_view sql) const
 {
     auto parsed = binder.parseAndBindSingle(sql);
     if (!parsed)
@@ -43,7 +43,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             // --- Queries: run the full pipeline ---
             [this](const QueryStatement& s) -> std::expected<StatementResult, Exception>
             {
-                auto analyzed = analyzer.analyse(s.plan);
+                const auto analyzed = analyzer.analyse(s.plan);
                 auto distributed = optimizer.optimize(analyzed);
                 return QueryPlanResult{
                     .name = std::nullopt,
@@ -52,8 +52,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             },
             [this](const ExplainQueryStatement& s) -> std::expected<StatementResult, Exception>
             {
-                auto analyzed = analyzer.analyse(s.plan);
-                return ExplainQueryResult{.explanation = explain(analyzed, ExplainVerbosity::Debug)};
+                return ExplainQueryResult{.explanation = explain(analyzer.analyse(s.plan), ExplainVerbosity::Debug)};
             },
 
             // --- DDL: extract parsed parameters ---
@@ -84,7 +83,7 @@ std::expected<StatementResult, Exception> SqlPlanner::execute(std::string_view s
             {
                 return CreateWorkerResult{
                     .hostAddr = s.hostAddr,
-                    .grpcAddr = s.grpcAddr,
+                    .dataAddr = s.dataAddr,
                     .capacity = s.capacity,
                     .peers = s.peers,
                     .config = s.config,

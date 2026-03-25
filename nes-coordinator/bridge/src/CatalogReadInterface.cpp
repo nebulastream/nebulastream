@@ -15,11 +15,13 @@
 #include <CatalogReadInterface.hpp>
 
 #include <string>
-#include <nes-coordinator-bridge/lib.h>
 #include <DataTypes/Schema.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Reflection.hpp>
+#include <coordinator/lib.h>
 #include <rfl/json/read.hpp>
+#include <rust/cxx.h>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -140,14 +142,33 @@ std::optional<WorkerInfo> getWorker(const CatalogRef& ctx, const Host& host)
             ? Capacity{CapacityKind::Unlimited{}}
             : Capacity{CapacityKind::Limited{static_cast<size_t>(ffi.capacity)}};
         return WorkerInfo{
-            .host = Host(std::string(ffi.grpc_addr)),
-            .data = std::string(ffi.host_addr),
+            .host = Host(std::string(ffi.host_addr)),
+            .data = std::string(ffi.data_addr),
             .maxOperators = cap};
     }
     catch (const rust::Error&)
     {
         return std::nullopt;
     }
+}
+
+/// TODO: implement once the query planning pipeline (SELECT) is wired through the coordinator.
+std::optional<SourceDescriptor> createInlineSource(
+    const std::string&,
+    const Schema&,
+    std::unordered_map<std::string, std::string>,
+    std::unordered_map<std::string, std::string>)
+{
+    return std::nullopt;
+}
+
+std::optional<SinkDescriptor> createInlineSink(
+    const Schema&,
+    std::string_view,
+    std::unordered_map<std::string, std::string>,
+    const std::unordered_map<std::string, std::string>&)
+{
+    return std::nullopt;
 }
 
 }

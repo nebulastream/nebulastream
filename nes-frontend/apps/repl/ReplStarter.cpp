@@ -16,63 +16,29 @@
 #include <csignal>
 #include <cstdint>
 #include <exception>
-#include <functional>
 #include <iostream>
-#include <memory>
-#include <optional>
-#include <ostream>
 #include <ranges>
 #include <stop_token>
 #include <string>
 #include <thread>
-#include <type_traits>
-#include <unordered_map>
-#include <utility>
-#include <vector>
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
-#include <QueryManager/GRPCQuerySubmissionBackend.hpp>
-#include <QueryManager/QueryManager.hpp>
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Statements/JsonOutputFormatter.hpp>
-#include <Statements/StatementHandler.hpp>
-#include <Statements/StatementOutputAssembler.hpp>
-#include <Statements/TextOutputFormatter.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
-#include <Util/Pointers.hpp>
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <magic_enum/magic_enum.hpp>
-#include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
-#include <WorkerCatalog.hpp>
-#include <WorkerConfig.hpp>
-#include <utils.hpp>
-
-#ifdef EMBED_ENGINE
-    #include <Configurations/Util.hpp>
-    #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
-    #include <SingleNodeWorkerConfiguration.hpp>
-#endif
-
-/// If repl is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
-/// via an in-memory channel.
-
-extern void enable_memcom();
+#include <coordinator/lib.h>
+#include <rust/cxx.h>
 
 namespace
 {
@@ -106,16 +72,12 @@ public:
     static std::stop_token terminationToken() { return signalSource.get_token(); }
 };
 
-std::ostream& printStatementResult(std::ostream& os, NES::StatementOutputFormat format, const auto& statement)
+const char* formatStr(NES::StatementOutputFormat format)
 {
-    NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statement)>> assembler{};
-    auto result = assembler.convert(statement);
     switch (format)
     {
-        case NES::StatementOutputFormat::TEXT:
-            return os << toText(result);
-        case NES::StatementOutputFormat::JSON:
-            return os << nlohmann::json(result).dump() << '\n';
+        case NES::StatementOutputFormat::TEXT: return "text";
+        case NES::StatementOutputFormat::JSON: return "json";
     }
     std::unreachable();
 }
@@ -136,7 +98,6 @@ int main(int argc, char** argv)
         using argparse::ArgumentParser;
         ArgumentParser program("nes-repl");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
-        program.add_argument("-s", "--server").help("Server URI to connect to").default_value(std::string{"localhost:8080"});
 
         program.add_argument("--on-exit")
             .choices(
@@ -157,20 +118,7 @@ int main(int argc, char** argv)
             .help(
                 "Fail and return non-zero exit code on first error, ignore error and continue, or continue and return non-zero exit code");
         program.add_argument("-f").default_value("TEXT").choices("TEXT", "JSON").help("Output format");
-        /// query optimizer config
-        program.add_argument("--optimizer")
-            .default_value<std::vector<std::string>>({})
-            .append()
-            .help("changes optimizer default values. e.g. join_strategy=HASH_JOIN");
-
-
-#ifdef EMBED_ENGINE
-        /// single node worker config
-        program.add_argument("--")
-            .help("arguments passed to the worker config, e.g., `-- --worker.query_engine.number_of_worker_threads=10`")
-            .default_value(std::vector<std::string>{})
-            .remaining();
-#endif
+        program.add_argument("--db").default_value(std::string{":memory:"}).help("SQLite database path for coordinator state");
 
         try
         {
@@ -195,7 +143,7 @@ int main(int argc, char** argv)
             return 1;
         }
         const auto defaultOutputFormat = defaultOutputFormatOpt.value();
-
+        const auto format = formatStr(defaultOutputFormat);
 
         const NES::ErrorBehaviour errorBehaviour = [&]
         {
@@ -210,86 +158,13 @@ int main(int argc, char** argv)
             return NES::ErrorBehaviour::FAIL_FAST;
         }();
 
-        NES::QueryOptimizerConfiguration queryOptimizerConfig;
+        const auto dbPath = program.get<std::string>("--db");
+        auto coordinator = start_coordinator(rust::Str(dbPath.data(), dbPath.size()));
 
-        if (program.is_used("--optimizer"))
-        {
-            auto optimizerConfigVec = program.get<std::vector<std::string>>("--optimizer");
-            std::unordered_map<std::string, std::string> optimizerRawConfig;
-
-            for (const auto& optimizerConfigString : optimizerConfigVec)
-            {
-                if (auto pos = optimizerConfigString.find("="); pos != std::string::npos)
-                {
-                    const std::string identifier = optimizerConfigString.substr(0, pos);
-                    const std::string value = optimizerConfigString.substr(pos + 1);
-                    optimizerRawConfig[identifier] = value;
-                }
-                else
-                {
-                    NES_ERROR("Invalid optimizer argument. Requires argument like 'CONFIG=VALUE' but got '{}'", optimizerConfigString)
-                    return 1;
-                }
-            }
-            queryOptimizerConfig.overwriteConfigWithCommandLineInput(optimizerRawConfig);
-        }
-
-
-        auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
-        auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-        auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
-        std::shared_ptr<NES::QueryManager> queryManager{};
-        auto binder = NES::StatementBinder{
-            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
-
-#ifdef EMBED_ENGINE
-        enable_memcom();
-        auto confVec = program.get<std::vector<std::string>>("--");
-
-        const int singleNodeArgC = static_cast<int>(confVec.size() + 1);
-        std::vector<const char*> singleNodeArgV;
-        singleNodeArgV.reserve(singleNodeArgC + 1);
-        singleNodeArgV.push_back("nes-single-node-worker"); /// dummy option as arg expects first arg to be the program name
-        for (auto& arg : confVec)
-        {
-            singleNodeArgV.push_back(arg.c_str());
-        }
-        auto singleNodeWorkerConfig = NES::loadConfiguration<NES::SingleNodeWorkerConfiguration>(singleNodeArgC, singleNodeArgV.data())
-                                          .value_or(NES::SingleNodeWorkerConfiguration{});
-
-        /// Derive a routable Host from the gRPC bind address.
-        /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
-        const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri.getValue();
-        const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
-        const auto dataAddr = singleNodeWorkerConfig.data.getValue();
-        const NES::WorkerConfig workerConfig{
-            .host = NES::Host(grpcAddr),
-            .data = dataAddr,
-            .maxOperators = NES::Capacity(NES::CapacityKind::Unlimited{}),
-            .downstream = {},
-            .config = singleNodeWorkerConfig,
-        };
-        workerCatalog->addWorker(workerConfig.host, workerConfig.data, workerConfig.maxOperators, workerConfig.downstream);
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};
-#else
-        queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
-        NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::RequireHostConfig{}};
-        NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
-#endif
-        NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
-        auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
-        auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);
         NES::Repl replClient(
-            std::move(sourceStatementHandler),
-            std::move(sinkStatementHandler),
-            std::move(topologyStatementHandler),
-            queryStatementHandler,
-            std::move(binder),
-            errorBehaviour,
+            *coordinator,
             defaultOutputFormat,
+            errorBehaviour,
             interactiveMode,
             SignalHandler::terminationToken());
         replClient.run();
@@ -299,27 +174,25 @@ int main(int argc, char** argv)
         switch (magic_enum::enum_cast<OnExitBehavior>(program.get<std::string>("--on-exit")).value())
         {
             case OnExitBehavior::STOP_QUERIES:
-                for (auto& query : queryManager->getRunningQueries())
+            {
+                try
                 {
-                    auto result = queryStatementHandler->operator()(NES::DropQueryStatement{.id = query});
-                    const NES::StatementOutputAssembler<NES::DropQueryStatementResult> assembler{};
-                    if (!result.has_value())
-                    {
-                        NES_ERROR("Could not stop query: {}", result.error().what());
-                        hasError = true;
-                        continue;
-                    }
-                    /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) validated by argparse .choices()
-                    printStatementResult(
-                        std::cout, magic_enum::enum_cast<NES::StatementOutputFormat>(program.get("-f")).value(), result.value());
+                    auto result = execute_statement(*coordinator, "DROP QUERY;", format);
+                    std::cout << std::string(result) << "\n";
                 }
+                catch (const rust::Error& e)
+                {
+                    NES_ERROR("Could not stop queries: {}", e.what());
+                    hasError = true;
+                }
+            }
                 [[clang::fallthrough]];
             case OnExitBehavior::WAIT_FOR_QUERY_TERMINATION:
-                while (!queryManager->getRunningQueries().empty())
-                {
-                    NES_DEBUG("Waiting for termination")
-                    std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                }
+                /// Poll until no queries are in a non-terminal state.
+                /// TODO: this currently just waits a fixed time; proper polling would
+                /// need to parse SHOW QUERIES output to check for running queries.
+                NES_DEBUG("Waiting for query termination")
+                std::this_thread::sleep_for(std::chrono::milliseconds(500));
                 break;
             case OnExitBehavior::DO_NOTHING:
                 break;

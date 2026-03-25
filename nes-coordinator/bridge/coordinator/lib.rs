@@ -24,12 +24,12 @@ use std::sync::Arc;
 
 #[cxx::bridge]
 pub mod ffi {
-    struct FfiLogicalSource {
+    struct LogicalSource {
         name: String,
         schema_json: String,
     }
 
-    struct FfiSourceDescriptor {
+    struct SourceDescriptor {
         id: i64,
         logical_source_name: String,
         host_addr: String,
@@ -38,7 +38,7 @@ pub mod ffi {
         parser_config_json: String,
     }
 
-    struct FfiSinkDescriptor {
+    struct SinkDescriptor {
         name: String,
         host_addr: String,
         sink_type: String,
@@ -46,44 +46,99 @@ pub mod ffi {
         config_json: String,
     }
 
-    struct FfiWorker {
+    struct Worker {
         host_addr: String,
-        grpc_addr: String,
+        data_addr: String,
         capacity: i32,
     }
 
-    struct FfiTopologyEdge {
+    struct NetworkLink {
         upstream: String,
         downstream: String,
+    }
+
+    struct Topology {
+        nodes: Vec<String>,
+        links: Vec<NetworkLink>,
+    }
+
+    struct PlannedFragment {
+        host_addr: String,
+        plan: Vec<u8>,
+        used_capacity: i32,
+        has_source: bool,
+    }
+
+    struct PlannedStatement {
+        /// JSON-encoded Statement variant (for all statement types).
+        json: String,
+        /// Non-empty only for query plans — carries the serialized protobuf plans.
+        fragments: Vec<PlannedFragment>,
     }
 
     extern "Rust" {
         type CoordinatorHandle;
         fn start_coordinator(db_path: &str) -> Box<CoordinatorHandle>;
-        fn execute_statement(handle: &CoordinatorHandle, sql: &str) -> Result<String>;
+        fn execute_statement(handle: &CoordinatorHandle, sql: &str, format: &str) -> Result<String>;
+    }
 
+    #[namespace = "NES"]
+    unsafe extern "C++" {
+        include!("SqlPlannerBridge.hpp");
+
+        fn plan_sql(ctx: &CatalogRef, sql: &str) -> Result<PlannedStatement>;
+    }
+
+    #[namespace = "NES"]
+    extern "Rust" {
         type CatalogRef;
-        fn get_logical_source(ctx: &CatalogRef, name: &str) -> Result<FfiLogicalSource>;
+        fn get_logical_source(ctx: &CatalogRef, name: &str) -> Result<LogicalSource>;
         fn get_source_descriptors(
             ctx: &CatalogRef,
             logical_source_name: &str,
-        ) -> Result<Vec<FfiSourceDescriptor>>;
-        fn get_sink_descriptor(ctx: &CatalogRef, name: &str) -> Result<FfiSinkDescriptor>;
-        fn get_worker(ctx: &CatalogRef, host_addr: &str) -> Result<FfiWorker>;
+        ) -> Result<Vec<SourceDescriptor>>;
+        fn get_sink_descriptor(ctx: &CatalogRef, name: &str) -> Result<SinkDescriptor>;
+        fn get_worker(ctx: &CatalogRef, host_addr: &str) -> Result<Worker>;
+        fn get_topology(ctx: &CatalogRef) -> Result<Topology>;
     }
 }
 
 pub struct CoordinatorHandle {
     sender: flume::Sender<Request>,
+    catalog: Arc<Catalog>,
+    runtime: tokio::runtime::Runtime,
 }
 
 fn start_coordinator(db_path: &str) -> Box<CoordinatorHandle> {
-    let sender = coordinator::start(Some(StateBackend::sqlite(db_path)), None);
-    Box::new(CoordinatorHandle { sender })
+    let (sender, catalog, runtime) = coordinator::start(Some(StateBackend::sqlite(db_path)), None);
+    Box::new(CoordinatorHandle { sender, catalog, runtime })
 }
 
-fn execute_statement(handle: &CoordinatorHandle, sql: &str) -> Result<String> {
-    let statement = Statement::Sql(sql.to_string());
+fn execute_statement(handle: &CoordinatorHandle, sql: &str, format: &str) -> Result<String> {
+    use model::query::fragment::CreateFragment;
+
+    let catalog_ref = CatalogRef::new(
+        handle.catalog.clone(),
+        handle.runtime.handle().clone(),
+    );
+    let planned = ffi::plan_sql(&catalog_ref, sql).map_err(|e| anyhow!("{}", e))?;
+    let mut statement: Statement = serde_json::from_str(&planned.json)?;
+
+    // For query plans, attach the fragments from the cxx bridge (protobuf bytes)
+    if let Statement::CreateQuery(ref mut q) = statement {
+        q.fragments = planned
+            .fragments
+            .into_iter()
+            .map(|f| CreateFragment {
+                host_addr: f.host_addr.parse().expect("invalid host_addr from planner"),
+                plan: f.plan,
+                used_capacity: f.used_capacity,
+                has_source: f.has_source,
+            })
+            .collect();
+    }
+
+    // Send structured statement to coordinator
     let (rx, req) = Request::new(statement);
     handle
         .sender
@@ -92,7 +147,11 @@ fn execute_statement(handle: &CoordinatorHandle, sql: &str) -> Result<String> {
     let response = rx
         .blocking_recv()
         .map_err(|_| anyhow!("coordinator dropped the request"))??;
-    Ok(serde_json::to_string(&response)?)
+    match format {
+        "json" => Ok(serde_json::to_string(&response)?),
+        "text" => Ok(response.to_string()),
+        _ => Err(anyhow!("unknown format '{}', expected 'json' or 'text'", format)),
+    }
 }
 
 pub struct CatalogRef {
@@ -106,14 +165,14 @@ impl CatalogRef {
     }
 }
 
-fn get_logical_source(ctx: &CatalogRef, name: &str) -> Result<ffi::FfiLogicalSource> {
+fn get_logical_source(ctx: &CatalogRef, name: &str) -> Result<ffi::LogicalSource> {
     let req = GetLogicalSource::all().with_name(name.to_string());
     let sources = ctx.handle.block_on(ctx.catalog.source.get_logical_source(req))?;
     let source = sources
         .into_iter()
         .next()
         .ok_or_else(|| anyhow!("logical source '{}' not found", name))?;
-    Ok(ffi::FfiLogicalSource {
+    Ok(ffi::LogicalSource {
         name: source.name,
         schema_json: serde_json::to_string(&source.schema)?,
     })
@@ -122,7 +181,7 @@ fn get_logical_source(ctx: &CatalogRef, name: &str) -> Result<ffi::FfiLogicalSou
 fn get_source_descriptors(
     ctx: &CatalogRef,
     logical_source_name: &str,
-) -> Result<Vec<ffi::FfiSourceDescriptor>> {
+) -> Result<Vec<ffi::SourceDescriptor>> {
     let req = GetPhysicalSource::all().with_logical_source(logical_source_name.to_string());
     let sources = ctx
         .handle
@@ -130,7 +189,7 @@ fn get_source_descriptors(
     sources
         .into_iter()
         .map(|s| {
-            Ok(ffi::FfiSourceDescriptor {
+            Ok(ffi::SourceDescriptor {
                 id: s.id,
                 logical_source_name: s.logical_source,
                 host_addr: s.host_addr.to_string(),
@@ -142,14 +201,14 @@ fn get_source_descriptors(
         .collect()
 }
 
-fn get_sink_descriptor(ctx: &CatalogRef, name: &str) -> Result<ffi::FfiSinkDescriptor> {
+fn get_sink_descriptor(ctx: &CatalogRef, name: &str) -> Result<ffi::SinkDescriptor> {
     let req = GetSink::all().with_name(name.to_string());
     let sinks = ctx.handle.block_on(ctx.catalog.sink.get_sink(req))?;
     let sink = sinks
         .into_iter()
         .next()
         .ok_or_else(|| anyhow!("sink '{}' not found", name))?;
-    Ok(ffi::FfiSinkDescriptor {
+    Ok(ffi::SinkDescriptor {
         name: sink.name,
         host_addr: sink.host_addr.to_string(),
         sink_type: sink.sink_type.to_string(),
@@ -158,7 +217,7 @@ fn get_sink_descriptor(ctx: &CatalogRef, name: &str) -> Result<ffi::FfiSinkDescr
     })
 }
 
-fn get_worker(ctx: &CatalogRef, host_addr: &str) -> Result<ffi::FfiWorker> {
+fn get_worker(ctx: &CatalogRef, host_addr: &str) -> Result<ffi::Worker> {
     let addr = host_addr
         .parse()
         .map_err(|e: String| anyhow!("invalid host_addr '{}': {}", host_addr, e))?;
@@ -168,9 +227,23 @@ fn get_worker(ctx: &CatalogRef, host_addr: &str) -> Result<ffi::FfiWorker> {
         .into_iter()
         .next()
         .ok_or_else(|| anyhow!("worker '{}' not found", host_addr))?;
-    Ok(ffi::FfiWorker {
+    Ok(ffi::Worker {
         host_addr: worker.host_addr.to_string(),
-        grpc_addr: worker.grpc_addr.to_string(),
+        data_addr: worker.data_addr.to_string(),
         capacity: worker.capacity.unwrap_or(-1),
+    })
+}
+
+fn get_topology(ctx: &CatalogRef) -> Result<ffi::Topology> {
+    let (workers, edges) = ctx.handle.block_on(ctx.catalog.worker.get_topology())?;
+    Ok(ffi::Topology {
+        nodes: workers.into_iter().map(|w| w.host_addr.to_string()).collect(),
+        links: edges
+            .into_iter()
+            .map(|(upstream, downstream)| ffi::NetworkLink {
+                upstream: upstream.to_string(),
+                downstream: downstream.to_string(),
+            })
+            .collect(),
     })
 }

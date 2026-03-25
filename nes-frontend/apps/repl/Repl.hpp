@@ -18,7 +18,8 @@
 #include <memory>
 #include <stop_token>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Statements/StatementHandler.hpp>
+
+struct CoordinatorHandle;
 
 namespace NES
 {
@@ -36,14 +37,10 @@ class Repl
     std::unique_ptr<Impl> impl;
 
 public:
-    explicit Repl(
-        SourceStatementHandler sourceStatementHandler,
-        SinkStatementHandler sinkStatementHandler,
-        TopologyStatementHandler topologyStatementHandler,
-        std::shared_ptr<QueryStatementHandler> queryStatementHandler,
-        StatementBinder binder,
-        ErrorBehaviour errorBehaviour,
+    Repl(
+        const CoordinatorHandle& coordinator,
         StatementOutputFormat defaultOutputFormat,
+        ErrorBehaviour errorBehaviour,
         bool interactiveMode,
         std::stop_token stopToken);
     void run();

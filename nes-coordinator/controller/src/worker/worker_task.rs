@@ -1,10 +1,23 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::worker::worker_registry::WorkerRegistry;
 use catalog::worker_catalog::WorkerCatalog;
 use model::query::StopMode;
-use model::query::fragment::FragmentId;
 use model::worker;
 use model::worker::WorkerState;
-use model::worker::endpoint::GrpcAddr;
+use model::worker::endpoint::NetworkAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use thiserror::Error;
@@ -36,7 +49,7 @@ use worker_rpc_service::{
 pub(crate) use worker_rpc_service::Error as FragmentError;
 pub(crate) use worker_rpc_service::QueryStatusReply;
 
-fn query_id(id: FragmentId) -> Option<SerializableQueryId> {
+fn query_id(id: i64) -> Option<SerializableQueryId> {
     Some(SerializableQueryId { id })
 }
 
@@ -44,13 +57,13 @@ fn query_id(id: FragmentId) -> Option<SerializableQueryId> {
 pub(crate) enum WorkerTaskError {
     #[error("failed to connect to {addr}: {err}")]
     Connection {
-        addr: GrpcAddr,
+        addr: NetworkAddr,
         err: tonic::transport::Error,
     },
 
     #[error("gRPC error at {addr}: {status}")]
     Grpc {
-        addr: GrpcAddr,
+        addr: NetworkAddr,
         status: tonic::Status,
     },
 }
@@ -83,12 +96,13 @@ where
     }
 }
 
+/// Payload: (fragment_id, serialized protobuf plan bytes)
 pub(crate) type RegisterFragmentRequest =
-    Request<FragmentId, Result<RegisterQueryReply, WorkerTaskError>>;
-pub(crate) type StartFragmentRequest = Request<FragmentId, Result<(), WorkerTaskError>>;
-pub(crate) type StopFragmentRequest = Request<(FragmentId, StopMode), Result<(), WorkerTaskError>>;
+    Request<(i64, Vec<u8>), Result<RegisterQueryReply, WorkerTaskError>>;
+pub(crate) type StartFragmentRequest = Request<i64, Result<(), WorkerTaskError>>;
+pub(crate) type StopFragmentRequest = Request<(i64, StopMode), Result<(), WorkerTaskError>>;
 pub(crate) type GetFragmentStatusRequest =
-    Request<FragmentId, Result<QueryStatusReply, WorkerTaskError>>;
+    Request<i64, Result<QueryStatusReply, WorkerTaskError>>;
 
 pub(crate) enum Rpc {
     RegisterFragment(RegisterFragmentRequest),
@@ -108,22 +122,22 @@ const RPC_CHANNEL_CAPACITY: usize = 64;
 const ENDPOINT_KEEP_ALIVE_INTERVAL: Duration = Duration::from_secs(60);
 const ENDPOINT_KEEP_ALIVE_TIMEOUT: Duration = Duration::from_secs(60);
 
-async fn connect(grpc_addr: &GrpcAddr) -> Result<Channel, WorkerTaskError> {
-    let endpoint = Endpoint::from_shared(format!("http://{}", grpc_addr))
+async fn connect(addr: &NetworkAddr) -> Result<Channel, WorkerTaskError> {
+    let endpoint = Endpoint::from_shared(format!("http://{}", addr))
         .map_err(|e| WorkerTaskError::Connection {
-            addr: grpc_addr.clone(),
+            addr: addr.clone(),
             err: e,
         })?
         .http2_keep_alive_interval(ENDPOINT_KEEP_ALIVE_INTERVAL)
         .keep_alive_timeout(ENDPOINT_KEEP_ALIVE_TIMEOUT)
         .connect_timeout(CONNECT_TIMEOUT);
 
-    let grpc_addr = grpc_addr.clone();
+    let addr = addr.clone();
     Retry::spawn(connect_retry_strategy(), || async {
         endpoint.connect().await.map_err(|e| {
             debug!("retrying connection");
             WorkerTaskError::Connection {
-                addr: grpc_addr.clone(),
+                addr: addr.clone(),
                 err: e,
             }
         })
@@ -142,7 +156,7 @@ fn connect_retry_strategy() -> impl Iterator<Item = Duration> {
 // The caller (QueryController) awaits the result via the oneshot in the Request.
 macro_rules! send_wait_reply {
     ($addr:expr, $client:expr, $tx:expr, $method:ident, $req:expr) => {
-        let addr: GrpcAddr = $addr.clone();
+        let addr: NetworkAddr = $addr.clone();
         let mut client = $client.clone();
         let span = tracing::Span::current();
         tokio::spawn(
@@ -185,11 +199,11 @@ impl WorkerTask {
         }
     }
 
-    fn addr(&self) -> &GrpcAddr {
-        &self.worker.grpc_addr
+    fn addr(&self) -> &NetworkAddr {
+        &self.worker.host_addr
     }
 
-    #[instrument(skip_all, fields(grpc_addr = %self.addr()))]
+    #[instrument(skip_all, fields(host_addr = %self.addr()))]
     pub(crate) async fn run(self) {
         loop {
             match connect(self.addr()).await {
@@ -266,19 +280,21 @@ impl WorkerTask {
     fn send(&self, client: &WorkerRpcServiceClient<Channel>, rpc: Rpc) {
         match rpc {
             Rpc::RegisterFragment(Request {
-                payload: id,
+                payload: (id, plan_bytes),
                 reply_to: tx,
             }) => {
+                let plan = prost::Message::decode(plan_bytes.as_slice())
+                    .unwrap_or_else(|_| worker_rpc_service::nes::SerializableQueryPlan {
+                        query_id: query_id(id),
+                        ..Default::default()
+                    });
                 send_wait_reply!(
                     self.addr(),
                     client,
                     tx,
                     register_query,
                     RegisterQueryRequest {
-                        query_plan: Some(worker_rpc_service::nes::SerializableQueryPlan {
-                            query_id: query_id(id),
-                            ..Default::default()
-                        }),
+                        query_plan: Some(plan),
                     }
                 );
             }

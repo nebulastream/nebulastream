@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::query::context::QueryContext;
 use crate::query::running;
 use crate::worker::worker_task::{RegisterFragmentRequest, Rpc, StartFragmentRequest};
@@ -26,8 +40,8 @@ async fn transition(ctx: &mut QueryContext) -> Result<()> {
         QueryState::Pending => {
             ctx.transition_fragments(
                 FragmentState::Pending,
-                |id| {
-                    let (rx, req) = RegisterFragmentRequest::new(id);
+                |f| {
+                    let (rx, req) = RegisterFragmentRequest::new((f.id, f.plan.clone()));
                     (rx, Rpc::RegisterFragment(req))
                 },
                 FragmentState::Registered,
@@ -37,8 +51,8 @@ async fn transition(ctx: &mut QueryContext) -> Result<()> {
         QueryState::Registered => {
             ctx.transition_fragments(
                 FragmentState::Registered,
-                |id| {
-                    let (rx, req) = StartFragmentRequest::new(id);
+                |f| {
+                    let (rx, req) = StartFragmentRequest::new(f.id);
                     (rx, Rpc::StartFragment(req))
                 },
                 FragmentState::Started,
@@ -105,7 +119,7 @@ pub(crate) async fn run(mut ctx: QueryContext, mut stop_rx: flume::Receiver<Stop
     let span = info_span!(
         "query",
         id = ctx.query.id,
-        name = %ctx.query.name,
+        name = ctx.query.name.as_deref().unwrap_or("<unnamed>"),
     );
     {
         let _guard = span.enter();

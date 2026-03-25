@@ -10,5 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(sql-planner)
-add_subdirectory(bridge)
+corrosion_add_cxxbridge(
+        nes-coordinator-bridge
+        CRATE coordinator_bridge
+        FILES ../coordinator/lib.rs
+)
+target_sources(nes-coordinator-bridge PRIVATE
+        src/CatalogReadInterface.cpp
+        src/SqlPlannerBridge.cpp)
+target_include_directories(nes-coordinator-bridge
+        PRIVATE .
+        PUBLIC include)
+target_link_libraries(nes-coordinator-bridge PUBLIC sql-planner)

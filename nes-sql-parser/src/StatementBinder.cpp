@@ -150,9 +150,9 @@ public:
             return std::nullopt;
         }();
 
-        auto grpcAddr = [&] -> std::string
+        auto dataAddr = [&] -> std::string
         {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "GRPC_ADDR"; });
+            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA_ADDR"; });
             if (it != configs.end())
             {
                 const Literal* literalOpt = std::get_if<Literal>(&it->second);
@@ -160,7 +160,7 @@ public:
                 {
                     return URI(std::get<std::string>(*literalOpt)).toString();
                 }
-                throw InvalidQuerySyntax("GRPC_ADDR must be a string literal");
+                throw InvalidQuerySyntax("DATA_ADDR must be a string literal");
             }
             return {};
         }();
@@ -186,7 +186,7 @@ public:
 
         return CreateWorkerStatement{
             .hostAddr = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
-            .grpcAddr = std::move(grpcAddr),
+            .dataAddr = std::move(dataAddr),
             .capacity = capacity,
             .peers = std::move(peers),
             .config = {}};

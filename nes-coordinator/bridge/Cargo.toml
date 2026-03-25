@@ -1,16 +1,17 @@
 [package]
-name = "coordinator-bridge"
+name = "coordinator_bridge"
 version = "0.1.0"
 edition = "2024"
 
 [lib]
+path = "coordinator/lib.rs"
 crate-type = ["staticlib"]
 
 [dependencies]
 coordinator = { path = "../coordinator" }
 model = { path = "../model" }
 catalog = { path = "../catalog" }
-cxx = "1.0"
+cxx = "=1.0.194"
 flume.workspace = true
 serde_json.workspace = true
 anyhow.workspace = true

@@ -12,6 +12,15 @@
     limitations under the License.
 */
 
-pub mod logical_source;
-pub mod physical_source;
-pub mod schema;
+#pragma once
+
+#include <rust/cxx.h>
+
+struct PlannedStatement;
+
+namespace NES
+{
+struct CatalogRef;
+
+::PlannedStatement plan_sql(const CatalogRef& ctx, rust::Str sql);
+}

@@ -1,26 +1,38 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::source::schema::Schema;
-use crate::worker::endpoint::HostAddr;
-#[cfg(feature = "testing")]
+use crate::worker::CreateWorker;
+use crate::worker::endpoint::NetworkAddr;
+use proptest::arbitrary::{Arbitrary, any};
+use proptest::strategy::{BoxedStrategy, Strategy};
 use proptest_derive::Arbitrary;
 use sea_orm::entity::prelude::*;
 use sea_orm::{Condition, Set};
 use serde::{Deserialize, Serialize};
 use strum::Display;
-#[cfg(feature = "testing")]
-use crate::worker::CreateWorker;
-
-pub type SinkName = String;
 
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "sink")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub name: SinkName,
-    pub host_addr: HostAddr,
+    pub name: String,
+    pub host_addr: NetworkAddr,
     pub sink_type: SinkType,
     #[sea_orm(column_type = "JsonBinary")]
     pub schema: Schema,
-    #[sea_orm(column_type = "Json")]
+    #[sea_orm(column_type = "JsonBinary")]
     pub config: Json,
 }
 
@@ -44,10 +56,10 @@ impl Related<crate::worker::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct CreateSink {
-    pub name: SinkName,
-    pub host_addr: HostAddr,
+    pub name: String,
+    pub host_addr: NetworkAddr,
     pub sink_type: SinkType,
     pub schema: Schema,
     pub config: serde_json::Value,
@@ -65,9 +77,9 @@ impl From<CreateSink> for ActiveModel {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Deserialize)]
 pub struct GetSink {
-    pub name: Option<SinkName>,
+    pub name: Option<String>,
 }
 
 impl GetSink {
@@ -75,7 +87,7 @@ impl GetSink {
         Self::default()
     }
 
-    pub fn with_name(mut self, name: SinkName) -> Self {
+    pub fn with_name(mut self, name: String) -> Self {
         self.name = Some(name);
         self
     }
@@ -83,68 +95,53 @@ impl GetSink {
 
 impl crate::IntoCondition for GetSink {
     fn into_condition(self) -> Condition {
-        Condition::all()
-            .add_option(self.name.map(|v| Column::Name.eq(v)))
+        Condition::all().add_option(self.name.map(|v| Column::Name.eq(v)))
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct DropSink {
-    pub name: SinkName,
+    pub name: String,
 }
 
 impl crate::IntoCondition for DropSink {
     fn into_condition(self) -> Condition {
-        Condition::all()
-            .add(Column::Name.eq(self.name))
+        Condition::all().add(Column::Name.eq(self.name))
     }
 }
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
 #[derive(
-    Debug, Copy, Clone, PartialEq, Eq, Display, Serialize, Deserialize, DeriveActiveEnum, EnumIter,
+    Arbitrary,
+    Debug,
+    Copy,
+    Clone,
+    PartialEq,
+    Eq,
+    Display,
+    Serialize,
+    Deserialize,
+    DeriveActiveEnum,
+    EnumIter,
 )]
-#[sea_orm(
-    rs_type = "String",
-    db_type = "Text",
-    rename_all = "PascalCase"
-)]
+#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum SinkType {
     File,
     Print,
 }
 
-#[cfg(feature = "testing")]
 #[derive(Debug, Clone)]
 pub struct SinkWithRefs {
     pub worker: CreateWorker,
     pub sink: CreateSink,
 }
 
-#[cfg(feature = "testing")]
-fn sink_name_chars() -> impl proptest::strategy::Strategy<Value = char> {
-    use proptest::prelude::*;
-    prop_oneof![
-        proptest::char::range('a', 'z'),
-        proptest::char::range('0', '9'),
-        Just('_')
-    ]
-}
+impl Arbitrary for SinkWithRefs {
+    type Parameters = ();
 
-#[cfg(feature = "testing")]
-impl crate::Generate for SinkWithRefs {
-    fn generate() -> proptest::strategy::BoxedStrategy<Self> {
-        use proptest::prelude::*;
-        let name = (
-            proptest::char::range('a', 'z'),
-            proptest::collection::vec(sink_name_chars(), 2..=29),
-        )
-            .prop_map(|(first, rest)| {
-                std::iter::once(first).chain(rest).collect::<String>()
-            });
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         (
-            name,
-            CreateWorker::generate(),
+            "[a-zA-Z]{1,10}",
+            any::<CreateWorker>(),
             any::<SinkType>(),
             any::<Schema>(),
         )
@@ -160,4 +157,6 @@ impl crate::Generate for SinkWithRefs {
             })
             .boxed()
     }
+
+    type Strategy = BoxedStrategy<Self>;
 }

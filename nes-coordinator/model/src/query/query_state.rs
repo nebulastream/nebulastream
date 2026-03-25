@@ -1,12 +1,24 @@
-#[cfg(feature = "testing")]
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use proptest_derive::Arbitrary;
 use sea_orm::{DeriveActiveEnum, EnumIter};
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
-use strum::{Display, EnumString, IntoEnumIterator};
+use strum::{Display, EnumString};
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
 #[derive(
+    Arbitrary,
     Clone,
     Copy,
     Debug,
@@ -22,11 +34,7 @@ use strum::{Display, EnumString, IntoEnumIterator};
     Serialize,
     Deserialize,
 )]
-#[sea_orm(
-    rs_type = "String",
-    db_type = "Text",
-    rename_all = "PascalCase"
-)]
+#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 #[strum(serialize_all = "PascalCase")]
 pub enum QueryState {
     #[default]
@@ -38,8 +46,8 @@ pub enum QueryState {
     Failed,
 }
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
 #[derive(
+    Arbitrary,
     Clone,
     Copy,
     Debug,
@@ -52,36 +60,12 @@ pub enum QueryState {
     Serialize,
     Deserialize,
 )]
-#[sea_orm(
-    rs_type = "String",
-    db_type = "Text",
-    rename_all = "PascalCase"
-)]
+#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 #[strum(serialize_all = "PascalCase")]
 pub enum DesiredQueryState {
     #[default]
     Completed,
     Stopped,
-}
-
-impl From<String> for QueryState {
-    fn from(s: String) -> Self {
-        QueryState::from_str(&s).expect("failed to parse QueryState")
-    }
-}
-
-impl From<super::fragment::FragmentState> for QueryState {
-    fn from(state: super::fragment::FragmentState) -> Self {
-        use super::fragment::FragmentState;
-        match state {
-            FragmentState::Pending => Self::Pending,
-            FragmentState::Registered => Self::Registered,
-            FragmentState::Started | FragmentState::Running => Self::Running,
-            FragmentState::Completed => Self::Completed,
-            FragmentState::Stopped => Self::Stopped,
-            FragmentState::Failed => Self::Failed,
-        }
-    }
 }
 
 impl QueryState {
@@ -90,51 +74,5 @@ impl QueryState {
             self,
             QueryState::Completed | QueryState::Stopped | QueryState::Failed
         )
-    }
-
-    pub fn transitions(&self) -> Vec<QueryState> {
-        match self {
-            QueryState::Pending => {
-                vec![QueryState::Registered, QueryState::Stopped, QueryState::Failed]
-            }
-            QueryState::Registered => vec![
-                QueryState::Pending,
-                QueryState::Running,
-                QueryState::Stopped,
-                QueryState::Failed,
-            ],
-            QueryState::Running => vec![
-                QueryState::Pending,
-                QueryState::Completed,
-                QueryState::Stopped,
-                QueryState::Failed,
-            ],
-            QueryState::Completed | QueryState::Stopped | QueryState::Failed => vec![],
-        }
-    }
-
-    pub fn invalid_transitions(&self) -> Vec<QueryState> {
-        let valid = self.transitions();
-        QueryState::iter()
-            .filter(|s| *s != *self && !valid.contains(s))
-            .collect()
-    }
-}
-
-#[cfg(feature = "testing")]
-impl crate::Generate for Vec<QueryState> {
-    fn generate() -> proptest::strategy::BoxedStrategy<Self> {
-        use proptest::prelude::*;
-        use QueryState::*;
-        prop_oneof![
-            Just(vec![Pending, Registered, Running, Completed]),
-            Just(vec![Pending, Registered, Running, Stopped]),
-            Just(vec![Pending, Registered, Running, Failed]),
-            Just(vec![Pending, Registered, Stopped]),
-            Just(vec![Pending, Registered, Failed]),
-            Just(vec![Pending, Stopped]),
-            Just(vec![Pending, Failed]),
-        ]
-        .boxed()
     }
 }

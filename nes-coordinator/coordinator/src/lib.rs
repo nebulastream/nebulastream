@@ -1,5 +1,18 @@
-mod request_handler;
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
 
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+mod request_handler;
 
 use crate::request_handler::RequestHandler;
 use catalog::Catalog;
@@ -99,35 +112,31 @@ impl Supervisor {
     }
 }
 
-#[cfg(not(madsim))]
 pub fn start(
     state_backend: Option<StateBackend>,
     request_buffer_size: Option<usize>,
-) -> flume::Sender<Request> {
+) -> (flume::Sender<Request>, Arc<Catalog>, tokio::runtime::Runtime) {
     info!("starting");
-    let (handle, receiver) = flume::bounded(request_buffer_size.unwrap_or(DEFAULT_CAPACITY));
+    let runtime = tokio::runtime::Builder::new_multi_thread()
+        .enable_time()
+        .enable_io()
+        .build()
+        .expect("failed to create runtime");
 
-    std::thread::spawn(move || {
-        let rt = tokio::runtime::Builder::new_multi_thread()
-            .enable_time()
-            .enable_io()
-            .build()
-            .expect("failed to create runtime");
+    let (sender, receiver) = flume::bounded(request_buffer_size.unwrap_or(DEFAULT_CAPACITY));
 
-        rt.block_on(async move {
-            let state = Database::with(state_backend.unwrap_or_default())
-                .await
-                .expect("failed to create database state");
-            let catalog = Catalog::from(state);
-            let registry = WorkerRegistry::default();
+    let catalog = runtime.block_on(async {
+        let state = Database::with(state_backend.unwrap_or_default())
+            .await
+            .expect("failed to create database state");
+        let catalog = Catalog::from(state);
+        let registry = WorkerRegistry::default();
 
-            Supervisor::new(catalog, registry, receiver).run().await
-        });
-
-        rt.shutdown_background();
+        tokio::spawn(Supervisor::new(catalog.clone(), registry, receiver).run());
+        catalog
     });
 
-    handle
+    (sender, catalog, runtime)
 }
 
 #[cfg(madsim)]

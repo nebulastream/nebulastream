@@ -1,22 +1,36 @@
-use super::logical_source::LogicalSourceName;
-use crate::worker::endpoint::HostAddr;
-#[cfg(feature = "testing")]
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+use crate::worker::endpoint::NetworkAddr;
+use crate::worker::CreateWorker;
+use proptest::arbitrary::Arbitrary;
+use proptest::strategy::BoxedStrategy;
 use proptest_derive::Arbitrary;
+use super::logical_source::CreateLogicalSource;
 use sea_orm::ActiveValue::{NotSet, Set};
 use sea_orm::Condition;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
-pub type PhysicalSourceId = i64;
-
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "physical_source")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: PhysicalSourceId,
-    pub logical_source: LogicalSourceName,
-    pub host_addr: HostAddr,
+    pub id: i64,
+    pub logical_source: String,
+    pub host_addr: NetworkAddr,
     pub source_type: SourceType,
     #[sea_orm(column_type = "Json")]
     pub source_config: Json,
@@ -58,10 +72,10 @@ impl Related<crate::worker::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, serde::Deserialize)]
 pub struct CreatePhysicalSource {
-    pub logical_source: LogicalSourceName,
-    pub host_addr: HostAddr,
+    pub logical_source: String,
+    pub host_addr: NetworkAddr,
     pub source_type: SourceType,
     pub source_config: serde_json::Value,
     pub parser_config: serde_json::Value,
@@ -80,11 +94,11 @@ impl From<CreatePhysicalSource> for ActiveModel {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Deserialize)]
 pub struct GetPhysicalSource {
-    pub id: Option<PhysicalSourceId>,
-    pub host_addr: Option<HostAddr>,
-    pub logical_source: Option<LogicalSourceName>,
+    pub id: Option<i64>,
+    pub host_addr: Option<NetworkAddr>,
+    pub logical_source: Option<String>,
 }
 
 impl GetPhysicalSource {
@@ -92,17 +106,17 @@ impl GetPhysicalSource {
         Self::default()
     }
 
-    pub fn with_id(mut self, id: PhysicalSourceId) -> Self {
+    pub fn with_id(mut self, id: i64) -> Self {
         self.id = Some(id);
         self
     }
 
-    pub fn with_host_addr(mut self, host_addr: HostAddr) -> Self {
+    pub fn with_host_addr(mut self, host_addr: NetworkAddr) -> Self {
         self.host_addr = Some(host_addr);
         self
     }
 
-    pub fn with_logical_source(mut self, logical_source: LogicalSourceName) -> Self {
+    pub fn with_logical_source(mut self, logical_source: String) -> Self {
         self.logical_source = Some(logical_source);
         self
     }
@@ -117,7 +131,7 @@ impl crate::IntoCondition for GetPhysicalSource {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, serde::Deserialize)]
 pub struct DropPhysicalSource {
     pub filters: GetPhysicalSource,
 }
@@ -139,9 +153,8 @@ impl crate::IntoCondition for DropPhysicalSource {
     }
 }
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
 #[derive(
-    Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
+    Arbitrary, Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
 )]
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum SourceType {
@@ -149,21 +162,21 @@ pub enum SourceType {
     Tcp,
 }
 
-#[cfg(feature = "testing")]
 #[derive(Debug, Clone)]
 pub struct PhysicalSourceWithRefs {
-    pub logical: super::logical_source::CreateLogicalSource,
-    pub worker: crate::worker::CreateWorker,
+    pub logical: CreateLogicalSource,
+    pub worker: CreateWorker,
     pub physical: CreatePhysicalSource,
 }
 
-#[cfg(feature = "testing")]
-impl crate::Generate for PhysicalSourceWithRefs {
-    fn generate() -> proptest::strategy::BoxedStrategy<Self> {
+impl Arbitrary for PhysicalSourceWithRefs {
+    type Parameters = ();
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         use proptest::prelude::*;
         (
-            any::<super::logical_source::CreateLogicalSource>(),
-            crate::worker::CreateWorker::generate(),
+            any::<CreateLogicalSource>(),
+            any::<CreateWorker>(),
             any::<SourceType>(),
         )
             .prop_map(|(logical, worker, source_type)| {
@@ -182,4 +195,6 @@ impl crate::Generate for PhysicalSourceWithRefs {
             })
             .boxed()
     }
+
+    type Strategy = BoxedStrategy<Self>;
 }

@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #![cfg(madsim)]
 use crate::harness::{TestHarness, arb};
 use crate::workload::{
@@ -8,7 +22,7 @@ use async_trait::async_trait;
 use madsim::rand::Rng;
 use model::query::query_state::QueryState;
 use model::query::{CreateQuery, DropQuery, GetQuery, StopMode};
-use model::{Generate, query};
+use model::query;
 use proptest::prelude::*;
 use serde::Deserialize;
 use std::cell::RefCell;
@@ -163,7 +177,7 @@ impl QueryWorkload {
                     let resp = harness
                         .drop_queries(
                             DropQuery::all()
-                                .stop_mode(stop_mode)
+                                .with_stop_mode(stop_mode)
                                 .with_filters(GetQuery::all().with_id(qid)),
                         )
                         .await;
@@ -278,12 +292,12 @@ impl Invariant for QueryLiveness {
             for f in fragments {
                 let active = ctx
                     .active_by_worker
-                    .get(&f.grpc_addr)
+                    .get(&f.host_addr)
                     .map_or(false, |ids| ids.contains(&(f.id as u64)));
                 assert!(
                     active,
                     "query_liveness: fragment {} of query {} not active on placed worker {}",
-                    f.id, q.id, f.grpc_addr,
+                    f.id, q.id, f.host_addr,
                 );
             }
         }
@@ -319,12 +333,12 @@ impl Invariant for QueryTermination {
             for f in fragments {
                 let active = ctx
                     .active_by_worker
-                    .get(&f.grpc_addr)
+                    .get(&f.host_addr)
                     .map_or(false, |ids| ids.contains(&(f.id as u64)));
                 assert!(
                     !active,
                     "query_termination: fragment {} of dropped query {} still active on worker {}",
-                    f.id, q.id, f.grpc_addr,
+                    f.id, q.id, f.host_addr,
                 );
             }
         }

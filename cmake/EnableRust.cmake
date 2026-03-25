@@ -61,7 +61,7 @@ corrosion_import_crate(
 
 corrosion_import_crate(
         MANIFEST_PATH nes-coordinator/Cargo.toml
-        CRATES coordinator-bridge
+        CRATES coordinator_bridge
         IMPORTED_CRATES COORDINATOR_CRATES
         CRATE_TYPES staticlib
         FLAGS ${ADDITIONAL_CARGOFLAGS}

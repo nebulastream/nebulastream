@@ -1,9 +1,23 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::worker::worker_task::{Rpc, WorkerTaskError};
 use crate::worker::worker_registry::{WorkerError, WorkerRegistryHandle};
 use catalog::Catalog;
 use catalog::error::Retryable;
-use model::query::fragment::{self, FragmentId};
-use model::worker::endpoint::HostAddr;
+use model::query::fragment;
+use model::worker::endpoint::NetworkAddr;
 use model::worker::{DesiredWorkerState, GetWorker};
 use std::sync::Arc;
 use std::time::Duration;
@@ -46,11 +60,11 @@ impl RetryPolicy {
         fragment: &fragment::Model,
     ) -> Result<Rsp, WorkerError>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
+        F: Fn(&fragment::Model) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
-        let (rx, rpc) = mk_rpc(fragment.id);
-        let addr = fragment.grpc_addr.clone();
+        let (rx, rpc) = mk_rpc(fragment);
+        let addr = fragment.host_addr.clone();
         registry.send(&addr, rpc).await?;
         let result = rx
             .await
@@ -78,10 +92,10 @@ impl RetryPolicy {
         fragment: &fragment::Model,
     ) -> Result<Rsp, WorkerError>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
+        F: Fn(&fragment::Model) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
-        let addr = fragment.grpc_addr.clone();
+        let addr = fragment.host_addr.clone();
         let retry_fut = RetryIf::spawn(
             self.strategy(),
             || self.action(registry, mk_rpc, fragment),
@@ -95,7 +109,7 @@ impl RetryPolicy {
     }
 }
 
-async fn is_worker_removed(catalog: &Catalog, host_addr: &HostAddr) -> bool {
+async fn is_worker_removed(catalog: &Catalog, host_addr: &NetworkAddr) -> bool {
     match catalog
         .worker
         .get_worker(GetWorker::all().with_host_addr(host_addr.clone()))

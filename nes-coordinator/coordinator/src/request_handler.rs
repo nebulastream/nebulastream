@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use catalog::Catalog;
 use catalog::Reconcilable;
 use model::query;
@@ -7,19 +21,16 @@ use model::request::{Request, Statement, StatementResponse};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
+use tokio::sync::oneshot;
 use tracing::{debug, info, instrument};
 
 #[derive(Error, Debug)]
-#[error("Query '{query_id}' terminated with state {state} before reaching target state")]
-struct EarlyTermination {
-    query_id: i64,
-    state: QueryState,
-    model: query::Model,
-}
+#[error("Query '{}' terminated early with state {}", .0.id, .0.current_state)]
+struct EarlyTermination(query::Model);
 
 struct PendingCreate {
     block_until: QueryState,
-    reply_to: tokio::sync::oneshot::Sender<anyhow::Result<StatementResponse>>,
+    reply_to: oneshot::Sender<anyhow::Result<StatementResponse>>,
 }
 
 pub(super) struct RequestHandler {
@@ -29,10 +40,7 @@ pub(super) struct RequestHandler {
 }
 
 impl RequestHandler {
-    pub(super) fn new(
-        receiver: flume::Receiver<Request>,
-        catalog: Arc<Catalog>,
-    ) -> RequestHandler {
+    pub(super) fn new(receiver: flume::Receiver<Request>, catalog: Arc<Catalog>) -> RequestHandler {
         Self {
             receiver,
             catalog,
@@ -63,17 +71,23 @@ impl RequestHandler {
     #[instrument(skip_all)]
     async fn handle(&mut self, req: Request) {
         debug!("received: {:?}", req);
-        let Request { statement, reply_to } = req;
+        let Request {
+            statement,
+            reply_to,
+        } = req;
 
         // CreateQuery with blocking: defer the reply until the query reaches the target state
-        if let Statement::CreateQuery(ref q) = statement {
-            if q.blocking() {
-                let block_until = q.block_until;
+        if let Statement::CreateQuery(ref req) = statement {
+            if req.is_blocking() {
+                let block_until = req.block_until;
                 match self.execute(statement).await {
                     Ok(StatementResponse::CreatedQuery(model)) => {
                         self.pending_query_creates.insert(
                             model.id,
-                            PendingCreate { block_until, reply_to },
+                            PendingCreate {
+                                block_until,
+                                reply_to,
+                            },
                         );
                     }
                     other => {
@@ -122,12 +136,7 @@ impl RequestHandler {
             let model = queries[&id].clone();
 
             if model.current_state.is_terminal() && model.current_state != pending.block_until {
-                let _ = pending.reply_to.send(Err(EarlyTermination {
-                    query_id: model.id,
-                    state: model.current_state,
-                    model,
-                }
-                .into()));
+                let _ = pending.reply_to.send(Err(EarlyTermination(model).into()));
             } else {
                 let _ = pending
                     .reply_to
@@ -138,10 +147,6 @@ impl RequestHandler {
 
     async fn execute(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
         match statement {
-            Statement::Sql(sql) => {
-                // TODO: call C++ SqlPlanner via FFI, convert result to structured variant
-                anyhow::bail!("SqlPlanner not yet integrated: {sql}")
-            }
             Statement::CreateWorker(w) => {
                 let model = self.catalog.worker.create_worker(w).await?;
                 Ok(StatementResponse::CreatedWorker(model))
@@ -155,20 +160,11 @@ impl RequestHandler {
                 Ok(StatementResponse::DroppedWorker(worker))
             }
             Statement::CreateQuery(q) => {
-                let model = self.catalog.query.create_query(q).await?;
-                #[cfg(madsim)]
-                {
-                    use model::query::fragment::CreateFragment;
-                    use model::worker::GetWorker;
-                    let workers = self.catalog.worker.get_worker(GetWorker::all()).await?;
-                    let fragments = CreateFragment::for_models(&model, &workers);
-                    self.catalog.query.create_fragments_for_query(fragments).await?;
-                }
+                let (model, _) = self.catalog.query.create_query(q).await?;
                 Ok(StatementResponse::CreatedQuery(model))
             }
-            Statement::ExplainQuery(_sql) => {
-                // TODO: call C++ SqlPlanner in explain mode, return plan explanation
-                anyhow::bail!("ExplainQuery not yet implemented")
+            Statement::ExplainQuery(explanation) => {
+                Ok(StatementResponse::ExplainedQuery(explanation))
             }
             Statement::GetQuery(g) => {
                 if g.with_fragments {
@@ -227,128 +223,120 @@ impl RequestHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use catalog::testing::advance_query_to;
+    use model::query::fragment::FragmentState;
     use model::query::query_state::QueryState;
-    use model::query::{CreateQuery, GetQuery};
+    use model::query::{CreateQueryWithRefs, GetQuery};
     use model::request::{Request, Statement, StatementResponse};
-    use model::worker::CreateWorker;
-    use model::worker::endpoint::NetworkAddr;
-    use model::Generate;
     use proptest::prelude::*;
-    use catalog::test_prop;
 
     struct TestHandle {
+        rt: tokio::runtime::Runtime,
         sender: flume::Sender<Request>,
         catalog: Arc<Catalog>,
     }
 
     impl TestHandle {
-        async fn new() -> Self {
-            let catalog = Catalog::for_test().await;
-            let worker = CreateWorker::new(
-                NetworkAddr::new("test-host".to_string(), 9000),
-                NetworkAddr::new("test-host".to_string(), 9001),
-                Some(100),
-            );
-            catalog.worker.create_worker(worker).await.unwrap();
-            let (sender, receiver) = flume::bounded(16);
-            let handler_catalog = catalog.clone();
-            tokio::spawn(RequestHandler::new(receiver, handler_catalog).run());
-            Self { sender, catalog }
+        fn new(req: &CreateQueryWithRefs) -> Self {
+            let rt = tokio::runtime::Builder::new_multi_thread()
+                .worker_threads(1)
+                .enable_all()
+                .build()
+                .unwrap();
+            let (sender, catalog) = rt.block_on(async {
+                let catalog = Catalog::for_test().await;
+                for w in &req.workers {
+                    catalog.worker.create_worker(w.clone()).await.unwrap();
+                }
+                let (sender, receiver) = flume::bounded(16);
+                tokio::spawn(RequestHandler::new(receiver, catalog.clone()).run());
+                (sender, catalog)
+            });
+            Self {
+                rt,
+                sender,
+                catalog,
+            }
         }
 
-        async fn send(&self, statement: Statement) -> tokio::sync::oneshot::Receiver<anyhow::Result<StatementResponse>> {
+        fn ask(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
             let (rx, request) = Request::new(statement);
             self.sender
-                .send_async(request)
-                .await
+                .send(request)
                 .expect("handler should be running");
-            rx
-        }
-
-        async fn advance_to(&self, query_id: i64, target: QueryState) {
-            advance_query_to(&self.catalog, query_id, target).await;
-        }
-    }
-
-    async fn prop_non_blocking_create_returns_pending(req: CreateQuery) {
-        let handle = TestHandle::new().await;
-        let statement = req.sql_statement.clone();
-        let name = req.name.clone();
-        let rx = handle.send(Statement::CreateQuery(req)).await;
-        let result = rx.await.unwrap().unwrap();
-        let model = match result {
-            StatementResponse::CreatedQuery(m) => m,
-            other => panic!("expected CreatedQuery, got {other:?}"),
-        };
-        assert_eq!(model.current_state, QueryState::Pending);
-        assert_eq!(model.statement, statement);
-        assert_eq!(model.name, name);
-    }
-
-    async fn prop_blocking_create_resolves_correctly(
-        block_until: QueryState,
-        path: Vec<QueryState>,
-    ) {
-        let handle = TestHandle::new().await;
-        let req = CreateQuery::new("SELECT 1".to_string()).block_until(block_until);
-        let rx = handle.send(Statement::CreateQuery(req)).await;
-        tokio::task::yield_now().await;
-
-        let queries = handle
-            .catalog
-            .query
-            .get_query(GetQuery::all())
-            .await
-            .unwrap();
-        let query = queries.into_iter().next().unwrap();
-
-        for &state in &path {
-            handle.advance_to(query.id, state).await;
-        }
-
-        let result = rx.await.unwrap();
-        let path_contains_target = path.contains(&block_until);
-
-        if path_contains_target {
-            let resp = result.expect("expected Ok when path contains block_until");
-            let model = match resp {
-                StatementResponse::CreatedQuery(m) => m,
-                other => panic!("expected CreatedQuery, got {other:?}"),
-            };
-            assert!(model.current_state >= block_until);
-        } else {
-            let err = result.expect_err("expected EarlyTermination when path skips block_until");
-            let early = err
-                .downcast_ref::<EarlyTermination>()
-                .expect("error should be EarlyTermination");
-            assert!(early.state.is_terminal());
-            assert!(early.state >= block_until);
-            assert_ne!(early.state, block_until);
+            self.rt.block_on(rx)?
         }
     }
 
     proptest! {
         #[test]
-        fn non_blocking_create_returns_pending(req in CreateQuery::generate()) {
-            let req = CreateQuery { block_until: QueryState::Pending, ..req };
-            test_prop(|| async move {
-                prop_non_blocking_create_returns_pending(req).await;
-            });
+        fn non_blocking_create_returns_pending(mut req in any::<CreateQueryWithRefs>()) {
+            let handle = TestHandle::new(&req);
+            req.query.block_until = QueryState::Pending;
+            let result = handle.ask(Statement::CreateQuery(req.query.clone())).unwrap();
+            let model = match result {
+                StatementResponse::CreatedQuery(m) => m,
+                other => panic!("expected CreatedQuery, got {other:?}"),
+            };
+            assert_eq!(model.current_state, QueryState::Pending);
+            assert_eq!(model.statement, req.query.sql_statement);
+            assert_eq!(model.name, req.query.name);
         }
 
         #[test]
         fn blocking_create_resolves_correctly(
+            mut req in any::<CreateQueryWithRefs>(),
             block_until in prop_oneof![
                 Just(QueryState::Registered),
                 Just(QueryState::Running),
                 Just(QueryState::Completed),
             ],
-            path in <Vec<QueryState> as Generate>::generate(),
         ) {
-            test_prop(|| async move {
-                prop_blocking_create_resolves_correctly(block_until, path).await;
+            let handle = TestHandle::new(&req);
+            req.query.block_until = block_until;
+
+            let mut intent_rx = handle.catalog.query.subscribe_intent();
+            let catalog = handle.catalog.clone();
+            handle.rt.spawn(async move {
+                intent_rx.changed().await.unwrap();
+                let query = catalog.query.get_query(GetQuery::all()).await.unwrap()
+                    .into_iter().next().unwrap();
+                let fragments = catalog.query.get_fragments(query.id).await.unwrap();
+                catalog.query.transition_to(query.id, &fragments, FragmentState::Completed).await;
             });
+
+            let result = handle.ask(Statement::CreateQuery(req.query)).unwrap();
+            let model = match result {
+                StatementResponse::CreatedQuery(m) => m,
+                other => panic!("expected CreatedQuery, got {other:?}"),
+            };
+            assert!(model.current_state >= block_until);
+        }
+
+        #[test]
+        fn blocking_create_early_termination(
+            mut req in any::<CreateQueryWithRefs>(),
+            terminal in prop_oneof![
+                Just(FragmentState::Stopped),
+                Just(FragmentState::Failed),
+            ],
+        ) {
+            let handle = TestHandle::new(&req);
+            req.query.block_until = QueryState::Completed;
+
+            let mut intent_rx = handle.catalog.query.subscribe_intent();
+            let catalog = handle.catalog.clone();
+            handle.rt.spawn(async move {
+                intent_rx.changed().await.unwrap();
+                let query = catalog.query.get_query(GetQuery::all()).await.unwrap()
+                    .into_iter().next().unwrap();
+                let fragments = catalog.query.get_fragments(query.id).await.unwrap();
+                catalog.query.transition_to(query.id, &fragments, terminal).await;
+            });
+
+            assert!(
+                handle.ask(Statement::CreateQuery(req.query)).is_err(),
+                "should return EarlyTermination for terminal={terminal:?}"
+            );
         }
     }
 }

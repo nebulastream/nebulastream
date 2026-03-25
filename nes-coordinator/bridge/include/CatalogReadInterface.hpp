@@ -20,10 +20,11 @@
 #include <string_view>
 #include <unordered_set>
 #include <variant>
+
 #include <Identifiers/Identifiers.hpp>
+#include <Sinks/SinkDescriptor.hpp>
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
-#include <Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {

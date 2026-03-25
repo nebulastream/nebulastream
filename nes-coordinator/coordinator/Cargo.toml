@@ -3,9 +3,6 @@ name = "coordinator"
 version = "0.1.0"
 edition = "2024"
 
-[features]
-testing = ["catalog/testing", "controller/testing"]
-
 [dependencies]
 catalog.workspace = true
 model.workspace = true
@@ -25,9 +22,6 @@ futures-util = "0.3"
 tonic-build.workspace = true
 
 [dev-dependencies]
-catalog = { workspace = true, features = ["testing"] }
-controller = { workspace = true, features = ["testing"] }
-model = { workspace = true, features = ["testing"] }
 proptest = "1.5"
 serde_json.workspace = true
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -38,6 +32,7 @@ async-trait.workspace = true
 inventory.workspace = true
 libtest-mimic = "0.8"
 tokio-retry.workspace = true
+test-strategy = "0.4.5"
 
 [[test]]
 name = "simulation"

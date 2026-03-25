@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::triggers::m20260204_185834_init as triggers;
 use crate::{assert_not_has_tables, drop_tables};
 use model::query::StopMode;
@@ -72,7 +86,7 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(
-                        ColumnDef::new(Worker::GrpcAddr)
+                        ColumnDef::new(Worker::DataAddr)
                             .string()
                             .not_null()
                             .unique_key(),
@@ -102,6 +116,7 @@ impl MigrationTrait for Migration {
                                 ),
                             ),
                     )
+                    .check(Expr::col(Worker::HostAddr).ne(Expr::col(Worker::DataAddr)))
                     .to_owned(),
             )
             .await?;
@@ -214,7 +229,7 @@ impl MigrationTrait for Migration {
                             .auto_increment()
                             .primary_key(),
                     )
-                    .col(ColumnDef::new(Query::Name).string().not_null())
+                    .col(ColumnDef::new(Query::Name).string().null())
                     .col(ColumnDef::new(Query::Statement).string().not_null())
                     .col(
                         ColumnDef::new(Query::CurrentState)
@@ -264,8 +279,7 @@ impl MigrationTrait for Migration {
                     )
                     .col(ColumnDef::new(Fragment::QueryId).big_integer().not_null())
                     .col(ColumnDef::new(Fragment::HostAddr).string().not_null())
-                    .col(ColumnDef::new(Fragment::GrpcAddr).string().not_null())
-                    .col(ColumnDef::new(Fragment::Plan).json().not_null())
+                    .col(ColumnDef::new(Fragment::Plan).binary().not_null())
                     .col(
                         ColumnDef::new(Fragment::UsedCapacity)
                             .integer()
@@ -370,7 +384,7 @@ enum Sink {
 enum Worker {
     Table,
     HostAddr,
-    GrpcAddr,
+    DataAddr,
     Capacity,
     CurrentState,
     DesiredState,
@@ -389,7 +403,6 @@ enum Fragment {
     Id,
     QueryId,
     HostAddr,
-    GrpcAddr,
     Plan,
     UsedCapacity,
     HasSource,

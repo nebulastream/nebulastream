@@ -1,17 +1,29 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::database::Database;
 use crate::notification::{NotificationChannel, Reconcilable};
-use anyhow::{Result, ensure};
+use anyhow::Result;
 use model::IntoCondition;
-use model::worker::endpoint::HostAddr;
+use model::worker::endpoint::NetworkAddr;
 use model::worker::network_link;
 use model::worker::{
     self, CreateWorker, DesiredWorkerState, DropWorker, Entity as WorkerEntity, GetWorker,
     WorkerState,
 };
 use sea_orm::sea_query::Expr;
-use sea_orm::{
-    ActiveModelTrait, ActiveValue::Set, EntityTrait, QueryFilter, TransactionTrait,
-};
+use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait, QueryFilter, TransactionTrait};
 use std::sync::Arc;
 
 pub struct WorkerCatalog {
@@ -28,36 +40,39 @@ impl WorkerCatalog {
     }
 
     pub async fn create_worker(&self, req: CreateWorker) -> Result<worker::Model> {
-        let worker = self.db.with_retry(|conn| {
-            let req = req.clone();
-            async move {
-                conn.transaction::<_, worker::Model, sea_orm::DbErr>(|txn| {
-                    Box::pin(async move {
-                        let host_addr = req.host_addr.clone();
-                        let peers = req.peers.clone();
-                        let worker = worker::ActiveModel::from(req).insert(txn).await?;
+        let worker = self
+            .db
+            .with_retry(|conn| {
+                let req = req.clone();
+                async move {
+                    conn.transaction::<_, worker::Model, sea_orm::DbErr>(|txn| {
+                        Box::pin(async move {
+                            let host_addr = req.host_addr.clone();
+                            let peers = req.peers.clone();
+                            let worker = worker::ActiveModel::from(req).insert(txn).await?;
 
-                        if !peers.is_empty() {
-                            network_link::Entity::insert_many(peers.into_iter().map(|peer| {
-                                network_link::ActiveModel {
-                                    source_host_addr: Set(host_addr.clone()),
-                                    target_host_addr: Set(peer),
-                                }
-                            }))
-                            .exec(txn)
-                            .await?;
-                        }
+                            if !peers.is_empty() {
+                                network_link::Entity::insert_many(peers.into_iter().map(|peer| {
+                                    network_link::ActiveModel {
+                                        source_host_addr: Set(host_addr.clone()),
+                                        target_host_addr: Set(peer),
+                                    }
+                                }))
+                                .exec(txn)
+                                .await?;
+                            }
 
-                        Ok(worker)
+                            Ok(worker)
+                        })
                     })
-                })
-                .await
-                .map_err(|e| match e {
-                    sea_orm::TransactionError::Connection(e) => e,
-                    sea_orm::TransactionError::Transaction(e) => e,
-                })
-            }
-        }).await?;
+                    .await
+                    .map_err(|e| match e {
+                        sea_orm::TransactionError::Connection(e) => e,
+                        sea_orm::TransactionError::Transaction(e) => e,
+                    })
+                }
+            })
+            .await?;
 
         self.listeners.notify_intent();
         Ok(worker)
@@ -95,7 +110,9 @@ impl WorkerCatalog {
         Ok(updated)
     }
 
-    pub async fn get_topology(&self) -> Result<(Vec<worker::Model>, Vec<(HostAddr, HostAddr)>)> {
+    pub async fn get_topology(
+        &self,
+    ) -> Result<(Vec<worker::Model>, Vec<(NetworkAddr, NetworkAddr)>)> {
         let workers = WorkerEntity::find().all(&self.db.conn).await?;
         let links = network_link::Entity::find().all(&self.db.conn).await?;
         let edges = links
@@ -127,20 +144,17 @@ impl Reconcilable for WorkerCatalog {
 
 #[cfg(test)]
 mod tests {
-    use std::collections::HashSet;
     use super::*;
-    use crate::{test_prop, Catalog};
-    use model::Generate;
-    use model::query::CreateQuery;
-    use model::query::fragment::CreateFragment;
-    use proptest::prelude::*;
+    use crate::Catalog;
+    use model::query::CreateQueryWithRefs;
+    use model::worker::n_unique_workers;
+    use std::collections::HashSet;
+    use test_strategy::proptest;
 
-    /// Upper bound on workers generated per test case. Kept low because potential
-    /// edges grow quadratically (n*(n-1)/2), so larger values slow proptest
-    /// shrinking and make minimal failing cases harder to find.
-    const MAX_TEST_WORKERS: usize = 8;
+    const MAX_TEST_WORKERS: u8 = 32;
 
-    async fn prop_create_and_get_worker(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn create_and_get_worker(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
 
         let created = catalog
@@ -150,7 +164,7 @@ mod tests {
             .expect("worker creation should succeed");
 
         assert_eq!(created.host_addr, req.host_addr);
-        assert_eq!(created.grpc_addr, req.grpc_addr);
+        assert_eq!(created.data_addr, req.data_addr);
         assert_eq!(created.capacity, req.capacity);
         assert_eq!(created.current_state, WorkerState::Pending);
         assert_eq!(created.desired_state, DesiredWorkerState::Active);
@@ -165,7 +179,8 @@ mod tests {
         assert_eq!(workers.first().unwrap().host_addr, req.host_addr);
     }
 
-    async fn prop_drop_and_remove_worker(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn drop_and_remove_worker(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
         let created = catalog.worker.create_worker(req.clone()).await.unwrap();
 
@@ -193,7 +208,8 @@ mod tests {
         assert_eq!(workers[0].current_state, WorkerState::Removed);
     }
 
-    async fn prop_mark_worker_state(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn mark_worker_state(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
         let created = catalog.worker.create_worker(req.clone()).await.unwrap();
 
@@ -211,93 +227,72 @@ mod tests {
         assert_eq!(workers.first().unwrap().current_state, WorkerState::Active);
     }
 
-    async fn prop_host_grpc_neq(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn host_addr_data_addr_must_differ(mut req: CreateWorker) {
         let catalog = Catalog::for_test().await;
-        let same_addr = CreateWorker::new(req.host_addr.clone(), req.host_addr, req.capacity);
+        req.data_addr = req.host_addr.clone();
 
         assert!(
-            catalog.worker.create_worker(same_addr).await.is_err(),
-            "Worker creation should fail when host_addr equals grpc_addr"
+            catalog.worker.create_worker(req).await.is_err(),
+            "Worker creation should fail when host_addr equals data_addr"
         );
     }
 
-    async fn prop_grpc_addr_unique(w1: CreateWorker, mut w2: CreateWorker) {
-        if w1.host_addr == w2.host_addr {
-            return;
-        }
-        w2.grpc_addr = w1.grpc_addr.clone();
-        if w2.host_addr == w2.grpc_addr {
-            return;
-        }
+    #[proptest(async = "tokio")]
+    async fn data_addr_unique(#[strategy(n_unique_workers(2))] mut workers: Vec<CreateWorker>) {
+        let dup_addr = workers[0].data_addr.clone();
+        workers[1].data_addr = dup_addr;
 
         let catalog = Catalog::for_test().await;
-        catalog.worker.create_worker(w1).await.unwrap();
+        catalog.worker.create_worker(workers[0].clone()).await.unwrap();
         assert!(
-            catalog.worker.create_worker(w2).await.is_err(),
-            "Duplicate grpc_addr should be rejected"
+            catalog.worker.create_worker(workers[1].clone()).await.is_err(),
+            "Duplicate data_addr should be rejected"
         );
     }
 
-    async fn prop_worker_drop_blocked_by_active_fragments(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn worker_drop_blocked_by_active_fragments(req: CreateQueryWithRefs) {
         let catalog = Catalog::for_test().await;
-        catalog.worker.create_worker(req.clone()).await.unwrap();
+        for w in &req.workers {
+            catalog.worker.create_worker(w.clone()).await.unwrap();
+        }
+        let _ = catalog.query.create_query(req.query.clone()).await.unwrap();
 
-        let query = catalog
-            .query
-            .create_query(CreateQuery::new("SELECT x FROM y".to_string()))
-            .await
-            .unwrap();
-        catalog
-            .query
-            .create_fragments_for_query(
-                vec![CreateFragment {
-                    query_id: query.id,
-                    host_addr: req.host_addr.clone(),
-                    grpc_addr: req.grpc_addr,
-                    plan: serde_json::json!({}),
-                    used_capacity: 0,
-                    has_source: false,
-                }],
-            )
-            .await
-            .unwrap();
-
+        // Pick a worker that actually has a fragment placed on it
+        let fragment_host = &req.query.fragments[0].host_addr;
         assert!(
-            catalog
-                .worker
-                .drop_worker(DropWorker::new(req.host_addr))
-                .await
-                .is_err(),
+            catalog.worker.drop_worker(DropWorker::new(fragment_host.clone())).await.is_err(),
             "Worker with active fragments should not be droppable"
         );
     }
 
-    async fn prop_worker_self_peer_rejected(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn worker_self_peer_rejected(mut req: CreateWorker) {
         let catalog = Catalog::for_test().await;
-        let worker = req.clone().with_peers(vec![req.host_addr]);
+        req.peers = vec![req.host_addr.clone()];
 
         assert!(
-            catalog.worker.create_worker(worker).await.is_err(),
+            catalog.worker.create_worker(req).await.is_err(),
             "Worker referencing itself as peer should be rejected"
         );
     }
 
-    async fn prop_duplicate_peer_rejected(w1: CreateWorker, w2: CreateWorker) {
-        if w1.host_addr == w2.host_addr || w1.grpc_addr == w2.grpc_addr {
-            return;
-        }
+    #[proptest(async = "tokio")]
+    async fn duplicate_peer_rejected(#[strategy(n_unique_workers(2))] mut workers: Vec<CreateWorker>) {
+        let peer_addr = workers[1].host_addr.clone();
+        workers[0].peers = vec![peer_addr.clone(), peer_addr];
 
         let catalog = Catalog::for_test().await;
-        catalog.worker.create_worker(w2.clone()).await.unwrap();
-
-        let w1_dup_peer = w1.with_peers(vec![w2.host_addr.clone(), w2.host_addr]);
+        catalog.worker.create_worker(workers[1].clone()).await.unwrap();
         assert!(
-            catalog.worker.create_worker(w1_dup_peer).await.is_err(),
+            catalog.worker.create_worker(workers[0].clone()).await.is_err(),
             "Duplicate peer entries should violate composite PK"
         );
     }
 
-    async fn prop_worker_addr_unique(req: CreateWorker) {
+    #[proptest(async = "tokio")]
+    async fn worker_host_addr_unique(req: CreateWorker) {
         let catalog = Catalog::for_test().await;
 
         catalog
@@ -313,119 +308,34 @@ mod tests {
         );
     }
 
-    async fn prop_mismatch_correct(workers: Vec<CreateWorker>) {
+    #[proptest(async = "tokio")]
+    async fn get_mismatch_correctness(
+        #[strategy(CreateWorker::topology_dag(2, MAX_TEST_WORKERS))] workers: Vec<CreateWorker>,
+    ) {
         let catalog = Catalog::for_test().await;
-
-        let mut created: Vec<worker::Model> = Vec::new();
         for worker in &workers {
-            let model = catalog.worker.create_worker(worker.clone()).await.unwrap();
-            created.push(model);
+            catalog.worker.create_worker(worker.clone()).await.unwrap();
         }
 
-        for (i, worker) in created.into_iter().enumerate() {
+        // Mark every other worker as Active, creating a mismatch with desired=Active
+        // for the ones still in Pending.
+        let all = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
+        for (i, w) in all.into_iter().enumerate() {
             if i % 2 == 0 {
-                catalog
-                    .worker
-                    .mark_worker(worker.into(), WorkerState::Active)
-                    .await
-                    .unwrap();
+                catalog.worker.mark_worker(w.into(), WorkerState::Active).await.unwrap();
             }
         }
 
-        let mismatched = catalog.worker.get_mismatch().await.unwrap();
-        let all_workers = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
+        let mismatched: HashSet<_> = catalog.worker.get_mismatch().await.unwrap()
+            .into_iter().map(|w| w.host_addr).collect();
+        let all = catalog.worker.get_worker(GetWorker::all()).await.unwrap();
 
-        let mismatched_addrs: HashSet<_> =
-            mismatched.iter().map(|w| &w.host_addr).collect();
-
-        for worker in &all_workers {
-            let is_mismatched =
-                worker.current_state.to_string() != worker.desired_state.to_string();
-            let in_result = mismatched_addrs.contains(&worker.host_addr);
-
+        for w in &all {
+            let expect_mismatch = w.current_state != WorkerState::Active;
             assert_eq!(
-                is_mismatched,
-                in_result,
-                "Worker '{}': is_mismatched={} but in_result={}. State: {:?}/{:?}",
-                worker.host_addr,
-                is_mismatched,
-                in_result,
-                worker.current_state,
-                worker.desired_state
+                mismatched.contains(&w.host_addr), expect_mismatch,
+                "Worker '{}': current={:?}, expected mismatch={}", w.host_addr, w.current_state, expect_mismatch
             );
         }
-    }
-
-    proptest! {
-        #[test]
-        fn create_and_get_worker(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_create_and_get_worker(req).await;
-            });
-        }
-
-        #[test]
-        fn drop_and_remove_worker(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_drop_and_remove_worker(req).await;
-            });
-        }
-
-        #[test]
-        fn mark_worker_state(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_mark_worker_state(req).await;
-            });
-        }
-
-        #[test]
-        fn host_addr_grpc_addr_must_differ(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_host_grpc_neq(req).await;
-            });
-        }
-
-        #[test]
-        fn grpc_addr_unique((w1, w2) in (CreateWorker::generate(), CreateWorker::generate())) {
-            test_prop(|| async move {
-                prop_grpc_addr_unique(w1, w2).await;
-            });
-        }
-
-        #[test]
-        fn worker_drop_blocked_by_active_fragments(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_worker_drop_blocked_by_active_fragments(req).await;
-            });
-        }
-
-        #[test]
-        fn worker_self_peer_rejected(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_worker_self_peer_rejected(req).await;
-            });
-        }
-
-        #[test]
-        fn duplicate_peer_rejected((w1, w2) in (CreateWorker::generate(), CreateWorker::generate())) {
-            test_prop(|| async move {
-                prop_duplicate_peer_rejected(w1, w2).await;
-            });
-        }
-
-        #[test]
-        fn worker_host_addr_unique(req in CreateWorker::generate()) {
-            test_prop(|| async move {
-                prop_worker_addr_unique(req).await;
-            });
-        }
-
-        #[test]
-        fn get_mismatch_correctness(workers in CreateWorker::dag_topology(MAX_TEST_WORKERS)) {
-            test_prop(|| async move {
-                prop_mismatch_correct(workers).await;
-            });
-        }
-
     }
 }

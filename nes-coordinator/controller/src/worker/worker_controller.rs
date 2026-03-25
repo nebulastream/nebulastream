@@ -1,9 +1,23 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::worker::poly_join_set::TaskMap;
 use crate::worker::worker_registry::WorkerRegistry;
 use crate::worker::worker_task::WorkerTask;
 use catalog::Reconcilable;
 use catalog::worker_catalog::WorkerCatalog;
-use model::worker::endpoint::GrpcAddr;
+use model::worker::endpoint::NetworkAddr;
 use model::worker::{DesiredWorkerState, GetWorker, WorkerState};
 use std::sync::Arc;
 use std::time::Duration;
@@ -21,9 +35,9 @@ pub struct WorkerController {
     // Holds the RPC send-side for each active worker; worker_task registers
     // itself here once connected so that QueryController can dispatch RPCs.
     registry: WorkerRegistry,
-    // One entry per worker: key = GrpcAddr, value = abort handle.
+    // One entry per worker: key = NetworkAddr, value = abort handle.
     // JoinSet aborts all tasks on drop.
-    tasks: TaskMap<GrpcAddr>,
+    tasks: TaskMap<NetworkAddr>,
 }
 
 impl WorkerController {
@@ -86,7 +100,7 @@ impl WorkerController {
         };
 
         for worker in workers {
-            let addr = worker.grpc_addr.clone();
+            let addr = worker.host_addr.clone();
             self.tasks.spawn_if_untracked(
                 addr,
                 (),
@@ -109,7 +123,7 @@ impl WorkerController {
             match mismatched_worker.desired_state {
                 DesiredWorkerState::Active => {
                     self.tasks.spawn_if_untracked(
-                        mismatched_worker.grpc_addr.clone(),
+                        mismatched_worker.host_addr.clone(),
                         (),
                         WorkerTask::new(
                             mismatched_worker,
@@ -121,7 +135,7 @@ impl WorkerController {
                 }
                 DesiredWorkerState::Removed => {
                     // Abort drops the RegistryGuard inside worker_task → auto-unregisters
-                    self.tasks.abort(&mismatched_worker.grpc_addr);
+                    self.tasks.abort(&mismatched_worker.host_addr);
                     self.worker_catalog
                         .mark_worker(mismatched_worker.into(), WorkerState::Removed)
                         .await

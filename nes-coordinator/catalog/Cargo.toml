@@ -13,9 +13,6 @@ tokio-retry.workspace = true
 tracing.workspace = true
 serde_json.workspace = true
 
-[features]
-testing = ["model/testing"]
-
 [dev-dependencies]
-model = { workspace = true, features = ["testing"] }
 proptest = "1.5"
+test-strategy = "0.4.5"

@@ -1,3 +1,17 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::query::retry::RetryPolicy;
 use crate::worker::worker_task::{
     GetFragmentStatusRequest, QueryStatusReply, Rpc, StopFragmentRequest, WorkerTaskError,
@@ -10,7 +24,7 @@ use futures_util::future;
 use model::Set;
 use model::query;
 use model::query::StopMode;
-use model::query::fragment::{self, FragmentError, FragmentId, FragmentState};
+use model::query::fragment::{self, FragmentError, FragmentState};
 use model::query::query_state::QueryState;
 use std::sync::Arc;
 use tokio::sync::oneshot;
@@ -50,7 +64,7 @@ impl QueryContext {
         retry: &RetryPolicy,
     ) -> Vec<Result<Rsp, WorkerError>>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
+        F: Fn(&fragment::Model) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let mk_rpc = &mk_rpc;
@@ -69,7 +83,7 @@ impl QueryContext {
         target: FragmentState,
     ) -> Result<()>
     where
-        F: Fn(FragmentId) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
+        F: Fn(&fragment::Model) -> (oneshot::Receiver<Result<Rsp, WorkerTaskError>>, Rpc),
         Rsp: Send + 'static,
     {
         let mk_rpc = &mk_rpc;
@@ -114,8 +128,8 @@ impl QueryContext {
 
     pub(crate) async fn stop_fragments(&self, stop_mode: StopMode) -> Vec<Result<(), WorkerError>> {
         self.multicast(
-            |id| {
-                let (rx, req) = StopFragmentRequest::new((id, stop_mode));
+            |f| {
+                let (rx, req) = StopFragmentRequest::new((f.id, stop_mode));
                 (rx, Rpc::StopFragment(req))
             },
             &self.rollback_retry(),
@@ -125,8 +139,8 @@ impl QueryContext {
 
     pub(crate) async fn poll_fragment_status(&self) -> Vec<Result<QueryStatusReply, WorkerError>> {
         self.multicast(
-            |id| {
-                let (rx, req) = GetFragmentStatusRequest::new(id);
+            |f| {
+                let (rx, req) = GetFragmentStatusRequest::new(f.id);
                 (rx, Rpc::GetFragmentStatus(req))
             },
             &RetryPolicy::Transition,
@@ -186,8 +200,8 @@ impl QueryContext {
         }
 
         let retry = self.rollback_retry();
-        let mk_rpc = |id: FragmentId| {
-            let (rx, req) = StopFragmentRequest::new((id, StopMode::Graceful));
+        let mk_rpc = |f: &fragment::Model| {
+            let (rx, req) = StopFragmentRequest::new((f.id, StopMode::Graceful));
             (rx, Rpc::StopFragment(req))
         };
         let mk_rpc = &mk_rpc;

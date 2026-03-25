@@ -1,8 +1,26 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 pub mod fragment;
 pub mod query_state;
 
 use crate::IntoCondition;
-#[cfg(feature = "testing")]
+use crate::query::fragment::CreateFragment;
+use crate::worker::CreateWorker;
+use proptest::arbitrary::Arbitrary;
+use proptest::collection::vec;
+use proptest::strategy::BoxedStrategy;
 use proptest_derive::Arbitrary;
 use query_state::{DesiredQueryState, QueryState};
 use sea_orm::ActiveValue::{NotSet, Set};
@@ -10,17 +28,15 @@ use sea_orm::Condition;
 use sea_orm::entity::prelude::*;
 use serde::{Deserialize, Serialize};
 use strum::Display;
-use uuid::Uuid;
 
-pub type QueryName = String;
 pub type QueryId = i64;
 
 #[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
 #[sea_orm(table_name = "query")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i64,
-    pub name: QueryName,
+    pub id: QueryId,
+    pub name: Option<String>,
     pub statement: String,
     pub current_state: QueryState,
     pub desired_state: DesiredQueryState,
@@ -45,8 +61,8 @@ impl Related<fragment::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
 #[derive(
+    Arbitrary,
     Clone,
     Copy,
     Debug,
@@ -76,24 +92,29 @@ impl From<StopMode> for i32 {
     }
 }
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Deserialize)]
 pub struct CreateQuery {
-    pub name: QueryName,
+    #[serde(default)]
+    pub name: Option<String>,
     pub sql_statement: String,
+    #[serde(default)]
     pub block_until: QueryState,
+    #[serde(default)]
+    pub fragments: Vec<CreateFragment>,
 }
 
 impl CreateQuery {
-    pub fn new(statement: String) -> Self {
+    pub fn new(stmt: String) -> Self {
         Self {
-            name: Uuid::new_v4().to_string(),
-            sql_statement: statement,
+            name: None,
+            sql_statement: stmt,
             block_until: QueryState::default(),
+            fragments: Vec::new(),
         }
     }
 
-    pub fn name(mut self, name: QueryName) -> Self {
-        self.name = name;
+    pub fn name(mut self, name: String) -> Self {
+        self.name = Some(name);
         self
     }
 
@@ -107,8 +128,13 @@ impl CreateQuery {
         self
     }
 
-    pub fn blocking(&self) -> bool {
+    pub fn is_blocking(&self) -> bool {
         self.block_until != QueryState::Pending
+    }
+
+    pub fn with_fragments(mut self, fragments: Vec<CreateFragment>) -> Self {
+        self.fragments = fragments;
+        self
     }
 }
 
@@ -128,7 +154,7 @@ impl From<CreateQuery> for ActiveModel {
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct DropQuery {
     pub stop_mode: StopMode,
     pub filters: GetQuery,
@@ -144,16 +170,16 @@ impl DropQuery {
         self
     }
 
-    pub fn stop_mode(mut self, stop_mode: StopMode) -> Self {
+    pub fn with_stop_mode(mut self, stop_mode: StopMode) -> Self {
         self.stop_mode = stop_mode;
         self
     }
 }
 
-#[derive(Clone, Debug, Default)]
+#[derive(Clone, Debug, Default, Deserialize)]
 pub struct GetQuery {
     pub ids: Option<Vec<QueryId>>,
-    pub name: Option<QueryName>,
+    pub name: Option<String>,
     pub with_fragments: bool,
 }
 
@@ -172,7 +198,7 @@ impl GetQuery {
         self
     }
 
-    pub fn with_name(mut self, name: QueryName) -> Self {
+    pub fn with_name(mut self, name: String) -> Self {
         self.name = Some(name);
         self
     }
@@ -191,18 +217,28 @@ impl IntoCondition for GetQuery {
     }
 }
 
-#[cfg(feature = "testing")]
-impl crate::Generate for CreateQuery {
-    fn generate() -> proptest::strategy::BoxedStrategy<Self> {
+#[derive(Debug, Clone)]
+pub struct CreateQueryWithRefs {
+    pub workers: Vec<CreateWorker>,
+    pub query: CreateQuery,
+}
+
+impl Arbitrary for CreateQueryWithRefs {
+    type Parameters = ();
+    type Strategy = BoxedStrategy<Self>;
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        use fragment::FragmentsWithRefs;
         use proptest::prelude::*;
+
         let name = (
             proptest::char::range('a', 'z'),
-            proptest::collection::vec(proptest::char::range('a', 'z'), 2..=10),
+            vec(proptest::char::range('a', 'z'), 2..=10),
         )
             .prop_map(|(first, rest)| std::iter::once(first).chain(rest).collect::<String>());
         let statement = (
-            proptest::collection::vec(proptest::char::range('a', 'z'), 1..=10),
-            proptest::collection::vec(proptest::char::range('a', 'z'), 1..=10),
+            vec(proptest::char::range('a', 'z'), 1..=10),
+            vec(proptest::char::range('a', 'z'), 1..=10),
         )
             .prop_map(|(col, table)| {
                 format!(
@@ -220,11 +256,17 @@ impl crate::Generate for CreateQuery {
                 Just(QueryState::Running),
                 Just(QueryState::Completed),
             ],
+            any::<FragmentsWithRefs>(),
         )
-            .prop_map(|(name, statement, block_until)| {
-                CreateQuery::new(statement)
+            .prop_map(|(name, statement, block_until, fragments)| {
+                let query = CreateQuery::new(statement)
                     .name(name)
                     .block_until(block_until)
+                    .with_fragments(fragments.create_fragments());
+                CreateQueryWithRefs {
+                    workers: fragments.workers,
+                    query,
+                }
             })
             .boxed()
     }

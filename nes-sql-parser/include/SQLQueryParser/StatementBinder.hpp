@@ -150,7 +150,7 @@ struct WorkerStatusStatement
 struct CreateWorkerStatement
 {
     std::string hostAddr;
-    std::string grpcAddr;
+    std::string dataAddr;
     std::optional<size_t> capacity;
     std::vector<std::string> peers;
     std::unordered_map<std::string, std::string> config;

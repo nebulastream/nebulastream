@@ -3,21 +3,14 @@ name = "model"
 version = "0.1.0"
 edition = "2024"
 
-[features]
-default = []
-testing = ["proptest", "proptest-derive"]
-
 [dependencies]
 sea-orm.workspace = true
-uuid.workspace = true
 chrono.workspace = true
-http.workspace = true
 serde.workspace = true
 serde_json.workspace = true
 strum.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
 tokio.workspace = true
-
-proptest = { version = "1.5", optional = true }
-proptest-derive = { version = "0.5", optional = true }
+proptest = "1.5"
+proptest-derive = "0.5"

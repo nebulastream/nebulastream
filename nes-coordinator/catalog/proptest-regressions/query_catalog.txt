@@ -1,0 +1,8 @@
+# Seeds for failure cases proptest has generated in the past. It is
+# automatically read and these particular cases re-run before any
+# novel cases are generated.
+#
+# It is recommended to check this file in to source control so that
+# everyone who runs the test benefits from these saved cases.
+cc 69c2efa4f5b1d2bd52ccb74365125ffa2790a66249a940ebfa71757ac25dea4d # shrinks to req = CreateQuery { name: Some("aaa"), sql_statement: "SELECT a FROM a", block_until: Pending, fragments: [] }, stop_mode = Graceful
+cc 1a3b623ab3e2ee25f0c565aea76bf096cde53c05bf822cdd9c9cd280a0c8b11c # shrinks to req = CreateQuery { name: Some("aaa"), sql_statement: "SELECT a FROM a", block_until: Pending, fragments: [] }

@@ -1,11 +1,24 @@
-#[cfg(feature = "testing")]
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+use proptest::collection::vec;
 use proptest_derive::Arbitrary;
 use sea_orm::FromJsonQueryResult;
 use serde::{Deserialize, Serialize};
 use strum::EnumIter;
 
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter)]
+#[derive(Arbitrary, Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, EnumIter)]
 pub enum DataType {
     UINT8,
     INT8,
@@ -22,7 +35,7 @@ pub enum DataType {
     VARSIZED,
 }
 
-#[derive(Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Arbitrary, Copy, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Nullable {
     #[serde(rename = "IS_NULLABLE")]
     IsNullable,
@@ -30,65 +43,16 @@ pub enum Nullable {
     NotNullable,
 }
 
-pub type FieldName = String;
-
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Arbitrary, Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AttributeField {
-    #[cfg_attr(feature = "testing", proptest(strategy = "field_name_strategy()"))]
-    pub name: FieldName,
+    #[proptest(regex = "[a-z][a-z0-9_]{0,19}")]
+    pub name: String,
     #[serde(rename = "type")]
-    #[cfg_attr(
-        feature = "testing",
-        proptest(strategy = "arb_data_type_pair()")
-    )]
     pub data_type: (DataType, Nullable),
 }
 
-#[cfg(feature = "testing")]
-fn arb_data_type_pair() -> impl proptest::strategy::Strategy<Value = (DataType, Nullable)> {
-    use proptest::prelude::*;
-    any::<DataType>().prop_map(|dt| (dt, Nullable::NotNullable))
-}
-
-#[cfg(feature = "testing")]
-fn field_name_chars() -> impl proptest::strategy::Strategy<Value = char> {
-    use proptest::prelude::*;
-    prop_oneof![
-        proptest::char::range('a', 'z'),
-        proptest::char::range('0', '9'),
-        Just('_')
-    ]
-}
-
-#[cfg(feature = "testing")]
-fn field_name_strategy() -> impl proptest::strategy::Strategy<Value = String> {
-    use proptest::prelude::*;
-    (
-        proptest::char::range('a', 'z'),
-        proptest::collection::vec(field_name_chars(), 0..=19),
-    )
-        .prop_map(|(first, rest)| std::iter::once(first).chain(rest).collect::<String>())
-}
-
-#[cfg_attr(feature = "testing", derive(Arbitrary))]
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
+#[derive(Arbitrary, Clone, Debug, PartialEq, Eq, Serialize, Deserialize, FromJsonQueryResult)]
 pub struct Schema {
-    #[cfg_attr(
-        feature = "testing",
-        proptest(strategy = "proptest::collection::vec(\
-            proptest::prelude::any::<AttributeField>(),\
-            1..10)")
-    )]
+    #[proptest(strategy = "vec(proptest::prelude::any::<AttributeField>(), 1..10)")]
     fields: Vec<AttributeField>,
-}
-
-impl Schema {
-    pub fn from_fields(fields: Vec<AttributeField>) -> Schema {
-        assert!(
-            !fields.is_empty(),
-            "Cannot construct Schema with empty fields"
-        );
-        Self { fields }
-    }
 }

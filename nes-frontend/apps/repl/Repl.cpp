@@ -17,46 +17,29 @@
 #include <algorithm>
 #include <array>
 #include <csignal>
-#include <cstdlib>
 #include <cstring>
 #include <iostream>
-#include <memory>
-#include <ranges>
 #include <sstream>
 #include <string>
 #include <string_view>
-#include <type_traits>
-#include <utility>
-#include <variant>
 #include <vector>
 #include <unistd.h>
 
-#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
-#include <SQLQueryParser/StatementBinder.hpp>
-#include <Statements/JsonOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
-#include <Statements/StatementHandler.hpp>
-#include <Statements/StatementOutputAssembler.hpp>
-#include <Statements/TextOutputFormatter.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Logger.hpp>
-#include <nlohmann/json.hpp>
-#include <nlohmann/json_fwd.hpp>
 #include <ErrorHandling.hpp>
+#include <coordinator/lib.h>
 #include <replxx.hxx>
+#include <rust/cxx.h>
 
 namespace NES
 {
 
 struct Repl::Impl
 {
-    SourceStatementHandler sourceStatementHandler;
-    SinkStatementHandler sinkStatementHandler;
-    TopologyStatementHandler topologyStatementHandler;
-    std::shared_ptr<QueryStatementHandler> queryStatementHandler;
-    StatementBinder binder;
+    const CoordinatorHandle& coordinator;
     std::stop_token stopToken;
 
     std::unique_ptr<replxx::Replxx> rx;
-    std::vector<std::string> history;
     bool interactiveMode = true;
     ErrorBehaviour errorBehaviour;
     StatementOutputFormat defaultOutputFormat;
@@ -68,23 +51,13 @@ struct Repl::Impl
     static constexpr const char* EXIT_CMD = "exit";
     static constexpr const char* CLEAR_CMD = "clear";
 
-    /// NOLINTBEGIN(readability-convert-member-functions-to-static)
-
     Impl(
-        SourceStatementHandler sourceStatementHandler,
-        SinkStatementHandler sinkStatementHandler,
-        TopologyStatementHandler topologyStatementHandler,
-        std::shared_ptr<QueryStatementHandler> queryStatementHandler,
-        StatementBinder binder,
-        const ErrorBehaviour errorBehaviour,
+        const CoordinatorHandle& coordinator,
         const StatementOutputFormat defaultOutputFormat,
+        const ErrorBehaviour errorBehaviour,
         const bool interactiveMode,
         std::stop_token stopToken)
-        : sourceStatementHandler(std::move(sourceStatementHandler))
-        , sinkStatementHandler(std::move(sinkStatementHandler))
-        , topologyStatementHandler(std::move(topologyStatementHandler))
-        , queryStatementHandler(std::move(queryStatementHandler))
-        , binder(std::move(binder))
+        : coordinator(coordinator)
         , stopToken(std::move(stopToken))
         , interactiveMode(interactiveMode)
         , errorBehaviour(errorBehaviour)
@@ -210,20 +183,18 @@ struct Repl::Impl
                   << "Docs: " << accent << "https://docs.nebula.stream/" << reset << "\n\n";
     }
 
-    /// This method should handle "regular" errors, such as from parsing user input or being unable to execute statements.
-    /// The try-catch in the main-loop should only catch unexpected errors.
-    void handleError(auto error)
+    void handleError(const std::string& message)
     {
-        if (errorBehaviour == ErrorBehaviour::FAIL_FAST)
-        {
-            throw error;
-        }
         if (errorBehaviour == ErrorBehaviour::CONTINUE_AND_FAIL)
         {
             exitCode = 1;
         }
-        NES_ERROR("Error encountered: {}", error.what());
-        std::cout << fmt::format("Error encountered: {}", error.what());
+        NES_ERROR("Error encountered: {}", message);
+        std::cout << "Error: " << message << "\n";
+        if (errorBehaviour == ErrorBehaviour::FAIL_FAST)
+        {
+            throw InvalidStatement(message);
+        }
     }
 
     void clearScreen() const
@@ -369,79 +340,28 @@ struct Repl::Impl
         return query;
     }
 
+    static const char* formatStr(StatementOutputFormat format)
+    {
+        switch (format)
+        {
+            case StatementOutputFormat::TEXT: return "text";
+            case StatementOutputFormat::JSON: return "json";
+        }
+        std::unreachable();
+    }
+
     bool executeQuery(const std::string& query)
     {
-        auto managedParser = NES::AntlrSQLQueryParser::ManagedAntlrParser::create(query);
-        auto parseResult = managedParser->parseMultiple();
-        if (not parseResult.has_value())
+        try
         {
-            handleError(std::move(parseResult.error()));
-            return false;
+            auto result = execute_statement(coordinator, rust::Str(query.data(), query.size()),
+                                            rust::Str(formatStr(defaultOutputFormat)));
+            std::cout << std::string(result) << std::flush;
         }
-        auto toHandle = parseResult.value() | std::views::transform([this](const auto& stmt) { return binder.bind(stmt.get()); })
-            | std::ranges::to<std::vector>();
-
-        for (auto& bindingResult : toHandle)
+        catch (const rust::Error& e)
         {
-            if (not bindingResult.has_value())
-            {
-                handleError(std::move(bindingResult.error()));
-                continue;
-            }
-            /// NOLINTNEXTLINE(fuchsia-trailing-return)
-            auto visitor = [&](const auto& stmt) -> std::expected<NES::StatementResult, NES::Exception>
-            {
-                if constexpr (requires { sourceStatementHandler.apply(stmt); })
-                {
-                    return sourceStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { sinkStatementHandler.apply(stmt); })
-                {
-                    return sinkStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { topologyStatementHandler.apply(stmt); })
-                {
-                    return topologyStatementHandler.apply(stmt);
-                }
-                else if constexpr (requires { queryStatementHandler->apply(stmt); })
-                {
-                    return queryStatementHandler->apply(stmt);
-                }
-                else
-                {
-                    static_assert(false, "All statement types need to have a handler");
-                    std::unreachable();
-                }
-            };
-            auto result = std::visit(visitor, bindingResult.value());
-            if (not result.has_value())
-            {
-                handleError(std::move(result.error()));
-                continue;
-            }
-            switch (getOutputFormat(bindingResult.value()).value_or(defaultOutputFormat))
-            {
-                case NES::StatementOutputFormat::TEXT:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            return toText(
-                                StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult));
-                        },
-                        result.value());
-                    break;
-                case NES::StatementOutputFormat::JSON:
-                    std::cout << std::visit(
-                        [](const auto& statementResult)
-                        {
-                            nlohmann::json output
-                                = NES::StatementOutputAssembler<std::remove_cvref_t<decltype(statementResult)>>{}.convert(statementResult);
-                            return output;
-                        },
-                        result.value())
-                              << "\n";
-            }
-            std::flush(std::cout);
+            handleError(e.what());
+            return false;
         }
         return true;
     }
@@ -550,23 +470,15 @@ struct Repl::Impl
 };
 
 Repl::Repl(
-    SourceStatementHandler sourceStatementHandler,
-    SinkStatementHandler sinkStatementHandler,
-    TopologyStatementHandler topologyStatementHandler,
-    std::shared_ptr<QueryStatementHandler> queryStatementHandler,
-    StatementBinder binder,
-    ErrorBehaviour errorBehaviour,
+    const CoordinatorHandle& coordinator,
     StatementOutputFormat defaultOutputFormat,
+    ErrorBehaviour errorBehaviour,
     bool interactiveMode,
     std::stop_token stopToken)
     : impl(std::make_unique<Impl>(
-          std::move(sourceStatementHandler),
-          std::move(sinkStatementHandler),
-          std::move(topologyStatementHandler),
-          std::move(queryStatementHandler),
-          std::move(binder),
-          errorBehaviour,
+          coordinator,
           defaultOutputFormat,
+          errorBehaviour,
           interactiveMode,
           std::move(stopToken)))
 {
@@ -578,7 +490,5 @@ void Repl::run()
 }
 
 Repl::~Repl() = default;
-
-/// NOLINTEND(readability-convert-member-functions-to-static)
 
 }

@@ -1,10 +1,24 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 #![cfg(madsim)]
 
 use crate::harness::TestHarness;
 use async_trait::async_trait;
 use model::query::fragment;
 use model::query::GetQuery;
-use model::worker::endpoint::GrpcAddr;
+use model::worker::endpoint::NetworkAddr;
 use model::{query};
 use std::collections::{HashMap, HashSet};
 use tracing::info;
@@ -13,7 +27,7 @@ pub struct InvariantContext {
     live_query_ids: Vec<i64>,
     dropped_query_ids: Vec<i64>,
     pub queries: Vec<(query::Model, Vec<fragment::Model>)>,
-    pub active_by_worker: HashMap<GrpcAddr, HashSet<u64>>,
+    pub active_by_worker: HashMap<NetworkAddr, HashSet<u64>>,
 }
 
 impl InvariantContext {

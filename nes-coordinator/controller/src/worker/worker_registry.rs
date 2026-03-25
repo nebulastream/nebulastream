@@ -1,7 +1,21 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
 use crate::worker::worker_task::{Rpc, WorkerTaskError};
 use catalog::error::Retryable;
 use model::query::fragment::FragmentError;
-use model::worker::endpoint::{GrpcAddr, HostAddr};
+use model::worker::endpoint::NetworkAddr;
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock};
 use thiserror::Error;
@@ -9,13 +23,13 @@ use thiserror::Error;
 #[derive(Error, Debug)]
 pub(crate) enum WorkerError {
     #[error("Worker client '{0}' unavailable")]
-    ClientUnavailable(GrpcAddr),
+    ClientUnavailable(NetworkAddr),
 
     #[error("RPC error")]
     ClientError(#[from] WorkerTaskError),
 
     #[error("Worker '{0}' has been removed")]
-    WorkerRemoved(HostAddr),
+    WorkerRemoved(NetworkAddr),
 }
 
 impl WorkerError {
@@ -93,7 +107,7 @@ impl From<WorkerError> for FragmentError {
 }
 
 pub struct WorkerRegistryHandle {
-    shared: Arc<RwLock<HashMap<GrpcAddr, flume::Sender<Rpc>>>>,
+    shared: Arc<RwLock<HashMap<NetworkAddr, flume::Sender<Rpc>>>>,
 }
 
 impl Clone for WorkerRegistryHandle {
@@ -107,7 +121,7 @@ impl Clone for WorkerRegistryHandle {
 impl WorkerRegistryHandle {
     pub(crate) async fn send(
         &self,
-        addr: &GrpcAddr,
+        addr: &NetworkAddr,
         rpc: Rpc,
     ) -> Result<(), WorkerError> {
         let sender: Result<flume::Sender<Rpc>, WorkerError> = {
@@ -132,7 +146,7 @@ impl WorkerRegistryHandle {
 
 #[derive(Default)]
 pub struct WorkerRegistry {
-    shared: Arc<RwLock<HashMap<GrpcAddr, flume::Sender<Rpc>>>>,
+    shared: Arc<RwLock<HashMap<NetworkAddr, flume::Sender<Rpc>>>>,
 }
 
 impl Clone for WorkerRegistry {
@@ -150,7 +164,7 @@ impl WorkerRegistry {
         }
     }
 
-    pub(crate) fn register(&self, addr: GrpcAddr, sender: flume::Sender<Rpc>) -> RegistryGuard {
+    pub(crate) fn register(&self, addr: NetworkAddr, sender: flume::Sender<Rpc>) -> RegistryGuard {
         self.shared
             .write()
             .expect("no one should panic while holding this lock")
@@ -161,7 +175,7 @@ impl WorkerRegistry {
         }
     }
 
-    fn unregister(&self, addr: &GrpcAddr) {
+    fn unregister(&self, addr: &NetworkAddr) {
         self.shared
             .write()
             .expect("no one should panic while holding this lock")
@@ -171,7 +185,7 @@ impl WorkerRegistry {
 
 pub(crate) struct RegistryGuard {
     registry: WorkerRegistry,
-    addr: GrpcAddr,
+    addr: NetworkAddr,
 }
 
 impl Drop for RegistryGuard {

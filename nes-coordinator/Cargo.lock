@@ -391,6 +391,7 @@ dependencies = [
  "proptest",
  "sea-orm",
  "serde_json",
+ "test-strategy",
  "tokio-retry",
  "tracing",
 ]
@@ -545,6 +546,7 @@ dependencies = [
  "serde",
  "serde_json",
  "strum",
+ "test-strategy",
  "thiserror 2.0.18",
  "tokio-retry",
  "toml 0.8.23",
@@ -553,7 +555,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "coordinator-bridge"
+name = "coordinator_bridge"
 version = "0.1.0"
 dependencies = [
  "anyhow",
@@ -771,6 +773,18 @@ checksum = "7cd812cc2bc1d69d4764bd80df88b4317eaef9e773c75226407d9bc0876b211c"
 dependencies = [
  "powerfmt",
  "serde_core",
+]
+
+[[package]]
+name = "derive-ex"
+version = "0.1.8"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "bba95f299f6b9cd47f68a847eca2ae9060a2713af532dc35c342065544845407"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "structmeta",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -1781,7 +1795,6 @@ version = "0.1.0"
 dependencies = [
  "anyhow",
  "chrono",
- "http",
  "madsim-tokio",
  "proptest",
  "proptest-derive",
@@ -1790,7 +1803,6 @@ dependencies = [
  "serde_json",
  "strum",
  "thiserror 2.0.18",
- "uuid",
 ]
 
 [[package]]
@@ -3191,6 +3203,29 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7da8b5736845d9f2fcb837ea5d9e2628564b3b043a70948a3f0b778838c5fb4f"
 
 [[package]]
+name = "structmeta"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2e1575d8d40908d70f6fd05537266b90ae71b15dbbe7a8b7dffa2b759306d329"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "structmeta-derive",
+ "syn 2.0.117",
+]
+
+[[package]]
+name = "structmeta-derive"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "152a0b65a590ff6c3da95cabe2353ee04e6167c896b28e3b14478c2636c922fc"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 2.0.117",
+]
+
+[[package]]
 name = "strum"
 version = "0.26.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3283,6 +3318,19 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "06794f8f6c5c898b3275aebefa6b8a1cb24cd2c6c79397ab15774837a0bc5755"
 dependencies = [
  "winapi-util",
+]
+
+[[package]]
+name = "test-strategy"
+version = "0.4.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8f7fd1eb9efb36942b85a290c4201d317980fe09bc88d34dd48aaaae03075c6a"
+dependencies = [
+ "derive-ex",
+ "proc-macro2",
+ "quote",
+ "structmeta",
+ "syn 2.0.117",
 ]
 
 [[package]]
@@ -3793,7 +3841,6 @@ version = "1.21.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "b672338555252d43fd2240c714dc444b8c6fb0a5c5335e65a07bba7742735ddb"
 dependencies = [
- "getrandom 0.4.1",
  "js-sys",
  "serde_core",
  "wasm-bindgen",
