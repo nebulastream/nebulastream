@@ -534,6 +534,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             }
 
         );
+        INVARIANT(pipeline->isStarted, "Pipeline {}-{} must be started before executing tasks", task.queryId, pipeline->id);
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
@@ -572,6 +573,8 @@ bool ThreadPool::WorkerThread::operator()(CompilePipelineTask& compilePipeline) 
             [&](const TupleBuffer&, std::chrono::milliseconds)
             { INVARIANT(false, "Repeat pipeline compilation is currently not supported"); });
         pipeline->stage->compile(pec);
+        const auto wasCompiled = pipeline->isCompiled.exchange(true);
+        INVARIANT(!wasCompiled, "Pipeline {}-{} must not be compiled multiple times", compilePipeline.queryId, pipeline->id);
         return true;
     }
 
@@ -612,7 +615,10 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
                     "tested");
             });
+        INVARIANT(pipeline->isCompiled, "Pipeline {}-{} must be compiled before start", startPipeline.queryId, pipeline->id);
         pipeline->stage->start(pec);
+        const auto wasStarted = pipeline->isStarted.exchange(true);
+        INVARIANT(!wasStarted, "Pipeline {}-{} must not be started multiple times", startPipeline.queryId, pipeline->id);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
         return true;
     }
@@ -706,6 +712,11 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    INVARIANT(
+        stopPipelineTask.pipeline->isStarted,
+        "Pipeline {}-{} must be started before stop",
+        stopPipelineTask.queryId,
+        stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);

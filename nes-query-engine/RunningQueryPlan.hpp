@@ -84,6 +84,8 @@ struct RunningQueryPlanNode
     PipelineId id;
 
     std::atomic_bool requiresTermination = false;
+    std::atomic_bool isCompiled = false;
+    std::atomic_bool isStarted = false;
     std::atomic<ssize_t> pendingTasks = 0;
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors;
     std::unique_ptr<ExecutablePipelineStage> stage;

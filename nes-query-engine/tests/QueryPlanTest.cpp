@@ -166,7 +166,7 @@ struct EmittedTask
     template <typename... TArgs>
     static std::unique_ptr<EmittedTask> setup(const RangeOf<KeyT> auto& stages, TArgs&&...);
 
-    ::testing::AssertionResult executeEmittedTask(Args&&);
+    ::testing::AssertionResult executeEmittedTask(Args);
 
     bool empty() const
     {
@@ -255,7 +255,7 @@ template <>
 template <typename... TArgs>
 std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
-    auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     auto terminations = std::make_unique<Terminations>();
     for (auto* stage : stages)
     {
@@ -268,7 +268,7 @@ std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipeli
 }
 
 template <>
-::testing::AssertionResult Terminations::executeEmittedTask(TerminatePipelineArgs&& args)
+::testing::AssertionResult Terminations::executeEmittedTask(TerminatePipelineArgs args)
 {
     TestPipelineExecutionContext pec{};
     EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
@@ -298,7 +298,7 @@ template <typename... TArgs>
 std::unique_ptr<Compiles> Compiles::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
     auto compiles = std::make_unique<Compiles>();
-    auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     for (auto* stage : stages)
     {
         EXPECT_CALL(emitter, emitPipelineCompile(::testing::_, StageMatcher(stage), ::testing::_))
@@ -310,7 +310,7 @@ std::unique_ptr<Compiles> Compiles::setup(const RangeOf<ExecutablePipelineStage*
 }
 
 template <>
-::testing::AssertionResult Compiles::executeEmittedTask(CompilePipelineArgs&& args)
+::testing::AssertionResult Compiles::executeEmittedTask(CompilePipelineArgs args)
 {
     TestPipelineExecutionContext pec{};
     EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
@@ -319,6 +319,7 @@ template <>
         if (auto strongRef = args.target.lock())
         {
             strongRef->stage->compile(pec);
+            strongRef->isCompiled = true;
             args.callback.callOnSuccess();
         }
     }
@@ -343,7 +344,7 @@ template <typename... TArgs>
 std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
     auto setups = std::make_unique<Setups>();
-    auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     for (auto* stage : stages)
     {
         EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_))
@@ -355,7 +356,7 @@ std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> au
 }
 
 template <>
-::testing::AssertionResult Setups::executeEmittedTask(SetupPipelineArgs&& args)
+::testing::AssertionResult Setups::executeEmittedTask(SetupPipelineArgs args)
 {
     TestPipelineExecutionContext pec{};
     EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
@@ -363,7 +364,9 @@ template <>
     {
         if (auto strongRef = args.target.lock())
         {
+            EXPECT_TRUE(strongRef->isCompiled);
             strongRef->stage->start(pec);
+            strongRef->isStarted = true;
             args.callback.callOnSuccess();
         }
     }
@@ -387,7 +390,7 @@ template <typename... TArgs>
 std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& originIds, TArgs&&... args)
 {
     auto setups = std::make_unique<SourceStops>();
-    auto& controller = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& controller = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     for (auto originId : originIds)
     {
         EXPECT_CALL(controller, initializeSourceStop(::testing::_, ::testing::_, ::testing::_))
@@ -399,7 +402,7 @@ std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& or
 }
 
 template <>
-::testing::AssertionResult SourceStops::executeEmittedTask(SourceStopArgs&& stops)
+::testing::AssertionResult SourceStops::executeEmittedTask(SourceStopArgs stops)
 {
     if (auto target = stops.target.lock())
     {

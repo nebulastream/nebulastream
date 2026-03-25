@@ -29,10 +29,12 @@ public:
     virtual ~ExecutablePipelineStage() = default;
 
     /// Compiles the ExecutablePipelineStage for future execution.
+    /// The expected lifecycle is `compile` -> `start` -> `execute*` -> `stop`.
     /// `compile` may throw to indicate an error.
     virtual void compile(PipelineExecutionContext&) { }
 
     /// Starts the ExecutablePipelineStage after `compile` completed.
+    /// QueryEngine and the test task queues call `start` only after `compile` returned successfully.
     /// `start` may throw to indicate an error.
     virtual void start(PipelineExecutionContext& pipelineExecutionContext) = 0;
 
@@ -41,7 +43,7 @@ public:
     virtual void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) = 0;
 
     /// Stops the ExecutablePipelineStage allowing it to flush left over state.
-    /// `stop` should never be called on a pipeline that has not previously been `compiled`.
+    /// QueryEngine only stops pipelines that have previously been `started`.
     /// `stop` is not guaranteed to be called, thus the destructor should take care of cleanup.
     /// `stop` may throw to indicate an error.
     virtual void stop(PipelineExecutionContext& pipelineExecutionContext) = 0;
