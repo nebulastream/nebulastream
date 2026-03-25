@@ -117,6 +117,16 @@ struct QueryFail : EventBase
     QueryFail() = default;
 };
 
+struct PipelineCompile : EventBase
+{
+    PipelineCompile(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
+        : EventBase(threadId, queryId), pipelineId(pipelineId) { }
+
+    PipelineCompile() = default;
+
+    PipelineId pipelineId = INVALID<PipelineId>;
+};
+
 struct PipelineStart : EventBase
 {
     PipelineStart(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
@@ -143,6 +153,7 @@ using Event = std::variant<
     TaskEmit,
     TaskExecutionComplete,
     TaskExpired,
+    PipelineCompile,
     PipelineStart,
     PipelineStop,
     QueryStart,

@@ -117,6 +117,12 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         const std::chrono::system_clock::time_point startTimePoint(std::chrono::milliseconds(response.metrics().startunixtimeinms()));
         metrics.start = startTimePoint;
     }
+    if (response.metrics().has_compilingunixtimeinms())
+    {
+        const std::chrono::system_clock::time_point compilingTimePoint(
+            std::chrono::milliseconds(response.metrics().compilingunixtimeinms()));
+        metrics.compiling = compilingTimePoint;
+    }
     if (response.metrics().has_runningunixtimeinms())
     {
         const std::chrono::system_clock::time_point runningTimePoint(std::chrono::milliseconds(response.metrics().runningunixtimeinms()));
