@@ -47,9 +47,8 @@ void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
         auto node = entry.second;
         if (!optionMap.contains(identifier))
         {
-            auto knownKeys = std::views::keys(optionMap);
-            NES_WARNING("Unrecognized configuration key: '{}'. Known keys: [{}]. Skipping.", identifier, fmt::join(knownKeys, ", "));
-            continue;
+            const auto knownKeys = std::views::keys(optionMap);
+            throw InvalidConfigParameter("Unrecognized configuration key: '{}'. Known keys: [{}].", identifier, fmt::join(knownKeys, ", "));
         }
         /// check if config is empty
         if (node.IsScalar())
@@ -83,9 +82,8 @@ void BaseConfiguration::parseFromString(std::string identifier, std::unordered_m
 
     if (!optionMap.contains(identifier))
     {
-        auto knownKeys = std::views::keys(optionMap);
-        NES_WARNING("Unrecognized configuration key: '{}'. Known keys: [{}]. Skipping.", identifier, fmt::join(knownKeys, ", "));
-        return;
+        const auto knownKeys = std::views::keys(optionMap);
+        throw InvalidConfigParameter("Unrecognized configuration key: '{}'. Known keys: [{}].", identifier, fmt::join(knownKeys, ", "));
     }
     if (auto* option = dynamic_cast<BaseConfiguration*>(optionMap[identifier]))
     {
