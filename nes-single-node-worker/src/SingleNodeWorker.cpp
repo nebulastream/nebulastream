@@ -208,9 +208,4 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     return status;
 }
 
-std::optional<QueryLog::Log> SingleNodeWorker::getQueryLog(QueryId queryId) const
-{
-    return nodeEngine->getQueryLog()->getLogForQuery(queryId);
-}
-
 }

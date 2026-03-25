@@ -73,8 +73,6 @@ public:
     /// @param terminationType dictates what happens with in in-flight data
     std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
 
-    /// Complete history of query status changes.
-    [[nodiscard]] std::optional<QueryLog::Log> getQueryLog(QueryId queryId) const;
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(QueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;

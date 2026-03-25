@@ -123,6 +123,11 @@ public:
     size_t getNumOfUnpooledBuffers() const override;
     size_t getNumberOfAvailableBuffers() const;
 
+    /// Explicitly shuts down the buffer manager: checks for leaked buffers (fires INVARIANT on leaks),
+    /// deallocates all memory, and marks the manager as destroyed. The destructor calls this automatically
+    /// if it has not already been called.
+    void destroy();
+
     /**
      * @brief Recycle a pooled buffer by making it available to others
      * @param buffer
