@@ -34,6 +34,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -70,7 +71,8 @@ void reportResult(
     runningQuery->passed = msg.empty();
 
     std::string performanceMessage;
-    if (performanceMessageBuilder)
+    /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
+    if (performanceMessageBuilder and runningQuery->queryStatus.state == QueryState::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
@@ -123,15 +125,81 @@ std::vector<RunningQuery> runQueries(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
+    using SystestKey = std::pair<TestName, SystestQueryId>;
+    std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
+
     std::queue<SystestQuery> pending;
+    std::vector<SystestQuery> dependentQueries;
     for (auto it = queries.rbegin(); it != queries.rend(); ++it)
     {
-        pending.push(*it);
+        if (it->runAfter.has_value() && it->runAfter.value().second.getRawValue() != 0)
+        {
+            dependentQueries.push_back(*it);
+        }
+        else
+        {
+            pending.push(*it);
+        }
+    }
+
+    /// Validate that all dependencies exist in queries
+    for (const auto& dependentQuery : dependentQueries)
+    {
+        if (dependentQuery.runAfter.has_value()) [[likely]]
+        {
+            const auto& dependency = dependentQuery.runAfter.value();
+            bool dependencyExists = false;
+            for (const auto& query : queries)
+            {
+                if (query.testName == dependency.first && query.queryIdInFile == dependency.second)
+                {
+                    dependencyExists = true;
+                    break;
+                }
+            }
+            if (!dependencyExists)
+            {
+                throw TestException(
+                    "{}:{} has nonexistent dependency {}:{}",
+                    dependentQuery.testName,
+                    dependentQuery.queryIdInFile,
+                    dependency.first,
+                    dependency.second);
+            }
+        }
     }
 
     std::unordered_map<QueryId, std::shared_ptr<RunningQuery>> active;
     std::unordered_map<QueryId, LocalQueryStatus> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
+
+    const auto canRunQuery = [&completedQueries](const SystestQuery& query) -> bool
+    {
+        if (!query.runAfter.has_value() || (query.runAfter.has_value() && query.runAfter.value().second.getRawValue() == 0))
+        {
+            return true;
+        }
+        return completedQueries.contains(query.runAfter.value());
+    };
+
+    const auto moveDependentsToPending = [&](const SystestQuery& parentQuery) -> void
+    {
+        completedQueries.emplace(parentQuery.testName, parentQuery.queryIdInFile);
+        /// check if any dependent query can now be run
+        auto it = dependentQueries.begin();
+        while (it != dependentQueries.end())
+        {
+            if (canRunQuery(*it))
+            {
+                pending.emplace(std::move(*it));
+                it = dependentQueries.erase(it);
+            }
+            else
+            {
+                ++it;
+            }
+        }
+    };
 
     const auto startMoreQueries = [&] -> bool
     {
@@ -140,6 +208,12 @@ std::vector<RunningQuery> runQueries(
         {
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
+
+            INVARIANT(
+                canRunQuery(nextQuery),
+                "Cannot run query from {} with the in file id {} as it's dependencies have not finished!",
+                nextQuery.testName,
+                nextQuery.queryIdInFile);
 
             if (nextQuery.differentialQueryPlan.has_value() and nextQuery.planInfoOrException.has_value())
             {
@@ -189,7 +263,7 @@ std::vector<RunningQuery> runQueries(
         return hasOneMoreQueryToStart;
     };
 
-    while (startMoreQueries() or not(active.empty() and pending.empty()))
+    while (startMoreQueries() or not(active.empty() and pending.empty() and dependentQueries.empty()))
     {
         for (const auto& queryStatus : querySubmitter.finishedQueries())
         {
@@ -255,6 +329,7 @@ std::vector<RunningQuery> runQueries(
                     {
                         active.erase(otherRunningQueryIt);
                     }
+                    moveDependentsToPending(runningQuery->systestQuery);
                     finishedDifferentialQueries.erase(otherSummaryIt);
                     active.erase(it);
                     finishedDifferentialQueries.erase(queryStatus.queryId);
@@ -283,6 +358,7 @@ std::vector<RunningQuery> runQueries(
                     return std::string{};
                 },
                 queryPerformanceMessage);
+            moveDependentsToPending(runningQuery->systestQuery);
             active.erase(it);
         }
     }
@@ -328,8 +404,9 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
     progressTracker.setTotalQueries(queries.size());
-    for (const auto& queryToRun : queries)
+    for (auto it = queries.rbegin(); it != queries.rend(); ++it)
     {
+        const auto& queryToRun = *it;
         if (not queryToRun.planInfoOrException.has_value())
         {
             NES_ERROR("skip failing query: {}", queryToRun.testName);
@@ -462,24 +539,26 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const SingleNodeWorkerConfiguration& configuration,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto embeddedQueryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
         WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configuration));
     QuerySubmitter submitter(std::move(embeddedQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
 std::vector<RunningQuery> runQueriesAtRemoteWorker(
     const std::vector<SystestQuery>& queries,
     const uint64_t numConcurrentQueries,
     const std::string& serverURI,
-    SystestProgressTracker& progressTracker)
+    SystestProgressTracker& progressTracker,
+    const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
     auto remoteQueryManager = std::make_unique<QueryManager>(
         std::make_unique<GRPCQuerySubmissionBackend>(WorkerConfig{.grpc = GrpcAddr(serverURI), .config = {}}));
     QuerySubmitter submitter(std::move(remoteQueryManager));
-    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, discardPerformanceMessage);
+    return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
 }

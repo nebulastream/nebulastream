@@ -77,7 +77,13 @@ public:
 
 NodeEngine::~NodeEngine()
 {
+    NES_DEBUG("Shutting down NodeEngine");
     queryEngine.reset();
+    sourceProvider.reset();
+    queryTracker.reset();
+
+    bufferManager->destroy();
+    bufferManager.reset();
 }
 
 NodeEngine::NodeEngine(
@@ -114,13 +120,6 @@ void NodeEngine::startQuery(QueryId queryId)
     {
         throw QueryNotRegistered("Query with queryId {} is not currently idle", queryId);
     }
-}
-
-void NodeEngine::unregisterQuery(QueryId queryId)
-{
-    PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-    NES_INFO("Unregister {}", queryId);
-    queryEngine->stop(queryId);
 }
 
 void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType)

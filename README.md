@@ -69,6 +69,8 @@ Configure, build, and test through the Nix-wrapped helpers:
 ./.nix/ctest --test-dir cmake-build-debug -j
 ```
 
+For formatting and clang-tidy fixes, run `nix run .#format` and `nix run .#clang-tidy`.
+
 #### Use the development container
 Build or reuse the local development image (installs the current user inside the container to avoid permission issues):
 
@@ -125,7 +127,7 @@ printf '1\n2\n3\n' > demo-input.csv
 cat > demo.sql <<'EOF'
 CREATE LOGICAL SOURCE demo(value UINT64);
 CREATE PHYSICAL SOURCE FOR demo TYPE File SET('./demo-input.csv' AS `SOURCE`.FILE_PATH, 'CSV' AS PARSER.`TYPE`, '\n' AS PARSER.TUPLE_DELIMITER, ',' AS PARSER.FIELD_DELIMITER);
-CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.INPUT_FORMAT);
+CREATE SINK result(demo.value UINT64) TYPE File SET('./demo-output.csv' AS `SINK`.FILE_PATH, 'CSV' AS `SINK`.OUTPUT_FORMAT);
 SELECT value FROM demo INTO result;
 EOF
 

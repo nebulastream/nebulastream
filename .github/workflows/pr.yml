@@ -43,6 +43,7 @@ jobs:
     needs: [ get-dev-images, smoke-tests ]
     name: "Run large scale tests"
     uses: ./.github/workflows/large_test.yml
+    secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha }}
@@ -60,6 +61,7 @@ jobs:
     needs: [ get-dev-images, smoke-tests ]
     name: "Run Endless Mode"
     uses: ./.github/workflows/endless-mode.yml
+    secrets: inherit
     with:
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
       head_sha: ${{ github.event.pull_request.head.sha }}
@@ -71,6 +73,7 @@ jobs:
       matrix:
         arch: [ x64, arm64 ]
     uses: ./.github/workflows/execute_query.yml
+    secrets: inherit
     with:
       head_sha: ${{ github.event.pull_request.head.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}

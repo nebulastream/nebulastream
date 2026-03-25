@@ -18,6 +18,12 @@ setup_file() {
     docker network inspect "$net" -f '{{range .Containers}}{{.Name}} {{end}}' 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
   done
   docker network prune -f --filter label=nes-test=distributed-repl 2>/dev/null || true
+  # Remove all containers (running or stopped) referencing test images
+  # from previous runs, so those images can later be deleted
+  for img in $(docker images --filter reference='nes-worker-repl-test-*' --filter reference='nes-repl-image-*' -q 2>/dev/null); do
+    docker ps -aq --filter ancestor="$img" 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
+  done
+  docker images --filter reference='nes-worker-repl-test-*' --filter reference='nes-repl-image-*' -q | xargs -r docker image rm -f 2>/dev/null || true
 
   # Validate environment variables
   if [ -z "$NES_REPL" ]; then
@@ -64,6 +70,11 @@ setup_file() {
     exit 1
   fi
 
+  if [ -z "$NES_RUNTIME_BASE_IMAGE" ]; then
+    echo "ERROR: NES_RUNTIME_BASE_IMAGE environment variable must be set" >&2
+    exit 1
+  fi
+
   # Build Docker images with unique tags to avoid collisions when test suites run in parallel
   local suffix=$(head -c 8 /dev/urandom | od -An -tx1 | tr -d ' \n')
   export WORKER_IMAGE="nes-worker-repl-test-${suffix}"
@@ -72,20 +83,7 @@ setup_file() {
   local worker_ctx=$(mktemp -d)
   cp $(realpath $NEBULASTREAM) "$worker_ctx/nes-single-node-worker"
   docker build --load -t $WORKER_IMAGE -f - "$worker_ctx" <<EOF
-    FROM ubuntu:24.04 AS app
-    ENV LLVM_TOOLCHAIN_VERSION=19
-    RUN apt update -y && apt install curl wget gpg -y
-    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
-    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
-    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
-    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y \
-    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
-
-    RUN GRPC_HEALTH_PROBE_VERSION=v0.4.40 && \
-    wget -qO/bin/grpc_health_probe https://github.com/grpc-ecosystem/grpc-health-probe/releases/download/\${GRPC_HEALTH_PROBE_VERSION}/grpc_health_probe-linux-\$(dpkg --print-architecture) && \
-    chmod +x /bin/grpc_health_probe
-
+    FROM $NES_RUNTIME_BASE_IMAGE
     COPY nes-single-node-worker /usr/bin
     ENTRYPOINT ["nes-single-node-worker"]
 EOF
@@ -94,16 +92,7 @@ EOF
   local repl_ctx=$(mktemp -d)
   cp $(realpath $NES_REPL) "$repl_ctx/nes-repl"
   docker build --load -t $REPL_IMAGE -f - "$repl_ctx" <<EOF
-    FROM ubuntu:24.04 AS app
-    ENV LLVM_TOOLCHAIN_VERSION=19
-    RUN apt update -y && apt install curl wget gpg -y
-    RUN curl -fsSL https://apt.llvm.org/llvm-snapshot.gpg.key | gpg --dearmor -o /etc/apt/keyrings/llvm-snapshot.gpg \
-    && chmod a+r /etc/apt/keyrings/llvm-snapshot.gpg \
-    && echo "deb [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" > /etc/apt/sources.list.d/llvm-snapshot.list \
-    && echo "deb-src [arch="\$(dpkg --print-architecture)" signed-by=/etc/apt/keyrings/llvm-snapshot.gpg] http://apt.llvm.org/"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"/ llvm-toolchain-"\$(. /etc/os-release && echo "\$VERSION_CODENAME")"-\${LLVM_TOOLCHAIN_VERSION} main" >> /etc/apt/sources.list.d/llvm-snapshot.list \
-    && apt update -y \
-    && apt install -y libc++1-\${LLVM_TOOLCHAIN_VERSION} libc++abi1-\${LLVM_TOOLCHAIN_VERSION}
-
+    FROM $NES_RUNTIME_BASE_IMAGE
     COPY nes-repl /usr/bin
 EOF
   rm -rf "$repl_ctx"
@@ -192,7 +181,7 @@ assert_json_contains() {
 
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
   assert_json_equal '[{"parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
-  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"input_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
+  assert_json_equal '[{"format_config":{},"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
 
@@ -266,9 +255,18 @@ assert_json_contains() {
   duration=$((end_time - start_time))
   [ "$duration" -le 5 ]
 
-  sleep 1
-  # Check the log to ensure that the query has been started but not stopped
-  sync_workdir
-  grep "Starting source with originId" worker-node/singleNodeWorker.log
+  # Check the log to ensure that the query has been started but not stopped.
+  # The source may take a moment to start after the REPL exits, so retry
+  # sync_workdir + grep for up to 10 seconds to avoid a race condition.
+  local found=false
+  for i in $(seq 1 10); do
+    sleep 1
+    sync_workdir
+    if grep -q "Starting source with originId" worker-node/singleNodeWorker.log 2>/dev/null; then
+      found=true
+      break
+    fi
+  done
+  [ "$found" = true ]
   ! grep "attempting to stop source" worker-node/singleNodeWorker.log
 }

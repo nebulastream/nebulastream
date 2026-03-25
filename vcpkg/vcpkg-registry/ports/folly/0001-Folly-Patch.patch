@@ -18,17 +18,15 @@ Subject: [PATCH] Remove most of folly, keep queues, synchronization and
  CMake/FindZstd.cmake                        |   41 -
  CMake/FollyCompilerMSVC.cmake               |  328 -----
  CMake/FollyCompilerUnix.cmake               |   59 -
- CMake/FollyConfigChecks.cmake               |  232 ----
+ CMake/FollyConfigChecks.cmake               |  232 +---
  CMake/FollyFunctions.cmake                  |  324 -----
  CMake/GenPkgConfig.cmake                    |  110 --
  CMake/folly-config.cmake.in                 |   47 -
- CMake/folly-config.h.cmake                  |   89 --
+ CMake/folly-config.h.cmake                  |  162 +--
  CMake/folly-deps.cmake                      |  315 -----
  CMake/libfolly.pc.in                        |   11 -
  CMakeLists.txt                              | 1181 ++++---------------
- cmake/FollyConfigChecks.cmake               |    2 +
  cmake/config.cmake                          |    4 +
- cmake/folly-config.h.cmake                  |   73 ++
  folly/Exception.h                           |   12 +-
  folly/Executor.cpp                          |   13 +-
  folly/Function.h                            |    8 +-
@@ -60,7 +58,7 @@ Subject: [PATCH] Remove most of folly, keep queues, synchronization and
  folly/synchronization/ParkingLot.h          |   22 +-
  folly/synchronization/SaturatingSemaphore.h |    2 +-
  folly/synchronization/detail/HazptrUtils.h  |    2 +-
- 55 files changed, 486 insertions(+), 3047 deletions(-)
+ 53 files changed, 486 insertions(+), 3047 deletions(-)
  delete mode 100644 CMake/FindCython.cmake
  delete mode 100644 CMake/FindDoubleConversion.cmake
  delete mode 100644 CMake/FindFmt.cmake
@@ -74,16 +72,12 @@ Subject: [PATCH] Remove most of folly, keep queues, synchronization and
  delete mode 100644 CMake/FindZstd.cmake
  delete mode 100644 CMake/FollyCompilerMSVC.cmake
  delete mode 100644 CMake/FollyCompilerUnix.cmake
- delete mode 100644 CMake/FollyConfigChecks.cmake
  delete mode 100644 CMake/FollyFunctions.cmake
  delete mode 100644 CMake/GenPkgConfig.cmake
  delete mode 100644 CMake/folly-config.cmake.in
- delete mode 100644 CMake/folly-config.h.cmake
  delete mode 100644 CMake/folly-deps.cmake
  delete mode 100644 CMake/libfolly.pc.in
- create mode 100644 cmake/FollyConfigChecks.cmake
  create mode 100644 cmake/config.cmake
- create mode 100644 cmake/folly-config.h.cmake
  create mode 100644 folly/stub/logging.h
 
 diff --git a/CMake/FindCython.cmake b/CMake/FindCython.cmake
@@ -939,11 +933,10 @@ index 8dcaf141a..000000000
 -  )
 -endfunction()
 diff --git a/CMake/FollyConfigChecks.cmake b/CMake/FollyConfigChecks.cmake
-deleted file mode 100644
-index 4fec47284..000000000
+index 4fec47284..25e7b67f5 100644
 --- a/CMake/FollyConfigChecks.cmake
-+++ /dev/null
-@@ -1,232 +0,0 @@
++++ b/CMake/FollyConfigChecks.cmake
+@@ -1,232 +1,2 @@
 -# Copyright (c) Facebook, Inc. and its affiliates.
 -#
 -# Licensed under the Apache License, Version 2.0 (the "License");
@@ -1176,6 +1169,8 @@ index 4fec47284..000000000
 -    set(FOLLY_GFLAGS_NAMESPACE google)
 -  endif()
 -endif()
++# Minimal FollyConfigChecks.cmake for simplified folly build
++# This file is intentionally minimal since the full platform checks have been removed
 diff --git a/CMake/FollyFunctions.cmake b/CMake/FollyFunctions.cmake
 deleted file mode 100644
 index 306df17e2..000000000
@@ -1676,11 +1671,10 @@ index 1689f9a2d..000000000
 -  message(STATUS "Found folly: ${FOLLY_PREFIX_DIR}")
 -endif()
 diff --git a/CMake/folly-config.h.cmake b/CMake/folly-config.h.cmake
-deleted file mode 100644
-index ec6706a45..000000000
+index ec6706a45..d722626a6 100644
 --- a/CMake/folly-config.h.cmake
-+++ /dev/null
-@@ -1,89 +0,0 @@
++++ b/CMake/folly-config.h.cmake
+@@ -1,89 +1,73 @@
 -/*
 - * Copyright (c) Facebook, Inc. and its affiliates.
 - *
@@ -1770,6 +1764,80 @@ index ec6706a45..000000000
 -#cmakedefine FOLLY_SUPPORT_SHARED_LIBRARY 1
 -
 -#cmakedefine01 FOLLY_HAVE_LIBRT
++#pragma once
++
++#if !defined(FOLLY_MOBILE)
++#if defined(__ANDROID__) || \
++(defined(__APPLE__) &&  \
++     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
++#define FOLLY_MOBILE 1
++#else
++#define FOLLY_MOBILE 0
++#endif
++#endif // FOLLY_MOBILE
++
++/* #undef FOLLY_HAVE_PTHREAD */
++#define FOLLY_HAVE_PTHREAD_ATFORK 1
++
++/* #undef FOLLY_HAVE_LIBGFLAGS */
++/* #undef FOLLY_UNUSUAL_GFLAGS_NAMESPACE */
++/* #undef FOLLY_GFLAGS_NAMESPACE */
++
++/* #undef FOLLY_HAVE_LIBGLOG */
++
++/* #undef FOLLY_USE_JEMALLOC */
++/* #undef FOLLY_USE_LIBSTDCPP */
++
++#if __has_include(<features.h>)
++#include <features.h>
++#endif
++
++#define FOLLY_HAVE_ACCEPT4 1
++#define FOLLY_HAVE_GETRANDOM 1
++#define FOLLY_HAVE_PREADV 1
++#define FOLLY_HAVE_PWRITEV 1
++#define FOLLY_HAVE_CLOCK_GETTIME 1
++#define FOLLY_HAVE_PIPE2 1
++#define FOLLY_HAVE_SENDMMSG 1
++#define FOLLY_HAVE_RECVMMSG 1
++/* #undef FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF */
++
++#define FOLLY_HAVE_IFUNC 1
++/* #undef FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE */
++#define FOLLY_HAVE_UNALIGNED_ACCESS 1
++#define FOLLY_HAVE_VLA 1
++#define FOLLY_HAVE_WEAK_SYMBOLS 1
++#define FOLLY_HAVE_LINUX_VDSO 1
++#define FOLLY_HAVE_MALLOC_USABLE_SIZE 1
++/* #undef FOLLY_HAVE_INT128_T */
++#define FOLLY_HAVE_WCHAR_SUPPORT 1
++#define FOLLY_HAVE_EXTRANDOM_SFMT19937 1
++/* #undef FOLLY_USE_LIBCPP */
++#define HAVE_VSNPRINTF_ERRORS 1
++
++/* #undef FOLLY_HAVE_LIBUNWIND */
++/* #undef FOLLY_HAVE_DWARF */
++/* #undef FOLLY_HAVE_ELF */
++/* #undef FOLLY_HAVE_SWAPCONTEXT */
++/* #undef FOLLY_HAVE_BACKTRACE */
++/* #undef FOLLY_USE_SYMBOLIZER */
++#define FOLLY_DEMANGLE_MAX_SYMBOL_SIZE 1024
++
++/* #undef FOLLY_HAVE_SHADOW_LOCAL_WARNINGS */
++
++/* #undef FOLLY_HAVE_LIBLZ4 */
++/* #undef FOLLY_HAVE_LIBLZMA */
++/* #undef FOLLY_HAVE_LIBSNAPPY */
++/* #undef FOLLY_HAVE_LIBZ */
++/* #undef FOLLY_HAVE_LIBZSTD */
++/* #undef FOLLY_HAVE_LIBBZ2 */
++
++#define FOLLY_LIBRARY_SANITIZE_ADDRESS 0
++
++/* #undef FOLLY_SUPPORT_SHARED_LIBRARY */
++
++#define FOLLY_HAVE_LIBRT 0
++\ No newline at end of file
 diff --git a/CMake/folly-deps.cmake b/CMake/folly-deps.cmake
 deleted file mode 100644
 index e0e02c02e..000000000
@@ -2183,7 +2251,7 @@ index fc9f56350..c8cdf6cc5 100644
 -  a stable ABI."
 -  OFF
 +configure_file(
-+        ${CMAKE_CURRENT_SOURCE_DIR}/cmake/folly-config.h.cmake
++        ${CMAKE_CURRENT_SOURCE_DIR}/CMake/folly-config.h.cmake
 +        ${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h
  )
 -# Mark BUILD_SHARED_LIBS as an "advanced" option, since enabling it
@@ -2272,7 +2340,7 @@ index fc9f56350..c8cdf6cc5 100644
 -configure_file(
 -  ${CMAKE_CURRENT_SOURCE_DIR}/CMake/folly-config.h.cmake
 -  ${CMAKE_CURRENT_BINARY_DIR}/folly/folly-config.h
-+include(cmake/FollyConfigChecks.cmake)
++include(CMake/FollyConfigChecks.cmake)
 +
 +configure_package_config_file(cmake/config.cmake
 +        ${CMAKE_CURRENT_BINARY_DIR}/${PROJECT_NAME}-config.cmake # cmake-build-debug/
@@ -3332,14 +3400,6 @@ index fc9f56350..c8cdf6cc5 100644
 +install(FILES ${memory_detail} DESTINATION "${include_dest}/memory/detail")
 +install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config/folly/folly-config.h" DESTINATION "${include_dest}")
 +install(FILES "folly/stub/logging.h" DESTINATION "${include_dest}/stub")
-diff --git a/cmake/FollyConfigChecks.cmake b/cmake/FollyConfigChecks.cmake
-new file mode 100644
-index 000000000..25e7b67f5
---- /dev/null
-+++ b/cmake/FollyConfigChecks.cmake
-@@ -0,0 +1,2 @@
-+# Minimal FollyConfigChecks.cmake for simplified folly build
-+# This file is intentionally minimal since the full platform checks have been removed
 diff --git a/cmake/config.cmake b/cmake/config.cmake
 new file mode 100644
 index 000000000..e835b2c1a
@@ -3350,86 +3410,6 @@ index 000000000..e835b2c1a
 +
 +# Minimal folly package config for simplified build
 +include("${CMAKE_CURRENT_LIST_DIR}/folly-targets.cmake")
-diff --git a/cmake/folly-config.h.cmake b/cmake/folly-config.h.cmake
-new file mode 100644
-index 000000000..d722626a6
---- /dev/null
-+++ b/cmake/folly-config.h.cmake
-@@ -0,0 +1,73 @@
-+#pragma once
-+
-+#if !defined(FOLLY_MOBILE)
-+#if defined(__ANDROID__) || \
-+(defined(__APPLE__) &&  \
-+     (TARGET_IPHONE_SIMULATOR || TARGET_OS_SIMULATOR || TARGET_OS_IPHONE))
-+#define FOLLY_MOBILE 1
-+#else
-+#define FOLLY_MOBILE 0
-+#endif
-+#endif // FOLLY_MOBILE
-+
-+/* #undef FOLLY_HAVE_PTHREAD */
-+#define FOLLY_HAVE_PTHREAD_ATFORK 1
-+
-+/* #undef FOLLY_HAVE_LIBGFLAGS */
-+/* #undef FOLLY_UNUSUAL_GFLAGS_NAMESPACE */
-+/* #undef FOLLY_GFLAGS_NAMESPACE */
-+
-+/* #undef FOLLY_HAVE_LIBGLOG */
-+
-+/* #undef FOLLY_USE_JEMALLOC */
-+/* #undef FOLLY_USE_LIBSTDCPP */
-+
-+#if __has_include(<features.h>)
-+#include <features.h>
-+#endif
-+
-+#define FOLLY_HAVE_ACCEPT4 1
-+#define FOLLY_HAVE_GETRANDOM 1
-+#define FOLLY_HAVE_PREADV 1
-+#define FOLLY_HAVE_PWRITEV 1
-+#define FOLLY_HAVE_CLOCK_GETTIME 1
-+#define FOLLY_HAVE_PIPE2 1
-+#define FOLLY_HAVE_SENDMMSG 1
-+#define FOLLY_HAVE_RECVMMSG 1
-+/* #undef FOLLY_HAVE_OPENSSL_ASN1_TIME_DIFF */
-+
-+#define FOLLY_HAVE_IFUNC 1
-+/* #undef FOLLY_HAVE_STD__IS_TRIVIALLY_COPYABLE */
-+#define FOLLY_HAVE_UNALIGNED_ACCESS 1
-+#define FOLLY_HAVE_VLA 1
-+#define FOLLY_HAVE_WEAK_SYMBOLS 1
-+#define FOLLY_HAVE_LINUX_VDSO 1
-+#define FOLLY_HAVE_MALLOC_USABLE_SIZE 1
-+/* #undef FOLLY_HAVE_INT128_T */
-+#define FOLLY_HAVE_WCHAR_SUPPORT 1
-+#define FOLLY_HAVE_EXTRANDOM_SFMT19937 1
-+/* #undef FOLLY_USE_LIBCPP */
-+#define HAVE_VSNPRINTF_ERRORS 1
-+
-+/* #undef FOLLY_HAVE_LIBUNWIND */
-+/* #undef FOLLY_HAVE_DWARF */
-+/* #undef FOLLY_HAVE_ELF */
-+/* #undef FOLLY_HAVE_SWAPCONTEXT */
-+/* #undef FOLLY_HAVE_BACKTRACE */
-+/* #undef FOLLY_USE_SYMBOLIZER */
-+#define FOLLY_DEMANGLE_MAX_SYMBOL_SIZE 1024
-+
-+/* #undef FOLLY_HAVE_SHADOW_LOCAL_WARNINGS */
-+
-+/* #undef FOLLY_HAVE_LIBLZ4 */
-+/* #undef FOLLY_HAVE_LIBLZMA */
-+/* #undef FOLLY_HAVE_LIBSNAPPY */
-+/* #undef FOLLY_HAVE_LIBZ */
-+/* #undef FOLLY_HAVE_LIBZSTD */
-+/* #undef FOLLY_HAVE_LIBBZ2 */
-+
-+#define FOLLY_LIBRARY_SANITIZE_ADDRESS 0
-+
-+/* #undef FOLLY_SUPPORT_SHARED_LIBRARY */
-+
-+#define FOLLY_HAVE_LIBRT 0
-\ No newline at end of file
 diff --git a/folly/Exception.h b/folly/Exception.h
 index d446e29bf..db51d0fa3 100644
 --- a/folly/Exception.h
