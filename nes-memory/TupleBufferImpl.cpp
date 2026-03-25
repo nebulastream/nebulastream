@@ -157,13 +157,13 @@ BufferControlBlock* BufferControlBlock::retain()
 void BufferControlBlock::dumpOwningThreadInfo()
 {
     std::unique_lock lock(owningThreadsMutex);
-    throw UnknownException("Buffer {} has {} live references", fmt::ptr(getOwner()), referenceCounter.load());
+    NES_ERROR("Buffer {} has {} live references", fmt::ptr(getOwner()), referenceCounter.load());
     for (auto& item : owningThreads)
     {
         for (auto& v : item.second)
         {
-            throw UnknownException(
-                "Thread {} has buffer {} requested on callstack: {}",
+            NES_ERROR(
+                "Thread {} has buffer {} requested on callstack:\n{}",
                 v.threadName,
                 fmt::ptr(getOwner()),
                 v.callstack.resolve().to_string());
