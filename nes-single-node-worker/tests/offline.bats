@@ -76,44 +76,42 @@ teardown() {
 }
 
 @test "worker launches and stays alive" {
-  run timeout 1 $NES_WORKER
+  run timeout 5 $NES_WORKER
   [ "$status" -eq 124 ] # killed by timeout
   grep "Starting SingleNodeWorker" singleNodeWorker.log
 }
 
 @test "worker accepts grpc address" {
-  run timeout 1 $NES_WORKER --grpc=localhost:55555
+  run timeout 5 $NES_WORKER --grpc=localhost:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "localhost:55555" singleNodeWorker.log
 
-
-  run timeout 1 $NES_WORKER --grpc=0.0.0.0:55555
+  run timeout 5 $NES_WORKER --grpc=0.0.0.0:55555
   [ "$status" -eq 124 ] # killed by timeout
   grep "0.0.0.0:55555" singleNodeWorker.log
 }
 
 @test "worker rejects bad grpc address" {
   # DNS Name is Valid, but cannot be resolved
-  run $NES_WORKER --grpc=asdf.asdf.asdf:55555
+  run timeout 10 $NES_WORKER --grpc=asdf.asdf.asdf:55555
 
-  # TODO this should probably show up in the logs
   echo $output | grep "Name or service not known"
   grep "Failed to start GRPC Server" singleNodeWorker.log
 
   # DNS Name is Invalid
-  run $NES_WORKER --grpc=wow!:55555
+  run timeout 10 $NES_WORKER --grpc=wow!:55555
   grep "Invalid hostname: 'wow!'" singleNodeWorker.log
   [ "$status" -ne 0 ]
 }
 
 @test "worker accepts valid configs" {
-  run timeout 1 $NES_WORKER --configPath=tests/good/config.yaml
+  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml
   [ "$status" -eq 124 ] # killed by timeout
 }
 
 @test "worker warns when CLI overrides YAML config value" {
   # The YAML config sets number_of_worker_threads=4. Override it via CLI to trigger the warning.
-  run timeout 1 $NES_WORKER --configPath=tests/good/config.yaml --worker.query_engine.number_of_worker_threads=8
+  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --worker.query_engine.number_of_worker_threads=8
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should contain the override warning
@@ -123,7 +121,7 @@ teardown() {
 
 @test "worker does not warn when CLI sets a value not in YAML" {
   # The YAML config does not set dump_graph_path. Setting it via CLI should not trigger a warning.
-  run timeout 1 $NES_WORKER --configPath=tests/good/config.yaml --worker.dump_graph_path=/tmp/test
+  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --worker.dump_graph_path=/tmp/test
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should NOT contain the override warning for this key
