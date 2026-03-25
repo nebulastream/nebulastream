@@ -120,12 +120,12 @@ teardown() {
 }
 
 @test "worker does not warn when CLI sets a value not in YAML" {
-  # The YAML config does not set dump_graph_path. Setting it via CLI should not trigger a warning.
-  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --worker.dump_graph_path=/tmp/test
+  # The YAML config does not set buffer_size_in_bytes. Setting it via CLI should not trigger a warning.
+  run timeout 5 $NES_WORKER --configPath=tests/good/config.yaml --worker.buffer_size_in_bytes=8192
   [ "$status" -eq 124 ] # killed by timeout
 
   # The log should NOT contain the override warning for this key
-  ! grep "dump_graph_path.*was already set" singleNodeWorker.log
+  ! grep "buffer_size_in_bytes.*was already set" singleNodeWorker.log
 }
 
 
