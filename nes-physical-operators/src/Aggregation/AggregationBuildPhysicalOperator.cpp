@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -83,34 +84,35 @@ void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationCo
 {
     compileChild(compilationContext);
 
-    if (cleanupStateNautilusFunction)
-    {
-        return;
-    }
-
-    cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions,
-             copyOfAggregationFunctions = aggregationPhysicalFunctions](const nautilus::val<HashMap*>& hashMap)
-            {
-                const ChainedHashMapRef hashMapRef(
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize);
-                for (const auto entry : hashMapRef)
-                {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
-                    auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                    for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+    std::call_once(
+        cleanupStateNautilusFunctionOnce,
+        [this, &compilationContext]
+        {
+            cleanupStateNautilusFunction
+                = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+                    [copyOfHashMapOptions = hashMapOptions,
+                     copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
                     {
-                        aggFunction->cleanup(state);
-                        state = state + aggFunction->getSizeOfStateInBytes();
-                    }
-                }
-            })));
+                        auto currentHashMap = hashMap;
+                        const ChainedHashMapRef hashMapRef(
+                            currentHashMap,
+                            copyOfHashMapOptions.fieldKeys,
+                            copyOfHashMapOptions.fieldValues,
+                            copyOfHashMapOptions.entriesPerPage,
+                            copyOfHashMapOptions.entrySize);
+                        for (const auto entry : hashMapRef)
+                        {
+                            const ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, currentHashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
+                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            {
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
+                            }
+                        }
+                    })));
+        });
 }
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const

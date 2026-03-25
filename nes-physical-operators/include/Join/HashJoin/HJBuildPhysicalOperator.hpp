@@ -14,6 +14,7 @@
 
 #pragma once
 #include <memory>
+#include <mutex>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
@@ -64,6 +65,7 @@ public:
 
 private:
     HashMapOptions hashMapOptions;
+    mutable std::once_flag cleanupStateNautilusFunctionOnce;
     mutable std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 };
 

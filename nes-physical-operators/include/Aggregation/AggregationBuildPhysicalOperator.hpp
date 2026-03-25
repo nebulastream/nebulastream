@@ -16,6 +16,7 @@
 
 
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -60,6 +61,7 @@ public:
 private:
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+    mutable std::once_flag cleanupStateNautilusFunctionOnce;
     mutable std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 };
 
