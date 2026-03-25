@@ -86,9 +86,10 @@ void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationCo
         return;
     }
 
-    cleanupStateNautilusFunction = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
-        std::function(
-            [copyOfHashMapOptions = hashMapOptions, copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
+    cleanupStateNautilusFunction
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+            [copyOfHashMapOptions = hashMapOptions,
+             copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
             {
                 const ChainedHashMapRef hashMapRef(
                     hashMap,

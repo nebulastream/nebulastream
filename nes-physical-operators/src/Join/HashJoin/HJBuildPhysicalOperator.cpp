@@ -83,29 +83,30 @@ void HJBuildPhysicalOperator::compile(CompilationContext& compilationContext) co
         return;
     }
 
-    cleanupStateNautilusFunction = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(
-        std::function([copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-        {
-            const ChainedHashMapRef hashMapRef{
-                hashMap,
-                copyOfHashMapOptions.fieldKeys,
-                copyOfHashMapOptions.fieldValues,
-                copyOfHashMapOptions.entriesPerPage,
-                copyOfHashMapOptions.entrySize};
-            for (const auto entry : hashMapRef)
+    cleanupStateNautilusFunction
+        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
             {
-                const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                    entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                const auto state = entryRefReset.getValueMemArea();
-                nautilus::invoke(
-                    +[](int8_t* pagedVectorMemArea) -> void
-                    {
-                        auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                        pagedVector->~PagedVector();
-                    },
-                    state);
-            }
-        })));
+                const ChainedHashMapRef hashMapRef{
+                    hashMap,
+                    copyOfHashMapOptions.fieldKeys,
+                    copyOfHashMapOptions.fieldValues,
+                    copyOfHashMapOptions.entriesPerPage,
+                    copyOfHashMapOptions.entrySize};
+                for (const auto entry : hashMapRef)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                    const auto state = entryRefReset.getValueMemArea();
+                    nautilus::invoke(
+                        +[](int8_t* pagedVectorMemArea) -> void
+                        {
+                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                            pagedVector->~PagedVector();
+                        },
+                        state);
+                }
+            })));
 }
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
@@ -196,9 +197,7 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other)
-    : StreamJoinBuildPhysicalOperator(other)
-    , hashMapOptions(other.hashMapOptions)
-    , cleanupStateNautilusFunction(nullptr)
+    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions), cleanupStateNautilusFunction(nullptr)
 {
 }
 

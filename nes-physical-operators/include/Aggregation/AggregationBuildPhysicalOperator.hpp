@@ -19,7 +19,6 @@
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <HashMapSlice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -27,6 +26,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <HashMapOptions.hpp>
+#include <HashMapSlice.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES

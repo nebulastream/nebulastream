@@ -15,7 +15,6 @@
 #pragma once
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <HashMapSlice.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -28,6 +27,7 @@
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
+#include <HashMapSlice.hpp>
 
 namespace NES
 {
