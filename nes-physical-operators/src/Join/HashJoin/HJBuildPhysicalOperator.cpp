@@ -29,6 +29,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>

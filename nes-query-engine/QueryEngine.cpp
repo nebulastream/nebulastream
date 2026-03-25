@@ -548,7 +548,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
 bool ThreadPool::WorkerThread::operator()(CompilePipelineTask& compilePipeline) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", compilePipeline.queryId, compilePipeline.pipelineId));
+    const LogContext logContext("Task", fmt::format("{}-{}", compilePipeline.queryId, compilePipeline.pipelineId));
     if (terminating)
     {
         ENGINE_LOG_WARNING(

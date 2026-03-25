@@ -33,6 +33,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <HashMapSlice.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 

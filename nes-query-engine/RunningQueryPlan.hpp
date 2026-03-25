@@ -150,15 +150,15 @@ private:
             std::vector<std::weak_ptr<RunningQueryPlanNode>> pipelines,
             std::unique_ptr<ExecutableQueryPlan> qep,
             CallbackOwner all_pipelines_expired,
-            CallbackOwner pipeline_compilation_done,
-            CallbackOwner pipeline_start_done)
+            CallbackOwner pipelineCompilationDone,
+            CallbackOwner pipelineStartDone)
             : listeners(std::move(listeners))
             , sources(std::move(sources))
             , pipelines(std::move(pipelines))
             , qep(std::move(qep))
             , allPipelinesExpired(std::move(all_pipelines_expired))
-            , allPipelinesCompiled(std::move(pipeline_compilation_done))
-            , allPipelinesStarted(std::move(pipeline_start_done))
+            , allPipelinesCompiled(std::move(pipelineCompilationDone))
+            , allPipelinesStarted(std::move(pipelineStartDone))
         {
         }
 

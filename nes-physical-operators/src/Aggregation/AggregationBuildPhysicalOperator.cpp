@@ -26,6 +26,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
@@ -36,6 +37,7 @@
 #include <function.hpp>
 #include <options.hpp>
 #include <static.hpp>
+#include <val_details.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -89,7 +91,7 @@ void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationCo
     cleanupStateNautilusFunction
         = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
             [copyOfHashMapOptions = hashMapOptions,
-             copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
+             copyOfAggregationFunctions = aggregationPhysicalFunctions](const nautilus::val<HashMap*>& hashMap)
             {
                 const ChainedHashMapRef hashMapRef(
                     hashMap,
