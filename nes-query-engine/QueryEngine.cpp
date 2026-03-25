@@ -713,8 +713,8 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     INVARIANT(
-        stopPipelineTask.pipeline->isStarted,
-        "Pipeline {}-{} must be started before stop",
+        stopPipelineTask.pipeline->isCompiled,
+        "Pipeline {}-{} must be compiled before stop",
         stopPipelineTask.queryId,
         stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;

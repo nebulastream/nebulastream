@@ -83,32 +83,37 @@ void PhysicalOperatorConcept::compileChild(CompilationContext& compilationContex
 
 void PhysicalOperatorConcept::setupChild(ExecutionContext& executionCtx) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().setup(executionCtx);
+    const auto child = getChild();
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child->setup(executionCtx);
 }
 
 void PhysicalOperatorConcept::openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().open(executionCtx, recordBuffer);
+    const auto child = getChild();
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child->open(executionCtx, recordBuffer);
 }
 
 void PhysicalOperatorConcept::closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().close(executionCtx, recordBuffer);
+    const auto child = getChild();
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child->close(executionCtx, recordBuffer);
 }
 
 void PhysicalOperatorConcept::executeChild(ExecutionContext& executionCtx, Record& record) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().execute(executionCtx, record);
+    const auto child = getChild();
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child->execute(executionCtx, record);
 }
 
 void PhysicalOperatorConcept::terminateChild(ExecutionContext& executionCtx) const
 {
-    INVARIANT(getChild().has_value(), "Child operator is not set");
-    getChild().value().terminate(executionCtx);
+    const auto child = getChild();
+    INVARIANT(child.has_value(), "Child operator is not set");
+    child->terminate(executionCtx);
 }
 
 PhysicalOperator::PhysicalOperator() = default;
