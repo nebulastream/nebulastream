@@ -66,10 +66,12 @@ public:
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
 
-    /// Is required to not perform the setup again and resolving a race condition to the cleanup state function
-    std::atomic<bool> setupAlreadyCalled;
-    /// shared_ptr as multiple slices need access to it
+    bool trySetCleanupStateNautilusFunction(std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction);
+
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
+
+private:
+    std::atomic<bool> cleanupStateNautilusFunctionInstalled;
 
 protected:
     void triggerSlices(

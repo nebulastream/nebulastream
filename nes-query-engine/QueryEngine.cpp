@@ -348,7 +348,7 @@ public:
         std::unreachable();
     }
 
-    void emitPipelinePrepare(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
+    void emitPipelineCompile(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
     {
         auto [complete, failure, success] = std::move(callback).take();
         auto wrappedCallback = TaskCallback{
@@ -356,7 +356,7 @@ public:
             std::move(success),
             TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
         };
-        addInternalTask(PreparePipelineTask(qid, node->id, std::move(wrappedCallback), node));
+        addInternalTask(CompilePipelineTask(qid, node->id, std::move(wrappedCallback), node));
     }
 
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
@@ -448,7 +448,7 @@ public:
         bool operator()(WorkTask& task) const;
         bool operator()(StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
-        bool operator()(PreparePipelineTask& preparePipeline) const;
+        bool operator()(CompilePipelineTask& compilePipeline) const;
         bool operator()(StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask& pendingPipelineStop) const;
         bool operator()(StopPipelineTask& stopPipelineTask) const;
@@ -546,19 +546,19 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     return false;
 }
 
-bool ThreadPool::WorkerThread::operator()(PreparePipelineTask& preparePipeline) const
+bool ThreadPool::WorkerThread::operator()(CompilePipelineTask& compilePipeline) const
 {
-    LogContext logContext("Task", fmt::format("{}-{}", preparePipeline.queryId, preparePipeline.pipelineId));
+    LogContext logContext("Task", fmt::format("{}-{}", compilePipeline.queryId, compilePipeline.pipelineId));
     if (terminating)
     {
         ENGINE_LOG_WARNING(
-            "Pipeline Preparation {}-{} was skipped during Termination", preparePipeline.queryId, preparePipeline.pipelineId);
+            "Pipeline Compilation {}-{} was skipped during Termination", compilePipeline.queryId, compilePipeline.pipelineId);
         return false;
     }
 
-    if (auto pipeline = preparePipeline.pipeline.lock())
+    if (auto pipeline = compilePipeline.pipeline.lock())
     {
-        ENGINE_LOG_DEBUG("Prepare Pipeline Task for {}-{}", preparePipeline.queryId, pipeline->id);
+        ENGINE_LOG_DEBUG("Compile Pipeline Task for {}-{}", compilePipeline.queryId, pipeline->id);
         DefaultPEC pec(
             pool.numberOfThreads(),
             WorkerThread::id,
@@ -566,16 +566,16 @@ bool ThreadPool::WorkerThread::operator()(PreparePipelineTask& preparePipeline) 
             pool.bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
-                INVARIANT(false, "Currently we assume that a pipeline cannot emit data during preparation");
+                INVARIANT(false, "Currently we assume that a pipeline cannot emit data during compilation");
                 return false;
             },
             [&](const TupleBuffer&, std::chrono::milliseconds)
-            { INVARIANT(false, "Repeat pipeline preparation is currently not supported"); });
-        pipeline->stage->prepare(pec);
+            { INVARIANT(false, "Repeat pipeline compilation is currently not supported"); });
+        pipeline->stage->compile(pec);
         return true;
     }
 
-    ENGINE_LOG_WARNING("Prepared pipeline is expired for {}-{}", preparePipeline.queryId, preparePipeline.pipelineId);
+    ENGINE_LOG_WARNING("Compiled pipeline is expired for {}-{}", compilePipeline.queryId, compilePipeline.pipelineId);
     return false;
 }
 

@@ -15,6 +15,7 @@
 #pragma once
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
+#include <HashMapSlice.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
@@ -56,11 +57,14 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         const std::shared_ptr<TupleBufferRef>& bufferRef,
         HashMapOptions hashMapOptions);
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other);
+    void compile(CompilationContext& compilationContext) const override;
+    void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
     HashMapOptions hashMapOptions;
+    mutable std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
 };
 
 }

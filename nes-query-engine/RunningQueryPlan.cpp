@@ -88,19 +88,19 @@ std::shared_ptr<RunningQueryPlanNode> RunningQueryPlanNode::create(
     std::unique_ptr<ExecutablePipelineStage> stage,
     std::function<void(Exception)> unregisterWithError,
     CallbackRef planRef,
-    CallbackRef preparationCallback)
+    CallbackRef compilationCallback)
 {
     auto node = std::shared_ptr<RunningQueryPlanNode>(
         new RunningQueryPlanNode(pipelineId, std::move(successors), std::move(stage), std::move(unregisterWithError), std::move(planRef)),
         RunningQueryPlanNodeDeleter{.emitter = emitter, .queryId = queryId});
-    emitter.emitPipelinePrepare(
+    emitter.emitPipelineCompile(
         queryId,
         node,
         TaskCallback{TaskCallback::OnComplete(
-            [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) preparationCallback = std::move(preparationCallback)]() mutable
+            [ENGINE_IF_LOG_TRACE(queryId, pipelineId, ) compilationCallback = std::move(compilationCallback)]() mutable
             {
-                static_cast<void>(preparationCallback);
-                ENGINE_LOG_TRACE("Pipeline {}-{} was prepared", queryId, pipelineId);
+                static_cast<void>(compilationCallback);
+                ENGINE_LOG_TRACE("Pipeline {}-{} was compiled", queryId, pipelineId);
             })});
 
     return node;
@@ -122,7 +122,7 @@ std::
         ExecutableQueryPlan& queryPlan,
         std::function<void(Exception)> unregisterWithError,
         const CallbackRef& terminationCallbackRef,
-        const CallbackRef& pipelinePreparationCallbackRef,
+        const CallbackRef& pipelineCompilationCallbackRef,
         WorkEmitter& emitter)
 {
     std::vector<std::pair<std::unique_ptr<SourceHandle>, std::vector<std::shared_ptr<RunningQueryPlanNode>>>> sources;
@@ -148,7 +148,7 @@ std::
             std::move(pipeline->stage),
             unregisterWithError,
             terminationCallbackRef,
-            pipelinePreparationCallbackRef);
+            pipelineCompilationCallbackRef);
         pipelines.emplace_back(node);
         cache[pipeline] = std::move(node);
         return cache[pipeline];
@@ -181,15 +181,15 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
     auto [terminationCallbackOwner, terminationCallbackRef] = Callback::create();
     terminationCallbackOwner.setCallback([listener] { listener->onDestruction(); });
 
-    /// Callback to track the lifetime of all prepare tasks.
-    auto [pipelinePreparationCallbackOwner, pipelinePreparationCallbackRef] = Callback::create();
+    /// Callback to track the lifetime of all compile tasks.
+    auto [pipelineCompilationCallbackOwner, pipelineCompilationCallbackRef] = Callback::create();
     /// Callback to track the lifetime of all start tasks.
     auto [pipelineStartCallbackOwner, pipelineStartCallbackRef] = Callback::create();
 
     /// The RunningQueryPlan object is the owner of all callbacks. If the RunningQueryPlan object is destroyed (i.e., stopped from a user,
     /// or because of a failure). The callbacks are cancelled, as they have become meaningless.
     auto runningPlan = std::unique_ptr<RunningQueryPlan>(new RunningQueryPlan(
-        std::move(terminationCallbackOwner), std::move(pipelinePreparationCallbackOwner), std::move(pipelineStartCallbackOwner)));
+        std::move(terminationCallbackOwner), std::move(pipelineCompilationCallbackOwner), std::move(pipelineStartCallbackOwner)));
 
     auto lock = runningPlan->internal.lock();
 
@@ -204,19 +204,19 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
             listener->onFailure(std::move(exception));
         },
         terminationCallbackRef,
-        pipelinePreparationCallbackRef,
+        pipelineCompilationCallbackRef,
         emitter);
     internal.pipelines = std::move(pipelines);
 
-    /// Once all pipelines are prepared, schedule their start tasks.
-    internal.allPipelinesPrepared.setCallback(
+    /// Once all pipelines are compiled, schedule their start tasks.
+    internal.allPipelinesCompiled.setCallback(
         [&runningPlan = *runningPlan, queryId, &emitter, pipelineStartCallbackRef]() mutable
         {
             std::vector<std::shared_ptr<RunningQueryPlanNode>> pipelinesToStart;
             {
                 auto lock = runningPlan.internal.lock();
                 auto& internal = *lock;
-                ENGINE_LOG_DEBUG("Pipeline Preparation Completed");
+                ENGINE_LOG_DEBUG("Pipeline Compilation Completed");
                 for (const auto& weakRef : internal.pipelines)
                 {
                     if (auto strongRef = weakRef.lock())
@@ -307,17 +307,17 @@ RunningQueryPlan::stop(std::unique_ptr<RunningQueryPlan> runningQueryPlan)
     return {
         std::make_unique<StoppingQueryPlan>(
             std::move(internal.qep), std::move(internal.listeners), std::move(internal.allPipelinesExpired)),
-        [preparationCallbackOwner = std::move(internal.allPipelinesPrepared),
+        [compilationCallbackOwner = std::move(internal.allPipelinesCompiled),
          startCallbackOwner = std::move(internal.allPipelinesStarted),
          pipelines = std::move(internal.pipelines),
          sources = std::move(internal.sources)]() mutable
         {
             /// Destroying the sources needs to ensure that there is no concurrency on the sources vector.
-            /// The prepare and start callbacks may run concurrently so they need to be destroyed before the graph is torn down.
+            /// The compile and start callbacks may run concurrently so they need to be destroyed before the graph is torn down.
             /// The callback owner will block until the callback is either cancelled or completed. Completing the callback requires
             /// a lock on the AtomicState. Therefore, this callback needs to be called from outside the atomic state.
             startCallbackOwner = {};
-            preparationCallbackOwner = {};
+            compilationCallbackOwner = {};
             pipelines.clear();
             sources.clear();
         }
@@ -349,7 +349,7 @@ RunningQueryPlan::~RunningQueryPlan()
     auto& internal = *lock;
 
 
-    /// CRITICAL: Disable pipeline prepare and start callbacks during destruction to prevent race conditions.
+    /// CRITICAL: Disable pipeline compile and start callbacks during destruction to prevent race conditions.
     ///
     /// This prevents any pending pipeline callbacks from executing after the
     /// RunningQueryPlan starts being destroyed. Without this, callbacks could access
@@ -358,7 +358,7 @@ RunningQueryPlan::~RunningQueryPlan()
     /// The callbacks may have captured a raw pointer to this RunningQueryPlan during
     /// the start() method, and this ensures they cannot execute after destruction begins.
     internal.allPipelinesStarted = {};
-    internal.allPipelinesPrepared = {};
+    internal.allPipelinesCompiled = {};
 
     for (const auto& weakRef : internal.pipelines)
     {

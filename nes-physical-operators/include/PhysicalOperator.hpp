@@ -59,8 +59,10 @@ struct PhysicalOperatorConcept
     [[nodiscard]] virtual std::optional<struct PhysicalOperator> getChild() const = 0;
     virtual void setChild(struct PhysicalOperator child) = 0;
 
+    virtual void compile(CompilationContext& compilationContext) const;
+
     /// This is called once before the operator starts processing records.
-    virtual void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    virtual void setup(ExecutionContext& executionCtx) const;
 
     /// Opens the operator for processing records.
     /// This is called before each batch of records is processed.
@@ -81,8 +83,9 @@ struct PhysicalOperatorConcept
     const OperatorId id = INVALID_OPERATOR_ID;
 
 protected:
+    void compileChild(CompilationContext& compilationContext) const;
     /// Helper classes to propagate to the child
-    void setupChild(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void setupChild(ExecutionContext& executionCtx) const;
     void openChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void closeChild(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void executeChild(ExecutionContext& executionCtx, Record& record) const;
@@ -118,7 +121,8 @@ struct PhysicalOperator
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const;
     [[nodiscard]] PhysicalOperator withChild(PhysicalOperator child) const;
 
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const;
+    void compile(CompilationContext& compilationContext) const;
+    void setup(ExecutionContext& executionCtx) const;
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const;
     void terminate(ExecutionContext& executionCtx) const;
@@ -186,10 +190,9 @@ private:
 
         void setChild(PhysicalOperator child) override { data.setChild(child); }
 
-        void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override
-        {
-            data.setup(executionCtx, compilationContext);
-        }
+        void compile(CompilationContext& compilationContext) const override { data.compile(compilationContext); }
+
+        void setup(ExecutionContext& executionCtx) const override { data.setup(executionCtx); }
 
         void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override { data.open(executionCtx, recordBuffer); }
 

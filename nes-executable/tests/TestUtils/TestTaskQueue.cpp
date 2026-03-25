@@ -132,7 +132,7 @@ void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pip
 
 void SingleThreadedTestTaskQueue::runTasks()
 {
-    tasks.front().task.eps->prepare(*tasks.front().pipelineExecutionContext);
+    tasks.front().task.eps->compile(*tasks.front().pipelineExecutionContext);
     tasks.front().task.eps->start(*tasks.front().pipelineExecutionContext);
     while (not tasks.empty())
     {
@@ -162,7 +162,7 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     /// Store a pointer to the executable pipeline stage to call 'stop()' after completion
     this->eps = testTasks.front().eps;
     auto pec = TestPipelineExecutionContext(this->bufferProvider, WorkerThreadId(0), PipelineId(0), this->resultBuffers);
-    this->eps->prepare(pec);
+    this->eps->compile(pec);
     this->eps->start(pec);
 
     /// Fill the task queue with test tasks
