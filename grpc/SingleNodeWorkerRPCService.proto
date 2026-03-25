@@ -23,7 +23,6 @@ service WorkerRPCService {
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
-  rpc RequestQueryLog (QueryLogRequest) returns (QueryLogReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
 }
 
@@ -75,20 +74,6 @@ message QueryStatusReply {
     uint64 queryId = 1;
     QueryState state = 2;
     QueryMetrics metrics = 3;
-}
-
-message QueryLogRequest {
-    uint64 queryId = 1;
-}
-
-message QueryLogEntry {
-    QueryState state = 1;
-    uint64 unixTimeInMs = 2;
-    optional Error error = 3;
-}
-
-message QueryLogReply {
-    repeated QueryLogEntry entries = 1;
 }
 
 message WorkerStatusRequest {
