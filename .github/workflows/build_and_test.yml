@@ -12,6 +12,11 @@ on:
         type: string
         required: true
         description: "head_sha of the branch"
+    secrets:
+      DOCKER_USER_NAME:
+        required: false
+      DOCKER_SECRET:
+        required: false
 
 jobs:
   build-and-test-linux:
@@ -48,27 +53,59 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         name: Preparing Github Runners
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
+            echo "=== sccache config before build ==="
+            sccache --show-stats
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} -DNES_LOG_LEVEL=DEBUG -DALL_HASHMAP_TESTS=1
             cmake --build build -j  -- -k 0
+            echo "=== sccache stats after build ==="
+            sccache --show-stats
+            sccache --stop-server
       - uses: ./.github/steps/run-in-container
-        name: Run Tests
+        name: Run Unit Tests
+        with:
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # Run unit tests in parallel. Timeout after 40 minutes.
+            # We run here all tests that are not a Syster or DockerCompose
+            ctest --test-dir build -j -LE "Systest|DockerCompose" --output-on-failure --output-junit build/junit-unit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run System Tests
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
-            # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
-            ctest --test-dir build -j --output-on-failure --output-junit build/junit.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
+            # Each systest uses PROCESSORS 4, so ctest -j will schedule them respecting core limits.
+            # Timeout after 80 minutes.
+            ctest --test-dir build -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
+      - uses: ./.github/steps/run-in-container
+        name: Run Docker Tests
+        with:
+          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          run: |
+            source .github/.env/test-${{matrix.sanitizer}}.env
+            # Run Docker-based tests sequentially. Timeout after 40 minutes.
+            ctest --test-dir build -j 1 -L DockerCompose --output-on-failure --output-junit build/junit-docker.xml --timeout 2400 ${ADDITIONAL_CTEST_ARGS}
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
@@ -86,7 +123,7 @@ jobs:
           slug: nebulastream/nebulastream
           token: ${{ secrets.CODECOV_TOKEN }}
           flags: ${{ matrix.arch }},${{ matrix.stdlib }},${{ matrix.sanitizer }},${{ matrix.build_type }}
-          files: build/junit.xml
+          files: build/junit-unit.xml,build/junit-systest.xml,build/junit-docker.xml
 
   # We want to test if our cmake log level flag works correctly. Therefore, we need to build and run the tests with different log levels.
   # As we can not do this in a unit test (because the log level is set at compile time), we need to run the tests in a separate job.
@@ -110,14 +147,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: Run Log Level Test
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             for LOG_LEVEL in TRACE DEBUG INFO WARN ERROR LEVEL_NONE; do
               echo "Running tests with log level: $LOG_LEVEL"
@@ -140,9 +184,15 @@ jobs:
     # Ensures that the build works from a clean build directory.
     name: "Clean build and tests"
     container:
-      image: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}
       env:
         MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       options: --user root
       volumes:
         - /var/run/docker.sock:/var/run/docker.sock
@@ -204,14 +254,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             cmake -GNinja -B build -DNES_ENABLES_TESTS=0
@@ -237,14 +294,21 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ inputs.head_sha }}
+      - uses: ./.github/steps/setup-sccache
+        with:
+          bucket: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+          endpoint: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+          access_key: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+          secret_key: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
       - uses: ./.github/steps/prepare-github
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
-          ccache_key: ${{ matrix.arch }}-${{ matrix.build_type }}-${{matrix.sanitizer}}-${{matrix.stdlib}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
       - uses: ./.github/steps/run-in-container
         name: CMake Build
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             cmake -GNinja -B build -DUSE_SANITIZER=${{ matrix.sanitizer }} -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} ${{ matrix.additional_build_flags.flags }}
@@ -252,7 +316,9 @@ jobs:
       - uses: ./.github/steps/run-in-container
         name: Run Tests
         with:
-          image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          image_name: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
+          docker_username: ${{ secrets.DOCKER_USER_NAME }}
+          docker_password: ${{ secrets.DOCKER_SECRET }}
           run: |
             source .github/.env/test-${{matrix.sanitizer}}.env
             # timeout after 40 minutes. This timeout can be adjusted if it causes failures.
@@ -260,7 +326,7 @@ jobs:
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
         # Upload all log and stats files if any of the tests has failed.
-        if: ${{ failure() && !github.event.act }}
+        if: ${{ failure() && !cancelled() && !github.event.act }}
         with:
           name: logs-${{ matrix.arch }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}-${{ matrix.additional_build_flags.name }}
           path: |

@@ -73,8 +73,6 @@ nautilus::val<bool> operator==(const nautilus::val<bool>& other, const VariableS
 
 nautilus::val<bool> VariableSizedData::isValid() const
 {
-    PRECONDITION(size > 0 && ptrToVarSized != nullptr, "VariableSizedData has a size of 0 but  a nullptr pointer to the data.");
-    PRECONDITION(size == 0 && ptrToVarSized == nullptr, "VariableSizedData has a size of 0 so there should be no pointer to the data.");
     return size > 0 && ptrToVarSized != nullptr;
 }
 

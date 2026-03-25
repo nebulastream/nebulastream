@@ -6,6 +6,17 @@ For building it locally with vcpkg, the commands should be quite similar.
 This document provides a good starting point for fixing clang-tidy warnings.
 As every setup is different, it might be necessary to adjust the commands to your setup.
 
+# Running the clang-tidy diff workflow with Nix
+If you want to reproduce the current clang-tidy diff workflow locally with the Nix toolchain, run the following command
+from the repository root.
+```bash
+nix run .#clang-tidy
+```
+By default, the command compares the current checkout to `origin/main`.
+To use another branch or commit, pass it after `--`, for example `nix run .#clang-tidy -- upstream/main`.
+The command uses the official `clang-tidy-diff.py` workflow, applies fixes in place, and configures and builds
+`build/`.
+
 # Fixing clang-tidy warnings for a PR / compared to a branch
 As a pre-requisite, you need to have the docker image built and your git repository updated.
 Before running clang-tidy, we must create a running container from the image.
