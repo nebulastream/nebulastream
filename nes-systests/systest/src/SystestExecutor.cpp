@@ -90,7 +90,7 @@ SingleNodeWorkerConfiguration resolveSingleNodeWorkerConfiguration(const Systest
     auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
     if (not config.workerConfig.getValue().empty())
     {
-        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
+        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig.getValue());
     }
     else if (config.singleNodeWorkerConfig.has_value())
     {
@@ -99,8 +99,8 @@ SingleNodeWorkerConfiguration resolveSingleNodeWorkerConfiguration(const Systest
     return singleNodeWorkerConfiguration;
 }
 
-SingleNodeWorkerConfiguration applyConfigurationOverride(
-    const SingleNodeWorkerConfiguration& baseConfiguration, const Systest::ConfigurationOverride& overrideConfig)
+SingleNodeWorkerConfiguration
+applyConfigurationOverride(const SingleNodeWorkerConfiguration& baseConfiguration, const Systest::ConfigurationOverride& overrideConfig)
 {
     auto configCopy = baseConfiguration;
     for (const auto& [key, value] : overrideConfig.overrideParameters)
@@ -294,6 +294,8 @@ void setupLogging(const SystestConfiguration& config)
 SystestExecutorResult SystestExecutor::executeSystests()
 {
     setupLogging(config);
+    Systest::resetQueryCompilationMetrics();
+    Systest::resetQueryRuntimeMetrics();
 
     CPPTRACE_TRY
     {
