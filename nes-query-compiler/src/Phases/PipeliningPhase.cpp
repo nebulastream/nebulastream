@@ -48,6 +48,7 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <UnionPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -237,6 +238,24 @@ std::shared_ptr<Pipeline> makeSinkPredecessorAfterFanOut(
     return formattingPipeline;
 }
 
+/// Checks recursively for a pipeline, excluding the scan, if it only consists of projections.
+/// Exception: A pipeline that feeds into a union or that fans out into multiple consumers is not considered pure, since the union is a
+/// merge point that needs its own pipeline, and a fan-out point must close the pipeline so every consumer sees the
+/// full output. Both require the regular pipeline break instead of inlining the projection into its predecessor.
+bool isPureProjectionPipeline(const std::shared_ptr<PhysicalOperatorWrapper>& wrappedOp)
+{
+    if (wrappedOp->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT
+        || wrappedOp->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    {
+        return true;
+    }
+    if (wrappedOp->getPhysicalOperator().tryGet<UnionPhysicalOperator>() || wrappedOp->getChildren().size() != 1)
+    {
+        return false;
+    }
+    return isPureProjectionPipeline(wrappedOp->getChildren().front());
+}
+
 enum class PipelinePolicy : uint8_t
 {
     Continue, /// Uses the current pipeline for the next operator
@@ -357,6 +376,27 @@ void buildPipelineRecursively(
     /// Case 1: Custom Scan
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
+        /// It might be the case that the scan is a regular scan: A regular scan is created before this phase for projections.
+        /// If it is a regular scan, then the operations in the previous pipeline could only have been stateless, as stateful
+        /// operators end in a probe that already opened its own pipeline. If the projection chain does not feed into a union,
+        /// the pipeline break is not needed and the projection is inlined into the predecessor's pipeline.
+        /// The shortcut is only taken while the predecessor pipeline is still open (not ForceNewClosed, which promises
+        /// an already emitted pipeline) and the scan has exactly one consumer. A fan-out scan, or a scan that is itself
+        /// a consumer of a fan-out point, keeps the regular break below.
+        if (policy != PipelinePolicy::ForceNewClosed && prevOpWrapper && opWrapper->getChildren().size() == 1
+            && opWrapper->getPhysicalOperator().tryGet<ScanPhysicalOperator>()
+            && isPureProjectionPipeline(opWrapper->getChildren().front()))
+        {
+            buildPipelineRecursively(
+                opWrapper->getChildren().front(),
+                prevOpWrapper,
+                currentPipeline,
+                pipelineMap,
+                PipelinePolicy::Continue,
+                configuredBufferSize,
+                mergePoints);
+            return;
+        }
         if (policy != PipelinePolicy::ForceNewClosed && prevOpWrapper
             && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
