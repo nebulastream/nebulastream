@@ -261,6 +261,48 @@ TEST_F(ExplicitlySetTrackingTest, ConfigValuePrinterWithYAMLOverrides)
     EXPECT_NE(output.find("port: 8080 (default)"), std::string::npos);
 }
 
+TEST_F(ExplicitlySetTrackingTest, UnrecognizedYAMLKeyThrows)
+{
+    TestConfig config;
+    YAML::Node node;
+    node["host"] = "my-host";
+    node["typo_key"] = "some-value";
+
+    /// Must throw on unrecognized key to prevent silent misconfiguration.
+    EXPECT_THROW(config.overwriteConfigWithYAMLNode(node), Exception);
+}
+
+TEST_F(ExplicitlySetTrackingTest, UnrecognizedCLIKeyThrows)
+{
+    TestConfig config;
+    const std::unordered_map<std::string, std::string> params = {{"--unknown_flag", "value"}};
+
+    /// Must throw on unrecognized key to prevent silent misconfiguration.
+    EXPECT_THROW(config.overwriteConfigWithCommandLineInput(params), Exception);
+}
+
+TEST_F(ExplicitlySetTrackingTest, RecognizedKeysOnlyDoNotThrow)
+{
+    TestConfig config;
+    YAML::Node node;
+    node["host"] = "my-host";
+    node["port"] = "9090";
+
+    EXPECT_NO_THROW(config.overwriteConfigWithYAMLNode(node));
+    EXPECT_EQ(config.host.getValue(), "my-host");
+    EXPECT_EQ(config.port.getValue(), static_cast<size_t>(9090));
+}
+
+TEST_F(ExplicitlySetTrackingTest, RecognizedCLIKeysOnlyDoNotThrow)
+{
+    TestConfig config;
+    const std::unordered_map<std::string, std::string> params = {{"--host", "cli-host"}, {"--port", "1234"}};
+
+    EXPECT_NO_THROW(config.overwriteConfigWithCommandLineInput(params));
+    EXPECT_EQ(config.host.getValue(), "cli-host");
+    EXPECT_EQ(config.port.getValue(), static_cast<size_t>(1234));
+}
+
 }
 
 /// NOLINTEND(readability-magic-numbers)

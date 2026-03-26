@@ -123,7 +123,7 @@ assert_json_contains() {
 @test "Fail on invalid optimizer config name" {
   run $NES_REPL --optimizer test_invalid_config_name=INVALID
   [ "$status" -ne 0 ]
-  grep "invalid config parameter; Identifier for: test_invalid_config_name is not known." nes-repl.log
+  grep "invalid config parameter; Unrecognized configuration key: 'test_invalid_config_name'" nes-repl.log
 }
 
 @test "Fail on invalid optimizer config value" {
