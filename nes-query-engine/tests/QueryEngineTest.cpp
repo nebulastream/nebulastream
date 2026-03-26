@@ -776,7 +776,8 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], QueryTerminationType::Graceful);
         test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], QueryTerminationType::Graceful);
-        test.expectQueryStatusEvents(QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Stopped});
+        test.expectQueryStatusEvents(
+            QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Stopped});
     }
 
     test.start();
@@ -865,7 +866,8 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(QueryId(1 + index), sources[index * 2], QueryTerminationType::Graceful);
         test.expectSourceTermination(QueryId(1 + index), sources[(index * 2) + 1], QueryTerminationType::Graceful);
-        test.expectQueryStatusEvents(QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Stopped});
+        test.expectQueryStatusEvents(
+            QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Stopped});
         index++;
     }
 
@@ -1340,7 +1342,8 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
         sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
-        test.expectQueryStatusEvents(QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Failed});
+        test.expectQueryStatusEvents(
+            QueryId(1 + index), {QueryState::Started, QueryState::Compiling, QueryState::Running, QueryState::Failed});
         index++;
     }
 

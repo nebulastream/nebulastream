@@ -100,7 +100,7 @@ struct ExpectStats
         Name(size_t lower, size_t upper) : lower(lower), upper(upper) \
         { \
         } \
-        Name(size_t exact) : lower(exact), upper(exact) \
+        explicit Name(size_t exact) : lower(exact), upper(exact) \
         { \
         } \
     }; \

@@ -119,8 +119,9 @@ struct QueryFail : EventBase
 
 struct PipelineCompile : EventBase
 {
-    PipelineCompile(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId)
-        : EventBase(threadId, queryId), pipelineId(pipelineId) { }
+    PipelineCompile(WorkerThreadId threadId, QueryId queryId, PipelineId pipelineId) : EventBase(threadId, queryId), pipelineId(pipelineId)
+    {
+    }
 
     PipelineCompile() = default;
 
