@@ -18,7 +18,6 @@
 #include <utility>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
-#include <Sequencing/SequenceData.hpp>
 #include <Time/Timestamp.hpp>
 #include <fmt/format.h>
 

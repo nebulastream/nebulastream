@@ -64,6 +64,7 @@ std::vector<size_t> getVarSizedFieldOffsets(const NES::Schema& schema)
     }
     return varSizedFieldOffsets;
 }
+
 }
 
 /// NOLINTBEGIN(readability-magic-numbers)
@@ -80,6 +81,8 @@ class SmallFilesTest : public Testing::BaseUnitTest
 
     using enum InputFormatterTestUtil::TestDataTypes;
     std::unordered_map<std::string, TestFile> testFileMap{
+        {"TwoIntegerColumnsSmaller",
+         TestFile{.fileName = "TwoIntegerColumnsSmaller", .schemaFieldTypes = {INT32, INT32}, .schemaFieldNames = {"id", "value"}}},
         {"TwoIntegerColumns",
          TestFile{.fileName = "TwoIntegerColumns", .schemaFieldTypes = {INT32, INT32}, .schemaFieldNames = {"id", "value"}}},
         {"Bimbo", /// https://github.com/cwida/public_bi_benchmark/blob/master/benchmark/Bimbo/
@@ -239,36 +242,25 @@ public:
 
     template <bool WriteExpectedResultsFile>
     bool compareResults(
-        const std::vector<std::vector<TupleBuffer>>& resultBuffers,
-        const SetupResult& setupResult,
-        const std::vector<size_t>& varSizedFieldOffsets,
-        BufferManager& testBufferManager)
+        const std::vector<std::vector<TupleBuffer>>& resultBuffers, const SetupResult& setupResult, BufferManager& testBufferManager)
     {
         /// Combine results and sort them using (ascending on sequence-/chunknumbers)
         auto combinedThreadResults = std::ranges::views::join(resultBuffers);
         std::vector<TupleBuffer> resultBufferVec(combinedThreadResults.begin(), combinedThreadResults.end());
         std::ranges::sort(
             resultBufferVec,
-            [](const TupleBuffer& left, const TupleBuffer& right)
-            {
-                if (left.getSequenceNumber() == right.getSequenceNumber())
-                {
-                    return left.getChunkNumber() < right.getChunkNumber();
-                }
-                return left.getSequenceNumber() < right.getSequenceNumber();
-            });
-
+            [](const TupleBuffer& left, const TupleBuffer& right) { return left.getSequenceRange() < right.getSequenceRange(); });
 
         /// Load expected results and compare to actual results
         if constexpr (WriteExpectedResultsFile)
         {
             const auto tmpExpectedResultsPath
                 = std::filesystem::path(INPUT_FORMATTER_TMP_RESULT_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-            writeTupleBuffersToFile(resultBufferVec, setupResult.schema, tmpExpectedResultsPath, varSizedFieldOffsets);
+            writeBuffersToDisk(tmpExpectedResultsPath, resultBufferVec, setupResult.schema.getSizeOfSchemaInBytes());
         }
         const auto expectedResultsPath
             = std::filesystem::path(INPUT_FORMATTER_TEST_DATA) / std::format("Expected/{}.nes", setupResult.currentTestFileName);
-        auto expectedBuffers = loadTupleBuffersFromFile(testBufferManager, setupResult.schema, expectedResultsPath, varSizedFieldOffsets);
+        auto expectedBuffers = readBuffersToDisk(expectedResultsPath, testBufferManager);
         return InputFormatterTestUtil::compareTestTupleBuffersOrderSensitive(resultBufferVec, expectedBuffers, setupResult.schema);
     }
 
@@ -298,6 +290,7 @@ public:
                 testConfig.isCompiled);
 
             auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(testConfig.numberOfThreads);
+            auto rangeTracker = std::make_shared<SequenceRangeTracker>(3);
             std::vector<TestPipelineTask> pipelineTasks;
             pipelineTasks.reserve(setupResult.numberOfExpectedRawBuffers);
             rawBuffers.modifyBuffer(
@@ -308,15 +301,16 @@ public:
                 });
 
             /// Create test task queue and process input formatter tasks
-            auto taskQueue
-                = std::make_unique<MultiThreadedTestTaskQueue>(testConfig.numberOfThreads, pipelineTasks, testBufferManager, resultBuffers);
+            auto taskQueue = std::make_unique<MultiThreadedTestTaskQueue>(
+                testConfig.numberOfThreads, pipelineTasks, testBufferManager, resultBuffers, rangeTracker);
             taskQueue->startProcessing();
             taskQueue->waitForCompletion();
 
+            EXPECT_EQ(rangeTracker->watermark(), rangeTracker->completedUpTo()) << "Gaps in the sequence ranges";
             /// Check results
-            const auto isCorrectResult
-                = compareResults<WriteExpectedResultsFile>(*resultBuffers, setupResult, varSizedFieldOffsets, *testBufferManager);
+            const auto isCorrectResult = compareResults<WriteExpectedResultsFile>(*resultBuffers, setupResult, *testBufferManager);
             ASSERT_TRUE(isCorrectResult);
+
 
             /// Cleanup
             resultBuffers->clear();
@@ -327,7 +321,7 @@ public:
 
 TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
 {
-    runTest(TestConfig{
+    runTest<true>(TestConfig{
         .testFileName = "TwoIntegerColumns",
         .formatterType = "JSON",
         .fileEnding = "JSON",

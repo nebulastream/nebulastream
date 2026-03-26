@@ -39,7 +39,7 @@
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
@@ -114,7 +114,7 @@ std::vector<TupleBuffer> TestSinkController::takeBuffers()
     std::ranges::sort(
         buffers,
         std::less{},
-        [](const auto& buffer) { return SequenceData{buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()}; });
+        [](const auto& buffer) { return buffer.getSequenceRange(); });
     return buffers;
 }
 

@@ -19,6 +19,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <WindowBasedOperatorHandler.hpp>
@@ -44,7 +45,7 @@ protected:
         Slice& sliceLeft,
         Slice& sliceRight,
         const WindowInfo& windowInfo,
-        const SequenceData& sequenceData,
+        const SequenceRange& sequenceRange,
         PipelineExecutionContext* pipelineCtx)
         = 0;
 };

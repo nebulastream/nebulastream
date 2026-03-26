@@ -17,8 +17,8 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/RangeWatermarkTracker.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Time/Timestamp.hpp>
 
 namespace NES
@@ -31,8 +31,8 @@ public:
     explicit MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins);
     static std::shared_ptr<MultiOriginWatermarkProcessor> create(const std::vector<OriginId>& origins);
 
-    /// @brief Updates the watermark timestamp and origin and emits the current watermark.
-    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const;
+    /// @brief Updates the watermark using the range-based system.
+    [[nodiscard]] Timestamp updateWatermark(Timestamp ts, const SequenceRange& sequenceRange, OriginId origin) const;
 
     /// @brief Returns the current watermark across all origins
     [[nodiscard]] Timestamp getCurrentWatermark() const;
@@ -41,7 +41,7 @@ public:
 
 private:
     const std::vector<OriginId> origins;
-    std::vector<std::shared_ptr<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors;
+    mutable std::vector<std::unique_ptr<RangeWatermarkTracker>> watermarkTrackers;
 };
 
 }

@@ -18,12 +18,16 @@
 #include <memory>
 #include <optional>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <nautilus/val.hpp>
@@ -34,9 +38,54 @@
 #include <PhysicalOperator.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
+#include "Nautilus/DataTypes/DataTypesUtil.hpp"
+#include "Nautilus/Interface/TupleBufferProxyFunctions.hpp"
 
 namespace NES
 {
+
+#define log(NAME) nautilus::invoke(+[]() { NES_DEBUG(#NAME); })
+/// Buffer to allocate the new SequenceNumberRange. Once Nautilus is able to dyna
+
+SequenceRange* initializeOutputSequenceRangeProxy(size_t depthPlusOne)
+{
+    NES_DEBUG("Initializing sequence range: {}", depthPlusOne);
+    thread_local SequenceRange range = SequenceRange::invalid();
+    range = SequenceRange::initial(depthPlusOne);
+    return &range;
+}
+
+RecordBuffer::SequenceRangeRef
+getOutputSequenceRange(ExecutionContext& ctx, nautilus::val<size_t> outputBufferIndex, RecordBuffer::SequenceRangeRef& sequence)
+{
+    log(getOutputSequenceRange);
+    for (nautilus::val<size_t> i = 0; i < sequence.getSize() - 1; ++i)
+    {
+        sequence.setStart(i, ctx.sequenceRange.getStart(i));
+        sequence.setEnd(i, ctx.sequenceRange.getStart(i));
+    }
+    sequence.setStart(sequence.getSize() - 1, outputBufferIndex);
+    sequence.setEnd(sequence.getSize() - 1, outputBufferIndex + 1);
+    return sequence;
+}
+
+void marker()
+{
+}
+
+RecordBuffer::SequenceRangeRef
+getClosingOutputSequenceRange(ExecutionContext& ctx, nautilus::val<size_t> outputBufferIndex, RecordBuffer::SequenceRangeRef& sequence)
+{
+    for (nautilus::val<size_t> i = 0; i < sequence.getSize() - 1; ++i)
+    {
+        nautilus::invoke(marker);
+        sequence.setStart(i, ctx.sequenceRange.getStart(i));
+        sequence.setEnd(i, ctx.sequenceRange.getEnd(i));
+    }
+    sequence.setStart(sequence.getSize() - 1, outputBufferIndex);
+    sequence.setEnd(sequence.getSize() - 1, 0);
+    return sequence;
+}
 
 class EmitState : public OperatorState
 {
@@ -46,6 +95,8 @@ public:
     nautilus::val<uint64_t> outputIndex = 0;
     RecordBuffer resultBuffer;
     nautilus::val<int8_t*> bufferMemoryArea;
+    nautilus::val<uint64_t> emittedBuffers = 0;
+    RecordBuffer::SequenceRangeRef sequenceRange;
 };
 
 void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
@@ -53,7 +104,11 @@ void EmitPhysicalOperator::open(ExecutionContext& ctx, RecordBuffer&) const
     /// initialize state variable and create new buffer
     const auto resultBufferRef = ctx.allocateBuffer();
     const auto resultBuffer = RecordBuffer(resultBufferRef);
+    auto allocated = nautilus::invoke(initializeOutputSequenceRangeProxy, ctx.sequenceRange.getSize() + 1);
+
     auto emitState = std::make_unique<EmitState>(resultBuffer);
+    emitState->sequenceRange = RecordBuffer::SequenceRangeRef::from(allocated);
+    nautilus::invoke(+[](size_t s) { NES_DEBUG("size: {}", s); }, emitState->sequenceRange.getSize());
     ctx.setLocalOperatorState(id, std::move(emitState));
 }
 
@@ -70,11 +125,12 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// We emit and create a new record buffer
     if (!writeResult.successful)
     {
-        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
+        emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, emitState->emittedBuffers, emitState->sequenceRange, false);
         const auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
         emitState->bufferMemoryArea = emitState->resultBuffer.getMemArea();
         emitState->outputIndex = 0_u64;
+        emitState->emittedBuffers += 1;
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
         writeResult
@@ -87,55 +143,33 @@ void EmitPhysicalOperator::close(ExecutionContext& ctx, RecordBuffer&) const
 {
     /// emit current buffer and set the metadata
     auto* const emitState = dynamic_cast<EmitState*>(ctx.getLocalState(id));
-    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, true);
-}
-
-namespace
-{
-void setChunkNumber(
-    const ExecutionContext& context,
-    OperatorHandlerId operatorHandlerId,
-    const nautilus::val<bool>& closesChunk,
-    const nautilus::val<ChunkNumber>& currentChunkNumber,
-    const nautilus::val<bool>& isCurrentBufferTheLastChunk,
-    const nautilus::val<TupleBuffer*>& newBuffer)
-{
-    nautilus::invoke(
-        +[](OperatorHandler* handler,
-            bool closesChunk,
-            ChunkNumber currentChunkNumber,
-            bool isCurrentBufferTheLastChunk,
-            TupleBuffer* newBuffer)
-        {
-            PRECONDITION(handler != nullptr, "Expects a valid handler");
-            PRECONDITION(newBuffer != nullptr, "Expects a valid buffer");
-            PRECONDITION(currentChunkNumber != INVALID<ChunkNumber>, "Expects a valid chunkNumber");
-
-            dynamic_cast<EmitOperatorHandler&>(*handler).setChunkNumber(
-                closesChunk, currentChunkNumber, isCurrentBufferTheLastChunk, *newBuffer);
-        },
-        context.getGlobalOperatorHandler(operatorHandlerId),
-        closesChunk,
-        currentChunkNumber,
-        isCurrentBufferTheLastChunk,
-        newBuffer);
-}
+    emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, emitState->emittedBuffers, emitState->sequenceRange, true);
 }
 
 void EmitPhysicalOperator::emitRecordBuffer(
     ExecutionContext& ctx,
     RecordBuffer& recordBuffer,
     const nautilus::val<uint64_t>& numRecords,
-    const nautilus::val<bool>& potentialLastChunk) const
+    nautilus::val<uint64_t>& outputBufferIndex,
+    RecordBuffer::SequenceRangeRef& sequenceRange,
+    bool closingBuffer) const
 {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.watermarkTs);
     recordBuffer.setOriginId(ctx.originId);
-    recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
 
-    setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
 
+    if (closingBuffer)
+    {
+        recordBuffer.setSequenceRange(getClosingOutputSequenceRange(ctx, outputBufferIndex, sequenceRange));
+    }
+    else
+    {
+        recordBuffer.setSequenceRange(getOutputSequenceRange(ctx, outputBufferIndex, sequenceRange));
+    }
+
+    nautilus::invoke(+[](TupleBuffer* ref) { NES_DEBUG("Emitting: {}", ref->getSequenceRange()); }, recordBuffer.getReference());
     ctx.emitBuffer(recordBuffer);
 }
 

@@ -29,6 +29,7 @@
 #include <InputFormatterTupleBufferRef.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
+#include "Nautilus/Interface/TupleBufferProxyFunctions.hpp"
 
 namespace NES
 {
@@ -45,17 +46,33 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
-    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
+    thread_local SequenceRange effectiveRange = SequenceRange::initial(2);
+    auto effectiveRangeRef = RecordBuffer::SequenceRangeRef::from(&effectiveRange);
+    effectiveRangeRef.setStart(0, executionCtx.sequenceRange.getStart(0));
+    effectiveRangeRef.setEnd(0, executionCtx.sequenceRange.getEnd(0));
+    executionCtx.sequenceRange = effectiveRangeRef;
+
+    if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx))
     {
         executionCtx.setOpenReturnState(OpenReturnState::REPEAT);
         return;
     }
 
+    if (inputFormatterBufferRef->isEmpty(recordBuffer))
+    {
+        executionCtx.setOpenReturnState(OpenReturnState::DISCARD);
+        return;
+    }
+
+
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
 
     /// process buffer
-    const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
+    const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record)
+    {
+        executeChild(executionCtx, record);
+    };
     inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
 }
 
@@ -65,15 +82,15 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.originId = recordBuffer.getOriginId();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
+    executionCtx.sequenceRange = recordBuffer.getSequenceRange();
 
     if (isRawScan)
     {
         rawScan(executionCtx, recordBuffer);
         return;
     }
+
+    executionCtx.emitOnClose = true;
     /// call open on all child operators
     openChild(executionCtx, recordBuffer);
     /// iterate over records in buffer

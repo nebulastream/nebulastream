@@ -12,7 +12,6 @@
 
 add_nes_common_test(nes-common-tests
         "ThreadNamingTest.cpp"
-        "NonBlockingMonotonicSeqQueueTest.cpp"
         "UtilFunctionTest.cpp"
         "StringUtilTest.cpp"
         "RangesTest.cpp"
@@ -20,12 +19,15 @@ add_nes_common_test(nes-common-tests
         "BFSIteratorTest.cpp"
         "RollingAverageTest.cpp"
         "TypeTraitsTest.cpp"
+        "FracturedNumberTest.cpp"
+        "SequenceRangeTest.cpp"
+        "SequenceRangeTrackerTest.cpp"
 )
 
 add_nes_test(nes-thread-test
         "ThreadTest.cpp"
 )
 
-add_nes_test(chunk-collector-test
-        "ChunkCollectorTest.cpp"
+add_nes_test(range-watermark-tracker-test
+        "RangeWatermarkTrackerTest.cpp"
 )

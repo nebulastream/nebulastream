@@ -42,6 +42,7 @@ namespace NES
 SequenceShredder::SequenceShredder(const size_t sizeOfTupleDelimiterInBytes)
 {
     auto dummyBuffer = BufferManager::create(1, 1)->getBufferBlocking();
+    dummyBuffer.setSequenceRange(SequenceRange::initial(1));
     dummyBuffer.setNumberOfTuples(sizeOfTupleDelimiterInBytes);
     this->spanningTupleBuffer = std::make_unique<SpanningTupleBuffer>(INITIAL_SIZE_OF_SPANNING_TUPLE_BUFFER, std::move(dummyBuffer));
 }
@@ -67,7 +68,7 @@ SequenceShredder::~SequenceShredder()
 
 SequenceShredderResult SequenceShredder::findLeadingSpanningTupleWithDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findLeadingSpanningTupleWithDelimiter(indexedRawBuffer, SequenceNumber::fromRange(indexedRawBuffer.getRawTupleBuffer().getSequenceRange()));
 }
 
 SpanningBuffers SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber sequenceNumber)
@@ -83,7 +84,7 @@ SequenceShredder::findTrailingSpanningTupleWithDelimiter(const SequenceNumber se
 
 SequenceShredderResult SequenceShredder::findSpanningTupleWithoutDelimiter(const StagedBuffer& indexedRawBuffer)
 {
-    return findSpanningTupleWithoutDelimiter(indexedRawBuffer, indexedRawBuffer.getRawTupleBuffer().getSequenceNumber());
+    return findSpanningTupleWithoutDelimiter(indexedRawBuffer, SequenceNumber::fromRange(indexedRawBuffer.getRawTupleBuffer().getSequenceRange()));
 }
 
 SequenceShredderResult

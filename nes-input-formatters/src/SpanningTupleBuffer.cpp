@@ -226,7 +226,7 @@ SpanningTupleBuffer::ClaimedSpanningTuple SpanningTupleBuffer::claimingLeadingDe
             .snOfLastBuffer = SequenceNumber{stStartSN},
         };
     }
-    return ClaimedSpanningTuple{.firstBuffer = std::nullopt, .snOfLastBuffer = INVALID<SequenceNumber>};
+    return ClaimedSpanningTuple{.firstBuffer = std::nullopt, .snOfLastBuffer = {}};
 }
 
 SpanningTupleBuffer::ClaimedSpanningTuple SpanningTupleBuffer::claimingTrailingDelimiterSearch(const SequenceNumber stStartSN)
@@ -248,6 +248,6 @@ SpanningTupleBuffer::claimingTrailingDelimiterSearch(const SequenceNumber stStar
             .snOfLastBuffer = lastSN,
         };
     }
-    return ClaimedSpanningTuple{.firstBuffer = std::nullopt, .snOfLastBuffer = INVALID<SequenceNumber>};
+    return ClaimedSpanningTuple{.firstBuffer = std::nullopt, .snOfLastBuffer = {}};
 }
 }

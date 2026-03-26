@@ -22,6 +22,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Nautilus/Util.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
@@ -53,7 +54,7 @@ struct SlicesAndWindowInfo
 struct WindowInfoAndSequenceNumber
 {
     WindowInfo windowInfo;
-    SequenceNumber sequenceNumber;
+    SequenceRange sequenceRange;
 
     bool operator<(const WindowInfoAndSequenceNumber& other) const { return windowInfo < other.windowInfo; }
 };

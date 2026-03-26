@@ -24,18 +24,157 @@
 #include <string>
 #include <utility>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Util/Ranges.hpp>
 #include <ErrorHandling.hpp>
+#include "Util/Files.hpp"
 
 namespace NES
 {
+
+template <typename T>
+requires std::integral<T> || std::floating_point<T>
+void write_le(std::ostream& os, T val)
+{
+    if constexpr (std::endian::native == std::endian::little)
+    {
+        os.write(reinterpret_cast<const char*>(&val), sizeof(T));
+        return;
+    }
+
+    if constexpr (std::integral<T>)
+    {
+        auto swapped = std::byteswap(val);
+        os.write(reinterpret_cast<const char*>(&swapped), sizeof(T));
+    }
+    else if constexpr (sizeof(T) == 4)
+    {
+        auto swapped = std::bit_cast<uint32_t>(std::byteswap(std::bit_cast<uint32_t>(val)));
+        os.write(reinterpret_cast<const char*>(&swapped), sizeof(T));
+    }
+    else if constexpr (sizeof(T) == 8)
+    {
+        auto swapped = std::bit_cast<uint64_t>(std::byteswap(std::bit_cast<uint64_t>(val)));
+        os.write(reinterpret_cast<const char*>(&swapped), sizeof(T));
+    }
+}
+
+template <typename T>
+requires std::integral<T> || std::floating_point<T>
+T read_le(std::istream& is)
+{
+    std::array<char, sizeof(T)> buf;
+    is.read(buf.data(), sizeof(T));
+
+    if constexpr (std::endian::native == std::endian::little)
+    {
+        return std::bit_cast<T>(buf);
+    }
+
+    if constexpr (std::integral<T>)
+    {
+        auto swapped = std::bit_cast<T>(std::byteswap(std::bit_cast<T>(buf)));
+        return swapped;
+    }
+    else if constexpr (sizeof(T) == 4)
+    {
+        auto swapped = std::bit_cast<uint32_t>(std::byteswap(std::bit_cast<uint32_t>(buf)));
+        return std::bit_cast<T>(swapped);
+    }
+    else if constexpr (sizeof(T) == 8)
+    {
+        auto swapped = std::bit_cast<uint64_t>(std::byteswap(std::bit_cast<uint64_t>(buf)));
+        return std::bit_cast<T>(swapped);
+    }
+}
+
+void writeBuffersToDisk(const std::filesystem::path& filePath, const std::vector<NES::TupleBuffer>& buffers, size_t schemaSizeInBytes)
+{
+    std::ofstream file(filePath, std::ios::binary);
+    if (not file)
+    {
+        throw std::runtime_error(fmt::format("Could not open file: {} while writing: {}", filePath, getErrorMessageFromERRNO()));
+    }
+
+    write_le<size_t>(file, buffers.size());
+    for (const auto& buffer : buffers)
+    {
+        write_le<size_t>(file, buffer.getNumberOfTuples() * schemaSizeInBytes);
+        write_le<size_t>(file, buffer.getSequenceRange().start[0]);
+        write_le<size_t>(file, buffer.getSequenceRange().start[1]);
+        write_le<size_t>(file, buffer.getSequenceRange().start[2]);
+        write_le<size_t>(file, buffer.getSequenceRange().end[0]);
+        write_le<size_t>(file, buffer.getSequenceRange().end[1]);
+        write_le<size_t>(file, buffer.getSequenceRange().end[2]);
+        write_le<size_t>(file, buffer.getNumberOfTuples());
+        write_le<size_t>(file, buffer.getNumberOfChildBuffers());
+        file.write(buffer.getAvailableMemoryArea<char>().data(), buffer.getNumberOfTuples() * schemaSizeInBytes);
+
+        for (size_t i = 0; i < buffer.getNumberOfChildBuffers(); ++i)
+        {
+            auto child = buffer.loadChildBuffer(NES::VariableSizedAccess::Index(i));
+            write_le<size_t>(file, child.getAvailableMemoryArea().size());
+            write_le<size_t>(file, child.getNumberOfTuples());
+            file.write(child.getAvailableMemoryArea<char>().data(), child.getAvailableMemoryArea().size());
+        }
+    }
+}
+
+std::vector<NES::TupleBuffer> readBuffersToDisk(const std::filesystem::path& filePath, NES::AbstractBufferProvider& bufferProvider)
+{
+    std::ifstream file(filePath, std::ios::binary);
+    if (not file)
+    {
+        throw std::runtime_error(fmt::format("Could not open file: {} while reading: {}", filePath, getErrorMessageFromERRNO()));
+    }
+
+    const auto numberOfBuffers = read_le<size_t>(file);
+    std::vector<NES::TupleBuffer> result;
+    result.reserve(numberOfBuffers);
+
+    for (size_t i = 0; i < numberOfBuffers; ++i)
+    {
+        const auto bufferSize = read_le<size_t>(file);
+        INVARIANT(bufferProvider.getBufferSize() >= bufferSize, "Buffer size mismatch");
+
+        const auto sequenceStart0 = read_le<size_t>(file);
+        const auto sequenceStart1 = read_le<size_t>(file);
+        const auto sequenceStart2 = read_le<size_t>(file);
+        const auto sequenceEnd0 = read_le<size_t>(file);
+        const auto sequenceEnd1 = read_le<size_t>(file);
+        const auto sequenceEnd2 = read_le<size_t>(file);
+        const auto numberOfTuples = read_le<size_t>(file);
+        const auto numberOfChildren = read_le<size_t>(file);
+
+        auto buffer = bufferProvider.getBufferBlocking();
+        file.read(buffer.getAvailableMemoryArea<char>().data(), bufferSize);
+        buffer.setSequenceRange(NES::SequenceRange(
+            NES::FracturedNumber({sequenceStart0, sequenceStart1, sequenceStart2}),
+            NES::FracturedNumber({sequenceEnd0, sequenceEnd1, sequenceEnd2})));
+        buffer.setNumberOfTuples(numberOfTuples);
+
+        for (size_t j = 0; j < numberOfChildren; ++j)
+        {
+            const auto childBufferSize = read_le<size_t>(file);
+            const auto numberOfTuples = read_le<size_t>(file);
+            auto childBuffer = bufferProvider.getUnpooledBuffer(childBufferSize).value();
+            childBuffer.setNumberOfTuples(numberOfTuples);
+            file.read(childBuffer.getAvailableMemoryArea<char>().data(), childBufferSize);
+            std::ignore = buffer.storeChildBuffer(childBuffer);
+        }
+        result.emplace_back(std::move(buffer));
+    }
+
+    return result;
+}
 
 struct BinaryFileHeader
 {
@@ -47,8 +186,10 @@ struct BinaryBufferHeader
 {
     uint64_t numberOfTuples = 0;
     uint64_t numberChildBuffers = 0;
-    uint64_t sequenceNumber = 0;
-    uint64_t chunkNumber = 0;
+    uint64_t sequenceRangeStart = 0;
+    uint64_t sequenceRangeStartFracture = 0;
+    uint64_t sequenceRangeEnd = 0;
+    uint64_t sequenceRangeEndFracture = 0;
 };
 
 enum class FileOpenMode : uint8_t
@@ -142,7 +283,7 @@ inline std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, Vari
 
 inline void writePagedSizeTupleBufferChunkToFile(
     std::span<TupleBuffer> pagedSizeBufferChunk,
-    const SequenceNumber::Underlying sequenceNumber,
+    const SequenceRange& sequenceRange,
     const size_t numTuplesInChunk,
     std::ofstream& appendFile,
     const size_t sizeOfSchemaInBytes,
@@ -150,10 +291,14 @@ inline void writePagedSizeTupleBufferChunkToFile(
 {
     const auto numChildBuffers = numTuplesInChunk * varSizedFieldOffsets.size();
     writePagedSizeBufferChunkToFile(
-        {.numberOfTuples = numTuplesInChunk,
-         .numberChildBuffers = numChildBuffers,
-         .sequenceNumber = sequenceNumber,
-         .chunkNumber = ChunkNumber::INITIAL},
+        {
+            .numberOfTuples = numTuplesInChunk,
+            .numberChildBuffers = numChildBuffers,
+            .sequenceRangeStart = sequenceRange.start[0],
+            .sequenceRangeStartFracture = sequenceRange.start[1],
+            .sequenceRangeEnd = sequenceRange.end[0],
+            .sequenceRangeEndFracture = sequenceRange.end[1],
+        },
         sizeOfSchemaInBytes,
         pagedSizeBufferChunk,
         appendFile);
@@ -189,11 +334,7 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
     std::ranges::sort(
         buffers.begin(),
         buffers.end(),
-        [](const TupleBuffer& left, const TupleBuffer& right)
-        {
-            return SequenceData{left.getSequenceNumber(), left.getChunkNumber(), left.isLastChunk()}
-            < SequenceData{right.getSequenceNumber(), right.getChunkNumber(), right.isLastChunk()};
-        });
+        [](const TupleBuffer& left, const TupleBuffer& right) { return left.getSequenceRange() < right.getSequenceRange(); });
 }
 
 inline void writeTupleBuffersToFile(
@@ -234,14 +375,14 @@ inline void writeTupleBuffersToFile(
     auto appendFile = createFile(actualResultFilePath, FileOpenMode::APPEND);
 
     size_t nextChunkStart = 0;
-    size_t nextChunkSequenceNumber = SequenceNumber::INITIAL;
+    uint64_t nextSeq = 1;
     for (const auto& [lastBufferIdxInChunk, numTuplesInChunk] : pagedSizedChunkOffsets)
     {
         const auto nextChunk = std::span(resultBufferVec).subspan(nextChunkStart, lastBufferIdxInChunk - nextChunkStart);
-        writePagedSizeTupleBufferChunkToFile(
-            nextChunk, nextChunkSequenceNumber, numTuplesInChunk, appendFile, sizeOfSchemaInBytes, varSizedFieldOffsets);
+        const auto range = SequenceRange(FracturedNumber(nextSeq), FracturedNumber(nextSeq + 1));
+        writePagedSizeTupleBufferChunkToFile(nextChunk, range, numTuplesInChunk, appendFile, sizeOfSchemaInBytes, varSizedFieldOffsets);
         nextChunkStart = lastBufferIdxInChunk;
-        ++nextChunkSequenceNumber;
+        ++nextSeq;
     }
     appendFile.close();
 }
@@ -313,8 +454,9 @@ inline std::vector<TupleBuffer> loadTupleBuffersFromFile(
                 }
             }
             parentBuffer.setNumberOfTuples(bufferHeader.numberOfTuples);
-            parentBuffer.setSequenceNumber(SequenceNumber(bufferHeader.sequenceNumber));
-            parentBuffer.setChunkNumber(ChunkNumber(bufferHeader.chunkNumber));
+            parentBuffer.setSequenceRange(SequenceRange(
+                FracturedNumber({bufferHeader.sequenceRangeStart, bufferHeader.sequenceRangeStartFracture}),
+                FracturedNumber({bufferHeader.sequenceRangeEnd, bufferHeader.sequenceRangeEndFracture})));
             expectedResultBuffers.at(bufferIdx) = std::move(parentBuffer);
         }
         file.close();

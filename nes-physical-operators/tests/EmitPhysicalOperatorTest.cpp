@@ -41,7 +41,8 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -139,9 +140,11 @@ public:
         Arena arena(bm);
 
         ExecutionContext executionContext{&pec, &arena};
-        executionContext.chunkNumber = buffer.getChunkNumber();
-        executionContext.sequenceNumber = buffer.getSequenceNumber(), executionContext.lastChunk = buffer.isLastChunk();
         executionContext.originId = buffer.getOriginId();
+
+        /// Set up the sequenceRange in the ExecutionContext from the buffer's SequenceRange
+        auto& range = buffer.getSequenceRange();
+        executionContext.sequenceRange = RecordBuffer::SequenceRangeRef::from(&range);
 
         RecordBuffer recordBuffer(std::addressof(buffer));
         test(executionContext, recordBuffer);
@@ -155,80 +158,30 @@ public:
         EXPECT_EQ(buffers.rlock()->size(), numberOfBuffers) << fmt::format("expects {} buffers to be emitted", numberOfBuffers);
     }
 
-    void checkBufferAt(
-        size_t index,
-        SequenceNumber::Underlying sequence,
-        ChunkNumber::Underlying chunkNumber,
-        bool isLastChunk = false,
-        OriginId originId = INITIAL<OriginId>,
-        size_t numberOfTuples = 0,
-        std::source_location location = std::source_location::current())
+    void checkAllBuffersHaveValidRange(std::source_location location = std::source_location::current())
     {
-        const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkBufferAt");
-        ASSERT_GE(buffers.rlock()->size(), index) << fmt::format("Index out of bound when checking buffer at {}", index);
-        EXPECT_EQ(buffers.rlock()->at(index).getNumberOfTuples(), numberOfTuples) << fmt::format("Expected {} tuples", numberOfTuples);
-        EXPECT_EQ(buffers.rlock()->at(index).getSequenceNumber(), SequenceNumber(sequence))
-            << fmt::format("Expected Sequence Number {}", sequence);
-        EXPECT_EQ(buffers.rlock()->at(index).getChunkNumber(), ChunkNumber(chunkNumber))
-            << fmt::format("Expected Chunk Number {}", sequence);
-        EXPECT_EQ(buffers.rlock()->at(index).getOriginId(), OriginId(originId)) << fmt::format("Expected Chunk Number {}", sequence);
-        EXPECT_EQ(buffers.rlock()->at(index).isLastChunk(), isLastChunk);
+        const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkAllBuffersHaveValidRange");
+        for (const auto& buffer : *buffers.rlock())
+        {
+            EXPECT_TRUE(buffer.getSequenceRange().isValid()) << "Output buffer should have a valid SequenceRange";
+        }
     }
 
     void checkForDups(std::source_location location = std::source_location::current())
     {
         const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkForDups");
-        auto uniqueSequences = (*buffers.rlock())
-            | std::views::transform([](const auto& buffer)
-                                    { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
+        auto uniqueRanges = (*buffers.rlock()) | std::views::transform([](const auto& buffer) { return buffer.getSequenceRange(); })
             | std::ranges::to<std::set>();
 
-        EXPECT_EQ(buffers.rlock()->size(), uniqueSequences.size()) << "Received duplicate sequences";
+        EXPECT_EQ(buffers.rlock()->size(), uniqueRanges.size()) << "Received duplicate sequence ranges";
     }
 
-    void checkLastChunks(std::source_location location = std::source_location::current())
-    {
-        const testing::ScopedTrace scopedTrace(location.file_name(), static_cast<int>(location.line()), "checkForLastChunks");
-        std::unordered_map<SequenceNumber, std::tuple<size_t, ChunkNumber::Underlying, bool, ChunkNumber::Underlying>>
-            sequenceNumberTerminations;
-
-        for (const auto& buffer : *buffers.rlock())
-        {
-            auto& [seen, maxChunkNumber, termination, terminationAt] = sequenceNumberTerminations[buffer.getSequenceNumber()];
-            seen++;
-            maxChunkNumber = std::max(maxChunkNumber, buffer.getChunkNumber().getRawValue());
-            if (buffer.isLastChunk())
-            {
-                terminationAt = buffer.getChunkNumber().getRawValue();
-            }
-            EXPECT_FALSE(termination && buffer.isLastChunk())
-                << fmt::format("Sequence {} has multiple last chunks", buffer.getSequenceNumber());
-            termination |= buffer.isLastChunk();
-        }
-
-        for (const auto& [seq, t] : sequenceNumberTerminations)
-        {
-            const auto& [seen, max, terminated, terminationAt] = t;
-            EXPECT_TRUE(terminated) << fmt::format("Sequence {} is not terminated", seq);
-            EXPECT_EQ(terminationAt, max) << fmt::format("Sequence {} Non Max Chunk Number has Last Flag", seq);
-            EXPECT_EQ(seen, max) << fmt::format("Sequence {}: The maximum chunk number is {}, but we only saw {} chunks", seq, max, seen);
-        }
-    }
-
-    TupleBuffer createBuffer(
-        SequenceNumber::Underlying sequence,
-        ChunkNumber::Underlying chunkNumber,
-        bool isLastChunk = false,
-        OriginId originId = INITIAL<OriginId>,
-        size_t numberOfTuples = 0) const
+    TupleBuffer createBuffer(uint64_t sequence, OriginId originId = INITIAL<OriginId>, size_t numberOfTuples = 0) const
     {
         auto buffer = bm->getBufferBlocking();
         buffer.setNumberOfTuples(numberOfTuples);
-        buffer.setLastChunk(isLastChunk);
-        buffer.setChunkNumber(ChunkNumber(chunkNumber));
-        buffer.setSequenceNumber(SequenceNumber(sequence));
+        buffer.setSequenceRange(SequenceRange(FracturedNumber(sequence), FracturedNumber(sequence + 1)));
         buffer.setOriginId(originId);
-
         return buffer;
     }
 
@@ -245,7 +198,7 @@ public:
 
 TEST_F(EmitPhysicalOperatorTest, BasicTest)
 {
-    auto buffer = createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, true);
+    auto buffer = createBuffer(1);
     EmitPhysicalOperator emit = createUUT();
 
     run(
@@ -256,142 +209,108 @@ TEST_F(EmitPhysicalOperatorTest, BasicTest)
         },
         buffer);
 
-    checkBufferAt(0, SequenceNumber::INITIAL, ChunkNumber::INITIAL, true);
+    checkNumberOfBuffers(1);
+    checkAllBuffersHaveValidRange();
     checkForDups();
-    checkLastChunks();
 }
 
-TEST_F(EmitPhysicalOperatorTest, ChunkNumberTest)
+TEST_F(EmitPhysicalOperatorTest, MultipleInputBuffersTest)
 {
     std::vector<TupleBuffer> inputBuffers;
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 2, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 3, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 4, true));
-
-
-    bool hasMorePermutations = true;
-    while (hasMorePermutations)
+    for (size_t i = 0; i < 5; ++i)
     {
-        reset();
-        EmitPhysicalOperator emit = createUUT();
-        for (auto& buffer : inputBuffers)
-        {
-            run(
-                [&](auto& executionContext, auto& recordBuffer)
-                {
-                    emit.open(executionContext, recordBuffer);
-                    emit.close(executionContext, recordBuffer);
-                },
-                buffer);
-        }
-        checkNumberOfBuffers(5);
-        checkBufferAt(4, SequenceNumber::INITIAL, ChunkNumber::INITIAL + 4, true);
-        checkForDups();
-        checkLastChunks();
-
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
+        inputBuffers.emplace_back(createBuffer(1 + i));
     }
-}
 
-/// Tests if all permutations result in a sane ordering of chunk numbers.
-/// This means every sequence number should have the same number of chunks as inserted (albeit in different order) with exactly one chunk
-/// marked as the last chunk, and no duplicates.
-TEST_F(EmitPhysicalOperatorTest, SequenceChunkNumberTest)
-{
-    std::vector<TupleBuffer> inputBuffers;
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 1, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL, ChunkNumber::INITIAL + 2, true));
-
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + 1, ChunkNumber::INITIAL, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + 1, ChunkNumber::INITIAL + 1, true));
-
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + 2, ChunkNumber::INITIAL, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + 2, ChunkNumber::INITIAL + 1, false));
-    inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + 2, ChunkNumber::INITIAL + 2, true));
-
-    bool hasMorePermutations = true;
-    while (hasMorePermutations)
+    EmitPhysicalOperator emit = createUUT();
+    for (auto& buffer : inputBuffers)
     {
-        reset();
-        EmitPhysicalOperator emit = createUUT();
-        for (auto& buffer : inputBuffers)
-        {
-            run(
-                [&](auto& executionContext, auto& recordBuffer)
-                {
-                    emit.open(executionContext, recordBuffer);
-                    emit.close(executionContext, recordBuffer);
-                },
-                buffer);
-        }
-        checkNumberOfBuffers(8);
-        checkForDups();
-        checkLastChunks();
-        hasMorePermutations = std::ranges::next_permutation(
-                                  inputBuffers,
-                                  std::less{},
-                                  [](const TupleBuffer& buffer)
-                                  { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); })
-                                  .found;
-    };
-}
-
-TEST_F(EmitPhysicalOperatorTest, ConcurrentSequenceChunkNumberTest)
-{
-    for (auto [numberOfSequences, maxChunksPerSequence, numberOfThreads] :
-         std::initializer_list<std::tuple<size_t, size_t, size_t>>{{2, 10, 2}, {1000, 2, 4}, {10, 100, 4}, {1000, 20, 10}})
-    {
-        reset();
-        std::vector<TupleBuffer> inputBuffers;
-        for (size_t seq = 0; seq < numberOfSequences; seq++)
-        {
-            std::uniform_int_distribution chunkNumbers(ChunkNumber::INITIAL + 1, maxChunksPerSequence);
-            auto maxChunkForThisSequence = chunkNumbers(rd);
-            for (size_t chunk = 0; chunk < maxChunkForThisSequence - 1; chunk++)
+        run(
+            [&](auto& executionContext, auto& recordBuffer)
             {
-                inputBuffers.emplace_back(createBuffer(SequenceNumber::INITIAL + seq, ChunkNumber::INITIAL + chunk, false));
-            }
-            inputBuffers.emplace_back(
-                createBuffer(SequenceNumber::INITIAL + seq, ChunkNumber::INITIAL + maxChunkForThisSequence - 1, true));
-        }
-
-        EmitPhysicalOperator emit = createUUT();
-        std::ranges::shuffle(inputBuffers, rd);
-        std::barrier<> barrier(static_cast<int>(numberOfThreads) + 1);
-        std::vector<std::jthread> threads;
-        threads.reserve(numberOfThreads);
-        for (size_t threadId = 0; threadId < numberOfThreads; threadId++)
-        {
-            threads.emplace_back(
-                [threadId, &inputBuffers, this, &emit, &barrier, numberOfThreads]()
-                {
-                    barrier.arrive_and_wait();
-                    for (size_t index = threadId; index < inputBuffers.size(); index += numberOfThreads)
-                    {
-                        run(
-                            [&](auto& executionContext, auto& recordBuffer)
-                            {
-                                emit.open(executionContext, recordBuffer);
-                                emit.close(executionContext, recordBuffer);
-                            },
-                            inputBuffers.at(index));
-                    }
-                });
-        }
-        barrier.arrive_and_wait();
-        threads.clear();
-
-        checkNumberOfBuffers(inputBuffers.size());
-        checkForDups();
-        checkLastChunks();
+                emit.open(executionContext, recordBuffer);
+                emit.close(executionContext, recordBuffer);
+            },
+            buffer);
     }
+    checkNumberOfBuffers(5);
+    checkAllBuffersHaveValidRange();
+    checkForDups();
+}
+
+TEST_F(EmitPhysicalOperatorTest, FracturesOnBufferFull)
+{
+    /// Buffer is 512 bytes, UINT32 is 4 bytes → 128 records per buffer.
+    /// Writing 300 records from a single input should produce 3 output buffers
+    /// with fractured depth-2 ranges: [{1,0},{1,1}), [{1,1},{1,2}), [{1,2},{2,0})
+    constexpr uint64_t recordsPerBuffer = 512 / sizeof(uint32_t);
+    constexpr uint64_t totalRecords = recordsPerBuffer * 2 + recordsPerBuffer / 2;
+    auto buffer = createBuffer(1);
+    EmitPhysicalOperator emit = createUUT();
+
+    run(
+        [&](auto& executionContext, auto& recordBuffer)
+        {
+            emit.open(executionContext, recordBuffer);
+            for (uint64_t i = 0; i < totalRecords; ++i)
+            {
+                Record dummyRecord;
+                dummyRecord.write("A_FIELD", nautilus::val<uint32_t>(42));
+                emit.execute(executionContext, dummyRecord);
+            }
+            emit.close(executionContext, recordBuffer);
+        },
+        buffer);
+
+    checkNumberOfBuffers(3);
+    checkAllBuffersHaveValidRange();
+    checkForDups();
+
+    /// Verify the output ranges form a contiguous cover of depth-2
+    auto locked = buffers.rlock();
+    std::vector<SequenceRange> outputRanges;
+    for (const auto& buf : *locked)
+    {
+        outputRanges.push_back(buf.getSequenceRange());
+    }
+    std::ranges::sort(outputRanges);
+
+    /// All ranges should be depth-2
+    for (const auto& r : outputRanges)
+    {
+        EXPECT_EQ(r.start.depth(), 2) << "Expected depth-2 output range, got " << r;
+    }
+    /// First should start at {1,0}, last should end at {2,0}
+    EXPECT_EQ(outputRanges.front().start, FracturedNumber(std::vector<uint64_t>{1, 0}));
+    EXPECT_EQ(outputRanges.back().end, FracturedNumber(std::vector<uint64_t>{2, 0}));
+    /// Adjacent ranges should be contiguous
+    for (size_t i = 1; i < outputRanges.size(); ++i)
+    {
+        EXPECT_EQ(outputRanges[i - 1].end, outputRanges[i].start) << "Gap between " << outputRanges[i - 1] << " and " << outputRanges[i];
+    }
+}
+
+TEST_F(EmitPhysicalOperatorTest, SingleOutputNoFracture)
+{
+    /// A single input producing a single output should still get a depth-2 range: [{1,0},{2,0})
+    auto buffer = createBuffer(1);
+    EmitPhysicalOperator emit = createUUT();
+
+    run(
+        [&](auto& executionContext, auto& recordBuffer)
+        {
+            emit.open(executionContext, recordBuffer);
+            emit.close(executionContext, recordBuffer);
+        },
+        buffer);
+
+    checkNumberOfBuffers(1);
+    checkAllBuffersHaveValidRange();
+
+    auto locked = buffers.rlock();
+    const auto& range = locked->front().getSequenceRange();
+    EXPECT_EQ(range.start.depth(), 2);
+    EXPECT_EQ(range.start, FracturedNumber(std::vector<uint64_t>{1, 0}));
+    EXPECT_EQ(range.end, FracturedNumber(std::vector<uint64_t>{2, 0}));
 }
 }

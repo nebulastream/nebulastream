@@ -39,15 +39,19 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>
+#include <SequenceNumber.hpp>
 #include <TestTaskQueue.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include "Sequencing/RangeWatermarkTracker.hpp"
 
 namespace NES::InputFormatterTestUtil
 {
@@ -208,14 +212,7 @@ inline void sortTupleBuffers(std::vector<TupleBuffer>& buffers)
     std::ranges::sort(
         buffers.begin(),
         buffers.end(),
-        [](const TupleBuffer& left, const TupleBuffer& right)
-        {
-            if (left.getSequenceNumber() == right.getSequenceNumber())
-            {
-                return left.getChunkNumber() < right.getChunkNumber();
-            }
-            return left.getSequenceNumber() < right.getSequenceNumber();
-        });
+        [](const TupleBuffer& left, const TupleBuffer& right) { return left.getSequenceRange() < right.getSequenceRange(); });
 }
 
 /// Takes a vector of tuple buffers and allows to iterate over all tuples in the buffers in order
@@ -281,6 +278,31 @@ compareTestTupleBuffersOrderSensitive(std::vector<TupleBuffer>& actualResult, st
         allTuplesMatch = false;
     }
     return allTuplesMatch;
+}
+
+/// Verifies that the result buffers' sequence ranges have no overlaps and no gaps.
+/// Output ranges are depth-3 FracturedNumbers (depth-2 fracture zones fractured by emit).
+/// Checks contiguity and that every raw buffer's complete zone start {N, 1, 0} is covered.
+inline bool verifySequenceRanges(const std::vector<TupleBuffer>& resultBuffers, const size_t numberOfRawBuffers)
+{
+    SequenceRangeTracker tracker(3);
+    for (auto result_buffer : resultBuffers)
+    {
+        tracker.completeRange(result_buffer.getSequenceRange());
+    }
+
+    if (tracker.completedUpTo() == FracturedNumber({numberOfRawBuffers, 1, 0}))
+    {
+        return true;
+    }
+    else
+    {
+        NES_ERROR(
+            "Sequence ranges are not contiguous or do not cover all raw buffers: {} but expected: {}",
+            tracker.completedUpTo(),
+            FracturedNumber({numberOfRawBuffers, 1, 0}));
+        return false;
+    }
 }
 
 inline bool checkIfBuffersAreEqual(const TupleBuffer& leftBuffer, const TupleBuffer& rightBuffer, const uint64_t schemaSizeInByte)
@@ -470,6 +492,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         = BufferManager::create(testConfig.sizeOfFormattedBuffers, 2 * testConfig.numRequiredBuffers);
 
     auto resultBuffers = std::make_shared<std::vector<std::vector<TupleBuffer>>>(1);
+    auto rangeTracker = std::make_shared<SequenceRangeTracker>(3);
     auto schema = createSchema(testConfig.testSchema);
     return {
         testConfig,
@@ -478,7 +501,7 @@ TestHandle<TupleSchemaTemplate> setupTest(const TestConfig<TupleSchemaTemplate>&
         resultBuffers,
         std::move(schema),
         testConfig.memoryLayoutType,
-        std::make_unique<SingleThreadedTestTaskQueue>(formattedBufferManager, resultBuffers),
+        std::make_unique<SingleThreadedTestTaskQueue>(formattedBufferManager, resultBuffers, rangeTracker),
         {},
         {}};
 }
@@ -510,8 +533,8 @@ std::vector<TupleBuffer> createTestTupleBuffers(const TestHandle<TupleSchemaTemp
         if (auto tupleBuffer = testHandle.testBufferManager->getBufferNoBlocking())
         {
             copyStringDataToTupleBuffer(rawInputBuffer.rawBytes, tupleBuffer.value());
-            tupleBuffer.value().setSequenceNumber(rawInputBuffer.sequenceNumber);
-            tupleBuffer.value().setChunkNumber(INITIAL_CHUNK_NUMBER);
+            auto seqNum = rawInputBuffer.sequenceNumber.getRawValue();
+            tupleBuffer.value().setSequenceRange(SequenceRange(FracturedNumber(seqNum), FracturedNumber(seqNum + 1)));
             rawTupleBuffers.emplace_back(tupleBuffer.value());
         }
         else

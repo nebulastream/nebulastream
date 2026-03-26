@@ -25,9 +25,13 @@
 #include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
+#include <type_traits>
 
 namespace NES
 {
+
+#define GET_MEMBER_PTR(PtrToStruct, MemberName) \
+    (static_cast<nautilus::val<decltype(std::declval<typename std::remove_cvref_t<decltype(PtrToStruct)>::raw_type>()->MemberName)*>>(static_cast<nautilus::val<int8_t*>>(PtrToStruct) + nautilus::val<size_t>(offsetof(typename std::remove_cvref_t<decltype(PtrToStruct)>::basic_type, MemberName))))
 
 /// Get member returns the MemRef to a specific class member as an offset to a objectReference.
 /// This is taken from https://stackoverflow.com/a/20141143 and modified to work with a nautilus::val<int8_t*>

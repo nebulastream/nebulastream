@@ -65,15 +65,15 @@ class SpanningTupleBuffer
     struct ClaimedSpanningTuple
     {
         std::optional<StagedBuffer> firstBuffer;
-        SequenceNumber snOfLastBuffer = INVALID<SequenceNumber>;
+        SequenceNumber snOfLastBuffer;
     };
 
 public:
     struct WithoutDelimiterSearchResult
     {
         std::optional<StagedBuffer> leadingSpanningTupleStartBuffer = std::nullopt;
-        SequenceNumber firstSequenceNumber = INVALID<SequenceNumber>;
-        SequenceNumber lastSequenceNumber = INVALID<SequenceNumber>;
+        SequenceNumber firstSequenceNumber;
+        SequenceNumber lastSequenceNumber;
     };
 
     explicit SpanningTupleBuffer(size_t initialSize, TupleBuffer dummyBuffer);

@@ -31,6 +31,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Time/Timestamp.hpp>
 #include <nautilus/val_concepts.hpp>
 #include <nautilus/val_ptr.hpp>
@@ -71,7 +72,12 @@ enum class OpenReturnState : uint8_t
 {
     CONTINUE,
     REPEAT,
+    /// The buffer produced nothing and should be silently discarded (no close, no repeat).
+    /// Used when all spanning tuples were claimed by other threads and the buffer has 0 complete tuples.
+    DISCARD,
 };
+
+
 
 /// The execution context provides access to functionality, such as emitting a record buffer to the next pipeline or sink as well
 /// as access to operator states from the nautilus-runtime.
@@ -110,9 +116,8 @@ struct ExecutionContext final
     nautilus::val<OriginId> originId; /// Stores the current origin id of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> watermarkTs; /// Stores the watermark timestamp of the incoming tuple buffer. This is set in the scan.
     nautilus::val<Timestamp> currentTs; /// Stores the current timestamp. This is set by a time function
-    nautilus::val<SequenceNumber> sequenceNumber; /// Stores the sequence number id of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<ChunkNumber> chunkNumber; /// Stores the chunk number of the incoming tuple buffer. This is set in the scan.
-    nautilus::val<bool> lastChunk;
+    nautilus::val<bool> emitOnClose = false;
+    RecordBuffer::SequenceRangeRef sequenceRange;
 
 private:
     std::unordered_map<OperatorId, std::unique_ptr<OperatorState>> localStateMap;

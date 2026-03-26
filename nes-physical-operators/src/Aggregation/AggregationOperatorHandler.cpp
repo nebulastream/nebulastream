@@ -117,9 +117,7 @@ void AggregationOperatorHandler::triggerSlices(
         /// As we are here "emitting" a buffer, we have to set the originId, the seq number, the watermark and the "number of tuples".
         /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
         tupleBuffer.setOriginId(outputOriginId);
-        tupleBuffer.setSequenceNumber(windowInfo.sequenceNumber);
-        tupleBuffer.setChunkNumber(ChunkNumber(ChunkNumber::INITIAL));
-        tupleBuffer.setLastChunk(true);
+        tupleBuffer.setSequenceRange(windowInfo.sequenceRange);
         tupleBuffer.setWatermark(windowInfo.windowInfo.windowStart);
         tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
         tupleBuffer.setCreationTimestampInMS(Timestamp(
@@ -134,11 +132,11 @@ void AggregationOperatorHandler::triggerSlices(
         /// Dispatching the buffer to the probe operator via the task queue.
         pipelineCtx->emitBuffer(tupleBuffer);
         NES_TRACE(
-            "Emitted window {}-{} with watermarkTs {} sequenceNumber {} originId {}",
+            "Emitted window {}-{} with watermarkTs {} sequenceRange {} originId {}",
             windowInfo.windowInfo.windowStart,
             windowInfo.windowInfo.windowEnd,
             tupleBuffer.getWatermark(),
-            tupleBuffer.getSequenceNumber(),
+            tupleBuffer.getSequenceRange(),
             tupleBuffer.getOriginId());
     }
 }

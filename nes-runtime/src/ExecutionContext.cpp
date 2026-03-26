@@ -19,6 +19,7 @@
 #include <span>
 #include <string>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
@@ -36,6 +37,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include "Nautilus/Interface/TupleBufferProxyFunctions.hpp"
 
 namespace NES
 {
@@ -59,9 +61,6 @@ ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
-    , sequenceNumber(INVALID<SequenceNumber>)
-    , chunkNumber(INVALID<ChunkNumber>)
-    , lastChunk(true)
 {
 }
 
@@ -85,7 +84,7 @@ nautilus::val<int8_t*> ExecutionContext::allocateMemory(const nautilus::val<size
 
 void emitBufferProxy(PipelineExecutionContext* pipelineCtx, TupleBuffer* tb)
 {
-    NES_TRACE("Emitting buffer with SequenceData = {}", tb->getSequenceDataAsString());
+    NES_TRACE("Emitting buffer with SequenceRange = {}", tb->getSequenceRange());
 
     /* We have to emit all buffer, regardless of their number of tuples. This is due to the fact, that we expect all
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator

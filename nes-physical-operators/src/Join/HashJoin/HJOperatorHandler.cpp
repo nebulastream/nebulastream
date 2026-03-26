@@ -28,7 +28,6 @@
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -108,7 +107,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     Slice& sliceLeft,
     Slice& sliceRight,
     const WindowInfo& windowInfo,
-    const SequenceData& sequenceData,
+    const SequenceRange& sequenceRange,
     PipelineExecutionContext* pipelineCtx)
 {
     /// Counting how many tuples the probe has to check for this probe task
@@ -151,9 +150,7 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
     auto tupleBuffer = tupleBufferVal.value();
     tupleBuffer.setOriginId(outputOriginId);
-    tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
-    tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
-    tupleBuffer.setLastChunk(sequenceData.lastChunk);
+    tupleBuffer.setSequenceRange(sequenceRange);
     tupleBuffer.setWatermark(windowInfo.windowStart);
     tupleBuffer.setNumberOfTuples(totalNumberOfTuples);
     tupleBuffer.setCreationTimestampInMS(Timestamp(
@@ -165,11 +162,11 @@ void HJOperatorHandler::emitSlicesToProbe(
     /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
     NES_TRACE(
-        "Triggered window {}-{} with watermarkTs {} sequenceNumber {} originId {} and {}-{} hashmaps",
+        "Triggered window {}-{} with watermarkTs {} sequenceRange {} originId {} and {}-{} hashmaps",
         windowInfo.windowStart,
         windowInfo.windowEnd,
         tupleBuffer.getWatermark(),
-        tupleBuffer.getSequenceNumber(),
+        tupleBuffer.getSequenceRange(),
         tupleBuffer.getOriginId(),
         leftHashMaps.size(),
         rightHashMaps.size());

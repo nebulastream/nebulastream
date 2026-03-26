@@ -55,6 +55,21 @@ private:
     std::vector<StagedBuffer> spanningBuffers;
 };
 
+struct SequenceNumber
+{
+    uint64_t rawValue = 0;
+
+    static SequenceNumber fromRange(const SequenceRange& range)
+    {
+        PRECONDITION(range.start.depth() == 1, "SequenceNumber requires depth-1 range, got depth {}", range.start.depth());
+        return SequenceNumber(range.start[0]);
+    }
+    uint64_t getRawValue() const { return rawValue; }
+};
+
+
+inline auto format_as(SequenceNumber sn) { return sn.rawValue; }
+
 struct SequenceShredderResult
 {
     bool isInRange = false;

@@ -27,6 +27,7 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -38,6 +39,9 @@
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
+#include "Sequencing/RangeWatermarkTracker.hpp"
+
+#include "Thread.hpp"
 
 namespace NES
 {
@@ -56,11 +60,13 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         const WorkerThreadId workerThreadId,
         const PipelineId pipelineId,
-        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers,
+        std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker)
         : workerThreadId(workerThreadId)
         , pipelineId(pipelineId)
         , bufferManager(std::move(bufferManager))
         , resultBuffers(std::move(resultBuffers))
+        , sequenceRangeTracker(sequenceRangeTracker)
     {
         PRECONDITION(this->resultBuffers != nullptr, "Result buffer vector is a nullptr");
         PRECONDITION(
@@ -72,11 +78,14 @@ public:
 
     /// Setting invalid values for ids, since we set the values later.
     explicit TestPipelineExecutionContext(
-        std::shared_ptr<AbstractBufferProvider> bufferManager, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBufferPtr)
+        std::shared_ptr<AbstractBufferProvider> bufferManager,
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBufferPtr,
+        std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker)
         : workerThreadId(WorkerThreadId(0))
         , pipelineId(PipelineId(0))
         , bufferManager(std::move(bufferManager))
         , resultBuffers(std::move(resultBufferPtr))
+        , sequenceRangeTracker(std::move(sequenceRangeTracker))
     {
         PRECONDITION(this->resultBuffers != nullptr, "Result buffer vector is a nullptr");
         PRECONDITION(
@@ -126,6 +135,7 @@ private:
     /// Each thread writes its own results in a dedicated slot. This keeps results in a single place and does not require awkward logic
     /// to get the result buffers out of the TestPipelineExecutionContexts.
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
+    std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker;
 };
 
 /// Represents a single ExecutablePipelineStage with multiple functions ('taskSteps').
@@ -189,7 +199,9 @@ class SingleThreadedTestTaskQueue
 {
 public:
     SingleThreadedTestTaskQueue(
-        std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers);
+        std::shared_ptr<BufferManager> bufferProvider,
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers,
+        std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker);
 
     ~SingleThreadedTestTaskQueue() = default;
 
@@ -200,6 +212,7 @@ private:
     std::queue<WorkTask> tasks;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
+    std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker;
 
     std::shared_ptr<ExecutablePipelineStage> eps;
 
@@ -218,7 +231,8 @@ public:
         size_t numberOfThreads,
         const std::vector<TestPipelineTask>& testTasks,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers);
+        std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers,
+        std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker);
 
     /// Activates threads which start to concurrently process the WorkTasks in the MPMC queue.
     void startProcessing();
@@ -232,8 +246,9 @@ private:
     std::latch completionLatch;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers;
+    std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker;
     std::shared_ptr<ExecutablePipelineStage> eps;
-    std::vector<std::jthread> threads;
+    std::vector<Thread> threads;
     Timer<std::chrono::microseconds> timer;
 
 

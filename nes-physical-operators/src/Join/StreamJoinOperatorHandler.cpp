@@ -20,7 +20,8 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -44,15 +45,14 @@ void StreamJoinOperatorHandler::triggerSlices(
     /// combinations of slices for a given window to ensure that it has seen all tuples of the window.
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
+        auto range = windowInfo.sequenceRange;
+        auto subranges = range.fracture(allSlices.size() * allSlices.size());
+        size_t subrangeIdx = 0;
         for (const auto& sliceLeft : allSlices)
         {
             for (const auto& sliceRight : allSlices)
             {
-                const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
-                const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
-                emitSlicesToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
-                ++chunkNumber;
+                emitSlicesToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, subranges.at(subrangeIdx++), pipelineCtx);
             }
         }
     }

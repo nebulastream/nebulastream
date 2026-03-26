@@ -28,7 +28,6 @@
 namespace NES
 {
 using FieldIndex = uint32_t;
-using SequenceNumberType = SequenceNumber::Underlying;
 
 /// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
 /// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
@@ -62,9 +61,7 @@ public:
 
     [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
 
-    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept { return rawBuffer.getSequenceNumber(); }
-
-    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept { return rawBuffer.getChunkNumber(); }
+    [[nodiscard]] SequenceRange getSequenceRange() const noexcept { return rawBuffer.getSequenceRange(); }
 
     [[nodiscard]] OriginId getOriginId() const noexcept { return rawBuffer.getOriginId(); }
 
@@ -105,7 +102,10 @@ private:
 public:
     StagedBuffer() = default;
 
-    StagedBuffer(RawTupleBuffer rawTupleBuffer, const uint32_t offsetOfFirstTupleDelimiter, const uint32_t offsetOfLastTupleDelimiter)
+    StagedBuffer(
+        RawTupleBuffer rawTupleBuffer,
+        const uint32_t offsetOfFirstTupleDelimiter,
+        const uint32_t offsetOfLastTupleDelimiter)
         : rawBuffer(std::move(rawTupleBuffer))
         , sizeOfBufferInBytes(this->rawBuffer.getNumberOfBytes())
         , offsetOfFirstTupleDelimiter(offsetOfFirstTupleDelimiter)

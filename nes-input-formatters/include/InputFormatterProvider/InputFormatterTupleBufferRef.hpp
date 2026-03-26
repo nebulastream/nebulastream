@@ -74,6 +74,7 @@ public:
     }
 
     void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const;
+    nautilus::val<bool> completesLeadingTuple() const;
 
     WriteRecordResult
     writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override
@@ -82,7 +83,8 @@ public:
         std::unreachable();
     }
 
-    nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef) const;
+    nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ExecutionContext& executionContext) const;
+    nautilus::val<bool> isEmpty(RecordBuffer& recordBuffer) const;
 
     friend std::ostream& operator<<(std::ostream& os, const InputFormatterTupleBufferRef& inputFormatterTupleBufferRef);
 
@@ -92,7 +94,8 @@ public:
         virtual ~InputFormatterConcept() = default;
         virtual void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const
             = 0;
-        virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&) const = 0;
+        virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ExecutionContext&) const = 0;
+        virtual nautilus::val<bool> isEmpty(RecordBuffer& recordBuffer) const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
 
@@ -102,9 +105,14 @@ public:
     {
         explicit InputFormatterModel(T&& inputFormatter) : InputFormatter(std::move(inputFormatter)) { }
 
-        nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arena) const override
+        nautilus::val<bool> isEmpty(RecordBuffer& recordBuffer) const override
         {
-            return InputFormatter.indexBuffer(recordBuffer, arena);
+            return InputFormatter.isEmpty(recordBuffer);
+        }
+
+        nautilus::val<bool> indexBuffer(RecordBuffer& recordBuffer, ExecutionContext& executionContext) const override
+        {
+            return InputFormatter.indexBuffer(recordBuffer, executionContext);
         }
 
         std::ostream& toString(std::ostream& os) const override { return InputFormatter.toString(os); }

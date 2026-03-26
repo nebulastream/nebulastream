@@ -26,6 +26,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferRecycler.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Time/Timestamp.hpp>
 #include <ErrorHandling.hpp>
@@ -150,20 +151,12 @@ public:
     void setWatermark(Timestamp value) noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
-    void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;
 
-    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
-
-    void setChunkNumber(ChunkNumber chunkNumber) noexcept;
-    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
-
-    /// @brief set if this is the last chunk of a sequence number
-    void setLastChunk(bool isLastChunk) noexcept;
-
-    /// @brief retrieves if this is the last chunk
-    [[nodiscard]] bool isLastChunk() const noexcept;
+    void setSequenceRange(SequenceRange range) noexcept;
+    [[nodiscard]] const SequenceRange& getSequenceRange() const noexcept;
+    [[nodiscard]] SequenceRange& getSequenceRange() noexcept;
 
     void setCreationTimestampInMS(Timestamp value) noexcept;
 

@@ -70,7 +70,7 @@ private:
 
     /// We need to store the sequence number for the triggerable window infos. This is necessary, as we have to ensure that the sequence number is unique
     /// and increases for each window info.
-    std::atomic<SequenceNumber::Underlying> sequenceNumber;
+    std::atomic<uint64_t> sequenceNumber;
 
     /// If a window build operator appears in multiple pipelines, it may get terminated multiple times
     /// We need to track how many input pipelines have not terminated yet, to only release pending slices after the last termination

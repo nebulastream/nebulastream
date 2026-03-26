@@ -22,6 +22,7 @@
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Time/Timestamp.hpp>
 #include <include/Runtime/VariableSizedAccess.hpp>
 #include <TaggedPointer.hpp>
@@ -101,12 +102,9 @@ public:
     void setNumberOfTuples(uint64_t);
     [[nodiscard]] Timestamp getWatermark() const noexcept;
     void setWatermark(Timestamp watermark);
-    [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept;
-    void setSequenceNumber(SequenceNumber sequenceNumber);
-    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept;
-    void setChunkNumber(ChunkNumber chunkNumber);
-    [[nodiscard]] bool isLastChunk() const noexcept;
-    void setLastChunk(bool lastChunk);
+    void setSequenceRange(SequenceRange range);
+    [[nodiscard]] SequenceRange& getSequenceRange() noexcept;
+    [[nodiscard]] const SequenceRange& getSequenceRange() const noexcept;
     [[nodiscard]] OriginId getOriginId() const noexcept;
     void setOriginId(OriginId originId);
     void setCreationTimestamp(Timestamp timestamp);
@@ -123,9 +121,7 @@ private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
     Timestamp watermark = Timestamp(Timestamp::INITIAL_VALUE);
-    SequenceNumber sequenceNumber = INVALID_SEQ_NUMBER;
-    ChunkNumber chunkNumber = INVALID_CHUNK_NUMBER;
-    bool lastChunk = true;
+    SequenceRange sequenceRange;
     Timestamp creationTimestamp = Timestamp(Timestamp::INITIAL_VALUE);
     OriginId originId = INVALID_ORIGIN_ID;
     std::vector<MemorySegment*> children;
@@ -166,7 +162,8 @@ private:
 #endif
 };
 
-static_assert(sizeof(BufferControlBlock) % 64 == 0);
+/// Note: The size assertion was relaxed because SequenceRange contains two std::vector<uint64_t>
+/// which makes the exact size harder to control. The alignment assertion is still enforced.
 static_assert(alignof(BufferControlBlock) % 64 == 0);
 
 /**

@@ -34,10 +34,9 @@ namespace NES
 {
 bool TestPipelineExecutionContext::emitBuffer(const TupleBuffer& resultBuffer, const ContinuationPolicy continuationPolicy)
 {
-    if (resultBuffer.getNumberOfTuples() == 0)
-    {
-        return true;
-    }
+    PRECONDITION(
+        resultBuffer.getNumberOfTuples() != 0, "TestPipelineExecutionContext::emitBuffer() must be called with a non-empty TupleBuffer");
+    sequenceRangeTracker->completeRange(resultBuffer.getSequenceRange());
     switch (continuationPolicy)
     {
         case ContinuationPolicy::NEVER:
@@ -95,8 +94,10 @@ std::ostream& TestPipelineStage::toString(std::ostream& os) const
 }
 
 SingleThreadedTestTaskQueue::SingleThreadedTestTaskQueue(
-    std::shared_ptr<BufferManager> bufferProvider, std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
-    : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers))
+    std::shared_ptr<BufferManager> bufferProvider,
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers,
+    std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker)
+    : bufferProvider(std::move(bufferProvider)), resultBuffers(std::move(resultBuffers)), sequenceRangeTracker(sequenceRangeTracker)
 {
 }
 
@@ -114,7 +115,11 @@ void SingleThreadedTestTaskQueue::enqueueTasks(std::vector<TestPipelineTask> pip
     for (const auto& testTask : pipelineTasks)
     {
         auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(
-            this->bufferProvider, WorkerThreadId(testTask.workerThreadId.getRawValue()), PipelineId(0), this->resultBuffers);
+            this->bufferProvider,
+            WorkerThreadId(testTask.workerThreadId.getRawValue()),
+            PipelineId(0),
+            this->resultBuffers,
+            sequenceRangeTracker);
         /// There is a circular dependency, because the repeatTaskCallback needs to know about the pec and the pec needs to know about the
         /// repeatTaskCallback. The Tasks own the pec. When a tasks goes out of scope, so should the pec and the repeatTaskCallback.
         /// Thus, we give a weak_ptr of the pec to the repeatTaskCallback, which is guaranteed to be alive during the lifetime of the repeatTaskCallback.
@@ -141,7 +146,8 @@ void SingleThreadedTestTaskQueue::runTasks()
     }
 
     /// Process final tuple
-    const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
+    const auto pipelineExecutionContext
+        = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers, sequenceRangeTracker);
     eps->stop(*pipelineExecutionContext);
 }
 
@@ -149,19 +155,22 @@ MultiThreadedTestTaskQueue::MultiThreadedTestTaskQueue(
     const size_t numberOfThreads,
     const std::vector<TestPipelineTask>& testTasks,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers)
+    std::shared_ptr<std::vector<std::vector<TupleBuffer>>> resultBuffers,
+    std::shared_ptr<SequenceRangeTracker> sequenceRangeTracker)
     : threadTasks(testTasks.size())
     , numberOfWorkerThreads(numberOfThreads)
     , completionLatch(numberOfThreads)
     , bufferProvider(std::move(bufferProvider))
     , resultBuffers(std::move(resultBuffers))
+    , sequenceRangeTracker(std::move(sequenceRangeTracker))
     , timer("ConcurrentTestTaskQueue")
 {
     PRECONDITION(not testTasks.empty(), "Test tasks must not be empty.");
     /// Store a pointer to the executable pipeline stage to call 'stop()' after completion
     this->eps = testTasks.front().eps;
     /// Start/Compile the executable pipeline stage
-    auto pec = TestPipelineExecutionContext(this->bufferProvider, WorkerThreadId(0), PipelineId(0), this->resultBuffers);
+    auto pec
+        = TestPipelineExecutionContext(this->bufferProvider, WorkerThreadId(0), PipelineId(0), this->resultBuffers, sequenceRangeTracker);
     this->eps->start(pec);
 
     /// Fill the task queue with test tasks
@@ -176,14 +185,19 @@ void MultiThreadedTestTaskQueue::startProcessing()
     timer.start();
     for (size_t i = 0; i < numberOfWorkerThreads; ++i)
     {
-        threads.emplace_back([this, i] { threadFunction(i); });
+        threads.emplace_back(fmt::format("Worker-{}", i), WorkerId("test"), [this, i]
+        {
+
+            threadFunction(i);
+        });
     }
 }
 
 void MultiThreadedTestTaskQueue::waitForCompletion()
 {
     completionLatch.wait();
-    const auto pipelineExecutionContext = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers);
+    const auto pipelineExecutionContext
+        = std::make_shared<TestPipelineExecutionContext>(this->bufferProvider, this->resultBuffers, sequenceRangeTracker);
     eps->stop(*pipelineExecutionContext);
     timer.pause();
     NES_DEBUG("Final time to process all tasks: {}ms", timer.getPrintTime());
@@ -196,7 +210,7 @@ void MultiThreadedTestTaskQueue::threadFunction(const size_t threadIdx)
     {
         /// Create the pipeline execution context and set the repeat task callback (in case the thread can't execute the task immediately)
         auto pec = std::make_shared<TestPipelineExecutionContext>(
-            this->bufferProvider, WorkerThreadId(WorkerThreadId(threadIdx)), PipelineId(0), this->resultBuffers);
+            this->bufferProvider, WorkerThreadId(WorkerThreadId(threadIdx)), PipelineId(0), this->resultBuffers, sequenceRangeTracker);
         pec->setRepeatTaskCallback([this, testTask]() { threadTasks.blockingWrite(testTask); });
 
         testTask.execute(*pec);

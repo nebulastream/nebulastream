@@ -87,6 +87,9 @@ CompiledExecutablePipelineStage::compilePipeline() const
                         recordBufferRef);
                     break;
                 }
+                case OpenReturnState::DISCARD: {
+                    break;
+                }
             }
         };
         /// NOLINTEND(performance-unnecessary-value-param)

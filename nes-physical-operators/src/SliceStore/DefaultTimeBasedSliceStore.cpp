@@ -23,6 +23,8 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -34,7 +36,7 @@
 namespace NES
 {
 DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const uint64_t windowSize, const uint64_t windowSlide)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfActiveInputPipelines(0)
+    : sliceAssigner(windowSize, windowSlide), sequenceNumber(1), numberOfActiveInputPipelines(0)
 {
 }
 
@@ -117,10 +119,11 @@ DefaultTimeBasedSliceStore::getTriggerableWindowSlices(const Timestamp globalWat
 
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
         /// As the windows are sorted, we can simply increment the sequence number here.
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        const auto seqNum = sequenceNumber++;
+        const auto newSequenceRange = SequenceRange(FracturedNumber(seqNum), FracturedNumber(seqNum + 1));
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{windowInfo, newSequenceRange}].emplace_back(slice);
         }
     }
     return windowsToSlices;
@@ -149,10 +152,11 @@ std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> Defau
     std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>> windowsToSlices;
     auto addAllSlicesToReturnMap = [&windowsToSlices, this](const WindowInfo& windowInfo, SlicesAndState& windowSlicesAndState)
     {
-        const auto newSequenceNumber = SequenceNumber(sequenceNumber++);
+        const auto seqNum = sequenceNumber++;
+        const auto newSequenceRange = SequenceRange(FracturedNumber(seqNum), FracturedNumber(seqNum + 1));
         for (auto& slice : windowSlicesAndState.windowSlices)
         {
-            windowsToSlices[{windowInfo, newSequenceNumber}].emplace_back(slice);
+            windowsToSlices[{windowInfo, newSequenceRange}].emplace_back(slice);
         }
         windowSlicesAndState.windowState = WindowInfoState::EMITTED_TO_PROBE;
     };

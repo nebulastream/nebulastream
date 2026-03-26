@@ -22,7 +22,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
@@ -35,18 +35,18 @@ namespace NES
 /// Stores the metadata for a RecordBuffer
 struct BufferMetaData
 {
-    BufferMetaData(const Timestamp watermarkTs, const SequenceData seqNumber, const OriginId originId)
-        : watermarkTs(watermarkTs), seqNumber(seqNumber), originId(originId)
+    BufferMetaData(const Timestamp watermarkTs, const SequenceRange& seqRange, const OriginId originId)
+        : watermarkTs(watermarkTs), sequenceRange(seqRange), originId(originId)
     {
     }
 
     [[nodiscard]] std::string toString() const
     {
-        return fmt::format("BufferMetadata(waterMarkTs: {}, seqNumber: {}, originId: {})", watermarkTs, seqNumber, originId);
+        return fmt::format("BufferMetadata(waterMarkTs: {}, sequenceRange: {}, originId: {})", watermarkTs, sequenceRange, originId);
     }
 
     Timestamp watermarkTs;
-    SequenceData seqNumber;
+    SequenceRange sequenceRange;
     OriginId originId;
 };
 

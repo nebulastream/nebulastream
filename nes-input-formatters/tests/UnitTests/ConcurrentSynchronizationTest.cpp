@@ -33,6 +33,11 @@
 
 #include <ErrorHandling.hpp>
 
+namespace NES
+{
+using SequenceNumberType = uint64_t;
+}
+
 /// Tests whether the SequenceShredder correctly finds spanning tuples given random orders of sequence numbers and random occurrences of
 /// tuple delimiters in the buffers that belong to the sequence numbers.
 /// Uses multiple threads that call the SequenceShredder to determine spanning tuples. Each thread randomly (seeded) determines whether its current

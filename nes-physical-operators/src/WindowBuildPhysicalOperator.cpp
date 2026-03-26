@@ -18,6 +18,9 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
@@ -37,16 +40,19 @@ void checkWindowsTriggerProxy(
     OperatorHandler* ptrOpHandler,
     PipelineExecutionContext* pipelineCtx,
     const Timestamp watermarkTs,
-    const SequenceNumber sequenceNumber,
-    const ChunkNumber chunkNumber,
-    const bool lastChunk,
-    const OriginId originId)
+    const OriginId originId,
+    const uint64_t* rangeStart,
+    const uint64_t* rangeEnd,
+    const size_t rangeSize)
 {
     PRECONDITION(ptrOpHandler != nullptr, "opHandler context should not be null!");
     PRECONDITION(pipelineCtx != nullptr, "pipeline context should not be null");
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
-    const BufferMetaData bufferMetaData(watermarkTs, SequenceData(sequenceNumber, chunkNumber, lastChunk), originId);
+    SequenceRange range(
+        FracturedNumber(std::vector<uint64_t>(rangeStart, rangeStart + rangeSize)),
+        FracturedNumber(std::vector<uint64_t>(rangeEnd, rangeEnd + rangeSize)));
+    const BufferMetaData bufferMetaData(watermarkTs, range, originId);
     opHandler->checkAndTriggerWindows(bufferMetaData, pipelineCtx);
 }
 
@@ -81,10 +87,10 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
         operatorHandlerMemRef,
         executionCtx.pipelineContext,
         executionCtx.watermarkTs,
-        executionCtx.sequenceNumber,
-        executionCtx.chunkNumber,
-        executionCtx.lastChunk,
-        executionCtx.originId);
+        executionCtx.originId,
+        executionCtx.sequenceRange.getStartPointer(),
+        executionCtx.sequenceRange.getEndPointer(),
+        executionCtx.sequenceRange.getSize());
 }
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const

@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <ranges>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
@@ -22,6 +23,7 @@
 #include <Time/Timestamp.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
+#include <val_std.hpp>
 
 namespace NES
 {
@@ -48,17 +50,6 @@ public:
     nautilus::val<OriginId> getOriginId();
     void setOriginId(const nautilus::val<OriginId>& originId);
 
-    /// Get the sequence number of the underlying tuple buffer. The sequence number is a monotonically increasing identifier for tuple buffers
-    /// from the same origin.
-    nautilus::val<SequenceNumber> getSequenceNumber();
-    void setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber);
-
-    /// Sets the chunk number of the underlying tuple buffer. The chunk number is a monotonically increasing identifier for chunks of a sequence number.
-    void setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber);
-    nautilus::val<ChunkNumber> getChunkNumber();
-    void setLastChunk(const nautilus::val<bool>& isLastChunk);
-    nautilus::val<bool> isLastChunk();
-
     ///  Get the watermark timestamp of the underlying tuple buffer. The watermark timestamp is a point in time that guarantees no records
     ///  with a lower timestamp will be received.
     nautilus::val<Timestamp> getWatermarkTs();
@@ -69,6 +60,37 @@ public:
     void setCreationTs(const nautilus::val<Timestamp>& creationTs);
 
     ~RecordBuffer() = default;
+
+    class SequenceRangeRef
+    {
+        nautilus::val<uint64_t*> seqStartData = nullptr;
+        nautilus::val<uint64_t*> seqEndData = nullptr;
+        nautilus::val<size_t> size = 0;
+
+        SequenceRangeRef(
+            const nautilus::val<uint64_t*>& seq_start_data,
+            const nautilus::val<uint64_t*>& seq_end_data,
+            const nautilus::val<size_t>& size);
+
+    public:
+        SequenceRangeRef() = default;
+        static SequenceRangeRef from(nautilus::val<SequenceRange*> allocated);
+        void store(nautilus::val<SequenceRange*> allocated);
+
+
+        void setStart(const nautilus::val<size_t>& index, const nautilus::val<size_t>& value);
+        void setEnd(nautilus::val<size_t> index, nautilus::val<size_t> value);
+        [[nodiscard]] nautilus::val<uint64_t> getStart(nautilus::val<size_t> index) const;
+        [[nodiscard]] nautilus::val<uint64_t> getEnd(nautilus::val<size_t> index) const;
+
+
+        [[nodiscard]] nautilus::val<uint64_t*> getStartPointer() const;
+        [[nodiscard]] nautilus::val<uint64_t*> getEndPointer() const;
+        [[nodiscard]] nautilus::val<size_t> getSize() const;
+    };
+
+    SequenceRangeRef getSequenceRange() const;
+    void setSequenceRange(SequenceRangeRef rangeRef);
 
 private:
     nautilus::val<TupleBuffer*> tupleBufferRef;

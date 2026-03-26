@@ -11,6 +11,8 @@
 # limitations under the License.
 
 add_source_files(nes-common
-        SequenceData.cpp
+        FracturedNumber.cpp
+        SequenceRange.cpp
+        RangeWatermarkTracker.cpp
 )
 

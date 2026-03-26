@@ -63,14 +63,14 @@ WindowSlicesStoreInterface& WindowBasedOperatorHandler::getSliceAndWindowStore()
 
 void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMetaData& bufferMetaData) const
 {
-    const auto newGlobalWaterMarkProbe
-        = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const Timestamp newGlobalWaterMarkProbe
+        = watermarkProcessorProbe->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.sequenceRange, bufferMetaData.originId);
 
     NES_TRACE(
-        "New global watermark probe: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
+        "New global watermark probe: {} for origin: {} and buffer metadata: {} and watermarkTs of buffer {}",
         newGlobalWaterMarkProbe,
         bufferMetaData.originId,
-        bufferMetaData.seqNumber,
+        bufferMetaData.toString(),
         bufferMetaData.watermarkTs);
     sliceAndWindowStore->garbageCollectSlicesAndWindows(newGlobalWaterMarkProbe);
 }
@@ -78,14 +78,14 @@ void WindowBasedOperatorHandler::garbageCollectSlicesAndWindows(const BufferMeta
 void WindowBasedOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
     /// The watermark processor handles the minimal watermark across both streams
-    const auto newGlobalWatermark
-        = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
+    const Timestamp newGlobalWatermark
+        = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.sequenceRange, bufferMetaData.originId);
 
     NES_TRACE(
-        "New global watermark: {} for origin: {} and sequence data: {} and watermarkTs of buffer {}",
+        "New global watermark: {} for origin: {} and buffer metadata: {} and watermarkTs of buffer {}",
         newGlobalWatermark,
         bufferMetaData.originId,
-        bufferMetaData.seqNumber,
+        bufferMetaData.toString(),
         bufferMetaData.watermarkTs);
 
     /// Getting all slices that can be triggered and triggering them

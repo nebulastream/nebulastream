@@ -19,8 +19,8 @@
 #include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
-#include <Sequencing/SequenceData.hpp>
+#include <Sequencing/RangeWatermarkTracker.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <fmt/ranges.h>
@@ -31,9 +31,10 @@ namespace NES
 
 MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const std::vector<OriginId>& origins) : origins(origins)
 {
-    for (const auto& _ : origins)
+    watermarkTrackers.reserve(origins.size());
+    for (size_t i = 0; i < origins.size(); ++i)
     {
-        watermarkProcessors.emplace_back(std::make_shared<Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>());
+        watermarkTrackers.push_back(std::make_unique<RangeWatermarkTracker>());
     }
 };
 
@@ -42,14 +43,24 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceData sequenceData, OriginId origin) const
+std::string MultiOriginWatermarkProcessor::getCurrentStatus()
+{
+    std::stringstream ss;
+    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
+    {
+        ss << " id=" << origins[originIndex] << " watermark=" << watermarkTrackers[originIndex]->getCurrentWatermark().getRawValue();
+    }
+    return ss.str();
+}
+
+Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, const SequenceRange& sequenceRange, OriginId origin) const
 {
     bool found = false;
     for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
     {
         if (origins[originIndex] == origin)
         {
-            watermarkProcessors[originIndex]->emplace(sequenceData, ts.getRawValue());
+            watermarkTrackers[originIndex]->insert(sequenceRange, ts);
             found = true;
         }
     }
@@ -62,22 +73,12 @@ Timestamp MultiOriginWatermarkProcessor::updateWatermark(Timestamp ts, SequenceD
     return getCurrentWatermark();
 }
 
-std::string MultiOriginWatermarkProcessor::getCurrentStatus()
-{
-    std::stringstream ss;
-    for (size_t originIndex = 0; originIndex < origins.size(); ++originIndex)
-    {
-        ss << " id=" << origins[originIndex] << " watermark=" << watermarkProcessors[originIndex]->getCurrentValue();
-    }
-    return ss.str();
-}
-
 Timestamp MultiOriginWatermarkProcessor::getCurrentWatermark() const
 {
     auto minimalWatermark = UINT64_MAX;
-    for (const auto& wt : watermarkProcessors)
+    for (const auto& tracker : watermarkTrackers)
     {
-        minimalWatermark = std::min(minimalWatermark, wt->getCurrentValue());
+        minimalWatermark = std::min(minimalWatermark, tracker->getCurrentWatermark().getRawValue());
     }
     return Timestamp(minimalWatermark);
 }

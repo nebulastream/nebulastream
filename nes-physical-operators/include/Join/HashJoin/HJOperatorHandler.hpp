@@ -25,7 +25,6 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/RollingAverage.hpp>
@@ -89,7 +88,7 @@ private:
         Slice& sliceLeft,
         Slice& sliceRight,
         const WindowInfo& windowInfo,
-        const SequenceData& sequenceData,
+        const SequenceRange& sequenceRange,
         PipelineExecutionContext* pipelineCtx) override;
 
     folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;

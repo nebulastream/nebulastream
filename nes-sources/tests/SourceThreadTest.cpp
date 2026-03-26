@@ -153,18 +153,18 @@ void verify_number_of_emits(
     EXPECT_THAT(*recorder.recordedEmits.lock(), ::testing::SizeIs(numberOfEmits))
         << "Expected " << numberOfEmits << " source events to be emitted";
 
-    std::vector<SequenceNumber> sequenceNumbers;
+    std::vector<uint64_t> sequenceNumbers;
     for (size_t i = 0; i < numberOfEmits; ++i)
     {
         auto& emitted = recorder.recordedEmits.lock()->at(i);
         if (auto* data = std::get_if<SourceReturnType::Data>(&emitted))
         {
-            sequenceNumbers.push_back(data->buffer.getSequenceNumber());
+            sequenceNumbers.push_back(data->buffer.getSequenceRange().start[0]);
         }
     }
     auto expectedView = std::views::iota(static_cast<size_t>(0), sequenceNumbers.size())
-        | std::views::transform([](auto seq) { return SequenceNumber(seq + 1); });
-    std::vector<SequenceNumber> expected;
+        | std::views::transform([](auto seq) { return static_cast<uint64_t>(seq + 1); });
+    std::vector<uint64_t> expected;
     std::ranges::copy(expectedView, std::back_inserter(expected));
     EXPECT_THAT(sequenceNumbers, ::testing::ContainerEq(expected));
 }

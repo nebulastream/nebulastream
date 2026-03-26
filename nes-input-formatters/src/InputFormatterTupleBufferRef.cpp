@@ -30,9 +30,14 @@ void InputFormatterTupleBufferRef::readBuffer(
     this->inputFormatter->readBuffer(executionCtx, recordBuffer, executeChild);
 }
 
-nautilus::val<bool> InputFormatterTupleBufferRef::indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef) const
+nautilus::val<bool> InputFormatterTupleBufferRef::indexBuffer(RecordBuffer& recordBuffer, ExecutionContext& executionContext) const
 {
-    return this->inputFormatter->indexBuffer(recordBuffer, arenaRef);
+    return this->inputFormatter->indexBuffer(recordBuffer, executionContext);
+}
+
+nautilus::val<bool> InputFormatterTupleBufferRef::isEmpty(RecordBuffer& recordBuffer) const
+{
+    return this->inputFormatter->isEmpty(recordBuffer);
 }
 
 std::ostream& operator<<(std::ostream& os, const InputFormatterTupleBufferRef& inputFormatterTupleBufferRef)

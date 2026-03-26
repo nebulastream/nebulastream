@@ -20,6 +20,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <include/Runtime/VariableSizedAccess.hpp>
@@ -95,7 +96,7 @@ MemorySegment::~MemorySegment()
 }
 
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
-    : owner(owner), recycleCallback(std::move(recycleCallback))
+    : sequenceRange(SequenceRange::invalid()), owner(owner), recycleCallback(std::move(recycleCallback))
 {
 }
 
@@ -249,34 +250,19 @@ void BufferControlBlock::setWatermark(const Timestamp watermark)
     this->watermark = watermark;
 }
 
-SequenceNumber BufferControlBlock::getSequenceNumber() const noexcept
+void BufferControlBlock::setSequenceRange(SequenceRange range)
 {
-    return sequenceNumber;
+    this->sequenceRange = std::move(range);
 }
 
-void BufferControlBlock::setSequenceNumber(const SequenceNumber sequenceNumber)
+SequenceRange& BufferControlBlock::getSequenceRange() noexcept
 {
-    this->sequenceNumber = sequenceNumber;
+    return sequenceRange;
 }
 
-ChunkNumber BufferControlBlock::getChunkNumber() const noexcept
+const SequenceRange& BufferControlBlock::getSequenceRange() const noexcept
 {
-    return chunkNumber;
-}
-
-void BufferControlBlock::setChunkNumber(const ChunkNumber chunkNumber)
-{
-    this->chunkNumber = chunkNumber;
-}
-
-bool BufferControlBlock::isLastChunk() const noexcept
-{
-    return lastChunk;
-}
-
-void BufferControlBlock::setLastChunk(const bool lastChunk)
-{
-    this->lastChunk = lastChunk;
+    return sequenceRange;
 }
 
 void BufferControlBlock::setCreationTimestamp(const Timestamp timestamp)

@@ -31,6 +31,19 @@ class ConcurrentSynchronizationTest;
 namespace NES
 {
 
+struct SequenceNumber
+{
+    uint64_t rawValue = 0;
+
+    static SequenceNumber fromRange(const SequenceRange& range)
+    {
+        PRECONDITION(range.start.depth() == 1, "SequenceNumber requires depth-1 range, got depth {}", range.start.depth());
+        return SequenceNumber(range.start[0]);
+    }
+    uint64_t getRawValue() const { return rawValue; }
+};
+
+
 /// Forward referencing 'SpanningTupleBuffer' to hide implementation details
 class SpanningTupleBuffer;
 

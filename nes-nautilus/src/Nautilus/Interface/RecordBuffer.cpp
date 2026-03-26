@@ -14,6 +14,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
 #include <cstdint>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
@@ -23,6 +24,8 @@
 #include <nautilus/function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include <val_std.hpp>
+#include "Nautilus/DataTypes/DataTypesUtil.hpp"
 
 namespace NES
 {
@@ -61,29 +64,108 @@ void RecordBuffer::setOriginId(const nautilus::val<OriginId>& originId)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setOriginId, tupleBufferRef, originId);
 }
 
-void RecordBuffer::setSequenceNumber(const nautilus::val<SequenceNumber>& seqNumber)
+RecordBuffer::SequenceRangeRef::SequenceRangeRef(
+    const nautilus::val<uint64_t*>& seq_start_data, const nautilus::val<uint64_t*>& seq_end_data, const nautilus::val<size_t>& size)
+    : seqStartData(seq_start_data), seqEndData(seq_end_data), size(size)
 {
-    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setSequenceNumber, tupleBufferRef, seqNumber);
 }
 
-void RecordBuffer::setChunkNumber(const nautilus::val<ChunkNumber>& chunkNumber)
+struct SequenceRangeBuffer
 {
-    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setChunkNumber, tupleBufferRef, chunkNumber);
+    uint64_t* start;
+    uint64_t* end;
+    size_t size;
+};
+
+void storeBuffer(SequenceRange* allocated, SequenceRangeBuffer* buffer)
+{
+    buffer->start = allocated->start.data();
+    buffer->end = allocated->end.data();
+    buffer->size = allocated->end.depth();
 }
 
-nautilus::val<ChunkNumber> RecordBuffer::getChunkNumber()
+RecordBuffer::SequenceRangeRef RecordBuffer::SequenceRangeRef::from(nautilus::val<SequenceRange*> allocated)
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getChunkNumber, tupleBufferRef)};
+    nautilus::val<SequenceRangeBuffer> buffer;
+    nautilus::invoke(storeBuffer, allocated, &buffer);
+    return {buffer.get(&SequenceRangeBuffer::start), buffer.get(&SequenceRangeBuffer::end), buffer.get(&SequenceRangeBuffer::size)};
 }
 
-void RecordBuffer::setLastChunk(const nautilus::val<bool>& isLastChunk)
+void RecordBuffer::SequenceRangeRef::store(nautilus::val<SequenceRange*> allocated)
 {
-    invoke(ProxyFunctions::NES_Memory_TupleBuffer_setLastChunk, tupleBufferRef, isLastChunk);
+    struct Buffer
+    {
+        uint64_t* start;
+        uint64_t* end;
+        size_t size;
+    };
+
+    nautilus::val<Buffer> buffer;
+    buffer.set(&Buffer::start, this->seqStartData), buffer.set(&Buffer::end, this->seqEndData), buffer.set(&Buffer::size, this->size);
+    nautilus::invoke(
+        +[](SequenceRange* allocated, Buffer* buffer)
+        {
+            allocated->start = FracturedNumber{std::span<uint64_t>(buffer->start, buffer->size) | std::ranges::to<std::vector>()};
+            allocated->end = FracturedNumber{std::span<uint64_t>(buffer->end, buffer->size) | std::ranges::to<std::vector>()};
+        },
+        allocated,
+        &buffer);
 }
 
-nautilus::val<bool> RecordBuffer::isLastChunk()
+void throwOutOfBoundsException(size_t index, size_t size)
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_isLastChunk, tupleBufferRef)};
+    throw std::runtime_error(fmt::format("Index out of bounds {} >= {}", index, size));
+}
+
+void RecordBuffer::SequenceRangeRef::setStart(const nautilus::val<size_t>& index, const nautilus::val<size_t>& value)
+{
+    if (index >= size)
+    {
+        nautilus::invoke(throwOutOfBoundsException, index, size);
+    }
+    *(seqStartData + index) = value;
+}
+
+void RecordBuffer::SequenceRangeRef::setEnd(nautilus::val<size_t> index, nautilus::val<size_t> value)
+{
+    if (index >= size)
+    {
+        nautilus::invoke(throwOutOfBoundsException, index, size);
+    }
+    *(seqEndData + index) = value;
+}
+
+nautilus::val<uint64_t> RecordBuffer::SequenceRangeRef::getStart(nautilus::val<size_t> index) const
+{
+    if (index >= size)
+    {
+        nautilus::invoke(throwOutOfBoundsException, index, size);
+    }
+    return *(seqStartData + index);
+}
+
+nautilus::val<uint64_t> RecordBuffer::SequenceRangeRef::getEnd(nautilus::val<size_t> index) const
+{
+    if (index >= size)
+    {
+        nautilus::invoke(throwOutOfBoundsException, index, size);
+    }
+    return *(seqEndData + index);
+}
+
+nautilus::val<uint64_t*> RecordBuffer::SequenceRangeRef::getStartPointer() const
+{
+    return seqStartData;
+}
+
+nautilus::val<uint64_t*> RecordBuffer::SequenceRangeRef::getEndPointer() const
+{
+    return seqEndData;
+}
+
+nautilus::val<size_t> RecordBuffer::SequenceRangeRef::getSize() const
+{
+    return size;
 }
 
 nautilus::val<Timestamp> RecordBuffer::getWatermarkTs()
@@ -96,9 +178,16 @@ void RecordBuffer::setWatermarkTs(const nautilus::val<Timestamp>& watermarkTs)
     invoke(ProxyFunctions::NES_Memory_TupleBuffer_setWatermark, tupleBufferRef, watermarkTs);
 }
 
-nautilus::val<SequenceNumber> RecordBuffer::getSequenceNumber()
+void RecordBuffer::setSequenceRange(SequenceRangeRef rangeRef)
 {
-    return {invoke(ProxyFunctions::NES_Memory_TupleBuffer_getSequenceNumber, tupleBufferRef)};
+    auto buffer = nautilus::invoke(+[](TupleBuffer* buffer) { return &buffer->getSequenceRange(); }, getReference());
+    rangeRef.store(buffer);
+}
+
+RecordBuffer::SequenceRangeRef RecordBuffer::getSequenceRange() const
+{
+    auto buffer = nautilus::invoke(+[](TupleBuffer* buffer) { return &buffer->getSequenceRange(); }, getReference());
+    return SequenceRangeRef::from(buffer);
 }
 
 nautilus::val<Timestamp> RecordBuffer::getCreatingTs()

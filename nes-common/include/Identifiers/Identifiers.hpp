@@ -34,9 +34,6 @@ using InlineSinkId = NESStrongType<uint64_t, struct InlineSinkId_, 0, 1>;
 
 /// Local Identifiers: These Identifiers are unique in a local scope. E.g. the PipelineId is unique in regard to a single query plan.
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
-using SequenceNumber = NESStrongType<uint64_t, struct SequenceNumber_, 0, 1>;
-using ChunkNumber = NESStrongType<uint64_t, struct ChunkNumber_, SequenceNumber::INVALID, SequenceNumber::INITIAL>;
-
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
@@ -55,12 +52,6 @@ static constexpr InlineSinkId INITIAL_INLINE_SINK_ID = INITIAL<InlineSinkId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;
-
-static constexpr ChunkNumber INVALID_CHUNK_NUMBER = INVALID<ChunkNumber>;
-static constexpr ChunkNumber INITIAL_CHUNK_NUMBER = INITIAL<ChunkNumber>;
-
-static constexpr SequenceNumber INVALID_SEQ_NUMBER = INVALID<SequenceNumber>;
-static constexpr SequenceNumber INITIAL_SEQ_NUMBER = INITIAL<SequenceNumber>;
 
 /// Special overloads for commonly occurring patterns
 /// overload modulo operator for WorkerThreadId as it is commonly use to index into buckets

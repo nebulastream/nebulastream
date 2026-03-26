@@ -19,6 +19,8 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/FracturedNumber.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -26,59 +28,52 @@
 namespace NES
 {
 
-void EmitOperatorHandler::setChunkNumber(
-    bool isEndOfIncomingChunk, ChunkNumber incomingChunkNumber, bool isIncomingBufferTheLastChunk, TupleBuffer& buffer)
+void EmitOperatorHandler::fractureRange(
+    bool isEndOfIncomingChunk, const SequenceRange& inputRange, OriginId originId, TupleBuffer& buffer)
 {
-    /// The SequenceState tracks how many chunks have been seen per Sequence/OriginId pair.
-    /// This allows to reason about completeness of a SequenceNumber and assign unique ChunkNumbers to every produced buffer aswell
-    /// as assigning exactly one LastChunk flag once we have seen all chunks.
+    RangeForOriginId key{inputRange, originId};
+    const auto lock = rangeFractureStates.wlock();
 
-    SequenceNumberForOriginId seqNumberOriginId(buffer.getSequenceNumber(), buffer.getOriginId());
-    const auto lock = sequenceStates.wlock();
+    auto& state = (*lock)[key];
+    state.outputBufferCount++;
 
-    /// Assign a unique chunk number to the buffer and increment the internal counter
-    auto& [nextChunkNumberCounter, lastChunkNumber, seenChunks] = (*lock)[seqNumberOriginId];
-
-#ifndef NO_ASSERT
-    const auto completedSequencesLock = completedSequences.wlock();
-    INVARIANT(
-        !completedSequencesLock->contains(seqNumberOriginId),
-        "Received chunk for sequence {} that was already completed",
-        seqNumberOriginId);
-#endif
-
-
-    const auto nextChunkNumber = ChunkNumber(nextChunkNumberCounter);
-    nextChunkNumberCounter += 1;
-
-    buffer.setChunkNumber(nextChunkNumber);
-    buffer.setLastChunk(false);
-
-    /// Check for completeness of the sequence number. This is only relevant if this buffer is actually completing an incoming chunk.
     if (isEndOfIncomingChunk)
     {
-        /// As soon as the incomingBufferLastChunk is received we know how many incoming chunks to expect.
-        if (isIncomingBufferTheLastChunk)
-        {
-            INVARIANT(
-                lastChunkNumber == INVALID<ChunkNumber>,
-                "Received multiple last chunks for {}. Previous last chunk was {}",
-                seqNumberOriginId,
-                lastChunkNumber);
-            lastChunkNumber = incomingChunkNumber;
-        }
-        seenChunks++;
+        state.inputFullyConsumed = true;
+    }
 
-        /// We have processed the expected number of chunks and this buffer is closing the input tuple buffer, so we assign the last flag
-        /// and erase the sequenceState.
-        if (lastChunkNumber != INVALID<ChunkNumber> && seenChunks - 1 == lastChunkNumber.getRawValue() - ChunkNumber::INITIAL)
+    if (state.inputFullyConsumed)
+    {
+        /// We know the total number of output buffers. Fracture the input range into that many sub-ranges.
+        const auto totalBuffers = state.outputBufferCount;
+        if (totalBuffers == 1)
         {
-            lock->erase(seqNumberOriginId);
-#ifndef NO_ASSERT
-            completedSequencesLock->emplace(seqNumberOriginId);
-#endif
-            buffer.setLastChunk(true);
+            /// Only one output buffer — it gets the full input range
+            buffer.setSequenceRange(inputRange);
         }
+        else
+        {
+            /// Fracture and assign the last sub-range to this buffer
+            auto subRanges = inputRange.fracture(totalBuffers);
+            buffer.setSequenceRange(subRanges.back());
+        }
+
+        /// Now go back and assign sub-ranges to all previously emitted buffers?
+        /// Actually, we can't retroactively change already-emitted buffers.
+        /// Instead, we use a simpler scheme: assign sub-ranges eagerly as buffers are emitted.
+        /// Let's redesign: each output buffer gets a sub-range based on its index.
+        /// We need to track the current index, then on completion, the last buffer gets the remainder.
+        lock->erase(key);
+    }
+    else
+    {
+        /// Not yet complete. Assign a provisional fractured sub-range.
+        /// The output buffer index is (outputBufferCount - 1).
+        const auto idx = state.outputBufferCount - 1;
+        /// Create sub-range: [start.idx, start.(idx+1))
+        auto subStart = inputRange.start.withSubLevel(idx);
+        auto subEnd = inputRange.start.withSubLevel(idx + 1);
+        buffer.setSequenceRange(SequenceRange(subStart, subEnd));
     }
 }
 

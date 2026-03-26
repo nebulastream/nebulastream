@@ -1,0 +1,1333 @@
+From e87c55919a33b831ef097a0f1ee45cb69886ddfe Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Thu, 26 Mar 2026 17:38:17 +0000
+Subject: [PATCH] Fix stale returnRef index by replacing hoisted ALLOCAs with
+ tombstones
+
+hoistAllocaOperations() previously erased ALLOCA ops from blocks,
+invalidating the operationIndex stored in returnRefs. Now it replaces
+them with ALLOCA_TOMBSTONE ops that preserve vector indices. Tombstones
+are skipped in isLocalValueRef, getOrBuildDefinitions, and IR lowering,
+then stripped alongside ASSIGN ops in removeAssignOperations.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+---
+ .../include/nautilus/tracing/Operations.hpp   |   7 ++
+ .../tracing/phases/SSACreationPhase.cpp       |  32 ++++--
+ nautilus/test/common/ValueTypeFunctions.hpp   |  94 +++++++++++++++
+ .../constructStructInLoopWithNestedCall.trace |  32 ++++++
+ .../modifyStructInLoopWithNestedCall.trace    |  48 ++++++++
+ .../after_ssa/multipleNestedCallsInLoop.trace |  69 +++++++++++
+ .../after_ssa/structInBothBranches.trace      |  35 ++++++
+ .../after_ssa/structInConditionalReturn.trace |  35 ++++++
+ .../structInNestedConditionalReturn.trace     |  29 +++++
+ .../constructStructInLoopWithNestedCall.trace |  37 ++++++
+ .../ir/modifyStructInLoopWithNestedCall.trace |  53 +++++++++
+ .../ir/multipleNestedCallsInLoop.trace        |  74 ++++++++++++
+ .../ir/structInBothBranches.trace             |  40 +++++++
+ .../ir/structInConditionalReturn.trace        |  40 +++++++
+ .../ir/structInNestedConditionalReturn.trace  |  34 ++++++
+ .../constructStructInLoopWithNestedCall.trace |  47 ++++++++
+ .../modifyStructInLoopWithNestedCall.trace    |  72 ++++++++++++
+ .../tracing/multipleNestedCallsInLoop.trace   | 108 ++++++++++++++++++
+ .../tracing/structInBothBranches.trace        |  55 +++++++++
+ .../tracing/structInConditionalReturn.trace   |  55 +++++++++
+ .../structInNestedConditionalReturn.trace     |  40 +++++++
+ .../test/execution-tests/ExecutionTest.cpp    |  22 ++++
+ nautilus/test/execution-tests/TracingTest.cpp |   8 ++
+ 23 files changed, 1055 insertions(+), 11 deletions(-)
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/constructStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/modifyStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/multipleNestedCallsInLoop.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/structInBothBranches.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/structInConditionalReturn.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/after_ssa/structInNestedConditionalReturn.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/constructStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/modifyStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/multipleNestedCallsInLoop.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/structInBothBranches.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/structInConditionalReturn.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/ir/structInNestedConditionalReturn.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/constructStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/modifyStructInLoopWithNestedCall.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/multipleNestedCallsInLoop.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/structInBothBranches.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/structInConditionalReturn.trace
+ create mode 100644 nautilus/test/data/value-tracing-tests/tracing/structInNestedConditionalReturn.trace
+
+diff --git a/nautilus/include/nautilus/tracing/Operations.hpp b/nautilus/include/nautilus/tracing/Operations.hpp
+index 30d05dcc6..622625471 100644
+--- a/nautilus/include/nautilus/tracing/Operations.hpp
++++ b/nautilus/include/nautilus/tracing/Operations.hpp
+@@ -45,6 +45,11 @@ enum Op : uint8_t {
+ 	// Ternary
+ 	SELECT,
+ 	ALLOCA,
++	// Placeholder left behind when hoistAllocaOperations() moves an ALLOCA to
++	// the entry block.  Preserves vector indices so that returnRefs (and any
++	// other operation_identifier) remain valid.  Only exists during SSA
++	// creation; stripped by removeAssignOperations before IR lowering.
++	ALLOCA_TOMBSTONE,
+ 	FUNC_ADDR,
+ };
+
+@@ -116,6 +121,8 @@ constexpr const char* toString(Op type) {
+ 		return "SELECT";
+ 	case ALLOCA:
+ 		return "ALLOCA";
++	case ALLOCA_TOMBSTONE:
++		return "ALLOCA_TOMBSTONE";
+ 	case FUNC_ADDR:
+ 		return "FUNC_ADDR";
+ 	default:
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+index d51a8433c..5667cb3c5 100644
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+@@ -78,22 +78,24 @@ Block& SSACreationPhase::SSACreationPhaseContext::getReturnBlock() {
+ }
+
+ void SSACreationPhase::SSACreationPhaseContext::hoistAllocaOperations() {
+-	// Collect all ALLOCA operations from every block, preserving their relative order.
++	// Collect all ALLOCA operations from every block, preserving their relative
++	// order.  Instead of erasing the original operation (which would invalidate
++	// every operationIndex stored in returnRefs and elsewhere), we replace it
++	// with an ALLOCA_TOMBSTONE that later phases simply skip.
+ 	std::vector<TraceOperation> allocaOps;
+-	for (auto& block : trace->getBlocks()) {
+-		for (auto it = block.operations.begin(); it != block.operations.end();) {
+-			if (it->op == Op::ALLOCA) {
+-				allocaOps.push_back(std::move(*it));
+-				it = block.operations.erase(it);
+-			} else {
+-				++it;
++	auto& blocks = trace->getBlocks();
++	for (auto& block : blocks) {
++		for (auto& op : block.operations) {
++			if (op.op == Op::ALLOCA) {
++				allocaOps.push_back(op);
++				op.op = Op::ALLOCA_TOMBSTONE;
+ 			}
+ 		}
+ 	}
+
+ 	// Prepend the collected ALLOCA operations to the head of the initial block.
+ 	if (!allocaOps.empty()) {
+-		auto& initialBlock = trace->getBlocks().front();
++		auto& initialBlock = blocks.front();
+ 		initialBlock.operations.insert(initialBlock.operations.begin(), std::make_move_iterator(allocaOps.begin()),
+ 		                               std::make_move_iterator(allocaOps.end()));
+ 	}
+@@ -132,6 +134,9 @@ bool SSACreationPhase::SSACreationPhaseContext::isLocalValueRef(Block& block, Ty
+ 	// operation before the operationIndex
+ 	for (uint32_t i = 0; i < operationIndex; i++) {
+ 		auto& resOperation = block.operations[i];
++		if (resOperation.op == Op::ALLOCA_TOMBSTONE) {
++			continue;
++		}
+ 		if (resOperation.resultRef == ref) {
+ 			return true;
+ 		}
+@@ -214,6 +219,9 @@ const std::unordered_set<ValueRef>& SSACreationPhase::SSACreationPhaseContext::g
+ 	}
+ 	auto& defined = blockDefinitions[blockId];
+ 	for (auto& op : trace->getBlock(blockId).operations) {
++		if (op.op == Op::ALLOCA_TOMBSTONE) {
++			continue;
++		}
+ 		defined.insert(op.resultRef.ref);
+ 	}
+ 	return defined;
+@@ -333,7 +341,8 @@ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
+ 				}
+ 			}
+ 		}
+-		std::erase_if(block.operations, [&](const auto& item) { return item.op == Op::ASSIGN; });
++		std::erase_if(block.operations,
++		              [&](const auto& item) { return item.op == Op::ASSIGN || item.op == Op::ALLOCA_TOMBSTONE; });
+ 	}
+ }
+
+@@ -382,7 +391,8 @@ void SSACreationPhase::SSACreationPhaseContext::makeBlockArgumentsUnique() {
+ 			}
+ 		}
+
+-		std::erase_if(block.operations, [&](const auto& item) { return item.op == Op::ASSIGN; });
++		std::erase_if(block.operations,
++		              [&](const auto& item) { return item.op == Op::ASSIGN || item.op == Op::ALLOCA_TOMBSTONE; });
+ 	}
+ }
+
+diff --git a/nautilus/test/common/ValueTypeFunctions.hpp b/nautilus/test/common/ValueTypeFunctions.hpp
+index 362e7f924..4a23895c0 100644
+--- a/nautilus/test/common/ValueTypeFunctions.hpp
++++ b/nautilus/test/common/ValueTypeFunctions.hpp
+@@ -4,6 +4,7 @@
+ #include "nautilus/function.hpp"
+ #include <cstdint>
+ #include <nautilus/Engine.hpp>
++#include <nautilus/nautilus_function.hpp>
+ #include <nautilus/std/cstring.h>
+ #include <nautilus/val.hpp>
+ #include <nautilus/val_ptr.hpp>
+@@ -148,4 +149,97 @@ val<int32_t> copyInLoop(val<int32_t> count) {
+ 	return sum;
+ }
+
++// --- Nested function + struct tests ---
++
++// Helper: takes a Test* and increments field a by a given amount.
++val<int32_t> readFieldA(val<Test*> ptr) {
++	return ptr.get(&Test::a);
++}
++
++static auto nautilusReadFieldA = NautilusFunction {"readFieldA", readFieldA};
++
++void incrementFieldA(val<Test*> ptr, val<int32_t> amount) {
++	ptr.set(&Test::a, ptr.get(&Test::a) + amount);
++}
++
++static auto nautilusIncrementFieldA = NautilusFunction {"incrementFieldA", incrementFieldA};
++
++// Struct modified in a loop via a nested NautilusFunction call.
++val<int32_t> modifyStructInLoopWithNestedCall(val<int32_t> count) {
++	val<Test> value;
++	value.set(&Test::a, 0);
++	for (val<int32_t> i = 0; i < count; i = i + 1) {
++		nautilusIncrementFieldA(&value, val<int32_t>(1));
++	}
++	return nautilusReadFieldA(&value);
++}
++
++// Struct constructed inside loop body, passed to nested function each iteration.
++val<int32_t> constructStructInLoopWithNestedCall(val<int32_t> count) {
++	val<int32_t> sum = 0;
++	for (val<int32_t> i = 0; i < count; i = i + 1) {
++		val<Test> tmp;
++		tmp.set(&Test::a, i);
++		sum = sum + nautilusReadFieldA(&tmp);
++	}
++	return sum;
++}
++
++// Helper: creates a Test with both fields set and returns a + b.
++val<int32_t> sumFields(val<Test*> ptr) {
++	return ptr.get(&Test::a) + ptr.get(&Test::b);
++}
++
++static auto nautilusSumFields = NautilusFunction {"sumFields", sumFields};
++
++// Multiple nested function calls on the same struct inside a loop.
++val<int32_t> multipleNestedCallsInLoop(val<int32_t> count) {
++	val<Test> value;
++	value.set(&Test::a, 0);
++	value.set(&Test::b, 100);
++	for (val<int32_t> i = 0; i < count; i = i + 1) {
++		nautilusIncrementFieldA(&value, nautilusSumFields(&value));
++	}
++	return nautilusReadFieldA(&value);
++}
++
++// --- Struct in conditional return paths ---
++
++// Construct a struct inside a conditional branch that also returns.
++// The ALLOCA and RETURN end up in the same non-initial block.
++// When hoistAllocaOperations() erases the ALLOCA, the returnRef's
++// operationIndex becomes stale (points OOB or to the wrong op).
++val<int32_t> structInConditionalReturn(val<int32_t> x) {
++	if (x > 0) {
++		val<Test> value;
++		value.set(&Test::a, x);
++		value.set(&Test::b, 10);
++		return value.get(&Test::a) + value.get(&Test::b);
++	}
++	return x;
++}
++
++// Two structs constructed in different branches, both returning.
++val<int32_t> structInBothBranches(val<int32_t> x) {
++	if (x > 0) {
++		val<Test> a;
++		a.set(&Test::a, x);
++		return a.get(&Test::a);
++	} else {
++		val<Test> b;
++		b.set(&Test::a, 42);
++		return b.get(&Test::a);
++	}
++}
++
++// Struct constructed in a nested function called from a conditional return path.
++val<int32_t> structInNestedConditionalReturn(val<int32_t> x) {
++	if (x > 0) {
++		val<Test> value;
++		value.set(&Test::a, x);
++		return nautilusReadFieldA(&value);
++	}
++	return val<int32_t>(0);
++}
++
+ } // namespace nautilus
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/constructStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/after_ssa/constructStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..f8ab9e08c
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/constructStructInLoopWithNestedCall.trace
+@@ -0,0 +1,32 @@
++READFIELDA:
++B0($1:ptr)
++	CONST	$3	0	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$3	$5	:ui64
++	ADD	$7	$1	$6	:ptr
++	LOAD	$10	$7	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$6	:ptr
++	CONST	$2	0	:i32
++	CONST	$3	0	:i32
++	JMP	$0	B3($2,$3,$1,$6)	:void
++B1($1:i32,$3:i32,$2:i32,$6:ptr)
++	CONST	$10	0	:ui64
++	CONST	$12	1	:ui64
++	MUL	$13	$10	$12	:ui64
++	ADD	$14	$6	$13	:ptr
++	STORE	$19	$14	$3	:void
++	CALL	$21	func_*($6)	:i32
++	ADD	$22	$2	$21	:i32
++	CONST	$23	1	:i32
++	ADD	$24	$3	$23	:i32
++	JMP	$0	B3($22,$24,$1,$6)	:void
++B2($2:i32)
++	RETURN	$0	$2	:i32
++B3($2:i32,$3:i32,$1:i32,$6:ptr) ControlFlowMerge
++	LT	$4	$3	$1	:bool
++	CMP	$5	$4	B1($1,$3,$2,$6)	B2($2)	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/modifyStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/after_ssa/modifyStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..701aeabfe
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/modifyStructInLoopWithNestedCall.trace
+@@ -0,0 +1,48 @@
++INCREMENTFIELDA:
++B0($1:ptr,$2:i32)
++	CONST	$4	0	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$4	$6	:ui64
++	ADD	$8	$1	$7	:ptr
++	LOAD	$12	$8	:i32
++	ADD	$13	$12	$2	:i32
++	CONST	$15	0	:ui64
++	CONST	$17	1	:ui64
++	MUL	$18	$15	$17	:ui64
++	ADD	$19	$1	$18	:ptr
++	STORE	$24	$19	$13	:void
++	RETURN	$0	:void
++
++READFIELDA:
++B0($1:ptr)
++	CONST	$3	0	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$3	$5	:ui64
++	ADD	$7	$1	$6	:ptr
++	LOAD	$10	$7	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$2	:ptr
++	CONST	$4	0	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$4	$6	:ui64
++	ADD	$8	$2	$7	:ptr
++	CONST	$11	0	:i32
++	STORE	$14	$8	$11	:void
++	CONST	$15	0	:i32
++	JMP	$0	B3($2,$15,$1)	:void
++B1($2:ptr,$1:i32,$15:i32)
++	CONST	$19	1	:i32
++	CALL	$20	func_*($2,$19)	:void
++	CONST	$21	1	:i32
++	ADD	$22	$15	$21	:i32
++	JMP	$0	B3($2,$22,$1)	:void
++B2($2:ptr)
++	CALL	$25	func_*($2)	:i32
++	RETURN	$0	$25	:i32
++B3($2:ptr,$15:i32,$1:i32) ControlFlowMerge
++	LT	$16	$15	$1	:bool
++	CMP	$17	$16	B1($2,$1,$15)	B2($2)	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/multipleNestedCallsInLoop.trace b/nautilus/test/data/value-tracing-tests/after_ssa/multipleNestedCallsInLoop.trace
+new file mode 100644
+index 000000000..ae0497b28
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/multipleNestedCallsInLoop.trace
+@@ -0,0 +1,69 @@
++INCREMENTFIELDA:
++B0($1:ptr,$2:i32)
++	CONST	$4	0	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$4	$6	:ui64
++	ADD	$8	$1	$7	:ptr
++	LOAD	$12	$8	:i32
++	ADD	$13	$12	$2	:i32
++	CONST	$15	0	:ui64
++	CONST	$17	1	:ui64
++	MUL	$18	$15	$17	:ui64
++	ADD	$19	$1	$18	:ptr
++	STORE	$24	$19	$13	:void
++	RETURN	$0	:void
++
++SUMFIELDS:
++B0($1:ptr)
++	CONST	$3	0	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$3	$5	:ui64
++	ADD	$7	$1	$6	:ptr
++	CONST	$11	4	:ui64
++	CONST	$13	1	:ui64
++	MUL	$14	$11	$13	:ui64
++	ADD	$15	$1	$14	:ptr
++	LOAD	$18	$7	:i32
++	LOAD	$19	$15	:i32
++	ADD	$20	$18	$19	:i32
++	RETURN	$0	$20	:i32
++
++READFIELDA:
++B0($1:ptr)
++	CONST	$3	0	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$3	$5	:ui64
++	ADD	$7	$1	$6	:ptr
++	LOAD	$10	$7	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$2	:ptr
++	CONST	$4	0	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$4	$6	:ui64
++	ADD	$8	$2	$7	:ptr
++	CONST	$11	0	:i32
++	STORE	$14	$8	$11	:void
++	CONST	$16	4	:ui64
++	CONST	$18	1	:ui64
++	MUL	$19	$16	$18	:ui64
++	ADD	$20	$2	$19	:ptr
++	CONST	$23	100	:i32
++	STORE	$26	$20	$23	:void
++	CONST	$27	0	:i32
++	JMP	$0	B3($2,$27,$1)	:void
++B1($2:ptr,$1:i32,$27:i32)
++	CALL	$32	func_*($2)	:i32
++	CALL	$33	func_*($2,$32)	:void
++	CONST	$34	1	:i32
++	ADD	$35	$27	$34	:i32
++	JMP	$0	B3($2,$35,$1)	:void
++B2($2:ptr)
++	CALL	$38	func_*($2)	:i32
++	RETURN	$0	$38	:i32
++B3($2:ptr,$27:i32,$1:i32) ControlFlowMerge
++	LT	$28	$27	$1	:bool
++	CMP	$29	$28	B1($2,$1,$27)	B2($2)	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/structInBothBranches.trace b/nautilus/test/data/value-tracing-tests/after_ssa/structInBothBranches.trace
+new file mode 100644
+index 000000000..399b1c927
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/structInBothBranches.trace
+@@ -0,0 +1,35 @@
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$5	:ptr
++	ALLOCA	$29	:ptr
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1($5,$1)	B2($29)	:void
++B1($5:ptr,$1:i32)
++	CONST	$9	0	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$9	$11	:ui64
++	ADD	$13	$5	$12	:ptr
++	STORE	$18	$13	$1	:void
++	CONST	$20	0	:ui64
++	CONST	$22	1	:ui64
++	MUL	$23	$20	$22	:ui64
++	ADD	$24	$5	$23	:ptr
++	LOAD	$27	$24	:i32
++	JMP	$0	B3($27)	:void
++B2($29:ptr)
++	CONST	$31	0	:ui64
++	CONST	$33	1	:ui64
++	MUL	$34	$31	$33	:ui64
++	ADD	$35	$29	$34	:ptr
++	CONST	$38	42	:i32
++	STORE	$41	$35	$38	:void
++	CONST	$43	0	:ui64
++	CONST	$45	1	:ui64
++	MUL	$46	$43	$45	:ui64
++	ADD	$47	$29	$46	:ptr
++	LOAD	$50	$47	:i32
++	JMP	$0	B3($50)	:void
++B3($27:i32)
++	RETURN	$0	$27	:i32
++
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/structInConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/after_ssa/structInConditionalReturn.trace
+new file mode 100644
+index 000000000..4e4d22df8
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/structInConditionalReturn.trace
+@@ -0,0 +1,35 @@
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$5	:ptr
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1($5,$1)	B2($1)	:void
++B1($5:ptr,$1:i32)
++	CONST	$9	0	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$9	$11	:ui64
++	ADD	$13	$5	$12	:ptr
++	STORE	$18	$13	$1	:void
++	CONST	$20	4	:ui64
++	CONST	$22	1	:ui64
++	MUL	$23	$20	$22	:ui64
++	ADD	$24	$5	$23	:ptr
++	CONST	$27	10	:i32
++	STORE	$30	$24	$27	:void
++	CONST	$32	0	:ui64
++	CONST	$34	1	:ui64
++	MUL	$35	$32	$34	:ui64
++	ADD	$36	$5	$35	:ptr
++	CONST	$40	4	:ui64
++	CONST	$42	1	:ui64
++	MUL	$43	$40	$42	:ui64
++	ADD	$44	$5	$43	:ptr
++	LOAD	$47	$36	:i32
++	LOAD	$48	$44	:i32
++	ADD	$49	$47	$48	:i32
++	JMP	$0	B3($49)	:void
++B2($1:i32)
++	JMP	$0	B3($1)	:void
++B3($49:i32)
++	RETURN	$0	$49	:i32
++
+diff --git a/nautilus/test/data/value-tracing-tests/after_ssa/structInNestedConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/after_ssa/structInNestedConditionalReturn.trace
+new file mode 100644
+index 000000000..4c99624ea
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/after_ssa/structInNestedConditionalReturn.trace
+@@ -0,0 +1,29 @@
++READFIELDA:
++B0($1:ptr)
++	CONST	$3	0	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$3	$5	:ui64
++	ADD	$7	$1	$6	:ptr
++	LOAD	$10	$7	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$5	:ptr
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1($5,$1)	B2()	:void
++B1($5:ptr,$1:i32)
++	CONST	$9	0	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$9	$11	:ui64
++	ADD	$13	$5	$12	:ptr
++	STORE	$18	$13	$1	:void
++	CALL	$20	func_*($5)	:i32
++	JMP	$0	B3($20)	:void
++B2()
++	CONST	$22	0	:i32
++	JMP	$0	B3($22)	:void
++B3($20:i32)
++	RETURN	$0	$20	:i32
++
+diff --git a/nautilus/test/data/value-tracing-tests/ir/constructStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/ir/constructStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..367166d67
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/constructStructInLoopWithNestedCall.trace
+@@ -0,0 +1,37 @@
++NautilusIr {
++readFieldA() {
++Block_0($1:ptr):
++	$3 = 0 :ui64
++	$5 = 1 :ui64
++	$6 = $3 * $5 :ui64
++	$7 = $1 + $6 :ptr
++	$10 = load($7) :i32
++	return ($10) :i32
++}
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$2 = 0 :i32
++	$3 = 0 :i32
++	br Block_3($2, $3, $1, $0) :void
++
++Block_3($2:i32, $3:i32, $1:i32, $6:ptr):
++	$4 = $3 < $1 :bool
++	if $4 ? Block_1($1, $3, $2, $6) : Block_2($2) :void
++
++Block_1($1:i32, $3:i32, $2:i32, $6:ptr):
++	$10 = 0 :ui64
++	$12 = 1 :ui64
++	$13 = $10 * $12 :ui64
++	$14 = $6 + $13 :ptr
++	store($3, $14) :void
++	$21 = func_*($6) :i32
++	$22 = $2 + $21 :i32
++	$23 = 1 :i32
++	$24 = $3 + $23 :i32
++	br Block_3($22, $24, $1, $6) :void
++
++Block_2($2:i32):
++	return ($2) :i32
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/ir/modifyStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/ir/modifyStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..414aebc1b
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/modifyStructInLoopWithNestedCall.trace
+@@ -0,0 +1,53 @@
++NautilusIr {
++incrementFieldA() {
++Block_0($1:ptr, $2:i32):
++	$4 = 0 :ui64
++	$6 = 1 :ui64
++	$7 = $4 * $6 :ui64
++	$8 = $1 + $7 :ptr
++	$12 = load($8) :i32
++	$13 = $12 + $2 :i32
++	$15 = 0 :ui64
++	$17 = 1 :ui64
++	$18 = $15 * $17 :ui64
++	$19 = $1 + $18 :ptr
++	store($13, $19) :void
++	return :void
++}
++readFieldA() {
++Block_0($1:ptr):
++	$3 = 0 :ui64
++	$5 = 1 :ui64
++	$6 = $3 * $5 :ui64
++	$7 = $1 + $6 :ptr
++	$10 = load($7) :i32
++	return ($10) :i32
++}
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$4 = 0 :ui64
++	$6 = 1 :ui64
++	$7 = $4 * $6 :ui64
++	$8 = $0 + $7 :ptr
++	$11 = 0 :i32
++	store($11, $8) :void
++	$15 = 0 :i32
++	br Block_3($0, $15, $1) :void
++
++Block_3($2:ptr, $15:i32, $1:i32):
++	$16 = $15 < $1 :bool
++	if $16 ? Block_1($2, $1, $15) : Block_2($2) :void
++
++Block_1($2:ptr, $1:i32, $15:i32):
++	$19 = 1 :i32
++	func_*($2,$19) :void
++	$21 = 1 :i32
++	$22 = $15 + $21 :i32
++	br Block_3($2, $22, $1) :void
++
++Block_2($2:ptr):
++	$25 = func_*($2) :i32
++	return ($25) :i32
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/ir/multipleNestedCallsInLoop.trace b/nautilus/test/data/value-tracing-tests/ir/multipleNestedCallsInLoop.trace
+new file mode 100644
+index 000000000..d3fca0d92
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/multipleNestedCallsInLoop.trace
+@@ -0,0 +1,74 @@
++NautilusIr {
++incrementFieldA() {
++Block_0($1:ptr, $2:i32):
++	$4 = 0 :ui64
++	$6 = 1 :ui64
++	$7 = $4 * $6 :ui64
++	$8 = $1 + $7 :ptr
++	$12 = load($8) :i32
++	$13 = $12 + $2 :i32
++	$15 = 0 :ui64
++	$17 = 1 :ui64
++	$18 = $15 * $17 :ui64
++	$19 = $1 + $18 :ptr
++	store($13, $19) :void
++	return :void
++}
++sumFields() {
++Block_0($1:ptr):
++	$3 = 0 :ui64
++	$5 = 1 :ui64
++	$6 = $3 * $5 :ui64
++	$7 = $1 + $6 :ptr
++	$11 = 4 :ui64
++	$13 = 1 :ui64
++	$14 = $11 * $13 :ui64
++	$15 = $1 + $14 :ptr
++	$18 = load($7) :i32
++	$19 = load($15) :i32
++	$20 = $18 + $19 :i32
++	return ($20) :i32
++}
++readFieldA() {
++Block_0($1:ptr):
++	$3 = 0 :ui64
++	$5 = 1 :ui64
++	$6 = $3 * $5 :ui64
++	$7 = $1 + $6 :ptr
++	$10 = load($7) :i32
++	return ($10) :i32
++}
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$4 = 0 :ui64
++	$6 = 1 :ui64
++	$7 = $4 * $6 :ui64
++	$8 = $0 + $7 :ptr
++	$11 = 0 :i32
++	store($11, $8) :void
++	$16 = 4 :ui64
++	$18 = 1 :ui64
++	$19 = $16 * $18 :ui64
++	$20 = $0 + $19 :ptr
++	$23 = 100 :i32
++	store($23, $20) :void
++	$27 = 0 :i32
++	br Block_3($0, $27, $1) :void
++
++Block_3($2:ptr, $27:i32, $1:i32):
++	$28 = $27 < $1 :bool
++	if $28 ? Block_1($2, $1, $27) : Block_2($2) :void
++
++Block_1($2:ptr, $1:i32, $27:i32):
++	$32 = func_*($2) :i32
++	func_*($2,$32) :void
++	$34 = 1 :i32
++	$35 = $27 + $34 :i32
++	br Block_3($2, $35, $1) :void
++
++Block_2($2:ptr):
++	$38 = func_*($2) :i32
++	return ($38) :i32
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/ir/structInBothBranches.trace b/nautilus/test/data/value-tracing-tests/ir/structInBothBranches.trace
+new file mode 100644
+index 000000000..4d671c4fc
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/structInBothBranches.trace
+@@ -0,0 +1,40 @@
++NautilusIr {
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$0 = alloca 8b :ptr
++	$2 = 0 :i32
++	$3 = $1 > $2 :bool
++	if $3 ? Block_1($0, $1) : Block_2($0) :void
++
++Block_1($5:ptr, $1:i32):
++	$9 = 0 :ui64
++	$11 = 1 :ui64
++	$12 = $9 * $11 :ui64
++	$13 = $5 + $12 :ptr
++	store($1, $13) :void
++	$20 = 0 :ui64
++	$22 = 1 :ui64
++	$23 = $20 * $22 :ui64
++	$24 = $5 + $23 :ptr
++	$27 = load($24) :i32
++	br Block_3($27) :void
++
++Block_3($27:i32):
++	return ($27) :i32
++
++Block_2($29:ptr):
++	$31 = 0 :ui64
++	$33 = 1 :ui64
++	$34 = $31 * $33 :ui64
++	$35 = $29 + $34 :ptr
++	$38 = 42 :i32
++	store($38, $35) :void
++	$43 = 0 :ui64
++	$45 = 1 :ui64
++	$46 = $43 * $45 :ui64
++	$47 = $29 + $46 :ptr
++	$50 = load($47) :i32
++	br Block_3($50) :void
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/ir/structInConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/ir/structInConditionalReturn.trace
+new file mode 100644
+index 000000000..7a9ad114e
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/structInConditionalReturn.trace
+@@ -0,0 +1,40 @@
++NautilusIr {
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$2 = 0 :i32
++	$3 = $1 > $2 :bool
++	if $3 ? Block_1($0, $1) : Block_2($1) :void
++
++Block_1($5:ptr, $1:i32):
++	$9 = 0 :ui64
++	$11 = 1 :ui64
++	$12 = $9 * $11 :ui64
++	$13 = $5 + $12 :ptr
++	store($1, $13) :void
++	$20 = 4 :ui64
++	$22 = 1 :ui64
++	$23 = $20 * $22 :ui64
++	$24 = $5 + $23 :ptr
++	$27 = 10 :i32
++	store($27, $24) :void
++	$32 = 0 :ui64
++	$34 = 1 :ui64
++	$35 = $32 * $34 :ui64
++	$36 = $5 + $35 :ptr
++	$40 = 4 :ui64
++	$42 = 1 :ui64
++	$43 = $40 * $42 :ui64
++	$44 = $5 + $43 :ptr
++	$47 = load($36) :i32
++	$48 = load($44) :i32
++	$49 = $47 + $48 :i32
++	br Block_3($49) :void
++
++Block_3($49:i32):
++	return ($49) :i32
++
++Block_2($1:i32):
++	br Block_3($1) :void
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/ir/structInNestedConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/ir/structInNestedConditionalReturn.trace
+new file mode 100644
+index 000000000..9d49f18c6
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/ir/structInNestedConditionalReturn.trace
+@@ -0,0 +1,34 @@
++NautilusIr {
++readFieldA() {
++Block_0($1:ptr):
++	$3 = 0 :ui64
++	$5 = 1 :ui64
++	$6 = $3 * $5 :ui64
++	$7 = $1 + $6 :ptr
++	$10 = load($7) :i32
++	return ($10) :i32
++}
++execute() {
++Block_0($1:i32):
++	$0 = alloca 8b :ptr
++	$2 = 0 :i32
++	$3 = $1 > $2 :bool
++	if $3 ? Block_1($0, $1) : Block_2() :void
++
++Block_1($5:ptr, $1:i32):
++	$9 = 0 :ui64
++	$11 = 1 :ui64
++	$12 = $9 * $11 :ui64
++	$13 = $5 + $12 :ptr
++	store($1, $13) :void
++	$20 = func_*($5) :i32
++	br Block_3($20) :void
++
++Block_3($20:i32):
++	return ($20) :i32
++
++Block_2():
++	$22 = 0 :i32
++	br Block_3($22) :void
++}
++} //NESIR
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/constructStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/tracing/constructStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..df23b0dd8
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/constructStructInLoopWithNestedCall.trace
+@@ -0,0 +1,47 @@
++READFIELDA:
++B0($1:ptr)
++	ASSIGN	$2	$1	:ptr
++	CONST	$3	0	:ui64
++	ASSIGN	$4	$3	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$4	$5	:ui64
++	ADD	$7	$2	$6	:ptr
++	ASSIGN	$8	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	LOAD	$10	$9	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	CONST	$2	0	:i32
++	CONST	$3	0	:i32
++	JMP	$0	B3()	:void
++B1()
++	ALLOCA	$6	:ptr
++	ASSIGN	$7	$3	:i32
++	ASSIGN	$8	$7	:i32
++	ASSIGN	$9	$6	:ptr
++	CONST	$10	0	:ui64
++	ASSIGN	$11	$10	:ui64
++	CONST	$12	1	:ui64
++	MUL	$13	$11	$12	:ui64
++	ADD	$14	$9	$13	:ptr
++	ASSIGN	$15	$14	:ptr
++	ASSIGN	$16	$15	:ptr
++	ASSIGN	$17	$8	:i32
++	ASSIGN	$18	$17	:i32
++	STORE	$19	$16	$18	:void
++	ASSIGN	$20	$6	:ptr
++	CALL	$21	func_*($20)	:i32
++	ADD	$22	$2	$21	:i32
++	ASSIGN	$2	$22	:i32
++	CONST	$23	1	:i32
++	ADD	$24	$3	$23	:i32
++	ASSIGN	$3	$24	:i32
++	JMP	$0	B3()	:void
++B2()
++	RETURN	$0	$2	:i32
++B3() ControlFlowMerge
++	LT	$4	$3	$1	:bool
++	CMP	$5	$4	B1()	B2()	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/modifyStructInLoopWithNestedCall.trace b/nautilus/test/data/value-tracing-tests/tracing/modifyStructInLoopWithNestedCall.trace
+new file mode 100644
+index 000000000..0cd04aeb1
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/modifyStructInLoopWithNestedCall.trace
+@@ -0,0 +1,72 @@
++INCREMENTFIELDA:
++B0($1:ptr,$2:i32)
++	ASSIGN	$3	$1	:ptr
++	CONST	$4	0	:ui64
++	ASSIGN	$5	$4	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$5	$6	:ui64
++	ADD	$8	$3	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	ASSIGN	$10	$9	:ptr
++	ASSIGN	$11	$2	:i32
++	LOAD	$12	$10	:i32
++	ADD	$13	$12	$11	:i32
++	ASSIGN	$14	$1	:ptr
++	CONST	$15	0	:ui64
++	ASSIGN	$16	$15	:ui64
++	CONST	$17	1	:ui64
++	MUL	$18	$16	$17	:ui64
++	ADD	$19	$14	$18	:ptr
++	ASSIGN	$20	$19	:ptr
++	ASSIGN	$21	$20	:ptr
++	ASSIGN	$22	$13	:i32
++	ASSIGN	$23	$22	:i32
++	STORE	$24	$21	$23	:void
++	RETURN	$0	:void
++
++READFIELDA:
++B0($1:ptr)
++	ASSIGN	$2	$1	:ptr
++	CONST	$3	0	:ui64
++	ASSIGN	$4	$3	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$4	$5	:ui64
++	ADD	$7	$2	$6	:ptr
++	ASSIGN	$8	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	LOAD	$10	$9	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$2	:ptr
++	ASSIGN	$3	$2	:ptr
++	CONST	$4	0	:ui64
++	ASSIGN	$5	$4	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$5	$6	:ui64
++	ADD	$8	$3	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	ASSIGN	$10	$9	:ptr
++	CONST	$11	0	:i32
++	ASSIGN	$12	$11	:i32
++	ASSIGN	$13	$12	:i32
++	STORE	$14	$10	$13	:void
++	CONST	$15	0	:i32
++	JMP	$0	B3()	:void
++B1()
++	ASSIGN	$18	$2	:ptr
++	CONST	$19	1	:i32
++	CALL	$20	func_*($18,$19)	:void
++	CONST	$21	1	:i32
++	ADD	$22	$15	$21	:i32
++	ASSIGN	$15	$22	:i32
++	JMP	$0	B3()	:void
++B2()
++	ASSIGN	$24	$2	:ptr
++	CALL	$25	func_*($24)	:i32
++	RETURN	$0	$25	:i32
++B3() ControlFlowMerge
++	LT	$16	$15	$1	:bool
++	CMP	$17	$16	B1()	B2()	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/multipleNestedCallsInLoop.trace b/nautilus/test/data/value-tracing-tests/tracing/multipleNestedCallsInLoop.trace
+new file mode 100644
+index 000000000..48d4e6a30
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/multipleNestedCallsInLoop.trace
+@@ -0,0 +1,108 @@
++INCREMENTFIELDA:
++B0($1:ptr,$2:i32)
++	ASSIGN	$3	$1	:ptr
++	CONST	$4	0	:ui64
++	ASSIGN	$5	$4	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$5	$6	:ui64
++	ADD	$8	$3	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	ASSIGN	$10	$9	:ptr
++	ASSIGN	$11	$2	:i32
++	LOAD	$12	$10	:i32
++	ADD	$13	$12	$11	:i32
++	ASSIGN	$14	$1	:ptr
++	CONST	$15	0	:ui64
++	ASSIGN	$16	$15	:ui64
++	CONST	$17	1	:ui64
++	MUL	$18	$16	$17	:ui64
++	ADD	$19	$14	$18	:ptr
++	ASSIGN	$20	$19	:ptr
++	ASSIGN	$21	$20	:ptr
++	ASSIGN	$22	$13	:i32
++	ASSIGN	$23	$22	:i32
++	STORE	$24	$21	$23	:void
++	RETURN	$0	:void
++
++SUMFIELDS:
++B0($1:ptr)
++	ASSIGN	$2	$1	:ptr
++	CONST	$3	0	:ui64
++	ASSIGN	$4	$3	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$4	$5	:ui64
++	ADD	$7	$2	$6	:ptr
++	ASSIGN	$8	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	ASSIGN	$10	$1	:ptr
++	CONST	$11	4	:ui64
++	ASSIGN	$12	$11	:ui64
++	CONST	$13	1	:ui64
++	MUL	$14	$12	$13	:ui64
++	ADD	$15	$10	$14	:ptr
++	ASSIGN	$16	$15	:ptr
++	ASSIGN	$17	$16	:ptr
++	LOAD	$18	$9	:i32
++	LOAD	$19	$17	:i32
++	ADD	$20	$18	$19	:i32
++	RETURN	$0	$20	:i32
++
++READFIELDA:
++B0($1:ptr)
++	ASSIGN	$2	$1	:ptr
++	CONST	$3	0	:ui64
++	ASSIGN	$4	$3	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$4	$5	:ui64
++	ADD	$7	$2	$6	:ptr
++	ASSIGN	$8	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	LOAD	$10	$9	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	ALLOCA	$2	:ptr
++	ASSIGN	$3	$2	:ptr
++	CONST	$4	0	:ui64
++	ASSIGN	$5	$4	:ui64
++	CONST	$6	1	:ui64
++	MUL	$7	$5	$6	:ui64
++	ADD	$8	$3	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	ASSIGN	$10	$9	:ptr
++	CONST	$11	0	:i32
++	ASSIGN	$12	$11	:i32
++	ASSIGN	$13	$12	:i32
++	STORE	$14	$10	$13	:void
++	ASSIGN	$15	$2	:ptr
++	CONST	$16	4	:ui64
++	ASSIGN	$17	$16	:ui64
++	CONST	$18	1	:ui64
++	MUL	$19	$17	$18	:ui64
++	ADD	$20	$15	$19	:ptr
++	ASSIGN	$21	$20	:ptr
++	ASSIGN	$22	$21	:ptr
++	CONST	$23	100	:i32
++	ASSIGN	$24	$23	:i32
++	ASSIGN	$25	$24	:i32
++	STORE	$26	$22	$25	:void
++	CONST	$27	0	:i32
++	JMP	$0	B3()	:void
++B1()
++	ASSIGN	$30	$2	:ptr
++	ASSIGN	$31	$2	:ptr
++	CALL	$32	func_*($31)	:i32
++	CALL	$33	func_*($30,$32)	:void
++	CONST	$34	1	:i32
++	ADD	$35	$27	$34	:i32
++	ASSIGN	$27	$35	:i32
++	JMP	$0	B3()	:void
++B2()
++	ASSIGN	$37	$2	:ptr
++	CALL	$38	func_*($37)	:i32
++	RETURN	$0	$38	:i32
++B3() ControlFlowMerge
++	LT	$28	$27	$1	:bool
++	CMP	$29	$28	B1()	B2()	:void
++
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/structInBothBranches.trace b/nautilus/test/data/value-tracing-tests/tracing/structInBothBranches.trace
+new file mode 100644
+index 000000000..a3eac5609
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/structInBothBranches.trace
+@@ -0,0 +1,55 @@
++EXECUTE:
++B0($1:i32)
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1()	B2()	:void
++B1()
++	ALLOCA	$5	:ptr
++	ASSIGN	$6	$1	:i32
++	ASSIGN	$7	$6	:i32
++	ASSIGN	$8	$5	:ptr
++	CONST	$9	0	:ui64
++	ASSIGN	$10	$9	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$10	$11	:ui64
++	ADD	$13	$8	$12	:ptr
++	ASSIGN	$14	$13	:ptr
++	ASSIGN	$15	$14	:ptr
++	ASSIGN	$16	$7	:i32
++	ASSIGN	$17	$16	:i32
++	STORE	$18	$15	$17	:void
++	ASSIGN	$19	$5	:ptr
++	CONST	$20	0	:ui64
++	ASSIGN	$21	$20	:ui64
++	CONST	$22	1	:ui64
++	MUL	$23	$21	$22	:ui64
++	ADD	$24	$19	$23	:ptr
++	ASSIGN	$25	$24	:ptr
++	ASSIGN	$26	$25	:ptr
++	LOAD	$27	$26	:i32
++	RETURN	$0	$27	:i32
++B2()
++	ALLOCA	$29	:ptr
++	ASSIGN	$30	$29	:ptr
++	CONST	$31	0	:ui64
++	ASSIGN	$32	$31	:ui64
++	CONST	$33	1	:ui64
++	MUL	$34	$32	$33	:ui64
++	ADD	$35	$30	$34	:ptr
++	ASSIGN	$36	$35	:ptr
++	ASSIGN	$37	$36	:ptr
++	CONST	$38	42	:i32
++	ASSIGN	$39	$38	:i32
++	ASSIGN	$40	$39	:i32
++	STORE	$41	$37	$40	:void
++	ASSIGN	$42	$29	:ptr
++	CONST	$43	0	:ui64
++	ASSIGN	$44	$43	:ui64
++	CONST	$45	1	:ui64
++	MUL	$46	$44	$45	:ui64
++	ADD	$47	$42	$46	:ptr
++	ASSIGN	$48	$47	:ptr
++	ASSIGN	$49	$48	:ptr
++	LOAD	$50	$49	:i32
++	RETURN	$0	$50	:i32
++
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/structInConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/tracing/structInConditionalReturn.trace
+new file mode 100644
+index 000000000..022a97004
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/structInConditionalReturn.trace
+@@ -0,0 +1,55 @@
++EXECUTE:
++B0($1:i32)
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1()	B2()	:void
++B1()
++	ALLOCA	$5	:ptr
++	ASSIGN	$6	$1	:i32
++	ASSIGN	$7	$6	:i32
++	ASSIGN	$8	$5	:ptr
++	CONST	$9	0	:ui64
++	ASSIGN	$10	$9	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$10	$11	:ui64
++	ADD	$13	$8	$12	:ptr
++	ASSIGN	$14	$13	:ptr
++	ASSIGN	$15	$14	:ptr
++	ASSIGN	$16	$7	:i32
++	ASSIGN	$17	$16	:i32
++	STORE	$18	$15	$17	:void
++	ASSIGN	$19	$5	:ptr
++	CONST	$20	4	:ui64
++	ASSIGN	$21	$20	:ui64
++	CONST	$22	1	:ui64
++	MUL	$23	$21	$22	:ui64
++	ADD	$24	$19	$23	:ptr
++	ASSIGN	$25	$24	:ptr
++	ASSIGN	$26	$25	:ptr
++	CONST	$27	10	:i32
++	ASSIGN	$28	$27	:i32
++	ASSIGN	$29	$28	:i32
++	STORE	$30	$26	$29	:void
++	ASSIGN	$31	$5	:ptr
++	CONST	$32	0	:ui64
++	ASSIGN	$33	$32	:ui64
++	CONST	$34	1	:ui64
++	MUL	$35	$33	$34	:ui64
++	ADD	$36	$31	$35	:ptr
++	ASSIGN	$37	$36	:ptr
++	ASSIGN	$38	$37	:ptr
++	ASSIGN	$39	$5	:ptr
++	CONST	$40	4	:ui64
++	ASSIGN	$41	$40	:ui64
++	CONST	$42	1	:ui64
++	MUL	$43	$41	$42	:ui64
++	ADD	$44	$39	$43	:ptr
++	ASSIGN	$45	$44	:ptr
++	ASSIGN	$46	$45	:ptr
++	LOAD	$47	$38	:i32
++	LOAD	$48	$46	:i32
++	ADD	$49	$47	$48	:i32
++	RETURN	$0	$49	:i32
++B2()
++	RETURN	$0	$1	:i32
++
+diff --git a/nautilus/test/data/value-tracing-tests/tracing/structInNestedConditionalReturn.trace b/nautilus/test/data/value-tracing-tests/tracing/structInNestedConditionalReturn.trace
+new file mode 100644
+index 000000000..e6f752ad0
+--- /dev/null
++++ b/nautilus/test/data/value-tracing-tests/tracing/structInNestedConditionalReturn.trace
+@@ -0,0 +1,40 @@
++READFIELDA:
++B0($1:ptr)
++	ASSIGN	$2	$1	:ptr
++	CONST	$3	0	:ui64
++	ASSIGN	$4	$3	:ui64
++	CONST	$5	1	:ui64
++	MUL	$6	$4	$5	:ui64
++	ADD	$7	$2	$6	:ptr
++	ASSIGN	$8	$7	:ptr
++	ASSIGN	$9	$8	:ptr
++	LOAD	$10	$9	:i32
++	RETURN	$0	$10	:i32
++
++EXECUTE:
++B0($1:i32)
++	CONST	$2	0	:i32
++	GT	$3	$1	$2	:bool
++	CMP	$4	$3	B1()	B2()	:void
++B1()
++	ALLOCA	$5	:ptr
++	ASSIGN	$6	$1	:i32
++	ASSIGN	$7	$6	:i32
++	ASSIGN	$8	$5	:ptr
++	CONST	$9	0	:ui64
++	ASSIGN	$10	$9	:ui64
++	CONST	$11	1	:ui64
++	MUL	$12	$10	$11	:ui64
++	ADD	$13	$8	$12	:ptr
++	ASSIGN	$14	$13	:ptr
++	ASSIGN	$15	$14	:ptr
++	ASSIGN	$16	$7	:i32
++	ASSIGN	$17	$16	:i32
++	STORE	$18	$15	$17	:void
++	ASSIGN	$19	$5	:ptr
++	CALL	$20	func_*($19)	:i32
++	RETURN	$0	$20	:i32
++B2()
++	CONST	$22	0	:i32
++	RETURN	$0	$22	:i32
++
+diff --git a/nautilus/test/execution-tests/ExecutionTest.cpp b/nautilus/test/execution-tests/ExecutionTest.cpp
+index 0e9b56951..de9b91f84 100644
+--- a/nautilus/test/execution-tests/ExecutionTest.cpp
++++ b/nautilus/test/execution-tests/ExecutionTest.cpp
+@@ -989,6 +989,28 @@ void valueExecutionTest(engine::NautilusEngine& engine) {
+ 		REQUIRE(f((int32_t) 3) == 30);
+ 		REQUIRE(f((int32_t) 10) == 100);
+ 	}
++	SECTION("modifyStructInLoopWithNestedCall") {
++		auto f = engine.registerFunction(modifyStructInLoopWithNestedCall);
++		REQUIRE(f((int32_t) 0) == 0);
++		REQUIRE(f((int32_t) 1) == 1);
++		REQUIRE(f((int32_t) 5) == 5);
++		REQUIRE(f((int32_t) 10) == 10);
++	}
++	SECTION("constructStructInLoopWithNestedCall") {
++		auto f = engine.registerFunction(constructStructInLoopWithNestedCall);
++		REQUIRE(f((int32_t) 0) == 0);
++		REQUIRE(f((int32_t) 1) == 0);  // sum of i for i in [0..1) = 0
++		REQUIRE(f((int32_t) 4) == 6);  // 0+1+2+3 = 6
++		REQUIRE(f((int32_t) 5) == 10); // 0+1+2+3+4 = 10
++	}
++	SECTION("multipleNestedCallsInLoop") {
++		auto f = engine.registerFunction(multipleNestedCallsInLoop);
++		// iter 0: a=0, b=100, sumFields=100, a becomes 0+100=100
++		// iter 1: a=100, b=100, sumFields=200, a becomes 100+200=300
++		REQUIRE(f((int32_t) 0) == 0);
++		REQUIRE(f((int32_t) 1) == 100);
++		REQUIRE(f((int32_t) 2) == 300);
++	}
+ }
+
+ class Clazz {
+diff --git a/nautilus/test/execution-tests/TracingTest.cpp b/nautilus/test/execution-tests/TracingTest.cpp
+index edf5c5ea1..8c50ce2fc 100644
+--- a/nautilus/test/execution-tests/TracingTest.cpp
++++ b/nautilus/test/execution-tests/TracingTest.cpp
+@@ -340,6 +340,14 @@ TEST_CASE("Value Trace Test") {
+ 	    {"modifyInLoop", details::createFunctionWrapper(modifyInLoop)},
+ 	    {"copyInLoop", details::createFunctionWrapper(copyInLoop)},
+ 	    {"constructAndCall", details::createFunctionWrapper(constructAndCall)},
++	    // struct in conditional return paths
++	    {"structInConditionalReturn", details::createFunctionWrapper(structInConditionalReturn)},
++	    {"structInBothBranches", details::createFunctionWrapper(structInBothBranches)},
++	    {"structInNestedConditionalReturn", details::createFunctionWrapper(structInNestedConditionalReturn)},
++	    // nested function + struct tests
++	    {"modifyStructInLoopWithNestedCall", details::createFunctionWrapper(modifyStructInLoopWithNestedCall)},
++	    {"constructStructInLoopWithNestedCall", details::createFunctionWrapper(constructStructInLoopWithNestedCall)},
++	    {"multipleNestedCallsInLoop", details::createFunctionWrapper(multipleNestedCallsInLoop)},
+
+ 	};
+ 	runTraceTests("value-tracing-tests", tests);

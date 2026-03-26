@@ -55,7 +55,7 @@ private:
         Slice& sliceLeft,
         Slice& sliceRight,
         const WindowInfo& windowInfo,
-        const SequenceData& sequenceData,
+        const SequenceRange& sequenceRange,
         PipelineExecutionContext* pipelineCtx) override;
 };
 }
