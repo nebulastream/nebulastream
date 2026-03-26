@@ -56,8 +56,8 @@ public:
                     patientBaseline->second.value,
                     unixTsToFormattedDatetime(patientBaseline->second.timestamp),
                     unixTsToFormattedDatetime(insertionTs),
-                    unixTsToFormattedDatetime(ingestionTs),
-                    unixTsToFormattedDatetime(
+                    unixTsToFormattedDatetimeAdjusted(ingestionTs),
+                    unixTsToFormattedDatetimeAdjusted(
                         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
                 constexpr size_t sevenDaysInMilliseconds = 604800000;
                 if (newBaselineValue.timestamp - patientBaseline->second.timestamp >= sevenDaysInMilliseconds)

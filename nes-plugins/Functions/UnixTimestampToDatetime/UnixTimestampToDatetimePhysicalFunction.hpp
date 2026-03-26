@@ -55,8 +55,8 @@ public:
                     patientId,
                     unixTsToFormattedDatetime(unixTimestamp),
                     unixTsToFormattedDatetime(insertionTs),
-                    unixTsToFormattedDatetime(ingestionTs),
-                    unixTsToFormattedDatetime(currentTs));
+                    unixTsToFormattedDatetimeAdjusted(ingestionTs),
+                    unixTsToFormattedDatetimeAdjusted(currentTs));
 
                 const auto allocatedMemory = reinterpret_cast<char*>(arenaPtr->allocateMemory(probeResult.size()).data());
                 std::memcpy(allocatedMemory, probeResult.data(), probeResult.size());
