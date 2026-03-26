@@ -71,3 +71,10 @@ SELECT * FROM stream WHERE value != UINT64(1) INTO sinkWindow;
 1,19,19000
 1,20,20000
 1,21,21000
+
+# Should only use one compiled pipeline
+SELECT id + UINT64(1) as newid, value + UINT64(1) as newval, timestamp FROM stream WHERE value == UINT64(1) and id < UINT64(13) INTO FILE();
+----
+2,2,1000
+13,2,1001
+5,2,1002

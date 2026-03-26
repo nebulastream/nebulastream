@@ -43,6 +43,7 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <UnionPhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -173,6 +174,22 @@ void addOutputFormattingEmit(
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, bufferRef));
 }
 
+/// Checks recursively for a pipeline, excluding the scan, if it only consists of projections
+bool isPureProjectionPipeline(const std::shared_ptr<PhysicalOperatorWrapper>& wrappedOp)
+{
+    if (wrappedOp->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT
+        || wrappedOp->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    {
+        return true;
+    }
+    /// In case of union, we actually need the seperate pipeline, as the mappings in it should be applied to both streams
+    if (!wrappedOp->getPhysicalOperator().tryGet<UnionPhysicalOperator>())
+    {
+        return isPureProjectionPipeline(wrappedOp->getChildren()[0]);
+    }
+    return false;
+}
+
 enum class PipelinePolicy : uint8_t
 {
     Continue, /// Uses the current pipeline for the next operator
@@ -224,6 +241,25 @@ void buildPipelineRecursively(
     /// Case 1: Custom Scan
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
+        /// It might be the case that the scan is a regular scan: A regular scan is created before this phase for projections.
+        /// If it is a regular scan, then the operations in the previous pipeline could only have been stateless. If this pipeline is not the immediate child of two united streams, the pipeline break is actually not needed.
+        if (prevOpWrapper && opWrapper->getPhysicalOperator().tryGet<ScanPhysicalOperator>())
+        {
+            /// For simplicity, we just assume that operators with multiple children don't exist (they currently don't)
+            if (isPureProjectionPipeline(opWrapper->getChildren()[0]))
+            {
+                buildPipelineRecursively(
+                    opWrapper->getChildren()[0],
+                    prevOpWrapper,
+                    currentPipeline,
+                    pipelineMap,
+                    PipelinePolicy::Continue,
+                    configuredBufferSize,
+                    mergePoints);
+                return;
+            }
+        }
+
         if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
