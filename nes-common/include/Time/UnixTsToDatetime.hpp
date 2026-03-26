@@ -21,6 +21,22 @@
 namespace NES
 {
 
+inline std::string unixTsToFormattedDatetimeAdjusted(const uint64_t unixTimestamp)
+{
+    const auto rawTime = static_cast<time_t>(unixTimestamp);
+    std::tm localTm{};
+    localtime_r(&rawTime, &localTm);
+
+    return fmt::format(
+        "{:02d}.{:02d}.{} {:02d}:{:02d}:{:02d}({})",
+        localTm.tm_mday,
+        localTm.tm_mon + 1,
+        localTm.tm_year + 1900,
+        localTm.tm_hour,
+        localTm.tm_min,
+        localTm.tm_sec,
+        unixTimestamp);
+}
 inline std::string unixTsToFormattedDatetime(const uint64_t unixTimestamp)
 {
     auto tp = std::chrono::sys_seconds{std::chrono::seconds(unixTimestamp)};
