@@ -191,8 +191,8 @@ public:
                     hco3Val.second,
                     unixTsToFormattedDatetime(phVal.first),
                     unixTsToFormattedDatetime(insertionTs),
-                    unixTsToFormattedDatetime(ingestionTs),
-                    unixTsToFormattedDatetime(
+                    unixTsToFormattedDatetimeAdjusted(ingestionTs),
+                    unixTsToFormattedDatetimeAdjusted(
                         std::chrono::duration_cast<std::chrono::seconds>(std::chrono::system_clock::now().time_since_epoch()).count()));
                 return alertMessage;
             }
