@@ -29,7 +29,7 @@ public:
 
     explicit NodeEngineBuilder(const WorkerConfiguration& workerConfiguration, std::shared_ptr<StatisticListener> statisticListener);
 
-    std::unique_ptr<NodeEngine> build(const Host& host);
+    std::unique_ptr<NodeEngine> build(Host host);
 
 private:
     WorkerConfiguration workerConfiguration;

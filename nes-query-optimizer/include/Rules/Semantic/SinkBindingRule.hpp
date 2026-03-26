@@ -13,21 +13,22 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
+
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
+
+struct CatalogRef;
+
 class SinkBindingRule
 {
 public:
-    explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
+    explicit SinkBindingRule(const CatalogRef& catalog) : catalog(catalog) { }
 
     void apply(LogicalPlan& queryPlan) const;
 
 private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
+    const CatalogRef& catalog;
 };
 }

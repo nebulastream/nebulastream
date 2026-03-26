@@ -909,7 +909,7 @@ struct SystestBinder::Impl
         std::vector lastMergedConfigOverrides{ConfigurationOverride{}};
         SystestParser parser{};
         const auto binder = NES::StatementBinder{
-            sourceCatalog, [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
+            [](auto&& pH1) { return NES::AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(pH1)>(pH1)); }};
 
         parser.registerSubstitutionRule(
             {.keyword = "TESTDATA", .ruleFunction = [&](std::string& substitute) { substitute = testDataDir; }});

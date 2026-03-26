@@ -21,7 +21,6 @@ activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
-
 activate_optional_plugin("Sources/NetworkSource" ON)
 activate_optional_plugin("Sinks/NetworkSink" ON)
 

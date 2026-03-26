@@ -31,8 +31,6 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>
-#include <Sources/SourceCatalog.hpp>
-#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
@@ -47,6 +45,12 @@ enum class StatementOutputFormat : uint8_t
 {
     JSON,
     TEXT
+};
+
+enum class StopMode : uint8_t
+{
+    Graceful,
+    Forceful
 };
 
 /// The source management statements are directly executed by the binder as we currently do not need to handle them differently between the frontends.
@@ -105,7 +109,7 @@ struct DropLogicalSourceStatement
 
 struct DropPhysicalSourceStatement
 {
-    SourceDescriptor descriptor;
+    uint64_t id;
 };
 
 struct DropSinkStatement
@@ -126,13 +130,16 @@ struct ExplainQueryStatement
 
 struct ShowQueriesStatement
 {
-    std::optional<DistributedQueryId> id;
+    std::optional<std::string> name;
+    std::optional<int64_t> id;
     std::optional<StatementOutputFormat> format;
 };
 
 struct DropQueryStatement
 {
-    DistributedQueryId id;
+    std::optional<std::string> name;
+    std::optional<int64_t> id;
+    StopMode stopMode = StopMode::Graceful;
 };
 
 struct WorkerStatusStatement
@@ -142,11 +149,11 @@ struct WorkerStatusStatement
 
 struct CreateWorkerStatement
 {
-    std::string host;
-    std::string data;
+    std::string hostAddr;
+    std::string dataAddr;
     std::optional<size_t> capacity;
-    std::vector<std::string> downstream;
-    std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")
+    std::vector<std::string> peers;
+    std::unordered_map<std::string, std::string> config;
 };
 
 struct DropWorkerStatement
@@ -154,10 +161,17 @@ struct DropWorkerStatement
     std::string host;
 };
 
+struct ShowWorkersStatement
+{
+    std::optional<std::string> host;
+    std::optional<StatementOutputFormat> format;
+};
+
 using Statement = std::variant<
     WorkerStatusStatement,
     CreateWorkerStatement,
     DropWorkerStatement,
+    ShowWorkersStatement,
     CreateLogicalSourceStatement,
     CreatePhysicalSourceStatement,
     CreateSinkStatement,
@@ -197,7 +211,6 @@ class StatementBinder
 
 public:
     explicit StatementBinder(
-        const std::shared_ptr<const SourceCatalog>& sourceCatalog,
         const std::function<LogicalPlan(AntlrSQLParser::QueryContext*)>& queryPlanBinder);
 
     StatementBinder(const StatementBinder& other) = delete;

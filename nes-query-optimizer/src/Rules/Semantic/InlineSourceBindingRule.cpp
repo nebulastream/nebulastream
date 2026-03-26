@@ -14,6 +14,7 @@
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
 #include <vector>
+#include <CatalogReadInterface.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -38,7 +39,7 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         const auto parserConfig = inlineSource.value()->getParserConfig();
         const auto sourceConfig = inlineSource.value()->getSourceConfig();
 
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, parserConfig, sourceConfig);
+        const auto descriptorOpt = createInlineSource(type, schema, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {

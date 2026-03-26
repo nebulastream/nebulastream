@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-option(USE_BUILD_CACHE "Use sccache or ccache to speed up rebuilds" ON)
+option(USE_COMPILER_CACHE "Use sccache or ccache to speed up rebuilds" ON)
 
-if (NOT USE_BUILD_CACHE)
+if (NOT USE_COMPILER_CACHE)
     message(STATUS "Compiler cache disabled")
     return()
 endif ()

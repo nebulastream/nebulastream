@@ -45,7 +45,7 @@ jobs:
           push: true
           tags: nebulastream/nes-runtime-base:${{ inputs.dockerhub-tag }}-${{ matrix.arch }}
           context: .
-          file: ${{ github.workspace }}/docker/runtime/RuntimeBase.dockerfile
+          file: ${{ github.workspace }}/docker/runtime/Runtime.dockerfile
       - name: Build CLI Image
         uses: docker/build-push-action@v6
         with:

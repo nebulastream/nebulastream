@@ -36,7 +36,7 @@ public:
         std::shared_ptr<QueryEngineStatisticListener> statListener,
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<BufferManager> bm,
-        const Host& host);
+        Host host);
     void stop(QueryId queryId);
     void start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan);
     ~QueryEngine();

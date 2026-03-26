@@ -1,0 +1,200 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+use crate::worker::endpoint::NetworkAddr;
+use crate::worker::CreateWorker;
+use proptest::arbitrary::Arbitrary;
+use proptest::strategy::BoxedStrategy;
+use proptest_derive::Arbitrary;
+use super::logical_source::CreateLogicalSource;
+use sea_orm::ActiveValue::{NotSet, Set};
+use sea_orm::Condition;
+use sea_orm::entity::prelude::*;
+use serde::{Deserialize, Serialize};
+use strum::Display;
+
+#[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, DeriveEntityModel)]
+#[sea_orm(table_name = "physical_source")]
+pub struct Model {
+    #[sea_orm(primary_key)]
+    pub id: i64,
+    pub logical_source: String,
+    pub host_addr: NetworkAddr,
+    pub source_type: SourceType,
+    #[sea_orm(column_type = "Json")]
+    pub source_config: Json,
+    #[sea_orm(column_type = "Json")]
+    pub parser_config: Json,
+}
+
+#[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
+pub enum Relation {
+    #[sea_orm(
+        belongs_to = "super::logical_source::Entity",
+        from = "Column::LogicalSource",
+        to = "super::logical_source::Column::Name",
+        on_update = "Restrict",
+        on_delete = "Restrict"
+    )]
+    LogicalSource,
+    #[sea_orm(
+        belongs_to = "crate::worker::Entity",
+        from = "Column::HostAddr",
+        to = "crate::worker::Column::HostAddr",
+        on_update = "Restrict",
+        on_delete = "Restrict"
+    )]
+    Worker,
+}
+
+impl Related<super::logical_source::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::LogicalSource.def()
+    }
+}
+
+impl Related<crate::worker::Entity> for Entity {
+    fn to() -> RelationDef {
+        Relation::Worker.def()
+    }
+}
+
+impl ActiveModelBehavior for ActiveModel {}
+
+#[derive(Clone, Debug, serde::Deserialize)]
+pub struct CreatePhysicalSource {
+    pub logical_source: String,
+    pub host_addr: NetworkAddr,
+    pub source_type: SourceType,
+    pub source_config: serde_json::Value,
+    pub parser_config: serde_json::Value,
+}
+
+impl From<CreatePhysicalSource> for ActiveModel {
+    fn from(req: CreatePhysicalSource) -> Self {
+        Self {
+            id: NotSet,
+            logical_source: Set(req.logical_source),
+            host_addr: Set(req.host_addr),
+            source_type: Set(req.source_type),
+            source_config: Set(req.source_config),
+            parser_config: Set(req.parser_config),
+        }
+    }
+}
+
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+pub struct GetPhysicalSource {
+    pub id: Option<i64>,
+    pub host_addr: Option<NetworkAddr>,
+    pub logical_source: Option<String>,
+}
+
+impl GetPhysicalSource {
+    pub fn all() -> Self {
+        Self::default()
+    }
+
+    pub fn with_id(mut self, id: i64) -> Self {
+        self.id = Some(id);
+        self
+    }
+
+    pub fn with_host_addr(mut self, host_addr: NetworkAddr) -> Self {
+        self.host_addr = Some(host_addr);
+        self
+    }
+
+    pub fn with_logical_source(mut self, logical_source: String) -> Self {
+        self.logical_source = Some(logical_source);
+        self
+    }
+}
+
+impl crate::IntoCondition for GetPhysicalSource {
+    fn into_condition(self) -> Condition {
+        Condition::all()
+            .add_option(self.id.map(|v| Column::Id.eq(v)))
+            .add_option(self.host_addr.map(|v| Column::HostAddr.eq(v)))
+            .add_option(self.logical_source.map(|v| Column::LogicalSource.eq(v)))
+    }
+}
+
+#[derive(Clone, Debug, Default, serde::Deserialize)]
+pub struct DropPhysicalSource {
+    pub filters: GetPhysicalSource,
+}
+
+impl DropPhysicalSource {
+    pub fn all() -> Self {
+        Self::default()
+    }
+
+    pub fn with_filters(mut self, filters: GetPhysicalSource) -> Self {
+        self.filters = filters;
+        self
+    }
+}
+
+impl crate::IntoCondition for DropPhysicalSource {
+    fn into_condition(self) -> Condition {
+        self.filters.into_condition()
+    }
+}
+
+#[derive(
+    Arbitrary, Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
+)]
+#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
+pub enum SourceType {
+    File,
+    Tcp,
+}
+
+#[derive(Debug, Clone)]
+pub struct PhysicalSourceWithRefs {
+    pub logical: CreateLogicalSource,
+    pub worker: CreateWorker,
+    pub physical: CreatePhysicalSource,
+}
+
+impl Arbitrary for PhysicalSourceWithRefs {
+    type Parameters = ();
+
+    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
+        use proptest::prelude::*;
+        (
+            any::<CreateLogicalSource>(),
+            any::<CreateWorker>(),
+            any::<SourceType>(),
+        )
+            .prop_map(|(logical, worker, source_type)| {
+                let physical = CreatePhysicalSource {
+                    logical_source: logical.name.clone(),
+                    host_addr: worker.host_addr.clone(),
+                    source_type,
+                    source_config: serde_json::json!({}),
+                    parser_config: serde_json::json!({}),
+                };
+                PhysicalSourceWithRefs {
+                    logical,
+                    worker,
+                    physical,
+                }
+            })
+            .boxed()
+    }
+
+    type Strategy = BoxedStrategy<Self>;
+}

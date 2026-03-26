@@ -26,17 +26,15 @@
 
 namespace NES
 {
-class SourceCatalog;
 class OperatorSerializationUtil;
 
 class LogicalSource
 {
-    friend SourceCatalog;
     friend OperatorSerializationUtil;
     friend struct Unreflector<LogicalSource>;
-    explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
 
 public:
+    explicit LogicalSource(std::string logicalSourceName, const Schema& schema);
     [[nodiscard]] std::string getLogicalSourceName() const;
 
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;

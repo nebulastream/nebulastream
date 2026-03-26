@@ -18,6 +18,7 @@
 #include <ranges>
 #include <utility>
 
+#include <CatalogReadInterface.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -39,7 +40,7 @@ void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto schema = Schema();
-        auto logicalSourceOpt = sourceCatalog->getLogicalSource(source->getLogicalSourceName());
+        auto logicalSourceOpt = getLogicalSource(catalog, source->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
             throw UnknownSourceName("Logical source not registered. Source Name: {}", source->getLogicalSourceName());

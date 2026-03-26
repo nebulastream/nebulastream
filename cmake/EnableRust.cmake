@@ -59,6 +59,14 @@ corrosion_import_crate(
         FLAGS ${ADDITIONAL_CARGOFLAGS}
 )
 
+corrosion_import_crate(
+        MANIFEST_PATH nes-coordinator/Cargo.toml
+        CRATES coordinator_bridge
+        IMPORTED_CRATES COORDINATOR_CRATES
+        CRATE_TYPES staticlib
+        FLAGS ${ADDITIONAL_CARGOFLAGS}
+)
+
 # Arguments are passed to cargo via an environment which we attach to the  nes_rust_bindings target and is loaded by corrosion
 list(JOIN CXXFLAGS_LIST " " ADDITIONAL_CXXFLAGS)
 list(JOIN RUSTFLAGS_LIST " " ADDITIONAL_RUSTFLAGS)
@@ -79,4 +87,22 @@ if (NOT "${ENV_VARS_LIST}" STREQUAL "")
     set_property(
             TARGET nes_rust_bindings
             PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
+endif ()
+
+# coordinator_bridge needs protoc for tonic-build (via the coordinator crate)
+find_program(PROTOC_EXECUTABLE protoc HINTS ${Protobuf_PROTOC_EXECUTABLE}
+        "${VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET}/tools/protobuf")
+if (PROTOC_EXECUTABLE)
+    set(COORDINATOR_ENV_VARS_LIST PROTOC=${PROTOC_EXECUTABLE})
+    list(APPEND COORDINATOR_ENV_VARS_LIST ${ENV_VARS_LIST})
+    set_property(
+            TARGET coordinator_bridge
+            PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${COORDINATOR_ENV_VARS_LIST})
+else ()
+    message(WARNING "protoc not found — coordinator_bridge may fail to build")
+    if (NOT "${ENV_VARS_LIST}" STREQUAL "")
+        set_property(
+                TARGET coordinator_bridge
+                PROPERTY CORROSION_ENVIRONMENT_VARIABLES ${ENV_VARS_LIST})
+    endif ()
 endif ()

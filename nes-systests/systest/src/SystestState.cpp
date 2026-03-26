@@ -381,8 +381,7 @@ std::ostream& operator<<(std::ostream& os, const TestFileMap& testMap)
 std::chrono::duration<double> RunningQuery::getElapsedTime() const
 {
     INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
-    INVARIANT(queryStatus.has_value(), "Query should have a status, otherwise it failed during registration already.");
-    const auto metrics = queryStatus.value().coalesceQueryMetrics();
+    const auto metrics = queryStatus.coalesceQueryMetrics();
     const auto stop = metrics.stop;
     const auto running = metrics.running;
     INVARIANT(stop.has_value() && running.has_value(), "Query {} has no timestamps attached", queryId);
@@ -392,8 +391,7 @@ std::chrono::duration<double> RunningQuery::getElapsedTime() const
 std::string RunningQuery::getThroughput() const
 {
     INVARIANT(queryId != DistributedQueryId(DistributedQueryId::INVALID), "QueryId should not be invalid");
-    INVARIANT(queryStatus.has_value(), "Query should have a status, otherwise it failed during registration already.");
-    const auto metrics = queryStatus.value().coalesceQueryMetrics();
+    const auto metrics = queryStatus.coalesceQueryMetrics();
 
     const auto stop = metrics.stop;
     const auto running = metrics.running;

@@ -207,7 +207,7 @@ struct RunningQuery
     SystestQuery systestQuery;
     DistributedQueryId queryId{DistributedQueryId::INVALID};
     std::optional<DistributedQueryId> differentialQueryPair;
-    std::optional<DistributedQueryStatus> queryStatus;
+    DistributedQueryStatus queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
     bool passed = false;

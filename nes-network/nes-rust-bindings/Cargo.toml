@@ -19,6 +19,6 @@ edition = "2021"
 crate-type = ["staticlib"]
 
 [dependencies]
-cxx = "1.0"
+cxx = "=1.0.194"
 network_bindings = { path = "network" }
 spdlog_bindings = { path = "spdlog" }

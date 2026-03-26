@@ -14,16 +14,12 @@
 
 #pragma once
 
-#include <memory>
-#include <set>
-#include <unordered_map>
-#include <utility>
-#include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
+
+struct CatalogRef;
 
 /**
  * @brief This class will expand the logical query graph by adding information about the physical sources and expand the
@@ -80,11 +76,11 @@ namespace NES
 class LogicalSourceExpansionRule
 {
 public:
-    explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit LogicalSourceExpansionRule(const CatalogRef& catalog) : catalog(catalog) { }
 
     void apply(LogicalPlan& queryPlan) const;
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    const CatalogRef& catalog;
 };
 }

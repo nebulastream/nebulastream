@@ -15,6 +15,7 @@
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 
 #include <vector>
+#include <CatalogReadInterface.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
@@ -37,7 +38,7 @@ void InlineSinkBindingRule::apply(LogicalPlan& queryPlan) const
             const auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, config, formatConfig);
+            const auto sinkDescriptor = createInlineSink(schema, type, config, formatConfig);
 
             if (!sinkDescriptor.has_value())
             {

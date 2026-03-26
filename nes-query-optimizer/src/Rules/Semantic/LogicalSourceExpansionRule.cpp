@@ -17,6 +17,7 @@
 #include <ranges>
 #include <utility>
 #include <vector>
+#include <CatalogReadInterface.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
@@ -32,13 +33,13 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
+        const auto logicalSourceOpt = getLogicalSource(catalog, sourceOp->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
             throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
+        const auto entriesOpt = getSourceDescriptors(catalog, sourceOp->getLogicalSourceName());
 
         if (not entriesOpt.has_value())
         {

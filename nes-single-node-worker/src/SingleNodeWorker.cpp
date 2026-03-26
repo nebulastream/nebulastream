@@ -37,7 +37,6 @@
 #include <Util/Pointers.hpp>
 #include <Util/UUID.hpp>
 #include <cpptrace/from_current.hpp>
-#include <fmt/format.h>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
@@ -55,7 +54,7 @@ SingleNodeWorker::~SingleNodeWorker() = default;
 SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
-SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
+SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, Host host)
     : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
     {

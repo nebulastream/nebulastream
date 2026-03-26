@@ -1,0 +1,52 @@
+[workspace]
+resolver = "3"
+members = [
+    "coordinator",
+    "model",
+    "catalog",
+    "controller",
+    "migration",
+    "bridge"
+]
+
+[workspace.dependencies]
+tokio = { version = "0.2", package = "madsim-tokio", features = [
+    "rt",
+    "rt-multi-thread",
+    "sync",
+    "macros",
+    "time",
+] }
+tokio-retry = "0.3.0"
+tracing = "0.1.44"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0.145"
+thiserror = "2.0.17"
+anyhow = "1.0"
+sea-orm = { version = "=1.1.1", features = [
+    "sqlx-sqlite",
+    "runtime-tokio-rustls",
+    "macros",
+    "debug-print",
+    "with-json",
+    "sqlite-use-returning-for-3_35",
+] }
+strum = { version = "0.26", features = ["derive"] }
+chrono = { version = "0.4", features = ["serde"] }
+madsim = { version = "0.2.34", features = ["macros"] }
+tonic = { version = "0.5.1", package = "madsim-tonic" }
+prost = "=0.13.4"
+flume = "0.12"
+async-trait = "0.1"
+inventory = "0.3"
+tonic-build = { version = "0.5", package = "madsim-tonic-build" }
+
+catalog = { path = "catalog" }
+controller = { path = "controller" }
+migration = { path = "migration" }
+model = { path = "model" }
+
+[patch.crates-io]
+sqlx = { git = "https://github.com/madsim-rs/sqlx.git", rev = "3efe6d0065963db2a2b7f30dee69f647e28dec81" }
+tokio-retry = { git = "https://github.com/madsim-rs/rust-tokio-retry.git", rev = "95e2fd3" }
+getrandom = { git = "https://github.com/madsim-rs/getrandom.git", rev = "e79a7ae" }

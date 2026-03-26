@@ -236,7 +236,7 @@ if (NES_ENABLES_TESTS)
         set(NES_RUNTIME_BASE_IMAGE "nes-runtime-base:test" CACHE STRING "Docker image name for the runtime base used by DockerCompose tests")
         add_test(NAME build-runtime-base-image
                 COMMAND docker build --load -t ${NES_RUNTIME_BASE_IMAGE}
-                -f ${CMAKE_SOURCE_DIR}/docker/runtime/RuntimeBase.dockerfile
+                -f ${CMAKE_SOURCE_DIR}/docker/runtime/Runtime.dockerfile
                 ${CMAKE_SOURCE_DIR}/docker/runtime
         )
         set_tests_properties(build-runtime-base-image PROPERTIES

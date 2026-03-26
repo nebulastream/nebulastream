@@ -139,12 +139,11 @@ teardown() {
 
 function setup_distributed() {
   tests/util/create_compose.sh "$1" > docker-compose.yaml
-  local compose_output exit_code=0
-  compose_output=$(docker compose up -d --wait 2>&1) || exit_code=$?
-  if [ "$exit_code" -ne 0 ]; then
-    echo "# [docker compose up] (status=$exit_code):" >&3
-    while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
-  fi
+  local compose_output
+  compose_output=$(docker compose up -d --wait 2>&1)
+  local exit_code=$?
+  echo "# [docker compose up] (status=$exit_code):" >&3
+  while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
   return $exit_code
 }
 
@@ -466,8 +465,8 @@ EOF
   assert_json_contains "[{\"local_query_id\":\"$local_query_id\", \"query_status\":\"Running\", \"started\": {}}]" "$output"
 }
 
-@test "back pressure using worker config" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+@test "back pressure" {
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -483,40 +482,12 @@ EOF
   done
 
   run DOCKER_NES_CLI stop $query_id
-  # 0 means there is no overwrite and the worker default will be picked.
-  grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 0" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 0" worker-2/singleNodeWorker.log
-  grep "Backpressure" worker-2/singleNodeWorker.log
-  [ $status -eq 0 ]
-}
-
-@test "back pressure using optimizer flags" {
-  setup_distributed tests/good/backpressure-optimizer-flags.yaml
-
-  run DOCKER_NES_CLI start
-  [ $status -eq 0 ]
-  query_id=$output
-
-  # Poll until backpressure is observed in the worker log
-  for i in $(seq 1 30); do
-    sleep 1
-    sync_workdir
-    if grep -q "Backpressure" worker-2/singleNodeWorker.log 2>/dev/null; then
-      break
-    fi
-  done
-
-  run DOCKER_NES_CLI stop $query_id
-  grep "host: worker-2:8080" worker-2/singleNodeWorker.log
-  grep "max_pending_acks: 25" worker-2/singleNodeWorker.log
-  grep "sender_queue_size: 32" worker-2/singleNodeWorker.log
   grep "Backpressure" worker-2/singleNodeWorker.log
   [ $status -eq 0 ]
 }
 
 @test "order of worker termination when backpressure is applied. terminate sink" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]
@@ -570,7 +541,7 @@ EOF
 }
 
 @test "order of worker termination when backpressure is applied. terminate source" {
-  setup_distributed tests/good/backpressure-worker-config.yaml
+  setup_distributed tests/good/backpressure.yaml
 
   run DOCKER_NES_CLI start
   [ $status -eq 0 ]

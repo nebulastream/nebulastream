@@ -13,10 +13,7 @@
 */
 
 #pragma once
-#include <memory>
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
@@ -27,12 +24,7 @@ namespace NES
 class InlineSinkBindingRule
 {
 public:
-    explicit InlineSinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
-
     void apply(LogicalPlan& queryPlan) const;
-
-private:
-    std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
 
 }
