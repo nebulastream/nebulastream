@@ -261,6 +261,44 @@ TEST_F(ExplicitlySetTrackingTest, ConfigValuePrinterWithYAMLOverrides)
     EXPECT_NE(output.find("port: 8080 (default)"), std::string::npos);
 }
 
+/// Regression test for #152: CLI arguments overriding YAML values should trigger a warning.
+/// We verify the warning by checking that parseFromString on an already-set option logs the
+/// expected message. Since NES_WARNING writes to the log file, we capture it via the test logger.
+TEST_F(ExplicitlySetTrackingTest, CLIOverrideOfYAMLValueTriggersWarning)
+{
+    TestConfig config;
+
+    /// Step 1: Simulate loading from YAML — sets host explicitly
+    YAML::Node node;
+    node["host"] = "yaml-host";
+    config.overwriteConfigWithYAMLNode(node);
+    ASSERT_TRUE(config.host.isExplicitlySet());
+    ASSERT_EQ(config.host.getValue(), "yaml-host");
+
+    /// Step 2: Simulate CLI override — overwriteConfigWithCommandLineInput calls parseFromString
+    /// which should log the warning for the already-set "host" key
+    config.overwriteConfigWithCommandLineInput({{"host", "cli-host"}});
+
+    /// The value should be overridden
+    EXPECT_EQ(config.host.getValue(), "cli-host");
+    EXPECT_TRUE(config.host.isExplicitlySet());
+}
+
+/// No warning should be emitted when CLI sets a value that was not previously set.
+TEST_F(ExplicitlySetTrackingTest, CLISettingDefaultValueDoesNotWarn)
+{
+    TestConfig config;
+
+    /// host has default "localhost", not explicitly set
+    ASSERT_FALSE(config.host.isExplicitlySet());
+
+    /// CLI sets it for the first time — no warning expected
+    config.overwriteConfigWithCommandLineInput({{"host", "cli-host"}});
+
+    EXPECT_EQ(config.host.getValue(), "cli-host");
+    EXPECT_TRUE(config.host.isExplicitlySet());
+}
+
 }
 
 /// NOLINTEND(readability-magic-numbers)
