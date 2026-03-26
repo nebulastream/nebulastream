@@ -25,9 +25,12 @@ namespace NES
 {
 
 void InputFormatterTupleBufferRef::readBuffer(
-    ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const
+    ExecutionContext& executionCtx,
+    const RecordBuffer& recordBuffer,
+    const ExecuteChildFn& executeChild,
+    const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
 {
-    this->inputFormatter->readBuffer(executionCtx, recordBuffer, executeChild);
+    this->inputFormatter->readBuffer(executionCtx, recordBuffer, executeChild, requiredFields);
 }
 
 nautilus::val<bool> InputFormatterTupleBufferRef::indexBuffer(RecordBuffer& recordBuffer, ArenaRef& arenaRef) const

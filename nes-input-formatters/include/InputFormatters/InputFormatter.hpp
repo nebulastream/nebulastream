@@ -140,7 +140,8 @@ public:
     void readBuffer(
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
-        const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild) const
+        const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         /// @Note: the order below is important
         const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
@@ -148,7 +149,7 @@ public:
         /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
         /// we count such a spanning tuple as a leading spanning tuple
         /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
-        parseLeadingRecord(executionCtx, executeChild, indexPhaseResult);
+        parseLeadingRecord(executionCtx, executeChild, indexPhaseResult, requiredFields);
 
         /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
         /// such a buffer can only form one (leading) spanning tuple, so returning is safe
@@ -159,11 +160,11 @@ public:
 
         /// a buffer that delimits tuples may contain multiple complete tuples
         /// determining the offset of a tuple may require parsing the prior tuple
-        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
+        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult, requiredFields);
 
         /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
         /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
-        parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult);
+        parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult, requiredFields);
     }
 
     std::ostream& toString(std::ostream& os) const
@@ -385,7 +386,8 @@ private:
     void parseLeadingRecord(
         ExecutionContext& executionCtx,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
         {
@@ -396,7 +398,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, requiredFields);
             executeChild(executionCtx, record);
         }
     }
@@ -406,7 +408,8 @@ private:
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         nautilus::val<uint64_t> bufferRecordIdx = 0;
         auto rawFieldAccessFunction = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
@@ -414,7 +417,7 @@ private:
         while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
         {
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction);
+                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, requiredFields);
             executeChild(executionCtx, record);
             bufferRecordIdx += 1;
         }
@@ -425,7 +428,8 @@ private:
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        const nautilus::val<IndexPhaseResult*>& indexPhaseResult,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         const nautilus::val<bool> hasTrailingSpanningTuple = invoke(
             indexTrailingSpanningTupleProxy,
@@ -441,7 +445,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, requiredFields);
             executeChild(executionCtx, record);
         }
     }

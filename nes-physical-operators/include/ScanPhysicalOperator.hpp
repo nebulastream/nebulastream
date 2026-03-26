@@ -30,10 +30,14 @@ namespace NES
 class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    /// @brief Constructor for the scan operator that receives a memory layout and a projection vector.
-    /// @param memoryLayout memory layout that describes the tuple buffer.
-    /// @param projections projection vector
-    explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    /// @brief Constructor for the scan operator that receives a memory layout, a projection vector, and required fields.
+    /// @param bufferRef memory layout that describes the tuple buffer.
+    /// @param projections projection vector (all fields needed by the query)
+    /// @param requiredFields fields that must be eagerly parsed (e.g., for selection predicates)
+    explicit ScanPhysicalOperator(
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::vector<Record::RecordFieldIdentifier> projections,
+        std::vector<Record::RecordFieldIdentifier> requiredFields = {});
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;

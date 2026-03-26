@@ -156,11 +156,11 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
             if (not includesField(requiredFields, fieldName))
             {
-                parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
+                parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
             }
             else
             {
-                parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName);
+                parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
             }
         }
         return record;

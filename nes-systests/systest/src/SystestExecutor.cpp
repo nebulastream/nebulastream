@@ -356,7 +356,9 @@ SystestExecutorResult SystestExecutor::executeSystests()
 
                 failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
                 std::cout << benchmarkResults.dump(4);
-                const auto outputPath = std::filesystem::path(config.workingDir.getValue()) / "BenchmarkResults.json";
+                const auto now = std::chrono::system_clock::now();
+                const auto outputFileName = fmt::format("BenchmarkResults_{:%Y-%m-%d_%H-%M-%S}.json", now);
+                const auto outputPath = std::filesystem::path(config.workingDir.getValue()).parent_path() / outputFileName;
                 std::ofstream outputFile(outputPath);
                 outputFile << benchmarkResults.dump(4);
                 outputFile.close();

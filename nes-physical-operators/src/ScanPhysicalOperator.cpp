@@ -34,11 +34,13 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::vector<Record::RecordFieldIdentifier> projections,
+    std::vector<Record::RecordFieldIdentifier> requiredFields)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
-    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr),
-    requiredFields(projections)
+    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
+    , requiredFields(std::move(requiredFields))
 {
 }
 
@@ -57,7 +59,7 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 
     /// process buffer
     const auto executeChildLambda = [this](ExecutionContext& executionCtx, Record& record) { executeChild(executionCtx, record); };
-    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda);
+    inputFormatterBufferRef->readBuffer(executionCtx, recordBuffer, executeChildLambda, requiredFields);
 }
 
 void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const

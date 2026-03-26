@@ -79,7 +79,8 @@ PhysicalOperator createScanOperator(
     const Pipeline& prevPipeline,
     const std::optional<Schema>& inputSchema,
     const std::optional<MemoryLayoutType>& memoryLayout,
-    const uint64_t configuredBufferSize, const std::vector<std::string> requiredFields)
+    const uint64_t configuredBufferSize,
+    const std::vector<std::string>& requiredFields)
 {
     INVARIANT(inputSchema.has_value(), "Wrapped operator has no input schema");
     INVARIANT(memoryLayout.has_value(), "Wrapped operator has no input memory layout type");
@@ -91,28 +92,19 @@ PhysicalOperator createScanOperator(
             configuredBufferSize);
     }
 
+    const auto projections = inputSchema->getFieldNames();
     const auto memoryProvider = LowerSchemaProvider::lowerSchema(configuredBufferSize, inputSchema.value(), memoryLayout.value());
-    /// Instantiate the scan with an InputFormatterTupleBufferRef, if the prior operatior is a source operator that contains a source descriptor
+    /// Instantiate the scan with an InputFormatterTupleBufferRef, if the prior operator is a source operator that contains a source descriptor
     /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
     if (prevPipeline.isSourcePipeline())
     {
         const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
-            return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), requiredFields);
+            return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), projections, requiredFields);
         }
     }
-    return ScanPhysicalOperator(memoryProvider, requiredFields);
-    //return InputFormatters::InputFormatterProvider::provideInputFormatterTask(
-    //OriginId(OriginId::INITIAL), schema.value(), ParserConfig{.parserType = "Native", .tupleDelimiter = "", .fieldDelimiter = ""});
-//}();
-
-//auto requiredProjections = computeRequiredScanProjections(wrappedOp);
-//currentPipeline->prependOperator(
-//    FormatScanPhysicalOperator(requiredProjections, std::move(inputFormatterTaskPipeline), configuredBufferSize, false));
-
-    return ScanPhysicalOperator(memoryProvider, inputSchema->getFieldNames());
-//    FormatScanPhysicalOperator(schema->getFieldNames(), std::move(inputFormatterTaskPipeline), configuredBufferSize, false, requiredProjections));
+    return ScanPhysicalOperator(memoryProvider, projections, requiredFields);
 }
 
 /// Creates a new pipeline that contains a scan followed by the wrappedOpAfterScan. The newly created pipeline is a successor of the prevPipeline

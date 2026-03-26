@@ -24,7 +24,6 @@
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Strings.hpp>
-#include <Arena.hpp>
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
@@ -60,8 +59,7 @@ void parseRawValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    QuotationType quotationType,
-    ArenaRef& arenaRef);
+    QuotationType quotationType);
 
 // Registers a lazy materializer for the given field. On first read, the parser executes
 // the same logic as parseRawValueIntoRecord and stores the result in the Record.

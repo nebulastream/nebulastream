@@ -15,6 +15,7 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalSelection.hpp>
 
 #include <memory>
+#include <unordered_set>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -43,8 +44,8 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
     {
         auto current = stack.back();
         stack.pop_back();
-        if (auto fieldAccessFunction = current.tryGet<FieldAccessLogicalFunction>()) {
-            const std::string& name = fieldAccessFunction->getFieldName();
+        if (auto fieldAccessFunction = current.tryGetAs<FieldAccessLogicalFunction>()) {
+            const std::string& name = fieldAccessFunction->get().getFieldName();
             dedup.insert(name);
         }
         for (const auto& child : current.getChildren()) {

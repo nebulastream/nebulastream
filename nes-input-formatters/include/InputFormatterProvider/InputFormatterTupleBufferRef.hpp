@@ -73,7 +73,11 @@ public:
         std::unreachable();
     }
 
-    void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const;
+    void readBuffer(
+        ExecutionContext& executionCtx,
+        const RecordBuffer& recordBuffer,
+        const ExecuteChildFn& executeChild,
+        const std::vector<Record::RecordFieldIdentifier>& requiredFields) const;
 
     void
     writeRecord(nautilus::val<uint64_t>&, const RecordBuffer&, const Record&, const nautilus::val<AbstractBufferProvider*>&) const override
@@ -90,8 +94,11 @@ public:
     struct InputFormatterConcept
     {
         virtual ~InputFormatterConcept() = default;
-        virtual void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const
-            = 0;
+        virtual void readBuffer(
+            ExecutionContext& executionCtx,
+            const RecordBuffer& recordBuffer,
+            const ExecuteChildFn& executeChild,
+            const std::vector<Record::RecordFieldIdentifier>& requiredFields) const = 0;
         virtual nautilus::val<bool> indexBuffer(RecordBuffer&, ArenaRef&) const = 0;
         virtual std::ostream& toString(std::ostream& os) const = 0;
     };
@@ -109,9 +116,13 @@ public:
 
         std::ostream& toString(std::ostream& os) const override { return InputFormatter.toString(os); }
 
-        void readBuffer(ExecutionContext& executionCtx, const RecordBuffer& recordBuffer, const ExecuteChildFn& executeChild) const override
+        void readBuffer(
+            ExecutionContext& executionCtx,
+            const RecordBuffer& recordBuffer,
+            const ExecuteChildFn& executeChild,
+            const std::vector<Record::RecordFieldIdentifier>& requiredFields) const override
         {
-            return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild);
+            return InputFormatter.readBuffer(executionCtx, recordBuffer, executeChild, requiredFields);
         }
 
     private:

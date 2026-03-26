@@ -225,7 +225,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<int8_t*>&,
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,
-        nautilus::val<SIMDJSONFIF*> fieldIndexFunction) const
+        nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
+        [[maybe_unused]] const std::vector<Record::RecordFieldIdentifier>& requiredFields) const
     {
         Record record;
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)

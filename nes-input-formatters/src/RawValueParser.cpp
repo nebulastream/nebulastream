@@ -25,7 +25,6 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <std/cstring.h>
-#include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
@@ -134,13 +133,14 @@ void parseLazyValueIntoRecord(
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::string& fieldName,
-    const QuotationType quotationType,
-    ArenaRef& arenaRef)
+    const QuotationType quotationType)
 {
-    // Register a lazy materializer that performs the same logic as parseRawValueIntoRecord on first access
+    // Register a lazy materializer that performs the same logic as parseRawValueIntoRecord on first access.
+    // Uses zero-copy VariableSizedData wrappers for VARSIZED (same as the eager path), safe because
+    // the underlying buffer is pinned for the lifetime of the pipeline execution.
     record.writeLazy(
         fieldName,
-        [physicalType, fieldAddress, fieldSize, quotationType, &arenaRef]() -> VarVal
+        [physicalType, fieldAddress, fieldSize, quotationType]() -> VarVal
         {
             switch (physicalType)
             {
@@ -181,17 +181,12 @@ void parseLazyValueIntoRecord(
                     switch (quotationType)
                     {
                         case QuotationType::NONE: {
-                            auto varSized = arenaRef.allocateVariableSizedData(fieldSize);
-                            nautilus::memcpy(varSized.getContent(), fieldAddress, fieldSize);
-                            return varSized;
+                            return VariableSizedData(fieldAddress, fieldSize);
                         }
                         case QuotationType::DOUBLE_QUOTE: {
                             const auto fieldAddressWithoutOpeningQuote = fieldAddress + nautilus::val<uint32_t>(1);
                             const auto fieldSizeWithoutClosingQuote = fieldSize - nautilus::val<uint32_t>(2);
-
-                            auto varSized = arenaRef.allocateVariableSizedData(fieldSizeWithoutClosingQuote);
-                            nautilus::memcpy(varSized.getContent(), fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
-                            return varSized;
+                            return VariableSizedData(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
                         }
                     }
                 case DataType::Type::UNDEFINED:
