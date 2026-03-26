@@ -98,7 +98,7 @@ std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId quer
     {
         /// Unfortunately the multithreaded nature of the query engine cannot guarantee event ordering.
         /// We handle out-of-order events by keeping the most recent timestamp for each event type.
-        /// Final state is determined by priority: Failed > Stopped > Running > Started > Registered.
+        /// Final state is determined by priority: Failed > Stopped > Running > Compiling > Started > Registered.
         LocalQueryStatus status;
         status.queryId = queryId;
 
@@ -115,6 +115,9 @@ std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId quer
                     break;
                 case QueryState::Started:
                     status.metrics.start = statusChange.timestamp;
+                    break;
+                case QueryState::Compiling:
+                    status.metrics.compiling = statusChange.timestamp;
                     break;
                 case QueryState::Running:
                     status.metrics.running = statusChange.timestamp;
@@ -137,6 +140,10 @@ std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId quer
         else if (status.metrics.running.has_value())
         {
             state = QueryState::Running;
+        }
+        else if (status.metrics.compiling.has_value())
+        {
+            state = QueryState::Compiling;
         }
         else if (status.metrics.start.has_value())
         {

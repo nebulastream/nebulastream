@@ -214,6 +214,19 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
                     /// Remove from active queries
                     activeQueries.erase(queryStop.queryId);
                 },
+                [&](const PipelineCompile& pipelineCompile)
+                {
+                    printComma();
+                    fmt::print(
+                        file,
+                        R"x(    {{"args":{{"pipeline_id":{}}},"cat":"pipeline","name":"Pipeline Compile {} (Query {})","ph":"i","pid":{},"tid":{},"ts":{}}})x",
+                        pipelineCompile.pipelineId.getRawValue(),
+                        pipelineCompile.pipelineId,
+                        pipelineCompile.queryId,
+                        pid,
+                        pipelineCompile.threadId.getRawValue(),
+                        timestampToMicroseconds(pipelineCompile.timestamp));
+                },
                 [&](const PipelineStart& pipelineStart)
                 {
                     printComma();

@@ -390,6 +390,16 @@ std::chrono::duration<double> RunningQuery::getElapsedTime() const
     return std::chrono::duration_cast<std::chrono::duration<double>>(stop.value() - running.value());
 }
 
+std::chrono::duration<double> RunningQuery::getCompilationTime() const
+{
+    INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");
+
+    const auto compiling = queryStatus.metrics.compiling;
+    const auto running = queryStatus.metrics.running;
+    INVARIANT(compiling.has_value() && running.has_value(), "Query {} has no compilation timestamps attached", queryId);
+    return std::chrono::duration_cast<std::chrono::duration<double>>(running.value() - compiling.value());
+}
+
 std::string RunningQuery::getThroughput() const
 {
     INVARIANT(queryId != INVALID_QUERY_ID, "QueryId should not be invalid");

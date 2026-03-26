@@ -305,6 +305,11 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                     .Times(1)
                     .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
                 break;
+            case QueryState::Compiling:
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Compiling, ::testing::_))
+                    .Times(1)
+                    .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
+                break;
             case QueryState::Running:
                 queryRunning.emplace(id, std::make_unique<std::promise<void>>());
                 EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Running, ::testing::_))

@@ -38,6 +38,7 @@
 #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
+#include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -82,6 +83,48 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
     NES_ERROR("{}", outputMessage.str());
     std::cout << '\n' << outputMessage.str() << '\n';
     std::exit(1); ///NOLINT(concurrency-mt-unsafe)
+}
+
+SingleNodeWorkerConfiguration resolveSingleNodeWorkerConfiguration(const SystestConfiguration& config)
+{
+    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
+    if (not config.workerConfig.getValue().empty())
+    {
+        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig.getValue());
+    }
+    else if (config.singleNodeWorkerConfig.has_value())
+    {
+        singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
+    }
+    return singleNodeWorkerConfiguration;
+}
+
+SingleNodeWorkerConfiguration
+applyConfigurationOverride(const SingleNodeWorkerConfiguration& baseConfiguration, const Systest::ConfigurationOverride& overrideConfig)
+{
+    auto configCopy = baseConfiguration;
+    for (const auto& [key, value] : overrideConfig.overrideParameters)
+    {
+        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
+    }
+    return configCopy;
+}
+
+Systest::QueryPerformanceMessageBuilder createPerformanceMessageBuilder(const bool showPerformance, const ExecutionMode executionMode)
+{
+    if (!showPerformance)
+    {
+        return Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+    }
+
+    if (executionMode == ExecutionMode::COMPILER)
+    {
+        return Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
+                                                       { return fmt::format(" compiled in {}", runningQuery.getCompilationTime()); }};
+    }
+
+    return Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
+                                                   { return fmt::format(" in {}", runningQuery.getElapsedTime()); }};
 }
 
 [[noreturn]] void runEndlessRemote(
@@ -132,11 +175,7 @@ void exitOnFailureIfNeeded(const std::vector<Systest::RunningQuery>& failedQueri
         progressTracker.setTotalQueries(totalLocal);
         for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
         {
-            auto configCopy = baseConfiguration;
-            for (const auto& [key, value] : overrideConfig.overrideParameters)
-            {
-                configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-            }
+            auto configCopy = applyConfigurationOverride(baseConfiguration, overrideConfig);
 
             auto queryManager = std::make_unique<QueryManager>(std::make_unique<EmbeddedWorkerQuerySubmissionBackend>(
                 WorkerConfig{.grpc = GrpcAddr("localhost:8080"), .config = {}}, configCopy));
@@ -162,15 +201,7 @@ void SystestExecutor::runEndlessMode(const std::vector<Systest::SystestQuery>& q
     std::cout << std::format("Running endlessly over a total of {} queries (across all configuration overrides).", queries.size()) << '\n';
 
     const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
-    auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-    if (not config.workerConfig.getValue().empty())
-    {
-        singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-    }
-    else if (config.singleNodeWorkerConfig.has_value())
-    {
-        singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-    }
+    auto singleNodeWorkerConfiguration = resolveSingleNodeWorkerConfiguration(config);
 
     OverrideQueriesMap queriesByOverride;
     for (const auto& query : queries)
@@ -263,6 +294,8 @@ void setupLogging(const SystestConfiguration& config)
 SystestExecutorResult SystestExecutor::executeSystests()
 {
     setupLogging(config);
+    Systest::resetQueryCompilationMetrics();
+    Systest::resetQueryRuntimeMetrics();
 
     CPPTRACE_TRY
     {
@@ -310,29 +343,20 @@ SystestExecutorResult SystestExecutor::executeSystests()
             std::ranges::shuffle(queries, rng);
         }
         const auto numberConcurrentQueries = config.numberConcurrentQueries.getValue();
+        auto singleNodeWorkerConfiguration = resolveSingleNodeWorkerConfiguration(config);
         std::vector<Systest::RunningQuery> failedQueries;
         if (const auto grpcURI = config.grpcAddressUri.getValue(); config.remoteTestExecution.getValue())
         {
             progressTracker.reset();
             progressTracker.setTotalQueries(queries.size());
-            const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+            const auto performanceMessage = createPerformanceMessageBuilder(
+                config.showQueryPerformance.getValue(),
+                singleNodeWorkerConfiguration.workerConfiguration.defaultQueryExecution.executionMode.getValue());
             auto failed = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, grpcURI, progressTracker, performanceMessage);
             failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());
         }
         else
         {
-            auto singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value_or(SingleNodeWorkerConfiguration{});
-            if (not config.workerConfig.getValue().empty())
-            {
-                singleNodeWorkerConfiguration.workerConfiguration.overwriteConfigWithYAMLFileInput(config.workerConfig);
-            }
-            else if (config.singleNodeWorkerConfig.has_value())
-            {
-                singleNodeWorkerConfiguration = config.singleNodeWorkerConfig.value();
-            }
             if (config.benchmark)
             {
                 nlohmann::json benchmarkResults;
@@ -381,15 +405,10 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 progressTracker.setTotalQueries(queries.size());
                 for (const auto& [overrideConfig, queriesForConfig] : queriesByOverride)
                 {
-                    auto configCopy = singleNodeWorkerConfiguration;
-                    for (const auto& [key, value] : overrideConfig.overrideParameters)
-                    {
-                        configCopy.overwriteConfigWithCommandLineInput({{key, value}});
-                    }
-                    const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
-                        ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
-                        : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
+                    auto configCopy = applyConfigurationOverride(singleNodeWorkerConfiguration, overrideConfig);
+                    const auto performanceMessage = createPerformanceMessageBuilder(
+                        config.showQueryPerformance.getValue(),
+                        configCopy.workerConfiguration.defaultQueryExecution.executionMode.getValue());
                     auto failed = runQueriesAtLocalWorker(
                         queriesForConfig, numberConcurrentQueries, configCopy, progressTracker, performanceMessage);
                     failedQueries.insert(failedQueries.end(), failed.begin(), failed.end());

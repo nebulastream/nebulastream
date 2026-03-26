@@ -92,6 +92,31 @@ TEST_F(QueryLogTest, GetQuerySummarySuccessfulExecution)
     EXPECT_EQ(*status->metrics.stop, testTime + 200ms);
 }
 
+TEST_F(QueryLogTest, GetQuerySummaryWithCompilationPhase)
+{
+    queryLog->logQueryStatusChange(testQueryId, QueryState::Started, testTime);
+    queryLog->logQueryStatusChange(testQueryId, QueryState::Compiling, testTime + 25ms);
+    queryLog->logQueryStatusChange(testQueryId, QueryState::Running, testTime + 100ms);
+    queryLog->logQueryStatusChange(testQueryId, QueryState::Stopped, testTime + 200ms);
+
+    const auto status = queryLog->getQueryStatus(testQueryId);
+    ASSERT_TRUE(status.has_value());
+
+    EXPECT_EQ(status->queryId, testQueryId);
+    EXPECT_EQ(status->state, QueryState::Stopped);
+
+    EXPECT_TRUE(status->metrics.start.has_value());
+    EXPECT_TRUE(status->metrics.compiling.has_value());
+    EXPECT_TRUE(status->metrics.running.has_value());
+    EXPECT_TRUE(status->metrics.stop.has_value());
+    EXPECT_FALSE(status->metrics.error.has_value());
+
+    EXPECT_EQ(*status->metrics.start, testTime);
+    EXPECT_EQ(*status->metrics.compiling, testTime + 25ms);
+    EXPECT_EQ(*status->metrics.running, testTime + 100ms);
+    EXPECT_EQ(*status->metrics.stop, testTime + 200ms);
+}
+
 TEST_F(QueryLogTest, GetQuerySummaryWithFailure)
 {
     const Exception testError{"Test error", 500};

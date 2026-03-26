@@ -306,6 +306,6 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
          LocalQueryStatus{
              .queryId = statement.id.value(),
              .state = QueryState::Failed,
-             .metrics = QueryMetrics{.start = {}, .running = {}, .stop = {}, .error = statusOpt.error()}}}}};
+             .metrics = QueryMetrics{.start = {}, .compiling = {}, .running = {}, .stop = {}, .error = statusOpt.error()}}}}};
 }
 }

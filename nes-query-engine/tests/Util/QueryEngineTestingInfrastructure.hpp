@@ -100,7 +100,7 @@ struct ExpectStats
         Name(size_t lower, size_t upper) : lower(lower), upper(upper) \
         { \
         } \
-        Name(size_t exact) : lower(exact), upper(exact) \
+        explicit Name(size_t exact) : lower(exact), upper(exact) \
         { \
         } \
     }; \
@@ -113,6 +113,7 @@ struct ExpectStats
     STAT_TYPE(QueryStop);
     STAT_TYPE(QueryStopRequest);
     STAT_TYPE(QueryFail);
+    STAT_TYPE(PipelineCompile);
     STAT_TYPE(PipelineStart);
     STAT_TYPE(PipelineStop);
     STAT_TYPE(TaskExecutionStart);
@@ -125,6 +126,8 @@ struct ExpectStats
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStart>(::testing::_))) /// needed because not in ExpectStats
             .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::QueryStop>(::testing::_)))
+            .WillRepeatedly(::testing::Invoke([](auto) { }));
+        EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineCompile>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));
         EXPECT_CALL(*this->listener, onEvent(::testing::VariantWith<NES::PipelineStart>(::testing::_)))
             .WillRepeatedly(::testing::Invoke([](auto) { }));

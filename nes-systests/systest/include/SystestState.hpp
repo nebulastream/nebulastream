@@ -219,6 +219,7 @@ struct RunningQuery
     std::optional<Exception> exception;
 
     std::chrono::duration<double> getElapsedTime() const;
+    std::chrono::duration<double> getCompilationTime() const;
     [[nodiscard]] std::string getThroughput() const;
 };
 
