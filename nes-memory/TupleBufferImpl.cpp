@@ -94,6 +94,11 @@ MemorySegment::~MemorySegment()
     }
 }
 
+TupleBuffer MemorySegment::toTupleBuffer()
+{
+    return TupleBuffer{controlBlock.get(), ptr, size};
+}
+
 BufferControlBlock::BufferControlBlock(MemorySegment* owner, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
     : owner(owner), recycleCallback(std::move(recycleCallback))
 {

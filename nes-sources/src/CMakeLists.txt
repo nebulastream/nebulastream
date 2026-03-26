@@ -25,7 +25,11 @@ add_source_files(nes-sources
 # Register plugins
 add_plugin(File Source nes-sources FileSource.cpp)
 add_plugin(File SourceValidation nes-sources FileSource.cpp)
+add_plugin(Benchmark Source nes-sources BenchmarkSource.cpp)
+add_plugin(Benchmark SourceValidation nes-sources BenchmarkSource.cpp)
 
 # Systest adaptors
 add_plugin(File InlineData nes-sources FileSource.cpp)
 add_plugin(File FileData nes-sources FileSource.cpp)
+add_plugin(Benchmark InlineData nes-sources BenchmarkSource.cpp)
+add_plugin(Benchmark FileData nes-sources BenchmarkSource.cpp)
