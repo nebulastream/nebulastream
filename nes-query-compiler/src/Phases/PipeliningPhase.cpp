@@ -40,9 +40,10 @@
 #include <PipelinedQueryPlan.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <SinkPhysicalOperator.hpp>
+#include <UnionPhysicalOperator.hpp>
 #include "Operators/Sources/SourceDescriptorLogicalOperator.hpp"
-#include "Util/Strings.hpp"
 #include "SelectionPhysicalOperator.hpp"
+#include "Util/Strings.hpp"
 
 namespace NES::QueryCompilation::PipeliningPhase
 {
@@ -52,13 +53,17 @@ namespace
 
 using OperatorPipelineMap = std::unordered_map<OperatorId, std::shared_ptr<Pipeline>>;
 
-std::vector<Record::RecordFieldIdentifier>
-computeRequiredScanProjections(const PhysicalOperatorWrapper& wrappedOp) {
+std::vector<Record::RecordFieldIdentifier> computeRequiredScanProjections(const PhysicalOperatorWrapper& wrappedOp)
+{
     // Look at the first operator in the upcoming pipeline segment. If it’s a Selection, use its requirements.
     std::set<Record::RecordFieldIdentifier> allRequiredFields;
-    if (auto sel = wrappedOp.getPhysicalOperator().tryGet<NES::SelectionPhysicalOperator>()) {
+    if (auto sel = wrappedOp.getPhysicalOperator().tryGet<NES::SelectionPhysicalOperator>())
+    {
         const auto& v = sel->getRequiredFields();
-        if (!v.empty()) { allRequiredFields.insert(v.begin(), v.end()); }
+        if (!v.empty())
+        {
+            allRequiredFields.insert(v.begin(), v.end());
+        }
     }
     if (!allRequiredFields.empty())
     {
@@ -101,7 +106,8 @@ PhysicalOperator createScanOperator(
         const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
-            return ScanPhysicalOperator(provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), projections, requiredFields);
+            return ScanPhysicalOperator(
+                provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), projections, requiredFields);
         }
     }
     return ScanPhysicalOperator(memoryProvider, projections, requiredFields);
@@ -116,7 +122,11 @@ std::shared_ptr<Pipeline> createNewPipelineWithScan(
 {
     const std::vector<std::string> requiredFields = computeRequiredScanProjections(wrappedOpAfterScan);
     const auto newPipeline = std::make_shared<Pipeline>(createScanOperator(
-        *prevPipeline, wrappedOpAfterScan.getInputSchema(), wrappedOpAfterScan.getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
+        *prevPipeline,
+        wrappedOpAfterScan.getInputSchema(),
+        wrappedOpAfterScan.getInputMemoryLayoutType(),
+        configuredBufferSize,
+        requiredFields));
     prevPipeline->addSuccessor(newPipeline, prevPipeline);
     pipelineMap[wrappedOpAfterScan.getPhysicalOperator().getId()] = newPipeline;
     newPipeline->appendOperator(wrappedOpAfterScan.getPhysicalOperator());
@@ -140,6 +150,22 @@ void addDefaultEmit(const std::shared_ptr<Pipeline>& pipeline, const PhysicalOpe
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();
     pipeline->getOperatorHandlers().emplace(operatorHandlerIndex, std::make_shared<EmitOperatorHandler>());
     pipeline->appendOperator(EmitPhysicalOperator(operatorHandlerIndex, bufferRef));
+}
+
+/// Checks recursively for a pipeline, excluding the scan, if it only consists of projections
+bool isPureProjectionPipeline(const std::shared_ptr<PhysicalOperatorWrapper>& wrappedOp)
+{
+    if (wrappedOp->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::EMIT
+        || wrappedOp->getPhysicalOperator().tryGet<SinkPhysicalOperator>())
+    {
+        return true;
+    }
+    /// In case of union, we actually need the seperate pipeline, as the mappings in it should be applied to both streams
+    if (!wrappedOp->getPhysicalOperator().tryGet<UnionPhysicalOperator>())
+    {
+        return isPureProjectionPipeline(wrappedOp->getChildren()[0]);
+    }
+    return false;
 }
 
 enum class PipelinePolicy : uint8_t
@@ -171,6 +197,24 @@ void buildPipelineRecursively(
     /// Case 1: Custom Scan
     if (opWrapper->getPipelineLocation() == PhysicalOperatorWrapper::PipelineLocation::SCAN)
     {
+        /// It might be the case that the scan is a regular scan: A regular scan is created before this phase for projections.
+        /// If it is a regular scan, then the operations in the previous pipeline could only have been stateless. If this pipeline is not the immediate child of two united streams, the pipeline break is actually not needed.
+        if (prevOpWrapper && opWrapper->getPhysicalOperator().tryGet<ScanPhysicalOperator>())
+        {
+            /// For simplicity, we just assume that operators with multiple children don't exist (they currently don't)
+            if (isPureProjectionPipeline(opWrapper->getChildren()[0]))
+            {
+                buildPipelineRecursively(
+                    opWrapper->getChildren()[0],
+                    prevOpWrapper,
+                    currentPipeline,
+                    pipelineMap,
+                    PipelinePolicy::Continue,
+                    configuredBufferSize);
+                return;
+            }
+        }
+
         if (prevOpWrapper && prevOpWrapper->getPipelineLocation() != PhysicalOperatorWrapper::PipelineLocation::EMIT)
         {
             addDefaultEmit(currentPipeline, *prevOpWrapper, configuredBufferSize);
@@ -244,7 +288,11 @@ void buildPipelineRecursively(
             {
                 std::vector<std::string> requiredFields = computeRequiredScanProjections(*opWrapper);
                 const auto sourcePipeline = std::make_shared<Pipeline>(createScanOperator(
-                    *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
+                    *currentPipeline,
+                    opWrapper->getInputSchema(),
+                    opWrapper->getInputMemoryLayoutType(),
+                    configuredBufferSize,
+                    requiredFields));
                 currentPipeline->addSuccessor(sourcePipeline, currentPipeline);
 
                 addDefaultEmit(sourcePipeline, *opWrapper, configuredBufferSize);
@@ -293,8 +341,8 @@ void buildPipelineRecursively(
         pipelineMap[opId] = newPipelinePtr;
         PRECONDITION(newPipelinePtr->isOperatorPipeline(), "Only add scan physical operator to operator pipelines");
         std::vector<std::string> requiredFields = computeRequiredScanProjections(*opWrapper);
-        newPipelinePtr->prependOperator(
-            createScanOperator(*currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
+        newPipelinePtr->prependOperator(createScanOperator(
+            *currentPipeline, opWrapper->getInputSchema(), opWrapper->getInputMemoryLayoutType(), configuredBufferSize, requiredFields));
         for (auto& child : opWrapper->getChildren())
         {
             buildPipelineRecursively(child, opWrapper, newPipelinePtr, pipelineMap, PipelinePolicy::Continue, configuredBufferSize);
