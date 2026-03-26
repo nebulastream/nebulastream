@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # The dependency image contains a prebuilt sdk of all vcpkg depedencies used in the NebulaStream manifest
 # This image is intended to be built as a multi-platform image where the ARCH is injected into the docker build.
 # We do not use the builtin TARGETPLATFORM because it would not match the archtiecture names expected by VCPKG.
@@ -17,7 +18,6 @@ ADD https://github.com/nebulastream/clang-binaries/releases/download/vmlir-${LLV
 
 RUN zstd --decompress llvm.tar.zstd --stdout | tar -x
 
-# syntax=docker/dockerfile:1
 FROM nebulastream/nes-development-base:${TAG} as dep-build
 ARG STDLIB=libcxx
 ARG ARCH

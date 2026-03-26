@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 ARG TAG=latest
 ARG BUILD_TYPE=RelWithDebInfo
 ARG RUNTIME_TAG=${TAG}

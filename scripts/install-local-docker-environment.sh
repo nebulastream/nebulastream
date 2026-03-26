@@ -14,6 +14,20 @@
 
 set -e
 
+# Enable Docker BuildKit, which is required by our Dockerfiles (they use
+# BuildKit-only features such as --mount, --chmod, --checksum, and --secret).
+export DOCKER_BUILDKIT=1
+
+# BuildKit requires Docker >= 18.09. Check early to give a clear error message.
+DOCKER_VERSION=$(docker version --format '{{.Server.Version}}' 2>/dev/null || echo "0.0.0")
+DOCKER_MAJOR=$(echo "$DOCKER_VERSION" | cut -d. -f1)
+DOCKER_MINOR=$(echo "$DOCKER_VERSION" | cut -d. -f2)
+if [ "$DOCKER_MAJOR" -lt 18 ] || { [ "$DOCKER_MAJOR" -eq 18 ] && [ "$DOCKER_MINOR" -lt 9 ]; }; then
+    echo "Error: Docker >= 18.09 is required for BuildKit support (found $DOCKER_VERSION)."
+    echo "Please upgrade Docker: https://docs.docker.com/engine/install/"
+    exit 1
+fi
+
 RED='\033[0;31m'
 NC='\033[0m' # No Color
 

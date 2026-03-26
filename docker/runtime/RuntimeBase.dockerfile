@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 # Lightweight runtime base image for running NebulaStream binaries.
 # Contains only the runtime dependencies: libc++, grpc_health_probe, and basic utilities.
 # This image is pre-built and pushed to the registry so that downstream images
