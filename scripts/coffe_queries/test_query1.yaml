@@ -1,0 +1,53 @@
+query: |
+  SELECT
+    `COFFE_MACHINE$MACHINEID` AS machineId,
+    `COFFE_MACHINE$WATER$PRODUCTSQUANTITY` AS waterProductsQuantity,
+    `COFFE_MACHINE$MILK$TOTALTIME` AS milkTotalTime
+  FROM COFFE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://127.0.0.1:1883
+      clientId: mqtt_sink_client
+      topic: coffee/machine/101
+      qos: 1
+      output_format: JSON
+    parser_config: { }
+    schema:
+      - name: machineId
+        type: INT32
+      - name: waterProductsQuantity
+        type: FLOAT64
+      - name: milkTotalTime
+        type: FLOAT64
+
+logical:
+  - name: COFFE_MACHINE
+    schema:
+      - name: machineId
+        type: INT32
+      - name: water$productsQuantity
+        type: FLOAT64
+      - name: milk$totalTime
+        type: FLOAT64
+
+physical:
+  - logical: COFFE_MACHINE
+    host: 127.0.0.1:9090
+    type: RestApi
+    parser_config:
+      type: JSON
+    source_config:
+      endpoint: http://127.0.0.1:8000/v3/machines/machine-counters/101
+      interval_ms: 1000
+      connect_timeout_seconds: 60
+      append_newline: true
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000

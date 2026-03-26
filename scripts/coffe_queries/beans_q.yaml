@@ -1,0 +1,63 @@
+query: |
+  SELECT
+    `COFFE_MACHINE$BEANS$QUANTITYHOPPER1` AS hopper1,
+    `COFFE_MACHINE$BEANS$QUANTITYHOPPER2` AS hopper2,
+    `COFFE_MACHINE$BEANS$QUANTITYHOPPER3` AS hopper3,
+    `COFFE_MACHINE$BEANS$QUANTITYHOPPER4` AS hopper4,
+    `COFFE_MACHINE$BEANS$TOTALQUANTITY` AS totalQuantity
+  FROM COFFE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://127.0.0.1:1883
+      clientId: mqtt_sink_client
+      topic: beans-usage
+      qos: 1
+      output_format: JSON
+    parser_config: { }
+    schema:
+      - name: hopper1
+        type: FLOAT64
+      - name: hopper2
+        type: FLOAT64
+      - name: hopper3
+        type: FLOAT64
+      - name: hopper4
+        type: FLOAT64
+      - name: totalQuantity
+        type: FLOAT64
+
+logical:
+  - name: COFFE_MACHINE
+    schema:
+      - name: BEANS$QUANTITYHOPPER1
+        type: FLOAT64
+      - name: BEANS$QUANTITYHOPPER2
+        type: FLOAT64
+      - name: BEANS$QUANTITYHOPPER3
+        type: FLOAT64
+      - name: BEANS$QUANTITYHOPPER4
+        type: FLOAT64
+      - name: BEANS$TOTALQUANTITY
+        type: FLOAT64
+
+physical:
+  - logical: COFFE_MACHINE
+    host: 127.0.0.1:9090
+    type: RestApi
+    parser_config:
+      type: JSON
+    source_config:
+      endpoint: http://127.0.0.1:8000/v3/machines/machine-counters/101
+      interval_ms: 10000
+      connect_timeout_seconds: 60
+      append_newline: true
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000

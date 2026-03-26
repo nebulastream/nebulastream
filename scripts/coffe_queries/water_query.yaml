@@ -1,0 +1,62 @@
+query: |
+  SELECT
+    `COFFE_MACHINE$WATER$PRODUCTSQUANTITY` AS productsQuantity,
+    `COFFE_MACHINE$WATER$RINSEQUANTITY` AS rinseQuantity,
+    `COFFE_MACHINE$WATER$PURGEQUANTITY` AS purgeQuantity,
+    `COFFE_MACHINE$WATER$CLEANINGQUANTITY` AS cleaningQuantity
+  FROM COFFE_MACHINE
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://127.0.0.1:1883
+      clientId: mqtt_sink_client
+      topic: water-usage
+      qos: 1
+      output_format: JSON
+    parser_config: { }
+    schema:
+      - name: productsQuantity
+        type: FLOAT64
+      - name: rinseQuantity
+        type: FLOAT64
+      - name: purgeQuantity
+        type: FLOAT64
+      - name: cleaningQuantity
+        type: FLOAT64
+
+logical:
+  - name: COFFE_MACHINE
+    schema:
+      - name: MACHINEID
+        type: INT32
+      - name: WATER$CLEANINGQUANTITY
+        type: FLOAT64
+      - name: WATER$PRODUCTSQUANTITY
+        type: FLOAT64
+      - name: WATER$PURGEQUANTITY
+        type: FLOAT64
+      - name: WATER$RINSEQUANTITY
+        type: FLOAT64
+      - name: WATER$TOTALQUANTITY
+        type: FLOAT64
+
+physical:
+  - logical: COFFE_MACHINE
+    host: 127.0.0.1:9090
+    type: RestApi
+    parser_config:
+      type: JSON
+    source_config:
+      endpoint: http://127.0.0.1:8000/v3/machines/machine-counters/101
+      interval_ms: 1000
+      connect_timeout_seconds: 60
+      append_newline: true
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000
