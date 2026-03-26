@@ -47,7 +47,8 @@
     "scope-guard",
     "boost-url",
     "simdjson",
-    "date"
+    "date",
+    "paho-mqttpp3"
   ],
   "overrides": [
     {
