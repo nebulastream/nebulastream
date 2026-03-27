@@ -108,7 +108,7 @@ void GoogleEventTracePrinter::threadRoutine(const std::stop_token& token)
 
     while (!token.stop_requested())
     {
-        CombinedEventType event = QueryStart{WorkerThreadId(0), QueryId(0)}; /// Will be overwritten
+        CombinedEventType event = QueryStart{WorkerThreadId(0), INVALID_QUERY_ID}; /// Will be overwritten
 
         if (!events.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(READ_RETRY_MS), event))
         {

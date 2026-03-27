@@ -234,7 +234,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 
         if (statement.id)
         {
-            plan.setQueryId(QueryId(*statement.id));
+            plan.setQueryId(*statement.id);
         }
         const auto queryResult = queryManager->registerQuery(plan);
         return queryResult
