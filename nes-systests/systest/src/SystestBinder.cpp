@@ -531,7 +531,7 @@ struct SystestBinder::Impl
             std::cout << "Created sources directory: file://" << sourceDir.string() << "\n";
         }
 
-        return createTemporaryFile(fmt::format("{}/input", sourceDir), ".csv").second;
+        return createUniqueFile(fmt::format("{}/input", sourceDir), ".csv").second;
     }
 
     [[nodiscard]] std::filesystem::path generateSourceFilePath(const std::string& testData) const { return testDataDir / testData; }

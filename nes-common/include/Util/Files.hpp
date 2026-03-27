@@ -27,9 +27,9 @@ namespace NES
 std::string getErrorMessageFromERRNO();
 std::string getErrorMessage(int errorNumber);
 
-/// Creates a temporary file in the current working directory with a unique name.
+/// Creates a file in the current working directory with a unique name.
 /// The generated name will be 'prefix######suffix', where # is randomly generated
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix, std::string_view suffix);
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix);
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile();
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile(std::string_view prefix, std::string_view suffix);
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile(std::string_view prefix);
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile();
 }

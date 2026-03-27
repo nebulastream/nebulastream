@@ -42,31 +42,31 @@ std::string getErrorMessage(int errorNumber)
     return errorMessage;
 }
 
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix, std::string_view suffix)
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile(std::string_view prefix, std::string_view suffix)
 {
     std::string fileTemplate = fmt::format("{}XXXXXX{}", prefix, suffix);
     const auto file = mkstemps(fileTemplate.data(), static_cast<int>(suffix.size())); /// NOLINT(misc-include-cleaner)
 
     if (file == -1)
     {
-        throw UnknownException("Failed to create temporary file: {}", getErrorMessageFromERRNO());
+        throw UnknownException("Failed to create unique file: {}", getErrorMessageFromERRNO());
     }
 
     if (close(file) == -1)
     {
-        throw UnknownException("Failed to close temporary file: {}", getErrorMessageFromERRNO());
+        throw UnknownException("Failed to close unique file: {}", getErrorMessageFromERRNO());
     }
 
     return {std::ofstream{fileTemplate}, fileTemplate};
 }
 
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix)
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile(std::string_view prefix)
 {
-    return createTemporaryFile(prefix, "");
+    return createUniqueFile(prefix, "");
 }
 
-std::pair<std::ofstream, std::filesystem::path> createTemporaryFile()
+std::pair<std::ofstream, std::filesystem::path> createUniqueFile()
 {
-    return createTemporaryFile("", "");
+    return createUniqueFile("", "");
 }
 }
