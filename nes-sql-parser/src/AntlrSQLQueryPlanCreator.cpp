@@ -354,6 +354,42 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
     helpers.top().functionBuilder.push_back(function);
 }
 
+void AntlrSQLQueryPlanCreator::exitBooleanLiteral(AntlrSQLParser::BooleanLiteralContext* context)
+{
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
+    }
+
+    const auto value = bindBooleanLiteral(context) ? "true" : "false";
+    helpers.top().functionBuilder.emplace_back(
+        ConstantValueLogicalFunction(DataTypeProvider::provideDataType(DataType::Type::BOOLEAN), value));
+    AntlrSQLBaseListener::exitBooleanLiteral(context);
+}
+
+void AntlrSQLQueryPlanCreator::exitCaseExpression(AntlrSQLParser::CaseExpressionContext* context)
+{
+    if (helpers.empty())
+    {
+        throw InvalidQuerySyntax("Parser is confused at {}", context->getText());
+    }
+
+    const auto numberOfChildren = context->whenClause().size() * 2 + 1;
+    if (helpers.top().functionBuilder.size() < numberOfChildren)
+    {
+        throw InvalidQuerySyntax(
+            "CASE expression requires {} child expressions, but only {} were parsed at {}",
+            numberOfChildren,
+            helpers.top().functionBuilder.size(),
+            context->getText());
+    }
+
+    auto childrenBegin = helpers.top().functionBuilder.end() - static_cast<std::ptrdiff_t>(numberOfChildren);
+    std::vector<LogicalFunction> children(childrenBegin, helpers.top().functionBuilder.end());
+    helpers.top().functionBuilder.resize(helpers.top().functionBuilder.size() - numberOfChildren);
+    helpers.top().functionBuilder.push_back(LogicalFunctionProvider::provide("Conditional", std::move(children)));
+}
+
 void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
 {
     /// Get Index of Parent Rule to check type of parent rule in conditions
