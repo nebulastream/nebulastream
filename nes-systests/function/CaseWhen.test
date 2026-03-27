@@ -1,0 +1,45 @@
+# name: function/CaseWhen.test
+# description: Tests for SQL CASE WHEN expressions
+# groups: [Function, FunctionCaseWhen]
+
+CREATE LOGICAL SOURCE intersection(intersection_id INT32, traffic_density FLOAT32, emergency_vehicle_detected BOOLEAN, pedestrian_waiting BOOLEAN);
+CREATE PHYSICAL SOURCE FOR intersection TYPE File;
+ATTACH INLINE
+1,0.5,true,false
+2,0.1,false,true
+3,0.9,false,false
+4,0.6,false,false
+5,0.3,false,false
+6,0.1,true,true
+7,0.9,false,true
+8,0.6,false,true
+9,0.3,false,true
+10,0.95,true,false
+
+CREATE SINK traffic_light(intersection.intersection_id INT32, signal_command VARSIZED NOT NULL) TYPE File;
+
+SELECT intersection_id,
+       CASE
+           WHEN emergency_vehicle_detected = TRUE
+               THEN VARSIZED("ALL_RED_EMERGENCY")
+           WHEN pedestrian_waiting = TRUE AND traffic_density < FLOAT32(0.2)
+               THEN VARSIZED("PEDESTRIAN_WALK")
+           WHEN traffic_density > FLOAT32(0.8)
+               THEN VARSIZED("GREEN_EXTENDED")
+           WHEN traffic_density > FLOAT32(0.5)
+               THEN VARSIZED("GREEN_STANDARD")
+           ELSE VARSIZED("FLASHING_YELLOW")
+       END AS signal_command
+FROM intersection
+INTO traffic_light;
+----
+1,ALL_RED_EMERGENCY
+2,PEDESTRIAN_WALK
+3,GREEN_EXTENDED
+4,GREEN_STANDARD
+5,FLASHING_YELLOW
+6,ALL_RED_EMERGENCY
+7,GREEN_EXTENDED
+8,GREEN_STANDARD
+9,FLASHING_YELLOW
+10,ALL_RED_EMERGENCY
