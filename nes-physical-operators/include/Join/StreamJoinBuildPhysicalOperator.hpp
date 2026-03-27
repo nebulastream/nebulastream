@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <SliceCacheConfiguration.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES
@@ -32,7 +33,8 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> memoryProvider);
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        SliceCacheConfiguration sliceCacheConfiguration);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
     StreamJoinBuildPhysicalOperator(const StreamJoinBuildPhysicalOperator& other) = default;

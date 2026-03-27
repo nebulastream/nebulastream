@@ -53,8 +53,8 @@ let
   nautilusSrc = pkgs.fetchFromGitHub {
     owner = "nebulastream";
     repo = "nautilus";
-    rev = "d75a6816436c824090c85191a0c1e39239cf2479";
-    hash = "sha256-M0OOYKk/bCegCv2RpuvJ4Q9gSccpW78r3C9xtrGIHe0=";
+    rev = "85c19150d9bb7e8cca3051e67e04e76045462379";
+    hash = "sha256-0sM29GbvNTX0K3SLESqn2ranJ2laZ/HspUHesejMpFY=";
   };
 
   nautilus = clangStdenv.mkDerivation rec {
@@ -64,7 +64,6 @@ let
     src = nautilusSrc;
     patches = [
       ./patches/0001-disable-ubsan-function-call-check.patch
-      ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
     ];
 
     nativeBuildInputs = [

@@ -107,11 +107,10 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
-    auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef);
-
-    auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
+    const NLJBuildPhysicalOperator leftBuildOperator{
+        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, conf.sliceCacheConfiguration};
+    const NLJBuildPhysicalOperator rightBuildOperator{
+        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, conf.sliceCacheConfiguration};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(

@@ -57,7 +57,6 @@ void setupProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelin
 
     auto* opHandler = dynamic_cast<WindowBasedOperatorHandler*>(ptrOpHandler);
     opHandler->start(*pipelineCtx, 0);
-    opHandler->setWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
 }
 
 void terminateProxy(OperatorHandler* ptrOpHandler, PipelineExecutionContext* pipelineCtx)

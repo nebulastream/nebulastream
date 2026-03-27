@@ -64,7 +64,7 @@ TEST_P(NumericTypeConversionTest, SimpleTest)
 /// This tests the join operation for all possible combinations of basic types
 /// As a ground truth, we use the C++ type promotion rules
 INSTANTIATE_TEST_CASE_P(
-    ThisIsARealTest,
+    NumericTypeConversionTest,
     NumericTypeConversionTest,
     ::testing::Values<TypeConversionTestInput>(
         TypeConversionTestInput{
