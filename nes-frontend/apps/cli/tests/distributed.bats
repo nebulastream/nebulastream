@@ -195,6 +195,25 @@ assert_json_contains() {
   [ "$status" -eq 0 ]
 }
 
+@test "stop all running queries" {
+  setup_distributed tests/topologies/1-node.yaml
+
+  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml start
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 8 ]
+
+  query_ids=("${lines[@]}")
+
+  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml stop-all
+  [ "$status" -eq 0 ]
+  echo "$output" | jq -e 'length == 8'
+
+  run DOCKER_NES_CLI -t tests/good/multiple-select-gen-into-void.yaml status "${query_ids[0]}"
+  [ "$status" -eq 0 ]
+  QUERY_STATUS=$(echo "$output" | jq -r '.[0].query_status')
+  [ "$QUERY_STATUS" != "Running" ]
+}
+
 @test "launch query from commandline" {
   setup_distributed tests/topologies/1-node.yaml
   run DOCKER_NES_CLI -t tests/good/select-gen-into-void.yaml start 'select DOUBLE from GENERATOR_SOURCE INTO VOID_SINK'

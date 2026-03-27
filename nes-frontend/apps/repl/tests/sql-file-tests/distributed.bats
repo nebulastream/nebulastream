@@ -193,6 +193,20 @@ assert_json_contains() {
   assert_json_contains "[]" "${lines[7]}"
 }
 
+@test "DROP QUERY ALL stops all running queries" {
+  setup_distributed tests/topologies/1-node.yaml
+  run DOCKER_NES_REPL tests/sql-file-tests/good/drop_all_queries.sql
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 7 ]
+
+  assert_json_equal '[{"query_id":1}]' "${lines[2]}"
+  assert_json_equal '[{"query_id":2}]' "${lines[3]}"
+  echo "${lines[4]}" | jq -e '(. | length) == 2'
+  echo "${lines[4]}" | jq -e 'all(.[].query_status; test("^Running|Registered|Started$"))'
+  echo "${lines[5]}" | jq -e 'map(.query_id) | sort == [1,2]'
+  assert_json_equal '[]' "${lines[6]}"
+}
+
 @test "launch multiple queries" {
   setup_distributed tests/topologies/1-node.yaml
   run DOCKER_NES_REPL tests/sql-file-tests/good/multiple_queries.sql

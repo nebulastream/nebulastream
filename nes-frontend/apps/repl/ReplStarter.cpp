@@ -290,16 +290,13 @@ int main(int argc, char** argv)
         switch (magic_enum::enum_cast<OnExitBehavior>(program.get<std::string>("--on-exit")).value())
         {
             case OnExitBehavior::STOP_QUERIES:
-                for (auto& query : queryManager->getRunningQueries())
+                if (auto result = queryStatementHandler->operator()(NES::DropQueryStatement{.id = std::nullopt}); !result.has_value())
                 {
-                    auto result = queryStatementHandler->operator()(NES::DropQueryStatement{.id = query});
-                    const NES::StatementOutputAssembler<NES::DropQueryStatementResult> assembler{};
-                    if (!result.has_value())
-                    {
-                        NES_ERROR("Could not stop query: {}", result.error().what());
-                        hasError = true;
-                        continue;
-                    }
+                    NES_ERROR("Could not stop queries: {}", result.error().what());
+                    hasError = true;
+                }
+                else
+                {
                     /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) validated by argparse .choices()
                     printStatementResult(
                         std::cout, magic_enum::enum_cast<NES::StatementOutputFormat>(program.get("-f")).value(), result.value());

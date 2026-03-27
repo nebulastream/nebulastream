@@ -134,7 +134,7 @@ struct ShowQueriesStatement
 
 struct DropQueryStatement
 {
-    QueryId id;
+    std::optional<QueryId> id;
 };
 
 struct WorkerStatusStatement

@@ -81,8 +81,9 @@ nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
 
-dropStatement: DROP dropSubject WHERE dropFilter;
+dropStatement: DROP (dropQueryAll | dropSubject WHERE dropFilter);
 dropSubject: dropQuery | dropSource | dropSink;
+dropQueryAll: QUERY ALL;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
 dropLogicalSourceSubject: LOGICAL SOURCE;
