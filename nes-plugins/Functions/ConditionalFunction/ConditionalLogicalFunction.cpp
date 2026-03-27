@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <ConditionalLogicalFunction.hpp>
+#include "ConditionalLogicalFunction.hpp"
 
 #include <cstddef>
 #include <optional>
