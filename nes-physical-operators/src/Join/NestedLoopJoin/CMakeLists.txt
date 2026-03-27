@@ -15,6 +15,7 @@ add_source_files(nes-physical-operators
         NLJOperatorHandler.cpp
         NLJProbePhysicalOperatorBase.cpp
         NLJInnerProbePhysicalOperator.cpp
+        NLJOuterProbePhysicalOperator.cpp
         NLJSlice.cpp
 )
 
