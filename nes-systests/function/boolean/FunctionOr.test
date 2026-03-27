@@ -21,7 +21,7 @@ SELECT
     (u8 == INT32(2)) or (u16 == INT32(2)) AS d
 FROM stream INTO sink4Booleans;
 ----
-0,1,1,1
+false,true,true,true
 
 
 # Check if the or operator works for simple nested functions
@@ -33,7 +33,7 @@ SELECT
     (i8 == INT32(1)) or not ((i16 == INT32(2)) or (i32 == INT32(1))) AS e
 FROM stream INTO sink5Booleans;
 ----
-0,1,1,1,1
+false,true,true,true,true
 
 
 # Check if the or operator works together with comparison functions
@@ -45,7 +45,7 @@ SELECT
     (i8 == INT32(1)) or not (i16 == INT32(2)) AS e
 FROM stream INTO sink5Booleans;
 ----
-0,1,1,1,1
+false,true,true,true,true
 
 
 # Check if the or operator works together with comparison functions and nested functions
@@ -57,7 +57,7 @@ SELECT
     (i8 == INT32(1)) or not ((i16 == INT32(2)) or (i32 == INT32(1))) AS e
 FROM stream INTO sink5Booleans;
 ----
-0,1,1,1,1
+false,true,true,true,true
 
 # Check that OR works with raw boolean fields (regression test for withInferredDataType checking pre-inference types)
 CREATE LOGICAL SOURCE boolStream(flag1 BOOLEAN NOT NULL, flag2 BOOLEAN NOT NULL, value INT32 NOT NULL);
@@ -76,7 +76,7 @@ SELECT
     (value > INT32(3)) OR flag2 AS c
 FROM boolStream INTO sinkBoolOr;
 ----
-1,1,1
-1,1,0
-1,1,1
-0,0,1
+true,true,true
+true,true,false
+true,true,true
+false,false,true
