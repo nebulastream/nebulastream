@@ -466,18 +466,18 @@ async def group_statistics(groupId: int):
             this_week = int(c * 0.35)
             last_week = int(c * 0.25)
 
-            total_today += today
-            total_yesterday += yesterday
+            total_today = random.randint(0,100)
+            total_yesterday = random.randint(0,100)
             total_this_week += this_week
             total_last_week += last_week
 
-        return {
-            "serverTimestamp": iso_utc_now(),
-            "totalProductsLastWeek": total_last_week,
-            "totalProductsThisWeek": total_this_week,
-            "totalProductsToday": total_today,
-            "totalProductsYesterday": total_yesterday,
-        }
+    return {
+        "SERVERTIMESTAMP": iso_utc_now(),
+        "TOTALPRODUCTSLASTWEEK": total_last_week,
+        "TOTALPRODUCTSTHISWEEK": total_this_week,
+        "TOTALPRODUCTSTODAY": total_today,
+        "TOTALPRODUCTSYESTERDAY": total_yesterday,
+    }
 
 
 # Optional: a tiny helper to list machines/groups (not part of your 4 endpoints, but handy)
