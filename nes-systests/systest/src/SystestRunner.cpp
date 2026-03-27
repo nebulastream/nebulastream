@@ -379,6 +379,7 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
         if (!queryRan.passed)
         {
             failedQueries.emplace_back(queryRan);
+            continue;
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
         resultJson.push_back({
@@ -474,8 +475,11 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 
         auto errorMessage = checkResult(*ranQueries.back());
         ranQueries.back()->passed = not errorMessage.has_value();
-        const auto queryPerformanceMessage
-            = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
+        std::string queryPerformanceMessage;
+        if (ranQueries.back()->passed)
+        {
+            queryPerformanceMessage = fmt::format(" in {} ({})", ranQueries.back()->getElapsedTime(), ranQueries.back()->getThroughput());
+        }
         progressTracker.incrementQueryCounter();
         printQueryResultToStdOut(*ranQueries.back(), errorMessage.value_or(""), progressTracker, queryPerformanceMessage);
     }
