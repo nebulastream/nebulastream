@@ -1,0 +1,69 @@
+From faea0eac239af54d92dca946c4498b3fe82e7bcb Mon Sep 17 00:00:00 2001
+From: Lukas Schwerdtfeger <lukas.schwerdtfeger@gmail.com>
+Date: Fri, 27 Mar 2026 15:58:59 +0000
+Subject: [PATCH] Fix AllocaOperation using default identifier, causing alloca
+ collisions
+MIME-Version: 1.0
+Content-Type: text/plain; charset=UTF-8
+Content-Transfer-Encoding: 8bit
+
+AllocaOperation was constructed without an OperationIdentifier, defaulting
+to {0,0}. When multiple allocas existed (different-sized structs), they all
+mapped to the same key in the MLIR ValueFrame — the second overwrote the
+first. This caused the larger struct's invoke to write into the smaller
+struct's allocation, corrupting the stack.
+
+Fix: pass the resultIdentifier from the trace through to AllocaOperation's
+constructor, giving each alloca a unique identity in the IR and MLIR frames.
+
+Co-Authored-By: Claude Opus 4.6 (1M context) <noreply@anthropic.com>
+---
+ .../src/nautilus/compiler/ir/operations/AllocaOperation.cpp   | 4 ++--
+ .../src/nautilus/compiler/ir/operations/AllocaOperation.hpp   | 2 +-
+ .../src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp  | 2 +-
+ 3 files changed, 4 insertions(+), 4 deletions(-)
+
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.cpp b/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.cpp
+index 8cb9c16..c69d6d5 100644
+--- a/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.cpp
++++ b/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.cpp
+@@ -5,8 +5,8 @@
+ 
+ namespace nautilus::compiler::ir {
+ 
+-AllocaOperation::AllocaOperation(size_t allocationSize)
+-    : Operation(OperationType::AllocaOp, Type::ptr, {}), allocationSize(allocationSize) {
++AllocaOperation::AllocaOperation(OperationIdentifier id, size_t allocationSize)
++    : Operation(OperationType::AllocaOp, id, Type::ptr, {}), allocationSize(allocationSize) {
+ }
+ 
+ size_t AllocaOperation::getSize() const {
+diff --git a/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.hpp b/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.hpp
+index f935c3a..d767bb6 100644
+--- a/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.hpp
++++ b/nautilus/src/nautilus/compiler/ir/operations/AllocaOperation.hpp
+@@ -6,7 +6,7 @@
+ namespace nautilus::compiler::ir {
+ class AllocaOperation : public Operation {
+ public:
+-	explicit AllocaOperation(size_t allocationSize);
++	AllocaOperation(OperationIdentifier id, size_t allocationSize);
+ 
+ 	~AllocaOperation() override = default;
+ 
+diff --git a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+index 9c0c7bb..12796e6 100644
+--- a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
++++ b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+@@ -457,7 +457,7 @@ void TraceToIRConversionPhase::IRConversionContext::processAlloca(ValueFrame& fr
+                                                                   TraceOperation& operation) {
+ 	auto resultIdentifier = createValueIdentifier(operation.resultRef);
+ 	AllocSize allocationSize = std::get<AllocSize>(operation.input[0]);
+-	auto allocaOperation = currentBlock->addOperation<AllocaOperation>(allocationSize);
++	auto allocaOperation = currentBlock->addOperation<AllocaOperation>(resultIdentifier, allocationSize);
+ 	frame.setValue(resultIdentifier, allocaOperation);
+ }
+ 
+-- 
+2.43.0
+

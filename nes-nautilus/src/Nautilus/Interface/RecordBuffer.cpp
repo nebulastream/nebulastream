@@ -79,6 +79,8 @@ struct SequenceRangeBuffer
 
 void storeBuffer(SequenceRange* allocated, SequenceRangeBuffer* buffer)
 {
+    PRECONDITION(reinterpret_cast<uintptr_t>(allocated) > 0x1000,
+        "storeBuffer called with invalid SequenceRange pointer: {}", reinterpret_cast<uintptr_t>(allocated));
     buffer->start = allocated->start.data();
     buffer->end = allocated->end.data();
     buffer->size = allocated->end.depth();

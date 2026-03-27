@@ -43,6 +43,7 @@
 #include <val.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <val_std.hpp>
 #include <common/FunctionAttributes.hpp>
 
 namespace NES
@@ -154,6 +155,13 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     [[nodiscard]] static nautilus::val<bool>
     applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction);
 
+    template <typename T, bool Nullable>
+    static void storeParseResultFixed(
+        FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData, ParseResultFixed<T>* out)
+    {
+        *out = *parseJsonFixedSizeIntoVarValProxy<T, Nullable>(fieldIndex, fieldIndexFunction, metaData);
+    }
+
     template <typename T>
     [[nodiscard]] VarVal parseJsonFixedSizeIntoVarVal(
         const bool nullable,
@@ -163,15 +171,15 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
     {
         if (nullable)
         {
-            const auto parseResult = nautilus::invoke(
-                {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, true>, fieldIndex, fieldIndexFunction, metaData);
-            const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
-            const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResultFixed<T>, isNull));
+            nautilus::val<ParseResultFixed<T>> result;
+            nautilus::invoke(storeParseResultFixed<T, true>, fieldIndex, fieldIndexFunction, metaData, &result);
+            const nautilus::val<T> nautilusValue = result.get(&ParseResultFixed<T>::value);
+            const nautilus::val<bool> isNull = result.get(&ParseResultFixed<T>::isNull);
             return VarVal{nautilusValue, nullable, isNull};
         }
-        const auto parseResult = nautilus::invoke(
-            {nautilus::ModRefInfo::Ref}, parseJsonFixedSizeIntoVarValProxy<T, false>, fieldIndex, fieldIndexFunction, metaData);
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResultFixed<T>, value));
+        nautilus::val<ParseResultFixed<T>> result;
+        nautilus::invoke(storeParseResultFixed<T, false>, fieldIndex, fieldIndexFunction, metaData, &result);
+        const nautilus::val<T> nautilusValue = result.get(&ParseResultFixed<T>::value);
         return VarVal{nautilusValue, nullable, false};
     }
 

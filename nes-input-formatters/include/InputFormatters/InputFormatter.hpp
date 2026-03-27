@@ -46,6 +46,7 @@
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
+#include <val_std.hpp>
 
 namespace NES
 {
@@ -53,50 +54,33 @@ namespace NES
 using FieldIndex = uint32_t;
 
 /// Constructs a spanning tuple (string) that spans over at least two buffers (stagedBuffersSpan).
-/// First, determines the start of the spanning tuple in the first buffer to format. Constructs a spanning tuple from the required bytes.
-/// Second, appends all bytes of all raw buffers that are not the last buffer to the spanning tuple.
-/// Third, determines the end of the spanning tuple in the last buffer to format. Appends the required bytes to the spanning tuple.
-/// Lastly, formats the full spanning tuple.
 template <IndexerMetaDataType IndexerMetaData>
 void processSpanningTuple(
     const std::span<const StagedBuffer>& stagedBuffersSpan, std::span<char> spanningTupleBuffer, const IndexerMetaData& indexerMetaData)
 {
-    /// If the buffers are not empty, there are at least three buffers
     INVARIANT(stagedBuffersSpan.size() >= 2, "A spanning tuple must span across at least two buffers");
 
     size_t offset = 0;
     auto boundsCheckedCopy = [&spanningTupleBuffer, &offset](std::string_view source)
     {
         INVARIANT(offset + source.size() <= spanningTupleBuffer.size(), "Buffer overflow: insufficient space in spanning tuple buffer");
-
         auto destSubspan = spanningTupleBuffer.subspan(offset, source.size());
         std::ranges::copy(source, destSubspan.begin());
         offset += source.size();
     };
 
-    /// Wrap the spanning tuple in delimiter bytes (if exist) and copy the trailing bytes of the first buffer into the spanning tuple
     boundsCheckedCopy(indexerMetaData.getTupleDelimitingBytes());
     boundsCheckedCopy(stagedBuffersSpan.front().getTrailingBytes(indexerMetaData.getTupleDelimitingBytes().size()));
 
-    /// Copy all complete buffers between the first and the last into the spanning tuple
     for (const auto& buffer : stagedBuffersSpan.subspan(1, stagedBuffersSpan.size() - 2))
     {
         boundsCheckedCopy(buffer.getBufferView());
     }
 
-    /// Copy the leading bytes of the last buffer into the spanning tuple and wrap the spanning tuple with delimiting bytes (if exist)
     boundsCheckedCopy(stagedBuffersSpan.back().getLeadingBytes());
     boundsCheckedCopy(indexerMetaData.getTupleDelimitingBytes());
 }
 
-/// InputFormatters concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
-/// individual InputFormatters see during execution.
-/// The only point of synchronization is a call to the SequenceShredder data structure, which determines which buffers the InputFormatter
-/// needs to process (resolving tuples that span multiple raw buffers).
-/// An InputFormatter belongs to exactly one source. The source reads raw data into buffers, constructs a Task from the
-/// raw buffer and its successor (the InputFormatter) and writes it to the task queue of the QueryEngine.
-/// The QueryEngine concurrently executes InputFormatters. Thus, even if the source writes the InputFormatters to the task queue sequentially,
-/// the QueryEngine may still execute them in any order.
 template <InputFormatIndexerType FormatterType>
 class InputFormatter
 {
@@ -118,46 +102,13 @@ public:
     InputFormatter(InputFormatter&&) = default;
     InputFormatter& operator=(InputFormatter&&) = delete;
 
-    [[nodiscard]] nautilus::val<bool> isEmpty(RecordBuffer& rb) const
+    [[nodiscard]] nautilus::val<bool> isEmpty(RecordBuffer&) const
     {
-        const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
-
-        auto startBuffer = rb.getSequenceRange().getStart(0);
-        if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
-        {
-            startBuffer = *getMemberWithOffset<size_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleStartSequence));
-        }
-
-        auto numberOfTuplesWithoutTrailing
-            = *getMemberWithOffset<uint64_t>(indexPhaseResult, offsetof(IndexPhaseResult, numTuplesWithoutTrailing));
-
-        auto endBufferSequence = rb.getSequenceRange().getStart(0);
-        if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTrailingSpanningTupleBool)))
-        {
-            endBufferSequence
-                = *getMemberWithOffset<size_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleEndSequence));
-        }
-
-        return startBuffer == endBufferSequence && numberOfTuplesWithoutTrailing == 0;
+        nautilus::val<IndexPhaseResultBuffer> ipr;
+        nautilus::invoke(loadIndexPhaseResultProxy, &ipr);
+        return ipr.get(&IndexPhaseResultBuffer::numberOfTuples) == nautilus::val<uint64_t>(0);
     }
 
-    static void logProxy(
-        size_t start, size_t trailing, bool hasLeading, bool hasTrailing, bool leadingHasSingleDelimiter, bool currentHasSingleDelimiter)
-    {
-        NES_DEBUG(
-            "Start: {}, Trailing: {}, HasLeading: {}, HasTrailing: {}, LeadingHasSingleDelimiter: {}, "
-            "CurrentHasSingleDelimiter: {}",
-            start,
-            trailing,
-            hasLeading,
-            hasTrailing,
-            leadingHasSingleDelimiter,
-            currentHasSingleDelimiter)
-    }
-
-    /// Executes the first phase, which indexes a (raw) buffer enabling the second phase, which calls 'readBuffer()' to index specific
-    /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
-    /// to the second phase, which uses the index to access specific records/fields
     [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, ExecutionContext& executionContext) const
     {
         nautilus::invoke(
@@ -169,9 +120,11 @@ public:
                     escapeSpecialCharacters(std::string_view(tb->getAvailableMemoryArea<char>())));
             },
             recordBuffer.getReference());
-        /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
-        const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
-            indexLeadingSpanningTupleAndBufferProxy,
+
+        /// Two-phase indexing: leading must complete before trailing can be resolved by other threads.
+        /// The make_unique wrapping ensures the return value is used, creating a data dependency.
+        const auto leadingResultPtr = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
+            indexLeadingAndBufferProxy,
             recordBuffer.getReference(),
             nautilus::val<const InputFormatter*>(this),
             executionContext.pipelineMemoryProvider.arena.getArena()));
@@ -182,64 +135,52 @@ public:
             nautilus::val<const InputFormatter*>(this),
             executionContext.pipelineMemoryProvider.arena.getArena());
 
-        if (/* isRepeat */ *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, isRepeat)))
+        /// Snapshot the completed indexing result into a bridge struct
+        nautilus::val<IndexPhaseResultBuffer> ipr;
+        nautilus::invoke(loadIndexPhaseResultProxy, &ipr);
+
+        if (ipr.get(&IndexPhaseResultBuffer::isRepeat))
         {
             return {false};
         }
 
-        auto startBuffer
-            = *getMemberWithOffset<size_t>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, leadingSpanningTupleStartSequence));
-        auto hasLeadSpanningTuple = nautilus::val<bool>(
-            *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)));
-        auto hasTrailingSpanningTuple1 = nautilus::val<bool>(
-            *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, hasTrailingSpanningTupleBool)));
-        auto currentBufferHasSingleDelimiter1
-            = *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, currentBufferHasSingleDelimiter));
-        auto startBufferHasSingleDelimiter
-            = *getMemberWithOffset<bool>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, startBufferHasSingleDelimiter));
-        auto endBufferSequence
-            = *getMemberWithOffset<size_t>(*tlIndexPhaseResultNautilusVal, offsetof(IndexPhaseResult, trailingSpanningTupleEndSequence));
+        nautilus::val<bool> hasLeading = ipr.get(&IndexPhaseResultBuffer::hasLeading);
+        nautilus::val<bool> hasTrailing = ipr.get(&IndexPhaseResultBuffer::hasTrailing);
+        nautilus::val<uint64_t> leadingStartSeq = ipr.get(&IndexPhaseResultBuffer::leadingStartSequence);
+        nautilus::val<uint64_t> trailingEndSeq = ipr.get(&IndexPhaseResultBuffer::trailingEndSequence);
+        nautilus::val<bool> leadingBufferSingleDelim = ipr.get(&IndexPhaseResultBuffer::leadingBufferHasSingleDelimiter);
+        nautilus::val<bool> currentSingleDelim = ipr.get(&IndexPhaseResultBuffer::currentBufferHasSingleDelimiter);
 
-        nautilus::invoke(
-            logProxy,
-            startBuffer,
-            endBufferSequence,
-            hasLeadSpanningTuple,
-            hasTrailingSpanningTuple || hasTrailingSpanningTuple1,
-            startBufferHasSingleDelimiter,
-            currentBufferHasSingleDelimiter1);
-
-        if (!hasLeadSpanningTuple)
+        /// Set sequence range start
+        if (!hasLeading)
         {
             executionContext.sequenceRange.setStart(0, recordBuffer.getSequenceRange().getStart(0));
             executionContext.sequenceRange.setStart(1, 1);
         }
         else
         {
-            if (startBuffer == 0)
+            if (leadingStartSeq == 0)
             {
-                ///edge case for first buffer it always starts with 1.0.0
                 executionContext.sequenceRange.setStart(0, 1);
                 executionContext.sequenceRange.setStart(1, 0);
             }
-            else if (startBufferHasSingleDelimiter)
+            else if (leadingBufferSingleDelim)
             {
-                ///edge case for buffers with a single delimiter. These buffers will not emit a n.1,n-2 range there will only be a (n-1).2,n.1 range
-                executionContext.sequenceRange.setStart(0, startBuffer);
+                executionContext.sequenceRange.setStart(0, leadingStartSeq);
                 executionContext.sequenceRange.setStart(1, 1);
             }
             else
             {
-                executionContext.sequenceRange.setStart(0, startBuffer);
+                executionContext.sequenceRange.setStart(0, leadingStartSeq);
                 executionContext.sequenceRange.setStart(1, 2);
             }
         }
 
-        if (!(hasTrailingSpanningTuple || hasTrailingSpanningTuple1))
+        /// Set sequence range end
+        if (!hasTrailing)
         {
-            if (currentBufferHasSingleDelimiter1)
+            if (currentSingleDelim)
             {
-                /// single delimiter edge case
                 executionContext.sequenceRange.setEnd(0, recordBuffer.getSequenceRange().getStart(0));
                 executionContext.sequenceRange.setEnd(1, 1);
             }
@@ -251,47 +192,34 @@ public:
         }
         else
         {
-            executionContext.sequenceRange.setEnd(0, endBufferSequence);
+            executionContext.sequenceRange.setEnd(0, trailingEndSeq);
             executionContext.sequenceRange.setEnd(1, 1);
         }
 
         return {true};
     }
 
-    /// Executes the second phase, which iterates over a (raw) buffer, reading specific records and fields from a (raw) buffer
-    /// Relies on the index created in the first phase (indexBuffer), which it accesses through the static_thread local member
     void readBuffer(
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild) const
     {
-        /// @Note: the order below is important
-        const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
+        nautilus::val<IndexPhaseResultBuffer> ipr;
+        nautilus::invoke(loadIndexPhaseResultProxy, &ipr);
 
-        /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
-        /// we count such a spanning tuple as a leading spanning tuple
-        /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
-        parseLeadingRecord(executionCtx, executeChild, indexPhaseResult);
+        parseLeadingRecord(executionCtx, executeChild, ipr);
 
-        /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
-        /// such a buffer can only form one (leading) spanning tuple, so returning is safe
-        if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
+        if (not(nautilus::val<bool>(ipr.get(&IndexPhaseResultBuffer::hasTupleDelimiter))))
         {
             return;
         }
 
-        /// a buffer that delimits tuples may contain multiple complete tuples
-        /// determining the offset of a tuple may require parsing the prior tuple
-        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
-
-        /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
-        /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
-        parseTrailingRecord(executionCtx, executeChild, indexPhaseResult);
+        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, ipr);
+        parseTrailingRecord(executionCtx, executeChild, ipr);
     }
 
     std::ostream& toString(std::ostream& os) const
     {
-        /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
         os << "InputFormatter(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder << ")\n";
         return os;
     }
@@ -303,21 +231,21 @@ private:
     std::shared_ptr<TupleBufferRef> memoryProvider;
     std::unique_ptr<SequenceShredder> sequenceShredder;
 
+    /// Internal struct for the thread-local indexing state (C++ side only, not exposed to Nautilus)
     struct IndexPhaseResult
     {
         std::span<char> leadingSpanningTuple;
         std::span<char> trailingSpanningTuple;
-        uint64_t leadingSpanningTupleStartSequence;
-        bool startBufferHasSingleDelimiter;
-        bool currentBufferHasSingleDelimiter;
-
-        uint64_t trailingSpanningTupleEndSequence;
+        uint64_t leadingSpanningTupleStartSequence = 0;
+        uint64_t trailingSpanningTupleEndSequence = 0;
+        bool startBufferHasSingleDelimiter = false;
+        bool currentBufferHasSingleDelimiter = false;
         bool hasLeadingSpanningTupleBool = false;
         bool hasTrailingSpanningTupleBool = false;
         bool hasTupleDelimiter = false;
         bool isRepeat = false;
         bool hasValidOffsetOfTrailingSpanningTuple = false;
-        uint64_t numTuplesWithoutTrailing = 0;
+        uint64_t numberOfTuples = 0;
 
         typename FormatterType::FieldIndexFunctionType leadingSpanningTupleFIF;
         typename FormatterType::FieldIndexFunctionType trailingSpanningTupleFIF;
@@ -326,245 +254,239 @@ private:
 
     static_assert(std::is_standard_layout_v<IndexPhaseResult>, "IndexPhaseResult must have a standard layout for safe usage of offsetof");
 
-    /// We need a thread_local variable to 'bridge' state between the indexing (open) and the parsing (readBuffer) phase.
-    /// They must be thread_local, since multiple threads use them at the same time.
-    /// 'thread_local' means that every thread creates its own 'local' static version.
-    static thread_local IndexPhaseResult tlIndexPhaseResult;
-
-    static nautilus::val<IndexPhaseResult*> getIndexPhaseResult() { return nautilus::val<IndexPhaseResult*>(&tlIndexPhaseResult); }
-
-    /// Builds an index during the indexing phase (open()), which the parsing phase (readBuffer()) requires for accessing specific fields.
-    /// Does not have state itself, but wraps the static thread_local 'tlIndexPhaseResult', which it builds during its lifetime.
-    class IndexPhaseResultBuilder
+    /// Bridge struct: POD-only, transferred to Nautilus via val<IndexPhaseResultBuffer>
+    using FIFType = typename FormatterType::FieldIndexFunctionType;
+    struct IndexPhaseResultBuffer
     {
-    public:
-        IndexPhaseResultBuilder() = delete;
-
-        static void startBuildingIndex() { tlIndexPhaseResult = IndexPhaseResult{}; }
-
-        struct IndexResult
-        {
-            FieldIndex offsetOfFirstTupleDelimiter;
-            FieldIndex offsetOfLastTupleDelimiter;
-            bool hasTupleDelimiter;
-        };
-
-        static IndexResult indexRawBuffer(InputFormatter& inputFormatter, const TupleBuffer& tupleBuffer)
-        {
-            inputFormatter.inputFormatIndexer.indexRawBuffer(
-                tlIndexPhaseResult.rawBufferFIF, RawTupleBuffer{tupleBuffer}, inputFormatter.indexerMetaData);
-            tlIndexPhaseResult.numTuplesWithoutTrailing = tlIndexPhaseResult.rawBufferFIF.getTotalNumberOfTuples();
-
-            const auto offsetOfFirstTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfFirstTuple();
-            const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
-            tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
-            tlIndexPhaseResult.currentBufferHasSingleDelimiter = offsetOfFirstTupleDelimiter == offsetOfLastTupleDelimiter;
-
-            tlIndexPhaseResult.hasTupleDelimiter = offsetOfFirstTupleDelimiter < tupleBuffer.getBufferSize();
-            return {
-                .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
-                .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
-                .hasTupleDelimiter = tlIndexPhaseResult.hasTupleDelimiter};
-        }
-
-        static void setIsRepeat(bool isRepeat) { tlIndexPhaseResult.isRepeat = isRepeat; }
-
-        static IndexPhaseResult* finalizeLeadingIndexPhase()
-        {
-            tlIndexPhaseResult.numTuplesWithoutTrailing += static_cast<uint64_t>(tlIndexPhaseResult.hasLeadingSpanningTupleBool);
-            return &tlIndexPhaseResult;
-        }
-
-        static void finalizeTrailingIndexPhase() { tlIndexPhaseResult.numTuplesWithoutTrailing += 1; }
-
-        static void constructAndIndexTrailingSpanningTuple(
-            const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
-        {
-            const auto sizeOfTrailingSpanningTuple
-                = calculateSizeOfSpanningTuple(stagedBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
-            tlIndexPhaseResult.trailingSpanningTupleEndSequence
-                = SequenceNumber::fromRange(stagedBuffers.back().getRawTupleBuffer().getSequenceRange()).rawValue;
-            allocateForTrailingSpanningTuple(arenaRef, sizeOfTrailingSpanningTuple);
-            const auto trailingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, stagedBuffers.size());
-            processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                trailingSpanningTupleBuffers, tlIndexPhaseResult.trailingSpanningTuple, inputFormatter.indexerMetaData);
-            inputFormatter.inputFormatIndexer.indexRawBuffer(
-                tlIndexPhaseResult.trailingSpanningTupleFIF,
-                RawTupleBuffer{
-                    std::bit_cast<const char*>(tlIndexPhaseResult.trailingSpanningTuple.data()),
-                    tlIndexPhaseResult.trailingSpanningTuple.size()},
-                inputFormatter.indexerMetaData);
-        }
-
-        static void constructAndIndexLeadingSpanningTuple(
-            const std::vector<StagedBuffer>& leadingSpanningTupleBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
-        {
-            const auto sizeOfLeadingSpanningTuple = calculateSizeOfSpanningTuple(
-                leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
-            tlIndexPhaseResult.leadingSpanningTupleStartSequence
-                = SequenceNumber::fromRange(leadingSpanningTupleBuffers.front().getRawTupleBuffer().getSequenceRange()).rawValue;
-            auto& leadingBuffer = leadingSpanningTupleBuffers.front();
-            tlIndexPhaseResult.startBufferHasSingleDelimiter
-                = leadingBuffer.getOffsetOfLastTuple() == leadingBuffer.getByteOffsetOfLastTuple();
-
-            allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
-            processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
-            inputFormatter.inputFormatIndexer.indexRawBuffer(
-                tlIndexPhaseResult.leadingSpanningTupleFIF,
-                RawTupleBuffer{
-                    std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
-                    tlIndexPhaseResult.leadingSpanningTuple.size()},
-                inputFormatter.indexerMetaData);
-        }
-
-        static void constructAndIndexLeadingAndTrailingSpanningTuple(
-            const std::vector<StagedBuffer>& leadingSpanningTupleBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
-        {
-            const auto sizeOfLeadingSpanningTuple = calculateSizeOfSpanningTuple(
-                leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
-            tlIndexPhaseResult.leadingSpanningTupleStartSequence
-                = SequenceNumber::fromRange(leadingSpanningTupleBuffers.front().getRawTupleBuffer().getSequenceRange()).rawValue;
-            tlIndexPhaseResult.trailingSpanningTupleEndSequence
-                = SequenceNumber::fromRange(leadingSpanningTupleBuffers.back().getRawTupleBuffer().getSequenceRange()).rawValue;
-            auto& leadingBuffer = leadingSpanningTupleBuffers.front();
-            tlIndexPhaseResult.startBufferHasSingleDelimiter
-                = leadingBuffer.getOffsetOfLastTuple() == leadingBuffer.getByteOffsetOfLastTuple();
-
-            allocateForLeadingAndTrailingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
-            processSpanningTuple<typename FormatterType::IndexerMetaData>(
-                leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
-            inputFormatter.inputFormatIndexer.indexRawBuffer(
-                tlIndexPhaseResult.leadingSpanningTupleFIF,
-                RawTupleBuffer{
-                    std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
-                    tlIndexPhaseResult.leadingSpanningTuple.size()},
-                inputFormatter.indexerMetaData);
-        }
-
-    private:
-        static void allocateForLeadingSpanningTuple(Arena& arenaRef, const size_t sizeOfLeadingSpanningTuple)
-        {
-            tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
-            auto byteSpan = arenaRef.allocateMemory(sizeOfLeadingSpanningTuple);
-            tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
-        }
-
-        static void allocateForLeadingAndTrailingSpanningTuple(Arena& arenaRef, const size_t sizeOfSpanningTuple)
-        {
-            tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
-            tlIndexPhaseResult.hasTrailingSpanningTupleBool = true;
-            auto byteSpan = arenaRef.allocateMemory(sizeOfSpanningTuple);
-            tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
-            tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
-        }
-
-        static void allocateForTrailingSpanningTuple(Arena& arenaRef, const size_t sizeOfTrailingSpanningTuple)
-        {
-            tlIndexPhaseResult.hasTrailingSpanningTupleBool = true;
-            auto byteSpan = arenaRef.allocateMemory(sizeOfTrailingSpanningTuple);
-            tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
-        }
-
-        static size_t
-        calculateSizeOfSpanningTuple(const std::span<const StagedBuffer> spanningTupleBuffers, const size_t sizeOfTupleDelimitingBytes)
-        {
-            size_t sizeOfSpanningTuple = 0;
-            sizeOfSpanningTuple += (2 * sizeOfTupleDelimitingBytes);
-            sizeOfSpanningTuple += spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimitingBytes).size();
-            for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
-            {
-                sizeOfSpanningTuple += spanningTupleBuffers[i].getSizeOfBufferInBytes();
-            }
-            sizeOfSpanningTuple += spanningTupleBuffers.back().getLeadingBytes().size();
-            return sizeOfSpanningTuple;
-        }
+        /// Group pointers together (8 bytes each, naturally aligned)
+        int8_t* leadingDataPtr;
+        FIFType* leadingFIFPtr;
+        int8_t* trailingDataPtr;
+        FIFType* trailingFIFPtr;
+        FIFType* rawBufferFIFPtr;
+        /// Group uint64_t together (8 bytes each)
+        uint64_t leadingStartSequence;
+        uint64_t trailingEndSequence;
+        uint64_t numberOfTuples;
+        /// Group bools together (1 byte each, packed at end)
+        bool hasLeading;
+        bool hasTrailing;
+        bool leadingBufferHasSingleDelimiter;
+        bool hasTupleDelimiter;
+        bool currentBufferHasSingleDelimiter;
+        bool isRepeat;
     };
 
-    static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
+    static thread_local IndexPhaseResult tlIndexPhaseResult;
 
-    static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
+    /// Populates the bridge struct from the thread-local IndexPhaseResult
+    static void loadIndexPhaseResultProxy(IndexPhaseResultBuffer* dst)
     {
-        /// the buffer does not have a trailing SpanningTuple, if after iterating over the entire buffer, getByteOffsetOfLastTuple is invalid
-        const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
-        if (offsetOfLastTupleDelimiter == std::numeric_limits<uint32_t>::max())
-        {
-            return false;
-        }
+        dst->hasLeading = tlIndexPhaseResult.hasLeadingSpanningTupleBool;
+        dst->leadingStartSequence = tlIndexPhaseResult.leadingSpanningTupleStartSequence;
+        dst->leadingBufferHasSingleDelimiter = tlIndexPhaseResult.startBufferHasSingleDelimiter;
+        dst->leadingDataPtr = std::bit_cast<int8_t*>(tlIndexPhaseResult.leadingSpanningTuple.data());
+        dst->leadingFIFPtr = &tlIndexPhaseResult.leadingSpanningTupleFIF;
 
-        /// if the offset to trailing SpanningTuple was not known after indexing we need to set it in the SequenceShredder, allowing threads to find it
-        auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
-            ? inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
-                  SequenceNumber::fromRange(tupleBuffer->getSequenceRange()), offsetOfLastTupleDelimiter)
-            : inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
-                  SequenceNumber::fromRange(tupleBuffer->getSequenceRange()));
-        /// a trailing spanning tuple must span at least 2 buffers
-        if (stagedBuffers.getSize() < 2)
-        {
-            return false;
-        }
-        IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
-        IndexPhaseResultBuilder::finalizeTrailingIndexPhase();
-        return true;
+        dst->hasTrailing = tlIndexPhaseResult.hasTrailingSpanningTupleBool;
+        dst->trailingEndSequence = tlIndexPhaseResult.trailingSpanningTupleEndSequence;
+        dst->trailingDataPtr = std::bit_cast<int8_t*>(tlIndexPhaseResult.trailingSpanningTuple.data());
+        dst->trailingFIFPtr = &tlIndexPhaseResult.trailingSpanningTupleFIF;
+
+        dst->hasTupleDelimiter = tlIndexPhaseResult.hasTupleDelimiter;
+        dst->currentBufferHasSingleDelimiter = tlIndexPhaseResult.currentBufferHasSingleDelimiter;
+        dst->numberOfTuples = tlIndexPhaseResult.numberOfTuples;
+        dst->rawBufferFIFPtr = &tlIndexPhaseResult.rawBufferFIF;
+
+        dst->isRepeat = tlIndexPhaseResult.isRepeat;
     }
 
-    static IndexPhaseResult*
-    indexLeadingSpanningTupleAndBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
+    /// Phase 1: Index raw buffer and resolve leading spanning tuple.
+    /// Must complete before trailing resolution so other threads can see this buffer's state.
+    static IndexPhaseResult* indexLeadingAndBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
     {
-        IndexPhaseResultBuilder::startBuildingIndex();
-        const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
-            = IndexPhaseResultBuilder::indexRawBuffer(*inputFormatter, *tupleBuffer);
+        NES_DEBUG("indexLeadingAndBufferProxy enter seq={}", tupleBuffer->getSequenceRange());
+        tlIndexPhaseResult = IndexPhaseResult{};
+        NES_DEBUG("indexLeadingAndBufferProxy indexing raw buffer");
+        inputFormatter->inputFormatIndexer.indexRawBuffer(
+            tlIndexPhaseResult.rawBufferFIF, RawTupleBuffer{*tupleBuffer}, inputFormatter->indexerMetaData);
 
-        if (hasTupleDelimiter)
+        const auto offsetOfFirstTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfFirstTuple();
+        const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
+        tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
+        tlIndexPhaseResult.currentBufferHasSingleDelimiter = offsetOfFirstTupleDelimiter == offsetOfLastTupleDelimiter;
+        tlIndexPhaseResult.hasTupleDelimiter = offsetOfFirstTupleDelimiter < tupleBuffer->getBufferSize();
+
+        NES_DEBUG("indexLeadingAndBufferProxy hasTupleDelimiter={} firstOff={} lastOff={}",
+            tlIndexPhaseResult.hasTupleDelimiter, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
+        if (tlIndexPhaseResult.hasTupleDelimiter)
         {
+            NES_DEBUG("indexLeadingAndBufferProxy calling findLeadingSpanningTupleWithDelimiter");
             const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findLeadingSpanningTupleWithDelimiter(
                 StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter});
+            NES_DEBUG("indexLeadingAndBufferProxy findLeading returned isInRange={} size={}", isInRange, stagedBuffers.getSize());
             if (not isInRange)
             {
-                IndexPhaseResultBuilder::setIsRepeat(true);
-                return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+                tlIndexPhaseResult.isRepeat = true;
+                return &tlIndexPhaseResult;
             }
-            if (stagedBuffers.getSize() < 2)
+            if (stagedBuffers.getSize() >= 2)
             {
-                return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+                constructAndIndexLeadingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
             }
-            IndexPhaseResultBuilder::constructAndIndexLeadingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
         }
-        else /* has no tuple delimiter */
+        else
         {
             const auto [isInRange, stagedBuffers] = inputFormatter->sequenceShredder->findSpanningTupleWithoutDelimiter(
                 StagedBuffer{RawTupleBuffer{*tupleBuffer}, offsetOfFirstTupleDelimiter, offsetOfFirstTupleDelimiter});
-
             if (not isInRange)
             {
-                IndexPhaseResultBuilder::setIsRepeat(true);
-                return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+                tlIndexPhaseResult.isRepeat = true;
+                return &tlIndexPhaseResult;
             }
-
-            if (stagedBuffers.getSize() < 3)
+            if (stagedBuffers.getSize() >= 3)
             {
-                return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+                constructAndIndexLeadingAndTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
             }
-
-            IndexPhaseResultBuilder::constructAndIndexLeadingAndTrailingSpanningTuple(
-                stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
         }
-        return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+        return &tlIndexPhaseResult;
     }
 
-    template <typename IndexPhaseResult>
+    /// Phase 2: Resolve trailing spanning tuple and finalize tuple count.
+    static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
+    {
+        if (tlIndexPhaseResult.isRepeat)
+        {
+            return false;
+        }
+
+        if (tlIndexPhaseResult.hasTupleDelimiter)
+        {
+            const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
+            if (offsetOfLastTupleDelimiter != std::numeric_limits<uint32_t>::max())
+            {
+                auto stagedBuffers = (not tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple)
+                    ? inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
+                          SequenceNumber::fromRange(tupleBuffer->getSequenceRange()), offsetOfLastTupleDelimiter)
+                    : inputFormatter->sequenceShredder->findTrailingSpanningTupleWithDelimiter(
+                          SequenceNumber::fromRange(tupleBuffer->getSequenceRange()));
+                if (stagedBuffers.getSize() >= 2)
+                {
+                    constructAndIndexTrailingSpanningTuple(
+                        stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
+                }
+            }
+        }
+
+        /// Compute total number of emittable tuples
+        const uint64_t owningTuples = tlIndexPhaseResult.currentBufferHasSingleDelimiter
+            ? 0
+            : tlIndexPhaseResult.rawBufferFIF.getTotalNumberOfTuples();
+        tlIndexPhaseResult.numberOfTuples = owningTuples
+            + static_cast<uint64_t>(tlIndexPhaseResult.hasLeadingSpanningTupleBool)
+            + static_cast<uint64_t>(tlIndexPhaseResult.hasTrailingSpanningTupleBool);
+        return true;
+    }
+
+    /// --- Spanning tuple construction helpers ---
+
+    static void constructAndIndexLeadingSpanningTuple(
+        const std::vector<StagedBuffer>& leadingSpanningTupleBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
+    {
+        const auto size = calculateSizeOfSpanningTuple(
+            leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
+        tlIndexPhaseResult.leadingSpanningTupleStartSequence
+            = SequenceNumber::fromRange(leadingSpanningTupleBuffers.front().getRawTupleBuffer().getSequenceRange()).rawValue;
+        auto& leadingBuffer = leadingSpanningTupleBuffers.front();
+        tlIndexPhaseResult.startBufferHasSingleDelimiter
+            = leadingBuffer.getOffsetOfLastTuple() == leadingBuffer.getByteOffsetOfLastTuple();
+
+        tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
+        auto byteSpan = arenaRef.allocateMemory(size);
+        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        processSpanningTuple<typename FormatterType::IndexerMetaData>(
+            leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
+        inputFormatter.inputFormatIndexer.indexRawBuffer(
+            tlIndexPhaseResult.leadingSpanningTupleFIF,
+            RawTupleBuffer{
+                std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
+                tlIndexPhaseResult.leadingSpanningTuple.size()},
+            inputFormatter.indexerMetaData);
+    }
+
+    static void constructAndIndexTrailingSpanningTuple(
+        const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
+    {
+        const auto size = calculateSizeOfSpanningTuple(stagedBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
+        tlIndexPhaseResult.trailingSpanningTupleEndSequence
+            = SequenceNumber::fromRange(stagedBuffers.back().getRawTupleBuffer().getSequenceRange()).rawValue;
+
+        tlIndexPhaseResult.hasTrailingSpanningTupleBool = true;
+        auto byteSpan = arenaRef.allocateMemory(size);
+        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        const auto trailingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, stagedBuffers.size());
+        processSpanningTuple<typename FormatterType::IndexerMetaData>(
+            trailingSpanningTupleBuffers, tlIndexPhaseResult.trailingSpanningTuple, inputFormatter.indexerMetaData);
+        inputFormatter.inputFormatIndexer.indexRawBuffer(
+            tlIndexPhaseResult.trailingSpanningTupleFIF,
+            RawTupleBuffer{
+                std::bit_cast<const char*>(tlIndexPhaseResult.trailingSpanningTuple.data()),
+                tlIndexPhaseResult.trailingSpanningTuple.size()},
+            inputFormatter.indexerMetaData);
+    }
+
+    static void constructAndIndexLeadingAndTrailingSpanningTuple(
+        const std::vector<StagedBuffer>& leadingSpanningTupleBuffers, InputFormatter& inputFormatter, Arena& arenaRef)
+    {
+        const auto size = calculateSizeOfSpanningTuple(
+            leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
+        tlIndexPhaseResult.leadingSpanningTupleStartSequence
+            = SequenceNumber::fromRange(leadingSpanningTupleBuffers.front().getRawTupleBuffer().getSequenceRange()).rawValue;
+        tlIndexPhaseResult.trailingSpanningTupleEndSequence
+            = SequenceNumber::fromRange(leadingSpanningTupleBuffers.back().getRawTupleBuffer().getSequenceRange()).rawValue;
+        auto& leadingBuffer = leadingSpanningTupleBuffers.front();
+        tlIndexPhaseResult.startBufferHasSingleDelimiter
+            = leadingBuffer.getOffsetOfLastTuple() == leadingBuffer.getByteOffsetOfLastTuple();
+
+        tlIndexPhaseResult.hasLeadingSpanningTupleBool = true;
+        tlIndexPhaseResult.hasTrailingSpanningTupleBool = true;
+        auto byteSpan = arenaRef.allocateMemory(size);
+        tlIndexPhaseResult.leadingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
+        processSpanningTuple<typename FormatterType::IndexerMetaData>(
+            leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
+        inputFormatter.inputFormatIndexer.indexRawBuffer(
+            tlIndexPhaseResult.leadingSpanningTupleFIF,
+            RawTupleBuffer{
+                std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
+                tlIndexPhaseResult.leadingSpanningTuple.size()},
+            inputFormatter.indexerMetaData);
+    }
+
+    static size_t calculateSizeOfSpanningTuple(const std::span<const StagedBuffer> spanningTupleBuffers, const size_t sizeOfTupleDelimitingBytes)
+    {
+        size_t sizeOfSpanningTuple = 0;
+        sizeOfSpanningTuple += (2 * sizeOfTupleDelimitingBytes);
+        sizeOfSpanningTuple += spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimitingBytes).size();
+        for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
+        {
+            sizeOfSpanningTuple += spanningTupleBuffers[i].getSizeOfBufferInBytes();
+        }
+        sizeOfSpanningTuple += spanningTupleBuffers.back().getLeadingBytes().size();
+        return sizeOfSpanningTuple;
+    }
+
+    /// --- Parse methods (Phase 2) ---
+
     void parseLeadingRecord(
         ExecutionContext& executionCtx,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        nautilus::val<IndexPhaseResultBuffer>& ipr) const
     {
-        if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
+        if (ipr.get(&IndexPhaseResultBuffer::hasLeading))
         {
-            auto leadingFIF = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-                indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleFIF));
-
-            /// Get leading field index function and a pointer to the spanning tuple 'record'
-            auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
+            nautilus::val<FIFType*> leadingFIF = ipr.get(&IndexPhaseResultBuffer::leadingFIFPtr);
+            nautilus::val<int8_t*> spanningRecordPtr = ipr.get(&IndexPhaseResultBuffer::leadingDataPtr);
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
                 projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF);
@@ -572,16 +494,14 @@ private:
         }
     }
 
-    template <typename IndexPhaseResult>
     void parseRecordsInRawBuffer(
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        nautilus::val<IndexPhaseResultBuffer>& ipr) const
     {
         nautilus::val<uint64_t> bufferRecordIdx = 0;
-        auto rawFieldAccessFunction = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-            indexPhaseResult, offsetof(IndexPhaseResult, rawBufferFIF));
+        nautilus::val<FIFType*> rawFieldAccessFunction = ipr.get(&IndexPhaseResultBuffer::rawBufferFIFPtr);
         while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
         {
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
@@ -591,18 +511,15 @@ private:
         }
     }
 
-    template <typename IndexPhaseResult>
     void parseTrailingRecord(
         ExecutionContext& executionCtx,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild,
-        const nautilus::val<IndexPhaseResult*>& indexPhaseResult) const
+        nautilus::val<IndexPhaseResultBuffer>& ipr) const
     {
-        if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTrailingSpanningTupleBool)))
+        if (ipr.get(&IndexPhaseResultBuffer::hasTrailing))
         {
-            auto trailingFIF = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-                indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleFIF));
-
-            auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
+            nautilus::val<FIFType*> trailingFIF = ipr.get(&IndexPhaseResultBuffer::trailingFIFPtr);
+            nautilus::val<int8_t*> spanningRecordPtr = ipr.get(&IndexPhaseResultBuffer::trailingDataPtr);
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
                 projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF);
@@ -611,7 +528,6 @@ private:
     }
 };
 
-/// Necessary thread_local variable definitions to make static thread_local variables usable in the InputFormatter class
 template <InputFormatIndexerType T>
 thread_local typename InputFormatter<T>::IndexPhaseResult InputFormatter<T>::tlIndexPhaseResult{};
 

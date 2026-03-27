@@ -18,6 +18,7 @@ vcpkg_from_github(
 		PATCHES
 		0001-disable-ubsan-function-call-check.patch
 		alloca_hoist_fix.patch
+		alloca-identifier-fix.patch
 )
 
 set(ADDITIONAL_CMAKE_OPTIONS "")

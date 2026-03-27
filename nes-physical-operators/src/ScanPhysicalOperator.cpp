@@ -25,14 +25,22 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
+#include <Sequencing/SequenceRange.hpp>
 #include <ExecutionContext.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
+#include <nautilus/function.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
 #include "Nautilus/Interface/TupleBufferProxyFunctions.hpp"
 
 namespace NES
 {
+
+SequenceRange* getFracturedSequenceRangeForRawScanResult(size_t depthPlusOne)
+{
+    thread_local SequenceRange effectiveRange = SequenceRange::initial(depthPlusOne);
+    return &effectiveRange;
+}
 
 ScanPhysicalOperator::ScanPhysicalOperator(
     std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
@@ -46,8 +54,8 @@ void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer&
 {
     auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
 
-    thread_local SequenceRange effectiveRange = SequenceRange::initial(2);
-    auto effectiveRangeRef = RecordBuffer::SequenceRangeRef::from(&effectiveRange);
+    auto effectiveRangeRef = RecordBuffer::SequenceRangeRef::from(
+        nautilus::invoke(getFracturedSequenceRangeForRawScanResult, executionCtx.sequenceRange.getSize() + 1));
     effectiveRangeRef.setStart(0, executionCtx.sequenceRange.getStart(0));
     effectiveRangeRef.setEnd(0, executionCtx.sequenceRange.getEnd(0));
     executionCtx.sequenceRange = effectiveRangeRef;

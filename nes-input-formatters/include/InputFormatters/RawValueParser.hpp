@@ -33,6 +33,7 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <val_std.hpp>
 
 namespace NES
 {
@@ -91,6 +92,12 @@ ParseResult<T>* parseIntoVarValProxy(int8_t* fieldAddress, const uint64_t fieldS
     return &result;
 }
 
+template <typename T, bool Nullable>
+void storeParseResult(int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues, ParseResult<T>* out)
+{
+    *out = *parseIntoVarValProxy<T, Nullable>(fieldAddress, fieldSize, nullValues);
+}
+
 template <typename T>
 VarVal parseFixedSizeIntoVarVal(
     const bool nullable,
@@ -101,15 +108,17 @@ VarVal parseFixedSizeIntoVarVal(
     /// As this is a C++ variable, this branch does not impact our tracing or the execution.
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-        const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
+        nautilus::val<ParseResult<T>> result;
+        nautilus::invoke(
+            storeParseResult<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues}, &result);
+        const nautilus::val<T> nautilusValue = result.get(&ParseResult<T>::value);
+        const nautilus::val<bool> isNull = result.get(&ParseResult<T>::isNull);
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = nautilus::invoke(
-        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
+    nautilus::val<ParseResult<T>> result;
+    nautilus::invoke(
+        storeParseResult<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues}, &result);
+    const nautilus::val<T> nautilusValue = result.get(&ParseResult<T>::value);
     return VarVal{nautilusValue, nullable, false};
 }
 }

@@ -67,11 +67,12 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         return fieldOffsets->indexValues.data();
     }
 
+    static size_t getTotalNumberOfTuplesProxy(const FieldOffsets* fieldOffsets) { return fieldOffsets->totalNumberOfTuples; }
+
     [[nodiscard]] nautilus::val<bool>
     applyHasNext(const nautilus::val<uint64_t>& recordIdx, nautilus::val<FieldOffsets*> fieldOffsetsPtr) const
     {
-        nautilus::val<uint64_t> totalNumberOfTuples
-            = *getMemberWithOffset<size_t>(fieldOffsetsPtr, offsetof(FieldOffsets, totalNumberOfTuples));
+        nautilus::val<uint64_t> totalNumberOfTuples = nautilus::invoke(getTotalNumberOfTuplesProxy, fieldOffsetsPtr);
         return recordIdx < totalNumberOfTuples;
     }
 

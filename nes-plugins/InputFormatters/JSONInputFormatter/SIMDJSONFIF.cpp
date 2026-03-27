@@ -41,6 +41,7 @@
 #include <function.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
+#include <val_std.hpp>
 #include <common/FunctionAttributes.hpp>
 
 namespace NES
@@ -48,8 +49,28 @@ namespace NES
 [[nodiscard]] nautilus::val<bool>
 SIMDJSONFIF::applyHasNext(const nautilus::val<uint64_t>&, const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction)
 {
-    const nautilus::val<bool> isAtLastTuple = *getMemberWithOffset<bool>(fieldIndexFunction, offsetof(SIMDJSONFIF, isAtLastTuple));
+    const nautilus::val<bool> isAtLastTuple = nautilus::invoke(
+        +[](const SIMDJSONFIF* fif) -> bool { return fif->isAtLastTuple; }, fieldIndexFunction);
     return not isAtLastTuple;
+}
+
+/// Bridge struct for transferring ParsedResultVariableSized via val<StructType>
+/// Uses int8_t* instead of const char* to match VariableSizedData's expected type
+struct ParsedVarSizedBuffer
+{
+    int8_t* pointer;
+    uint64_t size;
+    bool isNull;
+};
+
+template <bool Nullable>
+static void storeParseJsonVarSized(
+    FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, SIMDJSONMetaData* metaData, ParsedVarSizedBuffer* out)
+{
+    auto* r = parseJsonVarSizedProxy<Nullable>(fieldIndex, fieldIndexFunction, metaData);
+    out->pointer = const_cast<int8_t*>(reinterpret_cast<const int8_t*>(r->varSizedPointer));
+    out->size = r->size;
+    out->isNull = r->isNull;
 }
 
 VarVal SIMDJSONFIF::parseJsonVarSized(
@@ -60,20 +81,20 @@ VarVal SIMDJSONFIF::parseJsonVarSized(
 {
     if (nullable)
     {
-        const auto varSizedResult = nautilus::invoke(
-            {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<true>, fieldIndex, fieldIndexFunction, metaData);
+        nautilus::val<ParsedVarSizedBuffer> result;
+        nautilus::invoke(storeParseJsonVarSized<true>, fieldIndex, fieldIndexFunction, metaData, &result);
         const VariableSizedData varSizedString{
-            *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
-            *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
-        const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(varSizedResult, offsetof(ParsedResultVariableSized, isNull));
+            result.get(&ParsedVarSizedBuffer::pointer),
+            result.get(&ParsedVarSizedBuffer::size)};
+        const nautilus::val<bool> isNull = result.get(&ParsedVarSizedBuffer::isNull);
         return VarVal{VariableSizedData{varSizedString}, nullable, isNull};
     }
 
-    const auto varSizedResult = nautilus::invoke(
-        {.modRefInfo = nautilus::ModRefInfo::Ref}, parseJsonVarSizedProxy<false>, fieldIndex, fieldIndexFunction, metaData);
+    nautilus::val<ParsedVarSizedBuffer> result;
+    nautilus::invoke(storeParseJsonVarSized<false>, fieldIndex, fieldIndexFunction, metaData, &result);
     const VariableSizedData varSizedString{
-        *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(ParsedResultVariableSized, varSizedPointer)),
-        *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(ParsedResultVariableSized, size))};
+        result.get(&ParsedVarSizedBuffer::pointer),
+        result.get(&ParsedVarSizedBuffer::size)};
     return VarVal{VariableSizedData{varSizedString}, nullable, false};
 }
 
