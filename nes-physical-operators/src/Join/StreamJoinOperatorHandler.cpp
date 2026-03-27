@@ -16,10 +16,11 @@
 
 #include <map>
 #include <memory>
-#include <ranges>
 #include <utility>
+#include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
@@ -31,8 +32,9 @@ namespace NES
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    JoinTriggerStrategy triggerStrategy)
+    : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore)), triggerStrategy(std::move(triggerStrategy))
 {
 }
 
@@ -40,23 +42,19 @@ void StreamJoinOperatorHandler::triggerSlices(
     const std::map<WindowInfoAndSequenceNumber, std::vector<std::shared_ptr<Slice>>>& slicesAndWindowInfo,
     PipelineExecutionContext* pipelineCtx)
 {
-    /// For every window, we have to trigger all combination of slices. This is necessary, as we have to give the probe operator all
-    /// combinations of slices for a given window to ensure that it has seen all tuples of the window.
+    const EmitSlicesFn emitFn
+        = [this](
+              const std::vector<std::shared_ptr<Slice>>& leftSlices,
+              const std::vector<std::shared_ptr<Slice>>& rightSlices,
+              ProbeTaskType probeTaskType,
+              const WindowInfo& windowInfo,
+              const SequenceData& sequenceData,
+              PipelineExecutionContext* ctx) { emitSlicesToProbe(leftSlices, rightSlices, probeTaskType, windowInfo, sequenceData, ctx); };
+
     for (const auto& [windowInfo, allSlices] : slicesAndWindowInfo)
     {
-        ChunkNumber::Underlying chunkNumber = ChunkNumber::INITIAL;
-        for (const auto& sliceLeft : allSlices)
-        {
-            for (const auto& sliceRight : allSlices)
-            {
-                const bool isLastChunk = chunkNumber == (allSlices.size() * allSlices.size());
-                const SequenceData sequenceData{windowInfo.sequenceNumber, ChunkNumber(chunkNumber), isLastChunk};
-                emitSlicesToProbe(*sliceLeft, *sliceRight, windowInfo.windowInfo, sequenceData, pipelineCtx);
-                ++chunkNumber;
-            }
-        }
+        std::visit([&](const auto& strategy) { strategy.triggerWindow(allSlices, windowInfo, emitFn, pipelineCtx); }, triggerStrategy);
     }
 }
-
 
 }

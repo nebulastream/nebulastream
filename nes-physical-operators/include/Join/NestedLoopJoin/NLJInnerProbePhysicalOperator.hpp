@@ -14,28 +14,27 @@
 
 #pragma once
 
-#include <cstdint>
 #include <memory>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <ExecutionContext.hpp>
 
 namespace NES
 {
 
-/// Performs the second phase of the join. The tuples are joined via two nested loops.
-class NLJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
+/// Performs the NLJ probe for inner joins. Only handles MATCH_PAIRS tasks.
+class NLJInnerProbePhysicalOperator final : public NLJProbePhysicalOperatorBase
 {
 public:
-    NLJProbePhysicalOperator(
+    NLJInnerProbePhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
@@ -47,21 +46,9 @@ public:
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-protected:
-    void performNLJ(
-        const PagedVectorRef& outerPagedVector,
-        const PagedVectorRef& innerPagedVector,
-        TupleBufferRef& outerMemoryProvider,
-        TupleBufferRef& innerMemoryProvider,
-        const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
-        const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
-        ExecutionContext& executionCtx,
-        const nautilus::val<Timestamp>& windowStart,
-        const nautilus::val<Timestamp>& windowEnd) const;
-
-    std::shared_ptr<TupleBufferRef> leftMemoryProvider;
-    std::shared_ptr<TupleBufferRef> rightMemoryProvider;
-    std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
-    std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
+    static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
+    {
+        return joinType == JoinLogicalOperator::JoinType::INNER_JOIN || joinType == JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT;
+    }
 };
 }

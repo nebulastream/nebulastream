@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Join/HashJoin/HJProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJOuterProbePhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -19,6 +19,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
+#include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
@@ -28,24 +29,24 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
-#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
 #include <function.hpp>
-#include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
+#include <val_enum.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 
-HJProbePhysicalOperator::HJProbePhysicalOperator(
+HJOuterProbePhysicalOperator::HJOuterProbePhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
@@ -53,18 +54,20 @@ HJProbePhysicalOperator::HJProbePhysicalOperator(
     std::shared_ptr<TupleBufferRef> leftBufferRef,
     std::shared_ptr<TupleBufferRef> rightBufferRef,
     HashMapOptions leftHashMapBasedOptions,
-    HashMapOptions rightHashMapBasedOptions,
-    JoinLogicalOperator::JoinType joinType)
-    : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
-    , leftBufferRef(std::move(leftBufferRef))
-    , rightBufferRef(std::move(rightBufferRef))
-    , leftHashMapOptions(std::move(leftHashMapBasedOptions))
-    , rightHashMapOptions(std::move(rightHashMapBasedOptions))
-    , joinType(joinType)
+    HashMapOptions rightHashMapBasedOptions)
+    : HJProbePhysicalOperatorBase(
+          operatorHandlerId,
+          std::move(joinFunction),
+          std::move(windowMetaData),
+          std::move(joinSchema),
+          std::move(leftBufferRef),
+          std::move(rightBufferRef),
+          std::move(leftHashMapBasedOptions),
+          std::move(rightHashMapBasedOptions))
 {
 }
 
-void HJProbePhysicalOperator::performNullFillProbe(
+void HJOuterProbePhysicalOperator::performNullFillProbe(
     nautilus::val<HashMap**> outerHashMapRefs,
     nautilus::val<uint64_t> outerNumberOfHashMaps,
     nautilus::val<HashMap**> innerHashMapRefs,
@@ -129,8 +132,8 @@ void HJProbePhysicalOperator::performNullFillProbe(
     }
 }
 
-/// NOLINTNEXTLINE(readability-function-cognitive-complexity) inner join's N x N hash-map iteration is inherently deeply nested
-void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+/// NOLINTNEXTLINE(readability-function-cognitive-complexity) outer join dispatches by task type and delegates to inner/null-fill probes
+void HJOuterProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
@@ -141,125 +144,69 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     executionCtx.originId = recordBuffer.getOriginId();
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
-    /// Getting number of hash maps and return if there are no hashmaps
+    /// Parse the trigger buffer
     const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
     const auto leftNumberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
     const auto rightNumberOfHashMaps
         = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
 
-    /// Getting necessary values from the record buffer
     const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
     const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
     const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
+    const auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
+    const auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
 
-    /// Read the probe task type from the buffer to determine what work this task should perform
-    const auto probeTaskType = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::probeTaskType));
-
-    if (isOuterJoin(joinType))
+    /// Read the probe task type to determine what work this task should perform
+    const nautilus::val<ProbeTaskType> probeTaskType
+        = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::probeTaskType));
+    if (probeTaskType == ProbeTaskType::LEFT_NULL_FILL)
     {
-        /// Null-fill tasks: iterate one side's keys and emit NULL-filled records for unmatched keys.
-        /// Each null-fill task sees one slice's maps on the preserved side and ALL maps on the opposite side.
-        if (probeTaskType == static_cast<uint64_t>(ProbeTaskType::LEFT_NULL_FILL))
+        if (leftNumberOfHashMaps > 0)
         {
-            if (leftNumberOfHashMaps > 0)
-            {
-                performNullFillProbe(
-                    leftHashMapRefs,
-                    leftNumberOfHashMaps,
-                    rightHashMapRefs,
-                    rightNumberOfHashMaps,
-                    leftHashMapOptions,
-                    rightHashMapOptions,
-                    leftBufferRef,
-                    joinSchema.rightSchema,
-                    executionCtx,
-                    windowStart,
-                    windowEnd);
-            }
-            return;
+            performNullFillProbe(
+                leftHashMapRefs,
+                leftNumberOfHashMaps,
+                rightHashMapRefs,
+                rightNumberOfHashMaps,
+                leftHashMapOptions,
+                rightHashMapOptions,
+                leftBufferRef,
+                joinSchema.rightSchema,
+                executionCtx,
+                windowStart,
+                windowEnd);
         }
-        if (probeTaskType == static_cast<uint64_t>(ProbeTaskType::RIGHT_NULL_FILL))
-        {
-            if (rightNumberOfHashMaps > 0)
-            {
-                performNullFillProbe(
-                    rightHashMapRefs,
-                    rightNumberOfHashMaps,
-                    leftHashMapRefs,
-                    leftNumberOfHashMaps,
-                    rightHashMapOptions,
-                    leftHashMapOptions,
-                    rightBufferRef,
-                    joinSchema.leftSchema,
-                    executionCtx,
-                    windowStart,
-                    windowEnd);
-            }
-            return;
-        }
-        /// Fall through to MATCH_PAIRS: use inner-join-style matching below
     }
-
-    /// MATCH_PAIRS (for both inner and outer joins) and INNER_JOIN / CARTESIAN_PRODUCT:
-    /// emit only matched pairs, no null-fill
-    if (leftNumberOfHashMaps == 0 or rightNumberOfHashMaps == 0)
+    else if (probeTaskType == ProbeTaskType::RIGHT_NULL_FILL)
     {
-        return;
-    }
-
-    for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
-    {
-        const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
-        ChainedHashMapRef leftHashMap{
-            leftHashMapPtr,
-            leftHashMapOptions.fieldKeys,
-            leftHashMapOptions.fieldValues,
-            leftHashMapOptions.entriesPerPage,
-            leftHashMapOptions.entrySize};
-        for (nautilus::val<uint64_t> rightHashMapIndex = 0; rightHashMapIndex < rightNumberOfHashMaps; ++rightHashMapIndex)
+        if (rightNumberOfHashMaps > 0)
         {
-            const nautilus::val<HashMap*> rightHashMapPtr = rightHashMapRefs[rightHashMapIndex];
-            const ChainedHashMapRef rightHashMap{
-                rightHashMapPtr,
-                rightHashMapOptions.fieldKeys,
-                rightHashMapOptions.fieldValues,
-                rightHashMapOptions.entriesPerPage,
-                rightHashMapOptions.entrySize};
-            for (const auto rightEntry : rightHashMap)
-            {
-                const ChainedHashMapRef::ChainedEntryRef rightEntryRef{
-                    rightEntry, rightHashMapPtr, rightHashMapOptions.fieldKeys, rightHashMapOptions.fieldValues};
-                auto rightPagedVectorMem = rightEntryRef.getValueMemArea();
-                const PagedVectorRef rightPagedVector{rightPagedVectorMem, rightBufferRef};
-                const auto rightFields = rightBufferRef->getAllFieldNames();
-                auto rightItStart = rightPagedVector.begin(rightFields);
-                auto rightItEnd = rightPagedVector.end(rightFields);
-
-                if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
-                {
-                    const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
-                        leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
-                    auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
-                    const PagedVectorRef leftPagedVector{leftPagedVectorMem, leftBufferRef};
-                    const auto leftFields = leftBufferRef->getAllFieldNames();
-
-                    for (auto leftIt = leftPagedVector.begin(leftFields); leftIt != leftPagedVector.end(leftFields); ++leftIt)
-                    {
-                        for (auto rightIt = rightItStart; rightIt != rightItEnd; ++rightIt)
-                        {
-                            const auto leftRecord = *leftIt;
-                            const auto rightRecord = *rightIt;
-                            auto joinedRecord
-                                = createJoinedRecord(leftRecord, rightRecord, windowStart, windowEnd, leftFields, rightFields);
-                            executeChild(executionCtx, joinedRecord);
-                        }
-                    }
-                }
-            }
+            performNullFillProbe(
+                rightHashMapRefs,
+                rightNumberOfHashMaps,
+                leftHashMapRefs,
+                leftNumberOfHashMaps,
+                rightHashMapOptions,
+                leftHashMapOptions,
+                rightBufferRef,
+                joinSchema.leftSchema,
+                executionCtx,
+                windowStart,
+                windowEnd);
         }
+    }
+    else if (probeTaskType == ProbeTaskType::MATCH_PAIRS)
+    {
+        performMatchPairsProbe(
+            leftHashMapRefs, leftNumberOfHashMaps, rightHashMapRefs, rightNumberOfHashMaps, executionCtx, windowStart, windowEnd);
+    }
+    else
+    {
+        nautilus::invoke(
+            +[](const ProbeTaskType unknownProbeTaskType)
+            { throw NotImplemented("Using unknown probeTaskType {}", magic_enum::enum_name(unknownProbeTaskType)); },
+            probeTaskType);
     }
 }
 }
