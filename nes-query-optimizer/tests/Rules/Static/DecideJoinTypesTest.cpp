@@ -471,10 +471,10 @@ TEST_F(DecideJoinTypesTest, OuterJoinGetsHashJoinEvenWithNLJStrategy)
     auto joins = getOperatorByType<JoinLogicalOperator>(result);
     ASSERT_EQ(joins.size(), 1);
     auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
-    EXPECT_TRUE(trait->implementationType == JoinImplementation::HASH_JOIN);
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::NESTED_LOOP_JOIN);
 }
 
-/// Outer join with non-equi predicate must be rejected (only Hash Join supports outer joins, and it requires equi-predicates)
+/// Outer join with non-equi predicate must be a NLJ, as the hash join does not support non-equi predicates
 TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
 {
     auto leftSchema = createSchema("left");
@@ -492,7 +492,11 @@ TEST_F(DecideJoinTypesTest, OuterJoinWithNonEquiPredicateIsRejected)
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
     DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
-    EXPECT_THROW(rule.apply(plan), Exception);
+    auto result = rule.apply(plan);
+    auto joins = getOperatorByType<JoinLogicalOperator>(result);
+    ASSERT_EQ(joins.size(), 1);
+    auto trait = joins[0]->getTraitSet().get<JoinImplementationTypeTrait>();
+    EXPECT_TRUE(trait->implementationType == JoinImplementation::NESTED_LOOP_JOIN);
 }
 
 }
