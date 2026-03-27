@@ -21,7 +21,7 @@ SELECT
     (u8 == INT32(2)) and (u16 == INT32(2)) AS d
 FROM stream INTO sink4Booleans;
 ----
-0,0,0,1
+false,false,false,true
 
 
 # Check if the and operator works for simple nested functions
@@ -36,7 +36,7 @@ SELECT
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
 FROM stream INTO sink8Booleans;
 ----
-1,1,0,0,0,0,1,1
+true,true,false,false,false,false,true,true
 
 # Check if the and operator works together with comparison functions
 SELECT
@@ -50,7 +50,7 @@ SELECT
     (u8 == INT32(2)) and not (u16 == INT32(2)) AS h
 FROM stream INTO sink8Booleans;
 ----
-1,1,1,1,0,0,1,0
+true,true,true,true,false,false,true,false
 
 
 # Check if the and operator works together with comparison functions and nested functions
@@ -65,7 +65,7 @@ SELECT
     (u8 == INT32(2)) and not ((u16 == INT32(1)) and (i32 == INT32(2))) AS h
 FROM stream INTO sink8Booleans;
 ----
-1,1,1,1,0,0,1,1
+true,true,true,true,false,false,true,true
 
 # Check that AND works with raw boolean fields
 CREATE LOGICAL SOURCE boolStream(flag1 BOOLEAN NOT NULL, flag2 BOOLEAN NOT NULL, value INT32 NOT NULL);
@@ -84,7 +84,7 @@ SELECT
     (value > INT32(2)) AND flag2 AS c
 FROM boolStream INTO sinkBoolAnd;
 ----
-1,1,0
-0,0,0
-0,0,1
-0,0,0
+true,true,false
+false,false,false
+false,false,true
+false,false,false
