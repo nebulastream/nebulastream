@@ -45,6 +45,7 @@ private:
     [[nodiscard]] LogicalOperator predicatePushdown(LogicalOperator op, const std::vector<LogicalFunction>& predicateSet) const;
     [[nodiscard]] LogicalOperator createNewSelectionOperator(std::vector<LogicalFunction> predicateSet) const;
     [[nodiscard]] LogicalOperator addSelection(LogicalOperator op, std::vector<LogicalFunction> predicateSet) const;
+
     [[nodiscard]] LogicalOperator predicatePushdownSelection(TypedLogicalOperator<SelectionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const;
     [[nodiscard]] LogicalOperator predicatePushdownUnion(TypedLogicalOperator<UnionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const;
 };

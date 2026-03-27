@@ -1,0 +1,43 @@
+# name: temp/Optimize.test
+# description: Playaroung
+# groups: []
+
+# TODO DELETE THIS BEFORE MERGING!!!
+
+CREATE LOGICAL SOURCE stream1(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream1 TYPE File;
+ATTACH INLINE
+1,1,1000
+1,1,1001
+1,1,1002
+1,1,1003
+
+CREATE LOGICAL SOURCE stream2(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH INLINE
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
+
+CREATE LOGICAL SOURCE stream3(id UINT64 NOT NULL, id2 UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream3 TYPE File;
+ATTACH INLINE
+1,2,2,3000
+1,2,2,3001
+1,2,2,3002
+1,2,2,3003
+
+SELECT id, value, timestamp FROM (
+    SELECT id AS id, value AS value, timestamp as timestamp FROM stream1
+    UNION
+    SELECT id AS id, value AS value, timestamp as timestamp FROM stream2
+    )
+WHERE id >= UINT64(2)
+INTO File();
+----
+2,2,2000
+2,2,2001
+2,2,2002
+2,2,2003
+

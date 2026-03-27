@@ -42,7 +42,7 @@ LogicalPlan PredicatePushdownRule::apply(LogicalPlan queryPlan) const
 
 LogicalOperator PredicatePushdownRule::predicatePushdown(LogicalOperator op, const std::vector<LogicalFunction>& predicateSet) const
 {
-    // std::cerr << op.getName() << '\n';
+    std::cerr << op.getName() << '\n';
 
     if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp)
     {
