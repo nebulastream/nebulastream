@@ -22,7 +22,6 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
@@ -75,10 +74,10 @@ WindowProbePhysicalOperator::WindowProbePhysicalOperator(OperatorHandlerId opera
 {
 }
 
-void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void WindowProbePhysicalOperator::setup(ExecutionContext& executionCtx) const
 {
-    /// Giving child operators the change to setup
-    setupChild(executionCtx, compilationContext);
+    /// Giving child operators the chance to setup
+    setupChild(executionCtx);
     invoke(setupProxy, executionCtx.getGlobalOperatorHandler(operatorHandlerId), executionCtx.pipelineContext);
 }
 

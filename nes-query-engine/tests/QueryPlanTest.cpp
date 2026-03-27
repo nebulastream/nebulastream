@@ -166,7 +166,7 @@ struct EmittedTask
     template <typename... TArgs>
     static std::unique_ptr<EmittedTask> setup(const RangeOf<KeyT> auto& stages, TArgs&&...);
 
-    ::testing::AssertionResult executeEmittedTask(Args&&);
+    ::testing::AssertionResult executeEmittedTask(Args);
 
     bool empty() const
     {
@@ -255,7 +255,7 @@ template <>
 template <typename... TArgs>
 std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
-    auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     auto terminations = std::make_unique<Terminations>();
     for (auto* stage : stages)
     {
@@ -268,7 +268,7 @@ std::unique_ptr<Terminations> Terminations::setup(const RangeOf<ExecutablePipeli
 }
 
 template <>
-::testing::AssertionResult Terminations::executeEmittedTask(TerminatePipelineArgs&& args)
+::testing::AssertionResult Terminations::executeEmittedTask(TerminatePipelineArgs args)
 {
     TestPipelineExecutionContext pec{};
     EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
@@ -276,6 +276,52 @@ template <>
     {
         args.target->stage->stop(pec);
         args.callback.callOnSuccess();
+    }
+    catch (const Exception& e)
+    {
+        args.callback.callOnFailure(e);
+    }
+    args.callback.callOnComplete();
+    return ::testing::AssertionSuccess();
+}
+
+struct CompilePipelineArgs
+{
+    std::weak_ptr<RunningQueryPlanNode> target;
+    TaskCallback callback;
+};
+
+using Compiles = EmittedTask<CompilePipelineArgs, ExecutablePipelineStage*>;
+
+template <>
+template <typename... TArgs>
+std::unique_ptr<Compiles> Compiles::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
+{
+    auto compiles = std::make_unique<Compiles>();
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
+    for (auto* stage : stages)
+    {
+        EXPECT_CALL(emitter, emitPipelineCompile(::testing::_, StageMatcher(stage), ::testing::_))
+            .WillOnce(::testing::Invoke([&compiles, stage](auto, const auto& compile, auto callback)
+                                        { compiles->add(stage, std::move(compile), std::move(callback)); }));
+    }
+
+    return compiles;
+}
+
+template <>
+::testing::AssertionResult Compiles::executeEmittedTask(CompilePipelineArgs args)
+{
+    TestPipelineExecutionContext pec{};
+    EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
+    try
+    {
+        if (auto strongRef = args.target.lock())
+        {
+            strongRef->stage->compile(pec);
+            strongRef->isCompiled = true;
+            args.callback.callOnSuccess();
+        }
     }
     catch (const Exception& e)
     {
@@ -298,7 +344,7 @@ template <typename... TArgs>
 std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> auto& stages, TArgs&&... args)
 {
     auto setups = std::make_unique<Setups>();
-    auto& emitter = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& emitter = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     for (auto* stage : stages)
     {
         EXPECT_CALL(emitter, emitPipelineStart(::testing::_, StageMatcher(stage), ::testing::_))
@@ -310,7 +356,7 @@ std::unique_ptr<Setups> Setups::setup(const RangeOf<ExecutablePipelineStage*> au
 }
 
 template <>
-::testing::AssertionResult Setups::executeEmittedTask(SetupPipelineArgs&& args)
+::testing::AssertionResult Setups::executeEmittedTask(SetupPipelineArgs args)
 {
     TestPipelineExecutionContext pec{};
     EXPECT_CALL(pec, emitBuffer(::testing::_, ::testing::_)).Times(0);
@@ -318,7 +364,9 @@ template <>
     {
         if (auto strongRef = args.target.lock())
         {
+            EXPECT_TRUE(strongRef->isCompiled);
             strongRef->stage->start(pec);
+            strongRef->isStarted = true;
             args.callback.callOnSuccess();
         }
     }
@@ -342,7 +390,7 @@ template <typename... TArgs>
 std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& originIds, TArgs&&... args)
 {
     auto setups = std::make_unique<SourceStops>();
-    auto& controller = std::get<0>(std::forward_as_tuple<TArgs>(args)...);
+    auto& controller = std::get<0>(std::forward_as_tuple(std::forward<TArgs>(args)...));
     for (auto originId : originIds)
     {
         EXPECT_CALL(controller, initializeSourceStop(::testing::_, ::testing::_, ::testing::_))
@@ -354,7 +402,7 @@ std::unique_ptr<SourceStops> SourceStops::setup(const RangeOf<OriginId> auto& or
 }
 
 template <>
-::testing::AssertionResult SourceStops::executeEmittedTask(SourceStopArgs&& stops)
+::testing::AssertionResult SourceStops::executeEmittedTask(SourceStopArgs stops)
 {
     if (auto target = stops.target.lock())
     {
@@ -412,15 +460,14 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
     auto stage1 = std::make_unique<TestPipeline>(pipeline1Ctrl);
     auto stage2 = std::make_unique<TestPipeline>(pipeline2Ctrl);
 
-    /// Verify that a setup and stop tasks have been emitted
+    /// Verify that compile tasks have been emitted
     TestWorkEmitter emitter;
-    auto terminations = Terminations::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
-    auto setups = Setups::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
+    auto compiles = Compiles::setup(std::vector<ExecutablePipelineStage*>{stage1.get(), stage2.get()}, emitter);
 
-    /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a setup task has been submitted
+    /// Build chain of two pipelines. Verify that on construction of a RunningQueryPlan node a compile task has been submitted
     auto sink
         = RunningQueryPlanNode::create(QueryId(1), PipelineId(1), emitter, {}, std::move(stage2), [](auto) { }, expirationRef, setupRef);
-    EXPECT_THAT(*setups, testing::SizeIs(1));
+    EXPECT_THAT(*compiles, testing::SizeIs(1));
     auto pipeline = RunningQueryPlanNode::create(
         QueryId(1),
         PipelineId(2),
@@ -430,16 +477,13 @@ TEST_F(QueryPlanTest, RunningQueryNodeSetup)
         [](auto) { },
         std::move(expirationRef),
         std::move(setupRef));
-    EXPECT_THAT(*setups, testing::SizeIs(2));
+    EXPECT_THAT(*compiles, testing::SizeIs(2));
 
-    /// Run all setup tasks.
-    EXPECT_TRUE(setups->handleAll());
-    EXPECT_THAT(*terminations, testing::IsEmpty());
+    /// Run all compile tasks.
+    EXPECT_TRUE(compiles->handleAll());
 
     /// Destroy root pipeline
     EXPECT_TRUE(destroyPipeline(std::move(pipeline)));
-    EXPECT_TRUE(terminations->handle(pipeline1Ctrl->stage));
-    EXPECT_TRUE(terminations->handle(pipeline2Ctrl->stage));
 }
 
 /// If a running query plan is dropped, it should perform a hard stop: e.g. no pipelines should be terminated.
@@ -457,13 +501,14 @@ TEST_F(QueryPlanTest, RunningQueryPlanDefaultDestructor)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
-    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+    /// The RunningQueryPlan requested compilation for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto listener = std::make_shared<TestQueryLifetimeListener>();
     EXPECT_CALL(*listener, onDestruction()).Times(1);
     EXPECT_CALL(*listener, onRunning()).Times(0);
     {
         auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        EXPECT_TRUE(compiles->waitForTasks(2));
     }
     EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
     EXPECT_FALSE(srcCtrl->wasOpened());
@@ -483,14 +528,15 @@ TEST_F(QueryPlanTest, RunningQueryPlanDispose)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
-    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+    /// The RunningQueryPlan requested compilation for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto listener = std::make_shared<TestQueryLifetimeListener>();
     EXPECT_CALL(*listener, onDestruction()).Times(0);
     EXPECT_CALL(*listener, onRunning()).Times(0);
 
     {
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        EXPECT_TRUE(compiles->waitForTasks(2));
         RunningQueryPlan::dispose(std::move(runningQueryPlan));
     }
 
@@ -511,8 +557,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
-    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+    /// The RunningQueryPlan requested compilation for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
 
     auto listener = std::make_shared<TestQueryLifetimeListener>();
     EXPECT_CALL(*listener, onDestruction()).Times(1);
@@ -520,7 +566,7 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
 
     {
         auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
-        EXPECT_TRUE(setups->waitForTasks(2));
+        EXPECT_TRUE(compiles->waitForTasks(2));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
     }
 
@@ -554,7 +600,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     auto terminations = Terminations::setup(stdv::values(test.stages), emitter);
 
@@ -568,6 +615,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestSourceSetup)
         EXPECT_FALSE(srcCtrl->wasOpened());
         EXPECT_FALSE(srcCtrl->wasClosed());
 
+        EXPECT_TRUE(compiles->waitForTasks(2));
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
 
@@ -600,7 +649,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     auto terminations = Terminations::setup(std::vector{test.stages[pipeline1]}, emitter);
 
@@ -614,6 +664,8 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestPartialConstruction)
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
         EXPECT_FALSE(srcCtrl->waitUntilOpened());
 
+        EXPECT_TRUE(compiles->waitForTasks(3));
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->waitForTasks(3));
         /// Only setup the pipeline1 pipeline
         EXPECT_TRUE(setups->handle(test.stages[pipeline1]));
@@ -654,13 +706,15 @@ TEST_F(QueryPlanTest, RefCountTestSourceEoS)
 
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     auto terminations = Terminations::setup(stdv::values(test.stages), emitter);
 
     {
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
 
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
         EXPECT_FALSE(test.sourceControls[source]->waitUntilClosed());
@@ -697,12 +751,14 @@ TEST_F(QueryPlanTest, RefCountTestMultipleSourceOneOfThemEoS)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
     /// No pipeline is terminated, because p is kept alive by source1
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     {
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->handleAll());
         EXPECT_TRUE(test.sourceControls[source]->waitUntilOpened());
         EXPECT_TRUE(test.sourceControls[source1]->waitUntilOpened());
@@ -728,7 +784,8 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
 
@@ -738,6 +795,8 @@ TEST_F(QueryPlanTest, DisposingQueryPlanWhileSourceIsAboutToBeTerminated)
 
     {
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        EXPECT_TRUE(compiles->waitForTasks(2));
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();
@@ -762,7 +821,8 @@ TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
     TestQueryLifetimeController controller;
     TestWorkEmitter emitter;
 
-    /// The RunningQueryPlan Requested Setup for all Pipelines in the QueryPlan.
+    /// The RunningQueryPlan requested compilation and setup for all pipelines in the query plan.
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
     auto setups = Setups::setup(stdv::values(test.stages), emitter);
     auto sourceStops = SourceStops::setup(std::vector{test.sourceIds.at(source)}, controller);
 
@@ -773,6 +833,8 @@ TEST_F(QueryPlanTest, DestroyingQueryPlanWhileSourceIsAboutToBeTerminated)
 
     {
         auto runningQueryPlan = dropRef(RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener));
+        EXPECT_TRUE(compiles->waitForTasks(2));
+        EXPECT_TRUE(compiles->handleAll());
         EXPECT_TRUE(setups->waitForTasks(2));
         EXPECT_TRUE(setups->handleAll());
         srcCtrl->injectEoS();

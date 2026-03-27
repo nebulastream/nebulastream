@@ -112,14 +112,20 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
     return os << "CompiledExecutablePipelineStage()";
 }
 
+void CompiledExecutablePipelineStage::compile(PipelineExecutionContext& pipelineExecutionContext)
+{
+    pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
+    CompilationContext compilationCtx{engine};
+    pipeline->getRootOperator().compile(compilationCtx);
+    compiledPipelineFunction = this->compilePipeline();
+}
+
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
-    CompilationContext compilationCtx{engine};
-    pipeline->getRootOperator().setup(ctx, compilationCtx);
-    compiledPipelineFunction = this->compilePipeline();
+    pipeline->getRootOperator().setup(ctx);
 }
 
 }

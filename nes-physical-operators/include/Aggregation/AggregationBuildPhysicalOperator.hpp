@@ -16,6 +16,7 @@
 
 
 #include <memory>
+#include <mutex>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -26,6 +27,7 @@
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <HashMapOptions.hpp>
+#include <HashMapSlice.hpp>
 #include <WindowBuildPhysicalOperator.hpp>
 
 namespace NES
@@ -51,13 +53,21 @@ public:
         std::unique_ptr<TimeFunction> timeFunction,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
-    void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
+    AggregationBuildPhysicalOperator(const AggregationBuildPhysicalOperator& other);
+    void compile(CompilationContext& compilationContext) const override;
+    void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    /// The aggregation function is a shared_ptr, because it is used in the aggregation build and in the getSliceCleanupFunction()
+    struct CleanupState
+    {
+        std::once_flag once;
+        std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
+    };
+
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
+    std::unique_ptr<CleanupState> cleanupState;
 };
 
 }

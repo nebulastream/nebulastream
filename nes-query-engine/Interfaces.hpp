@@ -49,6 +49,7 @@ public:
         TaskCallback,
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
+    virtual void emitPipelineCompile(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;

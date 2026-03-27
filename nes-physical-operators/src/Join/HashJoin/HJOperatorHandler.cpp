@@ -43,8 +43,8 @@ HJOperatorHandler::HJOperatorHandler(
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     const uint64_t maxNumberOfBuckets)
     : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    , setupAlreadyCalledLeft(false)
-    , setupAlreadyCalledRight(false)
+    , leftCleanupStateNautilusFunctionInstalled(false)
+    , rightCleanupStateNautilusFunctionInstalled(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
@@ -67,36 +67,32 @@ HJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments& ne
         });
 }
 
-bool HJOperatorHandler::wasSetupCalled(const JoinBuildSideType& buildSide)
+bool HJOperatorHandler::trySetNautilusCleanupExec(
+    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide)
 {
     switch (buildSide)
     {
         case JoinBuildSideType::Right: {
             bool expectedValue = false;
-            return not setupAlreadyCalledRight.compare_exchange_strong(expectedValue, true);
+            if (!rightCleanupStateNautilusFunctionInstalled.compare_exchange_strong(expectedValue, true))
+            {
+                return false;
+            }
+            rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
+            return true;
         }
         case JoinBuildSideType::Left: {
             bool expectedValue = false;
-            return not setupAlreadyCalledLeft.compare_exchange_strong(expectedValue, true);
+            if (!leftCleanupStateNautilusFunctionInstalled.compare_exchange_strong(expectedValue, true))
+            {
+                return false;
+            }
+            leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
+            return true;
         }
     }
 
     std::unreachable();
-}
-
-void HJOperatorHandler::setNautilusCleanupExec(
-    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> nautilusCleanupExec, const JoinBuildSideType& buildSide)
-{
-    switch (buildSide)
-    {
-        case JoinBuildSideType::Right:
-            rightCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-        case JoinBuildSideType::Left:
-            leftCleanupStateNautilusFunction = std::move(nautilusCleanupExec);
-            break;
-            std::unreachable();
-    }
 }
 
 std::vector<std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec>> HJOperatorHandler::getNautilusCleanupExec() const

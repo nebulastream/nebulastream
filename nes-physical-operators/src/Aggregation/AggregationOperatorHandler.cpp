@@ -33,6 +33,7 @@
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <HashMapSlice.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 
@@ -45,10 +46,22 @@ AggregationOperatorHandler::AggregationOperatorHandler(
     std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
     const uint64_t maxNumberOfBuckets)
     : WindowBasedOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
-    , setupAlreadyCalled(false)
+    , cleanupStateNautilusFunctionInstalled(false)
     , rollingAverageNumberOfKeys(RollingAverage<uint64_t>{100})
     , maxNumberOfBuckets(maxNumberOfBuckets)
 {
+}
+
+bool AggregationOperatorHandler::trySetCleanupStateNautilusFunction(
+    std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction)
+{
+    bool expectedValue = false;
+    if (!cleanupStateNautilusFunctionInstalled.compare_exchange_strong(expectedValue, true))
+    {
+        return false;
+    }
+    this->cleanupStateNautilusFunction = std::move(cleanupStateNautilusFunction);
+    return true;
 }
 
 std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>

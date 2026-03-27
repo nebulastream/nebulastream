@@ -348,6 +348,17 @@ public:
         std::unreachable();
     }
 
+    void emitPipelineCompile(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
+    {
+        auto [complete, failure, success] = std::move(callback).take();
+        auto wrappedCallback = TaskCallback{
+            std::move(complete),
+            std::move(success),
+            TaskCallback::OnFailure(injectQueryFailure(node, std::move(failure.callback))),
+        };
+        addInternalTask(CompilePipelineTask(qid, node->id, std::move(wrappedCallback), node));
+    }
+
     void emitPipelineStart(QueryId qid, const std::shared_ptr<RunningQueryPlanNode>& node, TaskCallback callback) override
     {
         auto [complete, failure, success] = std::move(callback).take();
@@ -437,6 +448,7 @@ public:
         bool operator()(WorkTask& task) const;
         bool operator()(StopQueryTask& stopQuery) const;
         bool operator()(StartQueryTask& startQuery) const;
+        bool operator()(CompilePipelineTask& compilePipeline) const;
         bool operator()(StartPipelineTask& startPipeline) const;
         bool operator()(PendingPipelineStopTask& pendingPipelineStop) const;
         bool operator()(StopPipelineTask& stopPipelineTask) const;
@@ -522,6 +534,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             }
 
         );
+        INVARIANT(pipeline->isStarted, "Pipeline {}-{} must be started before executing tasks", task.queryId, pipeline->id);
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
         pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
@@ -531,6 +544,41 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
     ENGINE_LOG_WARNING(
         "Task {} for Query {}-{} is expired. Tuples: {}", taskId, task.queryId, task.pipelineId, task.buf.getNumberOfTuples());
     pool.statistic->onEvent(TaskExpired{WorkerThread::id, task.queryId, task.pipelineId, taskId});
+    return false;
+}
+
+bool ThreadPool::WorkerThread::operator()(CompilePipelineTask& compilePipeline) const
+{
+    const LogContext logContext("Task", fmt::format("{}-{}", compilePipeline.queryId, compilePipeline.pipelineId));
+    if (terminating)
+    {
+        ENGINE_LOG_WARNING(
+            "Pipeline Compilation {}-{} was skipped during Termination", compilePipeline.queryId, compilePipeline.pipelineId);
+        return false;
+    }
+
+    if (auto pipeline = compilePipeline.pipeline.lock())
+    {
+        ENGINE_LOG_DEBUG("Compile Pipeline Task for {}-{}", compilePipeline.queryId, pipeline->id);
+        DefaultPEC pec(
+            pool.numberOfThreads(),
+            WorkerThread::id,
+            pipeline->id,
+            pool.bufferProvider,
+            [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
+            {
+                INVARIANT(false, "Currently we assume that a pipeline cannot emit data during compilation");
+                return false;
+            },
+            [&](const TupleBuffer&, std::chrono::milliseconds)
+            { INVARIANT(false, "Repeat pipeline compilation is currently not supported"); });
+        pipeline->stage->compile(pec);
+        const auto wasCompiled = pipeline->isCompiled.exchange(true);
+        INVARIANT(!wasCompiled, "Pipeline {}-{} must not be compiled multiple times", compilePipeline.queryId, pipeline->id);
+        return true;
+    }
+
+    ENGINE_LOG_WARNING("Compiled pipeline is expired for {}-{}", compilePipeline.queryId, compilePipeline.pipelineId);
     return false;
 }
 
@@ -567,7 +615,10 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
                     "Repeat pipeline setup is currently not supported. Although there is no inherit reason this wouldn't work, but its not "
                     "tested");
             });
+        INVARIANT(pipeline->isCompiled, "Pipeline {}-{} must be compiled before start", startPipeline.queryId, pipeline->id);
         pipeline->stage->start(pec);
+        const auto wasStarted = pipeline->isStarted.exchange(true);
+        INVARIANT(!wasStarted, "Pipeline {}-{} must not be started multiple times", startPipeline.queryId, pipeline->id);
         pool.statistic->onEvent(PipelineStart{WorkerThread::id, startPipeline.queryId, pipeline->id});
         return true;
     }
@@ -661,6 +712,11 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         });
 
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
+    INVARIANT(
+        stopPipelineTask.pipeline->isCompiled,
+        "Pipeline {}-{} must be compiled before stop",
+        stopPipelineTask.queryId,
+        stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
     stopPipelineTask.pipeline->stage->stop(pec);

@@ -401,13 +401,14 @@
                 fi
 
                 # shellcheck disable=SC2016
-                exec ./.nix/nix-run.sh bash -lc '
+                exec ./.nix/nix-run.sh bash -c '
                   set -euo pipefail
                   base_ref="$1"
                   jobs="$2"
 
                   echo "nes-clang-tidy: configuring build/"
-                  ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DNES_LOG_LEVEL=DEBUG
+                  rm -rf build
+                  ./.nix/nix-cmake.sh -GNinja -B build -DUSE_SANITIZER=none -DCMAKE_BUILD_TYPE=Debug -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DNES_LOG_LEVEL=DEBUG
 
                   echo "nes-clang-tidy: building generated headers"
                   ./.nix/nix-cmake.sh --build build -j -- -k 0

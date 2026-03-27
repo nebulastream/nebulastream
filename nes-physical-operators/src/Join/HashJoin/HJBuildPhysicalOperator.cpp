@@ -17,6 +17,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
@@ -29,6 +30,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
@@ -74,50 +76,51 @@ HashMap* getHashJoinHashMapProxy(
     return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
 }
 
-void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void HJBuildPhysicalOperator::compile(CompilationContext& compilationContext) const
 {
-    StreamJoinBuildPhysicalOperator::setup(executionCtx, compilationContext);
+    compileChild(compilationContext);
 
-    /// Creating the cleanup function for the slice of current stream
-    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
-    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    std::call_once(
+        cleanupState->once,
+        [this, &compilationContext]
+        {
+            cleanupState->cleanupStateNautilusFunction
+                = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+                    [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
+                    {
+                        const ChainedHashMapRef hashMapRef{
+                            hashMap,
+                            copyOfHashMapOptions.fieldKeys,
+                            copyOfHashMapOptions.fieldValues,
+                            copyOfHashMapOptions.entriesPerPage,
+                            copyOfHashMapOptions.entrySize};
+                        for (const auto entry : hashMapRef)
+                        {
+                            const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                                entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                            const auto state = entryRefReset.getValueMemArea();
+                            nautilus::invoke(
+                                +[](int8_t* pagedVectorMemArea) -> void
+                                {
+                                    auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                                    pagedVector->~PagedVector();
+                                },
+                                state);
+                        }
+                    })));
+        });
+}
+
+void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+{
+    StreamJoinBuildPhysicalOperator::setup(executionCtx);
+
+    PRECONDITION(cleanupState->cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for hash join build operator");
+
     auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(
         nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
-    if (operatorHandler->wasSetupCalled(joinBuildSide))
-    {
-        return;
-    }
-
-    const auto cleanupStateNautilusFunction
-        = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-            {
-                const ChainedHashMapRef hashMapRef{
-                    hashMap,
-                    copyOfHashMapOptions.fieldKeys,
-                    copyOfHashMapOptions.fieldValues,
-                    copyOfHashMapOptions.entriesPerPage,
-                    copyOfHashMapOptions.entrySize};
-                for (const auto entry : hashMapRef)
-                {
-                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                    const auto state = entryRefReset.getValueMemArea();
-                    nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea) -> void
-                        {
-                            /// Calls the destructor of the PagedVector
-                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            pagedVector->~PagedVector();
-                        },
-                        state);
-                }
-            })));
-    /// NOLINTEND(performance-unnecessary-value-param)
-    operatorHandler->setNautilusCleanupExec(cleanupStateNautilusFunction, joinBuildSide);
+    PRECONDITION(operatorHandler != nullptr, "Expected HJOperatorHandler for {}", operatorHandlerId);
+    operatorHandler->trySetNautilusCleanupExec(cleanupState->cleanupStateNautilusFunction, joinBuildSide);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -191,6 +194,12 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     HashMapOptions hashMapOptions)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))
+    , cleanupState(std::make_unique<CleanupState>())
+{
+}
+
+HJBuildPhysicalOperator::HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other)
+    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions), cleanupState(std::make_unique<CleanupState>())
 {
 }
 

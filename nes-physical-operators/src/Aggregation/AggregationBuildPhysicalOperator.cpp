@@ -16,6 +16,7 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
+#include <mutex>
 #include <ranges>
 #include <utility>
 #include <vector>
@@ -26,6 +27,7 @@
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Time/Timestamp.hpp>
 #include <CompilationContext.hpp>
@@ -36,6 +38,7 @@
 #include <function.hpp>
 #include <options.hpp>
 #include <static.hpp>
+#include <val_details.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
@@ -77,46 +80,51 @@ HashMap* getAggHashMapProxy(
     return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
 }
 
-void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
+void AggregationBuildPhysicalOperator::compile(CompilationContext& compilationContext) const
 {
-    WindowBuildPhysicalOperator::setup(executionCtx, compilationContext);
+    compileChild(compilationContext);
 
-    /// Creating the cleanup function for the slice of current stream
-    /// As the setup function does not get traced, we do not need to have any nautilus::invoke calls to jump to the C++ runtime
-    /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
-    /// ReSharper disable once CppPassValueParameterByConstReference
-    /// NOLINTBEGIN(performance-unnecessary-value-param)
+    std::call_once(
+        cleanupState->once,
+        [this, &compilationContext]
+        {
+            cleanupState->cleanupStateNautilusFunction
+                = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+                    [copyOfHashMapOptions = hashMapOptions,
+                     copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
+                    {
+                        const ChainedHashMapRef hashMapRef(
+                            hashMap,
+                            copyOfHashMapOptions.fieldKeys,
+                            copyOfHashMapOptions.fieldValues,
+                            copyOfHashMapOptions.entriesPerPage,
+                            copyOfHashMapOptions.entrySize);
+                        for (const auto entry : hashMapRef)
+                        {
+                            const ChainedHashMapRef::ChainedEntryRef entryRefReset(
+                                entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
+                            auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
+                            for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
+                            {
+                                aggFunction->cleanup(state);
+                                state = state + aggFunction->getSizeOfStateInBytes();
+                            }
+                        }
+                    })));
+        });
+}
+
+void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
+{
+    WindowBuildPhysicalOperator::setup(executionCtx);
+
+    PRECONDITION(
+        cleanupState->cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for aggregation build operator");
+
     auto* const operatorHandler = dynamic_cast<AggregationOperatorHandler*>(
         nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
-    if (bool expectedValue = false; operatorHandler->setupAlreadyCalled.compare_exchange_strong(expectedValue, true))
-    {
-        operatorHandler->cleanupStateNautilusFunction
-            = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-                [copyOfHashMapOptions = hashMapOptions,
-                 copyOfAggregationFunctions = aggregationPhysicalFunctions](nautilus::val<HashMap*> hashMap)
-                {
-                    const ChainedHashMapRef hashMapRef(
-                        hashMap,
-                        copyOfHashMapOptions.fieldKeys,
-                        copyOfHashMapOptions.fieldValues,
-                        copyOfHashMapOptions.entriesPerPage,
-                        copyOfHashMapOptions.entrySize);
-                    for (const auto entry : hashMapRef)
-                    {
-                        const ChainedHashMapRef::ChainedEntryRef entryRefReset(
-                            entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues);
-                        auto state = static_cast<nautilus::val<AggregationState*>>(entryRefReset.getValueMemArea());
-                        for (const auto& aggFunction : nautilus::static_iterable(copyOfAggregationFunctions))
-                        {
-                            aggFunction->cleanup(state);
-                            state = state + aggFunction->getSizeOfStateInBytes();
-                        }
-                    }
-                })));
-    }
-
-
-    /// NOLINTEND(performance-unnecessary-value-param)
+    PRECONDITION(operatorHandler != nullptr, "Expected AggregationOperatorHandler for {}", operatorHandlerId);
+    operatorHandler->trySetCleanupStateNautilusFunction(cleanupState->cleanupStateNautilusFunction);
 }
 
 void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -177,6 +185,15 @@ AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapOptions(std::move(hashMapOptions))
+    , cleanupState(std::make_unique<CleanupState>())
+{
+}
+
+AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(const AggregationBuildPhysicalOperator& other)
+    : WindowBuildPhysicalOperator(other)
+    , aggregationPhysicalFunctions(other.aggregationPhysicalFunctions)
+    , hashMapOptions(other.hashMapOptions)
+    , cleanupState(std::make_unique<CleanupState>())
 {
 }
 

@@ -36,6 +36,7 @@ public:
         std::shared_ptr<Pipeline> pipeline,
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandler,
         nautilus::engine::Options options);
+    void compile(PipelineExecutionContext& pipelineExecutionContext) override;
     void start(PipelineExecutionContext& pipelineExecutionContext) override;
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
