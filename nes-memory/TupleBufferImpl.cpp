@@ -96,6 +96,7 @@ MemorySegment::~MemorySegment()
 
 TupleBuffer MemorySegment::toTupleBuffer()
 {
+    controlBlock->prepare(nullptr);
     return TupleBuffer{controlBlock.get(), ptr, size};
 }
 

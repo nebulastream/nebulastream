@@ -1,0 +1,24 @@
+# name: benchmark/YahooStreamingBenchmark_large.test
+# description: YahooStreamingBenchmark with replicated 50MB data for source mode benchmarking
+# groups: [benchmark, benchmark_small, Aggregation]
+
+# Source definitions
+CREATE LOGICAL SOURCE ysb1k(user_id UINT64, page_id UINT64, campaign_id UINT64, ad_type UINT64, event_type UINT64, current_ms UINT64, ip UINT64, d1 UINT64, d2 UINT64, d3 UINT32, d4 UINT16);
+CREATE PHYSICAL SOURCE FOR ysb1k TYPE File;
+ATTACH FILE small/ysb_large/ysb1k_50M.csv
+
+CREATE SINK ysb1kChecksum(ysb1k.start UINT64 NOT NULL, ysb1k.end UINT64 NOT NULL, ysb1k.campaign_id UINT64, ysb1k.sum_user_id UINT64) TYPE Checksum;
+
+# Query 1 YSB with 1k campaign_ids (50MB input)
+SELECT
+    start,
+    end,
+    campaign_id,
+    SUM(user_id) AS sum_user_id
+FROM ysb1k
+WHERE event_type < UINT64(1)
+GROUP BY campaign_id
+WINDOW TUMBLING(current_ms, SIZE 30 SEC)
+INTO ysb1kChecksum;
+----
+0 0

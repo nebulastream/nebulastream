@@ -214,8 +214,9 @@ public:
 
     uint8_t* getPointer() const { return ptr; }
 
-    /// Create a TupleBuffer wrapping this segment's memory. The caller must ensure
-    /// the MemorySegment outlives all TupleBuffer copies.
+    /// Create a TupleBuffer wrapping this segment's memory.
+    /// Calls prepare() on the control block to set the reference counter to 1.
+    /// The caller must ensure the MemorySegment outlives all TupleBuffer copies.
     TupleBuffer toTupleBuffer();
 
 private:

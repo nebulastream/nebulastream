@@ -30,11 +30,6 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-namespace NES::detail
-{
-class MemorySegment;
-}
-
 namespace NES
 {
 
@@ -83,13 +78,9 @@ private:
     std::vector<char> memoryBuffer;
     size_t memoryReadOffset = 0;
 
-    /// Runtime state for InPlace mode
+    /// Runtime state for InPlace mode (pre-loaded aligned memory, shares memoryReadOffset with Memory mode)
     uint8_t* fileData = nullptr;
     size_t fileDataSize = 0;
-    std::vector<std::unique_ptr<detail::MemorySegment>> ownedSegments;
-    std::vector<TupleBuffer> preBuiltBuffers;
-    size_t currentBufferIndex = 0;
-    size_t bufferSize = 0;
 
     /// Runtime state for Tmpfs modes
     std::string tmpfsCopyPath;

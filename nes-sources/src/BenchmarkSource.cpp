@@ -40,7 +40,6 @@
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <TupleBufferImpl.hpp>
 
 namespace NES
 {
@@ -87,7 +86,7 @@ BenchmarkSource::~BenchmarkSource()
     }
 }
 
-void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider> bufferProvider)
+void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider> /*bufferProvider*/)
 {
     const auto realPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     if (!realPath)
@@ -168,7 +167,6 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider> bufferProvide
             fileDataSize = static_cast<size_t>(file.tellg());
             file.seekg(0, std::ios::beg);
 
-            bufferSize = bufferProvider->getBufferSize();
             constexpr size_t ALIGNMENT = 64;
 
             /// Allocate aligned memory for the entire file
@@ -179,20 +177,7 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider> bufferProvide
                 throw InvalidConfigParameter("Failed to allocate {} bytes for in-place benchmark source", alignedSize);
             }
             file.read(reinterpret_cast<char*>(fileData), static_cast<std::streamsize>(fileDataSize));
-
-            /// Create wrapped TupleBuffers for each chunk
-            for (size_t offset = 0; offset < fileDataSize; offset += bufferSize)
-            {
-                const auto chunkSize = static_cast<uint32_t>(std::min(bufferSize, fileDataSize - offset));
-                auto segment = std::make_unique<detail::MemorySegment>(
-                    fileData + offset,
-                    chunkSize,
-                    [](detail::MemorySegment*, BufferRecycler*) { /* no-op: BenchmarkSource owns the memory */ });
-                segment->controlBlock->prepare(nullptr);
-                preBuiltBuffers.emplace_back(segment->toTupleBuffer());
-                ownedSegments.push_back(std::move(segment));
-            }
-            currentBufferIndex = 0;
+            memoryReadOffset = 0;
             break;
         }
     }
@@ -205,10 +190,7 @@ void BenchmarkSource::close()
     memoryBuffer.shrink_to_fit();
     memoryReadOffset = 0;
 
-    /// Clean up pre-built buffers before segments (buffers reference segment control blocks)
-    preBuiltBuffers.clear();
-    ownedSegments.clear();
-    currentBufferIndex = 0;
+    memoryReadOffset = 0;
 
     if (fileData)
     {
@@ -303,22 +285,20 @@ Source::FillTupleBufferResult BenchmarkSource::fillFromMemory(TupleBuffer& tuple
 
 Source::FillTupleBufferResult BenchmarkSource::fillFromInPlace(TupleBuffer& tupleBuffer)
 {
-    if (currentBufferIndex >= preBuiltBuffers.size())
+    if (memoryReadOffset >= fileDataSize)
     {
         return FillTupleBufferResult::eos();
     }
 
-    /// Move-assign the pre-built buffer into the provided one.
-    /// The old pooled buffer gets released/recycled; the new one points directly at our pre-loaded memory.
-    auto& sourceBuffer = preBuiltBuffers[currentBufferIndex];
-    const auto chunkSize = sourceBuffer.getBufferSize();
+    const auto bytesToCopy = std::min(static_cast<size_t>(tupleBuffer.getBufferSize()), fileDataSize - memoryReadOffset);
+    if (bytesToCopy == 0)
+    {
+        return FillTupleBufferResult::eos();
+    }
 
-    /// Retain because SourceThread will release after emit, and we want the backing memory to stay valid.
-    sourceBuffer.retain();
-    tupleBuffer = sourceBuffer;
-
-    currentBufferIndex++;
-    return FillTupleBufferResult::withBytes(chunkSize);
+    std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data(), fileData + memoryReadOffset, bytesToCopy);
+    memoryReadOffset += bytesToCopy;
+    return FillTupleBufferResult::withBytes(bytesToCopy);
 }
 
 void BenchmarkSource::rewindSource()
@@ -335,7 +315,7 @@ void BenchmarkSource::rewindSource()
             memoryReadOffset = 0;
             break;
         case BenchmarkMode::InPlace:
-            currentBufferIndex = 0;
+            memoryReadOffset = 0;
             break;
     }
 }

@@ -47,7 +47,9 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
+#include <MultiQueueTaskQueue.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SchedulingStrategy.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
@@ -331,8 +333,15 @@ public:
         auto task = WorkTask(qid, node->id, node, std::move(buffer), std::move(wrappedCallback));
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
-            /// Non-WorkerThread
-            taskQueue.addAdmissionTaskBlocking({}, std::move(task));
+            /// Non-WorkerThread: route through admission queue
+            if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+            {
+                taskQueue.addAdmissionTaskBlocking({}, std::move(task));
+            }
+            else
+            {
+                multiQueue->addAdmissionTaskBlocking({}, std::move(task));
+            }
             ENGINE_LOG_DEBUG("Task written to AdmissionQueue");
             return true;
         }
@@ -372,11 +381,24 @@ public:
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
     }
 
+    /// Helper to route admission tasks through the appropriate queue based on strategy.
+    template <typename T>
+    void submitAdmissionTask(T&& task)
+    {
+        if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+        {
+            taskQueue.addAdmissionTaskBlocking({}, std::forward<T>(task));
+        }
+        else
+        {
+            multiQueue->addAdmissionTaskBlocking({}, std::forward<T>(task));
+        }
+    }
+
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        taskQueue.addAdmissionTaskBlocking(
-            {},
+        submitAdmissionTask(
             FailSourceTask{
                 id,
                 std::move(source),
@@ -389,8 +411,7 @@ public:
     void initializeSourceStop(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");
-        taskQueue.addAdmissionTaskBlocking(
-            {},
+        submitAdmissionTask(
             StopSourceTask{
                 id,
                 std::move(source),
@@ -410,13 +431,32 @@ public:
         std::shared_ptr<AbstractQueryStatusListener> listener,
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
-        const size_t admissionQueueSize)
+        const size_t admissionQueueSize,
+        SchedulingStrategy schedulingStrategy,
+        bool workStealing,
+        size_t numThreads)
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
+        , strategy(schedulingStrategy)
         , taskQueue(admissionQueueSize)
-        , delayedTaskSubmitter([this](Task&& task) noexcept { taskQueue.addInternalTaskNonBlocking(std::move(task)); })
+        , delayedTaskSubmitter(
+              [this](Task&& task) noexcept
+              {
+                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+                  {
+                      taskQueue.addInternalTaskNonBlocking(std::move(task));
+                  }
+                  else
+                  {
+                      multiQueue->addTaskByPolicy(std::move(task));
+                  }
+              })
     {
+        if (strategy != SchedulingStrategy::GLOBAL_QUEUE)
+        {
+            multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing);
+        }
     }
 
     /// Reserves the initial WorkerThreadId for the terminator thread, which is the thread which is calling shutdown.
@@ -452,16 +492,25 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+        if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+        {
+            taskQueue.addInternalTaskNonBlocking(std::move(task));
+        }
+        else
+        {
+            multiQueue->addInternalTaskNonBlocking(std::move(task));
+        }
     }
 
-    /// Order of destruction matters: TaskQueue has to outlive the pool
+    /// Order of destruction matters: TaskQueue/MultiQueue has to outlive the pool
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
+    SchedulingStrategy strategy;
     TaskQueue<Task> taskQueue;
+    std::unique_ptr<MultiQueueTaskQueue<Task>> multiQueue; /// only set for per-thread strategies
     DelayedTaskSubmitter<> delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
@@ -749,20 +798,48 @@ void ThreadPool::addThread(WorkerId workerId)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
-            while (!stopToken.stop_requested())
+
+            if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
             {
-                if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                /// Global queue mode: all workers read from the shared queue
+                while (!stopToken.stop_requested())
                 {
-                    handleTask(worker, std::move(*task));
+                    if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                    {
+                        handleTask(worker, std::move(*task));
+                    }
+                }
+
+                ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
+                const WorkerThread terminatingWorker{*this, true};
+                while (auto task = taskQueue.getNextTaskNonBlocking())
+                {
+                    handleTask(terminatingWorker, std::move(*task));
                 }
             }
-
-            ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
-            /// Worker in termination mode will not emit further work and eventually clear the task queue and terminate.
-            const WorkerThread terminatingWorker{*this, true};
-            while (auto task = taskQueue.getNextTaskNonBlocking())
+            else
             {
-                handleTask(terminatingWorker, std::move(*task));
+                /// Per-thread queue mode: each worker reads from its own queue
+                while (!stopToken.stop_requested())
+                {
+                    if (auto task = multiQueue->getNextTaskBlocking(id, stopToken))
+                    {
+                        handleTask(worker, std::move(*task));
+                    }
+                }
+
+                ENGINE_LOG_INFO("WorkerThread {} shutting down (per-thread queue)", id);
+                const WorkerThread terminatingWorker{*this, true};
+                /// Drain own queue first
+                while (auto task = multiQueue->getNextTaskNonBlocking(id))
+                {
+                    handleTask(terminatingWorker, std::move(*task));
+                }
+                /// Help drain any remaining tasks from other queues
+                while (auto task = multiQueue->getNextTaskFromAnyNonBlocking())
+                {
+                    handleTask(terminatingWorker, std::move(*task));
+                }
             }
         });
 }
@@ -777,7 +854,14 @@ QueryEngine::QueryEngine(
     , statusListener(std::move(listener))
     , statisticListener(std::move(statListener))
     , queryCatalog(std::make_shared<QueryCatalog>())
-    , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
+    , threadPool(std::make_unique<ThreadPool>(
+          statusListener,
+          statisticListener,
+          bufferManager,
+          config.admissionQueueSize.getValue(),
+          config.schedulingStrategy.getValue(),
+          config.workStealing.getValue(),
+          config.numberOfWorkerThreads.getValue()))
     , workerId(workerId)
 {
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
@@ -790,14 +874,14 @@ QueryEngine::QueryEngine(
 void QueryEngine::stop(QueryId queryId)
 {
     ENGINE_LOG_INFO("Stopping Query: {}", queryId);
-    threadPool->taskQueue.addAdmissionTaskBlocking({}, StopQueryTask{queryId, queryCatalog, TaskCallback{}});
+    threadPool->submitAdmissionTask(StopQueryTask{queryId, queryCatalog, TaskCallback{}});
 }
 
 /// NOLINTNEXTLINE Intentionally non-const
 void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan)
 {
-    threadPool->taskQueue.addAdmissionTaskBlocking(
-        {}, StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
+    threadPool->submitAdmissionTask(
+        StartQueryTask{executableQueryPlan->queryId, std::move(executableQueryPlan), queryCatalog, TaskCallback{}});
 }
 
 QueryEngine::~QueryEngine()
