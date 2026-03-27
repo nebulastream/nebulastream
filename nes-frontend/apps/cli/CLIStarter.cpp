@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
-#include <algorithm>
 #include <cctype>
+#include <cstddef>
 #include <cstdlib>
 #include <exception>
 #include <filesystem>
 #include <functional>
+#include <initializer_list>
 #include <iostream>
 #include <memory>
 #include <ranges>
@@ -26,7 +27,6 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
-#include <unordered_set>
 #include <utility>
 #include <vector>
 #include <unistd.h>
@@ -54,12 +54,15 @@
 #include <Util/Strings.hpp>
 #include <argparse/argparse.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/ranges.h>
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
+#include <WorkerCatalog.hpp>
 
 namespace
 {
@@ -117,6 +120,7 @@ struct Sink
     std::string name;
     std::vector<SchemaField> schema;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> config;
     std::unordered_map<std::string, std::string> parserConfig;
 };
@@ -131,8 +135,18 @@ struct PhysicalSource
 {
     std::string logical;
     std::string type;
+    std::string host;
     std::unordered_map<std::string, std::string> parserConfig;
     std::unordered_map<std::string, std::string> sourceConfig;
+};
+
+struct WorkerConfig
+{
+    std::string host;
+    std::string data;
+    std::optional<size_t> maxOperators;
+    std::vector<std::string> downstream;
+    std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
 };
 
 struct QueryConfig
@@ -141,8 +155,29 @@ struct QueryConfig
     std::vector<Sink> sinks;
     std::vector<LogicalSource> logical;
     std::vector<PhysicalSource> physical;
-    std::unordered_map<std::string, std::string> optimizer;
+    YAML::Node optimizer;
+    std::vector<WorkerConfig> workers;
 };
+}
+
+namespace
+{
+/// Validates that a YAML map node contains only the expected keys. Throws InvalidConfigParameter if an unknown key is found.
+void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Node& node)
+{
+    if (!node.IsMap())
+    {
+        return;
+    }
+    for (const auto& entry : node)
+    {
+        const auto key = entry.first.as<std::string>();
+        if (std::ranges::find(allowed, key) == allowed.end())
+        {
+            throw NES::InvalidConfigParameter("Unknown key '{}'. Expected one of: {}", key, fmt::join(allowed, ", "));
+        }
+    }
+}
 }
 
 namespace YAML
@@ -152,6 +187,7 @@ struct convert<NES::CLI::SchemaField>
 {
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
+        acceptKeys({"name", "type"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.type = stringToFieldType(node["type"].as<std::string>());
         return true;
@@ -163,9 +199,11 @@ struct convert<NES::CLI::Sink>
 {
     static bool decode(const Node& node, NES::CLI::Sink& rhs)
     {
+        acceptKeys({"name", "type", "schema", "host", "config", "parser_config"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.type = node["type"].as<std::string>();
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.host = node["host"].as<std::string>();
         rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
         rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         return true;
@@ -177,6 +215,7 @@ struct convert<NES::CLI::LogicalSource>
 {
     static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
     {
+        acceptKeys({"name", "schema"}, node);
         rhs.name = bindIdentifierName(node["name"].as<std::string>());
         rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
         return true;
@@ -188,10 +227,32 @@ struct convert<NES::CLI::PhysicalSource>
 {
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
+        acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
         rhs.logical = bindIdentifierName(node["logical"].as<std::string>());
         rhs.type = node["type"].as<std::string>();
+        rhs.host = node["host"].as<std::string>();
         rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
         rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
+        return true;
+    }
+};
+
+template <>
+struct convert<NES::CLI::WorkerConfig>
+{
+    static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
+    {
+        acceptKeys({"host", "data", "max_operators", "downstream", "config"}, node);
+        if (node["max_operators"].IsDefined())
+        {
+            rhs.maxOperators = node["max_operators"].as<size_t>();
+        }
+        if (node["downstream"].IsDefined())
+        {
+            rhs.downstream = node["downstream"].as<std::vector<std::string>>();
+        }
+        rhs.host = node["host"].as<std::string>();
+        rhs.data = node["data"].IsDefined() ? node["data"].as<std::string>() : "";
         return true;
     }
 };
@@ -201,13 +262,14 @@ struct convert<NES::CLI::QueryConfig>
 {
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
+        acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers"}, node);
         rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
         rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
         rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
 
         if (node["optimizer"].IsDefined())
         {
-            rhs.optimizer = node["optimizer"].as<std::unordered_map<std::string, std::string>>();
+            rhs.optimizer = node["optimizer"];
         }
         rhs.query = {};
         if (node["query"].IsDefined())
@@ -221,6 +283,7 @@ struct convert<NES::CLI::QueryConfig>
                 rhs.query.emplace_back(node["query"].as<std::string>());
             }
         }
+        rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
         return true;
     }
 };
@@ -333,8 +396,14 @@ std::vector<std::string> loadQueries(
 
 std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topologyConfig)
 {
-    const auto& [query, sinks, logical, physical, optimizer] = topologyConfig;
+    const auto& [query, sinks, logical, physical, optimizer, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
+    statements.reserve(workers.size());
+    for (const auto& [host, data, maxOperators, downstream, config] : workers)
+    {
+        statements.emplace_back(
+            NES::CreateWorkerStatement{.host = host, .data = data, .capacity = maxOperators, .downstream = downstream, .config = config});
+    }
     for (const auto& [name, schemaFields] : logical)
     {
         NES::Schema schema;
@@ -346,12 +415,17 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
     }
 
-    for (const auto& [logical, type, parserConfig, sourceConfig] : physical)
+    for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
+        auto sourceConfigCopy = sourceConfig;
+        sourceConfigCopy.emplace("host", host);
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = NES::LogicalSourceName(logical), .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig});
+            .attachedTo = NES::LogicalSourceName(logical),
+            .sourceType = type,
+            .sourceConfig = sourceConfigCopy,
+            .parserConfig = parserConfig});
     }
-    for (const auto& [name, schemaFields, type, config, parserConfig] : sinks)
+    for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
         NES::Schema schema;
         for (const auto& schemaField : schemaFields)
@@ -359,8 +433,10 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             schema.addField(schemaField.name, schemaField.type);
         }
 
-        statements.emplace_back(
-            NES::CreateSinkStatement{.name = name, .sinkType = type, .schema = schema, .sinkConfig = config, .formatConfig = parserConfig});
+        auto configCopy = config;
+        configCopy.emplace("host", host);
+        statements.emplace_back(NES::CreateSinkStatement{
+            .name = name, .sinkType = type, .schema = schema, .sinkConfig = configCopy, .formatConfig = parserConfig});
     }
     return statements;
 }
@@ -368,36 +444,32 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 NES::QueryOptimizerConfiguration loadQueryOptimizerConfiguration(const NES::CLI::QueryConfig& topologyConfig)
 {
     NES::QueryOptimizerConfiguration configuration;
-    configuration.overwriteConfigWithCommandLineInput(topologyConfig.optimizer);
+    if (topologyConfig.optimizer.IsDefined())
+    {
+        configuration.overwriteConfigWithYAMLNode(topologyConfig.optimizer);
+    }
     return configuration;
 }
 
 void doStatus(
     NES::QueryStatementHandler& queryStatementHandler,
     NES::TopologyStatementHandler& topologyStatementHandler,
-    const std::unordered_map<NES::QueryId, std::string>& queries)
+    const std::vector<NES::DistributedQueryId>& queries)
 {
     if (queries.empty())
     {
-        auto result = topologyStatementHandler(NES::WorkerStatusStatement{});
+        auto result = topologyStatementHandler(NES::WorkerStatusStatement{{}});
         if (!result)
         {
             throw std::move(result.error());
         }
-
         auto jsonResult = nlohmann::json(NES::StatementOutputAssembler<NES::WorkerStatusStatementResult>{}.convert(result.value()));
-
-        for (auto& query : jsonResult)
-        {
-            query["local_query_id"] = query["query_id"];
-            query.erase("query_id");
-        }
         std::cout << jsonResult.dump(4) << '\n';
     }
     else
     {
         auto result = nlohmann::json::array();
-        for (const auto& query : queries | std::views::keys)
+        for (const auto& query : queries)
         {
             auto statementResult
                 = queryStatementHandler(NES::ShowQueriesStatement{.id = query, .format = NES::StatementOutputFormat::JSON});
@@ -410,21 +482,14 @@ void doStatus(
             result.insert(result.end(), results.begin(), results.end());
         }
 
-        /// Patch local query ids for persistent id
-        for (auto& query : result)
-        {
-            query["local_query_id"] = query["query_id"];
-            query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
-        }
-
         std::cout << result.dump(4) << '\n';
     }
 }
 
-void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unordered_map<NES::QueryId, std::string>& queries)
+void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::vector<NES::DistributedQueryId>& queries)
 {
     auto result = nlohmann::json::array();
-    for (const auto& query : queries | std::views::keys)
+    for (const auto& query : queries)
     {
         auto statementResult = queryStatementHandler(NES::DropQueryStatement{.id = query});
         if (!statementResult)
@@ -436,32 +501,7 @@ void doStop(NES::QueryStatementHandler& queryStatementHandler, const std::unorde
         result.insert(result.end(), results.begin(), results.end());
     }
 
-    /// Patch local query ids for persistent id
-    for (auto& query : result)
-    {
-        query["local_query_id"] = query["query_id"];
-        query["query_id"] = queries.at(query["query_id"].get<NES::QueryId>());
-    }
-
     std::cout << result.dump(4) << '\n';
-}
-
-constexpr NES::GrpcAddr grpcAddr{"localhost:8080"};
-
-NES::UniquePtr<NES::GRPCQuerySubmissionBackend> createGRPCBackend(const argparse::ArgumentParser& program)
-{
-    if (program.is_used("-s"))
-    {
-        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(program.get("-s")), .config = {}});
-    }
-    /// NOLINTNEXTLINE(concurrency-mt-unsafe)
-    if (auto* env = std::getenv("NES_WORKER_GRPC_ADDR"))
-    {
-        NES_DEBUG("Found worker address in environment: {}", env);
-        return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = NES::GrpcAddr(env), .config = {}});
-    }
-
-    return std::make_unique<NES::GRPCQuerySubmissionBackend>(NES::WorkerConfig{.grpc = grpcAddr, .config = {}});
 }
 
 void doQueryManagement(const argparse::ArgumentParser& program, const argparse::ArgumentParser& subcommand)
@@ -470,37 +510,39 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     auto queryOptimizationConfiguration = loadQueryOptimizerConfiguration(topologyConfig);
     NES::CLI::QueryStateBackend stateBackend;
 
-    const auto mapping = subcommand.get<std::vector<std::string>>("queryId")
+    const auto state = subcommand.get<std::vector<std::string>>("queryId")
         | std::views::transform(
-                             [&stateBackend](const auto& persistentIdString) -> std::pair<NES::QueryId, std::string>
-                             {
-                                 auto persistedId = NES::CLI::PersistedQueryId::fromString(persistentIdString);
-                                 auto queryId = stateBackend.load(persistedId);
-                                 return {queryId, persistentIdString};
-                             })
+                           [&stateBackend](const std::string& queryId) -> std::pair<NES::DistributedQueryId, NES::DistributedQuery>
+                           {
+                               auto persistedId = NES::CLI::PersistedQueryId::fromString(queryId);
+                               auto distributedQuery = stateBackend.load(persistedId);
+                               return {persistedId.queryId, distributedQuery};
+                           })
         | std::ranges::to<std::unordered_map>();
-    const auto state = mapping | std::views::keys | std::ranges::to<std::unordered_set>();
 
+    const auto queries = state | std::views::keys | std::ranges::to<std::vector>();
+
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    const auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(program), NES::QueryManagerState{state});
+    const auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend(), NES::QueryManagerState{state});
 
-    NES::TopologyStatementHandler topologyHandler{queryManager};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog};
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
-    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog);
     NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("stop"))
     {
-        doStop(queryHandler, mapping);
+        doStop(queryHandler, queries);
     }
     else if (program.is_subcommand_used("status"))
     {
-        doStatus(queryHandler, topologyHandler, mapping);
+        doStatus(queryHandler, topologyHandler, queries);
     }
     else
     {
@@ -519,15 +561,16 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
         throw NES::InvalidConfigParameter("No queries");
     }
 
+    auto workerCatalog = std::make_shared<NES::WorkerCatalog>();
     auto sourceCatalog = std::make_shared<NES::SourceCatalog>();
     auto sinkCatalog = std::make_shared<NES::SinkCatalog>();
-    auto queryManager = std::make_shared<NES::QueryManager>(createGRPCBackend(program));
+    auto queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createGRPCBackend());
 
-    NES::TopologyStatementHandler topologyHandler{queryManager};
-    NES::SourceStatementHandler sourceHandler{sourceCatalog};
-    NES::SinkStatementHandler sinkHandler{sinkCatalog};
+    NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
+    NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
+    NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
     auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
-    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration);
+    auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
@@ -541,7 +584,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
             {
                 auto queryDescriptor = queryManager->getQuery(result->id);
                 INVARIANT(queryDescriptor.has_value(), "Query should exist in the query manager if statement handler succeed");
-                auto persistedId = stateBackend.store(*queryDescriptor);
+                auto persistedId = stateBackend.store(result->id, *queryDescriptor);
                 std::cout << persistedId.toString() << '\n';
             }
             else
@@ -578,9 +621,9 @@ int main(int argc, char** argv)
         using argparse::ArgumentParser;
         ArgumentParser program("nebucli");
         program.add_argument("-d", "--debug").flag().help("Dump the query plan and enable debug logging");
-        program.add_argument("-s", "--server").help("Worker gRPC endpoint URL (default: localhost:8080 or NES_WORKER_GRPC_ADDR if set)");
         program.add_argument("-t").help(
-            "Path to the topology file. If this flag is not used it will fallback to the NES_TOPOLOGY_FILE environment");
+            "Path to the topology file, or '-' to read from stdin. "
+            "Resolution order: 1) -t flag, 2) NES_TOPOLOGY_FILE env, 3) topology.yaml/topology.yml in working directory");
 
         ArgumentParser startQuery("start");
         startQuery.add_argument("queries").nargs(argparse::nargs_pattern::any);

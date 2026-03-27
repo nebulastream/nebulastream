@@ -21,30 +21,14 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 
 namespace NES
 {
-
-struct QueryMetrics
-{
-    std::optional<std::chrono::system_clock::time_point> start;
-    std::optional<std::chrono::system_clock::time_point> running;
-    std::optional<std::chrono::system_clock::time_point> stop;
-    std::optional<Exception> error;
-};
-
-/// Summary structure of the query log for a query
-struct LocalQueryStatus
-{
-    QueryId queryId = INVALID_QUERY_ID;
-    QueryState state = QueryState::Registered;
-    QueryMetrics metrics{};
-};
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
 struct QueryStateChange

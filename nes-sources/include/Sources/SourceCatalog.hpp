@@ -60,6 +60,7 @@ public:
     [[nodiscard]] std::expected<SourceDescriptor, Exception> addPhysicalSource(
         const LogicalSource& logicalSource,
         std::string_view sourceType,
+        Host host,
         std::unordered_map<std::string, std::string> descriptorConfig,
         const std::unordered_map<std::string, std::string>& parserConfig);
 

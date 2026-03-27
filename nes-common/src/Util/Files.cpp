@@ -41,4 +41,32 @@ std::string getErrorMessage(int errorNumber)
     INVARIANT(errorMessage != nullptr, "strerror_r does not behave as expected");
     return errorMessage;
 }
+
+std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix, std::string_view suffix)
+{
+    std::string fileTemplate = fmt::format("{}XXXXXX{}", prefix, suffix);
+    const auto file = mkstemps(fileTemplate.data(), static_cast<int>(suffix.size())); /// NOLINT(misc-include-cleaner)
+
+    if (file == -1)
+    {
+        throw UnknownException("Failed to create temporary file: {}", getErrorMessageFromERRNO());
+    }
+
+    if (close(file) == -1)
+    {
+        throw UnknownException("Failed to close temporary file: {}", getErrorMessageFromERRNO());
+    }
+
+    return {std::ofstream{fileTemplate}, fileTemplate};
+}
+
+std::pair<std::ofstream, std::filesystem::path> createTemporaryFile(std::string_view prefix)
+{
+    return createTemporaryFile(prefix, "");
+}
+
+std::pair<std::ofstream, std::filesystem::path> createTemporaryFile()
+{
+    return createTemporaryFile("", "");
+}
 }

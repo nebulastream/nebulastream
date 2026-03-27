@@ -29,6 +29,8 @@
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Reflection.hpp>
 
@@ -59,19 +61,22 @@ public:
     [[nodiscard]] std::shared_ptr<const Schema> getSchema() const;
     [[nodiscard]] std::string getSinkName() const;
     [[nodiscard]] bool isInline() const;
+    [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::unordered_map<std::string, std::string> getOutputFormatterConfig() const;
 
 private:
-    explicit SinkDescriptor(
+    SinkDescriptor(
         std::variant<std::string, uint64_t> sinkName,
         const Schema& schema,
         std::string_view sinkType,
+        Host host,
         const std::unordered_map<std::string, std::string>& formatConfig,
         DescriptorConfig::Config config);
 
     std::variant<std::string, uint64_t> sinkName;
     std::shared_ptr<const Schema> schema;
     std::string sinkType;
+    Host host;
     std::unordered_map<std::string, std::string> formatConfig;
 
     friend Reflector<SinkDescriptor>;
@@ -93,13 +98,6 @@ public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
-
-    /// Well-known property for any sink that sends its data to a file
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
-        std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static std::optional<DescriptorConfig::Config>
     validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
@@ -138,6 +136,7 @@ struct ReflectedSinkDescriptor
     std::variant<std::string, uint64_t> sinkName;
     Schema schema;
     std::string sinkType;
+    Host host;
     std::unordered_map<std::string, std::string> formatConfig;
     Reflected config;
 };

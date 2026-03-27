@@ -12,3 +12,7 @@
 
 add_subdirectory(Semantic)
 add_subdirectory(Static)
+add_source_files(nes-query-optimizer
+        BottomUpPlacement.cpp
+        OperatorPlacement.cpp
+)

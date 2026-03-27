@@ -26,6 +26,12 @@ setup_file() {
     exit 1
   fi
 
+  if [ -z "$NES_TEST_TMP_DIR" ]; then
+    echo "ERROR: NES_TEST_TMP_DIR environment variable must be set" >&2
+    echo "Usage: NES_TEST_TMP_DIR=/path/to/tmp" >&2
+    exit 1
+  fi
+
   if [ -z "$SYSTEST_TESTDATA" ]; then
     echo "ERROR: SYSTEST_TESTDATA environment variable must be set" >&2
     echo "Usage: SYSTEST_TESTDATA=/path/to/nes-systest/testdata" >&2
@@ -52,7 +58,8 @@ teardown_file() {
 }
 
 setup() {
-  export TMP_DIR=$(mktemp -d)
+  mkdir -p "$NES_TEST_TMP_DIR"
+  export TMP_DIR=$(mktemp -d -p "$NES_TEST_TMP_DIR")
 
   ln -s "$NES_REPL_TESTDATA" "$TMP_DIR"
   ln -s "$SYSTEST_TESTDATA" "$TMP_DIR"
@@ -95,18 +102,28 @@ assert_json_contains() {
   [ ${#lines[@]} -eq 8 ]
 
   assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
-  assert_json_equal '[{"parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
-  assert_json_equal '[{"format_config":{},"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
+  assert_json_equal '[{"host":"localhost:8080","parser_config":{"field_delimiter":",","tuple_delimiter":"\n","type":"CSV"},"physical_source_id":1,"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_config":[{"flush_interval_ms":10},{"generator_rate_config":"emit_rate 10"},{"generator_rate_type":"FIXED"},{"generator_schema":"SEQUENCE UINT64 0 10000000 1"},{"max_inflight_buffers":0},{"max_runtime_ms":10000000},{"seed":1},{"stop_generator_when_sequence_finishes":"ALL"}],"source_name":"ENDLESS","source_type":"Generator"}]' "${lines[1]}"
+  assert_json_equal '[{"format_config":{},"host":"localhost:8080","schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"sink_config":[{"add_timestamp":false},{"append":false},{"file_path":"out.csv"},{"output_format":"CSV"}],"sink_name":"SOMESINK","sink_type":"File"}]' "${lines[2]}"
   assert_json_equal '[]' "${lines[3]}"
-
   QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
 
   # One global and one local query
-  echo "${lines[5]}" | jq -e '(. | length) == 1'
+  echo "${lines[5]}" | jq -e '(. | length) == 2'
   echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
 
   assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
   assert_json_contains "[]" "${lines[7]}"
+}
+
+@test "launch multiple queries distributed" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/good/multiple_queries_distributed.sql
+  [ "$status" -eq 0 ]
+}
+
+@test "launch bad query should fail distributed" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/bad/integer_literal_in_query_without_type_distributed.sql
+  [ "$status" -ne 0 ]
+  grep "invalid query syntax" nes-repl.log
 }
 
 @test "launch multiple queries" {

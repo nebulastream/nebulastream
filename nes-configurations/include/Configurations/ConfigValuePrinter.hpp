@@ -28,7 +28,7 @@ namespace NES
 ///   worker.query_engine.number_of_worker_threads: 8
 ///   worker.query_engine.admission_queue_size: 1000 (default)
 ///   grpc: [::]:8080 (default)
-///   connection: sink-node:9090
+///   data: sink-node:9090
 class ConfigValuePrinter final : public OptionVisitor
 {
 public:

@@ -14,8 +14,8 @@
 
 #include <csignal>
 #include <semaphore>
-#include <thread>
 #include <Configurations/Util.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -44,14 +44,15 @@ void signalHandler(int signal)
     shutdownBarrier.release();
 }
 
-std::jthread shutdownHook(grpc::Server& server)
+NES::Thread shutdownHook(grpc::Server& server)
 {
-    return std::jthread(
+    return {
+        "shutdown-hook",
         [&]()
         {
             shutdownBarrier.acquire();
             server.Shutdown();
-        });
+        }};
 }
 }
 
@@ -75,7 +76,8 @@ int main(const int argc, const char* argv[])
             return 0;
         }
         {
-            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration)};
+            NES::Thread::initializeThread(NES::Host(configuration->data.getValue()), "main");
+            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->data.getValue()))};
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);

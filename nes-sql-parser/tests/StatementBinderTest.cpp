@@ -77,8 +77,8 @@ public:
             sourceCatalog,
             [](auto&& queryContext)
             { return AntlrSQLQueryParser::bindLogicalQueryPlan(std::forward<decltype(queryContext)>(queryContext)); });
-        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog);
-        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog);
+        sourceStatementHandler = std::make_shared<SourceStatementHandler>(sourceCatalog, DefaultHost{"localhost:9090"});
+        sinkStatementHandler = std::make_shared<SinkStatementHandler>(sinkCatalog, DefaultHost{"localhost:9090"});
     }
 };
 
@@ -280,7 +280,7 @@ TEST_F(StatementBinderTest, BindCreateSink)
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
+    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
 
     const std::string dropSinkStatement = "DROP SINK WHERE NAME = 'TESTSINK'";
@@ -314,7 +314,7 @@ TEST_F(StatementBinderTest, BindCreateSinkWithQualifiedColumns)
     ASSERT_EQ(actualSink.getSinkName(), "TESTSINK");
     ASSERT_EQ(*actualSink.getSchema(), expectedSchema);
     ASSERT_EQ(actualSink.getSinkType(), "File");
-    ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::FILE_PATH), "/dev/null");
+    ASSERT_EQ(actualSink.getFromConfig(ConfigParametersFile::FILE_PATH), "/dev/null");
     ASSERT_EQ(actualSink.getFromConfig(SinkDescriptor::OUTPUT_FORMAT), "CSV");
 }
 
@@ -325,7 +325,7 @@ TEST_F(StatementBinderTest, BindDropQuery)
     const auto statement = binder->parseAndBindSingle(queryString);
     ASSERT_TRUE(statement.has_value());
     ASSERT_TRUE(std::holds_alternative<DropQueryStatement>(*statement));
-    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id, QueryId::createLocal(LocalQueryId(testUUID)));
+    ASSERT_EQ(std::get<DropQueryStatement>(*statement).id.getRawValue(), testUUID);
 
     const std::string queryString2 = "DROP QUERY 1";
     const auto statement2 = binder->parseAndBindSingle(queryString2);
@@ -557,6 +557,18 @@ TEST_F(StatementBinderTest, ExplainStatement)
         const auto explainStatementResult = binder->parseAndBindSingle(explain);
         ASSERT_FALSE(explainStatementResult.has_value());
     }
+}
+
+TEST_F(StatementBinderTest, CreateWorkerStatementTest)
+{
+    const std::string statementString
+        = "CREATE WORKER 'localhost:8080' SET ('localhost:9090' AS `DATA`, 32 AS `CAPACITY`, 'localhost2:9090' AS "
+          "`DOWNSTREAM`, 'localhost1:9090' AS `DOWNSTREAM`)";
+    const auto statement = binder->parseAndBindSingle(statementString);
+    ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
+    ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).host, "localhost:8080");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).data, "localhost:9090");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

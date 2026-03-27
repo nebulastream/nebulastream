@@ -25,6 +25,7 @@
 #include <ranges>
 #include <sstream>
 #include <string>
+#include <type_traits>
 #include <unordered_set>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
@@ -75,6 +76,30 @@ constexpr char PARENT_CHILD_FIRST_BRANCH = '{'; /// '├'
 constexpr char PARENT_CHILD_MIDDLE_BRANCH = '+'; /// '┼'
 constexpr char PARENT_CHILD_LAST_BRANCH = '}'; /// '┤'
 
+template <typename T>
+struct GetRootOperator
+{
+    auto operator()(const T& op) const { return op.getRootOperators(); }
+};
+
+template <typename T>
+struct Explain
+{
+    auto operator()(const T& op, const ExplainVerbosity verbosity) const { return op.explain(verbosity); }
+};
+
+template <typename T>
+struct GetId
+{
+    auto operator()(const T& op) const { return op.getId().getRawValue(); }
+};
+
+template <typename T>
+struct GetChildren
+{
+    auto operator()(const T& op) const { return op.getChildren(); }
+};
+
 /// Maximum display width for a single operator node label before truncation.
 constexpr size_t MAX_NODE_DISPLAY_WIDTH = 60;
 
@@ -94,13 +119,14 @@ template <typename Plan, typename Operator>
 class PlanRenderer
 {
 public:
+    using IdType = std::invoke_result_t<GetId<Operator>, Operator>;
     virtual ~PlanRenderer() = default;
     explicit PlanRenderer(std::ostream& out, ExplainVerbosity verbosity)
         : out(out), verbosity(verbosity), processedDag({}), layerCalcQueue({}) { };
 
     void dump(const Plan& plan)
     {
-        const std::vector<Operator> rootOperators = plan.getRootOperators();
+        auto rootOperators = GetRootOperator<Plan>{}(plan);
         dump(rootOperators);
     }
 
@@ -140,7 +166,7 @@ private:
         /// If true, this node as actually a "dummy node" (not representing an actual node from the queryplan) and just represents a
         /// vertical branch: '|'.
         bool verticalBranch{};
-        uint64_t id{};
+        IdType id{};
     };
 
     /// Holds information on each node of that layer in the dag and its cumulative width.
@@ -167,7 +193,7 @@ private:
     {
         size_t maxWidth = 0;
         size_t currentDepth = 0;
-        std::unordered_set<uint64_t> alreadySeen = {};
+        std::unordered_set<IdType> alreadySeen = {};
         NodesPerLayerCounter nodesPerLayer = {rootOperators.size(), 0};
         for (auto rootOp : rootOperators)
         {
@@ -180,9 +206,9 @@ private:
             layerCalcQueue.pop_front();
             nodesPerLayer.current--;
 
-            const std::string currentNodeAsString = truncateNodeLabel(currentNode.explain(verbosity), MAX_NODE_DISPLAY_WIDTH);
+            const std::string currentNodeAsString = truncateNodeLabel(Explain<Operator>{}(currentNode, verbosity), MAX_NODE_DISPLAY_WIDTH);
             const size_t width = currentNodeAsString.size();
-            const auto id = currentNode.getId().getRawValue();
+            const auto id = GetId<Operator>{}(currentNode);
             auto layerNode = std::make_shared<PrintNode>(
                 currentNodeAsString, std::vector<size_t>{}, parentPtrs, std::vector<std::shared_ptr<PrintNode>>{}, false, id);
             if (not alreadySeen.emplace(id).second)
@@ -205,7 +231,7 @@ private:
                 parent.lock()->children.emplace_back(layerNode);
             }
             /// Only add children to the queue if they haven't been added yet (this is the case if one node has multiple parents)
-            for (const auto& child : currentNode.getChildren())
+            for (const auto& child : GetChildren<Operator>{}(currentNode))
             {
                 queueChild(alreadySeen, nodesPerLayer, currentDepth, child, layerNode);
             }
@@ -237,15 +263,15 @@ private:
     ///   branches between its former position and its new one. Finally queue it.
     /// - The new node is in the `alreadySeen` list and in the queue. Same as above, but note that it has another parent instead of queueing it.
     void queueChild(
-        std::unordered_set<uint64_t>& alreadySeen,
+        std::unordered_set<IdType>& alreadySeen,
         NodesPerLayerCounter& nodesPerLayer,
         size_t depth,
         const Operator& child,
         const std::shared_ptr<PrintNode>& layerNode)
     {
-        const uint64_t childId = child.getId().getRawValue();
+        const IdType childId = GetId<Operator>{}(child);
         auto queueIt = std::ranges::find_if(
-            layerCalcQueue, [childId](const QueueItem& queueItem) { return childId == queueItem.node.getId().getRawValue(); });
+            layerCalcQueue, [childId](const QueueItem& queueItem) { return childId == GetId<Operator>{}(queueItem.node); });
         const auto seenIt = alreadySeen.find(childId);
         if (queueIt == layerCalcQueue.end() && seenIt == alreadySeen.end())
         {
@@ -318,7 +344,7 @@ private:
         Operator operatorToBeReplaced,
         const std::ranges::borrowed_iterator_t<std::deque<QueueItem>&>& queueIt,
         NodesPerLayerCounter& nodesPerLayer,
-        std::unordered_set<uint64_t>& alreadySeen)
+        std::unordered_set<IdType>& alreadySeen)
     {
         const auto node = processedDag.at(startDepth).nodes.at(nodesIndex);
 
@@ -326,7 +352,7 @@ private:
             auto parents = node->parents;
             for (auto depthDiff = startDepth; depthDiff < endDepth; ++depthDiff)
             {
-                auto verticalBranchNode = std::make_shared<PrintNode>(PrintNode{"|", {}, parents, {}, true, 0});
+                auto verticalBranchNode = std::make_shared<PrintNode>(PrintNode{"|", {}, parents, {}, true, IdType{}});
                 if (depthDiff == startDepth)
                 {
                     processedDag.at(depthDiff).nodes.at(nodesIndex) = verticalBranchNode;
@@ -360,7 +386,7 @@ private:
                 parents = {verticalBranchNode};
             }
             /// Remove from alreadySeen so calculateLayers can re-process the node at the correct depth.
-            alreadySeen.erase(operatorToBeReplaced.getId().getRawValue());
+            alreadySeen.erase(GetId<Operator>{}(operatorToBeReplaced));
             /// Add the final dummy as parent of the to be drawn child
             if (queueIt == layerCalcQueue.end())
             {
@@ -615,7 +641,6 @@ private:
                         output[position] = PARENT_CHILD_MIDDLE_BRANCH;
                         break;
                     default:
-                        NES_DEBUG("No connector: unexpected input. The printed query plan will probably be incorrectly represented.")
                         break;
                 }
                 break;

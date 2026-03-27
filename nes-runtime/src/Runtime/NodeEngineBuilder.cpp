@@ -17,6 +17,7 @@
 #include <memory>
 #include <utility>
 #include <Configuration/WorkerConfiguration.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -32,15 +33,14 @@ NodeEngineBuilder::NodeEngineBuilder(const WorkerConfiguration& workerConfigurat
 {
 }
 
-std::unique_ptr<NodeEngine> NodeEngineBuilder::build(Host workerId)
+std::unique_ptr<NodeEngine> NodeEngineBuilder::build(const Host& host)
 {
     auto bufferManager = BufferManager::create(
         workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue(),
         workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
     auto queryLog = std::make_shared<QueryLog>();
 
-    auto queryEngine
-        = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, workerId);
+    auto queryEngine = std::make_unique<QueryEngine>(workerConfiguration.queryEngine, statisticsListener, queryLog, bufferManager, host);
 
     auto sourceProvider = std::make_unique<SourceProvider>(workerConfiguration.defaultMaxInflightBuffers.getValue(), bufferManager);
 
