@@ -93,17 +93,7 @@ LogicalOperator DecideJoinTypesRule::apply(const LogicalOperator& logicalOperato
     auto traitSet = logicalOperator.getTraitSet();
     if (const auto joinOperator = logicalOperator.tryGetAs<JoinLogicalOperator>())
     {
-        if (isOuterJoin(joinOperator.value()->getJoinType()))
-        {
-            /// Outer joins require equi-predicates because only the Hash Join implementation supports them
-            if (not shallUseHashJoin(joinOperator.value()->getJoinFunction()))
-            {
-                throw UnsupportedQuery("Outer joins require equi-predicates (equality on field accesses). "
-                                       "Non-equi outer joins are not supported.");
-            }
-            tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::HASH_JOIN});
-        }
-        else if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
+        if (this->joinStrategy == StreamJoinStrategy::NESTED_LOOP_JOIN)
         {
             tryInsert(traitSet, JoinImplementationTypeTrait{JoinImplementation::NESTED_LOOP_JOIN});
         }
