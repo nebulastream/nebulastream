@@ -1,0 +1,63 @@
+query: |
+  SELECT
+    `PRODUCT_STATS$SERVERTIMESTAMP` AS SERVERTIMESTAMP,
+    `PRODUCT_STATS$TOTALPRODUCTSLASTWEEK` AS TOTALPRODUCTSLASTWEEK,
+    `PRODUCT_STATS$TOTALPRODUCTSTHISWEEK` AS TOTALPRODUCTSTHISWEEK,
+    `PRODUCT_STATS$TOTALPRODUCTSTODAY` AS TOTALPRODUCTSTODAY,
+    `PRODUCT_STATS$TOTALPRODUCTSYESTERDAY` AS TOTALPRODUCTSYESTERDAY
+  FROM PRODUCT_STATS
+  INTO MQTT_SINK
+
+sinks:
+  - name: MQTT_SINK
+    host: 127.0.0.1:9090
+    type: MQTT
+    config:
+      serverURI: mqtt://127.0.0.1:1883
+      clientId: mqtt_sink_client2
+      topic: products-today-yesterday
+      qos: 1
+      output_format: JSON
+    parser_config: { }
+    schema:
+      - name: SERVERTIMESTAMP
+        type: VARSIZED
+      - name: TOTALPRODUCTSLASTWEEK
+        type: FLOAT64
+      - name: TOTALPRODUCTSTHISWEEK
+        type: FLOAT64
+      - name: TOTALPRODUCTSTODAY
+        type: UINT32
+      - name: TOTALPRODUCTSYESTERDAY
+        type: UINT32
+
+logical:
+  - name: PRODUCT_STATS
+    schema:
+      - name: SERVERTIMESTAMP
+        type: VARSIZED
+      - name: TOTALPRODUCTSLASTWEEK
+        type: FLOAT64
+      - name: TOTALPRODUCTSTHISWEEK
+        type: FLOAT64
+      - name: TOTALPRODUCTSTODAY
+        type: UINT32
+      - name: TOTALPRODUCTSYESTERDAY
+        type: UINT32
+
+physical:
+  - logical: PRODUCT_STATS
+    host: 127.0.0.1:9090
+    type: RestApi
+    parser_config:
+      type: JSON
+    source_config:
+      endpoint: http://127.0.0.1:8000/v3/dashboards/groups/statistic-views/1
+      interval_ms: 1000
+      connect_timeout_seconds: 60
+      append_newline: true
+
+workers:
+  - host: 127.0.0.1:9090
+    grpc: 127.0.0.1:8080
+    capacity: 10000
