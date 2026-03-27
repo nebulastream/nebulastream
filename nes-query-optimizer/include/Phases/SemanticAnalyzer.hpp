@@ -24,6 +24,11 @@ class SinkCatalog;
 class SourceCatalog;
 }
 
+namespace NES::Inference
+{
+class ModelCatalog;
+}
+
 namespace NES
 {
 class SemanticAnalyzer
@@ -31,13 +36,17 @@ class SemanticAnalyzer
 public:
     [[nodiscard]] LogicalPlan analyse(const LogicalPlan& plan) const;
 
-    explicit SemanticAnalyzer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
-        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
+    explicit SemanticAnalyzer(
+        std::shared_ptr<SourceCatalog> sourceCatalog,
+        std::shared_ptr<SinkCatalog> sinkCatalog,
+        std::shared_ptr<Inference::ModelCatalog> modelCatalog)
+        : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog)), modelCatalog(std::move(modelCatalog))
     {
     }
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
+    std::shared_ptr<Inference::ModelCatalog> modelCatalog;
 };
 }

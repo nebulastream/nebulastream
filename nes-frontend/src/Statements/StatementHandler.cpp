@@ -16,12 +16,14 @@
 
 #include <chrono>
 #include <expected>
+#include <filesystem>
 #include <memory>
 #include <ranges>
 #include <sstream>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <DataTypes/DataType.hpp>
 #include <Listeners/QueryLog.hpp>
 #include <Phases/QueryOptimizer.hpp>
 #include <Phases/SemanticAnalyzer.hpp>
@@ -31,9 +33,12 @@
 #include <Sinks/SinkCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <cpptrace/from_current.hpp>
+#include <fmt/format.h>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 #include <ErrorHandling.hpp>
+#include <ModelCatalog.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -186,6 +191,105 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
         return DropSinkStatementResult{sink.value()};
     }
     return std::unexpected{UnknownSinkName(statement.name)};
+}
+
+ModelStatementHandler::ModelStatementHandler(std::shared_ptr<Inference::ModelCatalog> modelCatalog) : modelCatalog(std::move(modelCatalog))
+{
+}
+
+namespace
+{
+ModelInfo toModelInfo(const Inference::RegisteredModel& reg)
+{
+    std::string inputSchema;
+    for (const auto& [fieldName, dataType] : reg.inputs)
+    {
+        if (!inputSchema.empty())
+        {
+            inputSchema += ", ";
+        }
+        inputSchema += fmt::format("{}: {}", fieldName, magic_enum::enum_name(dataType->type));
+    }
+
+    std::string outputSchema;
+    for (const auto& [fieldName, dataType] : reg.outputs)
+    {
+        if (!outputSchema.empty())
+        {
+            outputSchema += ", ";
+        }
+        outputSchema += fmt::format("{}: {}", fieldName, magic_enum::enum_name(dataType->type));
+    }
+
+    return ModelInfo{
+        .name = reg.name,
+        .path = reg.path.string(),
+        .inputSchema = std::move(inputSchema),
+        .outputSchema = std::move(outputSchema),
+    };
+}
+}
+
+std::expected<CreateModelStatementResult, Exception> ModelStatementHandler::operator()(const CreateModelStatement& statement)
+{
+    if (modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{ModelAlreadyExists(statement.name)};
+    }
+
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> inputs;
+    inputs.reserve(statement.inputs.size());
+    for (const auto& [fieldName, dataType] : statement.inputs)
+    {
+        inputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+    }
+
+    std::vector<std::pair<std::string, std::shared_ptr<DataType>>> outputs;
+    outputs.reserve(statement.outputs.size());
+    for (const auto& [fieldName, dataType] : statement.outputs)
+    {
+        outputs.emplace_back(fieldName, std::make_shared<DataType>(dataType));
+    }
+
+    const Inference::RegisteredModel reg{
+        .name = statement.name,
+        .path = statement.path,
+        .inputs = std::move(inputs),
+        .outputs = std::move(outputs),
+    };
+
+    try
+    {
+        modelCatalog->registerModel(reg);
+    }
+    catch (const Exception& e)
+    {
+        return std::unexpected{e};
+    }
+
+    return toModelInfo(reg);
+}
+
+std::expected<ShowModelsStatementResult, Exception> ModelStatementHandler::operator()(const ShowModelsStatement&) const
+{
+    auto registeredModels = modelCatalog->getRegisteredModels();
+    std::vector<ModelInfo> models;
+    models.reserve(registeredModels.size());
+    for (const auto& reg : registeredModels)
+    {
+        models.push_back(toModelInfo(reg));
+    }
+    return ShowModelsStatementResult{.models = std::move(models)};
+}
+
+std::expected<DropModelStatementResult, Exception> ModelStatementHandler::operator()(const DropModelStatement& statement)
+{
+    if (!modelCatalog->hasModel(statement.name))
+    {
+        return std::unexpected{UnknownModelName(statement.name)};
+    }
+    modelCatalog->removeModel(statement.name);
+    return DropModelStatementResult{.name = statement.name};
 }
 
 QueryStatementHandler::QueryStatementHandler(

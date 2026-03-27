@@ -13,3 +13,9 @@
 include(${CMAKE_CURRENT_LIST_DIR}/bits/arch/arm64.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/bits/sanitizers/ubsan.cmake)
 set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchains/local.cmake)
+
+if (PORT STREQUAL ireeruntime)
+    set(VCPKG_CXX_FLAGS "-Wno-error=pass-failed")
+    set(VCPKG_C_FLAGS "-Wno-error=pass-failed")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DIREE_ENABLE_UBSAN=ON)
+endif()

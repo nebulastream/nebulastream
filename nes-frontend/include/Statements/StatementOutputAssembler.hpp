@@ -333,6 +333,52 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
     }
 };
 
+using ModelNameOutputRowType = std::tuple<std::string>;
+constexpr std::array<std::string_view, 1> modelNameOutputColumns{"model_name"};
+
+using ModelInfoOutputRowType = std::tuple<std::string, std::string, std::string, std::string>;
+constexpr std::array<std::string_view, 4> modelInfoOutputColumns{"model_name", "path", "input_schema", "output_schema"};
+
+template <>
+struct StatementOutputAssembler<CreateModelStatementResult>
+{
+    using OutputRowType = ModelInfoOutputRowType;
+
+    auto convert(const CreateModelStatementResult& result)
+    {
+        return std::make_pair(
+            modelInfoOutputColumns, std::vector{std::make_tuple(result.name, result.path, result.inputSchema, result.outputSchema)});
+    }
+};
+
+template <>
+struct StatementOutputAssembler<ShowModelsStatementResult>
+{
+    using OutputRowType = ModelInfoOutputRowType;
+
+    auto convert(const ShowModelsStatementResult& result)
+    {
+        std::vector<OutputRowType> output;
+        output.reserve(result.models.size());
+        for (const auto& model : result.models)
+        {
+            output.emplace_back(model.name, model.path, model.inputSchema, model.outputSchema);
+        }
+        return std::make_pair(modelInfoOutputColumns, output);
+    }
+};
+
+template <>
+struct StatementOutputAssembler<DropModelStatementResult>
+{
+    using OutputRowType = ModelNameOutputRowType;
+
+    auto convert(const DropModelStatementResult& result)
+    {
+        return std::make_pair(modelNameOutputColumns, std::vector{std::make_tuple(result.name)});
+    }
+};
+
 /// NOLINTEND(readability-convert-member-functions-to-static)
 
 
@@ -349,5 +395,8 @@ static_assert(AssemblembleStatementResult<QueryStatementResult>);
 static_assert(AssemblembleStatementResult<ShowQueriesStatementResult>);
 static_assert(AssemblembleStatementResult<WorkerStatusStatementResult>);
 static_assert(AssemblembleStatementResult<DropQueryStatementResult>);
+static_assert(AssemblembleStatementResult<CreateModelStatementResult>);
+static_assert(AssemblembleStatementResult<ShowModelsStatementResult>);
+static_assert(AssemblembleStatementResult<DropModelStatementResult>);
 
 }

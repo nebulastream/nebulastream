@@ -1,0 +1,7 @@
+-- Test CREATE MODEL, SHOW MODELS, and DROP MODEL lifecycle
+CREATE MODEL testModel ('tests/testdata/model/tiny_identity.onnx')
+INPUT (f1 FLOAT32)
+OUTPUT (o1 FLOAT32);
+SHOW MODELS;
+DROP MODEL WHERE NAME = 'TESTMODEL';
+SHOW MODELS;

@@ -15,6 +15,7 @@
 
 #include <Phases/SemanticAnalyzer.hpp>
 
+#include <Rules/Semantic/InferModelResolutionRule.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
@@ -41,6 +42,10 @@ LogicalPlan SemanticAnalyzer::analyse(const LogicalPlan& plan) const
     inlineSourceBindingRule.apply(newPlan);
     sourceInference.apply(newPlan);
     logicalSourceExpansionRule.apply(newPlan);
+
+    const auto inferModelResolutionRule = InferModelResolutionRule{modelCatalog};
+    inferModelResolutionRule.apply(newPlan);
+
     typeInferenceRule.apply(newPlan);
     originIdInferenceRule.apply(newPlan);
     typeInferenceRule.apply(newPlan);
