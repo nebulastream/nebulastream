@@ -16,6 +16,7 @@
 
 #include <array>
 #include <cstddef>
+#include <cstdint>
 #include <memory>
 #include <ranges>
 #include <span>
@@ -36,21 +37,23 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Interface/PagedVector/PagedVector.hpp>
+#include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Join/NestedLoopJoin/NLJOuterProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
-#include <Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -105,7 +108,6 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto outputOriginId = (*outputOriginIds)[0];
     auto logicalJoinFunction = join->getJoinFunction();
     auto windowType = join->getWindowType();
-    const auto pageSize = conf.pageSize.getValue();
 
     const auto inputOriginIds
         = join.getChildren()
@@ -125,8 +127,10 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
-    auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
-    auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
+    auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
+    auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
+    const uint64_t tupleSizeLeft = leftTupleLayout->getSchema().getSizeInBytes();
+    const uint64_t tupleSizeRight = rightTupleLayout->getSchema().getSizeInBytes();
 
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
     auto characteristicsAreBound
@@ -138,29 +142,62 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Left);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
+        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
+            return handler.getCreateNewSlicesFunction(nljSliceArgs);
+        });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Right);
-            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
+            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
+            return const_cast<TupleBuffer*>(ptr);
         },
-        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
+        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
+        {
+            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
+            return handler.getCreateNewSlicesFunction(nljSliceArgs);
+        });
 
-    auto handler = std::make_shared<NLJOperatorHandler>(
-        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), JoinTriggerStrategy{InnerJoinTriggerStrategy{}});
+    const auto currentJoinType = join->getJoinType();
+    const auto leftKeyFieldNames = getJoinFieldNames(leftInputSchema, logicalJoinFunction);
+    const auto rightKeyFieldNames = getJoinFieldNames(rightInputSchema, logicalJoinFunction);
+
+    /// Create trigger strategy based on join type
+    using JT = JoinLogicalOperator::JoinType;
+    auto createTriggerStrategy = [&]() -> JoinTriggerStrategy
+    {
+        switch (currentJoinType)
+        {
+            case JT::OUTER_LEFT_JOIN:
+                return OuterJoinTriggerStrategy<true, false>{};
+            case JT::OUTER_RIGHT_JOIN:
+                return OuterJoinTriggerStrategy<false, true>{};
+            case JT::OUTER_FULL_JOIN:
+                return OuterJoinTriggerStrategy<true, true>{};
+            case JT::CARTESIAN_PRODUCT:
+            case JT::INNER_JOIN:
+                return InnerJoinTriggerStrategy{};
+        }
+        std::unreachable();
+    };
+
+    auto handler
+        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     const NLJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftBufferRef, std::move(sliceStoreRefLeft)};
+        handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};
     const NLJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef, std::move(sliceStoreRefRight)};
+        handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightTupleLayout, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
 
@@ -184,28 +221,53 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
+    /// Select probe operator based on join type
     static_assert(JoinProbeOperator<NLJInnerProbePhysicalOperator>);
+    static_assert(JoinProbeOperator<NLJOuterProbePhysicalOperator>);
 
-    auto probeOperator = NLJInnerProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        WindowMetaData{join->getStartField(), join->getEndField()},
-        joinSchema,
-        leftBufferRef,
-        rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+    auto createProbeWrapper = [&](const auto& probeOperator)
+    {
+        return std::make_shared<PhysicalOperatorWrapper>(
+            std::move(probeOperator),
+            outputSchema,
+            outputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
+            handlerId,
+            handler,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{leftBuildWrapper, rightBuildWrapper});
+    };
 
-    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(probeOperator),
-        outputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
-        handlerId,
-        handler,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftBuildWrapper, rightBuildWrapper});
+    std::shared_ptr<PhysicalOperatorWrapper> probeWrapper;
+    if (isOuterJoin(currentJoinType))
+    {
+        PRECONDITION(
+            NLJOuterProbePhysicalOperator::supportsJoinType(currentJoinType), "NLJOuterProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(NLJOuterProbePhysicalOperator(
+            handlerId,
+            joinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftTupleLayout,
+            rightTupleLayout,
+            leftKeyFieldNames,
+            rightKeyFieldNames));
+    }
+    else
+    {
+        PRECONDITION(
+            NLJInnerProbePhysicalOperator::supportsJoinType(currentJoinType), "NLJInnerProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(NLJInnerProbePhysicalOperator(
+            handlerId,
+            joinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftTupleLayout,
+            rightTupleLayout,
+            leftKeyFieldNames,
+            rightKeyFieldNames));
+    }
 
     return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
 };
