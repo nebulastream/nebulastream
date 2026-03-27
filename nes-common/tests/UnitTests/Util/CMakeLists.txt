@@ -20,6 +20,7 @@ add_nes_common_test(nes-common-tests
         "BFSIteratorTest.cpp"
         "RollingAverageTest.cpp"
         "TypeTraitsTest.cpp"
+        "PlanRendererTest.cpp"
 )
 
 add_nes_test(nes-thread-test
