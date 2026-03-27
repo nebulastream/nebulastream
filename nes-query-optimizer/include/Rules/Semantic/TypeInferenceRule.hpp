@@ -15,7 +15,12 @@
 #pragma once
 
 #include <memory>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
@@ -24,7 +29,12 @@ namespace NES
 class TypeInferenceRule
 {
 public:
-    TypeInferenceRule() = default;
+    static constexpr std::string_view NAME = "TypeInferenceRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.
@@ -32,6 +42,9 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    bool operator==(const TypeInferenceRule& other) const;
 };
+
+static_assert(PlanRuleConcept<TypeInferenceRule>);
 }

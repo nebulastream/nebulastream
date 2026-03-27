@@ -15,21 +15,59 @@
 #include <Rules/Semantic/SinkBindingRule.hpp>
 
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+
 #include <ErrorHandling.hpp>
 
-void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
+namespace NES
 {
-    queryPlan = queryPlan.withRootOperators(
+
+const std::type_info& SinkBindingRule::getType()
+{
+    return typeid(SinkBindingRule);
+}
+
+std::string_view SinkBindingRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> SinkBindingRule::dependsOn() const
+{
+    return {typeid(InlineSinkBindingRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> SinkBindingRule::requiredBy() const
+{
+    return {};
+}
+
+bool SinkBindingRule::operator==(const SinkBindingRule& other) const
+{
+    return sinkCatalog == other.sinkCatalog;
+}
+
+LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
+{
+    return queryPlan.withRootOperators(
         queryPlan.getRootOperators()
         | std::ranges::views::transform(
             [this](const LogicalOperator& rootOperator) -> LogicalOperator
             {
                 auto sinkOperator = rootOperator.tryGetAs<SinkLogicalOperator>();
                 PRECONDITION(sinkOperator.has_value(), "Root operator must be sink");
+
                 /// Check to centralize the sink binding logic
                 /// TODO #897 move sink binding to new query binder
 
@@ -48,4 +86,6 @@ void NES::SinkBindingRule::apply(LogicalPlan& queryPlan) const
                 return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
+}
+
 }

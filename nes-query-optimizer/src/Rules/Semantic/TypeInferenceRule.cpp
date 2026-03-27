@@ -14,10 +14,18 @@
 
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <vector>
+
 #include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/SinkBindingRule.hpp>
 
 namespace NES
 {
@@ -44,7 +52,8 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
     return updatedOperator.withInferredSchema(childSchemas);
 }
 
-void TypeInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readability-convert-member-functions-to-static)
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.getRootOperators())
@@ -52,7 +61,35 @@ void TypeInferenceRule::apply(LogicalPlan& queryPlan) const /// NOLINT(readabili
         const LogicalOperator inferredRoot = propagateSchema(sink);
         newRoots.push_back(inferredRoot);
     }
-    queryPlan = queryPlan.withRootOperators(newRoots);
+    return queryPlan.withRootOperators(newRoots);
 }
+
+const std::type_info& TypeInferenceRule::getType()
+{
+    return typeid(TypeInferenceRule);
+}
+
+std::string_view TypeInferenceRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> TypeInferenceRule::dependsOn() const
+{
+    return {typeid(LogicalSourceExpansionRule), typeid(SinkBindingRule), typeid(InlineSinkBindingRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> TypeInferenceRule::requiredBy() const
+{
+    return {};
+}
+
+bool TypeInferenceRule::operator==(const TypeInferenceRule&) const
+{
+    return true;
+}
+
 
 }

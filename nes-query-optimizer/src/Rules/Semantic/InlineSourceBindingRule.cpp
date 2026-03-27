@@ -13,7 +13,12 @@
 */
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -22,6 +27,33 @@
 
 namespace NES
 {
+
+const std::type_info& InlineSourceBindingRule::getType()
+{
+    return typeid(InlineSourceBindingRule);
+}
+
+std::string_view InlineSourceBindingRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> InlineSourceBindingRule::dependsOn() const
+{
+    return {};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> InlineSourceBindingRule::requiredBy() const
+{
+    return {};
+};
+
+bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const
+{
+    return sourceCatalog == other.sourceCatalog;
+}
 
 LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
 {
@@ -52,14 +84,14 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
     return current.withChildren(newChildren);
 }
 
-void InlineSourceBindingRule::apply(LogicalPlan& queryPlan) const
+LogicalPlan InlineSourceBindingRule::apply(const LogicalPlan& queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& root : queryPlan.getRootOperators())
     {
         newRoots.emplace_back(bindInlineSourceLogicalOperators(root));
     }
-    queryPlan = queryPlan.withRootOperators(newRoots);
+    return queryPlan.withRootOperators(newRoots);
 }
 
 }

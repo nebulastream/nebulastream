@@ -25,8 +25,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -36,6 +34,8 @@
 #include <Util/Pointers.hpp>
 #include <experimental/propagate_const>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
+#include <SemanticAnalyzer.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES

@@ -13,8 +13,13 @@
 */
 
 #pragma once
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 
 namespace NES
 {
@@ -23,10 +28,18 @@ namespace NES
 class DecideMemoryLayoutRule
 {
 public:
-    LogicalPlan apply(const LogicalPlan& queryPlan);
+    static constexpr std::string_view NAME = "DecideMemoryLayoutRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    bool operator==(const DecideMemoryLayoutRule& other) const;
 
 private:
-    LogicalOperator apply(const LogicalOperator& logicalOperator);
+    [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
 };
 
+static_assert(PlanRuleConcept<DecideMemoryLayoutRule>);
 }

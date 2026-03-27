@@ -14,9 +14,15 @@
 
 #pragma once
 
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
+#include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
+
 namespace NES
 {
-class LogicalPlan;
 
 /**
  * @brief The OriginIdInferencePhase traverses the operator tree and assigns origin ids to operators.
@@ -32,8 +38,15 @@ class LogicalPlan;
 class OriginIdInferenceRule
 {
 public:
-    explicit OriginIdInferenceRule() = default;
+    static constexpr std::string_view NAME = "OriginIdInferenceRule";
 
-    void apply(LogicalPlan& queryPlan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    bool operator==(const OriginIdInferenceRule& other) const;
 };
+
+static_assert(PlanRuleConcept<OriginIdInferenceRule>);
 }

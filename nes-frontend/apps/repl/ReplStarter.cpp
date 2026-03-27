@@ -32,8 +32,6 @@
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -56,8 +54,10 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
+#include <SemanticAnalyzer.hpp>
 #include <Thread.hpp>
 #include <utils.hpp>
 

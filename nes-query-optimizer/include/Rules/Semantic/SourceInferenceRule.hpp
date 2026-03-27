@@ -15,8 +15,13 @@
 #pragma once
 
 #include <memory>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES
@@ -27,11 +32,21 @@ class SourceInferenceRule
 public:
     explicit SourceInferenceRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
+    static constexpr std::string_view NAME = "SourceInferenceRule";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    void apply(LogicalPlan& queryPlan) const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
+    bool operator==(const SourceInferenceRule& other) const;
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
+
+static_assert(PlanRuleConcept<SourceInferenceRule>);
 }

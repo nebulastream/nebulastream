@@ -14,23 +14,58 @@
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
+
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/DecideJoinTypesRule.hpp>
+#include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
-LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan)
+
+const std::type_info& DecideMemoryLayoutRule::getType()
+{
+    return typeid(DecideMemoryLayoutRule);
+}
+
+std::string_view DecideMemoryLayoutRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> DecideMemoryLayoutRule::dependsOn() const
+{
+    return {typeid(DecideJoinTypesRule), typeid(RedundantUnionRemovalRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> DecideMemoryLayoutRule::requiredBy() const
+{
+    return {};
+}
+
+bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule&) const
+{
+    return true;
+}
+
+LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");
     return LogicalPlan{queryPlan.getQueryId(), {apply(queryPlan.getRootOperators()[0])}};
 }
 
-LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator)
+LogicalOperator DecideMemoryLayoutRule::apply(const LogicalOperator& logicalOperator) const
 {
     /// Iterating over all operators and setting the memory layout trait to row
     const auto children = logicalOperator.getChildren()
