@@ -32,6 +32,7 @@
 #include <Traits/TraitSet.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {

@@ -17,6 +17,7 @@
 #include <bit>
 #include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -38,8 +39,14 @@ namespace NES
 struct EmittedHJWindowTrigger
 {
     EmittedHJWindowTrigger(
-        const WindowInfo windowInfo, const std::vector<HashMap*>& leftHashMaps, const std::vector<HashMap*>& rightHashMaps)
-        : windowInfo(windowInfo), leftNumberOfHashMaps(leftHashMaps.size()), rightNumberOfHashMaps(rightHashMaps.size())
+        const WindowInfo windowInfo,
+        const std::vector<HashMap*>& leftHashMaps,
+        const std::vector<HashMap*>& rightHashMaps,
+        ProbeTaskType probeTaskType)
+        : windowInfo(windowInfo)
+        , leftNumberOfHashMaps(leftHashMaps.size())
+        , rightNumberOfHashMaps(rightHashMaps.size())
+        , probeTaskType(probeTaskType)
     {
         /// Copying the left and right hashmap pointer pointers after this object, hence this + 1
         const auto leftHashMapPtrSizeInByte = leftHashMaps.size() * sizeof(HashMap*);
@@ -54,6 +61,7 @@ struct EmittedHJWindowTrigger
     WindowInfo windowInfo;
     uint64_t leftNumberOfHashMaps;
     uint64_t rightNumberOfHashMaps;
+    ProbeTaskType probeTaskType;
     HashMap** leftHashMaps; /// Pointer to the stored pointers of all hash maps of the left input stream that the probe should iterate over
     HashMap**
         rightHashMaps; /// Pointer to the stored pointers of all hash maps of the right input stream that the probe should iterate over
@@ -66,7 +74,8 @@ public:
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
         std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
-        uint64_t maxNumberOfBuckets);
+        uint64_t maxNumberOfBuckets,
+        JoinTriggerStrategy triggerStrategy);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments& newSlicesArguments) const override;
@@ -84,15 +93,16 @@ private:
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> leftCleanupStateNautilusFunction;
     std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> rightCleanupStateNautilusFunction;
 
-
     void emitSlicesToProbe(
-        Slice& sliceLeft,
-        Slice& sliceRight,
+        const std::vector<std::shared_ptr<Slice>>& leftSlices,
+        const std::vector<std::shared_ptr<Slice>>& rightSlices,
+        ProbeTaskType probeTaskType,
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;
 
-    folly::Synchronized<RollingAverage<uint64_t>> rollingAverageNumberOfKeys;
+    folly::Synchronized<RollingAverage<uint64_t>> leftRollingAverageNumberOfKeys;
+    folly::Synchronized<RollingAverage<uint64_t>> rightRollingAverageNumberOfKeys;
     uint64_t maxNumberOfBuckets;
 };
 

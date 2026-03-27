@@ -14,6 +14,7 @@
 
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -23,6 +24,7 @@
 
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+#include <magic_enum/magic_enum.hpp>
 
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -55,6 +57,12 @@ namespace NES
 JoinLogicalOperator::JoinLogicalOperator(LogicalFunction joinFunction, std::shared_ptr<Windowing::WindowType> windowType, JoinType joinType)
     : joinFunction(std::move(joinFunction)), windowType(std::move(windowType)), joinType(joinType)
 {
+    if (isOuterJoin(this->joinType)
+        && std::ranges::none_of(
+            BFSRange(this->joinFunction), [](const LogicalFunction& fn) { return fn.tryGetAs<FieldAccessLogicalFunction>().has_value(); }))
+    {
+        throw UnsupportedQuery("Outer joins require an explicit equi-join predicate (e.g. ON left$key = right$key)");
+    }
 }
 
 std::string_view JoinLogicalOperator::getName() const noexcept
@@ -70,18 +78,20 @@ bool JoinLogicalOperator::operator==(const JoinLogicalOperator& rhs) const
 
 std::string JoinLogicalOperator::explain(ExplainVerbosity verbosity, OperatorId id) const
 {
+    const auto joinTypeName = std::string(magic_enum::enum_name(joinType));
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format(
-            "Join(opId: {}, windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {}, traitSet: {})",
+            "Join(opId: {}, type: {}, windowType: {}, joinFunction: {}, windowStartField: {}, windowEndField: {}, traitSet: {})",
             id,
+            joinTypeName,
             getWindowType()->toString(),
             getJoinFunction().explain(verbosity),
             windowMetaData.windowStartFieldName,
             windowMetaData.windowEndFieldName,
             traitSet.explain(verbosity));
     }
-    return fmt::format("Join({})", getJoinFunction().explain(verbosity));
+    return fmt::format("Join({}, {})", joinTypeName, getJoinFunction().explain(verbosity));
 }
 
 JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> inputSchemas) const
@@ -110,13 +120,30 @@ JoinLogicalOperator JoinLogicalOperator::withInferredSchema(std::vector<Schema> 
     copy.outputSchema.addField(copy.windowMetaData.windowStartFieldName, DataType::Type::UINT64);
     copy.outputSchema.addField(copy.windowMetaData.windowEndFieldName, DataType::Type::UINT64);
 
+    const bool leftNullable = (joinType == JoinType::OUTER_RIGHT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+    const bool rightNullable = (joinType == JoinType::OUTER_LEFT_JOIN || joinType == JoinType::OUTER_FULL_JOIN);
+
     for (const auto& field : leftInputSchema.getFields())
     {
-        copy.outputSchema.addField(field.name, field.dataType);
+        if (leftNullable)
+        {
+            copy.outputSchema.addField(field.name, field.dataType.type, DataType::NULLABLE::IS_NULLABLE);
+        }
+        else
+        {
+            copy.outputSchema.addField(field.name, field.dataType);
+        }
     }
     for (const auto& field : rightInputSchema.getFields())
     {
-        copy.outputSchema.addField(field.name, field.dataType);
+        if (rightNullable)
+        {
+            copy.outputSchema.addField(field.name, field.dataType.type, DataType::NULLABLE::IS_NULLABLE);
+        }
+        else
+        {
+            copy.outputSchema.addField(field.name, field.dataType);
+        }
     }
 
     auto inputSchema = leftInputSchema;
@@ -193,6 +220,11 @@ const WindowMetaData& JoinLogicalOperator::getWindowMetaData() const
 LogicalFunction JoinLogicalOperator::getJoinFunction() const
 {
     return joinFunction;
+}
+
+JoinLogicalOperator::JoinType JoinLogicalOperator::getJoinType() const
+{
+    return joinType;
 }
 
 Reflected Reflector<JoinLogicalOperator>::operator()(const JoinLogicalOperator& op) const

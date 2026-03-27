@@ -29,9 +29,12 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJOuterProbePhysicalOperator.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -114,19 +117,33 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator = NLJProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        join->getWindowMetaData(),
-        joinSchema,
-        leftBufferRef,
-        rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
+    const auto currentJoinType = join->getJoinType();
+    const auto leftKeyFieldNames = getJoinFieldNames(leftInputSchema, logicalJoinFunction);
+    const auto rightKeyFieldNames = getJoinFieldNames(rightInputSchema, logicalJoinFunction);
+
+    /// Create trigger strategy based on join type
+    using JT = JoinLogicalOperator::JoinType;
+    auto createTriggerStrategy = [&]() -> JoinTriggerStrategy
+    {
+        switch (currentJoinType)
+        {
+            case JT::OUTER_LEFT_JOIN:
+                return OuterJoinTriggerStrategy<true, false>{};
+            case JT::OUTER_RIGHT_JOIN:
+                return OuterJoinTriggerStrategy<false, true>{};
+            case JT::OUTER_FULL_JOIN:
+                return OuterJoinTriggerStrategy<true, true>{};
+            case JT::CARTESIAN_PRODUCT:
+            case JT::INNER_JOIN:
+                return InnerJoinTriggerStrategy{};
+        }
+        std::unreachable();
+    };
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    auto handler
+        = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), createTriggerStrategy());
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
@@ -148,16 +165,53 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(probeOperator),
-        outputSchema,
-        outputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
-        handlerId,
-        handler,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftBuildWrapper, rightBuildWrapper});
+    /// Select probe operator based on join type
+    static_assert(JoinProbeOperator<NLJInnerProbePhysicalOperator>);
+    static_assert(JoinProbeOperator<NLJOuterProbePhysicalOperator>);
+
+    auto createProbeWrapper = [&](const auto& probeOperator)
+    {
+        return std::make_shared<PhysicalOperatorWrapper>(
+            std::move(probeOperator),
+            outputSchema,
+            outputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
+            handlerId,
+            handler,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{leftBuildWrapper, rightBuildWrapper});
+    };
+
+    std::shared_ptr<PhysicalOperatorWrapper> probeWrapper;
+    if (isOuterJoin(currentJoinType))
+    {
+        PRECONDITION(
+            NLJOuterProbePhysicalOperator::supportsJoinType(currentJoinType), "NLJOuterProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(NLJOuterProbePhysicalOperator(
+            handlerId,
+            joinFunction,
+            join->getWindowMetaData(),
+            joinSchema,
+            leftBufferRef,
+            rightBufferRef,
+            leftKeyFieldNames,
+            rightKeyFieldNames));
+    }
+    else
+    {
+        PRECONDITION(
+            NLJInnerProbePhysicalOperator::supportsJoinType(currentJoinType), "NLJInnerProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(NLJInnerProbePhysicalOperator(
+            handlerId,
+            joinFunction,
+            join->getWindowMetaData(),
+            joinSchema,
+            leftBufferRef,
+            rightBufferRef,
+            leftKeyFieldNames,
+            rightKeyFieldNames));
+    }
 
     return {.root = {probeWrapper}, .leafs = {leftBuildWrapper, rightBuildWrapper}};
 };

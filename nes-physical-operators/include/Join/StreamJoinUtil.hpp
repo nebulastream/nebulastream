@@ -14,13 +14,17 @@
 
 #pragma once
 
+#include <concepts>
+#include <functional>
 #include <memory>
 #include <utility>
+#include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp> /// NOLINT
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Sequencing/SequenceData.hpp>
-#include <Time/Timestamp.hpp>
-#include <fmt/format.h>
+#include <SliceStore/Slice.hpp>
+#include <SliceStore/WindowSlicesStoreInterface.hpp>
 
 namespace NES
 {
@@ -29,6 +33,35 @@ enum class JoinBuildSideType : uint8_t
 {
     Right,
     Left
+};
+
+/// Identifies what kind of work a probe task should perform.
+/// NOLINTNEXTLINE(performance-enum-size) uint64_t required for struct alignment and Nautilus readValueFromMemRef compatibility
+enum class ProbeTaskType : uint64_t
+{
+    MATCH_PAIRS = 0, /// Inner-join-style: emit only matched pairs
+    LEFT_NULL_FILL = 1, /// Iterate left (preserved) maps, check all right maps, emit null-fill for unmatched left
+    RIGHT_NULL_FILL = 2 /// Iterate right (preserved) maps, check all left maps, emit null-fill for unmatched right
+};
+
+class PipelineExecutionContext;
+
+/// Callback type for emitting probe tasks from a trigger strategy.
+/// Matches the StreamJoinOperatorHandler::emitSlicesToProbe signature.
+using EmitSlicesFn = std::function<void(
+    const std::vector<std::shared_ptr<Slice>>& leftSlices,
+    const std::vector<std::shared_ptr<Slice>>& rightSlices,
+    ProbeTaskType probeTaskType,
+    const WindowInfo& windowInfo,
+    const SequenceData& sequenceData,
+    PipelineExecutionContext* pipelineCtx)>;
+
+/// Concept: a hash join probe operator must declare which join types it supports via a static constexpr method.
+/// This enables compile-time verification in the lowering rules that the chosen probe operator is compatible with
+/// the requested join type.
+template <typename T>
+concept JoinProbeOperator = requires(JoinLogicalOperator::JoinType jt) {
+    { T::supportsJoinType(jt) } -> std::same_as<bool>;
 };
 
 /// This stores the left, right and output schema for a binary join

@@ -14,29 +14,49 @@
 
 #pragma once
 
+#include <algorithm>
+#include <bit>
 #include <cstdint>
 #include <functional>
 #include <memory>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinOperatorHandler.hpp>
+#include <Join/StreamJoinUtil.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 
 namespace NES
 {
-/// This task models the information for a join window trigger
+
+/// Variable-sized trigger buffer for NLJ. Stores arrays of slice ends for both sides,
+/// a ProbeTaskType, and window info. The slice end arrays are packed after the struct.
 struct EmittedNLJWindowTrigger
 {
-    EmittedNLJWindowTrigger(const WindowInfo& windowInfo, const SliceEnd leftSliceEnd, const SliceEnd rightSliceEnd)
-        : leftSliceEnd(leftSliceEnd), rightSliceEnd(rightSliceEnd), windowInfo(windowInfo)
+    EmittedNLJWindowTrigger(
+        const WindowInfo& windowInfo,
+        const std::vector<SliceEnd>& leftSliceEnds,
+        const std::vector<SliceEnd>& rightSliceEnds,
+        ProbeTaskType probeTaskType)
+        : windowInfo(windowInfo)
+        , leftNumberOfSliceEnds(leftSliceEnds.size())
+        , rightNumberOfSliceEnds(rightSliceEnds.size())
+        , probeTaskType(probeTaskType)
     {
+        auto* base = std::bit_cast<int8_t*>(this + 1);
+        this->leftSliceEnds = std::bit_cast<SliceEnd*>(base);
+        this->rightSliceEnds = std::bit_cast<SliceEnd*>(base + (leftSliceEnds.size() * sizeof(SliceEnd)));
+        std::ranges::copy(leftSliceEnds, this->leftSliceEnds);
+        std::ranges::copy(rightSliceEnds, this->rightSliceEnds);
     }
 
-    SliceEnd leftSliceEnd;
-    SliceEnd rightSliceEnd;
     WindowInfo windowInfo;
+    uint64_t leftNumberOfSliceEnds;
+    uint64_t rightNumberOfSliceEnds;
+    ProbeTaskType probeTaskType;
+    SliceEnd* leftSliceEnds;
+    SliceEnd* rightSliceEnds;
 };
 
 class NLJOperatorHandler final : public StreamJoinOperatorHandler
@@ -45,15 +65,17 @@ public:
     NLJOperatorHandler(
         const std::vector<OriginId>& inputOrigins,
         OriginId outputOriginId,
-        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore);
+        std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+        JoinTriggerStrategy triggerStrategy);
 
     [[nodiscard]] std::function<std::vector<std::shared_ptr<Slice>>(SliceStart, SliceEnd)>
     getCreateNewSlicesFunction(const CreateNewSlicesArguments&) const override;
 
 private:
     void emitSlicesToProbe(
-        Slice& sliceLeft,
-        Slice& sliceRight,
+        const std::vector<std::shared_ptr<Slice>>& leftSlices,
+        const std::vector<std::shared_ptr<Slice>>& rightSlices,
+        ProbeTaskType probeTaskType,
         const WindowInfo& windowInfo,
         const SequenceData& sequenceData,
         PipelineExecutionContext* pipelineCtx) override;

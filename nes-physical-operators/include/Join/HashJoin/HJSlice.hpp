@@ -24,6 +24,23 @@
 namespace NES
 {
 
+struct CreateNewHJSliceArgs final : CreateNewHashMapSliceArgs
+{
+    CreateNewHJSliceArgs(
+        std::vector<std::shared_ptr<NautilusCleanupExec>> nautilusCleanup,
+        const uint64_t keySize,
+        const uint64_t valueSize,
+        const uint64_t pageSize,
+        const uint64_t numberOfBuckets,
+        const JoinBuildSideType joinBuildSide)
+        : CreateNewHashMapSliceArgs{std::move(nautilusCleanup), keySize, valueSize, pageSize, numberOfBuckets}, joinBuildSide(joinBuildSide)
+    {
+    }
+
+    ~CreateNewHJSliceArgs() override = default;
+    JoinBuildSideType joinBuildSide;
+};
+
 /// As a hash join has left and right side, we need to handle the left and right side of the join with one slice
 /// Thus, we use a HashMapSlice and set the number of input streams to 2 in its constructor
 class HJSlice final : public HashMapSlice

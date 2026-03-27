@@ -16,10 +16,11 @@
 
 #include <memory>
 #include <Functions/PhysicalFunction.hpp>
-#include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <ExecutionContext.hpp>
@@ -28,11 +29,11 @@
 namespace NES
 {
 
-/// Performs the second phase of the join. The tuples are joined via probing the previously built hash tables
-class HJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
+/// Performs the hash join probe for inner joins. Only handles MATCH_PAIRS tasks.
+class HJInnerProbePhysicalOperator final : public HJProbePhysicalOperatorBase
 {
 public:
-    HJProbePhysicalOperator(
+    HJInnerProbePhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
@@ -42,13 +43,12 @@ public:
         HashMapOptions leftHashMapBasedOptions,
         HashMapOptions rightHashMapBasedOptions);
 
-    /// As the second phase gets triggered by the first phase, we receive a tuple buffer containing all information for performing the probe.
-    /// Thus, we start a new pipeline and therefore, we create new Records from the built-up state.
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-private:
-    std::shared_ptr<TupleBufferRef> leftBufferRef, rightBufferRef;
-    HashMapOptions leftHashMapOptions, rightHashMapOptions;
+    static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
+    {
+        return joinType == JoinLogicalOperator::JoinType::INNER_JOIN || joinType == JoinLogicalOperator::JoinType::CARTESIAN_PRODUCT;
+    }
 };
 
 }

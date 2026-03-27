@@ -54,12 +54,13 @@ HashMap* getHashJoinHashMapProxy(
     PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
     PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
 
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
+    const CreateNewHJSliceArgs hashMapSliceArgs{
         operatorHandler->getNautilusCleanupExec(),
         buildOperator->hashMapOptions.keySize,
         buildOperator->hashMapOptions.valueSize,
         buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
+        buildOperator->hashMapOptions.numberOfBuckets,
+        buildSide};
     const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
         timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
     INVARIANT(

@@ -724,16 +724,21 @@ void AntlrSQLQueryPlanCreator::enterJoinType(AntlrSQLParser::JoinTypeContext* co
 
 void AntlrSQLQueryPlanCreator::exitJoinType(AntlrSQLParser::JoinTypeContext* context)
 {
-    const auto joinType = context->getText();
-    auto tokenType = context->getStop()->getType();
-
-    if (joinType.empty() || tokenType == AntlrSQLLexer::INNER)
+    if (context->LEFT() != nullptr)
     {
-        helpers.top().joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN;
+    }
+    else if (context->RIGHT() != nullptr)
+    {
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN;
+    }
+    else if (context->FULL() != nullptr)
+    {
+        helpers.top().joinType = JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
     }
     else
     {
-        throw InvalidQuerySyntax("Unknown join type: {}, resolved to token type: {}", joinType, tokenType);
+        helpers.top().joinType = JoinLogicalOperator::JoinType::INNER_JOIN;
     }
     AntlrSQLBaseListener::exitJoinType(context);
 }

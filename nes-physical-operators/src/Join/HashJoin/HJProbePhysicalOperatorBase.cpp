@@ -11,84 +11,62 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Join/HashJoin/HJProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 
 #include <cstdint>
 #include <memory>
 #include <utility>
 #include <Functions/PhysicalFunction.hpp>
-#include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
-#include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
-#include <function.hpp>
-#include <val.hpp>
+#include <val_arith.hpp>
 #include <val_ptr.hpp>
 
 namespace NES
 {
 
-HJProbePhysicalOperator::HJProbePhysicalOperator(
+HJProbePhysicalOperatorBase::HJProbePhysicalOperatorBase(
     const OperatorHandlerId operatorHandlerId,
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     JoinSchema joinSchema,
     std::shared_ptr<TupleBufferRef> leftBufferRef,
     std::shared_ptr<TupleBufferRef> rightBufferRef,
-    HashMapOptions leftHashMapBasedOptions,
-    HashMapOptions rightHashMapBasedOptions)
+    HashMapOptions leftHashMapOptions,
+    HashMapOptions rightHashMapOptions)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), std::move(windowMetaData), std::move(joinSchema))
     , leftBufferRef(std::move(leftBufferRef))
     , rightBufferRef(std::move(rightBufferRef))
-    , leftHashMapOptions(std::move(leftHashMapBasedOptions))
-    , rightHashMapOptions(std::move(rightHashMapBasedOptions))
+    , leftHashMapOptions(std::move(leftHashMapOptions))
+    , rightHashMapOptions(std::move(rightHashMapOptions))
 {
 }
 
-void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+/// NOLINTNEXTLINE(readability-function-cognitive-complexity) inner join's N x N hash-map iteration is inherently deeply nested
+void HJProbePhysicalOperatorBase::performMatchPairsProbe(
+    nautilus::val<HashMap**> leftHashMapRefs,
+    nautilus::val<uint64_t> leftNumberOfHashMaps,
+    nautilus::val<HashMap**> rightHashMapRefs,
+    nautilus::val<uint64_t> rightNumberOfHashMaps,
+    ExecutionContext& executionCtx,
+    const nautilus::val<Timestamp>& windowStart,
+    const nautilus::val<Timestamp>& windowEnd) const
 {
-    /// As this operator functions as a scan, we have to set the execution context for this pipeline
-    executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
-    executionCtx.currentTs = recordBuffer.getCreatingTs();
-    executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
-    executionCtx.chunkNumber = recordBuffer.getChunkNumber();
-    executionCtx.lastChunk = recordBuffer.isLastChunk();
-    executionCtx.originId = recordBuffer.getOriginId();
-    StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
-
-    /// Getting number of hash maps and return if there are no hashmaps
-    const auto hashJoinWindowRef = static_cast<nautilus::val<EmittedHJWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto leftNumberOfHashMaps
-        = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftNumberOfHashMaps));
-    const auto rightNumberOfHashMaps
-        = readValueFromMemRef<uint64_t>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightNumberOfHashMaps));
     if (leftNumberOfHashMaps == 0 or rightNumberOfHashMaps == 0)
     {
         return;
     }
 
-    /// Getting necessary values from the record buffer
-    const auto windowInfoRef = getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::windowInfo);
-    const nautilus::val<Timestamp> windowStart{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
-    const nautilus::val<Timestamp> windowEnd{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
-    auto leftHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::leftHashMaps));
-    auto rightHashMapRefs = readValueFromMemRef<HashMap**>(getMemberRef(hashJoinWindowRef, &EmittedHJWindowTrigger::rightHashMaps));
-
-
-    /// We iterate over all "left" hash maps and check if we find a tuple with the same key in the "right" hash maps
     for (nautilus::val<uint64_t> leftHashMapIndex = 0; leftHashMapIndex < leftNumberOfHashMaps; ++leftHashMapIndex)
     {
         const nautilus::val<HashMap*> leftHashMapPtr = leftHashMapRefs[leftHashMapIndex];
@@ -117,10 +95,8 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
                 auto rightItStart = rightPagedVector.begin(rightFields);
                 auto rightItEnd = rightPagedVector.end(rightFields);
 
-                /// We use here findEntry as the other methods would insert a new entry, which is unnecessary
                 if (auto leftEntry = leftHashMap.findEntry(rightEntryRef.entryRef))
                 {
-                    /// At this moment, we can be sure that both paged vector contain only records that satisfy the join condition
                     const ChainedHashMapRef::ChainedEntryRef leftEntryRef{
                         leftEntry, leftHashMapPtr, leftHashMapOptions.fieldKeys, leftHashMapOptions.fieldValues};
                     auto leftPagedVectorMem = leftEntryRef.getValueMemArea();
@@ -143,4 +119,5 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
         }
     }
 }
+
 }
