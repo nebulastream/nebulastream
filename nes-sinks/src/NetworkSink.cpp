@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "NetworkSink.hpp"
+#include <Sinks/NetworkSink.hpp>
 
 #include <chrono>
 #include <cstddef>
