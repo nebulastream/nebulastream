@@ -33,24 +33,24 @@ constexpr size_t PTHREAD_NAME_LENGTH = 15;
 /// `NES::Thread` is a wrapper around `std::jthread`. The main purpose is that it is a standardized way
 /// to add additional information to a thread. Currently, it contains:
 /// 1. ThreadName which is used during debugging and is attached to logs.
-/// 2. It holds the WorkerId. Which can be automatically inherited to threads created within this thread.
+/// 2. It holds the Host. Which can be automatically inherited to threads created within this thread.
 class Thread
 {
     std::jthread thread;
 
 public:
-    static thread_local WorkerId WorkerNodeId;
+    static thread_local Host WorkerNodeId;
     static thread_local std::string ThreadName;
     Thread() = default;
 
     template <typename FN, typename... Args>
-    Thread(std::string name, WorkerId worker_id, FN&& fn, Args&&... args)
+    Thread(std::string name, Host worker_id, FN&& fn, Args&&... args)
     {
         /// The complexity of this function is caused by the combination of different ways a std::jthread can be created.
         /// 1. It can accept an addtional std::stop_token
         /// 2. The first parameter has to be the this ptr if the function is a member function
         thread = std::jthread(
-            []<typename FN2, typename... Args2>(std::stop_token token, WorkerId worker_id, std::string name, FN2&& fn, Args2&&... args)
+            []<typename FN2, typename... Args2>(std::stop_token token, Host worker_id, std::string name, FN2&& fn, Args2&&... args)
             {
                 initializeThread(std::move(worker_id), std::move(name));
                 if constexpr (std::is_member_function_pointer_v<FN2>)
@@ -102,7 +102,7 @@ public:
 
     static const std::string& getThisThreadName() { return ThreadName; }
 
-    static const WorkerId& getThisWorkerNodeId() { return WorkerNodeId; }
+    static const Host& getThisWorkerNodeId() { return WorkerNodeId; }
 
     [[nodiscard]] bool isCurrentThread() const { return std::this_thread::get_id() == thread.get_id(); }
 
@@ -110,7 +110,7 @@ public:
 
     bool requestStop() { return thread.request_stop(); }
 
-    static void initializeThread(WorkerId worker_id, std::string name)
+    static void initializeThread(Host worker_id, std::string name)
     {
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
