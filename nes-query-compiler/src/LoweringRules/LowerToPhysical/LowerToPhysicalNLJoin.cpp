@@ -29,9 +29,11 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -114,19 +116,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator = NLJProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        join->getWindowMetaData(),
-        joinSchema,
-        leftBufferRef,
-        rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto sliceAndWindowStore
         = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), JoinTriggerStrategy{InnerJoinTriggerStrategy{}});
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
@@ -147,6 +141,18 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+
+    static_assert(JoinProbeOperator<NLJInnerProbePhysicalOperator>);
+
+    auto probeOperator = NLJInnerProbePhysicalOperator(
+        handlerId,
+        joinFunction,
+        join->getWindowMetaData(),
+        joinSchema,
+        leftBufferRef,
+        rightBufferRef,
+        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
+        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
