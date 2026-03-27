@@ -28,7 +28,7 @@ SELECT
     f64 != FLOAT64(42.42) AS bool10
 FROM stream INTO sink10Booleans;
 ----
-1,1,1,1,0,1,1,1,1,0
+true,true,true,true,false,true,true,true,true,false
 
 # Equal i8 value with all other data types
 SELECT
@@ -57,7 +57,7 @@ SELECT
     i8 != f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans;
 ----
-0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true
 
 # Equal i16 value with all other data types
 SELECT
@@ -86,7 +86,7 @@ SELECT
     i16 != f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans;
 ----
-1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true
 
 # Equal i32 value with all other data types
 SELECT
@@ -115,7 +115,7 @@ SELECT
     i32 != f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans;
 ----
-1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1
+true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true,true,true
 
 # Equal i64 value with all other data types
 SELECT
@@ -144,4 +144,4 @@ SELECT
     i64 != f64 + FLOAT64(1) AS bool20
 FROM stream INTO sink20Booleans;
 ----
-1,1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,1,1,1,1
+true,true,true,true,true,true,false,true,true,true,true,true,true,true,true,true,true,true,true,true
