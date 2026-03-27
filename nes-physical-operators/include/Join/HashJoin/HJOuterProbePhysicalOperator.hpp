@@ -18,12 +18,11 @@
 #include <memory>
 #include <DataTypes/Schema.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/HashMap/HashMap.hpp>
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <Interface/TimestampRef.hpp>
-#include <Join/StreamJoinProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJProbePhysicalOperatorBase.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Operators/Windows/WindowMetaData.hpp>
@@ -32,35 +31,35 @@
 #include <ExecutionContext.hpp>
 #include <HashMapOptions.hpp>
 #include <val_arith.hpp>
-#include <val_concepts.hpp>
 
 namespace NES
 {
 
-/// Performs the second phase of the join. The tuples are joined via probing the previously built hash tables
-class HJProbePhysicalOperator final : public StreamJoinProbePhysicalOperator
+/// Performs the hash join probe for outer joins (left, right, full).
+/// Handles MATCH_PAIRS tasks (via base class) and NULL_FILL tasks
+/// (emitting unmatched tuples with NULL-filled fields for the missing side).
+class HJOuterProbePhysicalOperator final : public HJProbePhysicalOperatorBase
 {
 public:
-    HJProbePhysicalOperator(
+    HJOuterProbePhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         JoinSchema joinSchema,
-        std::shared_ptr<TupleBufferRef> leftBufferRef,
-        std::shared_ptr<TupleBufferRef> rightBufferRef,
+        std::shared_ptr<PagedVectorTupleLayout> leftTupleLayout,
+        std::shared_ptr<PagedVectorTupleLayout> rightTupleLayout,
         HashMapOptions leftHashMapBasedOptions,
-        HashMapOptions rightHashMapBasedOptions,
-        JoinLogicalOperator::JoinType joinType);
+        HashMapOptions rightHashMapBasedOptions);
 
-    /// As the second phase gets triggered by the first phase, we receive a tuple buffer containing all information for performing the probe.
-    /// Thus, we start a new pipeline and therefore, we create new Records from the built-up state.
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
+    static constexpr bool supportsJoinType(JoinLogicalOperator::JoinType joinType) noexcept
+    {
+        return joinType == JoinLogicalOperator::JoinType::OUTER_LEFT_JOIN || joinType == JoinLogicalOperator::JoinType::OUTER_RIGHT_JOIN
+            || joinType == JoinLogicalOperator::JoinType::OUTER_FULL_JOIN;
+    }
+
 private:
-    /// Null-fill probe: iterates the outer (preserved) side's hash maps.
-    /// For each entry, checks whether the inner side has a matching key.
-    /// Unmatched entries emit NULL-filled records; matched entries are skipped
-    /// (matched pairs are emitted by separate MATCH_PAIRS tasks using the inner join code path).
     void performNullFillProbe(
         nautilus::val<HashMap**> outerHashMapRefs,
         nautilus::val<uint64_t> outerNumberOfHashMaps,
@@ -68,15 +67,11 @@ private:
         nautilus::val<uint64_t> innerNumberOfHashMaps,
         const HashMapOptions& outerHashMapOptions,
         const HashMapOptions& innerHashMapOptions,
-        const std::shared_ptr<TupleBufferRef>& outerBufferRef,
-        const Schema& nullSideSchema,
+        const std::shared_ptr<PagedVectorTupleLayout>& outerTupleLayout,
+        const Schema<QualifiedUnboundField, Ordered>& nullSideSchema,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-
-    std::shared_ptr<TupleBufferRef> leftBufferRef, rightBufferRef;
-    HashMapOptions leftHashMapOptions, rightHashMapOptions;
-    JoinLogicalOperator::JoinType joinType;
 };
 
 }

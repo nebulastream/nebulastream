@@ -28,7 +28,7 @@
 namespace NES
 {
 
-struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
+struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
 {
     /// Handle into the pipeline's compiled module; keeps the compiled cleanup function alive
     /// even if the slice outlives the pipeline stage that compiled it.

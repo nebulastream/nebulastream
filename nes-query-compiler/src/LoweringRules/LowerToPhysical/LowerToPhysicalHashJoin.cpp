@@ -42,8 +42,6 @@
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
-#include <Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/Hash/MurMur3HashFunction.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
@@ -51,9 +49,12 @@
 #include <Interface/PagedVector/PagedVectorRef.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
+#include <Join/HashJoin/HJInnerProbePhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
-#include <Join/HashJoin/HJProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJOuterProbePhysicalOperator.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -218,10 +219,7 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
             memoryLayoutType));
     }
 
-    auto schemaExp = Schema<QualifiedUnboundField, Ordered>::tryCreateCollisionFree(std::move(currentFields))
-                         .transform_error(Schema<QualifiedUnboundField, Ordered>::createCollisionString);
-    PRECONDITION(schemaExp.has_value(), "{}", schemaExp.error());
-    return {std::move(schemaExp).value(), mapPhysicalOperators};
+    return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
 }
 
 HashMapOptions createHashMapOptions(
@@ -312,6 +310,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(newRightInputSchema);
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
+
     /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
@@ -320,8 +319,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Left);
-            return ptr;
+            return hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Left);
         },
         [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
@@ -339,8 +337,7 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
         {
             auto& hjSlice = dynamic_cast<HJSlice&>(slice);
-            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Right);
-            return ptr;
+            return hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Right);
         },
         [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler, AbstractBufferProvider&)
         {
@@ -354,8 +351,28 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 JoinBuildSideType::Right};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
+    /// Create the trigger strategy based on join type — determines what probe tasks are emitted at runtime
+    const auto currentJoinType = join->getJoinType();
+    using JT = JoinLogicalOperator::JoinType;
+    auto createTriggerStrategy = [&]() -> JoinTriggerStrategy
+    {
+        switch (currentJoinType)
+        {
+            case JT::OUTER_LEFT_JOIN:
+                return OuterJoinTriggerStrategy<true, false>{};
+            case JT::OUTER_RIGHT_JOIN:
+                return OuterJoinTriggerStrategy<false, true>{};
+            case JT::OUTER_FULL_JOIN:
+                return OuterJoinTriggerStrategy<true, true>{};
+            case JT::CARTESIAN_PRODUCT:
+            case JT::INNER_JOIN:
+                return InnerJoinTriggerStrategy{};
+        }
+        std::unreachable();
+    };
+
     auto handler = std::make_shared<HJOperatorHandler>(
-        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, join->getJoinType());
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
@@ -373,18 +390,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         rightHashMapOptions,
         std::move(sliceStoreRefRight)};
 
-    /// Creating the hash join probe
+    /// Creating the hash join probe — select inner or outer probe based on join type
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
-    auto probeOperator = HJProbePhysicalOperator(
-        handlerId,
-        physicalJoinFunction,
-        WindowMetaData{join->getStartField(), join->getEndField()},
-        joinSchema,
-        leftTupleLayout,
-        rightTupleLayout,
-        leftHashMapOptions,
-        rightHashMapOptions,
-        join->getJoinType());
 
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -407,16 +414,53 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(probeOperator),
-        physicalOutputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
-        handlerId,
-        handler,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftBuildWrapper, rightBuildWrapper});
+    /// Verify at compile time that both probe operators satisfy the JoinProbeOperator concept
+    static_assert(JoinProbeOperator<HJInnerProbePhysicalOperator>);
+    static_assert(JoinProbeOperator<HJOuterProbePhysicalOperator>);
+
+    auto createProbeWrapper = [&](const auto& probeOperator)
+    {
+        return std::make_shared<PhysicalOperatorWrapper>(
+            std::move(probeOperator),
+            physicalOutputSchema,
+            physicalOutputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
+            handlerId,
+            handler,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{leftBuildWrapper, rightBuildWrapper});
+    };
+
+    std::shared_ptr<PhysicalOperatorWrapper> probeWrapper;
+    if (isOuterJoin(currentJoinType))
+    {
+        PRECONDITION(
+            HJOuterProbePhysicalOperator::supportsJoinType(currentJoinType), "HJOuterProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(HJOuterProbePhysicalOperator(
+            handlerId,
+            physicalJoinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftTupleLayout,
+            rightTupleLayout,
+            leftHashMapOptions,
+            rightHashMapOptions));
+    }
+    else
+    {
+        PRECONDITION(
+            HJInnerProbePhysicalOperator::supportsJoinType(currentJoinType), "HJInnerProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(HJInnerProbePhysicalOperator(
+            handlerId,
+            physicalJoinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftTupleLayout,
+            rightTupleLayout,
+            leftHashMapOptions,
+            rightHashMapOptions));
+    }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;
     std::shared_ptr<PhysicalOperatorWrapper> rightLeaf = rightBuildWrapper;
