@@ -28,7 +28,7 @@
 namespace NES
 {
 
-struct CreateNewHashMapSliceArgs final : CreateNewSlicesArguments
+struct CreateNewHashMapSliceArgs : CreateNewSlicesArguments
 {
     using NautilusCleanupExec = nautilus::engine::CallableFunction<void, HashMap*>;
 

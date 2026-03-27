@@ -44,9 +44,12 @@
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
+#include <Join/HashJoin/HJInnerProbePhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
-#include <Join/HashJoin/HJProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJOuterProbePhysicalOperator.hpp>
 #include <Join/HashJoin/HJSlice.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -352,8 +355,28 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
                 JoinBuildSideType::Right};
             return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
         });
+    /// Create the trigger strategy based on join type — determines what probe tasks are emitted at runtime
+    const auto currentJoinType = join->getJoinType();
+    using JT = JoinLogicalOperator::JoinType;
+    auto createTriggerStrategy = [&]() -> JoinTriggerStrategy
+    {
+        switch (currentJoinType)
+        {
+            case JT::OUTER_LEFT_JOIN:
+                return OuterJoinTriggerStrategy<true, false>{};
+            case JT::OUTER_RIGHT_JOIN:
+                return OuterJoinTriggerStrategy<false, true>{};
+            case JT::OUTER_FULL_JOIN:
+                return OuterJoinTriggerStrategy<true, true>{};
+            case JT::CARTESIAN_PRODUCT:
+            case JT::INNER_JOIN:
+                return InnerJoinTriggerStrategy{};
+        }
+        std::unreachable();
+    };
+
     auto handler = std::make_shared<HJOperatorHandler>(
-        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, join->getJoinType());
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets, createTriggerStrategy());
 
     /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
@@ -371,18 +394,8 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         rightHashMapOptions,
         std::move(sliceStoreRefRight)};
 
-    /// Creating the hash join probe
+    /// Creating the hash join probe — select inner or outer probe based on join type
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, physicalOutputSchema);
-    auto probeOperator = HJProbePhysicalOperator(
-        handlerId,
-        physicalJoinFunction,
-        WindowMetaData{join->getStartField(), join->getEndField()},
-        joinSchema,
-        leftBufferRef,
-        rightBufferRef,
-        leftHashMapOptions,
-        rightHashMapOptions,
-        join->getJoinType());
 
     /// Building operator wrapper for the two builds and the probe.
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
@@ -405,16 +418,53 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
 
-    auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
-        std::move(probeOperator),
-        physicalOutputSchema,
-        physicalOutputSchema,
-        memoryLayoutType,
-        memoryLayoutType,
-        handlerId,
-        handler,
-        PhysicalOperatorWrapper::PipelineLocation::SCAN,
-        std::vector{leftBuildWrapper, rightBuildWrapper});
+    /// Verify at compile time that both probe operators satisfy the JoinProbeOperator concept
+    static_assert(JoinProbeOperator<HJInnerProbePhysicalOperator>);
+    static_assert(JoinProbeOperator<HJOuterProbePhysicalOperator>);
+
+    auto createProbeWrapper = [&](const auto& probeOperator)
+    {
+        return std::make_shared<PhysicalOperatorWrapper>(
+            std::move(probeOperator),
+            physicalOutputSchema,
+            physicalOutputSchema,
+            memoryLayoutType,
+            memoryLayoutType,
+            handlerId,
+            handler,
+            PhysicalOperatorWrapper::PipelineLocation::SCAN,
+            std::vector{leftBuildWrapper, rightBuildWrapper});
+    };
+
+    std::shared_ptr<PhysicalOperatorWrapper> probeWrapper;
+    if (isOuterJoin(currentJoinType))
+    {
+        PRECONDITION(
+            HJOuterProbePhysicalOperator::supportsJoinType(currentJoinType), "HJOuterProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(HJOuterProbePhysicalOperator(
+            handlerId,
+            physicalJoinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftBufferRef,
+            rightBufferRef,
+            leftHashMapOptions,
+            rightHashMapOptions));
+    }
+    else
+    {
+        PRECONDITION(
+            HJInnerProbePhysicalOperator::supportsJoinType(currentJoinType), "HJInnerProbePhysicalOperator does not support join type");
+        probeWrapper = createProbeWrapper(HJInnerProbePhysicalOperator(
+            handlerId,
+            physicalJoinFunction,
+            WindowMetaData{join->getStartField(), join->getEndField()},
+            joinSchema,
+            leftBufferRef,
+            rightBufferRef,
+            leftHashMapOptions,
+            rightHashMapOptions));
+    }
 
     std::shared_ptr<PhysicalOperatorWrapper> leftLeaf = leftBuildWrapper;
     std::shared_ptr<PhysicalOperatorWrapper> rightLeaf = rightBuildWrapper;

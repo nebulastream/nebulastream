@@ -38,8 +38,9 @@ namespace NES
 NLJOperatorHandler::NLJOperatorHandler(
     const std::vector<OriginId>& inputOrigins,
     const OriginId outputOriginId,
-    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore)
-    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore))
+    std::unique_ptr<WindowSlicesStoreInterface> sliceAndWindowStore,
+    JoinTriggerStrategy triggerStrategy)
+    : StreamJoinOperatorHandler(inputOrigins, outputOriginId, std::move(sliceAndWindowStore), std::move(triggerStrategy))
 {
 }
 
@@ -59,14 +60,18 @@ NLJOperatorHandler::getCreateNewSlicesFunction(const CreateNewSlicesArguments&) 
 }
 
 void NLJOperatorHandler::emitSlicesToProbe(
-    Slice& sliceLeft,
-    Slice& sliceRight,
+    const std::vector<std::shared_ptr<Slice>>& leftSlices,
+    const std::vector<std::shared_ptr<Slice>>& rightSlices,
+    ProbeTaskType probeTaskType,
     const WindowInfo& windowInfo,
     const SequenceData& sequenceData,
     PipelineExecutionContext* pipelineCtx)
 {
-    auto& nljSliceLeft = dynamic_cast<NLJSlice&>(sliceLeft);
-    auto& nljSliceRight = dynamic_cast<NLJSlice&>(sliceRight);
+    PRECONDITION(probeTaskType == ProbeTaskType::MATCH_PAIRS, "NLJ currently only supports MATCH_PAIRS probe tasks");
+    PRECONDITION(leftSlices.size() == 1 && rightSlices.size() == 1, "MATCH_PAIRS expects exactly one slice per side");
+
+    auto& nljSliceLeft = dynamic_cast<NLJSlice&>(*leftSlices[0]);
+    auto& nljSliceRight = dynamic_cast<NLJSlice&>(*rightSlices[0]);
 
     nljSliceLeft.combinePagedVectors();
     nljSliceRight.combinePagedVectors();
@@ -74,8 +79,6 @@ void NLJOperatorHandler::emitSlicesToProbe(
 
     auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
 
-    /// As we are here "emitting" a buffer, we have to set the originId, the seq number, and the watermark.
-    /// The watermark cannot be the slice end as some buffers might be still waiting to get processed.
     tupleBuffer.setOriginId(outputOriginId);
     tupleBuffer.setSequenceNumber(SequenceNumber(sequenceData.sequenceNumber));
     tupleBuffer.setChunkNumber(ChunkNumber(sequenceData.chunkNumber));
@@ -85,16 +88,15 @@ void NLJOperatorHandler::emitSlicesToProbe(
     tupleBuffer.setCreationTimestampInMS(Timestamp(
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count()));
     new (tupleBuffer.getAvailableMemoryArea().data())
-        EmittedNLJWindowTrigger{windowInfo, sliceLeft.getSliceEnd(), sliceRight.getSliceEnd()};
+        EmittedNLJWindowTrigger{windowInfo, leftSlices[0]->getSliceEnd(), rightSlices[0]->getSliceEnd()};
 
-    /// Dispatching the buffer to the probe operator via the task queue.
     pipelineCtx->emitBuffer(tupleBuffer);
 
     NES_TRACE(
         "Emitted leftSliceId {} rightSliceId {} with watermarkTs {} sequenceNumber {} originId {} for no. left tuples "
         "{} and no. right tuples {} for window info: {}-{}",
-        sliceLeft.getSliceEnd(),
-        sliceRight.getSliceEnd(),
+        leftSlices[0]->getSliceEnd(),
+        rightSlices[0]->getSliceEnd(),
         tupleBuffer.getWatermark(),
         tupleBuffer.getSequenceDataAsString(),
         tupleBuffer.getOriginId(),

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -21,9 +21,11 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Join/NestedLoopJoin/NLJProbePhysicalOperatorBase.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -51,41 +53,13 @@ NLJSlice* getNLJSliceRefFromEndProxy(OperatorHandler* ptrOpHandler, const SliceE
 {
     PRECONDITION(ptrOpHandler != nullptr, "op handler context should not be null");
     const auto* opHandler = dynamic_cast<NLJOperatorHandler*>(ptrOpHandler);
-
     auto slice = opHandler->getSliceAndWindowStore().getSliceBySliceEnd(sliceEnd);
     INVARIANT(slice.has_value(), "Could not find a slice for slice end {}", sliceEnd);
-
     return dynamic_cast<NLJSlice*>(slice.value().get());
 }
-
-Timestamp getNLJWindowStartProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
-{
-    PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
-    return nljWindowTriggerTask->windowInfo.windowStart;
 }
 
-Timestamp getNLJWindowEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask)
-{
-    PRECONDITION(nljWindowTriggerTask, "nljWindowTriggerTask should not be null");
-    return nljWindowTriggerTask->windowInfo.windowEnd;
-}
-
-SliceEnd getNLJSliceEndProxy(const EmittedNLJWindowTrigger* nljWindowTriggerTask, const JoinBuildSideType joinBuildSide)
-{
-    PRECONDITION(nljWindowTriggerTask != nullptr, "nljWindowTriggerTask should not be null");
-
-    switch (joinBuildSide)
-    {
-        case JoinBuildSideType::Left:
-            return nljWindowTriggerTask->leftSliceEnd;
-        case JoinBuildSideType::Right:
-            return nljWindowTriggerTask->rightSliceEnd;
-    }
-    std::unreachable();
-}
-}
-
-NLJProbePhysicalOperator::NLJProbePhysicalOperator(
+NLJInnerProbePhysicalOperator::NLJInnerProbePhysicalOperator(
     OperatorHandlerId operatorHandlerId,
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
@@ -94,53 +68,20 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     std::shared_ptr<TupleBufferRef> rightMemoryProvider,
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames)
-    : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), WindowMetaData(std::move(windowMetaData)), joinSchema)
-    , leftMemoryProvider(std::move(leftMemoryProvider))
-    , rightMemoryProvider(std::move(rightMemoryProvider))
-    , leftKeyFieldNames(std::move(leftKeyFieldNames))
-    , rightKeyFieldNames(std::move(rightKeyFieldNames))
+    : NLJProbePhysicalOperatorBase(
+          operatorHandlerId,
+          std::move(joinFunction),
+          std::move(windowMetaData),
+          joinSchema,
+          std::move(leftMemoryProvider),
+          std::move(rightMemoryProvider),
+          std::move(leftKeyFieldNames),
+          std::move(rightKeyFieldNames))
 {
 }
 
-void NLJProbePhysicalOperator::performNLJ(
-    const PagedVectorRef& outerPagedVector,
-    const PagedVectorRef& innerPagedVector,
-    TupleBufferRef& outerMemoryProvider,
-    TupleBufferRef& innerMemoryProvider,
-    const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
-    const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
-    ExecutionContext& executionCtx,
-    const nautilus::val<Timestamp>& windowStart,
-    const nautilus::val<Timestamp>& windowEnd) const
+void NLJInnerProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    const auto outerFields = outerMemoryProvider.getAllFieldNames();
-    const auto innerFields = innerMemoryProvider.getAllFieldNames();
-
-    nautilus::val<uint64_t> outerItemPos(0);
-    for (auto outerIt = outerPagedVector.begin(outerKeyFieldNames); outerIt != outerPagedVector.end(outerKeyFieldNames); ++outerIt)
-    {
-        nautilus::val<uint64_t> innerItemPos(0);
-        for (auto innerIt = innerPagedVector.begin(innerKeyFieldNames); innerIt != innerPagedVector.end(innerKeyFieldNames); ++innerIt)
-        {
-            const auto joinedKeyFields
-                = createJoinedRecord(*outerIt, *innerIt, windowStart, windowEnd, outerKeyFieldNames, innerKeyFieldNames);
-            if (joinFunction.execute(joinedKeyFields, executionCtx.pipelineMemoryProvider.arena))
-            {
-                auto outerRecord = outerPagedVector.readRecord(outerItemPos, outerFields);
-                auto innerRecord = innerPagedVector.readRecord(innerItemPos, innerFields);
-                auto joinedRecord = createJoinedRecord(outerRecord, innerRecord, windowStart, windowEnd, outerFields, innerFields);
-                executeChild(executionCtx, joinedRecord);
-            }
-
-            innerItemPos = innerItemPos + nautilus::val<uint64_t>{1};
-        }
-        outerItemPos = outerItemPos + nautilus::val<uint64_t>{1};
-    }
-}
-
-void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
-{
-    /// As this operator functions as a scan, we have to set the execution context for this pipeline
     executionCtx.watermarkTs = recordBuffer.getWatermarkTs();
     executionCtx.currentTs = recordBuffer.getCreatingTs();
     executionCtx.sequenceNumber = recordBuffer.getSequenceNumber();
@@ -149,17 +90,19 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
     executionCtx.originId = recordBuffer.getOriginId();
     openChild(executionCtx, recordBuffer);
 
-    /// Getting all needed info from the recordBuffer
-    const auto nljWindowTriggerTaskRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
-    const auto sliceIdLeft
-        = invoke(getNLJSliceEndProxy, nljWindowTriggerTaskRef, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Left));
-    const auto sliceIdRight
-        = invoke(getNLJSliceEndProxy, nljWindowTriggerTaskRef, nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
-    const auto windowStart = invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
-    const auto windowEnd = invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
+    /// Parse trigger buffer — for inner join, always 1 left + 1 right slice end
+    const auto triggerRef = static_cast<nautilus::val<EmittedNLJWindowTrigger*>>(recordBuffer.getMemArea());
+    const auto windowInfoRef = getMemberRef(triggerRef, &EmittedNLJWindowTrigger::windowInfo);
+    const auto windowStart = nautilus::val<Timestamp>{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowStart))};
+    const auto windowEnd = nautilus::val<Timestamp>{readValueFromMemRef<uint64_t>(getMemberRef(windowInfoRef, &WindowInfo::windowEnd))};
+
+    auto leftSliceEndsPtr = readValueFromMemRef<SliceEnd::Underlying*>(getMemberRef(triggerRef, &EmittedNLJWindowTrigger::leftSliceEnds));
+    auto rightSliceEndsPtr = readValueFromMemRef<SliceEnd::Underlying*>(getMemberRef(triggerRef, &EmittedNLJWindowTrigger::rightSliceEnds));
+    const nautilus::val<SliceEnd> sliceIdLeft{leftSliceEndsPtr[0]};
+    const nautilus::val<SliceEnd> sliceIdRight{rightSliceEndsPtr[0]};
 
     /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const auto workerThreadIdForPages = nautilus::val<WorkerThreadId>(WorkerThreadId(0));
+    const nautilus::val<WorkerThreadId> workerThreadIdForPages{WorkerThreadId(0)};
 
     /// Getting the left and right paged vector
     const auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
