@@ -35,13 +35,13 @@ function(activate_optional_plugin plugin_path plugin_option)
     endif ()
 endfunction()
 
-# create a new library for the plugin and link the component that the plugin registry belongs to against it
+# create a new library for the plugin and link it against the plugin registry
 # adds the name of plugin to the list of plugin names for the plugin registry
 # adds the name of the library of the plugin to the list of libraries for the plugin registry
-function(add_plugin_as_library plugin_name plugin_registry plugin_registry_component plugin_library)
+# the registry component is inferred later when generate_plugin_registrar links the plugin library
+function(add_plugin_as_library plugin_name plugin_registry plugin_library)
     set(sources ${ARGN})
     add_library(${plugin_library} STATIC ${sources})
-    target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_component})
 
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
@@ -49,17 +49,12 @@ endfunction()
 
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
 # adds the name of plugin to the list of plugin names for the plugin registry
-macro(add_plugin plugin_name plugin_registry plugin_registry_component)
+# the component is inferred from the registry name later in generate_plugin_registrar
+macro(add_plugin plugin_name plugin_registry)
     set(sources ${ARGN})
-    if (TARGET ${plugin_registry_component})
-        foreach (source ${sources})
-            set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/${source})
-        endforeach ()
-    else ()
-        add_source_files(${plugin_registry_component}
-                ${sources}
-        )
-    endif ()
+    foreach (source ${sources})
+        set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_sources" "${CMAKE_CURRENT_SOURCE_DIR}/${source}")
+    endforeach ()
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
 endmacro()
 
@@ -68,9 +63,21 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
     set(registrar_header_template_path ${current_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc.in)
     set(registrar_header_generated_path ${current_binary_dir}/registry/templates/${plugin_registry}GeneratedRegistrar.inc)
 
-    # get the names of plugins and all plugin libraries for the plugin registry
+    # get the names of plugins, source files, and all plugin libraries for the plugin registry
     get_property(plugin_registry_plugin_names_final GLOBAL PROPERTY ${plugin_registry}_plugin_names)
+    get_property(plugin_registry_plugin_sources_final GLOBAL PROPERTY ${plugin_registry}_plugin_sources)
     get_property(plugin_registry_plugin_libraries_final GLOBAL PROPERTY ${plugin_registry}_plugin_libraries)
+
+    # add the deferred source files from add_plugin() to the component target.
+    # The target must exist at this point because generate_plugin_registrar runs via
+    # cmake_language(DEFER) at the end of configuration, after all add_library() calls.
+    if (NOT TARGET ${plugin_registry_component})
+        message(FATAL_ERROR "Target '${plugin_registry_component}' does not exist. "
+            "Ensure add_library(${plugin_registry_component} ...) is called before create_registries_for_component().")
+    endif ()
+    foreach (source ${plugin_registry_plugin_sources_final})
+        set_property(TARGET ${plugin_registry_component} APPEND PROPERTY SOURCES ${source})
+    endforeach ()
 
     # first, read the Configuration(RETURN_TYPE, ARGUMENTS) from the '.in' file
     file(READ ${registrar_header_template_path} registrar_header_file_data)
@@ -91,7 +98,9 @@ function(generate_plugin_registrar current_dir current_binary_dir plugin_registr
 
     # link all plugin libraries against the component that the plugin registry belongs to, this makes the implementation
     # details accessible to the library of the component that the plugin registry belongs to
+    set(plugin_registry_library ${plugin_registry_component}-registry)
     foreach (plugin_library IN LISTS plugin_registry_plugin_libraries_final)
+        target_link_libraries(${plugin_library} PRIVATE ${plugin_registry_library})
         target_link_libraries(${plugin_registry_component} PUBLIC ${plugin_library})
     endforeach ()
 

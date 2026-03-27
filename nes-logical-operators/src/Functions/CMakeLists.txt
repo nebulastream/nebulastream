@@ -18,9 +18,9 @@ add_source_files(nes-logical-operators
         LogicalFunctionProvider.cpp
 )
 
-add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
-add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
-add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
-add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)
-add_plugin(CastToUnixTs LogicalFunction nes-logical-operators CastToUnixTimestampLogicalFunction.cpp)
-add_plugin(CastFromUnixTs LogicalFunction nes-logical-operators CastFromUnixTimestampLogicalFunction.cpp)
+add_plugin(ConstantValue LogicalFunction ConstantValueLogicalFunction.cpp)
+add_plugin(FieldAccess LogicalFunction FieldAccessLogicalFunction.cpp)
+add_plugin(Concat LogicalFunction ConcatLogicalFunction.cpp)
+add_plugin(CastToType LogicalFunction CastToTypeLogicalFunction.cpp)
+add_plugin(CastToUnixTs LogicalFunction CastToUnixTimestampLogicalFunction.cpp)
+add_plugin(CastFromUnixTs LogicalFunction CastFromUnixTimestampLogicalFunction.cpp)
