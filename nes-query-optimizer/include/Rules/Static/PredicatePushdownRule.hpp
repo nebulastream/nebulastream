@@ -18,8 +18,12 @@ Licensed under the Apache License, Version 2.0 (the "License");
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
+#include "Functions/LogicalFunction.hpp"
+#include "Operators/SelectionLogicalOperator.hpp"
+#include "Operators/UnionLogicalOperator.hpp"
 
 namespace NES
 {
@@ -34,9 +38,14 @@ public:
     [[nodiscard]] static std::string_view getName();
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
     bool operator==(const PredicatePushdownRule& other) const;
 
+private:
+    [[nodiscard]] LogicalOperator predicatePushdown(LogicalOperator op, const std::vector<LogicalFunction>& predicateSet) const;
+    [[nodiscard]] LogicalOperator addSelection(LogicalOperator op, std::vector<LogicalFunction> predicateSet) const;
+    [[nodiscard]] LogicalOperator predicatePushdownSelection(TypedLogicalOperator<SelectionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const;
+    [[nodiscard]] LogicalOperator predicatePushdownUnion(TypedLogicalOperator<UnionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const;
 };
 
 static_assert(PlanRuleConcept<PredicatePushdownRule>);
