@@ -34,10 +34,20 @@ void InlineSinkBindingRule::apply(LogicalPlan& queryPlan) const
         {
             const auto schema = sink.value()->getSchema();
             const auto type = sink.value()->getSinkType();
-            const auto config = sink.value()->getSinkConfig();
+            auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, config, formatConfig);
+            /// "host" is not part of the sink config — it determines placement, not sink behavior.
+            /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
+            auto hostIt = config.find("host");
+            if (hostIt == config.end())
+            {
+                throw InvalidConfigParameter("'host'");
+            }
+            auto host = Host(hostIt->second);
+            config.erase(hostIt);
+
+            const auto sinkDescriptor = sinkCatalog->getInlineSink(schema, type, host, config, formatConfig);
 
             if (!sinkDescriptor.has_value())
             {

@@ -75,16 +75,10 @@ std::optional<SinkDescriptor> SinkCatalog::getSinkDescriptor(const std::string& 
 std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     const Schema& schema,
     std::string_view sinkType,
+    Host host,
     std::unordered_map<std::string, std::string> config,
     const std::unordered_map<std::string, std::string>& formatConfig) const
 {
-    if (!config.contains("host"))
-    {
-        throw InvalidConfigParameter("'host'");
-    }
-    const auto host = Host(config.at("host"));
-    config.erase("host");
-
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
 
     const auto inlineSinkId = InlineSinkId{nextInlineSinkId.fetch_add(1)};

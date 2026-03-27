@@ -88,19 +88,14 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->data;
     const auto& upstreamData = upstreamWorker->data;
 
-    auto sourceConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"host", channel.downstreamNode.getRawValue()}};
+    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()},
-        {"bind", upstreamData},
-        {"host", channel.upstreamNode.getRawValue()},
-        {"data_endpoint", downstreamData},
-        {"output_format", "NATIVE"}};
+        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
@@ -119,12 +114,13 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
-    const auto networkSourceDescriptorOpt
-        = context.sourceCatalog->getInlineSource("Network", channel.upstreamOp.getOutputSchema(), {{"type", "Native"}}, sourceConfig);
+    const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
+        "Network", channel.upstreamOp.getOutputSchema(), Host(channel.downstreamNode.getRawValue()), {{"type", "Native"}}, sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
-    auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(channel.upstreamOp.getOutputSchema(), "Network", sinkConfig, {});
+    auto networkSinkDescriptor = context.sinkCatalog->getInlineSink(
+        channel.upstreamOp.getOutputSchema(), "Network", Host(channel.upstreamNode.getRawValue()), sinkConfig, {});
     INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();

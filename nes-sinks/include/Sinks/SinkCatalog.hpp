@@ -42,6 +42,7 @@ public:
     [[nodiscard]] std::optional<SinkDescriptor> getInlineSink(
         const Schema& schema,
         std::string_view sinkType,
+        Host host,
         std::unordered_map<std::string, std::string> config,
         const std::unordered_map<std::string, std::string>& formatConfig) const;
 

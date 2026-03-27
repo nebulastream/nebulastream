@@ -61,6 +61,7 @@ struct CreatePhysicalSourceStatement
 {
     LogicalSourceName attachedTo;
     std::string sourceType;
+    std::optional<Host> host;
     std::unordered_map<std::string, std::string> sourceConfig;
     std::unordered_map<std::string, std::string> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
@@ -71,6 +72,7 @@ struct CreateSinkStatement
     std::string name;
     std::string sinkType;
     Schema schema;
+    std::optional<Host> host;
     std::unordered_map<std::string, std::string> sinkConfig;
     std::unordered_map<std::string, std::string> formatConfig;
 };

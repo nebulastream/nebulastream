@@ -78,6 +78,7 @@ public:
     [[nodiscard]] std::optional<SourceDescriptor> getInlineSource(
         const std::string& sourceType,
         const Schema& schema,
+        Host host,
         std::unordered_map<std::string, std::string> parserConfigMap,
         std::unordered_map<std::string, std::string> sourceConfigMap) const;
 

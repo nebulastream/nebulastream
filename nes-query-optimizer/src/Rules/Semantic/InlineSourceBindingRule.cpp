@@ -36,9 +36,19 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         const auto type = inlineSource.value()->getSourceType();
         const auto schema = inlineSource.value()->getSchema();
         const auto parserConfig = inlineSource.value()->getParserConfig();
-        const auto sourceConfig = inlineSource.value()->getSourceConfig();
+        auto sourceConfig = inlineSource.value()->getSourceConfig();
 
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, parserConfig, sourceConfig);
+        /// "host" is not part of the source config — it determines placement, not source behavior.
+        /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
+        auto hostIt = sourceConfig.find("host");
+        if (hostIt == sourceConfig.end())
+        {
+            throw InvalidConfigParameter("`host`");
+        }
+        auto host = Host(hostIt->second);
+        sourceConfig.erase(hostIt);
+
+        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {

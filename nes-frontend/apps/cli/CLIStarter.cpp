@@ -417,12 +417,11 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
 
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
-        auto sourceConfigCopy = sourceConfig;
-        sourceConfigCopy.emplace("host", host);
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
-            .sourceConfig = sourceConfigCopy,
+            .host = NES::Host(host),
+            .sourceConfig = sourceConfig,
             .parserConfig = parserConfig});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
@@ -433,10 +432,8 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
             schema.addField(schemaField.name, schemaField.type);
         }
 
-        auto configCopy = config;
-        configCopy.emplace("host", host);
         statements.emplace_back(NES::CreateSinkStatement{
-            .name = name, .sinkType = type, .schema = schema, .sinkConfig = configCopy, .formatConfig = parserConfig});
+            .name = name, .sinkType = type, .schema = schema, .host = NES::Host(host), .sinkConfig = config, .formatConfig = parserConfig});
     }
     return statements;
 }

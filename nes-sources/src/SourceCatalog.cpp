@@ -146,16 +146,10 @@ std::optional<SourceDescriptor> SourceCatalog::getPhysicalSource(const PhysicalS
 std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const std::string& sourceType,
     const Schema& schema,
+    Host host,
     std::unordered_map<std::string, std::string> parserConfigMap,
     std::unordered_map<std::string, std::string> sourceConfigMap) const
 {
-    if (!sourceConfigMap.contains("host"))
-    {
-        throw InvalidConfigParameter("`host`");
-    }
-    auto host = Host(sourceConfigMap.at("host"));
-    sourceConfigMap.erase("host");
-
     auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
     if (!descriptorConfig.has_value())
     {

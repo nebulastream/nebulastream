@@ -135,8 +135,8 @@ public:
         PRECONDITION(
             not possibleSinkPlacements.empty(),
             "Topology must list at least one worker in allow_sink_placement to assign a default inline sink host");
-        config.try_emplace("host", possibleSinkPlacements.at(0).getRawValue());
-        return sinkCatalog->getInlineSink(schema, std::move(sinkType), std::move(config), formatConfig);
+        return sinkCatalog->getInlineSink(
+            schema, std::move(sinkType), Host(possibleSinkPlacements.at(0).getRawValue()), std::move(config), formatConfig);
     }
 
     std::expected<SinkDescriptor, Exception>
@@ -571,19 +571,13 @@ struct SystestBinder::Impl
         PRECONDITION(
             not clusterConfiguration.allowSourcePlacement.empty(),
             "Topology must list at least one worker in allow_source_placement to assign a default source host");
-        std::string host = clusterConfiguration.allowSourcePlacement.at(0).getRawValue();
-        auto sourceConfigCopy = statement.sourceConfig;
-        if (auto hostIt = sourceConfigCopy.find("host"); hostIt != sourceConfigCopy.end())
-        {
-            host = hostIt->second;
-            sourceConfigCopy.erase(hostIt);
-        }
+        const auto host = statement.host ? *statement.host : Host(clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
         PhysicalSourceConfig physicalSourceConfig{
             .logical = statement.attachedTo.getRawValue(),
             .type = statement.sourceType,
             .parserConfig = statement.parserConfig,
-            .sourceConfig = sourceConfigCopy};
+            .sourceConfig = statement.sourceConfig};
 
         std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
@@ -600,11 +594,7 @@ struct SystestBinder::Impl
         }
 
         if (const auto created = sourceCatalog->addPhysicalSource(
-                *logicalSource,
-                physicalSourceConfig.type,
-                Host(host),
-                physicalSourceConfig.sourceConfig,
-                physicalSourceConfig.parserConfig);
+                *logicalSource, physicalSourceConfig.type, host, physicalSourceConfig.sourceConfig, physicalSourceConfig.parserConfig);
             not created.has_value())
         {
             throw Exception(created.error());

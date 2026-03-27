@@ -131,8 +131,16 @@ public:
         const auto parserConfig = getParserConfig(configOptions);
         auto sourceConfig = getSourceConfig(configOptions);
 
+        /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
+        std::optional<Host> host;
+        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        {
+            host = Host(it->second);
+            sourceConfig.erase(it);
+        }
+
         return CreatePhysicalSourceStatement{
-            .attachedTo = logicalSourceName, .sourceType = type, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
+            .attachedTo = logicalSourceName, .sourceType = type, .host = host, .sourceConfig = sourceConfig, .parserConfig = parserConfig};
     }
 
     CreateWorkerStatement bindCreateWorkerStatement(AntlrSQLParser::CreateWorkerDefinitionContext* workerDefAST) const
@@ -228,9 +236,22 @@ public:
                       [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<std::string, std::string>>();
         }
+        /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
+        std::optional<Host> host;
+        if (auto it = sinkOptions.find("host"); it != sinkOptions.end())
+        {
+            host = Host(it->second);
+            sinkOptions.erase(it);
+        }
+
         const auto schema = bindSchema(sinkDefAST->schemaDefinition());
         return CreateSinkStatement{
-            .name = sinkName, .sinkType = sinkType, .schema = schema, .sinkConfig = sinkOptions, .formatConfig = formatOptions};
+            .name = sinkName,
+            .sinkType = sinkType,
+            .schema = schema,
+            .host = host,
+            .sinkConfig = sinkOptions,
+            .formatConfig = formatOptions};
     }
 
     Statement bindCreateStatement(AntlrSQLParser::CreateStatementContext* createAST) const
@@ -576,9 +597,10 @@ std::expected<Statement, Exception> StatementBinder::parseAndBindSingle(std::str
 std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj)
 {
     return os << fmt::format(
-               "CreatePhysicalSourceStatement: attachedTo: {} sourceType: {} sourceConfig: {} parserConfig: {}",
+               "CreatePhysicalSourceStatement: attachedTo: {} sourceType: {} host: {} sourceConfig: {} parserConfig: {}",
                obj.attachedTo,
                obj.sourceType,
+               obj.host ? obj.host->getRawValue() : "<none>",
                obj.sourceConfig,
                obj.parserConfig);
 }

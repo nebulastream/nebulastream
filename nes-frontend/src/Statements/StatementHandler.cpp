@@ -71,25 +71,22 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
         return std::unexpected{UnknownSourceName(statement.attachedTo.getRawValue())};
     }
 
-    auto sourceConfig = statement.sourceConfig;
     const auto host = [&]
     {
-        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        if (statement.host)
         {
-            const auto host = it->second;
-            sourceConfig.erase(it);
-            return host;
+            return *statement.host;
         }
         return std::visit(
             Overloaded{
-                [](const DefaultHost& defaultHost) -> std::string { return defaultHost.hostName; },
-                [](const RequireHostConfig&) -> std::string
+                [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
+                [](const RequireHostConfig&) -> Host
                 { throw InvalidStatement("Could not handle source statement. `SOURCE`.`HOST` was not set"); }},
             hostPolicy);
     }();
 
     if (const auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, Host(host), sourceConfig, statement.parserConfig))
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, statement.sourceConfig, statement.parserConfig))
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
@@ -180,26 +177,22 @@ SinkStatementHandler::SinkStatementHandler(const std::shared_ptr<SinkCatalog>& s
 
 std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operator()(const CreateSinkStatement& statement)
 {
-    auto sinkConfig = statement.sinkConfig;
     const auto host = [&]
     {
-        if (auto it = sinkConfig.find("host"); it != sinkConfig.end())
+        if (statement.host)
         {
-            const auto host = it->second;
-            sinkConfig.erase(it);
-            return host;
+            return *statement.host;
         }
         return std::visit(
             Overloaded{
-                [](const DefaultHost& defaultHost) -> std::string { return defaultHost.hostName; },
-                [](const RequireHostConfig&) -> std::string
+                [](const DefaultHost& defaultHost) -> Host { return Host(defaultHost.hostName); },
+                [](const RequireHostConfig&) -> Host
                 { throw InvalidStatement("Could not handle sink statement. `SINK`.`HOST` was not set"); }},
             hostPolicy);
     }();
-    sinkConfig.erase("host");
 
     if (const auto created = sinkCatalog->addSinkDescriptor(
-            toUpperCase(statement.name), statement.schema, statement.sinkType, Host(host), sinkConfig, statement.formatConfig))
+            toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }

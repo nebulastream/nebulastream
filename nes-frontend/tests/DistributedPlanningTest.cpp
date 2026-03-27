@@ -190,7 +190,8 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(NES::toUpperCase(logical)),
             .sourceType = "File",
-            .sourceConfig = {{"file_path", "does_not_exist"}, {"host", host}},
+            .host = NES::Host(host),
+            .sourceConfig = {{"file_path", "does_not_exist"}},
             .parserConfig = {{"type", "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
@@ -202,7 +203,12 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
         }
 
         statements.emplace_back(NES::CreateSinkStatement{
-            .name = NES::toUpperCase(name), .sinkType = "Void", .schema = schema, .sinkConfig = {{"host", host}}, .formatConfig = {}});
+            .name = NES::toUpperCase(name),
+            .sinkType = "Void",
+            .schema = schema,
+            .host = NES::Host(host),
+            .sinkConfig = {},
+            .formatConfig = {}});
     }
     statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
     return statements;
