@@ -37,10 +37,12 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
 #include <Iterators/BFSIterator.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -152,7 +154,8 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         },
         [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
 
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), JoinTriggerStrategy{InnerJoinTriggerStrategy{}});
 
     const NLJBuildPhysicalOperator leftBuildOperator{
         handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftBufferRef, std::move(sliceStoreRefLeft)};
@@ -160,15 +163,6 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator = NLJProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        WindowMetaData{join->getStartField(), join->getEndField()},
-        joinSchema,
-        leftBufferRef,
-        rightBufferRef,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
@@ -189,6 +183,18 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+
+    static_assert(JoinProbeOperator<NLJInnerProbePhysicalOperator>);
+
+    auto probeOperator = NLJInnerProbePhysicalOperator(
+        handlerId,
+        joinFunction,
+        WindowMetaData{join->getStartField(), join->getEndField()},
+        joinSchema,
+        leftBufferRef,
+        rightBufferRef,
+        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
+        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
