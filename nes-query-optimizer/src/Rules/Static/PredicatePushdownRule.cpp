@@ -26,7 +26,7 @@ namespace NES
 LogicalPlan PredicatePushdownRule::apply(LogicalPlan queryPlan) const
 {
     /// TODO Adapt for multiple roots
-    // std::cerr << explain(queryPlan, ExplainVerbosity::Debug) << '\n';
+    std::cerr << explain(queryPlan, ExplainVerbosity::Debug) << '\n';
 
     auto originalRoots = queryPlan.getRootOperators();
     PRECONDITION(originalRoots.size() == 1, "predicate pushdown not yet implemented for more than one root");
@@ -35,7 +35,7 @@ LogicalPlan PredicatePushdownRule::apply(LogicalPlan queryPlan) const
 
     queryPlan = queryPlan.withRootOperators({newRoot});
 
-    // std::cerr << explain(queryPlan, ExplainVerbosity::Debug) << '\n';
+    std::cerr << explain(queryPlan, ExplainVerbosity::Debug) << '\n';
 
     return queryPlan;
 }
@@ -46,6 +46,12 @@ LogicalOperator PredicatePushdownRule::predicatePushdown(LogicalOperator op, con
 
     if (auto sourceOp = op.tryGetAs<SourceDescriptorLogicalOperator>(); sourceOp)
     {
+        if (!predicateSet.empty())
+        {
+            return createNewSelectionOperator(predicateSet)
+                .withChildren({op})
+            .withInferredSchema({op.getOutputSchema()});
+        }
         return op;
     }
     if (auto selectionOp = op.tryGetAs<SelectionLogicalOperator>(); selectionOp)
@@ -73,7 +79,8 @@ LogicalOperator PredicatePushdownRule::predicatePushdown(LogicalOperator op, con
     return addSelection(op, predicateSet);
 }
 
-LogicalOperator PredicatePushdownRule::addSelection(LogicalOperator op, std::vector<LogicalFunction> predicateSet) const
+
+LogicalOperator PredicatePushdownRule::createNewSelectionOperator(std::vector<LogicalFunction> predicateSet) const
 {
     LogicalFunction newPredicate = predicateSet.back();
     predicateSet.pop_back();
@@ -84,6 +91,13 @@ LogicalOperator PredicatePushdownRule::addSelection(LogicalOperator op, std::vec
         predicateSet.pop_back();
     }
 
+    return SelectionLogicalOperator{newPredicate};
+}
+
+LogicalOperator PredicatePushdownRule::addSelection(LogicalOperator op, std::vector<LogicalFunction> predicateSet) const
+{
+    auto selection = createNewSelectionOperator(predicateSet);
+
     std::vector<LogicalOperator> children;
     std::vector<Schema> schemas;
     for (const auto &child: op.getChildren())
@@ -93,7 +107,7 @@ LogicalOperator PredicatePushdownRule::addSelection(LogicalOperator op, std::vec
         children.push_back(newChild);
     }
 
-    return SelectionLogicalOperator{newPredicate}.withChildren(children).withInferredSchema(schemas);
+    return selection.withChildren(children).withInferredSchema(schemas);
 }
 
 LogicalOperator PredicatePushdownRule::predicatePushdownSelection(TypedLogicalOperator<SelectionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const
