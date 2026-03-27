@@ -107,7 +107,9 @@ LogicalOperator PredicatePushdownRule::addSelection(LogicalOperator op, std::vec
         children.push_back(newChild);
     }
 
-    return selection.withChildren(children).withInferredSchema(schemas);
+    auto newOp = op.withChildren(children).withInferredSchema(schemas);
+
+    return selection.withChildren({newOp}).withInferredSchema({newOp.getOutputSchema()});
 }
 
 LogicalOperator PredicatePushdownRule::predicatePushdownSelection(TypedLogicalOperator<SelectionLogicalOperator> op, std::vector<LogicalFunction> predicateSet) const
