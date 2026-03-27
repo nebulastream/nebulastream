@@ -14,6 +14,7 @@ add_subdirectory(HashJoin)
 add_subdirectory(NestedLoopJoin)
 
 add_source_files(nes-physical-operators
+        JoinTriggerStrategy.cpp
         StreamJoinBuildPhysicalOperator.cpp
         StreamJoinOperatorHandler.cpp
         StreamJoinProbePhysicalOperator.cpp
