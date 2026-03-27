@@ -13,6 +13,8 @@
 add_source_files(nes-physical-operators
         HJBuildPhysicalOperator.cpp
         HJOperatorHandler.cpp
-        HJProbePhysicalOperator.cpp
+        HJProbePhysicalOperatorBase.cpp
+        HJInnerProbePhysicalOperator.cpp
+        HJOuterProbePhysicalOperator.cpp
         HJSlice.cpp
 )

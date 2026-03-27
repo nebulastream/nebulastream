@@ -16,7 +16,6 @@
 
 #include <array>
 #include <cstddef>
-#include <cstdint>
 #include <memory>
 #include <ranges>
 #include <span>
@@ -37,22 +36,21 @@
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/QualifiedIdentifier.hpp>
+#include <Iterators/BFSIterator.hpp>
+#include <Join/JoinTriggerStrategy.hpp>
+#include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJInnerProbePhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
+#include <Join/StreamJoinOperatorHandler.hpp>
+#include <Join/StreamJoinUtil.hpp>
+#include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Interface/BufferRef/TupleBufferRef.hpp>
 #include <Interface/PagedVector/PagedVector.hpp>
-#include <Interface/PagedVector/PagedVectorRef.hpp>
-#include <Iterators/BFSIterator.hpp>
-#include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
-#include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
-#include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
-#include <Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Join/StreamJoinUtil.hpp>
-#include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/FieldMappingTrait.hpp>
@@ -124,18 +122,11 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         | std::views::transform([](const auto& child)
                                 { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
         | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
-    PRECONDITION(
-        combinedFieldMappingVec.size()
-            == join->getChildren()[0].getTraitSet().get<FieldMappingTrait>()->getUnderlying().size()
-                + join.getChildren()[1].getTraitSet().get<FieldMappingTrait>()->getUnderlying().size(),
-        "Join output field mapping size is not equals the sum of its inputs, check for field name collisions.");
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
-    auto leftTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(leftInputSchema);
-    auto rightTupleLayout = std::make_shared<DefaultPagedVectorTupleLayout>(rightInputSchema);
-    const uint64_t tupleSizeLeft = leftTupleLayout->getSchema().getSizeInBytes();
-    const uint64_t tupleSizeRight = rightTupleLayout->getSchema().getSizeInBytes();
+    auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
+    auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
 
     const auto& joinTimeCharacteristicsVariant = join->getJoinTimeCharacteristics();
     auto characteristicsAreBound
@@ -147,49 +138,31 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
     auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
         windowType.getSize().getTime(), windowType.getSlide().getTime(), conf.sliceCacheConfiguration);
     auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Left);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Left);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
         },
-        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
-        {
-            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
-            return handler.getCreateNewSlicesFunction(nljSliceArgs);
-        });
+        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
     auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
-        [](Slice& slice, const WorkerThreadId workerThreadId) -> void*
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
         {
             const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
-            const auto* ptr = newNLJSlice.getPagedVectorTupleBufferRef(workerThreadId, JoinBuildSideType::Right);
-            /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-const-cast): the SliceStoreRef callback returns a void* token by contract.
-            return const_cast<TupleBuffer*>(ptr);
+            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Right);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
         },
-        [tupleSizeLeft, tupleSizeRight](const WindowBasedOperatorHandler& handler, AbstractBufferProvider& bufferProvider)
-        {
-            const CreateNewNLJSliceArgs nljSliceArgs{bufferProvider, tupleSizeLeft, tupleSizeRight};
-            return handler.getCreateNewSlicesFunction(nljSliceArgs);
-        });
+        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
 
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+    auto handler = std::make_shared<NLJOperatorHandler>(
+        inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), JoinTriggerStrategy{InnerJoinTriggerStrategy{}});
 
     const NLJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftTupleLayout, std::move(sliceStoreRefLeft)};
+        handlerId, JoinBuildSideType::Left, TimeFunction::create(timeStampFieldLeft), leftBufferRef, std::move(sliceStoreRefLeft)};
     const NLJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightTupleLayout, std::move(sliceStoreRefRight)};
+        handlerId, JoinBuildSideType::Right, TimeFunction::create(timeStampFieldRight), rightBufferRef, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
-    auto probeOperator = NLJProbePhysicalOperator(
-        handlerId,
-        joinFunction,
-        WindowMetaData{join->getStartField(), join->getEndField()},
-        joinSchema,
-        leftTupleLayout,
-        rightTupleLayout,
-        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
-        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),
@@ -210,6 +183,18 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         handlerId,
         handler,
         PhysicalOperatorWrapper::PipelineLocation::EMIT);
+
+    static_assert(JoinProbeOperator<NLJInnerProbePhysicalOperator>);
+
+    auto probeOperator = NLJInnerProbePhysicalOperator(
+        handlerId,
+        joinFunction,
+        WindowMetaData{join->getStartField(), join->getEndField()},
+        joinSchema,
+        leftBufferRef,
+        rightBufferRef,
+        getJoinFieldNames(leftInputSchema, logicalJoinFunction),
+        getJoinFieldNames(rightInputSchema, logicalJoinFunction));
 
     auto probeWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(probeOperator),
