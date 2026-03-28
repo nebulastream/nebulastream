@@ -14,6 +14,7 @@
 
 #pragma once
 #include <atomic>
+#include <expected>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -23,13 +24,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <folly/Synchronized.h>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
 class SinkCatalog
 {
 public:
-    std::optional<SinkDescriptor> addSinkDescriptor(
+    std::expected<SinkDescriptor, Exception> addSinkDescriptor(
         std::string sinkName,
         const Schema& schema,
         std::string_view sinkType,

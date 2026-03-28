@@ -93,13 +93,13 @@ public:
                 {
                     formatConfig["quote_strings"] = "true";
                 }
-                const auto sink
+                auto sink
                     = sinkCatalog->addSinkDescriptor(std::string{assignedSinkName}, schema, sinkType, std::move(config), formatConfig);
                 if (not sink.has_value())
                 {
-                    return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
+                    return std::unexpected{std::move(sink.error())};
                 }
-                return sink.value();
+                return std::move(sink.value());
             });
         return success;
     }
@@ -696,7 +696,9 @@ struct SystestBinder::Impl
         auto sinkExpected = sltSinkProvider.createActualSink(toUpperCase(sinkName), sinkForQuery, resultFile);
         if (not sinkExpected.has_value())
         {
-            currentBuilder.setException(sinkExpected.error());
+            auto error = sinkExpected.error();
+            currentBuilder.setException(error);
+            throw error;
         }
 
         const auto newOperator = SinkLogicalOperator{sinkExpected.value()};
