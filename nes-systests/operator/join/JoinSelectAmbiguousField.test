@@ -1,0 +1,48 @@
+# name: join/JoinSelectAmbiguousField.test
+# description: Test that table.column syntax disambiguates fields with the same name from different join sides (#1494)
+# groups: [WindowOperators, Join, CompilationIntensive]
+
+# Source definitions — both sources share a 'timestamp' field
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH FILE small/stream.csv
+
+CREATE LOGICAL SOURCE stream2(id2 UINT64 NOT NULL, value2 UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream2 TYPE File;
+ATTACH FILE small/stream2.csv
+
+CREATE SINK sinkQualifiedTimestamps(stream.id UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL, stream2.timestamp UINT64 NOT NULL) TYPE File;
+
+# Query 1 — Use table.column syntax to select the ambiguous 'timestamp' from each join side
+SELECT id, stream.timestamp, stream2.timestamp FROM (SELECT * FROM stream) INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec) INTO sinkQualifiedTimestamps;
+----
+4 1002 1102
+4 1002 1112
+12 1001 1011
+1 2000 2010
+11 2001 2301
+1 3000 3009
+1 3000 3201
+11 3001 3001
+1 3003 3009
+1 3003 3201
+1 3200 3009
+1 3200 3201
+1 4000 4001
+1 5000 5500
+1 6000 6000
+1 7000 7000
+1 8000 8000
+1 9000 9000
+1 10000 10000
+1 11000 11000
+1 12000 12000
+1 13000 13000
+1 14000 14000
+1 15000 15000
+1 16000 16000
+1 17000 17000
+1 18000 18000
+1 19000 19000
+1 20000 20000
+1 21000 21000

@@ -357,6 +357,13 @@ void AntlrSQLQueryPlanCreator::exitArithmeticUnary(AntlrSQLParser::ArithmeticUna
 
 void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context)
 {
+    /// Skip identifiers that are part of a dereference expression (table.column).
+    if (helpers.top().isDereference)
+    {
+        AntlrSQLBaseListener::enterUnquotedIdentifier(context);
+        return;
+    }
+
     /// Get Index of Parent Rule to check type of parent rule in conditions
     const auto parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent);
     const bool isParentRuleTableAlias = (parentContext != nullptr) && parentContext->getRuleIndex() == AntlrSQLParser::RuleTableAlias;
@@ -371,8 +378,49 @@ void AntlrSQLQueryPlanCreator::enterUnquotedIdentifier(AntlrSQLParser::UnquotedI
     AntlrSQLBaseListener::enterUnquotedIdentifier(context);
 }
 
+void AntlrSQLQueryPlanCreator::enterDereference(AntlrSQLParser::DereferenceContext* /*context*/)
+{
+    helpers.top().isDereference = true;
+}
+
+void AntlrSQLQueryPlanCreator::exitDereference(AntlrSQLParser::DereferenceContext* context)
+{
+    helpers.top().isDereference = false;
+
+    /// Build a qualified field name from the dereference expression: base.fieldName -> BASE$FIELDNAME
+    /// This supports the table.column syntax for disambiguating fields from different join sides.
+    auto* const baseColumnRef = dynamic_cast<AntlrSQLParser::ColumnReferenceContext*>(context->base);
+    if (baseColumnRef == nullptr)
+    {
+        throw InvalidQuerySyntax("Only simple table.column dereference is supported, but got: {}", context->getText());
+    }
+    const auto tableName = bindIdentifier(baseColumnRef->identifier());
+    const auto fieldName = bindIdentifier(context->fieldName);
+    const auto qualifiedName = tableName + std::string(Schema::ATTRIBUTE_NAME_SEPARATOR) + fieldName;
+
+    if (helpers.top().isJoinRelation)
+    {
+        helpers.top().joinKeyRelationHelper.emplace_back(FieldAccessLogicalFunction(qualifiedName));
+    }
+    else if (helpers.top().isWhereOrHaving || helpers.top().isSelect || helpers.top().isWindow)
+    {
+        helpers.top().functionBuilder.emplace_back(FieldAccessLogicalFunction(qualifiedName));
+    }
+    else if (helpers.top().isGroupBy)
+    {
+        helpers.top().groupByFields.emplace_back(qualifiedName);
+    }
+}
+
 void AntlrSQLQueryPlanCreator::enterIdentifier(AntlrSQLParser::IdentifierContext* context)
 {
+    /// Skip identifiers that are part of a dereference expression (table.column).
+    /// The exitDereference handler will process them as a single qualified field name.
+    if (helpers.top().isDereference)
+    {
+        return;
+    }
+
     /// Get Index of Parent Rule to check type of parent rule in conditions
     std::optional<size_t> parentRuleIndex;
     if (const auto* const parentContext = dynamic_cast<antlr4::ParserRuleContext*>(context->parent); parentContext != nullptr)

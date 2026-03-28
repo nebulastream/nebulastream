@@ -68,6 +68,8 @@ public:
     void exitLogicalBinary(AntlrSQLParser::LogicalBinaryContext* context) override;
     void enterUnquotedIdentifier(AntlrSQLParser::UnquotedIdentifierContext* context) override;
     void enterIdentifier(AntlrSQLParser::IdentifierContext* context) override;
+    void enterDereference(AntlrSQLParser::DereferenceContext* context) override;
+    void exitDereference(AntlrSQLParser::DereferenceContext* context) override;
     void enterTimeUnit(AntlrSQLParser::TimeUnitContext* context) override;
     void exitSizeParameter(AntlrSQLParser::SizeParameterContext* context) override;
     void exitAdvancebyParameter(AntlrSQLParser::AdvancebyParameterContext* context) override;
