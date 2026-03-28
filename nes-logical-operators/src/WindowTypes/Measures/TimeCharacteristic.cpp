@@ -18,6 +18,7 @@
 #include <string>
 #include <utility>
 
+#include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <DataTypes/TimeUnit.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
@@ -49,7 +50,8 @@ TimeCharacteristic TimeCharacteristic::createEventTime(const FieldAccessLogicalF
 
 TimeCharacteristic TimeCharacteristic::createIngestionTime()
 {
-    return TimeCharacteristic(Type::IngestionTime);
+    auto field = Schema::Field(std::string(RECORD_CREATION_TS_FIELD_NAME), DataTypeProvider::provideDataType(DataType::Type::UINT64));
+    return {Type::IngestionTime, field, TimeUnit(1)};
 }
 
 TimeCharacteristic::Type TimeCharacteristic::getType() const

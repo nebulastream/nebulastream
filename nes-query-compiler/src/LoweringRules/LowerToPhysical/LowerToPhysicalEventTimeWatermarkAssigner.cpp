@@ -14,6 +14,8 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalEventTimeWatermarkAssigner.hpp>
 
 #include <memory>
+#include <utility>
+#include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
@@ -21,6 +23,7 @@
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
@@ -32,8 +35,21 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
 {
     PRECONDITION(logicalOperator.tryGetAs<EventTimeWatermarkAssignerLogicalOperator>(), "Expected a EventTimeWatermarkAssigner");
     const auto assigner = logicalOperator.getAs<EventTimeWatermarkAssignerLogicalOperator>();
-    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
-    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assigner->unit));
+
+    std::unique_ptr<TimeFunction> timeFunction;
+    const auto fieldAccess = assigner->onField.tryGetAs<FieldAccessLogicalFunction>();
+    if (fieldAccess && fieldAccess->get().getFieldName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+    {
+        /// Ingestion time: timestamp comes from buffer metadata, not from a per-tuple field.
+        timeFunction = std::make_unique<IngestionTimeFunction>();
+    }
+    else
+    {
+        const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assigner->onField);
+        timeFunction = std::make_unique<EventTimeFunction>(physicalFunction, assigner->unit);
+    }
+
+    auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(std::move(timeFunction));
     const auto memoryLayoutTypeTrait = logicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;

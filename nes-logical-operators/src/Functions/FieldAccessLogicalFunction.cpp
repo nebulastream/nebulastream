@@ -27,6 +27,7 @@
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <WindowTypes/Measures/TimeCharacteristic.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
 #include <LogicalFunctionRegistry.hpp>
@@ -75,6 +76,14 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 
 LogicalFunction FieldAccessLogicalFunction::withInferredDataType(const Schema& schema) const
 {
+    /// $record.creationTs is a built-in virtual field (buffer creation timestamp) not present in the schema.
+    if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+    {
+        auto copy = *this;
+        copy.dataType = DataTypeProvider::provideDataType(DataType::Type::UINT64);
+        return copy;
+    }
+
     const auto existingField = schema.getFieldByName(fieldName);
     if (!existingField)
     {

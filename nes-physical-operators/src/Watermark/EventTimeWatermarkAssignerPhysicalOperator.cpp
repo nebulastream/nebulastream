@@ -27,19 +27,25 @@
 namespace NES
 {
 
-EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction timeFunction)
+EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(std::unique_ptr<TimeFunction> timeFunction)
     : timeFunction(std::move(timeFunction)) { };
+
+EventTimeWatermarkAssignerPhysicalOperator::EventTimeWatermarkAssignerPhysicalOperator(
+    const EventTimeWatermarkAssignerPhysicalOperator& other)
+    : PhysicalOperatorConcept(other.id), timeFunction(other.timeFunction->clone()), child(other.child)
+{
+}
 
 void EventTimeWatermarkAssignerPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
     openChild(executionCtx, recordBuffer);
     executionCtx.watermarkTs = nautilus::val<Timestamp>(Timestamp(Timestamp::INITIAL_VALUE));
-    timeFunction.open(executionCtx, recordBuffer);
+    timeFunction->open(executionCtx, recordBuffer);
 }
 
 void EventTimeWatermarkAssignerPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
-    const auto tsField = timeFunction.getTs(ctx, record);
+    const auto tsField = timeFunction->getTs(ctx, record);
     if (tsField > ctx.watermarkTs)
     {
         ctx.watermarkTs = tsField;
