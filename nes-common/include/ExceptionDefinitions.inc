@@ -64,6 +64,7 @@ EXCEPTION(UnknownSinkName, 2033, "unknown sink name")
 EXCEPTION(SinkAlreadyExists, 2034, "sink already exists")
 EXCEPTION(QueryAlreadyRegistered, 2035, "query already registered")
 EXCEPTION(UnknownOutputFormatterType, 2036, "unknown output formatter type")
+EXCEPTION(UnknownOutputParserType, 2037, "unknown output parser type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
