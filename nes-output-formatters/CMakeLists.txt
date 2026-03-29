@@ -34,7 +34,11 @@ create_runtime_registry(OutputFormatterValidation nes-output-formatters
         HEADER_TEMPLATE "\${PLUGIN_NAME}OutputFormatter.hpp"
         INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
 
+create_runtime_registry(ValueSerializer nes-output-formatters
+        ENTRY_TEMPLATE "&\${PLUGIN_NAME}ValueSerializer::provideSerializer"
+        HEADER_TEMPLATE "DefaultValueSerializers.hpp"
+        INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/private)
+
 add_subdirectory(src)
 get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 target_sources(nes-output-formatters PRIVATE ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
-
