@@ -17,12 +17,16 @@
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/VarVal.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
+#include <magic_enum/magic_enum.hpp>
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -65,9 +69,20 @@ public:
 
     friend std::ostream& operator<<(std::ostream& os, const OutputFormatter& obj);
 
+    [[nodiscard]] const std::string& getSerializerType(const DataType::Type& dataType) const
+    {
+        if (const auto it = serializerTypes.find(dataType); it != serializerTypes.end())
+        {
+            return it->second;
+        }
+        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(dataType));
+    }
+
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
+    /// Stores the configured serializer for each datatype.
+    std::unordered_map<DataType::Type, std::string> serializerTypes;
 };
 
 }
