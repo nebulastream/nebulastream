@@ -10,18 +10,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(ValueSerializers)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 
-add_source_files(nes-output-formatters
-        OutputFormatter.cpp
-        OutputFormatterProvider.cpp
-        OutputFormatterDescriptor.cpp
-        OutputFormatterRegistry.cpp
-        OutputFormatterValidationRegistry.cpp
-        OutputFormatterValidationProvider.cpp
-        CSVOutputFormatter.cpp
-)
+add_library(json_value_serializer_plugin STATIC JSONValueSerializers.cpp)
+target_link_libraries(json_value_serializer_plugin PRIVATE nes-output-formatters)
+target_include_directories(json_value_serializer_plugin PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 
-# Runtime registry entries for the built-in CSV formatter
-add_registry_entry(OutputFormatter CSV)
-add_registry_entry(OutputFormatterValidation CSV)
+link_plugin_library(nes-output-formatters json_value_serializer_plugin)
+add_registry_entry(ValueSerializer JSONCHAR HEADER JSONValueSerializers.hpp)
+add_registry_entry(ValueSerializer JSONVARSIZED HEADER JSONValueSerializers.hpp)
