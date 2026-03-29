@@ -86,7 +86,7 @@ struct ConfigParametersCSV
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
+        = DescriptorConfig::createConfigParameterContainerMap(OutputFormatterDescriptor::parameterMap, QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
 };
 }
 

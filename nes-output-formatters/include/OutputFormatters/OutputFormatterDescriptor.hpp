@@ -30,6 +30,15 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const OutputFormatterDescriptor& outputFormatterDescriptor);
 
+    /// The float parser option is available for every output formatter type
+    static inline const DescriptorConfig::ConfigParameter<std::string> FLOAT_PARSER{
+        "float_parser",
+        "Default",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLOAT_PARSER, config); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(FLOAT_PARSER);
+
 private:
     /// Add LowerSchemaProvider as friend, so that it can construct the descriptor
     friend class LowerSchemaProvider;

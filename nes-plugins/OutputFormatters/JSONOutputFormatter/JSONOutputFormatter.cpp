@@ -111,7 +111,8 @@ void writeValue(
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize)
+    nautilus::val<uint64_t>& currentRemainingSize,
+    const std::unique_ptr<FloatOutputParser>& floatParser)
 {
     switch (fieldType.type)
     {
@@ -164,8 +165,8 @@ void writeValue(
         case DataType::Type::UINT64:
         case DataType::Type::FLOAT32:
         case DataType::Type::FLOAT64: {
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
+            const nautilus::val<uint64_t> amountWritten = formatAndWriteVal(
+                value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider, floatParser);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
             break;
@@ -177,7 +178,9 @@ void writeValue(
 }
 }
 
-JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : OutputFormatter(fieldNames)
+JSONOutputFormatter::JSONOutputFormatter(
+    const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
+    : OutputFormatter(fieldNames, descriptor.getFromConfig(OutputFormatterDescriptor::FLOAT_PARSER))
 {
 }
 
@@ -224,12 +227,12 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         }
         else
         {
-            writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+            writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize, floatParser);
         }
     }
     else
     {
-        writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+        writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize, floatParser);
     }
 
     /// Either write a , or a }\n depending on if this is the last value of the record
@@ -259,6 +262,6 @@ OutputFormatterValidationGeneratedRegistrar::RegisterJSONOutputFormatterValidati
 
 OutputFormatterRegistryReturnType OutputFormatterGeneratedRegistrar::RegisterJSONOutputFormatter(OutputFormatterRegistryArguments args)
 {
-    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames));
+    return std::make_unique<JSONOutputFormatter>(std::move(args.fieldNames), std::move(args.descriptor));
 }
 }

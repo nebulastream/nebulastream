@@ -26,6 +26,7 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/FloatOutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -97,7 +98,8 @@ static uint64_t writeValAsString(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
     TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
+    AbstractBufferProvider* bufferProvider,
+    FloatOutputParser* floatParser)
 {
     /// Convert val to a string
     /// Depending on the type, we need to perform additional transformations besides the direct conversion to string
@@ -106,7 +108,7 @@ static uint64_t writeValAsString(
     std::string stringFormattedValue;
     if constexpr (std::is_same_v<removedCVRefT, float> || std::is_same_v<removedCVRefT, double>)
     {
-        stringFormattedValue = formatFloat(val);
+        floatParser->floatToString(val, stringFormattedValue);
     }
     else if constexpr (std::is_same_v<removedCVRefT, bool>)
     {
@@ -135,7 +137,8 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     const nautilus::val<int8_t*>& address,
     const nautilus::val<uint64_t>& remainingSize,
     const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
+    const nautilus::val<AbstractBufferProvider*>& bufferProvider,
+    const std::unique_ptr<FloatOutputParser>& floatParser)
 {
     nautilus::val<uint64_t> writtenBytes = 0;
     /// Switch between datatypes to convert value to a nautilus val of the phyiscal type and convert it to a string
@@ -143,8 +146,14 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
     {
         case DataType::Type::BOOLEAN: {
             const auto castedVal = value.getRawValueAs<nautilus::val<bool>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<bool>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+            writtenBytes = nautilus::invoke(
+                writeValAsString<bool>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::INT8: {
@@ -152,67 +161,133 @@ inline nautilus::val<uint64_t> formatAndWriteVal(
             /// Casting them to int32_t fixes this
             const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<int32_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::INT16: {
             const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<int32_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::INT32: {
             const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<int32_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::INT64: {
             const auto castedVal = value.getRawValueAs<nautilus::val<int64_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<int64_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<int64_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::CHAR: {
             const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<char>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+            writtenBytes = nautilus::invoke(
+                writeValAsString<char>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::UINT8: {
             const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<uint8_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<uint8_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::UINT16: {
             const auto castedVal = value.getRawValueAs<nautilus::val<uint16_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<uint16_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<uint16_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::UINT32: {
             const auto castedVal = value.getRawValueAs<nautilus::val<uint32_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<uint32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<uint32_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::UINT64: {
             const auto castedVal = value.getRawValueAs<nautilus::val<uint64_t>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<uint64_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<uint64_t>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::FLOAT32: {
             const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<float>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+            writtenBytes = nautilus::invoke(
+                writeValAsString<float>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::FLOAT64: {
             const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
             writtenBytes = nautilus::invoke(
-                writeValAsString<double>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
+                writeValAsString<double>,
+                castedVal,
+                address,
+                remainingSize,
+                recordBuffer.getReference(),
+                bufferProvider,
+                nautilus::val<FloatOutputParser*>{floatParser.get()});
             break;
         }
         case DataType::Type::VARSIZED:

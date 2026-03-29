@@ -23,6 +23,8 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/FloatOutputParser.hpp>
+#include <OutputFormatters/FloatOutputParserProvider.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -41,9 +43,11 @@ namespace NES
 class OutputFormatter
 {
 public:
-    explicit OutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : fieldNames(fieldNames)
+    explicit OutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const std::string& floatParserType)
+        : fieldNames(fieldNames)
     {
         INVARIANT(!fieldNames.empty(), "Schema is not allowed to have 0 fields");
+        floatParser = FloatOutputParserProvider::provideFloatOutputParser(floatParserType);
     }
 
     virtual ~OutputFormatter() noexcept = default;
@@ -59,8 +63,7 @@ public:
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 
@@ -69,6 +72,7 @@ public:
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
+    std::unique_ptr<FloatOutputParser> floatParser;
 };
 
 }

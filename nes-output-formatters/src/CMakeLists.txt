@@ -15,6 +15,8 @@ add_source_files(nes-output-formatters
         OutputFormatterProvider.cpp
         OutputFormatterDescriptor.cpp
         OutputFormatterValidationProvider.cpp
+        FloatOutputParserProvider.cpp
 )
 add_plugin(CSV OutputFormatter nes-output-formatters CSVOutputFormatter.cpp)
 add_plugin(CSV OutputFormatterValidation nes-output-formatters CSVOutputFormatter.cpp)
+add_plugin(Default FloatOutputParser nes-output-formatters DefaultFloatOutputParser.cpp)
