@@ -36,6 +36,7 @@
 #include <std/cstring.h>
 
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
@@ -91,7 +92,8 @@ void writeValue(
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     const nautilus::val<bool>& quoteStrings,
     nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize)
+    nautilus::val<uint64_t>& currentRemainingSize,
+    const std::string& parserType)
 {
     switch (fieldType.type)
     {
@@ -125,7 +127,7 @@ void writeValue(
         case DataType::Type::CHAR: {
             /// Convert the VarVal to a string and write it into the address.
             const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider);
+                = formatAndWriteVal(value, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider, parserType);
             written += amountWritten;
             currentRemainingSize -= amountWritten;
             break;
@@ -139,7 +141,7 @@ void writeValue(
 
 CSVOutputFormatter::CSVOutputFormatter(
     const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
-    : OutputFormatter(fieldNames)
+    : OutputFormatter(fieldNames, descriptor)
     , quoteStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::QUOTE_STRINGS))
     , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
     , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
@@ -175,12 +177,30 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
         }
         else
         {
-            writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+            writeValue(
+                value,
+                fieldType,
+                fieldPointer,
+                recordBuffer,
+                bufferProvider,
+                quoteStrings,
+                written,
+                currentRemainingSize,
+                parserTypes[static_cast<size_t>(fieldType.type)]);
         }
     }
     else
     {
-        writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+        writeValue(
+            value,
+            fieldType,
+            fieldPointer,
+            recordBuffer,
+            bufferProvider,
+            quoteStrings,
+            written,
+            currentRemainingSize,
+            parserTypes[static_cast<size_t>(fieldType.type)]);
     }
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index

@@ -23,6 +23,7 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -41,9 +42,22 @@ namespace NES
 class OutputFormatter
 {
 public:
-    explicit OutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames) : fieldNames(fieldNames)
+    explicit OutputFormatter(const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
+        : fieldNames(fieldNames), parserTypes(12)
     {
         INVARIANT(!fieldNames.empty(), "Schema is not allowed to have 0 fields");
+        parserTypes[static_cast<size_t>(DataType::Type::BOOLEAN)] = descriptor.getFromConfig(OutputFormatterDescriptor::BOOL_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::CHAR)] = descriptor.getFromConfig(OutputFormatterDescriptor::CHAR_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::UINT8)] = descriptor.getFromConfig(OutputFormatterDescriptor::UINT8_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::UINT16)] = descriptor.getFromConfig(OutputFormatterDescriptor::UINT16_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::UINT32)] = descriptor.getFromConfig(OutputFormatterDescriptor::UINT32_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::UINT64)] = descriptor.getFromConfig(OutputFormatterDescriptor::UINT64_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::INT8)] = descriptor.getFromConfig(OutputFormatterDescriptor::INT8_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::INT16)] = descriptor.getFromConfig(OutputFormatterDescriptor::INT16_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::INT32)] = descriptor.getFromConfig(OutputFormatterDescriptor::INT32_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::INT64)] = descriptor.getFromConfig(OutputFormatterDescriptor::INT64_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::FLOAT32)] = descriptor.getFromConfig(OutputFormatterDescriptor::F32_PARSER);
+        parserTypes[static_cast<size_t>(DataType::Type::FLOAT64)] = descriptor.getFromConfig(OutputFormatterDescriptor::F64_PARSER);
     }
 
     virtual ~OutputFormatter() noexcept = default;
@@ -59,8 +73,7 @@ public:
         const nautilus::val<int8_t*>& fieldPointer,
         const nautilus::val<uint64_t>& remainingSize,
         const RecordBuffer& recordBuffer,
-        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const
-        = 0;
+        const nautilus::val<AbstractBufferProvider*>& bufferProvider) const = 0;
 
     virtual std::ostream& toString(std::ostream&) const = 0;
 
@@ -69,6 +82,8 @@ public:
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
+    /// Stores the configured parser for each datatype. Access a types parser by using the type enum as index
+    std::vector<std::string> parserTypes;
 };
 
 }
