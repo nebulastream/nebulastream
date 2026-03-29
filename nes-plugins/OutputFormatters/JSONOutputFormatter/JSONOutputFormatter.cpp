@@ -25,24 +25,17 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-#include <simdjson.h>
+
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/FixedSizedData.hpp>
-#include <DataTypes/StructData.hpp>
-#include <DataTypes/VarArrayData.hpp>
 #include <DataTypes/VarVal.hpp>
-#include <DataTypes/VariableSizedData.hpp>
 #include <Interface/Record.hpp>
 #include <Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
-#include <Util/Strings.hpp>
 #include <fmt/format.h>
-#include <magic_enum/magic_enum.hpp>
-#include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
-#include <DataTypes/VarArrayData.hpp>
+#include <OutputFormatters/ValueSerializer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
@@ -58,16 +51,6 @@ namespace NES
 {
 namespace
 {
-/// Escapes a raw byte string into a quoted JSON string literal. simdjson's string builder performs
-/// RFC 8259-conformant escaping (\b \f \n \r \t \" \\ short forms, \uXXXX for the remaining control
-/// characters) with a SIMD fast path that scans for characters needing escaping.
-std::string escapeAsJsonString(std::string_view input)
-{
-    simdjson::builder::string_builder builder;
-    builder.escape_and_append_with_quotes(input);
-    return std::string{builder.view().value()};
-}
-
 uint64_t writePreValueContents(
     const bool isFirstField,
     const char* fieldIdentifier,
@@ -81,214 +64,32 @@ uint64_t writePreValueContents(
     {
         preValueContentString = "{" + preValueContentString;
     }
-    return writeValueToBuffer(preValueContentString.c_str(), remainingSpace, buffer, bufferProvider, bufferAddress);
-}
-
-uint64_t writeChar(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const char content,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// Chars are treated as strings in JSON
-    const std::string charAsJsonString = escapeAsJsonString(std::string_view(&content, 1));
-    return writeValueToBuffer(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-uint64_t writeVarsized(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const int8_t* varSizedContent,
-    const uint64_t contentSize,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    /// NOLINTNEXTLINE(cppcoreguidelines-pro-type-reinterpret-cast) -- int8_t buffer reinterpreted as char* for string_view
-    const auto* const contentChars = reinterpret_cast<const char*>(varSizedContent);
-    const std::string jsonFormattedString = escapeAsJsonString(std::string_view(contentChars, contentSize));
-    return writeValueToBuffer(jsonFormattedString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-/// Writes either `{"fieldName":` (first sub-field) or `,"fieldName":` (subsequent
-/// sub-fields) into the buffer; used by the STRUCT case of writeValue to glue
-/// together the recursive child renderings.
-uint64_t writeStructFieldNamePrefix(
-    const bool isFirstField,
-    const char* fieldName,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider,
-    int8_t* bufferAddress)
-{
-    std::string out = isFirstField ? std::string("{\"") : std::string(",\"");
-    out += fieldName;
-    out += "\":";
-    return writeValueToBuffer(out.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
-}
-
-uint64_t
-writeStructEnd(int8_t* bufferAddress, const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider)
-{
-    return writeValueToBuffer("}", remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
-}
-
-uint64_t writeArrayPrefix(
-    const bool isFirstField,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider,
-    int8_t* bufferAddress)
-{
-    const std::string out = isFirstField ? std::string("[") : std::string(",");
-    return writeValueToBuffer(out.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
-}
-
-uint64_t
-writeArrayEnd(const uint64_t remainingSpace, TupleBuffer* tupleBuffer, AbstractBufferProvider* bufferProvider, int8_t* bufferAddress)
-{
-    return writeValueToBuffer("]", remainingSpace, tupleBuffer, bufferProvider, bufferAddress);
+    return writeValueToBuffer(
+        preValueContentString.data(), preValueContentString.size(), remainingSpace, buffer, bufferProvider, bufferAddress);
 }
 
 void writeValue(
-    const DataType& fieldType,
     const VarVal& value,
     const nautilus::val<int8_t*>& fieldPointer,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
     nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize)
+    nautilus::val<uint64_t>& currentRemainingSize,
+    const DataType& fieldType,
+    const std::unordered_map<DataType::Type, std::string>& serializerTypes)
 {
-    switch (fieldType.type)
+    if (const auto it = serializerTypes.find(fieldType.type); it != serializerTypes.end())
     {
-        case DataType::Type::CHAR: {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeChar,
-                fieldPointer + written,
-                currentRemainingSize,
-                value.getRawValueAs<nautilus::val<char>>(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::VARSIZED: {
-            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeVarsized,
-                fieldPointer + written,
-                currentRemainingSize,
-                varSizedValue.getContent(),
-                varSizedValue.getSize(),
-                recordBuffer.getReference(),
-                bufferProvider);
-
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::INT8:
-        case DataType::Type::INT16:
-        case DataType::Type::INT32:
-        case DataType::Type::INT64:
-        case DataType::Type::UINT8:
-        case DataType::Type::UINT16:
-        case DataType::Type::UINT32:
-        case DataType::Type::UINT64:
-        case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64:
-        case DataType::Type::BOOLEAN: {
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::FIXEDSIZED: {
-            const auto fixedValue = value.getRawValueAs<FixedSizedData>();
-            for (nautilus::static_val<size_t> i = 0; i < fixedValue.getNumElements(); ++i)
-            {
-                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                    writeArrayPrefix,
-                    i == nautilus::val<uint64_t>{0},
-                    currentRemainingSize,
-                    recordBuffer.getReference(),
-                    bufferProvider,
-                    fieldPointer + written);
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-                writeValue(
-                    fieldType.elementType[0],
-                    fixedValue.at(nautilus::val<uint64_t>{i}),
-                    fieldPointer,
-                    recordBuffer,
-                    bufferProvider,
-                    written,
-                    currentRemainingSize);
-            }
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeArrayEnd, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::VARARRAY: {
-            /// Vararray can use the same pattern as Fixedsized
-            const auto varArrayVal = value.getRawValueAs<VarArrayData>();
-            for (nautilus::val<uint64_t> i = 0; i < varArrayVal.getNumElements(); ++i)
-            {
-                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                    writeArrayPrefix,
-                    i == nautilus::val<uint64_t>{0},
-                    currentRemainingSize,
-                    recordBuffer.getReference(),
-                    bufferProvider,
-                    fieldPointer + written);
-                written += amountWritten;
-                currentRemainingSize -= amountWritten;
-                writeValue(
-                    fieldType.elementType[0], varArrayVal.at(i), fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
-            }
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeArrayEnd, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::STRUCT: {
-            /// Render as JSON object: `{"f1":v1,"f2":v2,...}`. Field names and
-            /// the sub-field DataType are host-side schema, so we unroll over
-            /// `fieldType.fields` with `static_val<uint64_t>` and recurse into
-            /// `writeValue` for each sub-VarVal pulled out of `StructData::at`.
-            const auto structValue = value.getRawValueAs<StructData>();
-            for (nautilus::static_val<uint64_t> i = 0; i < fieldType.fields.size(); ++i)
-            {
-                const auto& [subFieldName, subFieldType] = fieldType.fields.at(i);
-                const nautilus::val<const char*> namePtr{subFieldName.c_str()};
-                const nautilus::val<uint64_t> prefixWritten = nautilus::invoke(
-                    writeStructFieldNamePrefix,
-                    i == nautilus::val<uint64_t>(0),
-                    namePtr,
-                    currentRemainingSize,
-                    recordBuffer.getReference(),
-                    bufferProvider,
-                    fieldPointer + written);
-                written += prefixWritten;
-                currentRemainingSize -= prefixWritten;
-
-                const VarVal subValue = structValue.at(subFieldName);
-                writeValue(subFieldType, subValue, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
-            }
-            const nautilus::val<uint64_t> endWritten = nautilus::invoke(
-                writeStructEnd, fieldPointer + written, currentRemainingSize, recordBuffer.getReference(), bufferProvider);
-            written += endWritten;
-            currentRemainingSize -= endWritten;
-            break;
-        }
-        case DataType::Type::UNDEFINED: {
-            throw UnknownDataType("JSON-OutputFormatting for type UNDEFINED is not supported.");
-        }
+        const ValueSerializerConfig config{.quoted = true};
+        const std::unique_ptr<ValueSerializer> valueSerializer = provideValueSerializer(it->second, config);
+        const nautilus::val<uint64_t> amountWritten = valueSerializer->serializeAndWrite(
+            value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer, serializerTypes, fieldType);
+        written += amountWritten;
+        currentRemainingSize -= amountWritten;
+    }
+    else
+    {
+        throw UnknownValueSerializerType("No ValueSerializer configured for DataType {}.", magic_enum::enum_name(fieldType.type));
     }
 }
 }
@@ -298,6 +99,22 @@ JSONOutputFormatter::JSONOutputFormatter(const std::vector<Record::RecordFieldId
     , canonicalFieldNames(
           fieldNames | std::views::transform([](const auto& id) { return fmt::format("{}", id); }) | std::ranges::to<std::vector>())
 {
+    serializerTypes[DataType::Type::UINT8] = "DefaultUINT8";
+    serializerTypes[DataType::Type::UINT16] = "DefaultUINT16";
+    serializerTypes[DataType::Type::UINT32] = "DefaultUINT32";
+    serializerTypes[DataType::Type::UINT64] = "DefaultUINT64";
+    serializerTypes[DataType::Type::INT8] = "DefaultINT8";
+    serializerTypes[DataType::Type::INT16] = "DefaultINT16";
+    serializerTypes[DataType::Type::INT32] = "DefaultINT32";
+    serializerTypes[DataType::Type::INT64] = "DefaultINT64";
+    serializerTypes[DataType::Type::FLOAT32] = "DefaultF32";
+    serializerTypes[DataType::Type::FLOAT64] = "DefaultF64";
+    serializerTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+    serializerTypes[DataType::Type::CHAR] = "JSONCHAR";
+    serializerTypes[DataType::Type::VARSIZED] = "JSONVARSIZED";
+    serializerTypes[DataType::Type::FIXEDSIZED] = "JSONFIXEDSIZED";
+    serializerTypes[DataType::Type::VARARRAY] = "JSONVARARRAY";
+    serializerTypes[DataType::Type::STRUCT] = "JSONSTRUCT";
 }
 
 nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
@@ -335,6 +152,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeValueToBuffer,
                 nautilus::val<const char*>{"null"},
+                nautilus::val<size_t>{4},
                 currentRemainingSize,
                 recordBuffer.getReference(),
                 bufferProvider,
@@ -344,12 +162,13 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         }
         else
         {
-            writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+            writeValue(
+                value, fieldPointer + written, recordBuffer, bufferProvider, written, currentRemainingSize, fieldType, serializerTypes);
         }
     }
     else
     {
-        writeValue(fieldType, value, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize);
+        writeValue(value, fieldPointer + written, recordBuffer, bufferProvider, written, currentRemainingSize, fieldType, serializerTypes);
     }
 
     /// Either write a , or a }\n depending on if this is the last value of the record
@@ -358,8 +177,19 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
         nautilus::val<const char*>{"}\n"},
         nautilus::val<const char*>{","});
 
+    const nautilus::val<size_t> delimiterSize = nautilus::select(
+        nautilus::val<uint64_t>(fieldIndex) == nautilus::val<uint64_t>(fieldNames.size()) - 1,
+        nautilus::val<size_t>{2},
+        nautilus::val<size_t>{1});
+
     written += nautilus::invoke(
-        writeValueToBuffer, delimiter, currentRemainingSize, recordBuffer.getReference(), bufferProvider, fieldPointer + written);
+        writeValueToBuffer,
+        delimiter,
+        delimiterSize,
+        currentRemainingSize,
+        recordBuffer.getReference(),
+        bufferProvider,
+        fieldPointer + written);
     return written;
 }
 
