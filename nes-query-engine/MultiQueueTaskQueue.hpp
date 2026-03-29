@@ -47,6 +47,10 @@ class MultiQueueTaskQueue
     std::atomic<size_t> roundRobinCounter{0};
     size_t numQueues;
 
+    /// Lock-free approximate queue sizes for PER_THREAD_SMALLEST_QUEUE.
+    /// Maintained via atomic increments/decrements on enqueue/dequeue instead of calling .size() under a lock.
+    std::vector<std::atomic<int64_t>> approxQueueSizes;
+
     static constexpr std::chrono::milliseconds StopTokenCheckInterval{100};
 
     size_t selectTargetQueue()
@@ -56,12 +60,12 @@ class MultiQueueTaskQueue
             return roundRobinCounter.fetch_add(1, std::memory_order_relaxed) % numQueues;
         }
 
-        /// PER_THREAD_SMALLEST_QUEUE: find the queue with the fewest pending tasks
+        /// PER_THREAD_SMALLEST_QUEUE: find the queue with the fewest pending tasks using lock-free approximate sizes
         size_t bestIndex = 0;
-        size_t bestSize = std::numeric_limits<size_t>::max();
+        auto bestSize = std::numeric_limits<int64_t>::max();
         for (size_t i = 0; i < numQueues; ++i)
         {
-            const auto sz = threadQueues[i]->size();
+            const auto sz = approxQueueSizes[i].load(std::memory_order_relaxed);
             if (sz < bestSize)
             {
                 bestSize = sz;
@@ -77,6 +81,7 @@ class MultiQueueTaskQueue
         /// Priority 1: own queue
         if (threadQueues[threadIndex]->try_dequeue(task))
         {
+            approxQueueSizes[threadIndex].fetch_sub(1, std::memory_order_relaxed);
             return task;
         }
 
@@ -88,6 +93,7 @@ class MultiQueueTaskQueue
                 const auto victim = (threadIndex + i) % numQueues;
                 if (threadQueues[victim]->try_dequeue(task))
                 {
+                    approxQueueSizes[victim].fetch_sub(1, std::memory_order_relaxed);
                     return task;
                 }
             }
@@ -102,7 +108,8 @@ class MultiQueueTaskQueue
 
 public:
     MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, SchedulingStrategy strategy, bool workStealing = false)
-        : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing), numQueues(numThreads)
+        : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing), numQueues(numThreads),
+          approxQueueSizes(numThreads)
     {
         threadQueues.reserve(numThreads);
         threadSemaphores.reserve(numThreads);
@@ -110,6 +117,7 @@ public:
         {
             threadQueues.push_back(std::make_unique<folly::UMPMCQueue<TaskType, true>>());
             threadSemaphores.push_back(std::make_unique<std::counting_semaphore<>>(0));
+            approxQueueSizes[i].store(0, std::memory_order_relaxed);
         }
     }
 
@@ -136,6 +144,7 @@ public:
     {
         const auto target = selectTargetQueue();
         threadQueues[target]->enqueue(std::forward<T>(task));
+        approxQueueSizes[target].fetch_add(1, std::memory_order_relaxed);
         threadSemaphores[target]->release();
     }
 

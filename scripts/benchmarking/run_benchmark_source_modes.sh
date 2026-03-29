@@ -420,8 +420,12 @@ for threads in "${THREAD_LIST[@]}"; do
         work_dir="${WORK_BASE}/${threads}t/${sched}_ws${ws}/${mode}/run_${iter}"
         mkdir -p "$work_dir"
 
-        # Build command
-        cmd=("$SYSTEST_BIN" -b --show-query-performance
+        # Build command — pin to one NUMA node when threads fit
+        cmd=()
+        if command -v numactl &>/dev/null && [[ "$threads" -le 32 ]]; then
+            cmd+=(numactl --cpunodebind=0 --membind=0)
+        fi
+        cmd+=("$SYSTEST_BIN" -b --show-query-performance
             -t "$test_file"
             --workingDir "$work_dir"
         )

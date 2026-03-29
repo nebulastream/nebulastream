@@ -1,0 +1,17 @@
+# name: benchmark/YahooStreamingBenchmark_10k_huge_stateless.test
+# description: YahooStreamingBenchmark 10k campaign_ids, 50M tuples (~4.8GB input), stateless filter only
+# groups: [benchmark, huge, Filter]
+
+CREATE LOGICAL SOURCE ysb10k(user_id UINT64 NOT NULL, page_id UINT64 NOT NULL, campaign_id UINT64 NOT NULL, ad_type UINT64 NOT NULL, event_type UINT64 NOT NULL, current_ms UINT64 NOT NULL, ip UINT64 NOT NULL, d1 UINT64 NOT NULL, d2 UINT64 NOT NULL, d3 UINT32 NOT NULL, d4 UINT16 NOT NULL);
+CREATE PHYSICAL SOURCE FOR ysb10k TYPE File;
+ATTACH FILE huge/ysb/ysb_10k_data_50000000.csv
+
+CREATE SINK ysb10kChecksum(ysb10k.user_id UINT64 NOT NULL, ysb10k.page_id UINT64 NOT NULL, ysb10k.campaign_id UINT64 NOT NULL, ysb10k.ad_type UINT64 NOT NULL, ysb10k.event_type UINT64 NOT NULL, ysb10k.current_ms UINT64 NOT NULL, ysb10k.ip UINT64 NOT NULL, ysb10k.d1 UINT64 NOT NULL, ysb10k.d2 UINT64 NOT NULL, ysb10k.d3 UINT32 NOT NULL, ysb10k.d4 UINT16 NOT NULL) TYPE Checksum;
+
+# Query 1 YSB with 10k campaign_ids (50M tuples) - stateless filter only
+SELECT *
+FROM ysb10k
+WHERE event_type < UINT64(1)
+INTO ysb10kChecksum;
+----
+0 0
