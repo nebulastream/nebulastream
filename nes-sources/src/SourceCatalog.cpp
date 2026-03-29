@@ -89,7 +89,7 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     }
 
     auto parserConfigObject = ParserConfig::create(parserConfig);
-    if (not contains(parserConfigObject.parserType))
+    if (toUpperCase(parserConfigObject.parserType) != "NATIVE" && not contains(parserConfigObject.parserType))
     {
         return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
     }
