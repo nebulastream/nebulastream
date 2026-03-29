@@ -109,8 +109,7 @@ TEST_F(FixedSizedArrayJSONTest, ThermalFrames4x4ParsesAllElements)
     schema.addField("timestamp", DataType{DataType::Type::UINT64, DataType::NULLABLE::NOT_NULLABLE});
     schema.addField("camera_id", DataType{DataType::Type::UINT32, DataType::NULLABLE::NOT_NULLABLE});
     schema.addField(
-        "image",
-        DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount});
+        "image", DataType{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, imageElementCount});
 
     /// Load JSONL through the file source. Buffer sized to comfortably hold the file.
     constexpr size_t sizeOfRawBuffers = 4096;

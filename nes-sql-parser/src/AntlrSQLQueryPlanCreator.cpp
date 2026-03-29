@@ -42,13 +42,13 @@
 #include <Functions/BooleanFunctions/NegateLogicalFunction.hpp>
 #include <Functions/BooleanFunctions/OrLogicalFunction.hpp>
 #include <Functions/CastToTypeLogicalFunction.hpp>
-#include <Functions/ConstructStructLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/GreaterLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessEqualsLogicalFunction.hpp>
 #include <Functions/ComparisonFunctions/LessLogicalFunction.hpp>
 #include <Functions/ConcatLogicalFunction.hpp>
 #include <Functions/ConstantValueLogicalFunction.hpp>
+#include <Functions/ConstructStructLogicalFunction.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Functions/LogicalFunctionProvider.hpp>
@@ -948,7 +948,8 @@ void AntlrSQLQueryPlanCreator::exitFunctionCall(AntlrSQLParser::FunctionCallCont
                     if (numArgs > helpers.top().functionBuilder.size())
                     {
                         throw InvalidQuerySyntax(
-                            "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, e.g. FLOAT64(1.5))",
+                            "Struct constructor '{}' expects {} arguments but only {} are available (raw literals must be wrapped, e.g. "
+                            "FLOAT64(1.5))",
                             funcName,
                             numArgs,
                             helpers.top().functionBuilder.size());

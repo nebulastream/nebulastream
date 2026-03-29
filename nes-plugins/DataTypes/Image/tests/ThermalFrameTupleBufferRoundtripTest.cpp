@@ -48,6 +48,7 @@ public:
         Logger::setupLogging("ThermalFrameTupleBufferRoundtripTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ThermalFrameTupleBufferRoundtripTest class.");
     }
+
     static void TearDownTestSuite() { NES_INFO("Tear down ThermalFrameTupleBufferRoundtripTest class."); }
 
     void SetUp() override

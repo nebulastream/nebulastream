@@ -23,10 +23,10 @@
 #include <Nautilus/DataTypes/StructData.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <nautilus/val.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <nautilus/val.hpp>
 #include <static.hpp>
 
 namespace NES
@@ -39,10 +39,7 @@ ConstructStructPhysicalFunction::ConstructStructPhysicalFunction(std::vector<Phy
 
 VarVal ConstructStructPhysicalFunction::execute(const Record& record, ArenaRef& arena) const
 {
-    PRECONDITION(
-        outputType.type == DataType::Type::STRUCT,
-        "ConstructStruct expects STRUCT outputType, got {}",
-        outputType);
+    PRECONDITION(outputType.type == DataType::Type::STRUCT, "ConstructStruct expects STRUCT outputType, got {}", outputType);
     PRECONDITION(
         childFunctions.size() == outputType.fields.size(),
         "ConstructStruct child count ({}) must match field count of {} ({})",

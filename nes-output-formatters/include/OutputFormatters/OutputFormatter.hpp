@@ -17,12 +17,17 @@
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <OutputFormatters/OutputFormatterUtil.hpp>
+#include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -69,6 +74,24 @@ public:
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
+    /// Stores the configured parser for each datatype.
+    std::unordered_map<DataType::Type, std::string> parserTypes
+        = {{DataType::Type::UINT8, "DefaultUINT8"},
+           {DataType::Type::UINT16, "DefaultUINT16"},
+           {DataType::Type::UINT32, "DefaultUINT32"},
+           {DataType::Type::UINT64, "DefaultUINT64"},
+           {DataType::Type::INT8, "DefaultINT8"},
+           {DataType::Type::INT16, "DefaultINT16"},
+           {DataType::Type::INT32, "DefaultINT32"},
+           {DataType::Type::INT64, "DefaultINT64"},
+           {DataType::Type::FLOAT32, "DefaultF32"},
+           {DataType::Type::FLOAT64, "DefaultF64"},
+           {DataType::Type::CHAR, "DefaultCHAR"},
+           {DataType::Type::BOOLEAN, "DefaultBOOL"},
+           {DataType::Type::VARSIZED, "DefaultVARSIZED"},
+           {DataType::Type::FIXEDSIZED, "DefaultFIXEDSIZED"},
+           {DataType::Type::STRUCT, "DefaultSTRUCT"},
+           {DataType::Type::UNDEFINED, "DefaultUNDEFINED"}};
 };
 
 }

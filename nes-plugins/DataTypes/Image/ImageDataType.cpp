@@ -42,8 +42,7 @@ constexpr uint32_t THERMAL_IMAGE_PIXEL_COUNT = 64 * 64;
 
 DataType makeThermalFrame(DataType::NULLABLE nullable)
 {
-    const DataType pixels{
-        DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, THERMAL_PIXEL_COUNT};
+    const DataType pixels{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, THERMAL_PIXEL_COUNT};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("pixels", pixels);
     return DataType{DataType::Type::STRUCT, nullable, std::string{"ThermalFrame"}, std::move(fields)};
@@ -61,8 +60,7 @@ DataType makeThermalImage(DataType::NULLABLE nullable)
     /// Same shape as ThermalFrame, just larger — single FIXEDSIZED<UINT16> pixels field.
     /// The logical functions gate on this layout, not on the structName, so they
     /// accept either type without code change.
-    const DataType pixels{
-        DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, THERMAL_IMAGE_PIXEL_COUNT};
+    const DataType pixels{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT16, THERMAL_IMAGE_PIXEL_COUNT};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("pixels", pixels);
     return DataType{DataType::Type::STRUCT, nullable, std::string{"ThermalImage"}, std::move(fields)};
@@ -73,8 +71,7 @@ DataType makeRGBFrame(DataType::NULLABLE nullable)
     /// Planar layout — `r`, `g`, `b` each occupy a contiguous UINT8 block of
     /// `THERMAL_PIXEL_COUNT` bytes. Matching the ThermalFrame pixel count
     /// keeps `to_rgb` a same-shape transformation.
-    const DataType channel{
-        DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT8, THERMAL_PIXEL_COUNT};
+    const DataType channel{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT8, THERMAL_PIXEL_COUNT};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("r", channel);
     fields.emplace_back("g", channel);

@@ -29,8 +29,7 @@
 namespace NES
 {
 
-ReadingAddPhysicalFunction::ReadingAddPhysicalFunction(
-    PhysicalFunction leftFunction, PhysicalFunction rightFunction, DataType outputType)
+ReadingAddPhysicalFunction::ReadingAddPhysicalFunction(PhysicalFunction leftFunction, PhysicalFunction rightFunction, DataType outputType)
     : leftFunction(std::move(leftFunction)), rightFunction(std::move(rightFunction)), outputType(std::move(outputType))
 {
 }

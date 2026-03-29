@@ -56,12 +56,12 @@ nautilus::val<int8_t*> FixedSizedData::getRawPtr() const
 
 VarVal FixedSizedData::at(const nautilus::val<uint64_t>& index) const
 {
-    #ifndef NDEBUG
+#ifndef NDEBUG
     if (index >= nautilus::val<uint64_t>(numElements))
     {
         nautilus::invoke(+[] { throw OutOfRangeAccess("FixedSizedData::at: index out of range"); });
     }
-    #endif
+#endif
 
     const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>(elementSize));
@@ -70,12 +70,12 @@ VarVal FixedSizedData::at(const nautilus::val<uint64_t>& index) const
 
 void FixedSizedData::writeAt(const nautilus::val<uint64_t>& index, const VarVal& value) const
 {
-    #ifndef NDEBUG
+#ifndef NDEBUG
     if (index >= nautilus::val<uint64_t>(numElements))
     {
         nautilus::invoke(+[] { throw OutOfRangeAccess("FixedSizedData::writeAt: index out of range"); });
     }
-    #endif
+#endif
 
     const auto elementSize = DataType{elementType, DataType::NULLABLE::NOT_NULLABLE}.getSizeInBytesWithoutNull();
     const auto elementPtr = ptr + (index * nautilus::val<uint64_t>(elementSize));

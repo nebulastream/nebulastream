@@ -39,6 +39,7 @@ public:
         Logger::setupLogging("StructDataTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup StructDataTest class.");
     }
+
     static void TearDownTestCase() { NES_INFO("Tear down StructDataTest class."); }
 };
 
@@ -59,8 +60,7 @@ TEST_F(StructDataTest, GettersReflectConstructorArgs)
 {
     /// `Point { x: INT32, y: INT32 }` — two 4-byte primitives, 8 bytes total.
     std::array<int32_t, 2> bytes = {7, -3};
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData s(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(bytes.data())), fields);
 
     EXPECT_EQ(s.getNumFields(), 2U);
@@ -72,6 +72,7 @@ TEST_F(StructDataTest, AtReturnsTypedPrimitiveByIndex)
 {
     /// Heterogeneous primitives. Layout: i64 (8) | u8 (1) | f32 (4) | char (1) = 14 bytes.
 #pragma pack(push, 1)
+
     struct Layout
     {
         int64_t a;
@@ -79,6 +80,7 @@ TEST_F(StructDataTest, AtReturnsTypedPrimitiveByIndex)
         float c;
         char d;
     };
+
 #pragma pack(pop)
     Layout buf{.a = -1234567890, .b = 200, .c = 3.5F, .d = 'Z'};
     std::vector<std::pair<std::string, DataType>> fields{
@@ -163,11 +165,13 @@ TEST_F(StructDataTest, NestedStructFieldYieldsStructDataView)
     /// Outer { tag: UINT8, inner: STRUCT { value: UINT16 } } — exercises the
     /// recursive layout (offset of `inner` is 1 byte, then UINT16 inline).
 #pragma pack(push, 1)
+
     struct Layout
     {
         uint8_t tag;
         uint16_t value;
     };
+
 #pragma pack(pop)
     Layout buf{.tag = 9, .value = 1234};
 
@@ -189,8 +193,7 @@ TEST_F(StructDataTest, EqualityIdenticalContent)
 {
     std::array<int32_t, 2> a = {7, -3};
     std::array<int32_t, 2> b = a;
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), fields);
     const StructData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), fields);
 
@@ -202,8 +205,7 @@ TEST_F(StructDataTest, EqualityDifferentContent)
 {
     std::array<int32_t, 2> a = {7, -3};
     std::array<int32_t, 2> b = {7, 0};
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(a.data())), fields);
     const StructData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(b.data())), fields);
 
@@ -214,10 +216,8 @@ TEST_F(StructDataTest, EqualityDifferentContent)
 TEST_F(StructDataTest, EqualityDifferentLayoutFails)
 {
     std::array<int32_t, 2> data = {7, -3};
-    std::vector<std::pair<std::string, DataType>> fields1{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
-    std::vector<std::pair<std::string, DataType>> fields2{
-        {"a", primitive(DataType::Type::INT32)}, {"b", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields1{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields2{{"a", primitive(DataType::Type::INT32)}, {"b", primitive(DataType::Type::INT32)}};
     const StructData lhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), fields1);
     const StructData rhs(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), fields2);
 
@@ -228,8 +228,7 @@ TEST_F(StructDataTest, WriteAtPrimitiveByName)
 {
     /// Round-trip a primitive field write: write a known value via writeAt, read it back via at.
     std::array<int32_t, 2> bytes = {0, 0};
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData s(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(bytes.data())), fields);
 
     s.writeAt("x", VarVal{nautilus::val<int32_t>(123)});
@@ -244,8 +243,7 @@ TEST_F(StructDataTest, WriteAtPrimitiveByIndex)
     /// Same idea but addressing fields positionally — verifies index dispatch
     /// and that the offset arithmetic is in sync with `at(index)`.
     std::array<int32_t, 2> bytes = {0, 0};
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData s(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(bytes.data())), fields);
 
     s.writeAt(static_cast<size_t>(0), VarVal{nautilus::val<int32_t>(7)});
@@ -284,27 +282,28 @@ TEST_F(StructDataTest, WriteAtNestedStructCopiesInlineBytes)
 {
     /// Same as the FIXEDSIZED case but for a nested STRUCT field.
 #pragma pack(push, 1)
+
     struct InnerLayout
     {
         uint16_t value;
     };
+
     struct Outer
     {
         uint8_t tag;
         InnerLayout inner;
     };
+
 #pragma pack(pop)
     Outer destBuf{.tag = 0, .inner = {.value = 0}};
 
     std::vector<std::pair<std::string, DataType>> innerFields{{"value", primitive(DataType::Type::UINT16)}};
     DataType innerStructType{DataType::Type::STRUCT, DataType::NULLABLE::NOT_NULLABLE, std::string{"Inner"}, innerFields};
-    std::vector<std::pair<std::string, DataType>> outerFields{
-        {"tag", primitive(DataType::Type::UINT8)}, {"inner", innerStructType}};
+    std::vector<std::pair<std::string, DataType>> outerFields{{"tag", primitive(DataType::Type::UINT8)}, {"inner", innerStructType}};
     const StructData outer(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(&destBuf)), outerFields);
 
     InnerLayout sourceInner{.value = 4242};
-    const StructData sourceInnerStruct(
-        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(&sourceInner)), innerFields);
+    const StructData sourceInnerStruct(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(&sourceInner)), innerFields);
     outer.writeAt("inner", VarVal{sourceInnerStruct});
 
     EXPECT_EQ(outer.at("inner").getRawValueAs<StructData>().at("value").getRawValueAs<nautilus::val<uint16_t>>(), 4242);
@@ -348,8 +347,7 @@ TEST_F(StructDataTest, WriteAtIndexOutOfRangeThrows)
 TEST_F(StructDataTest, CopyAndAssign)
 {
     std::array<int32_t, 2> data = {1, 2};
-    std::vector<std::pair<std::string, DataType>> fields{
-        {"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
+    std::vector<std::pair<std::string, DataType>> fields{{"x", primitive(DataType::Type::INT32)}, {"y", primitive(DataType::Type::INT32)}};
     const StructData original(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), fields);
 
     /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional

@@ -243,8 +243,9 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
     return std::visit(
         [&]<typename LHS, typename RHS>(const LHS& trueUnderlying, const RHS& falseUnderlying) -> VarVal
         {
-            if constexpr (std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData> && !std::same_as<LHS, FixedSizedData>
-                          && !std::same_as<LHS, StructData>)
+            if constexpr (
+                std::same_as<LHS, RHS> && !std::same_as<LHS, VariableSizedData> && !std::same_as<LHS, FixedSizedData>
+                && !std::same_as<LHS, StructData>)
             {
                 return VarVal{
                     nautilus::select(condition, trueUnderlying, falseUnderlying),
@@ -287,13 +288,10 @@ VarVal VarVal::select(const nautilus::val<bool>& condition, const VarVal& trueVa
             {
                 /// Field layout is host-side schema and must agree on both branches; only
                 /// the underlying pointer is selected on.
-                INVARIANT(
-                    trueUnderlying.getFields() == falseUnderlying.getFields(),
-                    "StructData select with mismatched field layout");
+                INVARIANT(trueUnderlying.getFields() == falseUnderlying.getFields(), "StructData select with mismatched field layout");
                 return VarVal{
                     StructData{
-                        nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()),
-                        trueUnderlying.getFields()},
+                        nautilus::select(condition, trueUnderlying.getRawPtr(), falseUnderlying.getRawPtr()), trueUnderlying.getFields()},
                     trueValue.nullable or falseValue.nullable,
                     nautilus::select(condition, trueValue.null, falseValue.null)};
             }

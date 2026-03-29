@@ -137,8 +137,7 @@ DataType::DataType(const Type type, const NULLABLE nullable, const Type elementT
     }
 }
 
-DataType::DataType(
-    const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
+DataType::DataType(const Type type, const NULLABLE nullable, std::string structName, std::vector<std::pair<std::string, DataType>> fields)
     : type(type), nullable(nullable == NULLABLE::IS_NULLABLE), structName(std::move(structName)), fields(std::move(fields))
 {
     if (type != Type::STRUCT)
@@ -499,8 +498,7 @@ Reflected Reflector<DataType>::operator()(const DataType& field) const
 
 DataType Unreflector<DataType>::operator()(const Reflected& rfl) const
 {
-    using TupleT
-        = std::tuple<DataType::Type, bool, DataType::Type, uint32_t, std::string, std::vector<std::pair<std::string, DataType>>>;
+    using TupleT = std::tuple<DataType::Type, bool, DataType::Type, uint32_t, std::string, std::vector<std::pair<std::string, DataType>>>;
     const auto [type, nullable, elementType, count, structName, fields] = unreflect<TupleT>(rfl);
     const auto nullableEnum = nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
     if (type == DataType::Type::FIXEDSIZED)

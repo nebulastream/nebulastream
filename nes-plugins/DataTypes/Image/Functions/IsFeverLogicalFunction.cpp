@@ -57,13 +57,11 @@ LogicalFunction IsFeverLogicalFunction::withInferredDataType(const Schema& schem
     /// Same layout gate as to_celsius — any STRUCT with a single
     /// FIXEDSIZED<UINT16> 'pixels' field is accepted.
     const auto childType = newChildren[0].getDataType();
-    if (childType.type != DataType::Type::STRUCT || childType.fields.size() != 1
-        || childType.fields[0].first != "pixels"
+    if (childType.type != DataType::Type::STRUCT || childType.fields.size() != 1 || childType.fields[0].first != "pixels"
         || childType.fields[0].second.type != DataType::Type::FIXEDSIZED
         || childType.fields[0].second.elementType != DataType::Type::UINT16)
     {
-        throw DifferentFieldTypeExpected(
-            "is_fever expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", childType);
+        throw DifferentFieldTypeExpected("is_fever expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", childType);
     }
     const auto nullable = childType.nullable ? DataType::NULLABLE::IS_NULLABLE : DataType::NULLABLE::NOT_NULLABLE;
     auto newDataType = DataType{DataType::Type::BOOLEAN, nullable};

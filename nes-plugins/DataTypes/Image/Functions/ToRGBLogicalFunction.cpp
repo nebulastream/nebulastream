@@ -39,8 +39,7 @@ namespace
 /// `makeRGBFrame` in `ImageDataType.cpp` — keep the two in sync.
 DataType makeRGBFrameLayout(uint32_t pixelCount, DataType::NULLABLE nullable)
 {
-    const DataType channel{
-        DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT8, pixelCount};
+    const DataType channel{DataType::Type::FIXEDSIZED, DataType::NULLABLE::NOT_NULLABLE, DataType::Type::UINT8, pixelCount};
     std::vector<std::pair<std::string, DataType>> fields;
     fields.emplace_back("r", channel);
     fields.emplace_back("g", channel);
@@ -75,13 +74,11 @@ LogicalFunction ToRGBLogicalFunction::withInferredDataType(const Schema& schema)
     /// Layout gate on child0: any STRUCT with a single FIXEDSIZED<UINT16>
     /// 'pixels' field. Output pixel count derives from it.
     const auto frameType = newChildren[0].getDataType();
-    if (frameType.type != DataType::Type::STRUCT || frameType.fields.size() != 1
-        || frameType.fields[0].first != "pixels"
+    if (frameType.type != DataType::Type::STRUCT || frameType.fields.size() != 1 || frameType.fields[0].first != "pixels"
         || frameType.fields[0].second.type != DataType::Type::FIXEDSIZED
         || frameType.fields[0].second.elementType != DataType::Type::UINT16)
     {
-        throw DifferentFieldTypeExpected(
-            "to_rgb expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", frameType);
+        throw DifferentFieldTypeExpected("to_rgb expects a STRUCT with a single FIXEDSIZED<UINT16> 'pixels' field, got {}", frameType);
     }
 
     /// Colormap selector: a VARSIZED string. Concrete value is resolved at

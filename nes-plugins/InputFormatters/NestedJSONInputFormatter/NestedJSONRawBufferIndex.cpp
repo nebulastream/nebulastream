@@ -140,7 +140,8 @@ void NestedJSONRawBufferIndex::markNoTupleDelimiters()
     this->offsetOfLastTuple = std::numeric_limits<FieldIndex>::max();
 }
 
-void NestedJSONRawBufferIndex::markWithTupleDelimiters(const FieldIndex offsetToFirstTuple, const std::optional<FieldIndex> offsetToLastTuple)
+void NestedJSONRawBufferIndex::markWithTupleDelimiters(
+    const FieldIndex offsetToFirstTuple, const std::optional<FieldIndex> offsetToLastTuple)
 {
     this->offsetOfFirstTuple = offsetToFirstTuple;
     this->offsetOfLastTuple = offsetToLastTuple.value_or(std::numeric_limits<FieldIndex>::max());

@@ -322,8 +322,8 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         /// directly (the registry only handles scalar types).
         if (typeTrimmed.starts_with("FIXEDSIZED<") && typeTrimmed.ends_with('>'))
         {
-            const auto inner = typeTrimmed.substr(std::string_view("FIXEDSIZED<").size(),
-                typeTrimmed.size() - std::string_view("FIXEDSIZED<").size() - 1);
+            const auto inner = typeTrimmed.substr(
+                std::string_view("FIXEDSIZED<").size(), typeTrimmed.size() - std::string_view("FIXEDSIZED<").size() - 1);
             /// Inner separator is `;` (not `,`) to avoid colliding with the outer
             /// comma-separated field split. Format: `FIXEDSIZED<ELEMENT;COUNT>`.
             const auto sepPos = inner.find(';');
@@ -361,8 +361,7 @@ NES::Schema parseFieldNames(const std::string_view fieldNamesRawLine)
         {
             dataType = NES::DataTypeProvider::provideDataType(NES::DataType::Type::VARSIZED, isNullable);
         }
-        else if (auto plugin = NES::DataTypeProvider::tryProvideDataType(std::string{typeTrimmed}, isNullable);
-                 plugin.has_value())
+        else if (auto plugin = NES::DataTypeProvider::tryProvideDataType(std::string{typeTrimmed}, isNullable); plugin.has_value())
         {
             /// Plugin-registered named type (e.g. ThermalFrame). Matches the
             /// header form emitted by `SchemaFormatter::formatTypeForHeader`.

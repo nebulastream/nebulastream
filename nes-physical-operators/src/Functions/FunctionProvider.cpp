@@ -71,9 +71,7 @@ PhysicalFunction FunctionProvider::lowerFunction(LogicalFunction logicalFunction
     if (inputTypes.size() == 2 && std::ranges::any_of(inputTypes, [](const auto& t) { return t.type == DataType::Type::STRUCT; }))
     {
         const auto typeKey = [](const DataType& dt) -> std::string
-        {
-            return dt.type == DataType::Type::STRUCT ? dt.structName : std::string(magic_enum::enum_name(dt.type));
-        };
+        { return dt.type == DataType::Type::STRUCT ? dt.structName : std::string(magic_enum::enum_name(dt.type)); };
         const auto specializedName = fmt::format("{}_{}_{}", baseName, typeKey(inputTypes[0]), typeKey(inputTypes[1]));
         if (const auto function = PhysicalFunctionRegistry::instance().create(specializedName, executableFunctionArguments))
         {

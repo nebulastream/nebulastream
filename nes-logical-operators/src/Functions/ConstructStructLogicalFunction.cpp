@@ -69,7 +69,10 @@ LogicalFunction ConstructStructLogicalFunction::withInferredDataType(const Schem
     if (newChildren.size() != structType.fields.size())
     {
         throw DifferentFieldTypeExpected(
-            "Struct constructor for '{}' expects {} arguments, got {}", structType.structName, structType.fields.size(), newChildren.size());
+            "Struct constructor for '{}' expects {} arguments, got {}",
+            structType.structName,
+            structType.fields.size(),
+            newChildren.size());
     }
     /// Each child must produce the field's declared type (ignoring nullability — a
     /// non-null source feeding a nullable field is fine; a null source feeding a
@@ -114,7 +117,8 @@ std::string_view ConstructStructLogicalFunction::getType() const
 
 std::string ConstructStructLogicalFunction::explain(ExplainVerbosity verbosity) const
 {
-    auto childStrings = children | std::views::transform([&](const auto& c) { return c.explain(verbosity); }) | std::ranges::to<std::vector>();
+    auto childStrings
+        = children | std::views::transform([&](const auto& c) { return c.explain(verbosity); }) | std::ranges::to<std::vector>();
     if (verbosity == ExplainVerbosity::Debug)
     {
         return fmt::format("ConstructStruct({}({}) : {})", structType.structName, fmt::join(childStrings, ", "), structType);
@@ -124,7 +128,8 @@ std::string ConstructStructLogicalFunction::explain(ExplainVerbosity verbosity) 
 
 Reflected Reflector<ConstructStructLogicalFunction>::operator()(const ConstructStructLogicalFunction& function) const
 {
-    return reflect(detail::ReflectedConstructStructLogicalFunction{.structType = function.getDataType(), .children = function.getChildren()});
+    return reflect(
+        detail::ReflectedConstructStructLogicalFunction{.structType = function.getDataType(), .children = function.getChildren()});
 }
 
 ConstructStructLogicalFunction Unreflector<ConstructStructLogicalFunction>::operator()(const Reflected& reflected) const

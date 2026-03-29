@@ -58,8 +58,7 @@ VarVal ToCelsiusPhysicalFunction::execute(const Record& record, ArenaRef& arena)
 
     for (nautilus::val<size_t> i = 0; i < pixelsView.getNumElements(); ++i)
     {
-        const auto rawAsDouble
-            = static_cast<nautilus::val<double>>(pixelsView.at(i).getRawValueAs<nautilus::val<float>>());
+        const auto rawAsDouble = static_cast<nautilus::val<double>>(pixelsView.at(i).getRawValueAs<nautilus::val<float>>());
         const nautilus::val<double> celsius = (rawAsDouble * scale) - kelvinToCelsiusOffset;
         outFixedSized.writeAt(i, VarVal{static_cast<nautilus::val<float>>(celsius)});
     }

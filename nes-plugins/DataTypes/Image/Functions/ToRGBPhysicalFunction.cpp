@@ -25,11 +25,11 @@
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/val.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <PhysicalFunctionRegistry.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
 
 namespace NES
 {
@@ -52,11 +52,11 @@ struct IronWaypoint
 };
 
 constexpr IronWaypoint IRON_WAYPOINTS[] = {
-    {29500, 0, 0, 80},      // ~22°C: dark blue
-    {29900, 0, 0, 200},     // ~26°C: blue
-    {30300, 180, 0, 100},   // ~30°C: purple-red
-    {30700, 255, 0, 0},     // ~34°C: red
-    {31100, 255, 200, 0},   // ~38°C (fever threshold): orange
+    {29500, 0, 0, 80}, // ~22°C: dark blue
+    {29900, 0, 0, 200}, // ~26°C: blue
+    {30300, 180, 0, 100}, // ~30°C: purple-red
+    {30700, 255, 0, 0}, // ~34°C: red
+    {31100, 255, 200, 0}, // ~38°C (fever threshold): orange
     {31500, 255, 255, 255}, // ~42°C: white
 };
 constexpr size_t IRON_WAYPOINT_COUNT = sizeof(IRON_WAYPOINTS) / sizeof(IRON_WAYPOINTS[0]);
@@ -107,11 +107,7 @@ void mapIronPalette(const uint16_t raw, uint8_t& r, uint8_t& g, uint8_t& b)
 ///   - `iron`:      body-temperature-calibrated piecewise-linear ramp
 ///                  (see IRON_WAYPOINTS).
 void thermalToRGB(
-    const int8_t* rawPixels,
-    int8_t* rgbOut,
-    const uint64_t numElements,
-    const int8_t* colormapNamePtr,
-    const uint64_t colormapNameLen)
+    const int8_t* rawPixels, int8_t* rgbOut, const uint64_t numElements, const int8_t* colormapNamePtr, const uint64_t colormapNameLen)
 {
     const auto* const in = reinterpret_cast<const uint16_t*>(rawPixels);
     auto* const r = reinterpret_cast<uint8_t*>(rgbOut);
@@ -139,8 +135,7 @@ void thermalToRGB(
 }
 }
 
-ToRGBPhysicalFunction::ToRGBPhysicalFunction(
-    PhysicalFunction frameFunction, PhysicalFunction colormapFunction, DataType outputType)
+ToRGBPhysicalFunction::ToRGBPhysicalFunction(PhysicalFunction frameFunction, PhysicalFunction colormapFunction, DataType outputType)
     : frameFunction(std::move(frameFunction)), colormapFunction(std::move(colormapFunction)), outputType(std::move(outputType))
 {
 }
@@ -153,9 +148,7 @@ VarVal ToRGBPhysicalFunction::execute(const Record& record, ArenaRef& arena) con
 
     /// Output pixel count comes from the bound logical output type, which the
     /// logical function derives from the input ThermalFrame layout.
-    PRECONDITION(
-        outputType.fields.size() == 3,
-        "RGBFrame layout must have exactly three channels (r, g, b)");
+    PRECONDITION(outputType.fields.size() == 3, "RGBFrame layout must have exactly three channels (r, g, b)");
     const auto count = static_cast<size_t>(outputType.fields[0].second.count);
     const auto totalBytes = count * 3;
 

@@ -100,8 +100,7 @@ CastToTypeLogicalFunction Unreflector<CastToTypeLogicalFunction>::operator()(con
     return CastToTypeLogicalFunction{castToType, std::move(child.value())};
 }
 
-LogicalFunctionRegistryReturnType
-LogicalFunctionGeneratedRegistrar::RegisterCastLogicalFunction(LogicalFunctionRegistryArguments arguments)
+LogicalFunctionRegistryReturnType LogicalFunctionGeneratedRegistrar::RegisterCastLogicalFunction(LogicalFunctionRegistryArguments arguments)
 {
     if (!arguments.reflected.isEmpty())
     {

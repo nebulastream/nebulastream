@@ -175,8 +175,7 @@ TEST_F(FixedSizedDataTest, EqualityDifferentNumElements)
 TEST_F(FixedSizedDataTest, CopyAndAssign)
 {
     std::array<uint16_t, 4> data = {10, 20, 30, 40};
-    const FixedSizedData original(
-        nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), data.size(), DataType::Type::UINT16);
+    const FixedSizedData original(nautilus::val<int8_t*>(reinterpret_cast<int8_t*>(data.data())), data.size(), DataType::Type::UINT16);
 
     /// NOLINTNEXTLINE(performance-unnecessary-copy-initialization) - intentional
     const FixedSizedData copy = original;

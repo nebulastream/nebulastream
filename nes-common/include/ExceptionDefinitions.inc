@@ -68,6 +68,7 @@ EXCEPTION(InvalidOptimizerRuleset, 2037, "invalid optimizer ruleset")
 EXCEPTION(UnknownModelName, 2040, "unknown model name")
 EXCEPTION(ModelAlreadyExists, 2041, "model already exists")
 EXCEPTION(CannotLoadModel, 2042, "cannot load model")
+EXCEPTION(UnknownOutputParserType, 2043, "unknown output parser type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")
@@ -86,7 +87,7 @@ EXCEPTION(SkippingDelayedTaskDuringShutdown, 3004, "skipping delayed task during
 EXCEPTION(TuplesTooLargeForPipelineBufferSize, 3005, "tuples too large for pipeline buffer size")
 EXCEPTION(InferenceRuntimeFailure, 3006, "inference runtime failure")
 EXCEPTION(ArithmeticalError, 3013, "arithmetical error")
-EXCEPTION(OutOfRangeAccess, 3013, "out of range access")
+EXCEPTION(OutOfRangeAccess, 3014, "out of range access")
 
 /// 4XXX Errors interpreting data stream, sources and sinks
 EXCEPTION(CannotFormatSourceData, 4000, "cannot format source data")

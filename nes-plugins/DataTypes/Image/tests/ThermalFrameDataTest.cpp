@@ -37,6 +37,7 @@ public:
         Logger::setupLogging("ThermalFrameDataTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup ThermalFrameDataTest class.");
     }
+
     static void TearDownTestCase() { NES_INFO("Tear down ThermalFrameDataTest class."); }
 };
 

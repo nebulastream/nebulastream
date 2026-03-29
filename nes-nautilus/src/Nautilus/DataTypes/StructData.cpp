@@ -185,8 +185,8 @@ nautilus::val<bool> StructData::operator!=(const StructData& rhs) const
 nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& oss, const StructData& structData)
 {
     const auto totalBytes = structData.getTotalSizeInBytes();
-    oss << "StructData(fields=" << nautilus::val<uint64_t>(structData.fields.size())
-        << ", bytes=" << nautilus::val<uint64_t>(totalBytes) << "): ";
+    oss << "StructData(fields=" << nautilus::val<uint64_t>(structData.fields.size()) << ", bytes=" << nautilus::val<uint64_t>(totalBytes)
+        << "): ";
     for (nautilus::val<uint64_t> i = 0; i < nautilus::val<uint64_t>(totalBytes); ++i)
     {
         const nautilus::val<int> byte = readValueFromMemRef<int8_t>(structData.ptr + i) & nautilus::val<int>(0xff);

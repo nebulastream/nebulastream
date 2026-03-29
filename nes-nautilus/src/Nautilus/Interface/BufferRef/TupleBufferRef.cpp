@@ -30,7 +30,6 @@
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Nautilus/DataTypes/FixedSizedData.hpp>
 #include <Nautilus/DataTypes/StructData.hpp>
-#include <nautilus/std/cstring.h>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -40,6 +39,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <magic_enum/magic_enum.hpp>
+#include <nautilus/std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <val.hpp>
