@@ -10,13 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(OutputParsers)
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(JSONCHAR OutputParser json_output_parser_plugin src/JSONOutputParsers.cpp)
+add_plugin(JSONVARSIZED OutputParser src/JSONOutputParsers.cpp)
 
-add_source_files(nes-output-formatters
-        OutputFormatter.cpp
-        OutputFormatterProvider.cpp
-        OutputFormatterDescriptor.cpp
-        OutputFormatterValidationProvider.cpp
+target_include_directories(json_output_parser_plugin
+        PUBLIC include
+        PRIVATE .
 )
-add_plugin(CSV OutputFormatter CSVOutputFormatter.cpp)
-add_plugin(CSV OutputFormatterValidation CSVOutputFormatter.cpp)
