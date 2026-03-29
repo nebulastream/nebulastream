@@ -148,6 +148,9 @@ void dataSourceThread(
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
+        /// Always set the origin id to the compilation-assigned value.
+        /// No source should ever override this — it must match what downstream operators expect.
+        buffer.setOriginId(originId);
         if (shouldAddMetadata)
         {
             addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
