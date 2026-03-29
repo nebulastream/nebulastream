@@ -17,12 +17,15 @@
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
+#include <string>
+#include <unordered_map>
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <fmt/base.h>
 #include <fmt/ostream.h>
@@ -69,6 +72,8 @@ public:
 protected:
     /// Identifiers of the fields of the output schema
     std::vector<Record::RecordFieldIdentifier> fieldNames;
+    /// Stores the configured parser for each datatype.
+    std::unordered_map<DataType::Type, std::string> parserTypes;
 };
 
 }

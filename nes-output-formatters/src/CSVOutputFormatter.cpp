@@ -36,6 +36,7 @@
 #include <std/cstring.h>
 
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
+#include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <OutputFormatterRegistry.hpp>
@@ -53,97 +54,57 @@ namespace NES
 
 namespace
 {
-uint64_t writeVarsized(
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    const bool quoteStrings,
-    const int8_t* varSizedContent,
-    const uint64_t contentSize,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
-{
-    std::string stringFormattedValue{reinterpret_cast<const char*>(varSizedContent), contentSize};
-    if (quoteStrings)
-    {
-        /// Replace all " instances in the string with ""
-        std::string stringWithDoubledQuotes;
-        for (const char character : stringFormattedValue)
-        {
-            if (character == '"')
-            {
-                stringWithDoubledQuotes.append("\"\"");
-            }
-            else
-            {
-                stringWithDoubledQuotes += character;
-            }
-        }
-        stringFormattedValue = "\"" + stringWithDoubledQuotes + "\"";
-    }
-    return writeValueToBuffer(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
 void writeValue(
     const VarVal& value,
     const DataType& fieldType,
     const nautilus::val<int8_t*>& fieldPointer,
     const RecordBuffer& recordBuffer,
     const nautilus::val<AbstractBufferProvider*>& bufferProvider,
-    const nautilus::val<bool>& quoteStrings,
     nautilus::val<uint64_t>& written,
-    nautilus::val<uint64_t>& currentRemainingSize)
+    nautilus::val<uint64_t>& currentRemainingSize,
+    const std::string& parserType)
 {
-    switch (fieldType.type)
+    if (fieldType.type == DataType::Type::UNDEFINED)
     {
-        case DataType::Type::VARSIZED: {
-            /// For varsized values, we cast to VariableSizedData and access the formatted string that way
-            const auto varSizedValue = value.getRawValueAs<VariableSizedData>();
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeVarsized,
-                fieldPointer,
-                currentRemainingSize,
-                nautilus::val<bool>{quoteStrings},
-                varSizedValue.getContent(),
-                varSizedValue.getSize(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::INT8:
-        case DataType::Type::INT16:
-        case DataType::Type::INT32:
-        case DataType::Type::INT64:
-        case DataType::Type::UINT8:
-        case DataType::Type::UINT16:
-        case DataType::Type::UINT32:
-        case DataType::Type::UINT64:
-        case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64:
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::CHAR: {
-            /// Convert the VarVal to a string and write it into the address.
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldType, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
-            break;
-        }
-        case DataType::Type::UNDEFINED: {
-            throw UnknownDataType("CSV-OutputFormatting for type UNDEFINED is not supported.");
-        }
+        throw UnknownDataType("CSV-OutputFormatting for type UNDEFINED is not supported.");
     }
+
+    const std::unique_ptr<OutputParser> parser = provideOutputParser(parserType);
+    const nautilus::val<uint64_t> amountWritten
+        = parser->parseAndWrite(value, currentRemainingSize, recordBuffer, bufferProvider, fieldPointer);
+    written += amountWritten;
+    currentRemainingSize -= amountWritten;
 }
 }
 
 CSVOutputFormatter::CSVOutputFormatter(
     const std::vector<Record::RecordFieldIdentifier>& fieldNames, const OutputFormatterDescriptor& descriptor)
     : OutputFormatter(fieldNames)
-    , quoteStrings(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::QUOTE_STRINGS))
     , fieldDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::FIELD_DELIMITER))
     , tupleDelimiter(descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::TUPLE_DELIMITER))
 {
+    parserTypes[DataType::Type::UINT8] = "DefaultUINT8";
+    parserTypes[DataType::Type::UINT16] = "DefaultUINT16";
+    parserTypes[DataType::Type::UINT32] = "DefaultUINT32";
+    parserTypes[DataType::Type::UINT64] = "DefaultUINT64";
+    parserTypes[DataType::Type::INT8] = "DefaultINT8";
+    parserTypes[DataType::Type::INT16] = "DefaultINT16";
+    parserTypes[DataType::Type::INT32] = "DefaultINT32";
+    parserTypes[DataType::Type::INT64] = "DefaultINT64";
+    parserTypes[DataType::Type::FLOAT32] = "DefaultF32";
+    parserTypes[DataType::Type::FLOAT64] = "DefaultF64";
+    parserTypes[DataType::Type::BOOLEAN] = "DefaultBOOL";
+    parserTypes[DataType::Type::CHAR] = "DefaultCHAR";
+    if (descriptor.getFromConfig(OutputFormatterConfig::ConfigParametersCSV::QUOTE_STRINGS))
+    {
+        parserTypes[DataType::Type::VARSIZED] = "QuotedVARSIZED";
+    }
+    else
+    {
+        parserTypes[DataType::Type::VARSIZED] = "DefaultVARSIZED";
+    }
+    /// Set placeholder for UNDEFINED, we throw an error later if a field type is UNDEFINED.
+    parserTypes[DataType::Type::UNDEFINED] = "";
 }
 
 nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
@@ -175,12 +136,21 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
         }
         else
         {
-            writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+            writeValue(
+                value,
+                fieldType,
+                fieldPointer,
+                recordBuffer,
+                bufferProvider,
+                written,
+                currentRemainingSize,
+                parserTypes.at(fieldType.type));
         }
     }
     else
     {
-        writeValue(value, fieldType, fieldPointer, recordBuffer, bufferProvider, quoteStrings, written, currentRemainingSize);
+        writeValue(
+            value, fieldType, fieldPointer, recordBuffer, bufferProvider, written, currentRemainingSize, parserTypes.at(fieldType.type));
     }
 
     /// Write either the field delimiter or the tuple delimiter, depending on the field index
@@ -197,11 +167,7 @@ nautilus::val<uint64_t> CSVOutputFormatter::writeFormattedValue(
 
 std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
 {
-    return out << fmt::format(
-               "CSVOutputFormatter(Quote Strings: {}, Field Delimiter: {}, Tuple Delimiter: {})",
-               format.quoteStrings,
-               format.fieldDelimiter,
-               format.tupleDelimiter);
+    return out << fmt::format("CSVOutputFormatter(Field Delimiter: {}, Tuple Delimiter: {})", format.fieldDelimiter, format.tupleDelimiter);
 }
 
 DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)

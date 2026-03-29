@@ -26,11 +26,13 @@
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
+#include <OutputFormatters/OutputParser.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <OutputParserRegistry.hpp>
 #include <function.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -91,135 +93,14 @@ inline uint64_t writeValueToBuffer(
     return writtenToMainMemory;
 }
 
-template <typename T>
-static uint64_t writeValAsString(
-    const T val,
-    int8_t* bufferStartingAddress,
-    const uint64_t remainingSpace,
-    TupleBuffer* tupleBuffer,
-    AbstractBufferProvider* bufferProvider)
+/// Fetches OutputParser from Registry
+inline std::unique_ptr<OutputParser> provideOutputParser(const std::string& parserType)
 {
-    /// Convert val to a string
-    /// Depending on the type, we need to perform additional transformations besides the direct conversion to string
-    /// In the future, we could introduce customizable parsing functions for every data type via a registry
-    using removedCVRefT = std::remove_cvref_t<T>;
-    std::string stringFormattedValue;
-    if constexpr (std::is_same_v<removedCVRefT, float> || std::is_same_v<removedCVRefT, double>)
+    constexpr OutputParserRegistryArguments arguments{};
+    if (auto parser = OutputParserRegistry::instance().create(parserType, arguments))
     {
-        stringFormattedValue = formatFloat(val);
+        return std::move(parser.value());
     }
-    else if constexpr (std::is_same_v<removedCVRefT, bool>)
-    {
-        stringFormattedValue = val ? "true" : "false";
-    }
-    else if constexpr (std::is_same_v<removedCVRefT, char>)
-    {
-        stringFormattedValue = std::string{val};
-    }
-    else
-    {
-        stringFormattedValue = std::to_string(val);
-    }
-
-    /// Write string into the memory at starting address
-    return writeValueToBuffer(stringFormattedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
-
-/// Converts the varval value of the given physical type into a string representation.
-/// The string is then written into the memory of the record buffer, starting from address.
-/// Child buffers might be allocated to fit the whole string into the buffer.
-/// Returns the amount of bytes written in the record buffer itself, children excluded.
-inline nautilus::val<uint64_t> formatAndWriteVal(
-    const VarVal& value,
-    const DataType& fieldType,
-    const nautilus::val<int8_t*>& address,
-    const nautilus::val<uint64_t>& remainingSize,
-    const RecordBuffer& recordBuffer,
-    const nautilus::val<AbstractBufferProvider*>& bufferProvider)
-{
-    nautilus::val<uint64_t> writtenBytes = 0;
-    /// Switch between datatypes to convert value to a nautilus val of the phyiscal type and convert it to a string
-    switch (fieldType.type)
-    {
-        case DataType::Type::BOOLEAN: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<bool>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<bool>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::INT8: {
-            /// For some reason, casting INT8 and INT16 values to their respected c++ types, leads to the to_string call in writeVal treating them as unsigned
-            /// Casting them to int32_t fixes this
-            const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::INT16: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::INT32: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<int32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::INT64: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<int64_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<int64_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::CHAR: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<char>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::UINT8: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<uint8_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::UINT16: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<uint16_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<uint16_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::UINT32: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<uint32_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<uint32_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::UINT64: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<uint64_t>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<uint64_t>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::FLOAT32: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-            writtenBytes
-                = nautilus::invoke(writeValAsString<float>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::FLOAT64: {
-            const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
-            writtenBytes = nautilus::invoke(
-                writeValAsString<double>, castedVal, address, remainingSize, recordBuffer.getReference(), bufferProvider);
-            break;
-        }
-        case DataType::Type::VARSIZED:
-        case DataType::Type::UNDEFINED: {
-            INVARIANT(false, "formatAndWriteVal is not supported for VARSIZED and UNDEFINED types.");
-        }
-    }
-    return writtenBytes;
+    throw UnknownOutputParserType("Unknown Output Parser: {}", parserType);
 }
 }

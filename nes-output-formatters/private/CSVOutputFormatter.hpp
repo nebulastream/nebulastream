@@ -60,7 +60,6 @@ public:
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
 private:
-    bool quoteStrings;
     std::string fieldDelimiter;
     std::string tupleDelimiter;
 };
