@@ -260,15 +260,15 @@ int main(int argc, char** argv)
         /// The default bind address [::]:8080 is a wildcard, so we use localhost:<port> instead.
         const auto grpcBind = singleNodeWorkerConfig.grpcAddressUri.getValue();
         const auto grpcAddr = "localhost" + grpcBind.substr(grpcBind.rfind(':'));
-        const auto dataAddr = singleNodeWorkerConfig.data.getValue();
+        const auto dataAddr = singleNodeWorkerConfig.dataAddress.getValue();
         const NES::WorkerConfig workerConfig{
             .host = NES::Host(grpcAddr),
-            .data = dataAddr,
+            .dataAddress = dataAddr,
             .maxOperators = NES::Capacity(NES::CapacityKind::Unlimited{}),
             .downstream = {},
             .config = singleNodeWorkerConfig,
         };
-        workerCatalog->addWorker(workerConfig.host, workerConfig.data, workerConfig.maxOperators, workerConfig.downstream);
+        workerCatalog->addWorker(workerConfig.host, workerConfig.dataAddress, workerConfig.maxOperators, workerConfig.downstream);
         queryManager = std::make_shared<NES::QueryManager>(workerCatalog, NES::createEmbeddedBackend(singleNodeWorkerConfig));
         NES::SourceStatementHandler sourceStatementHandler{sourceCatalog, NES::DefaultHost(grpcAddr)};
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::DefaultHost(grpcAddr)};

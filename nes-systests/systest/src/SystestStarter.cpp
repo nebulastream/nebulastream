@@ -355,7 +355,7 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
 
             clusterConfig.workers.push_back(NES::WorkerConfig{
                 .host = worker["host"].as<NES::Host>(),
-                .data = worker["data"].as<std::string>(),
+                .dataAddress = worker["data_address"].as<std::string>(),
                 .maxOperators = worker["max_operators"].IsDefined()
                     ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
                     : NES::Capacity(NES::CapacityKind::Unlimited{}),

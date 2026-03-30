@@ -568,7 +568,7 @@ TEST_F(StatementBinderTest, CreateWorkerStatementTest)
     ASSERT_TRUE(statement.has_value()) << "Statement could not be parsed" << statement.error();
     ASSERT_TRUE(std::holds_alternative<CreateWorkerStatement>(*statement));
     ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).host, "localhost:8080");
-    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).data, "localhost:9090");
+    ASSERT_EQ(std::get<CreateWorkerStatement>(*statement).dataAddress, "localhost:9090");
 }
 
 ///NOLINTEND(bugprone-unchecked-optional-access)

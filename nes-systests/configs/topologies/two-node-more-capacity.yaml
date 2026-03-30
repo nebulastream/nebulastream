@@ -1,6 +1,6 @@
 workers:
   - host: "sink-node:8080"
-    data: "sink-node:9090"
+    data_address: "sink-node:9090"
     max_operators: 10000
     config:
       worker:
@@ -9,7 +9,7 @@ workers:
           number_of_worker_threads: 8
 
   - host: "source-node:8080"
-    data: "source-node:9090"
+    data_address: "source-node:9090"
     max_operators: 8
     downstream:
       - "sink-node:8080"

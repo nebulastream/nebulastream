@@ -78,7 +78,7 @@ struct PhysicalSource
 struct WorkerConfig
 {
     std::string host;
-    std::optional<std::string> data;
+    std::optional<std::string> dataAddress;
     std::optional<size_t> capacity;
     std::vector<std::string> downstream;
 };
@@ -136,7 +136,8 @@ struct convert<NES::Test::WorkerConfig>
     static bool decode(const Node& node, NES::Test::WorkerConfig& rhs)
     {
         rhs.host = node["host"].as<std::string>();
-        rhs.data = node["data"].IsDefined() ? std::optional<std::string>(node["data"].as<std::string>()) : std::nullopt;
+        rhs.dataAddress
+            = node["data_address"].IsDefined() ? std::optional<std::string>(node["data_address"].as<std::string>()) : std::nullopt;
         rhs.capacity = node["max_operators"].IsDefined() ? std::optional<size_t>(node["max_operators"].as<size_t>()) : std::nullopt;
         if (node["downstream"].IsDefined())
         {
@@ -169,10 +170,10 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     const auto& [query, sinks, logical, physical, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
-    for (const auto& [host, data, capacity, downstream] : workers)
+    for (const auto& [host, dataAddress, capacity, downstream] : workers)
     {
         statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .data = data.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
+            .host = host, .dataAddress = dataAddress.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {

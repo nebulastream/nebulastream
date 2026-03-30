@@ -41,7 +41,7 @@ EmbeddedWorkerQuerySubmissionBackend::EmbeddedWorkerQuerySubmissionBackend(
 
                  /// Set grpc/data from topology (these always come from cluster config)
                  mergedConfig.grpcAddressUri.setValue(config.host.getRawValue());
-                 mergedConfig.data.setValue(config.data);
+                 mergedConfig.dataAddress.setValue(config.dataAddress);
 
                  const LogContext logContext("create", config.host);
                  return SingleNodeWorker(mergedConfig, config.host);

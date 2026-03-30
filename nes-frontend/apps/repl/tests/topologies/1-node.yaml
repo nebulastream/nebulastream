@@ -1,3 +1,3 @@
 workers:
   - host: "worker-node:8080"
-    data: "worker-node:9090"
+    data_address: "worker-node:9090"

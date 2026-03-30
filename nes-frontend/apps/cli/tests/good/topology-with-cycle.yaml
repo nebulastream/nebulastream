@@ -49,14 +49,14 @@ physical:
 
 workers:
   - host: worker-a:8080
-    data: worker-a:9090
+    data_address: worker-a:9090
     max_operators: 10000
     downstream: [ worker-b:8080 ]
   - host: worker-b:8080
-    data: worker-b:9090
+    data_address: worker-b:9090
     max_operators: 10000
     downstream: [ worker-c:8080 ]
   - host: worker-c:8080
-    data: worker-c:9090
+    data_address: worker-c:9090
     max_operators: 10000
     downstream: [ worker-a:8080 ]  # This creates a cycle: a → b → c → a

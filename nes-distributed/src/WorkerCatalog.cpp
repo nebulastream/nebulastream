@@ -29,14 +29,18 @@ namespace NES
 {
 
 bool WorkerCatalog::addWorker(
-    const Host& host, std::string data, Capacity maxOperators, const std::vector<Host>& downstream, SingleNodeWorkerConfiguration config)
+    const Host& host,
+    std::string dataAddress,
+    Capacity maxOperators,
+    const std::vector<Host>& downstream,
+    SingleNodeWorkerConfiguration config)
 {
     const bool added = workers
                            .try_emplace(
                                host,
                                WorkerConfig{
                                    .host = host,
-                                   .data = std::move(data),
+                                   .dataAddress = std::move(dataAddress),
                                    .maxOperators = maxOperators,
                                    .downstream = downstream,
                                    .config = std::move(config)})

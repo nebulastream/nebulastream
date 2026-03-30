@@ -83,7 +83,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   HOST=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $HOST | cut -d':' -f1)
   HOST_PORT=$(echo $HOST | cut -d':' -f2)
-  DATA=$(yq -r ".workers[$i].data" "$WORKERS_FILE")
+  DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
 
   # Check if worker has config
   HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
@@ -113,7 +113,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
         set -e
         mkdir -p /workdir/configs
         echo '$CONFIG_B64' | base64 -d > /workdir/configs/$HOST_NAME.yaml
-        exec nes-single-node-worker --grpc=$HOST_NAME:$HOST_PORT --data=$DATA --worker.default_query_execution.execution_mode=INTERPRETER --configPath=/workdir/configs/$HOST_NAME.yaml
+        exec nes-single-node-worker --grpc=$HOST_NAME:$HOST_PORT --data_address=$DATA --worker.default_query_execution.execution_mode=INTERPRETER --worker.query_engine.number_of_worker_threads=1 --configPath=/workdir/configs/$HOST_NAME.yaml
     volumes:
       - $TEST_VOLUME:/workdir
 EOF
@@ -135,7 +135,7 @@ EOF
       start_period: 60s
     command: [
       "--grpc=$HOST_NAME:$HOST_PORT",
-      "--data=$DATA",
+      "--data_address=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
       "--worker.query_engine.number_of_worker_threads=1",
     ]

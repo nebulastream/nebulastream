@@ -80,7 +80,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   HOST=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $HOST | cut -d':' -f1)
   HOST_PORT=$(echo $HOST | cut -d':' -f2)
-  DATA=$(yq -r ".workers[$i].data" "$WORKERS_FILE")
+  DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
 
   # Generate service definition
   cat <<EOF
@@ -96,7 +96,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$HOST_PORT",
-      "--data=$DATA",
+      "--data_address=$DATA",
       "--worker.default_query_execution.execution_mode=INTERPRETER",
     ]
     volumes:

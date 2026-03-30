@@ -34,17 +34,17 @@ physical:
 
 workers:
   - host: node1:8080
-    data: node1:9090
+    data_address: node1:9090
     max_operators: 10000
 
   - host: node2:8080
-    data: node2:9090
+    data_address: node2:9090
     max_operators: 10000
     downstream:
       - node1:8080
 
   - host: node3:8080
-    data: node3:9090
+    data_address: node3:9090
     max_operators: 10000
     downstream:
       - node2:8080

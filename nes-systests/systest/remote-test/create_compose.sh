@@ -100,7 +100,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
   GRPC=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
   HOST_NAME=$(echo $GRPC | cut -d':' -f1)
   GRPC_PORT=$(echo $GRPC | cut -d':' -f2)
-  DATA=$(yq -r ".workers[$i].data" "$WORKERS_FILE")
+  DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
 
   HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")
   CONFIG_ARG=""
@@ -121,7 +121,7 @@ for i in $(seq 0 $((WORKER_COUNT - 1))); do
       start_period: 0s
     command: [
       "--grpc=$HOST_NAME:$GRPC_PORT",
-      "--data=$DATA",
+      "--data_address=$DATA",
       $CONFIG_ARG
     ]
     volumes:

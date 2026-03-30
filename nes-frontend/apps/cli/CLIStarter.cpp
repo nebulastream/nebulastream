@@ -143,7 +143,7 @@ struct PhysicalSource
 struct WorkerConfig
 {
     std::string host;
-    std::string data;
+    std::string dataAddress;
     std::optional<size_t> maxOperators;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flattened dot-separated config (e.g., "worker.receiver_queue_size" -> "2")
@@ -242,7 +242,7 @@ struct convert<NES::CLI::WorkerConfig>
 {
     static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
     {
-        acceptKeys({"host", "data", "max_operators", "downstream", "config"}, node);
+        acceptKeys({"host", "data_address", "max_operators", "downstream", "config"}, node);
         if (node["max_operators"].IsDefined())
         {
             rhs.maxOperators = node["max_operators"].as<size_t>();
@@ -252,7 +252,7 @@ struct convert<NES::CLI::WorkerConfig>
             rhs.downstream = node["downstream"].as<std::vector<std::string>>();
         }
         rhs.host = node["host"].as<std::string>();
-        rhs.data = node["data"].IsDefined() ? node["data"].as<std::string>() : "";
+        rhs.dataAddress = node["data_address"].IsDefined() ? node["data_address"].as<std::string>() : "";
         return true;
     }
 };
@@ -399,10 +399,10 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
     const auto& [query, sinks, logical, physical, optimizer, workers] = topologyConfig;
     std::vector<NES::Statement> statements;
     statements.reserve(workers.size());
-    for (const auto& [host, data, maxOperators, downstream, config] : workers)
+    for (const auto& [host, dataAddress, maxOperators, downstream, config] : workers)
     {
-        statements.emplace_back(
-            NES::CreateWorkerStatement{.host = host, .data = data, .capacity = maxOperators, .downstream = downstream, .config = config});
+        statements.emplace_back(NES::CreateWorkerStatement{
+            .host = host, .dataAddress = dataAddress, .capacity = maxOperators, .downstream = downstream, .config = config});
     }
     for (const auto& [name, schemaFields] : logical)
     {

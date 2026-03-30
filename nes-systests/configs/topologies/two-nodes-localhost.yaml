@@ -1,9 +1,9 @@
 workers:
   - host: "localhost:8080"
-    data: "localhost:9090"
+    data_address: "localhost:9090"
     max_operators: 10000
   - host: "localhost:8181"
-    data: "localhost:9191"
+    data_address: "localhost:9191"
     max_operators: 4
     downstream:
       - "localhost:8080"

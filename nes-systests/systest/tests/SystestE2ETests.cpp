@@ -75,7 +75,7 @@ TEST_F(SystestE2ETest, CheckThatOnlyWrongQueriesFailInFileWithManyQueries)
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
             .host = Host("localhost:8080"),
-            .data = "localhost:9090",
+            .dataAddress = "localhost:9090",
             .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),
             .downstream = {},
             .config = {}}},
@@ -110,7 +110,7 @@ TEST_P(SystestE2ETest, correctAndIncorrectSchemaTestFile)
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
             .host = Host("localhost:8080"),
-            .data = "localhost:9090",
+            .dataAddress = "localhost:9090",
             .maxOperators = Capacity(CapacityKind::Limited{DEFAULT_WORKER_CAPACITY}),
             .downstream = {},
             .config = {}}},

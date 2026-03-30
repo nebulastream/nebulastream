@@ -75,11 +75,11 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
-    if (!configuration.data.getValue().empty())
+    if (!configuration.dataAddress.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
         initNetworkServices(
-            configuration.data.getValue(),
+            configuration.dataAddress.getValue(),
             host,
             NetworkOptions{
                 .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),

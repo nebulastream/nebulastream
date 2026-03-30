@@ -53,7 +53,7 @@ physical:
 # Enforces backpressure using the worker configs, which should make the queues so small that backpressure is triggered
 workers:
   - host: worker-1:8080
-    data: worker-1:9090
+    data_address: worker-1:9090
     max_operators: 10000
     config:
       worker:
@@ -61,7 +61,7 @@ workers:
         network:
           receiver_queue_size: 2
   - host: worker-2:8080
-    data: worker-2:9090
+    data_address: worker-2:9090
     downstream: [ worker-1:8080 ]
     max_operators: 10000
     config:

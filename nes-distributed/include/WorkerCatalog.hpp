@@ -40,7 +40,7 @@ class WorkerCatalog
 public:
     bool addWorker(
         const Host& host,
-        std::string data,
+        std::string dataAddress,
         Capacity maxOperators,
         const std::vector<Host>& downstream,
         SingleNodeWorkerConfiguration config = {}); /// NOLINT(fuchsia-default-arguments-declarations)

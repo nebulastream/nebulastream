@@ -353,7 +353,7 @@ std::expected<CreateWorkerStatementResult, Exception> TopologyStatementHandler::
     }
     workerCatalog->addWorker(
         Host(statement.host),
-        statement.data,
+        statement.dataAddress,
         statement.capacity.has_value() ? Capacity(CapacityKind::Limited{statement.capacity.value()}) : Capacity(CapacityKind::Unlimited{}),
         statement.downstream | std::views::transform([](auto downstream) { return Host(std::move(downstream)); })
             | std::ranges::to<std::vector>(),

@@ -274,7 +274,7 @@ physical:
         SEQUENCE UINT64 0 100 1
 workers:
   - host: worker-1:8080
-    data: worker-1:9090
+    data_address: worker-1:9090
 TOPEOF
 
   run $NES_CLI -t topology-no-capacity.yaml dump
@@ -306,6 +306,6 @@ TOPEOF
 
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys3.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: host, data, max_operators, downstream, config" nes-cli.log
+  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 

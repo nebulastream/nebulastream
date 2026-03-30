@@ -1,6 +1,6 @@
 workers:
   - host: "localhost:8080"
-    data: "localhost:9090"
+    data_address: "localhost:9090"
     max_operators: 10000
     config:
       worker:

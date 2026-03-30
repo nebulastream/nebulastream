@@ -145,7 +145,7 @@ struct WorkerStatusStatement
 struct CreateWorkerStatement
 {
     std::string host;
-    std::string data;
+    std::string dataAddress;
     std::optional<size_t> capacity;
     std::vector<std::string> downstream;
     std::unordered_map<std::string, std::string> config; /// Flat dot-separated config map (e.g., "worker.receiver_queue_size" -> "2")

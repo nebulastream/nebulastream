@@ -164,7 +164,7 @@ public:
             return std::nullopt;
         }();
 
-        auto data = [&] -> std::string
+        auto dataAddress = [&] -> std::string
         {
             auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA"; });
             if (it != configs.end())
@@ -200,7 +200,7 @@ public:
 
         return CreateWorkerStatement{
             .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
-            .data = std::move(data),
+            .dataAddress = std::move(dataAddress),
             .capacity = capacity,
             .downstream = downStreams,
             .config = {}};

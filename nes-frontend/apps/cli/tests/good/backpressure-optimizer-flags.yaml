@@ -52,11 +52,11 @@ physical:
 
 workers:
   - host: worker-1:8080
-    data: worker-1:9090
+    data_address: worker-1:9090
     max_operators: 10000
 
   - host: worker-2:8080
-    data: worker-2:9090
+    data_address: worker-2:9090
     downstream: [ worker-1:8080 ]
     max_operators: 10000
 

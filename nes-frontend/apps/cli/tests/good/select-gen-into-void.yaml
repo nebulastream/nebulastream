@@ -50,5 +50,5 @@ physical:
 
 workers:
   - host: worker-1:8080
-    data: worker-1:9090
+    data_address: worker-1:9090
     max_operators: 10000

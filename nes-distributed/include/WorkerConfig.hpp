@@ -41,7 +41,7 @@ using Capacity = std::variant<CapacityKind::Unlimited, CapacityKind::Limited>;
 struct WorkerConfig
 {
     Host host; /// gRPC management endpoint, used as primary worker identity
-    std::string data; /// Data-plane address for network sources/sinks (set via --data)
+    std::string dataAddress; /// Data-plane address for network sources/sinks (set via --data_address)
     Capacity maxOperators;
     std::vector<Host> downstream;
     SingleNodeWorkerConfiguration config;

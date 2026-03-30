@@ -85,8 +85,8 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto upstreamWorker = context.workerCatalog->getWorker(channel.upstreamNode);
     INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
 
-    const auto& downstreamData = downstreamWorker->data;
-    const auto& upstreamData = upstreamWorker->data;
+    const auto& downstreamData = downstreamWorker->dataAddress;
+    const auto& upstreamData = upstreamWorker->dataAddress;
 
     auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
