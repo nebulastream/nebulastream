@@ -164,7 +164,9 @@ std::vector<RunningQuery> runQueries(
     using SystestKey = std::pair<TestName, SystestQueryId>;
     std::unordered_set<SystestKey> completedQueries; /// Track which queries have completed
 
-    const bool k8sEnabled = std::getenv("NES_K8S_ENABLED") != nullptr;
+    const char* k8sEnv = std::getenv("NES_K8S_ENABLED");
+    const bool k8sEnabled = k8sEnv != nullptr && std::string_view(k8sEnv) != "0" && std::string_view(k8sEnv) != "false";
+    std::cerr <<  "[SystestRunner] Kubernetes integration is " << (k8sEnabled ? "enabled" : "disabled") << ".\n";
     std::optional<K8sJSONSubmitter> jsonSubmitter;
     if (k8sEnabled) {
         jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
@@ -276,7 +278,7 @@ std::vector<RunningQuery> runQueries(
 
                 /// Poll for query completion in K8s, fetch pod logs, write result file.
                 std::cerr << "[K8s] Waiting for query '" << queryName << "' to complete...\n";
-                bool completed = jsonSubmitter->waitForQueryCompletion(queryName, 300);
+                bool completed = jsonSubmitter->waitForQueryCompletion(queryName, 15);
 
                 auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
                 if (completed) {

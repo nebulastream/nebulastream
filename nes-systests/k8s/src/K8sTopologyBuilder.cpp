@@ -75,7 +75,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     /// Sinks
     nlohmann::json sinks = nlohmann::json::array();
     nlohmann::json sink;
-    sink["name"] = toUpperCase(extractSinkName(q.queryDefinition));
+    sink["name"] = extractSinkName(q.queryDefinition);
     sink["host"] = "worker-1";
     sink["type"] = "Print";
     if (q.planInfoOrException)
@@ -100,11 +100,19 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     nlohmann::json logicalSources = nlohmann::json::array();
     if (q.planInfoOrException)
     {
+        std::unordered_set<std::string> seenLogicalNames;
         for (const auto& pair : q.planInfoOrException->sourcesToFilePathsAndCounts)
         {
             const SourceDescriptor& desc = pair.first;
+            const std::string logicalName = desc.getLogicalSource().getLogicalSourceName();
+
+            if (!seenLogicalNames.insert(logicalName).second) {
+                continue;
+            }
+
             nlohmann::json ls;
-            ls["name"] = desc.getLogicalSource().getLogicalSourceName();
+            ls["name"] = logicalName;
+
             nlohmann::json schemaNode = nlohmann::json::array();
             for (const auto& fld : desc.getLogicalSource().getSchema()->getFields())
             {
@@ -135,6 +143,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
             ps["logical"] = desc.getLogicalSource().getLogicalSourceName();
             ps["host"] = "worker-1";
             ps["parser_config"]["type"] = desc.getParserConfig().parserType;
+            ps["parser_config"]["field_delimiter"] = desc.getParserConfig().fieldDelimiter;
             ps["type"] = desc.getSourceType();
 
             /// Pod-local path where the operator should mount the source data PVC (PersistentVolumeClaim)
@@ -161,6 +170,11 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     wn["host"] = "worker-1";
     wn["image"] = "nebulastream/worker:distributed-poc";
     wn["max_operators"] = 100;
+
+    for (const auto& [key, value] : q.configurationOverride.overrideParameters) {
+        wn["config"][key] = value;
+    }
+
     workerNodes.push_back(wn);
     spec["workers"] = workerNodes;
 

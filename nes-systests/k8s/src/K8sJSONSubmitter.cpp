@@ -419,7 +419,7 @@ void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
 
     static constexpr const char* MOUNT_PATH = "/data";
     static constexpr int POLL_INTERVAL_SEC = 2;
-    static constexpr int TIMEOUT_SEC = 120;
+    static constexpr int TIMEOUT_SEC = 30;
 
     std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Writing " << fileData.size()
               << " file(s) to PVC '" << pvcName << "'...\n";
@@ -505,9 +505,9 @@ void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
             return;
         }
         if (phase == "Failed") {
+            std::string logs = fetchPodLogs("source-writer");
             deletePod(podName);
-            throw std::runtime_error("Writer pod '" + podName + "' failed. "
-                "Check logs: kubectl logs " + podName + " -n " + kubeNamespace);
+            throw std::runtime_error("Writer pod '" + podName + "' failed.\nLogs:\n" + logs);
         }
 
         std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Pod phase: "
@@ -733,9 +733,33 @@ bool isNumericToken(const std::string& s)
 bool isLogOrMetadataLine(const std::string& line)
 {
     if (line.empty()) return true;
+    if (line.front() == '\x1b') return true;
     if (line.front() == '[') return true;  // NES log line
-    if (line.rfind("Pipeline(", 0) == 0) return true;  // Pipeline header
-    if (std::isalpha(static_cast<unsigned char>(line.front()))) return true;  // Starts with letter
+    if (std::all_of(line.begin(), line.end(), [](unsigned char c){ return c == '-'; })) return true;
+
+    // Known non-result text emitted by worker startup/planning/diagnostics.
+    static const std::array<std::string, 14> kPrefixes = {
+        "Pipeline(",
+        "PipelinedQueryPlan",
+        "Root Pipeline",
+        "Successor Pipeline",
+        "Operator chain",
+        "PhysicalOperator(",
+        "Number of root pipelines",
+        "worker.",
+        "grpc:",
+        "enable_event_trace:",
+        "Server listening on",
+        "Starting SingleNodeWorker",
+        "The sinkDescriptor is:",
+        "SourceThread "
+    };
+
+    for (const auto& p : kPrefixes) {
+        if (line.find(p) != std::string::npos) {
+            return true;
+        }
+    }
     return false;
 }
 
@@ -744,9 +768,20 @@ std::vector<std::string> parseDataLine(const std::string& line, size_t expectedF
 {
     std::vector<std::string> commaToks;
     {
-        std::istringstream ss(line);
         std::string tok;
-        while (std::getline(ss, tok, ',')) { commaToks.push_back(trimWhitespaces(tok)); }
+        bool inQuotes = false;
+        for (char c : line) {
+            if (c == '"') {
+                inQuotes = !inQuotes;
+                tok += c;
+            } else if (c == ',' && !inQuotes) {
+                commaToks.push_back(trimWhitespaces(tok));
+                tok.clear();
+            } else {
+                tok += c;
+            }
+        }
+        commaToks.push_back(trimWhitespaces(tok));
     }
 
     if (expectedFieldCount > 0 && commaToks.size() == expectedFieldCount) {
