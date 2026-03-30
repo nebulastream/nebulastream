@@ -34,3 +34,12 @@ target_link_libraries(nes-single-node-worker-lib
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)
 target_link_libraries(nes-single-node-worker PRIVATE nes-single-node-worker-lib)
+if (ENABLE_BATS_TESTS)
+    add_test(
+            NAME worker-offline-test
+            COMMAND
+            env NES_WORKER=$<TARGET_FILE:nes-single-node-worker>
+            env NES_WORKER_TESTDATA=${CMAKE_CURRENT_SOURCE_DIR}/tests
+            ${BATS} -x --verbose-run ${CMAKE_CURRENT_SOURCE_DIR}/tests/offline.bats
+    )
+endif ()
