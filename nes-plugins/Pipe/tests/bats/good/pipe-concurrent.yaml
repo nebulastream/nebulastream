@@ -1,0 +1,92 @@
+# Three independent pipes (A, B, C) running concurrently.
+# Each pipe: generator -> pipe sink, pipe source -> void sink.
+# Queries ordered so each producer registers before its consumer.
+
+query:
+  - SELECT * FROM GEN_A INTO PIPE_SINK_A
+  - SELECT * FROM READER_A INTO VOID_SINK_A
+  - SELECT * FROM GEN_B INTO PIPE_SINK_B
+  - SELECT * FROM READER_B INTO VOID_SINK_B
+  - SELECT * FROM GEN_C INTO PIPE_SINK_C
+  - SELECT * FROM READER_C INTO VOID_SINK_C
+
+sinks:
+  - name: PIPE_SINK_A
+    schema: [ { name: "GEN_A$id", type: UINT64 } ]
+    type: Pipe
+    config: { pipe_name: "pipe_a" }
+    parser_config: { }
+  - name: VOID_SINK_A
+    schema: [ { name: "READER_A$id", type: UINT64 } ]
+    type: Void
+    config: { }
+    parser_config: { }
+  - name: PIPE_SINK_B
+    schema: [ { name: "GEN_B$id", type: UINT64 } ]
+    type: Pipe
+    config: { pipe_name: "pipe_b" }
+    parser_config: { }
+  - name: VOID_SINK_B
+    schema: [ { name: "READER_B$id", type: UINT64 } ]
+    type: Void
+    config: { }
+    parser_config: { }
+  - name: PIPE_SINK_C
+    schema: [ { name: "GEN_C$id", type: UINT64 } ]
+    type: Pipe
+    config: { pipe_name: "pipe_c" }
+    parser_config: { }
+  - name: VOID_SINK_C
+    schema: [ { name: "READER_C$id", type: UINT64 } ]
+    type: Void
+    config: { }
+    parser_config: { }
+
+logical:
+  - { name: GEN_A, schema: [ { name: id, type: UINT64 } ] }
+  - { name: READER_A, schema: [ { name: id, type: UINT64 } ] }
+  - { name: GEN_B, schema: [ { name: id, type: UINT64 } ] }
+  - { name: READER_B, schema: [ { name: id, type: UINT64 } ] }
+  - { name: GEN_C, schema: [ { name: id, type: UINT64 } ] }
+  - { name: READER_C, schema: [ { name: id, type: UINT64 } ] }
+
+physical:
+  - logical: GEN_A
+    parser_config: { type: CSV, fieldDelimiter: "," }
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 100"
+      generator_schema: "SEQUENCE UINT64 0 1000 1"
+  - logical: READER_A
+    parser_config: { type: NATIVE }
+    type: Pipe
+    source_config: { pipe_name: "pipe_a" }
+  - logical: GEN_B
+    parser_config: { type: CSV, fieldDelimiter: "," }
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 2
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 100"
+      generator_schema: "SEQUENCE UINT64 0 1000 1"
+  - logical: READER_B
+    parser_config: { type: NATIVE }
+    type: Pipe
+    source_config: { pipe_name: "pipe_b" }
+  - logical: GEN_C
+    parser_config: { type: CSV, fieldDelimiter: "," }
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 3
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 100"
+      generator_schema: "SEQUENCE UINT64 0 1000 1"
+  - logical: READER_C
+    parser_config: { type: NATIVE }
+    type: Pipe
+    source_config: { pipe_name: "pipe_c" }
