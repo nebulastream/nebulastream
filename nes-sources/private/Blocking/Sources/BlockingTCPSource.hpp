@@ -30,7 +30,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
@@ -60,7 +60,7 @@ struct ConfigParametersTCP
                 {
                     return portNumber;
                 }
-                NES_ERROR("TCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
+                NES_ERROR("BlockingTCPSource specified port is: {}, but ports must be between 0 and {}", portNumber.value(), PORT_NUMBER_MAX);
             }
             return portNumber;
         }};
@@ -79,7 +79,7 @@ struct ConfigParametersTCP
             {
                 return AF_INET6;
             }
-            NES_ERROR("TCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
+            NES_ERROR("BlockingTCPSource: Domain value is: {}, but the domain value must be AF_INET or AF_INET6", socketDomainString);
             return std::nullopt;
         }};
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
@@ -113,7 +113,7 @@ struct ConfigParametersTCP
                 return SOCK_RDM;
             }
             NES_ERROR(
-                "TCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
+                "BlockingTCPSource: Socket type is: {}, but the socket type must be SOCK_STREAM, SOCK_DGRAM, SOCK_SEQPACKET, SOCK_RAW, or "
                 "SOCK_RDM",
                 socketTypeString)
             return std::nullopt;
@@ -154,7 +154,7 @@ struct ConfigParametersTCP
             CONNECT_TIMEOUT);
 };
 
-class TCPSource : public Source
+class BlockingTCPSource : public BlockingSource
 {
     constexpr static ssize_t INVALID_RECEIVED_BUFFER_SIZE = -1;
     /// A return value of '0' means an EoF in the context of a read(socket..) (https://man.archlinux.org/man/core/man-pages/read.2.en)
@@ -171,13 +171,13 @@ public:
         return Instance;
     }
 
-    explicit TCPSource(const SourceDescriptor& sourceDescriptor);
-    ~TCPSource() override = default;
+    explicit BlockingTCPSource(const SourceDescriptor& sourceDescriptor);
+    ~BlockingTCPSource() override = default;
 
-    TCPSource(const TCPSource&) = delete;
-    TCPSource& operator=(const TCPSource&) = delete;
-    TCPSource(TCPSource&&) = delete;
-    TCPSource& operator=(TCPSource&&) = delete;
+    BlockingTCPSource(const BlockingTCPSource&) = delete;
+    BlockingTCPSource& operator=(const BlockingTCPSource&) = delete;
+    BlockingTCPSource(BlockingTCPSource&&) = delete;
+    BlockingTCPSource& operator=(BlockingTCPSource&&) = delete;
 
     FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
 

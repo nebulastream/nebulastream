@@ -31,7 +31,7 @@
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -45,7 +45,7 @@
 namespace NES
 {
 
-class GeneratorSource : public Source
+class GeneratorSource : public BlockingSource
 {
 public:
     constexpr static std::string_view NAME = "Generator";

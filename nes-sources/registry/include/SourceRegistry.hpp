@@ -17,14 +17,17 @@
 #include <memory>
 #include <string>
 
-#include <Sources/Source.hpp>
+// #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
+#include "Sources/AsyncSource.hpp"
+#include "Sources/BlockingSource.hpp"
 
 namespace NES
 {
 
-using SourceRegistryReturnType = std::unique_ptr<Source>;
+// using SourceRegistryReturnType = std::unique_ptr<Source>;
+using SourceRegistryReturnType = std::variant<std::unique_ptr<BlockingSource>, std::unique_ptr<AsyncSource>>;
 
 struct SourceRegistryArguments
 {

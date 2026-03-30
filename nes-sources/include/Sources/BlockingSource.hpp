@@ -18,18 +18,19 @@
 #include <memory>
 #include <ostream>
 #include <stop_token>
-#include <variant>
-#include <Runtime/AbstractBufferProvider.hpp>
+
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <variant>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {
 
-/// Source is the interface for all sources that read data into TupleBuffers.
-/// 'SourceThread' creates TupleBuffers and uses 'Source' to fill.
-/// When 'fillTupleBuffer()' returns successfully, 'SourceThread' creates a new Task using the filled TupleBuffer.
-class Source
+/// BlockingSource is the interface for all blocking sources that read data into buffers in a blocking fashion.
+/// 'BlockingSourceRunner' creates IOBuffers and uses 'BlockingSource' to fill.
+/// When 'fillBuffer()' returns successfully, 'BlockingSourceThread' creates a new Task using the filled TupleBuffer.
+class BlockingSource
 {
 public:
     class FillTupleBufferResult
@@ -58,10 +59,13 @@ public:
         [[nodiscard]] size_t getNumberOfBytes() const { return std::get<Data>(result).sizeInBytes; }
     };
 
-    Source() = default;
-    virtual ~Source() = default;
+    BlockingSource() = default;
+    virtual ~BlockingSource() = default;
 
-    /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
+    BlockingSource(BlockingSource&&) = delete;
+    BlockingSource& operator=(BlockingSource&&) = delete;
+
+    /// Read data from a source into a buffer, until it is full (or a timeout is reached).
     /// @return the number of bytes read
     virtual FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) = 0;
 
@@ -70,15 +74,14 @@ public:
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
-    friend std::ostream& operator<<(std::ostream& out, const Source& source);
+    friend std::ostream& operator<<(std::ostream& out, const BlockingSource& source);
 
     [[nodiscard]] virtual bool addsMetadata() const { return false; }
 
-protected:
-    /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
+    /// Implemented by children of BlockingSource. Called by '<<'. Allows to use '<<' on abstract BlockingSource.
     [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 
 }
 
-FMT_OSTREAM(NES::Source);
+FMT_OSTREAM(NES::BlockingSource);

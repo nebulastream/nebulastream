@@ -10,25 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(Blocking)
+add_subdirectory(Async)
 add_source_files(nes-sources
-        SourceThread.cpp
         SourceDescriptor.cpp
-        Source.cpp
         SourceHandle.cpp
         SourceProvider.cpp
         SourceDataProvider.cpp
         SourceValidationProvider.cpp
         LogicalSource.cpp
         SourceCatalog.cpp
+        TCPDataServer.cpp
 )
-
-# Register plugins
-add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
-
-# Systest adaptors
-add_plugin(File InlineData nes-sources FileSource.cpp)
-add_plugin(File FileData nes-sources FileSource.cpp)
 
 add_plugin(Network Source nes-sources NetworkSource.cpp)
 add_plugin(Network SourceValidation nes-sources NetworkSource.cpp)
