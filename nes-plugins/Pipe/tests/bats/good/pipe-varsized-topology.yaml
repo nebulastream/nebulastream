@@ -1,0 +1,53 @@
+# Topology for variable-sized data test through pipe.
+# Generator produces tuples with a UINT64 id and a VARSIZED string field.
+# PipeSource must copy child buffers (holding varsized data) — if it only
+# copies the main buffer, the consumer will read garbage or crash.
+
+sinks:
+  - name: PIPE_SINK
+    schema:
+      - { name: "GEN$id", type: UINT64 }
+      - { name: "GEN$payload", type: VARSIZED }
+    type: Pipe
+    config:
+      pipe_name: "varsized_test"
+    parser_config: { }
+  - name: FILE_SINK
+    schema:
+      - { name: "READER$id", type: UINT64 }
+      - { name: "READER$payload", type: VARSIZED }
+    type: File
+    config:
+      output_format: CSV
+      file_path: "/workdir/worker-node/varsized_output.csv"
+    parser_config: { }
+
+logical:
+  - name: GEN
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: payload, type: VARSIZED }
+  - name: READER
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: payload, type: VARSIZED }
+
+physical:
+  - logical: GEN
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 1000"
+      generator_schema: |
+        SEQUENCE UINT64 0 1000 1, RANDOMSTR 10 50
+  - logical: READER
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "varsized_test"
