@@ -25,7 +25,7 @@
 #include <Configurations/Validation/EndpointValidation.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UUID.hpp>
@@ -35,7 +35,7 @@
 namespace NES
 {
 
-class NetworkSource final : public Source
+class NetworkSource final : public BlockingSource
 {
 public:
     static const std::string& name()

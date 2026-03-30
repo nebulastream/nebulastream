@@ -21,7 +21,7 @@
 
 #include <memory>
 #include <string>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 

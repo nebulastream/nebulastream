@@ -25,12 +25,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+// #include <Blocking/BlockingSourceRunner.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <Thread.hpp>
+#include "Sources/BlockingSource.hpp"
 
 namespace NES
 {
@@ -48,27 +49,27 @@ struct SourceImplementationTermination
     }
 };
 
-/// The sourceThread starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
+/// The BlockingSourceRunner starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class SourceThread
+class BlockingSourceRunner
 {
     static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
     static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
 
 public:
-    explicit SourceThread(
+    explicit BlockingSourceRunner(
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        std::unique_ptr<Source> sourceImplementation);
+        std::unique_ptr<BlockingSource> sourceImplementation);
 
-    SourceThread() = delete;
-    SourceThread(const SourceThread& other) = delete;
-    SourceThread(SourceThread&& other) noexcept = delete;
-    SourceThread& operator=(const SourceThread& other) = delete;
-    SourceThread& operator=(SourceThread&& other) noexcept = delete;
+    BlockingSourceRunner() = delete;
+    BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
+    BlockingSourceRunner(BlockingSourceRunner&& other) noexcept = delete;
+    BlockingSourceRunner& operator=(const BlockingSourceRunner& other) = delete;
+    BlockingSourceRunner& operator=(BlockingSourceRunner&& other) noexcept = delete;
 
     /// clean up thread-local state for the source.
     void close();
@@ -86,12 +87,12 @@ public:
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
 
-    friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
+    friend std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& BlockingSourceRunner);
 
 protected:
     OriginId originId;
     std::shared_ptr<AbstractBufferProvider> localBufferManager;
-    std::unique_ptr<Source> sourceImplementation;
+    std::unique_ptr<BlockingSource> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
 
@@ -104,7 +105,7 @@ protected:
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine(const std::stop_token& stopToken, std::promise<SourceImplementationTermination>&);
     void emitWork(TupleBuffer& buffer, bool addBufferMetaData = true);
-    friend std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread);
+    friend std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& BlockingSourceRunner);
 };
 
 }

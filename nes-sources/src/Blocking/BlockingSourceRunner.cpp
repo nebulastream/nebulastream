@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <SourceThread.hpp>
+#include <Blocking/BlockingSourceRunner.hpp>
 
 #include <chrono>
 #include <cstddef>
@@ -27,7 +27,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -40,11 +40,11 @@
 namespace NES
 {
 
-SourceThread::SourceThread(
+BlockingSourceRunner::BlockingSourceRunner(
     BackpressureListener backpressureListener,
     OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
-    std::unique_ptr<Source> sourceImplementation)
+    std::unique_ptr<BlockingSource> sourceImplementation)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
@@ -80,10 +80,10 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
 
-SourceImplementationTermination dataSourceThreadRoutine(
+SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     const std::stop_token& stopToken,
     BackpressureListener backpressureListener,
-    Source& source,
+    BlockingSource& source,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     const EmitFn& emit)
 {
@@ -102,7 +102,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
         ///    The thread exits with `StopRequested`
         /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
         ///    The thread exits with `EndOfStream`
-        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the SourceThread via the return promise.
+        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the BlockingSourceRunner via the return promise.
         ///    The thread exists with an exception
 
         std::optional<TupleBuffer> emptyBuffer;
@@ -137,11 +137,11 @@ SourceImplementationTermination dataSourceThreadRoutine(
     return {SourceImplementationTermination::StopRequested};
 }
 
-void dataSourceThread(
+void dataBlockingSourceRunner(
     const std::stop_token& stopToken,
     BackpressureListener backpressureListener,
     std::promise<SourceImplementationTermination> result,
-    Source* source,
+    BlockingSource* source,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
@@ -160,7 +160,7 @@ void dataSourceThread(
     try
     {
         result.set_value_at_thread_exit(
-            dataSourceThreadRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+            dataBlockingSourceRunnerRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
         if (!stopToken.stop_requested())
         {
             emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -175,7 +175,7 @@ void dataSourceThread(
 }
 }
 
-bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
+bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
 {
     INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
     if (started.exchange(true))
@@ -187,29 +187,29 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
-    Thread sourceThread(
+    Thread BlockingSourceRunner(
         fmt::format("DataSrc-{}", originId),
-        dataSourceThread,
+        dataBlockingSourceRunner,
         backpressureListener,
         std::move(terminationPromise),
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
         localBufferManager);
-    thread = std::move(sourceThread);
+    thread = std::move(BlockingSourceRunner);
     return true;
 }
 
-void SourceThread::stop()
+void BlockingSourceRunner::stop()
 {
     PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
 
-    NES_DEBUG("SourceThread  {} : stop source", originId);
+    NES_DEBUG("BlockingSourceRunner  {} : stop source", originId);
     thread.requestStop();
     {
         auto deletedOnScopeExit = std::move(thread);
     }
-    NES_DEBUG("SourceThread  {} : stopped", originId);
+    NES_DEBUG("BlockingSourceRunner  {} : stopped", originId);
 
     try
     {
@@ -221,15 +221,15 @@ void SourceThread::stop()
     }
 }
 
-SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds timeout)
+SourceReturnType::TryStopResult BlockingSourceRunner::tryStop(std::chrono::milliseconds timeout)
 {
     if (!thread.joinable())
     {
-        NES_DEBUG("SourceThread {}: thread is not running", originId);
+        NES_DEBUG("BlockingSourceRunner {}: thread is not running", originId);
         return SourceReturnType::TryStopResult::NOT_RUNNING;
     }
     PRECONDITION(!thread.isCurrentThread(), "DataSrc Thread should never request the source termination");
-    NES_DEBUG("SourceThread {}: attempting to stop source", originId);
+    NES_DEBUG("BlockingSourceRunner {}: attempting to stop source", originId);
     thread.requestStop();
 
     try
@@ -237,7 +237,7 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
         auto result = this->terminationFuture.wait_for(timeout);
         if (result == std::future_status::timeout)
         {
-            NES_DEBUG("SourceThread {}: source was not stopped during timeout", originId);
+            NES_DEBUG("BlockingSourceRunner {}: source was not stopped during timeout", originId);
             return SourceReturnType::TryStopResult::TIMEOUT;
         }
         auto deletedOnScopeExit = std::move(thread);
@@ -247,20 +247,20 @@ SourceReturnType::TryStopResult SourceThread::tryStop(std::chrono::milliseconds 
         NES_ERROR("Source encountered an error: {}", exception.what());
     }
 
-    NES_DEBUG("SourceThread {}: stopped", originId);
+    NES_DEBUG("BlockingSourceRunner {}: stopped", originId);
     return SourceReturnType::TryStopResult::SUCCESS;
 }
 
-OriginId SourceThread::getOriginId() const
+OriginId BlockingSourceRunner::getOriginId() const
 {
     return this->originId;
 }
 
-std::ostream& operator<<(std::ostream& out, const SourceThread& sourceThread)
+std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& BlockingSourceRunner)
 {
-    out << "\nSourceThread(";
-    out << "\n  originId: " << sourceThread.originId;
-    out << "\n  source implementation:" << *sourceThread.sourceImplementation;
+    out << "\nBlockingSourceRunner(";
+    out << "\n  originId: " << BlockingSourceRunner.originId;
+    out << "\n  source implementation:" << *BlockingSourceRunner.sourceImplementation;
     out << ")\n";
     return out;
 }

@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <utility>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -24,6 +25,9 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include <Util/Overloaded.hpp>
+#include <Blocking/BlockingSourceHandle.hpp>
+#include <Async/AsyncSourceHandle.hpp>
 
 namespace NES
 {
@@ -47,9 +51,20 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
             : defaultMaxInflightBuffers;
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
-        return std::make_unique<SourceHandle>(
-            std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
+        return std::visit(
+                Overloaded{
+                    [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<BlockingSourceHandle>(std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
+                    },
+                    [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                    {
+                        return std::make_unique<AsyncSourceHandle>(std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
+                    }},
+                std::move(source.value()));
     }
+        // return std::make_unique<SourceHandle>(
+        //     std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
 
