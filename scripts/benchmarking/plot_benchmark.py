@@ -48,9 +48,12 @@ def main():
             threads = int(row.get("threads", "4"))
             sched = row.get("scheduling", "GLOBAL_QUEUE")
             ws = row.get("work_stealing", "false")
+            pl = row.get("producer_local", "false")
             sched_label = sched
             if ws == "true":
                 sched_label += "+WS"
+            if pl == "true":
+                sched_label += "+PL"
             mode = row["mode"]
             key = (threads, sched_label, mode)
             results[key]["bps"].append(float(row["bytes_per_second"]))
@@ -73,7 +76,7 @@ def main():
             label_parts = []
             if len(modes) > 1:
                 label_parts.append(mode)
-            label_parts.append(sched.replace("PER_THREAD_", "PT_"))
+            label_parts.append(sched.replace("PT_", "PT_"))
             label = " / ".join(label_parts)
 
             xs = []
@@ -88,10 +91,10 @@ def main():
                 series[label] = (xs, ys)
 
     # Plot
-    fig, ax = plt.subplots(figsize=(10, 6))
+    fig, ax = plt.subplots(figsize=(14, 7))
 
-    markers = ["o", "s", "^", "D", "v", "P", "X", "*"]
-    colors = plt.cm.tab10.colors
+    markers = ["o", "s", "^", "D", "v", "P", "X", "*", "h", "<", ">", "d"]
+    colors = list(plt.cm.tab10.colors) + list(plt.cm.Set2.colors)
 
     # Use evenly spaced positions so the x-axis is linear, not log-like
     tick_positions = list(range(len(thread_counts)))
@@ -115,12 +118,12 @@ def main():
 
     ax.set_ylabel("Throughput (MB/s)", fontsize=13)
     ax.set_title("BenchmarkSource — Scheduling Strategy vs Thread Count", fontsize=14)
-    ax.legend(loc="best", fontsize=10)
+    ax.legend(loc="upper left", bbox_to_anchor=(1.02, 1), fontsize=9, borderaxespad=0)
     ax.grid(True, alpha=0.3)
     ax.yaxis.set_major_formatter(ticker.FormatStrFormatter("%.0f"))
 
     plt.tight_layout()
-    plt.savefig(out_path, dpi=150)
+    plt.savefig(out_path, dpi=150, bbox_inches="tight")
     print(f"Chart saved to: {out_path}")
 
 

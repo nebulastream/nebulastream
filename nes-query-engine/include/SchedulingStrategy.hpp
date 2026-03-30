@@ -23,7 +23,7 @@ namespace NES
 /// GLOBAL_QUEUE: All worker threads share a single internal task queue (default, existing behavior).
 /// PER_THREAD_ROUND_ROBIN: Each worker thread has its own queue; tasks are assigned round-robin.
 /// PER_THREAD_SMALLEST_QUEUE: Each worker thread has its own queue; tasks are assigned to the shortest queue.
-/// PER_THREAD_POWER_OF_TWO: Each worker thread has its own queue; tasks are assigned to the shorter of two random queues.
+/// PER_THREAD_CHOOSE_TWO: Each worker thread has its own queue; tasks are assigned to the shorter of two random queues.
 ///
 /// All per-thread strategies can be combined with:
 ///   --producer_local true  : successor tasks stay on the producing thread's queue (cache locality)
@@ -33,7 +33,7 @@ enum class SchedulingStrategy : uint8_t
     GLOBAL_QUEUE,
     PER_THREAD_ROUND_ROBIN,
     PER_THREAD_SMALLEST_QUEUE,
-    PER_THREAD_POWER_OF_TWO
+    PER_THREAD_CHOOSE_TWO
 };
 
 }

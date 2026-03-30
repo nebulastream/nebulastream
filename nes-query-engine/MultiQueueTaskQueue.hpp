@@ -63,9 +63,9 @@ class MultiQueueTaskQueue
             return roundRobinCounter.fetch_add(1, std::memory_order_relaxed) % numQueues;
         }
 
-        if (strategy == SchedulingStrategy::PER_THREAD_POWER_OF_TWO)
+        if (strategy == SchedulingStrategy::PER_THREAD_CHOOSE_TWO)
         {
-            /// Pick the shorter of two randomly chosen queues (power-of-two-choices).
+            /// Pick the shorter of two randomly chosen queues (choose-two).
             /// Uses a thread-local RNG to avoid shared state contention.
             thread_local std::mt19937 rng{std::random_device{}()};
             const auto a = rng() % numQueues;
