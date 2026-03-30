@@ -13,4 +13,7 @@
 add_source_files(nes-sinks
         BufferIterator.cpp
         SchemaFormatter.cpp
+        CSVFormat.cpp
+        JSONFormat.cpp
+        NoneFormat.cpp
 )

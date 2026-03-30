@@ -28,7 +28,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/Format.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/Strings.hpp>
 #include <PipelineExecutionContext.hpp>
 
 namespace NES
@@ -64,6 +66,7 @@ private:
     uint64_t timestampOfFirstSN{};
     std::pair<SequenceNumber, uint64_t> timestampOfLastSN;
     std::mutex mutex;
+    std::unique_ptr<Format> format;
 };
 
 struct ConfigParametersMonitoring
@@ -79,13 +82,27 @@ struct ConfigParametersMonitoring
         "NATIVE",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
+
+    /// Addition to seamlessly test the old output formatter. The old output formatter can only be activated, if OUTPUT_FORMAT is Native.
+    /// Otherwise, legacy_output_format will switch to None.
+    static inline const DescriptorConfig::ConfigParameter<std::string> LEGACY_OUTPUT_FORMAT{
+        "legacy_output_format",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            return (!DescriptorConfig::tryGet(OUTPUT_FORMAT, config).has_value()
+                    || toUpperCase(DescriptorConfig::tryGet(OUTPUT_FORMAT, config).value()) == "NATIVE")
+                ? DescriptorConfig::tryGet(LEGACY_OUTPUT_FORMAT, config)
+                : std::optional("None");
+        }};
+
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "file_path",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, SIZE_OF_INPUT_DATA_IN_BYTES, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, SIZE_OF_INPUT_DATA_IN_BYTES, OUTPUT_FORMAT, LEGACY_OUTPUT_FORMAT);
 };
 
 }
