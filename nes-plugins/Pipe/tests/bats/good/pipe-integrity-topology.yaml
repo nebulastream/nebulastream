@@ -1,0 +1,65 @@
+# Topology for data integrity test through pipe.
+# Generator produces a finite sequence of increasing UINT64 values.
+# Consumer reads from pipe source → checksum sink.
+# Verify: count + sum must match Gauss formula (no gaps, no duplicates).
+
+sinks:
+  - name: PIPE_SINK
+    schema:
+      - { name: "GEN$id", type: UINT64 }
+    type: Pipe
+    config:
+      pipe_name: "integrity_test"
+    parser_config: { }
+  - name: FILE_SINK_1
+    schema:
+      - { name: "READER$id", type: UINT64 }
+    type: File
+    config:
+      output_format: CSV
+      file_path: "/workdir/worker-node/consumer_1.csv"
+    parser_config: { }
+  - name: FILE_SINK_2
+    schema:
+      - { name: "READER$id", type: UINT64 }
+    type: File
+    config:
+      output_format: CSV
+      file_path: "/workdir/worker-node/consumer_2.csv"
+    parser_config: { }
+  - name: FILE_SINK_3
+    schema:
+      - { name: "READER$id", type: UINT64 }
+    type: File
+    config:
+      output_format: CSV
+      file_path: "/workdir/worker-node/consumer_3.csv"
+    parser_config: { }
+
+logical:
+  - name: GEN
+    schema:
+      - { name: id, type: UINT64 }
+  - name: READER
+    schema:
+      - { name: id, type: UINT64 }
+
+physical:
+  - logical: GEN
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: ALL
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 10000"
+      generator_schema: |
+        SEQUENCE UINT64 0 100000 1
+  - logical: READER
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "integrity_test"

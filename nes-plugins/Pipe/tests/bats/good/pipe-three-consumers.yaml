@@ -1,0 +1,55 @@
+# Single-file pipe test: producer + 3 consumers.
+# The producer query is listed first so the pipe sink exists before consumers connect.
+
+query:
+  - SELECT * FROM GEN_SOURCE INTO PIPE_SINK
+  - SELECT * FROM PIPE_READER INTO VOID_SINK
+  - SELECT * FROM PIPE_READER INTO VOID_SINK
+  - SELECT * FROM PIPE_READER INTO VOID_SINK
+
+sinks:
+  - name: PIPE_SINK
+    schema:
+      - { name: "GEN_SOURCE$id", type: UINT64 }
+      - { name: "GEN_SOURCE$value", type: UINT64 }
+    type: Pipe
+    config:
+      pipe_name: "test_pipe"
+    parser_config: { }
+  - name: VOID_SINK
+    schema:
+      - { name: "PIPE_READER$id", type: UINT64 }
+      - { name: "PIPE_READER$value", type: UINT64 }
+    type: Void
+    config: { }
+    parser_config: { }
+
+logical:
+  - name: GEN_SOURCE
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+  - name: PIPE_READER
+    schema:
+      - { name: id, type: UINT64 }
+      - { name: value, type: UINT64 }
+
+physical:
+  - logical: GEN_SOURCE
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 100"
+      generator_schema: |
+        SEQUENCE UINT64 0 1000 1, SEQUENCE UINT64 0 500 1
+  - logical: PIPE_READER
+    parser_config:
+      type: NATIVE
+    type: Pipe
+    source_config:
+      pipe_name: "test_pipe"
