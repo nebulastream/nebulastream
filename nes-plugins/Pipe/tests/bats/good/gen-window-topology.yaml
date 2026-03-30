@@ -1,0 +1,35 @@
+# Topology for reproducing the duplicate window query bug.
+# No pipes involved — just a generator source with a timestamp field and a void sink.
+
+sinks:
+  - name: VOID_SINK
+    schema:
+      - name: GEN$id_count
+        type: UINT64
+    type: Void
+    config: { }
+    parser_config: { }
+
+logical:
+  - name: GEN
+    schema:
+      - name: id
+        type: UINT64
+      - name: value
+        type: UINT64
+      - name: ts
+        type: UINT64
+
+physical:
+  - logical: GEN
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_rate_type: FIXED
+      generator_rate_config: "emit_rate 1000"
+      generator_schema: |
+        SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 50 1, SEQUENCE UINT64 1000 10000 100
