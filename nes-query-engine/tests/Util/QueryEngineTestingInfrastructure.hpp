@@ -42,6 +42,8 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
+#include <Runtime/MemoryUtil.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -56,7 +58,6 @@
 #include <ExecutablePipelineStage.hpp>
 #include <ExecutableQueryPlan.hpp>
 #include <Interfaces.hpp>
-#include <MemoryTestUtils.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryId.hpp>
@@ -306,7 +307,7 @@ struct TestPipeline final : ExecutablePipelineStage
             const uint64_t currentRepeatCount = inputTupleBuffer.getWatermark().getRawValue();
             if (currentRepeatCount < maxRepeats)
             {
-                auto copiedBuffer = Testing::copyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
+                auto copiedBuffer = copyBuffer(inputTupleBuffer, *pipelineExecutionContext.getBufferManager());
                 copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
                 return;
@@ -377,7 +378,7 @@ public:
 
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pipelineExecutionContext) override
     {
-        controller->insertBuffer(Testing::copyBuffer(inputBuffer, *bufferProvider));
+        controller->insertBuffer(copyBuffer(inputBuffer, *bufferProvider));
 
         /// Handle repeat functionality
         const size_t maxRepeats = controller->repeatCount.load();
@@ -387,7 +388,7 @@ public:
             const uint64_t currentRepeatCount = inputBuffer.getWatermark().getRawValue();
             if (currentRepeatCount < maxRepeats)
             {
-                auto copiedBuffer = Testing::copyBuffer(inputBuffer, *bufferProvider);
+                auto copiedBuffer = copyBuffer(inputBuffer, *bufferProvider);
                 copiedBuffer.setWatermark(Timestamp(currentRepeatCount + 1));
                 pipelineExecutionContext.repeatTask(copiedBuffer, std::chrono::milliseconds(10));
             }

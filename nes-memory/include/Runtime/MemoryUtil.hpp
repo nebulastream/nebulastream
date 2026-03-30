@@ -13,11 +13,13 @@
 */
 
 #pragma once
+
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Testing
+namespace NES
 {
-/// Used for testing to copy buffers from the pipeline execution context, so that we can both free the original TupleBuffer and keep the copy of the TupleBuffer for later checks.
+/// Deep-copies a TupleBuffer including all metadata and child buffers (used for variable-sized data).
+/// Allocates the destination buffer and any child buffers from the given provider.
 TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider);
 }

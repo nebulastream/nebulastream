@@ -12,17 +12,16 @@
     limitations under the License.
 */
 
-#include <MemoryTestUtils.hpp>
+#include <Runtime/MemoryUtil.hpp>
 
 #include <algorithm>
 #include <cstddef>
-#include <span>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <ErrorHandling.hpp>
 
-namespace NES::Testing
+namespace NES
 {
 TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provider)
 {
@@ -32,17 +31,16 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
         "Attempt to copy buffer of size: {} into smaller buffer of size: {}",
         copiedBuffer.getBufferSize(),
         buffer.getBufferSize());
+
     auto bufferData = buffer.getAvailableMemoryArea<std::byte>();
     std::ranges::copy(bufferData, copiedBuffer.getAvailableMemoryArea().begin());
+
     copiedBuffer.setWatermark(buffer.getWatermark());
-    copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
-    copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
+    copiedBuffer.setChunkNumber(buffer.getChunkNumber());
     copiedBuffer.setLastChunk(buffer.isLastChunk());
     copiedBuffer.setOriginId(buffer.getOriginId());
-    copiedBuffer.setSequenceNumber(buffer.getSequenceNumber());
-    copiedBuffer.setChunkNumber(buffer.getChunkNumber());
-    copiedBuffer.setLastChunk(buffer.isLastChunk());
+    copiedBuffer.setCreationTimestampInMS(buffer.getCreationTimestampInMS());
     copiedBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
     for (size_t childIdx = 0; childIdx < buffer.getNumberOfChildBuffers(); ++childIdx)
@@ -51,11 +49,7 @@ TupleBuffer copyBuffer(const TupleBuffer& buffer, AbstractBufferProvider& provid
         auto childBuffer = buffer.loadChildBuffer(varSizedIndex);
         auto copiedChildBuffer = copyBuffer(childBuffer, provider);
         auto ret = copiedBuffer.storeChildBuffer(copiedChildBuffer);
-        INVARIANT(
-            ret == varSizedIndex,
-            "Child buffer index: {}, does not match index: {}",
-            childIdx,
-            copiedBuffer.storeChildBuffer(copiedChildBuffer));
+        INVARIANT(ret == varSizedIndex, "Child buffer index: {}, does not match expected index: {}", ret, childIdx);
     }
 
     return copiedBuffer;

@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-memory-test-utils TestUtils/MemoryTestUtils.cpp)
-target_include_directories(nes-memory-test-utils PUBLIC TestUtils)
-target_link_libraries(nes-memory-test-utils PUBLIC nes-memory)
-
 add_nes_test(unpooled-buffer-test UnpooledBufferTests.cpp)
-target_link_libraries(unpooled-buffer-test nes-memory nes-memory-test-utils)
+target_link_libraries(unpooled-buffer-test nes-memory)
 
 add_nes_test(tuple-buffer-memory-access-tests TupleBufferMemoryAccessTest.cpp)
 target_link_libraries(tuple-buffer-memory-access-tests nes-memory)
