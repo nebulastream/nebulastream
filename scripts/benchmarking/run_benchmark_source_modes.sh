@@ -58,6 +58,7 @@ ITERATIONS=3
 MODES="file,memory,in_place,tmpfs_cold,tmpfs_warm"
 SCHEDULING="GLOBAL_QUEUE"
 WORK_STEALING="false"
+PRODUCER_LOCAL="false"
 TMPFS_PATH="/dev/shm"
 WORKER_THREADS=4
 OUTPUT_CSV="benchmark_results.csv"
@@ -83,6 +84,7 @@ while [[ $# -gt 0 ]]; do
         --modes)           MODES="$2";            shift 2 ;;
         --scheduling)      SCHEDULING="$2";       shift 2 ;;
         --work-stealing)   WORK_STEALING="$2";    shift 2 ;;
+        --producer-local)  PRODUCER_LOCAL="$2";   shift 2 ;;
         --tmpfs-path)      TMPFS_PATH="$2";       shift 2 ;;
         --worker-threads)  WORKER_THREADS="$2";   shift 2 ;;
         --output)          OUTPUT_CSV="$2";       shift 2 ;;
@@ -289,6 +291,7 @@ if [[ -n "$REMOTE" ]]; then
     REMOTE_BENCH_CMD+=" --modes '${MODES}'"
     REMOTE_BENCH_CMD+=" --scheduling '${SCHEDULING}'"
     REMOTE_BENCH_CMD+=" --work-stealing '${WORK_STEALING}'"
+    REMOTE_BENCH_CMD+=" --producer-local '${PRODUCER_LOCAL}'"
     REMOTE_BENCH_CMD+=" --tmpfs-path '${TMPFS_PATH}'"
     REMOTE_BENCH_CMD+=" --worker-threads ${WORKER_THREADS}"
     REMOTE_BENCH_CMD+=" --output /tmp/nes_benchmark_results.csv"
@@ -352,6 +355,7 @@ IFS=',' read -ra MODE_LIST <<< "$MODES"
 IFS=',' read -ra SCHED_LIST <<< "$SCHEDULING"
 IFS=',' read -ra THREAD_LIST <<< "$WORKER_THREADS"
 IFS=',' read -ra WS_LIST <<< "$WORK_STEALING"
+IFS=',' read -ra PL_LIST <<< "$PRODUCER_LOCAL"
 
 echo ""
 echo "================================================================="
@@ -360,6 +364,7 @@ echo " Test file:       ${TEST_FILE}"
 echo " Source modes:    ${MODES}"
 echo " Scheduling:      ${SCHEDULING}"
 echo " Work stealing:   ${WORK_STEALING}"
+echo " Producer local:  ${PRODUCER_LOCAL}"
 echo " Iterations:      ${ITERATIONS}"
 echo " Worker threads:  ${WORKER_THREADS}"
 echo " Output CSV:      ${OUTPUT_CSV}"
@@ -390,7 +395,7 @@ generate_test_file() {
 }
 
 # ---- CSV header ----
-echo "threads,scheduling,work_stealing,mode,iteration,query,time_seconds,bytes_per_second,tuples_per_second" > "$OUTPUT_CSV"
+echo "threads,scheduling,work_stealing,producer_local,mode,iteration,query,time_seconds,bytes_per_second,tuples_per_second" > "$OUTPUT_CSV"
 
 # ---- Run benchmarks ----
 for threads in "${THREAD_LIST[@]}"; do
@@ -398,6 +403,11 @@ for threads in "${THREAD_LIST[@]}"; do
   for ws in "${WS_LIST[@]}"; do
    # Work stealing only applies to per-thread strategies
    if [[ "$sched" == "GLOBAL_QUEUE" && "$ws" == "true" ]]; then
+       continue
+   fi
+   for pl in "${PL_LIST[@]}"; do
+   # Producer local only applies to per-thread strategies
+   if [[ "$sched" == "GLOBAL_QUEUE" && "$pl" == "true" ]]; then
        continue
    fi
    for mode in "${MODE_LIST[@]}"; do
@@ -413,11 +423,15 @@ for threads in "${THREAD_LIST[@]}"; do
     if [[ "$ws" == "true" ]]; then
         ws_label=" +WS"
     fi
-    echo "--- Threads: $threads | Scheduling: ${sched}${ws_label} | Source mode: $mode ---"
+    pl_label=""
+    if [[ "$pl" == "true" ]]; then
+        pl_label=" +PL"
+    fi
+    echo "--- Threads: $threads | Scheduling: ${sched}${ws_label}${pl_label} | Source mode: $mode ---"
     test_file=$(generate_test_file "$mode")
 
     for iter in $(seq 1 "$ITERATIONS"); do
-        work_dir="${WORK_BASE}/${threads}t/${sched}_ws${ws}/${mode}/run_${iter}"
+        work_dir="${WORK_BASE}/${threads}t/${sched}_ws${ws}_pl${pl}/${mode}/run_${iter}"
         mkdir -p "$work_dir"
 
         # Build command — pin to one NUMA node when threads fit
@@ -437,6 +451,7 @@ for threads in "${THREAD_LIST[@]}"; do
             "--worker.default_query_execution.execution_mode=COMPILER"
             "--worker.query_engine.scheduling_strategy=${sched}"
             "--worker.query_engine.work_stealing=${ws}"
+            "--worker.query_engine.producer_local=${pl}"
         )
 
         printf "  Iteration %d/%d... " "$iter" "$ITERATIONS"
@@ -445,16 +460,16 @@ for threads in "${THREAD_LIST[@]}"; do
         # Parse BenchmarkResults.json (produced even if queries fail checksum validation)
         results_json="${work_dir}/BenchmarkResults.json"
         if [[ -f "$results_json" ]]; then
-            python3 - "$results_json" "$threads" "$sched" "$ws" "$mode" "$iter" >> "$OUTPUT_CSV" <<'PARSE_EOF'
+            python3 - "$results_json" "$threads" "$sched" "$ws" "$pl" "$mode" "$iter" >> "$OUTPUT_CSV" <<'PARSE_EOF'
 import json, sys
 with open(sys.argv[1]) as f:
-    threads, sched, ws, mode, iteration = sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6]
+    threads, sched, ws, pl, mode, iteration = sys.argv[2], sys.argv[3], sys.argv[4], sys.argv[5], sys.argv[6], sys.argv[7]
     for r in json.load(f):
         name = r.get("query name", "?")
         t = r.get("time", 0)
         bps = r.get("bytesPerSecond", 0)
         tps = r.get("tuplesPerSecond", 0)
-        print(f"{threads},{sched},{ws},{mode},{iteration},{name},{t},{bps},{tps}")
+        print(f"{threads},{sched},{ws},{pl},{mode},{iteration},{name},{t},{bps},{tps}")
 PARSE_EOF
             echo "done"
         else
@@ -462,6 +477,7 @@ PARSE_EOF
         fi
     done
     echo ""
+   done
    done
   done
  done

@@ -434,6 +434,7 @@ public:
         const size_t admissionQueueSize,
         SchedulingStrategy schedulingStrategy,
         bool workStealing,
+        bool producerLocal,
         size_t numThreads)
         : listener(std::move(listener))
         , statistic(std::move(stats))
@@ -455,7 +456,7 @@ public:
     {
         if (strategy != SchedulingStrategy::GLOBAL_QUEUE)
         {
-            multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing);
+            multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing, producerLocal);
         }
     }
 
@@ -498,7 +499,8 @@ private:
         }
         else
         {
-            multiQueue->addInternalTaskNonBlocking(std::move(task));
+            const auto threadIndex = static_cast<size_t>(WorkerThread::id.getRawValue() - WorkerThreadId::INITIAL);
+            multiQueue->addInternalTaskNonBlocking(std::move(task), threadIndex);
         }
     }
 
@@ -861,6 +863,7 @@ QueryEngine::QueryEngine(
           config.admissionQueueSize.getValue(),
           config.schedulingStrategy.getValue(),
           config.workStealing.getValue(),
+          config.producerLocal.getValue(),
           config.numberOfWorkerThreads.getValue()))
     , workerId(workerId)
 {

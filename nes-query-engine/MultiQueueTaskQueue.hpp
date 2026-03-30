@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <random>
 #include <semaphore>
 #include <stop_token>
 #include <utility>
@@ -44,7 +45,9 @@ class MultiQueueTaskQueue
 
     SchedulingStrategy strategy;
     bool workStealingEnabled;
+    bool producerLocalEnabled;
     std::atomic<size_t> roundRobinCounter{0};
+    std::atomic<size_t> admissionRoundRobin{0};
     size_t numQueues;
 
     /// Lock-free approximate queue sizes for PER_THREAD_SMALLEST_QUEUE.
@@ -58,6 +61,18 @@ class MultiQueueTaskQueue
         if (strategy == SchedulingStrategy::PER_THREAD_ROUND_ROBIN)
         {
             return roundRobinCounter.fetch_add(1, std::memory_order_relaxed) % numQueues;
+        }
+
+        if (strategy == SchedulingStrategy::PER_THREAD_POWER_OF_TWO)
+        {
+            /// Pick the shorter of two randomly chosen queues (power-of-two-choices).
+            /// Uses a thread-local RNG to avoid shared state contention.
+            thread_local std::mt19937 rng{std::random_device{}()};
+            const auto a = rng() % numQueues;
+            const auto b = rng() % numQueues;
+            const auto sizeA = approxQueueSizes[a].load(std::memory_order_relaxed);
+            const auto sizeB = approxQueueSizes[b].load(std::memory_order_relaxed);
+            return (sizeA <= sizeB) ? a : b;
         }
 
         /// PER_THREAD_SMALLEST_QUEUE: find the queue with the fewest pending tasks using lock-free approximate sizes
@@ -107,9 +122,10 @@ class MultiQueueTaskQueue
     }
 
 public:
-    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, SchedulingStrategy strategy, bool workStealing = false)
-        : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing), numQueues(numThreads),
-          approxQueueSizes(numThreads)
+    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, SchedulingStrategy strategy, bool workStealing = false,
+                        bool producerLocal = false)
+        : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing),
+          producerLocalEnabled(producerLocal), numQueues(numThreads), approxQueueSizes(numThreads)
     {
         threadQueues.reserve(numThreads);
         threadSemaphores.reserve(numThreads);
@@ -122,7 +138,9 @@ public:
     }
 
     /// External producers (sources, control messages). Writes to the shared admission queue with backpressure.
-    /// Signals the target thread's semaphore so it wakes up to read from admission.
+    /// Signals thread semaphores round-robin to distribute wakeups evenly across all workers,
+    /// regardless of the scheduling strategy. This prevents serialization onto a single thread
+    /// when selectTargetQueue() would always pick the same target (e.g., all queue sizes are 0).
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
     {
@@ -130,7 +148,7 @@ public:
         {
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
-                const auto target = selectTargetQueue();
+                const auto target = admissionRoundRobin.fetch_add(1, std::memory_order_relaxed) % numQueues;
                 threadSemaphores[target]->release();
                 return true;
             }
@@ -139,10 +157,20 @@ public:
     }
 
     /// Internal producers (worker threads). Dispatches to a per-thread queue based on the assignment policy.
+    /// When producerLocal is enabled and a valid producerThreadIndex is provided, the task stays on the
+    /// producing thread's queue for cache locality. Otherwise, the configured strategy selects the target.
     template <typename T = TaskType>
-    void addInternalTaskNonBlocking(T&& task)
+    void addInternalTaskNonBlocking(T&& task, size_t producerThreadIndex = std::numeric_limits<size_t>::max())
     {
-        const auto target = selectTargetQueue();
+        size_t target;
+        if (producerLocalEnabled && producerThreadIndex < numQueues)
+        {
+            target = producerThreadIndex;
+        }
+        else
+        {
+            target = selectTargetQueue();
+        }
         threadQueues[target]->enqueue(std::forward<T>(task));
         approxQueueSizes[target].fetch_add(1, std::memory_order_relaxed);
         threadSemaphores[target]->release();

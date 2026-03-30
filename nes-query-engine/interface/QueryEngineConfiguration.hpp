@@ -43,14 +43,16 @@ public:
         = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
     EnumOption<SchedulingStrategy> schedulingStrategy
         = {"scheduling_strategy", SchedulingStrategy::GLOBAL_QUEUE,
-           "Task scheduling strategy: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE"};
+           "Task scheduling strategy: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE, PER_THREAD_POWER_OF_TWO"};
     BoolOption workStealing
         = {"work_stealing", "false", "Enable work stealing for per-thread scheduling (idle threads steal from other queues)"};
+    BoolOption producerLocal
+        = {"producer_local", "false", "Keep successor tasks on the producing thread's queue for cache locality (per-thread strategies only)"};
 
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&numberOfWorkerThreads, &admissionQueueSize, &schedulingStrategy, &workStealing};
+        return {&numberOfWorkerThreads, &admissionQueueSize, &schedulingStrategy, &workStealing, &producerLocal};
     }
 };
 }
