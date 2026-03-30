@@ -1,7 +1,7 @@
 # Tests placement failure due to reversed downstream edges.
 # node1 hosts the sink but declares downstream toward node3 (the source),
 # making operator placement infeasible. Expected: placement fails with
-# "Placement is not possible".
+# "topology is not connected".
 query: |
   SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK
 

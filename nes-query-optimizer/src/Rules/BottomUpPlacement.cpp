@@ -158,6 +158,32 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
     NES_DEBUG("Performing Operator Placement on: {}", os.str());
 }
 
+/// Verify that every source can reach the sink via the network topology.
+/// This check runs before the ILP solver so that missing paths produce a clear error
+/// instead of a generic "placement is not possible" from the solver.
+void validateConnectivity(const NetworkTopology& topology, const LogicalPlan& plan)
+{
+    auto sinkOperator = plan.getRootOperators().front().getAs<SinkLogicalOperator>().get();
+    const auto& sinkDescriptorOpt = sinkOperator.getSinkDescriptor();
+    INVARIANT(sinkDescriptorOpt, "BUG: sink operator must have a sink descriptor");
+    auto sinkHost = sinkDescriptorOpt->getHost();
+
+    std::vector<std::string> errors;
+    for (const auto& sourceOperator : getOperatorByType<SourceDescriptorLogicalOperator>(plan))
+    {
+        auto sourceHost = sourceOperator->getSourceDescriptor().getHost();
+        if (topology.findPaths(sinkHost, sourceHost, NetworkTopology::Upstream).empty())
+        {
+            errors.emplace_back(fmt::format("No path from source worker '{}' to sink worker '{}'", sourceHost, sinkHost));
+        }
+    }
+
+    if (!errors.empty())
+    {
+        throw PlacementFailure(fmt::format("Query cannot be placed because the topology is not connected:\n{}", fmt::join(errors, "\n")));
+    }
+}
+
 /// Shared state for the ILP placement model
 struct PlacementModel
 {
@@ -402,6 +428,7 @@ void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
 {
     const auto topology = workerCatalog->getTopology();
     validatePlan(topology, logicalPlan);
+    validateConnectivity(topology, logicalPlan);
 
     const auto capacity = topology | std::views::keys
         | std::views::transform(
@@ -413,7 +440,7 @@ void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
 
     if (!placement)
     {
-        throw PlacementFailure("Placement is not possible");
+        throw PlacementFailure("Placement is not possible under the given capacity constraints");
     }
     logicalPlan = LogicalPlan(logicalPlan.getQueryId(), {addPlacementTrait(logicalPlan.getRootOperators().front(), *placement)});
 }

@@ -630,7 +630,7 @@ EOF
   [ "$status" -eq 1 ]
 
   sync_workdir
-  grep "Placement is not possible" nes-cli.log
+  grep "topology is not connected" nes-cli.log
 }
 
 @test "launch and stop query with topology from stdin" {

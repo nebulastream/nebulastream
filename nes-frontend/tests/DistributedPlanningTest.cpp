@@ -50,6 +50,7 @@
 #include <yaml-cpp/node/parse.h>
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <BaseUnitTest.hpp>
+#include <ErrorHandling.hpp>
 #include <NetworkTopology.hpp>
 #include <WorkerCatalog.hpp>
 
@@ -643,13 +644,35 @@ TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 TEST_F(DistributedPlanningTest, Disconnected)
 {
     auto [sem, opt, boundPlan] = loadAndBind("disconnected.yaml");
-    EXPECT_ANY_THROW(auto _ = opt->optimize(sem->analyse(boundPlan)));
+    try
+    {
+        auto _ = opt->optimize(sem->analyse(boundPlan));
+        FAIL() << "Expected Exception";
+    }
+    catch (const Exception& e)
+    {
+        EXPECT_EQ(e.code(), ErrorCode::PlacementFailure);
+        EXPECT_TRUE(std::string_view(e.what()).find("topology is not connected") != std::string_view::npos)
+            << "Expected 'topology is not connected' in: " << e.what();
+        EXPECT_TRUE(std::string_view(e.what()).find("No path from source worker") != std::string_view::npos)
+            << "Expected 'No path from source worker' in: " << e.what();
+    }
 }
 
 TEST_F(DistributedPlanningTest, NotEnoughCapacities)
 {
     auto [sem, opt, boundPlan] = loadAndBind("not_enough_capacities.yaml");
-    EXPECT_ANY_THROW(auto _ = opt->optimize(sem->analyse(boundPlan)));
+    try
+    {
+        auto _ = opt->optimize(sem->analyse(boundPlan));
+        FAIL() << "Expected Exception";
+    }
+    catch (const Exception& e)
+    {
+        EXPECT_EQ(e.code(), ErrorCode::PlacementFailure);
+        EXPECT_TRUE(std::string_view(e.what()).find("capacity constraints") != std::string_view::npos)
+            << "Expected 'capacity constraints' in: " << e.what();
+    }
 }
 
 TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
