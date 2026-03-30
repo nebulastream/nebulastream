@@ -18,7 +18,8 @@
 #include <cstddef>
 #include <memory>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Sources/Source.hpp>
+// #include <Sources/Source.hpp>
+// #include <Sources/SourceExecutionContext.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <fmt/format.h>
@@ -44,32 +45,27 @@ struct SourceRuntimeConfiguration
 class SourceHandle
 {
 public:
-    explicit SourceHandle(
-        BackpressureListener backpressureListener,
-        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-        SourceRuntimeConfiguration configuration,
-        std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<Source> sourceImplementation);
+    explicit SourceHandle(SourceRuntimeConfiguration configuration, OriginId sourceId);
 
-    ~SourceHandle();
+    virtual ~SourceHandle();
 
-    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
-    void stop() const;
+    virtual bool start(SourceReturnType::EmitFunction&& emitFunction) = 0;
+    virtual void stop() = 0;
 
     /// Tries to stop the source within a given timeout.
-    [[nodiscard]] NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) const;
+     [[nodiscard]] virtual NES::SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
 
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
-    [[nodiscard]] OriginId getSourceId() const;
+    [[nodiscard]] OriginId getSourceId() const { return sourceId; };
 
     const SourceRuntimeConfiguration& getRuntimeConfiguration() const { return configuration; }
 
 private:
+    OriginId sourceId;
     SourceRuntimeConfiguration configuration;
-    /// Used to print the data source via the overloaded '<<' operator.
-    std::unique_ptr<SourceThread> sourceThread;
 };
 
 }

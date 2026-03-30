@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <TCPSource.hpp>
+#include <Blocking/Sources/BlockingTCPSource.hpp>
 
 #include <cerrno> /// For socket error
 #include <chrono>
@@ -35,7 +35,7 @@
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <asm-generic/socket.h>
@@ -47,29 +47,29 @@
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
-#include <TCPDataServer.hpp>
+#include <Sources/TCPDataServer.hpp>
 
 namespace NES
 {
 
-TCPSource::TCPSource(const SourceDescriptor& sourceDescriptor)
+BlockingTCPSource::BlockingTCPSource(const SourceDescriptor& sourceDescriptor)
     : errBuffer{}
-    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
-    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
-    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
-    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
-    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
-    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
-    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
-    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
-    , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersTCP::CONNECT_TIMEOUT))
+    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::HOST))
+    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::PORT)))
+    , socketType(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::TYPE))
+    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::DOMAIN))
+    , tupleDelimiter(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::SEPARATOR))
+    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::SOCKET_BUFFER_SIZE))
+    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::SOCKET_BUFFER_TRANSFER_SIZE))
+    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::FLUSH_INTERVAL_MS))
+    , connectionTimeout(sourceDescriptor.getFromConfig(ConfigParametersBlockingTCP::CONNECT_TIMEOUT))
 {
-    NES_TRACE("Init TCPSource.");
+    NES_TRACE("Init BlockingTCPSource.");
 }
 
-std::ostream& TCPSource::toString(std::ostream& str) const
+std::ostream& BlockingTCPSource::toString(std::ostream& str) const
 {
-    str << "\nTCPSource(";
+    str << "\nBlockingTCPSource(";
     str << "\n  generated tuples: " << this->generatedTuples;
     str << "\n  generated buffers: " << this->generatedBuffers;
     str << "\n  connection: " << this->connection;
@@ -86,7 +86,7 @@ std::ostream& TCPSource::toString(std::ostream& str) const
     return str;
 }
 
-bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
+bool BlockingTCPSource::tryToConnect(const addrinfo* result, const int flags)
 {
     const std::chrono::seconds socketConnectDefaultTimeout{connectionTimeout};
 
@@ -121,7 +121,7 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     setsockopt(sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, sizeof(timeout));
     connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
-    /// if the TCPSource did not establish a connection, try with timeout
+    /// if the BlockingTCPSource did not establish a connection, try with timeout
     if (connection < 0)
     {
         if (errno != EINPROGRESS)
@@ -163,9 +163,9 @@ bool TCPSource::tryToConnect(const addrinfo* result, const int flags)
     return true;
 }
 
-void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
+void BlockingTCPSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
-    NES_TRACE("TCPSource::open: Trying to create socket and connect.");
+    NES_TRACE("BlockingTCPSource::open: Trying to create socket and connect.");
 
     addrinfo hints{};
     addrinfo* result = nullptr;
@@ -200,10 +200,10 @@ void TCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     /// Set connection to non-blocking again to enable a timeout in the 'read()' call
     fcntl(sockfd, F_SETFL, flags); /// NOLINT(cppcoreguidelines-pro-type-vararg) - POSIX API requires varargs
 
-    NES_TRACE("TCPSource::open: Connected to server.");
+    NES_TRACE("BlockingTCPSource::open: Connected to server.");
 }
 
-Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+BlockingSource::FillTupleBufferResult BlockingTCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
 {
     try
     {
@@ -225,7 +225,7 @@ Source::FillTupleBufferResult TCPSource::fillTupleBuffer(TupleBuffer& tupleBuffe
     }
 }
 
-bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
+bool BlockingTCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
 {
     const auto flushIntervalTimerStart = std::chrono::system_clock::now();
     bool flushIntervalPassed = false;
@@ -271,12 +271,12 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
     return numReceivedBytes == 0 and readWasValid;
 }
 
-DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config BlockingTCPSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
+    return DescriptorConfig::validateAndFormat<ConfigParametersBlockingTCP>(std::move(config), name());
 }
 
-void TCPSource::close()
+void BlockingTCPSource::close()
 {
     NES_DEBUG("Trying to close connection.");
     if (connection >= 0)
@@ -286,34 +286,34 @@ void TCPSource::close()
     }
 }
 
-SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
+SourceValidationRegistryReturnType RegisterBlockingTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
 {
-    return TCPSource::validateAndFormat(std::move(sourceConfig.config));
+    return BlockingTCPSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBlockingTCPSource(SourceRegistryArguments sourceRegistryArguments)
 {
-    return std::make_unique<TCPSource>(sourceRegistryArguments.sourceDescriptor);
+    return std::make_unique<BlockingTCPSource>(sourceRegistryArguments.sourceDescriptor);
 }
 
-InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
+InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterBlockingTCPInlineData(InlineDataRegistryArguments systestAdaptorArguments)
 {
     std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersBlockingTCP::PORT))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersBlockingTCP::HOST))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(std::move(systestAdaptorArguments.tuples));
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
@@ -321,16 +321,16 @@ InlineDataRegistryReturnType InlineDataGeneratedRegistrar::RegisterTCPInlineData
     return systestAdaptorArguments.physicalSourceConfig;
 }
 
-FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
+FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterBlockingTCPFileData(FileDataRegistryArguments systestAdaptorArguments)
 {
     std::unordered_map<std::string, std::string> defaultSourceConfig{{"flush_interval_ms", "100"}};
     systestAdaptorArguments.physicalSourceConfig.sourceConfig.merge(defaultSourceConfig);
 
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::PORT))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersBlockingTCP::PORT))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a port");
     }
-    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersTCP::HOST))
+    if (systestAdaptorArguments.physicalSourceConfig.sourceConfig.contains(ConfigParametersBlockingTCP::HOST))
     {
         throw InvalidConfigParameter("Cannot use mock implementation if config already contains a host");
     }
@@ -338,8 +338,8 @@ FileDataRegistryReturnType FileDataGeneratedRegistrar::RegisterTCPFileData(FileD
 
     auto mockTCPServer = std::make_unique<TCPDataServer>(systestAdaptorArguments.testFilePath);
 
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::PORT, std::to_string(mockTCPServer->getPort()));
-    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersTCP::HOST, "localhost");
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::PORT, std::to_string(mockTCPServer->getPort()));
+    systestAdaptorArguments.physicalSourceConfig.sourceConfig.emplace(ConfigParametersBlockingTCP::HOST, "localhost");
 
     auto serverThread = std::jthread([server = std::move(mockTCPServer)](const std::stop_token& stopToken) { server->run(stopToken); });
     systestAdaptorArguments.serverThreads->push_back(std::move(serverThread));
