@@ -154,6 +154,9 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
     ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
+    /// Update the maximum source insertion timestamp for this hashmap of this slice
+    hashMap.updateSourceCreationTimestamp(ctx.sourceCreationTimestamp);
+
     /// Calling the key functions to add/update the keys to the record
     nautilus::val<bool> containsNullInKey{false};
     for (nautilus::static_val<uint64_t> i = 0; i < hashMapOptions.fieldKeys.size(); ++i)

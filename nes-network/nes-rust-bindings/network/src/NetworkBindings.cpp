@@ -50,6 +50,7 @@ void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData
     buffer.setLastChunk(metaData.last_chunk);
     buffer.setWatermark(NES::Timestamp(metaData.watermark));
     buffer.setNumberOfTuples(metaData.number_of_tuples);
+    buffer.setSourceCreationTimestampInMS(NES::Timestamp(metaData.source_insertion_ts));
 }
 
 void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)

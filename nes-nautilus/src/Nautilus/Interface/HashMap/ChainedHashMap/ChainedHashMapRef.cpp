@@ -28,7 +28,9 @@
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/HashMap/HashMapRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Interface/TimestampRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Time/Timestamp.hpp>
 #include <nautilus/function.hpp>
 #include <nautilus/static.hpp>
 #include <nautilus/val.hpp>
@@ -119,6 +121,17 @@ nautilus::val<int8_t*> ChainedHashMapRef::ChainedEntryRef::getValueMemArea() con
     auto castedMemArea = static_cast<nautilus::val<int8_t*>>(entryRef);
     auto valueMemArea = castedMemArea + valueMemAreaOffset;
     return valueMemArea;
+}
+
+void updateTimestamp(const Timestamp timestamp, HashMap* hashMap)
+{
+    const auto chained = dynamic_cast<ChainedHashMap*>(hashMap);
+    chained->updateTimestamp(timestamp);
+}
+
+void ChainedHashMapRef::updateSourceCreationTimestamp(const nautilus::val<Timestamp>& timestamp)
+{
+    nautilus::invoke(updateTimestamp, timestamp, hashMapRef);
 }
 
 HashFunction::HashValue ChainedHashMapRef::ChainedEntryRef::getHash() const

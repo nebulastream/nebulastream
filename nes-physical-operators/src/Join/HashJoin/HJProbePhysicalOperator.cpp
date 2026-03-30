@@ -67,6 +67,7 @@ void HJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer&
     executionCtx.chunkNumber = recordBuffer.getChunkNumber();
     executionCtx.lastChunk = recordBuffer.isLastChunk();
     executionCtx.originId = recordBuffer.getOriginId();
+    executionCtx.sourceCreationTimestamp = recordBuffer.getSourceCreationTs();
     StreamJoinProbePhysicalOperator::open(executionCtx, recordBuffer);
 
     /// Getting number of hash maps and return if there are no hashmaps

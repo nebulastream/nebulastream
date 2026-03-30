@@ -150,6 +150,11 @@ public:
     void setWatermark(Timestamp value) noexcept;
 
     [[nodiscard]] Timestamp getCreationTimestampInMS() const noexcept;
+
+    /// used to determine how long a buffer spent in the system
+    [[nodiscard]] Timestamp getSourceCreationTimestampInMS() const noexcept;
+    void setSourceCreationTimestampInMS(Timestamp sourceCreationTS) noexcept;
+
     void setSequenceNumber(SequenceNumber sequenceNumber) noexcept;
 
     [[nodiscard]] std::string getSequenceDataAsString() const noexcept;

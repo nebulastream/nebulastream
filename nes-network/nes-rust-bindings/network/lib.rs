@@ -38,6 +38,7 @@ pub mod ffi {
         number_of_tuples: u64,
         watermark: u64,
         last_chunk: bool,
+        source_insertion_ts: u64
     }
 
     /// Configuration for network services (sender and receiver).
@@ -389,6 +390,7 @@ fn receive_buffer(
             chunk_number: buffer.chunk_number as u64,
             number_of_tuples: buffer.number_of_tuples as u64,
             last_chunk: buffer.last_chunk,
+            source_insertion_ts: buffer.source_insertion_ts as u64
         });
 
     buffer_builder.as_mut().setData(&buffer.data);
@@ -471,6 +473,7 @@ fn send_buffer(
         last_chunk: metadata.last_chunk,
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
+        source_insertion_ts: metadata.source_insertion_ts
     };
 
     // Because we copy the data anyway, we don't have to reuse the buffer if sending failed.

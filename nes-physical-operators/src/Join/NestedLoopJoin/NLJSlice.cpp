@@ -23,6 +23,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES
 {
@@ -109,5 +110,19 @@ void NLJSlice::combinePagedVectors()
         }
         rightPagedVectors.erase(rightPagedVectors.begin() + 1, rightPagedVectors.end());
     }
+}
+
+Timestamp NLJSlice::getMaximumTimestamp() const
+{
+    Timestamp maxTimestamp{0_u64};
+    for (const auto& pagedVector : leftPagedVectors)
+    {
+        maxTimestamp = std::max(maxTimestamp, pagedVector->getSourceInsertionTimestamp());
+    }
+    for (const auto& pagedVector : rightPagedVectors)
+    {
+        maxTimestamp = std::max(maxTimestamp, pagedVector->getSourceInsertionTimestamp());
+    }
+    return maxTimestamp;
 }
 }

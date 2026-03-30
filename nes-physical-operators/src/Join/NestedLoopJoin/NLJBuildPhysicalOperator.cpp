@@ -103,6 +103,8 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
 
     /// Write record to the pagedVector
     const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
+    /// Update source creation timestamp for this worker thread of this slice
+    pagedVectorRef.updateSourceCreationTimestamp(executionCtx.sourceCreationTimestamp);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

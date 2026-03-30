@@ -133,6 +133,7 @@ void EmitPhysicalOperator::emitRecordBuffer(
     recordBuffer.setOriginId(ctx.originId);
     recordBuffer.setSequenceNumber(ctx.sequenceNumber);
     recordBuffer.setCreationTs(ctx.currentTs);
+    recordBuffer.setSourceCreationTs(ctx.sourceCreationTimestamp);
 
     setChunkNumber(ctx, operatorHandlerId, potentialLastChunk, ctx.chunkNumber, ctx.lastChunk, recordBuffer.getReference());
 
