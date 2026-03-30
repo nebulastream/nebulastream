@@ -19,6 +19,8 @@
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Time/Timestamp.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES
 {
@@ -54,6 +56,8 @@ public:
     /// Returns the position of the buffer in the buffer provider that contains the entry at the given position.
     [[nodiscard]] std::optional<uint64_t> getBufferPosForEntry(uint64_t entryPos) const;
 
+    void updateTimestamp(const Timestamp& timestamp);
+
     [[nodiscard]] uint64_t getTotalNumberOfEntries() const { return pages.getTotalNumberOfEntries(); }
 
     [[nodiscard]] const TupleBuffer& getLastPage() const { return pages.getLastPage(); }
@@ -61,6 +65,8 @@ public:
     [[nodiscard]] const TupleBuffer& getFirstPage() const { return pages.getFirstPage(); }
 
     [[nodiscard]] uint64_t getNumberOfPages() const { return pages.getNumberOfPages(); }
+
+    [[nodiscard]] Timestamp getSourceInsertionTimestamp() const { return sourceInsertionTimestamp; }
 
 private:
     /// Wrapper around a vector of TupleBufferWithCumulativeSum to take care of updating the cumulative sums
@@ -88,6 +94,7 @@ private:
     };
 
     PagesWrapper pages;
+    Timestamp sourceInsertionTimestamp{0_u64};
 };
 
 }

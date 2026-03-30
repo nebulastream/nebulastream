@@ -190,7 +190,8 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             .chunk_number = currentBuffer->getChunkNumber().getRawValue(),
             .number_of_tuples = currentBuffer->getNumberOfTuples(),
             .watermark = currentBuffer->getWatermark().getRawValue(),
-            .last_chunk = currentBuffer->isLastChunk()};
+            .last_chunk = currentBuffer->isLastChunk(),
+            .source_insertion_ts = currentBuffer->getSourceCreationTimestampInMS().getRawValue()};
 
         /// Set child buffers
         std::vector<rust::Slice<const uint8_t>> children;
