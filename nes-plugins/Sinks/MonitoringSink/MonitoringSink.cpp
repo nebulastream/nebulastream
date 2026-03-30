@@ -23,17 +23,21 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/JSONFormat.hpp>
+#include <SinksParsing/NoneFormat.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ostream.h>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include "Identifiers/NESStrongType.hpp"
 
 namespace NES
 {
@@ -69,6 +73,19 @@ MonitoringSink::MonitoringSink(BackpressureController backpressureController, co
     // , sizeOfInputDataInBytes(497214231)
     , timestampOfLastSN(std::make_pair(INVALID<SequenceNumber>, 0))
 {
+    const auto legacyOutputFormat = toUpperCase(sinkDescriptor.getFromConfig(ConfigParametersMonitoring::LEGACY_OUTPUT_FORMAT));
+    if (legacyOutputFormat == "CSV")
+    {
+        format = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+    }
+    else if (legacyOutputFormat == "JSON")
+    {
+        format = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+    }
+    else
+    {
+        format = std::make_unique<NoneFormat>(*sinkDescriptor.getSchema());
+    }
 }
 
 void MonitoringSink::start(PipelineExecutionContext&)
@@ -149,6 +166,8 @@ void MonitoringSink::stop(PipelineExecutionContext&)
 void MonitoringSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in MonitoringSink.");
+    /// Obligatory legacy formatting step
+    (void)format->getFormattedBuffer(inputBuffer);
 
     // if (inputBuffer.isLastChunk())
     /// If the current buffer contains the source creation timestamp marker, measure the latency
@@ -184,5 +203,4 @@ SinkRegistryReturnType RegisterMonitoringSink(SinkRegistryArguments sinkRegistry
 {
     return std::make_unique<MonitoringSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
 }
-
 }
