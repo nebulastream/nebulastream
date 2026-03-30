@@ -28,12 +28,12 @@
 namespace NES
 {
 
-const std::type_info& InlineSourceBindingRule::getType()
+const std::type_info& InlineSourceBindingRule::getType() const
 {
     return typeid(InlineSourceBindingRule);
 }
 
-std::string_view InlineSourceBindingRule::getName()
+std::string_view InlineSourceBindingRule::getName() const
 {
     return NAME;
 }
@@ -50,9 +50,13 @@ std::set<std::type_index> InlineSourceBindingRule::requiredBy() const
     return {};
 };
 
-bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const
+bool InlineSourceBindingRule::equals(const Rule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    if (const auto* temp = dynamic_cast<const InlineSourceBindingRule*>(&other))
+    {
+        return temp->sourceCatalog == this->sourceCatalog;
+    }
+    return false;
 }
 
 LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
@@ -84,7 +88,7 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
     return current.withChildren(newChildren);
 }
 
-LogicalPlan InlineSourceBindingRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan InlineSourceBindingRule::apply(LogicalPlan queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& root : queryPlan.getRootOperators())

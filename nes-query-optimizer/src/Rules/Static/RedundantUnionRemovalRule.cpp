@@ -29,12 +29,12 @@
 namespace NES
 {
 
-const std::type_info& RedundantUnionRemovalRule::getType()
+const std::type_info& RedundantUnionRemovalRule::getType() const
 {
     return typeid(RedundantUnionRemovalRule);
 }
 
-std::string_view RedundantUnionRemovalRule::getName()
+std::string_view RedundantUnionRemovalRule::getName() const
 {
     return NAME;
 }
@@ -51,9 +51,9 @@ std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
     return {};
 }
 
-bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
+bool RedundantUnionRemovalRule::equals(const Rule& other) const
 {
-    return true;
+    return dynamic_cast<const RedundantUnionRemovalRule*>(&other) != nullptr;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

@@ -31,12 +31,12 @@
 namespace NES
 {
 
-const std::type_info& DecideMemoryLayoutRule::getType()
+const std::type_info& DecideMemoryLayoutRule::getType() const
 {
     return typeid(DecideMemoryLayoutRule);
 }
 
-std::string_view DecideMemoryLayoutRule::getName()
+std::string_view DecideMemoryLayoutRule::getName() const
 {
     return NAME;
 }
@@ -53,12 +53,12 @@ std::set<std::type_index> DecideMemoryLayoutRule::requiredBy() const
     return {};
 }
 
-bool DecideMemoryLayoutRule::operator==(const DecideMemoryLayoutRule&) const
+bool DecideMemoryLayoutRule::equals(const Rule& other) const
 {
-    return true;
+    return dynamic_cast<const DecideMemoryLayoutRule*>(&other) != nullptr;
 }
 
-LogicalPlan DecideMemoryLayoutRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan DecideMemoryLayoutRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Only single root operators are supported for now");
     PRECONDITION(not queryPlan.getRootOperators().empty(), "Query must have a sink root operator");

@@ -30,11 +30,11 @@ namespace NES
 QueryOptimizer::QueryOptimizer(QueryOptimizerConfiguration defaultQueryOptimization)
     : defaultQueryOptimization(std::move(defaultQueryOptimization))
 {
-    PlanRuleManager ruleManager;
-    ruleManager.addRule(DecideJoinTypesRule{this->defaultQueryOptimization.joinStrategy});
-    ruleManager.addRule(DecideMemoryLayoutRule{});
-    ruleManager.addRule(RedundantUnionRemovalRule{});
-    ruleManager.addRule(RedundantProjectionRemovalRule{});
+    RuleManager<PlanRule> ruleManager;
+    ruleManager.addRule(std::make_unique<DecideJoinTypesRule>(this->defaultQueryOptimization.joinStrategy));
+    ruleManager.addRule(std::make_unique<DecideMemoryLayoutRule>());
+    ruleManager.addRule(std::make_unique<RedundantUnionRemovalRule>());
+    ruleManager.addRule(std::make_unique<RedundantProjectionRemovalRule>());
 
     ruleSequence = ruleManager.getSequence();
 }
@@ -43,7 +43,7 @@ LogicalPlan QueryOptimizer::optimize(LogicalPlan plan) const
 {
     for (const auto& rule : ruleSequence)
     {
-        plan = rule.apply(std::move(plan));
+        plan = rule->apply(std::move(plan));
     }
     return plan;
 }

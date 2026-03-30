@@ -34,12 +34,12 @@
 namespace NES
 {
 
-const std::type_info& LogicalSourceExpansionRule::getType()
+const std::type_info& LogicalSourceExpansionRule::getType() const
 {
     return typeid(LogicalSourceExpansionRule);
 }
 
-std::string_view LogicalSourceExpansionRule::getName()
+std::string_view LogicalSourceExpansionRule::getName() const
 {
     return NAME;
 }
@@ -56,9 +56,13 @@ std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
     return {};
 };
 
-bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
+bool LogicalSourceExpansionRule::equals(const Rule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    if (const auto* temp = dynamic_cast<const LogicalSourceExpansionRule*>(&other))
+    {
+        return temp->sourceCatalog == this->sourceCatalog;
+    }
+    return false;
 }
 
 LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const

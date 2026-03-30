@@ -19,7 +19,7 @@
 #include <typeindex>
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 
 namespace NES
 {
@@ -35,18 +35,16 @@ namespace NES
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
 */
-class OriginIdInferenceRule
+class OriginIdInferenceRule final : public PlanRule
 {
 public:
     static constexpr std::string_view NAME = "OriginIdInferenceRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const OriginIdInferenceRule& other) const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 };
-
-static_assert(PlanRuleConcept<OriginIdInferenceRule>);
 }

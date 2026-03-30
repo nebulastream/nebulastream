@@ -29,12 +29,12 @@
 namespace NES
 {
 
-const std::type_info& RedundantProjectionRemovalRule::getType()
+const std::type_info& RedundantProjectionRemovalRule::getType() const
 {
     return typeid(RedundantProjectionRemovalRule);
 }
 
-std::string_view RedundantProjectionRemovalRule::getName()
+std::string_view RedundantProjectionRemovalRule::getName() const
 {
     return NAME;
 }
@@ -51,9 +51,9 @@ std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
     return {};
 }
 
-bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
+bool RedundantProjectionRemovalRule::equals(const Rule& other) const
 {
-    return true;
+    return dynamic_cast<const RedundantProjectionRemovalRule*>(&other) != nullptr;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

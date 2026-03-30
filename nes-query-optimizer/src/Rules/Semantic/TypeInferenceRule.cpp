@@ -53,7 +53,7 @@ static LogicalOperator propagateSchema(const LogicalOperator& op)
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan TypeInferenceRule::apply(LogicalPlan queryPlan) const
 {
     std::vector<LogicalOperator> newRoots;
     for (const auto& sink : queryPlan.getRootOperators())
@@ -64,12 +64,12 @@ LogicalPlan TypeInferenceRule::apply(const LogicalPlan& queryPlan) const
     return queryPlan.withRootOperators(newRoots);
 }
 
-const std::type_info& TypeInferenceRule::getType()
+const std::type_info& TypeInferenceRule::getType() const
 {
     return typeid(TypeInferenceRule);
 }
 
-std::string_view TypeInferenceRule::getName()
+std::string_view TypeInferenceRule::getName() const
 {
     return NAME;
 }
@@ -86,9 +86,9 @@ std::set<std::type_index> TypeInferenceRule::requiredBy() const
     return {};
 }
 
-bool TypeInferenceRule::operator==(const TypeInferenceRule&) const
+bool TypeInferenceRule::equals(const Rule& other) const
 {
-    return true;
+    return dynamic_cast<const TypeInferenceRule*>(&other) != nullptr;
 }
 
 

@@ -41,37 +41,38 @@ namespace NES
  *
  * @tparam U The plan type that rules operate on (e.g. LogicalPlan).
  */
-template <typename U>
+template <typename RuleType>
 class RuleManager
 {
 public:
-    void addRule(Rule<U> rule)
+    void addRule(std::unique_ptr<RuleType> rule)
     {
-        if (rules.contains(rule.getType()))
+        if (rules.contains(rule->getType()))
         {
             throw InvalidOptimizerRuleset("only supports one rule per type");
         }
-        for (const auto& deps : rule.dependsOn())
+        for (const auto& deps : rule->dependsOn())
         {
-            directedEdges[deps].insert(rule.getType());
+            directedEdges[deps].insert(rule->getType());
         }
 
-        for (const auto& requiredBy : rule.requiredBy())
+        for (const auto& requiredBy : rule->requiredBy())
         {
-            directedEdges[rule.getType()].insert(requiredBy);
+            directedEdges[rule->getType()].insert(requiredBy);
         }
 
-        rules.emplace(rule.getType(), rule);
+        rules.emplace(rule->getType(), std::move(rule));
     }
 
     /// Returns a topological ordering of all registered rules respecting their declared dependencies.
     /// Throws InvalidOptimizerRuleset if any dependency references an unregistered rule or if the graph contains a cycle.
-    [[nodiscard]] std::vector<Rule<U>> getSequence() const
+    /// Moves all rules out of this manager; the manager should not be used after this call.
+    [[nodiscard]] std::vector<std::unique_ptr<RuleType>> getSequence()
     {
-        std::queue<Rule<U>> candidates;
+        std::queue<RuleType*> candidates;
         std::unordered_map<std::type_index, size_t> indegree;
 
-        std::vector<Rule<U>> sequence;
+        std::vector<std::type_index> orderedTypes;
 
         for (const auto& [type, rule] : rules)
         {
@@ -98,41 +99,45 @@ public:
         {
             if (numberOfRulesItDependsOn == 0)
             {
-                candidates.push(rules.at(type));
+                candidates.push(rules.at(type).get());
             }
         }
 
         while (!candidates.empty())
         {
-            auto next = candidates.front();
+            auto* next = candidates.front();
             candidates.pop();
-            sequence.emplace_back(next);
-            if (directedEdges.contains(next.getType()))
+            orderedTypes.emplace_back(next->getType());
+            if (directedEdges.contains(next->getType()))
             {
-                auto dependents = directedEdges.at(next.getType());
+                auto dependents = directedEdges.at(next->getType());
                 for (auto dependent : dependents)
                 {
                     indegree[dependent] -= 1;
                     if (indegree[dependent] == 0)
                     {
-                        candidates.push(rules.at(dependent));
+                        candidates.push(rules.at(dependent).get());
                     }
                 }
             }
         }
-        if (sequence.size() != rules.size())
+        if (orderedTypes.size() != rules.size())
         {
             throw InvalidOptimizerRuleset("Cycle detected in rule dependencies.");
         }
 
+        std::vector<std::unique_ptr<RuleType>> sequence;
+        sequence.reserve(orderedTypes.size());
+        for (auto& type : orderedTypes)
+        {
+            sequence.push_back(std::move(rules.at(type)));
+        }
         return sequence;
     }
 
 private:
     /// Directed edges between rules. key points to rules that depend on it.
     std::unordered_map<std::type_index, std::set<std::type_index>> directedEdges;
-    std::unordered_map<std::type_index, Rule<U>> rules;
+    std::unordered_map<std::type_index, std::unique_ptr<RuleType>> rules;
 };
-
-using PlanRuleManager = RuleManager<LogicalPlan>;
 }

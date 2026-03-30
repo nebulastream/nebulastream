@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Rules/Rule.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
@@ -33,7 +34,7 @@ public:
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
-    std::vector<PlanRule> ruleSequence;
+    std::vector<std::unique_ptr<PlanRule>> ruleSequence;
 };
 
 }

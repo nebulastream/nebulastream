@@ -33,14 +33,14 @@ namespace NES
 SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<SourceCatalog> sourceCatalog, std::shared_ptr<SinkCatalog> sinkCatalog)
     : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
 {
-    PlanRuleManager ruleManager;
-    ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
-    ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
-    ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
-    ruleManager.addRule(SourceInferenceRule{this->sourceCatalog});
-    ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
-    ruleManager.addRule(TypeInferenceRule{});
-    ruleManager.addRule(OriginIdInferenceRule{});
+    RuleManager<PlanRule> ruleManager;
+    ruleManager.addRule(std::make_unique<InlineSinkBindingRule>(this->sinkCatalog));
+    ruleManager.addRule(std::make_unique<SinkBindingRule>(this->sinkCatalog));
+    ruleManager.addRule(std::make_unique<InlineSourceBindingRule>(this->sourceCatalog));
+    ruleManager.addRule(std::make_unique<SourceInferenceRule>(this->sourceCatalog));
+    ruleManager.addRule(std::make_unique<LogicalSourceExpansionRule>(this->sourceCatalog));
+    ruleManager.addRule(std::make_unique<TypeInferenceRule>());
+    ruleManager.addRule(std::make_unique<OriginIdInferenceRule>());
 
     this->ruleSequence = ruleManager.getSequence();
 }
@@ -49,7 +49,7 @@ LogicalPlan SemanticAnalyzer::analyse(LogicalPlan plan) const
 {
     for (const auto& rule : ruleSequence)
     {
-        plan = rule.apply(plan);
+        plan = rule->apply(plan);
     }
     return plan;
 }

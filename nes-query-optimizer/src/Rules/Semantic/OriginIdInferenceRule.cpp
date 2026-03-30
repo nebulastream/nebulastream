@@ -76,12 +76,12 @@ LogicalOperator propagateOriginIds(const LogicalOperator& visitingOperator, Orig
 }
 }
 
-const std::type_info& OriginIdInferenceRule::getType()
+const std::type_info& OriginIdInferenceRule::getType() const
 {
     return typeid(OriginIdInferenceRule);
 }
 
-std::string_view OriginIdInferenceRule::getName()
+std::string_view OriginIdInferenceRule::getName() const
 {
     return NAME;
 }
@@ -98,13 +98,13 @@ std::set<std::type_index> OriginIdInferenceRule::requiredBy() const
     return {};
 }
 
-bool OriginIdInferenceRule::operator==(const OriginIdInferenceRule&) const
+bool OriginIdInferenceRule::equals(const Rule& other) const
 {
-    return true;
+    return dynamic_cast<const OriginIdInferenceRule*>(&other) != nullptr;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-LogicalPlan OriginIdInferenceRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan OriginIdInferenceRule::apply(LogicalPlan queryPlan) const
 {
     /// origin ids, always start from 1 to n, whereby n is the number of operators that assign new orin ids
     auto originIdCounter = OriginId{INITIAL_ORIGIN_ID.getRawValue()};

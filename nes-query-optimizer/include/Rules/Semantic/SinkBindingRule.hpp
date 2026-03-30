@@ -20,28 +20,26 @@
 #include <typeinfo>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Sinks/SinkCatalog.hpp>
 
 namespace NES
 {
-class SinkBindingRule
+class SinkBindingRule final : public PlanRule
 {
 public:
     explicit SinkBindingRule(std::shared_ptr<const SinkCatalog> sinkCatalog) : sinkCatalog(std::move(sinkCatalog)) { }
 
     static constexpr std::string_view NAME = "SinkBindingRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const SinkBindingRule& other) const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 
 private:
     std::shared_ptr<const SinkCatalog> sinkCatalog;
 };
-
-static_assert(PlanRuleConcept<SinkBindingRule>);
 }

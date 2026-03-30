@@ -23,7 +23,7 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES
@@ -81,23 +81,21 @@ namespace NES
  * logical source truck has two physical sources: i.e. truck1 and truck2
  *
  */
-class LogicalSourceExpansionRule
+class LogicalSourceExpansionRule final : public PlanRule
 {
 public:
     explicit LogicalSourceExpansionRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
     static constexpr std::string_view NAME = "LogicalSourceExpansionRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-    bool operator==(const LogicalSourceExpansionRule& other) const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
-
-static_assert(PlanRuleConcept<LogicalSourceExpansionRule>);
 }

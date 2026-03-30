@@ -14,27 +14,26 @@
 
 #pragma once
 
-#include <memory>
 #include <set>
 #include <string_view>
 #include <typeindex>
 #include <typeinfo>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 
 namespace NES
 {
 
 /// The type inference phase receives and query plan and infers all input and output schemata for all operators.
-class TypeInferenceRule
+class TypeInferenceRule final : public PlanRule
 {
 public:
     static constexpr std::string_view NAME = "TypeInferenceRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
 
     /// Performs type inference on the given query plan.
     /// This involves the following steps.
@@ -42,9 +41,7 @@ public:
     /// 2. Propagate the input and output schemas from source operators to the sink operators.
     /// 3. If a operator contains expression, we infer the result dataType of this operators.
     /// @throws TypeInferenceException if inferring the data types into the query failed
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const TypeInferenceRule& other) const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 };
-
-static_assert(PlanRuleConcept<TypeInferenceRule>);
 }

@@ -16,6 +16,7 @@
 #include <memory>
 #include <vector>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Rules/Rule.hpp>
 
 namespace NES
@@ -36,6 +37,6 @@ public:
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
     std::shared_ptr<const SinkCatalog> sinkCatalog;
-    std::vector<PlanRule> ruleSequence;
+    std::vector<std::unique_ptr<PlanRule>> ruleSequence;
 };
 }

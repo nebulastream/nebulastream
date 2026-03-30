@@ -28,12 +28,12 @@
 namespace NES
 {
 
-const std::type_info& InlineSinkBindingRule::getType()
+const std::type_info& InlineSinkBindingRule::getType() const
 {
     return typeid(InlineSinkBindingRule);
 }
 
-std::string_view InlineSinkBindingRule::getName()
+std::string_view InlineSinkBindingRule::getName() const
 {
     return NAME;
 }
@@ -50,12 +50,16 @@ std::set<std::type_index> InlineSinkBindingRule::requiredBy() const
     return {};
 }
 
-bool InlineSinkBindingRule::operator==(const InlineSinkBindingRule& other) const
-{
-    return sinkCatalog == other.sinkCatalog;
+bool InlineSinkBindingRule::equals(const Rule& other) const {
+    if (const auto temp = dynamic_cast<const InlineSinkBindingRule*>(&other); temp != nullptr)
+    {
+        return temp->sinkCatalog == this->sinkCatalog;
+    }
+    return false;
+
 }
 
-LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
+LogicalPlan InlineSinkBindingRule::apply(LogicalPlan queryPlan) const
 {
     std::vector<LogicalOperator> newRootOperators;
     for (const auto& rootOperator : queryPlan.getRootOperators())

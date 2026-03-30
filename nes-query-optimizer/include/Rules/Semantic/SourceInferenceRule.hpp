@@ -21,32 +21,30 @@
 #include <typeinfo>
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
 
-class SourceInferenceRule
+class SourceInferenceRule final : public PlanRule
 {
 public:
     explicit SourceInferenceRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
     static constexpr std::string_view NAME = "SourceInferenceRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
 
     /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
     /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-    bool operator==(const SourceInferenceRule& other) const;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 
 private:
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
-
-static_assert(PlanRuleConcept<SourceInferenceRule>);
 }

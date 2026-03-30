@@ -21,7 +21,7 @@
 #include <utility>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 #include <Sources/SourceCatalog.hpp>
 
 namespace NES
@@ -30,24 +30,22 @@ namespace NES
 /// The InlineSourceBindingPhase replaces all sources that are defined within the query itself (InlineSourceLogicalOperators), as opposed to
 /// sources that are created in separate CREATE statements, with physical sources based on the given inline source configuration.
 
-class InlineSourceBindingRule
+class InlineSourceBindingRule final : public PlanRule
 {
 public:
     explicit InlineSourceBindingRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
 
     static constexpr std::string_view NAME = "InlineSourceBindingRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const InlineSourceBindingRule& other) const;
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 
 private:
     [[nodiscard]] LogicalOperator bindInlineSourceLogicalOperators(const LogicalOperator& current) const;
     std::shared_ptr<const SourceCatalog> sourceCatalog;
 };
-
-static_assert(PlanRuleConcept<InlineSourceBindingRule>);
 }

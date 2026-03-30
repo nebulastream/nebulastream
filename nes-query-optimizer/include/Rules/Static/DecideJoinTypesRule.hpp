@@ -19,32 +19,29 @@
 #include <typeinfo>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/Rule.hpp>
+#include <Rules/PlanRule.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
 
 /// Decides what join implementation should be used. For now, we support HashJoin or a NestedLoopJoin
-class DecideJoinTypesRule
+class DecideJoinTypesRule final : public PlanRule
 {
 public:
     explicit DecideJoinTypesRule(const StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy) { }
 
     static constexpr std::string_view NAME = "DecideJoinTypesRule";
 
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
-    bool operator==(const DecideJoinTypesRule& other) const;
-
+    [[nodiscard]] const std::type_info& getType() const override;
+    [[nodiscard]] std::string_view getName() const override;
+    [[nodiscard]] std::set<std::type_index> dependsOn() const override;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const override;
+    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const override;
+    [[nodiscard]] bool equals(const Rule& other) const override;
 
 private:
     [[nodiscard]] LogicalOperator apply(const LogicalOperator& logicalOperator) const;
     StreamJoinStrategy joinStrategy;
 };
-
-static_assert(PlanRuleConcept<DecideJoinTypesRule>);
 }

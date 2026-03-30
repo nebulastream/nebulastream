@@ -32,12 +32,12 @@
 namespace NES
 {
 
-const std::type_info& SourceInferenceRule::getType()
+const std::type_info& SourceInferenceRule::getType() const
 {
     return typeid(SourceInferenceRule);
 }
 
-std::string_view SourceInferenceRule::getName()
+std::string_view SourceInferenceRule::getName() const
 {
     return NAME;
 }
@@ -54,10 +54,13 @@ std::set<std::type_index> SourceInferenceRule::requiredBy() const
     return {};
 }
 
-/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const
+bool SourceInferenceRule::equals(const Rule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    if (const auto* temp = dynamic_cast<const SourceInferenceRule*>(&other))
+    {
+        return temp->sourceCatalog == this->sourceCatalog;
+    }
+    return false;
 }
 
 LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
