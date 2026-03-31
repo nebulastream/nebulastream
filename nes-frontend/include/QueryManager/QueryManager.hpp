@@ -27,6 +27,7 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 #include <WorkerStatus.hpp>

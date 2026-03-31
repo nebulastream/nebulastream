@@ -74,7 +74,9 @@ void reportResult(
 
     std::string performanceMessage;
     /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
-    if (performanceMessageBuilder and runningQuery->queryStatus.has_value()
+    if (performanceMessageBuilder
+        and runningQuery->queryStatus.has_value()
+        /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) guarded by has_value() above
         and runningQuery->queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);

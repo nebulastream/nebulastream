@@ -14,9 +14,9 @@
 
 #pragma once
 
-#include <algorithm>
 #include <cstddef>
 #include <functional>
+#include <numeric>
 #include <ranges>
 #include <stdexcept>
 #include <unordered_map>

@@ -23,6 +23,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 

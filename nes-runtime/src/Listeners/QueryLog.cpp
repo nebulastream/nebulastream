@@ -25,9 +25,9 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryStatus.hpp>
 
 namespace NES
 {
@@ -94,7 +94,7 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
 
 namespace
 {
-std::optional<LocalQueryStatusSnapshot> getQueryStatusImpl(const auto& log, QueryId queryId)
+std::optional<LocalQueryStatusSnapshot> getQueryStatusImpl(const auto& log, const QueryId& queryId)
 {
     if (const auto queryLog = log->find(queryId); queryLog != log->end())
     {
@@ -151,7 +151,7 @@ std::optional<LocalQueryStatusSnapshot> getQueryStatusImpl(const auto& log, Quer
 }
 }
 
-std::optional<LocalQueryStatusSnapshot> QueryLog::getQueryStatus(const QueryId queryId) const
+std::optional<LocalQueryStatusSnapshot> QueryLog::getQueryStatus(const QueryId& queryId) const
 {
     const auto log = queryStatusLog.rlock();
     return getQueryStatusImpl(log, queryId);

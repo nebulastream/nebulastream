@@ -14,6 +14,7 @@
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>

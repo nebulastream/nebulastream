@@ -28,6 +28,7 @@
 #include <vector>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/LogicalSource.hpp>

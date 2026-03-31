@@ -71,11 +71,11 @@ std::filesystem::path QueryStateBackend::getStateDirectory()
         stateDir = std::filesystem::path(home) / ".local" / "state" / "nebucli";
         NES_DEBUG("Using fallback state directory: {}", stateDir.string());
     }
-    std::error_code ec;
-    std::filesystem::create_directories(stateDir, ec);
-    if (ec)
+    std::error_code errorCode;
+    std::filesystem::create_directories(stateDir, errorCode);
+    if (errorCode)
     {
-        throw InvalidConfigParameter("Failed to create state directory {}: {}", stateDir.string(), ec.message());
+        throw InvalidConfigParameter("Failed to create state directory {}: {}", stateDir.string(), errorCode.message());
     }
     return stateDir;
 }
@@ -164,11 +164,11 @@ DistributedQuery QueryStateBackend::load(PersistedQueryId persistedId)
 void QueryStateBackend::remove(PersistedQueryId persistedId)
 {
     auto filePath = getQueryFilePath(persistedId.queryId);
-    std::error_code ec;
-    std::filesystem::remove(filePath, ec);
-    if (ec)
+    std::error_code errorCode;
+    std::filesystem::remove(filePath, errorCode);
+    if (errorCode)
     {
-        NES_WARNING("Failed to remove state file {}: {}", filePath.string(), ec.message());
+        NES_WARNING("Failed to remove state file {}: {}", filePath.string(), errorCode.message());
     }
     else
     {

@@ -27,7 +27,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -88,8 +87,8 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
         return std::nullopt;
     }
 
-    auto sinkDescriptor
-        = SinkDescriptor{inlineSinkId.getRawValue(), schema, sinkType, host, formatConfig, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor = SinkDescriptor{
+        inlineSinkId.getRawValue(), schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

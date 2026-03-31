@@ -42,7 +42,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -61,6 +60,7 @@
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 #include <TestSource.hpp>
@@ -537,7 +537,7 @@ struct TestingHarness
     std::unique_ptr<ExecutableQueryPlan> addNewQuery(QueryPlanBuilder&& builder);
 
     /// List of status events to be emitted by a query with QueryId `id`
-    void expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states);
+    void expectQueryStatusEvents(const QueryId& id, std::initializer_list<QueryStatus> states);
 
     /// Expects a source for a given query to be terminated (gracefully or due to a failure)
     void expectSourceTermination(QueryId id, QueryPlanBuilder::identifier_t source, QueryTerminationType type);

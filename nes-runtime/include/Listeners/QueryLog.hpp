@@ -62,7 +62,7 @@ struct QueryLog : AbstractQueryStatusListener
     bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
-    [[nodiscard]] std::optional<LocalQueryStatusSnapshot> getQueryStatus(QueryId queryId) const;
+    [[nodiscard]] std::optional<LocalQueryStatusSnapshot> getQueryStatus(const QueryId& queryId) const;
 
     [[nodiscard]] std::vector<LocalQueryStatusSnapshot> getStatus() const;
 

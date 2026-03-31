@@ -121,7 +121,8 @@ std::unordered_map<NES::Host, std::vector<NES::Exception>> NES::DistributedQuery
         {
             if (result.has_value() && result->metrics.error.has_value())
             {
-                exceptions[grpc].emplace_back(*result->metrics.error);
+                /// NOLINTNEXTLINE(bugprone-unchecked-optional-access) guarded by has_value() above
+                exceptions[grpc].emplace_back(result->metrics.error.value());
             }
             else if (!result.has_value())
             {

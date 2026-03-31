@@ -41,6 +41,7 @@
 #include <fmt/base.h>
 #include <fmt/format.h>
 #include <DistributedLogicalPlan.hpp>
+#include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <SystestConfiguration.hpp>
 

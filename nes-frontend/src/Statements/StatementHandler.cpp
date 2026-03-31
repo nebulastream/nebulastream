@@ -35,6 +35,7 @@
 #include <Util/Overloaded.hpp>
 #include <Util/Pointers.hpp>
 #include <Util/Ranges.hpp>
+#include <Util/Strings.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/ostream.h>
 #include <fmt/ranges.h>

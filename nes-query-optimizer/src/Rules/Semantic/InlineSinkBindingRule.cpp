@@ -15,6 +15,7 @@
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sinks/InlineSinkLogicalOperator.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>

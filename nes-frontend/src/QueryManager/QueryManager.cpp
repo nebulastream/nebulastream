@@ -32,9 +32,11 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Pointers.hpp>
 #include <fmt/ranges.h>
+#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
 

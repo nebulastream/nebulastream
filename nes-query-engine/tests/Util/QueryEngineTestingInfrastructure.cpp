@@ -36,7 +36,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
@@ -53,6 +52,7 @@
 #include <QueryEngine.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <TestSource.hpp>
 
 namespace NES
@@ -302,7 +302,7 @@ std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilde
     return std::move(plan);
 }
 
-void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states)
+void TestingHarness::expectQueryStatusEvents(const QueryId& id, std::initializer_list<QueryStatus> states)
 {
     for (auto state : states)
     {

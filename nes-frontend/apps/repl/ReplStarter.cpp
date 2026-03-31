@@ -66,6 +66,7 @@
     #include <Configurations/Util.hpp>
     #include <QueryManager/EmbeddedWorkerQuerySubmissionBackend.hpp>
     #include <SingleNodeWorkerConfiguration.hpp>
+    #include <WorkerConfig.hpp>
 #endif
 
 /// If repl is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication

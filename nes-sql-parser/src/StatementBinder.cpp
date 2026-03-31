@@ -35,6 +35,7 @@
 #include <vector>
 
 #include <DataTypes/DataTypeProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceValidationProvider.hpp>

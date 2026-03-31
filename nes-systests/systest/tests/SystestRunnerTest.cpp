@@ -34,7 +34,6 @@
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -45,9 +44,11 @@
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+#include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryId.hpp>
+#include <QueryStatus.hpp>
 #include <QuerySubmitter.hpp>
 #include <SystestProgressTracker.hpp>
 #include <SystestState.hpp>
@@ -66,7 +67,7 @@ NES::QueryId randomQueryId()
 /// NOLINTBEGIN(bugprone-unchecked-optional-access)
 
 NES::LocalQueryStatusSnapshot
-makeSummary(const NES::QueryId id, const NES::QueryStatus currState, const std::shared_ptr<NES::Exception>& err)
+makeSummary(const NES::QueryId& id, const NES::QueryStatus currState, const std::shared_ptr<NES::Exception>& err)
 {
     NES::LocalQueryStatusSnapshot queryStatus;
     queryStatus.queryId = id;

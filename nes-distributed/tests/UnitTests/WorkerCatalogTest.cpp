@@ -25,7 +25,7 @@
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
 
-/// NOLINTBEGIN(google-build-using-namespace, readability-identifier-length)
+/// NOLINTBEGIN(google-build-using-namespace, readability-identifier-length, bugprone-unchecked-optional-access, readability-magic-numbers)
 namespace NES
 {
 
@@ -270,4 +270,4 @@ TEST_F(WorkerCatalogTest, TopologyDiamondRemoveIntermediateNode)
 
 }
 
-/// NOLINTEND(google-build-using-namespace, readability-identifier-length)
+/// NOLINTEND(google-build-using-namespace, readability-identifier-length, bugprone-unchecked-optional-access, readability-magic-numbers)

@@ -162,7 +162,7 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     auto name = physicalId.toString();
 
     const auto logicalSource = LogicalSource{name, schema};
-    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, host, descriptorConfig.value(), parserConfig};
+    SourceDescriptor sourceDescriptor{physicalId, logicalSource, sourceType, std::move(host), descriptorConfig.value(), parserConfig};
     return sourceDescriptor;
 }
 
