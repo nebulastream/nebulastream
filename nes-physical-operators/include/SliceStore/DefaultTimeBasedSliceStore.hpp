@@ -14,19 +14,27 @@
 
 #pragma once
 #include <atomic>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
 #include <optional>
+#include <span>
+#include <unordered_map>
 #include <vector>
+#include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <folly/Synchronized.h>
 
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
@@ -47,7 +55,7 @@ struct SlicesAndState
 class DefaultTimeBasedSliceStore final : public WindowSlicesStoreInterface
 {
 public:
-    DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide);
+    DefaultTimeBasedSliceStore(uint64_t windowSize, uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration);
 
     ~DefaultTimeBasedSliceStore() override;
     std::vector<std::shared_ptr<Slice>> getSlicesOrCreate(
@@ -60,8 +68,18 @@ public:
     void deleteState() override;
     void incrementNumberOfInputPipelines() override;
     uint64_t getWindowSize() const override;
+    std::span<std::byte>
+    allocateSpaceForSliceCache(uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider);
+
+    /// Creates a SliceStoreRef that wraps this store. The store provides its own SliceCacheConfiguration;
+    /// the caller only supplies the two operator-specific callbacks.
+    std::unique_ptr<SliceStoreRef> createSliceStoreRef(
+        DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator);
 
 private:
+    SliceCacheConfiguration sliceCacheConfiguration;
+    folly::Synchronized<std::unordered_map<PipelineId, std::unique_ptr<TupleBuffer>>> pipelineIdToSliceCacheStarts;
+
     /// We need to store the windows and slices in two separate maps. This is necessary as we need to access the slices during the join build phase,
     /// while we need to access windows during the triggering of windows.
     folly::Synchronized<std::map<WindowInfo, SlicesAndState>> windows;

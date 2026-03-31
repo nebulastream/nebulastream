@@ -128,6 +128,7 @@ void HJOperatorHandler::emitSlicesToProbe(
                 /// As the hashmap has one value per key, we can use the number of tuples for the number of keys
                 rollingAverageNumberOfKeys.wlock()->add(hashMap->getNumberOfTuples());
 
+                /// We store here the raw pointer, as we need the raw pointers to operate over them in the HJProbe
                 allHashMaps.emplace_back(hashMap);
                 totalNumberOfTuples += hashMap->getNumberOfTuples();
             }

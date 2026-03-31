@@ -14,8 +14,10 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalNLJoin.hpp>
 
+#include <cstddef>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -32,14 +34,17 @@
 #include <Join/NestedLoopJoin/NLJBuildPhysicalOperator.hpp>
 #include <Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Join/NestedLoopJoin/NLJProbePhysicalOperator.hpp>
+#include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -52,6 +57,7 @@
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -107,11 +113,31 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto [timeStampFieldLeft, timeStampFieldRight] = TimestampField::getTimestampLeftAndRight(*join, windowType);
 
-    auto leftBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef);
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        {
+            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
+            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Left);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+        },
+        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
+    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        {
+            const auto& newNLJSlice = dynamic_cast<NLJSlice&>(slice);
+            auto* ptr = newNLJSlice.getPagedVectorRef(workerThreadId, JoinBuildSideType::Right);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(PagedVector)};
+        },
+        [](const WindowBasedOperatorHandler& handler) { return handler.getCreateNewSlicesFunction({}); });
 
-    auto rightBuildOperator
-        = NLJBuildPhysicalOperator(handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef);
+    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
+
+    const NLJBuildPhysicalOperator leftBuildOperator{
+        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, std::move(sliceStoreRefLeft)};
+    const NLJBuildPhysicalOperator rightBuildOperator{
+        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, std::move(sliceStoreRefRight)};
 
     auto joinSchema = JoinSchema(leftInputSchema, rightInputSchema, outputSchema);
     auto probeOperator = NLJProbePhysicalOperator(
@@ -123,10 +149,6 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
         rightBufferRef,
         getJoinFieldNames(leftInputSchema, logicalJoinFunction),
         getJoinFieldNames(rightInputSchema, logicalJoinFunction));
-
-    auto sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler = std::make_shared<NLJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore));
 
     auto leftBuildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         std::move(leftBuildOperator),

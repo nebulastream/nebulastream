@@ -15,10 +15,10 @@
 #pragma once
 #include <cstddef>
 #include <cstdint>
-#include <type_traits>
 #include <functional>
 #include <memory>
 #include <span>
+#include <type_traits>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/TimestampRef.hpp>
 #include <Time/Timestamp.hpp>
@@ -42,11 +42,13 @@ struct SliceCacheEntry
     {
     }
 
-    virtual ~SliceCacheEntry() = default;
     Timestamp::Underlying sliceStart;
     Timestamp::Underlying sliceEnd;
     DataStructure dataStructure;
 };
+
+/// We do not wish to have a virtual destructor, as this leads to a 8B vtable pointer for every slice cache entry.
+/// Due to use using the structs purely in nautilus, this would simply waste space, as the struct is never polymorphically destroyed.
 static_assert(std::is_trivially_destructible_v<SliceCacheEntry>);
 
 /// Slice cache that sits between our slice store and an operator. Each entry stores a pointer to a data structure, e.g., Hashmap or

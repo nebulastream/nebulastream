@@ -14,31 +14,37 @@
 
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalWindowedAggregation.hpp>
 
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <numeric>
 #include <ranges>
+#include <span>
 #include <utility>
 #include <vector>
 
 #include <Aggregation/AggregationBuildPhysicalOperator.hpp>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/AggregationProbePhysicalOperator.hpp>
+#include <Aggregation/AggregationSlice.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <Functions/FieldAccessPhysicalFunction.hpp>
 #include <Functions/FunctionProvider.hpp>
 #include <Functions/PhysicalFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Windows/WindowedAggregationLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -49,9 +55,11 @@
 #include <AggregationPhysicalFunctionRegistry.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
+#include <HashMapSlice.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <PhysicalOperator.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -215,12 +223,31 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
         pageSize,
         numberOfBuckets);
 
-    auto sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto sliceStoreRef = sliceAndWindowStore->createSliceStoreRef(
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        {
+            auto& aggregationSlice = dynamic_cast<AggregationSlice&>(slice);
+            auto* ptr = aggregationSlice.getHashMapPtrOrCreate(workerThreadId);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+        },
+        [hashMapOptions](WindowBasedOperatorHandler& handler)
+        {
+            auto& aggHandler = dynamic_cast<AggregationOperatorHandler&>(handler);
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{
+                {aggHandler.cleanupStateNautilusFunction},
+                hashMapOptions.keySize,
+                hashMapOptions.valueSize,
+                hashMapOptions.pageSize,
+                hashMapOptions.numberOfBuckets};
+            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+        });
     auto handler = std::make_shared<AggregationOperatorHandler>(
         inputOriginIds | std::ranges::to<std::vector>(), outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
-    auto build = AggregationBuildPhysicalOperator(handlerId, std::move(timeFunction), aggregationPhysicalFunctions, hashMapOptions);
-    auto probe = AggregationProbePhysicalOperator(hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData);
+    const AggregationBuildPhysicalOperator build{
+        handlerId, std::move(timeFunction), std::move(sliceStoreRef), aggregationPhysicalFunctions, hashMapOptions};
+    const AggregationProbePhysicalOperator probe{hashMapOptions, aggregationPhysicalFunctions, handlerId, windowMetaData};
 
     auto buildWrapper = std::make_shared<PhysicalOperatorWrapper>(
         build,

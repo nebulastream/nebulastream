@@ -30,6 +30,7 @@ struct SliceCacheEntrySecondChance final : SliceCacheEntry
     /// Stores the second chance bit for each entry in the cache.
     bool secondChanceBit;
 };
+
 static_assert(std::is_trivially_destructible_v<SliceCacheEntrySecondChance>);
 
 /// Slice Cache that employs the second chance / clock, c.f., https://en.wikipedia.org/wiki/Page_replacement_algorithm#Clock

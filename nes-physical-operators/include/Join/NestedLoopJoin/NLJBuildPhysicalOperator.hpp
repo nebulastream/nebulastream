@@ -21,6 +21,7 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 
 namespace NES
@@ -36,7 +37,8 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef);
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::unique_ptr<SliceStoreRef> sliceStoreRef);
 
     void execute(ExecutionContext& executionCtx, Record& record) const override;
 };

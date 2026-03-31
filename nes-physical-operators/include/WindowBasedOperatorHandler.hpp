@@ -64,8 +64,6 @@ public:
 
     ~WindowBasedOperatorHandler() override = default;
 
-    /// We can not call opHandler->start() from Nautilus, as we only get a pointer in the proxy function in Nautilus, e.g., setupProxy() in StreamJoinBuild
-    void setWorkerThreads(uint64_t numberOfWorkerThreads);
     void start(PipelineExecutionContext& pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType queryTerminationType, PipelineExecutionContext& pipelineExecutionContext) override;
 

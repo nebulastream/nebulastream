@@ -50,11 +50,17 @@ WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 {
     return pec->getWorkerThreadId();
 }
+
+PipelineId getPipelineIdProxy(const PipelineExecutionContext* pec)
+{
+    return pec->getPipelineId();
+}
 }
 
 ExecutionContext::ExecutionContext(const nautilus::val<PipelineExecutionContext*>& pipelineContext, const nautilus::val<Arena*>& arena)
     : pipelineContext(pipelineContext)
     , workerThreadId(nautilus::invoke(getWorkerThreadIdProxy, pipelineContext))
+    , pipelineId(nautilus::invoke(getPipelineIdProxy, pipelineContext))
     , pipelineMemoryProvider(arena, invoke(getBufferProviderProxy, pipelineContext))
     , originId(INVALID<OriginId>)
     , watermarkTs(0_u64)

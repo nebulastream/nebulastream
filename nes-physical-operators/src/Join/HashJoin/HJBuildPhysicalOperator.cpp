@@ -44,35 +44,6 @@
 
 namespace NES
 {
-HashMap* getHashJoinHashMapProxy(
-    const HJOperatorHandler* operatorHandler,
-    const Timestamp timestamp,
-    const WorkerThreadId workerThreadId,
-    const JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator)
-{
-    PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
-    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
-
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        operatorHandler->getNautilusCleanupExec(),
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(
-        timestamp, operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs));
-    INVARIANT(
-        hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the HashJoinBuild, as we currently solely support "
-        "slicing, but got {}",
-        hashMap.size());
-
-    /// Converting the slice to an HJSlice and returning the pointer to the hashmap
-    const auto hjSlice = std::dynamic_pointer_cast<HJSlice>(hashMap[0]);
-    INVARIANT(hjSlice != nullptr, "The slice should be an HJSlice in an HJBuildPhysicalOperator");
-    return hjSlice->getHashMapPtrOrCreate(workerThreadId, buildSide);
-}
 
 void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
@@ -106,12 +77,10 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
                         entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
                     const auto state = entryRefReset.getValueMemArea();
                     nautilus::invoke(
-                        +[](int8_t* pagedVectorMemArea) -> void
+                        +[](PagedVector* pagedVectorMemArea) -> void
                         {
                             /// Calls the destructor of the PagedVector
-                            /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                            pagedVector->~PagedVector();
+                            pagedVectorMemArea->~PagedVector();
                         },
                         state);
                 }
@@ -128,13 +97,8 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
 
     /// Get the current slice / hash map that we have to insert the tuple into
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getHashJoinHashMapProxy,
-        operatorHandler,
-        timestamp,
-        ctx.workerThreadId,
-        nautilus::val<JoinBuildSideType>(joinBuildSide),
-        nautilus::val<const HJBuildPhysicalOperator*>(this));
+    const auto hashMapPtr = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler);
+
     ChainedHashMapRef hashMap{
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize};
 
@@ -164,12 +128,10 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
                     entry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
                 const auto state = entryRefReset.getValueMemArea();
                 nautilus::invoke(
-                    +[](int8_t* pagedVectorMemArea) -> void
+                    +[](PagedVector* pagedVectorMemArea) -> void
                     {
                         /// Allocates a new PagedVector in the memory area provided by the pointer to the pagedvector
-                        /// NOLINT(cppcoreguidelines-pro-type-reinterpret-cast)
-                        auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                        new (pagedVector) PagedVector();
+                        new (pagedVectorMemArea) PagedVector();
                     },
                     state);
             },
@@ -187,9 +149,10 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    const std::shared_ptr<TupleBufferRef>& bufferRef,
-    HashMapOptions hashMapOptions)
-    : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
+    std::shared_ptr<TupleBufferRef> bufferRef,
+    HashMapOptions hashMapOptions,
+    std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

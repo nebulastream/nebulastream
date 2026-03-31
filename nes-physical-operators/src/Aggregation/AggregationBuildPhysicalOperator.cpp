@@ -40,42 +40,6 @@
 
 namespace NES
 {
-HashMap* getAggHashMapProxy(
-    const AggregationOperatorHandler* operatorHandler,
-    const Timestamp timestamp,
-    const WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator)
-{
-    PRECONDITION(operatorHandler != nullptr, "The operator handler should not be null");
-    PRECONDITION(buildOperator != nullptr, "The build operator should not be null");
-
-    /// If a new hashmap slice is created, we need to set the cleanup function for the aggregation states
-    const CreateNewHashMapSliceArgs hashMapSliceArgs{
-        {operatorHandler->cleanupStateNautilusFunction},
-        buildOperator->hashMapOptions.keySize,
-        buildOperator->hashMapOptions.valueSize,
-        buildOperator->hashMapOptions.pageSize,
-        buildOperator->hashMapOptions.numberOfBuckets};
-    auto wrappedCreateFunction(
-        [createFunction = operatorHandler->getCreateNewSlicesFunction(hashMapSliceArgs),
-         cleanupStateNautilusFunction = operatorHandler->cleanupStateNautilusFunction](const SliceStart sliceStart, const SliceEnd sliceEnd)
-        {
-            const auto createdSlices = createFunction(sliceStart, sliceEnd);
-            return createdSlices;
-        });
-
-    const auto hashMap = operatorHandler->getSliceAndWindowStore().getSlicesOrCreate(timestamp, wrappedCreateFunction);
-    INVARIANT(
-        hashMap.size() == 1,
-        "We expect exactly one slice for the given timestamp during the AggregationBuild, as we currently solely support "
-        "slicing, but got {}",
-        hashMap.size());
-
-    /// Converting the slice to an AggregationSlice and returning the pointer to the hashmap
-    const auto aggregationSlice = std::dynamic_pointer_cast<AggregationSlice>(hashMap[0]);
-    INVARIANT(aggregationSlice != nullptr, "The slice should be an AggregationSlice in an AggregationBuild");
-    return aggregationSlice->getHashMapPtrOrCreate(workerThreadId);
-}
 
 void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const
 {
@@ -115,7 +79,6 @@ void AggregationBuildPhysicalOperator::setup(ExecutionContext& executionCtx, Com
                 })));
     }
 
-
     /// NOLINTEND(performance-unnecessary-value-param)
 }
 
@@ -125,10 +88,9 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
     auto* const localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();
 
-    /// Getting the correspinding slice so that we can update the aggregation states
+    /// Getting the corresponding slice so that we can update the aggregation states
     const auto timestamp = timeFunction->getTs(ctx, record);
-    const auto hashMapPtr = invoke(
-        getAggHashMapProxy, operatorHandler, timestamp, ctx.workerThreadId, nautilus::val<const AggregationBuildPhysicalOperator*>(this));
+    const auto hashMapPtr = sliceStoreRef->getDataStructureRef(timestamp, ctx.workerThreadId, operatorHandler);
     ChainedHashMapRef hashMap(
         hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues, hashMapOptions.entriesPerPage, hashMapOptions.entrySize);
 
@@ -172,9 +134,10 @@ void AggregationBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& re
 AggregationBuildPhysicalOperator::AggregationBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     std::unique_ptr<TimeFunction> timeFunction,
+    std::unique_ptr<SliceStoreRef> sliceStoreRef,
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
     HashMapOptions hashMapOptions)
-    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction))
+    : WindowBuildPhysicalOperator(operatorHandlerId, std::move(timeFunction), std::move(sliceStoreRef))
     , aggregationPhysicalFunctions(std::move(aggregationFunctions))
     , hashMapOptions(std::move(hashMapOptions))
 {

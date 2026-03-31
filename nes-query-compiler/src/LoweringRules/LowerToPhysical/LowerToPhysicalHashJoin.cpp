@@ -14,9 +14,11 @@
 #include <LoweringRules/LowerToPhysical/LowerToPhysicalHashJoin.hpp>
 
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <ranges>
+#include <span>
 #include <string>
 #include <tuple>
 #include <unordered_set>
@@ -37,6 +39,7 @@
 #include <Join/HashJoin/HJBuildPhysicalOperator.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/HashJoin/HJProbePhysicalOperator.hpp>
+#include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <LoweringRules/AbstractLoweringRule.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
@@ -49,6 +52,7 @@
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
+#include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -60,9 +64,11 @@
 #include <WindowTypes/Types/TimeBasedWindowType.hpp>
 #include <ErrorHandling.hpp>
 #include <HashMapOptions.hpp>
+#include <HashMapSlice.hpp>
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -279,12 +285,64 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     auto leftHashMapOptions = createHashMapOptions(leftJoinFields, newLeftInputSchema, conf);
     auto rightHashMapOptions = createHashMapOptions(rightJoinFields, newRightInputSchema, conf);
 
-    /// Creating the left and right hash join build operator
+    /// Creating the hash join operator handler and slice store
     auto handlerId = getNextOperatorHandlerId();
+    auto sliceAndWindowStore = std::make_unique<DefaultTimeBasedSliceStore>(
+        windowType->getSize().getTime(), windowType->getSlide().getTime(), conf.sliceCacheConfiguration);
+    auto sliceStoreRefLeft = sliceAndWindowStore->createSliceStoreRef(
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        {
+            auto& hjSlice = dynamic_cast<HJSlice&>(slice);
+            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Left);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+        },
+        [hashMapOptions = leftHashMapOptions](WindowBasedOperatorHandler& handler)
+        {
+            auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{
+                hjHandler.getNautilusCleanupExec(),
+                hashMapOptions.keySize,
+                hashMapOptions.valueSize,
+                hashMapOptions.pageSize,
+                hashMapOptions.numberOfBuckets};
+            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+        });
+    auto sliceStoreRefRight = sliceAndWindowStore->createSliceStoreRef(
+        [](Slice& slice, const WorkerThreadId workerThreadId) -> std::span<const std::byte>
+        {
+            auto& hjSlice = dynamic_cast<HJSlice&>(slice);
+            auto* ptr = hjSlice.getHashMapPtrOrCreate(workerThreadId, JoinBuildSideType::Right);
+            return {reinterpret_cast<const std::byte*>(ptr), sizeof(ChainedHashMap)};
+        },
+        [hashMapOptions = rightHashMapOptions](WindowBasedOperatorHandler& handler)
+        {
+            auto& hjHandler = dynamic_cast<HJOperatorHandler&>(handler);
+            const CreateNewHashMapSliceArgs hashMapSliceArgs{
+                hjHandler.getNautilusCleanupExec(),
+                hashMapOptions.keySize,
+                hashMapOptions.valueSize,
+                hashMapOptions.pageSize,
+                hashMapOptions.numberOfBuckets};
+            return handler.getCreateNewSlicesFunction(hashMapSliceArgs);
+        });
+    auto handler
+        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
+
+    /// Creating the left and right hash join build operator
     const HJBuildPhysicalOperator leftBuildOperator{
-        handlerId, JoinBuildSideType::Left, timeStampFieldLeft.toTimeFunction(), leftBufferRef, leftHashMapOptions};
+        handlerId,
+        JoinBuildSideType::Left,
+        timeStampFieldLeft.toTimeFunction(),
+        leftBufferRef,
+        leftHashMapOptions,
+        std::move(sliceStoreRefLeft)};
     const HJBuildPhysicalOperator rightBuildOperator{
-        handlerId, JoinBuildSideType::Right, timeStampFieldRight.toTimeFunction(), rightBufferRef, rightHashMapOptions};
+        handlerId,
+        JoinBuildSideType::Right,
+        timeStampFieldRight.toTimeFunction(),
+        rightBufferRef,
+        rightHashMapOptions,
+        std::move(sliceStoreRefRight)};
 
     /// Creating the hash join probe
     auto joinSchema = JoinSchema(newLeftInputSchema, newRightInputSchema, outputSchema);
@@ -297,13 +355,6 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
         rightBufferRef,
         leftHashMapOptions,
         rightHashMapOptions);
-
-
-    /// Creating the hash join operator handler
-    auto sliceAndWindowStore
-        = std::make_unique<DefaultTimeBasedSliceStore>(windowType->getSize().getTime(), windowType->getSlide().getTime());
-    auto handler
-        = std::make_shared<HJOperatorHandler>(inputOriginIds, outputOriginId, std::move(sliceAndWindowStore), conf.maxNumberOfBuckets);
 
 
     /// Building operator wrapper for the two builds and the probe.

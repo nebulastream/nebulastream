@@ -14,15 +14,11 @@
 
 #pragma once
 #include <memory>
-#include <Identifiers/Identifiers.hpp>
-#include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Time/Timestamp.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <ExecutionContext.hpp>
@@ -30,13 +26,6 @@
 
 namespace NES
 {
-class HJBuildPhysicalOperator;
-HashMap* getHashJoinHashMapProxy(
-    const HJOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
-    JoinBuildSideType buildSide,
-    const HJBuildPhysicalOperator* buildOperator);
 
 /// This class is the first phase of the join. For both streams (left and right), the tuples are stored in a hash map of a
 /// corresponding slice one after the other. Afterward, the second phase (HJProbe) will start joining the tuples by comparing the join keys
@@ -44,18 +33,13 @@ HashMap* getHashJoinHashMapProxy(
 class HJBuildPhysicalOperator : public StreamJoinBuildPhysicalOperator
 {
 public:
-    friend HashMap* getHashJoinHashMapProxy(
-        const HJOperatorHandler* operatorHandler,
-        Timestamp timestamp,
-        WorkerThreadId workerThreadId,
-        JoinBuildSideType buildSide,
-        const HJBuildPhysicalOperator* buildOperator);
     HJBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        const std::shared_ptr<TupleBufferRef>& bufferRef,
-        HashMapOptions hashMapOptions);
+        std::shared_ptr<TupleBufferRef> bufferRef,
+        HashMapOptions hashMapOptions,
+        std::unique_ptr<SliceStoreRef> sliceStoreRef);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 

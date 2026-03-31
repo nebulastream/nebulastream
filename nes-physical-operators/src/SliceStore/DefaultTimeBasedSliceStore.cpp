@@ -15,26 +15,38 @@
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 
 #include <algorithm>
+#include <cstddef>
+#include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
 #include <optional>
+#include <span>
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/StreamJoinUtil.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <SliceStore/DefaultTimeBasedSliceStoreRef.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/SliceAssigner.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
+#include <SliceCacheConfiguration.hpp>
 
 namespace NES
 {
-DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(const uint64_t windowSize, const uint64_t windowSlide)
-    : sliceAssigner(windowSize, windowSlide), sequenceNumber(SequenceNumber::INITIAL), numberOfActiveInputPipelines(0)
+DefaultTimeBasedSliceStore::DefaultTimeBasedSliceStore(
+    const uint64_t windowSize, const uint64_t windowSlide, SliceCacheConfiguration sliceCacheConfiguration)
+    : sliceCacheConfiguration(std::move(sliceCacheConfiguration))
+    , sliceAssigner(windowSize, windowSlide)
+    , sequenceNumber(SequenceNumber::INITIAL)
+    , numberOfActiveInputPipelines(0)
 {
 }
 
@@ -275,4 +287,30 @@ uint64_t DefaultTimeBasedSliceStore::getWindowSize() const
 {
     return sliceAssigner.getWindowSize();
 }
+
+std::span<std::byte> DefaultTimeBasedSliceStore::allocateSpaceForSliceCache(
+    uint64_t sliceCacheMemorySize, PipelineId pipelineId, AbstractBufferProvider& bufferProvider)
+{
+    INVARIANT(not pipelineIdToSliceCacheStarts.rlock()->contains(pipelineId), "We expect this method to be called once per pipelineId!");
+
+    auto buffer = bufferProvider.getUnpooledBuffer(sliceCacheMemorySize);
+    if (not buffer.has_value())
+    {
+        throw BufferAllocationFailure("Can not allocate buffer for slice cache of size {}", sliceCacheMemorySize);
+    }
+
+    /// We set everything to 0, as there might be old data in the tuple buffer
+    std::ranges::fill(buffer.value().getAvailableMemoryArea(), std::byte{0});
+    auto sliceCacheStartBuffer = std::make_unique<TupleBuffer>(buffer.value());
+    const auto& memArea = sliceCacheStartBuffer->getAvailableMemoryArea();
+    pipelineIdToSliceCacheStarts.wlock()->emplace(pipelineId, std::move(sliceCacheStartBuffer));
+    return memArea;
+}
+
+std::unique_ptr<SliceStoreRef> DefaultTimeBasedSliceStore::createSliceStoreRef(
+    DefaultTimeBasedSliceStoreRef::DataStructureExtractor extractor, DefaultTimeBasedSliceStoreRef::CreateSlicesFunction creator)
+{
+    return std::make_unique<DefaultTimeBasedSliceStoreRef>(sliceCacheConfiguration, this, std::move(extractor), std::move(creator));
+}
+
 }

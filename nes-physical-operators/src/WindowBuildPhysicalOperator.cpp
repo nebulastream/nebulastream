@@ -20,6 +20,7 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
@@ -67,11 +68,6 @@ void registerActivePipeline(OperatorHandler* ptrOpHandler)
     opHandler->getSliceAndWindowStore().incrementNumberOfInputPipelines();
 }
 
-WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction)
-    : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction))
-{
-}
-
 void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBuffer&) const
 {
     /// Update the watermark for the nlj operator and trigger slices
@@ -89,9 +85,11 @@ void WindowBuildPhysicalOperator::close(ExecutionContext& executionCtx, RecordBu
 
 void WindowBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationContext&) const
 {
-    auto operatorHandlerMemRef = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
-    invoke(registerActivePipeline, operatorHandlerMemRef);
-};
+    auto operatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerId);
+    invoke(registerActivePipeline, operatorHandler);
+
+    sliceStoreRef->setupSliceStore(executionCtx.pipelineContext);
+}
 
 void WindowBuildPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
@@ -119,11 +117,19 @@ void WindowBuildPhysicalOperator::setChild(PhysicalOperator child)
     this->child = std::move(child);
 }
 
+WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(
+    const OperatorHandlerId operatorHandlerId, std::unique_ptr<TimeFunction> timeFunction, std::unique_ptr<SliceStoreRef> sliceStoreRef)
+    : operatorHandlerId(operatorHandlerId), timeFunction(std::move(timeFunction)), sliceStoreRef(std::move(sliceStoreRef))
+{
+}
+
 WindowBuildPhysicalOperator::WindowBuildPhysicalOperator(const WindowBuildPhysicalOperator& other)
     : PhysicalOperatorConcept(other.id)
     , child(other.child)
     , operatorHandlerId(other.operatorHandlerId)
     , timeFunction(other.timeFunction ? other.timeFunction->clone() : nullptr)
+    /// The SliceStoreRef is shared across pipeline copies — it manages per-pipeline caches internally
+    , sliceStoreRef(other.sliceStoreRef->clone())
 {
 }
 }

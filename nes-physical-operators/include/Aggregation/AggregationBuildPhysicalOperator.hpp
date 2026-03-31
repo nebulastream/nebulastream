@@ -14,15 +14,10 @@
 
 #pragma once
 
-
 #include <memory>
 #include <vector>
-#include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/HashMap/HashMap.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Time/Timestamp.hpp>
+#include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
 #include <CompilationContext.hpp>
 #include <HashMapOptions.hpp>
@@ -30,25 +25,14 @@
 
 namespace NES
 {
-class AggregationBuildPhysicalOperator;
-HashMap* getAggHashMapProxy(
-    const AggregationOperatorHandler* operatorHandler,
-    Timestamp timestamp,
-    WorkerThreadId workerThreadId,
-    const AggregationBuildPhysicalOperator* buildOperator);
 
 class AggregationBuildPhysicalOperator final : public WindowBuildPhysicalOperator
 {
 public:
-    friend HashMap* getAggHashMapProxy(
-        const AggregationOperatorHandler* operatorHandler,
-        Timestamp timestamp,
-        WorkerThreadId workerThreadId,
-        const AggregationBuildPhysicalOperator* buildOperator);
-
     AggregationBuildPhysicalOperator(
         OperatorHandlerId operatorHandlerId,
         std::unique_ptr<TimeFunction> timeFunction,
+        std::unique_ptr<SliceStoreRef> sliceStoreRef,
         std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationFunctions,
         HashMapOptions hashMapOptions);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;
