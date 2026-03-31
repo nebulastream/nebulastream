@@ -12,10 +12,10 @@
     limitations under the License.
 */
 #pragma once
-#include <Util/Logger/Formatter.hpp>
 #include <ostream>
 #include <string>
 #include <unordered_map>
+#include <Util/Logger/Formatter.hpp>
 #include <yaml-cpp/yaml.h>
 
 namespace NES
