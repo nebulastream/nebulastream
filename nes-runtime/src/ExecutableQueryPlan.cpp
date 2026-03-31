@@ -35,6 +35,8 @@
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 
+#include "QueryEngineConfiguration.hpp"
+
 namespace NES
 {
 
@@ -63,7 +65,7 @@ std::ostream& operator<<(std::ostream& os, const ExecutableQueryPlan& instantiat
 }
 
 std::unique_ptr<ExecutableQueryPlan>
-ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider)
+ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, const bool pinThreads, const size_t numberOfIOThreads)
 {
     std::vector<SourceWithSuccessor> instantiatedSources;
 
@@ -93,8 +95,9 @@ ExecutableQueryPlan::instantiate(CompiledQueryPlan& compiledQueryPlan, const Sou
 
     for (auto [originId, operatorId, descriptor, successors] : compiledQueryPlan.sources)
     {
+        // Todo: somehow pass 'IO thread pool size here', also
         std::ranges::copy(instantiatedSinksWithSourcePredecessor[operatorId], std::back_inserter(successors));
-        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor), std::move(successors));
+        instantiatedSources.emplace_back(sourceProvider.lower(originId, backpressureListener, descriptor, pinThreads, numberOfIOThreads), std::move(successors));
     }
 
 

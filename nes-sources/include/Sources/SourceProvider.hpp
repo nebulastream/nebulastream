@@ -38,8 +38,12 @@ public:
     SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    [[nodiscard]] std::unique_ptr<SourceHandle>
-    lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const;
+    [[nodiscard]] std::unique_ptr<SourceHandle> lower(
+        OriginId originId,
+        BackpressureListener backpressureListener,
+        const SourceDescriptor& sourceDescriptor,
+        bool pinThreads,
+        size_t numberOfIOThreads) const;
 
     [[nodiscard]] bool contains(const std::string& sourceType) const;
 };
