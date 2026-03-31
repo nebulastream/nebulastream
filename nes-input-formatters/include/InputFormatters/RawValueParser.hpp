@@ -33,6 +33,7 @@
 #include <val_bool.hpp>
 #include <val_concepts.hpp>
 #include <val_ptr.hpp>
+#include <Util/InvokeMacro.hpp>
 
 namespace NES
 {
@@ -115,14 +116,26 @@ VarVal parseFixedSizeIntoVarVal(
     /// As this is a C++ variable, this branch does not impact our tracing or the execution.
     if (nullable)
     {
-        const auto parseResult = nautilus::invoke(
-            parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        const auto parseResult = NAUTILUS_TAGGED_INVOKE("parse_null", parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        // const auto parseResult = nautilus::invoke(
+            // parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        /// alternative with function attributes:
+        // nautilus::FunctionAttributes funcAttr{.modRefInfo = nautilus::ModRefInfo::Ref, .willReturn = true, .noUnwind = true};
+        // const auto parseResult = nautilus::invoke(
+        //     funcAttr, parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+        /// alternative with inline tag
+        // const auto parseResult = NAUTILUS_INLINE nautilus::invoke(
+        //     parseIntoVarValProxy<T, true>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+
         const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<T>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = nautilus::invoke(
-        parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+    const auto kek = InvokeConfig::instance();
+    (void) kek;
+    const auto parseResult = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
+    // const auto parseResult = nautilus::invoke(
+    //     parseIntoVarValProxy<T, false>, fieldAddress, fieldSize, nautilus::val<const std::vector<std::string>*>{&nullValues});
     const nautilus::val<T> nautilusValue = *getMemberWithOffset<T>(parseResult, offsetof(ParseResult<T>, value));
     return VarVal{nautilusValue, nullable, false};
 }

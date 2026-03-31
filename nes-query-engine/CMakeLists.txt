@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # Add interface library
-add_library(nes-query-engine-interface interface/QueryEngineConfiguration.cpp)
+add_library(nes-query-engine-interface interface/QueryEngineConfiguration.cpp interface/InvokeConfiguration.cpp)
 target_include_directories(nes-query-engine-interface PUBLIC interface)
 target_link_libraries(nes-query-engine-interface PUBLIC nes-common nes-configurations nes-query-optimizer-interface)
 
