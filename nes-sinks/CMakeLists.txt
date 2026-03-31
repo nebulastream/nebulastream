@@ -31,4 +31,4 @@ endif ()
 
 create_registries_for_component(Sink SinkValidation)
 
-add_subdirectory(tests)
+add_tests_if_enabled(tests)
