@@ -1,9 +1,13 @@
-# Permanent exclusions for systest startup.
+# Permanent, human-curated exclusions for systest startup.
 # Examples:
 # disabled_test_files:
 #   - <relative/path/to/test>.test
 # exclude_groups:
 #   - <group name>
+#
+# At configure time this file is merged with the groups of every optional plugin disabled via a
+# -DNES_PLUGIN_* option (see nes-systests/systest/CMakeLists.txt); the merged result in the build tree
+# is the systest runner's default --disableConfigFile. Edit this file for permanent exclusions only.
 #
 # - large scale tests are always skipped below
 exclude_groups:

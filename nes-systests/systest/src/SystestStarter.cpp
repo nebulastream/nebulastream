@@ -33,6 +33,8 @@
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <yaml-cpp/node/impl.h>
+#include <yaml-cpp/node/iterator.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
@@ -70,7 +72,7 @@ void parseArgumentsOrExit(ArgumentParser& program, const int argc, const char** 
 
 void configureArgumentParser(ArgumentParser& program)
 {
-    const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
+    const auto defaultDisableConfigPath = std::string{DEFAULT_DISABLE_CONFIG_FILE};
 
     program.add_argument("-t", "--testLocations")
         .help("directly specified test files, directories, or multiple locations to discover test files in. "
@@ -121,37 +123,46 @@ void configureArgumentParser(ArgumentParser& program)
 
 void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
-    if (program.is_used("--ignoreDisableConfigFile"))
+    /// Collects exclude_groups from the disable config file. The default file is generated at configure
+    /// time (configs/systest-disable.yaml merged with the groups of every disabled optional plugin); it
+    /// can be overridden with --disableConfigFile or bypassed entirely with --ignoreDisableConfigFile.
+    /// disabled_test_files is loaded into config.disabledTestFiles by overwriteConfigWithYAMLFileInput
+    /// and must not be cleared.
+    std::vector<std::string> mergedExcludeGroups;
+    const auto captureExcludeGroups = [&config, &mergedExcludeGroups]()
     {
-        return;
-    }
+        for (const auto& value : config.excludeGroups.getValues())
+        {
+            mergedExcludeGroups.push_back(value.getValue());
+        }
+        config.excludeGroups.clear();
+    };
 
-    const auto disableConfigFilePath = program.get<std::string>("--disableConfigFile");
-    if (not std::filesystem::is_regular_file(disableConfigFilePath))
+    if (not program.is_used("--ignoreDisableConfigFile"))
     {
-        if (program.is_used("--disableConfigFile"))
+        const auto disableConfigFilePath = program.get<std::string>("--disableConfigFile");
+        if (std::filesystem::is_regular_file(disableConfigFilePath))
+        {
+            try
+            {
+                config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
+                captureExcludeGroups();
+            }
+            catch (const std::exception& err)
+            {
+                std::cerr << "Failed to read systest disable config file '" << disableConfigFilePath << "': " << err.what() << '\n';
+                std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+            }
+        }
+        else if (program.is_used("--disableConfigFile"))
         {
             std::cerr << "Configured systest disable config file does not exist: " << disableConfigFilePath << '\n';
             std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
         }
-        return;
     }
 
-    try
-    {
-        const YAML::Node disableConfig = YAML::LoadFile(disableConfigFilePath);
-        config.excludeGroupsConfiguredInDisableConfig
-            = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
-        config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
-        config.globalExcludedGroups = config.excludeGroups.getValues()
-            | std::views::transform([](const auto& value) { return value.getValue(); }) | std::ranges::to<std::vector<std::string>>();
-        config.excludeGroups.clear();
-    }
-    catch (const std::exception& err)
-    {
-        std::cerr << "Failed to read systest disable config file '" << disableConfigFilePath << "': " << err.what() << '\n';
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
-    }
+    config.excludeGroupsConfiguredInDisableConfig = not mergedExcludeGroups.empty();
+    config.globalExcludedGroups = std::move(mergedExcludeGroups);
 }
 
 void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration& config)

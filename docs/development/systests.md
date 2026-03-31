@@ -243,11 +243,27 @@ The `-t`/`--testLocations` flag accepts one or more values, each of which can be
 - All `.test` files in a directory (searched recursively): `-t /path/to/directory`
 - Multiple locations at once: `-t dir1 dir2 /path/to/test.test`
 
-By default, the systest runner discovers tests in `nes-systests/` (recursively). Passing directories via `-t` replaces that default, so `-t dirA dirB` discovers in `dirA` and `dirB` only.
+By default, the systest runner discovers tests in `nes-systests/` (recursively). Passing directories via `-t` replaces that default, so `-t dirA dirB` discovers in `dirA` and `dirB` only. A plugin may ship a `systests/` folder next to its `CMakeLists.txt`, which is auto-registered and passed via `-t` alongside `nes-systests/`; for in-repo plugins, prefer the group-tag convention below instead.
+
+#### Plugin-dependent tests
+
+Tests that require an optional plugin (TCP source, JSON input/output formatter, ...) live under `nes-systests/plugins/<category>/` and **must be tagged with the plugin's group** in their `# groups:` header:
+
+| Plugin (CMake option) | Group |
+| --- | --- |
+| `NES_PLUGIN_TCP_SOURCE` | `TCP` |
+| `NES_PLUGIN_JSON_INPUT_FORMATTER` | `JSON` |
+| `NES_PLUGIN_JSON_OUTPUT_FORMATTER` | `JSONOutput` |
+
+A test that needs several plugins carries **all** of their groups (e.g. `# groups: [Sources, TCP, JSONOutput]`); the runner skips a test if **any** of its groups is excluded, so it only runs when every required plugin is enabled. 
+The plugin→group map lives in `nes-plugins/CMakeLists.txt` and must be extended when adding a new optional plugin that ships tests.
+
+At configure time, `nes-systests/systest/CMakeLists.txt` merges the checked-in `configs/systest-disable.yaml` with the groups of every **disabled** plugin and writes the result into the build tree; that generated file is the runner's default `--disableConfigFile`. Plugin-dependent tests are therefore excluded automatically when their plugin is off. 
+Re-run CMake configure after toggling a `-DNES_PLUGIN_*` option to refresh it.
 
 Tests can also be filtered by group (`-g group1 group2`, `-e excludedGroup`).
 Tests can be run with specific configuration settings (`-- --worker.total_memory_in_bytes=81920000`).
-Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
+Permanent exclusions are curated in `configs/systest-disable.yaml` (understood keys: `exclude_groups` and `disabled_test_files`); the generated merge of it and the disabled-plugin groups is the default `--disableConfigFile`. A different file can be supplied with `--disableConfigFile`, and the disable config can be bypassed entirely per run with `--ignoreDisableConfigFile` (which then also un-excludes the disabled-plugin groups, so tests needing an uncompiled plugin will fail rather than skip).
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries to remote workers, use remote mode (`-r` or `--remote`).
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).
