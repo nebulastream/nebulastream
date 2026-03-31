@@ -18,16 +18,16 @@
 #include <string>
 #include <utility>
 
+#include <Async/AsyncSourceHandle.hpp>
+#include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Util/Overloaded.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
-#include <Util/Overloaded.hpp>
-#include <Blocking/BlockingSourceHandle.hpp>
-#include <Async/AsyncSourceHandle.hpp>
 
 namespace NES
 {
@@ -37,8 +37,12 @@ SourceProvider::SourceProvider(size_t defaultMaxInflightBuffers, std::shared_ptr
 {
 }
 
-std::unique_ptr<SourceHandle>
-SourceProvider::lower(OriginId originId, BackpressureListener backpressureListener, const SourceDescriptor& sourceDescriptor) const
+std::unique_ptr<SourceHandle> SourceProvider::lower(
+    OriginId originId,
+    BackpressureListener backpressureListener,
+    const SourceDescriptor& sourceDescriptor,
+    const bool pinThreads,
+    const size_t numberOfIOThreads) const
 {
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
@@ -52,19 +56,27 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
         SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
 
         return std::visit(
-                Overloaded{
-                    [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
-                    {
-                        return std::make_unique<BlockingSourceHandle>(std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
-                    },
-                    [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
-                    {
-                        return std::make_unique<AsyncSourceHandle>(std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
-                    }},
-                std::move(source.value()));
+            Overloaded{
+                [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                {
+                    return std::make_unique<BlockingSourceHandle>(
+                        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
+                },
+                [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
+                {
+                    return std::make_unique<AsyncSourceHandle>(
+                        std::move(backpressureListener),
+                        std::move(originId),
+                        std::move(runtimeConfig),
+                        bufferPool,
+                        std::move(sourceImpl),
+                        pinThreads,
+                        numberOfIOThreads);
+                }},
+            std::move(source.value()));
     }
-        // return std::make_unique<SourceHandle>(
-        //     std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
+    // return std::make_unique<SourceHandle>(
+    //     std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     throw UnknownSourceType("unknown source descriptor type: {}", sourceDescriptor.getSourceType());
 }
 

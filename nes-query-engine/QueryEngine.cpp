@@ -30,6 +30,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -54,6 +55,7 @@
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
+#include "Functions/ArithmeticalFunctions/AbsoluteLogicalFunction.hpp"
 
 namespace NES
 {
@@ -308,7 +310,7 @@ struct DefaultPEC final : PipelineExecutionContext
 class ThreadPool : public WorkEmitter, public QueryLifetimeController
 {
 public:
-    void addThread(const Host& host);
+    void addThread(const Host& host, bool pinThreads, size_t cpuThreadOffset);
 
     bool emitWork(
         QueryId qid,
@@ -739,13 +741,30 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
-void ThreadPool::addThread(const Host& host)
+void ThreadPool::addThread(const Host& host, const bool pinThreads, const size_t cpuThreadOffset)
 {
     pool.emplace_back(
         fmt::format("WorkerThread-{}", numberOfThreads_),
         host,
-        [this, id = numberOfThreads_++](const std::stop_token& stopToken)
+        [this, id = numberOfThreads_++, pinThreads, cpuThreadOffset](const std::stop_token& stopToken)
         {
+            // Pin this thread to a specific CPU core
+            if (pinThreads)
+            {
+                cpu_set_t cpuset;
+                CPU_ZERO(&cpuset);
+                CPU_SET(cpuThreadOffset, &cpuset);
+                int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+                if (rc != 0)
+                {
+                    ENGINE_LOG_WARNING("Failed to pin WorkerThread {} to CPU {}: error {}", id, host.cpuOffset + id, rc);
+                }
+                else
+                {
+                    ENGINE_LOG_DEBUG("Pinned WorkerThread {} to CPU {}", id, host.cpuOffset + id);
+                }
+            }
+
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
             while (!stopToken.stop_requested())
@@ -778,10 +797,13 @@ QueryEngine::QueryEngine(
     , queryCatalog(std::make_shared<QueryCatalog>())
     , threadPool(std::make_unique<ThreadPool>(statusListener, statisticListener, bufferManager, config.admissionQueueSize.getValue()))
     , host(host)
+    , configuration(config)
 {
+    /// if numberOfIOThreads is 0, we don't pin threads
+    const size_t workerThreadCPUOffset = config.numberOfIOThreads.getValue();
     for (size_t i = 0; i < config.numberOfWorkerThreads.getValue(); ++i)
     {
-        threadPool->addThread(host);
+        threadPool->addThread(host, config.pinThreads.getValue(), workerThreadCPUOffset + i);
     }
 }
 

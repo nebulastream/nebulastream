@@ -53,6 +53,7 @@ public:
     std::shared_ptr<QueryCatalog> queryCatalog;
     std::unique_ptr<ThreadPool> threadPool;
     Host host;
+    QueryEngineConfiguration configuration;
 };
 
 }

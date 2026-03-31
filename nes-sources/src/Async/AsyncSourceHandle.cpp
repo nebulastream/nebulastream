@@ -37,9 +37,11 @@ AsyncSourceHandle::AsyncSourceHandle(
     OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     SourceRuntimeConfiguration configuration,
     std::shared_ptr<AbstractBufferProvider> bufferPool,
-    std::unique_ptr<AsyncSource> sourceImplementation)
+    std::unique_ptr<AsyncSource> sourceImplementation,
+    const bool pinThreads,
+    const size_t numberOfIOThreads)
     : SourceHandle(configuration, originId)
-    , state{AsyncSourceState{Initial{std::move(sourceImplementation)}}}
+    , state{AsyncSourceState{Initial{std::move(sourceImplementation), pinThreads, numberOfIOThreads}}}
     , bufferPool(std::move(bufferPool))
 {
 }
@@ -55,6 +57,8 @@ bool AsyncSourceHandle::start(SourceReturnType::EmitFunction&& emitFn)
                 std::move(emitFn),
                 getSourceId(),
                 this->bufferPool,
+                initialState.pinThreads,
+                initialState.numberOfIOThreads
             };
         });
 }

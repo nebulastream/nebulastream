@@ -32,7 +32,8 @@ namespace NES
 struct ExecutableQueryPlan
 {
     using SourceWithSuccessor = std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>;
-    static std::unique_ptr<ExecutableQueryPlan> instantiate(CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider);
+    static std::unique_ptr<ExecutableQueryPlan> instantiate(
+        CompiledQueryPlan& compiledQueryPlan, const SourceProvider& sourceProvider, const bool pinThreads, const size_t numberOfIOThreads);
 
     ExecutableQueryPlan(
         QueryId queryId, std::vector<std::shared_ptr<ExecutablePipeline>> pipelines, std::vector<SourceWithSuccessor> instantiatedSources);
