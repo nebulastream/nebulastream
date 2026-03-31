@@ -59,6 +59,7 @@ MODES="file,memory,in_place,tmpfs_cold,tmpfs_warm"
 SCHEDULING="GLOBAL_QUEUE"
 WORK_STEALING="false"
 PRODUCER_LOCAL="false"
+BATCH_PULL_SIZE=4
 TMPFS_PATH="/dev/shm"
 WORKER_THREADS=4
 OUTPUT_CSV="benchmark_results.csv"
@@ -85,6 +86,7 @@ while [[ $# -gt 0 ]]; do
         --scheduling)      SCHEDULING="$2";       shift 2 ;;
         --work-stealing)   WORK_STEALING="$2";    shift 2 ;;
         --producer-local)  PRODUCER_LOCAL="$2";   shift 2 ;;
+        --batch-pull-size) BATCH_PULL_SIZE="$2";  shift 2 ;;
         --tmpfs-path)      TMPFS_PATH="$2";       shift 2 ;;
         --worker-threads)  WORKER_THREADS="$2";   shift 2 ;;
         --output)          OUTPUT_CSV="$2";       shift 2 ;;
@@ -292,6 +294,7 @@ if [[ -n "$REMOTE" ]]; then
     REMOTE_BENCH_CMD+=" --scheduling '${SCHEDULING}'"
     REMOTE_BENCH_CMD+=" --work-stealing '${WORK_STEALING}'"
     REMOTE_BENCH_CMD+=" --producer-local '${PRODUCER_LOCAL}'"
+    REMOTE_BENCH_CMD+=" --batch-pull-size ${BATCH_PULL_SIZE}"
     REMOTE_BENCH_CMD+=" --tmpfs-path '${TMPFS_PATH}'"
     REMOTE_BENCH_CMD+=" --worker-threads ${WORKER_THREADS}"
     REMOTE_BENCH_CMD+=" --output /tmp/nes_benchmark_results.csv"
@@ -452,6 +455,7 @@ for threads in "${THREAD_LIST[@]}"; do
             "--worker.query_engine.scheduling_strategy=${sched}"
             "--worker.query_engine.work_stealing=${ws}"
             "--worker.query_engine.producer_local=${pl}"
+            "--worker.query_engine.batch_pull_size=${BATCH_PULL_SIZE}"
         )
 
         printf "  Iteration %d/%d... " "$iter" "$ITERATIONS"

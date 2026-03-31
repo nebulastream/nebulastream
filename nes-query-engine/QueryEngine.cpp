@@ -334,7 +334,7 @@ public:
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread: route through admission queue
-            if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+            if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
             {
                 taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             }
@@ -385,7 +385,7 @@ public:
     template <typename T>
     void submitAdmissionTask(T&& task)
     {
-        if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
         {
             taskQueue.addAdmissionTaskBlocking({}, std::forward<T>(task));
         }
@@ -435,16 +435,18 @@ public:
         SchedulingStrategy schedulingStrategy,
         bool workStealing,
         bool producerLocal,
+        size_t batchPullSize,
         size_t numThreads)
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
         , strategy(schedulingStrategy)
+        , batchPullSize_(batchPullSize)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter(
               [this](Task&& task) noexcept
               {
-                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
                   {
                       taskQueue.addInternalTaskNonBlocking(std::move(task));
                   }
@@ -454,7 +456,7 @@ public:
                   }
               })
     {
-        if (strategy != SchedulingStrategy::GLOBAL_QUEUE)
+        if (strategy != SchedulingStrategy::GLOBAL_QUEUE && strategy != SchedulingStrategy::BATCH_PULL)
         {
             multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing, producerLocal);
         }
@@ -493,7 +495,7 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
         {
             taskQueue.addInternalTaskNonBlocking(std::move(task));
         }
@@ -511,6 +513,7 @@ private:
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     SchedulingStrategy strategy;
+    size_t batchPullSize_{1};
     TaskQueue<Task> taskQueue;
     std::unique_ptr<MultiQueueTaskQueue<Task>> multiQueue; /// only set for per-thread strategies
     DelayedTaskSubmitter<> delayedTaskSubmitter;
@@ -819,6 +822,56 @@ void ThreadPool::addThread(WorkerId workerId)
                     handleTask(terminatingWorker, std::move(*task));
                 }
             }
+            else if (strategy == SchedulingStrategy::BATCH_PULL)
+            {
+                /// Batch-pull mode: pull a batch from the global queue into a thread-local buffer
+                std::vector<Task> localBatch;
+                localBatch.reserve(batchPullSize_);
+
+                while (!stopToken.stop_requested())
+                {
+                    if (localBatch.empty())
+                    {
+                        /// Block for the first task
+                        if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                        {
+                            localBatch.push_back(std::move(*task));
+                        }
+                        else
+                        {
+                            continue;
+                        }
+
+                        /// Greedily pull up to batchPullSize_ - 1 more tasks
+                        for (size_t i = 1; i < batchPullSize_; ++i)
+                        {
+                            if (auto task = taskQueue.getNextTaskNonBlocking())
+                            {
+                                localBatch.push_back(std::move(*task));
+                            }
+                            else
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    auto task = std::move(localBatch.back());
+                    localBatch.pop_back();
+                    handleTask(worker, std::move(task));
+                }
+
+                ENGINE_LOG_INFO("WorkerThread {} shutting down (batch pull)", id);
+                const WorkerThread terminatingWorker{*this, true};
+                for (auto& task : localBatch)
+                {
+                    handleTask(terminatingWorker, std::move(task));
+                }
+                while (auto task = taskQueue.getNextTaskNonBlocking())
+                {
+                    handleTask(terminatingWorker, std::move(*task));
+                }
+            }
             else
             {
                 /// Per-thread queue mode: each worker reads from its own queue
@@ -864,6 +917,7 @@ QueryEngine::QueryEngine(
           config.schedulingStrategy.getValue(),
           config.workStealing.getValue(),
           config.producerLocal.getValue(),
+          config.batchPullSize.getValue(),
           config.numberOfWorkerThreads.getValue()))
     , workerId(workerId)
 {
