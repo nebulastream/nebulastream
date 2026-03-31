@@ -75,7 +75,7 @@ void reportResult(
     std::string performanceMessage;
     /// Printing the query performance for any query that has not stoppped, e.g., failed, makes no sense
     if (performanceMessageBuilder and runningQuery->queryStatus.has_value()
-        and runningQuery->queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped)
+        and runningQuery->queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped)
     {
         performanceMessage = performanceMessageBuilder(*runningQuery);
     }
@@ -200,7 +200,7 @@ std::vector<RunningQuery> runQueries(
     }
 
     std::unordered_map<DistributedQueryId, std::shared_ptr<RunningQuery>> active;
-    std::unordered_map<DistributedQueryId, DistributedQueryStatus> finishedDifferentialQueries;
+    std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot> finishedDifferentialQueries;
     std::vector<std::shared_ptr<RunningQuery>> failed;
 
     const auto canRunQuery = [&completedQueries](const SystestQuery& query) -> bool
@@ -314,7 +314,7 @@ std::vector<RunningQuery> runQueries(
 
             auto& runningQuery = it->second;
 
-            if (queryStatus.getGlobalQueryState() == DistributedQueryState::Failed)
+            if (queryStatus.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
                 processQueryWithError(it->second, progressTracker, failed, queryStatus.coalesceException(), queryPerformanceMessage);
                 active.erase(it);
@@ -471,15 +471,15 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
         submitter.startQuery(queryId);
         const auto summary = submitter.finishedQueries().at(0);
 
-        if (summary.getGlobalQueryState() == DistributedQueryState::Failed)
+        if (summary.getGlobalQueryStatus() == DistributedQueryStatus::Failed)
         {
             NES_ERROR("Query {} has failed with: {}", queryId, summary.coalesceException());
             continue;
         }
 
-        if (summary.getGlobalQueryState() != DistributedQueryState::Stopped)
+        if (summary.getGlobalQueryStatus() != DistributedQueryStatus::Stopped)
         {
-            NES_ERROR("Query {} terminated in unexpected state {}", queryId, summary.getGlobalQueryState());
+            NES_ERROR("Query {} terminated in unexpected state {}", queryId, summary.getGlobalQueryStatus());
             continue;
         }
 

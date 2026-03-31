@@ -32,12 +32,12 @@
 namespace NES
 {
 
-QueryStateChange::QueryStateChange(Exception exception, std::chrono::system_clock::time_point timestamp)
-    : state(QueryState::Failed), timestamp(timestamp), exception(exception)
+QueryStatusChange::QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp)
+    : state(QueryStatus::Failed), timestamp(timestamp), exception(exception)
 {
 }
 
-inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange)
+inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange)
 {
     os << magic_enum::enum_name(statusChange.state) << " : " << std::chrono::system_clock::to_time_t(statusChange.timestamp);
     if (statusChange.exception.has_value())
@@ -55,27 +55,29 @@ bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType, std
 
 bool QueryLog::logQueryFailure(const QueryId queryId, const Exception exception, const std::chrono::system_clock::time_point timestamp)
 {
-    QueryStateChange statusChange(exception, timestamp);
+    QueryStatusChange statusChange(exception, timestamp);
 
     if (const auto log = queryStatusLog.wlock(); log->contains(queryId))
     {
         auto& changes = (*log)[queryId];
         const auto pos = std::ranges::upper_bound(
-            changes, statusChange, [](const QueryStateChange& lhs, const QueryStateChange& rhs) { return lhs.timestamp < rhs.timestamp; });
+            changes,
+            statusChange,
+            [](const QueryStatusChange& lhs, const QueryStatusChange& rhs) { return lhs.timestamp < rhs.timestamp; });
         changes.emplace(pos, std::move(statusChange));
         return true;
     }
     return false;
 }
 
-bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryState status, const std::chrono::system_clock::time_point timestamp)
+bool QueryLog::logQueryStatusChange(const QueryId queryId, QueryStatus status, const std::chrono::system_clock::time_point timestamp)
 {
-    QueryStateChange statusChange(std::move(status), timestamp);
+    QueryStatusChange statusChange(std::move(status), timestamp);
 
     const auto log = queryStatusLog.wlock();
     auto& changes = (*log)[queryId];
     const auto pos = std::ranges::upper_bound(
-        changes, statusChange, [](const QueryStateChange& lhs, const QueryStateChange& rhs) { return lhs.timestamp < rhs.timestamp; });
+        changes, statusChange, [](const QueryStatusChange& lhs, const QueryStatusChange& rhs) { return lhs.timestamp < rhs.timestamp; });
     changes.emplace(pos, std::move(statusChange));
     return true;
 }
@@ -92,55 +94,55 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId) const
 
 namespace
 {
-std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId queryId)
+std::optional<LocalQueryStatusSnapshot> getQueryStatusImpl(const auto& log, QueryId queryId)
 {
     if (const auto queryLog = log->find(queryId); queryLog != log->end())
     {
         /// Unfortunately the multithreaded nature of the query engine cannot guarantee event ordering.
         /// We handle out-of-order events by keeping the most recent timestamp for each event type.
         /// Final state is determined by priority: Failed > Stopped > Running > Started > Registered.
-        LocalQueryStatus status;
+        LocalQueryStatusSnapshot status;
         status.queryId = queryId;
 
         for (const auto& statusChange : queryLog->second)
         {
             switch (statusChange.state)
             {
-                case QueryState::Failed:
+                case QueryStatus::Failed:
                     status.metrics.stop = statusChange.timestamp;
                     status.metrics.error = statusChange.exception;
                     break;
-                case QueryState::Stopped:
+                case QueryStatus::Stopped:
                     status.metrics.stop = statusChange.timestamp;
                     break;
-                case QueryState::Started:
+                case QueryStatus::Started:
                     status.metrics.start = statusChange.timestamp;
                     break;
-                case QueryState::Running:
+                case QueryStatus::Running:
                     status.metrics.running = statusChange.timestamp;
                     break;
-                case QueryState::Registered:
+                case QueryStatus::Registered:
                     break;
             }
         }
 
         /// Determine state based on available metrics and timestamps
-        auto state = QueryState::Registered;
+        auto state = QueryStatus::Registered;
         if (status.metrics.error.has_value())
         {
-            state = QueryState::Failed;
+            state = QueryStatus::Failed;
         }
         else if (status.metrics.stop.has_value())
         {
-            state = QueryState::Stopped;
+            state = QueryStatus::Stopped;
         }
         else if (status.metrics.running.has_value())
         {
-            state = QueryState::Running;
+            state = QueryStatus::Running;
         }
         else if (status.metrics.start.has_value())
         {
-            state = QueryState::Started;
+            state = QueryStatus::Started;
         }
         status.state = state;
         return status;
@@ -149,16 +151,16 @@ std::optional<LocalQueryStatus> getQueryStatusImpl(const auto& log, QueryId quer
 }
 }
 
-std::optional<LocalQueryStatus> QueryLog::getQueryStatus(const QueryId queryId) const
+std::optional<LocalQueryStatusSnapshot> QueryLog::getQueryStatus(const QueryId queryId) const
 {
     const auto log = queryStatusLog.rlock();
     return getQueryStatusImpl(log, queryId);
 }
 
-std::vector<LocalQueryStatus> QueryLog::getStatus() const
+std::vector<LocalQueryStatusSnapshot> QueryLog::getStatus() const
 {
     const auto queryStatusLogLocked = queryStatusLog.rlock();
-    std::vector<LocalQueryStatus> summaries;
+    std::vector<LocalQueryStatusSnapshot> summaries;
     summaries.reserve(queryStatusLogLocked->size());
     for (const auto& id : std::views::keys(*queryStatusLogLocked))
     {

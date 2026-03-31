@@ -31,38 +31,40 @@ namespace NES
 {
 
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
-struct QueryStateChange
+struct QueryStatusChange
 {
-    QueryStateChange(const QueryState state, const std::chrono::system_clock::time_point timestamp) : state(state), timestamp(timestamp) { }
+    QueryStatusChange(const QueryStatus state, const std::chrono::system_clock::time_point timestamp) : state(state), timestamp(timestamp)
+    {
+    }
 
-    QueryStateChange(Exception exception, std::chrono::system_clock::time_point timestamp);
+    QueryStatusChange(Exception exception, std::chrono::system_clock::time_point timestamp);
 
-    friend std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange);
+    friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 
-    QueryState state;
+    QueryStatus state;
     std::chrono::system_clock::time_point timestamp;
     std::optional<Exception> exception;
 };
 
-inline std::ostream& operator<<(std::ostream& os, const QueryStateChange& statusChange);
+inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);
 
 /// The query log keeps track of query status changes. We want to keep it as lightweight as possible to reduce overhead inflicted to
 /// the query manager.
 struct QueryLog : AbstractQueryStatusListener
 {
-    using Log = std::vector<QueryStateChange>;
-    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStateChange>>;
+    using Log = std::vector<QueryStatusChange>;
+    using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStatusChange>>;
 
     /// TODO #241: we should use the new unique sourceId/hash once implemented here instead
     bool logSourceTermination(
         QueryId queryId, OriginId sourceId, QueryTerminationType, std::chrono::system_clock::time_point timestamp) override;
     bool logQueryFailure(QueryId queryId, Exception exception, std::chrono::system_clock::time_point timestamp) override;
-    bool logQueryStatusChange(QueryId queryId, QueryState status, std::chrono::system_clock::time_point timestamp) override;
+    bool logQueryStatusChange(QueryId queryId, QueryStatus status, std::chrono::system_clock::time_point timestamp) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId) const;
-    [[nodiscard]] std::optional<LocalQueryStatus> getQueryStatus(QueryId queryId) const;
+    [[nodiscard]] std::optional<LocalQueryStatusSnapshot> getQueryStatus(QueryId queryId) const;
 
-    [[nodiscard]] std::vector<LocalQueryStatus> getStatus() const;
+    [[nodiscard]] std::vector<LocalQueryStatusSnapshot> getStatus() const;
 
 private:
     folly::Synchronized<QueryStatusLog> queryStatusLog;

@@ -86,7 +86,7 @@ void QuerySubmitter::stopQuery(const DistributedQueryId& query)
     }
 }
 
-DistributedQueryStatus QuerySubmitter::waitForQueryTermination(const DistributedQueryId& query)
+DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const DistributedQueryId& query)
 {
     while (true)
     {
@@ -98,19 +98,19 @@ DistributedQueryStatus QuerySubmitter::waitForQueryTermination(const Distributed
                 "Could not get query state: {}",
                 fmt::join(queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
         }
-        if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped
-            || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed)
+        if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
+            || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
         {
             return *queryStatus;
         }
     }
 }
 
-std::vector<DistributedQueryStatus> QuerySubmitter::finishedQueries()
+std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
 {
     while (true)
     {
-        std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatus>> results;
+        std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatusSnapshot>> results;
         for (const auto& id : ids)
         {
             auto queryStatus = queryManager->status(id);
@@ -120,8 +120,8 @@ std::vector<DistributedQueryStatus> QuerySubmitter::finishedQueries()
                     "Could not get query state: {}",
                     fmt::join(queryStatus.error() | std::views::transform([](const auto& exception) { return exception.what(); }), ", "));
             }
-            if (queryStatus->getGlobalQueryState() == DistributedQueryState::Stopped
-                || queryStatus->getGlobalQueryState() == DistributedQueryState::Failed)
+            if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
+                || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
             {
                 results.emplace_back(id, std::move(*queryStatus));
             }

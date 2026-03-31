@@ -74,7 +74,7 @@ public:
     std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
 
     /// Summary structure for query.
-    [[nodiscard]] std::expected<LocalQueryStatus, Exception> getQueryStatus(QueryId queryId) const noexcept;
+    [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
 };
 }

@@ -41,7 +41,7 @@ public:
     [[nodiscard]] virtual std::expected<QueryId, Exception> registerQuery(LogicalPlan) = 0;
     virtual std::expected<void, Exception> start(QueryId) = 0;
     virtual std::expected<void, Exception> stop(QueryId) = 0;
-    [[nodiscard]] virtual std::expected<LocalQueryStatus, Exception> status(QueryId) const = 0;
+    [[nodiscard]] virtual std::expected<LocalQueryStatusSnapshot, Exception> status(QueryId) const = 0;
     [[nodiscard]] virtual std::expected<WorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const = 0;
 };
 
@@ -111,7 +111,7 @@ public:
     std::expected<void, std::vector<Exception>> start(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> stop(DistributedQueryId query);
     std::expected<void, std::vector<Exception>> unregister(const DistributedQueryId& query);
-    [[nodiscard]] std::expected<DistributedQueryStatus, std::vector<Exception>> status(const DistributedQueryId& query) const;
+    [[nodiscard]] std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> status(const DistributedQueryId& query) const;
     [[nodiscard]] std::vector<DistributedQueryId> getRunningQueries() const;
     [[nodiscard]] std::vector<DistributedQueryId> queries() const;
     [[nodiscard]] std::expected<DistributedWorkerStatus, Exception> workerStatus(std::chrono::system_clock::time_point after) const;

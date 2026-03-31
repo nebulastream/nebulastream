@@ -159,7 +159,7 @@ std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, Quer
     std::unreachable();
 }
 
-std::expected<LocalQueryStatus, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
+std::expected<LocalQueryStatusSnapshot, Exception> SingleNodeWorker::getQueryStatus(QueryId queryId) const noexcept
 {
     CPPTRACE_TRY
     {
@@ -188,17 +188,17 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
     {
         switch (state)
         {
-            case QueryState::Registered:
+            case QueryStatus::Registered:
                 /// Ignore these for the worker status
                 break;
-            case QueryState::Started:
+            case QueryStatus::Started:
                 INVARIANT(metrics.start.has_value(), "If query is started, it should have a start timestamp");
                 if (metrics.start.value() >= after)
                 {
                     status.activeQueries.emplace_back(queryId, std::nullopt);
                 }
                 break;
-            case QueryState::Running: {
+            case QueryStatus::Running: {
                 INVARIANT(metrics.running.has_value(), "If query is running, it should have a running timestamp");
                 if (metrics.running.value() >= after)
                 {
@@ -206,7 +206,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 }
                 break;
             }
-            case QueryState::Stopped: {
+            case QueryStatus::Stopped: {
                 INVARIANT(metrics.running.has_value(), "If query is stopped, it should have a running timestamp");
                 INVARIANT(metrics.stop.has_value(), "If query is stopped, it should have a stopped timestamp");
                 if (metrics.stop.value() >= after)
@@ -215,7 +215,7 @@ WorkerStatus SingleNodeWorker::getWorkerStatus(std::chrono::system_clock::time_p
                 }
                 break;
             }
-            case QueryState::Failed: {
+            case QueryStatus::Failed: {
                 INVARIANT(metrics.stop.has_value(), "If query has failed, it should have a stopped timestamp");
                 if (metrics.stop.value() >= after)
                 {

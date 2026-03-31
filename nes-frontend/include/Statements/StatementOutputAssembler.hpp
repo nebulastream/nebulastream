@@ -93,7 +93,7 @@ constexpr std::array<std::string_view, 8> queryStatusOutputColumns{
 using WorkerStatusOutputRowType = std::tuple<
     Host,
     std::string,
-    QueryState,
+    QueryStatus,
     std::optional<std::string>,
     std::optional<std::chrono::system_clock::time_point>,
     std::optional<std::chrono::system_clock::time_point>>;
@@ -292,7 +292,7 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
                 id,
                 std::nullopt,
                 std::nullopt,
-                magic_enum::enum_name(query.getGlobalQueryState()),
+                magic_enum::enum_name(query.getGlobalQueryStatus()),
                 globalMetrics.error.transform([](const auto& exception) { return exception.what(); }),
                 globalMetrics.start,
                 globalMetrics.running,
@@ -390,7 +390,7 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
         {
             if (!workerStatusResult)
             {
-                output.emplace_back(grpc, "", QueryState::Failed, workerStatusResult.error().what(), std::nullopt, std::nullopt);
+                output.emplace_back(grpc, "", QueryStatus::Failed, workerStatusResult.error().what(), std::nullopt, std::nullopt);
             }
             else
             {
@@ -401,7 +401,7 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
                     output.emplace_back(
                         grpc,
                         activeQuery.queryId.getLocalQueryId().getRawValue(),
-                        QueryState::Running,
+                        QueryStatus::Running,
                         std::nullopt,
                         activeQuery.started,
                         std::nullopt);
@@ -411,7 +411,7 @@ struct StatementOutputAssembler<WorkerStatusStatementResult>
                     output.emplace_back(
                         grpc,
                         terminatedQuery.queryId.getLocalQueryId().getRawValue(),
-                        terminatedQuery.error.has_value() ? QueryState::Failed : QueryState::Stopped,
+                        terminatedQuery.error.has_value() ? QueryStatus::Failed : QueryStatus::Stopped,
                         terminatedQuery.error.transform([](const auto& error) { return error.what(); }),
                         terminatedQuery.started,
                         terminatedQuery.terminated);

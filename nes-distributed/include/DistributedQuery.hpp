@@ -65,8 +65,8 @@ struct DistributedQueryMetrics
 };
 
 /// Computed (not stored) global state of a distributed query, derived from individual
-/// local query statuses across all workers. Determined by getGlobalQueryState() on each status poll.
-enum class DistributedQueryState : uint8_t
+/// local query statuses across all workers. Determined by getGlobalQueryStatus() on each status poll.
+enum class DistributedQueryStatus : uint8_t
 {
     Registered, /// all local queries have been registered
     Running, /// all local queries have been started and are currently running. none of them has stopped
@@ -81,18 +81,18 @@ struct DistributedWorkerStatus
     std::unordered_map<Host, std::expected<WorkerStatus, Exception>> workerStatus;
 };
 
-struct DistributedQueryStatus
+struct DistributedQueryStatusSnapshot
 {
     /// A Distributed Query is deployed onto multiple Worker nodes, referenced by their Host.
     /// Each worker may host multiple independent local queries for the same distributed query.
     /// There are two kinds of failures per query that are used here. The Expected may contain an exception
-    /// encountered when fetching the query status (i.e., the worker is not reachable). The LocalQueryStatus
+    /// encountered when fetching the query status (i.e., the worker is not reachable). The LocalQueryStatusSnapshot
     /// may include a failure encountered by the worker node during query processing (e.g., bad input format)
-    std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatus, Exception>>> localStatusSnapshots;
+    std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>> localStatusSnapshots;
     DistributedQueryId queryId{DistributedQueryId::INVALID};
 
-    /// Reports a distributed query state based on the individual query states. See @DistributedQueryState for more information.
-    [[nodiscard]] DistributedQueryState getGlobalQueryState() const;
+    /// Reports a distributed query state based on the individual query states. See @DistributedQueryStatus for more information.
+    [[nodiscard]] DistributedQueryStatus getGlobalQueryStatus() const;
 
     /// Reports the encountered exception per worker node. There might be multiple local queries running on a single worker, so there
     /// might be multiple errors per worker.
@@ -142,8 +142,8 @@ public:
 };
 
 std::ostream& operator<<(std::ostream& ostream, const DistributedQuery& query);
-std::ostream& operator<<(std::ostream& ostream, const DistributedQueryState& status);
+std::ostream& operator<<(std::ostream& ostream, const DistributedQueryStatus& status);
 }
 
-FMT_OSTREAM(NES::DistributedQueryState);
+FMT_OSTREAM(NES::DistributedQueryStatus);
 FMT_OSTREAM(NES::DistributedQuery);

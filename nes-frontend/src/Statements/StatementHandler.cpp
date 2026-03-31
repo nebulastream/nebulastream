@@ -378,7 +378,7 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
         auto statusResults
             = queryManager->queries()
             | std::views::transform(
-                  [&](const auto& queryId) -> std::pair<DistributedQueryId, std::expected<DistributedQueryStatus, Exception>>
+                  [&](const auto& queryId) -> std::pair<DistributedQueryId, std::expected<DistributedQueryStatusSnapshot, Exception>>
                   {
                       auto statusResult = queryManager->status(queryId).transform_error(
                           [](auto vecOfErrors)
@@ -398,7 +398,7 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
 
         auto goodQueryStatusResults = statusResults
             | std::views::filter([](const auto& idAndStatusResult) { return idAndStatusResult.second.has_value(); })
-            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, DistributedQueryStatus>
+            | std::views::transform([](const auto& idAndStatusResult) -> std::pair<DistributedQueryId, DistributedQueryStatusSnapshot>
                                     { return {idAndStatusResult.first, idAndStatusResult.second.value()}; });
         if (!failedStatusResults.empty())
         {
@@ -407,14 +407,14 @@ std::expected<ShowQueriesStatementResult, Exception> QueryStatementHandler::oper
         }
 
         return ShowQueriesStatementResult{
-            goodQueryStatusResults | std::ranges::to<std::unordered_map<DistributedQueryId, DistributedQueryStatus>>()};
+            goodQueryStatusResults | std::ranges::to<std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot>>()};
     }
 
     const auto statusOpt = queryManager->status(statement.id.value());
     if (statusOpt)
     {
         return ShowQueriesStatementResult{
-            std::unordered_map<DistributedQueryId, DistributedQueryStatus>{{statement.id.value(), statusOpt.value()}}};
+            std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot>{{statement.id.value(), statusOpt.value()}}};
     }
     return std::unexpected(QueryStatusFailed("Could not retrieve query status for some queries: ", fmt::join(statusOpt.error(), "\n")));
 }

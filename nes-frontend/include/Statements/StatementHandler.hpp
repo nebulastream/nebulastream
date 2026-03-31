@@ -94,7 +94,7 @@ struct QueryStatementResult
 
 struct ShowQueriesStatementResult
 {
-    std::unordered_map<DistributedQueryId, DistributedQueryStatus> queries;
+    std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot> queries;
 };
 
 struct DropQueryStatementResult

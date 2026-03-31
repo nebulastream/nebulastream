@@ -212,7 +212,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
 
                 /// Waiting until the query state changed. Even if the query status changes to failed we consider the start to be successful.
                 /// Subsequent status requests will find the query in a failed state.
-                return result->state != QueryState::Registered;
+                return result->state != QueryStatus::Registered;
             });
 
         if (waitForStatusChange.empty())
@@ -245,7 +245,7 @@ std::expected<void, std::vector<Exception>> QueryManager::start(DistributedQuery
     return {};
 }
 
-std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const
+std::expected<DistributedQueryStatusSnapshot, std::vector<Exception>> QueryManager::status(const DistributedQueryId& queryId) const
 {
     auto queryResult = getQuery(queryId);
     if (!queryResult.has_value())
@@ -254,7 +254,7 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
     }
     auto query = queryResult.value();
 
-    std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatus, Exception>>> localStatusResults;
+    std::unordered_map<Host, std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>> localStatusResults;
 
     for (const auto& [host, localQueryId] : query.iterate())
     {
@@ -273,7 +273,7 @@ std::expected<DistributedQueryStatus, std::vector<Exception>> QueryManager::stat
         }
     }
 
-    return DistributedQueryStatus{.localStatusSnapshots = localStatusResults, .queryId = queryId};
+    return DistributedQueryStatusSnapshot{.localStatusSnapshots = localStatusResults, .queryId = queryId};
 }
 
 std::vector<DistributedQueryId> QueryManager::queries() const
@@ -295,17 +295,17 @@ std::vector<DistributedQueryId> QueryManager::getRunningQueries() const
 {
     return state.queries | std::views::keys
         | std::views::transform(
-               [this](const auto& id) -> std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>
+               [this](const auto& id) -> std::optional<std::pair<DistributedQueryId, DistributedQueryStatusSnapshot>>
                {
                    auto result = status(id);
                    if (result)
                    {
-                       return std::optional<std::pair<DistributedQueryId, DistributedQueryStatus>>{{id, *result}};
+                       return std::optional<std::pair<DistributedQueryId, DistributedQueryStatusSnapshot>>{{id, *result}};
                    }
                    return std::nullopt;
                })
         | std::views::filter([](const auto& idAndStatus) { return idAndStatus.has_value(); })
-        | std::views::filter([](auto idAndStatus) { return idAndStatus->second.getGlobalQueryState() == DistributedQueryState::Running; })
+        | std::views::filter([](auto idAndStatus) { return idAndStatus->second.getGlobalQueryStatus() == DistributedQueryStatus::Running; })
         | std::views::transform([](auto idAndStatus) { return idAndStatus->first; }) | std::ranges::to<std::vector>();
 }
 

@@ -302,23 +302,23 @@ std::unique_ptr<ExecutableQueryPlan> TestingHarness::addNewQuery(QueryPlanBuilde
     return std::move(plan);
 }
 
-void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<QueryState> states)
+void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<QueryStatus> states)
 {
     for (auto state : states)
     {
         switch (state)
         {
-            case QueryState::Registered:
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Registered, ::testing::_)).Times(1);
+            case QueryStatus::Registered:
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Registered, ::testing::_)).Times(1);
                 break;
-            case QueryState::Started:
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Started, ::testing::_))
+            case QueryStatus::Started:
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Started, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke([](auto, auto, auto) { return true; }));
                 break;
-            case QueryState::Running:
+            case QueryStatus::Running:
                 queryRunning.emplace(id, std::make_unique<std::promise<void>>());
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Running, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Running, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
                         [this](auto id, auto, auto)
@@ -327,10 +327,10 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                             return true;
                         }));
                 break;
-            case QueryState::Stopped:
+            case QueryStatus::Stopped:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
-                EXPECT_CALL(*status, logQueryStatusChange(id, QueryState::Stopped, ::testing::_))
+                EXPECT_CALL(*status, logQueryStatusChange(id, QueryStatus::Stopped, ::testing::_))
                     .Times(1)
                     .WillOnce(::testing::Invoke(
                         [this](auto id, auto, auto)
@@ -339,7 +339,7 @@ void TestingHarness::expectQueryStatusEvents(QueryId id, std::initializer_list<Q
                             return true;
                         }));
                 break;
-            case QueryState::Failed:
+            case QueryStatus::Failed:
                 ASSERT_TRUE(queryTermination.try_emplace(id, std::make_unique<std::promise<void>>()).second)
                     << "Registered multiple query terminations";
                 EXPECT_CALL(*status, logQueryFailure(id, ::testing::_, ::testing::_))

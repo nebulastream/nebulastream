@@ -33,10 +33,10 @@ public:
     std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
     void startQuery(const DistributedQueryId& query);
     void stopQuery(const DistributedQueryId& query);
-    DistributedQueryStatus waitForQueryTermination(const DistributedQueryId& query);
+    DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
 
     /// Blocks until atleast one query has finished (or potentially failed)
-    std::vector<DistributedQueryStatus> finishedQueries();
+    std::vector<DistributedQueryStatusSnapshot> finishedQueries();
 
 private:
     UniquePtr<QueryManager> queryManager;

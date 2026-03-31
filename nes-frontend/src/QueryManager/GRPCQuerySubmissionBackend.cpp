@@ -92,7 +92,7 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::start(QueryId queryId
         "Status: {}\nMessage: {}\nDetail: {}", magic_enum::enum_name(status.error_code()), status.error_message(), status.error_details())};
 }
 
-std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const
+std::expected<LocalQueryStatusSnapshot, Exception> GRPCQuerySubmissionBackend::status(QueryId queryId) const
 {
     grpc::ClientContext context;
     QueryStatusRequest request;
@@ -142,13 +142,13 @@ std::expected<LocalQueryStatus, Exception> GRPCQuerySubmissionBackend::status(Qu
         metrics.error = exception;
     }
 
-    auto state = magic_enum::enum_cast<QueryState>(static_cast<uint8_t>(response.state()));
+    auto state = magic_enum::enum_cast<QueryStatus>(static_cast<uint8_t>(response.state()));
     if (!state)
     {
         return std::unexpected{
             QueryStatusFailed("Unknown query state `{}` for query: {}", magic_enum::enum_name(response.state()), queryId)};
     }
-    return LocalQueryStatus(queryId, *state, metrics);
+    return LocalQueryStatusSnapshot(queryId, *state, metrics);
 }
 
 std::expected<WorkerStatus, Exception> GRPCQuerySubmissionBackend::workerStatus(std::chrono::system_clock::time_point after) const

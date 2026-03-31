@@ -64,7 +64,7 @@ std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryI
     return worker.stopQuery(queryId, QueryTerminationType::Graceful);
 }
 
-std::expected<LocalQueryStatus, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
+std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
 {
     return worker.getQueryStatus(queryId);
 }

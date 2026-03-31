@@ -76,7 +76,7 @@ TEST_F(QueryEngineTest, singleQueryWithShutdown)
         ExpectStats::TaskExecutionStart(4),
         ExpectStats::TaskExecutionComplete(4));
 
-    test.expectQueryStatusEvents(queryId, {QueryState::Started, QueryState::Running});
+    test.expectQueryStatusEvents(queryId, {QueryStatus::Started, QueryStatus::Running});
 
     test.start();
     {
@@ -122,7 +122,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemShutdown)
         ExpectStats::TaskExecutionComplete(8),
         ExpectStats::TaskEmit(4));
 
-    test.expectQueryStatusEvents(id, {QueryState::Started, QueryState::Running});
+    test.expectQueryStatusEvents(id, {QueryStatus::Started, QueryStatus::Running});
 
     test.start();
     {
@@ -173,7 +173,7 @@ TEST_F(QueryEngineTest, singleQueryWithExternalStop)
         ExpectStats::TaskExecutionComplete(8),
         ExpectStats::TaskEmit(4));
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
 
     test.start();
@@ -213,7 +213,7 @@ TEST_F(QueryEngineTest, singleQueryWithSystemStop)
 
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     /// Statistics.
     ///     Note: Pipelines are terminated because the query is gracefully stopped.
@@ -268,7 +268,7 @@ TEST_F(QueryEngineTest, singleQueryWithSourceFailure)
 
     auto ctrl = test.sourceControls[source];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Failure);
 
     test.start();
@@ -311,7 +311,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesShutdown)
     auto ctrl1 = test.sourceControls[source1];
     auto ctrl2 = test.sourceControls[source2];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running});
 
     /// Statistics.
     ///     Note: Pipelines are not terminated, due to system shutdown
@@ -386,7 +386,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStop)
 
     test.pipelineControls[fail]->failOnStop = true;
 
-    test.expectQueryStatusEvents(id, {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(id, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.expectSourceTermination(id, src, QueryTerminationType::Graceful);
 
     test.start();
@@ -437,7 +437,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSources)
     auto id = query->queryId;
     test.pipelineControls[fail]->failOnStop = true;
 
-    test.expectQueryStatusEvents(id, {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(id, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.expectSourceTermination(id, src1, QueryTerminationType::Graceful);
     test.expectSourceTermination(id, src2, QueryTerminationType::Graceful);
 
@@ -499,7 +499,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStopMultipleSourcesRaceBetweenFailA
     auto id = query->queryId;
     test.pipelineControls[fail]->failOnStop = true;
 
-    test.expectQueryStatusEvents(id, {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(id, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.expectSourceTermination(id, src1, QueryTerminationType::Graceful);
 
     /// The query engine does not explicitly notify src2 so it cannot report query failure. This could arguably be improved.
@@ -546,7 +546,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultiplePipelines)
     auto id = query->queryId;
     test.pipelineControls[failingPipeline]->failOnStart = true;
 
-    test.expectQueryStatusEvents(id, {QueryState::Failed});
+    test.expectQueryStatusEvents(id, {QueryStatus::Failed});
 
     test.start();
     {
@@ -571,7 +571,7 @@ TEST_F(QueryEngineTest, failureDuringPipelineStartWithMultipleSources)
     auto id = query->queryId;
     test.pipelineControls[failingPipeline]->failOnStart = true;
 
-    test.expectQueryStatusEvents(id, {QueryState::Failed});
+    test.expectQueryStatusEvents(id, {QueryStatus::Failed});
 
     test.start();
     {
@@ -593,7 +593,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourcesWaitingForTwoStops)
     auto ctrl1 = test.sourceControls[source1];
     auto ctrl2 = test.sourceControls[source2];
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source1, QueryTerminationType::Graceful);
     test.expectSourceTermination(test.queryId(0), source2, QueryTerminationType::Graceful);
 
@@ -658,7 +658,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySources)
         });
 
     auto sinkCtrl = test.sinkControls[sink];
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     test.start();
     {
@@ -695,7 +695,7 @@ TEST_F(QueryEngineTest, singleQueryWithManySourcesOneOfThemFails)
     std::vector<std::shared_ptr<TestSourceControl>> sourcesCtrls;
     std::ranges::transform(sources, std::back_inserter(sourcesCtrls), [&](auto identifier) { return test.sourceControls[identifier]; });
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     /// Overwrite Source 0 to expect source failure.
     test.expectSourceTermination(test.queryId(0), sources[0], QueryTerminationType::Failure);
 
@@ -729,7 +729,7 @@ TEST_F(QueryEngineTest, RaceBetweenFailureAndEOS)
 
     auto query = test.addNewQuery(std::move(builder));
     test.pipelineControls[failingPipeline]->throwOnNthInvocation = 1;
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
 
     test.start();
     {
@@ -774,7 +774,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(test.queryId(index), sources[index * 2], QueryTerminationType::Graceful);
         test.expectSourceTermination(test.queryId(index), sources[(index * 2) + 1], QueryTerminationType::Graceful);
-        test.expectQueryStatusEvents(test.queryId(index), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+        test.expectQueryStatusEvents(test.queryId(index), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     }
 
     test.start();
@@ -847,13 +847,13 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
     sourcesCtrls.push_back(test.sourceControls[sources[1]]);
     sinkCtrls.push_back(test.sinkControls[sinks[0]]);
     test.expectSourceTermination(test.queryId(0), sources[0], QueryTerminationType::Failure);
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
 
     /// Query 2 is terminated by an internal stop
     sourcesCtrls.push_back(test.sourceControls[sources[2]]);
     sourcesCtrls.push_back(test.sourceControls[sources[3]]);
     sinkCtrls.push_back(test.sinkControls[sinks[1]]);
-    test.expectQueryStatusEvents(test.queryId(1), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(1), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     /// Rest of the queries are terminated by external stop via eos
     for (size_t index = 2; const auto& query : queryPlans | std::ranges::views::drop(2))
@@ -863,7 +863,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesOneSourceFails)
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
         test.expectSourceTermination(test.queryId(index), sources[index * 2], QueryTerminationType::Graceful);
         test.expectSourceTermination(test.queryId(index), sources[(index * 2) + 1], QueryTerminationType::Graceful);
-        test.expectQueryStatusEvents(test.queryId(index), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+        test.expectQueryStatusEvents(test.queryId(index), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
         index++;
     }
 
@@ -922,7 +922,7 @@ TEST_F(QueryEngineTest, singleQueryWithTwoSourceExternalStop)
     auto sink = builder.addSink({pipeline});
     auto query = test.addNewQuery(std::move(builder));
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     test.start();
     {
@@ -965,7 +965,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringEngineTerminatio
         ExpectStats::TaskEmit(0));
 
     test.sourceControls[source]->failDuringOpen(DEFAULT_AWAIT_TIMEOUT);
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running});
 
     test.start();
     {
@@ -998,7 +998,7 @@ TEST_F(QueryEngineTest, singleQueryWithSlowlyFailingSourceDuringQueryPlanTermina
         ExpectStats::TaskEmit(0));
 
     test.sourceControls[source]->failDuringOpen(DEFAULT_LONG_AWAIT_TIMEOUT);
-    test.expectQueryStatusEvents(query->queryId, {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(query->queryId, {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     test.start();
     {
@@ -1028,7 +1028,7 @@ TEST_F(QueryEngineTest, singleQueryWithPipelineFailure)
     auto sink = builder.addSink({pipeline});
     auto query = test.addNewQuery(std::move(builder));
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.pipelineControls[pipeline]->throwOnNthInvocation = 2;
 
     test.start();
@@ -1064,7 +1064,7 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessors)
     auto sink = builder.addSink({pipeline1, pipeline2, pipeline3});
 
     auto query = test.addNewQuery(std::move(builder));
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
 
     test.start();
@@ -1100,7 +1100,7 @@ TEST_F(QueryEngineTest, singleSourceWithMultipleSuccessorsSourceFailure)
     auto sink = builder.addSink({pipeline1, pipeline2, pipeline3});
 
     auto query = test.addNewQuery(std::move(builder));
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Failed});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Failure);
 
 
@@ -1167,7 +1167,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSink)
     auto sink = builder.addSink({source});
     auto query = test.addNewQuery(std::move(builder));
     test.sinkControls[sink]->repeatCount = 3;
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
 
     test.stats.expect(
@@ -1199,7 +1199,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingPipeline)
     builder.addSink({pipeline});
     auto query = test.addNewQuery(std::move(builder));
     test.pipelineControls[pipeline]->repeatCount = 3;
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
 
     /// NOLINTBEGIN(readability-magic-numbers) These are the results I expect
@@ -1233,7 +1233,7 @@ TEST_F(QueryEngineTest, SingleQueryWithRepeatingSinkDuringQueryStop)
     auto query = test.addNewQuery(std::move(builder));
     test.sinkControls[sink]->repeatCountDuringStop = 3;
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
     /// NOLINTBEGIN(readability-magic-numbers) These are the results I expect
     test.stats.expect(
@@ -1268,7 +1268,7 @@ TEST_F(QueryEngineTest, SingleQueryWithMultipleSinksDuringQueryStopOneIsRepeated
     auto query = test.addNewQuery(std::move(builder));
     test.sinkControls[sink1]->repeatCountDuringStop = 2;
 
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
     test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
     /// NOLINTBEGIN(readability-magic-numbers) These are the results I expect
     test.stats.expect(
@@ -1329,7 +1329,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     sinkCtrls.push_back(test.sinkControls[sinks[0]]);
     test.expectSourceTermination(test.queryId(0), sources[0], QueryTerminationType::Graceful);
     test.expectSourceTermination(test.queryId(0), sources[1], QueryTerminationType::Graceful);
-    test.expectQueryStatusEvents(test.queryId(0), {QueryState::Started, QueryState::Running, QueryState::Stopped});
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
 
     /// Rest of the queries are failing due to pipeline errors on pipeline 1
     for (size_t index = 1; const auto& query : queryPlans | std::ranges::views::drop(1))
@@ -1338,7 +1338,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
         sourcesCtrls.push_back(test.sourceControls[sources[index * 2]]);
         sourcesCtrls.push_back(test.sourceControls[sources[(index * 2) + 1]]);
         sinkCtrls.push_back(test.sinkControls[sinks[index]]);
-        test.expectQueryStatusEvents(test.queryId(index), {QueryState::Started, QueryState::Running, QueryState::Failed});
+        test.expectQueryStatusEvents(test.queryId(index), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
         index++;
     }
 

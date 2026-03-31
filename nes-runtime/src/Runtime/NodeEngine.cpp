@@ -106,7 +106,7 @@ NodeEngine::NodeEngine(
 void NodeEngine::registerCompiledQueryPlan(QueryId queryId, std::unique_ptr<CompiledQueryPlan> compiledQueryPlan)
 {
     queryTracker->registerQuery(std::move(compiledQueryPlan), queryId);
-    queryLog->logQueryStatusChange(queryId, QueryState::Registered, std::chrono::system_clock::now());
+    queryLog->logQueryStatusChange(queryId, QueryStatus::Registered, std::chrono::system_clock::now());
 }
 
 void NodeEngine::startQuery(QueryId queryId)

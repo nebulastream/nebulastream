@@ -47,29 +47,29 @@ NES::DistributedException::DistributedException(std::unordered_map<Host, std::ve
     errorMessage = builder.str();
 }
 
-NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() const
+NES::DistributedQueryStatus NES::DistributedQueryStatusSnapshot::getGlobalQueryStatus() const
 {
-    auto any = [&](std::initializer_list<QueryState> state)
+    auto any = [&](std::initializer_list<QueryStatus> state)
     {
         return std::ranges::any_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
+            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>& localMap)
             {
                 return std::ranges::any_of(
                     localMap | std::views::values,
-                    [&](const std::expected<LocalQueryStatus, Exception>& local)
+                    [&](const std::expected<LocalQueryStatusSnapshot, Exception>& local)
                     { return local.has_value() && std::ranges::contains(state, local.value().state); });
             });
     };
-    auto all = [this](std::initializer_list<QueryState> state)
+    auto all = [this](std::initializer_list<QueryStatus> state)
     {
         return std::ranges::all_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
+            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>& localMap)
             {
                 return std::ranges::all_of(
                     localMap | std::views::values,
-                    [&](const std::expected<LocalQueryStatus, Exception>& local)
+                    [&](const std::expected<LocalQueryStatusSnapshot, Exception>& local)
                     { return local.has_value() && std::ranges::contains(state, local.value().state); });
             });
     };
@@ -78,41 +78,41 @@ NES::DistributedQueryState NES::DistributedQueryStatus::getGlobalQueryState() co
         [](const auto& perWorker)
         { return std::ranges::any_of(perWorker | std::views::values, [](const auto& expected) { return !expected.has_value(); }); });
 
-    if (any({QueryState::Failed}))
+    if (any({QueryStatus::Failed}))
     {
-        return DistributedQueryState::Failed;
+        return DistributedQueryStatus::Failed;
     }
 
     if (hasConnectionException)
     {
-        return DistributedQueryState::Unreachable;
+        return DistributedQueryStatus::Unreachable;
     }
 
-    if (all({QueryState::Stopped}))
+    if (all({QueryStatus::Stopped}))
     {
-        return DistributedQueryState::Stopped;
+        return DistributedQueryStatus::Stopped;
     }
 
-    if (any({QueryState::Stopped}))
+    if (any({QueryStatus::Stopped}))
     {
-        return DistributedQueryState::PartiallyStopped;
+        return DistributedQueryStatus::PartiallyStopped;
     }
 
-    if (all({QueryState::Registered}))
+    if (all({QueryStatus::Registered}))
     {
-        return DistributedQueryState::Registered;
+        return DistributedQueryStatus::Registered;
     }
 
-    if (all({QueryState::Stopped, QueryState::Running, QueryState::Started, QueryState::Registered}))
+    if (all({QueryStatus::Stopped, QueryStatus::Running, QueryStatus::Started, QueryStatus::Registered}))
     {
-        return DistributedQueryState::Running;
+        return DistributedQueryStatus::Running;
     }
 
     INVARIANT(false, "Unexpected combination of local query states");
     std::unreachable();
 }
 
-std::unordered_map<NES::Host, std::vector<NES::Exception>> NES::DistributedQueryStatus::getExceptions() const
+std::unordered_map<NES::Host, std::vector<NES::Exception>> NES::DistributedQueryStatusSnapshot::getExceptions() const
 {
     std::unordered_map<Host, std::vector<Exception>> exceptions;
     for (const auto& [grpc, localStatusMap] : localStatusSnapshots)
@@ -132,7 +132,7 @@ std::unordered_map<NES::Host, std::vector<NES::Exception>> NES::DistributedQuery
     return exceptions;
 }
 
-std::optional<NES::DistributedException> NES::DistributedQueryStatus::coalesceException() const
+std::optional<NES::DistributedException> NES::DistributedQueryStatusSnapshot::coalesceException() const
 {
     auto exceptions = getExceptions();
     if (exceptions.empty())
@@ -142,40 +142,42 @@ std::optional<NES::DistributedException> NES::DistributedQueryStatus::coalesceEx
     return DistributedException(exceptions);
 }
 
-NES::DistributedQueryMetrics NES::DistributedQueryStatus::coalesceQueryMetrics() const
+NES::DistributedQueryMetrics NES::DistributedQueryStatusSnapshot::coalesceQueryMetrics() const
 {
     auto all = [&](auto predicate)
     {
         return std::ranges::all_of(
             localStatusSnapshots | std::views::values,
-            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatus, Exception>>& localMap)
+            [&](const std::unordered_map<QueryId, std::expected<LocalQueryStatusSnapshot, Exception>>& localMap)
             {
                 return std::ranges::all_of(
                     localMap | std::views::values,
-                    [&](const std::expected<LocalQueryStatus, Exception>& local) { return local.has_value() && predicate(local.value()); });
+                    [&](const std::expected<LocalQueryStatusSnapshot, Exception>& local)
+                    { return local.has_value() && predicate(local.value()); });
             });
     };
     auto get = [&](auto projection)
     {
         return localStatusSnapshots | std::views::values
             | std::views::transform([](const auto& localMap) { return localMap | std::views::values; }) | std::views::join
-            | std::views::transform([&](const std::expected<LocalQueryStatus, Exception>& local) { return projection(local.value()); });
+            | std::views::transform([&](const std::expected<LocalQueryStatusSnapshot, Exception>& local)
+                                    { return projection(local.value()); });
     };
 
     DistributedQueryMetrics metrics;
-    if (all([](const LocalQueryStatus& local) { return local.metrics.start.has_value(); }))
+    if (all([](const LocalQueryStatusSnapshot& local) { return local.metrics.start.has_value(); }))
     {
-        metrics.start = std::ranges::min(get([](const LocalQueryStatus& local) { return local.metrics.start.value(); }));
+        metrics.start = std::ranges::min(get([](const LocalQueryStatusSnapshot& local) { return local.metrics.start.value(); }));
     }
 
-    if (all([](const LocalQueryStatus& local) { return local.metrics.running.has_value(); }))
+    if (all([](const LocalQueryStatusSnapshot& local) { return local.metrics.running.has_value(); }))
     {
-        metrics.running = std::ranges::max(get([](const LocalQueryStatus& local) { return local.metrics.running.value(); }));
+        metrics.running = std::ranges::max(get([](const LocalQueryStatusSnapshot& local) { return local.metrics.running.value(); }));
     }
 
-    if (all([](const LocalQueryStatus& local) { return local.metrics.stop.has_value(); }))
+    if (all([](const LocalQueryStatusSnapshot& local) { return local.metrics.stop.has_value(); }))
     {
-        metrics.stop = std::ranges::max(get([](const LocalQueryStatus& local) { return local.metrics.stop.value(); }));
+        metrics.stop = std::ranges::max(get([](const LocalQueryStatusSnapshot& local) { return local.metrics.stop.value(); }));
     }
 
     metrics.error = coalesceException();
@@ -200,7 +202,7 @@ std::ostream& NES::operator<<(std::ostream& os, const DistributedQuery& query)
     return os;
 }
 
-std::ostream& NES::operator<<(std::ostream& ostream, const DistributedQueryState& status)
+std::ostream& NES::operator<<(std::ostream& ostream, const DistributedQueryStatus& status)
 {
     return ostream << magic_enum::enum_name(status);
 }
