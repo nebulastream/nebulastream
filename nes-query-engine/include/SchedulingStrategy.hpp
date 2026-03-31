@@ -25,6 +25,8 @@ namespace NES
 /// PER_THREAD_SMALLEST_QUEUE: Each worker thread has its own queue; tasks are assigned to the shortest queue.
 /// PER_THREAD_CHOOSE_TWO: Each worker thread has its own queue; tasks are assigned to the shorter of two random queues.
 /// BATCH_PULL: Tasks go to a global queue; workers pull a configurable batch into a thread-local buffer.
+/// HYBRID_QUEUE: Global queue + per-thread queues. Workers pull batches from global into their per-thread queue.
+///               Successor tasks go to the producer's per-thread queue. Refill from global when local is empty.
 ///
 /// All per-thread strategies can be combined with:
 ///   --producer_local true  : successor tasks stay on the producing thread's queue (cache locality)
@@ -35,7 +37,8 @@ enum class SchedulingStrategy : uint8_t
     PER_THREAD_ROUND_ROBIN,
     PER_THREAD_SMALLEST_QUEUE,
     PER_THREAD_CHOOSE_TWO,
-    BATCH_PULL
+    BATCH_PULL,
+    HYBRID_QUEUE
 };
 
 }

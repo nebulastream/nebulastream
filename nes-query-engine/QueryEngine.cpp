@@ -334,7 +334,7 @@ public:
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread: route through admission queue
-            if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
+            if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
             {
                 taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             }
@@ -385,7 +385,7 @@ public:
     template <typename T>
     void submitAdmissionTask(T&& task)
     {
-        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
+        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
         {
             taskQueue.addAdmissionTaskBlocking({}, std::forward<T>(task));
         }
@@ -446,7 +446,7 @@ public:
         , delayedTaskSubmitter(
               [this](Task&& task) noexcept
               {
-                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
+                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
                   {
                       taskQueue.addInternalTaskNonBlocking(std::move(task));
                   }
@@ -456,9 +456,18 @@ public:
                   }
               })
     {
-        if (strategy != SchedulingStrategy::GLOBAL_QUEUE && strategy != SchedulingStrategy::BATCH_PULL)
+        if (strategy != SchedulingStrategy::GLOBAL_QUEUE && strategy != SchedulingStrategy::BATCH_PULL
+            && strategy != SchedulingStrategy::HYBRID_QUEUE)
         {
             multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing, producerLocal);
+        }
+        if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+        {
+            hybridLocalQueues.reserve(numThreads);
+            for (size_t i = 0; i < numThreads; ++i)
+            {
+                hybridLocalQueues.push_back(std::make_unique<folly::UMPMCQueue<Task, true>>());
+            }
         }
     }
 
@@ -495,7 +504,12 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
+        if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+        {
+            const auto threadIndex = static_cast<size_t>(WorkerThread::id.getRawValue() - WorkerThreadId::INITIAL);
+            hybridLocalQueues[threadIndex]->enqueue(std::move(task));
+        }
+        else if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
         {
             taskQueue.addInternalTaskNonBlocking(std::move(task));
         }
@@ -516,6 +530,7 @@ private:
     size_t batchPullSize_{1};
     TaskQueue<Task> taskQueue;
     std::unique_ptr<MultiQueueTaskQueue<Task>> multiQueue; /// only set for per-thread strategies
+    std::vector<std::unique_ptr<folly::UMPMCQueue<Task, true>>> hybridLocalQueues; /// only set for HYBRID_QUEUE
     DelayedTaskSubmitter<> delayedTaskSubmitter;
 
     /// Class Invariant: numberOfThreads == pool.size().
@@ -870,6 +885,60 @@ void ThreadPool::addThread(WorkerId workerId)
                 while (auto task = taskQueue.getNextTaskNonBlocking())
                 {
                     handleTask(terminatingWorker, std::move(*task));
+                }
+            }
+            else if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+            {
+                /// Hybrid queue mode: per-thread queue for successors, global queue for refill
+                auto& localQueue = *hybridLocalQueues[id];
+
+                while (!stopToken.stop_requested())
+                {
+                    /// Priority 1: drain local queue (successor tasks from this thread)
+                    Task task;
+                    if (localQueue.try_dequeue(task))
+                    {
+                        handleTask(worker, std::move(task));
+                        continue;
+                    }
+
+                    /// Priority 2: local queue empty — refill a batch from global queue
+                    /// Block for the first task
+                    if (auto globalTask = taskQueue.getNextTaskBlocking(stopToken))
+                    {
+                        handleTask(worker, std::move(*globalTask));
+                    }
+                    else
+                    {
+                        continue;
+                    }
+
+                    /// Greedily pull up to batchPullSize_ - 1 more into local queue
+                    for (size_t i = 1; i < batchPullSize_; ++i)
+                    {
+                        if (auto globalTask = taskQueue.getNextTaskNonBlocking())
+                        {
+                            localQueue.enqueue(std::move(*globalTask));
+                        }
+                        else
+                        {
+                            break;
+                        }
+                    }
+                }
+
+                ENGINE_LOG_INFO("WorkerThread {} shutting down (hybrid queue)", id);
+                const WorkerThread terminatingWorker{*this, true};
+                /// Drain local queue
+                Task task;
+                while (localQueue.try_dequeue(task))
+                {
+                    handleTask(terminatingWorker, std::move(task));
+                }
+                /// Drain global queue
+                while (auto globalTask = taskQueue.getNextTaskNonBlocking())
+                {
+                    handleTask(terminatingWorker, std::move(*globalTask));
                 }
             }
             else
