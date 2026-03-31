@@ -11,8 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-physical-operators
-        Slice.cpp
-        DefaultTimeBasedSliceStore.cpp
+        SliceCache.cpp
+        SliceCacheNone.cpp
+        SliceCacheSecondChance.cpp
 )
-
-add_subdirectory(SliceCache)
