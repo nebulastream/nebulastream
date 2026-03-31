@@ -10,14 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(add_nes_test_nebuli)
-    add_nes_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-frontend-lib)
-    target_include_directories(${TARGET_NAME}
-            PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private
-    )
-    target_compile_definitions(${TARGET_NAME} PRIVATE NEBULI_TEST_DATA_DIR="${CMAKE_CURRENT_SOURCE_DIR}/testdata/")
-endfunction()
-
-add_nes_test_nebuli(distributed-planning-test DistributedPlanningTest.cpp)
+add_nes_test(distributed-planning-test DistributedPlanningTest.cpp)
+target_link_libraries(distributed-planning-test nes-frontend-lib)
+target_include_directories(distributed-planning-test
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private
+)

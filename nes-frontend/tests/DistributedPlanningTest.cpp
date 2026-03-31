@@ -17,7 +17,6 @@
 #include <QueryOptimizerConfiguration.hpp>
 
 #include <cstddef>
-#include <filesystem>
 #include <iostream>
 #include <memory>
 #include <optional>
@@ -230,13 +229,13 @@ struct OptimizerAndPlan
     NES::LogicalPlan plan;
 };
 
-OptimizerAndPlan loadAndBind(std::string_view testFileName)
+OptimizerAndPlan loadAndBind(std::string_view yamlContent)
 {
     auto sources = std::make_shared<NES::SourceCatalog>();
     auto sinks = std::make_shared<NES::SinkCatalog>();
     auto workers = std::make_shared<NES::WorkerCatalog>();
 
-    auto queryConfig = YAML::LoadFile(std::filesystem::path{NEBULI_TEST_DATA_DIR} / testFileName).as<NES::Test::QueryConfig>();
+    auto queryConfig = YAML::Load(std::string(yamlContent)).as<NES::Test::QueryConfig>();
     auto statements = loadStatements(queryConfig);
 
     NES::TopologyStatementHandler topologyHandler{nullptr, workers};
@@ -272,7 +271,27 @@ public:
 ///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-identifier-length)
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("basic_single_node.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO mock_sink
+
+sinks:
+  - name: mock_sink
+    schema: [ mock_source$a, mock_source$b ]
+    host: "localhost:8080"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "localhost:8080"
+
+workers:
+  - host: "localhost:8080"
+    max_operators: 10
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
@@ -290,7 +309,31 @@ TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 
 TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("basic_two_nodes.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO mock_sink
+
+sinks:
+  - name: mock_sink
+    schema: [ mock_source$a, mock_source$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "source-node:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 1
+  - host: "source-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sourceNodePlan = plan[Host("source-node:8080")].front();
@@ -313,7 +356,39 @@ TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("join_with_one_selection.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1, a, b ]
+
+physical:
+  - logical: stream0
+    host: "source-node0:8080"
+  - logical: stream1
+    host: "source-node1:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node0:8080"
+    max_operators: 10
+    downstream:
+      - "sink-node:8080"
+  - host: "source-node1:8080"
+    max_operators: 10
+    downstream:
+      - "sink-node:8080"
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
@@ -361,7 +436,39 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("three_nodes.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT ts, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$a, stream0$id0, stream1$ts, stream1$id1, stream1$c, stream1$d ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0, a, b ]
+  - name: stream1
+    schema: [ ts, id1, c, d ]
+
+physical:
+  - logical: stream0
+    host: "source-node0:8080"
+  - logical: stream1
+    host: "source-node1:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node0:8080"
+    max_operators: 4
+    downstream:
+      - "sink-node:8080"
+  - host: "source-node1:8080"
+    max_operators: 3
+    downstream:
+      - "sink-node:8080"
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto plan0 = plan[Host("sink-node:8080")].front();
@@ -392,7 +499,39 @@ TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("join_with_limited_capacity.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1, a, b ]
+
+physical:
+  - logical: stream0
+    host: "source-node0:8080"
+  - logical: stream1
+    host: "source-node1:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node0:8080"
+    max_operators: 10
+    downstream:
+      - "sink-node:8080"
+  - host: "source-node1:8080"
+    max_operators: 1
+    downstream:
+      - "sink-node:8080"
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto plan0 = plan[Host("sink-node:8080")].front();
@@ -420,7 +559,35 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("join_with_limited_capacity_on_two_nodes.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1, a, b ]
+
+physical:
+  - logical: stream0
+    host: "source-node:8080"
+  - logical: stream1
+    host: "source-node:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 10
+  - host: "source-node:8080"
+    max_operators: 3
+    downstream:
+      - "sink-node:8080"
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
@@ -450,7 +617,47 @@ TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 
 TEST_F(DistributedPlanningTest, FourWayJoin)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("four_way_join.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream)
+  INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4) ON id = id4 WINDOW TUMBLING (timestamp, size 1 sec)
+  INNER JOIN (SELECT * FROM stream4_1) ON id = id4_1 WINDOW TUMBLING (timestamp, size 1 sec)
+  INTO sinkStreamStream2Stream4Stream4_1;
+
+sinks:
+  - name: sinkStreamStream2Stream4Stream4_1
+    schema: [ streamstream2stream4stream4_1$start, streamstream2stream4stream4_1$end, streamstream2stream4$start, streamstream2stream4$end, streamstream2$start, streamstream2$end, stream$id, stream$value, stream$timestamp, stream2$id2, stream2$value2, stream2$timestamp, stream4$id4, stream4$value4, stream4$timestamp, stream4_1$id4_1, stream4_1$value4_1, stream4_1$timestamp ]
+    host: "host2:8080"
+
+logical:
+  - name: stream
+    schema: [ id, value, timestamp ]
+  - name: stream2
+    schema: [ id2, value2, timestamp ]
+  - name: stream4
+    schema: [ id4, value4, timestamp ]
+  - name: stream4_1
+    schema: [ id4_1, value4_1, timestamp ]
+
+physical:
+  - logical: stream
+    host: "host1:8080"
+  - logical: stream2
+    host: "host1:8080"
+  - logical: stream4
+    host: "host1:8080"
+  - logical: stream4_1
+    host: "host1:8080"
+
+workers:
+  - host: "host1:8080"
+    max_operators: 5
+    downstream:
+      - "host2:8080"
+  - host: "host2:8080"
+    max_operators: 255
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     for (const auto& [node, plans] : plan)
@@ -464,7 +671,35 @@ TEST_F(DistributedPlanningTest, FourWayJoin)
 
 TEST_F(DistributedPlanningTest, BridgePlacement)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("bridge.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM stream INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream$ts ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream
+    schema: [ ts ]
+
+physical:
+  - logical: stream
+    host: "source-node:8080"
+
+workers:
+  - host: "source-node:8080"
+    max_operators: 10
+    downstream:
+      - "intermediate-node:8080"
+  - host: "intermediate-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    max_operators: 10
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sourcePlan = plan[Host("source-node:8080")].front();
@@ -492,7 +727,39 @@ TEST_F(DistributedPlanningTest, BridgePlacement)
 
 TEST_F(DistributedPlanningTest, LongBridgePlacement)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("long_bridge.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM stream INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream$ts ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream
+    schema: [ ts ]
+
+physical:
+  - logical: stream
+    host: "source-node:8080"
+
+workers:
+  - host: "source-node:8080"
+    max_operators: 0
+    downstream:
+      - "intermediate-node0:8080"
+  - host: "intermediate-node0:8080"
+    max_operators: 0
+    downstream:
+      - "intermediate-node1:8080"
+  - host: "intermediate-node1:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    max_operators: 0
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sourcePlan = plan[Host("source-node:8080")].front();
@@ -528,7 +795,39 @@ TEST_F(DistributedPlanningTest, LongBridgePlacement)
 
 TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("bridge_join.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream1$a, stream1$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1, a, b ]
+
+physical:
+  - logical: stream0
+    host: "source-node:8080"
+  - logical: stream1
+    host: "source-node:8080"
+
+workers:
+  - host: "source-node:8080"
+    max_operators: 3
+    downstream:
+      - "intermediate-node:8080"
+  - host: "intermediate-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    max_operators: 10
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sourcePlan1 = plan[Host("source-node:8080")][0];
@@ -576,7 +875,59 @@ TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 
 TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("complex_join.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream2) ON id1 = id2 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream3) ON id2 = id3 WINDOW TUMBLING (ts, size 1 sec) INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream0stream1stream2stream3$start, stream0stream1stream2stream3$end, stream0stream1stream2$start, stream0stream1stream2$end, stream0stream1$start, stream0stream1$end, stream0$ts, stream0$id0, stream1$ts, stream1$id1, stream2$ts, stream2$id2, stream3$ts, stream3$id3 ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream0
+    schema: [ ts, id0 ]
+  - name: stream1
+    schema: [ ts, id1 ]
+  - name: stream2
+    schema: [ ts, id2 ]
+  - name: stream3
+    schema: [ ts, id3 ]
+
+physical:
+  - logical: stream0
+    host: "source-node0:8080"
+  - logical: stream1
+    host: "source-node0:8080"
+  - logical: stream2
+    host: "source-node1:8080"
+  - logical: stream3
+    host: "source-node2:8080"
+
+workers:
+  - host: "source-node0:8080"
+    max_operators: 3
+    downstream:
+      - "sink-node:8080"
+  - host: "source-node1:8080"
+    max_operators: 1
+    downstream:
+      - "intermediate-node0:8080"
+  - host: "source-node2:8080"
+    max_operators: 0
+    downstream:
+      - "intermediate-node1:8080"
+  - host: "intermediate-node0:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "intermediate-node1:8080"
+    max_operators: 1
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    max_operators: 2
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     for (const auto& [node, localPlans] : plan)
@@ -643,7 +994,33 @@ TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 
 TEST_F(DistributedPlanningTest, Disconnected)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("disconnected.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM stream INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream$ts ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream
+    schema: [ ts ]
+
+physical:
+  - logical: stream
+    host: "source-node:8080"
+
+workers:
+  - host: "source-node:8080"
+    max_operators: 10
+    downstream:
+      - "intermediate-node:8080"
+  - host: "intermediate-node:8080"
+    max_operators: 0
+  - host: "sink-node:8080"
+    max_operators: 10
+)");
     try
     {
         auto _ = opt->optimize(sem->analyse(boundPlan));
@@ -661,7 +1038,31 @@ TEST_F(DistributedPlanningTest, Disconnected)
 
 TEST_F(DistributedPlanningTest, NotEnoughCapacities)
 {
-    auto [sem, opt, boundPlan] = loadAndBind("not_enough_capacities.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM (SELECT * FROM mock_source WHERE a > b) WHERE b > a INTO mock_sink
+
+sinks:
+  - name: mock_sink
+    schema: [ mock_source$a, mock_source$b ]
+    host: "sink-node:8080"
+
+logical:
+  - name: mock_source
+    schema: [ a, b ]
+
+physical:
+  - logical: mock_source
+    host: "source-node:8080"
+
+workers:
+  - host: "sink-node:8080"
+    max_operators: 1
+  - host: "source-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+)");
     try
     {
         auto _ = opt->optimize(sem->analyse(boundPlan));
@@ -679,7 +1080,55 @@ TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
 {
     /// Plan has a logical source that is referenced by 9 physical sources. 4 physical source on source and 5 on source2.
     /// Capacity prevents the union from beeing placed at the intermediate node
-    auto [sem, opt, boundPlan] = loadAndBind("multiple_physical_sources.yaml");
+    auto [sem, opt, boundPlan] = loadAndBind(R"(
+query: |
+  SELECT * FROM stream INTO sink
+
+sinks:
+  - name: sink
+    schema: [ stream$ts ]
+    host: "sink-node:8080"
+
+logical:
+  - name: stream
+    schema: [ ts ]
+
+physical:
+  - logical: stream
+    host: "source-node:8080"
+  - logical: stream
+    host: "source-node:8080"
+  - logical: stream
+    host: "source-node:8080"
+  - logical: stream
+    host: "source-node:8080"
+  - logical: stream
+    host: "source-node2:8080"
+  - logical: stream
+    host: "source-node2:8080"
+  - logical: stream
+    host: "source-node2:8080"
+  - logical: stream
+    host: "source-node2:8080"
+  - logical: stream
+    host: "source-node2:8080"
+
+workers:
+  - host: "source-node2:8080"
+    max_operators: 10
+    downstream:
+      - "intermediate-node:8080"
+  - host: "source-node:8080"
+    max_operators: 10
+    downstream:
+      - "intermediate-node:8080"
+  - host: "intermediate-node:8080"
+    max_operators: 0
+    downstream:
+      - "sink-node:8080"
+  - host: "sink-node:8080"
+    max_operators: 10
+)");
     auto plan = opt->optimize(sem->analyse(boundPlan));
 
     const auto sinkPlans = plan[Host("sink-node:8080")];
