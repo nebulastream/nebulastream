@@ -18,6 +18,7 @@
 #include <memory>
 #include <string>
 #include <thread>
+#include <InvokeConfiguration.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Strings.hpp>
@@ -97,6 +98,19 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::pinThreadsVal
                 return false;
             }
             return true;
+        }
+    };
+
+    return std::make_shared<Validator>();
+}
+
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::invokeModeConfigurationValidator()
+{
+    struct Validator : ConfigurationValidation
+    {
+        [[nodiscard]] bool isValid(const std::string& stringValue) const override
+        {
+            return InvokeConfig::instance().loadFromFile(stringValue);
         }
     };
 
