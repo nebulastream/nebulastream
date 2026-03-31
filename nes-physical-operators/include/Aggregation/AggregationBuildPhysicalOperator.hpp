@@ -16,7 +16,6 @@
 
 
 #include <memory>
-#include <mutex>
 #include <vector>
 #include <Aggregation/AggregationOperatorHandler.hpp>
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
@@ -55,19 +54,11 @@ public:
         HashMapOptions hashMapOptions);
     AggregationBuildPhysicalOperator(const AggregationBuildPhysicalOperator& other);
     void compile(CompilationContext& compilationContext) const override;
-    void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    struct CleanupState
-    {
-        std::once_flag once;
-        std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
-    };
-
     std::vector<std::shared_ptr<AggregationPhysicalFunction>> aggregationPhysicalFunctions;
     HashMapOptions hashMapOptions;
-    std::unique_ptr<CleanupState> cleanupState;
 };
 
 }

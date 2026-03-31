@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <atomic>
 #include <iostream>
 #include <memory>
 #include <unordered_map>
@@ -51,6 +52,8 @@ private:
     nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*> compiledPipelineFunction;
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>> operatorHandlers;
     std::shared_ptr<Pipeline> pipeline;
+    std::atomic_bool isCompiled = false;
+    std::atomic_bool isStarted = false;
 };
 
 }

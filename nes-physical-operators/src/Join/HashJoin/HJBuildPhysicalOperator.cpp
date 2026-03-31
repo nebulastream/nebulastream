@@ -17,7 +17,6 @@
 #include <cstdint>
 #include <functional>
 #include <memory>
-#include <mutex>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
@@ -80,47 +79,33 @@ void HJBuildPhysicalOperator::compile(CompilationContext& compilationContext) co
 {
     compileChild(compilationContext);
 
-    std::call_once(
-        cleanupState->once,
-        [this, &compilationContext]
-        {
-            cleanupState->cleanupStateNautilusFunction
-                = std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
-                    [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
-                    {
-                        const ChainedHashMapRef hashMapRef{
-                            hashMap,
-                            copyOfHashMapOptions.fieldKeys,
-                            copyOfHashMapOptions.fieldValues,
-                            copyOfHashMapOptions.entriesPerPage,
-                            copyOfHashMapOptions.entrySize};
-                        for (const auto entry : hashMapRef)
-                        {
-                            const ChainedHashMapRef::ChainedEntryRef entryRefReset{
-                                entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
-                            const auto state = entryRefReset.getValueMemArea();
-                            nautilus::invoke(
-                                +[](int8_t* pagedVectorMemArea) -> void
-                                {
-                                    auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
-                                    pagedVector->~PagedVector();
-                                },
-                                state);
-                        }
-                    })));
-        });
-}
-
-void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx) const
-{
-    StreamJoinBuildPhysicalOperator::setup(executionCtx);
-
-    PRECONDITION(cleanupState->cleanupStateNautilusFunction != nullptr, "Expected compiled cleanup function for hash join build operator");
-
-    auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(
-        nautilus::details::RawValueResolver<OperatorHandler*>::getRawValue(executionCtx.getGlobalOperatorHandler(operatorHandlerId)));
+    auto* const operatorHandler = dynamic_cast<HJOperatorHandler*>(compilationContext.getGlobalOperatorHandler(operatorHandlerId));
     PRECONDITION(operatorHandler != nullptr, "Expected HJOperatorHandler for {}", operatorHandlerId);
-    operatorHandler->trySetNautilusCleanupExec(cleanupState->cleanupStateNautilusFunction, joinBuildSide);
+    operatorHandler->trySetNautilusCleanupExec(
+        std::make_shared<CreateNewHashMapSliceArgs::NautilusCleanupExec>(compilationContext.registerFunction(std::function(
+            [copyOfHashMapOptions = hashMapOptions](nautilus::val<HashMap*> hashMap)
+            {
+                const ChainedHashMapRef hashMapRef{
+                    hashMap,
+                    copyOfHashMapOptions.fieldKeys,
+                    copyOfHashMapOptions.fieldValues,
+                    copyOfHashMapOptions.entriesPerPage,
+                    copyOfHashMapOptions.entrySize};
+                for (const auto entry : hashMapRef)
+                {
+                    const ChainedHashMapRef::ChainedEntryRef entryRefReset{
+                        entry, hashMap, copyOfHashMapOptions.fieldKeys, copyOfHashMapOptions.fieldValues};
+                    const auto state = entryRefReset.getValueMemArea();
+                    nautilus::invoke(
+                        +[](int8_t* pagedVectorMemArea) -> void
+                        {
+                            auto* pagedVector = reinterpret_cast<PagedVector*>(pagedVectorMemArea);
+                            pagedVector->~PagedVector();
+                        },
+                        state);
+                }
+            }))),
+        joinBuildSide);
 }
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
@@ -194,12 +179,11 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     HashMapOptions hashMapOptions)
     : StreamJoinBuildPhysicalOperator(operatorHandlerId, joinBuildSide, std::move(timeFunction), bufferRef)
     , hashMapOptions(std::move(hashMapOptions))
-    , cleanupState(std::make_unique<CleanupState>())
 {
 }
 
 HJBuildPhysicalOperator::HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other)
-    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions), cleanupState(std::make_unique<CleanupState>())
+    : StreamJoinBuildPhysicalOperator(other), hashMapOptions(other.hashMapOptions)
 {
 }
 

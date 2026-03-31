@@ -49,7 +49,9 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 
 void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext)
 {
-    /// we call the compiled pipeline function with an input buffer and the execution context
+    PRECONDITION(isCompiled.load(), "CompiledExecutablePipelineStage must be compiled before execute");
+    PRECONDITION(isStarted.load(), "CompiledExecutablePipelineStage must be started before execute");
+
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
@@ -101,6 +103,8 @@ CompiledExecutablePipelineStage::compilePipeline() const
 
 void CompiledExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext)
 {
+    PRECONDITION(isStarted.load(), "CompiledExecutablePipelineStage must be started before stop");
+
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
@@ -114,18 +118,25 @@ std::ostream& CompiledExecutablePipelineStage::toString(std::ostream& os) const
 
 void CompiledExecutablePipelineStage::compile(PipelineExecutionContext& pipelineExecutionContext)
 {
+    PRECONDITION(!isCompiled.load(), "CompiledExecutablePipelineStage must not be compiled multiple times");
+
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
-    CompilationContext compilationCtx{engine};
+    CompilationContext compilationCtx{engine, operatorHandlers};
     pipeline->getRootOperator().compile(compilationCtx);
     compiledPipelineFunction = this->compilePipeline();
+    isCompiled.store(true);
 }
 
 void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineExecutionContext)
 {
+    PRECONDITION(isCompiled.load(), "CompiledExecutablePipelineStage must be compiled before start");
+    PRECONDITION(!isStarted.load(), "CompiledExecutablePipelineStage must not be started multiple times");
+
     pipelineExecutionContext.setOperatorHandlers(operatorHandlers);
     Arena arena(pipelineExecutionContext.getBufferManager());
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     pipeline->getRootOperator().setup(ctx);
+    isStarted.store(true);
 }
 
 }

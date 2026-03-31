@@ -14,7 +14,6 @@
 
 #pragma once
 #include <memory>
-#include <mutex>
 #include <Identifiers/Identifiers.hpp>
 #include <Join/HashJoin/HJOperatorHandler.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
@@ -60,18 +59,10 @@ public:
         HashMapOptions hashMapOptions);
     HJBuildPhysicalOperator(const HJBuildPhysicalOperator& other);
     void compile(CompilationContext& compilationContext) const override;
-    void setup(ExecutionContext& executionCtx) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:
-    struct CleanupState
-    {
-        std::once_flag once;
-        std::shared_ptr<CreateNewHashMapSliceArgs::NautilusCleanupExec> cleanupStateNautilusFunction;
-    };
-
     HashMapOptions hashMapOptions;
-    std::unique_ptr<CleanupState> cleanupState;
 };
 
 }

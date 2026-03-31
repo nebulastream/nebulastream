@@ -574,6 +574,39 @@ TEST_F(QueryPlanTest, RunningQueryPlanTestInitialPipelineSetup)
     EXPECT_FALSE(srcCtrl->wasClosed());
 }
 
+TEST_F(QueryPlanTest, RunningQueryPlanEmitsStartTasksOnlyAfterAllPipelinesAreCompiled)
+{
+    Testing::TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addSource();
+    auto pipeline = builder.addPipeline({source});
+    builder.addSink({pipeline});
+    auto queryPlan = test.addNewQuery(std::move(builder));
+    auto srcCtrl = test.sourceControls[source];
+
+    TestQueryLifetimeController controller;
+    TestWorkEmitter emitter;
+
+    auto compiles = Compiles::setup(stdv::values(test.stages), emitter);
+    auto setups = Setups::setup(stdv::values(test.stages), emitter);
+
+    auto listener = std::make_shared<TestQueryLifetimeListener>();
+    EXPECT_CALL(*listener, onDestruction()).Times(1);
+    EXPECT_CALL(*listener, onRunning()).Times(0);
+
+    {
+        auto runningQueryPlan = RunningQueryPlan::start(QueryId(0), std::move(queryPlan), controller, emitter, listener);
+        EXPECT_TRUE(compiles->waitForTasks(2));
+        EXPECT_TRUE(setups->empty());
+        EXPECT_TRUE(compiles->handleAll());
+        EXPECT_TRUE(setups->waitForTasks(2));
+        EXPECT_FALSE(srcCtrl->waitUntilOpened());
+    }
+
+    EXPECT_TRUE(srcCtrl->waitUntilDestroyed());
+    EXPECT_FALSE(srcCtrl->wasClosed());
+}
+
 /// Happy Path:
 /// 1. Start the Query which should emit pipeline SetupTasks.
 /// 2. AFTER we handle all SetupTasks. We expect the SourceThread to start

@@ -14,20 +14,29 @@
 #pragma once
 
 #include <functional>
+#include <memory>
+#include <unordered_map>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Engine.hpp>
+#include <ErrorHandling.hpp>
 #include <val_concepts.hpp>
 
 namespace NES
 {
 
-/// Similar to the execution context, this class provides access to functionality for compiling code in a pipeline.
 class CompilationContext
 {
-    /// We assume that a compilation context always outlives the engine
     const nautilus::engine::NautilusEngine& engine; /// NOLINT(cppcoreguidelines-avoid-const-or-ref-data-members)
+    const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers;
 
 public:
-    explicit CompilationContext(const nautilus::engine::NautilusEngine& engine) : engine(engine) { }
+    explicit CompilationContext(
+        const nautilus::engine::NautilusEngine& engine,
+        const std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers)
+        : engine(engine), operatorHandlers(operatorHandlers)
+    {
+    }
 
     template <typename R, typename... FunctionArguments>
     auto registerFunction(R (*fnptr)(nautilus::val<FunctionArguments>...)) const
@@ -39,6 +48,14 @@ public:
     auto registerFunction(std::function<R(nautilus::val<FunctionArguments>...)> func) const
     {
         return engine.registerFunction<R, FunctionArguments...>(func);
+    }
+
+    [[nodiscard]] OperatorHandler* getGlobalOperatorHandler(const OperatorHandlerId operatorHandlerId) const
+    {
+        const auto it = operatorHandlers.find(operatorHandlerId);
+        PRECONDITION(it != operatorHandlers.end(), "Expected operator handler for {}", operatorHandlerId);
+        PRECONDITION(it->second != nullptr, "Expected operator handler for {}", operatorHandlerId);
+        return it->second.get();
     }
 };
 }
