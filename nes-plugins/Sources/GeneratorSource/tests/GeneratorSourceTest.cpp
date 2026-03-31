@@ -328,16 +328,16 @@ TEST_F(GeneratorTest, allStopPolicyWaitsForAllSequences)
     EXPECT_TRUE(generator.shouldStop());
 }
 
-/// Empty schema line within a multi-field schema is rejected.
-TEST_F(GeneratorTest, emptySchemaThrows)
+/// Empty schema is rejected (hits PRECONDITION which aborts in debug builds).
+TEST_F(GeneratorTest, emptySchemaAborts)
 {
-    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, ""), Exception);
+    ASSERT_DEATH(Generator(42U, GeneratorStop::NONE, ""), "");
 }
 
-/// Schema with only whitespace is rejected.
-TEST_F(GeneratorTest, whitespaceOnlySchemaThrows)
+/// Schema with only whitespace is rejected (hits PRECONDITION which aborts in debug builds).
+TEST_F(GeneratorTest, whitespaceOnlySchemaAborts)
 {
-    EXPECT_THROW(Generator(42U, GeneratorStop::NONE, "   "), Exception);
+    ASSERT_DEATH(Generator(42U, GeneratorStop::NONE, "   "), "");
 }
 
 /// --- FixedGeneratorRate Tests ---
