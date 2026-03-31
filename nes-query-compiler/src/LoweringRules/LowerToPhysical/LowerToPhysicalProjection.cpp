@@ -59,7 +59,8 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
     if (sourceOperators.size() == 1)
     {
         const auto inputFormatterConfig = sourceOperators.front().getInputFormatterDescriptor();
-        if (NES::toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE")
+        if (NES::toUpperCase(inputFormatterConfig.getInputFormatterType()) != "NATIVE"
+            and not NES::toUpperCase(inputFormatterConfig.getInputFormatterType()).contains("UNCOMPILED"))
         {
             return NES::ScanPhysicalOperator(
                 provideInputFormatterTupleBufferRef(inputFormatterConfig, memoryProvider), inputSchema.getFieldNames());

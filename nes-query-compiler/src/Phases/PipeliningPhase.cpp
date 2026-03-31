@@ -106,7 +106,13 @@ PhysicalOperator createScanOperator(
     const auto memoryProvider = LowerSchemaProvider::lowerSchema(configuredBufferSize, inputSchema.value(), memoryLayout.value());
     /// Instantiate the scan with an InputFormatterTupleBufferRef, if the prior operatior is a source operator that contains a source descriptor
     /// with a parser type other than "NATIVE" (NATIVE data does not require formatting)
-    if (prevPipeline.isSourcePipeline())
+    if (prevPipeline.isSourcePipeline()
+        && not toUpperCase(prevPipeline.getRootOperator()
+                   .get<SourcePhysicalOperator>()
+                   .getDescriptor()
+                   .getInputFormatterDescriptor()
+                   .getInputFormatterType())
+                   .contains("UNCOMPILED"))
     {
         const auto inputFormatterConfig
             = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getInputFormatterDescriptor();

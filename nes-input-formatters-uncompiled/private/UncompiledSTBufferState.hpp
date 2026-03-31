@@ -1,0 +1,196 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+#include <atomic>
+#include <cstddef>
+#include <cstdint>
+#include <new>
+#include <optional>
+#include <ostream>
+#include <span>
+#include <Runtime/TupleBuffer.hpp>
+#include <UncompiledRawTupleBuffer.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+
+namespace NES
+{
+
+using UncompiledSTBufferIdx = NESStrongType<uint32_t, struct UncompiledSTBufferIdx_, 0, 1>;
+using UncompiledABAItNo = NESStrongType<uint32_t, struct UncompiledABAItNo_, 0, 1>;
+
+class UncompiledSTBufferEntry;
+
+/// (Implementation detail of the UncompiledSTBufferEntry)
+/// The UncompiledAtomicState consists a 64-bit-wide atomic bitmap that allows the UncompiledSTBuffer to thread-safely determine whether a specific
+/// UncompiledSTBufferEntry may overwrite a prior entry or whether it connects to a neighbour-entry and whether the connecting entries form an ST
+/// Central to the UncompiledAtomicState are the first 32 bits, which represent the 'ABA iteration number' (abaItNo)
+/// The abaItNo protects against the ABA problem, but more importantly, it allows the UncompiledSTBuffer to determine which iteration an UncompiledSTBufferEntry
+/// belongs to (see header documentation of UncompiledSTBuffer)
+/// Furthermore, the bitmap denotes whether an entry (with a specific abaItNo) has a delimiter, whether it was claimed as the first buffer
+/// in a spanning tuple, and whether the leading/trailing buffer of the UncompiledSTBufferEntry were moved out already
+/// If both the 'usedLeadingBufferBit' and the 'usedTrailingBufferBit' are set, then the buffer has no more uses and it is safe to replace
+/// it with the buffer that has a sequence number that corresponds to the same UncompiledSTBufferEntry and that has the next higher abaItNo
+/// (Planned) Some of the (currently) 28 unused bits will be used to model uncertainty. If a delimiter is larger than a byte a thread may
+///           be uncertain whether the first/last few bytes of its buffer form a valid tuple delimiter. Additionally, it may be impossible
+///           for a thread to determine if its buffer starts in an escape sequence or not. We can model these additional pieces of
+///           information as states using the remaning bits and (potentially) perform state transitions as (atomic) bitwise operations.
+class UncompiledAtomicState
+{
+    friend UncompiledSTBufferEntry;
+
+    /// 33:   000000000000000000000000000000100000000000000000000000000000000
+    static constexpr uint64_t hasTupleDelimiterBit = (1ULL << 32ULL); /// NOLINT(readability-magic-numbers)
+    /// 34:   000000000000000000000000000001000000000000000000000000000000000
+    static constexpr uint64_t claimedSpanningTupleBit = (1ULL << 33ULL); /// NOLINT(readability-magic-numbers)
+    /// 35:   000000000000000000000000000010000000000000000000000000000000000
+    static constexpr uint64_t usedLeadingBufferBit = (1ULL << 34ULL); /// NOLINT(readability-magic-numbers)
+    /// 36:   000000000000000000000000000100000000000000000000000000000000000
+    static constexpr uint64_t usedTrailingBufferBit = (1ULL << 35ULL); /// NOLINT(readability-magic-numbers)
+    ///       000000000000000000000000000110000000000000000000000000000000000
+    static constexpr uint64_t usedLeadingAndTrailingBufferBits = (usedLeadingBufferBit | usedTrailingBufferBit);
+
+    /// The UncompiledSTBuffer initializes all STBufferEntries, except for the very first entry, with the 'defaultState'
+    /// Tag: 0, HasTupleDelimiter: True, ClaimedSpanningTuple: True, UsedLeading: True, UsedTrailing: True
+    static constexpr uint64_t defaultState = (0ULL | claimedSpanningTupleBit | usedLeadingBufferBit | usedTrailingBufferBit);
+    /// The UncompiledSTBuffer initializes the very first entry with a dummy buffer and a matching dummy state to trigger the first leading ST
+    /// Tag: 1, HasTupleDelimiter: True, ClaimedSpanningTuple: False, UsedLeading: True, UsedTrailing: False
+    static constexpr uint64_t firstEntryDummy = (1ULL | hasTupleDelimiterBit | usedLeadingBufferBit);
+
+    /// [1-32] : Iteration Tag:        protects against ABA and tells threads whether buffer is from the same iteration during ST search
+    /// [33]   : HasTupleDelimiter:    when set, threads stop spanning tuple (ST) search, since the buffer represents a possible start/end
+    /// [34]   : ClaimedSpanningTuple: signals to threads that the corresponding buffer was already claimed to start an ST by another thread
+    /// [35]   : UsedLeadingBuffer:    signals to threads that the leading buffer use was consumed already
+    /// [36]   : UsedTrailingBuffer:   signals to threads that the trailing buffer use was consumed already
+    class BitmapState
+    {
+    public:
+        explicit BitmapState(const uint64_t state) : state(state) { };
+
+        [[nodiscard]] UncompiledABAItNo getABAItNo() const { return UncompiledABAItNo{static_cast<uint32_t>(state)}; }
+
+        [[nodiscard]] bool hasTupleDelimiter() const { return (state & hasTupleDelimiterBit) == hasTupleDelimiterBit; }
+
+        [[nodiscard]] bool hasUsedLeadingBuffer() const { return (state & usedLeadingBufferBit) == usedLeadingBufferBit; }
+
+        [[nodiscard]] bool hasUsedTrailingBuffer() const { return (state & usedTrailingBufferBit) == usedTrailingBufferBit; }
+
+        [[nodiscard]] bool hasClaimedSpanningTuple() const { return (state & claimedSpanningTupleBit) == claimedSpanningTupleBit; }
+
+        void updateLeading(const BitmapState other) { this->state |= (other.getBitmapState() & usedLeadingBufferBit); }
+
+        void claimSpanningTuple() { this->state |= claimedSpanningTupleBit; }
+
+    private:
+        friend class UncompiledAtomicState;
+
+        [[nodiscard]] uint64_t getBitmapState() const { return state; }
+
+        uint64_t state;
+    };
+
+    UncompiledAtomicState() : state(defaultState) { };
+    ~UncompiledAtomicState() = default;
+
+    /// CAS loop that attempts to set the 'ClaimedSpanningTuple', if and only if the current atomic state has the expected abaItNumber and
+    /// the 'ClaimedSpanningTuple' bit is not set yet. Thus, guarantees that only one thread can claim a spanning tuple
+    bool tryClaimSpanningTuple(UncompiledABAItNo abaItNumber);
+
+    [[nodiscard]] UncompiledABAItNo getABAItNo() const { return static_cast<UncompiledABAItNo>(state.load()); }
+
+    [[nodiscard]] BitmapState getState() const { return BitmapState{this->state.load()}; }
+
+    void setStateOfFirstEntry() { this->state = firstEntryDummy; }
+
+    void setHasTupleDelimiterState(const UncompiledABAItNo abaItNumber) { this->state = (hasTupleDelimiterBit | abaItNumber.getRawValue()); }
+
+    void setNoTupleDelimiterState(const UncompiledABAItNo abaItNumber) { this->state = abaItNumber.getRawValue(); }
+
+    void setUsedLeadingBuffer() { this->state |= usedLeadingBufferBit; }
+
+    void setUsedTrailingBuffer() { this->state |= usedTrailingBufferBit; }
+
+    void setUsedLeadingAndTrailingBuffer() { this->state |= usedLeadingAndTrailingBufferBits; }
+
+    friend std::ostream& operator<<(std::ostream& os, const UncompiledAtomicState& atomicBitmapState);
+
+    std::atomic<uint64_t> state;
+};
+
+/// Entry of spanning tuple buffer (UncompiledSTBuffer). Is cache-line-size-aligned (64B) to avoid false sharing and contains:
+/// - (48B): two buffer references, buffers with delimiters can be used to complete both a leading and a trailing spanning tuple (ST)
+///     - since only one thread can find an ST, threads can safely move their buffer reference out of the UncompiledSTBufferEntry without synchronization
+/// - (8B) : the atomic state of the entry, which allows the UncompiledSTBuffer to determine valid spanning tuples and to synchronize between threads
+/// - (4B) : the offset of the first delimiter in the buffer, which the UncompiledInputFormatterTask uses to construct a spanning tuple
+/// - (4B) : the offset of the last delimiter in the buffer, which the UncompiledInputFormatterTask uses to construct a spanning tuple
+class alignas(std::hardware_destructive_interference_size) UncompiledSTBufferEntry /// NOLINT(readability-magic-numbers)
+{
+public:
+    struct EntryState
+    {
+        bool hasCorrectABA = false;
+        bool hasDelimiter = false;
+    };
+
+    UncompiledSTBufferEntry() = default;
+
+    /// Sets the state of the first entry to a value that allows triggering the first leading spanning tuple of a stream
+    void setStateOfFirstIndex(TupleBuffer dummyBuffer);
+
+    /// A thread can claim a spanning tuple by claiming the first buffer of the spanning tuple (ST).
+    /// Multiple threads may concurrently call 'tryClaimSpanningTuple()', but only one thread can successfully claim the ST.
+    /// Only the succeeding thread receives a valid 'UncompiledStagedBuffer', all other threads receive a 'nullopt'.
+    std::optional<UncompiledStagedBuffer> tryClaimSpanningTuple(UncompiledABAItNo abaItNumber);
+
+    /// Checks if the current entry was used to construct both a leading and trailing spanning tuple (given it matches abaItNumber - 1)
+    [[nodiscard]] bool isCurrentEntryUsedUp(UncompiledABAItNo abaItNumber) const;
+
+    /// Sets the TupleBuffer of the staged buffer for both uses (leading/spanning) and copies the offsets
+    void setBuffersAndOffsets(const UncompiledStagedBuffer& indexedBuffer);
+
+    /// Sets the indexed buffer as the new entry, if the prior entry is used up and its expected ABA iteration number is (abaItNumber - 1)
+    bool trySetWithDelimiter(UncompiledABAItNo abaItNumber, const UncompiledStagedBuffer& indexedBuffer);
+    bool trySetWithoutDelimiter(UncompiledABAItNo abaItNumber, const UncompiledStagedBuffer& indexedBuffer);
+
+    /// Claim a buffer without a delimiter (that connects two buffers with delimiters), taking both buffers and atomically setting both uses at once
+    void claimNoDelimiterBuffer(std::span<UncompiledStagedBuffer> spanningTupleVector, size_t spanningTupleIdx);
+
+    /// Claim the leading use of a buffer with a delimiter, only taking the leading buffer atomically setting the leading use
+    void claimLeadingBuffer(std::span<UncompiledStagedBuffer> spanningTupleVector, size_t spanningTupleIdx);
+
+    /// Atomically loads the state of an entry, checks if its ABA iteration number matches the expected and if it has a tuple delimiter
+    [[nodiscard]] EntryState getEntryState(UncompiledABAItNo expectedABAItNo) const;
+
+    /// Iterates over all STBufferEntries, checking that they don't hold any buffer references if they should not and that their atomic
+    /// bitmap state is correct. Logs errors and returns 'false' if at least one entry is in an invalid state
+    [[nodiscard]] bool validateFinalState(UncompiledSTBufferIdx bufferIdx, const UncompiledSTBufferEntry& nextEntry, UncompiledSTBufferIdx lastIdxOfBuffer) const;
+
+private:
+    /// 24 Bytes (TupleBuffer)
+    TupleBuffer leadingBufferRef;
+    /// 48 Bytes (TupleBuffer)
+    TupleBuffer trailingBufferRef;
+    /// 56 Bytes (Atomic state)
+    UncompiledAtomicState atomicState;
+    /// 60 Bytes (meta data)
+    uint32_t firstDelimiterOffset = 0;
+    /// 64 Bytes (meta data)
+    uint32_t lastDelimiterOffset = 0;
+};
+
+static_assert(sizeof(UncompiledSTBufferEntry) % std::hardware_destructive_interference_size == 0);
+static_assert(alignof(UncompiledSTBufferEntry) % std::hardware_destructive_interference_size == 0);
+}
