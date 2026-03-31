@@ -31,7 +31,7 @@ jobs:
           echo "period=${{ github.event.inputs.fromdate }}..${{ github.event.inputs.todate }}" >> "$GITHUB_ENV"
 
       - name: Get metrics for Issues
-        uses: github/issue-metrics@v3
+        uses: github-community-projects/issue-metrics@v3
         env:
           SEARCH_QUERY: 'repo:nebulastream/nebulastream-public is:issue created:${{ env.period }} -reason:"not planned"'
 
@@ -39,7 +39,7 @@ jobs:
         run: mv issue_metrics.md metrics_for_issues.md
 
       - name: Get metrics for PRs
-        uses: github/issue-metrics@v3
+        uses: github-community-projects/issue-metrics@v3
         env:
           SEARCH_QUERY: 'repo:nebulastream/nebulastream-public is:pr created:${{ env.period }} -reason:"not planned"'
           REPORT_TITLE: 'Metrics for PRs'
