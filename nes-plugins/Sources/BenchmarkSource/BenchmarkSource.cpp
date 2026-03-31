@@ -138,7 +138,7 @@ Source::FillTupleBufferResult BenchmarkSource::fillTupleBuffer(TupleBuffer& tupl
 
     const char* basePtr = (mode == "mmap") ? static_cast<const char*>(mmapBase) : preloadedData.data();
     const char* srcPtr
-        = std::next(basePtr, static_cast<std::ptrdiff_t>(readOffset)); // NOLINT(cppcoreguidelines-pro-bounds-pointer-arithmetic)
+        = std::next(basePtr, static_cast<std::ptrdiff_t>(readOffset));
 
     std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data(), srcPtr, bytesToCopy);
 
@@ -171,7 +171,7 @@ SourceValidationRegistryReturnType RegisterBenchmarkSourceValidation(SourceValid
     return BenchmarkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
-SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(const SourceRegistryArguments& args)
+SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(SourceRegistryArguments args)
 {
     return std::make_unique<BenchmarkSource>(args.sourceDescriptor);
 }

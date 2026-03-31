@@ -36,13 +36,11 @@ namespace NES
 /// Config parameters for the BenchmarkSource plugin.
 struct ConfigParametersBenchmark
 {
-    // NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         "file_path",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 
-    // NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> MODE{
         "mode",
         std::string("preload"),
@@ -56,7 +54,6 @@ struct ConfigParametersBenchmark
             return value;
         }};
 
-    // NOLINTNEXTLINE(cert-err58-cpp)
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH, MODE);
 };
