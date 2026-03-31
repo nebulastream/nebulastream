@@ -48,7 +48,7 @@ AbstractBufferProvider* getBufferProviderProxy(const PipelineExecutionContext* p
 
 WorkerThreadId getWorkerThreadIdProxy(const PipelineExecutionContext* pec)
 {
-    return pec->getId();
+    return pec->getWorkerThreadId();
 }
 }
 

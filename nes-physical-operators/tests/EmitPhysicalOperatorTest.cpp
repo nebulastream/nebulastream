@@ -76,7 +76,7 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
             return *pinnedBuffers.back();
         }
 
-        [[nodiscard]] WorkerThreadId getId() const override { return INITIAL<WorkerThreadId>; }
+        [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return INITIAL<WorkerThreadId>; }
 
         [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 1; }
 

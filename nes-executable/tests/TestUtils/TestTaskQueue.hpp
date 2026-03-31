@@ -95,7 +95,7 @@ public:
 
     void setRepeatTaskCallback(std::function<void()> repeatTaskCallback) { this->repeatTaskCallback = std::move(repeatTaskCallback); }
 
-    [[nodiscard]] WorkerThreadId getId() const override { return workerThreadId; };
+    [[nodiscard]] WorkerThreadId getWorkerThreadId() const override { return workerThreadId; };
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override { return 0; }; /// dummy implementation for  pure virtual function
 

@@ -233,7 +233,7 @@ struct DefaultPEC final : PipelineExecutionContext
     {
     }
 
-    [[nodiscard]] WorkerThreadId getId() const override
+    [[nodiscard]] WorkerThreadId getWorkerThreadId() const override
     {
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return threadId;
