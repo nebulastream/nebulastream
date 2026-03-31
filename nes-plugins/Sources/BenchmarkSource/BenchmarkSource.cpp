@@ -137,8 +137,7 @@ Source::FillTupleBufferResult BenchmarkSource::fillTupleBuffer(TupleBuffer& tupl
     const auto bytesToCopy = std::min(tupleBuffer.getBufferSize(), fileSize - readOffset);
 
     const char* basePtr = (mode == "mmap") ? static_cast<const char*>(mmapBase) : preloadedData.data();
-    const char* srcPtr
-        = std::next(basePtr, static_cast<std::ptrdiff_t>(readOffset));
+    const char* srcPtr = std::next(basePtr, static_cast<std::ptrdiff_t>(readOffset));
 
     std::memcpy(tupleBuffer.getAvailableMemoryArea<char>().data(), srcPtr, bytesToCopy);
 
