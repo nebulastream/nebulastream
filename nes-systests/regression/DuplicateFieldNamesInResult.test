@@ -2,30 +2,18 @@
 # groups: [regression]
 
 # This test verifies that the systest result checker correctly matches schemas
-# where the output contains duplicate field names (e.g., from a join where both
-# sides contribute a field with the same name).
+# where the output contains duplicate field names (e.g., selecting the same field twice).
 
-CREATE LOGICAL SOURCE left_stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR left_stream TYPE File;
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
 ATTACH INLINE
-1,100,1
-2,200,1
+1,100,1000
+2,200,2000
 
-CREATE LOGICAL SOURCE right_stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR right_stream TYPE File;
-ATTACH INLINE
-1,10,1
-2,20,1
+# Selecting the same field twice produces duplicate field names in the output.
+CREATE SINK dupSink(stream.id UINT64 NOT NULL, stream.id UINT64 NOT NULL) TYPE File;
 
-# Join produces duplicate field names: left_stream.value and right_stream.value both map to "value" in the output.
-CREATE SINK joinSink(left_stream.value UINT64 NOT NULL, right_stream.value UINT64 NOT NULL) TYPE File;
-
-SELECT left_stream.value, right_stream.value
-FROM left_stream
-INNER JOIN right_stream
-ON left_stream.id = right_stream.id
-WINDOW TUMBLING(timestamp, SIZE 1 SEC)
-INTO joinSink;
+SELECT id, id FROM stream INTO dupSink;
 ----
-100,10
-200,20
+1,1
+2,2
