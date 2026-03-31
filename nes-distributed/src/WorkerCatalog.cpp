@@ -28,6 +28,14 @@
 namespace NES
 {
 
+WorkerCatalog::WorkerCatalog(const std::vector<WorkerConfig>& workers)
+{
+    for (const auto& [host, data, capacity, downstream, config] : workers)
+    {
+        this->addWorker(host, data, capacity, downstream, config);
+    }
+}
+
 bool WorkerCatalog::addWorker(
     const Host& host,
     std::string dataAddress,

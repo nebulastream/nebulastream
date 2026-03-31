@@ -437,11 +437,7 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
     const SystestClusterConfiguration& clusterConfig,
     SystestProgressTracker& progressTracker)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
+    auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
     QuerySubmitter submitter(std::move(worker));
@@ -580,11 +576,7 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
+    auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
@@ -597,11 +589,7 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
     SystestProgressTracker& progressTracker,
     const QueryPerformanceMessageBuilder& queryPerformanceMessage)
 {
-    auto catalog = std::make_shared<WorkerCatalog>();
-    for (const auto& [host, data, capacity, downstream, config] : clusterConfig.workers)
-    {
-        catalog->addWorker(host, data, capacity, downstream, config);
-    }
+    auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
     /// Running the Systest against a remote worker setup cannot use configuration overrides as the worker configuration is not handled
     /// by the systest tool. Currently we will skip any query which has a configuration override.

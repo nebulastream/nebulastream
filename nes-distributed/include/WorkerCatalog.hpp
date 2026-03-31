@@ -28,6 +28,10 @@
 namespace NES
 {
 
+inline void addWorkers()
+{
+}
+
 /// Catalog of worker nodes in a distributed NebulaStream cluster.
 /// Maintains the network topology to enable path-finding for distributed
 /// query decomposition and placement validation.
@@ -38,6 +42,9 @@ class WorkerCatalog
     uint64_t version = 0;
 
 public:
+    WorkerCatalog() = default;
+    explicit WorkerCatalog(const std::vector<WorkerConfig>& workers);
+
     bool addWorker(
         const Host& host,
         std::string dataAddress,
