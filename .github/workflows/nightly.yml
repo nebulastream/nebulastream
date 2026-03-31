@@ -117,6 +117,8 @@ jobs:
         cmake_args:
           - name: tupleBuffer_debugging
             arg: -DNES_DEBUG_TUPLE_BUFFER_LEAKS=ON
+          - name: all_slice_cache_tests
+            arg: -DALL_SLICE_CACHE_TESTS=ON
         stdlib: [ libcxx, libstdcxx ]
         sanitizer: [ none, address, undefined, thread ]
         build_type: [ RelWithDebInfo, Debug ]
@@ -157,13 +159,23 @@ jobs:
           name: junit-${{ matrix.cmake_args.name }}-${{ matrix.stdlib }}-${{ matrix.sanitizer }}-${{ matrix.build_type }}.xml
           path: /junit.xml
 
-  # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
-  long-running-tests:
-    needs: [ build-and-test ]
-    runs-on: [ self-hosted, linux, X64, Build ]
-    steps:
-      - name: Print Placeholder Message
-        run: echo "Long running tests will be added in the future."
+  large-tests:
+    name: "Large Scale Tests (${{ matrix.name }})"
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: slice-cache-enabled
+            enable_slice_cache: true
+          - name: slice-cache-disabled
+            enable_slice_cache: false
+    uses: ./.github/workflows/large_test.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      enable_slice_cache: ${{ matrix.enable_slice_cache }}
 
   build-and-benchmark:
     needs: [ fetch-current-main-commit, get-dev-images ]
@@ -193,7 +205,7 @@ jobs:
       dockerhub-tag: "nightly"
 
   send-zulip-msg-on-failure:
-    needs: [ compile-time-regression, create-nightly-image, long-running-tests, full-clang-tidy ]
+    needs: [ compile-time-regression, create-nightly-image, large-tests, full-clang-tidy ]
     runs-on: [ self-hosted ]
     if: ${{ failure() && !github.event.act }}
     steps:

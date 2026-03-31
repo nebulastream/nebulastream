@@ -31,6 +31,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" ON)
 option(NES_DEBUG_TUPLE_BUFFER_LEAKS "Heavyweight instrumentation for Tuplebuffer debugging" OFF)
 option(ALL_HASHMAP_TESTS "Run all hashmap test combinations." OFF)
+option(ALL_SLICE_CACHE_TESTS "Run system tests with and without slice cache." OFF)
 
 
 if (CMAKE_BUILD_TYPE STREQUAL "Benchmark")

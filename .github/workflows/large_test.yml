@@ -27,6 +27,10 @@ on:
         type: string
         description: "Number of partitions large scale tests should be run with"
         default: 128
+      enable_slice_cache:
+        type: boolean
+        description: "Enable slice cache for the large scale tests"
+        default: true
 
 jobs:
   build-and-test-linux:
@@ -81,7 +85,8 @@ jobs:
               --worker.default_query_execution.operator_buffer_size=${{ inputs.buffer_size }} \
               --worker.default_query_execution.page_size=${{ inputs.page_size }} \
               --worker.default_query_execution.number_of_partitions=${{ inputs.number_of_partitions }} \
-              --worker.number_of_buffers_in_global_buffer_manager=200000
+              --worker.number_of_buffers_in_global_buffer_manager=200000 \
+              --worker.default_query_execution.slice_cache.enable_slice_cache=${{ inputs.enable_slice_cache }}
 
       - name: Upload Test Logs on Failure
         uses: actions/upload-artifact@v4
