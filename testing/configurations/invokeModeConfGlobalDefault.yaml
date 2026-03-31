@@ -1,0 +1,2 @@
+# invoke_config.yaml
+global_mode: default  # "default", "fnattr", or "inline"

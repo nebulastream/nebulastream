@@ -1,0 +1,18 @@
+# invoke_config.yaml
+global_mode: fnattr  # "default", "fnattr", or "inline"
+global_fn_attr:      # optional, only relevant if global_mode is fnattr
+  mod_ref_info: ref
+  will_return: true
+  no_unwind: true
+
+#overrides:
+#  csv_parse_field:
+#    mode: inline
+#  join_probe:
+#    mode: fnattr
+#    fn_attr:
+#      mod_ref_info: ref
+#      will_return: true
+#      no_unwind: true
+#  hash_compute:
+#    mode: default
