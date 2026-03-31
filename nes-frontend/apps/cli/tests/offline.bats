@@ -295,6 +295,12 @@ TOPEOF
   grep "invalid config parameter; Enum for INVALID was not found." nes-cli.log
 }
 
+@test "topology validation: reject duplicate worker host" {
+  run $NES_CLI -d -t tests/bad/duplicate-worker-host.yaml dump
+  [ "$status" -eq 1 ]
+  grep -i "duplicate worker" nes-cli.log
+}
+
 @test "yaml parser should reject unknown keys" {
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys1.yaml dump
   [ "$status" -eq 1 ]

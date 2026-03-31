@@ -1,0 +1,48 @@
+# Tests that duplicate worker hosts are rejected.
+# host1 appears twice in the workers list.
+# Expected: fails with "duplicate worker" error.
+query: |
+  SELECT * FROM mock_source WHERE a > b INTO mock_sink
+
+sinks:
+  - name: mock_sink
+    schema:
+      - name: mock_source$a
+        type: UINT64
+      - name: mock_source$b
+        type: UINT64
+    host: host1:8080
+    type: Void
+    config: { }
+    parser_config: { }
+
+logical:
+  - name: mock_source
+    schema:
+      - name: a
+        type: UINT64
+      - name: b
+        type: UINT64
+
+physical:
+  - logical: mock_source
+    host: host1:8080
+    parser_config:
+      type: CSV
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: NONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE UINT64 0 100 1
+        SEQUENCE UINT64 0 100 1
+
+workers:
+  - host: host1:8080
+    data_address: host1:9090
+    max_operators: 10
+  - host: host1:8080
+    data_address: host1:9090
+    max_operators: 10
