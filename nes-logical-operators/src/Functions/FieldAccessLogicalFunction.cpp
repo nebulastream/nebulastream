@@ -68,7 +68,7 @@ std::string FieldAccessLogicalFunction::explain(ExplainVerbosity verbosity) cons
 {
     if (verbosity == ExplainVerbosity::Debug)
     {
-        return fmt::format("FieldAccessLogicalFunction({}{})", fieldName, dataType);
+        return fmt::format("FieldAccessLogicalFunction({}: {})", fieldName, dataType);
     }
     return fieldName;
 }
