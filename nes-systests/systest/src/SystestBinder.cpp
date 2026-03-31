@@ -753,7 +753,7 @@ struct SystestBinder::Impl
         {
             auto error = sinkExpected.error();
             currentBuilder.setException(error);
-            throw error;
+            throw std::move(error);
         }
 
         const auto newOperator = SinkLogicalOperator{sinkExpected.value()};
