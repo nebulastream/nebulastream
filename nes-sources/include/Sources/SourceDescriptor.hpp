@@ -24,6 +24,7 @@
 #include <string_view>
 #include <unordered_map>
 
+#include <InputFormatterDescriptor.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
@@ -42,16 +43,16 @@ namespace NES
 class SourceCatalog;
 class OperatorSerializationUtil;
 
-struct ParserConfig
-{
-    std::string parserType;
-    std::string tupleDelimiter;
-    std::string fieldDelimiter;
-    bool allowCommasInStrings{};
-    friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
-    friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
-};
+// struct ParserConfig
+// {
+//     std::string parserType;
+//     std::string tupleDelimiter;
+//     std::string fieldDelimiter;
+//     bool allowCommasInStrings{};
+//     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
+//     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
+//     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
+// };
 
 class SourceDescriptor final : public Descriptor
 {
@@ -71,7 +72,8 @@ public:
 
     [[nodiscard]] LogicalSource getLogicalSource() const;
     [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] ParserConfig getParserConfig() const;
+    [[nodiscard]] std::string getInputFormatType() const;
+    [[nodiscard]] InputFormatterDescriptor getInputFormatterDescriptor() const;
 
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] PhysicalSourceId getPhysicalSourceId() const;
@@ -88,7 +90,7 @@ private:
     LogicalSource logicalSource;
     std::string sourceType;
     Host host;
-    ParserConfig parserConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
 
 
     /// Used by Sources to create a valid SourceDescriptor.
@@ -98,7 +100,7 @@ private:
         std::string_view sourceType,
         Host host,
         DescriptorConfig::Config config,
-        ParserConfig parserConfig);
+        InputFormatterDescriptor parserConfig);
 
 public:
     /// Per default, we set an 'invalid' number of max inflight buffers. We choose zero as an invalid number as giving zero buffers to a source would make it unusable.
@@ -147,10 +149,9 @@ struct ReflectedSourceDescriptor
     LogicalSource logicalSource;
     std::string type;
     Host host;
-    ParserConfig parserConfig;
+    InputFormatterDescriptor inputFormatterDescriptor;
     Reflected config;
 };
 }
 
 FMT_OSTREAM(NES::SourceDescriptor);
-FMT_OSTREAM(NES::ParserConfig);

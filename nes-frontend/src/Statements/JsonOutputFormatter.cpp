@@ -19,6 +19,7 @@
 #include <string>
 #include <variant>
 #include <vector>
+
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/DataType.hpp>
@@ -29,16 +30,14 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
+#include "../../../nes-plugins/OutputFormatters/JSONOutputFormatter/JSONOutputFormatter.hpp"
 
 namespace NES
 {
 
-void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig)
+void to_json(nlohmann::json& jsonOutput, const InputFormatterDescriptor& config)
 {
-    jsonOutput = nlohmann::json{
-        {"type", parserConfig.parserType},
-        {"field_delimiter", parserConfig.fieldDelimiter},
-        {"tuple_delimiter", parserConfig.tupleDelimiter}};
+    jsonOutput = nlohmann::json{{"type", config.getInputFormatterType()}, {"field_delimiter", ""}, {"tuple_delimiter", "\n"}};
 }
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType)
