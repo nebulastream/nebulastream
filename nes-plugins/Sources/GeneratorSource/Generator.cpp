@@ -73,7 +73,10 @@ void Generator::addField(std::unique_ptr<GeneratorFields::GeneratorFieldType> fi
 
 void Generator::parseRawSchemaLine(std::string_view line)
 {
-    PRECONDITION(!line.empty(), "Line to parse cannot be empty!");
+    if (line.empty())
+    {
+        throw InvalidConfigParameter("Line to parse cannot be empty!");
+    }
     std::string_view firstWord = line.substr(0, line.find_first_of(' '));
     switch (auto fieldType = magic_enum::enum_cast<GeneratorFields::FieldIdentifier>(NES::toUpperCase(firstWord))
                                  .value_or(GeneratorFields::FieldIdentifier::INVALID))
@@ -102,7 +105,10 @@ void Generator::parseRawSchemaLine(std::string_view line)
 
 void Generator::parseSchema(const std::string_view rawSchema)
 {
-    PRECONDITION(!rawSchema.empty(), "Cannot parse a schema from an empty string!");
+    if (rawSchema.empty() || trimWhiteSpaces(rawSchema).empty())
+    {
+        throw InvalidConfigParameter("Cannot parse a schema from an empty string!");
+    }
 
     for (const auto schemaLine = splitOnMultipleDelimiters(rawSchema, {'\n', ','}); const auto& field : schemaLine)
     {
