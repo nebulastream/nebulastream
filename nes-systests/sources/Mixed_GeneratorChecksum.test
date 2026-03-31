@@ -1,0 +1,56 @@
+# name: sources/Mixed_GeneratorChecksum.test
+# description: Tests generator sources with checksum sinks
+# groups: [Sources]
+
+CREATE LOGICAL SOURCE generator10K(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR generator10K TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE generator10KSinus(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR generator10KSinus TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'SINUS' AS `SOURCE`.GENERATOR_RATE_TYPE,
+       'amplitude 1000, frequency 2' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE generatorStopAll(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR generatorStopAll TYPE Generator SET(
+       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE LOGICAL SOURCE generatorStopOne(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR generatorStopOne TYPE Generator SET(
+       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       1 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
+);
+
+CREATE SINK checksum_10K(generator10K.id UINT64 NOT NULL, generator10K.field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK checksum_10K_Sinus(generator10KSinus.id UINT64 NOT NULL,generator10KSinus.field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK stop_all_checksum(generatorStopAll.id UINT64 NOT NULL, generatorStopAll.field2 UINT64 NOT NULL) TYPE Checksum;
+CREATE SINK stop_one_checksum(generatorStopOne.id UINT64 NOT NULL, generatorStopOne.field2 UINT64 NOT NULL) TYPE Checksum;
+
+SELECT * FROM generator10K INTO checksum_10K;
+----
+10000 4032240
+
+SELECT * FROM generator10KSinus INTO checksum_10K_Sinus;
+----
+10000 4032240
+
+SELECT * FROM generatorStopAll INTO stop_all_checksum;
+----
+200 60740
+
+SELECT * FROM generatorStopOne INTO stop_one_checksum;
+----
+100 25440

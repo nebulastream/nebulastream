@@ -1,6 +1,6 @@
 # name: sources/Generator.test
 # description: Tests the generator source
-# groups: [Sources, Generator]
+# groups: [Sources]
 
 CREATE LOGICAL SOURCE generatorDefault(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorDefault TYPE Generator SET(
@@ -19,38 +19,6 @@ CREATE PHYSICAL SOURCE FOR generatorDifferentDataTypes TYPE Generator SET(
        AS `SOURCE`.GENERATOR_SCHEMA
 );
 
-CREATE LOGICAL SOURCE generator10K(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR generator10K TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'FIXED' AS `SOURCE`.GENERATOR_RATE_TYPE,
-       'emit_rate 1000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
-);
-
-CREATE LOGICAL SOURCE generator10KSinus(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR generator10KSinus TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SINUS' AS `SOURCE`.GENERATOR_RATE_TYPE,
-       'amplitude 1000, frequency 2' AS `SOURCE`.GENERATOR_RATE_CONFIG,
-       'SEQUENCE UINT64 0 10000 1, SEQUENCE UINT64 0 100 1' AS `SOURCE`.GENERATOR_SCHEMA
-);
-
-CREATE LOGICAL SOURCE generatorStopAll(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR generatorStopAll TYPE Generator SET(
-       'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
-);
-
-CREATE LOGICAL SOURCE generatorStopOne(id UINT64 NOT NULL, field2 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR generatorStopOne TYPE Generator SET(
-       'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
-       1 AS `SOURCE`.SEED,
-       'SEQUENCE UINT64 0 100 1, SEQUENCE UINT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
-);
-
 CREATE LOGICAL SOURCE generatorInline(id UINT64 NOT NULL);
 CREATE PHYSICAL SOURCE FOR generatorInline TYPE Generator SET(
        'ALL' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
@@ -61,10 +29,6 @@ CREATE PHYSICAL SOURCE FOR generatorInline TYPE Generator SET(
 
 CREATE SINK generator_sink(generatorDefault.id UINT64 NOT NULL, generatorDefault.field2 UINT64 NOT NULL) TYPE File;
 CREATE SINK generator_data_types_sink(generatorDifferentDataTypes.field1 UINT64 NOT NULL, generatorDifferentDataTypes.field2 UINT32 NOT NULL, generatorDifferentDataTypes.field3 UINT16 NOT NULL, generatorDifferentDataTypes.field4 UINT8 NOT NULL, generatorDifferentDataTypes.field5 INT64 NOT NULL, generatorDifferentDataTypes.field6 INT32 NOT NULL, generatorDifferentDataTypes.field7 INT16 NOT NULL, generatorDifferentDataTypes.field8 INT8 NOT NULL, generatorDifferentDataTypes.field9 FLOAT64 NOT NULL, generatorDifferentDataTypes.field10 FLOAT32 NOT NULL) TYPE File;
-CREATE SINK checksum_10K_Sinus(generator10KSinus.id UINT64 NOT NULL,generator10KSinus.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK checksum_10K(generator10K.id UINT64 NOT NULL, generator10K.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK stop_all_checksum(generatorStopAll.id UINT64 NOT NULL, generatorStopAll.field2 UINT64 NOT NULL) TYPE Checksum;
-CREATE SINK stop_one_checksum(generatorStopOne.id UINT64 NOT NULL, generatorStopOne.field2 UINT64 NOT NULL) TYPE Checksum;
 CREATE SINK generator_sink_inline(generatorInline.id UINT64 NOT NULL) TYPE File;
 
 SELECT * FROM generatorDefault INTO generator_sink;
@@ -92,24 +56,6 @@ SELECT * FROM generatorDifferentDataTypes INTO generator_data_types_sink;
 7 7 7 7 6 5 4 3 2 1
 8 8 8 7 6 5 4 3 2 1
 9 9 8 7 6 5 4 3 2 1
-
-
-
-SELECT * FROM generator10K INTO checksum_10K;
-----
-10000 4032240
-
-SELECT * FROM generator10KSinus INTO checksum_10K_Sinus;
-----
-10000 4032240
-
-SELECT * FROM generatorStopAll INTO stop_all_checksum;
-----
-200 60740
-
-SELECT * FROM generatorStopOne INTO stop_one_checksum;
-----
-100 25440
 
 SELECT * FROM generatorInline INTO generator_sink_inline;
 ----

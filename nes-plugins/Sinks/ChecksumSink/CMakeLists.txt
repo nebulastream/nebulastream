@@ -25,3 +25,11 @@ target_include_directories(checksum_sink_validation_plugin
 
 target_link_libraries(checksum_sink_plugin PRIVATE systest-checksum)
 target_link_libraries(checksum_sink_validation_plugin PRIVATE systest-checksum)
+
+# Register mixed systest directories only if the other plugin is also active
+if (TARGET generator_source_plugin_library)
+    register_plugin_systests(${CMAKE_CURRENT_SOURCE_DIR}/systests_generator)
+endif ()
+if (TARGET json_input_format_indexer_plugin_library)
+    register_plugin_systests(${CMAKE_CURRENT_SOURCE_DIR}/systests_json)
+endif ()

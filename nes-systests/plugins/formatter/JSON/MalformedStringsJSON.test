@@ -1,0 +1,40 @@
+# name: formatter/JSON/MalformedStringsJSON.test
+# description: testing malformed strings with the JSON input formatter, e.g., "3.14" instead of 3.14
+# groups: [Formatter, JSON]
+
+CREATE LOGICAL SOURCE jsonStreamFloating(ID UINT64 NOT NULL, VALUE FLOAT64, ISMALFORMEDSTRING BOOLEAN, METADATA VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamFloating TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"ID": 1,"VALUE": 3.14,"ISMALFORMEDSTRING": false,"METADATA": "valid"}
+{"ID": 2,"VALUE": "3.14","ISMALFORMEDSTRING": true,"METADATA": "malformed_quotation"}
+
+CREATE LOGICAL SOURCE jsonStreamInteger(ID UINT64 NOT NULL, VALUE UINT64, ISMALFORMEDSTRING BOOLEAN, METADATA VARSIZED);
+CREATE PHYSICAL SOURCE FOR jsonStreamInteger TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"ID": 1,"VALUE": 3,"ISMALFORMEDSTRING": false,"METADATA": "valid"}
+{"ID": 2,"VALUE": "3.14","ISMALFORMEDSTRING": true,"METADATA": "malformed_quotation"}
+{"ID": 3,"VALUE": 99999999999999999999,"ISMALFORMEDSTRING": true,"METADATA": "integer_overflow"}
+
+
+CREATE LOGICAL SOURCE jsonMalformedStreamNotNullable(ID UINT64 NOT NULL, VALUE UINT64 NOT NULL, ISMALFORMEDSTRING BOOLEAN NOT NULL, METADATA VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR jsonMalformedStreamNotNullable TYPE File SET("JSON" AS INPUT_FORMATTER.`TYPE`);
+ATTACH INLINE
+{"ID": 2,"VALUE": "3.14","ISMALFORMEDSTRING": true,"METADATA": "malformed_quotation"}
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM jsonStreamFloating INTO FILE();
+----
+1,3.14,false,valid
+2,NULL,true,malformed_quotation
+
+# Simple SELECT * query. We expect null for all malformed values
+SELECT * FROM jsonStreamInteger INTO FILE();
+----
+1,3,false,valid
+2,NULL,true,malformed_quotation
+3,NULL,true,integer_overflow
+
+# Query that contains NOT NULLABLE fields that are malformed --> CannotFormatMalformedStringValue
+SELECT * FROM jsonMalformedStreamNotNullable INTO FILE();
+----
+Error 3002
