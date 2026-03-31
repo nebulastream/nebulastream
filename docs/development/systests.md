@@ -186,9 +186,36 @@ Alternatively, you can click the double triangle in the first line to run all te
 You can also run the systest via the CMake `systest` executable either in the terminal or via your IDE such as CLion.
 The executable can run individual tests, all tests in a given file, or all test files that belong to a defined group.
 You can select the test cases and define the behaviour via command line arguments. 
-The executable can run individual tests (`-t /path/to/test.test:1`), all tests in a given file (`-t /path/to/test.test`), or all test files that belong to a defined group (`-g group1 group2`, `-e excludedGroup`).
+The `-t`/`--testLocations` flag accepts one or more values, each of which can be:
+- A specific test with query number: `-t /path/to/test.test:1`
+- All tests in a file: `-t /path/to/test.test`
+- All `.test` files in a directory (searched recursively): `-t /path/to/directory`
+- Multiple locations at once: `-t dir1 dir2 /path/to/test.test`
+
+By default, the systest runner discovers tests in `nes-systests/` (recursively). A plugin may still ship a `systests/` folder next to its `CMakeLists.txt`, which is auto-registered and passed via `-t`; for in-repo plugins, prefer the group-tag convention below instead.
+
+#### Plugin-dependent tests
+
+Tests that require an optional plugin (TCP source, JSON input/output formatter, ...) live under `nes-systests/plugins/<category>/` and **must be tagged with the plugin's group** in their `# groups:` header:
+
+| Plugin (CMake option) | Group |
+| --- | --- |
+| `NES_PLUGIN_TCP_SOURCE` | `TCP` |
+| `NES_PLUGIN_JSON_INPUT_FORMATTER` | `JSON` |
+| `NES_PLUGIN_JSON_OUTPUT_FORMATTER` | `JSONOutput` |
+
+A test that needs several plugins carries **all** of their groups (e.g. `# groups: [Sources, TCP, JSONOutput]`); the runner skips a test if **any** of its groups is excluded, so it only runs when every required plugin is enabled. 
+The plugin→group map lives in `nes-plugins/CMakeLists.txt` and must be extended when adding a new optional plugin that ships tests.
+
+At configure time, `nes-systests/systest/CMakeLists.txt` writes `disable_current.yaml` into the build tree listing the groups of every **disabled** plugin. 
+The runner loads it in addition to the static `systest-disable.yaml` and excludes those groups, so plugin-dependent tests are skipped automatically when their plugin is off. 
+Re-run CMake configure after toggling a `-DNES_PLUGIN_*` option for the file to refresh.
+
+Tests can also be filtered by group (`-g group1 group2`, `-e excludedGroup`).
 Tests can be run with specific configuration settings (`-- --worker.number_of_buffers_in_global_buffer_manager=10000`).
-Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. The disable config file understands `exclude_groups` and `disabled_test_files`.
+Permanent exclusions can be configured via `--disableConfigFile` (defaulting to `${TEST_CONFIGURATION_DIR}/systest-disable.yaml`) and can be ignored per run with `--ignoreDisableConfigFile`. 
+The disable config file understands `exclude_groups` and `disabled_test_files`. 
+The generated `disable_current.yaml` (disabled-plugin groups) is always applied, even with `--ignoreDisableConfigFile`, because it reflects which plugins are actually compiled in.
 To measure the execution time of tests use the benchmark mode (`-b`).
 To send queries on a remote worker use the remote mode (`-s`).
 The endless mode runs tests in an infinite loop i.e. for regression testing (`--endless`).

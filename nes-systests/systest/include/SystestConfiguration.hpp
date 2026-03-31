@@ -39,11 +39,15 @@ struct SystestClusterConfiguration
 class SystestConfiguration final : public BaseConfiguration
 {
 public:
-    SystestConfiguration() = default;
+    SystestConfiguration()
+    {
+        /// We always want to search in TEST_DISCOVER_DIR for .test files
+        testDiscoverDirs.add(TEST_DISCOVER_DIR);
+    }
 
     /// Note: for now we ignore/override the here specified default values with ones provided by argparse in `SystestExecutor::parseConfiguration()`
-    StringOption testsDiscoverDir
-        = {"tests_discover_dir", TEST_DISCOVER_DIR, "Directory to lookup test files in. Default: " TEST_DISCOVER_DIR};
+    SequenceOption<StringOption> testDiscoverDirs
+        = {"test_discover_dirs", "Directories to discover test files in. Default: " TEST_DISCOVER_DIR};
     StringOption testDataDir
         = {"test_data_dir", SYSTEST_EXTERNAL_DATA_DIR, "Directory to lookup test data files in. Default: " SYSTEST_EXTERNAL_DATA_DIR};
     StringOption configDir

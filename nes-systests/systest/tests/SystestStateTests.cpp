@@ -93,7 +93,7 @@ TEST_F(SystestStateTest, ExplicitlyIncludedGroupOverridesMatchingDisableConfigEx
     writeTextFile(otherFile, "# groups:[other]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
     config.globalExcludedGroups = {"large"};
     config.testGroups.add("large");
@@ -111,7 +111,7 @@ TEST_F(SystestStateTest, ExplicitCommandLineExclusionOverridesExplicitInclusion)
     writeTextFile(joinFile, "# groups:[Join]\n");
 
     SystestConfiguration config;
-    config.testsDiscoverDir = tempDir.get().string();
+    config.testDiscoverDirs.add(tempDir.get().string());
     config.testFileExtension = ".test";
     config.testGroups.add("Join");
     config.excludeGroups.add("Join");

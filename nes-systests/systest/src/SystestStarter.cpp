@@ -33,6 +33,8 @@
 #include <Util/Signal.hpp>
 #include <argparse/argparse.hpp>
 #include <fmt/format.h>
+#include <yaml-cpp/node/impl.h>
+#include <yaml-cpp/node/iterator.h>
 #include <yaml-cpp/node/node.h>
 #include <yaml-cpp/node/parse.h>
 #include <ErrorHandling.hpp>
@@ -71,9 +73,11 @@ void configureArgumentParser(ArgumentParser& program)
 {
     const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
 
-    program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
-              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+    program.add_argument("-t", "--testLocations")
+        .help("directly specified test files, directories, or multiple locations to discover test files in. "
+              "If a directory is given, all .test files are discovered recursively. "
+              "Use 'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR)
+        .nargs(argparse::nargs_pattern::any);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -118,37 +122,71 @@ void configureArgumentParser(ArgumentParser& program)
 
 void loadDisableConfig(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
-    if (program.is_used("--ignoreDisableConfigFile"))
+    /// Collects exclude_groups from the disable config files. The two files are merged (duplicates are
+    /// harmless because the groups are inserted into a set during discovery filtering). disabled_test_files
+    /// from the static config is loaded into config.disabledTestFiles by overwriteConfigWithYAMLFileInput
+    /// and must not be cleared.
+    std::vector<std::string> mergedExcludeGroups;
+    const auto captureExcludeGroups = [&config, &mergedExcludeGroups]()
     {
-        return;
-    }
+        for (const auto& value : config.excludeGroups.getValues())
+        {
+            mergedExcludeGroups.push_back(value.getValue());
+        }
+        config.excludeGroups.clear();
+    };
 
-    const auto disableConfigFilePath = program.get<std::string>("--disableConfigFile");
-    if (not std::filesystem::is_regular_file(disableConfigFilePath))
+    /// The generated disable_current.yaml encodes a hard build constraint -- which optional plugins are
+    /// not compiled in. It is always applied, even with --ignoreDisableConfigFile, which only bypasses the
+    /// human-curated static disable config. It is read directly (tolerating an empty/absent exclude_groups
+    /// for the all-plugins-enabled case) because overwriteConfigWithYAMLFileInput rejects an empty sequence.
+#ifdef GENERATED_DISABLE_CONFIG_FILE
+    if (const std::string generatedDisableConfig = GENERATED_DISABLE_CONFIG_FILE; std::filesystem::is_regular_file(generatedDisableConfig))
     {
-        if (program.is_used("--disableConfigFile"))
+        try
+        {
+            const YAML::Node generatedConfig = YAML::LoadFile(generatedDisableConfig);
+            if (const YAML::Node excludeGroups = generatedConfig["exclude_groups"]; excludeGroups.IsSequence())
+            {
+                for (const auto& group : excludeGroups)
+                {
+                    mergedExcludeGroups.push_back(group.as<std::string>());
+                }
+            }
+        }
+        catch (const std::exception& err)
+        {
+            std::cerr << "Failed to read generated systest disable config file '" << generatedDisableConfig << "': " << err.what() << '\n';
+            std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+        }
+    }
+#endif
+
+    if (not program.is_used("--ignoreDisableConfigFile"))
+    {
+        const auto disableConfigFilePath = program.get<std::string>("--disableConfigFile");
+        if (std::filesystem::is_regular_file(disableConfigFilePath))
+        {
+            try
+            {
+                config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
+                captureExcludeGroups();
+            }
+            catch (const std::exception& err)
+            {
+                std::cerr << "Failed to read systest disable config file '" << disableConfigFilePath << "': " << err.what() << '\n';
+                std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
+            }
+        }
+        else if (program.is_used("--disableConfigFile"))
         {
             std::cerr << "Configured systest disable config file does not exist: " << disableConfigFilePath << '\n';
             std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
         }
-        return;
     }
 
-    try
-    {
-        const YAML::Node disableConfig = YAML::LoadFile(disableConfigFilePath);
-        config.excludeGroupsConfiguredInDisableConfig
-            = disableConfig["exclude_groups"].IsDefined() && disableConfig["exclude_groups"].IsSequence();
-        config.overwriteConfigWithYAMLFileInput(disableConfigFilePath);
-        config.globalExcludedGroups = config.excludeGroups.getValues()
-            | std::views::transform([](const auto& value) { return value.getValue(); }) | std::ranges::to<std::vector<std::string>>();
-        config.excludeGroups.clear();
-    }
-    catch (const std::exception& err)
-    {
-        std::cerr << "Failed to read systest disable config file '" << disableConfigFilePath << "': " << err.what() << '\n';
-        std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
-    }
+    config.excludeGroupsConfiguredInDisableConfig = not mergedExcludeGroups.empty();
+    config.globalExcludedGroups = std::move(mergedExcludeGroups);
 }
 
 void applyBenchmarkMode(const ArgumentParser& program, NES::SystestConfiguration& config)
@@ -245,60 +283,61 @@ std::vector<std::filesystem::path> findAllInTree(const std::filesystem::path& wa
     return hits;
 }
 
-std::vector<std::filesystem::path> resolveTestArg(const std::filesystem::path& arg, const std::filesystem::path& discoverRoot)
+void applyDiscoveredTestLocation(const std::filesystem::path& testFilePath, NES::SystestConfiguration& config)
 {
-    if (std::filesystem::exists(arg))
+    /// Search all discover directories for a matching file name
+    std::vector<std::filesystem::path> allMatches;
+    for (const auto& dir : config.testDiscoverDirs.getValues())
     {
-        return {std::filesystem::canonical(arg)};
+        auto matches = findAllInTree(testFilePath.filename(), dir.getValue());
+        allMatches.insert(allMatches.end(), matches.begin(), matches.end());
     }
-    return findAllInTree(arg.filename(), discoverRoot);
-}
 
-void applyDiscoveredTestLocation(
-    const std::filesystem::path& testFilePath, const std::filesystem::path& discoverRoot, NES::SystestConfiguration& config)
-{
-    const auto matches = resolveTestArg(testFilePath, discoverRoot);
-    if (matches.empty())
+    if (allMatches.empty())
     {
-        std::cerr << '\'' << testFilePath << "' could not be located under '" << discoverRoot << "'.\n";
+        std::cerr << '\'' << testFilePath << "' could not be located in any test discover directory.\n";
         std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
     }
 
-    if (matches.size() == 1)
+    if (allMatches.size() == 1)
     {
-        config.directlySpecifiedTestFiles = matches.front();
+        config.directlySpecifiedTestFiles = allMatches.front();
         return;
     }
 
     std::cerr << "Ambiguous test name '" << testFilePath << "':\n";
-    for (const auto& path : matches)
+    for (const auto& path : allMatches)
     {
         std::cerr << "  • " << path << '\n';
     }
     std::exit(EXIT_FAILURE); ///NOLINT(concurrency-mt-unsafe)
 }
 
-void applyTestLocation(const ArgumentParser& program, NES::SystestConfiguration& config)
+void applyTestLocations(const ArgumentParser& program, NES::SystestConfiguration& config)
 {
-    if (not program.is_used("--testLocation"))
+    if (not program.is_used("--testLocations"))
     {
         return;
     }
 
-    const auto testFilePath = parseTestLocationPath(program.get<std::string>("--testLocation"), config);
-    if (std::filesystem::is_directory(testFilePath))
+    const auto testLocations = program.get<std::vector<std::string>>("--testLocations");
+    for (const auto& location : testLocations)
     {
-        config.testsDiscoverDir = testFilePath;
-        return;
-    }
+        const auto testFilePath = parseTestLocationPath(location, config);
+        if (std::filesystem::is_directory(testFilePath))
+        {
+            config.testDiscoverDirs.add(testFilePath.string());
+            continue;
+        }
 
-    if (std::filesystem::is_regular_file(testFilePath))
-    {
-        config.directlySpecifiedTestFiles = testFilePath;
-        return;
-    }
+        if (std::filesystem::is_regular_file(testFilePath))
+        {
+            config.directlySpecifiedTestFiles = testFilePath;
+            continue;
+        }
 
-    applyDiscoveredTestLocation(testFilePath, config.testsDiscoverDir.getValue(), config);
+        applyDiscoveredTestLocation(testFilePath, config);
+    }
 }
 
 void addSequenceOptionValues(
@@ -486,7 +525,7 @@ NES::SystestConfiguration parseConfiguration(int argc, const char** argv)
     applyBenchmarkMode(program, config);
     applyDebugMode(program);
     applyInputLocations(program, config);
-    applyTestLocation(program, config);
+    applyTestLocations(program, config);
     applyGroupSelection(program, config);
     applyExecutionOptions(program, config);
     applyConfigurationFiles(program, config);

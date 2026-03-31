@@ -45,6 +45,14 @@ function(add_plugin_as_library plugin_name plugin_registry plugin_registry_compo
 
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_names" "${plugin_name}")
     set_property(GLOBAL APPEND PROPERTY "${plugin_registry}_plugin_libraries" "${plugin_library}")
+
+    # Auto-register systest directory if it exists
+    set(systest_dir "${CMAKE_CURRENT_SOURCE_DIR}/systests")
+    if (IS_DIRECTORY "${systest_dir}")
+        register_plugin_systests("${systest_dir}")
+    else ()
+        message(STATUS "No systests directory found for plugin ${plugin_name} (looked for ${systest_dir})")
+    endif ()
 endfunction()
 
 # adds the source files of the plugin to the source files of the component that the plugin registry belongs to
@@ -116,6 +124,17 @@ function(generate_plugin_registrars plugin_registry_component)
                 cmake_language(DEFER DIRECTORY [[${PROJECT_SOURCE_DIR}]] CALL generate_plugin_registrar [[${CMAKE_CURRENT_SOURCE_DIR}]] [[${CMAKE_CURRENT_BINARY_DIR}]] [[${plugin_registry}]] [[${plugin_registry_component}]])
         ")
     endforeach ()
+endfunction()
+
+# registers a plugin's systest directory so the systest tool can discover its .test files
+function(register_plugin_systests systest_dir)
+    if (IS_DIRECTORY "${systest_dir}")
+        get_property(existing_dirs GLOBAL PROPERTY PLUGIN_SYSTEST_DIRS)
+        if (NOT "${systest_dir}" IN_LIST existing_dirs)
+            set_property(GLOBAL APPEND PROPERTY PLUGIN_SYSTEST_DIRS "${systest_dir}")
+            message(STATUS "Registered plugin systest directory: ${systest_dir}")
+        endif ()
+    endif ()
 endfunction()
 
 # Provide the names of all registries that the component creates as ARGS
