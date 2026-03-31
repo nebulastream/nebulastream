@@ -35,6 +35,29 @@
 namespace NES
 {
 
+struct ConfigParametersCSVInputFormatIndexer
+{
+    static inline const DescriptorConfig::ConfigParameter<bool> ALLOW_COMMAS_IN_STRINGS{
+        "allow_commas_in_strings",
+        true,
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(ALLOW_COMMAS_IN_STRINGS, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
+        "tuple_delimiter",
+        "\n",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
+        "field_delimiter",
+        ",",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
+
+    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(
+            InputFormatterDescriptor::parameterMap, ALLOW_COMMAS_IN_STRINGS, TUPLE_DELIMITER, FIELD_DELIMITER);
+};
+
 constexpr auto CSV_NUM_OFFSETS_PER_FIELD = NumRequiredOffsetsPerField::ONE;
 
 struct CSVMetaData
@@ -42,23 +65,23 @@ struct CSVMetaData
     static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
-    explicit CSVMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
-        : tupleDelimiter(config.tupleDelimiter.front())
-        , fieldDelimiter(config.fieldDelimiter.front())
+    explicit CSVMetaData(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
+        : tupleDelimiter(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER).front())
+        , fieldDelimiter(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER).front())
         , fieldNames(tupleBufferRef.getAllFieldNames())
         , fieldDataTypes(tupleBufferRef.getAllDataTypes())
         , nullValues({""})
     {
         PRECONDITION(
-            config.tupleDelimiter.size() == SIZE_OF_TUPLE_DELIMITER,
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER).size() == SIZE_OF_TUPLE_DELIMITER,
             "Delimiters must be of size '1 byte', but the tuple delimiter was {} (size {})",
-            config.tupleDelimiter,
-            config.tupleDelimiter.size());
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER),
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::TUPLE_DELIMITER).size());
         PRECONDITION(
-            config.fieldDelimiter.size() == SIZE_OF_FIELD_DELIMITER,
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER).size() == SIZE_OF_FIELD_DELIMITER,
             "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
-            config.fieldDelimiter,
-            config.fieldDelimiter.size());
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER),
+            config.getFromConfig(ConfigParametersCSVInputFormatIndexer::FIELD_DELIMITER).size());
     };
 
     [[nodiscard]] std::string_view getTupleDelimitingBytes() const { return {&tupleDelimiter, SIZE_OF_TUPLE_DELIMITER}; }
@@ -103,15 +126,18 @@ private:
 class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
 {
 public:
+    static constexpr std::string_view NAME = "CSV";
+
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;
 
-    explicit CSVInputFormatIndexer(const bool allowCommasInStrings) : allowCommasInStrings(allowCommasInStrings) { };
+    explicit CSVInputFormatIndexer(const InputFormatterDescriptor& config);
     ~CSVInputFormatIndexer() = default;
 
 
     void indexRawBuffer(
         FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const;
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer& obj);
 

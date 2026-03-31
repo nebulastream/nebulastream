@@ -100,12 +100,12 @@ class InputFormatter
 {
 public:
     explicit InputFormatter(
-        FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const ParserConfig& parserConfig)
+        FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const InputFormatterDescriptor& config)
         : inputFormatIndexer(std::move(inputFormatIndexer))
-        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
+        , indexerMetaData(typename FormatterType::IndexerMetaData{config, *memoryProvider})
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
-        , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
+        , sequenceShredder(std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size()))
     {
     }
 

@@ -38,12 +38,12 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTuple
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<TupleBufferRef> memoryProvider)
+    InputFormatIndexerRegistryArguments(InputFormatterDescriptor config, std::shared_ptr<TupleBufferRef> memoryProvider)
         : inputFormatIndexerConfig(std::move(config)), memoryProvider(std::move(memoryProvider))
     {
     }
 
-    const ParserConfig& getInputFormatterConfig() { return inputFormatIndexerConfig; }
+    const InputFormatterDescriptor& getInputFormatterConfig() { return inputFormatIndexerConfig; }
 
     /// Instantiates an InputFormatter with a specific input format indexer
     template <InputFormatIndexerType IndexerType>
@@ -59,7 +59,7 @@ private:
     /// As a result, we don't hand the config and memory provider to the indexer in its registry-constructor
     /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
-    ParserConfig inputFormatIndexerConfig;
+    InputFormatterDescriptor inputFormatIndexerConfig;
     std::shared_ptr<TupleBufferRef> memoryProvider;
 };
 

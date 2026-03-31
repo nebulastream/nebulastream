@@ -73,19 +73,30 @@ parseJsonFixedSizeIntoVarValProxy(FieldIndex fieldIndex, SIMDJSONFIF* fieldIndex
 
 bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData) noexcept;
 
+struct ConfigParametersSIMDJSON
+{
+    static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
+        "tuple_delimiter",
+        "\n",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
+
+    static inline const std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(InputFormatterDescriptor::parameterMap, TUPLE_DELIMITER);
+};
+
 struct SIMDJSONMetaData
 {
-    explicit SIMDJSONMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
+    explicit SIMDJSONMetaData(const InputFormatterDescriptor& config, const TupleBufferRef& tupleBufferRef)
         : fieldNamesOutput(tupleBufferRef.getAllFieldNames())
         , fieldDataTypes(tupleBufferRef.getAllDataTypes())
-        , tupleDelimiter(config.tupleDelimiter)
+        , tupleDelimiter(config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER))
 
     {
         PRECONDITION(
-            config.fieldDelimiter.size() == 1,
+            config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER).size() == 1,
             "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
-            config.fieldDelimiter,
-            config.fieldDelimiter.size());
+            config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER),
+            config.getFromConfig(ConfigParametersSIMDJSON::TUPLE_DELIMITER).size());
 
         /// We expect the names in the json file to not be source qualified
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())

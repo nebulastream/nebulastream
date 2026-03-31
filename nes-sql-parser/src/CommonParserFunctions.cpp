@@ -140,7 +140,7 @@ std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& co
 {
     auto parserConfig = std::unordered_map<std::string, std::string>{};
 
-    if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
+    if (const auto parserConfigIter = configOptions.find("INPUT_FORMATTER"); parserConfigIter != configOptions.end())
     {
         parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })

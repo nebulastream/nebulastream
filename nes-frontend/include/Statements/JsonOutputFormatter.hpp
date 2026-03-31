@@ -45,7 +45,7 @@ struct adl_serializer<NES::EnumWrapper>
 namespace NES
 {
 
-void to_json(nlohmann::json& jsonOutput, const ParserConfig& parserConfig);
+void to_json(nlohmann::json& jsonOutput, const InputFormatterDescriptor& inputFormatterDescriptor);
 
 void to_json(nlohmann::json& jsonOutput, const DataType& dataType);
 

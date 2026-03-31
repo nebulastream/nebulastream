@@ -116,7 +116,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
 
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        "Network", channel.upstreamOp.getOutputSchema(), Host(channel.downstreamNode.getRawValue()), {{"type", "Native"}}, sourceConfig);
+        "Network", channel.upstreamOp.getOutputSchema(), Host(channel.downstreamNode.getRawValue()), {{InputFormatterDescriptor::getTypeString(), "Native"}}, sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 

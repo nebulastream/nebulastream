@@ -29,6 +29,8 @@ namespace NES
 class SIMDJSONInputFormatIndexer final : public InputFormatIndexer<SIMDJSONInputFormatIndexer>
 {
 public:
+    static constexpr std::string_view NAME = "JSON";
+
     using IndexerMetaData = SIMDJSONMetaData;
     using FieldIndexFunctionType = SIMDJSONFIF;
     static constexpr char DELIMITER_SIZE = sizeof(char);
@@ -41,13 +43,9 @@ public:
     ~SIMDJSONInputFormatIndexer() = default;
 
     static void indexRawBuffer(SIMDJSONFIF& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const SIMDJSONMetaData&);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& os, const SIMDJSONInputFormatIndexer& sonInputFormatIndexer);
 };
 
-struct ConfigParametersSIMDJSON
-{
-    static inline const std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap();
-};
 }
