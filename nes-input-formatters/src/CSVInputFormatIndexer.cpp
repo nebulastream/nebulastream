@@ -25,8 +25,10 @@
 #include <ErrorHandling.hpp>
 #include <FieldOffsets.hpp>
 #include <InputFormatIndexerRegistry.hpp>
+#include <InputFormatterValidationRegistry.hpp>
 #include <InputFormatter.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
+
 
 namespace
 {
@@ -98,6 +100,11 @@ void initializeIndexFunctionForTuple(
 namespace NES
 {
 
+CSVInputFormatIndexer::CSVInputFormatIndexer(const InputFormatterDescriptor& config)
+    : allowCommasInStrings(config.getFromConfig(ConfigParametersCSVInputFormatIndexer::ALLOW_COMMAS_IN_STRINGS))
+{
+}
+
 void CSVInputFormatIndexer::indexRawBuffer(
     FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>& fieldOffsets, const RawTupleBuffer& rawBuffer, const CSVMetaData& metaData) const
 {
@@ -143,10 +150,21 @@ void CSVInputFormatIndexer::indexRawBuffer(
     fieldOffsets.markWithTupleDelimiters(offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter);
 }
 
+DescriptorConfig::Config CSVInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersCSVInputFormatIndexer>(std::move(config), NAME);
+}
+
 InputFormatIndexerRegistryReturnType
 RegisterCSVInputFormatIndexer(InputFormatIndexerRegistryArguments arguments) ///NOLINT(performance-unnecessary-value-param)
 {
-    return arguments.createInputFormatterWithIndexer(CSVInputFormatIndexer{arguments.getInputFormatterConfig().allowCommasInStrings});
+    return arguments.createInputFormatterWithIndexer(CSVInputFormatIndexer{arguments.getInputFormatterConfig()});
+}
+
+InputFormatterValidationRegistryReturnType
+InputFormatterValidationGeneratedRegistrar::RegisterCSVInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+{
+    return CSVInputFormatIndexer::validateAndFormat(arguments.config);
 }
 
 std::ostream& operator<<(std::ostream& os, const CSVInputFormatIndexer&)

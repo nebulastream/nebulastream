@@ -36,69 +36,69 @@
 namespace NES
 {
 
-ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
-{
-    ParserConfig created{};
-    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
-    {
-        created.parserType = parserType->second;
-    }
-    else
-    {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
-    }
-    if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
-    {
-        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        auto unescapedDelimiter = unescapeSpecialCharacters(tupleDelimiter->second);
-        PRECONDITION(
-            unescapedDelimiter.size() == 1,
-            "We currently do not support tuple delimiters larger than one byte. `{}`",
-            escapeSpecialCharacters(unescapedDelimiter));
-        created.tupleDelimiter = unescapedDelimiter;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
-        created.tupleDelimiter = '\n';
-    }
-    if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
-    {
-        auto unescapedDelimiter = unescapeSpecialCharacters(fieldDelimiter->second);
-        created.fieldDelimiter = unescapedDelimiter;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
-        created.fieldDelimiter = ",";
-    }
-    if (const auto commaCheck = configMap.find("allow_commas_in_strings"); commaCheck != configMap.end())
-    {
-        const auto commaCheckParsed = from_chars<bool>(commaCheck->second);
-        if (not commaCheckParsed)
-        {
-            throw InvalidConfigParameter("no_commas_in_strings config argument must be parsable boolean, but was: {}", commaCheck->second);
-        }
-        created.allowCommasInStrings = commaCheckParsed.value();
-        ;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: allow_commas_in_strings, using default: true");
-        created.allowCommasInStrings = true;
-    }
-    return created;
-}
+// ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
+// {
+//     ParserConfig created{};
+//     if (const auto parserType = configMap.find("type"); parserType != configMap.end())
+//     {
+//         created.parserType = parserType->second;
+//     }
+//     else
+//     {
+//         throw InvalidConfigParameter("Parser configuration must contain: type");
+//     }
+//     if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
+//     {
+//         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
+//         auto unescapedDelimiter = unescapeSpecialCharacters(tupleDelimiter->second);
+//         PRECONDITION(
+//             unescapedDelimiter.size() == 1,
+//             "We currently do not support tuple delimiters larger than one byte. `{}`",
+//             escapeSpecialCharacters(unescapedDelimiter));
+//         created.tupleDelimiter = unescapedDelimiter;
+//     }
+//     else
+//     {
+//         NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
+//         created.tupleDelimiter = '\n';
+//     }
+//     if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
+//     {
+//         auto unescapedDelimiter = unescapeSpecialCharacters(fieldDelimiter->second);
+//         created.fieldDelimiter = unescapedDelimiter;
+//     }
+//     else
+//     {
+//         NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
+//         created.fieldDelimiter = ",";
+//     }
+//     if (const auto commaCheck = configMap.find("allow_commas_in_strings"); commaCheck != configMap.end())
+//     {
+//         const auto commaCheckParsed = from_chars<bool>(commaCheck->second);
+//         if (not commaCheckParsed)
+//         {
+//             throw InvalidConfigParameter("no_commas_in_strings config argument must be parsable boolean, but was: {}", commaCheck->second);
+//         }
+//         created.allowCommasInStrings = commaCheckParsed.value();
+//         ;
+//     }
+//     else
+//     {
+//         NES_DEBUG("Parser configuration did not contain: allow_commas_in_strings, using default: true");
+//         created.allowCommasInStrings = true;
+//     }
+//     return created;
+// }
 
-std::ostream& operator<<(std::ostream& os, const ParserConfig& obj)
-{
-    return os << fmt::format(
-               "ParserConfig(type: {}, tupleDelimiter: '{}', fieldDelimiter: '{}', allowCommasInStrings: {})",
-               obj.parserType,
-               obj.tupleDelimiter,
-               obj.fieldDelimiter,
-               obj.allowCommasInStrings);
-}
+// std::ostream& operator<<(std::ostream& os, const InputFormatterDescriptor& obj)
+// {
+//     return os << fmt::format(
+//                "ParserConfig(type: {}, tupleDelimiter: '{}', fieldDelimiter: '{}', allowCommasInStrings: {})",
+//                obj.parserType,
+//                obj.tupleDelimiter,
+//                obj.fieldDelimiter,
+//                obj.allowCommasInStrings);
+// }
 
 SourceDescriptor::SourceDescriptor(
     const PhysicalSourceId physicalSourceId,
@@ -106,13 +106,13 @@ SourceDescriptor::SourceDescriptor(
     std::string_view sourceType,
     Host host,
     DescriptorConfig::Config config,
-    ParserConfig parserConfig)
+    InputFormatterDescriptor inputFormatterDescriptor)
     : Descriptor(std::move(config))
     , physicalSourceId(physicalSourceId)
     , logicalSource(std::move(logicalSource))
     , sourceType(std::move(sourceType))
     , host(std::move(host))
-    , parserConfig(std::move(parserConfig))
+    , inputFormatterDescriptor(std::move(inputFormatterDescriptor))
 {
 }
 
@@ -126,9 +126,9 @@ std::string SourceDescriptor::getSourceType() const
     return sourceType;
 }
 
-ParserConfig SourceDescriptor::getParserConfig() const
+InputFormatterDescriptor SourceDescriptor::getInputFormatterDescriptor() const
 {
-    return parserConfig;
+    return inputFormatterDescriptor;
 }
 
 Host SourceDescriptor::getHost() const
@@ -163,16 +163,12 @@ std::string SourceDescriptor::explain(ExplainVerbosity verbosity) const
 std::ostream& operator<<(std::ostream& out, const SourceDescriptor& descriptor)
 {
     return out << fmt::format(
-               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, parserConfig: {{type: {}, tupleDelimiter: "
-               "{}, "
-               "stringDelimiter: {} }})",
+               "SourceDescriptor(sourceId: {}, sourceType: {}, logicalSource:{}, host: {}, inputFormatterDescriptor: {})",
                descriptor.getPhysicalSourceId(),
                descriptor.getSourceType(),
                descriptor.getLogicalSource(),
                descriptor.getHost(),
-               descriptor.getParserConfig().parserType,
-               escapeSpecialCharacters(descriptor.getParserConfig().tupleDelimiter),
-               escapeSpecialCharacters(descriptor.getParserConfig().fieldDelimiter));
+               descriptor.getInputFormatterDescriptor());
 }
 
 Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& sourceDescriptor) const
@@ -182,7 +178,7 @@ Reflected Reflector<SourceDescriptor>::operator()(const SourceDescriptor& source
         .logicalSource = sourceDescriptor.logicalSource,
         .type = sourceDescriptor.sourceType,
         .host = sourceDescriptor.host,
-        .parserConfig = sourceDescriptor.parserConfig,
+        .inputFormatterDescriptor = sourceDescriptor.inputFormatterDescriptor,
         .config = sourceDescriptor.getReflectedConfig()};
 
     return reflect(descriptor);
@@ -198,6 +194,6 @@ SourceDescriptor Unreflector<SourceDescriptor>::operator()(const Reflected& rfl)
         reflectedSourceDescriptor.type,
         reflectedSourceDescriptor.host,
         Descriptor::unreflectConfig(reflectedSourceDescriptor.config),
-        std::move(reflectedSourceDescriptor.parserConfig)};
+        std::move(reflectedSourceDescriptor.inputFormatterDescriptor)};
 }
 }

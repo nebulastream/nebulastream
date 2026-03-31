@@ -23,6 +23,8 @@
 #include <InputFormatterTupleBufferRef.hpp>
 #include <SIMDJSONFIF.hpp>
 
+#include "InputFormatterValidationRegistry.hpp"
+
 namespace NES
 {
 
@@ -58,9 +60,21 @@ std::ostream& operator<<(std::ostream& os, const SIMDJSONInputFormatIndexer&)
                SIMDJSONInputFormatIndexer::FIELD_DELIMITER);
 }
 
+DescriptorConfig::Config SIMDJSONInputFormatIndexer::validateAndFormat(std::unordered_map<std::string, std::string> config)
+{
+    return DescriptorConfig::validateAndFormat<ConfigParametersSIMDJSON>(std::move(config), NAME);
+}
+
 InputFormatIndexerRegistryReturnType RegisterJSONInputFormatIndexer(InputFormatIndexerRegistryArguments arguments)
 {
     return arguments.createInputFormatterWithIndexer(SIMDJSONInputFormatIndexer{});
 }
+
+InputFormatterValidationRegistryReturnType
+InputFormatterValidationGeneratedRegistrar::RegisterJSONInputFormatterValidation(InputFormatterValidationRegistryArguments arguments)
+{
+    return SIMDJSONInputFormatIndexer::validateAndFormat(arguments.config);
+}
+
 
 }

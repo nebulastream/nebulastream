@@ -71,7 +71,7 @@ public:
     {
         auto schema = createSchema();
         auto descriptor
-            = sourceCatalog.getInlineSource("File", schema, {{"type", "CSV"}}, {{"file_path", "/dev/null"}, {"host", "localhost"}});
+            = sourceCatalog.getInlineSource("File", schema, {{InputFormatterDescriptor::getTypeString(), "CSV"}}, {{"file_path", "/dev/null"}, {"host", "localhost"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourcePhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)

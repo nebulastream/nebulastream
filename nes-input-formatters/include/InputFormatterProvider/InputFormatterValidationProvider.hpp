@@ -11,22 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
 #pragma once
 
-#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <Configurations/Descriptor.hpp>
 
-#include <DataTypes/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
-#include <Sources/SourceDescriptor.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
-
-namespace NES
+namespace NES::InputFormatterValidationProvider
 {
-
-std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(InputFormatterDescriptor formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
-
-bool contains(const std::string& parserType);
+/// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
+std::optional<DescriptorConfig::Config> provide(std::string_view inputFormat, std::unordered_map<std::string, std::string> stringConfig);
 }

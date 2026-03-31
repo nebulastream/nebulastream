@@ -131,6 +131,8 @@ struct LogicalSource
     std::vector<SchemaField> schema;
 };
 
+
+
 struct PhysicalSource
 {
     std::string logical;

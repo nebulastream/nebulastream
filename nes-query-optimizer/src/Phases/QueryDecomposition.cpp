@@ -119,8 +119,8 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
-    const auto networkSourceDescriptorOpt
-        = context.sourceCatalog->getInlineSource("Network", channel.upstreamOp.getOutputSchema(), {{"type", "Native"}}, sourceConfig);
+    const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
+        "Network", channel.upstreamOp.getOutputSchema(), {{InputFormatterDescriptor::getTypeString(), "Native"}}, sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 

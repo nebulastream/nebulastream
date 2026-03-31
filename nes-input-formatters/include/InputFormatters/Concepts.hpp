@@ -35,7 +35,7 @@ namespace NES
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
 concept IndexerMetaDataType
-    = requires(ParserConfig config, const TupleBufferRef& tupleBufferRef, T indexerMetaData, std::ostream& spanningTuple) {
+    = requires(InputFormatterDescriptor config, const TupleBufferRef& tupleBufferRef, T indexerMetaData, std::ostream& spanningTuple) {
           T(config, tupleBufferRef);
           /// Assumes a fixed set of symbols that separate tuples
           /// InputFormatIndexers without tuple delimiters should return an empty string
