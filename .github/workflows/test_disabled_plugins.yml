@@ -1,0 +1,84 @@
+name: Test Disabled Plugins
+description: |
+  Builds and tests NebulaStream with individual plugins disabled, ensuring
+  the system gracefully handles missing plugins. Also runs with all plugins disabled.
+  Large tests are enabled to maximize coverage.
+
+on:
+  workflow_call:
+    inputs:
+      dev_image_tag:
+        required: true
+        type: string
+        description: "Docker image tag of the development image"
+      head_sha:
+        type: string
+        required: true
+        description: "head_sha of the branch"
+
+jobs:
+  test-disabled-plugins:
+    runs-on: [ self-hosted, linux, X64, Build ]
+    name: "Disabled plugins: ${{ matrix.config.name }}"
+    container:
+      image: nebulastream/nes-ci:${{ inputs.dev_image_tag }}-libstdcxx-none
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      env:
+        MOLD_JOBS: 1
+        SCCACHE_BUCKET: ${{ secrets.SCCACHE_CACHE_BUCKET }}
+        SCCACHE_ENDPOINT: ${{ secrets.SCCACHE_CACHE_ENDPOINT }}
+        SCCACHE_REGION: auto
+        SCCACHE_S3_USE_SSL: "true"
+        AWS_ACCESS_KEY_ID: ${{ secrets.SCCACHE_CACHE_ACCESS_KEY }}
+        AWS_SECRET_ACCESS_KEY: ${{ secrets.SCCACHE_CACHE_SECRET_KEY }}
+      options: --user root
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        config:
+          - name: all-plugins-disabled
+            arg: >-
+              -DNES_PLUGIN_TCP_SOURCE=OFF
+              -DNES_PLUGIN_GENERATOR_SOURCE=OFF
+              -DNES_PLUGIN_VOID_SINK=OFF
+              -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF
+              -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=OFF
+              -DNES_PLUGIN_CHECKSUM_SINK=OFF
+          - name: no-tcp-source
+            arg: -DNES_PLUGIN_TCP_SOURCE=OFF
+          - name: no-generator-source
+            arg: -DNES_PLUGIN_GENERATOR_SOURCE=OFF
+          - name: no-void-sink
+            arg: -DNES_PLUGIN_VOID_SINK=OFF
+          - name: no-json-input-formatter
+            arg: -DNES_PLUGIN_JSON_INPUT_FORMATTER=OFF
+          - name: no-json-output-formatter
+            arg: -DNES_PLUGIN_JSON_OUTPUT_FORMATTER=OFF
+          - name: no-checksum-sink
+            arg: -DNES_PLUGIN_CHECKSUM_SINK=OFF
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.head_sha }}
+      - name: Configure NebulaStream
+        run: cmake -B build -DCMAKE_BUILD_TYPE=RelWithDebInfo -DENABLE_LARGE_TESTS=ON ${{ matrix.config.arg }}
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml --timeout 1200
+      - name: Upload Test Logs on Failure
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !github.event.act }}
+        with:
+          name: logs-disabled-plugins-${{ matrix.config.name }}
+          path: |
+            build/**/*.log
+            build/**/*.stats
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ failure() && !cancelled() && !github.event.act }}
+        with:
+          name: junit-disabled-plugins-${{ matrix.config.name }}.xml
+          path: /junit.xml

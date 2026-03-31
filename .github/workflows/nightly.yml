@@ -104,6 +104,22 @@ jobs:
       head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
       dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
 
+  test-disabled-plugins:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/test_disabled_plugins.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
+  test-enabled-plugins:
+    needs: [ fetch-current-main-commit, get-dev-images ]
+    uses: ./.github/workflows/test_enabled_plugins.yml
+    secrets: inherit
+    with:
+      head_sha: ${{ needs.fetch-current-main-commit.outputs.sha }}
+      dev_image_tag: ${{ needs.get-dev-images.outputs.image-tag }}
+
   large-tests:
     name: "Large Scale Tests (${{ matrix.name }})"
     needs: [ fetch-current-main-commit, get-dev-images ]
