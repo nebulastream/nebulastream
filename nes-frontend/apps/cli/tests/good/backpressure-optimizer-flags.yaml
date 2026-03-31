@@ -10,12 +10,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology:
+#
+#   ┌──────────────────────────────┐
+#   │  worker-2  (cap: 10000)      │
+#   │  S: GENERATOR_SOURCE         │
+#   └──────────────┬───────────────┘
+#                  │
+#                  ▼
+#   ┌──────────────────────────────┐
+#   │  worker-1  (cap: 10000)      │
+#   │  K: PRINT_SINK               │
+#   └──────────────────────────────┘
+#
+#   worker-2 ─► worker-1
+#   (backpressure via optimizer flags: small queues)
+
 query: |
-  SELECT 
+  SELECT
     *
-  FROM 
+  FROM
     GENERATOR_SOURCE
-  INTO 
+  INTO
     PRINT_SINK
 sinks:
   - name: print_sink

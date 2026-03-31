@@ -10,6 +10,32 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology:
+#
+#   No explicit workers section -- single implicit worker hosts everything.
+#   stream source emits at 10000/s (fast); all others at 10/s.
+#
+#   S: stream  S: stream2  S: stream3  S: stream4  S: stream5  S: stream6  S: stream7  S: stream8
+#   (fast)         │           │           │           │           │           │           │
+#       └──────┬───┘           │           │           │           │           │           │
+#              │ JOIN          │           │           │           │           │           │
+#              └───────┬───────┘           │           │           │           │           │
+#                      │ JOIN              │           │           │           │           │
+#                      └──────────┬────────┘           │           │           │           │
+#                                 │ JOIN               │           │           │           │
+#                                 └───────────┬────────┘           │           │           │
+#                                             │ JOIN               │           │           │
+#                                             └───────────┬────────┘           │           │
+#                                                         │ JOIN               │           │
+#                                                         └───────────┬────────┘           │
+#                                                                     │ JOIN               │
+#                                                                     └───────────┬────────┘
+#                                                                                 │ JOIN
+#                                                                                 ▼
+#                                                                          K: sink (File)
+#
+#   8-way chained join on a single worker; one fast source.
+
 query: |
   SELECT start, end, id FROM (
   SELECT * FROM (SELECT * FROM stream)

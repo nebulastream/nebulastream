@@ -10,12 +10,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology:
+#
+#   ┌──────────────────────────────┐
+#   │  worker-1  (cap: 10000)      │
+#   │  S: GENERATOR_SOURCE         │
+#   └──────────────┬───────────────┘
+#                  │
+#                  ▼
+#   ┌──────────────────────────────┐
+#   │  worker-2  (cap: 10000)      │
+#   │  K: VOID_SINK                │
+#   └──────────────────────────────┘
+#
+#   worker-1 ─► worker-2
+
 query: |
-  SELECT 
+  SELECT
     *
-  FROM 
-    GENERATOR_SOURCE 
-  INTO 
+  FROM
+    GENERATOR_SOURCE
+  INTO
     VOID_SINK
 sinks:
   - name: VOID_SINK

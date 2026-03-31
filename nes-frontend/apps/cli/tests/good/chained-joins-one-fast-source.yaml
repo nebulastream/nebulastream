@@ -10,6 +10,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology (star -- 9 workers):
+#
+#   ┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+#   │  worker-2      │ │  worker-3      │ │  worker-4      │ │  worker-5      │
+#   │  S: stream     │ │  S: stream2    │ │  S: stream3    │ │  S: stream4    │
+#   │  (fast 10000)  │ │                │ │                │ │                │
+#   └───────┬────────┘ └───────┬────────┘ └───────┬────────┘ └───────┬────────┘
+#           │                  │                  │                  │
+#           └──────────┬───────┘                  │                  │
+#                      └──────────────┬───────────┘                  │
+#                                     └──────────────────┬───────────┘
+#   ┌────────────────┐ ┌────────────────┐ ┌────────────────┐ ┌────────────────┐
+#   │  worker-6      │ │  worker-7      │ │  worker-8      │ │  worker-9      │
+#   │  S: stream5    │ │  S: stream6    │ │  S: stream7    │ │  S: stream8    │
+#   └───────┬────────┘ └───────┬────────┘ └───────┬────────┘ └───────┬────────┘
+#           │                  │                  │                  │
+#           └──────────┬───────┘                  │                  │
+#                      └──────────────┬───────────┘                  │
+#                                     └──────────────────┬───────────┘
+#                                                        │
+#                                                        ▼
+#                                          ┌──────────────────────────┐
+#                                          │  worker-1  (cap: 10000)  │
+#                                          │  K: sink (File)          │
+#                                          └──────────────────────────┘
+#
+#   All source workers (2-9) ─► worker-1
+#   8-way chained join; stream on worker-2 is fast (10000/s), rest at 10/s.
+
 query: |
   SELECT start, end, id FROM (
   SELECT * FROM (SELECT * FROM stream)

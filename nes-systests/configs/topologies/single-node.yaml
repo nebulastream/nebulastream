@@ -1,3 +1,10 @@
+# Topology:
+#
+#   ┌─────────────────────────┐
+#   │ localhost:8080 (S)(K)   │
+#   │ capacity: 10000         │
+#   └─────────────────────────┘
+#
 workers:
   - host: "localhost:8080"
     data_address: "localhost:9090"

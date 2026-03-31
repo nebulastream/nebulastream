@@ -10,6 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology:
+#
+#   ┌─────────────────────────┐
+#   │  worker-1  (cap: 10000) │
+#   │  S: GENERATOR_SOURCE    │
+#   │  K: VOID_SINK           │
+#   └─────────────────────────┘
+#
+#   Single worker hosts both source and sink.
+#   8 identical queries deployed on the same node.
+
 query:
   - |
     SELECT 

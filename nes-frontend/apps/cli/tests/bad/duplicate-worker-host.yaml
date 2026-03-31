@@ -1,6 +1,7 @@
 # Tests that duplicate worker hosts are rejected.
 # host1 appears twice in the workers list.
 # Expected: fails with "duplicate worker" error.
+
 query: |
   SELECT * FROM mock_source WHERE a > b INTO mock_sink
 

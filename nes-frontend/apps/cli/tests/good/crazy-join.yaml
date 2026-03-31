@@ -10,6 +10,31 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# Topology:
+#
+#   No explicit workers section -- single implicit worker hosts everything.
+#
+#   S: stream  S: stream2  S: stream3  S: stream4  S: stream5  S: stream6  S: stream7  S: stream8
+#       │          │           │           │           │           │           │           │
+#       └──────┬───┘           │           │           │           │           │           │
+#              │ JOIN          │           │           │           │           │           │
+#              └───────┬───────┘           │           │           │           │           │
+#                      │ JOIN              │           │           │           │           │
+#                      └──────────┬────────┘           │           │           │           │
+#                                 │ JOIN               │           │           │           │
+#                                 └───────────┬────────┘           │           │           │
+#                                             │ JOIN               │           │           │
+#                                             └───────────┬────────┘           │           │
+#                                                         │ JOIN               │           │
+#                                                         └───────────┬────────┘           │
+#                                                                     │ JOIN               │
+#                                                                     └───────────┬────────┘
+#                                                                                 │ JOIN
+#                                                                                 ▼
+#                                                                          K: sink (File)
+#
+#   8-way chained join on a single worker.
+
 query: |
   SELECT start, end, id FROM (
   SELECT * FROM (SELECT * FROM stream)
