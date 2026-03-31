@@ -24,10 +24,13 @@
 
 namespace NES
 {
-std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator()
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThreadsValidator(std::string threadType)
 {
     struct Validator : ConfigurationValidation
     {
+        std::string threadType;
+        explicit Validator(std::string threadType) : ConfigurationValidation(), threadType(std::move(threadType)) {}
+
         [[nodiscard]] bool isValid(const std::string& stringValue) const override
         {
             size_t value{};
@@ -37,20 +40,21 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
             }
             else
             {
-                NES_ERROR("Invalid WorkerThread configuration: {}.", stringValue.data());
+                NES_ERROR("Invalid {} threads configuration: {}.", threadType, stringValue.data());
                 return false;
             }
 
             if (value == 0)
             {
-                NES_ERROR("Invalid WorkerThread configuration: {}. Cannot be zero", stringValue.data());
+                NES_ERROR("Invalid {} threads configuration: {}. Cannot be zero", threadType, stringValue.data());
                 return false;
             }
 
             if (value > std::thread::hardware_concurrency())
             {
                 NES_ERROR(
-                    "Cannot use more worker thread than available cpus: {} vs. {} available CPUs",
+                    "Cannot use more {} threads than available cpus: {} vs. {} available CPUs",
+                    threadType,
                     value,
                     std::thread::hardware_concurrency());
                 return false;
@@ -60,7 +64,7 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::numberOfThrea
         }
     };
 
-    return std::make_shared<Validator>();
+    return std::make_shared<Validator>(std::move(threadType));
 }
 
 std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::queueSizeValidator()
@@ -72,6 +76,24 @@ std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::queueSizeVali
             if (!from_chars<size_t>(stringValue))
             {
                 NES_ERROR("Invalid TaskQueueSize configuration: {}.", stringValue.data());
+                return false;
+            }
+            return true;
+        }
+    };
+
+    return std::make_shared<Validator>();
+}
+
+std::shared_ptr<ConfigurationValidation> QueryEngineConfiguration::pinThreadsValidator()
+{
+    struct Validator : ConfigurationValidation
+    {
+        [[nodiscard]] bool isValid(const std::string& stringValue) const override
+        {
+            if (!from_chars<bool>(stringValue))
+            {
+                NES_ERROR("Invalid pin threads configuration: {}.", stringValue.data());
                 return false;
             }
             return true;

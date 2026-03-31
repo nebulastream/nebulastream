@@ -73,7 +73,7 @@ std::mutex LazySingleton<SingletonType>::instantiationMutex;
 class IOThread
 {
 public:
-    explicit IOThread(size_t poolSize = 1);
+    explicit IOThread(bool pinThreads, size_t poolSize);
 
     ~IOThread();
 

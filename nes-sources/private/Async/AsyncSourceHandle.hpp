@@ -44,7 +44,9 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<AsyncSource> sourceImplementation);
+        std::unique_ptr<AsyncSource> sourceImplementation,
+        bool pinThreads,
+        size_t numberOfIOThreads);
     ~AsyncSourceHandle() override = default;
 
     AsyncSourceHandle(const AsyncSourceHandle&) = delete;
@@ -64,9 +66,14 @@ private:
     {
         Initial() = delete;
 
-        explicit Initial(std::unique_ptr<AsyncSource> source) : sourceContext(std::move(source)) { }
+        explicit Initial(std::unique_ptr<AsyncSource> source, const bool pinThreads, const size_t numberOfIOThreads)
+            : sourceContext(std::move(source)), pinThreads(pinThreads), numberOfIOThreads(numberOfIOThreads)
+        {
+        }
 
         std::unique_ptr<AsyncSource> sourceContext;
+        bool pinThreads;
+        size_t numberOfIOThreads;
     };
 
     struct Running
@@ -77,8 +84,10 @@ private:
             std::unique_ptr<AsyncSource> source,
             SourceReturnType::EmitFunction emitFn,
             OriginId sourceId,
-            std::shared_ptr<AbstractBufferProvider> bufferProvider)
-            : ioThread{LazySingleton<IOThread>::getOrCreate()}
+            std::shared_ptr<AbstractBufferProvider> bufferProvider,
+            const bool pinThreads,
+            const size_t numberOfIOThreads)
+            : ioThread{LazySingleton<IOThread>::getOrCreate(pinThreads, numberOfIOThreads)}
             , runner{std::make_shared<AsyncSourceRunner>(std::move(source), std::move(emitFn))}
             , cancellationSignal{std::make_unique<asio::cancellation_signal>()}
             , terminationFuture{asio::co_spawn(

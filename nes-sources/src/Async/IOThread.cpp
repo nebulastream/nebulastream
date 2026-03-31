@@ -14,6 +14,8 @@
 
 #include <Async/IOThread.hpp>
 
+#include <pthread.h>
+#include <sched.h>
 #include <boost/asio/executor_work_guard.hpp>
 
 #include <Util/Logger/Logger.hpp>
@@ -22,18 +24,46 @@ namespace NES
 {
 
 /// The io_context is initialized first from its default constructor.
-IOThread::IOThread(size_t poolSize) : ioContexts(poolSize), nextContext(0)
+IOThread::IOThread(const bool pinThreads, const size_t poolSize) : ioContexts(poolSize), nextContext(0)
 {
-    NES_DEBUG("IOThread: starting with {} threads.", poolSize);
+    NES_DEBUG("IOThread: starting with {} threads, and thread pinning: {}.", poolSize, pinThreads);
 
-    // Create one io_context per thread
     for (size_t i = 0; i < poolSize; ++i)
     {
-        // Create work guard to keep io_context running
-        workGuards.emplace_back(asio::make_work_guard(ioContexts.at(i)));
+        if (pinThreads)
+        {
+            workGuards.emplace_back(asio::make_work_guard(ioContexts.at(i)));
 
-        // Create thread that runs this specific io_context
-        threads.emplace_back(fmt::format("IOThread_{}", i), [ioc = &ioContexts.at(i)]() { ioc->run(); });
+            threads.emplace_back(
+                fmt::format("IOThread_{}", i),
+                [ioc = &ioContexts.at(i), cpuId = i]()
+                {
+                    // Pin this thread to a specific CPU core
+                    cpu_set_t cpuset;
+                    CPU_ZERO(&cpuset);
+                    CPU_SET(cpuId, &cpuset);
+
+                    int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
+                    if (rc != 0)
+                    {
+                        NES_WARNING("IOThread: failed to pin thread to CPU {}: error {}", cpuId, rc);
+                    }
+                    else
+                    {
+                        NES_DEBUG("IOThread: pinned thread to CPU {}", cpuId);
+                    }
+
+                    ioc->run();
+                });
+        }
+        else
+        {
+            // Create work guard to keep io_context running
+            workGuards.emplace_back(asio::make_work_guard(ioContexts.at(i)));
+
+            // Create thread that runs this specific io_context
+            threads.emplace_back(fmt::format("IOThread_{}", i), [ioc = &ioContexts.at(i)]() { ioc->run(); });
+        }
     }
 }
 
@@ -53,5 +83,4 @@ IOThread::~IOThread()
     // Threads will join automatically due to jthread
     NES_DEBUG("IOThread: stopped.");
 }
-
 }

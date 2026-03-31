@@ -116,7 +116,12 @@ void NodeEngine::startQuery(QueryId queryId)
     if (auto qep = queryTracker->moveToExecuting(queryId))
     {
         systemEventListener->onEvent(StartQuerySystemEvent(queryId));
-        queryEngine->start(ExecutableQueryPlan::instantiate(*qep, *sourceProvider));
+        queryEngine->start(
+            ExecutableQueryPlan::instantiate(
+                *qep,
+                *sourceProvider,
+                queryEngine->configuration.pinThreads.getValue(),
+                queryEngine->configuration.numberOfIOThreads.getValue()));
     }
     else
     {
