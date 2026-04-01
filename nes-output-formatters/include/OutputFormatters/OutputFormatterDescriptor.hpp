@@ -21,7 +21,6 @@
 namespace NES
 {
 /// Descriptor that stores the configuration parameters of a specific OutputFormatter instance
-/// Currently, there are no parameters that are shared by all types of OutputFormatters.
 /// For a specific OutputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
 class OutputFormatterDescriptor final : public Descriptor
 {
