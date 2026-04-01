@@ -168,6 +168,7 @@ class UncompiledInputFormatterTask
 {
 public:
     static constexpr bool hasSpanningTuple() { return FormatterType::HasSpanningTuple; }
+    static constexpr bool isSequential() { return FormatterType::IsSequential; }
 
     explicit UncompiledInputFormatterTask(
         FormatterType inputFormatIndexer,
@@ -178,10 +179,6 @@ public:
         : inputFormatIndexer(std::move(inputFormatIndexer))
         , schemaInfo(schema)
         , uncompiledIndexerMetaData(typename FormatterType::UncompiledIndexerMetaData{parserConfig, schema})
-        /// Only if we need to resolve spanning tuples, we need the UncompiledSequenceShredder
-        , sequenceShredder(
-              hasSpanningTuple() ? std::make_unique<UncompiledSequenceShredder>(uncompiledIndexerMetaData.getTupleDelimitingBytes().size()) : nullptr)
-
         /// Since we know the schema, we can create a vector that contains a function that converts the string representation of a field value
         /// to our internal representation in the correct order. During parsing, we iterate over the fields in each tuple, and, using the current
         /// field number, load the correct function for parsing from the vector.
@@ -191,6 +188,10 @@ public:
                                       { return getUncompiledParseFunction(field.dataType.type, quotationType); })
               | std::ranges::to<std::vector>())
     {
+        if constexpr (hasSpanningTuple() and not isSequential())
+        {
+            sequenceShredder = std::make_unique<UncompiledSequenceShredder>(uncompiledIndexerMetaData.getTupleDelimitingBytes().size());
+        }
     }
 
     ~UncompiledInputFormatterTask() = default;
@@ -204,12 +205,38 @@ public:
 
     void stopTask() const
     {
-        /// If the UncompiledInputFormatterTask needs to handle spanning tuples, it uses the UncompiledSequenceShredder.
-        /// The logs of 'validateState()' allow us to detect whether something went wrong during formatting and specifically, whether the
-        /// UncompiledSequenceShredder still owns TupleBuffers, that it should have given back to its corresponding source.
-        if constexpr (hasSpanningTuple())
+        if constexpr (isSequential())
+        {
+            INVARIANT(accumulatedSpanningTupleBuffers.empty(),
+                "Sequential input formatter should have no accumulated buffers when stopping.");
+        }
+        else if constexpr (hasSpanningTuple())
         {
             INVARIANT(sequenceShredder != nullptr, "The UncompiledSequenceShredder handles spanning tuples, thus it must not be null.");
+        }
+    }
+
+
+    // ========== Sequential (single-threaded) execution path ==========
+    void executeTask(const UncompiledRawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
+    requires(FormatterType::IsFormattingRequired and isSequential())
+    {
+        auto fieldIndexFunction = typename FormatterType::UncompiledFieldIndexFunctionType();
+        inputFormatIndexer.indexRawBuffer(fieldIndexFunction, rawBuffer, uncompiledIndexerMetaData);
+
+        ChunkNumber::Underlying runningChunkNumber = ChunkNumber::INITIAL;
+
+        if (fieldIndexFunction.getOffsetOfFirstTupleDelimiter() < rawBuffer.getBufferSize())
+        {
+            /// Buffer has at least one delimiter — process full tuples and report truncated bytes
+            processSequentialBufferWithDelimiter(rawBuffer, runningChunkNumber, fieldIndexFunction, pec);
+        }
+        else
+        {
+            /// Buffer has no delimiter — entire buffer is part of a multi-buffer spanning tuple
+            const auto byteCount = rawBuffer.getNumberOfBytes();
+            accumulatedSpanningTupleBuffers.emplace_back(rawBuffer.getRawBuffer(), byteCount);
+            rawBuffer.setNumberOfTuples(0);
         }
     }
 
@@ -240,7 +267,7 @@ public:
     }
 
     void executeTask(const UncompiledRawTupleBuffer& rawBuffer, PipelineExecutionContext& pec)
-    requires(FormatterType::IsFormattingRequired and hasSpanningTuple())
+    requires(FormatterType::IsFormattingRequired and hasSpanningTuple() and not isSequential())
     {
         /// Get field delimiter indices of the raw buffer by using the UncompiledInputFormatIndexer implementation
         auto fieldIndexFunction = typename FormatterType::UncompiledFieldIndexFunctionType();
@@ -264,9 +291,12 @@ public:
 
     std::ostream& taskToString(std::ostream& os) const
     {
-        /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "UncompiledInputFormatterTask(" << ", inputFormatIndexer: " << inputFormatIndexer
-           << ", sequenceShredder: " << *sequenceShredder << ")\n";
+        os << "UncompiledInputFormatterTask(inputFormatIndexer: " << inputFormatIndexer;
+        if constexpr (hasSpanningTuple() and not isSequential())
+        {
+            os << ", sequenceShredder: " << *sequenceShredder;
+        }
+        os << ")\n";
         return os;
     }
 
@@ -274,8 +304,18 @@ private:
     FormatterType inputFormatIndexer;
     UncompiledSchemaInfo schemaInfo;
     typename FormatterType::UncompiledIndexerMetaData uncompiledIndexerMetaData;
-    std::unique_ptr<UncompiledSequenceShredder> sequenceShredder; /// unique_ptr, because mutex is not copiable
+    struct Empty {};
+
+    /// Concurrent mode only: lock-free spanning tuple resolution across threads
+    [[no_unique_address]] std::conditional_t<hasSpanningTuple() and not isSequential(),
+        std::unique_ptr<UncompiledSequenceShredder>, Empty> sequenceShredder;
+
     std::vector<UncompiledParseFunctionSignature> parseFunctions;
+
+    /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
+    /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
+    [[no_unique_address]] std::conditional_t<isSequential(),
+        std::vector<std::pair<TupleBuffer, size_t>>, Empty> accumulatedSpanningTupleBuffers;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
     /// Iterates over all full tuples using hasNext() and parses the tuples into formatted data.
@@ -284,12 +324,13 @@ private:
         ChunkNumber::Underlying& runningChunkNumber,
         UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
         TupleBuffer& formattedBuffer,
-        PipelineExecutionContext& pec) const
+        PipelineExecutionContext& pec,
+        const size_t startTupleIdx = 0) const
     {
         const auto bufferProvider = pec.getBufferManager();
         const size_t numberOfTuplesPerBuffer = bufferProvider->getBufferSize() / this->schemaInfo.getSizeOfTupleInBytes();
         PRECONDITION(numberOfTuplesPerBuffer != 0, "The capacity of a buffer must suffice to hold at least one tuple.");
-        size_t numTuplesReadFromRawBuffer = 0;
+        size_t numTuplesReadFromRawBuffer = startTupleIdx;
 
         while (fieldIndexFunction.hasNext(numTuplesReadFromRawBuffer))
         {
@@ -421,6 +462,92 @@ private:
         formattedBuffer.setChunkNumber(ChunkNumber(runningChunkNumber++));
         formattedBuffer.setOriginId(rawBuffer.getOriginId());
         pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+    }
+
+private:
+    /// Sequential path: buffer has at least one delimiter.
+    void processSequentialBufferWithDelimiter(
+        const UncompiledRawTupleBuffer& rawBuffer,
+        ChunkNumber::Underlying& runningChunkNumber,
+        UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        PipelineExecutionContext& pec)
+    {
+        const auto bufferProvider = pec.getBufferManager();
+        auto formattedBuffer = bufferProvider->getBufferBlocking();
+        size_t startTupleIdx = 0;
+
+        /// If we have accumulated buffers from previous no-delimiter calls, assemble and process the spanning tuple
+        if (!accumulatedSpanningTupleBuffers.empty())
+        {
+            processSequentialSpanningTuple(rawBuffer, fieldIndexFunction, formattedBuffer, *bufferProvider);
+            /// The first indexed "tuple" (from byte 0 to first delimiter) was the spanning tuple tail — skip it
+            startTupleIdx = 1;
+        }
+
+        /// Process remaining full tuples
+        if (fieldIndexFunction.hasNext(startTupleIdx))
+        {
+            parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec, startTupleIdx);
+        }
+
+        /// Emit the formatted buffer if it has tuples
+        if (formattedBuffer.getNumberOfTuples() != 0)
+        {
+            setUncompiledMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, true);
+            pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
+        }
+
+        /// Report truncated trailing bytes (bytes after the last delimiter) so the outside can prepend them to the next buffer
+        const auto delimiterSize = uncompiledIndexerMetaData.getTupleDelimitingBytes().size();
+
+        // Todo: offsetOfLastDelimiter is not always known!
+        const auto truncatedByteCount = rawBuffer.getNumberOfBytes()
+            - (fieldIndexFunction.getOffsetOfLastTupleDelimiter() + delimiterSize);
+        rawBuffer.setNumberOfTuples(truncatedByteCount);
+    }
+
+    /// Sequential path: assembles a spanning tuple from accumulated buffers + leading bytes of current buffer.
+    void processSequentialSpanningTuple(
+        const UncompiledRawTupleBuffer& rawBuffer,
+        const UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        TupleBuffer& formattedBuffer,
+        AbstractBufferProvider& bufferProvider)
+    {
+        const auto delimiterBytes = uncompiledIndexerMetaData.getTupleDelimitingBytes();
+
+        /// Build the spanning tuple: delimiter + accumulated_data + leading_bytes + delimiter
+        std::stringstream spanningTupleStringStream;
+        spanningTupleStringStream << delimiterBytes;
+
+        for (const auto& [buffer, byteCount] : accumulatedSpanningTupleBuffers)
+        {
+            spanningTupleStringStream << std::string_view(buffer.template getAvailableMemoryArea<char>().data(), byteCount);
+        }
+
+        /// Leading bytes = bytes before first delimiter in current buffer (tail of spanning tuple)
+        const auto leadingBytes = rawBuffer.getBufferView().substr(0, fieldIndexFunction.getOffsetOfFirstTupleDelimiter());
+        spanningTupleStringStream << leadingBytes;
+        spanningTupleStringStream << delimiterBytes;
+
+        const std::string completeSpanningTuple(spanningTupleStringStream.str());
+
+        /// Release accumulated buffers — moves ownership back to the buffer pool
+        accumulatedSpanningTupleBuffers.clear();
+
+        /// Process the spanning tuple if it contains actual data (not just two delimiters)
+        const auto sizeOfTwoDelimiters = 2 * delimiterBytes.size();
+        if (completeSpanningTuple.size() > sizeOfTwoDelimiters)
+        {
+            auto tempFIF = typename FormatterType::UncompiledFieldIndexFunctionType();
+            auto tempRawBuffer = rawBuffer; /// shallow copy (TupleBuffer is ref-counted)
+            tempRawBuffer.setSpanningTuple(completeSpanningTuple);
+            inputFormatIndexer.indexRawBuffer(tempFIF, tempRawBuffer, uncompiledIndexerMetaData);
+
+            processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
+                completeSpanningTuple, tempFIF, 0, formattedBuffer,
+                this->schemaInfo, this->parseFunctions, bufferProvider);
+            formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+        }
     }
 };
 

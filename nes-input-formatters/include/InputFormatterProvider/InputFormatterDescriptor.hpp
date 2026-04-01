@@ -15,11 +15,19 @@
 #pragma once
 
 #include <ostream>
+
 #include <Configurations/Descriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
 
 namespace NES
 {
+
+enum class InputFormatterThreadingMode : uint8_t
+{
+    SEQUENTIAL,
+    PARALLEL
+};
+
 /// Descriptor that stores the configuration parameters of a specific InputFormatter instance
 /// Currently, there are no parameters that are shared by all types of InputFormatters.
 /// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
@@ -35,10 +43,21 @@ public:
 
     const std::string& getInputFormatterType() const;
 
+    [[nodiscard]] InputFormatterThreadingMode getThreadingMode() const
+    {
+        return this->getFromConfig(THREADING_MODE);
+    }
+
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
         std::string{TYPE_STRING},
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TYPE, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormatterThreadingMode> THREADING_MODE{
+        "threading_mode",
+        EnumWrapper{InputFormatterThreadingMode::PARALLEL},
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(THREADING_MODE, config); }};
 
     /// A user may overwrite the parsing function for every input type
     static inline const DescriptorConfig::ConfigParameter<std::string> INT8_PARSER{
@@ -93,6 +112,7 @@ public:
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             TYPE,
+            THREADING_MODE,
             INT8_PARSER,
             INT16_PARSER,
             INT32_PARSER,

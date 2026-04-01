@@ -48,7 +48,8 @@ concept UncompiledFieldIndexFunctionType = requires(T& indexFunction) {
 template <typename T>
 concept UncompiledInputFormatIndexerType
     = UncompiledIndexerMetaDataType<typename T::UncompiledIndexerMetaData> && std::same_as<std::remove_cv_t<decltype(T::IsFormattingRequired)>, bool>
-    && std::same_as<std::remove_cv_t<decltype(T::HasSpanningTuple)>, bool> && UncompiledFieldIndexFunctionType<typename T::UncompiledFieldIndexFunctionType>
+    && std::same_as<std::remove_cv_t<decltype(T::HasSpanningTuple)>, bool>
+    && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool> && UncompiledFieldIndexFunctionType<typename T::UncompiledFieldIndexFunctionType>
     && requires(const T& indexer) {
            {
                indexer.indexRawBuffer(

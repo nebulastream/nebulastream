@@ -38,6 +38,106 @@
 namespace NES
 {
 
+struct DefaultPEC final : PipelineExecutionContext
+{
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>* operatorHandlers = nullptr;
+    std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler;
+    std::function<void(const TupleBuffer& tb, std::chrono::milliseconds duration)> repeatHandler;
+    std::shared_ptr<AbstractBufferProvider> bm;
+    size_t numberOfThreads;
+    WorkerThreadId threadId;
+    PipelineId pipelineId;
+    /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
+    /// the address might change as the vector might be resized and thus, the object have a different address.
+    std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
+
+#ifndef NO_ASSERT
+    bool wasRepeated = false;
+#endif
+
+    DefaultPEC(
+        size_t numberOfThreads,
+        WorkerThreadId threadId,
+        PipelineId pipelineId,
+        std::shared_ptr<AbstractBufferProvider> bm,
+        std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
+        std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
+        : handler(std::move(handler))
+        , repeatHandler(std::move(repeatHandler))
+        , bm(std::move(bm))
+        , numberOfThreads(numberOfThreads)
+        , threadId(threadId)
+        , pipelineId(pipelineId)
+    {
+    }
+
+    [[nodiscard]] WorkerThreadId getWorkerThreadId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return threadId;
+    }
+
+    TupleBuffer allocateTupleBuffer() override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm->getBufferBlocking();
+    }
+
+    TupleBuffer& pinBuffer(TupleBuffer&& tupleBuffer) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        pinnedBuffers.emplace_back(std::make_unique<TupleBuffer>(tupleBuffer));
+        return *pinnedBuffers.back();
+    }
+
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return numberOfThreads;
+    }
+
+    bool emitBuffer(const TupleBuffer& buffer, ContinuationPolicy policy) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return handler(buffer, policy);
+    }
+
+    void repeatTask(const TupleBuffer& buffer, std::chrono::milliseconds duration) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+#ifndef NO_ASSERT
+        wasRepeated = true;
+#endif
+
+        repeatHandler(buffer, duration);
+    }
+
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return bm;
+    }
+
+    [[nodiscard]] PipelineId getPipelineId() const override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return pipelineId;
+    }
+
+    std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
+    {
+        PRECONDITION(operatorHandlers, "OperatorHandlers were not set");
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        return *operatorHandlers;
+    }
+
+    void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& handlers) override
+    {
+        PRECONDITION(!wasRepeated, "A task should terminate after repeating");
+        operatorHandlers = std::addressof(handlers);
+    }
+};
+
 namespace
 {
 SourceReturnType::EmitFunction emitFunction(
@@ -57,6 +157,73 @@ SourceReturnType::EmitFunction emitFunction(
     {
         return std::visit(
             Overloaded{
+                [&](const SourceReturnType::Execute& executeData)
+                {
+                    for (const auto& successor : successors)
+                    {
+                        {
+                            /// release the semaphore in case the source wants to terminate
+                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
+                            availableBuffer->acquire();
+                            if (stopToken.stop_requested())
+                            {
+                                return SourceReturnType::EmitResult::STOP_REQUESTED;
+                            }
+                        }
+                        DefaultPEC pec(
+                            1, // number of threads
+                            WorkerThreadId{static_cast<uint32_t>(executeData.originId.getRawValue())},
+                            successor->id,
+                            executeData.bufferProvider,
+                            [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy) //continuationPolicy
+                            {
+                                ENGINE_LOG_DEBUG(
+                                    "Task emitted tuple buffer {}-{}. Tuples: {}",
+                                    task.queryId,
+                                    task.pipelineId,
+                                    tupleBuffer.getNumberOfTuples());
+                                /// Emit all subsequent buffers into the admission / task queue
+                                return std::ranges::all_of(
+                                    successor->successors,
+                                    [&](const auto& successor)
+                                    {
+                                        {
+                                            /// release the semaphore in case the source wants to terminate
+                                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
+                                            availableBuffer->acquire();
+                                            if (stopToken.stop_requested())
+                                            {
+                                                return false;
+                                            }
+                                        }
+                                        /// The admission queue might be full, we have to reattempt
+                                        while (not emitter.emitWork(
+                                            queryId,
+                                            successor,
+                                            tupleBuffer,
+                                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                                            PipelineExecutionContext::ContinuationPolicy::NEVER))
+                                        {
+                                            if (stopToken.stop_requested())
+                                            {
+                                                return false;
+                                            }
+                                        }
+                                        ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
+                                        return true;
+                                    });
+                            },
+                            [&](const TupleBuffer&, std::chrono::milliseconds)
+                            {
+                                throw SkippingDelayedTaskDuringShutdown("Cannot execute delayed task as follow-up to source");
+                            }
+
+                        );
+                        successor->stage->execute(executeData.buffer, pec);
+                        availableBuffer->release();
+                    }
+                    return SourceReturnType::EmitResult::SUCCESS;
+                },
                 [&](const SourceReturnType::Data& data)
                 {
                     for (const auto& successor : successors)
