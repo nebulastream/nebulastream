@@ -24,3 +24,5 @@ add_source_files(nes-input-formatters-uncompiled
 # Register plugins
 add_plugin(UncompiledCSV UncompiledInputFormatIndexer nes-input-formatters-uncompiled UncompiledCSVInputFormatIndexer.cpp)
 add_plugin(UncompiledCSV InputFormatterValidation nes-input-formatters-uncompiled UncompiledCSVInputFormatIndexer.cpp)
+add_plugin(UncompiledJSON UncompiledInputFormatIndexer nes-input-formatters-uncompiled UncompiledSIMDJSONInputFormatIndexer.cpp)
+add_plugin(UncompiledJSON InputFormatterValidation nes-input-formatters-uncompiled UncompiledSIMDJSONInputFormatIndexer.cpp)

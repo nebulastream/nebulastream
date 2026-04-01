@@ -66,7 +66,7 @@ public:
     template <typename UncompiledFieldIndexFunctionType>
     friend void processUncompiledTuple(
         std::string_view tupleView,
-        const UncompiledFieldIndexFunction<UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        UncompiledFieldIndexFunction<UncompiledFieldIndexFunctionType>& fieldIndexFunction,
         size_t numTuplesReadFromRawBuffer,
         TupleBuffer& formattedBuffer,
         const UncompiledSchemaInfo& schemaInfo,
@@ -98,9 +98,11 @@ public:
 
     [[nodiscard]] size_t getTotalNumberOfTuples() const { return static_cast<const Derived*>(this)->applyGetTotalNumberOfTuples(); }
 
-    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t tupleIdx, size_t fieldIdx) const
+    [[nodiscard]] bool hasNext(size_t tupleIdx) { return static_cast<Derived*>(this)->applyHasNext(tupleIdx); }
+
+    [[nodiscard]] std::string_view readFieldAt(const std::string_view bufferView, size_t tupleIdx, size_t fieldIdx)
     {
-        return static_cast<const Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
+        return static_cast<Derived*>(this)->applyReadFieldAt(bufferView, tupleIdx, fieldIdx);
     }
 };
 
@@ -111,6 +113,8 @@ struct UncompiledNoopFieldIndexFunction
     [[nodiscard]] static UncompiledFieldIndex getOffsetOfLastTupleDelimiter() { return 0; }
 
     [[nodiscard]] static size_t getTotalNumberOfTuples() { return 0; }
+
+    [[nodiscard]] static bool hasNext(size_t) { return false; }
 
     [[nodiscard]] static std::string_view readFieldAt(const std::string_view bufferView, size_t, size_t) { return bufferView; }
 };

@@ -35,10 +35,11 @@ concept UncompiledIndexerMetaDataType = requires(InputFormatterDescriptor config
 };
 
 template <typename T>
-concept UncompiledFieldIndexFunctionType = requires(const T& indexFunction) {
+concept UncompiledFieldIndexFunctionType = requires(T& indexFunction) {
     { indexFunction.getOffsetOfFirstTupleDelimiter() };
     { indexFunction.getOffsetOfLastTupleDelimiter() };
     { indexFunction.getTotalNumberOfTuples() };
+    { indexFunction.hasNext(std::declval<size_t>()) } -> std::same_as<bool>;
     {
         indexFunction.readFieldAt(std::declval<std::string_view>(), std::declval<size_t>(), std::declval<size_t>())
     } -> std::same_as<std::string_view>;

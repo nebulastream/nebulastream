@@ -55,7 +55,9 @@ class UncompiledFieldOffsets final : public UncompiledFieldIndexFunction<Uncompi
 
     [[nodiscard]] size_t applyGetTotalNumberOfTuples() const { return this->totalNumberOfTuples; }
 
-    [[nodiscard]] std::string_view applyReadFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx) const
+    [[nodiscard]] bool applyHasNext(size_t tupleIdx) const { return tupleIdx < this->totalNumberOfTuples; }
+
+    [[nodiscard]] std::string_view applyReadFieldAt(const std::string_view bufferView, const size_t tupleIdx, const size_t fieldIdx)
     {
         const size_t numberOfPriorFields = tupleIdx * numberOfOffsetsPerTuple + fieldIdx;
         const auto startOfCurrentField = this->indexValues.at(numberOfPriorFields);

@@ -79,7 +79,7 @@ inline size_t calculateUncompiledNumberOfRequiredFormattedBuffers(
 template <typename UncompiledFieldIndexFunctionType>
 void processUncompiledTuple(
     const std::string_view tupleView,
-    const UncompiledFieldIndexFunction<UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+    UncompiledFieldIndexFunction<UncompiledFieldIndexFunctionType>& fieldIndexFunction,
     const size_t numTuplesReadFromRawBuffer,
     TupleBuffer& formattedBuffer,
     const UncompiledSchemaInfo& schemaInfo,
@@ -278,58 +278,39 @@ private:
     std::vector<UncompiledParseFunctionSignature> parseFunctions;
 
     /// Called by processRawBufferWithTupleDelimiter if the raw buffer contains at least one full tuple.
-    /// Iterates over all full tuples, using the indexes in UncompiledFieldOffsets and parses the tuples into formatted data.
+    /// Iterates over all full tuples using hasNext() and parses the tuples into formatted data.
     void parseRawBuffer(
         const UncompiledRawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
         TupleBuffer& formattedBuffer,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
-        const auto numberOfTuplesInFirstFormattedBuffer = formattedBuffer.getNumberOfTuples();
         const size_t numberOfTuplesPerBuffer = bufferProvider->getBufferSize() / this->schemaInfo.getSizeOfTupleInBytes();
         PRECONDITION(numberOfTuplesPerBuffer != 0, "The capacity of a buffer must suffice to hold at least one tuple.");
-        const auto numberOfBuffersToFill = calculateUncompiledNumberOfRequiredFormattedBuffers(
-            fieldIndexFunction.getTotalNumberOfTuples(), numberOfTuplesInFirstFormattedBuffer, numberOfTuplesPerBuffer);
-
-        /// Determine the total number of tuples to produce, including potential prior (spanning) tuples
-        /// If the first buffer is full already, the first iteration of the for loop below does 'nothing'
-        size_t numberOfFormattedTuplesToProduce = fieldIndexFunction.getTotalNumberOfTuples() + numberOfTuplesInFirstFormattedBuffer;
         size_t numTuplesReadFromRawBuffer = 0;
 
-        /// Initialize indexes for offset buffer
-        for (size_t bufferIdx = 0; bufferIdx < numberOfBuffersToFill; ++bufferIdx)
+        while (fieldIndexFunction.hasNext(numTuplesReadFromRawBuffer))
         {
-            /// Either fill the entire buffer, or process the leftover formatted tuples to produce
-            const size_t numberOfTuplesToRead = std::min(numberOfTuplesPerBuffer, numberOfFormattedTuplesToProduce);
-            /// If the current buffer is not the first buffer, set the meta data of the prior buffer, emit it, get a new buffer and reset the associated counters
-            if (bufferIdx != 0)
+            /// If the current formatted buffer is full, emit it and get a new one
+            if (formattedBuffer.getNumberOfTuples() >= numberOfTuplesPerBuffer)
             {
-                /// The current raw buffer produces more than one formatted buffer.
-                /// Each formatted buffer has the sequence number of the raw buffer and a chunk number that uniquely identifies it.
-                /// Only the last formatted buffer sets the 'isLastChunk' member to true.
                 setUncompiledMetadataOfFormattedBuffer(rawBuffer.getRawBuffer(), formattedBuffer, runningChunkNumber, false);
                 pec.emitBuffer(formattedBuffer, PipelineExecutionContext::ContinuationPolicy::POSSIBLE);
-                /// The 'isLastChunk' member of a new buffer is true pre default. If we don't require another buffer, the flag stays true.
                 formattedBuffer = bufferProvider->getBufferBlocking();
             }
 
-            /// Fill current buffer until either full, or we exhausted tuples in raw buffer
-            while (formattedBuffer.getNumberOfTuples() < numberOfTuplesToRead)
-            {
-                processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
-                    rawBuffer.getBufferView(),
-                    fieldIndexFunction,
-                    numTuplesReadFromRawBuffer,
-                    formattedBuffer,
-                    this->schemaInfo,
-                    this->parseFunctions,
-                    *bufferProvider);
-                formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
-                ++numTuplesReadFromRawBuffer;
-            }
-            numberOfFormattedTuplesToProduce -= formattedBuffer.getNumberOfTuples();
+            processUncompiledTuple<typename FormatterType::UncompiledFieldIndexFunctionType>(
+                rawBuffer.getBufferView(),
+                fieldIndexFunction,
+                numTuplesReadFromRawBuffer,
+                formattedBuffer,
+                this->schemaInfo,
+                this->parseFunctions,
+                *bufferProvider);
+            formattedBuffer.setNumberOfTuples(formattedBuffer.getNumberOfTuples() + 1);
+            ++numTuplesReadFromRawBuffer;
         }
     }
 
@@ -340,7 +321,7 @@ private:
     void processRawBufferWithTupleDelimiter(
         const UncompiledRawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
@@ -368,8 +349,8 @@ private:
                 this->parseFunctions);
         }
 
-        /// 2. process tuples in buffer
-        if (fieldIndexFunction.getTotalNumberOfTuples() > 0)
+        /// 2. process tuples in buffer — iterate for as long as the field index function indicates more tuples
+        if (fieldIndexFunction.hasNext(0))
         {
             parseRawBuffer(rawBuffer, runningChunkNumber, fieldIndexFunction, formattedBuffer, pec);
         }
@@ -408,7 +389,7 @@ private:
     void processRawBufferWithoutTupleDelimiter(
         const UncompiledRawTupleBuffer& rawBuffer,
         ChunkNumber::Underlying& runningChunkNumber,
-        const UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
+        UncompiledFieldIndexFunction<typename FormatterType::UncompiledFieldIndexFunctionType>& fieldIndexFunction,
         PipelineExecutionContext& pec) const
     {
         const auto bufferProvider = pec.getBufferManager();
