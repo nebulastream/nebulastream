@@ -42,6 +42,7 @@ class UncompiledNativeInputFormatIndexer : public UncompiledInputFormatIndexer<U
 public:
     static constexpr bool IsFormattingRequired = false;
     static constexpr bool HasSpanningTuple = false;
+    static constexpr bool IsSequential = false;
     using UncompiledFieldIndexFunctionType = UncompiledNoopFieldIndexFunction;
     using UncompiledIndexerMetaData = UncompiledNativeMetaData;
 

@@ -70,6 +70,7 @@ public:
     static constexpr std::string_view NAME = "UncompiledCSV";
     static constexpr bool IsFormattingRequired = true;
     static constexpr bool HasSpanningTuple = true;
+    static constexpr bool IsSequential = false;
     using UncompiledIndexerMetaData = UncompiledCSVMetaData;
     using UncompiledFieldIndexFunctionType = UncompiledFieldOffsets<UNCOMPILED_CSV_NUM_OFFSETS_PER_FIELD>;
 

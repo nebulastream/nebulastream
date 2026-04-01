@@ -26,6 +26,8 @@
 #include <fmt/ostream.h>
 #include <BackpressureChannel.hpp>
 
+#include <Sources/SourceDescriptor.hpp>
+
 namespace NES
 {
 
@@ -35,6 +37,7 @@ class SourceThread;
 struct SourceRuntimeConfiguration
 {
     size_t inflightBufferLimit;
+    InputFormatterThreadingMode inputFormatterThreadingMode;
 };
 
 /// Interface class to handle sources.

@@ -24,7 +24,6 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <InputFormatterDescriptor.hpp>
 #include <Configurations/Descriptor.hpp>
 #include <Configurations/Enums/EnumWrapper.hpp>
 #include <DataTypes/Schema.hpp>
@@ -37,22 +36,12 @@
 #include <Util/Reflection.hpp>
 #include <fmt/core.h>
 #include <folly/hash/Hash.h>
+#include <InputFormatterDescriptor.hpp>
 
 namespace NES
 {
 class SourceCatalog;
 class OperatorSerializationUtil;
-
-// struct ParserConfig
-// {
-//     std::string parserType;
-//     std::string tupleDelimiter;
-//     std::string fieldDelimiter;
-//     bool allowCommasInStrings{};
-//     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
-//     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-//     static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
-// };
 
 class SourceDescriptor final : public Descriptor
 {
@@ -111,6 +100,8 @@ public:
         "max_inflight_buffers",
         INVALID_MAX_INFLIGHT_BUFFERS,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
+
+    // Todo: SEQUENTIAL threading mode is only possible, if
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)

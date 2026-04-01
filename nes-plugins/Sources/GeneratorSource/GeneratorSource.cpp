@@ -88,7 +88,8 @@ void GeneratorSource::close()
     }
 }
 
-BlockingSource::FillTupleBufferResult GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+BlockingSource::FillTupleBufferResult
+GeneratorSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken, const size_t)
 {
     try
     {

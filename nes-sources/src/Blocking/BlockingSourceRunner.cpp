@@ -42,13 +42,15 @@ namespace NES
 
 BlockingSourceRunner::BlockingSourceRunner(
     BackpressureListener backpressureListener,
-    OriginId originId,
+    const OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
-    std::unique_ptr<BlockingSource> sourceImplementation)
+    std::unique_ptr<BlockingSource> sourceImplementation,
+    const InputFormatterThreadingMode inputFormatterThreadingMode)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
+    , inputFormatterThreadingMode(inputFormatterThreadingMode)
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -79,6 +81,77 @@ void addBufferMetaData(OriginId originId, SequenceNumber sequenceNumber, TupleBu
 }
 
 using EmitFn = std::function<void(TupleBuffer&&, bool addBufferMetadata)>;
+using EmitWithResultFn
+    = std::function<SourceReturnType::EmitResult(TupleBuffer&&, bool addBufferMetadata, std::shared_ptr<AbstractBufferProvider>)>;
+
+SourceImplementationTermination dataBlockingSourceRunnerRoutineSequential(
+    const std::stop_token& stopToken,
+    BackpressureListener backpressureListener,
+    BlockingSource& source,
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    const EmitWithResultFn& emitFn)
+{
+    source.open(bufferProvider);
+    SCOPE_EXIT
+    {
+        source.close();
+    };
+
+    const bool requiresMetadata = !source.addsMetadata();
+    TupleBuffer priorBuffer = bufferProvider->getBufferBlocking();
+    priorBuffer.setNumberOfTuples(0);
+    while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
+    {
+        /// 4 Things that could happen:
+        /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
+        /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
+        ///    The thread exits with `StopRequested`
+        /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
+        ///    The thread exits with `EndOfStream`
+        /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the BlockingSourceRunner via the return promise.
+        ///    The thread exists with an exception
+
+
+        /// at this point we are guaranteed that if threading mode is sequential, the type is also sequential
+        std::optional<TupleBuffer> emptyBuffer;
+
+        while (!emptyBuffer && !stopToken.stop_requested())
+        {
+            emptyBuffer = bufferProvider->getBufferWithTimeout(std::chrono::milliseconds(25));
+        }
+        if (stopToken.stop_requested())
+        {
+            return {SourceImplementationTermination::StopRequested};
+        }
+
+        /// copy truncated bytes from prior buffer to current buffer
+        const auto priorTruncatedBytes = priorBuffer.getNumberOfTuples();
+        const auto offsetInPriorBuffer = priorBuffer.getBufferSize() - priorTruncatedBytes;
+        std::memcpy(
+            emptyBuffer.value().getAvailableMemoryArea().data(),
+            priorBuffer.getAvailableMemoryArea().data() + offsetInPriorBuffer,
+            priorTruncatedBytes);
+
+        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken, priorTruncatedBytes);
+        if (fillTupleResult.isEoS())
+        {
+            if (stopToken.stop_requested())
+            {
+                return {SourceImplementationTermination::StopRequested};
+            }
+
+            return {SourceImplementationTermination::EndOfStream};
+        }
+
+        emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes() + priorTruncatedBytes);
+        // the 'priorBuffer' should point to the same control block as the emptyBuffer
+        priorBuffer = emptyBuffer.value();
+        // emit should only return if
+        const auto emitResult = emitFn(std::move(*emptyBuffer), requiresMetadata, bufferProvider);
+        (void)emitResult;
+    }
+    return {SourceImplementationTermination::StopRequested};
+}
 
 SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     const std::stop_token& stopToken,
@@ -105,6 +178,9 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
         /// 4. Failure. The fillTupleBuffer method will throw an exception, the exception is propagted to the BlockingSourceRunner via the return promise.
         ///    The thread exists with an exception
 
+
+        // Todo: utilize threading mode
+        // - at this point we are guaranteed that if threading mode is sequential, the type is also sequential
         std::optional<TupleBuffer> emptyBuffer;
         while (!emptyBuffer && !stopToken.stop_requested())
         {
@@ -115,7 +191,8 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
             return {SourceImplementationTermination::StopRequested};
         }
 
-        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken);
+        // Todo: before filling a buffer, copy truncated bytes from prior in
+        const auto fillTupleResult = source.fillTupleBuffer(*emptyBuffer, stopToken, 0);
 
         if (!fillTupleResult.isEoS())
         {
@@ -144,26 +221,52 @@ void dataBlockingSourceRunner(
     BlockingSource* source,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
+    const InputFormatterThreadingMode threadingMode,
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
-    size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
-    const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
-    {
-        if (shouldAddMetadata)
-        {
-            addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
-        }
-        emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
-    };
-
     try
     {
-        result.set_value_at_thread_exit(
-            dataBlockingSourceRunnerRoutine(stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
-        if (!stopToken.stop_requested())
+        switch (threadingMode)
         {
-            emit(originId, SourceReturnType::EoS{}, stopToken);
+            case InputFormatterThreadingMode::PARALLEL: {
+                size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+                const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
+                {
+                    if (shouldAddMetadata)
+                    {
+                        addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+                    }
+                    emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
+                };
+                result.set_value_at_thread_exit(dataBlockingSourceRunnerRoutine(
+                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+                if (!stopToken.stop_requested())
+                {
+                    emit(originId, SourceReturnType::EoS{}, stopToken);
+                }
+                break;
+            }
+            case InputFormatterThreadingMode::SEQUENTIAL: {
+                size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
+                const EmitWithResultFn dataEmit
+                    = [&](TupleBuffer&& buffer, bool shouldAddMetadata, std::shared_ptr<AbstractBufferProvider> bufferProvider)
+                {
+                    if (shouldAddMetadata)
+                    {
+                        addBufferMetaData(originId, SequenceNumber(sequenceNumberGenerator++), buffer);
+                    }
+                    // SourceReturnType::Error{std::move(backpressureListenerException)}, stopToken)
+                    return emit(originId, SourceReturnType::Execute{std::move(buffer), originId, std::move(bufferProvider)}, stopToken);
+                };
+                result.set_value_at_thread_exit(dataBlockingSourceRunnerRoutineSequential(
+                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+                if (!stopToken.stop_requested())
+                {
+                    emit(originId, SourceReturnType::EoS{}, stopToken);
+                }
+                break;
+            }
         }
     }
     catch (const std::exception& e)
@@ -195,6 +298,7 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
         sourceImplementation.get(),
         std::move(emitFunction),
         originId,
+        inputFormatterThreadingMode,
         localBufferManager);
     thread = std::move(BlockingSourceRunner);
     return true;

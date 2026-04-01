@@ -1,0 +1,250 @@
+# name: projection/Projection.test
+# description: Simple map tests with an add function
+# groups: [Projection]
+
+CREATE LOGICAL SOURCE stream(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE BlockingFile SET( "SequentialUncompiledCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
+ATTACH INLINE
+1,1,1000
+2,1,1001
+3,1,1002
+4,2,2000
+5,19,19000
+6,20,20000
+7,21,21000
+
+# 1: [id]
+SELECT id FROM stream INTO File();
+----
+1
+2
+3
+4
+5
+6
+7
+
+#
+#
+## 2: [value]
+#SELECT value FROM stream INTO File();
+#----
+#1
+#1
+#1
+#2
+#19
+#20
+#21
+#
+## 3: [timestamp]
+#SELECT timestamp FROM stream INTO File();
+#----
+#1000
+#1001
+#1002
+#2000
+#19000
+#20000
+#21000
+#
+## 4: [id, value]
+#SELECT id, value FROM stream INTO File();
+#----
+#1,1
+#2,1
+#3,1
+#4,2
+#5,19
+#6,20
+#7,21
+#
+## 5: [id, timestamp]
+#SELECT id, timestamp FROM stream INTO File();
+#----
+#1,1000
+#2,1001
+#3,1002
+#4,2000
+#5,19000
+#6,20000
+#7,21000
+#
+## 6: [value, timestamp]
+#SELECT value, timestamp FROM stream INTO File();
+#----
+#1,1000
+#1,1001
+#1,1002
+#2,2000
+#19,19000
+#20,20000
+#21,21000
+#
+## 7: [id, value, timestamp]
+#SELECT id, value, timestamp FROM stream INTO File();
+#----
+#1,1,1000
+#2,1,1001
+#3,1,1002
+#4,2,2000
+#5,19,19000
+#6,20,20000
+#7,21,21000
+#
+## 8: [id, timestamp, value]
+#SELECT id, timestamp, value FROM stream INTO File();
+#----
+#1,1000,1
+#2,1001,1
+#3,1002,1
+#4,2000,2
+#5,19000,19
+#6,20000,20
+#7,21000,21
+#
+## 9: [value, id, timestamp]
+#SELECT value, id, timestamp FROM stream INTO File();
+#----
+#1,1,1000
+#1,2,1001
+#1,3,1002
+#2,4,2000
+#19,5,19000
+#20,6,20000
+#21,7,21000
+#
+## 10: [value, timestamp, id]
+#SELECT value, timestamp, id FROM stream INTO File();
+#----
+#1,1000,1
+#1,1001,2
+#1,1002,3
+#2,2000,4
+#19,19000,5
+#20,20000,6
+#21,21000,7
+#
+## 11: [timestamp, id, value]
+#SELECT timestamp, id, value FROM stream INTO File();
+#----
+#1000,1,1
+#1001,2,1
+#1002,3,1
+#2000,4,2
+#19000,5,19
+#20000,6,20
+#21000,7,21
+#
+## 12: [timestamp, value, id]
+#SELECT timestamp, value, id FROM stream INTO File();
+#----
+#1000,1,1
+#1001,1,2
+#1002,1,3
+#2000,2,4
+#19000,19,5
+#20000,20,6
+#21000,21,7
+#
+## [id]
+## Just a rename
+#SELECT id AS new_id FROM stream INTO File();
+#----
+#1
+#2
+#3
+#4
+#5
+#6
+#7
+#
+#
+## [id, value]
+## Rename with another value
+#SELECT id AS new_id, value FROM stream INTO File();
+#----
+#1,1
+#2,1
+#3,1
+#4,2
+#5,19
+#6,20
+#7,21
+#
+## 12: [id, id -> new_field]
+#SELECT id, id AS new_field FROM stream INTO File();
+#----
+#1,1
+#2,2
+#3,3
+#4,4
+#5,5
+#6,6
+#7,7
+#
+## 13: [id, value, id -> new_field]
+#SELECT id, value, id AS new_field FROM stream INTO File();
+#----
+#1,1,1
+#2,1,2
+#3,1,3
+#4,2,4
+#5,19,5
+#6,20,6
+#7,21,7
+#
+### 14: [id, value, timestamp, id -> new_field]
+#SELECT id, value, timestamp, id AS new_field FROM stream INTO File();
+#----
+#1,1,1000,1
+#2,1,1001,2
+#3,1,1002,3
+#4,2,2000,4
+#5,19,19000,5
+#6,20,20000,6
+#7,21,21000,7
+#
+## 15: [id -> new_field, id, value, timestamp]
+#SELECT id AS new_field, id, value, timestamp FROM stream INTO File();
+#----
+#1,1,1,1000
+#2,2,1,1001
+#3,3,1,1002
+#4,4,2,2000
+#5,5,19,19000
+#6,6,20,20000
+#7,7,21,21000
+#
+### 17: [id -> new_field_1, id, value -> new_field_2, value, timestamp -> new_field_3, timestamp]
+#SELECT id AS new_field_1, id, value AS new_field_2, value, timestamp AS new_field_3, timestamp FROM stream INTO File();
+#----
+#1,1,1,1,1000,1000
+#2,2,1,1,1001,1001
+#3,3,1,1,1002,1002
+#4,4,2,2,2000,2000
+#5,5,19,19,19000,19000
+#6,6,20,20,20000,20000
+#7,7,21,21,21000,21000
+#
+#
+## 6: filter -> map ->  project [id, id * 2 -> new_id, value, timestamp]
+#SELECT id, id * UINT64(2) AS new_id, value, timestamp FROM stream WHERE id == UINT64(1) INTO File();
+#----
+#1 2 1 1000
+#
+## 7: filter -> map -> project -> map -> map [new_id -> id, value, timestamp]
+#SELECT id * UINT64(2) AS new_id, id, id AS value, id * UINT64(1000) AS timestamp FROM stream WHERE id == UINT64(1) INTO File();
+#----
+#2 1 1 1000
+#
+#
+### Negative test, mismatch sink schema and input
+##SELECT id, value FROM stream INTO File();
+##----
+##ERROR 2003
+##
+##
+##SELECT doesnotexist FROM stream INTO File();
+##----
+##ERROR 2003

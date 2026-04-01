@@ -32,6 +32,7 @@
 #include <BackpressureChannel.hpp>
 #include <Thread.hpp>
 #include "Sources/BlockingSource.hpp"
+#include "Sources/SourceDescriptor.hpp"
 
 namespace NES
 {
@@ -63,7 +64,8 @@ public:
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
-        std::unique_ptr<BlockingSource> sourceImplementation);
+        std::unique_ptr<BlockingSource> sourceImplementation,
+        InputFormatterThreadingMode inputFormatterThreadingMode);
 
     BlockingSourceRunner() = delete;
     BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
@@ -95,6 +97,7 @@ protected:
     std::unique_ptr<BlockingSource> sourceImplementation;
     std::atomic_bool started;
     BackpressureListener backpressureListener;
+    InputFormatterThreadingMode inputFormatterThreadingMode;
 
     /// Order is important. Member destruction happens in reverse order. We first destroy the thread (which
     /// uses the terminationFuture), then the terminationFuture.
