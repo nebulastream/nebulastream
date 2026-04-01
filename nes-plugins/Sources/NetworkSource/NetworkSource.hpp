@@ -52,7 +52,7 @@ public:
     NetworkSource(NetworkSource&&) = delete;
     NetworkSource& operator=(NetworkSource&&) = delete;
 
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken, size_t offset) override;
     void open(std::shared_ptr<AbstractBufferProvider> provider) override;
     void close() override;
 

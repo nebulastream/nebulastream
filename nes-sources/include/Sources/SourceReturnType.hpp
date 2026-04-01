@@ -20,6 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <ErrorHandling.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES::SourceReturnType
 {
@@ -32,6 +33,13 @@ struct Error
 struct Data
 {
     TupleBuffer buffer;
+};
+
+struct Execute
+{
+    TupleBuffer buffer;
+    OriginId originId;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
 
 struct EoS
@@ -51,7 +59,7 @@ enum class EmitResult : uint8_t
     STOP_REQUESTED,
 };
 
-using SourceReturnType = std::variant<Error, Data, EoS>;
+using SourceReturnType = std::variant<Error, Data, EoS, Execute>;
 using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
 
 }

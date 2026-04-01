@@ -30,6 +30,13 @@ std::optional<DescriptorConfig::Config>
 provide(const std::string_view inputFormat, std::unordered_map<std::string, std::string> stringConfig)
 {
     auto inputFormatValidationArgs = InputFormatterValidationRegistryArguments(std::move(stringConfig));
-    return InputFormatterValidationRegistry::instance().create(std::string{inputFormat}, std::move(inputFormatValidationArgs));
+    const auto validatedConf = InputFormatterValidationRegistry::instance().create(std::string{inputFormat}, std::move(inputFormatValidationArgs));
+    const auto threadingMode = std::get<EnumWrapper>(validatedConf.value().at(InputFormatterDescriptor::THREADING_MODE.name));
+    const auto type = std::get<std::string>(validatedConf.value().at(InputFormatterDescriptor::TYPE.name));
+    if (threadingMode.asEnum<InputFormatterThreadingMode>() == InputFormatterThreadingMode::SEQUENTIAL and not toUpperCase(type).contains("SEQUENTIAL"))
+    {
+        throw InvalidConfigParameter("Sequential InputFormatterThreadingMode requires sequential input formatter type, but got: {}", type);
+    }
+    return validatedConf;
 }
 }

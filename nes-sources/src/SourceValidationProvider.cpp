@@ -30,6 +30,7 @@ std::optional<DescriptorConfig::Config>
 provide(const std::string_view sourceType, std::unordered_map<std::string, std::string> stringConfig)
 {
     auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(std::move(stringConfig));
+    // Todo: could make sure that if input formatter is in sequential mode, that source type is blocking
     return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 }

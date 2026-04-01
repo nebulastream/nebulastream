@@ -203,11 +203,11 @@ void BlockingTCPSource::open(std::shared_ptr<AbstractBufferProvider>)
     NES_TRACE("BlockingTCPSource::open: Connected to server.");
 }
 
-BlockingSource::FillTupleBufferResult BlockingTCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&)
+BlockingSource::FillTupleBufferResult BlockingTCPSource::fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token&, size_t offset)
 {
     try
     {
-        size_t numReceivedBytes = 0;
+        size_t numReceivedBytes = offset;
         while (fillBuffer(tupleBuffer, numReceivedBytes))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
