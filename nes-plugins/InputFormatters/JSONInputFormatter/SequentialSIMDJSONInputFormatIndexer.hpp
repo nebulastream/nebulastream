@@ -26,27 +26,24 @@
 namespace NES
 {
 
-class SIMDJSONInputFormatIndexer final : public InputFormatIndexer<SIMDJSONInputFormatIndexer>
+class SequentialSIMDJSONInputFormatIndexer final : public InputFormatIndexer<SequentialSIMDJSONInputFormatIndexer>
 {
 public:
-    static constexpr std::string_view NAME = "JSON";
-    static constexpr bool IsSequential = false;
+    static constexpr std::string_view NAME = "SequentialJSON";
+    static constexpr bool IsSequential = true;
 
     using IndexerMetaData = SIMDJSONMetaData;
     using FieldIndexFunctionType = SIMDJSONFIF;
     static constexpr char DELIMITER_SIZE = sizeof(char);
     static constexpr char TUPLE_DELIMITER = '\n';
-    static constexpr char KEY_VALUE_DELIMITER = ':';
-    static constexpr char FIELD_DELIMITER = ',';
-    static constexpr char KEY_QUOTE = '"';
 
-    SIMDJSONInputFormatIndexer() = default;
-    ~SIMDJSONInputFormatIndexer() = default;
+    SequentialSIMDJSONInputFormatIndexer() = default;
+    ~SequentialSIMDJSONInputFormatIndexer() = default;
 
-    static void indexRawBuffer(SIMDJSONFIF& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const SIMDJSONMetaData&);
+    static void indexRawBuffer(SIMDJSONFIF& fieldIndexFunction, const RawTupleBuffer& rawBuffer, const SIMDJSONMetaData& metaData);
     static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
 
-    friend std::ostream& operator<<(std::ostream& os, const SIMDJSONInputFormatIndexer& sonInputFormatIndexer);
+    friend std::ostream& operator<<(std::ostream& os, const SequentialSIMDJSONInputFormatIndexer&);
 };
 
 }

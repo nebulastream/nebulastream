@@ -26,6 +26,7 @@
 #include <span>
 #include <string>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -99,14 +100,19 @@ template <InputFormatIndexerType FormatterType>
 class InputFormatter
 {
 public:
+    static constexpr bool isSequential() { return FormatterType::IsSequential; }
+
     explicit InputFormatter(
         FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const InputFormatterDescriptor& config)
         : inputFormatIndexer(std::move(inputFormatIndexer))
         , indexerMetaData(typename FormatterType::IndexerMetaData{config, *memoryProvider})
         , projections(memoryProvider->getAllFieldNames())
         , memoryProvider(std::move(memoryProvider))
-        , sequenceShredder(std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size()))
     {
+        if constexpr (not isSequential())
+        {
+            sequenceShredder = std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size());
+        }
     }
 
     ~InputFormatter() = default;
@@ -120,6 +126,18 @@ public:
     /// records/fields within the (raw) buffer. Relies on static thread_local member variables to 'bridge' the result of the indexing phase
     /// to the second phase, which uses the index to access specific records/fields
     [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
+    requires FormatterType::IsSequential
+    {
+        invoke(
+            indexSequentialBufferProxy,
+            recordBuffer.getReference(),
+            nautilus::val<InputFormatter*>(const_cast<InputFormatter*>(this)),
+            arenaRef.getArena());
+        return {true}; /// sequential mode never repeats
+    }
+
+    [[nodiscard]] nautilus::val<bool> indexBuffer(const RecordBuffer& recordBuffer, const ArenaRef& arenaRef) const
+    requires (not FormatterType::IsSequential)
     {
         /// index raw tuple buffer, resolve and index spanning tuples(SequenceShredder) and return pointers to resolved spanning tuples, if exist
         const auto tlIndexPhaseResultNautilusVal = std::make_unique<nautilus::val<IndexPhaseResult*>>(invoke(
@@ -142,35 +160,50 @@ public:
         ExecutionContext& executionCtx,
         const RecordBuffer& recordBuffer,
         const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild) const
+    requires(not FormatterType::IsSequential)
     {
         /// @Note: the order below is important
         const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
 
-        /// a buffer that only contains data from a single tuple may connect two buffers that delimit tuples
-        /// we count such a spanning tuple as a leading spanning tuple
-        /// a buffer that delimits tuples may form a leading (and a trailing) spanning tuple
         parseLeadingRecord(executionCtx, executeChild, indexPhaseResult);
 
-        /// check if the buffer only contains data from a single tuple (does not delimit two tuples)
-        /// such a buffer can only form one (leading) spanning tuple, so returning is safe
         if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
         {
             return;
         }
 
-        /// a buffer that delimits tuples may contain multiple complete tuples
-        /// determining the offset of a tuple may require parsing the prior tuple
         parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
 
-        /// a buffer that delimits tuples usually forms a spanning tuple that continues in the next buffer
-        /// determining the offset of the start of that tuple may require parsing all prior records in the raw buffer
         parseTrailingRecord(executionCtx, recordBuffer, executeChild, indexPhaseResult);
+    }
+
+    /// Sequential readBuffer: no trailing spanning tuple resolution — truncated bytes already reported in indexSequentialBufferProxy.
+    void readBuffer(
+        ExecutionContext& executionCtx,
+        const RecordBuffer& recordBuffer,
+        const std::function<void(ExecutionContext& executionCtx, Record& record)>& executeChild) const
+    requires FormatterType::IsSequential
+    {
+        const nautilus::val<IndexPhaseResult*> indexPhaseResult = nautilus::invoke(getIndexPhaseResultProxy);
+
+        parseLeadingRecord(executionCtx, executeChild, indexPhaseResult);
+
+        if (not(nautilus::val<bool>(*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasTupleDelimiter)))))
+        {
+            return;
+        }
+
+        parseRecordsInRawBuffer(executionCtx, recordBuffer, executeChild, indexPhaseResult);
     }
 
     std::ostream& toString(std::ostream& os) const
     {
-        /// Not using fmt::format, because it fails during build, trying to pass sequenceShredder as a const value
-        os << "InputFormatter(" << ", inputFormatIndexer: " << inputFormatIndexer << ", sequenceShredder: " << *sequenceShredder << ")\n";
+        os << "InputFormatter(inputFormatIndexer: " << inputFormatIndexer;
+        if constexpr (not isSequential())
+        {
+            os << ", sequenceShredder: " << *sequenceShredder;
+        }
+        os << ")\n";
         return os;
     }
 
@@ -179,7 +212,18 @@ private:
     typename FormatterType::IndexerMetaData indexerMetaData;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::shared_ptr<TupleBufferRef> memoryProvider;
-    std::unique_ptr<SequenceShredder> sequenceShredder;
+
+    struct Empty
+    {
+    };
+
+    /// Concurrent mode only: lock-free spanning tuple resolution across threads
+    [[no_unique_address]] std::conditional_t<not isSequential(), std::unique_ptr<SequenceShredder>, Empty> sequenceShredder;
+
+    /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
+    /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
+    [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
+        accumulatedSpanningTupleBuffers;
 
     struct IndexPhaseResult
     {
@@ -282,6 +326,53 @@ private:
                 inputFormatter.indexerMetaData);
         }
 
+        /// Sequential mode: assembles a leading spanning tuple from accumulated buffers + leading bytes of the current buffer.
+        static void constructAndIndexSequentialLeadingSpanningTuple(
+            std::vector<std::pair<TupleBuffer, size_t>>& accumulatedBuffers,
+            const std::string_view leadingBytes,
+            InputFormatter& inputFormatter,
+            Arena& arenaRef)
+        {
+            const auto delimiterBytes = inputFormatter.indexerMetaData.getTupleDelimitingBytes();
+
+            /// Compute total size: delimiter + accumulated_data + leading_bytes + delimiter
+            size_t totalSize = 2 * delimiterBytes.size() + leadingBytes.size();
+            for (const auto& [buffer, byteCount] : accumulatedBuffers)
+            {
+                totalSize += byteCount;
+            }
+
+            /// Arena-allocate and copy
+            allocateForLeadingSpanningTuple(arenaRef, totalSize);
+            auto dest = tlIndexPhaseResult.leadingSpanningTuple;
+            size_t offset = 0;
+
+            auto copyTo = [&dest, &offset](const std::string_view src)
+            {
+                std::ranges::copy(src, dest.subspan(offset, src.size()).begin());
+                offset += src.size();
+            };
+
+            copyTo(delimiterBytes);
+            for (const auto& [buffer, byteCount] : accumulatedBuffers)
+            {
+                copyTo(std::string_view(buffer.getAvailableMemoryArea<char>().data(), byteCount));
+            }
+            copyTo(leadingBytes);
+            copyTo(delimiterBytes);
+
+            /// Release accumulated buffers
+            accumulatedBuffers.clear();
+
+            /// Index the assembled spanning tuple
+            inputFormatter.inputFormatIndexer.indexRawBuffer(
+                tlIndexPhaseResult.leadingSpanningTupleFIF,
+                RawTupleBuffer{
+                    std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
+                    tlIndexPhaseResult.leadingSpanningTuple.size()},
+                inputFormatter.indexerMetaData);
+        }
+
     private:
         static void allocateForLeadingSpanningTuple(Arena& arenaRef, const size_t sizeOfLeadingSpanningTuple)
         {
@@ -312,6 +403,38 @@ private:
     };
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
+
+    /// Sequential mode proxy: indexes the buffer and handles accumulated spanning tuples without SequenceShredder.
+    static IndexPhaseResult* indexSequentialBufferProxy(const TupleBuffer* tupleBuffer, InputFormatter* inputFormatter, Arena* arenaRef)
+    {
+        IndexPhaseResultBuilder::startBuildingIndex();
+        const auto [offsetOfFirstTupleDelimiter, offsetOfLastTupleDelimiter, hasTupleDelimiter]
+            = IndexPhaseResultBuilder::indexRawBuffer(*inputFormatter, *tupleBuffer);
+
+        if (hasTupleDelimiter)
+        {
+            if (not inputFormatter->accumulatedSpanningTupleBuffers.empty())
+            {
+                /// Bytes before the first delimiter are the tail of the spanning tuple
+                const auto leadingBytes = std::string_view(tupleBuffer->getAvailableMemoryArea<char>().data(), offsetOfFirstTupleDelimiter);
+                IndexPhaseResultBuilder::constructAndIndexSequentialLeadingSpanningTuple(
+                    inputFormatter->accumulatedSpanningTupleBuffers, leadingBytes, *inputFormatter, *arenaRef);
+            }
+
+            /// Report truncated trailing bytes so the outside can prepend them to the next buffer
+            const auto delimiterSize = inputFormatter->indexerMetaData.getTupleDelimitingBytes().size();
+            const auto truncatedByteCount = tupleBuffer->getNumberOfTuples() - (offsetOfLastTupleDelimiter + delimiterSize);
+            tupleBuffer->setNumberOfTuples(truncatedByteCount);
+        }
+        else
+        {
+            /// No delimiter: accumulate entire buffer
+            const auto byteCount = tupleBuffer->getNumberOfTuples();
+            inputFormatter->accumulatedSpanningTupleBuffers.emplace_back(*tupleBuffer, byteCount);
+            tupleBuffer->setNumberOfTuples(0);
+        }
+        return IndexPhaseResultBuilder::finalizeLeadingIndexPhase();
+    }
 
     static bool indexTrailingSpanningTupleProxy(const TupleBuffer* tupleBuffer, const InputFormatter* inputFormatter, Arena* arenaRef)
     {
