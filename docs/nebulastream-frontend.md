@@ -63,6 +63,13 @@ The embedded mode runs queries locally on a single embedded worker. The worker i
 Sources and sinks are automatically placed on the single node. No `HOST` configuration is required.
 
 > [!NOTE]
+> **Starting a worker:** Each worker is started with separate gRPC and data addresses:
+> ```bash
+> nes-single-node-worker --grpc=0.0.0.0:8080 --data_address=<dns-name/ip>:9090
+> ```
+> The gRPC address (port 8080 by convention) is the address used to identify workers in topology files and for source/sink placement. The data address (port 9090 by convention) is used internally for data transfer between workers.
+
+> [!NOTE]
 > In embedded mode, terminating the REPL also terminates the embedded worker. This means `--on-exit DO_NOTHING` and `--on-exit STOP_QUERIES` behave identically - all queries will be terminated when the REPL exits.
 
 #### Basic Workflow Example
@@ -156,8 +163,8 @@ Queries are always deployed based on the most recent topology state.
 
 ```sql
 -- 1. Register a worker node
-CREATE WORKER "sink-node:9090" AT "sink-node:8080";
--- Returns: [{"worker":"sink-node:9090"}]
+CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
+-- Returns: [{"worker":"sink-node:8080"}]
 
 -- 2. Create logical source
 CREATE LOGICAL SOURCE endless(ts UINT64);
@@ -170,7 +177,7 @@ SET(
     'CSV' as PARSER.`TYPE`,
     'emit_rate 10' AS `SOURCE`.GENERATOR_RATE_CONFIG,
     10000000 AS `SOURCE`.MAX_RUNTIME_MS,
-    "sink-node:9090" AS `SOURCE`.`HOST`,  -- Specify target host
+    "sink-node:8080" AS `SOURCE`.`HOST`,  -- Specify target host (gRPC address)
     1 AS `SOURCE`.SEED,
     'SEQUENCE UINT64 0 10000000 1' AS `SOURCE`.GENERATOR_SCHEMA
 );
@@ -181,7 +188,7 @@ TYPE File
 SET(
     'out.csv' as `SINK`.FILE_PATH,
     'CSV' as `SINK`.OUTPUT_FORMAT,
-    "sink-node:9090" AS `SINK`.`HOST`  -- Specify target host
+    "sink-node:8080" AS `SINK`.`HOST`  -- Specify target host (gRPC address)
 );
 
 -- 5. Deploy query
@@ -194,30 +201,30 @@ Query status shows one global query status as well as potentially multiple local
 
 ```sql
 -- worker creation (multi-statement)
-CREATE WORKER "sink-node:9090" AT "sink-node:8080";
-CREATE WORKER "source-node-1:9090" AT "source-node-1:8080"
-    SET("intermediate-node-1:9090" AS `DOWNSTREAM`);
-CREATE WORKER "source-node-2:9090" AT "source-node-2:8080"
-    SET("intermediate-node-1:9090" AS `DOWNSTREAM`);
-CREATE WORKER "source-node-3:9090" AT "source-node-3:8080"
-    SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
-CREATE WORKER "source-node-4:9090" AT "source-node-4:8080"
-    SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
-CREATE WORKER "source-node-5:9090" AT "source-node-5:8080"
-    SET("intermediate-node-2:9090" AS `DOWNSTREAM`);
-CREATE WORKER "intermediate-node-1:9090" AT "intermediate-node-1:8080"
-    SET("sink-node:9090" AS `DOWNSTREAM`);
-CREATE WORKER "intermediate-node-2:9090" AT "intermediate-node-2:8080"
-    SET("sink-node:9090" AS `DOWNSTREAM`);
+CREATE WORKER "sink-node:8080" SET ('sink-node:9090' AS DATA);
+CREATE WORKER "source-node-1:8080" SET ('source-node-1:9090' AS DATA,
+    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-2:8080" SET ('source-node-2:9090' AS DATA,
+    "intermediate-node-1:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-3:8080" SET ('source-node-3:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-4:8080" SET ('source-node-4:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "source-node-5:8080" SET ('source-node-5:9090' AS DATA,
+    "intermediate-node-2:8080" AS `DOWNSTREAM`);
+CREATE WORKER "intermediate-node-1:8080" SET ('intermediate-node-1:9090' AS DATA,
+    "sink-node:8080" AS `DOWNSTREAM`);
+CREATE WORKER "intermediate-node-2:8080" SET ('intermediate-node-2:9090' AS DATA,
+    "sink-node:8080" AS `DOWNSTREAM`);
 
 -- Deploy multiple queries to different nodes
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-1:9090" AS `SOURCE`.`HOST`, ...)
-INTO Print("sink-node:9090" AS `SINK`.`HOST`, ...);
+FROM Generator(..., "source-node-1:8080" AS `SOURCE`.`HOST`, ...)
+INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
 
 SELECT ID, VALUE, TIMESTAMP
-FROM Generator(..., "source-node-5:9090" AS `SOURCE`.`HOST`, ...)
-INTO Print("sink-node:9090" AS `SINK`.`HOST`, ...);
+FROM Generator(..., "source-node-5:8080" AS `SOURCE`.`HOST`, ...)
+INTO Print("sink-node:8080" AS `SINK`.`HOST`, ...);
 
 -- Verify query distribution
 SHOW QUERIES;
@@ -314,7 +321,7 @@ query: |
 
 sinks:
   - name: VOID_SINK
-    host: worker-1:9090
+    host: worker-1:8080
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
@@ -330,7 +337,7 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
-    host: worker-1:9090
+    host: worker-1:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -344,9 +351,9 @@ physical:
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
 workers:
-  - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
 ```
 
 **Example: Multiple Queries in Single Topology**
@@ -359,7 +366,7 @@ query:
 
 sinks:
   - name: VOID_SINK
-    host: worker-1:9090
+    host: worker-1:8080
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
@@ -375,7 +382,7 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
-    host: worker-1:9090
+    host: worker-1:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -389,9 +396,9 @@ physical:
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
 workers:
-  - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
 ```
 
 **Example: Ad-hoc Query (No Query in Topology)**
@@ -401,7 +408,7 @@ workers:
 
 sinks:
   - name: VOID_SINK
-    host: worker-1:9090
+    host: worker-1:8080
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
@@ -417,7 +424,7 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
-    host: worker-1:9090
+    host: worker-1:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -431,13 +438,14 @@ physical:
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
 workers:
-  - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
 ```
 
 ```bash
 # Provide query as command line argument
+nes-cli -t topology.yaml dump 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 nes-cli -t topology.yaml start 'SELECT * FROM GENERATOR_SOURCE INTO VOID_SINK'
 ```
 
@@ -449,7 +457,7 @@ query: |
 
 sinks:
   - name: VOID_SINK
-    host: worker-2:9090 # sink located at worker-2
+    host: worker-2:8080 # sink located at worker-2
     schema:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
@@ -465,7 +473,7 @@ logical:
 
 physical:
   - logical: GENERATOR_SOURCE
-    host: worker-1:9090 # source located at worker-1
+    host: worker-1:8080 # source located at worker-1
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -479,13 +487,13 @@ physical:
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
 workers:
-  - host: worker-1:9090
-    grpc: worker-1:8080
-    capacity: 10000
-    downstream: [ worker-2:9090 ]  # Route data to worker-2
-  - host: worker-2:9090
-    grpc: worker-2:8080
-    capacity: 10000
+  - host: worker-1:8080
+    data_address: worker-1:9090
+    max_operators: 10000
+    downstream: [ worker-2:8080 ]  # Route data to worker-2
+  - host: worker-2:8080
+    data_address: worker-2:9090
+    max_operators: 10000
 ```
 
 ### Query Management
