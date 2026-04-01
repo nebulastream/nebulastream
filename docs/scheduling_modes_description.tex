@@ -1,0 +1,120 @@
+\subsection{Scheduling Strategies}
+\label{sec:scheduling-strategies}
+
+We implement and evaluate five task scheduling strategies for the query engine's thread pool.
+The query engine uses a two-level queue architecture:
+
+\begin{itemize}
+    \item \textbf{Admission queue} (shared, bounded): receives tasks from external producers (sources, control messages). Provides backpressure---if full, the source blocks until space is available.
+    \item \textbf{Internal queue(s)} (unbounded): hold successor tasks produced during pipeline execution. Depending on the strategy, this is either a single shared queue or one queue per worker thread.
+\end{itemize}
+
+When a worker thread is woken by its semaphore, it reads tasks in the following priority order:
+\begin{enumerate}
+    \item \textbf{Own per-thread queue} (successor tasks from pipeline execution)
+    \item \textbf{Steal from other threads' queues} (if work stealing is enabled)
+    \item \textbf{Admission queue} (new source data)
+\end{enumerate}
+This priority ensures that in-flight pipeline work is completed before accepting new input, preventing the accumulation of half-processed data.
+
+\subsubsection{Single-Queue Strategy}
+
+\begin{description}
+    \item[\texttt{GLOBAL\_QUEUE}.]
+    All worker threads share a single lock-free MPMC queue (Folly \texttt{MPMCQueue}) as the internal queue.
+    Both admission tasks from sources and successor tasks from pipeline execution are placed into their respective shared queues.
+    Workers block on a single shared semaphore that counts tasks across both queues.
+
+    \textit{Advantages:} Perfect load balancing---no worker can idle while tasks are available.
+    Simple implementation with no configuration parameters.
+
+    \textit{Disadvantages:} Every enqueue and dequeue operation contends on the same atomic state.
+    At high thread counts, cache line bouncing on the shared queue's head/tail pointers becomes the bottleneck.
+    No data locality---a successor task is likely processed by a different thread than the one that produced it, requiring the data to be fetched from a remote L2/L3 cache.
+\end{description}
+
+\subsubsection{Per-Thread Queue Strategies}
+
+The following strategies assign each worker thread its own unbounded internal queue (Folly \texttt{UMPMCQueue}) and its own semaphore.
+The shared bounded admission queue remains global.
+When a source submits a task, it is written to the admission queue and a worker thread's semaphore is signaled via round-robin to ensure fair wakeup distribution.
+The woken worker checks its own per-thread queue first; if empty, it falls through to the admission queue.
+Note that the scheduling strategy's selection policy is \emph{only} applied to internal (successor) tasks, which are placed directly into a target thread's per-thread queue.
+Admission tasks always use round-robin semaphore signaling regardless of the strategy.
+
+\begin{description}
+    \item[\texttt{PER\_THREAD\_ROUND\_ROBIN}.]
+    Successor tasks are assigned to worker queues in rotating order using an atomic counter:
+    \[
+        \text{target} = \texttt{counter.fetch\_add(1)} \mod N
+    \]
+    where $N$ is the number of worker threads.
+    This provides $O(1)$ dispatch with a single relaxed atomic operation.
+
+    \textit{Advantages:} Even distribution of tasks across all threads.
+    Minimal dispatch overhead (one atomic increment).
+
+    \textit{Disadvantages:} No awareness of queue load---a slow thread accumulates a backlog while fast threads idle.
+    No data locality---successor tasks are distributed away from the producing thread.
+
+    \item[\texttt{PER\_THREAD\_SMALLEST\_QUEUE}.]
+    Successor tasks are assigned to the worker queue with the fewest pending tasks.
+    Queue sizes are tracked via per-queue \texttt{atomic<int64\_t>} counters that are incremented on enqueue and decremented on dequeue, using \texttt{memory\_order\_relaxed}.
+    The dispatch scans all $N$ counters to find the minimum:
+    \[
+        \text{target} = \arg\min_{i \in [0,N)} \texttt{approxSize}[i]
+    \]
+
+    \textit{Advantages:} Adaptive load balancing---threads with shorter queues receive more work.
+
+    \textit{Disadvantages:} $O(N)$ dispatch cost (linear scan of all queue sizes).
+    Approximate sizes may be stale under high concurrency, leading to suboptimal choices.
+    Multiple threads may simultaneously select the same ``smallest'' queue, causing temporary imbalance.
+    No data locality.
+
+    \item[\texttt{PER\_THREAD\_CHOOSE\_TWO}.]
+    Successor tasks are assigned to the shorter of two randomly sampled queues (the ``power of two choices'' technique~\cite{mitzenmacher2001power}):
+    \[
+        a, b \sim \text{Uniform}(0, N), \quad \text{target} =
+        \begin{cases}
+            a & \text{if } \texttt{approxSize}[a] \leq \texttt{approxSize}[b] \\
+            b & \text{otherwise}
+        \end{cases}
+    \]
+    A thread-local \texttt{std::mt19937} random number generator avoids shared state.
+
+    \textit{Advantages:} $O(1)$ dispatch with only two atomic reads.
+    Provably achieves near-optimal load balancing---the maximum queue length is $O(\log \log N)$ compared to $O(\log N)$ for random single-choice and $O(1)$ for full-scan~\cite{mitzenmacher2001power}.
+
+    \textit{Disadvantages:} Non-deterministic assignment.
+    Slightly less balanced than \texttt{SMALLEST\_QUEUE} in low-contention scenarios.
+    No data locality.
+
+    \item[\texttt{PRODUCER\_LOCAL}.]
+    A worker thread that produces a successor task places it on \emph{its own} per-thread queue, bypassing the dispatch strategy entirely.
+    Tasks from external sources (admission queue) and non-worker contexts (e.g., the delayed task submitter, which re-submits deferred tasks after a timeout) still use the underlying strategy's dispatch policy.
+    In practice, since the vast majority of internal tasks originate from worker threads, the choice of underlying strategy becomes largely irrelevant when producer-local is enabled---our experiments confirm that all three per-thread strategies perform identically (within 1\%) in this mode.
+
+    \textit{Advantages:} Optimal data locality---after processing a tuple buffer through a pipeline stage, the data is hot in the producing thread's L1/L2 cache.
+    By keeping the successor task (next pipeline stage) on the same thread, we avoid cache misses from cross-thread data migration.
+    Zero dispatch overhead for internal tasks (no atomic operations, no queue selection).
+
+    \textit{Disadvantages:} Can cause load imbalance if one thread produces more successors than others, as all successor work accumulates on a single thread's queue.
+    This can be mitigated by combining it with work stealing.
+\end{description}
+
+\subsubsection{Work Stealing}
+
+All per-thread queue strategies (including \texttt{PRODUCER\_LOCAL}) support optional work stealing.
+When a worker's own queue is empty, it attempts to dequeue a task from other workers' queues in round-robin order before falling back to the shared admission queue:
+
+\begin{enumerate}
+    \item Try own per-thread queue (non-blocking dequeue)
+    \item If empty and work stealing enabled: try queue $(i+1) \mod N$, $(i+2) \mod N$, \ldots
+    \item Fall back to admission queue (spin-wait, guaranteed to have a task due to semaphore invariant)
+\end{enumerate}
+
+\textit{Rationale:} Work stealing prevents idle threads when load is unevenly distributed, particularly when combined with \texttt{PRODUCER\_LOCAL} dispatch where all successor tasks accumulate on the producing thread.
+
+\textit{Trade-off:} Stealing introduces contention on victim queues and breaks data locality (the stolen task's data is cold in the stealer's cache).
+Our experiments show that work stealing generally hurts performance for stateless workloads where load is naturally balanced through the admission queue's round-robin wakeup, but can help in combination with \texttt{PRODUCER\_LOCAL} for workloads with uneven task production.

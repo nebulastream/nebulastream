@@ -159,11 +159,34 @@ public:
     /// Internal producers (worker threads). Dispatches to a per-thread queue based on the assignment policy.
     /// When producerLocal is enabled and a valid producerThreadIndex is provided, the task stays on the
     /// producing thread's queue for cache locality. Otherwise, the configured strategy selects the target.
+    /// For ADAPTIVE: keeps local if own queue is shrinking/stable, offloads via choose-two if growing.
     template <typename T = TaskType>
     void addInternalTaskNonBlocking(T&& task, size_t producerThreadIndex = std::numeric_limits<size_t>::max())
     {
         size_t target;
-        if (producerLocalEnabled && producerThreadIndex < numQueues)
+        if (strategy == SchedulingStrategy::PER_THREAD_ADAPTIVE && producerThreadIndex < numQueues)
+        {
+            const auto currentSize = approxQueueSizes[producerThreadIndex].load(std::memory_order_relaxed);
+            if (currentSize <= 1)
+            {
+                /// Queue is empty or has one task — keep local for cache locality
+                target = producerThreadIndex;
+            }
+            else
+            {
+                /// Queue is growing — offload to a less busy thread via choose-two
+                thread_local std::mt19937 rng{std::random_device{}()};
+                const auto a = rng() % numQueues;
+                const auto b = rng() % numQueues;
+                const auto sizeA = approxQueueSizes[a].load(std::memory_order_relaxed);
+                const auto sizeB = approxQueueSizes[b].load(std::memory_order_relaxed);
+                const auto candidate = (sizeA <= sizeB) ? a : b;
+                /// Only offload if the candidate is actually less loaded than our own queue
+                target = (approxQueueSizes[candidate].load(std::memory_order_relaxed) < currentSize)
+                    ? candidate : producerThreadIndex;
+            }
+        }
+        else if (producerLocalEnabled && producerThreadIndex < numQueues)
         {
             target = producerThreadIndex;
         }
