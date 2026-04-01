@@ -100,6 +100,8 @@ jobs:
             ctest --test-dir build -j -L Systest --output-on-failure --output-junit build/junit-systest.xml --timeout 4800 ${ADDITIONAL_CTEST_ARGS}
       - uses: ./.github/steps/run-in-container
         name: Run Docker Tests
+        # TODO #1540: remove this if once tests are reorganized, currently tsan is just too slow
+        if: ${{ !(matrix.build_type == 'Debug' && matrix.sanitizer == 'thread') }}
         with:
           image_name: nebulastream/nes-development:${{ inputs.dev_image_tag }}-${{ matrix.stdlib }}-${{matrix.sanitizer}}
           run: |
