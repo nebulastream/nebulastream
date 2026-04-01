@@ -2,9 +2,9 @@
 # description: Simple source/buffer tests
 # groups: [Tuples]
 
-
+# CREATE PHYSICAL SOURCE FOR multiBuffer TYPE File;
 CREATE LOGICAL SOURCE multiBuffer(field_1 UINT64 NOT NULL, field_2 UINT64 NOT NULL, field_3 UINT64 NOT NULL, field_4 UINT64 NOT NULL, field_5 UINT64 NOT NULL, field_6 UINT64 NOT NULL, field_7 UINT64 NOT NULL, field_8 UINT64 NOT NULL);
-CREATE PHYSICAL SOURCE FOR multiBuffer TYPE File;
+CREATE PHYSICAL SOURCE FOR multiBuffer TYPE BlockingFile SET( "SequentialUncompiledCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
 ATTACH FILE small/200x8-rows-fields.csv
 
 CREATE SINK sinkMultiBuffer(multiBuffer.field_1 UINT64 NOT NULL, multiBuffer.field_2 UINT64 NOT NULL, multiBuffer.field_3 UINT64 NOT NULL, multiBuffer.field_4 UINT64 NOT NULL, multiBuffer.field_5 UINT64 NOT NULL, multiBuffer.field_6 UINT64 NOT NULL, multiBuffer.field_7 UINT64 NOT NULL, multiBuffer.field_8 UINT64 NOT NULL)  TYPE File;
