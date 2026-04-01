@@ -36,9 +36,9 @@ jobs:
         # we explicitely set bash to have pipefail
         # (c.f. https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax#exit-codes-and-error-action-preference)
         shell: bash
-        # do not run clang-tidy on generated files, i.e. files from dirs matching .*_generated_src/
+        # do not run clang-tidy on generated files, i.e. files from dirs matching .*_generated_src/, or on nes-rust-bindings
         # (c.f. https://stackoverflow.com/a/1240365 for regex explanation)
-        run: run-clang-tidy-19 -p build '^(?!.*_generated_src/).+$' 2> /dev/null | tee clang-tidy.log
+        run: run-clang-tidy-19 -p build -header-filter='^(?!.*nes-rust-bindings/).*' '^(?!.*_generated_src/)(?!.*nes-rust-bindings/).+$' 2> /dev/null | tee clang-tidy.log
       - name: show errors
         if: ${{ failure() && steps.run-clang-tidy.conclusion == 'failure' }}
         run: |
