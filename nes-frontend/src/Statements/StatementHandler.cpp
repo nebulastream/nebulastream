@@ -25,8 +25,6 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -41,6 +39,7 @@
 #include <fmt/ranges.h>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>
@@ -227,11 +226,8 @@ std::expected<DropSinkStatementResult, Exception> SinkStatementHandler::operator
     return std::unexpected{UnknownSinkName(statement.name)};
 }
 
-QueryStatementHandler::QueryStatementHandler(
-    SharedPtr<QueryManager> queryManager,
-    SharedPtr<const SemanticAnalyzer> semanticAnalyser,
-    SharedPtr<const QueryOptimizer> queryOptimizer)
-    : queryManager(std::move(queryManager)), semanticAnalyser(std::move(semanticAnalyser)), queryOptimizer(std::move(queryOptimizer))
+QueryStatementHandler::QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer)
+    : queryManager(std::move(queryManager)), queryOptimizer(std::move(queryOptimizer))
 {
 }
 
@@ -256,8 +252,7 @@ std::expected<ExplainQueryStatementResult, Exception> QueryStatementHandler::ope
         fmt::println(explainMessage, "Query:\n{}", statement.plan.getOriginalSql());
         fmt::println(explainMessage, "Initial Logical Plan:\n{}", statement.plan);
 
-        const auto plan = semanticAnalyser->analyse(statement.plan);
-        const auto distributedPlan = queryOptimizer->optimize(plan);
+        const auto distributedPlan = queryOptimizer->optimize(statement.plan);
 
         fmt::println(explainMessage, "Optimized Global Plan:\n{}", distributedPlan.getGlobalPlan());
 
@@ -283,8 +278,7 @@ std::expected<QueryStatementResult, Exception> QueryStatementHandler::operator()
 {
     CPPTRACE_TRY
     {
-        auto plan = semanticAnalyser->analyse(statement.plan);
-        auto distributedPlan = queryOptimizer->optimize(plan);
+        auto distributedPlan = queryOptimizer->optimize(statement.plan);
 
         if (statement.id)
         {

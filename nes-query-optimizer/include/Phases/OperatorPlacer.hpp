@@ -14,22 +14,20 @@
 
 #pragma once
 
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Pointers.hpp>
 #include <DistributedLogicalPlan.hpp>
-#include <QueryOptimizerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
 {
-class SourceCatalog;
-class SinkCatalog;
 
-class QueryOptimizer final
+class OperatorPlacer
 {
 public:
-    explicit QueryOptimizer(
+    explicit OperatorPlacer(
         QueryOptimizerConfiguration defaultQueryOptimization,
         SharedPtr<const SourceCatalog> sourceCatalog,
         SharedPtr<const SinkCatalog> sinkCatalog,
@@ -39,8 +37,7 @@ public:
         , sinkCatalog(std::move(sinkCatalog))
         , workerCatalog(std::move(workerCatalog)) { };
 
-    /// Takes the query plan as a logical plan and returns a distributed plan with placement and decomposition
-    [[nodiscard]] DistributedLogicalPlan optimize(const LogicalPlan& plan) const;
+    [[nodiscard]] DistributedLogicalPlan place(LogicalPlan plan) const;
 
 private:
     QueryOptimizerConfiguration defaultQueryOptimization;
@@ -48,5 +45,6 @@ private:
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 };
+
 
 }

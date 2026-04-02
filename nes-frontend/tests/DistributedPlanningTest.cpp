@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 
 #include <cstddef>
@@ -22,6 +21,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
@@ -224,7 +224,6 @@ struct Catalogs
 
 struct OptimizerAndPlan
 {
-    std::unique_ptr<NES::SemanticAnalyzer> semanticAnalyzer;
     std::unique_ptr<NES::QueryOptimizer> queryOptimizer;
     NES::LogicalPlan plan;
 };
@@ -244,10 +243,9 @@ OptimizerAndPlan loadAndBind(std::string_view yamlContent)
 
     handleStatements(statements, topologyHandler, sinkStatementHandler, sourceStatementHandler);
     renderTopology(workers->getTopology(), std::cout);
-    return {
-        .semanticAnalyzer = std::make_unique<NES::SemanticAnalyzer>(sources, sinks),
-        .queryOptimizer = std::make_unique<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{}, sources, sinks, workers),
-        .plan = std::get<NES::ExplainQueryStatement>(statements.back()).plan};
+
+    auto optimizer = std::make_unique<NES::QueryOptimizer>(NES::QueryOptimizerConfiguration{}, sources, sinks, workers);
+    return {.queryOptimizer = std::move(optimizer), .plan = std::get<NES::ExplainQueryStatement>(statements.back()).plan};
 }
 
 }
@@ -271,7 +269,7 @@ public:
 ///NOLINTBEGIN(bugprone-unchecked-optional-access, readability-identifier-length)
 TEST_F(DistributedPlanningTest, BasicPlacementSingleNode)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM mock_source WHERE a > b INTO mock_sink
 
@@ -292,7 +290,7 @@ workers:
   - host: "localhost:8080"
     max_operators: 10
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const LogicalPlan localPlan = plan[Host("localhost:8080")].front();
     const auto root = localPlan.getRootOperators();
@@ -309,7 +307,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, BasicPlacementTwoNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM mock_source WHERE a > b INTO mock_sink
 
@@ -334,7 +332,7 @@ workers:
     downstream:
       - "sink-node:8080"
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sourceNodePlan = plan[Host("source-node:8080")].front();
     const auto root = sourceNodePlan.getRootOperators();
@@ -356,7 +354,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithOneSelection)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -389,7 +387,7 @@ workers:
     downstream:
       - "sink-node:8080"
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sourceNode0Plan = plan[Host("source-node0:8080")].front();
     EXPECT_EQ(flatten(sourceNode0Plan).size(), 3);
@@ -436,7 +434,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, PlacementWithThreeNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT ts, a, id0 FROM stream0 WHERE a != b) INNER JOIN (SELECT * FROM stream1 WHERE c < d) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -469,7 +467,7 @@ workers:
     downstream:
       - "sink-node:8080"
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto plan0 = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan0).size(), 1);
@@ -499,7 +497,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacity)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -532,7 +530,7 @@ workers:
     downstream:
       - "sink-node:8080"
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto plan0 = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(plan0).size(), 1);
@@ -559,7 +557,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, JoinPlacementWithLimitedCapacityOnTwoNodes)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -588,7 +586,7 @@ workers:
     downstream:
       - "sink-node:8080"
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sinkPlan = plan[Host("sink-node:8080")].front();
     EXPECT_EQ(getOperatorByType<SinkLogicalOperator>(sinkPlan).size(), 1);
@@ -617,7 +615,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, FourWayJoin)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream)
   INNER JOIN (SELECT * FROM stream2) ON id = id2 WINDOW TUMBLING (timestamp, size 1 sec)
@@ -658,7 +656,7 @@ workers:
   - host: "host2:8080"
     max_operators: 255
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     for (const auto& [node, plans] : plan)
     {
@@ -671,7 +669,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, BridgePlacement)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM stream INTO sink
 
@@ -700,7 +698,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 10
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sourcePlan = plan[Host("source-node:8080")].front();
     EXPECT_EQ(flatten(sourcePlan).size(), 2);
@@ -727,7 +725,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, LongBridgePlacement)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM stream INTO sink
 
@@ -760,7 +758,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 0
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sourcePlan = plan[Host("source-node:8080")].front();
     EXPECT_EQ(flatten(sourcePlan).size(), 2);
@@ -795,7 +793,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, BridgePlacementJoin)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1 WHERE a < b) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -828,7 +826,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 10
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sourcePlan1 = plan[Host("source-node:8080")][0];
     EXPECT_EQ(flatten(sourcePlan1).size(), 3);
@@ -875,7 +873,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, ComplexJoinQuery)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM stream0) INNER JOIN (SELECT * FROM stream1) ON id0 = id1 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream2) ON id1 = id2 WINDOW TUMBLING (ts, size 1 sec) INNER JOIN (SELECT * FROM stream3) ON id2 = id3 WINDOW TUMBLING (ts, size 1 sec) INTO sink
 
@@ -928,7 +926,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 2
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     for (const auto& [node, localPlans] : plan)
     {
@@ -994,7 +992,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, Disconnected)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM stream INTO sink
 
@@ -1023,7 +1021,7 @@ workers:
 )");
     try
     {
-        auto _ = opt->optimize(sem->analyse(boundPlan));
+        auto _ = opt->optimize(boundPlan);
         FAIL() << "Expected Exception";
     }
     catch (const Exception& e)
@@ -1038,7 +1036,7 @@ workers:
 
 TEST_F(DistributedPlanningTest, NotEnoughCapacities)
 {
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM (SELECT * FROM mock_source WHERE a > b) WHERE b > a INTO mock_sink
 
@@ -1065,7 +1063,7 @@ workers:
 )");
     try
     {
-        auto _ = opt->optimize(sem->analyse(boundPlan));
+        auto _ = opt->optimize(boundPlan);
         FAIL() << "Expected Exception";
     }
     catch (const Exception& e)
@@ -1080,7 +1078,7 @@ TEST_F(DistributedPlanningTest, MultiplePhysicalSources)
 {
     /// Plan has a logical source that is referenced by 9 physical sources. 4 physical source on source and 5 on source2.
     /// Capacity prevents the union from beeing placed at the intermediate node
-    auto [sem, opt, boundPlan] = loadAndBind(R"(
+    auto [opt, boundPlan] = loadAndBind(R"(
 query: |
   SELECT * FROM stream INTO sink
 
@@ -1129,7 +1127,7 @@ workers:
   - host: "sink-node:8080"
     max_operators: 10
 )");
-    auto plan = opt->optimize(sem->analyse(boundPlan));
+    auto plan = opt->optimize(boundPlan);
 
     const auto sinkPlans = plan[Host("sink-node:8080")];
     ASSERT_EQ(sinkPlans.size(), 1);

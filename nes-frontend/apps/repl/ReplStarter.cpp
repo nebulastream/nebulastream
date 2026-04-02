@@ -32,8 +32,6 @@
 #include <unistd.h>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -56,6 +54,7 @@
 #include <magic_enum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <Repl.hpp>
 #include <Thread.hpp>
@@ -279,9 +278,8 @@ int main(int argc, char** argv)
         NES::SinkStatementHandler sinkStatementHandler{sinkCatalog, NES::RequireHostConfig{}};
 #endif
         NES::TopologyStatementHandler topologyStatementHandler{queryManager, workerCatalog};
-        auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
         auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfig, sourceCatalog, sinkCatalog, workerCatalog);
-        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, semanticAnalyser, queryOptimizer);
+        auto queryStatementHandler = std::make_shared<NES::QueryStatementHandler>(queryManager, queryOptimizer);
         NES::Repl replClient(
             std::move(sourceStatementHandler),
             std::move(sinkStatementHandler),

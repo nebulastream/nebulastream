@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Phases/QueryDecomposition.hpp>
+#include <Placement/QueryDecomposition.hpp>
 
 #include <algorithm>
 #include <array>
@@ -29,7 +29,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Rules/OperatorPlacement.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
@@ -172,6 +171,12 @@ LogicalOperator createNetworkChannel(
 }
 
 LogicalOperator decomposePlanRecursive(DecompositionContext& context, const LogicalOperator& op);
+
+NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op)
+{
+    auto placementTrait = op.getTraitSet().get<PlacementTrait>();
+    return placementTrait->onNode;
+}
 
 LogicalOperator assignOperator(DecompositionContext& context, const LogicalOperator& op, const LogicalOperator& child)
 {

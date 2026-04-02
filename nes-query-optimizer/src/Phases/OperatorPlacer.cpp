@@ -11,16 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#pragma once
 
+#include <Phases/OperatorPlacer.hpp>
 
-#include <Operators/LogicalOperator.hpp>
-#include <NetworkTopology.hpp>
+#include <Placement/BottomUpPlacement.hpp>
+#include <Placement/QueryDecomposition.hpp>
+#include <Plans/LogicalPlan.hpp>
+#include <Util/Pointers.hpp>
+#include <DistributedLogicalPlan.hpp>
 
 namespace NES
 {
+DistributedLogicalPlan OperatorPlacer::place(LogicalPlan plan) const
+{
+    BottomUpOperatorPlacer(copyPtr(workerCatalog)).apply(plan);
 
-/// Obtain the placement for op. Asserts that the operator has a placement trait.
-NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op);
-
+    return QueryDecomposer(copyPtr(workerCatalog), copyPtr(sourceCatalog), copyPtr(sinkCatalog))
+        .decompose(plan, defaultQueryOptimization.network);
+}
 }

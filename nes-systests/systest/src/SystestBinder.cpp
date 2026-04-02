@@ -36,6 +36,7 @@
 #include <utility>
 #include <variant>
 #include <vector>
+
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
@@ -46,8 +47,6 @@
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
@@ -66,6 +65,7 @@
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
 #include <QueryId.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestParser.hpp>
@@ -262,7 +262,7 @@ public:
 
     void setDifferentialQueryPlan(LogicalPlan differentialQueryPlan) { this->differentialQueryPlan = std::move(differentialQueryPlan); }
 
-    void optimizeQueries(const NES::SemanticAnalyzer& semanticAnalyser, const NES::QueryOptimizer& queryOptimizer)
+    void optimizeQueries(const NES::QueryOptimizer& queryOptimizer)
     {
         if (!boundPlan.has_value())
         {
@@ -270,8 +270,7 @@ public:
         }
         try
         {
-            auto plan = semanticAnalyser.analyse(boundPlan.value());
-            auto distributedPlan = queryOptimizer.optimize(plan);
+            auto distributedPlan = queryOptimizer.optimize(boundPlan.value());
             setOptimizedPlan(std::move(distributedPlan));
         }
         catch (Exception& e)
@@ -285,8 +284,7 @@ public:
         {
             try
             {
-                auto plan = semanticAnalyser.analyse(differentialQueryPlan.value());
-                auto distributedPlan = queryOptimizer.optimize(plan);
+                auto distributedPlan = queryOptimizer.optimize(differentialQueryPlan.value());
                 this->optimizedDifferentialQueryPlan = std::move(distributedPlan);
             }
             catch (Exception& e)
@@ -477,7 +475,6 @@ struct SystestBinder::Impl
         auto loadedSystests = loadFromSLTFile(testfile.file, testfile.name(), testfile.sourceCatalog, sinkProvider);
         std::unordered_set<SystestQueryId> foundQueries;
 
-        const SemanticAnalyzer semanticAnalyser{testfile.sourceCatalog, testfile.sinkCatalog};
         const QueryOptimizer queryOptimizer{
             queryOptimizerConfiguration, testfile.sourceCatalog, testfile.sinkCatalog, copyPtr(workerCatalog)};
 
@@ -492,7 +489,7 @@ struct SystestBinder::Impl
             }
 
             foundQueries.insert(builder.getSystemTestQueryId());
-            builder.optimizeQueries(semanticAnalyser, queryOptimizer);
+            builder.optimizeQueries(queryOptimizer);
             for (auto& query : std::move(builder).build())
             {
                 buildSystests.emplace_back(std::move(query));

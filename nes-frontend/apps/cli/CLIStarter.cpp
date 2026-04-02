@@ -37,8 +37,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> ///NOLINT(misc-include-cleaner)
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/GRPCQuerySubmissionBackend.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
@@ -62,6 +60,7 @@
 #include <yaml-cpp/yaml.h> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <QueryOptimizerConfiguration.hpp>
 #include <QueryStateBackend.hpp>
 #include <WorkerCatalog.hpp>
@@ -529,9 +528,8 @@ void doQueryManagement(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
-    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
     auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizationConfiguration, sourceCatalog, sinkCatalog, workerCatalog);
-    NES::QueryStatementHandler queryHandler{queryManager, semanticAnalyser, queryOptimizer};
+    NES::QueryStatementHandler queryHandler{queryManager, queryOptimizer};
 
     handleStatements(loadStatements(topologyConfig), topologyHandler, sourceHandler, sinkHandler);
 
@@ -568,14 +566,13 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     NES::TopologyStatementHandler topologyHandler{queryManager, workerCatalog};
     NES::SourceStatementHandler sourceHandler{sourceCatalog, NES::RequireHostConfig{}};
     NES::SinkStatementHandler sinkHandler{sinkCatalog, NES::RequireHostConfig{}};
-    auto semanticAnalyser = std::make_shared<NES::SemanticAnalyzer>(sourceCatalog, sinkCatalog);
     auto queryOptimizer = std::make_shared<NES::QueryOptimizer>(queryOptimizerConfiguration, sourceCatalog, sinkCatalog, workerCatalog);
     handleStatements(statements, topologyHandler, sourceHandler, sinkHandler);
 
     if (program.is_subcommand_used("start"))
     {
         NES::CLI::QueryStateBackend stateBackend;
-        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result = queryStatementHandler(NES::QueryStatement(NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)));
@@ -594,7 +591,7 @@ void doQuerySubmission(const argparse::ArgumentParser& program, const argparse::
     }
     else
     {
-        NES::QueryStatementHandler queryStatementHandler{queryManager, semanticAnalyser, queryOptimizer};
+        NES::QueryStatementHandler queryStatementHandler{queryManager, queryOptimizer};
         for (const auto& query : queries)
         {
             auto result

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Rules/BottomUpPlacement.hpp>
+#include <Placement/BottomUpPlacement.hpp>
 
 #include <algorithm>
 #include <array>

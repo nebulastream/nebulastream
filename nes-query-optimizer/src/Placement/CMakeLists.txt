@@ -10,12 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Phases)
-add_subdirectory(Placement)
-add_subdirectory(Traits)
-add_subdirectory(Rules)
-
-
 add_source_files(nes-query-optimizer
-        QueryOptimizer.cpp
+        BottomUpPlacement.cpp
+        QueryDecomposition.cpp
 )

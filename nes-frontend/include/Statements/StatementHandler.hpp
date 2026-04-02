@@ -25,8 +25,6 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryLog.hpp>
-#include <Phases/QueryOptimizer.hpp>
-#include <Phases/SemanticAnalyzer.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -36,6 +34,7 @@
 #include <Util/Pointers.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <QueryOptimizer.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES
@@ -206,15 +205,11 @@ public:
 class QueryStatementHandler final : public StatementHandler<QueryStatementHandler>
 {
     SharedPtr<QueryManager> queryManager;
-    SharedPtr<const SemanticAnalyzer> semanticAnalyser;
     SharedPtr<const QueryOptimizer> queryOptimizer;
     SharedPtr<WorkerCatalog> workerCatalog;
 
 public:
-    explicit QueryStatementHandler(
-        SharedPtr<QueryManager> queryManager,
-        SharedPtr<const SemanticAnalyzer> semanticAnalyser,
-        SharedPtr<const QueryOptimizer> queryOptimizer);
+    explicit QueryStatementHandler(SharedPtr<QueryManager> queryManager, SharedPtr<const QueryOptimizer> queryOptimizer);
     std::expected<QueryStatementResult, Exception> operator()(const QueryStatement& statement);
     std::expected<ExplainQueryStatementResult, Exception> operator()(const ExplainQueryStatement& statement);
     std::expected<ShowQueriesStatementResult, Exception> operator()(const ShowQueriesStatement& statement);
