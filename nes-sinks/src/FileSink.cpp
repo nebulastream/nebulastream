@@ -33,6 +33,9 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
+#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/JSONFormat.hpp>
+#include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <BackpressureChannel.hpp>
@@ -51,6 +54,19 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , isOpen(false)
     , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
 {
+    const auto legacyOutputFormat = toUpperCase(sinkDescriptor.getFromConfig(ConfigParametersFile::LEGACY_OUTPUT_FORMAT));
+    if (legacyOutputFormat == "CSV")
+    {
+        format = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+    }
+    else if (legacyOutputFormat == "JSON")
+    {
+        format = std::make_unique<JSONFormat>(*sinkDescriptor.getSchema());
+    }
+    else
+    {
+        format = std::make_unique<NoneWithIteratorFormat>(*sinkDescriptor.getSchema());
+    }
 }
 
 std::ostream& FileSink::toString(std::ostream& str) const
@@ -103,17 +119,8 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 
     {
         const auto wlocked = outputFileStream.wlock();
-        /// Create a buffer iterator to help iterate through the tuplebuffer and its children
-        BufferIterator iterator{inputTupleBuffer};
-
-        std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
-        while (element.has_value())
-        {
-            wlocked->write(
-                element.value().buffer.getAvailableMemoryArea<char>().data(), static_cast<std::streamsize>(element.value().contentLength));
-            /// Get the next buffer to be written
-            element = iterator.getNextElement();
-        }
+        const std::string formattedBufferString = format->getFormattedBuffer(inputTupleBuffer);
+        wlocked->write(formattedBufferString.data(), static_cast<std::streamsize>(formattedBufferString.length()));
         wlocked->flush();
     }
 }
