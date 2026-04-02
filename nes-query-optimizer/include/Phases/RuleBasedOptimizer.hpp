@@ -12,20 +12,25 @@
     limitations under the License.
 */
 
-#include <Rules/OperatorPlacement.hpp>
+#pragma once
 
-#include <Operators/LogicalOperator.hpp>
-#include <Traits/PlacementTrait.hpp>
-#include <Traits/TraitSet.hpp>
-#include <NetworkTopology.hpp>
+#include <vector>
+#include <Plans/LogicalPlan.hpp>
+#include <Rules/Rule.hpp>
+#include <QueryOptimizerConfiguration.hpp>
 
 namespace NES
 {
-
-NetworkTopology::NodeId getPlacementFor(const LogicalOperator& op)
+class RuleBasedOptimizer
 {
-    auto placementTrait = op.getTraitSet().get<PlacementTrait>();
-    return placementTrait->onNode;
-}
+public:
+    explicit RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryOptimization);
+
+    [[nodiscard]] LogicalPlan optimize(LogicalPlan plan) const;
+
+private:
+    QueryOptimizerConfiguration defaultQueryOptimization;
+    std::vector<Rule<LogicalPlan>> ruleSequence;
+};
 
 }

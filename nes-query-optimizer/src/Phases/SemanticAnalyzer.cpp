@@ -15,6 +15,10 @@
 
 #include <Phases/SemanticAnalyzer.hpp>
 
+#include <memory>
+#include <utility>
+#include <Plans/LogicalPlan.hpp>
+#include <Rules/RuleManager.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
@@ -25,26 +29,30 @@
 
 namespace NES
 {
-LogicalPlan SemanticAnalyzer::analyse(const LogicalPlan& plan) const
+
+SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCatalog, std::shared_ptr<const SinkCatalog> sinkCatalog)
+    : sourceCatalog(std::move(sourceCatalog)), sinkCatalog(std::move(sinkCatalog))
 {
-    auto newPlan = LogicalPlan{plan};
-    const auto sinkBindingRule = SinkBindingRule{sinkCatalog};
-    const auto inlineSinkBindingRule = InlineSinkBindingRule{sinkCatalog};
-    const auto inlineSourceBindingRule = InlineSourceBindingRule{sourceCatalog};
-    const auto sourceInference = SourceInferenceRule{sourceCatalog};
-    const auto logicalSourceExpansionRule = LogicalSourceExpansionRule{sourceCatalog};
-    constexpr auto typeInferenceRule = TypeInferenceRule{};
-    constexpr auto originIdInferenceRule = OriginIdInferenceRule{};
+    RuleManager<LogicalPlan> ruleManager;
+    ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
+    ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
+    ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
+    ruleManager.addRule(SourceInferenceRule{this->sourceCatalog});
+    ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
+    ruleManager.addRule(TypeInferenceRule{});
+    ruleManager.addRule(OriginIdInferenceRule{});
 
-    inlineSinkBindingRule.apply(newPlan);
-    sinkBindingRule.apply(newPlan);
-    inlineSourceBindingRule.apply(newPlan);
-    sourceInference.apply(newPlan);
-    logicalSourceExpansionRule.apply(newPlan);
-    typeInferenceRule.apply(newPlan);
-    originIdInferenceRule.apply(newPlan);
-    typeInferenceRule.apply(newPlan);
-
-    return newPlan;
+    this->ruleSequence = ruleManager.getSequence();
 }
+
+LogicalPlan SemanticAnalyzer::analyse(LogicalPlan plan) const
+{
+    for (const auto& rule : ruleSequence)
+    {
+        plan = rule.apply(plan);
+    }
+    return plan;
+}
+
+
 }
