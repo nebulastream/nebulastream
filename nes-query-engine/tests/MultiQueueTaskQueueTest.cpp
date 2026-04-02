@@ -21,7 +21,7 @@
 #include <stop_token>
 #include <thread>
 #include <vector>
-#include <SchedulingStrategy.hpp>
+#include <WorkDealingStrategy.hpp>
 #include <gtest/gtest.h>
 
 namespace NES
@@ -37,7 +37,7 @@ protected:
 
 TEST_F(MultiQueueTaskQueueTest, RoundRobinDistributesEvenly)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     /// Add tasks that should distribute round-robin across 4 queues
     for (int i = 0; i < 100; ++i)
@@ -54,7 +54,7 @@ TEST_F(MultiQueueTaskQueueTest, RoundRobinDistributesEvenly)
 
 TEST_F(MultiQueueTaskQueueTest, SmallestQueuePicksShortest)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_SMALLEST_QUEUE);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_SMALLEST_QUEUE);
 
     /// Fill thread 0's queue with some tasks first using round-robin temporarily
     /// We'll just add one task — it should go to thread 0 (all empty, picks first)
@@ -74,7 +74,7 @@ TEST_F(MultiQueueTaskQueueTest, SmallestQueuePicksShortest)
 
 TEST_F(MultiQueueTaskQueueTest, BlockingReadReturnsTask)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     queue.addInternalTaskNonBlocking(42);
 
@@ -87,7 +87,7 @@ TEST_F(MultiQueueTaskQueueTest, BlockingReadReturnsTask)
 
 TEST_F(MultiQueueTaskQueueTest, BlockingReadTimesOutOnEmpty)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     std::stop_source stopSource;
     stopSource.request_stop();
@@ -97,7 +97,7 @@ TEST_F(MultiQueueTaskQueueTest, BlockingReadTimesOutOnEmpty)
 
 TEST_F(MultiQueueTaskQueueTest, AdmissionQueueWakesTargetThread)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     /// Add via admission queue
     std::stop_token noStop;
@@ -121,7 +121,7 @@ TEST_F(MultiQueueTaskQueueTest, AdmissionQueueWakesTargetThread)
 
 TEST_F(MultiQueueTaskQueueTest, DrainFromAnyCollectsAllTasks)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     for (int i = 0; i < 20; ++i)
     {
@@ -138,7 +138,7 @@ TEST_F(MultiQueueTaskQueueTest, DrainFromAnyCollectsAllTasks)
 
 TEST_F(MultiQueueTaskQueueTest, ConcurrentProducersConsumers)
 {
-    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, SchedulingStrategy::PER_THREAD_ROUND_ROBIN);
+    MultiQueueTaskQueue<Task> queue(NUM_THREADS, ADMISSION_SIZE, WorkDealingStrategy::PER_THREAD_ROUND_ROBIN);
 
     constexpr int TASKS_PER_PRODUCER = 1000;
     constexpr int NUM_PRODUCERS = 4;

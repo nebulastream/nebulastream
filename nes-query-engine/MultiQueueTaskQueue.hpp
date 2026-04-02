@@ -26,7 +26,7 @@
 #include <stop_token>
 #include <utility>
 #include <vector>
-#include <SchedulingStrategy.hpp>
+#include <WorkDealingStrategy.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -43,7 +43,7 @@ class MultiQueueTaskQueue
     std::vector<std::unique_ptr<std::counting_semaphore<>>> threadSemaphores;
     folly::MPMCQueue<TaskType> admission;
 
-    SchedulingStrategy strategy;
+    WorkDealingStrategy strategy;
     bool workStealingEnabled;
     bool producerLocalEnabled;
     std::atomic<size_t> roundRobinCounter{0};
@@ -58,12 +58,12 @@ class MultiQueueTaskQueue
 
     size_t selectTargetQueue()
     {
-        if (strategy == SchedulingStrategy::PER_THREAD_ROUND_ROBIN)
+        if (strategy == WorkDealingStrategy::PER_THREAD_ROUND_ROBIN)
         {
             return roundRobinCounter.fetch_add(1, std::memory_order_relaxed) % numQueues;
         }
 
-        if (strategy == SchedulingStrategy::PER_THREAD_CHOOSE_TWO)
+        if (strategy == WorkDealingStrategy::PER_THREAD_CHOOSE_TWO)
         {
             /// Pick the shorter of two randomly chosen queues (choose-two).
             /// Uses a thread-local RNG to avoid shared state contention.
@@ -122,7 +122,7 @@ class MultiQueueTaskQueue
     }
 
 public:
-    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, SchedulingStrategy strategy, bool workStealing = false,
+    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, WorkDealingStrategy strategy, bool workStealing = false,
                         bool producerLocal = false)
         : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing),
           producerLocalEnabled(producerLocal), numQueues(numThreads), approxQueueSizes(numThreads)
@@ -139,7 +139,7 @@ public:
 
     /// External producers (sources, control messages). Writes to the shared admission queue with backpressure.
     /// Signals thread semaphores round-robin to distribute wakeups evenly across all workers,
-    /// regardless of the scheduling strategy. This prevents serialization onto a single thread
+    /// regardless of the work dealing strategy. This prevents serialization onto a single thread
     /// when selectTargetQueue() would always pick the same target (e.g., all queue sizes are 0).
     template <typename T = TaskType>
     bool addAdmissionTaskBlocking(const std::stop_token& stoken, T&& task)
@@ -164,7 +164,7 @@ public:
     void addInternalTaskNonBlocking(T&& task, size_t producerThreadIndex = std::numeric_limits<size_t>::max())
     {
         size_t target;
-        if (strategy == SchedulingStrategy::PER_THREAD_ADAPTIVE && producerThreadIndex < numQueues)
+        if (strategy == WorkDealingStrategy::PER_THREAD_ADAPTIVE && producerThreadIndex < numQueues)
         {
             const auto currentSize = approxQueueSizes[producerThreadIndex].load(std::memory_order_relaxed);
             if (currentSize <= 1)

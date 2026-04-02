@@ -17,7 +17,7 @@ SELECT
 FROM ysb10k
 WHERE event_type < UINT64(1)
 GROUP BY campaign_id
-WINDOW TUMBLING(current_ms, SIZE 100)
+WINDOW TUMBLING(current_ms, SIZE 10 MS)
 INTO ysb10kChecksum;
 ----
 0 0

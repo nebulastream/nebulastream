@@ -19,7 +19,7 @@
 namespace NES
 {
 
-/// Scheduling strategy for task dispatch within the QueryEngine.
+/// Work dealing strategy for task dispatch within the QueryEngine.
 /// GLOBAL_QUEUE: All worker threads share a single internal task queue (default, existing behavior).
 /// PER_THREAD_ROUND_ROBIN: Each worker thread has its own queue; tasks are assigned round-robin.
 /// PER_THREAD_SMALLEST_QUEUE: Each worker thread has its own queue; tasks are assigned to the shortest queue.
@@ -32,7 +32,7 @@ namespace NES
 /// All per-thread strategies can be combined with:
 ///   --producer_local true  : successor tasks stay on the producing thread's queue (cache locality)
 ///   --work_stealing true   : idle threads steal from other threads' queues (load balancing)
-enum class SchedulingStrategy : uint8_t
+enum class WorkDealingStrategy : uint8_t
 {
     GLOBAL_QUEUE,
     PER_THREAD_ROUND_ROBIN,

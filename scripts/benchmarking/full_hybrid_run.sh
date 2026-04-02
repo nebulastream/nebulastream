@@ -1,8 +1,20 @@
 #!/bin/bash
 set -euo pipefail
-cd "$(dirname "$0")/../.."
+cd /home/zeuchste-ldap/nesScheduler/nebulastream
 
-TESTFILE="${1:-nes-systests/benchmark/YahooStreamingBenchmark_10k_huge_stateless.test}"
+echo "=== Step 1: Configure + Build ==="
+./.nix/nix-cmake.sh -B cmake-build-release -DCMAKE_BUILD_TYPE=Release -G Ninja
+./.nix/nix-cmake.sh --build cmake-build-release -j 64 --target systest
+
+echo "=== Step 2: Regenerate data ==="
+mkdir -p nes-systests/testdata/huge/ysb
+if [ ! -f nes-systests/testdata/huge/ysb/ysb_10k_data_50000000.csv ]; then
+    bash scripts/benchmarking/replicate_ysb_data.sh nes-systests/testdata/large/ysb/ysb_10k_data_479M.csv 10
+    mv nes-systests/testdata/large/ysb/ysb_10k_data_50000000.csv nes-systests/testdata/huge/ysb/
+fi
+
+echo "=== Step 3: Run benchmark ==="
+TESTFILE="nes-systests/benchmark/YahooStreamingBenchmark_10k_huge_stateless.test"
 SYSTEST="./cmake-build-release/nes-systests/systest/systest"
 OUTCSV="/tmp/hybrid_benchmark.csv"
 
@@ -13,7 +25,8 @@ for SCHED in GLOBAL_QUEUE BATCH_PULL HYBRID_QUEUE; do
     WORK="/tmp/hb_${SCHED}_t${T}"
     mkdir -p "$WORK/tests"
 
-    cp "$TESTFILE" "$WORK/tests/test.test"
+    sed 's|TYPE File;|TYPE Benchmark SET('"'"'memory'"'"' AS `SOURCE`.MODE);|g' \
+        "$TESTFILE" > "$WORK/tests/test.test"
 
     CMD="$SYSTEST -b --show-query-performance -t $WORK/tests/test.test --workingDir $WORK"
     CMD+=" -- --worker.query_engine.number_of_worker_threads=$T"
@@ -45,3 +58,4 @@ done
 
 echo "=== Results ==="
 cat "$OUTCSV"
+echo "=== DONE ==="

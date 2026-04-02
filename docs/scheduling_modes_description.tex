@@ -1,7 +1,7 @@
 \subsection{Scheduling Strategies}
 \label{sec:scheduling-strategies}
 
-We implement and evaluate five task scheduling strategies for the query engine's thread pool.
+We implement and evaluate six task scheduling strategies for the query engine's thread pool.
 The query engine uses a two-level queue architecture:
 
 \begin{itemize}
@@ -101,6 +101,29 @@ Admission tasks always use round-robin semaphore signaling regardless of the str
 
     \textit{Disadvantages:} Can cause load imbalance if one thread produces more successors than others, as all successor work accumulates on a single thread's queue.
     This can be mitigated by combining it with work stealing.
+
+    \item[\texttt{PER\_THREAD\_ADAPTIVE}.]
+    An adaptive strategy that dynamically switches between local and distributed dispatch based on the producer's queue pressure.
+    When a worker produces a successor task, it checks its own approximate queue size:
+    \[
+        \text{target} =
+        \begin{cases}
+            \text{producer} & \text{if } \texttt{approxSize}[\text{producer}] \leq 1 \quad \text{(queue shrinking/empty)} \\
+            \text{choose-two}(a, b) & \text{if } \texttt{approxSize}[\text{candidate}] < \texttt{approxSize}[\text{producer}] \\
+            \text{producer} & \text{otherwise (no less-loaded thread found)}
+        \end{cases}
+    \]
+    When the producer's queue is empty or has at most one pending task, the successor stays local for cache locality (like \texttt{PRODUCER\_LOCAL}).
+    When the queue is growing (size $> 1$), the strategy samples two random queues via choose-two and offloads the task to the less loaded one---but only if that candidate is actually less loaded than the producer's queue.
+    If no better candidate is found, the task stays local.
+
+    \textit{Advantages:} Combines the cache locality of \texttt{PRODUCER\_LOCAL} (when the thread is keeping up with its work) with the load balancing of \texttt{CHOOSE\_TWO} (when the thread is falling behind).
+    The transition is automatic and requires no tuning---the queue size acts as a natural backpressure signal.
+    Zero overhead in the common case (queue empty, task stays local).
+
+    \textit{Disadvantages:} Slightly higher dispatch cost than \texttt{PRODUCER\_LOCAL} due to the queue size check on every dispatch.
+    The threshold ($\leq 1$) is a heuristic---a thread may keep tasks local even when offloading would improve overall throughput, or offload too eagerly when the queue is temporarily at size~2.
+    Our experiments show that \texttt{ADAPTIVE} performs comparably to \texttt{PRODUCER\_LOCAL} at low thread counts and slightly better under high load, but does not outperform \texttt{GLOBAL\_QUEUE} on workloads with few successor tasks.
 \end{description}
 
 \subsubsection{Work Stealing}

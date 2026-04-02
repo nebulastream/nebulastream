@@ -28,7 +28,7 @@ for WORKLOAD in stateless stateful; do
             --test-file "$TESTFILE" \
             --iterations 1 \
             --modes memory \
-            --scheduling "$SCHED" \
+            --work-dealing "$SCHED" \
             --work-stealing false \
             --producer-local false \
             --batch-pull-size "$BS" \

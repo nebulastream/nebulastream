@@ -16,7 +16,7 @@ run_one() {
     local CMD="$SYSTEST -b --show-query-performance -t $SYSTEST_DIR/$TESTFILE --workingDir $WORK"
     CMD+=" -- --worker.query_engine.number_of_worker_threads=$T"
     CMD+=" --worker.default_query_execution.execution_mode=COMPILER"
-    CMD+=" --worker.query_engine.scheduling_strategy=$SCHED"
+    CMD+=" --worker.query_engine.work_dealing_strategy=$SCHED"
     CMD+=" --worker.query_engine.batch_pull_size=$BS"
 
     if [ "$T" -le 32 ]; then

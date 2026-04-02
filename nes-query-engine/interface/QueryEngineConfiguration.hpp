@@ -22,7 +22,7 @@
 #include <Configurations/Enums/EnumOption.hpp>
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
-#include <SchedulingStrategy.hpp>
+#include <WorkDealingStrategy.hpp>
 
 namespace NES
 {
@@ -41,9 +41,9 @@ public:
         = {"number_of_worker_threads", "4", "Number of worker threads used within the QueryEngine", {numberOfThreadsValidator()}};
     UIntOption admissionQueueSize
         = {"admission_queue_size", "1000", "Size of the bounded admission queue used within the QueryEngine", {queueSizeValidator()}};
-    EnumOption<SchedulingStrategy> schedulingStrategy
-        = {"scheduling_strategy", SchedulingStrategy::GLOBAL_QUEUE,
-           "Task scheduling strategy: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE, PER_THREAD_CHOOSE_TWO, PER_THREAD_ADAPTIVE, BATCH_PULL, HYBRID_QUEUE"};
+    EnumOption<WorkDealingStrategy> workDealingStrategy
+        = {"work_dealing_strategy", WorkDealingStrategy::GLOBAL_QUEUE,
+           "Task work dealing strategy: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE, PER_THREAD_CHOOSE_TWO, PER_THREAD_ADAPTIVE, BATCH_PULL, HYBRID_QUEUE"};
     BoolOption workStealing
         = {"work_stealing", "false", "Enable work stealing for per-thread scheduling (idle threads steal from other queues)"};
     BoolOption producerLocal
@@ -54,7 +54,7 @@ public:
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&numberOfWorkerThreads, &admissionQueueSize, &schedulingStrategy, &workStealing, &producerLocal, &batchPullSize};
+        return {&numberOfWorkerThreads, &admissionQueueSize, &workDealingStrategy, &workStealing, &producerLocal, &batchPullSize};
     }
 };
 }

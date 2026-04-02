@@ -26,7 +26,7 @@
 #   --data <path>           Test data directory (passed to systest --data)
 #   --iterations <n>        Iterations per mode (default: 3)
 #   --modes <m1,m2,...>     Comma-separated source modes (default: file,memory,in_place,tmpfs_cold,tmpfs_warm)
-#   --scheduling <s1,s2,..> Comma-separated scheduling strategies (default: GLOBAL_QUEUE)
+#   --work-dealing <s1,s2,..> Comma-separated scheduling strategies (default: GLOBAL_QUEUE)
 #                           Options: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE
 #   --work-stealing <t/f,..> Comma-separated work stealing settings (default: false)
 #   --tmpfs-path <path>     tmpfs mount point (default: /dev/shm)
@@ -56,7 +56,7 @@ TEST_FILE="benchmark_small/YahooStreamingBenchmark.test"
 DATA_DIR=""
 ITERATIONS=3
 MODES="file,memory,in_place,tmpfs_cold,tmpfs_warm"
-SCHEDULING="GLOBAL_QUEUE"
+WORK_DEALING="GLOBAL_QUEUE"
 WORK_STEALING="false"
 PRODUCER_LOCAL="false"
 BATCH_PULL_SIZE=4
@@ -83,7 +83,7 @@ while [[ $# -gt 0 ]]; do
         --data)            DATA_DIR="$2";         shift 2 ;;
         --iterations)      ITERATIONS="$2";       shift 2 ;;
         --modes)           MODES="$2";            shift 2 ;;
-        --scheduling)      SCHEDULING="$2";       shift 2 ;;
+        --work-dealing)      WORK_DEALING="$2";       shift 2 ;;
         --work-stealing)   WORK_STEALING="$2";    shift 2 ;;
         --producer-local)  PRODUCER_LOCAL="$2";   shift 2 ;;
         --batch-pull-size) BATCH_PULL_SIZE="$2";  shift 2 ;;
@@ -130,7 +130,7 @@ if [[ -n "$REMOTE" ]]; then
     echo " Remote build:    ${REMOTE_BUILD}"
     echo " Test file:       ${TEST_FILE}"
     echo " Source modes:    ${MODES}"
-    echo " Scheduling:      ${SCHEDULING}"
+    echo " Work dealing:      ${WORK_DEALING}"
     echo " Work stealing:   ${WORK_STEALING}"
     echo " Iterations:      ${ITERATIONS}"
     echo " Worker threads:  ${WORKER_THREADS}"
@@ -291,7 +291,7 @@ if [[ -n "$REMOTE" ]]; then
     REMOTE_BENCH_CMD+=" --test-file '${TEST_FILE}'"
     REMOTE_BENCH_CMD+=" --iterations ${ITERATIONS}"
     REMOTE_BENCH_CMD+=" --modes '${MODES}'"
-    REMOTE_BENCH_CMD+=" --scheduling '${SCHEDULING}'"
+    REMOTE_BENCH_CMD+=" --work-dealing '${WORK_DEALING}'"
     REMOTE_BENCH_CMD+=" --work-stealing '${WORK_STEALING}'"
     REMOTE_BENCH_CMD+=" --producer-local '${PRODUCER_LOCAL}'"
     REMOTE_BENCH_CMD+=" --batch-pull-size ${BATCH_PULL_SIZE}"
@@ -351,11 +351,15 @@ if [[ ! -f "$SOURCE_TEST" ]]; then
 fi
 
 # ---- Setup ----
-WORK_BASE=$(mktemp -d "/tmp/nes_benchmark_modes_XXXXXX")
+if [[ -d "/local-ssd/${USER}" ]]; then
+    WORK_BASE=$(mktemp -d "/local-ssd/${USER}/nes_benchmark_modes_XXXXXX")
+else
+    WORK_BASE=$(mktemp -d "/tmp/nes_benchmark_modes_XXXXXX")
+fi
 trap 'rm -rf "$WORK_BASE"' EXIT
 
 IFS=',' read -ra MODE_LIST <<< "$MODES"
-IFS=',' read -ra SCHED_LIST <<< "$SCHEDULING"
+IFS=',' read -ra SCHED_LIST <<< "$WORK_DEALING"
 IFS=',' read -ra THREAD_LIST <<< "$WORKER_THREADS"
 IFS=',' read -ra WS_LIST <<< "$WORK_STEALING"
 IFS=',' read -ra PL_LIST <<< "$PRODUCER_LOCAL"
@@ -365,7 +369,7 @@ echo "================================================================="
 echo " BenchmarkSource Mode Comparison (local)"
 echo " Test file:       ${TEST_FILE}"
 echo " Source modes:    ${MODES}"
-echo " Scheduling:      ${SCHEDULING}"
+echo " Work dealing:      ${WORK_DEALING}"
 echo " Work stealing:   ${WORK_STEALING}"
 echo " Producer local:  ${PRODUCER_LOCAL}"
 echo " Iterations:      ${ITERATIONS}"
@@ -430,7 +434,7 @@ for threads in "${THREAD_LIST[@]}"; do
     if [[ "$pl" == "true" ]]; then
         pl_label=" +PL"
     fi
-    echo "--- Threads: $threads | Scheduling: ${sched}${ws_label}${pl_label} | Source mode: $mode ---"
+    echo "--- Threads: $threads | Work dealing: ${sched}${ws_label}${pl_label} | Source mode: $mode ---"
     test_file=$(generate_test_file "$mode")
 
     for iter in $(seq 1 "$ITERATIONS"); do
@@ -452,7 +456,7 @@ for threads in "${THREAD_LIST[@]}"; do
         cmd+=(--
             "--worker.query_engine.number_of_worker_threads=${threads}"
             "--worker.default_query_execution.execution_mode=COMPILER"
-            "--worker.query_engine.scheduling_strategy=${sched}"
+            "--worker.query_engine.work_dealing_strategy=${sched}"
             "--worker.query_engine.work_stealing=${ws}"
             "--worker.query_engine.producer_local=${pl}"
             "--worker.query_engine.batch_pull_size=${BATCH_PULL_SIZE}"

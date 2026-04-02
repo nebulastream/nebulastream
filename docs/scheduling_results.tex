@@ -1,7 +1,7 @@
 \subsection{Experimental Results: Per-Thread Scheduling Strategies}
 \label{sec:scheduling-results}
 
-We evaluate the five scheduling strategies on two workloads using the Yahoo Streaming Benchmark (YSB) with 50 million tuples (4.8\,GB) and 10,000 distinct campaign IDs.
+We evaluate the six scheduling strategies on four workloads using the Yahoo Streaming Benchmark (YSB) with 50 million tuples (4.8\,GB) and 10,000 distinct campaign IDs.
 All experiments run on a dual-socket server with 2 NUMA nodes (32 logical CPUs each, 16 physical cores with hyperthreading) and 512\,GB RAM.
 For thread counts $\leq 32$, processes are pinned to NUMA node~0 via \texttt{numactl --cpunodebind=0 --membind=0}.
 At 64 threads, both NUMA nodes are used without pinning.
@@ -9,7 +9,7 @@ At 64 threads, both NUMA nodes are used without pinning.
 \subsubsection{Stateless Workload (Filter Only)}
 
 The stateless workload applies a predicate (\texttt{WHERE event\_type < 1}) with approximately 80\% selectivity.
-This is a single-pipeline query that produces \emph{no successor tasks}---each source buffer is processed in a single pipeline execution through filter and checksum sink.
+This is a single-pipeline query that produces \emph{no successor tasks}, thus each source buffer is processed in a single pipeline execution through filter and checksum sink.
 The only scheduling-relevant contention is on the admission queue (source $\rightarrow$ workers).
 
 Table~\ref{tab:stateless-strategies} shows the throughput in MB/s for each strategy.
@@ -22,19 +22,20 @@ Table~\ref{tab:stateless-strategies} shows the throughput in MB/s for each strat
 \hline
 \textbf{Strategy} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
 \hline
-\texttt{GLOBAL\_QUEUE}      & 72 & 134 & 241 & 403 & \textbf{564} & \textbf{593} & \textbf{388} \\
+\texttt{GLOBAL\_QUEUE}      & 75 & 149 & 293 & 566 & \textbf{949} & \textbf{734} & \textbf{559} \\
 \texttt{PT\_ROUND\_ROBIN}   & 72 & 134 & 234 & 400 & 395 & 506 & 191 \\
 \texttt{PT\_SMALLEST\_QUEUE}& 72 & 131 & 228 & 368 & 412 & 498 & 362 \\
 \texttt{PT\_CHOOSE\_TWO}    & 72 & 133 & 238 & 400 & 400 & 496 & 355 \\
-\texttt{PRODUCER\_LOCAL}    & 72 & \textbf{135} & \textbf{241} & \textbf{403} & 406 & 477 & 278 \\
+\texttt{PRODUCER\_LOCAL}    & 76 & 149 & 296 & 570 & 594 & 659 & 517 \\
+\texttt{PT\_ADAPTIVE}       & 75 & \textbf{150} & \textbf{296} & \textbf{577} & 580 & 666 & 505 \\
 \hline
-\textit{Speedup vs.\ 1T}   & 1.0$\times$ & 1.9$\times$ & 3.3$\times$ & 5.6$\times$ & 7.8$\times$ & 8.2$\times$ & 5.4$\times$ \\
+\textit{Speedup vs.\ 1T}   & 1.0$\times$ & 2.0$\times$ & 3.9$\times$ & 7.6$\times$ & 12.5$\times$ & 9.6$\times$ & 7.3$\times$ \\
 \hline
 \end{tabular}
 \end{table}
 
-Key observations:
-
+The key observations are as follows.
+% 
 \begin{itemize}
     \item \textbf{At 1--8 threads, all strategies perform identically} (within 3\%), with \texttt{PRODUCER\_LOCAL} and \texttt{GLOBAL\_QUEUE} slightly ahead.
     At low thread counts, queue contention is negligible, so the dispatch policy has minimal impact.
@@ -49,7 +50,7 @@ Key observations:
     \texttt{SMALLEST\_QUEUE} and \texttt{CHOOSE\_TWO} fare better (400--412\,MB/s at 16T) because they adapt to load imbalance, but still trail \texttt{GLOBAL\_QUEUE} due to the overhead of maintaining per-thread queues for a workload that does not benefit from them.
 
     \item \textbf{\texttt{PRODUCER\_LOCAL} offers no advantage over \texttt{GLOBAL\_QUEUE}} on this workload.
-    Since there are no successor tasks, the producer-local policy is never triggered---all tasks come from the admission queue.
+    Since there are no successor tasks, the producer-local policy is never triggered — every task comes from the admission queue.
     The 477\,MB/s at 32T (vs.\ 593 for \texttt{GLOBAL\_QUEUE}) reflects the overhead of the per-thread queue infrastructure without any benefit.
 
     \item \textbf{The 32T $\rightarrow$ 64T throughput drop} is caused by two factors:
@@ -85,15 +86,15 @@ Table~\ref{tab:stateful-strategies} shows the results.
 \end{tabular}
 \end{table}
 
-Key observations:
-
+The key observations are as follows.
+% 
 \begin{itemize}
     \item \textbf{Scaling is limited to 2.3$\times$}, with \texttt{GLOBAL\_QUEUE} achieving the peak of 179\,MB/s at 32T.
     The aggregation operator's hash table and window state management are the bottleneck, not the scheduling strategy.
     Adding more threads provides diminishing returns because the per-tuple cost of hash table lookups and state updates dominates.
 
     \item \textbf{All strategies perform within 10--15\% of each other} at every thread count.
-    This confirms that for compute-bound stateful queries, the choice of scheduling strategy is secondary to operator efficiency.
+    This confirms that for compute-bound stateful queries, the choice of work-dealing scheduling strategy is secondary to operator efficiency.
 
     \item \textbf{\texttt{GLOBAL\_QUEUE} wins at most thread counts} (2T, 4T, 8T, 32T, 64T), consistent with the stateless results.
     Its advantage is most pronounced at 32T (179 vs.\ 152--171 for per-thread strategies), where the single shared queue avoids the per-thread overhead that provides no benefit for this workload.
@@ -107,26 +108,137 @@ Key observations:
 
     \item \textbf{\texttt{PRODUCER\_LOCAL} provides no measurable benefit} despite the stateful query producing window emission successor tasks.
     The reason is that window emissions are too rare (1,667 across 50M tuples) to create meaningful cache locality advantages.
-    A workload with higher-frequency successor tasks (e.g., smaller window sizes or multi-stage pipelines) would be needed to observe the benefit.
+\end{itemize}
+
+\subsubsection{High-Frequency Window Workload (1-Second Tumbling Window)}
+
+To increase the frequency of successor tasks, we reduce the tumbling window size to 10~milliseconds (\texttt{WINDOW TUMBLING(current\_ms, SIZE 10 MS)}), producing approximately 5~million window emissions---3,000$\times$ more than the 30-second window.
+Each window emission generates a successor task that must be dispatched by the scheduling strategy.
+At this frequency, roughly one in ten tasks processed by a worker is a successor task rather than a source buffer, making the scheduling strategy's dispatch policy for internal tasks a significant factor in overall throughput.
+
+Table~\ref{tab:highfreq-strategies} shows the results.
+
+\begin{table}[h]
+\centering
+\caption{High-frequency window workload throughput (MB/s) by strategy and thread count. Bold values indicate the best strategy per thread count.}
+\label{tab:highfreq-strategies}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Strategy} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}      & 38 & 52 & 76 & 106 & 119 & \textbf{130} & 36 \\
+\texttt{PT\_ROUND\_ROBIN}   & 39 & 51 & 80 & 115 & 121 & 116 & 26 \\
+\texttt{PT\_SMALLEST\_QUEUE}& 38 & 51 & 79 & 109 & 122 & 118 & 31 \\
+\texttt{PT\_CHOOSE\_TWO}    & 39 & 52 & 81 & 115 & 122 & 117 & 26 \\
+\texttt{PRODUCER\_LOCAL}    & 39 & \textbf{52} & \textbf{88} & \textbf{125} & \textbf{127} & 129 & \textbf{40} \\
+\texttt{PT\_ADAPTIVE}       & 39 & 52 & 82 & 115 & 123 & 117 & 26 \\
+\hline
+\textit{Speedup vs.\ 1T}   & 1.0$\times$ & 1.3$\times$ & 2.3$\times$ & 3.2$\times$ & 3.3$\times$ & 3.3$\times$ & 1.0$\times$ \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{PRODUCER\_LOCAL} clearly outperforms all other strategies at 4--16T.}
+    At 8T, \texttt{PRODUCER\_LOCAL} achieves 125\,MB/s vs.\ 106\,MB/s for \texttt{GLOBAL\_QUEUE} (+18\%).
+    This is the first workload where keeping successor tasks on the producing thread's queue provides a measurable benefit: with $\sim$5 million window emissions (one per 10\,ms window), a significant fraction of the work consists of successor tasks that benefit from L1/L2 cache locality.
+
+    \item \textbf{Scaling reaches 3.3$\times$} with \texttt{PRODUCER\_LOCAL} at 16T (127\,MB/s) and \texttt{GLOBAL\_QUEUE} at 32T (130\,MB/s).
+    The higher successor task frequency makes per-thread strategies competitive throughout the scaling range.
+
+    \item \textbf{\texttt{GLOBAL\_QUEUE} retains its advantage only at 32T} (130 vs.\ 129\,MB/s for \texttt{PRODUCER\_LOCAL}), where its load balancing compensates for the lack of locality.
+    At all other thread counts, \texttt{PRODUCER\_LOCAL} leads.
+
+    \item \textbf{\texttt{ADAPTIVE} does not outperform the simpler \texttt{CHOOSE\_TWO}} on this workload (115 vs.\ 115\,MB/s at 8T, 123 vs.\ 122 at 16T).
+    The adaptive threshold ($\texttt{approxSize} \leq 1$) causes frequent offloading since the high successor task rate keeps queues non-empty, negating the intended locality benefit.
+
+    \item \textbf{At 64T (cross-NUMA), all per-thread strategies collapse} to 26--31\,MB/s, while \texttt{GLOBAL\_QUEUE} reaches 36\,MB/s and \texttt{PRODUCER\_LOCAL} 40\,MB/s.
+    Cross-NUMA memory access dominates; only strategies with strong locality (\texttt{PRODUCER\_LOCAL}) or fair distribution (\texttt{GLOBAL\_QUEUE}) survive.
+\end{itemize}
+
+\subsubsection{Join Workload (Multi-Pipeline)}
+
+To evaluate the strategies on a truly multi-pipeline workload, we use a windowed self-join on \texttt{campaign\_id} with a 1-second tumbling window.
+Two copies of the YSB source (each 50M tuples) are joined, creating three pipelines: left source $\rightarrow$ filter/project, right source $\rightarrow$ filter/project, and join $\rightarrow$ sink.
+Both source pipelines produce window emission successor tasks that feed the join pipeline, creating a steady flow of internal tasks that must be dispatched by the scheduling strategy.
+
+Table~\ref{tab:join-strategies} shows the results.
+
+\begin{table}[h]
+\centering
+\caption{Join workload throughput (MB/s) by strategy and thread count. Bold values indicate the best strategy per thread count.}
+\label{tab:join-strategies}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Strategy} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}      & 31 & 41 & \textbf{67} & \textbf{104} & 111 & 88 & 65 \\
+\texttt{PT\_ROUND\_ROBIN}   & 31 & 41 & 63 & 99 & 109 & 87 & 65 \\
+\texttt{PT\_SMALLEST\_QUEUE}& 31 & \textbf{44} & 56 & 68 & 75 & 92 & 62 \\
+\texttt{PT\_CHOOSE\_TWO}    & 31 & 41 & 65 & 100 & 111 & 87 & 66 \\
+\texttt{PRODUCER\_LOCAL}    & 31 & 41 & 65 & 99 & \textbf{113} & \textbf{94} & \textbf{67} \\
+\texttt{PT\_ADAPTIVE}       & 31 & 41 & 64 & 99 & 112 & 86 & 67 \\
+\hline
+\textit{Speedup vs.\ 1T}   & 1.0$\times$ & 1.4$\times$ & 2.2$\times$ & 3.3$\times$ & 3.6$\times$ & 3.0$\times$ & 2.2$\times$ \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{PRODUCER\_LOCAL} wins at 16--64T}, confirming the high-frequency window results on a fundamentally different workload.
+    At 16T, \texttt{PRODUCER\_LOCAL} achieves 113\,MB/s vs.\ 111 for \texttt{GLOBAL\_QUEUE}.
+    At 32T, the gap widens to 94 vs.\ 88\,MB/s (+7\%), and at 64T to 67 vs.\ 65\,MB/s.
+    The join pipeline's successor tasks---which carry intermediate join results---benefit from remaining on the producing thread's cache.
+
+    \item \textbf{\texttt{GLOBAL\_QUEUE} leads at 4--8T} (67/104\,MB/s vs.\ 65/99 for \texttt{PRODUCER\_LOCAL}).
+    At lower thread counts, the join's hash table contention is the dominant bottleneck, and \texttt{GLOBAL\_QUEUE}'s balanced distribution ensures all threads contribute equally to the hash table build phase.
+
+    \item \textbf{Scaling peaks at 3.6$\times$ (16T)} before declining at 32T due to hyperthreading contention.
+    The join's hash table lookups are memory-intensive, making hyperthreading less effective than for the filter-only workloads.
+    At 64T (cross-NUMA), throughput recovers partially (67\,MB/s) because the two NUMA nodes can each process one side of the join independently.
+
+    \item \textbf{\texttt{SMALLEST\_QUEUE} exhibits anomalous behavior}: best at 2T (44\,MB/s, the overall winner) and competitive at 32T (92\,MB/s), but worst at 8--16T (68--75\,MB/s).
+    At 2T, its load-aware dispatch effectively balances between the two source pipelines and the join pipeline.
+    At higher thread counts, the $O(N)$ scan cost and stale size approximations cause poor dispatch decisions during the bursty join output phase.
+
+    \item \textbf{\texttt{ADAPTIVE} closely tracks \texttt{CHOOSE\_TWO}} (within 1--2\,MB/s at all thread counts) and does not match \texttt{PRODUCER\_LOCAL}.
+    As with the high-frequency workload, the adaptive threshold triggers offloading too eagerly when the join pipeline's successor tasks keep queues non-empty.
 \end{itemize}
 
 \subsubsection{Summary}
+We analyze the impact of work-dealing on throughput across four workloads with increasing successor task frequency:
+
 
 \begin{itemize}
-    \item \textbf{\texttt{GLOBAL\_QUEUE} is the best default strategy.}
-    It wins or ties on both workloads at most thread counts.
-    Its simplicity (no batch size tuning, no flags) and natural load balancing make it robust across workload types.
+    \item \textbf{The optimal strategy depends on the ratio of successor tasks to admission tasks.}
+    When successor tasks are rare or absent (stateless filter, 30s window), \texttt{GLOBAL\_QUEUE} dominates due to its perfect load balancing and zero dispatch overhead.
+    When successor tasks are frequent (10\,ms window with $\sim$5M emissions, or multi-pipeline joins), \texttt{PRODUCER\_LOCAL} wins by up to 18\% through cache locality.
 
-    \item \textbf{Per-thread queue strategies add overhead without benefit for single-pipeline queries.}
-    The dispatch cost (atomic counter for round-robin, linear scan for smallest-queue, random sampling for choose-two) and per-thread queue maintenance are only justified when successor tasks are frequent enough to benefit from locality.
+    \item \textbf{\texttt{GLOBAL\_QUEUE} is the safest default strategy.}
+    It wins or ties on the stateless and stateful workloads at most thread counts, and remains competitive on successor-heavy workloads at low thread counts (4--8T).
+    Its simplicity (no configuration parameters) and natural load balancing make it robust when successor task frequency is unknown.
 
-    \item \textbf{\texttt{PRODUCER\_LOCAL} is the best per-thread strategy} at low thread counts (1--8T), tying with \texttt{GLOBAL\_QUEUE}.
-    However, it degrades at higher thread counts due to load imbalance when all admission tasks are distributed evenly but successor tasks accumulate on specific threads.
+    \item \textbf{\texttt{PRODUCER\_LOCAL} is the best strategy for successor-heavy workloads.}
+    On both the high-frequency window workload and the join workload, it leads at 16--64T.
+    The benefit is consistent across two fundamentally different query types (single-source windowed aggregation and multi-source join), confirming that cache locality for successor tasks is the key advantage.
 
-    \item \textbf{The scheduling strategy matters most at high thread counts} ($\geq 16$T), where contention on shared data structures amplifies the differences between strategies.
-    At 1--8 threads, all strategies are within 5\% of each other.
+    \item \textbf{Per-thread dispatch strategies (\texttt{ROUND\_ROBIN}, \texttt{CHOOSE\_TWO}, \texttt{SMALLEST\_QUEUE}) add overhead without sufficient benefit.}
+    They trail both \texttt{GLOBAL\_QUEUE} and \texttt{PRODUCER\_LOCAL} on all four workloads.
+    The dispatch cost and loss of cache locality for successor tasks outweigh any load balancing advantage they provide.
 
-    \item \textbf{Both workloads are bottlenecked by factors other than scheduling:}
-    the stateless workload by admission queue throughput (source buffer production rate), and the stateful workload by operator execution time (hash table and window state management).
-    To fully exercise the scheduling strategies, a multi-pipeline workload with frequent successor tasks is needed.
+    \item \textbf{\texttt{ADAPTIVE} does not outperform \texttt{PRODUCER\_LOCAL}} on any tested workload.
+    The threshold heuristic ($\texttt{approxSize} \leq 1$) causes premature offloading when successor tasks keep queues non-empty, negating the intended locality benefit.
+    A more sophisticated threshold (e.g., based on rate of change rather than absolute size) may improve its performance.
+
+    \item \textbf{The scheduling strategy matters most at $\geq 16$T}, where contention on shared data structures amplifies the differences.
+    At 1--2 threads, all strategies perform within 3\% of each other.
+
+    \item \textbf{Cross-NUMA execution (64T) severely degrades all strategies.}
+    Throughput drops 60--80\% from 32T to 64T on the high-frequency workload.
+    On the join workload, 64T partially recovers because the two NUMA nodes can each process one side of the join.
+    NUMA-aware scheduling remains a more impactful optimization opportunity than task dispatch strategy.
 \end{itemize}

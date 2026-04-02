@@ -22,7 +22,7 @@ for BS in 1 2 4 8 16 32; do
         --test-file "$TESTFILE" \
         --iterations 1 \
         --modes memory \
-        --scheduling BATCH_PULL \
+        --work-dealing BATCH_PULL \
         --work-stealing false \
         --producer-local false \
         --batch-pull-size "$BS" \

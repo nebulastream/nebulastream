@@ -49,7 +49,7 @@
 #include <Interfaces.hpp>
 #include <MultiQueueTaskQueue.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SchedulingStrategy.hpp>
+#include <WorkDealingStrategy.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
@@ -334,7 +334,7 @@ public:
         if (WorkerThread::id == INVALID<WorkerThreadId>)
         {
             /// Non-WorkerThread: route through admission queue
-            if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
+            if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL || strategy == WorkDealingStrategy::HYBRID_QUEUE)
             {
                 taskQueue.addAdmissionTaskBlocking({}, std::move(task));
             }
@@ -385,7 +385,7 @@ public:
     template <typename T>
     void submitAdmissionTask(T&& task)
     {
-        if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
+        if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL || strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
             taskQueue.addAdmissionTaskBlocking({}, std::forward<T>(task));
         }
@@ -432,7 +432,7 @@ public:
         std::shared_ptr<QueryEngineStatisticListener> stats,
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
         const size_t admissionQueueSize,
-        SchedulingStrategy schedulingStrategy,
+        WorkDealingStrategy workDealingStrategy,
         bool workStealing,
         bool producerLocal,
         size_t batchPullSize,
@@ -440,13 +440,13 @@ public:
         : listener(std::move(listener))
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
-        , strategy(schedulingStrategy)
+        , strategy(workDealingStrategy)
         , batchPullSize_(batchPullSize)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter(
               [this](Task&& task) noexcept
               {
-                  if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL || strategy == SchedulingStrategy::HYBRID_QUEUE)
+                  if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL || strategy == WorkDealingStrategy::HYBRID_QUEUE)
                   {
                       taskQueue.addInternalTaskNonBlocking(std::move(task));
                   }
@@ -456,12 +456,12 @@ public:
                   }
               })
     {
-        if (strategy != SchedulingStrategy::GLOBAL_QUEUE && strategy != SchedulingStrategy::BATCH_PULL
-            && strategy != SchedulingStrategy::HYBRID_QUEUE)
+        if (strategy != WorkDealingStrategy::GLOBAL_QUEUE && strategy != WorkDealingStrategy::BATCH_PULL
+            && strategy != WorkDealingStrategy::HYBRID_QUEUE)
         {
             multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing, producerLocal);
         }
-        if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+        if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
             hybridLocalQueues.reserve(numThreads);
             for (size_t i = 0; i < numThreads; ++i)
@@ -504,12 +504,12 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+        if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
             const auto threadIndex = static_cast<size_t>(WorkerThread::id.getRawValue() - WorkerThreadId::INITIAL);
             hybridLocalQueues[threadIndex]->enqueue(std::move(task));
         }
-        else if (strategy == SchedulingStrategy::GLOBAL_QUEUE || strategy == SchedulingStrategy::BATCH_PULL)
+        else if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL)
         {
             taskQueue.addInternalTaskNonBlocking(std::move(task));
         }
@@ -526,7 +526,7 @@ private:
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
-    SchedulingStrategy strategy;
+    WorkDealingStrategy strategy;
     size_t batchPullSize_{1};
     TaskQueue<Task> taskQueue;
     std::unique_ptr<MultiQueueTaskQueue<Task>> multiQueue; /// only set for per-thread strategies
@@ -819,7 +819,7 @@ void ThreadPool::addThread(WorkerId workerId)
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);
             const WorkerThread worker{*this, false};
 
-            if (strategy == SchedulingStrategy::GLOBAL_QUEUE)
+            if (strategy == WorkDealingStrategy::GLOBAL_QUEUE)
             {
                 /// Global queue mode: all workers read from the shared queue
                 while (!stopToken.stop_requested())
@@ -837,7 +837,7 @@ void ThreadPool::addThread(WorkerId workerId)
                     handleTask(terminatingWorker, std::move(*task));
                 }
             }
-            else if (strategy == SchedulingStrategy::BATCH_PULL)
+            else if (strategy == WorkDealingStrategy::BATCH_PULL)
             {
                 /// Batch-pull mode: pull a batch from the global queue into a thread-local buffer
                 std::vector<Task> localBatch;
@@ -887,7 +887,7 @@ void ThreadPool::addThread(WorkerId workerId)
                     handleTask(terminatingWorker, std::move(*task));
                 }
             }
-            else if (strategy == SchedulingStrategy::HYBRID_QUEUE)
+            else if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
             {
                 /// Hybrid queue mode: per-thread queue for successors, global queue for refill
                 auto& localQueue = *hybridLocalQueues[id];
@@ -983,7 +983,7 @@ QueryEngine::QueryEngine(
           statisticListener,
           bufferManager,
           config.admissionQueueSize.getValue(),
-          config.schedulingStrategy.getValue(),
+          config.workDealingStrategy.getValue(),
           config.workStealing.getValue(),
           config.producerLocal.getValue(),
           config.batchPullSize.getValue(),
