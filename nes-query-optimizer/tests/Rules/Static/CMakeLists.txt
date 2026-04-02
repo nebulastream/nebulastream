@@ -10,11 +10,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-function(add_nes_optimizer_test)
-    add_nes_unit_test(${ARGN})
-    set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-query-optimizer nes-logical-operators nes-test-util)
-    target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
-endfunction()
-
-add_subdirectory(Rules)
+add_nes_optimizer_test(DecideJoinTypesTest DecideJoinTypesTest.cpp)
+add_nes_optimizer_test(DecideMemoryLayoutTest DecideMemoryLayoutTest.cpp)

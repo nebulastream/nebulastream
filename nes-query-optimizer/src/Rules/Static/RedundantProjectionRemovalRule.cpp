@@ -15,6 +15,10 @@
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
@@ -25,7 +29,35 @@
 namespace NES
 {
 
-void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
+const std::type_info& RedundantProjectionRemovalRule::getType()
+{
+    return typeid(RedundantProjectionRemovalRule);
+}
+
+std::string_view RedundantProjectionRemovalRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
+{
+    return {};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
+{
+    return {};
+}
+
+bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const
+{
+    return true;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& projectionOp :
          getOperatorByType<ProjectionLogicalOperator>(queryPlan)
@@ -42,6 +74,7 @@ void RedundantProjectionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLI
         INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
         queryPlan = std::move(replaceResult.value());
     }
+    return queryPlan;
 }
 
 }

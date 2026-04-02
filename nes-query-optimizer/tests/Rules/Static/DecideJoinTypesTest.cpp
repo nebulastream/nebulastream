@@ -113,7 +113,7 @@ TEST_F(DecideJoinTypesTest, HashJoinConditionProducesHashJoinTrait)
         = LogicalPlanBuilder::addJoin(leftPlan, rightPlan, joinFunction, createTumblingWindow(), JoinLogicalOperator::JoinType::INNER_JOIN);
     plan = LogicalPlanBuilder::addSink("test_sink", plan);
 
-    DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
+    const DecideJoinTypesRule rule(StreamJoinStrategy::OPTIMIZER_CHOOSES);
     auto result = rule.apply(plan);
 
     auto joins = getOperatorByType<JoinLogicalOperator>(result);

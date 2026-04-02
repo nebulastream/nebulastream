@@ -16,18 +16,51 @@
 
 #include <algorithm>
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
+const std::type_info& SourceInferenceRule::getType()
+{
+    return typeid(SourceInferenceRule);
+}
+
+std::string_view SourceInferenceRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> SourceInferenceRule::dependsOn() const
+{
+    return {typeid(InlineSourceBindingRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> SourceInferenceRule::requiredBy() const
+{
+    return {};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+bool SourceInferenceRule::operator==(const SourceInferenceRule& other) const
+{
+    return sourceCatalog == other.sourceCatalog;
+}
+
+LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
 {
     auto sourceOperators = getOperatorByType<SourceNameLogicalOperator>(queryPlan);
     auto sourceDescriptorOperators = getOperatorByType<SourceDescriptorLogicalOperator>(queryPlan);
@@ -62,5 +95,6 @@ void SourceInferenceRule::apply(LogicalPlan& queryPlan) const
         INVARIANT(result.has_value(), "replaceOperator failed");
         queryPlan = std::move(*result);
     }
+    return queryPlan;
 }
 }

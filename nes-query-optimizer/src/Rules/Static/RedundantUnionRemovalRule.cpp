@@ -15,6 +15,10 @@
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
 
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <vector>
 #include <Operators/LogicalOperator.hpp>
@@ -25,7 +29,35 @@
 namespace NES
 {
 
-void RedundantUnionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(readability-convert-member-functions-to-static)
+const std::type_info& RedundantUnionRemovalRule::getType()
+{
+    return typeid(RedundantUnionRemovalRule);
+}
+
+std::string_view RedundantUnionRemovalRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
+{
+    return {};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
+{
+    return {};
+}
+
+bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const
+{
+    return true;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+LogicalPlan RedundantUnionRemovalRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& unionOperator : getOperatorByType<UnionLogicalOperator>(queryPlan)
              | std::views::filter([](const auto& op) { return op.getChildren().size() == 1; }))
@@ -35,6 +67,7 @@ void RedundantUnionRemovalRule::apply(LogicalPlan& queryPlan) const ///NOLINT(re
         INVARIANT(replaceResult.has_value(), "Failed to replace union with its child");
         queryPlan = std::move(replaceResult.value());
     }
+    return queryPlan;
 }
 
 }

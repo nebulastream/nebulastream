@@ -15,20 +15,53 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 
 #include <ranges>
+#include <set>
+#include <string_view>
+#include <typeindex>
+#include <typeinfo>
 #include <utility>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Sources/SourceNameLogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
 {
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+const std::type_info& LogicalSourceExpansionRule::getType()
+{
+    return typeid(LogicalSourceExpansionRule);
+}
+
+std::string_view LogicalSourceExpansionRule::getName()
+{
+    return NAME;
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> LogicalSourceExpansionRule::dependsOn() const
+{
+    return {typeid(SourceInferenceRule)};
+}
+
+/// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
+std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
+{
+    return {};
+};
+
+bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
+{
+    return sourceCatalog == other.sourceCatalog;
+}
+
+LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
@@ -70,6 +103,7 @@ void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
             newParent.explain(ExplainVerbosity::Debug));
         queryPlan = std::move(replaceResult.value());
     }
+    return queryPlan;
 }
 
 }
