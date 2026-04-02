@@ -49,6 +49,7 @@
 #include <Interfaces.hpp>
 #include <MultiQueueTaskQueue.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <random>
 #include <WorkDealingStrategy.hpp>
 #include <WorkStealingStrategy.hpp>
 #include <QueryEngineConfiguration.hpp>
@@ -442,6 +443,8 @@ public:
         , statistic(std::move(stats))
         , bufferProvider(std::move(bufferProvider))
         , strategy(workDealingStrategy)
+        , stealingStrategy_(workStealingStrategy)
+        , producerLocal_(producerLocal)
         , batchPullSize_(batchPullSize)
         , taskQueue(admissionQueueSize)
         , delayedTaskSubmitter(
@@ -508,7 +511,18 @@ private:
         if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
             const auto threadIndex = static_cast<size_t>(WorkerThread::id.getRawValue() - WorkerThreadId::INITIAL);
-            hybridLocalQueues[threadIndex]->enqueue(std::move(task));
+            if (producerLocal_)
+            {
+                /// Producer-local: successor stays on this thread's queue
+                hybridLocalQueues[threadIndex]->enqueue(std::move(task));
+            }
+            else
+            {
+                /// Distribute successor to another thread's queue via round-robin
+                const auto numQueues = hybridLocalQueues.size();
+                const auto target = hybridRoundRobin_.fetch_add(1, std::memory_order_relaxed) % numQueues;
+                hybridLocalQueues[target]->enqueue(std::move(task));
+            }
         }
         else if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL)
         {
@@ -528,7 +542,10 @@ private:
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     WorkDealingStrategy strategy;
+    WorkStealingStrategy stealingStrategy_;
+    bool producerLocal_;
     size_t batchPullSize_{1};
+    std::atomic<size_t> hybridRoundRobin_{0};
     TaskQueue<Task> taskQueue;
     std::unique_ptr<MultiQueueTaskQueue<Task>> multiQueue; /// only set for per-thread strategies
     std::vector<std::unique_ptr<folly::UMPMCQueue<Task, true>>> hybridLocalQueues; /// only set for HYBRID_QUEUE
@@ -892,6 +909,7 @@ void ThreadPool::addThread(WorkerId workerId)
             {
                 /// Hybrid queue mode: per-thread queue for successors, global queue for refill
                 auto& localQueue = *hybridLocalQueues[id];
+                const auto numQueues = hybridLocalQueues.size();
 
                 while (!stopToken.stop_requested())
                 {
@@ -903,7 +921,60 @@ void ThreadPool::addThread(WorkerId workerId)
                         continue;
                     }
 
-                    /// Priority 2: local queue empty — refill a batch from global queue
+                    /// Priority 2: steal from other workers' local queues (if stealing enabled)
+                    if (stealingStrategy_ != WorkStealingStrategy::NONE)
+                    {
+                        bool stolen = false;
+                        switch (stealingStrategy_)
+                        {
+                            case WorkStealingStrategy::ROUND_ROBIN:
+                                for (size_t i = 1; i < numQueues; ++i)
+                                {
+                                    if (hybridLocalQueues[(id + i) % numQueues]->try_dequeue(task))
+                                    {
+                                        stolen = true;
+                                        break;
+                                    }
+                                }
+                                break;
+                            case WorkStealingStrategy::RANDOM:
+                            {
+                                thread_local std::mt19937 rng{std::random_device{}()};
+                                const auto victim = rng() % numQueues;
+                                if (victim != id)
+                                    stolen = hybridLocalQueues[victim]->try_dequeue(task);
+                                break;
+                            }
+                            case WorkStealingStrategy::CHOOSE_TWO:
+                            {
+                                thread_local std::mt19937 rng{std::random_device{}()};
+                                const auto a = rng() % numQueues;
+                                const auto b = rng() % numQueues;
+                                const auto first = (a != id) ? a : b;
+                                if (first != id && hybridLocalQueues[first]->try_dequeue(task))
+                                {
+                                    stolen = true;
+                                }
+                                else
+                                {
+                                    const auto second = (first == a) ? b : a;
+                                    if (second != id)
+                                        stolen = hybridLocalQueues[second]->try_dequeue(task);
+                                }
+                                break;
+                            }
+                            case WorkStealingStrategy::LARGEST_QUEUE:
+                            case WorkStealingStrategy::NONE:
+                                break;
+                        }
+                        if (stolen)
+                        {
+                            handleTask(worker, std::move(task));
+                            continue;
+                        }
+                    }
+
+                    /// Priority 3: refill a batch from global queue
                     /// Block for the first task
                     if (auto globalTask = taskQueue.getNextTaskBlocking(stopToken))
                     {
@@ -935,6 +1006,14 @@ void ThreadPool::addThread(WorkerId workerId)
                 while (localQueue.try_dequeue(task))
                 {
                     handleTask(terminatingWorker, std::move(task));
+                }
+                /// Drain other workers' queues
+                for (size_t i = 0; i < numQueues; ++i)
+                {
+                    while (hybridLocalQueues[i]->try_dequeue(task))
+                    {
+                        handleTask(terminatingWorker, std::move(task));
+                    }
                 }
                 /// Drain global queue
                 while (auto globalTask = taskQueue.getNextTaskNonBlocking())
