@@ -115,6 +115,7 @@ set(SYSTEST_JOIN_UNPOOLED_FRACTION 0.8333333)
 # alongside the plugin directories.
 get_property(PLUGIN_SYSTEST_DIRS GLOBAL PROPERTY PLUGIN_SYSTEST_DIRS)
 set(SYSTEST_LOCATIONS ${CMAKE_CURRENT_SOURCE_DIR}/.. ${PLUGIN_SYSTEST_DIRS})
+message(STATUS "PLUGIN_SYSTEST_DIRS: ${PLUGIN_SYSTEST_DIRS}")
 
 # Add code coverage if enabled
 if (CODE_COVERAGE)
@@ -171,18 +172,45 @@ if (ENABLE_LARGE_TESTS)
             "Memory budget (bytes) for the in-process large systests: 8 GiB pooled (2,000,000 * 4096) + 64 GiB unpooled")
     set(LARGE_TEST_UNPOOLED_FRACTION 0.8935) # 68719476736 / 76911476736
 
+    # Worker knobs for the large systests. They are cache variables so the nightly random-worker-config CI job can vary
+    # them at configure time (-DLARGE_TEST_*) instead of spelling out a systest invocation in the workflow; the tests
+    # themselves are then run through `ctest -L LargeTest`. See .github/workflows/large_tests_random_worker_config.yml.
+    # The two entries below deliberately differ in thread count, so each keeps its own variable.
+    set(LARGE_TEST_WORKER_THREADS 4 CACHE STRING
+            "Worker threads for systest_large (4 performs best; avoids lock contention on NEXMARK Query 5)")
+    set(LARGE_TEST_BENCHMARK_WORKER_THREADS 16 CACHE STRING
+            "Worker threads for systest_large_benchmark (16 performs best on the large systests)")
+    set(LARGE_TEST_ENABLE_SLICE_CACHE true CACHE STRING "Enable the slice cache in the large systests")
+    # Empty means "leave the worker default alone", which is what the large tests used before these knobs existed.
+    set(LARGE_TEST_BUFFER_SIZE "" CACHE STRING "operator_buffer_size for the large systests; empty keeps the worker default")
+    set(LARGE_TEST_PAGE_SIZE "" CACHE STRING "page_size for the large systests; empty keeps the worker default")
+    set(LARGE_TEST_NUMBER_OF_PARTITIONS "" CACHE STRING
+            "number_of_partitions for the large systests; empty keeps the worker default")
+
+    set(LARGE_TEST_EXTRA_WORKER_ARGS "")
+    if (LARGE_TEST_BUFFER_SIZE)
+        list(APPEND LARGE_TEST_EXTRA_WORKER_ARGS --worker.default_query_execution.operator_buffer_size=${LARGE_TEST_BUFFER_SIZE})
+    endif ()
+    if (LARGE_TEST_PAGE_SIZE)
+        list(APPEND LARGE_TEST_EXTRA_WORKER_ARGS --worker.default_query_execution.page_size=${LARGE_TEST_PAGE_SIZE})
+    endif ()
+    if (LARGE_TEST_NUMBER_OF_PARTITIONS)
+        list(APPEND LARGE_TEST_EXTRA_WORKER_ARGS
+                --worker.default_query_execution.number_of_partitions=${LARGE_TEST_NUMBER_OF_PARTITIONS})
+    endif ()
+
     set(joinStrategy HASH_JOIN) # We simply test here with a hash join, as a NLJ does not finish in 2h
     ExternalData_Add_Test(test-data
             # currently, 4 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_${joinStrategy}
-            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --testLocations ${SYSTEST_LOCATIONS} --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
-    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
+            COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --testLocations ${SYSTEST_LOCATIONS} --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=${LARGE_TEST_WORKER_THREADS} --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${LARGE_TEST_ENABLE_SLICE_CACHE} ${LARGE_TEST_EXTRA_WORKER_ARGS})
+    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest;LargeTest" PROCESSORS ${LARGE_TEST_WORKER_THREADS})
 
     ExternalData_Add_Test(test-data
             # currently, 16 worker threads perform the best on the large systests (avoids lock contention on NEXMARK Query 5)
             NAME systest_large_benchmark_${joinStrategy}
-            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --testLocations ${SYSTEST_LOCATIONS} --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=16 --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=true)
-    set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 16)
+            COMMAND systest -b --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_benchmark_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --groups large --testLocations ${SYSTEST_LOCATIONS} --optimizer join_strategy=${joinStrategy}  -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=${LARGE_TEST_BENCHMARK_WORKER_THREADS} --worker.total_memory_in_bytes=${LARGE_TEST_TOTAL_MEMORY_BYTES} --worker.unpooled_memory_fraction=${LARGE_TEST_UNPOOLED_FRACTION} --worker.default_query_execution.slice_cache.enable_slice_cache=${LARGE_TEST_ENABLE_SLICE_CACHE} ${LARGE_TEST_EXTRA_WORKER_ARGS})
+    set_tests_properties(systest_large_benchmark_${joinStrategy} PROPERTIES LABELS "Systest;LargeTest" PROCESSORS ${LARGE_TEST_BENCHMARK_WORKER_THREADS})
 
     # Running here the Nexmark.test queries with NLJ to test it for larger data sets but the input data size
     # is still small enough to finish the test in minutes.
@@ -190,7 +218,7 @@ if (ENABLE_LARGE_TESTS)
     ExternalData_Add_Test(TEST_DATA_LARGE
             NAME systest_large_${joinStrategy}
             COMMAND systest -n 6 --show-query-performance --workingDir=${CMAKE_CURRENT_BINARY_DIR}/large_scale_${joinStrategy} --data ${EXPANDED_TEST_DATA_PATH} --testLocations ${CMAKE_CURRENT_SOURCE_DIR}/../benchmark/Nexmark.test:05 --optimizer join_strategy=${joinStrategy} -- --worker.default_query_execution.execution_mode=COMPILER --worker.query_engine.number_of_worker_threads=4 --worker.total_memory_in_bytes=16384000000 --worker.default_query_execution.slice_cache.enable_slice_cache=true)
-    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest" PROCESSORS 4)
+    set_tests_properties(systest_large_${joinStrategy} PROPERTIES LABELS "Systest;LargeTest" PROCESSORS 4)
 
     # The in-process large tests above each run one worker at LARGE_TEST_TOTAL_MEMORY_BYTES on this host. Fail loudly at
     # configure time if the host cannot back a single worker's budget rather than silently dropping the coverage or
