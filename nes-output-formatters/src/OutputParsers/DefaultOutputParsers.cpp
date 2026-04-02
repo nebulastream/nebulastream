@@ -31,6 +31,7 @@
 
 namespace NES
 {
+
 NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseChar(
     const char value,
