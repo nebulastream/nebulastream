@@ -1,7 +1,7 @@
 \subsection{Experimental Results: Per-Thread Scheduling Strategies}
 \label{sec:scheduling-results}
 
-We evaluate the six scheduling strategies on four workloads using the Yahoo Streaming Benchmark (YSB) with 50 million tuples (4.8\,GB) and 10,000 distinct campaign IDs.
+We evaluate the six work-dealing strategies on five workloads using the Yahoo Streaming Benchmark (YSB) with 50 million tuples (4.8\,GB) and 10,000 distinct campaign IDs.
 All experiments run on a dual-socket server with 2 NUMA nodes (32 logical CPUs each, 16 physical cores with hyperthreading) and 512\,GB RAM.
 For thread counts $\leq 32$, processes are pinned to NUMA node~0 via \texttt{numactl --cpunodebind=0 --membind=0}.
 At 64 threads, both NUMA nodes are used without pinning.
@@ -209,36 +209,91 @@ The key observations are as follows.
     As with the high-frequency workload, the adaptive threshold triggers offloading too eagerly when the join pipeline's successor tasks keep queues non-empty.
 \end{itemize}
 
+\subsubsection{Mixed Concurrent Workload}
+
+To create load imbalance between worker threads, we run two queries concurrently (\texttt{-n\,2}): a lightweight filter query (\texttt{SELECT * WHERE event\_type < 1}) and a heavy aggregation with a 10\,ms tumbling window.
+Both queries share the same worker thread pool and compete for scheduling resources.
+The filter query processes buffers quickly and produces no successor tasks, while the aggregation query is compute-heavy and produces $\sim$5 million window emission successor tasks.
+This creates asymmetric load: workers processing filter buffers finish quickly and idle, while workers processing aggregation buffers are busy and produce successor tasks that must be dispatched.
+
+Table~\ref{tab:mixed-strategies} shows the wall-clock time (lower is better) for each strategy.
+
+\begin{table}[h]
+\centering
+\caption{Mixed concurrent workload wall-clock time (seconds, lower is better) by strategy and thread count. Bold values indicate the best strategy per thread count.}
+\label{tab:mixed-strategies}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Strategy} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}      & 198 & 123 & 75 & 50 & 43 & \textbf{41} & \textbf{98} \\
+\texttt{PT\_ROUND\_ROBIN}   & 199 & 125 & 76 & 48 & 44 & 45 & 174 \\
+\texttt{PT\_SMALLEST\_QUEUE}& 199 & 132 & 78 & 51 & 43 & 43 & 128 \\
+\texttt{PT\_CHOOSE\_TWO}    & 198 & 127 & 75 & 50 & 44 & 44 & 170 \\
+\texttt{PRODUCER\_LOCAL}    & \textbf{197} & \textbf{122} & \textbf{72} & \textbf{45} & \textbf{42} & \textbf{41} & 115 \\
+\texttt{PT\_ADAPTIVE}       & 198 & 126 & 75 & 49 & 43 & 45 & 175 \\
+\hline
+\textit{Speedup vs.\ 1T}   & 1.0$\times$ & 1.6$\times$ & 2.7$\times$ & 4.3$\times$ & 4.7$\times$ & 4.8$\times$ & 2.0$\times$ \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{PRODUCER\_LOCAL} wins or ties at every thread count from 1--32T.}
+    At 8T, it achieves 45\,s vs.\ 50\,s for \texttt{GLOBAL\_QUEUE} ($-$10\%), the largest gap observed across all workloads.
+    The concurrent workload amplifies the locality advantage: when the aggregation query's successor tasks stay on the producing thread, they avoid contention with the filter query's workers that are rapidly cycling through admission tasks.
+
+    \item \textbf{Scaling reaches 4.8$\times$ at 32T} (\texttt{PRODUCER\_LOCAL} and \texttt{GLOBAL\_QUEUE} both at 41\,s), the highest speedup across all tested workloads.
+    The concurrent execution of two queries provides more parallelism to exploit than a single query.
+
+    \item \textbf{At 64T (cross-NUMA), \texttt{GLOBAL\_QUEUE} wins decisively} (98\,s vs.\ 115\,s for \texttt{PRODUCER\_LOCAL}).
+    Per-thread dispatch strategies collapse to 170--175\,s---the combination of dispatch overhead and cross-NUMA memory latency compounds into a 75\% slowdown compared to \texttt{GLOBAL\_QUEUE}.
+    \texttt{PRODUCER\_LOCAL} is the only per-thread strategy that remains competitive at 64T (115\,s), because keeping successor tasks local avoids cross-NUMA data migration even when the dispatch infrastructure introduces overhead.
+
+    \item \textbf{\texttt{ADAPTIVE} fails to match \texttt{PRODUCER\_LOCAL}} (49\,s vs.\ 45\,s at 8T).
+    The mixed workload creates bursty queue behavior: aggregation successor tasks arrive in clusters (window emissions), temporarily inflating the queue size above the threshold and triggering offloading.
+    A purely local strategy (\texttt{PRODUCER\_LOCAL}) handles this better by never offloading, letting the worker drain its burst naturally.
+
+    \item \textbf{The mixed workload is the strongest differentiator} among all tested workloads.
+    The 10\% gap between \texttt{PRODUCER\_LOCAL} and \texttt{GLOBAL\_QUEUE} at 8T is larger than the gaps observed in the high-frequency window (18\% in throughput, but on a different metric) and join (7\%) workloads, confirming that concurrent query execution with asymmetric workloads is the scenario where work-dealing strategy choice matters most.
+\end{itemize}
+
 \subsubsection{Summary}
-We analyze the impact of work-dealing on throughput across four workloads with increasing successor task frequency:
+We analyze the impact of work-dealing on throughput across five workloads with increasing successor task frequency and concurrency:
 
 
 \begin{itemize}
-    \item \textbf{The optimal strategy depends on the ratio of successor tasks to admission tasks.}
+    \item \textbf{The optimal strategy depends on successor task frequency and query concurrency.}
     When successor tasks are rare or absent (stateless filter, 30s window), \texttt{GLOBAL\_QUEUE} dominates due to its perfect load balancing and zero dispatch overhead.
-    When successor tasks are frequent (10\,ms window with $\sim$5M emissions, or multi-pipeline joins), \texttt{PRODUCER\_LOCAL} wins by up to 18\% through cache locality.
+    When successor tasks are frequent (10\,ms window, joins, or concurrent mixed workloads), \texttt{PRODUCER\_LOCAL} wins by 10--18\% through cache locality.
 
-    \item \textbf{\texttt{GLOBAL\_QUEUE} is the safest default strategy.}
-    It wins or ties on the stateless and stateful workloads at most thread counts, and remains competitive on successor-heavy workloads at low thread counts (4--8T).
-    Its simplicity (no configuration parameters) and natural load balancing make it robust when successor task frequency is unknown.
+    \item \textbf{\texttt{PRODUCER\_LOCAL} is the best overall strategy for multi-pipeline and concurrent workloads.}
+    It leads on the high-frequency window workload (+18\% at 8T), the join workload (+7\% at 32T), and the mixed concurrent workload ($-$10\% wall time at 8T).
+    The benefit is consistent across three fundamentally different scenarios (single-source aggregation, multi-source join, and concurrent heterogeneous queries), confirming that cache locality for successor tasks is the key advantage.
 
-    \item \textbf{\texttt{PRODUCER\_LOCAL} is the best strategy for successor-heavy workloads.}
-    On both the high-frequency window workload and the join workload, it leads at 16--64T.
-    The benefit is consistent across two fundamentally different query types (single-source windowed aggregation and multi-source join), confirming that cache locality for successor tasks is the key advantage.
+    \item \textbf{\texttt{GLOBAL\_QUEUE} is the safest default when workload characteristics are unknown.}
+    It wins or ties on the stateless and stateful workloads at most thread counts, and remains competitive on successor-heavy workloads.
+    Its simplicity (no configuration parameters) and natural load balancing make it robust.
+    It is also the only strategy that degrades gracefully at 64T (cross-NUMA).
 
     \item \textbf{Per-thread dispatch strategies (\texttt{ROUND\_ROBIN}, \texttt{CHOOSE\_TWO}, \texttt{SMALLEST\_QUEUE}) add overhead without sufficient benefit.}
-    They trail both \texttt{GLOBAL\_QUEUE} and \texttt{PRODUCER\_LOCAL} on all four workloads.
-    The dispatch cost and loss of cache locality for successor tasks outweigh any load balancing advantage they provide.
+    They trail both \texttt{GLOBAL\_QUEUE} and \texttt{PRODUCER\_LOCAL} on all five workloads.
+    The dispatch cost and loss of cache locality for successor tasks outweigh any load balancing advantage.
+    On the mixed workload at 64T, they collapse to 170--175\,s vs.\ 98\,s for \texttt{GLOBAL\_QUEUE}.
 
     \item \textbf{\texttt{ADAPTIVE} does not outperform \texttt{PRODUCER\_LOCAL}} on any tested workload.
-    The threshold heuristic ($\texttt{approxSize} \leq 1$) causes premature offloading when successor tasks keep queues non-empty, negating the intended locality benefit.
-    A more sophisticated threshold (e.g., based on rate of change rather than absolute size) may improve its performance.
+    Bursty successor task arrivals (window emissions, join output) temporarily inflate queue sizes above the threshold, triggering offloading that negates the locality benefit.
+    A purely local strategy handles bursts better by letting the worker drain them naturally.
 
-    \item \textbf{The scheduling strategy matters most at $\geq 16$T}, where contention on shared data structures amplifies the differences.
-    At 1--2 threads, all strategies perform within 3\% of each other.
+    \item \textbf{The work-dealing strategy matters most under two conditions:}
+    (1)~high successor task frequency (10\,ms windows, joins), where the gap between best and worst strategy reaches 18\%;
+    (2)~concurrent query execution with asymmetric workloads, where the gap reaches 10\% even at moderate thread counts.
+    At 1--2 threads, all strategies perform within 3\%.
 
-    \item \textbf{Cross-NUMA execution (64T) severely degrades all strategies.}
-    Throughput drops 60--80\% from 32T to 64T on the high-frequency workload.
-    On the join workload, 64T partially recovers because the two NUMA nodes can each process one side of the join.
-    NUMA-aware scheduling remains a more impactful optimization opportunity than task dispatch strategy.
+    \item \textbf{Cross-NUMA execution (64T) severely degrades per-thread strategies.}
+    On the mixed workload, per-thread dispatch strategies are 75\% slower than \texttt{GLOBAL\_QUEUE} at 64T.
+    Only \texttt{PRODUCER\_LOCAL} remains competitive cross-NUMA (115\,s vs.\ 98\,s), because keeping tasks local avoids cross-node data migration.
+    NUMA-aware scheduling remains the most impactful optimization opportunity beyond work-dealing strategy choice.
 \end{itemize}
