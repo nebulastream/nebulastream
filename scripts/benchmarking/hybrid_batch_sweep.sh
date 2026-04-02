@@ -29,7 +29,7 @@ for WORKLOAD in stateless stateful; do
             --iterations 1 \
             --modes memory \
             --work-dealing "$SCHED" \
-            --work-stealing false \
+            --work-stealing NONE \
             --producer-local false \
             --batch-pull-size "$BS" \
             --worker-threads "$T" \

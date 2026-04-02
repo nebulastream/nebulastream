@@ -50,6 +50,7 @@
 #include <MultiQueueTaskQueue.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <WorkDealingStrategy.hpp>
+#include <WorkStealingStrategy.hpp>
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <RunningQueryPlan.hpp>
@@ -433,7 +434,7 @@ public:
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
         const size_t admissionQueueSize,
         WorkDealingStrategy workDealingStrategy,
-        bool workStealing,
+        WorkStealingStrategy workStealingStrategy,
         bool producerLocal,
         size_t batchPullSize,
         size_t numThreads)
@@ -459,7 +460,7 @@ public:
         if (strategy != WorkDealingStrategy::GLOBAL_QUEUE && strategy != WorkDealingStrategy::BATCH_PULL
             && strategy != WorkDealingStrategy::HYBRID_QUEUE)
         {
-            multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealing, producerLocal);
+            multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealingStrategy, producerLocal);
         }
         if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
@@ -984,7 +985,7 @@ QueryEngine::QueryEngine(
           bufferManager,
           config.admissionQueueSize.getValue(),
           config.workDealingStrategy.getValue(),
-          config.workStealing.getValue(),
+          config.workStealingStrategy.getValue(),
           config.producerLocal.getValue(),
           config.batchPullSize.getValue(),
           config.numberOfWorkerThreads.getValue()))

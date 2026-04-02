@@ -23,7 +23,7 @@ for BS in 1 2 4 8 16 32; do
         --iterations 1 \
         --modes memory \
         --work-dealing BATCH_PULL \
-        --work-stealing false \
+        --work-stealing NONE \
         --producer-local false \
         --batch-pull-size "$BS" \
         --worker-threads "$T" \

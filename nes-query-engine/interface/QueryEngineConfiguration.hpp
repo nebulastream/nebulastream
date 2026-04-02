@@ -23,6 +23,7 @@
 #include <Configurations/ScalarOption.hpp>
 #include <Configurations/Validation/ConfigurationValidation.hpp>
 #include <WorkDealingStrategy.hpp>
+#include <WorkStealingStrategy.hpp>
 
 namespace NES
 {
@@ -44,8 +45,9 @@ public:
     EnumOption<WorkDealingStrategy> workDealingStrategy
         = {"work_dealing_strategy", WorkDealingStrategy::GLOBAL_QUEUE,
            "Task work dealing strategy: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE, PER_THREAD_CHOOSE_TWO, PER_THREAD_ADAPTIVE, BATCH_PULL, HYBRID_QUEUE"};
-    BoolOption workStealing
-        = {"work_stealing", "false", "Enable work stealing for per-thread scheduling (idle threads steal from other queues)"};
+    EnumOption<WorkStealingStrategy> workStealingStrategy
+        = {"work_stealing_strategy", WorkStealingStrategy::NONE,
+           "Work stealing strategy: NONE, ROUND_ROBIN, RANDOM, CHOOSE_TWO, LARGEST_QUEUE"};
     BoolOption producerLocal
         = {"producer_local", "false", "Keep successor tasks on the producing thread's queue for cache locality (per-thread strategies only)"};
     UIntOption batchPullSize
@@ -54,7 +56,7 @@ public:
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&numberOfWorkerThreads, &admissionQueueSize, &workDealingStrategy, &workStealing, &producerLocal, &batchPullSize};
+        return {&numberOfWorkerThreads, &admissionQueueSize, &workDealingStrategy, &workStealingStrategy, &producerLocal, &batchPullSize};
     }
 };
 }

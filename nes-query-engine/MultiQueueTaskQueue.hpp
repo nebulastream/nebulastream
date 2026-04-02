@@ -27,6 +27,7 @@
 #include <utility>
 #include <vector>
 #include <WorkDealingStrategy.hpp>
+#include <WorkStealingStrategy.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -44,7 +45,7 @@ class MultiQueueTaskQueue
     folly::MPMCQueue<TaskType> admission;
 
     WorkDealingStrategy strategy;
-    bool workStealingEnabled;
+    WorkStealingStrategy stealingStrategy;
     bool producerLocalEnabled;
     std::atomic<size_t> roundRobinCounter{0};
     std::atomic<size_t> admissionRoundRobin{0};
@@ -100,17 +101,79 @@ class MultiQueueTaskQueue
             return task;
         }
 
-        /// Priority 2: steal from other threads' queues (if enabled)
-        if (workStealingEnabled)
+        /// Priority 2: steal from other threads' queues based on stealing strategy
+        if (stealingStrategy != WorkStealingStrategy::NONE)
         {
-            for (size_t i = 1; i < numQueues; ++i)
+            const auto trySteal = [&](size_t victim) -> bool
             {
-                const auto victim = (threadIndex + i) % numQueues;
                 if (threadQueues[victim]->try_dequeue(task))
                 {
                     approxQueueSizes[victim].fetch_sub(1, std::memory_order_relaxed);
-                    return task;
+                    return true;
                 }
+                return false;
+            };
+
+            switch (stealingStrategy)
+            {
+                case WorkStealingStrategy::ROUND_ROBIN:
+                {
+                    /// Try victims in order: i+1, i+2, ..., wrapping around
+                    for (size_t i = 1; i < numQueues; ++i)
+                    {
+                        if (trySteal((threadIndex + i) % numQueues))
+                            return task;
+                    }
+                    break;
+                }
+                case WorkStealingStrategy::RANDOM:
+                {
+                    /// Pick one random victim
+                    thread_local std::mt19937 rng{std::random_device{}()};
+                    const auto victim = rng() % numQueues;
+                    if (victim != threadIndex && trySteal(victim))
+                        return task;
+                    break;
+                }
+                case WorkStealingStrategy::CHOOSE_TWO:
+                {
+                    /// Sample two random queues, steal from the one with more tasks
+                    thread_local std::mt19937 rng{std::random_device{}()};
+                    const auto a = rng() % numQueues;
+                    const auto b = rng() % numQueues;
+                    const auto sizeA = approxQueueSizes[a].load(std::memory_order_relaxed);
+                    const auto sizeB = approxQueueSizes[b].load(std::memory_order_relaxed);
+                    const auto victim = (sizeA >= sizeB) ? a : b;
+                    if (victim != threadIndex && trySteal(victim))
+                        return task;
+                    /// Try the other candidate if first failed
+                    const auto other = (victim == a) ? b : a;
+                    if (other != threadIndex && trySteal(other))
+                        return task;
+                    break;
+                }
+                case WorkStealingStrategy::LARGEST_QUEUE:
+                {
+                    /// Scan all queues, steal from the one with the most tasks
+                    size_t bestVictim = threadIndex;
+                    auto bestSize = int64_t{0};
+                    for (size_t i = 0; i < numQueues; ++i)
+                    {
+                        if (i == threadIndex)
+                            continue;
+                        const auto sz = approxQueueSizes[i].load(std::memory_order_relaxed);
+                        if (sz > bestSize)
+                        {
+                            bestSize = sz;
+                            bestVictim = i;
+                        }
+                    }
+                    if (bestVictim != threadIndex && trySteal(bestVictim))
+                        return task;
+                    break;
+                }
+                case WorkStealingStrategy::NONE:
+                    break;
             }
         }
 
@@ -122,9 +185,10 @@ class MultiQueueTaskQueue
     }
 
 public:
-    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, WorkDealingStrategy strategy, bool workStealing = false,
+    MultiQueueTaskQueue(size_t numThreads, size_t admissionQueueSize, WorkDealingStrategy strategy,
+                        WorkStealingStrategy stealingStrategy = WorkStealingStrategy::NONE,
                         bool producerLocal = false)
-        : admission(admissionQueueSize), strategy(strategy), workStealingEnabled(workStealing),
+        : admission(admissionQueueSize), strategy(strategy), stealingStrategy(stealingStrategy),
           producerLocalEnabled(producerLocal), numQueues(numThreads), approxQueueSizes(numThreads)
     {
         threadQueues.reserve(numThreads);

@@ -28,7 +28,7 @@
 #   --modes <m1,m2,...>     Comma-separated source modes (default: file,memory,in_place,tmpfs_cold,tmpfs_warm)
 #   --work-dealing <s1,s2,..> Comma-separated scheduling strategies (default: GLOBAL_QUEUE)
 #                           Options: GLOBAL_QUEUE, PER_THREAD_ROUND_ROBIN, PER_THREAD_SMALLEST_QUEUE
-#   --work-stealing <t/f,..> Comma-separated work stealing settings (default: false)
+#   --work-stealing <t/f,..> Comma-separated work stealing strategies (default: NONE)
 #   --tmpfs-path <path>     tmpfs mount point (default: /dev/shm)
 #   --worker-threads <n>    Worker threads (default: 4). Comma-separated for multi-thread sweep (e.g., 1,2,4,8,16)
 #   --output <path>         Output CSV path (default: benchmark_results.csv)
@@ -57,7 +57,7 @@ DATA_DIR=""
 ITERATIONS=3
 MODES="file,memory,in_place,tmpfs_cold,tmpfs_warm"
 WORK_DEALING="GLOBAL_QUEUE"
-WORK_STEALING="false"
+WORK_STEALING="NONE"
 PRODUCER_LOCAL="false"
 BATCH_PULL_SIZE=4
 TMPFS_PATH="/dev/shm"
@@ -402,7 +402,7 @@ generate_test_file() {
 }
 
 # ---- CSV header ----
-echo "threads,scheduling,work_stealing,producer_local,mode,iteration,query,time_seconds,bytes_per_second,tuples_per_second" > "$OUTPUT_CSV"
+echo "threads,scheduling,work_stealing_strategy,producer_local,mode,iteration,query,time_seconds,bytes_per_second,tuples_per_second" > "$OUTPUT_CSV"
 
 # ---- Run benchmarks ----
 for threads in "${THREAD_LIST[@]}"; do
@@ -457,7 +457,7 @@ for threads in "${THREAD_LIST[@]}"; do
             "--worker.query_engine.number_of_worker_threads=${threads}"
             "--worker.default_query_execution.execution_mode=COMPILER"
             "--worker.query_engine.work_dealing_strategy=${sched}"
-            "--worker.query_engine.work_stealing=${ws}"
+            "--worker.query_engine.work_stealing_strategy=${ws}"
             "--worker.query_engine.producer_local=${pl}"
             "--worker.query_engine.batch_pull_size=${BATCH_PULL_SIZE}"
         )
