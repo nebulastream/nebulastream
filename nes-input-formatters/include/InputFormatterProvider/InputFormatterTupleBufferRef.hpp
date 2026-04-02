@@ -31,7 +31,6 @@
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
-#include <PhysicalOperator.hpp>
 #include <val.hpp>
 #include <val_ptr.hpp>
 
