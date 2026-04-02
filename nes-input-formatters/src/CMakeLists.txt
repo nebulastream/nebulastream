@@ -16,6 +16,7 @@ add_source_files(nes-input-formatters
         SpanningTupleBufferState.cpp
         RawValueParser.cpp
         InputFormatterTupleBufferRef.cpp
+        InputFormatterTupleBufferRefProvider.cpp
 )
 
 # Register plugins
