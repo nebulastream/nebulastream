@@ -26,10 +26,12 @@
 #include <Util/Strings.hpp>
 #include <OutputParserRegistry.hpp>
 #include <nautilus/inline.hpp>
+#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
-uint64_t parseF32(
+NAUTILUS_TAGGED_INLINE(output_parse)
+uint64_t parseF32ZMIJ(
     const float value,
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -42,7 +44,8 @@ uint64_t parseF32(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
-uint64_t parseF64(
+NAUTILUS_TAGGED_INLINE(output_parse)
+uint64_t parseF64ZMIJ(
     const double value,
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -64,7 +67,7 @@ nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF32ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
@@ -75,7 +78,7 @@ nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF64ZMIJ, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 OutputParserRegistryReturnType OutputParserGeneratedRegistrar::RegisterZMIJF32OutputParser(OutputParserRegistryArguments)

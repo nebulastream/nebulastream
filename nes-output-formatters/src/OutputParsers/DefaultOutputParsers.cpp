@@ -31,8 +31,6 @@
 
 namespace NES
 {
-namespace
-{
 NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseChar(
     const char value,
@@ -175,7 +173,6 @@ uint64_t parseUint64(
 {
     const std::string parsedValue = std::to_string(value);
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
-}
 }
 
 nautilus::val<uint64_t> DefaultCHAROutputParser::parseAndWrite(
