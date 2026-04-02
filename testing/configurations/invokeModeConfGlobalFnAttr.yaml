@@ -16,3 +16,11 @@ global_fn_attr:      # optional, only relevant if global_mode is fnattr
 #      no_unwind: true
 #  hash_compute:
 #    mode: default
+
+#overrides:
+#  parse_to_string:
+#    mode: fnattr
+#    fn_attr:
+#      mod_ref_info: ref
+#      will_return: true
+#      no_unwind: true

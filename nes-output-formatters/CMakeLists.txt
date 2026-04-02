@@ -17,7 +17,7 @@ get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 # Add Library
 add_library(nes-output-formatters ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
 
-target_link_libraries(nes-output-formatters PUBLIC nes-common nes-data-types nes-memory nes-nautilus)
+target_link_libraries(nes-output-formatters PUBLIC nes-common nes-data-types nes-memory nes-nautilus nes-runtime)
 
 target_include_directories(nes-output-formatters PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
