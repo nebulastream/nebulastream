@@ -30,7 +30,7 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Nautilus/Interface/VariableSizedAccessRef.hpp>
@@ -225,7 +225,7 @@ public:
     TupleIterator(std::vector<TupleBuffer> buffers, const Schema& schema, const MemoryLayoutType layoutType)
         : schema(std::move(schema))
         , buffers(std::move(buffers))
-        , bufferRef(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType))
+        , layout(LowerSchemaProvider::lowerSchema(this->buffers.at(0).getBufferSize(), this->schema, layoutType))
     {
     }
 
@@ -242,7 +242,7 @@ public:
             currentTupleIdx = 0;
         }
         const RecordBuffer recordBuffer{buffers.data() + currentBufferIdx};
-        auto record = bufferRef->readRecord(schema.getFieldNames(), recordBuffer, currentTupleIdx);
+        auto record = layout->readRecord(schema.getFieldNames(), recordBuffer, currentTupleIdx);
         ++currentTupleIdx;
         return record;
     }
@@ -252,7 +252,7 @@ private:
     nautilus::val<uint64_t> currentTupleIdx = 0;
     Schema schema;
     std::vector<TupleBuffer> buffers;
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::shared_ptr<BufferLayoutRef> layout;
 };
 
 /// Expects tuple buffers with matching sequence numbers contain the same tuples in the same order
@@ -339,12 +339,12 @@ void writeFieldToBuffer(
     const T& fieldValue,
     const size_t fieldIndex,
     NES::TupleBuffer& tupleBuffer,
-    TupleBufferRef& tupleBufferRef,
+    BufferLayoutRef& layout,
     AbstractBufferProvider& bufferProvider)
 {
     Record record;
     const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
-    const auto fieldName = tupleBufferRef.getAllFieldNames().at(fieldIndex);
+    const auto fieldName = layout.getAllFieldNames().at(fieldIndex);
 
     /// Creating a Record containing the current field
     if constexpr (std::is_same_v<T, std::string>)
@@ -360,10 +360,10 @@ void writeFieldToBuffer(
 
     const nautilus::val<AbstractBufferProvider*> bufferProviderVal{std::addressof(bufferProvider)};
     auto recordIndex = recordBuffer.getNumRecords();
-    tupleBufferRef.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
+    layout.writeRecord(recordIndex, recordBuffer, record, bufferProviderVal);
 }
 
-inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const TupleBufferRef& tupleBufferRef)
+inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleBuffer, const BufferLayoutRef& layout)
 {
     /// NOLINTNEXTLINE(bugprone-suspicious-stringview-data-usage) is fine as we are passing it ot a nautilus::val<>
     const nautilus::val<const char*> messageVal{message.data()};
@@ -372,7 +372,7 @@ inline void printTupleBuffer(const std::string_view message, TupleBuffer& tupleB
     const RecordBuffer recordBuffer{std::addressof(tupleBuffer)};
     for (nautilus::val<uint64_t> recordIndex = 0; recordIndex < recordBuffer.getNumRecords(); ++recordIndex)
     {
-        const auto record = tupleBufferRef.readRecord(tupleBufferRef.getAllFieldNames(), recordBuffer, recordIndex);
+        const auto record = layout.readRecord(layout.getAllFieldNames(), recordBuffer, recordIndex);
         ss << record << "\n";
     }
 

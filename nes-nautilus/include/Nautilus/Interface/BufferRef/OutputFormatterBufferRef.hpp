@@ -19,7 +19,7 @@
 #include <memory>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
@@ -34,7 +34,7 @@ class LowerSchemaProvider;
 
 namespace NES
 {
-class OutputFormatterBufferRef final : public TupleBufferRef
+class OutputFormatterBufferRef final : public BufferLayoutRef
 {
     struct Field
     {
@@ -42,6 +42,7 @@ class OutputFormatterBufferRef final : public TupleBufferRef
         DataType type;
     };
 
+    uint64_t bufferSize;
     std::vector<Field> fields;
     std::shared_ptr<OutputFormatter> formatter;
 
@@ -58,6 +59,12 @@ public:
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override;
 
     [[nodiscard]] std::vector<DataType> getAllDataTypes() const override;
+
+    [[nodiscard]] nautilus::val<int8_t*> getHeaderStart(const nautilus::val<int8_t*>& bufferBase) const override {return bufferBase;};
+    [[nodiscard]] nautilus::val<int8_t*> getDataStart(const nautilus::val<int8_t*>& bufferBase) const override {return bufferBase;};
+    [[nodiscard]] uint64_t getHeaderSize() const override {return 0;};
+    [[nodiscard]] uint64_t getCapacity() const override {return bufferSize;};
+    [[nodiscard]] uint64_t getBufferSize() const override {return bufferSize;};
 
     Record readRecord(
         const std::vector<Record::RecordFieldIdentifier>& projections,

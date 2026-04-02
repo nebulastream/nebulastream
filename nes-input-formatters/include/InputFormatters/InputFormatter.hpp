@@ -30,7 +30,7 @@
 #include <vector>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -100,11 +100,11 @@ class InputFormatter
 {
 public:
     explicit InputFormatter(
-        FormatterType inputFormatIndexer, std::shared_ptr<TupleBufferRef> memoryProvider, const ParserConfig& parserConfig)
+        FormatterType inputFormatIndexer, std::shared_ptr<BufferLayoutRef> layout, const ParserConfig& parserConfig)
         : inputFormatIndexer(std::move(inputFormatIndexer))
-        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *memoryProvider})
-        , projections(memoryProvider->getAllFieldNames())
-        , memoryProvider(std::move(memoryProvider))
+        , indexerMetaData(typename FormatterType::IndexerMetaData{parserConfig, *layout})
+        , projections(layout->getAllFieldNames())
+        , layout(std::move(layout))
         , sequenceShredder(std::make_unique<SequenceShredder>(parserConfig.tupleDelimiter.size()))
     {
     }
@@ -178,7 +178,7 @@ private:
     FormatterType inputFormatIndexer;
     typename FormatterType::IndexerMetaData indexerMetaData;
     std::vector<Record::RecordFieldIdentifier> projections;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
+    std::shared_ptr<BufferLayoutRef> layout;
     std::unique_ptr<SequenceShredder> sequenceShredder;
 
     struct IndexPhaseResult

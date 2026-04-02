@@ -18,7 +18,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -52,7 +52,7 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
         {
             ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, fieldValues, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(bufferKey);
-            auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+            auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
 
             auto foundEntry = hashMapRef.findOrCreateEntry(
                 recordKey,
@@ -72,11 +72,11 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
                 bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputLayout);
             const RecordBuffer recordBufferValue(bufferValue);
             for (nautilus::val<uint64_t> idxValues = 0; idxValues < recordBufferValue.getNumRecords(); idxValues = idxValues + 1)
             {
-                auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, idxValues);
+                auto recordValue = inputLayout->readRecord(projectionAllFields, recordBufferValue, idxValues);
                 pagedVectorRef.writeRecord(recordValue, bufferManagerVal);
             }
         }));
@@ -84,13 +84,13 @@ ChainedHashMapCustomValueTestUtils::compileFindAndInsertIntoPagedVector(
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
 ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
-    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
+    const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<BufferLayoutRef>& layout) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this, projectionAllFields, tupleBufferRef](
+        [this, projectionAllFields, layout](
             nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<uint64_t> keyPositionVal,
             nautilus::val<TupleBuffer*> outputBufferRef,
@@ -100,17 +100,17 @@ ChainedHashMapCustomValueTestUtils::compileWriteAllRecordsIntoOutputBuffer(
             ChainedHashMapRef hashMapRef(hashMapVal, fieldKeys, {}, entriesPerPage, entrySize);
             const RecordBuffer recordBufferKey(keyBufferRef);
             RecordBuffer recordBufferOutput(outputBufferRef);
-            const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
+            const auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, keyPositionVal);
             const auto foundEntry
                 = hashMapRef.findOrCreateEntry(recordKey, *getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
             const ChainedHashMapRef::ChainedEntryRef ref(foundEntry, hashMapVal, fieldKeys, fieldValues);
-            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputBufferRef);
+            const PagedVectorRef pagedVectorRef(ref.getValueMemArea(), inputLayout);
             nautilus::val<uint64_t> recordBufferIndex = 0;
             for (auto it = pagedVectorRef.begin(projectionAllFields); it != pagedVectorRef.end(projectionAllFields); ++it)
             {
                 const auto record = *it;
-                tupleBufferRef->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
+                layout->writeRecord(recordBufferIndex, recordBufferOutput, record, bufferManagerVal);
                 recordBufferIndex = recordBufferIndex + 1;
                 recordBufferOutput.setNumRecords(recordBufferIndex);
             }

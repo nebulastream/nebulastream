@@ -24,7 +24,7 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -90,13 +90,13 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
     PhysicalFunction joinFunction,
     WindowMetaData windowMetaData,
     const JoinSchema& joinSchema,
-    std::shared_ptr<TupleBufferRef> leftMemoryProvider,
-    std::shared_ptr<TupleBufferRef> rightMemoryProvider,
+    std::shared_ptr<BufferLayoutRef> leftLayout,
+    std::shared_ptr<BufferLayoutRef> rightLayout,
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames)
     : StreamJoinProbePhysicalOperator(operatorHandlerId, std::move(joinFunction), WindowMetaData(std::move(windowMetaData)), joinSchema)
-    , leftMemoryProvider(std::move(leftMemoryProvider))
-    , rightMemoryProvider(std::move(rightMemoryProvider))
+    , leftLayout(std::move(leftLayout))
+    , rightLayout(std::move(rightLayout))
     , leftKeyFieldNames(std::move(leftKeyFieldNames))
     , rightKeyFieldNames(std::move(rightKeyFieldNames))
 {
@@ -105,16 +105,16 @@ NLJProbePhysicalOperator::NLJProbePhysicalOperator(
 void NLJProbePhysicalOperator::performNLJ(
     const PagedVectorRef& outerPagedVector,
     const PagedVectorRef& innerPagedVector,
-    TupleBufferRef& outerMemoryProvider,
-    TupleBufferRef& innerMemoryProvider,
+    BufferLayoutRef& outerLayout,
+    BufferLayoutRef& innerLayout,
     const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
     const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
     ExecutionContext& executionCtx,
     const nautilus::val<Timestamp>& windowStart,
     const nautilus::val<Timestamp>& windowEnd) const
 {
-    const auto outerFields = outerMemoryProvider.getAllFieldNames();
-    const auto innerFields = innerMemoryProvider.getAllFieldNames();
+    const auto outerFields = outerLayout.getAllFieldNames();
+    const auto innerFields = innerLayout.getAllFieldNames();
 
     nautilus::val<uint64_t> outerItemPos(0);
     for (auto outerIt = outerPagedVector.begin(outerKeyFieldNames); outerIt != outerPagedVector.end(outerKeyFieldNames); ++outerIt)
@@ -185,8 +185,8 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         workerThreadIdForPages,
         nautilus::val<JoinBuildSideType>(JoinBuildSideType::Right));
 
-    const PagedVectorRef leftPagedVector(leftPagedVectorRef, leftMemoryProvider);
-    const PagedVectorRef rightPagedVector(rightPagedVectorRef, rightMemoryProvider);
+    const PagedVectorRef leftPagedVector(leftPagedVectorRef, leftLayout);
+    const PagedVectorRef rightPagedVector(rightPagedVectorRef, rightLayout);
     const auto numberOfTuplesLeft = leftPagedVector.getNumberOfTuples();
     const auto numberOfTuplesRight = rightPagedVector.getNumberOfTuples();
 
@@ -196,8 +196,8 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         performNLJ(
             leftPagedVector,
             rightPagedVector,
-            *leftMemoryProvider,
-            *rightMemoryProvider,
+            *leftLayout,
+            *rightLayout,
             leftKeyFieldNames,
             rightKeyFieldNames,
             executionCtx,
@@ -209,8 +209,8 @@ void NLJProbePhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer
         performNLJ(
             rightPagedVector,
             leftPagedVector,
-            *rightMemoryProvider,
-            *leftMemoryProvider,
+            *rightLayout,
+            *leftLayout,
             rightKeyFieldNames,
             leftKeyFieldNames,
             executionCtx,

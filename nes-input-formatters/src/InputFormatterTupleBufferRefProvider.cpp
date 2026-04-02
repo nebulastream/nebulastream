@@ -18,7 +18,7 @@
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
@@ -28,10 +28,10 @@ namespace NES
 {
 
 std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider)
+provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<BufferLayoutRef> layout)
 {
     if (auto inputFormatter = InputFormatIndexerRegistry::instance().create(
-            formatScanConfig.parserType, InputFormatIndexerRegistryArguments(formatScanConfig, std::move(memoryProvider))))
+            formatScanConfig.parserType, InputFormatIndexerRegistryArguments(formatScanConfig, std::move(layout))))
     {
         return std::move(inputFormatter.value());
     }

@@ -27,7 +27,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -191,7 +191,7 @@ public:
         ExecutionMode backend,
         nautilus::engine::Options& options,
         const Schema& schema,
-        const std::shared_ptr<TupleBufferRef>& memoryProviderInputBuffer);
+        const std::shared_ptr<BufferLayoutRef>& inputLayout);
 
     /// Compares two records and if they are not equal returning a string. If the records are equal, return nullopt
     static std::optional<std::string>
@@ -211,8 +211,8 @@ public:
     static std::string compareRecordBuffers(
         const std::vector<TupleBuffer>& actualRecords,
         const std::vector<TupleBuffer>& expectedRecords,
-        const TupleBufferRef& memoryProviderActualBuffer,
-        const TupleBufferRef& memoryProviderInputBuffer);
+        const BufferLayoutRef& actualLayout,
+        const BufferLayoutRef& inputLayout);
 
 
 protected:

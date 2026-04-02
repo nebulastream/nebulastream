@@ -21,7 +21,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
 #include <Concepts.hpp>
@@ -38,8 +38,8 @@ using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTuple
 /// Calls constructor of specific InputFormatter and exposes public members to it.
 struct InputFormatIndexerRegistryArguments
 {
-    InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<TupleBufferRef> memoryProvider)
-        : inputFormatIndexerConfig(std::move(config)), memoryProvider(std::move(memoryProvider))
+    InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<BufferLayoutRef> layout)
+        : inputFormatIndexerConfig(std::move(config)), layout(std::move(layout))
     {
     }
 
@@ -50,7 +50,7 @@ struct InputFormatIndexerRegistryArguments
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
         auto inputFormatter
-            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(layout), inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
     }
 
@@ -60,7 +60,7 @@ private:
     /// Instead, an indexer receives it as a const meta-data object in its main 'indexRawBuffer' function
     /// While this does not prevent an indexer implementation from accessing the state of the meta-data object it helps to discourage it
     ParserConfig inputFormatIndexerConfig;
-    std::shared_ptr<TupleBufferRef> memoryProvider;
+    std::shared_ptr<BufferLayoutRef> layout;
 };
 
 class InputFormatIndexerRegistry : public BaseRegistry<

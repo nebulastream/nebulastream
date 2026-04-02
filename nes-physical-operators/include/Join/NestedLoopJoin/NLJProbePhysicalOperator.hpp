@@ -20,7 +20,7 @@
 #include <Functions/PhysicalFunction.hpp>
 #include <Join/StreamJoinProbePhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -39,8 +39,8 @@ public:
         PhysicalFunction joinFunction,
         WindowMetaData windowMetaData,
         const JoinSchema& joinSchema,
-        std::shared_ptr<TupleBufferRef> leftMemoryProvider,
-        std::shared_ptr<TupleBufferRef> rightMemoryProvider,
+        std::shared_ptr<BufferLayoutRef> leftLayout,
+        std::shared_ptr<BufferLayoutRef> rightLayout,
         std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames,
         std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames);
 
@@ -50,15 +50,15 @@ protected:
     void performNLJ(
         const PagedVectorRef& outerPagedVector,
         const PagedVectorRef& innerPagedVector,
-        TupleBufferRef& outerMemoryProvider,
-        TupleBufferRef& innerMemoryProvider,
+        BufferLayoutRef& outerLayout,
+        BufferLayoutRef& innerLayout,
         const std::vector<Record::RecordFieldIdentifier>& outerKeyFieldNames,
         const std::vector<Record::RecordFieldIdentifier>& innerKeyFieldNames,
         ExecutionContext& executionCtx,
         const nautilus::val<Timestamp>& windowStart,
         const nautilus::val<Timestamp>& windowEnd) const;
-    std::shared_ptr<TupleBufferRef> leftMemoryProvider;
-    std::shared_ptr<TupleBufferRef> rightMemoryProvider;
+    std::shared_ptr<BufferLayoutRef> leftLayout;
+    std::shared_ptr<BufferLayoutRef> rightLayout;
     std::vector<Record::RecordFieldIdentifier> leftKeyFieldNames;
     std::vector<Record::RecordFieldIdentifier> rightKeyFieldNames;
 };

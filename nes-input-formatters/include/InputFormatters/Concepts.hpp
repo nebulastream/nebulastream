@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <RawValueParser.hpp>
@@ -35,8 +35,8 @@ namespace NES
 /// Restricts the IndexerMetaData that an InputFormatIndexer receives from the InputFormatter
 template <typename T>
 concept IndexerMetaDataType
-    = requires(ParserConfig config, const TupleBufferRef& tupleBufferRef, T indexerMetaData, std::ostream& spanningTuple) {
-          T(config, tupleBufferRef);
+    = requires(ParserConfig config, const BufferLayoutRef& layout, T indexerMetaData, std::ostream& spanningTuple) {
+          T(config, layout);
           /// Assumes a fixed set of symbols that separate tuples
           /// InputFormatIndexers without tuple delimiters should return an empty string
           { indexerMetaData.getTupleDelimitingBytes() } -> std::same_as<std::string_view>;

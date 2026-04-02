@@ -11,9 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-        TupleBufferRef.cpp
-        ColumnTupleBufferRef.cpp
-        RowTupleBufferRef.cpp
         LowerSchemaProvider.cpp
         OutputFormatterBufferRef.cpp
+        BufferLayoutRef.cpp
+        RowTupleBufferLayoutRef.cpp
+        ColumnTupleBufferLayoutRef.cpp
         )

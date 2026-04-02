@@ -19,7 +19,7 @@
 #include <optional>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/NESStrongTypeRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -65,7 +65,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
     /// emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
     /// to the brim, i.e., have no more space left.
     auto writeResult
-        = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+        = layout->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     /// An unsuccessful writeResult means, that the current record buffer is filled up completely and needs to be emitted first.
     /// We emit and create a new record buffer
     if (!writeResult.successful)
@@ -78,7 +78,7 @@ void EmitPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 
         /// This write record call should succeed since a newly allocated tuple buffer should be able to store at least one record
         writeResult
-            = bufferRef->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
+            = layout->writeRecord(emitState->outputIndex, emitState->resultBuffer, record, ctx.pipelineMemoryProvider.bufferProvider);
     }
     emitState->outputIndex = emitState->outputIndex + writeResult.writtenRecords;
 }
@@ -139,14 +139,14 @@ void EmitPhysicalOperator::emitRecordBuffer(
     ctx.emitBuffer(recordBuffer);
 }
 
-EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<TupleBufferRef> memoryProvider)
-    : bufferRef(std::move(memoryProvider)), operatorHandlerId(operatorHandlerId)
+EmitPhysicalOperator::EmitPhysicalOperator(OperatorHandlerId operatorHandlerId, std::shared_ptr<BufferLayoutRef> layout)
+    : layout(std::move(layout)), operatorHandlerId(operatorHandlerId)
 {
 }
 
 [[nodiscard]] uint64_t EmitPhysicalOperator::getMaxRecordsPerBuffer() const
 {
-    return bufferRef->getCapacity();
+    return layout->getCapacity();
 }
 
 std::optional<PhysicalOperator> EmitPhysicalOperator::getChild() const

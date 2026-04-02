@@ -29,7 +29,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <magic_enum/magic_enum.hpp>
@@ -75,9 +75,9 @@ bool checkIsNullJsonProxy(FieldIndex fieldIndex, const SIMDJSONFIF* fieldIndexFu
 
 struct SIMDJSONMetaData
 {
-    explicit SIMDJSONMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
-        : fieldNamesOutput(tupleBufferRef.getAllFieldNames())
-        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+    explicit SIMDJSONMetaData(const ParserConfig& config, const BufferLayoutRef& layout)
+        : fieldNamesOutput(layout.getAllFieldNames())
+        , fieldDataTypes(layout.getAllDataTypes())
         , tupleDelimiter(config.tupleDelimiter)
 
     {
@@ -88,7 +88,7 @@ struct SIMDJSONMetaData
             config.fieldDelimiter.size());
 
         /// We expect the names in the json file to not be source qualified
-        for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
+        for (const auto& fieldName : layout.getAllFieldNames())
         {
             if (const auto& qualifierPosition = fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR); qualifierPosition != std::string::npos)
             {

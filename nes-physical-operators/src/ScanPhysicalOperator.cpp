@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
@@ -34,16 +34,16 @@ namespace NES
 {
 
 ScanPhysicalOperator::ScanPhysicalOperator(
-    std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
-    : bufferRef(std::move(bufferRef))
+    std::shared_ptr<BufferLayoutRef> layout, std::vector<Record::RecordFieldIdentifier> projections)
+    : layout(std::move(layout))
     , projections(std::move(projections))
-    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
+    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->layout) != nullptr)
 {
 }
 
 void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
+    auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->layout);
 
     if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {
@@ -80,7 +80,7 @@ void ScanPhysicalOperator::open(ExecutionContext& executionCtx, RecordBuffer& re
     auto numberOfRecords = recordBuffer.getNumRecords();
     for (nautilus::val<uint64_t> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
-        auto record = bufferRef->readRecord(projections, recordBuffer, i);
+        auto record = layout->readRecord(projections, recordBuffer, i);
         executeChild(executionCtx, record);
     }
 }

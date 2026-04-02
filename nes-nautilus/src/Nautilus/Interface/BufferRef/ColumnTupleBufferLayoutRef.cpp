@@ -11,16 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
+
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferLayoutRef.hpp>
 
 #include <cstdint>
-#include <memory>
 #include <ranges>
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/DataTypes/VarVal.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -32,32 +31,68 @@
 namespace NES
 {
 
-ColumnTupleBufferRef::ColumnTupleBufferRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize / tupleSize, bufferSize, tupleSize), fields(std::move(fields))
+ColumnTupleBufferLayoutRef::ColumnTupleBufferLayoutRef(std::vector<Field> fields, const uint64_t tupleSize, const uint64_t bufferSize)
+    : fields(std::move(fields))
+    , tupleSize(tupleSize)
+    , bufferSize(bufferSize)
+    , capacity(bufferSize / tupleSize)
 {
+}
+
+nautilus::val<int8_t*> ColumnTupleBufferLayoutRef::getHeaderStart(const nautilus::val<int8_t*>& bufferBase) const
+{
+    /// Column layout has no header
+    return bufferBase;
+}
+
+nautilus::val<int8_t*> ColumnTupleBufferLayoutRef::getDataStart(const nautilus::val<int8_t*>& bufferBase) const
+{
+    /// No header, data starts at buffer base
+    return bufferBase;
+}
+
+uint64_t ColumnTupleBufferLayoutRef::getHeaderSize() const
+{
+    return 0;
+}
+
+uint64_t ColumnTupleBufferLayoutRef::getCapacity() const
+{
+    return capacity;
+}
+
+uint64_t ColumnTupleBufferLayoutRef::getBufferSize() const
+{
+    return bufferSize;
+}
+
+uint64_t ColumnTupleBufferLayoutRef::getTupleSize() const
+{
+    return tupleSize;
 }
 
 namespace
 {
+/// For columnar layout the field address is:
+///   dataStart + columnOffset + recordIndex * dataTypeSize
 nautilus::val<int8_t*> calculateFieldAddress(
-    const nautilus::val<int8_t*>& bufferAddress,
+    const nautilus::val<int8_t*>& dataBase,
     nautilus::val<uint64_t>& recordIndex,
-    const uint64_t fieldSize,
+    const uint64_t dataTypeSize,
     const uint64_t columnOffset)
 {
-    const auto fieldOffset = recordIndex * fieldSize + columnOffset;
-    auto fieldAddress = bufferAddress + fieldOffset;
-    return fieldAddress;
+    const auto fieldOffset = recordIndex * dataTypeSize + columnOffset;
+    return dataBase + fieldOffset;
 }
-}
+} // namespace
 
-Record ColumnTupleBufferRef::readRecord(
+Record ColumnTupleBufferLayoutRef::readRecord(
     const std::vector<Record::RecordFieldIdentifier>& projections,
     const RecordBuffer& recordBuffer,
     nautilus::val<uint64_t>& recordIndex) const
 {
     Record record;
-    const auto bufferAddress = recordBuffer.getMemArea();
+    const auto base = getDataStart(recordBuffer.getMemArea());
     for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
     {
         const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
@@ -65,14 +100,14 @@ Record ColumnTupleBufferRef::readRecord(
         {
             continue;
         }
-        auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
+        auto fieldAddress = calculateFieldAddress(base, recordIndex, dataTypeSize, columnOffset);
         const auto& value = loadValue(type, recordBuffer, fieldAddress);
         record.write(name, value);
     }
     return record;
 }
 
-TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
+BufferLayoutRef::WriteRecordResult ColumnTupleBufferLayoutRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
     const Record& rec,
@@ -80,19 +115,17 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
 {
     nautilus::val<bool> successful{false};
     nautilus::val<uint64_t> writtenRecords{0};
-    /// Check if index is in-bounds
     if (recordIndex < capacity)
     {
-        const auto bufferAddress = recordBuffer.getMemArea();
+        const auto base = getDataStart(recordBuffer.getMemArea());
         for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
         {
             const auto& [name, type, dataTypeSize, columnOffset] = fields.at(i);
             if (not rec.hasField(name))
             {
-                /// Skipping any fields that are not part of the record
                 continue;
             }
-            auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
+            auto fieldAddress = calculateFieldAddress(base, recordIndex, dataTypeSize, columnOffset);
             const auto& value = rec.read(name);
             storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
         }
@@ -102,14 +135,14 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
     return {.successful = successful, .writtenRecords = writtenRecords};
 }
 
-std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferRef::getAllFieldNames() const
+std::vector<Record::RecordFieldIdentifier> ColumnTupleBufferLayoutRef::getAllFieldNames() const
 {
-    return fields | std::views::transform([](const Field& field) { return field.name; }) | std::ranges::to<std::vector>();
+    return fields | std::views::transform([](const Field& f) { return f.name; }) | std::ranges::to<std::vector>();
 }
 
-std::vector<DataType> ColumnTupleBufferRef::getAllDataTypes() const
+std::vector<DataType> ColumnTupleBufferLayoutRef::getAllDataTypes() const
 {
-    return fields | std::views::transform([](const Field& field) { return field.type; }) | std::ranges::to<std::vector>();
+    return fields | std::views::transform([](const Field& f) { return f.type; }) | std::ranges::to<std::vector>();
 }
 
-}
+} // namespace NES

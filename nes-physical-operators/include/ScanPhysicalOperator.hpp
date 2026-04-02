@@ -17,7 +17,7 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <PhysicalOperator.hpp>
@@ -30,14 +30,14 @@ namespace NES
 class ScanPhysicalOperator final : public PhysicalOperatorConcept
 {
 public:
-    explicit ScanPhysicalOperator(std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections);
+    explicit ScanPhysicalOperator(std::shared_ptr<BufferLayoutRef> layout, std::vector<Record::RecordFieldIdentifier> projections);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     [[nodiscard]] std::optional<PhysicalOperator> getChild() const override;
     void setChild(PhysicalOperator child) override;
 
 private:
-    std::shared_ptr<TupleBufferRef> bufferRef;
+    std::shared_ptr<BufferLayoutRef> layout;
     std::vector<Record::RecordFieldIdentifier> projections;
     std::optional<PhysicalOperator> child;
     bool isRawScan = false;

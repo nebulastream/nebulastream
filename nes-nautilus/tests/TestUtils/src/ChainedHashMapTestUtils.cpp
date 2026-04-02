@@ -30,7 +30,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedEntryMemoryProvider.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
@@ -107,7 +107,8 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     bufferManager = BufferManager::create(bufferSize, std::max(bufferNeeded, minimumBuffers));
 
     /// Creating a tuple buffer memory provider for the key and value buffers
-    inputBufferRef = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    inputLayoutType = MemoryLayoutType::ROW_LAYOUT;
+    inputLayout = LowerSchemaProvider::lowerSchema(bufferManager->getBufferSize(), inputSchema, inputLayoutType);
 
     /// Creating the fields for the key and value from the schema
     std::tie(fieldKeys, fieldValues) = ChainedEntryMemoryProvider::createFieldOffsets(inputSchema, fieldNamesKey, fieldNamesValue);
@@ -117,7 +118,7 @@ void ChainedHashMapTestUtils::setUpChainedHashMapTest(
     projectionValues = inputSchemaValue.getFieldNames();
 
     /// Creating the buffers with the values for the keys and values with a specific seed
-    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, MemoryLayoutType::ROW_LAYOUT, params.numberOfItems, *bufferManager);
+    inputBuffers = createMonotonicallyIncreasingValues(inputSchema, inputLayoutType, params.numberOfItems, *bufferManager);
 }
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
@@ -137,9 +138,9 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     for (nautilus::val<uint64_t> i = 0; i < recordBufferInput.getNumRecords(); i = i + 1)
     {
         /// Reading the actual key and value and the exact value
-        auto recordKeyActual = inputBufferRef->readRecord(projectionKeys, recordBufferActual, i);
-        auto recordValueActual = inputBufferRef->readRecord(projectionValues, recordBufferActual, i);
-        auto recordKeyExact = inputBufferRef->readRecord(projectionKeys, recordBufferInput, i);
+        auto recordKeyActual = inputLayout->readRecord(projectionKeys, recordBufferActual, i);
+        auto recordValueActual = inputLayout->readRecord(projectionValues, recordBufferActual, i);
+        auto recordKeyExact = inputLayout->readRecord(projectionKeys, recordBufferInput, i);
         auto recordValueExact = exactMap.find({recordKeyExact, projectionKeys});
         EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find the record with the key";
 
@@ -152,7 +153,7 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
 
 std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     const TupleBuffer& bufferActual,
-    const TupleBufferRef& memoryProviderInputBuffer,
+    const BufferLayoutRef& expectedLayout,
     const std::unordered_map<RecordWithFields, Record, RecordWithFieldsHash>& exactMap)
 {
     PRECONDITION(
@@ -167,8 +168,8 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
     for (nautilus::val<uint64_t> pos = 0; pos < recordBufferActual.getNumRecords(); ++pos)
     {
         /// Reading the actual key and value and the exact value
-        auto recordKeyActual = memoryProviderInputBuffer.readRecord(projectionKeys, recordBufferActual, pos);
-        auto recordValueActual = memoryProviderInputBuffer.readRecord(projectionValues, recordBufferActual, pos);
+        auto recordKeyActual = expectedLayout.readRecord(projectionKeys, recordBufferActual, pos);
+        auto recordValueActual = expectedLayout.readRecord(projectionValues, recordBufferActual, pos);
         auto recordValueExact = exactMap.find({recordKeyActual, projectionKeys});
         EXPECT_NE(recordValueExact, exactMap.end()) << "Could not find a record for this key";
 
@@ -179,13 +180,13 @@ std::string ChainedHashMapTestUtils::compareExpectedWithActual(
 }
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, TupleBuffer*, AbstractBufferProvider*, HashMap*>
-ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
+ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr<BufferLayoutRef>& layout) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this, tupleBufferRef](
+        [this, layout](
             nautilus::val<TupleBuffer*> keyBufferRef,
             nautilus::val<TupleBuffer*> outputBufferForValues,
             nautilus::val<AbstractBufferProvider*> bufferManagerVal,
@@ -195,7 +196,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr
             const RecordBuffer recordBufferKey(keyBufferRef);
             for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
-                auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, i);
+                auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey, *NautilusTestUtils::getMurMurHashFunction(), ASSERT_VIOLATION_FOR_ON_INSERT, bufferManagerVal);
 
@@ -210,7 +211,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr
                 outputRecord.reassignFields(valueRecord);
 
                 RecordBuffer recordBufferOutput(outputBufferForValues);
-                tupleBufferRef->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
+                layout->writeRecord(i, recordBufferOutput, outputRecord, bufferManagerVal);
                 recordBufferOutput.setNumRecords(i + 1);
             }
         }));
@@ -218,13 +219,13 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBuffer(const std::shared_ptr
 }
 
 nautilus::engine::CallableFunction<void, TupleBuffer*, HashMap*, AbstractBufferProvider*>
-ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const
+ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(const std::shared_ptr<BufferLayoutRef>& layout) const
 {
     /// We are not allowed to use const or const references for the lambda function params, as nautilus does not support this in the registerFunction method.
     /// ReSharper disable once CppPassValueParameterByConstReference
     /// NOLINTBEGIN(performance-unnecessary-value-param)
     return nautilusEngine->registerFunction(std::function(
-        [this, tupleBufferRef](
+        [this, layout](
             nautilus::val<TupleBuffer*> bufferOutput,
             nautilus::val<HashMap*> hashMapVal,
             nautilus::val<AbstractBufferProvider*> bufferProvider)
@@ -241,7 +242,7 @@ ChainedHashMapTestUtils::compileFindAndWriteToOutputBufferWithEntryIterator(cons
                 const auto valueRecord = entryRef.getValue();
                 outputRecord.reassignFields(keyRecord);
                 outputRecord.reassignFields(valueRecord);
-                tupleBufferRef->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
+                layout->writeRecord(outputBufferIndex, recordBufferOutput, outputRecord, bufferProvider);
                 outputBufferIndex = outputBufferIndex + nautilus::static_val<uint64_t>(1);
                 recordBufferOutput.setNumRecords(outputBufferIndex);
             }
@@ -265,8 +266,8 @@ ChainedHashMapTestUtils::compileFindAndInsert() const
             const RecordBuffer recordBuffer(inputBufferPtr);
             for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
             {
-                auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBuffer, i);
-                auto recordValue = inputBufferRef->readRecord(projectionValues, recordBuffer, i);
+                auto recordKey = inputLayout->readRecord(projectionKeys, recordBuffer, i);
+                auto recordValue = inputLayout->readRecord(projectionValues, recordBuffer, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey,
                     *NautilusTestUtils::getMurMurHashFunction(),
@@ -302,8 +303,8 @@ ChainedHashMapTestUtils::compileFindAndUpdate() const
 
             for (nautilus::val<uint64_t> i = 0; i < recordBufferKey.getNumRecords(); i = i + 1)
             {
-                auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, i);
-                auto recordValue = inputBufferRef->readRecord(projectionValues, recordBufferValue, i);
+                auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, i);
+                auto recordValue = inputLayout->readRecord(projectionValues, recordBufferValue, i);
                 auto foundEntry = hashMapRef.findOrCreateEntry(
                     recordKey,
                     *NautilusTestUtils::getMurMurHashFunction(),
@@ -336,8 +337,8 @@ ChainedHashMapTestUtils::createExactMap(const ExactMapInsert exactMapInsert)
         const RecordBuffer recordBuffer(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
         for (nautilus::val<uint64_t> i = 0; i < recordBuffer.getNumRecords(); i = i + 1)
         {
-            const auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBuffer, i);
-            const auto recordValue = inputBufferRef->readRecord(projectionValues, recordBuffer, i);
+            const auto recordKey = inputLayout->readRecord(projectionKeys, recordBuffer, i);
+            const auto recordValue = inputLayout->readRecord(projectionValues, recordBuffer, i);
 
             switch (exactMapInsert)
             {
@@ -371,14 +372,14 @@ void ChainedHashMapTestUtils::checkIfValuesAreCorrectViaFindEntry(
     }
     auto bufferOutput = bufferOutputOpt.value();
     std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
-    const auto outputBufferRef = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+    const auto outputBufferRef = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, inputLayoutType);
     /// We are calling the function to find all entries and write them to the output buffer.
     auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBufferWithEntryIterator(outputBufferRef);
     findAndWriteToOutputBuffer(std::addressof(bufferOutput), std::addressof(hashMap), bufferManager.get());
 
     /// Checking if the number of items are equal to the number of items in the exact map.
     ASSERT_EQ(bufferOutput.getNumberOfTuples(), exactMap.size());
-    const auto errorMessage = compareExpectedWithActual(bufferOutput, *inputBufferRef, exactMap);
+    const auto errorMessage = compareExpectedWithActual(bufferOutput, *inputLayout, exactMap);
     if (not errorMessage.empty())
     {
         EXPECT_TRUE(false) << errorMessage;
@@ -404,7 +405,7 @@ void ChainedHashMapTestUtils::checkEntryIterator(
         std::ranges::fill(bufferOutput.getAvailableMemoryArea(), std::byte{0});
         /// Create a buffer ref for the outputbuffer, as its size may differ from the pooled buffer size
         const auto outputBufferRef
-            = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, MemoryLayoutType::ROW_LAYOUT);
+            = LowerSchemaProvider::lowerSchema(bufferOutput.getBufferSize(), inputSchema, inputLayoutType);
         auto findAndWriteToOutputBuffer = compileFindAndWriteToOutputBuffer(outputBufferRef);
         findAndWriteToOutputBuffer(std::addressof(inputBuffer), std::addressof(bufferOutput), bufferManager.get(), std::addressof(hashMap));
 

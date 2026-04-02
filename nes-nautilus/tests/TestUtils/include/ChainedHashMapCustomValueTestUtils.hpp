@@ -37,6 +37,6 @@ public:
     /// We use the findOrCreateEntry() method of the hash map interface.
     [[nodiscard]] nautilus::engine::CallableFunction<void, TupleBuffer*, uint64_t, TupleBuffer*, AbstractBufferProvider*, HashMap*>
     compileWriteAllRecordsIntoOutputBuffer(
-        const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<TupleBufferRef>& tupleBufferRef) const;
+        const std::vector<Record::RecordFieldIdentifier>& projectionAllFields, const std::shared_ptr<BufferLayoutRef>& layout) const;
 };
 }

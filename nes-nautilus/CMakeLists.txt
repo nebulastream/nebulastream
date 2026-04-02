@@ -17,7 +17,11 @@ add_subdirectory(src)
 get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
-add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
+add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES}
+        include/Nautilus/Interface/BufferRef/RowTupleBufferLayoutRef.hpp
+        src/Nautilus/Interface/BufferRef/RowTupleBufferLayoutRef.cpp
+        include/Nautilus/Interface/BufferRef/ColumnTupleBufferLayoutRef.hpp
+        src/Nautilus/Interface/BufferRef/ColumnTupleBufferLayoutRef.cpp)
 target_link_libraries(nes-nautilus PUBLIC nes-memory nes-output-formatters)
 
 

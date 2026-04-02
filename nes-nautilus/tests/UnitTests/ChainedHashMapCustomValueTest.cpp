@@ -29,13 +29,16 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 
+#include <Nautilus/Interface/BufferRef/ColumnTupleBufferLayoutRef.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
+#include <Nautilus/Interface/BufferRef/RowTupleBufferLayoutRef.hpp>
 #include <Util/ExecutionMode.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <gtest/gtest.h>
 #include <magic_enum/magic_enum.hpp>
+
 #include <BaseUnitTest.hpp>
 #include <ChainedHashMapCustomValueTestUtils.hpp>
 #include <ChainedHashMapTestUtils.hpp>
@@ -124,7 +127,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         /// Writing the key and values to the exact map to compare the values later.
         const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(bufferKey)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
-        auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
+        auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
         /// Writing all values to the paged vector and the exact map
         for (auto& bufferValue : inputBuffers)
@@ -138,7 +141,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
             const RecordBuffer recordBufferValue(nautilus::val<const TupleBuffer*>(std::addressof(bufferValue)));
             for (nautilus::val<uint64_t> i = 0; i < recordBufferValue.getNumRecords(); i = i + 1)
             {
-                auto recordValue = inputBufferRef->readRecord(projectionAllFields, recordBufferValue, i);
+                auto recordValue = inputLayout->readRecord(projectionAllFields, recordBufferValue, i);
                 exactMap.insert({{recordKey, projectionKeys}, recordValue});
             }
         }
@@ -162,14 +165,27 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         /// Getting the record key from the input buffer, so that we can compare the values with the exact map.
         const RecordBuffer recordBufferKey(nautilus::val<const TupleBuffer*>(std::addressof(buffer)));
         nautilus::val<uint64_t> keyPositionInBufferVal = keyPositionInBuffer;
-        auto recordKey = inputBufferRef->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
+        auto recordKey = inputLayout->readRecord(projectionKeys, recordBufferKey, keyPositionInBufferVal);
 
         /// Getting the iterator for the exact map to compare the values.
         auto [recordValueExactStart, recordValueExactEnd] = exactMap.equal_range({recordKey, projectionKeys});
         const auto numberOfRecordsExact = std::distance(recordValueExactStart, recordValueExactEnd);
 
         /// Acquiring a buffer to write the values to that has the needed size
-        const auto neededBytes = inputBufferRef->getTupleSize() * numberOfRecordsExact;
+        uint64_t tupleSize = 0;
+        if (inputLayoutType == MemoryLayoutType::ROW_LAYOUT)
+        {
+            auto rowInputLayout = dynamic_cast<RowTupleBufferLayoutRef*>(inputLayout.get());
+            tupleSize = rowInputLayout->getTupleSize();
+        } else if (inputLayoutType == MemoryLayoutType::COLUMNAR_LAYOUT)
+        {
+            auto columnInputLayout = dynamic_cast<ColumnTupleBufferLayoutRef*>(inputLayout.get());
+            tupleSize = columnInputLayout->getTupleSize();
+        } else
+        {
+            NES_ERROR("Invalid layout type. Must be row or column.");
+        }
+        const auto neededBytes = tupleSize * numberOfRecordsExact;
         auto outputBufferOpt = bufferManager->getUnpooledBuffer(neededBytes);
         if (not outputBufferOpt)
         {
@@ -187,7 +203,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         /// Calling the compiled method to write all values of the hash map for a specific key position to the output buffer.
         writeAllRecordsIntoOutputBuffer(
             std::addressof(buffer), keyPositionInBuffer, std::addressof(outputBuffer), bufferManager.get(), std::addressof(hashMap));
-        const auto writtenBytes = outputBuffer.getNumberOfTuples() * inputBufferRef->getTupleSize();
+        const auto writtenBytes = outputBuffer.getNumberOfTuples() * tupleSize;
         ASSERT_LE(writtenBytes, outputBuffer.getBufferSize());
         ASSERT_EQ(outputBuffer.getNumberOfTuples(), std::distance(recordValueExactStart, recordValueExactEnd));
 
@@ -197,7 +213,7 @@ TEST_P(ChainedHashMapCustomValueTest, pagedVector)
         {
             /// Printing an error message, if the values are not equal.
             const RecordBuffer recordBufferOutput(nautilus::val<const TupleBuffer*>(std::addressof(outputBuffer)));
-            auto recordValueActual = inputBufferRef->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
+            auto recordValueActual = inputLayout->readRecord(projectionAllFields, recordBufferOutput, currentPosition);
             const auto errorMessage = compareRecords(recordValueActual, exactIt->second, projectionAllFields);
             if (errorMessage.has_value())
             {

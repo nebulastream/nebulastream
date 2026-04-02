@@ -21,7 +21,7 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
@@ -38,7 +38,7 @@ namespace NES
 /// There is no predetermined tuple size for output-formatted tuples, we pass 0 as placeholder
 OutputFormatterBufferRef::OutputFormatterBufferRef(
     std::vector<Field> fields, std::shared_ptr<OutputFormatter> formatter, const uint64_t bufferSize)
-    : TupleBufferRef(bufferSize, bufferSize, 0), fields(std::move(fields)), formatter(std::move(formatter))
+    : bufferSize(bufferSize), fields(std::move(fields)), formatter(std::move(formatter))
 {
 }
 
@@ -49,7 +49,7 @@ OutputFormatterBufferRef::readRecord(const std::vector<Record::RecordFieldIdenti
     std::unreachable();
 }
 
-TupleBufferRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
+BufferLayoutRef::WriteRecordResult OutputFormatterBufferRef::writeRecord(
     nautilus::val<uint64_t>& bytesWritten,
     const RecordBuffer& recordBuffer,
     const Record& rec,

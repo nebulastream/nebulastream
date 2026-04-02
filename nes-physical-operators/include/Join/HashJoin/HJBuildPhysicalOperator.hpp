@@ -16,7 +16,7 @@
 #include <memory>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -37,7 +37,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<BufferLayoutRef> layout,
         HashMapOptions hashMapOptions,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     void setup(ExecutionContext& executionCtx, CompilationContext& compilationContext) const override;

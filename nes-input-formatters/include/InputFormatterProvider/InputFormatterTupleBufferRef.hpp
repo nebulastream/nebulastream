@@ -23,7 +23,7 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -41,7 +41,7 @@ class RawTupleBuffer;
 
 /// Type-erased wrapper around InputFormatter implementing the TupleBufferRef interface, enabling streamlined access to tuple buffers via
 /// TupleBufferRefs/MemoryLayouts
-class InputFormatterTupleBufferRef final : public TupleBufferRef
+class InputFormatterTupleBufferRef final : public BufferLayoutRef
 {
     using ExecuteChildFn = std::function<void(ExecutionContext& executionCtx, Record& record)>;
 
@@ -49,11 +49,17 @@ public:
     template <typename T>
     requires(not std::same_as<std::decay_t<T>, InputFormatterTupleBufferRef>)
     explicit InputFormatterTupleBufferRef(T&& inputFormatter)
-        : TupleBufferRef(0, 0, 0), inputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(inputFormatter)))
+        : inputFormatter(std::make_unique<InputFormatterModel<T>>(std::forward<T>(inputFormatter)))
     {
     }
 
     ~InputFormatterTupleBufferRef() override = default;
+
+    [[nodiscard]] nautilus::val<int8_t*> getHeaderStart(const nautilus::val<int8_t*>& bufferBase) const override {return bufferBase;};
+    [[nodiscard]] nautilus::val<int8_t*> getDataStart(const nautilus::val<int8_t*>& bufferBase) const override {return bufferBase;};
+    [[nodiscard]] uint64_t getHeaderSize() const override {return 0;};
+    [[nodiscard]] uint64_t getCapacity() const override {return 0;};
+    [[nodiscard]] uint64_t getBufferSize() const override {return 0;};
 
     [[nodiscard]] std::vector<Record::RecordFieldIdentifier> getAllFieldNames() const override
     {

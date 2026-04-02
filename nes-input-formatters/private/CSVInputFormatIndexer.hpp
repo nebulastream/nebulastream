@@ -22,7 +22,7 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <ErrorHandling.hpp>
@@ -42,11 +42,11 @@ struct CSVMetaData
     static constexpr size_t SIZE_OF_TUPLE_DELIMITER = 1;
     static constexpr size_t SIZE_OF_FIELD_DELIMITER = 1;
 
-    explicit CSVMetaData(const ParserConfig& config, const TupleBufferRef& tupleBufferRef)
+    explicit CSVMetaData(const ParserConfig& config, const BufferLayoutRef& layout)
         : tupleDelimiter(config.tupleDelimiter.front())
         , fieldDelimiter(config.fieldDelimiter.front())
-        , fieldNames(tupleBufferRef.getAllFieldNames())
-        , fieldDataTypes(tupleBufferRef.getAllDataTypes())
+        , fieldNames(layout.getAllFieldNames())
+        , fieldDataTypes(layout.getAllDataTypes())
         , nullValues({""})
     {
         PRECONDITION(

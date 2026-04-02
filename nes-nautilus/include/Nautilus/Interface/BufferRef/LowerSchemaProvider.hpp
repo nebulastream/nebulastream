@@ -20,7 +20,7 @@
 #include <unordered_map>
 
 #include <DataTypes/Schema.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 
 namespace NES
 {
@@ -38,13 +38,13 @@ enum class MemoryLayoutType : uint8_t
 class LowerSchemaProvider
 {
 public:
-    static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
+    static std::shared_ptr<BufferLayoutRef> lowerSchemaWithOutputFormat(
         uint64_t bufferSize,
         const Schema& schema,
         const std::string& outputFormatterType,
         const std::unordered_map<std::string, std::string>& config);
 
-    static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
+    static std::shared_ptr<BufferLayoutRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
 };
 
 }

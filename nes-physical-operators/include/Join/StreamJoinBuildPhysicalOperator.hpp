@@ -17,7 +17,7 @@
 #include <cstdint>
 #include <memory>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <SliceStore/SliceStoreRef.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -33,7 +33,7 @@ public:
         OperatorHandlerId operatorHandlerId,
         JoinBuildSideType joinBuildSide,
         std::unique_ptr<TimeFunction> timeFunction,
-        std::shared_ptr<TupleBufferRef> bufferRef,
+        std::shared_ptr<BufferLayoutRef> layout,
         std::unique_ptr<SliceStoreRef> sliceStoreRef);
     ~StreamJoinBuildPhysicalOperator() override = default;
 
@@ -41,7 +41,7 @@ public:
 
 protected:
     const JoinBuildSideType joinBuildSide;
-    const std::shared_ptr<TupleBufferRef> bufferRef;
+    const std::shared_ptr<BufferLayoutRef> layout;
 };
 
 }

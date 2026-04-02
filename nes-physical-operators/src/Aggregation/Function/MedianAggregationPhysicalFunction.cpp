@@ -21,7 +21,7 @@
 #include <Aggregation/Function/AggregationPhysicalFunction.hpp>
 #include <DataTypes/DataType.hpp>
 #include <Functions/PhysicalFunction.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -43,9 +43,9 @@ MedianAggregationPhysicalFunction::MedianAggregationPhysicalFunction(
     DataType resultType,
     PhysicalFunction inputFunction,
     Record::RecordFieldIdentifier resultFieldIdentifier,
-    std::shared_ptr<TupleBufferRef> bufferRefPagedVector)
+    std::shared_ptr<BufferLayoutRef> pageLayout)
     : AggregationPhysicalFunction(std::move(inputType), std::move(resultType), std::move(inputFunction), std::move(resultFieldIdentifier))
-    , bufferRefPagedVector(std::move(bufferRefPagedVector))
+    , pageLayout(std::move(pageLayout))
 {
 }
 
@@ -65,7 +65,7 @@ void MedianAggregationPhysicalFunction::lift(
     }
 
     /// Adding the record to the paged vector. We are storing the full record in the paged vector for now.
-    const PagedVectorRef pagedVectorRef(memArea, bufferRefPagedVector);
+    const PagedVectorRef pagedVectorRef(memArea, pageLayout);
     pagedVectorRef.writeRecord(record, pipelineMemoryProvider.bufferProvider);
 }
 
@@ -112,8 +112,8 @@ Record MedianAggregationPhysicalFunction::lower(
     /// Getting the paged vector from the aggregation state
     const auto pagedVectorPtr
         = static_cast<nautilus::val<PagedVector*>>(aggregationState + nautilus::val<uint64_t>{static_cast<uint64_t>(inputType.nullable)});
-    const PagedVectorRef pagedVectorRef(pagedVectorPtr, bufferRefPagedVector);
-    const auto allFieldNames = bufferRefPagedVector->getAllFieldNames();
+    const PagedVectorRef pagedVectorRef(pagedVectorPtr, pageLayout);
+    const auto allFieldNames = pageLayout->getAllFieldNames();
     const auto numberOfEntries = invoke(
         +[](const PagedVector* pagedVector)
         {
@@ -235,13 +235,13 @@ size_t MedianAggregationPhysicalFunction::getSizeOfStateInBytes() const
 AggregationPhysicalFunctionRegistryReturnType AggregationPhysicalFunctionGeneratedRegistrar::RegisterMedianAggregationPhysicalFunction(
     AggregationPhysicalFunctionRegistryArguments arguments)
 {
-    INVARIANT(arguments.bufferRefPagedVector.has_value(), "Memory provider paged vector not set");
+    INVARIANT(arguments.pageLayout.has_value(), "Memory provider paged vector not set");
     return std::make_shared<MedianAggregationPhysicalFunction>(
         std::move(arguments.inputType),
         std::move(arguments.resultType),
         arguments.inputFunction,
         arguments.resultFieldIdentifier,
-        arguments.bufferRefPagedVector.value());
+        arguments.pageLayout.value());
 }
 
 }

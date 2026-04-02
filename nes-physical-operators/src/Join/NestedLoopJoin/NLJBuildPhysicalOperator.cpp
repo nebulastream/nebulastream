@@ -20,7 +20,7 @@
 #include <Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -50,10 +50,10 @@ NLJBuildPhysicalOperator::NLJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<BufferLayoutRef> layout,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
     : StreamJoinBuildPhysicalOperator{
-          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+          operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(layout), std::move(sliceStoreRef)}
 {
 }
 
@@ -68,7 +68,7 @@ void NLJBuildPhysicalOperator::execute(ExecutionContext& executionCtx, Record& r
     const auto nljPagedVectorMemRef = sliceStoreRef->getDataStructureRef(timestamp, executionCtx.workerThreadId, operatorHandler);
 
     /// Write record to the pagedVector
-    const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, bufferRef);
+    const PagedVectorRef pagedVectorRef(nljPagedVectorMemRef, layout);
     pagedVectorRef.writeRecord(record, executionCtx.pipelineMemoryProvider.bufferProvider);
 }
 }

@@ -23,7 +23,7 @@
 #include <Join/HashJoin/HJSlice.hpp>
 #include <Join/StreamJoinBuildPhysicalOperator.hpp>
 #include <Join/StreamJoinUtil.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/HashMap/HashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
@@ -140,7 +140,7 @@ void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) con
         /// Inserting the tuple into the corresponding hash entry
         const ChainedHashMapRef::ChainedEntryRef entryRef{hashMapEntry, hashMapPtr, hashMapOptions.fieldKeys, hashMapOptions.fieldValues};
         auto entryMemArea = entryRef.getValueMemArea();
-        const PagedVectorRef pagedVectorRef(entryMemArea, bufferRef);
+        const PagedVectorRef pagedVectorRef(entryMemArea, layout);
         pagedVectorRef.writeRecord(record, ctx.pipelineMemoryProvider.bufferProvider);
     }
 }
@@ -149,10 +149,10 @@ HJBuildPhysicalOperator::HJBuildPhysicalOperator(
     const OperatorHandlerId operatorHandlerId,
     const JoinBuildSideType joinBuildSide,
     std::unique_ptr<TimeFunction> timeFunction,
-    std::shared_ptr<TupleBufferRef> bufferRef,
+    std::shared_ptr<BufferLayoutRef> layout,
     HashMapOptions hashMapOptions,
     std::unique_ptr<SliceStoreRef> sliceStoreRef)
-    : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(bufferRef), std::move(sliceStoreRef)}
+    : StreamJoinBuildPhysicalOperator{operatorHandlerId, joinBuildSide, std::move(timeFunction), std::move(layout), std::move(sliceStoreRef)}
     , hashMapOptions(std::move(hashMapOptions))
 {
 }

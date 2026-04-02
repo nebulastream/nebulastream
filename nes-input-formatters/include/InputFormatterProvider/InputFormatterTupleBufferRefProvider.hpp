@@ -18,7 +18,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <InputFormatterTupleBufferRef.hpp>
 
@@ -26,7 +26,7 @@ namespace NES
 {
 
 std::shared_ptr<InputFormatterTupleBufferRef>
-provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<TupleBufferRef> memoryProvider);
+provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_ptr<BufferLayoutRef> layout);
 
 bool contains(const std::string& parserType);
 }

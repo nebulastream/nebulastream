@@ -26,7 +26,7 @@
 #include <vector>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Nautilus/Interface/BufferRef/BufferLayoutRef.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
@@ -135,7 +135,7 @@ inline void writePagedSizeBufferChunkToFile(
 inline std::string readVarSizedDataAsString(const TupleBuffer& tupleBuffer, VariableSizedAccess variableSizedAccess)
 {
     /// Retrieve the variable sized value as span over its bytes
-    const auto varSizedSpan = TupleBufferRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
+    const auto varSizedSpan = BufferLayoutRef::loadAssociatedVarSizedValue(tupleBuffer, variableSizedAccess);
     const auto* const strPtrContent = reinterpret_cast<const char*>(varSizedSpan.data());
     return std::string{strPtrContent, variableSizedAccess.getSize().getRawSize()};
 }
