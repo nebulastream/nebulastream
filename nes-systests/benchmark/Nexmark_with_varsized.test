@@ -44,6 +44,11 @@ CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
 SELECT timestamp FROM bid INTO bidCheckSumProjection;
 ----
 183991721 127905527607
+CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
+
+SELECT timestamp FROM bid INTO bidCheckSumProjection;
+----
+183991721 127905527607
 
 # Query 0
 SELECT * FROM bid INTO bidCheckSum;

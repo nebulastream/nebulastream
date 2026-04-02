@@ -12,21 +12,56 @@
     limitations under the License.
 */
 
-#include <UncompiledRawValueParser.hpp>
-
 #include <algorithm>
+#include <cstddef>
 #include <cstdint>
 #include <cstring>
 #include <span>
 #include <string_view>
-#include <DataTypes/DataType.hpp>
-// #include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <UncompiledInputFormatters/UncompiledInputParser.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
+#include <UncompiledInputParserRegistry.hpp>
 
 namespace NES
 {
+namespace
+{
+
+/// Takes a target type and a value represented as a string. Attempts to parse the string to the C++ target type.
+/// @Note throws CannotFormatMalformedStringValue if the parsing fails.
+/// @Note given a string like '0751' and an integer value, from_chars creates an integer '751' from it. Also, '0.751' becomes '0'.
+template <typename T>
+auto parseUncompiledFieldString()
+{
+    return [](const std::string_view fieldValueString,
+              const size_t writeOffsetInBytes,
+              AbstractBufferProvider&,
+              TupleBuffer& tupleBufferFormatted)
+    {
+        const T parsedValue = from_chars_with_exception<T>(fieldValueString);
+        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
+    };
+}
+
+template <typename T>
+auto parseQuotedUncompiledFieldString()
+{
+    return [](const std::string_view quotedFieldValueString,
+              const size_t writeOffsetInBytes,
+              AbstractBufferProvider&,
+              TupleBuffer& tupleBufferFormatted)
+    {
+        INVARIANT(quotedFieldValueString.length() >= 2, "Input string must be at least 2 characters long.");
+        const auto fieldValueString = quotedFieldValueString.substr(1, quotedFieldValueString.length() - 2);
+        const T parsedValue = from_chars_with_exception<T>(fieldValueString);
+        const auto parsedValueBytes = std::as_bytes<const T>(std::span<const T>{&parsedValue, 1});
+        std::ranges::copy(parsedValueBytes, tupleBufferFormatted.getAvailableMemoryArea().begin() + writeOffsetInBytes);
+    };
+}
 
 void writeVarsizedToChildBuffer(
     const std::string_view inputString,
@@ -78,7 +113,6 @@ UncompiledParseFunctionSignature getQuotedStringParseFunction()
     {
         INVARIANT(inputString.length() >= 2, "Input string must be at least 2 characters long.");
         auto inputStringWithoutQuotes = inputString.substr(1, inputString.length() - 2);
-        // const Index index, const Offset offset, const Size size
         if (tupleBufferFormatted.getNumberOfChildBuffers() == 0)
         {
             writeVarsizedToNewChildBuffer(inputStringWithoutQuotes, writeOffsetInBytes, tupleBufferFormatted, bufferProvider);
@@ -135,63 +169,86 @@ UncompiledParseFunctionSignature getStringParseFunction(const UncompiledQuotatio
     std::unreachable();
 }
 
-UncompiledParseFunctionSignature getBasicTypeParseFunction(const DataType::Type physicalType, const UncompiledQuotationType quotationType)
+} /// anonymous namespace
+
+/// Registration functions for the default uncompiled input parsers
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultBOOLUncompiledInputParser(UncompiledInputParserRegistryArguments)
 {
-    switch (physicalType)
-    {
-        case DataType::Type::INT8: {
-            return parseUncompiledFieldString<int8_t>();
-        }
-        case DataType::Type::INT16: {
-            return parseUncompiledFieldString<int16_t>();
-        }
-        case DataType::Type::INT32: {
-            return parseUncompiledFieldString<int32_t>();
-        }
-        case DataType::Type::INT64: {
-            return parseUncompiledFieldString<int64_t>();
-        }
-        case DataType::Type::UINT8: {
-            return parseUncompiledFieldString<uint8_t>();
-        }
-        case DataType::Type::UINT16: {
-            return parseUncompiledFieldString<uint16_t>();
-        }
-        case DataType::Type::UINT32: {
-            return parseUncompiledFieldString<uint32_t>();
-        }
-        case DataType::Type::UINT64: {
-            return parseUncompiledFieldString<uint64_t>();
-        }
-        case DataType::Type::FLOAT32: {
-            return parseUncompiledFieldString<float>();
-        }
-        case DataType::Type::FLOAT64: {
-            return parseUncompiledFieldString<double>();
-        }
-        case DataType::Type::CHAR: {
-            return (quotationType == UncompiledQuotationType::NONE) ? parseUncompiledFieldString<char>()
-                                                                    : parseQuotedUncompiledFieldString<char>();
-        }
-        case DataType::Type::BOOLEAN: {
-            return parseUncompiledFieldString<bool>();
-        }
-        case DataType::Type::VARSIZED: {
-            return getBasicStringParseFunction();
-        }
-        case DataType::Type::UNDEFINED: {
-            throw NotImplemented("Cannot parse undefined type.");
-        }
-    }
-    return nullptr;
+    return parseUncompiledFieldString<bool>();
 }
 
-UncompiledParseFunctionSignature getUncompiledParseFunction(const DataType::Type physicalType, const UncompiledQuotationType quotationType)
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultCHARUncompiledInputParser(UncompiledInputParserRegistryArguments args)
 {
-    if (physicalType == DataType::Type::VARSIZED)
-    {
-        return getStringParseFunction(quotationType);
-    }
-    return getBasicTypeParseFunction(physicalType, quotationType);
+    return (args.quotationType == UncompiledQuotationType::NONE) ? parseUncompiledFieldString<char>()
+                                                                 : parseQuotedUncompiledFieldString<char>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<int8_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<int16_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<int32_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<int64_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT8UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<uint8_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT16UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<uint16_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<uint32_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultUINT64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<uint64_t>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultF32UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<float>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultF64UncompiledInputParser(UncompiledInputParserRegistryArguments)
+{
+    return parseUncompiledFieldString<double>();
+}
+
+UncompiledInputParserRegistryReturnType
+    UncompiledInputParserGeneratedRegistrar::RegisterDefaultVARSIZEDUncompiledInputParser(UncompiledInputParserRegistryArguments args)
+{
+    return getStringParseFunction(args.quotationType);
 }
 }
