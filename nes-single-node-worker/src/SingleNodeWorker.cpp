@@ -14,6 +14,7 @@
 
 #include <SingleNodeWorker.hpp>
 
+#include <algorithm>
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
@@ -29,9 +30,14 @@
 #include <Identifiers/NESStrongType.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Listeners/QueryLog.hpp>
+#include <Phases/RuleBasedOptimizer.hpp>
+#include <Phases/SemanticAnalyzer.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <SQLQueryParser/AntlrSQLQueryParser.hpp>
+#include <Sinks/SinkCatalog.hpp>
+#include <Sources/SourceCatalog.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
@@ -60,8 +66,12 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
     : workerNodeId(host), listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
+    /// Set up worker-scoped thread-locals. WorkerNodeId is propagated via the
+    /// thread init hook map. EventStore uses WorkerLocalSingleton CRTP which
+    /// handles hook registration automatically on construction.
     Thread::WorkerNodeId = workerNodeId;
     detail::threadInitHooks[std::type_index(typeid(Host))] = [this]() { Thread::WorkerNodeId = workerNodeId; };
+    eventStore = std::make_unique<EventStore>();
     {
         std::stringstream configStr;
         ConfigValuePrinter printer(configStr);
@@ -78,6 +88,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    registerSystemQueries(host);
 
     if (!configuration.dataAddress.getValue().empty())
     {
@@ -93,6 +104,115 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
             });
     }
+}
+
+void SingleNodeWorker::registerSystemQueries(const Host& host)
+{
+    auto sourceCatalog = std::make_shared<SourceCatalog>();
+    auto sinkCatalog = std::make_shared<SinkCatalog>();
+    const SemanticAnalyzer analyzer{sourceCatalog, sinkCatalog};
+    const RuleBasedOptimizer optimizer{{}};
+    const auto hostStr = host.getRawValue();
+    /// Sanitize host for use in file paths (replace : with _).
+    auto fileHostStr = hostStr;
+    std::replace(fileHostStr.begin(), fileHostStr.end(), ':', '_');
+
+    auto startSystemQuery = [&](const std::string& name, std::string sql)
+    {
+        auto plan = AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(sql);
+        plan = analyzer.analyse(plan);
+        plan = optimizer.optimize(std::move(plan));
+
+        auto queryIdResult = registerQuery(plan);
+        if (!queryIdResult.has_value())
+        {
+            NES_WARNING("Failed to register system query '{}': {}", name, queryIdResult.error());
+            return;
+        }
+        auto startResult = startQuery(queryIdResult.value());
+        if (startResult.has_value())
+        {
+            NES_INFO("System query '{}' started (queryId={})", name, queryIdResult.value());
+        }
+        else
+        {
+            NES_WARNING("Failed to start system query '{}': {}", name, startResult.error());
+        }
+    };
+
+    /// pipeline_compiled → raw events to CSV
+    startSystemQuery(
+        "pipeline_compiled",
+        fmt::format(
+            R"(
+        SELECT timestamp_ms, ToUuid(query_id_hi, query_id_lo) AS query_id, pipeline_id, compile_time_ns
+        FROM Event(
+            'pipeline_compiled' AS `SOURCE`.EVENT_NAME,
+            '{0}' AS `SOURCE`.`HOST`,
+            '1000' AS `SOURCE`.FLUSH_INTERVAL_MS,
+            'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
+            SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, pipeline_id UINT64 NOT NULL, compile_time_ns UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
+            'native' AS PARSER.`TYPE`)
+        INTO File('/tmp/nebulastream-docker-toolchain/nes_pipeline_compilation_times_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+    )",
+            hostStr,
+            fileHostStr));
+
+    /// query_status → raw events to CSV
+    startSystemQuery(
+        "query_status",
+        fmt::format(
+            R"(
+        SELECT timestamp_ms, ToUuid(query_id_hi, query_id_lo) AS query_id, status
+        FROM Event(
+            'query_status' AS `SOURCE`.EVENT_NAME,
+            '{0}' AS `SOURCE`.`HOST`,
+            '1000' AS `SOURCE`.FLUSH_INTERVAL_MS,
+            'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
+            SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, status VARSIZED NOT NULL) AS `SOURCE`.`SCHEMA`,
+            'native' AS PARSER.`TYPE`)
+        INTO File('/tmp/nebulastream-docker-toolchain/nes_query_status_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+    )",
+            hostStr,
+            fileHostStr));
+
+    /// unpooled_buffer_alloc → COUNT and AVG over 1-second tumbling window
+    startSystemQuery(
+        "unpooled_buffer_alloc",
+        fmt::format(
+            R"(
+        SELECT start, end, COUNT(alloc_size) AS alloc_count, AVG(alloc_size) AS avg_alloc_size
+        FROM Event(
+            'unpooled_buffer_alloc' AS `SOURCE`.EVENT_NAME,
+            '{0}' AS `SOURCE`.`HOST`,
+            '500' AS `SOURCE`.FLUSH_INTERVAL_MS,
+            'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
+            SCHEMA(timestamp_ms UINT64 NOT NULL, alloc_size UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
+            'native' AS PARSER.`TYPE`)
+        WINDOW TUMBLING(timestamp_ms, SIZE 1 SEC)
+        INTO File('/tmp/nebulastream-docker-toolchain/nes_unpooled_buffer_alloc_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+    )",
+            hostStr,
+            fileHostStr));
+
+    /// buffer_ingestion → AVG throughput (tuples) over 1-second sliding window, 500ms advance
+    startSystemQuery(
+        "buffer_ingestion",
+        fmt::format(
+            R"(
+        SELECT start, end, AVG(num_tuples) AS avg_tuples, SUM(num_tuples) AS total_tuples, COUNT(num_tuples) AS ingestion_count
+        FROM Event(
+            'buffer_ingestion' AS `SOURCE`.EVENT_NAME,
+            '{0}' AS `SOURCE`.`HOST`,
+            '500' AS `SOURCE`.FLUSH_INTERVAL_MS,
+            'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
+            SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, origin_id UINT64 NOT NULL, num_tuples UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
+            'native' AS PARSER.`TYPE`)
+        WINDOW SLIDING(timestamp_ms, SIZE 1 SEC, ADVANCE BY 500 MS)
+        INTO File('/tmp/nebulastream-docker-toolchain/nes_buffer_ingestion_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+    )",
+            hostStr,
+            fileHostStr));
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept

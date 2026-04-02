@@ -10,24 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-memory
-        BufferManager.cpp
-        TupleBufferImpl.cpp
-        TupleBuffer.cpp
-        NesDefaultMemoryAllocator.cpp
-        TaggedPointer.cpp
-        UnpooledChunksManager.cpp
-        VariableSizedAccess.cpp
-        ${MEMORY_LAYOUT_SOURCES}
-)
-
-target_include_directories(nes-memory
-        PUBLIC
+add_library(nes-events STATIC src/EventStore.cpp)
+target_include_directories(nes-events PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>
-        PRIVATE
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
-)
-find_package(folly REQUIRED)
-target_link_libraries(nes-memory PUBLIC nes-common nes-data-types nes-events PRIVATE folly::folly)
-add_tests_if_enabled(tests)
+        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_link_libraries(nes-events PUBLIC nes-common)

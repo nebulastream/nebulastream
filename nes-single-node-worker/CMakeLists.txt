@@ -29,7 +29,9 @@ target_link_libraries(nes-single-node-worker-lib
         nes-grpc
         nes-query-compiler
         nes-query-optimizer
+        nes-sql-parser
         nes-single-node-worker-interface
+        nes-events
 )
 
 add_executable(nes-single-node-worker src/SingleNodeWorkerStarter.cpp)

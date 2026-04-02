@@ -38,6 +38,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
+#include <Util/Tracing/LogEvent.hpp>
 #include <fmt/format.h>
 #include <folly/MPMCQueue.h>
 #include <DelayedTaskSubmitter.hpp>
@@ -209,6 +210,7 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    const QueryId& queryId;
     /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
     /// the address might change as the vector might be resized and thus, the object have a different address.
     std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
@@ -221,6 +223,7 @@ struct DefaultPEC final : PipelineExecutionContext
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
+        const QueryId& queryId,
         std::shared_ptr<AbstractBufferProvider> bm,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
@@ -230,6 +233,7 @@ struct DefaultPEC final : PipelineExecutionContext
         , numberOfThreads(numberOfThreads)
         , threadId(threadId)
         , pipelineId(pipelineId)
+        , queryId(queryId)
     {
     }
 
@@ -285,6 +289,8 @@ struct DefaultPEC final : PipelineExecutionContext
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         return pipelineId;
     }
+
+    [[nodiscard]] const QueryId& getQueryId() const override { return queryId; }
 
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
     {
@@ -492,6 +498,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            task.queryId,
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
@@ -549,6 +556,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            startPipeline.queryId,
             pool.bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
@@ -627,6 +635,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
+        stopPipelineTask.queryId,
         pool.bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
@@ -836,6 +845,7 @@ void QueryCatalog::start(
                     },
                     [](Starting&& starting) { return Running{std::move(starting.plan)}; });
                 listener->logQueryStatusChange(queryId, QueryStatus::Running, timestamp);
+                LOG_EVENT(query_status, queryId.getLocalQueryId().view(), "running");
             }
         }
 
@@ -880,6 +890,7 @@ void QueryCatalog::start(
 
                 exception.what() += fmt::format(" in Query {}.", queryId);
                 ENGINE_LOG_ERROR("Query Failed: {}", exception.what());
+                LOG_EVENT(query_status, queryId.getLocalQueryId().view(), "failed");
                 listener->logQueryFailure(queryId, std::move(exception), timestamp);
                 statistic->onEvent(QueryFail(ThreadPool::WorkerThread::id, queryId));
             }
@@ -922,6 +933,7 @@ void QueryCatalog::start(
                 if (didTransition)
                 {
                     listener->logQueryStatusChange(queryId, QueryStatus::Stopped, timestamp);
+                    LOG_EVENT(query_status, queryId.getLocalQueryId().view(), "stopped");
                     statistic->onEvent(QueryStop(ThreadPool::WorkerThread::id, queryId));
                 }
             }
@@ -945,6 +957,7 @@ void QueryCatalog::start(
                           { return Starting{std::move(runningQueryPlan)}; })) /// NOLINT(cppcoreguidelines-rvalue-reference-param-not-moved)
     {
         listener->logQueryStatusChange(queryId, QueryStatus::Started, startTimestamp);
+        LOG_EVENT(query_status, queryId.getLocalQueryId().view(), "started");
     }
     else
     {

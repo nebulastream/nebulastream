@@ -29,6 +29,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Tracing/LogEvent.hpp>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
@@ -85,6 +86,7 @@ SourceReturnType::EmitFunction emitFunction(
                         }
                         ENGINE_LOG_DEBUG("Source Emitted Data to successor: {}-{}", queryId, successor->id);
                     }
+                    LOG_EVENT(buffer_ingestion, queryId.getLocalQueryId().view(), sourceId.getRawValue(), data.buffer.getNumberOfTuples());
                     return SourceReturnType::EmitResult::SUCCESS;
                 },
                 [&](SourceReturnType::EoS)

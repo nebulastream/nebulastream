@@ -24,6 +24,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Pointers.hpp>
+#include <Util/Tracing/EventStore.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryCompiler.hpp>
@@ -41,6 +42,7 @@ namespace NES
 class SingleNodeWorker
 {
     Host workerNodeId;
+    std::unique_ptr<EventStore> eventStore;
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
@@ -77,5 +79,9 @@ public:
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;
     [[nodiscard]] WorkerStatus getWorkerStatus(std::chrono::system_clock::time_point after) const;
+
+private:
+    /// Registers and starts built-in system queries (e.g., event tracing).
+    void registerSystemQueries(const Host& host);
 };
 }

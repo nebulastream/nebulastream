@@ -54,6 +54,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -83,6 +84,8 @@ class EmitPhysicalOperatorTest : public Testing::BaseUnitTest
         [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
 
         [[nodiscard]] PipelineId getPipelineId() const override { return PipelineId(1); }
+
+        [[nodiscard]] const QueryId& getQueryId() const override { return INVALID_QUERY_ID; }
 
         std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override
         {

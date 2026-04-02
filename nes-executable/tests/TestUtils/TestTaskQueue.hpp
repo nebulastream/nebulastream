@@ -38,6 +38,7 @@
 #include <ErrorHandling.hpp>
 #include <ExecutablePipelineStage.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryId.hpp>
 
 namespace NES
 {
@@ -103,6 +104,8 @@ public:
 
     [[nodiscard]] PipelineId getPipelineId() const override { return pipelineId; }
 
+    [[nodiscard]] const QueryId& getQueryId() const override { return queryId; }
+
     std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& getOperatorHandlers() override { return operatorHandlers; };
 
     void setOperatorHandlers(std::unordered_map<OperatorHandlerId, std::shared_ptr<OperatorHandler>>& operatorHandlers) override
@@ -114,6 +117,7 @@ public:
 
     WorkerThreadId workerThreadId;
     PipelineId pipelineId;
+    QueryId queryId = INVALID_QUERY_ID;
 
 private:
     /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,

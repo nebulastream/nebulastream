@@ -26,6 +26,7 @@
 #include <utility>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Tracing/LogEvent.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
@@ -186,6 +187,7 @@ UnpooledChunksManager::getUnpooledBuffer(const size_t neededSize, size_t alignme
 
     if (leakedMemSegment->controlBlock->prepare(bufferRecycler))
     {
+        LOG_EVENT(unpooled_buffer_alloc, static_cast<uint64_t>(neededSize));
         return TupleBuffer{leakedMemSegment->controlBlock.get(), leakedMemSegment->ptr, leakedMemSegment->size};
     }
     throw InvalidRefCountForBuffer("[BufferManager] got buffer with invalid reference counter");

@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/Tracing/LogEvent.hpp>
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <nautilus/val_ptr.hpp>
@@ -119,7 +120,15 @@ void CompiledExecutablePipelineStage::start(PipelineExecutionContext& pipelineEx
     ExecutionContext ctx(std::addressof(pipelineExecutionContext), std::addressof(arena));
     CompilationContext compilationCtx{engine};
     pipeline->getRootOperator().setup(ctx, compilationCtx);
+    const auto compileStart = std::chrono::steady_clock::now();
     compiledPipelineFunction = this->compilePipeline();
+    const auto compileTimeNs
+        = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - compileStart).count();
+    LOG_EVENT(
+        pipeline_compiled,
+        pipelineExecutionContext.getQueryId().getLocalQueryId().view(),
+        pipeline->getPipelineId().getRawValue(),
+        static_cast<uint64_t>(compileTimeNs));
 }
 
 }
