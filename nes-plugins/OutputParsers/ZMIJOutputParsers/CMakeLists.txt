@@ -31,6 +31,7 @@ endforeach()
 
 add_plugin_as_library(ZMIJF32 OutputParser nes-output-formatters-registry zmij_output_parser_plugin ZMIJOutputParser.cpp)
 add_plugin(ZMIJF64 OutputParser zmij_output_parser_plugin ZMIJOutputParser.cpp)
+nautilus_inline(zmij_output_parser_plugin)
 
 target_link_libraries(zmij_output_parser_plugin PRIVATE zmij)
 target_include_directories(zmij_output_parser_plugin PUBLIC include PRIVATE .)
