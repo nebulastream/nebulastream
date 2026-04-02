@@ -24,8 +24,6 @@
 
 namespace NES
 {
-namespace
-{
 template <typename T>
 struct ParseResult
 {
@@ -33,45 +31,43 @@ struct ParseResult
     bool isNull;
 };
 
+/// Non-nullable: returns T directly, no thread_local, no null handling.
 template <typename T, bool Nullable>
+requires(not Nullable)
+T parseFixedSized(const int8_t* fieldAddress, const uint64_t fieldSize)
+{
+    const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
+    const auto trimmedFieldAsString = trimWhiteSpaces(fieldAsString);
+    return NES::from_chars_with_exception<T>(trimmedFieldAsString);
+}
+
+/// Nullable: returns ParseResult<T>* via thread_local, with null checking.
+template <typename T, bool Nullable>
+requires Nullable
 ParseResult<T>* parseFixedSized(const int8_t* fieldAddress, const uint64_t fieldSize, const std::vector<std::string>* nullValues)
 {
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
 
-    /// We use the thread local to return multiple values.
-    /// C++ guarantees that the returned address is valid throughout the lifetime of this thread.
     thread_local static ParseResult<T> result;
     result.isNull = false;
 
-    /// Checking if the field is null but only if the field is nullable
-    if constexpr (Nullable)
+    if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))
     {
-        if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))
-        {
-            result.isNull = true;
-            result.value = T{0};
-            return &result;
-        }
+        result.isNull = true;
+        result.value = T{0};
+        return &result;
     }
 
     try
     {
-        const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
-        const auto trimmedFieldAsString = trimWhiteSpaces(fieldAsString);
-        result.value = NES::from_chars_with_exception<T>(trimmedFieldAsString);
+        result.value = parseFixedSized<T, false>(fieldAddress, fieldSize);
     }
     catch (const Exception& ex)
     {
-        /// If the field is nullable, we return a null value, otherwise we throw an exception
-        if constexpr (not Nullable)
-        {
-            throw;
-        }
         result.isNull = true;
         result.value = T{0};
     }
     return &result;
-}
 }
 
 VarVal DefaultBOOLInputParser::parseToVarVal(
@@ -92,13 +88,8 @@ VarVal DefaultBOOLInputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<bool>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<bool, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<bool> nautilusValue = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<bool>, value));
+    const nautilus::val<bool> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<bool, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -120,13 +111,8 @@ VarVal DefaultCHARInputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<char>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<char, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<char> nautilusValue = *getMemberWithOffset<char>(parseResult, offsetof(ParseResult<char>, value));
+    const nautilus::val<char> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<char, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -148,13 +134,8 @@ VarVal DefaultF32InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<float>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<float, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<float> nautilusValue = *getMemberWithOffset<float>(parseResult, offsetof(ParseResult<float>, value));
+    const nautilus::val<float> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<float, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -176,13 +157,8 @@ VarVal DefaultF64InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<double>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<double, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<double> nautilusValue = *getMemberWithOffset<double>(parseResult, offsetof(ParseResult<double>, value));
+    const nautilus::val<double> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<double, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -204,13 +180,8 @@ VarVal DefaultINT8InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<int8_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<int8_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<int8_t> nautilusValue = *getMemberWithOffset<int8_t>(parseResult, offsetof(ParseResult<int8_t>, value));
+    const nautilus::val<int8_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int8_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -232,13 +203,8 @@ VarVal DefaultINT16InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<int16_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<int16_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<int16_t> nautilusValue = *getMemberWithOffset<int16_t>(parseResult, offsetof(ParseResult<int16_t>, value));
+    const nautilus::val<int16_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int16_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -260,13 +226,8 @@ VarVal DefaultINT32InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<int32_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<int32_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<int32_t> nautilusValue = *getMemberWithOffset<int32_t>(parseResult, offsetof(ParseResult<int32_t>, value));
+    const nautilus::val<int32_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int32_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -288,13 +249,8 @@ VarVal DefaultINT64InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<int64_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<int64_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<int64_t> nautilusValue = *getMemberWithOffset<int64_t>(parseResult, offsetof(ParseResult<int64_t>, value));
+    const nautilus::val<int64_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int64_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -316,13 +272,8 @@ VarVal DefaultUINT8InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<uint8_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<uint8_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<uint8_t> nautilusValue = *getMemberWithOffset<uint8_t>(parseResult, offsetof(ParseResult<uint8_t>, value));
+    const nautilus::val<uint8_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint8_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -344,13 +295,8 @@ VarVal DefaultUINT16InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<uint16_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<uint16_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<uint16_t> nautilusValue = *getMemberWithOffset<uint16_t>(parseResult, offsetof(ParseResult<uint16_t>, value));
+    const nautilus::val<uint16_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint16_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -372,13 +318,8 @@ VarVal DefaultUINT32InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<uint32_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<uint32_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<uint32_t> nautilusValue = *getMemberWithOffset<uint32_t>(parseResult, offsetof(ParseResult<uint32_t>, value));
+    const nautilus::val<uint32_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint32_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 
@@ -400,13 +341,8 @@ VarVal DefaultUINT64InputParser::parseToVarVal(
         const nautilus::val<bool> isNull = *getMemberWithOffset<bool>(parseResult, offsetof(ParseResult<uint64_t>, isNull));
         return VarVal{nautilusValue, nullable, isNull};
     }
-    const auto parseResult = NAUTILUS_TAGGED_INVOKE(
-        "parse_not_null",
-        parseFixedSized<uint64_t, false>,
-        fieldAddress,
-        fieldSize,
-        nautilus::val<const std::vector<std::string>*>{&nullValues});
-    const nautilus::val<uint64_t> nautilusValue = *getMemberWithOffset<uint64_t>(parseResult, offsetof(ParseResult<uint64_t>, value));
+    const nautilus::val<uint64_t> nautilusValue
+        = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint64_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
 }
 

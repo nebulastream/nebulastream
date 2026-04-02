@@ -1,4 +1,5 @@
 # invoke_config.yaml
+#global_mode: default
 global_mode: fnattr  # "default", "fnattr", or "inline"
 global_fn_attr:      # optional, only relevant if global_mode is fnattr
   mod_ref_info: ref
