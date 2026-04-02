@@ -17,10 +17,12 @@
 #include <cstdint>
 #include <memory>
 #include <string>
+
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/InvokeMacro.hpp>
 #include <OutputParserRegistry.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -170,7 +172,8 @@ nautilus::val<uint64_t> DefaultCHAROutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<char>>();
-    return nautilus::invoke(parseChar, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseChar, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultF32OutputParser::parseAndWrite(
@@ -181,7 +184,8 @@ nautilus::val<uint64_t> DefaultF32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return nautilus::invoke(parseF32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseF32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultF64OutputParser::parseAndWrite(
@@ -192,7 +196,8 @@ nautilus::val<uint64_t> DefaultF64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<double>>();
-    return nautilus::invoke(parseF64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseF64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultINT8OutputParser::parseAndWrite(
@@ -203,7 +208,8 @@ nautilus::val<uint64_t> DefaultINT8OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(parseInt8, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseInt8, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultINT16OutputParser::parseAndWrite(
@@ -214,7 +220,8 @@ nautilus::val<uint64_t> DefaultINT16OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(parseInt16, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseInt16, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultINT32OutputParser::parseAndWrite(
@@ -225,7 +232,8 @@ nautilus::val<uint64_t> DefaultINT32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int32_t>>();
-    return nautilus::invoke(parseInt32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseInt32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultINT64OutputParser::parseAndWrite(
@@ -236,7 +244,8 @@ nautilus::val<uint64_t> DefaultINT64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<int64_t>>();
-    return nautilus::invoke(parseInt64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseInt64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultBOOLOutputParser::parseAndWrite(
@@ -247,7 +256,8 @@ nautilus::val<uint64_t> DefaultBOOLOutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<bool>>();
-    return nautilus::invoke(parseBool, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseBool, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultUINT8OutputParser::parseAndWrite(
@@ -258,7 +268,8 @@ nautilus::val<uint64_t> DefaultUINT8OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint8_t>>();
-    return nautilus::invoke(parseUint8, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseUint8, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultUINT16OutputParser::parseAndWrite(
@@ -269,7 +280,8 @@ nautilus::val<uint64_t> DefaultUINT16OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint16_t>>();
-    return nautilus::invoke(parseUint16, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseUint16, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultUINT32OutputParser::parseAndWrite(
@@ -280,7 +292,8 @@ nautilus::val<uint64_t> DefaultUINT32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint32_t>>();
-    return nautilus::invoke(parseUint32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseUint32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> DefaultUINT64OutputParser::parseAndWrite(
@@ -291,7 +304,8 @@ nautilus::val<uint64_t> DefaultUINT64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<uint64_t>>();
-    return nautilus::invoke(parseUint64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE(
+        "parse_to_string", parseUint64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 OutputParserRegistryReturnType OutputParserGeneratedRegistrar::RegisterDefaultCHAROutputParser(OutputParserRegistryArguments)

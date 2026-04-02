@@ -22,6 +22,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
 #include <OutputParserRegistry.hpp>
 
@@ -64,7 +65,7 @@ nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return nautilus::invoke(parseF32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF32, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
@@ -75,7 +76,7 @@ nautilus::val<uint64_t> ZMIJF64OutputParser::parseAndWrite(
     const nautilus::val<int8_t*>& startingAddress) const
 {
     const auto castedVal = value.getRawValueAs<nautilus::val<float>>();
-    return nautilus::invoke(parseF64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
+    return NAUTILUS_TAGGED_INVOKE("parse_to_string", parseF64, castedVal, startingAddress, remainingSize, recordBuffer.getReference(), bufferProvider);
 }
 
 OutputParserRegistryReturnType OutputParserGeneratedRegistrar::RegisterZMIJF32OutputParser(OutputParserRegistryArguments)
