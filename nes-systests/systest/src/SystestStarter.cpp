@@ -72,8 +72,9 @@ void configureArgumentParser(ArgumentParser& program)
     const auto defaultDisableConfigPath = std::string{TEST_CONFIGURATION_DIR} + "/systest-disable.yaml";
 
     program.add_argument("-t", "--testLocation")
-        .help("directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
-              "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
+        .help(
+            "directly specified test file, e.g., fliter.test or a directory to discover test files in.  Use "
+            "'path/to/testfile:testnumber' to run a specific test by testnumber within a file. Default: " TEST_DISCOVER_DIR);
     program.add_argument("-g", "--groups").help("run a specific test groups").nargs(argparse::nargs_pattern::at_least_one);
     program.add_argument("-e", "--exclude-groups")
         .help("ignore groups, takes precedence over -g")
@@ -90,8 +91,8 @@ void configureArgumentParser(ArgumentParser& program)
     program.add_argument("-w", "--workerConfig").help("load worker config file (.yaml)");
     program.add_argument("-q", "--queryCompilerConfig").help("load query compiler config file (.yaml)");
     program.add_argument("--workingDir")
-        .help("change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR
-              "/nes-systests/");
+        .help(
+            "change the working directory. This directory contains source and result files. Default: " PATH_TO_BINARY_DIR "/nes-systests/");
     program.add_argument("-r", "--remote").flag().help("use the remote grpc backend");
     program.add_argument("-c", "--clusterConfig").nargs(1).help("path to the cluster topology file");
     program.add_argument("--shuffle").flag().help("run queries in random order");
@@ -353,16 +354,17 @@ void applyExecutionOptions(const ArgumentParser& program, NES::SystestConfigurat
                 config.overwriteConfigWithYAMLNode(worker["config"]);
             }
 
-            clusterConfig.workers.push_back(NES::WorkerConfig{
-                .host = worker["host"].as<NES::Host>(),
-                .dataAddress = worker["data_address"].as<std::string>(),
-                .maxOperators = worker["max_operators"].IsDefined()
-                    ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
-                    : NES::Capacity(NES::CapacityKind::Unlimited{}),
-                .downstream
-                = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
-                .config = config,
-            });
+            clusterConfig.workers.push_back(
+                NES::WorkerConfig{
+                    .host = worker["host"].as<NES::Host>(),
+                    .dataAddress = worker["data_address"].as<std::string>(),
+                    .maxOperators = worker["max_operators"].IsDefined()
+                        ? NES::Capacity(NES::CapacityKind::Limited{worker["max_operators"].as<size_t>()})
+                        : NES::Capacity(NES::CapacityKind::Unlimited{}),
+                    .downstream
+                    = worker["downstream"].IsDefined() ? worker["downstream"].as<std::vector<NES::Host>>() : std::vector<NES::Host>{},
+                    .config = config,
+                });
         }
         config.clusterConfig = clusterConfig;
     }
@@ -503,31 +505,40 @@ int main(int argc, const char** argv)
     const auto startTime = std::chrono::high_resolution_clock::now();
     NES::Thread::initializeThread(NES::Host("systest"), "main");
 
-    auto config = parseConfiguration(argc, argv);
-    NES::SystestExecutor executor(std::move(config));
-    const auto result = executor.executeSystests();
-
-    switch (result.returnType)
+    try
     {
-        case SystestExecutorResult::ReturnType::SUCCESS: {
-            const auto endTime = std::chrono::high_resolution_clock::now();
-            const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            fmt::print(
-                "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
-                result.outputMessage,
-                duration.count(),
-                std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
-            return 0;
+        auto config = parseConfiguration(argc, argv);
+        NES::SystestExecutor executor(std::move(config));
+        const auto result = executor.executeSystests();
+
+        switch (result.returnType)
+        {
+            case SystestExecutorResult::ReturnType::SUCCESS: {
+                const auto endTime = std::chrono::high_resolution_clock::now();
+                const auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                fmt::print(
+                    "{}\nTotal execution time: {} ms ({:.3f} seconds)\n",
+                    result.outputMessage,
+                    duration.count(),
+                    std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
+                return 0;
+            }
+            case SystestExecutorResult::ReturnType::FAILED: {
+                auto endTime = std::chrono::high_resolution_clock::now();
+                auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
+                PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
+                NES_ERROR("{}", result.outputMessage);
+                std::cout << result.outputMessage << '\n';
+                std::cout << "Total execution time: " << duration.count() << " ms ("
+                          << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
+                return result.errorCode.value();
+            }
         }
-        case SystestExecutorResult::ReturnType::FAILED: {
-            auto endTime = std::chrono::high_resolution_clock::now();
-            auto duration = std::chrono::duration_cast<std::chrono::milliseconds>(endTime - startTime);
-            PRECONDITION(result.errorCode, "Returning with as 'FAILED_WITH_EXCEPTION_CODE', but did not provide error code");
-            NES_ERROR("{}", result.outputMessage);
-            std::cout << result.outputMessage << '\n';
-            std::cout << "Total execution time: " << duration.count() << " ms ("
-                      << std::chrono::duration_cast<std::chrono::duration<double>>(duration).count() << " seconds)" << '\n';
-            return result.errorCode.value();
-        }
+    }
+    catch (const NES::Exception& e)
+    {
+        fmt::print(stderr, "Fatal error: {}\n", e.what());
+        e.trace().print(std::cerr, isatty(STDERR_FILENO));
+        return 1;
     }
 }
