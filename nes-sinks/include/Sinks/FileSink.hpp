@@ -28,6 +28,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/Format.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
 #include <PipelineExecutionContext.hpp>
 
@@ -62,6 +63,7 @@ private:
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
     SchemaFormatter schemaFormatter;
+    std::unique_ptr<Format> format;
 };
 
 struct ConfigParametersFile
@@ -77,8 +79,22 @@ struct ConfigParametersFile
         false,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
 
+    /// Addition to seamlessly test the old output formatter. The old output formatter can only be activated, if OUTPUT_FORMAT is Native.
+    /// Otherwise, legacy_output_format will switch to NoneWithIterator.
+    static inline const DescriptorConfig::ConfigParameter<std::string> LEGACY_OUTPUT_FORMAT{
+        "legacy_output_format",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config)
+        {
+            return (!DescriptorConfig::tryGet(SinkDescriptor::OUTPUT_FORMAT, config).has_value()
+                    || toUpperCase(DescriptorConfig::tryGet(SinkDescriptor::OUTPUT_FORMAT, config).value()) == "NATIVE")
+                ? DescriptorConfig::tryGet(LEGACY_OUTPUT_FORMAT, config)
+                : std::optional("NoneWithIterator");
+        }};
+
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND, LEGACY_OUTPUT_FORMAT);
 };
 
 }

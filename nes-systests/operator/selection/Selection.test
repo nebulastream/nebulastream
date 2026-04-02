@@ -37,7 +37,7 @@ ATTACH INLINE
 CREATE SINK sinkWindow(stream.id UINT64 NOT NULL, stream.value UINT64 NOT NULL, stream.timestamp UINT64 NOT NULL)  TYPE File;
 
 # Filter equal
-SELECT * FROM stream WHERE value == UINT64(1) INTO sinkWindow;
+SELECT * FROM stream WHERE value == UINT64(1) INTO FILE('NATIVE' as `SINK`.OUTPUT_FORMAT, 'CSV' as `SINK`.LEGACY_OUTPUT_FORMAT);
 ----
 1,1,1000
 12,1,1001
