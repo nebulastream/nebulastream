@@ -16,10 +16,13 @@ add_source_files(nes-input-formatters-uncompiled
         UncompiledSequenceShredder.cpp
         UncompiledSTBuffer.cpp
         UncompiledSTBufferState.cpp
-        UncompiledRawValueParser.cpp
+        UncompiledParserProvider.cpp
         UncompiledInputFormatterTaskPipeline.cpp
         UncompiledSIMDJSONFIF.cpp
 )
+
+# Register UncompiledInputParser plugins
+add_subdirectory(UncompiledInputParsers)
 
 # Register plugins
 add_plugin(UncompiledCSV UncompiledInputFormatIndexer nes-input-formatters-uncompiled UncompiledCSVInputFormatIndexer.cpp)

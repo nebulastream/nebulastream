@@ -24,7 +24,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Concepts.hpp>
-#include <UncompiledRawValueParser.hpp>
+#include <UncompiledInputFormatters/UncompiledInputParser.hpp>
 
 namespace NES
 {

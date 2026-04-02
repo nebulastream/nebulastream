@@ -39,7 +39,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <UncompiledFieldIndexFunction.hpp>
 #include <UncompiledRawTupleBuffer.hpp>
-#include <UncompiledRawValueParser.hpp>
+#include <UncompiledParserProvider.hpp>
 #include <UncompiledSequenceShredder.hpp>
 
 namespace NES
@@ -155,6 +155,30 @@ void processUncompiledSpanningTuple(
     }
 }
 
+/// Maps a DataType to the corresponding parser name from the InputFormatterDescriptor.
+/// For VARSIZED, uses a hardcoded default since the descriptor does not (yet) have a VARSIZED parser config.
+inline std::string getUncompiledParserName(const DataType::Type type, const InputFormatterDescriptor& config)
+{
+    switch (type)
+    {
+        case DataType::Type::BOOLEAN: return config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
+        case DataType::Type::CHAR: return config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
+        case DataType::Type::INT8: return config.getFromConfig(InputFormatterDescriptor::INT8_PARSER);
+        case DataType::Type::INT16: return config.getFromConfig(InputFormatterDescriptor::INT16_PARSER);
+        case DataType::Type::INT32: return config.getFromConfig(InputFormatterDescriptor::INT32_PARSER);
+        case DataType::Type::INT64: return config.getFromConfig(InputFormatterDescriptor::INT64_PARSER);
+        case DataType::Type::UINT8: return config.getFromConfig(InputFormatterDescriptor::UINT8_PARSER);
+        case DataType::Type::UINT16: return config.getFromConfig(InputFormatterDescriptor::UINT16_PARSER);
+        case DataType::Type::UINT32: return config.getFromConfig(InputFormatterDescriptor::UINT32_PARSER);
+        case DataType::Type::UINT64: return config.getFromConfig(InputFormatterDescriptor::UINT64_PARSER);
+        case DataType::Type::FLOAT32: return config.getFromConfig(InputFormatterDescriptor::F32_PARSER);
+        case DataType::Type::FLOAT64: return config.getFromConfig(InputFormatterDescriptor::F64_PARSER);
+        case DataType::Type::VARSIZED: return "DefaultVARSIZED";
+        case DataType::Type::UNDEFINED: throw NotImplemented("Cannot parse undefined type.");
+    }
+    std::unreachable();
+}
+
 /// InputFormatterTasks concurrently take (potentially) raw input buffers and format all full tuples in these raw input buffers that the
 /// individual InputFormatterTasks see during execution.
 /// The only point of synchronization is a call to the UncompiledSequenceShredder data structure, which determines which buffers the UncompiledInputFormatterTask
@@ -184,8 +208,8 @@ public:
         /// field number, load the correct function for parsing from the vector.
         , parseFunctions(
               schema.getFields()
-              | std::views::transform([quotationType](const auto& field)
-                                      { return getUncompiledParseFunction(field.dataType.type, quotationType); })
+              | std::views::transform([&parserConfig, quotationType](const auto& field)
+                                      { return provideUncompiledParseFunction(getUncompiledParserName(field.dataType.type, parserConfig), quotationType); })
               | std::ranges::to<std::vector>())
     {
         if constexpr (hasSpanningTuple() and not isSequential())
