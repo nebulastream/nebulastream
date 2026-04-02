@@ -9,11 +9,11 @@
 
 enable:
   - output_parse
-  - input_parse
+#  - input_parse
 #  - parse_null
 #  - parse_not_null
 
 disable:
 #  - output_parse
-#  - input_parse
+  - input_parse
 #  - csv_parse_field
