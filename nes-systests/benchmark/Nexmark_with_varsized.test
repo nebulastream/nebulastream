@@ -50,6 +50,10 @@ SELECT timestamp FROM bid INTO bidCheckSumProjection;
 ----
 183991721 127905527607
 
+SELECT * FROM bid INTO WHERE auctionId = INT32(123) bidCheckSum;
+----
+0 0
+
 # Query 0
 SELECT * FROM bid INTO bidCheckSum;
 ----
