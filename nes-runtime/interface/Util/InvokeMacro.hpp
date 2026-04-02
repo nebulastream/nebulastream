@@ -30,19 +30,3 @@
                 return nautilus::invoke(func, __VA_ARGS__); \
         } \
     }()
-
-// Todo: use below once we integrated inlining
-// #define NAUTILUS_TAGGED_INVOKE(tag, func, ...) \
-//     [&]() \
-//     { \
-//         switch (NES::InvokeConfig::instance().resolveMode(tag)) \
-//         { \
-//             case NES::InvokeMode::Inline: \
-//                 return NAUTILUS_INLINE nautilus::invoke(func, __VA_ARGS__); \
-//             case NES::InvokeMode::FnAttr: \
-//                 return nautilus::invoke(NES::InvokeConfig::instance().resolveFnAttr(tag), func, __VA_ARGS__); \
-//             case NES::InvokeMode::Default: \
-//             default: \
-//                 return nautilus::invoke(func, __VA_ARGS__); \
-//         } \
-//     }()

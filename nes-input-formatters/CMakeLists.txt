@@ -18,6 +18,7 @@ include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 add_subdirectory(src)
 get_source(nes-input-formatters NES_SOURCE_PARSERS_SOURCE_FILES)
 add_library(nes-input-formatters ${NES_SOURCE_PARSERS_SOURCE_FILES})
+nautilus_inline(nes-input-formatters)
 
 # Exposing TupleBuffer (nes-memory) and PipelineExecutionContext (nes-executable) from public APIs
 target_link_libraries(nes-input-formatters PUBLIC nes-memory nes-executable PRIVATE nes-common nes-configurations nes-runtime nes-executable nes-physical-operators)

@@ -14,6 +14,7 @@
 #include <InputParsers/DefaultInputParsers.hpp>
 
 #include <memory>
+
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
@@ -21,6 +22,7 @@
 #include <RawValueParser.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
+#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
@@ -34,6 +36,7 @@ struct ParseResult
 /// Non-nullable: returns T directly, no thread_local, no null handling.
 template <typename T, bool Nullable>
 requires(not Nullable)
+NAUTILUS_TAGGED_INLINE(input_parse)
 T parseFixedSized(const int8_t* fieldAddress, const uint64_t fieldSize)
 {
     const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
@@ -48,7 +51,7 @@ ParseResult<T>* parseFixedSized(const int8_t* fieldAddress, const uint64_t field
 {
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
 
-    thread_local static ParseResult<T> result;
+    thread_local ParseResult<T> result;
     result.isNull = false;
 
     if (checkIsNullProxy(fieldAddress, fieldSize, nullValues))

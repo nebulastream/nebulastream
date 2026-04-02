@@ -25,10 +25,9 @@
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
 #include <OutputParserRegistry.hpp>
+#include <nautilus/inline.hpp>
 
 namespace NES
-{
-namespace
 {
 uint64_t parseF32(
     const float value,
@@ -55,7 +54,7 @@ uint64_t parseF64(
     parsedValue.resize(size);
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
-}
+
 
 nautilus::val<uint64_t> ZMIJF32OutputParser::parseAndWrite(
     const VarVal& value,
