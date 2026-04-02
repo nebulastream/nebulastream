@@ -170,6 +170,31 @@ std::vector<RunningQuery> runQueries(
     std::optional<K8sJSONSubmitter> jsonSubmitter;
     if (k8sEnabled) {
         jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
+        /// Write all source data files to the PVC once, before running any queries.
+        std::unordered_map<std::string, std::string> allSourceFiles;
+        for (const auto& query : queries) {
+            if (query.planInfoOrException) {
+                for (const auto& [desc, fileAndCount] :
+                    query.planInfoOrException->sourcesToFilePathsAndCounts) {
+                    const auto& path = fileAndCount.first.getRawValue();
+                    std::string filename = path.filename().string();
+                    if (!allSourceFiles.contains(filename)) {
+                        std::ifstream ifs(path);
+                        std::ostringstream oss;
+                        oss << ifs.rdbuf();
+                        allSourceFiles[filename] = oss.str();
+                    }
+                }
+            }
+        }
+
+        if (!allSourceFiles.empty()) {
+            static const std::string pvcName = "source-data-pvc";
+            jsonSubmitter->ensurePVCExists(pvcName);
+            jsonSubmitter->writeSourceDataToPVC(pvcName, allSourceFiles);
+            std::cerr << "[K8s] Waiting 5s for PVC data to be available in worker pods...\n";
+            std::this_thread::sleep_for(std::chrono::seconds(5));
+        }
     }
     std::queue<SystestQuery> pending;
     std::vector<SystestQuery> dependentQueries;
@@ -251,34 +276,26 @@ std::vector<RunningQuery> runQueries(
         {
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
-            if (jsonSubmitter.has_value())
+            if (jsonSubmitter.has_value() && nextQuery.planInfoOrException.has_value())
             {
                 auto topologyResult = K8sTopologyBuilder::buildWithSourceData(nextQuery);
                 jsonSubmitter->submitJson(topologyResult.topologyJson);
-                /// TODO: Replace this sleep with proper polling of the topology status (status.phase == "Ready").
                 std::cerr << "[K8s] Waiting for operator to reconcile topology...\n";
-                std::this_thread::sleep_for(std::chrono::seconds(10));
-                /// Write source data files into a PVC via a short-lived writer pod.
-                /// The operator mounts this PVC into worker pods at /data.
-                if (!topologyResult.sourceFileData.empty()) {
-                    jsonSubmitter->ensurePVCExists(topologyResult.sourceDataPVCName);
-                    jsonSubmitter->writeSourceDataToPVC(
-                        topologyResult.sourceDataPVCName,
-                        topologyResult.sourceFileData);
-                    /// Brief wait for the volume mount to propagate to newly-created worker pods.
-                    std::cerr << "[K8s] Waiting 5s for PVC data to be available in worker pods...\n";
-                    std::this_thread::sleep_for(std::chrono::seconds(5));
+                bool topologyReady = jsonSubmitter->waitForTopologyReady(topologyResult.topologyName, 30);
+                if (!topologyReady) {
+                    std::cerr << "[K8s] Topology failed to become ready, skipping query.\n";
                 }
 
                 auto queryJson = K8sQueryBuilder::build(nextQuery,
                     topologyResult.topologyJson["metadata"]["name"].get<std::string>());
-                std::cerr << "[K8s DEBUG] Query JSON being submitted:\n" << queryJson.dump(2) << "\n";
+                // std::cerr << "[K8s DEBUG] Query JSON being submitted:\n" << queryJson.dump(2) << "\n";
+                // std::cerr << "Submitting topology and query to K8s for query '" << topologyResult.topologyJson.dump(2) << "'...\n";
                 std::string queryName = queryJson["metadata"]["name"].get<std::string>();
                 jsonSubmitter->submitJson(queryJson);
 
                 /// Poll for query completion in K8s, fetch pod logs, write result file.
                 std::cerr << "[K8s] Waiting for query '" << queryName << "' to complete...\n";
-                bool completed = jsonSubmitter->waitForQueryCompletion(queryName, 15);
+                bool completed = jsonSubmitter->waitForQueryCompletion(queryName, 240);
 
                 auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
                 if (completed) {

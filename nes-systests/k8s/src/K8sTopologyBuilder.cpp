@@ -124,7 +124,11 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
             ls["schema"] = schemaNode;
             logicalSources.push_back(ls);
         }
+    } else
+    {
+        std::cerr << "Query '" << q.testName << "' has no plan info available, skipping logical source generation.\n";
     }
+
     if (logicalSources.size() > 0)
     {
         spec["logical"] = logicalSources;
@@ -135,6 +139,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     std::unordered_map<std::string, std::string> sourceFileData;
     if (q.planInfoOrException)
     {
+        std::cerr << "Query '" << q.testName << "' has " << q.planInfoOrException->sourcesToFilePathsAndCounts.size() << " physical sources.\n";
         for (const auto& pair : q.planInfoOrException->sourcesToFilePathsAndCounts)
         {
             const SourceDescriptor& desc = pair.first;
@@ -185,6 +190,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     return TopologyBuildResult{
         .topologyJson = std::move(root),
         .sourceFileData = std::move(sourceFileData),
+        .topologyName = std::move(topologyName),
         .sourceDataPVCName = std::move(pvcName),
     };
 }

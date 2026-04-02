@@ -41,7 +41,7 @@ public:
 
     void submitJson(const nlohmann::json& yaml);
 
-    void ensurePVCExists(const std::string& pvcName, const std::string& storageSize = "1Gi");
+    void ensurePVCExists(const std::string& pvcName, const std::string& storageSize = "10Gi");
 
     /// Write source data files into a PVC via a temporarily writer pod
     void writeSourceDataToPVC(const std::string& pvcName,
@@ -49,6 +49,8 @@ public:
 
     /// Fetch stdout logs from a worker pod identified by label selector
     std::string fetchPodLogs(const std::string& labelSelector);
+
+    bool waitForTopologyReady(const std::string& topologyName, int timeoutSeconds = 300);
 
     bool waitForQueryCompletion(const std::string& queryName, int timeoutSeconds = 300);
 

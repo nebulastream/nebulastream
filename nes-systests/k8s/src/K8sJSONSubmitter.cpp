@@ -602,9 +602,75 @@ std::string K8sJSONSubmitter::fetchPodLogs(const std::string& labelSelector)
     return responseBody;
 }
 
+bool K8sJSONSubmitter::waitForTopologyReady(const std::string& topologyName, int timeoutSeconds)
+{
+    const int pollIntervalSeconds = 2;
+    int elapsed = 0;
+
+    std::cerr << "[K8s] Waiting for topology '" << topologyName << "' to become Ready...\n";
+
+    while (elapsed < timeoutSeconds)
+    {
+        std::this_thread::sleep_for(std::chrono::seconds(pollIntervalSeconds));
+        elapsed += pollIntervalSeconds;
+
+        object_t* result = CustomObjectsAPI_getNamespacedCustomObject(
+            client,
+            (char*)"nebulastream.com",
+            (char*)"v1",
+            (char*)kubeNamespace.c_str(),
+            (char*)"nes-topologies",
+            (char*)topologyName.c_str()
+        );
+
+        if (result == nullptr || client->response_code < 200 || client->response_code >= 300) {
+            std::cerr << "[K8s] Topology poll HTTP " << client->response_code << ", retrying...\n";
+            if (result) object_free(result);
+            continue;
+        }
+
+        /// Serialize back to JSON for parsing
+        cJSON* cjson = object_convertToJSON(result);
+        object_free(result);
+
+        if (cjson == nullptr) continue;
+
+        char* jsonStr = cJSON_Print(cjson);
+        cJSON_Delete(cjson);
+
+        if (jsonStr == nullptr) continue;
+
+        auto json = nlohmann::json::parse(jsonStr, nullptr, false);
+        free(jsonStr);
+
+        if (json.is_discarded()) continue;
+
+        int readyWorkers = 0;
+        int totalWorkers = 0;
+
+        if (json.contains("status")) {
+            const auto& status = json["status"];
+            if (status.contains("readyWorkers")) readyWorkers = status["readyWorkers"].get<int>();
+            if (status.contains("workers"))      totalWorkers = status["workers"].get<int>();
+        }
+
+        std::cerr << "[K8s] Topology workers: " << readyWorkers << "/" << totalWorkers
+                  << " ready (elapsed: " << elapsed << "s)\n";
+
+        if (totalWorkers > 0 && readyWorkers == totalWorkers) {
+            std::cerr << "[K8s] Topology is Ready.\n";
+            return true;
+        }
+    }
+
+    std::cerr << "[K8s] Timed out waiting for topology '" << topologyName
+              << "' after " << timeoutSeconds << "s\n";
+    return false;
+}
+
 bool K8sJSONSubmitter::waitForQueryCompletion(const std::string& queryName, int timeoutSeconds)
 {
-    const int pollIntervalSeconds = 5;
+    const int pollIntervalSeconds = 2;
     int elapsed = 0;
 
     while (elapsed < timeoutSeconds)

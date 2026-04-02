@@ -27,6 +27,7 @@ struct SystestQuery;
 struct TopologyBuildResult {
     nlohmann::json topologyJson;
     std::unordered_map<std::string, std::string> sourceFileData;
+    std::string topologyName;
     std::string sourceDataPVCName;
 };
 
