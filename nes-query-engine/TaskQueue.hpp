@@ -20,6 +20,7 @@
 #include <semaphore>
 #include <stop_token>
 #include <utility>
+#include <WorkAnalytics.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -44,12 +45,15 @@ class TaskQueue
     /// This parameter could be tuned to allow for more timely cancellation
     static constexpr std::chrono::milliseconds StopTokenCheckInterval{100};
 
-    TaskType readElementAssumingItExists()
+    WorkAnalytics* analytics{nullptr};
+
+    TaskType readElementAssumingItExists(size_t threadIndex)
     {
         TaskType task;
         /// The semaphore guarantees that there is at least one element in either one of the queues.
         if (internal.try_dequeue(task))
         {
+            if (analytics) { (*analytics)[threadIndex].localTaken++; }
             return task;
         }
 
@@ -59,11 +63,20 @@ class TaskQueue
         {
         }
 
+        if (analytics) { (*analytics)[threadIndex].admissionTaken++; }
         return task;
+    }
+
+    /// Legacy overload without thread index (used during termination where thread ID may not matter)
+    TaskType readElementAssumingItExists()
+    {
+        return readElementAssumingItExists(0);
     }
 
 public:
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
+
+    void setAnalytics(WorkAnalytics* a) { analytics = a; }
 
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.
@@ -86,18 +99,23 @@ public:
 
     /// Write a Task to the internal task queue. The internal task queue is unbounded thus this operation will always succeed
     template <typename T = TaskType>
-    void addInternalTaskNonBlocking(T&& task)
+    void addInternalTaskNonBlocking(T&& task, size_t producerThreadIndex = 0)
     {
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
         tasksAvailable.release();
+        if (analytics)
+        {
+            (*analytics)[producerThreadIndex].successorsProduced++;
+            (*analytics)[producerThreadIndex].dealtToSelf++;
+        }
     }
 
     /// Blocking read to retrieve the next task from the internal queue, or the admission queue if the internal task queue is empty.
     /// This operation can be canceled using a stop token. In case of a cancellation, this method returns an empty optional.
     /// The method prioritizes reading over cancellation. This implies, if a read is non-blocking, it succeeds regardless of the state of
     /// the stop token.
-    std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
+    std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken, size_t threadIndex = 0)
     {
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
@@ -105,20 +123,21 @@ public:
             {
                 return std::nullopt;
             }
+            if (analytics) { (*analytics)[threadIndex].idleCycles++; }
         }
 
-        return readElementAssumingItExists();
+        return readElementAssumingItExists(threadIndex);
     }
 
     /// Non-Blocking version of `getNextTaskBlocking` if the queue is empty, this method returns an empty optional.
-    std::optional<TaskType> getNextTaskNonBlocking()
+    std::optional<TaskType> getNextTaskNonBlocking(size_t threadIndex = 0)
     {
         if (!tasksAvailable.try_acquire())
         {
             return std::nullopt;
         }
 
-        return readElementAssumingItExists();
+        return readElementAssumingItExists(threadIndex);
     }
 };
 }

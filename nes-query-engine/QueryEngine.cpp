@@ -465,6 +465,7 @@ public:
         if (analyticsEnabled)
         {
             workAnalytics_ = std::make_unique<WorkAnalytics>(numThreads, true);
+            taskQueue.setAnalytics(workAnalytics_.get());
         }
         if (strategy != WorkDealingStrategy::GLOBAL_QUEUE && strategy != WorkDealingStrategy::BATCH_PULL
             && strategy != WorkDealingStrategy::HYBRID_QUEUE)
@@ -536,7 +537,8 @@ private:
         }
         else if (strategy == WorkDealingStrategy::GLOBAL_QUEUE || strategy == WorkDealingStrategy::BATCH_PULL)
         {
-            taskQueue.addInternalTaskNonBlocking(std::move(task));
+            const auto threadIndex = static_cast<size_t>(WorkerThread::id.getRawValue() - WorkerThreadId::INITIAL);
+            taskQueue.addInternalTaskNonBlocking(std::move(task), threadIndex);
         }
         else
         {
@@ -853,7 +855,7 @@ void ThreadPool::addThread(WorkerId workerId)
                 /// Global queue mode: all workers read from the shared queue
                 while (!stopToken.stop_requested())
                 {
-                    if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                    if (auto task = taskQueue.getNextTaskBlocking(stopToken, static_cast<size_t>(id)))
                     {
                         handleTask(worker, std::move(*task));
                     }
@@ -861,7 +863,7 @@ void ThreadPool::addThread(WorkerId workerId)
 
                 ENGINE_LOG_INFO("WorkerThread {} shutting down", id);
                 const WorkerThread terminatingWorker{*this, true};
-                while (auto task = taskQueue.getNextTaskNonBlocking())
+                while (auto task = taskQueue.getNextTaskNonBlocking(static_cast<size_t>(id)))
                 {
                     handleTask(terminatingWorker, std::move(*task));
                 }
@@ -871,13 +873,14 @@ void ThreadPool::addThread(WorkerId workerId)
                 /// Batch-pull mode: pull a batch from the global queue into a thread-local buffer
                 std::vector<Task> localBatch;
                 localBatch.reserve(batchPullSize_);
+                const size_t tid = static_cast<size_t>(id);
 
                 while (!stopToken.stop_requested())
                 {
                     if (localBatch.empty())
                     {
                         /// Block for the first task
-                        if (auto task = taskQueue.getNextTaskBlocking(stopToken))
+                        if (auto task = taskQueue.getNextTaskBlocking(stopToken, tid))
                         {
                             localBatch.push_back(std::move(*task));
                         }
@@ -889,7 +892,7 @@ void ThreadPool::addThread(WorkerId workerId)
                         /// Greedily pull up to batchPullSize_ - 1 more tasks
                         for (size_t i = 1; i < batchPullSize_; ++i)
                         {
-                            if (auto task = taskQueue.getNextTaskNonBlocking())
+                            if (auto task = taskQueue.getNextTaskNonBlocking(tid))
                             {
                                 localBatch.push_back(std::move(*task));
                             }
@@ -911,7 +914,7 @@ void ThreadPool::addThread(WorkerId workerId)
                 {
                     handleTask(terminatingWorker, std::move(task));
                 }
-                while (auto task = taskQueue.getNextTaskNonBlocking())
+                while (auto task = taskQueue.getNextTaskNonBlocking(tid))
                 {
                     handleTask(terminatingWorker, std::move(*task));
                 }
@@ -988,7 +991,7 @@ void ThreadPool::addThread(WorkerId workerId)
 
                     /// Priority 3: refill a batch from global queue
                     /// Block for the first task
-                    if (auto globalTask = taskQueue.getNextTaskBlocking(stopToken))
+                    if (auto globalTask = taskQueue.getNextTaskBlocking(stopToken, myId))
                     {
                         handleTask(worker, std::move(*globalTask));
                     }
@@ -1000,7 +1003,7 @@ void ThreadPool::addThread(WorkerId workerId)
                     /// Greedily pull up to batchPullSize_ - 1 more into local queue
                     for (size_t i = 1; i < batchPullSize_; ++i)
                     {
-                        if (auto globalTask = taskQueue.getNextTaskNonBlocking())
+                        if (auto globalTask = taskQueue.getNextTaskNonBlocking(myId))
                         {
                             localQueue.enqueue(std::move(*globalTask));
                         }
