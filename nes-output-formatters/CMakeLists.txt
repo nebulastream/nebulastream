@@ -16,6 +16,7 @@ get_source(nes-output-formatters NES_OUTPUT_FORMATTERS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-output-formatters ${NES_OUTPUT_FORMATTERS_SOURCE_FILES})
+nautilus_inline(nes-output-formatters)
 
 target_link_libraries(nes-output-formatters PUBLIC nes-common nes-data-types nes-memory nes-nautilus nes-runtime)
 

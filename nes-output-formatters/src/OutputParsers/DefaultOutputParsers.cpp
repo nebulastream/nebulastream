@@ -22,7 +22,9 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <OutputFormatters/OutputFormatterUtil.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <Util/InvokeMacro.hpp>
+#include <nautilus/inline.hpp>
 #include <OutputParserRegistry.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
@@ -31,6 +33,7 @@ namespace NES
 {
 namespace
 {
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseChar(
     const char value,
     int8_t* bufferStartingAddress,
@@ -42,6 +45,7 @@ uint64_t parseChar(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseF32(
     const float value,
     int8_t* bufferStartingAddress,
@@ -53,6 +57,7 @@ uint64_t parseF32(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseF64(
     const double value,
     int8_t* bufferStartingAddress,
@@ -64,6 +69,7 @@ uint64_t parseF64(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseInt8(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -75,6 +81,7 @@ uint64_t parseInt8(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseInt16(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -86,6 +93,7 @@ uint64_t parseInt16(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseInt32(
     const int32_t value,
     int8_t* bufferStartingAddress,
@@ -97,6 +105,7 @@ uint64_t parseInt32(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseInt64(
     const int64_t value,
     int8_t* bufferStartingAddress,
@@ -108,6 +117,7 @@ uint64_t parseInt64(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseBool(
     const bool value,
     int8_t* bufferStartingAddress,
@@ -119,6 +129,7 @@ uint64_t parseBool(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseUint8(
     const uint8_t value,
     int8_t* bufferStartingAddress,
@@ -130,6 +141,7 @@ uint64_t parseUint8(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseUint16(
     const uint16_t value,
     int8_t* bufferStartingAddress,
@@ -141,6 +153,7 @@ uint64_t parseUint16(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseUint32(
     const uint32_t value,
     int8_t* bufferStartingAddress,
@@ -152,6 +165,7 @@ uint64_t parseUint32(
     return writeValueToBuffer(parsedValue.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+NAUTILUS_TAGGED_INLINE(output_parse)
 uint64_t parseUint64(
     const uint64_t value,
     int8_t* bufferStartingAddress,

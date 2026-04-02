@@ -1,0 +1,19 @@
+# Nautilus Tagged Inline Configuration
+#
+# Controls which NAUTILUS_TAGGED_INLINE(tag) annotations expand to NAUTILUS_INLINE.
+# After editing, reconfigure CMake and rebuild.
+#
+# Tags listed under 'enable' get inlined. Tags under 'disable' are explicitly disabled.
+# Tags used in code but not listed here cause a compile error.
+# Multiple functions can share the same tag.
+
+enable:
+  - output_parse
+  - input_parse
+#  - parse_null
+#  - parse_not_null
+
+disable:
+#  - output_parse
+#  - input_parse
+#  - csv_parse_field

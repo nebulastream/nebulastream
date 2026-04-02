@@ -14,6 +14,7 @@
 #include <InputParsers/DefaultInputParsers.hpp>
 
 #include <memory>
+
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
@@ -21,6 +22,7 @@
 #include <RawValueParser.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
+#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
@@ -34,11 +36,12 @@ struct ParseResult
 /// Non-nullable: returns T directly, no thread_local, no null handling.
 template <typename T, bool Nullable>
 requires(not Nullable)
+NAUTILUS_TAGGED_INLINE(input_parse)
 T parseFixedSized(const int8_t* fieldAddress, const uint64_t fieldSize)
 {
     const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
     const auto trimmedFieldAsString = trimWhiteSpaces(fieldAsString);
-    return NES::from_chars_with_exception<T>(trimmedFieldAsString);
+    return NES::from_chars<T>(trimmedFieldAsString).value();
 }
 
 /// Nullable: returns ParseResult<T>* via thread_local, with null checking.
