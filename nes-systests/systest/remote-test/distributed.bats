@@ -54,6 +54,12 @@ setup_file() {
     | docker exec -i $volume_host_container tar -xf - -C /data
   tar -chf - -C "${NES_DIR}/nes-systests" . \
     | docker exec -i $volume_host_container tar -xf - -C /config/nes-systests
+  # Copy plugin systest directories so systest can discover plugin .test files inside the container
+  if [ -d "${NES_DIR}/nes-plugins" ]; then
+    docker exec $volume_host_container sh -c "mkdir -p /config/nes-plugins"
+    tar -chf - -C "${NES_DIR}/nes-plugins" . \
+      | docker exec -i $volume_host_container tar -xf - -C /config/nes-plugins
+  fi
   docker stop -t0 $volume_host_container
 
   echo "# Using NES_DIR: $NES_DIR" >&3
@@ -156,6 +162,6 @@ fi
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
-  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
+  run docker_systest -g large -e tcp "${EXTRA_EXCLUDE_GROUPS[@]}" --testLocations $NES_DIR/nes-plugins --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
 }
