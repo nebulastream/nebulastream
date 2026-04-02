@@ -921,6 +921,7 @@ void ThreadPool::addThread(WorkerId workerId)
                 /// Hybrid queue mode: per-thread queue for successors, global queue for refill
                 auto& localQueue = *hybridLocalQueues[id];
                 const auto numQueues = hybridLocalQueues.size();
+                const size_t myId = static_cast<size_t>(id);
 
                 while (!stopToken.stop_requested())
                 {
@@ -941,7 +942,7 @@ void ThreadPool::addThread(WorkerId workerId)
                             case WorkStealingStrategy::ROUND_ROBIN:
                                 for (size_t i = 1; i < numQueues; ++i)
                                 {
-                                    if (hybridLocalQueues[(id + i) % numQueues]->try_dequeue(task))
+                                    if (hybridLocalQueues[(myId + i) % numQueues]->try_dequeue(task))
                                     {
                                         stolen = true;
                                         break;
@@ -952,7 +953,7 @@ void ThreadPool::addThread(WorkerId workerId)
                             {
                                 thread_local std::mt19937 rng{std::random_device{}()};
                                 const auto victim = rng() % numQueues;
-                                if (victim != id)
+                                if (victim != myId)
                                     stolen = hybridLocalQueues[victim]->try_dequeue(task);
                                 break;
                             }
@@ -961,15 +962,15 @@ void ThreadPool::addThread(WorkerId workerId)
                                 thread_local std::mt19937 rng{std::random_device{}()};
                                 const auto a = rng() % numQueues;
                                 const auto b = rng() % numQueues;
-                                const auto first = (a != id) ? a : b;
-                                if (first != id && hybridLocalQueues[first]->try_dequeue(task))
+                                const auto first = (a != myId) ? a : b;
+                                if (first != myId && hybridLocalQueues[first]->try_dequeue(task))
                                 {
                                     stolen = true;
                                 }
                                 else
                                 {
                                     const auto second = (first == a) ? b : a;
-                                    if (second != id)
+                                    if (second != myId)
                                         stolen = hybridLocalQueues[second]->try_dequeue(task);
                                 }
                                 break;
