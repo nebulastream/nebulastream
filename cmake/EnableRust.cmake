@@ -41,10 +41,11 @@ if (${USING_LIBCXX})
 endif ()
 
 include(FetchContent)
+set(CORROSION_NO_HOSTBUILD ON CACHE BOOL "Enable proper incremental builds for Rust targets")
 FetchContent_Declare(
         Corrosion
-        GIT_REPOSITORY https://github.com/corrosion-rs/corrosion.git
-        GIT_TAG v0.5.2
+        GIT_REPOSITORY https://github.com/nebulastream/corrosion.git
+        GIT_TAG v0.6.1-always-dirty-fix
 )
 
 FetchContent_MakeAvailable(Corrosion)
