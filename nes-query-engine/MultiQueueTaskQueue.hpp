@@ -26,6 +26,7 @@
 #include <stop_token>
 #include <utility>
 #include <vector>
+#include <WorkAnalytics.hpp>
 #include <WorkDealingStrategy.hpp>
 #include <WorkStealingStrategy.hpp>
 #include <folly/MPMCQueue.h>
@@ -50,6 +51,7 @@ class MultiQueueTaskQueue
     std::atomic<size_t> roundRobinCounter{0};
     std::atomic<size_t> admissionRoundRobin{0};
     size_t numQueues;
+    WorkAnalytics* analytics{nullptr};
 
     /// Lock-free approximate queue sizes for PER_THREAD_SMALLEST_QUEUE.
     /// Maintained via atomic increments/decrements on enqueue/dequeue instead of calling .size() under a lock.
@@ -98,6 +100,7 @@ class MultiQueueTaskQueue
         if (threadQueues[threadIndex]->try_dequeue(task))
         {
             approxQueueSizes[threadIndex].fetch_sub(1, std::memory_order_relaxed);
+            if (analytics) { analytics->operator[](threadIndex).localTaken++; }
             return task;
         }
 
@@ -109,6 +112,11 @@ class MultiQueueTaskQueue
                 if (threadQueues[victim]->try_dequeue(task))
                 {
                     approxQueueSizes[victim].fetch_sub(1, std::memory_order_relaxed);
+                    if (analytics)
+                    {
+                        analytics->operator[](threadIndex).stolenFromOther++;
+                        analytics->operator[](victim).stolenByOther.fetch_add(1, std::memory_order_relaxed);
+                    }
                     return true;
                 }
                 return false;
@@ -181,6 +189,7 @@ class MultiQueueTaskQueue
         while (!admission.read(task)) [[unlikely]]
         {
         }
+        if (analytics) { analytics->operator[](threadIndex).admissionTaken++; }
         return task;
     }
 
@@ -261,6 +270,15 @@ public:
         threadQueues[target]->enqueue(std::forward<T>(task));
         approxQueueSizes[target].fetch_add(1, std::memory_order_relaxed);
         threadSemaphores[target]->release();
+
+        if (analytics && producerThreadIndex < numQueues)
+        {
+            analytics->operator[](producerThreadIndex).successorsProduced++;
+            if (target == producerThreadIndex)
+                analytics->operator[](producerThreadIndex).dealtToSelf++;
+            else
+                analytics->operator[](producerThreadIndex).dealtToOther++;
+        }
     }
 
     /// Same as addInternalTaskNonBlocking but explicitly named for use from non-worker threads
@@ -281,6 +299,7 @@ public:
             {
                 return std::nullopt;
             }
+            if (analytics) { analytics->operator[](threadIndex).idleCycles++; }
         }
 
         return readElementFromThreadOrAdmission(threadIndex);
@@ -313,6 +332,8 @@ public:
     [[nodiscard]] size_t getQueueSize(size_t threadIndex) const { return threadQueues[threadIndex]->size(); }
 
     [[nodiscard]] size_t getNumQueues() const { return numQueues; }
+
+    void setAnalytics(WorkAnalytics* a) { analytics = a; }
 };
 
 }

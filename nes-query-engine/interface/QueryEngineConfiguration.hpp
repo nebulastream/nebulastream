@@ -52,11 +52,13 @@ public:
         = {"producer_local", "false", "Keep successor tasks on the producing thread's queue for cache locality (per-thread strategies only)"};
     UIntOption batchPullSize
         = {"batch_pull_size", "4", "Number of tasks a worker pulls at once in BATCH_PULL mode", {queueSizeValidator()}};
+    BoolOption workAnalytics
+        = {"work_analytics", "false", "Enable per-thread work dealing/stealing analytics counters (written to work_analytics.csv)"};
 
 protected:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&numberOfWorkerThreads, &admissionQueueSize, &workDealingStrategy, &workStealingStrategy, &producerLocal, &batchPullSize};
+        return {&numberOfWorkerThreads, &admissionQueueSize, &workDealingStrategy, &workStealingStrategy, &producerLocal, &batchPullSize, &workAnalytics};
     }
 };
 }

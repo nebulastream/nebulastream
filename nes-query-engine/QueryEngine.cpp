@@ -50,6 +50,7 @@
 #include <MultiQueueTaskQueue.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <random>
+#include <WorkAnalytics.hpp>
 #include <WorkDealingStrategy.hpp>
 #include <WorkStealingStrategy.hpp>
 #include <QueryEngineConfiguration.hpp>
@@ -438,6 +439,7 @@ public:
         WorkStealingStrategy workStealingStrategy,
         bool producerLocal,
         size_t batchPullSize,
+        bool analyticsEnabled,
         size_t numThreads)
         : listener(std::move(listener))
         , statistic(std::move(stats))
@@ -460,10 +462,18 @@ public:
                   }
               })
     {
+        if (analyticsEnabled)
+        {
+            workAnalytics_ = std::make_unique<WorkAnalytics>(numThreads, true);
+        }
         if (strategy != WorkDealingStrategy::GLOBAL_QUEUE && strategy != WorkDealingStrategy::BATCH_PULL
             && strategy != WorkDealingStrategy::HYBRID_QUEUE)
         {
             multiQueue = std::make_unique<MultiQueueTaskQueue<Task>>(numThreads, admissionQueueSize, strategy, workStealingStrategy, producerLocal);
+            if (workAnalytics_)
+            {
+                multiQueue->setAnalytics(workAnalytics_.get());
+            }
         }
         if (strategy == WorkDealingStrategy::HYBRID_QUEUE)
         {
@@ -539,6 +549,7 @@ private:
     std::shared_ptr<AbstractQueryStatusListener> listener;
     std::shared_ptr<QueryEngineStatisticListener> statistic;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::unique_ptr<WorkAnalytics> workAnalytics_;
     std::atomic<TaskId::Underlying> taskIdCounter;
 
     WorkDealingStrategy strategy;
@@ -1067,6 +1078,7 @@ QueryEngine::QueryEngine(
           config.workStealingStrategy.getValue(),
           config.producerLocal.getValue(),
           config.batchPullSize.getValue(),
+          config.workAnalytics.getValue(),
           config.numberOfWorkerThreads.getValue()))
     , workerId(workerId)
 {
@@ -1093,6 +1105,10 @@ void QueryEngine::start(std::unique_ptr<ExecutableQueryPlan> executableQueryPlan
 QueryEngine::~QueryEngine()
 {
     ThreadPool::WorkerThread::id = ThreadPool::terminatorThreadId;
+    if (threadPool->workAnalytics_)
+    {
+        threadPool->workAnalytics_->exportCSV("work_analytics.csv");
+    }
     queryCatalog->clear();
 }
 
