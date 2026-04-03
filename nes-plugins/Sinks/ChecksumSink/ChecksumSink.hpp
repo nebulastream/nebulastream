@@ -29,6 +29,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <SinksParsing/Format.hpp>
 
 namespace NES
 {
@@ -57,6 +58,7 @@ private:
     std::string outputFilePath;
     std::ofstream outputFileStream;
     Checksum checksum;
+    std::unique_ptr<Format> format;
 };
 
 struct ConfigParametersChecksum
@@ -65,6 +67,11 @@ struct ConfigParametersChecksum
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
         "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
 
+    static inline const DescriptorConfig::ConfigParameter<std::string> LEGACY_OUTPUT_FORMAT{
+        "legacy_output_format",
+        "None",
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LEGACY_OUTPUT_FORMAT, config); }};
+
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "file_path",
@@ -72,7 +79,7 @@ struct ConfigParametersChecksum
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, LEGACY_OUTPUT_FORMAT, OUTPUT_FORMAT);
 };
 
 }

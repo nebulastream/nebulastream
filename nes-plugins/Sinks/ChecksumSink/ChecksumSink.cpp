@@ -29,6 +29,8 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/BufferIterator.hpp>
+#include <SinksParsing/CSVFormat.hpp>
+#include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
@@ -37,6 +39,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <Util/Strings.hpp>
 
 namespace NES
 {
@@ -46,6 +49,15 @@ ChecksumSink::ChecksumSink(BackpressureController backpressureController, const 
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
 {
+    const auto legacyOutputFormat = sinkDescriptor.getFromConfig(ConfigParametersChecksum::LEGACY_OUTPUT_FORMAT);
+    if (legacyOutputFormat != "None")
+    {
+        format = std::make_unique<CSVFormat>(*sinkDescriptor.getSchema());
+    }
+    else
+    {
+        format = std::make_unique<NoneWithIteratorFormat>(*sinkDescriptor.getSchema());
+    }
 }
 
 void ChecksumSink::start(PipelineExecutionContext&)
@@ -90,23 +102,20 @@ void ChecksumSink::stop(PipelineExecutionContext&)
 void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
-    /// Create a buffer iterator to help iterate through the tuplebuffer and its children
-    BufferIterator iterator{inputBuffer};
-
-    std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
-    while (element.has_value())
-    {
-        /// Create string out of formatted buffer
-        const std::string formatted{element.value().buffer.getAvailableMemoryArea<char>().data(), element.value().contentLength};
-        checksum.add(formatted);
-        /// Get the next buffer
-        element = iterator.getNextElement();
-    }
+    const std::string inputBufferAsString = format->getFormattedBuffer(inputBuffer);
+    checksum.add(inputBufferAsString);
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
 {
-    return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
+    DescriptorConfig::Config validatedConfig = DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
+    /// Very hacky way to ensure that legacy output format is set correctly
+    if (toUpperCase(std::get<std::string>(validatedConfig.at("legacy_output_format"))) != "NONE")
+    {
+        validatedConfig["legacy_output_format"] = "CSV";
+        validatedConfig["output_format"] = "NATIVE";
+    }
+    return validatedConfig;
 }
 
 SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
