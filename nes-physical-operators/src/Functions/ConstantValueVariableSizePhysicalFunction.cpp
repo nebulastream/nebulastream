@@ -41,4 +41,9 @@ VarVal ConstantValueVariableSizePhysicalFunction::execute(const Record&, ArenaRe
     return result;
 }
 
+const std::vector<int8_t>& ConstantValueVariableSizePhysicalFunction::getData() const
+{
+    return data;
+}
+
 }

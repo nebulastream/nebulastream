@@ -33,6 +33,7 @@ class ConstantValueVariableSizePhysicalFunction final
 public:
     explicit ConstantValueVariableSizePhysicalFunction(const int8_t* value, size_t size);
     [[nodiscard]] VarVal execute(const Record& record, ArenaRef& arena) const;
+    const std::vector<int8_t>& getData() const;
 
 private:
     std::vector<int8_t> data;
