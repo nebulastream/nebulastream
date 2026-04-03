@@ -1,0 +1,23 @@
+# name: Uuid
+# description: Checks that UUID(high, low) converts two UINT64 values into a UUID string
+# groups: [Function, Text, Projection]
+
+CREATE LOGICAL SOURCE uuidStream(high UINT64 NOT NULL, low UINT64 NOT NULL);
+CREATE PHYSICAL SOURCE FOR uuidStream TYPE File;
+ATTACH INLINE
+0,0
+18446744073709551615,18446744073709551615
+6128981282234515924,12039885860129472512
+1,1
+81985529216486895,18364758544493064720
+
+CREATE SINK uuidSink(uuid VARSIZED NOT NULL) TYPE File;
+
+# Basic conversion of two UINT64 values to UUID string
+SELECT UUID(high, low) AS uuid FROM uuidStream INTO uuidSink;
+----
+00000000-0000-0000-0000-000000000000
+ffffffff-ffff-ffff-ffff-ffffffffffff
+550e8400-e29b-41d4-a716-446655440000
+00000000-0000-0001-0000-000000000001
+01234567-89ab-cdef-fedc-ba9876543210
