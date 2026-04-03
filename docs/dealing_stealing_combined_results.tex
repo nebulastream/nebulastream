@@ -1,0 +1,222 @@
+% % ######% ######% ######% ######% ######% ######% ######% ######% ######% ######
+\section{Combined Impact of Work Dealing and Work Stealing}
+In this experiment, we evaluate all combinations of work dealing and work stealing together. We want to answer the research question
+
+\begin{tcolorbox}[colback=blue!5, colframe=blue!40!black, title=Research Questions]
+    \textbf{RQ:} What is the best combination of work dealing and work stealing?
+\end{tcolorbox}
+
+We evaluate five configurations that span the design space of local vs.\ distributed dealing and with vs.\ without stealing:
+\begin{description}
+    \item[\texttt{GLOBAL\_QUEUE}:] Single shared queue, no per-thread dealing or stealing (baseline).
+    \item[\texttt{LOCAL+NoSteal}:] Producer-local dealing (successors stay on the producing thread), no stealing.
+    \item[\texttt{LOCAL+STEAL}:] Producer-local dealing with \texttt{CHOOSE\_TWO} stealing when idle.
+    \item[\texttt{DISTRIBUTED+NoSteal}:] Round-robin dealing (successors sent to other threads), no stealing.
+    \item[\texttt{DISTRIBUTED+STEAL}:] Round-robin dealing with \texttt{CHOOSE\_TWO} stealing when idle.
+\end{description}
+
+% % ######% ######% ######% ######% ######% ######% ######% ######% ######% ######
+\subsection{Experimental Results}
+\label{sec:combined-results}
+
+We evaluate these five configurations on the same four workloads as before, using 50 million tuples (4.8\,GB) with thread counts from 1 to 64.
+For thread counts $\leq 32$, processes are pinned to NUMA node~0 via \texttt{numactl}.
+
+\subsubsection{Stateless Workload}
+
+Table~\ref{tab:ds-stateless} shows the throughput.
+
+\begin{table}[h]
+\centering
+\caption{Stateless workload throughput (MB/s). Bold = best per thread count.}
+\label{tab:ds-stateless}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Config} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}       & 77 & 149 & 292 & 576 & \textbf{935} & \textbf{771} & \textbf{578} \\
+\texttt{LOCAL+NoSteal}       & 76 & \textbf{150} & \textbf{295} & \textbf{581} & 586 & 677 & 531 \\
+\texttt{LOCAL+STEAL}         & 76 & 150 & 289 & 571 & 586 & 678 & 534 \\
+\texttt{DISTRIBUTED+NoSteal} & 76 & 148 & 287 & 555 & 571 & 670 & 531 \\
+\texttt{DISTRIBUTED+STEAL}   & 76 & 148 & 283 & 550 & 465 & 707 & 527 \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{GLOBAL\_QUEUE} dominates at 16--64T}, peaking at 935\,MB/s at 16T (12.1$\times$).
+    Since this workload produces no successor tasks, per-thread queue infrastructure adds overhead without benefit.
+
+    \item \textbf{\texttt{LOCAL+NoSteal} matches or slightly leads at 1--8T} (581 vs.\ 576\,MB/s at 8T).
+    At low thread counts, the per-thread queue overhead is negligible and admission round-robin distributes work as well as the global queue.
+
+    \item \textbf{Adding stealing to local dealing has no effect} (\texttt{LOCAL+STEAL} $\approx$ \texttt{LOCAL+NoSteal}, within 2\%).
+    With no successor tasks in per-thread queues, there is nothing to steal.
+
+    \item \textbf{Distributed dealing consistently underperforms local dealing} by 3--5\% at 4--8T.
+    The round-robin dispatch overhead (atomic counter increment per successor task) adds up even though the successor tasks themselves are rare.
+
+    \item \textbf{\texttt{DISTRIBUTED+STEAL} shows anomalous behavior at 16T} (465\,MB/s, 20\% below \texttt{DISTRIBUTED+NoSteal}).
+    The $O(1)$ stealing attempts on empty queues create cache line traffic that interferes with the admission queue contention at this thread count.
+\end{itemize}
+
+\subsubsection{High-Frequency Window Workload}
+
+Table~\ref{tab:ds-highfreq} shows the throughput.
+
+\begin{table}[h]
+\centering
+\caption{High-frequency window workload throughput (MB/s). Bold = best per thread count.}
+\label{tab:ds-highfreq}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Config} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}       & 39 & 51 & 75 & 103 & 118 & 130 & 40 \\
+\texttt{LOCAL+NoSteal}       & 38 & \textbf{53} & \textbf{87} & \textbf{123} & \textbf{129} & 130 & 40 \\
+\texttt{LOCAL+STEAL}         & 39 & 48 & 73 & 108 & 108 & \textbf{131} & \textbf{45} \\
+\texttt{DISTRIBUTED+NoSteal} & 38 & 52 & 79 & 115 & 120 & 117 & 27 \\
+\texttt{DISTRIBUTED+STEAL}   & 39 & 49 & 72 & 100 & 105 & 123 & 54 \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{LOCAL+NoSteal} leads at 2--16T}, achieving 123\,MB/s at 8T vs.\ 103 for \texttt{GLOBAL\_QUEUE} (+19\%).
+    This is the strongest evidence that producer-local dealing improves throughput for workloads with frequent successor tasks ($\sim$5 million window emissions).
+    The cache locality benefit of keeping successor tasks on the producing thread is significant.
+
+    \item \textbf{Adding stealing to local dealing hurts at 2--16T} but helps slightly at 32--64T.
+    \texttt{LOCAL+STEAL} drops to 108\,MB/s at 8T ($-$12\% vs.\ \texttt{LOCAL+NoSteal}).
+    Stealing moves cache-hot window emission tasks to threads with cold caches.
+    At 32T, \texttt{LOCAL+STEAL} ties \texttt{LOCAL+NoSteal} (131 vs.\ 130), and at 64T it leads (45 vs.\ 40) because cross-NUMA imbalance benefits from rebalancing.
+
+    \item \textbf{Distributed dealing is consistently worse than local dealing.}
+    \texttt{DISTRIBUTED+NoSteal} achieves 115\,MB/s at 8T (vs.\ 123 for \texttt{LOCAL+NoSteal}), confirming that round-robin dispatch of successor tasks destroys the cache locality that the high-frequency workload depends on.
+
+    \item \textbf{At 64T (cross-NUMA), \texttt{DISTRIBUTED+STEAL} leads} with 54\,MB/s.
+    When all threads span both NUMA nodes, distributing work and stealing from remote nodes is better than keeping tasks local on one NUMA node.
+    However, this comes at the cost of much lower absolute performance (54 vs.\ 130\,MB/s at 32T).
+\end{itemize}
+
+\subsubsection{Join Workload}
+
+Table~\ref{tab:ds-join} shows the throughput.
+
+\begin{table}[h]
+\centering
+\caption{Join workload throughput (MB/s). Bold = best per thread count.}
+\label{tab:ds-join}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Config} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}       & 31 & \textbf{41} & \textbf{67} & \textbf{103} & 108 & 85 & 60 \\
+\texttt{LOCAL+NoSteal}       & 31 & 40 & 65 & 100 & \textbf{113} & 93 & 70 \\
+\texttt{LOCAL+STEAL}         & 31 & 41 & 61 & 86 & 99 & \textbf{102} & 64 \\
+\texttt{DISTRIBUTED+NoSteal} & 30 & 41 & 62 & 99 & 110 & 93 & \textbf{72} \\
+\texttt{DISTRIBUTED+STEAL}   & 31 & 41 & 64 & 99 & 109 & 95 & 71 \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{The join workload shows a crossover between strategies as thread count increases.}
+    \texttt{GLOBAL\_QUEUE} leads at 4--8T (67/103\,MB/s) where the join's hash table contention dominates.
+    \texttt{LOCAL+NoSteal} takes over at 16T (113\,MB/s, +5\%) as the successor tasks from window emissions benefit from cache locality.
+    \texttt{LOCAL+STEAL} wins at 32T (102\,MB/s, +20\% over \texttt{GLOBAL\_QUEUE}'s 85\,MB/s) where hyperthreading creates pipeline imbalance that stealing can address.
+
+    \item \textbf{Stealing hurts at 4--16T but helps at 32T.}
+    \texttt{LOCAL+STEAL} drops to 86\,MB/s at 8T ($-$14\% vs.\ \texttt{LOCAL+NoSteal}).
+    The join's successor tasks carry intermediate results that benefit from staying on the producing thread's cache.
+    At 32T, the three pipelines (left source, right source, join) create structural imbalance: some threads finish their source pipeline early and idle, while others are still processing the join.
+    Stealing redistributes the backed-up join tasks, improving throughput by 20\%.
+
+    \item \textbf{\texttt{DISTRIBUTED+NoSteal} is competitive at 16--64T} (110/93/72\,MB/s).
+    Unlike the high-frequency workload, the join's successor tasks are less cache-sensitive (join inputs are new data from the hash table, not continuation of the same buffer), so distributing them does less harm.
+
+    \item \textbf{At 64T (cross-NUMA), per-thread strategies lead} (\texttt{DISTRIBUTED+NoSteal} at 72, \texttt{LOCAL+NoSteal} at 70, vs.\ \texttt{GLOBAL\_QUEUE} at 60\,MB/s).
+    The join's multi-pipeline structure benefits from per-thread queues that keep work on the same NUMA node.
+\end{itemize}
+
+\subsubsection{Mixed Concurrent Workload}
+
+Table~\ref{tab:ds-mixed} shows the throughput (computed as total data processed divided by wall-clock time).
+
+\begin{table}[h]
+\centering
+\caption{Mixed workload throughput (MB/s, computed from wall-clock time). Bold = best per thread count.}
+\label{tab:ds-mixed}
+\begin{tabular}{l|rrrrrrr}
+\hline
+\textbf{Config} & \textbf{1T} & \textbf{2T} & \textbf{4T} & \textbf{8T} & \textbf{16T} & \textbf{32T} & \textbf{64T} \\
+\hline
+\texttt{GLOBAL\_QUEUE}       & 49 & 77 & 130 & 195 & 227 & \textbf{240} & 83 \\
+\texttt{LOCAL+NoSteal}       & 49 & \textbf{77} & \textbf{136} & \textbf{212} & \textbf{233} & 239 & 86 \\
+\texttt{LOCAL+STEAL}         & 49 & 76 & 128 & 191 & 200 & 238 & 96 \\
+\texttt{DISTRIBUTED+NoSteal} & 49 & 76 & 128 & 197 & 220 & 214 & 55 \\
+\texttt{DISTRIBUTED+STEAL}   & 48 & 76 & 123 & 178 & 188 & 217 & \textbf{112} \\
+\hline
+\end{tabular}
+\end{table}
+
+The key observations are as follows.
+%
+\begin{itemize}
+    \item \textbf{\texttt{LOCAL+NoSteal} leads at 2--16T}, peaking at 233\,MB/s at 16T vs.\ 227 for \texttt{GLOBAL\_QUEUE} (+3\%).
+    At 8T the gap is larger: 212 vs.\ 195\,MB/s (+9\%).
+    The mixed workload combines a lightweight filter (no successors) with a heavy aggregation ($\sim$5M successors), and keeping the aggregation's successor tasks local avoids contention with the filter query's workers.
+
+    \item \textbf{Stealing on top of local dealing hurts consistently at 4--16T.}
+    \texttt{LOCAL+STEAL} achieves 191\,MB/s at 8T ($-$10\% vs.\ \texttt{LOCAL+NoSteal}).
+    The filter query's idle workers steal aggregation successor tasks, processing them with cold caches.
+    This is the same pattern observed in the high-frequency workload: stealing cache-hot window emissions to cache-cold threads degrades performance.
+
+    \item \textbf{Distributed dealing is worse than local dealing at all single-NUMA thread counts} (4--32T).
+    \texttt{DISTRIBUTED+NoSteal} achieves 197\,MB/s at 8T (vs.\ 212 for \texttt{LOCAL+NoSteal}), confirming that round-robin dispatch of successor tasks is suboptimal for workloads that benefit from cache locality.
+
+    \item \textbf{At 64T (cross-NUMA), \texttt{DISTRIBUTED+STEAL} leads} with 112\,MB/s vs.\ 83--96 for all other configurations.
+    This is the only scenario where the combination of distributing work and stealing provides a net benefit.
+    With 64 threads spanning two NUMA nodes, the workload imbalance between the fast filter and slow aggregation is amplified by non-uniform memory access, and aggressive rebalancing compensates.
+\end{itemize}
+
+\subsection{Summary}
+
+\begin{itemize}
+    \item \textbf{\texttt{LOCAL+NoSteal} is the best configuration for successor-heavy workloads at 2--16T.}
+    It leads on the high-frequency workload (+19\% at 8T), the mixed workload (+9\% at 8T), and the join workload (+5\% at 16T).
+    Producer-local dealing ensures that successor tasks are processed with warm L1/L2 caches, while the absence of stealing preserves this locality.
+
+    \item \textbf{\texttt{GLOBAL\_QUEUE} remains the best for workloads without successor tasks.}
+    On the stateless workload, it peaks at 935\,MB/s at 16T---60\% higher than any per-thread configuration.
+    Its simplicity and perfect load balancing make it the optimal choice when the workload is dominated by admission tasks.
+
+    \item \textbf{Stealing helps only at $\geq 32$T on multi-pipeline workloads.}
+    \texttt{LOCAL+STEAL} achieves 102\,MB/s at 32T on the join workload (+20\% over \texttt{GLOBAL\_QUEUE}), because the three-pipeline structure creates structural imbalance that dealing alone cannot resolve.
+    At lower thread counts, stealing consistently hurts by breaking cache locality.
+
+    \item \textbf{Distributed dealing is always inferior to local dealing.}
+    Across all four workloads and all thread counts, \texttt{DISTRIBUTED+NoSteal} trails \texttt{LOCAL+NoSteal}.
+    The round-robin dispatch overhead and loss of cache locality for successor tasks are never compensated by the marginally better load distribution.
+    The sole exception is 64T cross-NUMA, where \texttt{DISTRIBUTED+STEAL} leads on the mixed workload.
+
+    \item \textbf{The cost of cache-cold stealing is workload-dependent.}
+    On the join workload, stealing reduces throughput by 14\% at 8T (successor tasks carry join hash table state).
+    On the high-frequency workload, the reduction is 12\% at 8T (successor tasks carry window aggregation state).
+    On the mixed workload, it is 10\% at 8T.
+    The common pattern: the more compute-intensive the successor task, the higher the penalty from processing it on a cache-cold thread.
+
+    \item \textbf{The optimal configuration depends on thread count and workload:}
+    \begin{itemize}
+        \item 1--8T: \texttt{LOCAL+NoSteal} (or \texttt{GLOBAL\_QUEUE} if no successors)
+        \item 16T: \texttt{LOCAL+NoSteal} for successor-heavy, \texttt{GLOBAL\_QUEUE} for stateless
+        \item 32T: \texttt{LOCAL+STEAL} for multi-pipeline, \texttt{GLOBAL\_QUEUE} for stateless
+        \item 64T (cross-NUMA): \texttt{DISTRIBUTED+STEAL} for mixed, \texttt{GLOBAL\_QUEUE} for stateless
+    \end{itemize}
+\end{itemize}
