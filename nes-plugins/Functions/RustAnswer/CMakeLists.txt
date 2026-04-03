@@ -10,6 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[workspace]
-resolver = "2"
-members = ["network", "nes-rust-bindings"]
+# CXX bridge for Rust FFI
+add_subdirectory(rust)
+
+# Register logical function plugin
+add_plugin(RustAnswer LogicalFunction nes-logical-operators RustAnswerLogicalFunction.cpp)
+
+# Register physical function plugin — links the CXX bridge for FFI access
+add_plugin(RustAnswer PhysicalFunction nes-physical-operators RustAnswerPhysicalFunction.cpp)
+target_link_libraries(nes-physical-operators PRIVATE nes-rust-answer-bindings)
+target_link_rust_lib(nes-physical-operators nes_rust_answer)

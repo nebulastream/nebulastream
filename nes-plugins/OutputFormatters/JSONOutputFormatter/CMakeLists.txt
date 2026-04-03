@@ -15,11 +15,9 @@ add_plugin_as_library(JSON OutputFormatter nes-output-formatters-registry json_o
 add_plugin_as_library(JSON OutputFormatterValidation nes-output-formatters-registry json_output_formatter_validation_plugin JSONOutputFormatter.cpp)
 
 target_include_directories(json_output_formatter_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC .
 )
 
 target_include_directories(json_output_formatter_validation_plugin
-        PUBLIC include
-        PRIVATE .
+        PUBLIC .
 )

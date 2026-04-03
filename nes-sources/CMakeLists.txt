@@ -41,6 +41,7 @@ add_subdirectory(rust/nes-sink-bindings)
 # Use PRIVATE link to get the include directories without creating a PUBLIC circular dependency
 # (nes-source-bindings and nes-sink-bindings already link PUBLIC to nes-sources).
 target_link_libraries(nes-sources PRIVATE nes-buffer-bindings nes-source-bindings nes-sink-bindings)
+target_link_rust_lib(nes-sources nes_buffer_bindings)
 target_link_rust_lib(nes-sources nes_source_bindings)
 target_link_rust_lib(nes-sources nes_sink_bindings)
 

@@ -1,0 +1,15 @@
+# Unified Rust workspace for all NebulaStream Rust crates.
+# Add new crates here when introducing Rust code in any part of the project.
+[workspace]
+resolver = "2"
+members = [
+    "nes-sources/rust/nes-buffer-bindings",
+    "nes-sources/rust/nes-source-bindings",
+    "nes-sources/rust/nes-sink-bindings",
+    "nes-sources/rust/nes-source-runtime",
+    "nes-network/nes-rust-bindings",
+    "nes-network/network",
+    "nes-network/nes-rust-bindings/network",
+    "nes-network/nes-rust-bindings/spdlog",
+    "nes-plugins/Functions/RustAnswer/rust",
+]

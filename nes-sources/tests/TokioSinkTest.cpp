@@ -75,7 +75,7 @@ public:
         return pinnedBuffers.back();
     }
 
-    WorkerThreadId getId() const override { return WorkerThreadId(1); }
+    WorkerThreadId getWorkerThreadId() const override { return WorkerThreadId(1); }
     uint64_t getNumberOfWorkerThreads() const override { return 1; }
     std::shared_ptr<AbstractBufferProvider> getBufferManager() const override { return bufferManager; }
     PipelineId getPipelineId() const override { return PipelineId(1); }

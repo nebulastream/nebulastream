@@ -109,17 +109,23 @@ endfunction()
 # This prevents the individual Rust staticlib from being pulled into every exe that links
 # the bridge target. The actual Rust symbols come from target_link_rust() instead.
 function(cxxbridge_remove_rust_link bridge_target rust_crate)
+    # Corrosion may name the imported target with a -static suffix
+    set(_variants "${rust_crate}" "${rust_crate}-static")
     # Remove from LINK_LIBRARIES (PRIVATE deps added by corrosion_add_cxxbridge)
     get_target_property(libs ${bridge_target} LINK_LIBRARIES)
     if(libs)
-        list(REMOVE_ITEM libs "${rust_crate}")
+        foreach(_v ${_variants})
+            list(REMOVE_ITEM libs "${_v}")
+        endforeach()
         set_target_properties(${bridge_target} PROPERTIES LINK_LIBRARIES "${libs}")
     endif()
     # Also remove from INTERFACE_LINK_LIBRARIES — Corrosion adds $<LINK_ONLY:crate> there
     get_target_property(iface_libs ${bridge_target} INTERFACE_LINK_LIBRARIES)
     if(iface_libs)
-        list(REMOVE_ITEM iface_libs "${rust_crate}")
-        list(REMOVE_ITEM iface_libs "$<LINK_ONLY:${rust_crate}>")
+        foreach(_v ${_variants})
+            list(REMOVE_ITEM iface_libs "${_v}")
+            list(REMOVE_ITEM iface_libs "$<LINK_ONLY:${_v}>")
+        endforeach()
         set_target_properties(${bridge_target} PROPERTIES INTERFACE_LINK_LIBRARIES "${iface_libs}")
     endif()
 endfunction()
@@ -206,11 +212,18 @@ function(_target_link_rust_impl exe_target)
         return()
     endif()
 
-    # Multiple crates: generate a per-executable umbrella staticlib
-    string(REPLACE "-" "_" safe_name "${exe_target}")
-    set(umbrella_name "nes_umbrella_${safe_name}")
-    set(umbrella_dir "${CMAKE_BINARY_DIR}/rust-umbrellas/${exe_target}")
+    # Multiple crates: deduplicate umbrella builds by crate-set hash.
+    # Executables that need the exact same set of Rust crates share a single umbrella
+    # staticlib, avoiding redundant Cargo builds and saving disk space.
+    list(SORT rust_libs)
+    string(JOIN "_" _crate_key ${rust_libs})
+    string(MD5 _crate_hash "${_crate_key}")
+    string(SUBSTRING "${_crate_hash}" 0 12 _crate_hash_short)
 
+    set(umbrella_name "nes_umbrella_${_crate_hash_short}")
+    set(umbrella_dir "${CMAKE_BINARY_DIR}/rust-umbrellas/${_crate_hash_short}")
+
+    # If an umbrella for this exact crate set already exists, just link it.
     if(TARGET ${umbrella_name})
         set_property(TARGET ${exe_target} APPEND PROPERTY LINK_LIBRARIES ${umbrella_name})
         return()
@@ -239,6 +252,9 @@ edition = \"2021\"
 
 [lib]
 crate-type = [\"staticlib\"]
+
+# Opt out of root workspace — umbrella crates are standalone.
+[workspace]
 
 [dependencies]
 cxx = \"=${NES_CXX_VERSION}\"

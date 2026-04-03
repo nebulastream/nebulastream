@@ -10,5 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[toolchain]
-channel = "nightly"
+corrosion_add_cxxbridge(nes-rust-answer-bindings CRATE nes_rust_answer FILES lib.rs)
+# Include directory for CXX-generated headers (nes_rust_answer/src/lib.rs.h)
+# Consumers include <nes-rust-answer-bindings/lib.h>
+cxxbridge_remove_rust_link(nes-rust-answer-bindings nes_rust_answer)
