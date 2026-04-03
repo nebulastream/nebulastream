@@ -270,3 +270,36 @@ ERROR 2003
 SELECT doesnotexist FROM stream INTO sinkId;
 ----
 ERROR 2003
+
+# Unnamed expression projection (arithmetic without AS)
+SELECT UINT64(1) + id FROM stream INTO File();
+----
+2
+3
+4
+5
+6
+7
+8
+
+# Unnamed expression with alias
+SELECT UINT64(1) + id AS a FROM stream INTO File();
+----
+2
+3
+4
+5
+6
+7
+8
+
+# Multiple unnamed expressions
+SELECT UINT64(1) + id, UINT64(10) + value FROM stream INTO File();
+----
+2,11
+3,11
+4,11
+5,12
+6,29
+7,30
+8,31
