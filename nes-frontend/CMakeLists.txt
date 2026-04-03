@@ -33,7 +33,7 @@ target_include_directories(nes-frontend-lib
 
 target_link_libraries(nes-frontend-lib
         PUBLIC nes-logical-operators nes-sql-parser nes-single-node-worker-interface nes-query-optimizer
-        PRIVATE yaml-cpp::yaml-cpp
+        PRIVATE yaml-cpp::yaml-cpp nes-input-formatters nes-input-formatters-uncompiled
 )
 
 target_compile_definitions(nes-frontend-embedded-lib PUBLIC
