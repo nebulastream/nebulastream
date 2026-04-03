@@ -47,6 +47,7 @@
     "scope-guard",
     "boost-url",
     "simdjson",
+    "ryu",
     "date",
     "highs"
   ],

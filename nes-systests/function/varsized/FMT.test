@@ -1,0 +1,258 @@
+# name: function/varsized/FMT.test
+# description: Test FMT function with all data types
+# groups: [VariableSizedData, Function]
+
+CREATE LOGICAL SOURCE data(
+  u8 UINT8,
+  u16 UINT16,
+  u32 UINT32,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64,
+  f32 FLOAT32,
+  f64 FLOAT64,
+  b BOOLEAN,
+  text VARSIZED
+);
+CREATE PHYSICAL SOURCE FOR data TYPE File;
+ATTACH INLINE
+1,2,3,4,-1,-2,-3,-4,1.5,2.5,true,hello
+
+# FMT with UINT8
+SELECT FMT(VARSIZED("u8={}"), u8) as v FROM data INTO File();
+----
+u8=1
+
+# FMT with UINT16
+SELECT FMT(VARSIZED("u16={}"), u16) as v FROM data INTO File();
+----
+u16=2
+
+# FMT with UINT32
+SELECT FMT(VARSIZED("u32={}"), u32) as v FROM data INTO File();
+----
+u32=3
+
+# FMT with UINT64
+SELECT FMT(VARSIZED("u64={}"), u64) as v FROM data INTO File();
+----
+u64=4
+
+# FMT with INT8
+SELECT FMT(VARSIZED("i8={}"), i8) as v FROM data INTO File();
+----
+i8=-1
+
+# FMT with INT16
+SELECT FMT(VARSIZED("i16={}"), i16) as v FROM data INTO File();
+----
+i16=-2
+
+# FMT with INT32
+SELECT FMT(VARSIZED("i32={}"), i32) as v FROM data INTO File();
+----
+i32=-3
+
+# FMT with INT64
+SELECT FMT(VARSIZED("i64={}"), i64) as v FROM data INTO File();
+----
+i64=-4
+
+# FMT with FLOAT32 — uses scientific notation (1.5E0 instead of 1.5)
+SELECT FMT(VARSIZED("f32={}"), f32) as v FROM data INTO File();
+----
+f32=1.5E0
+
+# FMT with FLOAT64 — uses scientific notation (2.5E0 instead of 2.5)
+SELECT FMT(VARSIZED("f64={}"), f64) as v FROM data INTO File();
+----
+f64=2.5E0
+
+# FMT with BOOLEAN — boolean value is currently missing from output
+SELECT FMT(VARSIZED("b={}"), b) as v FROM data INTO File();
+----
+b=true
+
+# FMT with VARSIZED — varsized value is currently missing from output
+SELECT FMT(VARSIZED("text={}"), text) as v FROM data INTO File();
+----
+text=hello
+
+SELECT FMT(VARSIZED("{}|{}"), b, text) as v FROM data INTO File();
+----
+true|hello
+
+# FMT with multiple fields
+SELECT FMT(VARSIZED("u32={}|i32={}|f64={}"), u32, i32, f64) as v FROM data INTO File();
+----
+u32=3|i32=-3|f64=2.5E0
+
+# FMT with all fields
+SELECT FMT(VARSIZED("{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}|{}"), u8, u16, u32, u64, i8, i16, i32, i64, f32, f64, b, text) as v FROM data INTO File();
+----
+1|2|3|4|-1|-2|-3|-4|1.5E0|2.5E0|true|hello
+
+# --- FMT drops bool/varsized after float ---
+# These minimal cases show that bool and varsized arguments are dropped when they follow a float.
+
+# float then bool — bool is dropped
+SELECT FMT(VARSIZED("{}|{}"), f64, b) as v FROM data INTO File();
+----
+2.5E0|true
+
+# bool then float — works
+SELECT FMT(VARSIZED("{}|{}"), b, f64) as v FROM data INTO File();
+----
+true|2.5E0
+
+# float then varsized — varsized is dropped
+SELECT FMT(VARSIZED("{}|{}"), f64, text) as v FROM data INTO File();
+----
+2.5E0|hello
+
+# float then bool then varsized — bool and varsized are dropped
+SELECT FMT(VARSIZED("{}|{}|{}"), f64, b, text) as v FROM data INTO File();
+----
+2.5E0|true|hello
+
+# --- Floating point edge cases ---
+
+CREATE LOGICAL SOURCE floats(id UINT8, f64 FLOAT64);
+CREATE PHYSICAL SOURCE FOR floats TYPE File;
+ATTACH INLINE
+1,nan
+2,inf
+3,-inf
+4,3.141592653589793
+5,0.000000001
+6,99999999999999.0
+7,-0.0
+8,1.7976931348623157e+308
+9,5e-324
+
+# All float edge cases formatted
+SELECT FMT(VARSIZED("{}"), f64) as v FROM floats INTO File();
+----
+NaN
+Infinity
+-Infinity
+3.141592653589793E0
+1E-9
+9.9999999999999E13
+-0E0
+1.7976931348623157E308
+0E0
+
+# --- Boundary values: max ---
+
+CREATE LOGICAL SOURCE maxvals(
+  u8 UINT8,
+  u16 UINT16,
+  u32 UINT32,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64
+);
+CREATE PHYSICAL SOURCE FOR maxvals TYPE File;
+ATTACH INLINE
+255,65535,4294967295,18446744073709551615,127,32767,2147483647,9223372036854775807
+
+# FMT max UINT8
+SELECT FMT(VARSIZED("{}"), u8) as v FROM maxvals INTO File();
+----
+255
+
+# FMT max UINT16
+SELECT FMT(VARSIZED("{}"), u16) as v FROM maxvals INTO File();
+----
+65535
+
+# FMT max UINT32
+SELECT FMT(VARSIZED("{}"), u32) as v FROM maxvals INTO File();
+----
+4294967295
+
+# FMT max UINT64
+SELECT FMT(VARSIZED("{}"), u64) as v FROM maxvals INTO File();
+----
+18446744073709551615
+
+# FMT max INT8
+SELECT FMT(VARSIZED("{}"), i8) as v FROM maxvals INTO File();
+----
+127
+
+# FMT max INT16
+SELECT FMT(VARSIZED("{}"), i16) as v FROM maxvals INTO File();
+----
+32767
+
+# FMT max INT32
+SELECT FMT(VARSIZED("{}"), i32) as v FROM maxvals INTO File();
+----
+2147483647
+
+# FMT max INT64
+SELECT FMT(VARSIZED("{}"), i64) as v FROM maxvals INTO File();
+----
+9223372036854775807
+
+# --- Boundary values: min/zero ---
+
+CREATE LOGICAL SOURCE minvals(
+  u8 UINT8,
+  u64 UINT64,
+  i8 INT8,
+  i16 INT16,
+  i32 INT32,
+  i64 INT64,
+  f32 FLOAT32,
+  f64 FLOAT64
+);
+CREATE PHYSICAL SOURCE FOR minvals TYPE File;
+ATTACH INLINE
+0,0,-128,-32768,-2147483648,-9223372036854775808,0.0,0.0
+
+# FMT zero UINT8
+SELECT FMT(VARSIZED("{}"), u8) as v FROM minvals INTO File();
+----
+0
+
+# FMT zero UINT64
+SELECT FMT(VARSIZED("{}"), u64) as v FROM minvals INTO File();
+----
+0
+
+# FMT min INT8 — currently produces garbled output
+SELECT FMT(VARSIZED("{}"), i8) as v FROM minvals INTO File();
+----
+-128
+
+# FMT min INT16 — currently produces garbled output
+SELECT FMT(VARSIZED("{}"), i16) as v FROM minvals INTO File();
+----
+-32768
+
+# FMT min INT32 — currently produces garbled output
+SELECT FMT(VARSIZED("{}"), i32) as v FROM minvals INTO File();
+----
+-2147483648
+
+# FMT min INT64 — currently produces garbled output
+SELECT FMT(VARSIZED("{}"), i64) as v FROM minvals INTO File();
+----
+-9223372036854775808
+
+# FMT zero FLOAT32 — currently outputs 0E0
+SELECT FMT(VARSIZED("{}"), f32) as v FROM minvals INTO File();
+----
+0E0
+
+# FMT zero FLOAT64 — currently outputs 0E0
+SELECT FMT(VARSIZED("{}"), f64) as v FROM minvals INTO File();
+----
+0E0

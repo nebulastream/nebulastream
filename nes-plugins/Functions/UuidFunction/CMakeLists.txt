@@ -11,8 +11,13 @@
 # limitations under the License.
 
 add_plugin_as_library(Uuid LogicalFunction nes-logical-operators uuid_logical_function_plugin UuidLogicalFunction.cpp)
+add_plugin(FMT LogicalFunction nes-logical-operators UuidLogicalFunction.cpp)
+add_plugin(To_String LogicalFunction nes-logical-operators UuidLogicalFunction.cpp)
 target_link_libraries(uuid_logical_function_plugin PRIVATE nes-logical-operators-registry)
 
 add_plugin_as_library(Uuid PhysicalFunction nes-physical-operators uuid_physical_function_plugin UuidPhysicalFunction.cpp)
+add_plugin(FMT PhysicalFunction nes-physical-operators UuidPhysicalFunction.cpp)
+add_plugin(To_String PhysicalFunction nes-physical-operators UuidPhysicalFunction.cpp)
 find_package(unofficial-libuuid CONFIG REQUIRED)
-target_link_libraries(uuid_physical_function_plugin PRIVATE nes-physical-operators-registry nes-nautilus unofficial::UUID::uuid)
+find_package(ryu CONFIG REQUIRED)
+target_link_libraries(uuid_physical_function_plugin PRIVATE nes-physical-operators-registry nes-nautilus unofficial::UUID::uuid RYU::ryu)
