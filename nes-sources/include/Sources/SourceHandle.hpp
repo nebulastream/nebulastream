@@ -17,6 +17,8 @@
 #include <chrono>
 #include <cstddef>
 #include <memory>
+#include <optional>
+#include <Decoders/Decoder.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 // #include <Sources/Source.hpp>
 // #include <Sources/SourceExecutionContext.hpp>

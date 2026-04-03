@@ -46,7 +46,11 @@ public:
 
     [[nodiscard]] InputFormatterThreadingMode getThreadingMode() const
     {
-        return this->getFromConfig(THREADING_MODE);
+        if (const auto threadingMode = this->tryGetFromConfig<EnumWrapper>(THREADING_MODE))
+        {
+            return threadingMode.value().asEnum<InputFormatterThreadingMode>().value();
+        }
+        return InputFormatterThreadingMode::PARALLEL;
     }
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{

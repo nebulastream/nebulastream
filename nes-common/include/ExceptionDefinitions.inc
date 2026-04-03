@@ -66,6 +66,8 @@ EXCEPTION(QueryAlreadyRegistered, 2035, "query already registered")
 EXCEPTION(UnknownOutputFormatterType, 2036, "unknown output formatter type")
 EXCEPTION(UnknownOutputParserType, 2037, "unknown output parser type")
 EXCEPTION(UnknownInputParserType, 2038, "unknown input parser type")
+EXCEPTION(UnknownDecoderType, 2139, "unknown decoder type")
+EXCEPTION(UnknownEncoderType, 2140, "unknown encoder type")
 
 /// 23XX Distributed
 EXCEPTION(PlacementFailure, 2300, "placement failure")

@@ -19,10 +19,12 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <span>
 #include <string>
 #include <thread>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -39,9 +41,11 @@
 namespace NES
 {
 
-PrintSink::PrintSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+PrintSink::PrintSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , outputStream(&std::cout)
+    , encoder(std::move(encoder))
     , ingestion(sinkDescriptor.getFromConfig(ConfigParametersPrint::INGESTION))
 {
 }
@@ -57,19 +61,33 @@ void PrintSink::stop(PipelineExecutionContext&)
 void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&)
 {
     PRECONDITION(inputBuffer, "Invalid input buffer in PrintSink.");
+    std::string bufferAsString;
+    /// Create a buffer iterator to help iterate through the tuplebuffer and its children
+    BufferIterator iterator{inputBuffer};
+
+    std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
+    while (element.has_value())
+    {
+        bufferAsString += std::string{element.value().buffer.getAvailableMemoryArea<char>().data(), element.value().contentLength};
+        /// Get the next buffer to be written
+        element = iterator.getNextElement();
+    }
+
+    /// Encode data if encoder was provided
+    if (encoder)
+    {
+        const auto stringSpan = std::as_bytes(std::span(bufferAsString));
+        std::vector<char> encodedData{};
+        auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+        PRECONDITION(encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
+        bufferAsString = std::string(encodedData.data(), encodingResult.compressedSize);
+    }
+
     {
         const auto wlocked = outputStream.wlock();
-        /// Create a buffer iterator to help iterate through the tuplebuffer and its children
-        BufferIterator iterator{inputBuffer};
 
-        std::optional<BufferIterator::BufferElement> element = iterator.getNextElement();
-        while (element.has_value())
-        {
             (*wlocked)->write(
-                element.value().buffer.getAvailableMemoryArea<char>().data(), static_cast<std::streamsize>(element.value().contentLength));
-            /// Get the next buffer to be written
-            element = iterator.getNextElement();
-        }
+                bufferAsString.data(), static_cast<std::streamsize>(bufferAsString.length()));
         (*wlocked)->flush();
     }
     std::this_thread::sleep_for(std::chrono::milliseconds{ingestion});
@@ -93,7 +111,10 @@ SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegis
 
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<PrintSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }

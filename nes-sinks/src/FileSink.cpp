@@ -20,10 +20,12 @@
 #include <iostream>
 #include <memory>
 #include <optional>
+#include <span>
 #include <string>
 #include <system_error>
 #include <unordered_map>
 #include <utility>
+#include <vector>
 
 #include <fmt/format.h>
 #include <magic_enum/magic_enum.hpp>
@@ -47,12 +49,14 @@
 namespace NES
 {
 
-FileSink::FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+FileSink::FileSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
     , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
+    , encoder(std::move(encoder))
 {
     const auto legacyOutputFormat = toUpperCase(sinkDescriptor.getFromConfig(ConfigParametersFile::LEGACY_OUTPUT_FORMAT));
     if (legacyOutputFormat == "CSV")
@@ -107,7 +111,19 @@ void FileSink::start(PipelineExecutionContext&)
     /// Write the schema to the file, if it is empty.
     if (stream->tellp() == 0)
     {
-        const auto schemaStr = schemaFormatter.getFormattedSchema();
+        auto schemaStr = schemaFormatter.getFormattedSchema();
+
+        /// Encode schema string if encoder was provided
+        if (encoder)
+        {
+            const auto stringSpan = std::as_bytes(std::span(schemaStr));
+            std::vector<char> encodedData{};
+            auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+            PRECONDITION(
+                encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED,
+                "Error occured during encoding process of schema string.");
+            schemaStr = std::string(encodedData.data(), encodingResult.compressedSize);
+        }
         stream->write(schemaStr.c_str(), static_cast<int64_t>(schemaStr.length()));
     }
 }
@@ -116,10 +132,19 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
 {
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in FileSink.");
     PRECONDITION(isOpen, "Sink was not opened");
-
+    std::string formattedBufferString = format->getFormattedBuffer(inputTupleBuffer);
+    /// If an encoder was given, encode the data here
+    if (encoder)
+    {
+        const auto stringSpan = std::as_bytes(std::span(formattedBufferString));
+        std::vector<char> encodedData{};
+        auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+        PRECONDITION(
+            encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
+        formattedBufferString = std::string(encodedData.data(), encodingResult.compressedSize);
+    }
     {
         const auto wlocked = outputFileStream.wlock();
-        const std::string formattedBufferString = format->getFormattedBuffer(inputTupleBuffer);
         wlocked->write(formattedBufferString.data(), static_cast<std::streamsize>(formattedBufferString.length()));
         wlocked->flush();
     }
@@ -145,7 +170,10 @@ SinkValidationRegistryReturnType RegisterFileSinkValidation(SinkValidationRegist
 
 SinkRegistryReturnType RegisterFileSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<FileSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<FileSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }

@@ -75,6 +75,18 @@ std::string SinkDescriptor::getFormatType() const
     }
 }
 
+std::optional<std::string> SinkDescriptor::getEncoderType() const
+{
+    try
+    {
+        return getFromConfig(CODEC);
+    }
+    catch (std::out_of_range& e)
+    {
+        return std::nullopt;
+    }
+}
+
 std::string SinkDescriptor::getSinkType() const
 {
     return sinkType;

@@ -164,6 +164,61 @@ teardown() {
   docker volume rm $TEST_VOLUME || true
 }
 
+limit_container_bandwidth() {
+  local svc="$1"
+  local veth="$2"
+  local rate="$3"
+
+  # Clean existing qdisc if present
+  sudo tc qdisc del dev "$veth" root 2>/dev/null || true
+
+  # HTB root
+  sudo tc qdisc add dev "$veth" root handle 1: htb default 10
+
+  # Bandwidth class
+  sudo tc class add dev "$veth" parent 1: classid 1:10 htb \
+    rate "$rate" ceil "$rate"
+
+  echo "#   tc: $svc limited to $rate on $veth" >&3
+}
+
+# Help function that displays the veths for each container to enable sending rate tracking via btop
+print_container_veths() {
+  local RATE="$1"
+  echo "# Container → veth mapping" >&3
+
+  for svc in $(docker compose ps --services); do
+    CID=$(docker compose ps -q "$svc")
+    [ -z "$CID" ] && continue
+
+    PID=$(docker inspect -f '{{.State.Pid}}' "$CID")
+    [ "$PID" = "0" ] && continue
+
+    # Enter netns and extract ifindex after @if
+    IFIDX=$(sudo nsenter -t "$PID" -n ip -o link \
+      | awk -F'@if' '/eth0/ {print $2}' | cut -d':' -f1)
+
+    if [ -z "$IFIDX" ]; then
+      echo "#   $svc → <no ifindex>" >&3
+      continue
+    fi
+
+    VETH=$(ip -o link \
+      | awk -F': ' -v ifidx="$IFIDX" '$1 == ifidx {print $2}' \
+      | cut -d'@' -f1)
+
+    if [ -z "$VETH" ]; then
+      echo "#   $svc → <no veth>" >&3
+      continue
+    fi
+
+    echo "#   $svc → $VETH" >&3
+    if [ "$svc" != "systest" ]; then
+      limit_container_bandwidth "$svc" "$VETH" "$RATE"
+    fi
+  done
+}
+
 function setup_distributed() {
   # Extract per-worker configs from the topology YAML and copy them into the test volume.
   local topology="$1"
@@ -194,6 +249,7 @@ function setup_distributed() {
     echo "# [docker compose up] (status=$exit_code):" >&3
     while IFS= read -r line; do echo "#   $line" >&3; done <<< "$compose_output"
   fi
+  print_container_veths "$2"
   return $exit_code
 }
 
@@ -220,4 +276,9 @@ DOCKER_SYSTEST() {
   setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
   run DOCKER_SYSTEST -g large -e tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
+
+@test "Codecs with bandwidth" {
+    setup_distributed $NES_DIR/nes-systests/configs/topologies/my-topo.yaml "50mbit"
+    run DOCKER_SYSTEST -g Codecs --clusterConfig nes-systests/configs/topologies/my-topo.yaml --remote -- --worker.number_of_buffers_in_global_buffer_manager=30000
+    [ "$status" -eq 0 ]
 }

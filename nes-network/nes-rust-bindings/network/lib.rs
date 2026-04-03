@@ -62,9 +62,9 @@ pub mod ffi {
         #[allow(non_snake_case)]
         fn setMetadata(self: Pin<&mut TupleBufferBuilder>, meta: &SerializedTupleBufferHeader);
         #[allow(non_snake_case)]
-        fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn setData(self: Pin<&mut TupleBufferBuilder>, data: &[u8], is_encoded: bool);
         #[allow(non_snake_case)]
-        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8]);
+        fn addChildBuffer(self: Pin<&mut TupleBufferBuilder>, data: &[u8], is_encoded: bool, buffer_size: u64);
         #[allow(non_snake_case)]
         fn identifyThread(thread_name: &str, worker_id: &str);
     }
@@ -114,6 +114,9 @@ pub mod ffi {
         fn send_buffer(
             channel: &SenderDataChannel,
             metadata: SerializedTupleBufferHeader,
+            encoded_data: bool,
+            encoded_children: &[u8],
+            child_buffer_sizes: &[u64],
             data: &[u8],
             children: &[&[u8]],
         ) -> SendResult;
@@ -393,11 +396,15 @@ fn receive_buffer(
             source_insertion_ts: buffer.source_insertion_ts as u64
         });
 
-    buffer_builder.as_mut().setData(&buffer.data);
+    buffer_builder.as_mut().setData(&buffer.data, buffer.encoded_data as bool);
 
+    let mut i : usize = 0;
     for child_buffer in buffer.child_buffers.iter() {
+        let is_encoded : bool = buffer.encoded_children[i];
+        let buffer_size: u64 = buffer.child_buffer_sizes[i];
         assert!(!child_buffer.is_empty());
-        buffer_builder.as_mut().addChildBuffer(child_buffer);
+        buffer_builder.as_mut().addChildBuffer(child_buffer, is_encoded, buffer_size);
+        i += 1;
     }
 
     Ok(true)
@@ -461,6 +468,9 @@ fn register_sender_channel(
 fn send_buffer(
     channel: &SenderDataChannel,
     metadata: ffi::SerializedTupleBufferHeader,
+    encoded_data: bool,
+    encoded_children: &[u8],
+    child_buffer_sizes: &[u64],
     data: &[u8],
     children: &[&[u8]],
 ) -> ffi::SendResult {
@@ -471,6 +481,9 @@ fn send_buffer(
         number_of_tuples: metadata.number_of_tuples,
         watermark: metadata.watermark,
         last_chunk: metadata.last_chunk,
+        encoded_data: encoded_data,
+        encoded_children: encoded_children.iter().map(|&value| value == 1).collect(),
+        child_buffer_sizes: Vec::from(child_buffer_sizes),
         data: Vec::from(data),
         child_buffers: children.iter().map(|bytes| Vec::from(*bytes)).collect(),
         source_insertion_ts: metadata.source_insertion_ts

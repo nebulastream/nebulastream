@@ -28,4 +28,3 @@ allow_source_placement:
 
 allow_sink_placement:
   - "sink-node:8080"
-  - "source-node:8080"

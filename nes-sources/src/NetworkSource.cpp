@@ -65,7 +65,10 @@ BlockingSource::FillTupleBufferResult NetworkSource::fillTupleBuffer(TupleBuffer
 {
     PRECONDITION(channel, "Network Source was opened multiple times");
     PRECONDITION(bufferProvider, "Network Source was opened without a buffer provider");
-    TupleBufferBuilder builder(tupleBuffer, *bufferProvider);
+    /// Pass the decoder as raw pointer, if the source uses one
+    /// The TupleBufferBuilder will use it to decode the incoming buffer
+    const Decoder* decoderRawPointer = decoder ? decoder.value().get() : nullptr;
+    TupleBufferBuilder builder(tupleBuffer, *bufferProvider, decoderRawPointer);
 
     /// If the source is requested to shutdown the network channel is closed, which will interrupt the call to receive_buffer.
     const std::stop_callback callback(stopToken, [this] { interrupt_receive(**channel); });

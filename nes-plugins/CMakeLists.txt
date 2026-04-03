@@ -23,6 +23,10 @@ activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 activate_optional_plugin("Sinks/MonitoringSink" ON)
 activate_optional_plugin("OutputParsers/ZMIJOutputParsers" ON)
+activate_optional_plugin("Decoders/ZstdDecoder" ON)
+activate_optional_plugin("Decoders/SnappyDecoder" ON)
+activate_optional_plugin("Encoders/ZstdEncoder" ON)
+activate_optional_plugin("Encoders/SnappyEncoder" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

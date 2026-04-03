@@ -15,18 +15,21 @@
 #pragma once
 
 #include <future>
+#include <memory>
+#include <optional>
 #include <ostream>
 #include <thread>
 #include <utility>
 
+#include <Blocking/BlockingSourceRunner.hpp>
+#include <Decoders/Decoder.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/BlockingSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Sources/SourceUtility.hpp>
 #include <Util/AtomicState.hpp>
-#include "Runtime/AbstractBufferProvider.hpp"
-
-#include "BlockingSourceRunner.hpp"
+#include <BackpressureChannel.hpp>
 
 namespace NES
 {
@@ -34,12 +37,14 @@ namespace NES
 class BlockingSourceHandle final : public SourceHandle
 {
 public:
+    /// Obtains decoder implementation if the source produces encoded data.
     explicit BlockingSourceHandle(
         BackpressureListener backpressureListener,
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SourceRuntimeConfiguration configuration,
         std::shared_ptr<AbstractBufferProvider> bufferPool,
-        std::unique_ptr<BlockingSource> sourceImplementation);
+        std::unique_ptr<BlockingSource> sourceImplementation,
+        std::optional<std::unique_ptr<Decoder>> decoder);
 
     BlockingSourceHandle() = delete;
     ~BlockingSourceHandle() override = default;

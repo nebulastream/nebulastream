@@ -89,14 +89,14 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}};
+    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"codec", "ZSTD"}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}};
+        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}, {"codec", "ZSTD"}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {

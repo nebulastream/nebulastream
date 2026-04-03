@@ -16,8 +16,12 @@
 
 #include <algorithm>
 #include <cstdint>
+#include <cstring>
+#include <optional>
 #include <string>
+#include <vector>
 
+#include <Decoders/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Time/Timestamp.hpp>
 #include <network/lib.h>
@@ -53,34 +57,89 @@ void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData
     buffer.setSourceCreationTimestampInMS(NES::Timestamp(metaData.source_insertion_ts));
 }
 
-void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data)
+void TupleBufferBuilder::setData(rust::Slice<const uint8_t> data, bool encoded)
 {
-    INVARIANT(
-        buffer.getBufferSize() >= data.length(),
-        "Buffer size mismatch. Internal BufferSize: {} vs. External {}",
-        buffer.getBufferSize(),
-        data.length());
+    if (encoded)
+    {
+        /// Decode the buffer
+        /// Create a vector and allocate as much size as a tuple buffer can hold
+        std::vector<char> decodedData{};
+        decodedData.reserve(buffer.getBufferSize());
+        /// Create a byte span out of the data slice and decode the data into decodedData
+        std::span byteSpan = std::as_bytes(std::span(data));
+        NES::Decoder::DecodingResult decodingResult = decoder->decodeBuffer(byteSpan, decodedData);
+        INVARIANT(
+            decodingResult.status == NES::Decoder::DecodingResultStatus::SUCCESSFULLY_DECODED,
+            "Decoding of transmitted tuple buffer caused error");
 
-    std::ranges::copy(data, buffer.getAvailableMemoryArea<uint8_t>().begin());
+        std::memcpy(buffer.getAvailableMemoryArea<>().data(), decodedData.data(), decodingResult.decompressedSize);
+    }
+    else
+    {
+        INVARIANT(
+            buffer.getBufferSize() >= data.length(),
+            "Buffer size mismatch. Internal BufferSize: {} vs. External {}",
+            buffer.getBufferSize(),
+            data.length());
+        std::ranges::copy(data, buffer.getAvailableMemoryArea<uint8_t>().begin());
+    }
 }
 
-void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child)
+void TupleBufferBuilder::addChildBuffer(const rust::Slice<const uint8_t> child, bool encoded, uint64_t bufferSize)
 {
-    auto childBuffer = bufferProvider.getUnpooledBuffer(child.size());
-    if (!childBuffer)
+    if (encoded)
     {
-        throw NES::CannotAllocateBuffer("allocating child buffer");
+        /// Decode the child
+        /// Create a vector and allocate as much size as the child buffer needs. This size is captured in the bufferSize arg
+        std::vector<char> decodedData{};
+        decodedData.reserve(bufferSize);
+        /// Create a byte span out of the child slice and decode the data into decodedData
+        std::span byteSpan = std::as_bytes(std::span(child));
+        NES::Decoder::DecodingResult decodingResult = decoder->decodeBuffer(byteSpan, decodedData);
+        INVARIANT(
+            decodingResult.status == NES::Decoder::DecodingResultStatus::SUCCESSFULLY_DECODED,
+            "Decoding of transmitted child buffer caused error");
+
+        /// The child content might fit into a normal buffer, so we do not neccessarely get an unpooled one.
+        auto childBuffer = (decodingResult.decompressedSize <= bufferProvider.getBufferSize())
+            ? std::optional(bufferProvider.getBufferBlocking())
+            : bufferProvider.getUnpooledBuffer(decodingResult.decompressedSize);
+
+        if (!childBuffer)
+        {
+            throw NES::CannotAllocateBuffer("allocating child buffer");
+        }
+
+        INVARIANT(
+            childBuffer->getBufferSize() >= decodingResult.decompressedSize,
+            "Unpooled Buffer size missmatch. Internal BufferSize: {} vs. External {}",
+            childBuffer->getBufferSize(),
+            decodingResult.decompressedSize);
+        std::memcpy(childBuffer->getAvailableMemoryArea<>().data(), decodedData.data(), decodingResult.decompressedSize);
+        /// Update number of tuples to match the amount of "used" bytes in the buffer
+        childBuffer->setNumberOfTuples(decodingResult.decompressedSize);
+        [[maybe_unused]] auto childIndex = buffer.storeChildBuffer(*childBuffer);
     }
+    else
+    {
+        auto childBuffer = (child.size() <= bufferProvider.getBufferSize()) ? std::optional(bufferProvider.getBufferBlocking())
+                                                                            : bufferProvider.getUnpooledBuffer(child.size());
+        if (!childBuffer)
+        {
+            throw NES::CannotAllocateBuffer("allocating child buffer");
+        }
 
-    INVARIANT(
-        childBuffer->getBufferSize() >= child.length(),
-        "Unpooled Buffer size mismatch. Internal BufferSize: {} vs. External {}",
-        childBuffer->getBufferSize(),
-        child.length());
+        INVARIANT(
+            childBuffer->getBufferSize() >= child.length(),
+            "Unpooled Buffer size mismatch. Internal BufferSize: {} vs. External {}",
+            childBuffer->getBufferSize(),
+            child.length());
 
-    std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
-    [[maybe_unused]] auto childIndex
-        = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
+        std::ranges::copy(child, childBuffer->getAvailableMemoryArea<uint8_t>().begin());
+        childBuffer->setNumberOfTuples(child.size());
+        [[maybe_unused]] auto childIndex
+            = buffer.storeChildBuffer(*childBuffer); /// index should already be present in the owning parent buffer
+    }
 }
 
 void identifyThread(const rust::str threadName, const rust::str host) /// NOLINT(misc-use-internal-linkage)

@@ -17,6 +17,7 @@
 #include <chrono>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <deque>
 #include <memory>
 #include <optional>
@@ -27,6 +28,7 @@
 #include <utility>
 #include <vector>
 #include <Configurations/Descriptor.hpp>
+#include <Encoders/Encoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -122,7 +124,8 @@ bool BackpressureHandler::empty() const
     return stateLock.rlock()->buffered.empty();
 }
 
-NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+NetworkSink::NetworkSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
     , backpressureHandler(
@@ -133,6 +136,7 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
     , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
     , senderQueueSize(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::SENDER_QUEUE_SIZE))
     , maxPendingAcks(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::MAX_PENDING_ACKS))
+    , encoder(std::move(encoder))
 {
 }
 
@@ -193,21 +197,114 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             .last_chunk = currentBuffer->isLastChunk(),
             .source_insertion_ts = currentBuffer->getSourceCreationTimestampInMS().getRawValue()};
 
-        /// Set child buffers
-        std::vector<rust::Slice<const uint8_t>> children;
-        children.reserve(currentBuffer->getNumberOfChildBuffers());
-        for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
+        SendResult sendResult;
+        if (encoder)
         {
-            auto childBuffer = currentBuffer->loadChildBuffer(VariableSizedAccess::Index(childIdx));
-            auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
-            children.emplace_back(childMemory);
+            /// If an encoder is provided, both the child buffers and the buffer itself may be encoded before transmission.
+            /// This functionality is meant for compression codecs that might reduce the overall size of the transmitted data.
+            /// Since we mainly care about size advantage, we will only send the encoded result if it is smaller than the original buffer.
+            std::vector<rust::Slice<const uint8_t>> children;
+            /// States if the ith child is encoded
+            std::vector<uint8_t> encodedChildren{};
+            std::vector<uint64_t> childBufferSizes{};
+            children.reserve(currentBuffer->getNumberOfChildBuffers());
+            encodedChildren.reserve(currentBuffer->getNumberOfChildBuffers());
+            childBufferSizes.reserve(currentBuffer->getNumberOfChildBuffers());
+            for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
+            {
+                /// Encode the child
+                auto childBuffer = currentBuffer->loadChildBuffer(VariableSizedAccess::Index(childIdx));
+                /// In TupleBufferRef.cpp, copyVarSizedAndIncrementMetaData, the number of tuples of a child buffer corresponds to the written bytes.
+                /// We can assume that each buffer in end-to-end queries passes through at least one emit, as we need to enter at least one pipeline for the initial input formatting,
+                /// thus we can always read out the amount of written bytes by using the tuple count.
+                /// We can use this information to only transmit actually relevant data and then set the number of tuples (bytes) correctly again in NetworkBindings.cpp
+                const std::span childMemory(childBuffer.getAvailableMemoryArea<>().data(), childBuffer.getNumberOfTuples());
+                std::vector<char> encodedChild{};
+                const auto encodingResult = encoder.value()->encodeBuffer(childMemory, encodedChild);
+                if (encodingResult.status == Encoder::EncodeStatusType::ENCODING_ERROR
+                    || encodingResult.compressedSize >= childBuffer.getNumberOfTuples())
+                {
+                    /// Send the unencoded child
+                    encodedChildren.emplace_back(0);
+                    std::span childAsInt8(childBuffer.getAvailableMemoryArea<const uint8_t>().data(), childBuffer.getNumberOfTuples());
+                    children.emplace_back(childAsInt8);
+                }
+                else
+                {
+                    encodedChildren.emplace_back(1);
+                    /// Copy the vector bytes into the child buffer. We need to do that because the vector contents need to persist until we call send_buffer
+                    /// Otherwise, once the scope of the current for iteration is exited, the vector seizes to exist.
+                    std::memcpy(childBuffer.getAvailableMemoryArea<>().data(), encodedChild.data(), encodingResult.compressedSize);
+                    /// The span of the childbuffer that we transmit only holds the encoded bytes
+                    const std::span encodedChildSpan(
+                        childBuffer.getAvailableMemoryArea<const uint8_t>().data(), encodingResult.compressedSize);
+                    children.emplace_back(encodedChildSpan);
+                }
+                childBufferSizes.emplace_back(childBuffer.getNumberOfTuples());
+            }
+            const std::span usedBufferMemory(
+                currentBuffer->getAvailableMemoryArea<>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
+            std::vector<char> encodedBuffer{};
+            /// Encode the buffer memory
+            const auto encodingResult = encoder.value()->encodeBuffer(usedBufferMemory, encodedBuffer);
+            if (encodingResult.status == Encoder::EncodeStatusType::ENCODING_ERROR
+                || encodingResult.compressedSize >= usedBufferMemory.size())
+            {
+                /// Encoded buffer is not smaller than the unencoded buffer. Default to sending the usedBufferMemory
+                std::span usedBufferMemoryAsInt8(reinterpret_cast<const uint8_t*>(usedBufferMemory.data()), usedBufferMemory.size());
+                sendResult = send_buffer(
+                    *channel.value(),
+                    metadata,
+                    false,
+                    rust::Slice<const uint8_t>(encodedChildren.data(), encodedChildren.size()),
+                    rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
+                    rust::Slice(usedBufferMemoryAsInt8),
+                    rust::Slice<const rust::Slice<const uint8_t>>(children));
+            }
+            else
+            {
+                /// Convert the encoded buffer vector span and send it
+                const std::span vectorAsSpan(reinterpret_cast<const uint8_t*>(encodedBuffer.data()), encodingResult.compressedSize);
+                sendResult = send_buffer(
+                    *channel.value(),
+                    metadata,
+                    true,
+                    rust::Slice<const uint8_t>(encodedChildren.data(), encodedChildren.size()),
+                    rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
+                    rust::Slice(vectorAsSpan),
+                    rust::Slice<const rust::Slice<const uint8_t>>(children));
+            }
+        }
+        else
+        {
+            /// Set child buffers
+            std::vector<rust::Slice<const uint8_t>> children;
+            children.reserve(currentBuffer->getNumberOfChildBuffers());
+            for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
+            {
+                auto childBuffer = currentBuffer->loadChildBuffer(VariableSizedAccess::Index(childIdx));
+                auto childMemory = childBuffer.getAvailableMemoryArea<const uint8_t>();
+                children.emplace_back(childMemory);
+            }
+
+            std::span usedBufferMemory(
+                currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
+            /// Set data and send over the network
+            /// Since not any children were encoded, we create a vector purely out of 0's
+            const std::vector<uint8_t> encodedChildren(inputBuffer.getNumberOfChildBuffers(), 0);
+            /// We do not need the childBufferSizes for non-encoded children but need to pass them anyway. However, the vector does not hold the actual
+            /// child buffer sizes here.
+            const std::vector<uint64_t> childBufferSizes(inputBuffer.getNumberOfChildBuffers(), 0);
+            sendResult = send_buffer(
+                *channel.value(),
+                metadata,
+                false,
+                rust::Slice(encodedChildren.data(), encodedChildren.size()),
+                rust::Slice<const uint64_t>(childBufferSizes.data(), childBufferSizes.size()),
+                rust::Slice(usedBufferMemory),
+                rust::Slice<const rust::Slice<const uint8_t>>(children));
         }
 
-        std::span usedBufferMemory(
-            currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
-        /// Set data and send over the network
-        const auto sendResult = send_buffer(
-            *channel.value(), metadata, rust::Slice(usedBufferMemory), rust::Slice<const rust::Slice<const uint8_t>>(children));
         switch (sendResult)
         {
             case SendResult::Closed: {
@@ -253,7 +350,10 @@ SinkValidationRegistryReturnType RegisterNetworkSinkValidation(SinkValidationReg
 
 SinkRegistryReturnType RegisterNetworkSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<NetworkSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<NetworkSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }

@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <optional>
 #include <string>
+#include <Encoders/Encoder.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Registry.hpp>
@@ -29,6 +31,7 @@ struct SinkRegistryArguments
 {
     BackpressureController backpressureController;
     SinkDescriptor sinkDescriptor;
+    std::optional<std::unique_ptr<Encoder>> encoder;
 };
 
 class SinkRegistry : public BaseRegistry<SinkRegistry, std::string, SinkRegistryReturnType, SinkRegistryArguments>

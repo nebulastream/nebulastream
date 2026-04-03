@@ -15,16 +15,23 @@
 #include <Sources/SourceProvider.hpp>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 
 #include <Async/AsyncSourceHandle.hpp>
 #include <Blocking/BlockingSourceHandle.hpp>
+
+#include <Decoders/DecoderProvider.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/NetworkSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
+#include <Util/Common.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/Strings.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
@@ -54,14 +61,56 @@ std::unique_ptr<SourceHandle> SourceProvider::lower(
             ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
             : defaultMaxInflightBuffers;
         const auto inputFormatterThreadingMode = sourceDescriptor.getInputFormatterDescriptor().getThreadingMode();
-        SourceRuntimeConfiguration runtimeConfig{.inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
+        SourceRuntimeConfiguration runtimeConfig{
+            .inflightBufferLimit = maxInflightBuffers, .inputFormatterThreadingMode = inputFormatterThreadingMode};
 
         return std::visit(
             Overloaded{
                 [&](std::unique_ptr<BlockingSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {
+                    /// Create Decoder if provided in source descriptor parameters
+                    if (const auto usedCodec = sourceDescriptor.getFromConfig(SourceDescriptor::CODEC); usedCodec != "None")
+                    {
+                        std::unique_ptr<Decoder> decoder = DecoderProvider::provideDecoder(usedCodec);
+                        if (toUpperCase(sourceDescriptor.getSourceType()) == "NETWORK")
+                        {
+                            /// This is a special case, since the Network Source takes care of decoding directly instead of relying on the source runner to do it.
+                            /// This is because the logic behind decoding a NES-internal buffer is vastly different than decoding a raw buffer
+                            /// It is stateless and the buffer includes children that must be decoded aswell.
+                            /// However, the source runner is not aware of the unique source types.
+                            /// Therefore, we create a slightly "hacky" solution for this POC, where the Network Source directly obtains the decoder
+                            /// as member and the Source Handle receives no decoder at all.
+                            /// The Network Source will then pass the decoder to the TupleBufferBuilder when receiving a tuple buffer.
+                            if (NetworkSource* raw = dynamic_cast<NetworkSource*>(sourceImpl.get()))
+                            {
+                                sourceImpl.release();
+                                std::unique_ptr<NetworkSource> networkSource(raw);
+                                networkSource->setDecoder(std::move(decoder));
+                                return std::make_unique<BlockingSourceHandle>(
+                                    std::move(backpressureListener),
+                                    std::move(originId),
+                                    std::move(runtimeConfig),
+                                    bufferPool,
+                                    std::move(networkSource),
+                                    std::nullopt);
+                            }
+                            throw UnknownSourceType("Source Name provided was Network, but no Network Source was created");
+                        }
+                        return std::make_unique<BlockingSourceHandle>(
+                            std::move(backpressureListener),
+                            std::move(originId),
+                            std::move(runtimeConfig),
+                            bufferPool,
+                            std::move(sourceImpl),
+                            std::move(decoder));
+                    }
                     return std::make_unique<BlockingSourceHandle>(
-                        std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(sourceImpl));
+                        std::move(backpressureListener),
+                        std::move(originId),
+                        std::move(runtimeConfig),
+                        bufferPool,
+                        std::move(sourceImpl),
+                        std::nullopt);
                 },
                 [&](std::unique_ptr<AsyncSource>&& sourceImpl) -> std::unique_ptr<SourceHandle>
                 {

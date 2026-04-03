@@ -45,12 +45,14 @@ BlockingSourceRunner::BlockingSourceRunner(
     const OriginId originId,
     std::shared_ptr<AbstractBufferProvider> poolProvider,
     std::unique_ptr<BlockingSource> sourceImplementation,
-    const InputFormatterThreadingMode inputFormatterThreadingMode)
+    const InputFormatterThreadingMode inputFormatterThreadingMode,
+    std::optional<std::unique_ptr<Decoder>> decoder)
     : originId(originId)
     , localBufferManager(std::move(poolProvider))
     , sourceImplementation(std::move(sourceImplementation))
     , backpressureListener(std::move(backpressureListener))
     , inputFormatterThreadingMode(inputFormatterThreadingMode)
+    , decoderImplementation(std::move(decoder))
 {
     PRECONDITION(this->localBufferManager, "Invalid buffer manager");
 }
@@ -158,7 +160,8 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     BackpressureListener backpressureListener,
     BlockingSource& source,
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
-    const EmitFn& emit)
+    const EmitFn& emit,
+    std::optional<Decoder*> decoder)
 {
     source.open(bufferProvider);
     SCOPE_EXIT
@@ -170,7 +173,7 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
     while (backpressureListener.wait(stopToken), !stopToken.stop_requested())
     {
         /// 4 Things that could happen:
-        /// 1. Happy Path: Source produces a tuple buffer and emit is called. The loop continues.
+        /// 1. Happy Path: Source produces a tuple buffer, we optionally decode the tuple buffer, and emit is called. The loop continues.
         /// 2. Stop was requested by the owner of the data source. Stop is propagated to the source implementation.
         ///    The thread exits with `StopRequested`
         /// 3. EndOfStream was signaled by the source implementation. It returned 0 bytes, but the Stop Token was not triggered.
@@ -199,7 +202,30 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
             /// The source read in raw bytes, thus we don't know the number of tuples yet.
             /// The InputFormatter expects that the source set the number of bytes this way and uses it to determine the number of tuples.
             emptyBuffer->setNumberOfTuples(fillTupleResult.getNumberOfBytes());
-            emit(std::move(*emptyBuffer), requiresMetadata);
+            /// If a decoder implementation is given, the source produces encoded data. We must decode the empty buffer and emit the result.
+            if (decoder.has_value())
+            {
+                /// Lambda function to emit a decoded buffer and optionally provide an empty, new one.
+                auto emitAndProvide
+                    = [&emit, &bufferProvider](
+                          TupleBuffer& filledDecodedBuffer, const Decoder::DecodeStatusType decodeStatus) -> std::optional<TupleBuffer>
+                {
+                    /// Emit the filled buffer.
+                    emit(std::move(filledDecodedBuffer), true);
+                    /// If required, provide a new, empty buffer.
+                    return decodeStatus == Decoder::DecodeStatusType::DECODING_REQUIRES_ANOTHER_BUFFER
+                        ? std::optional(bufferProvider->getBufferBlocking())
+                        : std::nullopt;
+                };
+
+                /// Get an initial empty buffer for the decoded data
+                auto decodedBuffer = bufferProvider->getBufferBlocking();
+                decoder.value()->decodeAndEmit(*emptyBuffer, decodedBuffer, emitAndProvide);
+            }
+            else
+            {
+                emit(std::move(*emptyBuffer), true);
+            }
         }
         else
         {
@@ -219,6 +245,7 @@ void dataBlockingSourceRunner(
     BackpressureListener backpressureListener,
     std::promise<SourceImplementationTermination> result,
     BlockingSource* source,
+    std::optional<Decoder*> decoder,
     SourceReturnType::EmitFunction emit,
     const OriginId originId,
     const InputFormatterThreadingMode threadingMode,
@@ -240,7 +267,7 @@ void dataBlockingSourceRunner(
                     emit(originId, SourceReturnType::Data{std::move(buffer)}, stopToken);
                 };
                 result.set_value_at_thread_exit(dataBlockingSourceRunnerRoutine(
-                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit));
+                    stopToken, std::move(backpressureListener), *source, std::move(bufferProvider), dataEmit, decoder));
                 if (!stopToken.stop_requested())
                 {
                     emit(originId, SourceReturnType::EoS{}, stopToken);
@@ -290,12 +317,16 @@ bool BlockingSourceRunner::start(SourceReturnType::EmitFunction&& emitFunction)
     std::promise<SourceImplementationTermination> terminationPromise;
     this->terminationFuture = terminationPromise.get_future();
 
+    /// If we have a decoder implementation, we pass a pointer to it to the sourceThread. Otherwise we pass nullopt
+    std::optional<Decoder*> optionalDecoderPtr = decoderImplementation ? std::optional(decoderImplementation->get()) : std::nullopt;
+
     Thread BlockingSourceRunner(
         fmt::format("DataSrc-{}", originId),
         dataBlockingSourceRunner,
         backpressureListener,
         std::move(terminationPromise),
         sourceImplementation.get(),
+        optionalDecoderPtr,
         std::move(emitFunction),
         originId,
         inputFormatterThreadingMode,
@@ -365,6 +396,7 @@ std::ostream& operator<<(std::ostream& out, const BlockingSourceRunner& Blocking
     out << "\nBlockingSourceRunner(";
     out << "\n  originId: " << BlockingSourceRunner.originId;
     out << "\n  source implementation:" << *BlockingSourceRunner.sourceImplementation;
+    out << "\n decoder implementation:" << *BlockingSourceRunner.decoderImplementation;
     out << ")\n";
     return out;
 }

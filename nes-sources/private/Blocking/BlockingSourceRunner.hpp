@@ -19,9 +19,11 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <stop_token>
 #include <thread>
+#include <Decoders/Decoder.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -65,7 +67,8 @@ public:
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         std::shared_ptr<AbstractBufferProvider> bufferManager,
         std::unique_ptr<BlockingSource> sourceImplementation,
-        InputFormatterThreadingMode inputFormatterThreadingMode);
+        InputFormatterThreadingMode inputFormatterThreadingMode,
+        std::optional<std::unique_ptr<Decoder>> decoderImplementation);
 
     BlockingSourceRunner() = delete;
     BlockingSourceRunner(const BlockingSourceRunner& other) = delete;
@@ -103,6 +106,10 @@ protected:
     /// uses the terminationFuture), then the terminationFuture.
     std::future<SourceImplementationTermination> terminationFuture;
     Thread thread;
+
+    /// Will be set to a specific decoder instance, if the source emits encoded data. In the running routine, the decoder will be used to
+    /// decode the data inside a tuple buffer before emitting to the input formatter.
+    std::optional<std::unique_ptr<Decoder>> decoderImplementation;
 
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
