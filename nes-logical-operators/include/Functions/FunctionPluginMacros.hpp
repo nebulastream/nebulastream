@@ -239,7 +239,8 @@ inline std::string explainFunction(std::string_view name, const std::vector<Logi
         } \
         if (arguments.children.size() != (arity)) \
         { \
-            throw CannotDeserialize(#name "LogicalFunction requires " #arity " children, but got {}", arguments.children.size()); \
+            throw CannotDeserialize( \
+                #name "LogicalFunction requires {} children, but got {}", static_cast<size_t>(arity), arguments.children.size()); \
         } \
         return name##LogicalFunction(std::move(arguments.children)); \
     } \
