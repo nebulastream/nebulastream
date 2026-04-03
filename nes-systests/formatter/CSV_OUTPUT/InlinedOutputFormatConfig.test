@@ -38,3 +38,15 @@ SELECT * FROM floatSource INTO File('CSV' as `SINK`.OUTPUT_FORMAT, 'ZMIJF32' as 
 ----
 42.42,65.1515151527
 9.0,99.999999999
+
+# Examples for uncompiled output formatter:
+# Explicitly set OUTPUT_FORMAT to NATIVE
+SELECT * from floatSource INTO File('NATIVE' as `SINK`.OUTPUT_FORMAT, 'CSV' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+42.42,65.1515151527
+9.0,99.999999999
+
+SELECT * from floatSource INTO CHECKSUM('NATIVE' as `SINK`.OUTPUT_FORMAT, 'CSV' as `SINK`.LEGACY_OUTPUT_FORMAT);
+----
+2 1433
+
