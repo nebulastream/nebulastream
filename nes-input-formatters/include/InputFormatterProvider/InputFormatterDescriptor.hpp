@@ -35,6 +35,7 @@ class InputFormatterDescriptor final : public Descriptor
     static constexpr std::string_view TYPE_STRING{"type"};
 
 public:
+    explicit InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config);
     ~InputFormatterDescriptor() = default;
 
     friend std::ostream& operator<<(std::ostream& out, const InputFormatterDescriptor& inputFormatterDescriptor);
@@ -133,7 +134,6 @@ private:
 
     /// Add LowerSchemaProvider as friend, so that it can construct the descriptor
     std::string inputFormatterType;
-    explicit InputFormatterDescriptor(std::string inputFormatterType, DescriptorConfig::Config config);
 };
 
 template <>

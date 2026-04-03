@@ -32,7 +32,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
@@ -150,7 +150,8 @@ void NES::TestSourceControl::failDuringClose(std::chrono::milliseconds blockFor)
     fail_during_close = true;
 }
 
-NES::Source::FillTupleBufferResult NES::TestSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken)
+NES::BlockingSource::FillTupleBufferResult
+NES::TestSource::fillTupleBuffer(NES::TupleBuffer& tupleBuffer, const std::stop_token& stopToken, size_t)
 {
     TestSourceControl::ControlData controlData;
     /// poll from the queue as long as stop was not requested.
@@ -228,14 +229,14 @@ NES::TestSource::~TestSource()
     control->destroyed.set_value();
 }
 
-std::pair<std::unique_ptr<NES::SourceHandle>, std::shared_ptr<NES::TestSourceControl>>
+std::pair<std::unique_ptr<NES::BlockingSourceHandle>, std::shared_ptr<NES::TestSourceControl>>
 NES::getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
 {
     auto ctrl = std::make_shared<TestSourceControl>();
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
-    SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
+    SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS, InputFormatterThreadingMode::PARALLEL};
 
-    auto sourceHandle = std::make_unique<SourceHandle>(
+    auto sourceHandle = std::make_unique<BlockingSourceHandle>(
         std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
     return {std::move(sourceHandle), ctrl};
 }

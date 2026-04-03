@@ -25,11 +25,11 @@
 #include <utility>
 #include <variant>
 #include <vector>
+#include <Blocking/BlockingSourceHandle.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Sources/BlockingSource.hpp>
 #include <Util/Overloaded.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
@@ -92,10 +92,10 @@ private:
     folly::MPMCQueue<ControlData> queue{DEFAULT_QUEUE_SIZE};
 };
 
-class TestSource : public Source
+class TestSource : public BlockingSource
 {
 public:
-    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken) override;
+    FillTupleBufferResult fillTupleBuffer(TupleBuffer& tupleBuffer, const std::stop_token& stopToken, size_t) override;
     void open(std::shared_ptr<AbstractBufferProvider>) override;
     void close() override;
 
@@ -111,7 +111,7 @@ private:
     std::shared_ptr<TestSourceControl> control;
 };
 
-std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+std::pair<std::unique_ptr<BlockingSourceHandle>, std::shared_ptr<TestSourceControl>>
 getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
 }

@@ -55,6 +55,7 @@
 #include <EmitPhysicalOperator.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterValidationProvider.hpp>
 #include <Pipeline.hpp>
 #include <ScanPhysicalOperator.hpp>
 #include <TestTaskQueue.hpp>
@@ -131,44 +132,11 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
             Overloaded{
                 [&](SourceReturnType::Data data) { resultBuffers.emplace_back(std::move(data.buffer)); },
                 [](SourceReturnType::EoS) { NES_DEBUG("Reached EoS in source"); },
-                [](SourceReturnType::Error error) { throw std::move(error.ex); }},
+                [](SourceReturnType::Error error) { throw std::move(error.ex); },
+                [](SourceReturnType::Execute) { throw NotImplemented("sequential execution not implemented"); }},
             std::move(returnType));
         return SourceReturnType::EmitResult::SUCCESS;
     };
-}
-
-ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
-{
-    auto validParserConfig = ParserConfig{};
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
-    {
-        validParserConfig.parserType = parserType->second;
-    }
-    else
-    {
-        throw InvalidConfigParameter("Parser configuration must contain: type");
-    }
-    if (const auto tupleDelimiter = parserConfig.find("tuple_delimiter"); tupleDelimiter != parserConfig.end())
-    {
-        /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
-        PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
-        validParserConfig.tupleDelimiter = tupleDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
-        validParserConfig.tupleDelimiter = '\n';
-    }
-    if (const auto fieldDelimiter = parserConfig.find("field_delimiter"); fieldDelimiter != parserConfig.end())
-    {
-        validParserConfig.fieldDelimiter = fieldDelimiter->second;
-    }
-    else
-    {
-        NES_DEBUG("Parser configuration did not contain: fieldDelimiter, using default: ,");
-        validParserConfig.fieldDelimiter = ",";
-    }
-    return validParserConfig;
 }
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
@@ -187,7 +155,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
-    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value())};
+    return {std::move(backpressureController), sourceProvider.lower(NES::OriginId(1), backpressureListener, sourceDescriptor.value(), false, 1)};
 }
 
 void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t numExpectedBuffers)
@@ -201,19 +169,9 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
     }
 }
 
-std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const std::unordered_map<std::string, std::string>& parserConfiguration,
-    const Schema& schema,
-    const MemoryLayoutType memoryLayoutType,
-    const size_t sizeOfFormattedBuffers,
-    const bool isCompiled)
-{
-    const auto validatedParserConfiguration = validateAndFormatParserConfig(parserConfiguration);
-    return createInputFormatter(validatedParserConfiguration, schema, memoryLayoutType, sizeOfFormattedBuffers, isCompiled);
-}
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const ParserConfig& parserConfiguration,
+    const DescriptorConfig::Config& parserConfiguration,
     const Schema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,
@@ -222,7 +180,10 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     constexpr OperatorHandlerId emitOperatorHandlerId = INITIAL<OperatorHandlerId>;
 
     auto memoryProvider = LowerSchemaProvider::lowerSchema(sizeOfFormattedBuffers, schema, memoryLayoutType);
-    auto scanOp = ScanPhysicalOperator(provideInputFormatterTupleBufferRef(parserConfiguration, memoryProvider), schema.getFieldNames());
+    auto inputFormatterType = std::get<std::string>(parserConfiguration.at("type"));
+    auto scanOp = ScanPhysicalOperator(
+        provideInputFormatterTupleBufferRef(InputFormatterDescriptor{inputFormatterType, parserConfiguration}, memoryProvider),
+        schema.getFieldNames());
     scanOp.setChild(EmitPhysicalOperator(emitOperatorHandlerId, std::move(memoryProvider)));
 
     auto physicalScanPipeline = std::make_shared<Pipeline>(std::move(scanOp));
