@@ -13,7 +13,7 @@
 function(add_nes_logical_operators_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-logical-operators)
+    target_link_libraries(${TARGET_NAME} nes-logical-operators nes-input-formatters-uncompiled)
 endfunction()
 
 add_nes_logical_operators_test(nes-logical-plan-test "LogicalPlanTest.cpp")

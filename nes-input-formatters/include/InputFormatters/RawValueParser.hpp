@@ -28,7 +28,6 @@
 #include <Util/Strings.hpp>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
-#include <InputParserRegistry.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
@@ -57,22 +56,15 @@ void parseRawValueIntoRecord(
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
 
+
 /// Instantiate the input parser for this value and parse the value with it
-/// Todo: Maybe this is not needed anymore and will fully be replaced by the lazy variant
-inline VarVal parseFixedSizeIntoVarVal(
-    const bool nullable,
+/// Todo: This might not be needed anymore on this branch
+VarVal parseFixedSizeIntoVarVal(
+    bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
     const nautilus::val<uint64_t>& fieldSize,
     const std::vector<std::string>& nullValues,
-    const std::string& parserType)
-{
-    constexpr InputParserRegistryArguments args{};
-    if (const auto parser = InputParserRegistry::instance().create(parserType, args))
-    {
-        return parser.value()->parseToVarVal(nullable, fieldAddress, fieldSize, nullValues);
-    }
-    throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
-}
+    const std::string& parserType);
 
 VarVal parseLazyIntoVarVal(
     bool nullable,

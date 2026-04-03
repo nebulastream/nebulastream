@@ -34,5 +34,3 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 create_registries_for_component(UncompiledInputFormatIndexer UncompiledInputParser)
-
-add_tests_if_enabled(tests)

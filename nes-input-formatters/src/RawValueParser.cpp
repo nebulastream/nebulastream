@@ -39,6 +39,8 @@
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
+#include <InputParserRegistry.hpp>
+
 
 namespace NES
 {
@@ -48,6 +50,22 @@ bool checkIsNullProxy(const int8_t* fieldAddress, const uint64_t fieldSize, cons
     PRECONDITION(nullValues != nullptr, "NullValues is expected to be not null!");
     const std::string fieldAsString{fieldAddress, fieldAddress + fieldSize};
     return std::ranges::any_of(*nullValues, [fieldAsString](const std::string& nullValue) { return nullValue == fieldAsString; });
+}
+
+VarVal parseFixedSizeIntoVarVal(
+    const bool nullable,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::vector<std::string>& nullValues,
+    const std::string& parserType)
+
+{
+    constexpr InputParserRegistryArguments args{};
+    if (const auto parser = InputParserRegistry::instance().create(parserType, args))
+    {
+        return parser.value()->parseToVarVal(nullable, fieldAddress, fieldSize, nullValues);
+    }
+    throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
 }
 
 void parseRawValueIntoRecord(

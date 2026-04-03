@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <InputFormatterTestUtil.hpp>
+#include <InputFormatterValidationProvider.hpp>
 
 /// NOLINTBEGIN(readability-magic-numbers)
 namespace NES
@@ -52,13 +53,12 @@ TEST_F(SpecificSequenceTest, oneTupleWithTupleDelimiters)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -71,13 +71,12 @@ TEST_F(SpecificSequenceTest, testTaskPipelineExecutingOutOfOrder)
         .numRequiredBuffers = 3, /// 2 buffers for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789)}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "789\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,123456"}}});
 }
 
 /// Threads may process buffers out of order. This test simulates a scenario where the second thread process the second buffer first.
@@ -90,13 +89,12 @@ TEST_F(SpecificSequenceTest, testTwoFullTuplesInFirstAndLastBuffer)
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20, /// 8 bytes metadata, 12 bytes per formatted tuple
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 12345)}, {TestTuple{12345, 123456789}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,12345\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,123456789\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,12345\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,123456789\n"}}});
 }
 
 /// TODO #1154: We currently don't support delimiters that are larger than one byte
@@ -109,13 +107,12 @@ TEST_F(SpecificSequenceTest, DISABLED_testDelimiterThatIsMoreThanOneCharacter)
         .numRequiredBuffers = 4, /// 2 buffers for raw data, two buffers for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "--", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "--"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 1234)}, {TestTuple{12345, 12345678}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,1234--"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,12345678--"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "123456789,1234--"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "12345,12345678--"}}});
 }
 
 /// Index buffer can only represent a single tuple. Requires 7 (nested) index buffers for first buffer ("1\n2\n3\n4\n5\n6\n7\n8\n").
@@ -129,16 +126,15 @@ TEST_F(SpecificSequenceTest, testMultipleTuplesInOneBuffer)
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers
         = 16, /// size of formatted tuple: 4 bytes, size of indexes: 8 bytes <-- 8 bytes metadata: 1 tuple per index buffer, 4 formatted buffers, 12 index buffers
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{
             {{TestTuple{1}, TestTuple{2}, TestTuple{3}, TestTuple{4}},
              {TestTuple{5}, TestTuple{6}, TestTuple{7}, TestTuple{8}},
              {TestTuple{1234}, TestTuple{5678}, TestTuple{1001}}}}},
-        .rawBytesPerThread
-        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "1\n2\n3\n4\n5\n6\n7\n8\n"},
-           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "1234\n5678\n1001\n"}}});
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "1\n2\n3\n4\n5\n6\n7\n8\n"},
+                              /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "1234\n5678\n1001\n"}}});
 }
 
 /// The third buffer has sequence number 2, connecting the first buffer (implicit delimiter) and the third (explicit delimiter)
@@ -152,7 +148,7 @@ TEST_F(SpecificSequenceTest, triggerSpanningTupleWithThirdBufferWithoutDelimiter
         .numRequiredBuffers = 4, /// 3 buffers for raw data, 1 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(123456789, 123456789, 123456789, 123456789)}}}},
@@ -173,7 +169,7 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
         .numRequiredBuffers = 6, /// 4 buffers for raw data, 2 buffer from results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 28,
-        .parserConfig = {.parserType = "CSV", .tupleDelimiter = "\n", .fieldDelimiter = ","},
+        .parserConfig = InputFormatterValidationProvider::provide("CSV", {{"tupleDelimiter", "\n"}, {"fieldDelimiter", ","}}).value(),
         .testSchema = {INT32, INT32, INT32, INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
