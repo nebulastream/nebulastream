@@ -15,8 +15,8 @@
 #pragma once
 
 #include <cstdint>
-#include <vector>
 #include <string>
+#include <vector>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <InputParser.hpp>
 #include <val_arith.hpp>
@@ -33,6 +33,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultCHARInputParser final : public InputParser
@@ -44,6 +50,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultF32InputParser final : public InputParser
@@ -55,6 +67,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultF64InputParser final : public InputParser
@@ -66,6 +84,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultINT8InputParser final : public InputParser
@@ -77,6 +101,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultINT16InputParser final : public InputParser
@@ -88,6 +118,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultINT32InputParser final : public InputParser
@@ -99,6 +135,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultINT64InputParser final : public InputParser
@@ -110,6 +152,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultUINT8InputParser final : public InputParser
@@ -121,6 +169,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultUINT16InputParser final : public InputParser
@@ -132,6 +186,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultUINT32InputParser final : public InputParser
@@ -143,6 +203,12 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 
 class DefaultUINT64InputParser final : public InputParser
@@ -154,5 +220,11 @@ public:
         const nautilus::val<int8_t*>& fieldAddress,
         const nautilus::val<uint64_t>& fieldSize,
         const std::vector<std::string>& nullValues) const override;
+
+    [[nodiscard]] VarVal parseLazyToVarVal(
+        const bool& nullable,
+        const nautilus::val<bool>& isNull,
+        const nautilus::val<int8_t*>& fieldAddress,
+        const nautilus::val<uint64_t>& fieldSize) const override;
 };
 }

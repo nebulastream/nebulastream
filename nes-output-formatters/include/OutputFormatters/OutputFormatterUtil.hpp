@@ -22,7 +22,6 @@
 #include <string>
 #include <string_view>
 #include <type_traits>
-
 #include <DataTypes/DataType.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
@@ -31,6 +30,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/VariableSizedAccess.hpp>
 #include <Util/Strings.hpp>
+#include <std/cstring.h>
 #include <ErrorHandling.hpp>
 #include <OutputParserRegistry.hpp>
 #include <function.hpp>

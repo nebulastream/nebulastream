@@ -19,6 +19,8 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -94,6 +96,7 @@ TupleBufferRef::WriteRecordResult ColumnTupleBufferRef::writeRecord(
             }
             auto fieldAddress = calculateFieldAddress(bufferAddress, recordIndex, dataTypeSize, columnOffset);
             const auto& value = rec.read(name);
+            const VarVal parsedVal = value.getAsParsedUnderlyingValue();
             storeValue(type, recordBuffer, fieldAddress, value, bufferProvider);
         }
         writtenRecords = 1;

@@ -91,6 +91,9 @@ void HJBuildPhysicalOperator::setup(ExecutionContext& executionCtx, CompilationC
 
 void HJBuildPhysicalOperator::execute(ExecutionContext& ctx, Record& record) const
 {
+    /// Convert lazy values into their parsed form
+    record.parseAllFields();
+
     /// Getting the operator handler from the local state
     auto* localState = dynamic_cast<WindowOperatorBuildLocalState*>(ctx.getLocalState(id));
     auto operatorHandler = localState->getOperatorHandler();

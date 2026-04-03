@@ -24,15 +24,18 @@
 #include <vector>
 
 #include <DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/LazyValueProvider.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <magic_enum/magic_enum.hpp>
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val.hpp>
+#include <val_arith.hpp>
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
@@ -57,81 +60,77 @@ void parseRawValueIntoRecord(
     const QuotationType quotationType,
     const std::string& parserType)
 {
-    switch (dataType.type)
+    /// Raw values will be transformed into a lazy representation of pointer, size and underlying datatype instead of being parsed immediatly.
+    /// Should a field be needed in its parsed form for the execution of a logical function, it will be parsed in the overridden function in LazyValueRepresentation
+    /// For this, we pass the parser type string into the members of the lazy value representation
+    if (dataType.type == DataType::Type::UNDEFINED)
     {
-        case DataType::Type::BOOLEAN:
-        case DataType::Type::INT8:
-        case DataType::Type::INT16:
-        case DataType::Type::INT32:
-        case DataType::Type::INT64:
-        case DataType::Type::UINT8:
-        case DataType::Type::UINT16:
-        case DataType::Type::UINT32:
-        case DataType::Type::UINT64:
-        case DataType::Type::FLOAT32:
-        case DataType::Type::FLOAT64: {
-            const auto varVal = parseFixedSizeIntoVarVal(dataType.nullable, fieldAddress, fieldSize, nullValues, parserType);
-            record.write(fieldName, varVal);
-            return;
-        }
-        case DataType::Type::CHAR: {
-            switch (quotationType)
-            {
-                case QuotationType::NONE: {
-                    const auto varVal = parseFixedSizeIntoVarVal(dataType.nullable, fieldAddress, fieldSize, nullValues, parserType);
-                    record.write(fieldName, varVal);
-                    return;
-                }
-                case QuotationType::DOUBLE_QUOTE: {
-                    const auto varVal = parseFixedSizeIntoVarVal(
-                        dataType.nullable,
-                        fieldAddress + nautilus::val<uint32_t>(1),
-                        fieldSize - nautilus::val<uint32_t>(2),
-                        nullValues,
-                        parserType);
-                    record.write(fieldName, varVal);
-                    return;
-                }
-            }
-            std::unreachable();
-        }
-        case DataType::Type::VARSIZED: {
-            nautilus::val<bool> isNull = false;
-            if (dataType.nullable)
-            {
-                isNull = nautilus::invoke(
-                    {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = false},
-                    checkIsNullProxy,
-                    fieldAddress,
-                    fieldSize,
-                    nautilus::val<const std::vector<std::string>*>{&nullValues});
-            }
-
-            switch (quotationType)
-            {
-                case QuotationType::NONE: {
-                    const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress);
-                    const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize);
-                    const VariableSizedData varSized{ptr, size};
-                    const VarVal varVal{varSized, dataType.nullable, isNull};
-                    record.write(fieldName, varVal);
-                    return;
-                }
-                case QuotationType::DOUBLE_QUOTE: {
-                    const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress + nautilus::val<uint32_t>(1));
-                    const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize - nautilus::val<uint64_t>(2));
-                    const VariableSizedData varSized{ptr, size};
-                    const VarVal varVal{varSized, dataType.nullable, isNull};
-                    record.write(fieldName, varVal);
-                    return;
-                }
-            }
-            std::unreachable();
-        }
-        case DataType::Type::UNDEFINED:
-            throw NotImplemented("Cannot parse undefined type.");
+        throw NotImplemented("Cannot parse undefined type.");
     }
-    std::unreachable();
+    nautilus::val<bool> isNull = false;
+    if (dataType.nullable)
+    {
+        /// For lazy values, it is pivotal to know, if the underlying val is null, in case we want to perform overridden logical functions with the lazy vals
+        isNull = nautilus::invoke(
+            {.modRefInfo = nautilus::ModRefInfo::Ref, .noUnwind = false},
+            checkIsNullProxy,
+            fieldAddress,
+            fieldSize,
+            nautilus::val<const std::vector<std::string>*>{&nullValues});
+    }
+    if (dataType.type == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
+    {
+        const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+            std::string(magic_enum::enum_name(dataType.type)),
+            fieldAddress + nautilus::val<uint32_t>(1),
+            fieldSize - nautilus::val<uint32_t>(2),
+            dataType,
+            isNull,
+            parserType);
+        record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+        return;
+    }
+    if (dataType.type == DataType::Type::VARSIZED)
+    {
+        switch (quotationType)
+        {
+            case QuotationType::NONE: {
+                const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress);
+                const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize);
+                const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+                    std::string(magic_enum::enum_name(dataType.type)), ptr, size, dataType, isNull, parserType);
+                record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+                return;
+            }
+            case QuotationType::DOUBLE_QUOTE: {
+                const auto ptr = nautilus::select(isNull, nautilus::val<int8_t*>{nullptr}, fieldAddress + nautilus::val<uint32_t>(1));
+                const auto size = nautilus::select(isNull, nautilus::val<uint64_t>{0}, fieldSize - nautilus::val<uint64_t>(2));
+                const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+                    std::string(magic_enum::enum_name(dataType.type)), ptr, size, dataType, isNull, parserType);
+                record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+                return;
+            }
+        }
+        std::unreachable();
+    }
+    const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
+        std::string(magic_enum::enum_name(dataType.type)), fieldAddress, fieldSize, dataType, isNull, parserType);
+    record.write(fieldName, {lazyVal, dataType.nullable, isNull});
+}
+
+VarVal parseLazyIntoVarVal(
+    const bool nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& parserType)
+{
+    constexpr InputParserRegistryArguments args{};
+    if (const auto parser = InputParserRegistry::instance().create(parserType, args))
+    {
+        return parser.value()->parseLazyToVarVal(nullable, isNull, fieldAddress, fieldSize);
+    }
+    throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
 }
 
 }

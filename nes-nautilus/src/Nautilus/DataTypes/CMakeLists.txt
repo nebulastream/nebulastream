@@ -13,4 +13,8 @@
 add_source_files(nes-nautilus
         VariableSizedData.cpp
         VarVal.cpp
+        LazyValueRepresentation.cpp
+        LazyValueProvider.cpp
 )
+
+add_subdirectory(LazyValueRepresentations)

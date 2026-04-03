@@ -9,7 +9,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
 include_directories(tests/include)
 
 # Set Sources and Headers
@@ -18,7 +18,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
-target_link_libraries(nes-nautilus PUBLIC nes-memory nes-output-formatters)
+target_link_libraries(nes-nautilus PUBLIC nes-memory nes-input-formatters nes-output-formatters nes-input-formatters-registry)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
@@ -28,11 +28,13 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
 endif ()
 
 add_tests_if_enabled(tests)
+nautilus_inline(nes-nautilus)
 
 # Add nes-nautilus to the include directories
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>
+        PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>
 )
 
 # Link with the nautilus library
@@ -51,3 +53,5 @@ target_link_libraries(nes-nautilus PUBLIC nautilus::nautilus
         MLIRMathToLLVM
         MLIRSCFToControlFlow
 )
+
+create_registries_for_component(LazyValueRepresentation)

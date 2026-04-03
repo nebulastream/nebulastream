@@ -73,6 +73,14 @@ nautilus::val<std::ostream>& operator<<(nautilus::val<std::ostream>& os, const R
     return os;
 }
 
+void Record::parseAllFields()
+{
+    for (auto& [fieldName, value] : nautilus::static_iterable(recordFields))
+    {
+        value.parseUnderlyingVal();
+    }
+}
+
 nautilus::val<uint64_t> Record::getNumberOfFields() const
 {
     return recordFields.size();

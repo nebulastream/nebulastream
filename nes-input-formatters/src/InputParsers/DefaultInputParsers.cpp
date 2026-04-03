@@ -16,13 +16,13 @@
 #include <memory>
 
 #include <Nautilus/DataTypes/DataTypesUtil.hpp>
+#include <Util/InlineTagMacro.hpp>
 #include <Util/InvokeMacro.hpp>
 #include <Util/Strings.hpp>
 #include <InputParserRegistry.hpp>
 #include <RawValueParser.hpp>
 #include <function.hpp>
 #include <val_ptr.hpp>
-#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
@@ -96,6 +96,25 @@ VarVal DefaultBOOLInputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultBOOLInputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<bool> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<bool, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<bool> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<bool, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultCHARInputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -119,6 +138,26 @@ VarVal DefaultCHARInputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultCHARInputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<char> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<char, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<char> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<char, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
+
 VarVal DefaultF32InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -140,6 +179,25 @@ VarVal DefaultF32InputParser::parseToVarVal(
     const nautilus::val<float> nautilusValue
         = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<float, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
+}
+
+VarVal DefaultF32InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<float> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<float, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<float> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<float, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
 }
 
 VarVal DefaultF64InputParser::parseToVarVal(
@@ -165,6 +223,25 @@ VarVal DefaultF64InputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultF64InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<double> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<double, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<double> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<double, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultINT8InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -186,6 +263,25 @@ VarVal DefaultINT8InputParser::parseToVarVal(
     const nautilus::val<int8_t> nautilusValue
         = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int8_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
+}
+
+VarVal DefaultINT8InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<int8_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int8_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<int8_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int8_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
 }
 
 VarVal DefaultINT16InputParser::parseToVarVal(
@@ -211,6 +307,25 @@ VarVal DefaultINT16InputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultINT16InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<int16_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int16_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<int16_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int16_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultINT32InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -232,6 +347,25 @@ VarVal DefaultINT32InputParser::parseToVarVal(
     const nautilus::val<int32_t> nautilusValue
         = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int32_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
+}
+
+VarVal DefaultINT32InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<int32_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int32_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<int32_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int32_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
 }
 
 VarVal DefaultINT64InputParser::parseToVarVal(
@@ -257,6 +391,25 @@ VarVal DefaultINT64InputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultINT64InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<int64_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int64_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<int64_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<int64_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultUINT8InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -278,6 +431,25 @@ VarVal DefaultUINT8InputParser::parseToVarVal(
     const nautilus::val<uint8_t> nautilusValue
         = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint8_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
+}
+
+VarVal DefaultUINT8InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<uint8_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint8_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<uint8_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint8_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
 }
 
 VarVal DefaultUINT16InputParser::parseToVarVal(
@@ -303,6 +475,25 @@ VarVal DefaultUINT16InputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultUINT16InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<uint16_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint16_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<uint16_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint16_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultUINT32InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -326,6 +517,25 @@ VarVal DefaultUINT32InputParser::parseToVarVal(
     return VarVal{nautilusValue, nullable, false};
 }
 
+VarVal DefaultUINT32InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<uint32_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint32_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<uint32_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint32_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
+}
+
 VarVal DefaultUINT64InputParser::parseToVarVal(
     bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -347,6 +557,25 @@ VarVal DefaultUINT64InputParser::parseToVarVal(
     const nautilus::val<uint64_t> nautilusValue
         = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint64_t, false>, fieldAddress, fieldSize);
     return VarVal{nautilusValue, nullable, false};
+}
+
+VarVal DefaultUINT64InputParser::parseLazyToVarVal(
+    const bool& nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize) const
+{
+    if (nullable)
+    {
+        nautilus::val<uint64_t> result{0};
+        if (!isNull)
+        {
+            result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint64_t, false>, fieldAddress, fieldSize);
+        }
+        return VarVal{result, true, isNull};
+    }
+    const nautilus::val<uint64_t> result = NAUTILUS_TAGGED_INVOKE("parse_not_null", parseFixedSized<uint64_t, false>, fieldAddress, fieldSize);
+    return VarVal{result, false, false};
 }
 
 InputParserRegistryReturnType InputParserGeneratedRegistrar::RegisterDefaultBOOLInputParser(InputParserRegistryArguments)

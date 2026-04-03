@@ -125,11 +125,32 @@ void writeValue(
         case DataType::Type::FLOAT64:
         case DataType::Type::BOOLEAN:
         case DataType::Type::CHAR: {
-            /// Convert the VarVal to a string and write it into the address.
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider, parserType);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
+            /// Resolved during compile-time
+            if (value.isLazyValue())
+            {
+                /// Treat lazyValue like a variable-sized value
+                /// Todo: There might be cases where the desired parsed representation in the sink differs from the one in the source. For these cases, we should parse anyway.
+                const auto lazyValue = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                const auto amountWritten = nautilus::invoke(
+                    writeVarsized,
+                    fieldPointer,
+                    currentRemainingSize,
+                    nautilus::val<bool>{false},
+                    lazyValue->getContent(),
+                    lazyValue->getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
+            else
+            {
+                /// Convert the VarVal to a string and write it into the address.
+                const nautilus::val<uint64_t> amountWritten
+                    = formatAndWriteVal(value, fieldPointer, currentRemainingSize, recordBuffer, bufferProvider, parserType);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
             break;
         }
         case DataType::Type::UNDEFINED: {

@@ -58,6 +58,7 @@ void parseRawValueIntoRecord(
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;
 
 /// Instantiate the input parser for this value and parse the value with it
+/// Todo: Maybe this is not needed anymore and will fully be replaced by the lazy variant
 inline VarVal parseFixedSizeIntoVarVal(
     const bool nullable,
     const nautilus::val<int8_t*>& fieldAddress,
@@ -72,4 +73,11 @@ inline VarVal parseFixedSizeIntoVarVal(
     }
     throw UnknownInputParserType("Unknown Input Parser: {}", parserType);
 }
+
+VarVal parseLazyIntoVarVal(
+    bool nullable,
+    const nautilus::val<bool>& isNull,
+    const nautilus::val<int8_t*>& fieldAddress,
+    const nautilus::val<uint64_t>& fieldSize,
+    const std::string& parserType);
 }

@@ -34,6 +34,7 @@
 #include <std/cstring.h>
 
 #include <Configurations/Descriptor.hpp>
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <nlohmann/json.hpp>
@@ -91,6 +92,18 @@ uint64_t writeChar(
     return writeValueToBuffer(charAsJsonString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
 }
 
+uint64_t writeLazyValue(
+    int8_t* bufferStartingAddress,
+    const uint64_t remainingSpace,
+    const int8_t* lazyContent,
+    const uint64_t contentSize,
+    TupleBuffer* tupleBuffer,
+    AbstractBufferProvider* bufferProvider)
+{
+    const std::string lazyString{reinterpret_cast<const char*>(lazyContent), contentSize};
+    return writeValueToBuffer(lazyString.c_str(), remainingSpace, tupleBuffer, bufferProvider, bufferStartingAddress);
+}
+
 uint64_t writeVarsized(
     int8_t* bufferStartingAddress,
     const uint64_t remainingSpace,
@@ -117,6 +130,8 @@ void writeValue(
     switch (fieldType.type)
     {
         case DataType::Type::BOOLEAN: {
+            /// We parse lazy bools for json, as JSON enforces true/false literals for bools
+            /// Todo: Solve with tags
             const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
                 writeBool,
                 fieldPointer + written,
@@ -129,15 +144,32 @@ void writeValue(
             break;
         }
         case DataType::Type::CHAR: {
-            const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
-                writeChar,
-                fieldPointer + written,
-                currentRemainingSize,
-                value.getRawValueAs<nautilus::val<char>>(),
-                recordBuffer.getReference(),
-                bufferProvider);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
+            if (value.isLazyValue())
+            {
+                const auto lazyVal = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                    writeVarsized,
+                    fieldPointer + written,
+                    currentRemainingSize,
+                    lazyVal->getContent(),
+                    lazyVal->getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
+            else
+            {
+                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                    writeChar,
+                    fieldPointer + written,
+                    currentRemainingSize,
+                    value.getRawValueAs<nautilus::val<char>>(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
             break;
         }
         case DataType::Type::VARSIZED: {
@@ -165,10 +197,27 @@ void writeValue(
         case DataType::Type::UINT64:
         case DataType::Type::FLOAT32:
         case DataType::Type::FLOAT64: {
-            const nautilus::val<uint64_t> amountWritten
-                = formatAndWriteVal(value, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider, parserType);
-            written += amountWritten;
-            currentRemainingSize -= amountWritten;
+            if (value.isLazyValue())
+            {
+                const auto lazyVal = value.getRawValueAs<std::shared_ptr<LazyValueRepresentation>>();
+                const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
+                    writeLazyValue,
+                    fieldPointer + written,
+                    currentRemainingSize,
+                    lazyVal->getContent(),
+                    lazyVal->getSize(),
+                    recordBuffer.getReference(),
+                    bufferProvider);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
+            else
+            {
+                const nautilus::val<uint64_t> amountWritten
+                    = formatAndWriteVal(value, fieldPointer + written, currentRemainingSize, recordBuffer, bufferProvider, parserType);
+                written += amountWritten;
+                currentRemainingSize -= amountWritten;
+            }
             break;
         }
         case DataType::Type::UNDEFINED: {
