@@ -641,6 +641,14 @@ void AntlrSQLQueryPlanCreator::exitNamedExpression(AntlrSQLParser::NamedExpressi
         helpers.top().addProjection(std::nullopt, expression);
         helpers.top().hasUnnamedAggregation = false;
     }
+    /// The user did not specify an alias for a non-trivial expression (e.g., UINT64(1) + auctionId).
+    /// Project the expression directly without a name.
+    else if (context->name == nullptr and not helpers.top().functionBuilder.empty() and helpers.top().isSelect)
+    {
+        const auto expression = helpers.top().functionBuilder.back();
+        helpers.top().functionBuilder.pop_back();
+        helpers.top().addProjection(std::nullopt, expression);
+    }
     AntlrSQLBaseListener::exitNamedExpression(context);
 }
 
