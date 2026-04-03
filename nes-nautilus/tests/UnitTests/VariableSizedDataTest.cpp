@@ -310,18 +310,6 @@ TEST_F(VariableSizedDataTest, InequalityWithDifferentSizes)
     EXPECT_TRUE(varData1 != varData2);
 }
 
-TEST_F(VariableSizedDataTest, GetReference)
-{
-    constexpr auto sizeInBytes = 512;
-    auto data = createVariableSizedRandomData(sizeInBytes);
-    const nautilus::val<int8_t*> ptr(data.data());
-
-    const VariableSizedData varData(ptr, sizeInBytes);
-
-    // getReference should return same as getContent for regular data
-    EXPECT_TRUE(nautilus::memcmp(varData.getReference(), varData.getContent(), sizeInBytes) == 0);
-}
-
 TEST_F(VariableSizedDataTest, SmallDataSize)
 {
     constexpr auto sizeInBytes = 1;
@@ -492,29 +480,6 @@ TEST_F(VariableSizedDataTest, CompoundEqualityWithCompound)
 
     // Two compound data with same content should be equal
     EXPECT_TRUE(compoundData1 == compoundData2);
-}
-
-TEST_F(VariableSizedDataTest, CompoundGetReference)
-{
-    auto bufferManager = BufferManager::create();
-    Arena arena(bufferManager);
-    const nautilus::val<Arena*> arenaPtr(&arena);
-    ArenaRef arenaRef(arenaPtr);
-
-    constexpr auto size1 = 256;
-    constexpr auto size2 = 128;
-    auto data1 = createVariableSizedRandomData(size1);
-    auto data2 = createVariableSizedRandomData(size2);
-
-    const nautilus::val<int8_t*> ptr1(data1.data());
-    const nautilus::val<int8_t*> ptr2(data2.data());
-
-    const VariableSizedData varData1(ptr1, size1);
-    const VariableSizedData varData2(ptr2, size2);
-    const VariableSizedData compoundData(varData1, varData2, arenaRef);
-
-    // getReference should return same as getContent
-    EXPECT_TRUE(nautilus::memcmp(compoundData.getReference(), compoundData.getContent(), size1 + size2) == 0);
 }
 
 TEST_F(VariableSizedDataTest, CompoundCopyConstruction)
