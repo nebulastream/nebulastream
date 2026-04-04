@@ -1,0 +1,17 @@
+# name: milestone/Nexmark_with_varsized.test
+# description: Nexmark benchmark taken from https://github.com/nexmark/nexmark/tree/master/nexmark-flink/src/main/resources/queries
+# We have used https://github.com/risingwavelabs/nexmark-rs to generate the source csv files
+# groups: [milestone, benchmark, large, Aggregation, Join]
+
+
+# Source definition. We have removed some columns that are not needed in our queries
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, padded VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR bid TYPE File SET("LOCKING" AS INPUT_FORMATTER.`SEQUENCE_SHREDDER_MODE`);
+#CREATE PHYSICAL SOURCE FOR bid TYPE File SET("LOCK_FREE" AS INPUT_FORMATTER.`SEQUENCE_SHREDDER_MODE`);
+ATTACH FILE /home/rudi/Documents/uni/phd/piparse/nebulastream/bid_pad_4k.csv
+
+
+CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
+SELECT timestamp FROM bid INTO bidCheckSumProjection;
+----
+1347595 936324090
