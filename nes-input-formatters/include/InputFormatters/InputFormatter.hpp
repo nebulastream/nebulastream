@@ -44,6 +44,7 @@
 #include <ExecutionContext.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
+#include <LockingSequenceShredder.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -98,7 +99,7 @@ void processSpanningTuple(
 /// raw buffer and its successor (the InputFormatter) and writes it to the task queue of the QueryEngine.
 /// The QueryEngine concurrently executes InputFormatters. Thus, even if the source writes the InputFormatters to the task queue sequentially,
 /// the QueryEngine may still execute them in any order.
-template <InputFormatIndexerType FormatterType>
+template <InputFormatIndexerType FormatterType, typename ShredderType = SequenceShredder>
 class InputFormatter
 {
 public:
@@ -113,7 +114,7 @@ public:
     {
         if constexpr (not isSequential())
         {
-            sequenceShredder = std::make_unique<SequenceShredder>(indexerMetaData.getTupleDelimitingBytes().size());
+            sequenceShredder = std::make_unique<ShredderType>(indexerMetaData.getTupleDelimitingBytes().size());
         }
         parserTypes[DataType::Type::BOOLEAN] = config.getFromConfig(InputFormatterDescriptor::BOOL_PARSER);
         parserTypes[DataType::Type::CHAR] = config.getFromConfig(InputFormatterDescriptor::CHAR_PARSER);
@@ -234,8 +235,8 @@ private:
     {
     };
 
-    /// Concurrent mode only: lock-free spanning tuple resolution across threads
-    [[no_unique_address]] std::conditional_t<not isSequential(), std::unique_ptr<SequenceShredder>, Empty> sequenceShredder;
+    /// Concurrent mode only: spanning tuple resolution across threads (SequenceShredder or LockingSequenceShredder)
+    [[no_unique_address]] std::conditional_t<not isSequential(), std::unique_ptr<ShredderType>, Empty> sequenceShredder;
 
     /// Sequential mode only: accumulates delimiter-less buffers that are part of a multi-buffer spanning tuple.
     /// Stores (TupleBuffer, byteCount) pairs — byteCount is saved before setNumberOfTuples(0) since TupleBuffer is ref-counted.
@@ -590,7 +591,7 @@ private:
 };
 
 /// Necessary thread_local variable definitions to make static thread_local variables usable in the InputFormatter class
-template <InputFormatIndexerType T>
-thread_local typename InputFormatter<T>::IndexPhaseResult InputFormatter<T>::tlIndexPhaseResult{};
+template <InputFormatIndexerType T, typename S>
+thread_local typename InputFormatter<T, S>::IndexPhaseResult InputFormatter<T, S>::tlIndexPhaseResult{};
 
 }

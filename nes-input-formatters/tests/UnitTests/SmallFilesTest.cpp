@@ -446,7 +446,7 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 2,
          .isCompiled = true,
-         .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}}});
+         .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}, {"sequence_shredder_mode", "LOCKING"}}});
 }
 
 }

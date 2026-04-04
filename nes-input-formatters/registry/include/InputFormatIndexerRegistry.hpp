@@ -49,6 +49,12 @@ struct InputFormatIndexerRegistryArguments
     template <InputFormatIndexerType IndexerType>
     InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
     {
+        if (inputFormatIndexerConfig.getSequenceShredderMode() == SequenceShredderMode::LOCKING)
+        {
+            auto inputFormatter = InputFormatter<IndexerType, LockingSequenceShredder>(
+                std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
+            return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
+        }
         auto inputFormatter
             = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
         return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));

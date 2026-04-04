@@ -37,12 +37,12 @@ using SequenceNumberType = SequenceNumber::Underlying;
 /// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
 /// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
 
-template <InputFormatIndexerType FormatterType>
+template <InputFormatIndexerType FormatterType, typename ShredderType>
 class InputFormatter;
 
 class RawTupleBuffer
 {
-    template <InputFormatIndexerType FormatterType>
+    template <InputFormatIndexerType FormatterType, typename ShredderType>
     friend class InputFormatter;
 
 public:

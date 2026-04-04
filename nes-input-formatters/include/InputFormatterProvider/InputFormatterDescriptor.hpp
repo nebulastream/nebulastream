@@ -28,6 +28,12 @@ enum class InputFormatterThreadingMode : uint8_t
     PARALLEL
 };
 
+enum class SequenceShredderMode : uint8_t
+{
+    LOCK_FREE,
+    LOCKING
+};
+
 /// Descriptor that stores the configuration parameters of a specific InputFormatter instance
 /// For a specific InputFormatter, config parameters may be added by creating a ConfigParameters<Type> struct in the respective header.
 class InputFormatterDescriptor final : public Descriptor
@@ -53,6 +59,11 @@ public:
         return InputFormatterThreadingMode::PARALLEL;
     }
 
+    [[nodiscard]] SequenceShredderMode getSequenceShredderMode() const
+    {
+        return this->getFromConfig(SEQUENCE_SHREDDER_MODE);
+    }
+
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
         std::string{TYPE_STRING},
         std::nullopt,
@@ -63,6 +74,12 @@ public:
         EnumWrapper{InputFormatterThreadingMode::PARALLEL},
         [](const std::unordered_map<std::string, std::string>& config)
         { return DescriptorConfig::tryGet(THREADING_MODE, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, SequenceShredderMode> SEQUENCE_SHREDDER_MODE{
+        "sequence_shredder_mode",
+        EnumWrapper{SequenceShredderMode::LOCK_FREE},
+        [](const std::unordered_map<std::string, std::string>& config)
+        { return DescriptorConfig::tryGet(SEQUENCE_SHREDDER_MODE, config); }};
 
     /// A user may overwrite the parsing function for every input type
     static inline const DescriptorConfig::ConfigParameter<std::string> INT8_PARSER{
@@ -118,6 +135,7 @@ public:
         = DescriptorConfig::createConfigParameterContainerMap(
             TYPE,
             THREADING_MODE,
+            SEQUENCE_SHREDDER_MODE,
             INT8_PARSER,
             INT16_PARSER,
             INT32_PARSER,

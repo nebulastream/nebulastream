@@ -39,7 +39,7 @@ class FieldIndexFunction
 {
 public:
     /// Expose the FieldIndexFunction interface functions only to the InputFormatter
-    template <InputFormatIndexerType FormatterType>
+    template <InputFormatIndexerType FormatterType, typename ShredderType>
     friend class InputFormatter;
 
     friend Derived;

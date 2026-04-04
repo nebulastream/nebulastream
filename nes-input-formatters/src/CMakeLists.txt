@@ -15,6 +15,9 @@ add_source_files(nes-input-formatters
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
         SpanningTupleBufferState.cpp
+        LockingSequenceShredder.cpp
+        LockingSpanningTupleBuffer.cpp
+        PlainSpanningTupleBufferState.cpp
         RawValueParser.cpp
         InputFormatterTupleBufferRef.cpp
         InputFormatterDescriptor.cpp
