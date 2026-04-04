@@ -130,6 +130,21 @@ public:
         /// Setting these even though they will probably not be used
         parserTypes[DataType::Type::VARSIZED] = "";
         parserTypes[DataType::Type::UNDEFINED] = "";
+
+        lazyValueOverloads[DataType::Type::BOOLEAN] = false;
+        lazyValueOverloads[DataType::Type::CHAR] = false;
+        lazyValueOverloads[DataType::Type::FLOAT32] = config.getFromConfig(InputFormatterDescriptor::LAZY_FLOAT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::FLOAT64] = config.getFromConfig(InputFormatterDescriptor::LAZY_FLOAT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::INT8] = config.getFromConfig(InputFormatterDescriptor::LAZY_INT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::INT16] = config.getFromConfig(InputFormatterDescriptor::LAZY_INT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::INT32] = config.getFromConfig(InputFormatterDescriptor::LAZY_INT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::INT64] = config.getFromConfig(InputFormatterDescriptor::LAZY_INT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::UINT8] = config.getFromConfig(InputFormatterDescriptor::LAZY_UINT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::UINT16] = config.getFromConfig(InputFormatterDescriptor::LAZY_UINT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::UINT32] = config.getFromConfig(InputFormatterDescriptor::LAZY_UINT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::UINT64] = config.getFromConfig(InputFormatterDescriptor::LAZY_UINT_OVERLOADS);
+        lazyValueOverloads[DataType::Type::VARSIZED] = false;
+        lazyValueOverloads[DataType::Type::UNDEFINED] = false;
     }
 
     ~InputFormatter() = default;
@@ -242,6 +257,8 @@ private:
     [[no_unique_address]] std::conditional_t<isSequential(), std::vector<std::pair<TupleBuffer, size_t>>, Empty>
         accumulatedSpanningTupleBuffers;
     std::unordered_map<DataType::Type, std::string> parserTypes;
+    /// Signalizes, if we allow logical function overloads on lazy value representations
+    std::unordered_map<DataType::Type, bool> lazyValueOverloads;
 
     struct IndexPhaseResult
     {
@@ -538,7 +555,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, parserTypes);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, parserTypes, lazyValueOverloads);
             executeChild(executionCtx, record);
         }
     }
@@ -556,7 +573,13 @@ private:
         while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
         {
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, parserTypes);
+                projections,
+                recordBuffer.getMemArea(),
+                bufferRecordIdx,
+                indexerMetaData,
+                rawFieldAccessFunction,
+                parserTypes,
+                lazyValueOverloads);
             executeChild(executionCtx, record);
             bufferRecordIdx += 1;
         }
@@ -583,7 +606,7 @@ private:
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
 
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, parserTypes);
+                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, parserTypes, lazyValueOverloads);
             executeChild(executionCtx, record);
         }
     }

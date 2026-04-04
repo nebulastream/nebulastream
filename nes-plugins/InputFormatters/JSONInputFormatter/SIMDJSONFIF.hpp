@@ -171,7 +171,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<const SIMDJSONMetaData*>& metaData,
-        const std::string& parserType) const
+        const std::string& parserType,
+        const bool& lazyOverload) const
     {
         if (dataType.nullable)
         {
@@ -191,7 +192,16 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
                 const nautilus::val<uint64_t> size
                     = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-                parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+                parseRawValueIntoRecord(
+                    dataType,
+                    record,
+                    rawPtr,
+                    size,
+                    fieldName,
+                    SIMDJSONMetaData::getNullValues(),
+                    QuotationType::DOUBLE_QUOTE,
+                    parserType,
+                    lazyOverload);
             }
             return;
         }
@@ -199,7 +209,16 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
             = nautilus::invoke({nautilus::ModRefInfo::Ref}, getRawJsonWithNullCheck<T, false>, fieldIndex, fieldIndexFunction, metaData);
         const nautilus::val<int8_t*> rawPtr = *getMemberWithOffset<int8_t*>(parseResult, offsetof(RawResultFixed<T>, ptrToRawJson));
         const nautilus::val<uint64_t> size = *getMemberWithOffset<uint64_t>(parseResult, offsetof(RawResultFixed<T>, sizeOfRawJson));
-        parseRawValueIntoRecord(dataType, record, rawPtr, size, fieldName, SIMDJSONMetaData::getNullValues(), QuotationType::DOUBLE_QUOTE, parserType);
+        parseRawValueIntoRecord(
+            dataType,
+            record,
+            rawPtr,
+            size,
+            fieldName,
+            SIMDJSONMetaData::getNullValues(),
+            QuotationType::DOUBLE_QUOTE,
+            parserType,
+            lazyOverload);
     }
 
     static VarVal parseJsonVarSized(
@@ -215,7 +234,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<FieldIndex>& fieldIndex,
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<const SIMDJSONMetaData*>& metaData,
-        const std::string& parserType) const;
+        const std::string& parserType,
+        const bool& lazyOverload) const;
 
     template <typename IndexerMetaData>
     [[nodiscard]] Record applyReadSpanningRecord(
@@ -224,7 +244,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<uint64_t>&,
         const IndexerMetaData& metaData,
         nautilus::val<SIMDJSONFIF*> fieldIndexFunction,
-        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
+        const std::unordered_map<DataType::Type, std::string>& parserTypes,
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
     {
         Record record;
         for (nautilus::static_val<FieldIndex> i = 0; i < static_cast<FieldIndex>(metaData.getNumberOfFields()); ++i)
@@ -245,7 +266,8 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
                 fieldIndex,
                 fieldIndexFunction,
                 nautilus::val<const IndexerMetaData*>(&metaData),
-                parserTypes.at(fieldDataType.type));
+                parserTypes.at(fieldDataType.type),
+                lazyOverloads.at(fieldDataType.type));
         }
         /// Increment iterator and return record
         nautilus::invoke(

@@ -32,6 +32,7 @@
 #include <std/cstring.h>
 #include <Arena.hpp>
 #include <ErrorHandling.hpp>
+#include <InputParserRegistry.hpp>
 #include <function.hpp>
 #include <select.hpp>
 #include <val.hpp>
@@ -39,8 +40,6 @@
 #include <val_bool.hpp>
 #include <val_ptr.hpp>
 #include <common/FunctionAttributes.hpp>
-#include <InputParserRegistry.hpp>
-
 
 namespace NES
 {
@@ -76,7 +75,8 @@ void parseRawValueIntoRecord(
     const std::string& fieldName,
     const std::vector<std::string>& nullValues,
     const QuotationType quotationType,
-    const std::string& parserType)
+    const std::string& parserType,
+    const bool& lazyOverload)
 {
     /// Raw values will be transformed into a lazy representation of pointer, size and underlying datatype instead of being parsed immediatly.
     /// Should a field be needed in its parsed form for the execution of a logical function, it will be parsed in the overridden function in LazyValueRepresentation
@@ -98,6 +98,7 @@ void parseRawValueIntoRecord(
     }
     if (dataType.type == DataType::Type::CHAR && quotationType == QuotationType::DOUBLE_QUOTE)
     {
+        /// Char does not have overloads for lazy parses currently
         const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
             std::string(magic_enum::enum_name(dataType.type)),
             fieldAddress + nautilus::val<uint32_t>(1),
@@ -110,6 +111,7 @@ void parseRawValueIntoRecord(
     }
     if (dataType.type == DataType::Type::VARSIZED)
     {
+        /// Varsized Lazy Values are basically VariableSized Data objects. Therefore, there is no harm in always using the overloaded logical functions for this type
         switch (quotationType)
         {
             case QuotationType::NONE: {
@@ -131,8 +133,10 @@ void parseRawValueIntoRecord(
         }
         std::unreachable();
     }
-    const auto lazyVal = LazyValueProvider::provideLazyValueRepresentation(
-        std::string(magic_enum::enum_name(dataType.type)), fieldAddress, fieldSize, dataType, isNull, parserType);
+    /// Check if the overloaded logical functions on this type are desired.
+    const std::string lazyValName = lazyOverload ? std::string(magic_enum::enum_name(dataType.type)) : "";
+    const auto lazyVal
+        = LazyValueProvider::provideLazyValueRepresentation(lazyValName, fieldAddress, fieldSize, dataType, isNull, parserType);
     record.write(fieldName, {lazyVal, dataType.nullable, isNull});
 }
 

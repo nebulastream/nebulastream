@@ -44,14 +44,12 @@ public:
 
     const std::string& getInputFormatterType() const;
 
-    [[nodiscard]] InputFormatterThreadingMode getThreadingMode() const
-    {
+    [[nodiscard]] InputFormatterThreadingMode getThreadingMode() const {
         if (const auto threadingMode = this->tryGetFromConfig<EnumWrapper>(THREADING_MODE))
         {
             return threadingMode.value().asEnum<InputFormatterThreadingMode>().value();
         }
-        return InputFormatterThreadingMode::PARALLEL;
-    }
+        return InputFormatterThreadingMode::PARALLEL; }
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TYPE{
         std::string{TYPE_STRING},
@@ -113,6 +111,21 @@ public:
         "DefaultCHAR",
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHAR_PARSER, config); }};
 
+    static inline const DescriptorConfig::ConfigParameter<bool> LAZY_INT_OVERLOADS{
+        "lazy_int_overloads",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LAZY_INT_OVERLOADS, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<bool> LAZY_UINT_OVERLOADS{
+        "lazy_uint_overloads",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LAZY_UINT_OVERLOADS, config); }};
+
+    static inline const DescriptorConfig::ConfigParameter<bool> LAZY_FLOAT_OVERLOADS{
+        "lazy_float_overloads",
+        false,
+        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(LAZY_FLOAT_OVERLOADS, config); }};
+
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             TYPE,
@@ -128,7 +141,10 @@ public:
             F32_PARSER,
             F64_PARSER,
             BOOL_PARSER,
-            CHAR_PARSER);
+            CHAR_PARSER,
+            LAZY_INT_OVERLOADS,
+            LAZY_UINT_OVERLOADS,
+            LAZY_FLOAT_OVERLOADS);
 
 private:
     friend class SourceCatalog;
@@ -150,7 +166,6 @@ struct Unreflector<InputFormatterDescriptor>
 {
     InputFormatterDescriptor operator()(const Reflected& rfl) const;
 };
-
 }
 
 namespace NES::detail

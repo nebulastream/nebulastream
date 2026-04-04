@@ -82,7 +82,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
+        const std::unordered_map<DataType::Type, std::string>& parserTypes,
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::ONE)
     {
         /// static loop over number of fields (which don't change)
@@ -115,7 +116,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 fieldName,
                 metaData.getNullValues(),
                 metaData.getQuotationType(),
-                parserTypes.at(fieldDataType.type));
+                parserTypes.at(fieldDataType.type),
+                lazyOverloads.at(fieldDataType.type));
         }
         return record;
     }
@@ -127,7 +129,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         const nautilus::val<FieldOffsets*> fieldOffsetsPtr,
-        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
+        const std::unordered_map<DataType::Type, std::string>& parserTypes,
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
     requires(NumOffsetsPerField == NumRequiredOffsetsPerField::TWO)
     {
         /// static loop over number of fields (which don't change)
@@ -160,7 +163,8 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 fieldName,
                 metaData.getNullValues(),
                 metaData.getQuotationType(),
-                parserTypes.at(fieldDataType.type));
+                parserTypes.at(fieldDataType.type),
+                lazyOverloads.at(fieldDataType.type));
         }
         return record;
     }

@@ -51,7 +51,8 @@ void parseRawValueIntoRecord(
     const std::string& fieldName,
     const std::vector<std::string>& nullValues,
     QuotationType quotationType,
-    const std::string& parserType);
+    const std::string& parserType,
+    const bool& lazyOverload);
 
 /// We expect a pointer and the size so that we can use this method from the nautilus runtime
 bool checkIsNullProxy(const int8_t* fieldAddress, uint64_t fieldSize, const std::vector<std::string>* nullValues) noexcept;

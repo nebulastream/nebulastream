@@ -79,10 +79,11 @@ public:
         const nautilus::val<uint64_t>& recordIndex,
         const IndexerMetaData& metaData,
         nautilus::val<Derived*> fieldIndexFunction,
-        const std::unordered_map<DataType::Type, std::string>& parserTypes) const
+        const std::unordered_map<DataType::Type, std::string>& parserTypes,
+        const std::unordered_map<DataType::Type, bool>& lazyOverloads) const
     {
         return static_cast<const Derived*>(this)->template applyReadSpanningRecord<IndexerMetaData>(
-            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, parserTypes);
+            projections, recordBufferPtr, recordIndex, metaData, fieldIndexFunction, parserTypes, lazyOverloads);
     }
 };
 
