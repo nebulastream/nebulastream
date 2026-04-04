@@ -66,7 +66,7 @@ services:
     image: $CLI_IMAGE
     pull_policy: never
     environment:
-      NES_TOPOLOGY_FILE: $WORKERS_FILE
+      NES_SETUP_FILE: $WORKERS_FILE
       XDG_STATE_HOME: /workdir/.xdg-state
     stop_grace_period: 0s
     working_dir: /workdir
@@ -80,10 +80,10 @@ WORKER_COUNT=$(yq '.workers | length' "$WORKERS_FILE")
 
 for i in $(seq 0 $((WORKER_COUNT - 1))); do
   # Extract worker data
-  HOST=$(yq -r ".workers[$i].host" "$WORKERS_FILE")
+  HOST=$(yq -r ".workers[$i].host_addr" "$WORKERS_FILE")
   HOST_NAME=$(echo $HOST | cut -d':' -f1)
   HOST_PORT=$(echo $HOST | cut -d':' -f2)
-  DATA=$(yq -r ".workers[$i].data_address" "$WORKERS_FILE")
+  DATA=$(yq -r ".workers[$i].data_addr" "$WORKERS_FILE")
 
   # Check if worker has config
   HAS_CONFIG=$(yq ".workers[$i] | has(\"config\")" "$WORKERS_FILE")

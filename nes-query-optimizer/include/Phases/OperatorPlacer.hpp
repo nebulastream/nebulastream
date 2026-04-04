@@ -20,8 +20,7 @@
 
 #include <Plans/LogicalPlan.hpp>
 #include <QueryOptimizerConfiguration.hpp>
-
-#include "NetworkTopology.hpp"
+#include <NetworkTopology.hpp>
 
 namespace NES
 {

@@ -21,7 +21,6 @@
 #include <Placement/BottomUpPlacement.hpp>
 #include <Placement/QueryDecomposition.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Util/Pointers.hpp>
 
 namespace NES
 {

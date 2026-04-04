@@ -13,28 +13,34 @@
 */
 
 #[cfg(madsim)]
-mod worker;
+mod config;
 #[cfg(madsim)]
 mod harness;
 #[cfg(madsim)]
-mod spec;
+mod invariant;
+mod model_state;
 #[cfg(madsim)]
 mod runner;
+#[cfg(madsim)]
+mod worker;
 #[cfg(madsim)]
 mod workload;
 
 use libtest_mimic::{Arguments, Trial};
 
 #[cfg(madsim)]
-use madsim::runtime::Runtime;
+use {
+    madsim::runtime::Runtime,
+    std::env,
+    std::fs,
+    std::path::Path,
+    std::sync::mpsc,
+    std::thread,
+    std::time::{Duration, SystemTime, UNIX_EPOCH},
+};
+
 #[cfg(madsim)]
-use std::env;
-#[cfg(madsim)]
-use std::fs;
-#[cfg(madsim)]
-use std::path::Path;
-#[cfg(madsim)]
-use std::time::{SystemTime, UNIX_EPOCH};
+const DEFAULT_WALL_TIMEOUT_SECS: u64 = 90;
 
 fn main() {
     let args = Arguments::from_args();
@@ -50,7 +56,7 @@ fn main() {
 
 #[cfg(madsim)]
 fn discover_trials() -> Vec<Trial> {
-    use spec::TestFile;
+    use config::TestFile;
 
     let config_dir = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/simulation/configs");
 
@@ -59,22 +65,19 @@ fn discover_trials() -> Vec<Trial> {
     let mut entries: Vec<_> = fs::read_dir(&config_dir)
         .unwrap_or_else(|e| panic!("failed to read config dir {}: {e}", config_dir.display()))
         .filter_map(|e| e.ok())
-        .filter(|e| {
-            e.path()
-                .extension()
-                .map_or(false, |ext| ext == "toml")
-        })
+        .filter(|e| e.path().extension().map_or(false, |ext| ext == "toml"))
         .collect();
     entries.sort_by_key(|e| e.file_name());
 
+    let env_seed: Option<u64> = env::var("MADSIM_TEST_SEED")
+        .ok()
+        .and_then(|s| s.parse().ok());
+
+    let mut trial_index: u64 = 0;
+
     for entry in entries {
         let path = entry.path();
-        let stem = path
-            .file_stem()
-            .unwrap()
-            .to_str()
-            .unwrap()
-            .to_string();
+        let stem = path.file_stem().unwrap().to_str().unwrap().to_string();
 
         let content = fs::read_to_string(&path)
             .unwrap_or_else(|e| panic!("failed to read {}: {e}", path.display()));
@@ -90,8 +93,18 @@ fn discover_trials() -> Vec<Trial> {
                 None => format!("{stem}::test_{i}"),
             };
 
+            let seed = env_seed.unwrap_or_else(|| {
+                let nanos = SystemTime::now()
+                    .duration_since(UNIX_EPOCH)
+                    .unwrap()
+                    .as_nanos() as u64;
+                nanos ^ trial_index.wrapping_mul(0x9E3779B97F4A7C15)
+            });
+            trial_index += 1;
+
+            let trial_name = name.clone();
             trials.push(Trial::test(name, move || {
-                run_trial(spec);
+                run_trial(&trial_name, spec, seed);
                 Ok(())
             }));
         }
@@ -101,27 +114,56 @@ fn discover_trials() -> Vec<Trial> {
 }
 
 #[cfg(madsim)]
-fn run_trial(spec: spec::TestSpec) {
-    let seed: u64 = env::var("MADSIM_TEST_SEED")
+fn run_trial(name: &str, spec: config::TestConfig, seed: u64) {
+    let wall_timeout = env::var("SIM_WALL_TIMEOUT_SECS")
         .ok()
         .and_then(|s| s.parse().ok())
-        .unwrap_or_else(|| {
-            SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_nanos() as u64
-        });
+        .map(Duration::from_secs)
+        .unwrap_or(Duration::from_secs(DEFAULT_WALL_TIMEOUT_SECS));
 
-    let rt = Runtime::with_seed_and_config(seed, madsim::Config::default());
+    let (tx, rx) = mpsc::channel();
+    let _ = thread::Builder::new()
+        .name(format!("sim-{name}"))
+        .spawn(move || {
+            let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let rt = Runtime::with_seed_and_config(seed, madsim::Config::default());
+                rt.block_on(async {
+                    runner::run_test(spec).await;
+                });
+            }));
+            let _ = tx.send(result);
+        })
+        .expect("failed to spawn trial worker thread");
 
-    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-        rt.block_on(async {
-            runner::run_test(spec).await;
-        });
-    }));
-
-    if let Err(e) = result {
-        eprintln!("MADSIM_TEST_SEED={seed}");
-        std::panic::resume_unwind(e);
+    match rx.recv_timeout(wall_timeout) {
+        Ok(Ok(())) => {}
+        Ok(Err(payload)) => {
+            print_repro(name, seed, "FAILED");
+            std::panic::resume_unwind(payload);
+        }
+        Err(mpsc::RecvTimeoutError::Timeout) => {
+            print_repro(
+                name,
+                seed,
+                &format!("TIMED OUT after {}s", wall_timeout.as_secs()),
+            );
+            panic!(
+                "trial {name} exceeded wall-clock timeout of {}s",
+                wall_timeout.as_secs()
+            );
+        }
+        Err(mpsc::RecvTimeoutError::Disconnected) => {
+            print_repro(name, seed, "ABORTED (worker disconnected)");
+            panic!("trial {name} worker thread disconnected without sending a result");
+        }
     }
+}
+
+#[cfg(madsim)]
+fn print_repro(name: &str, seed: u64, status: &str) {
+    eprintln!();
+    eprintln!("=== {name} {status} (seed={seed}) ===");
+    eprintln!("  reproduce with:");
+    eprintln!("    MADSIM_TEST_SEED={seed} cargo test --test simulation -- --exact '{name}'");
+    eprintln!();
 }

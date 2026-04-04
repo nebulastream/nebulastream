@@ -12,17 +12,20 @@
     limitations under the License.
 */
 
+pub mod database;
 mod format;
+pub mod identifier;
 pub mod query;
 pub mod request;
 pub mod sink;
 pub mod source;
+pub mod statement;
 pub mod worker;
 
+use anyhow::Result;
 pub use sea_orm::Set;
-use sea_orm::Condition;
-use proptest_derive::Arbitrary;
 use sea_orm::entity::prelude::*;
+use sea_orm::{Condition, ConnectionTrait};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
@@ -30,9 +33,13 @@ pub trait IntoCondition {
     fn into_condition(self) -> Condition;
 }
 
+pub trait Execute {
+    type Response;
+    fn execute(self, conn: &impl ConnectionTrait) -> impl Future<Output = Result<Self::Response>>;
+}
+
 #[derive(
-    Arbitrary, Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize,
-    Deserialize,
+    Clone, Copy, Debug, PartialEq, Eq, Display, EnumIter, DeriveActiveEnum, Serialize, Deserialize,
 )]
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum ConnectorKind {
@@ -46,4 +53,3 @@ impl Default for ConnectorKind {
         Self::Shared
     }
 }
-

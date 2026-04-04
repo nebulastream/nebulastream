@@ -3,7 +3,6 @@ resolver = "3"
 members = [
     "nes-coordinator/coordinator",
     "nes-coordinator/model",
-    "nes-coordinator/catalog",
     "nes-coordinator/controller",
     "nes-coordinator/migration",
     "nes-coordinator/bridge",
@@ -12,7 +11,6 @@ members = [
 default-members = [
     "nes-coordinator/coordinator",
     "nes-coordinator/model",
-    "nes-coordinator/catalog",
     "nes-coordinator/controller",
     "nes-coordinator/migration",
 ]
@@ -46,10 +44,11 @@ tonic = { version = "0.5.1", package = "madsim-tonic" }
 tonic-build = { version = "0.5", package = "madsim-tonic-build" }
 prost = "=0.13.4"
 flume = "0.12"
+sqlx = { version = "0.8", default-features = false, features = ["sqlite"] }
 async-trait = "0.1"
 inventory = "0.3"
+proptest-stateful = { git = "https://github.com/yschroeder97/proptest-stateful.git", rev = "a4eed0b" }
 
-catalog = { path = "nes-coordinator/catalog" }
 controller = { path = "nes-coordinator/controller" }
 migration = { path = "nes-coordinator/migration" }
 model = { path = "nes-coordinator/model" }

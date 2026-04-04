@@ -13,67 +13,72 @@
 */
 
 use crate::SqlPlanner;
-use catalog::crud::{execute_on, execute_statement, notify_intent};
-use catalog::database::Database;
-use catalog::{QueryStateManager, Reconcilable, WorkerStateManager};
+use model::database::{Database, DatabaseTransaction};
+use model::identifier::QueryId;
 use model::query;
+use model::query::GetQuery;
 use model::query::query_state::QueryState;
-use model::query::{GetQuery, QueryId};
-use model::request::{Request, RequestInput, Statement, StatementInput, StatementResponse};
+use model::request::{Payload, Request, StatementInput};
+use model::statement::{Statement, StatementResult};
 use std::collections::HashMap;
 use std::sync::Arc;
 use thiserror::Error;
-use tokio::sync::oneshot;
+use tokio::sync::{oneshot, watch};
 use tokio::task::spawn_blocking;
 use tracing::{debug, info, instrument};
 
 #[derive(Error, Debug)]
-#[error("Query '{}' terminated early with state {}", .0.id, .0.current_state)]
+#[error("Query '{}' terminated early with state {}", .0.id, .0.state)]
 struct EarlyTermination(query::Model);
 
 struct PendingCreate {
     block_until: QueryState,
-    reply_to: oneshot::Sender<anyhow::Result<StatementResponse>>,
+    reply_to: oneshot::Sender<anyhow::Result<StatementResult>>,
 }
 
 struct PendingDrop {
     query_ids: Vec<QueryId>,
-    reply_to: oneshot::Sender<anyhow::Result<StatementResponse>>,
+    reply_to: oneshot::Sender<anyhow::Result<StatementResult>>,
+}
+
+struct PendingStatus {
+    query: GetQuery,
+    reply_to: oneshot::Sender<anyhow::Result<StatementResult>>,
 }
 
 pub(super) struct RequestHandler {
     receiver: flume::Receiver<Request>,
     db: Database,
+    intent_tx: watch::Sender<()>,
+    state_rx: watch::Receiver<()>,
     planner: Option<Arc<dyn SqlPlanner>>,
-    query_sm: Arc<QueryStateManager>,
-    worker_sm: Arc<WorkerStateManager>,
     pending_query_creates: HashMap<QueryId, PendingCreate>,
     pending_query_drops: Vec<PendingDrop>,
+    pending_polls: Vec<PendingStatus>,
 }
 
 impl RequestHandler {
     pub(super) fn new(
         receiver: flume::Receiver<Request>,
         db: Database,
+        intent_tx: watch::Sender<()>,
+        state_rx: watch::Receiver<()>,
         planner: Option<Arc<dyn SqlPlanner>>,
-        query_sm: Arc<QueryStateManager>,
-        worker_sm: Arc<WorkerStateManager>,
     ) -> RequestHandler {
         Self {
             receiver,
             db,
+            intent_tx,
+            state_rx,
             planner,
-            query_sm,
-            worker_sm,
             pending_query_creates: HashMap::new(),
             pending_query_drops: Vec::new(),
+            pending_polls: Vec::new(),
         }
     }
 
-    #[instrument(skip(self))]
     pub(super) async fn run(mut self) {
-        let mut query_state_rx = self.query_sm.subscribe_state();
-
+        info!("starting");
         loop {
             tokio::select! {
                 recv_result = self.receiver.recv_async() => match recv_result {
@@ -83,17 +88,14 @@ impl RequestHandler {
                         return;
                     }
                 },
-                Ok(()) = query_state_rx.changed() => {
+                Ok(()) = self.state_rx.changed() => {
                     self.resolve_pending_queries().await;
                 },
             }
         }
     }
 
-    async fn execute(
-        &self,
-        input: StatementInput,
-    ) -> anyhow::Result<StatementResponse> {
+    async fn execute(&self, input: StatementInput) -> anyhow::Result<StatementResult> {
         match input {
             StatementInput::Sql(sql) => {
                 let planner = self
@@ -101,41 +103,49 @@ impl RequestHandler {
                     .clone()
                     .ok_or_else(|| anyhow::anyhow!("no SQL planner configured"))?;
                 let txn = self.db.begin().await?;
-                let (statement, txn): (Statement, _) =
+                let (statement, txn): (Statement, DatabaseTransaction) =
                     spawn_blocking(move || planner.plan(txn, &sql)).await??;
-                let response = execute_on(statement, &txn).await?;
+                let rsp = statement.execute_on(&txn).await?;
                 txn.commit().await?;
-                Ok(response)
+                Ok(rsp)
             }
             StatementInput::Structured(statement) => {
                 let txn = self.db.begin().await?;
-                let response = execute_on(statement, &txn).await?;
+                let rsp = statement.execute_on(&txn).await?;
                 txn.commit().await?;
-                Ok(response)
+                Ok(rsp)
             }
         }
     }
 
-    #[instrument(skip_all)]
     async fn handle(&mut self, req: Request) {
-        debug!("received: {:?}", req);
-        let Request { input: RequestInput { input, block_until }, reply_to } = req;
+        debug!("received: {req:?}");
+        let Request {
+            payload: Payload { input, block_until },
+            reply_to,
+        } = req;
 
         let should_block_drop = matches!(
             &input,
             StatementInput::Structured(Statement::DropQuery(q)) if q.should_block
         );
 
+        // Extract wait_for_poll query before executing, so we can defer if needed.
+        let wait_for_poll = match &input {
+            StatementInput::Structured(Statement::GetQuery(q)) if q.wait_for_poll => {
+                Some(q.clone())
+            }
+            _ => None,
+        };
+
         let result = self.execute(input).await;
 
-        if let Ok(ref resp) = result {
-            notify_intent(resp, &self.query_sm, &self.worker_sm);
+        if result.is_ok() {
+            self.intent_tx.send(()).expect("intent channel closed");
         }
 
         match result {
-            Ok(StatementResponse::CreatedQuery(query))
-                if block_until > QueryState::Pending =>
-            {
+            Ok(StatementResult::CreatedQuery(query, _)) if block_until > QueryState::Pending => {
                 self.pending_query_creates.insert(
                     query.id,
                     PendingCreate {
@@ -144,10 +154,11 @@ impl RequestHandler {
                     },
                 );
             }
-            Ok(StatementResponse::DroppedQueries(queries)) if should_block_drop => {
-                let query_ids: Vec<QueryId> = queries.iter().map(|q| q.id).collect();
-                if query_ids.is_empty() || queries.iter().all(|q| q.current_state.is_terminal()) {
-                    let _ = reply_to.send(Ok(StatementResponse::DroppedQueries(queries)));
+            Ok(StatementResult::DroppedQueries(queries)) if should_block_drop => {
+                let query_ids: Vec<_> = queries.iter().map(|q| q.id).collect();
+                if query_ids.is_empty() || queries.iter().all(|q| q.state.is_terminal()) {
+                    info!("completed: DroppedQueries({} queries)", queries.len());
+                    let _ = reply_to.send(Ok(StatementResult::DroppedQueries(queries)));
                 } else {
                     self.pending_query_drops.push(PendingDrop {
                         query_ids,
@@ -155,57 +166,77 @@ impl RequestHandler {
                     });
                 }
             }
+            Ok(StatementResult::Queries(ref queries)) if wait_for_poll.is_some() => {
+                let all_terminal = queries.iter().all(|(query, _)| query.state.is_terminal());
+                if all_terminal || queries.is_empty() {
+                    info!("completed: Queries({} queries)", queries.len());
+                    reply_to
+                        .send(Ok(StatementResult::Queries(queries.clone())))
+                        .expect("requester should be alive");
+                } else {
+                    self.pending_polls.push(PendingStatus {
+                        query: wait_for_poll.unwrap(),
+                        reply_to,
+                    });
+                }
+            }
             Ok(resp) => {
-                let _ = reply_to.send(Ok(resp));
+                reply_to.send(Ok(resp)).expect("requester should be alive");
             }
             Err(e) => {
-                let _ = reply_to.send(Err(e));
+                reply_to.send(Err(e)).expect("requester should be alive");
             }
         }
     }
 
-    #[instrument(skip(self))]
     async fn resolve_pending_queries(&mut self) {
-        if self.pending_query_creates.is_empty() && self.pending_query_drops.is_empty() {
+        if self.pending_query_creates.is_empty()
+            && self.pending_query_drops.is_empty()
+            && self.pending_polls.is_empty()
+        {
             return;
         }
 
-        let mut all_ids: Vec<QueryId> = self.pending_query_creates.keys().copied().collect();
+        let mut all_ids: Vec<_> = self.pending_query_creates.keys().copied().collect();
         for pending in &self.pending_query_drops {
             all_ids.extend(&pending.query_ids);
         }
 
-        let result = execute_statement(
-            &self.db,
-            Statement::GetQuery(GetQuery::all().with_ids(all_ids)),
-        )
-        .await;
-        let Ok(StatementResponse::Queries(query_list)) = result else {
+        let result = Statement::GetQuery(GetQuery::all().with_ids(all_ids))
+            .execute_with(&self.db)
+            .await;
+        let Ok(StatementResult::Queries(query_list)) = result else {
             return;
         };
-        let queries: HashMap<QueryId, query::Model> =
-            query_list.into_iter().map(|(m, _)| (m.id, m)).collect();
+        let queries: HashMap<QueryId, (query::Model, Vec<query::fragment::Model>)> = query_list
+            .into_iter()
+            .map(|(query, fragments)| (query.id, (query, fragments)))
+            .collect();
 
-        let resolved_ids: Vec<QueryId> = queries
+        let resolved_ids: Vec<_> = queries
             .iter()
-            .filter(|(id, query)| {
+            .filter(|(id, (query, _))| {
                 self.pending_query_creates
                     .get(id)
-                    .is_some_and(|pending| query.current_state >= pending.block_until)
+                    .is_some_and(|pending| query.state >= pending.block_until)
             })
             .map(|(&id, _)| id)
             .collect();
 
         for id in resolved_ids {
             let pending = self.pending_query_creates.remove(&id).unwrap();
-            let query = queries[&id].clone();
+            let (query, fragments) = queries[&id].clone();
 
-            if query.current_state.is_terminal() && query.current_state != pending.block_until {
+            let is_early_termination =
+                matches!(query.state, QueryState::Stopped | QueryState::Failed)
+                    && query.state != pending.block_until;
+            if is_early_termination {
                 let _ = pending.reply_to.send(Err(EarlyTermination(query).into()));
             } else {
+                info!("completed: CreatedQuery({})", query.id);
                 let _ = pending
                     .reply_to
-                    .send(Ok(StatementResponse::CreatedQuery(query)));
+                    .send(Ok(StatementResult::CreatedQuery(query, fragments)));
             }
         }
 
@@ -214,20 +245,35 @@ impl RequestHandler {
             let all_terminal = pending.query_ids.iter().all(|id| {
                 queries
                     .get(id)
-                    .is_some_and(|q| q.current_state.is_terminal())
+                    .is_some_and(|(query, _)| query.state.is_terminal())
             });
             if all_terminal {
                 let dropped: Vec<_> = pending
                     .query_ids
                     .iter()
-                    .filter_map(|id| queries.get(id).cloned())
+                    .filter_map(|id| queries.get(id).map(|(query, _)| query.clone()))
                     .collect();
+                info!("completed: DroppedQueries({} queries)", dropped.len());
                 let _ = pending
                     .reply_to
-                    .send(Ok(StatementResponse::DroppedQueries(dropped)));
+                    .send(Ok(StatementResult::DroppedQueries(dropped)));
             } else {
                 self.pending_query_drops.push(pending);
             }
+        }
+
+        let pending_polls = std::mem::take(&mut self.pending_polls);
+        for pending in pending_polls {
+            let result = Statement::GetQuery(pending.query)
+                .execute_with(&self.db)
+                .await;
+            if let Ok(ref resp) = result {
+                info!("completed: {resp:?}");
+            }
+            pending
+                .reply_to
+                .send(result)
+                .expect("requester should be alive");
         }
     }
 }
@@ -235,17 +281,23 @@ impl RequestHandler {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use model::query::fragment;
     use model::query::fragment::FragmentState;
     use model::query::query_state::QueryState;
     use model::query::{CreateQueryWithRefs, DropQuery, GetQuery};
-    use model::request::{Request, Statement, StatementResponse};
+    use model::request::Request;
+    use model::statement::{Statement, StatementResult};
     use proptest::prelude::*;
+    use sea_orm::sea_query::Expr;
+    use sea_orm::{ColumnTrait, EntityTrait, QueryFilter};
+    use std::sync::Arc;
 
     struct TestHandle {
         rt: tokio::runtime::Runtime,
         sender: flume::Sender<Request>,
         db: Database,
-        query_sm: Arc<QueryStateManager>,
+        intent_rx: watch::Receiver<()>,
+        state_tx: Arc<watch::Sender<()>>,
     }
 
     impl TestHandle {
@@ -255,51 +307,28 @@ mod tests {
                 .enable_all()
                 .build()
                 .unwrap();
-            let (sender, db, query_sm, _worker_sm, source_ids, sink_id) = rt.block_on(async {
+            let (sender, db, source_ids, sink_id, intent_rx, state_tx) = rt.block_on(async {
+                use model::Execute;
+
                 let db = Database::for_test().await;
-                let query_sm = QueryStateManager::from(db.clone());
-                let worker_sm = WorkerStateManager::from(db.clone());
                 for w in &req.workers {
-                    execute_statement(&db, Statement::CreateWorker(w.clone()))
-                        .await
-                        .unwrap();
+                    w.clone().execute(&db.conn).await.unwrap();
                 }
-                execute_statement(
-                    &db,
-                    Statement::CreateLogicalSource(req.logical_source.clone()),
-                )
-                .await
-                .unwrap();
+                req.logical_source.clone().execute(&db.conn).await.unwrap();
                 let mut source_ids = Vec::new();
                 for ps in &req.physical_sources {
-                    let StatementResponse::CreatedPhysicalSource(m) =
-                        execute_statement(&db, Statement::CreatePhysicalSource(ps.clone()))
-                            .await
-                            .unwrap()
-                    else {
-                        panic!("expected CreatedPhysicalSource")
-                    };
+                    let m = ps.clone().execute(&db.conn).await.unwrap();
                     source_ids.push(m.id);
                 }
-                let StatementResponse::CreatedSink(s) =
-                    execute_statement(&db, Statement::CreateSink(req.sink.clone()))
-                        .await
-                        .unwrap()
-                else {
-                    panic!("expected CreatedSink")
-                };
+                let s = req.sink.clone().execute(&db.conn).await.unwrap();
                 let (sender, receiver) = flume::bounded(16);
+                let (intent_tx, intent_rx) = watch::channel(());
+                let (state_tx, state_rx) = watch::channel(());
+                let state_tx = Arc::new(state_tx);
                 tokio::spawn(
-                    RequestHandler::new(
-                        receiver,
-                        db.clone(),
-                        None,
-                        query_sm.clone(),
-                        worker_sm.clone(),
-                    )
-                    .run(),
+                    RequestHandler::new(receiver, db.clone(), intent_tx, state_rx, None).run(),
                 );
-                (sender, db, query_sm, worker_sm, source_ids, s.id)
+                (sender, db, source_ids, s.id, intent_rx, state_tx)
             });
             req.query.source_ids = source_ids;
             req.query.sink_ids = vec![sink_id];
@@ -307,24 +336,55 @@ mod tests {
                 rt,
                 sender,
                 db,
-                query_sm,
+                intent_rx,
+                state_tx,
             }
         }
 
-        fn ask(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
-            self.ask_with(RequestInput::structured(statement))
+        fn ask(&self, statement: Statement) -> anyhow::Result<StatementResult> {
+            self.ask_with(Payload::structured(statement))
         }
 
-        fn ask_blocking(&self, statement: Statement, block_until: QueryState) -> anyhow::Result<StatementResponse> {
-            self.ask_with(RequestInput::structured(statement).block_until(block_until))
+        fn ask_blocking(
+            &self,
+            statement: Statement,
+            block_until: QueryState,
+        ) -> anyhow::Result<StatementResult> {
+            self.ask_with(Payload::structured(statement).block_until(block_until))
         }
 
-        fn ask_with(&self, input: RequestInput) -> anyhow::Result<StatementResponse> {
+        fn ask_with(&self, input: Payload) -> anyhow::Result<StatementResult> {
             let (rx, request) = Request::from(input);
             self.sender
                 .send(request)
                 .expect("handler should be running");
             self.rt.block_on(rx)?
+        }
+    }
+
+    /// Transition all fragments of a query to the given state by updating the DB
+    /// directly. The DB trigger derives the query state automatically.
+    async fn transition_fragments(db: &Database, target: FragmentState) {
+        // Walk through intermediate states to satisfy the validation trigger
+        let steps = match target {
+            FragmentState::Registered => vec![FragmentState::Registered],
+            FragmentState::Running => vec![FragmentState::Registered, FragmentState::Running],
+            FragmentState::Completed => vec![
+                FragmentState::Registered,
+                FragmentState::Running,
+                FragmentState::Completed,
+            ],
+            FragmentState::Stopped => vec![FragmentState::Registered, FragmentState::Stopped],
+            FragmentState::Failed => vec![FragmentState::Failed],
+            FragmentState::Pending => vec![],
+        };
+        for step in steps {
+            fragment::Entity::update_many()
+                .col_expr(fragment::Column::CurrentState, Expr::value(step))
+                .filter(fragment::Column::CurrentState.ne(step))
+                .exec(&db.conn)
+                .await
+                .unwrap();
         }
     }
 
@@ -334,11 +394,11 @@ mod tests {
             let handle = TestHandle::new(&mut req);
             let result = handle.ask(Statement::CreateQuery(req.query.clone())).unwrap();
             let query = match result {
-                StatementResponse::CreatedQuery(q) => q,
+                StatementResult::CreatedQuery(q, _) => q,
                 other => panic!("expected CreatedQuery, got {other:?}"),
             };
-            assert_eq!(query.current_state, QueryState::Pending);
-            assert_eq!(query.statement, req.query.sql);
+            assert_eq!(query.state, QueryState::Pending);
+            assert_eq!(query.sql, req.query.sql);
             assert_eq!(query.name, req.query.name);
         }
 
@@ -353,23 +413,21 @@ mod tests {
         ) {
             let handle = TestHandle::new(&mut req);
 
-            let mut intent_rx = handle.query_sm.subscribe_intent();
+            let mut intent_rx = handle.intent_rx.clone();
             let db = handle.db.clone();
-            let query_sm = handle.query_sm.clone();
+            let state_tx = handle.state_tx.clone();
             handle.rt.spawn(async move {
                 intent_rx.changed().await.unwrap();
-                let StatementResponse::Queries(queries) = execute_statement(&db, Statement::GetQuery(GetQuery::all())).await.unwrap() else { panic!("unexpected") };
-                let (query, _) = queries.into_iter().next().unwrap();
-                let fragments = query_sm.get_fragments(query.id).await.unwrap();
-                query_sm.transition_to(query.id, &fragments, FragmentState::Completed).await;
+                transition_fragments(&db, FragmentState::Completed).await;
+                state_tx.send(()).expect("state channel closed");
             });
 
             let result = handle.ask_blocking(Statement::CreateQuery(req.query), block_until).unwrap();
             let query = match result {
-                StatementResponse::CreatedQuery(q) => q,
+                StatementResult::CreatedQuery(q, _) => q,
                 other => panic!("expected CreatedQuery, got {other:?}"),
             };
-            assert!(query.current_state >= block_until);
+            assert!(query.state >= block_until);
         }
 
         #[test]
@@ -382,15 +440,13 @@ mod tests {
         ) {
             let handle = TestHandle::new(&mut req);
 
-            let mut intent_rx = handle.query_sm.subscribe_intent();
+            let mut intent_rx = handle.intent_rx.clone();
             let db = handle.db.clone();
-            let query_sm = handle.query_sm.clone();
+            let state_tx = handle.state_tx.clone();
             handle.rt.spawn(async move {
                 intent_rx.changed().await.unwrap();
-                let StatementResponse::Queries(queries) = execute_statement(&db, Statement::GetQuery(GetQuery::all())).await.unwrap() else { panic!("unexpected") };
-                let (query, _) = queries.into_iter().next().unwrap();
-                let fragments = query_sm.get_fragments(query.id).await.unwrap();
-                query_sm.transition_to(query.id, &fragments, terminal).await;
+                transition_fragments(&db, terminal.into()).await;
+                state_tx.send(()).expect("state channel closed");
             });
 
             assert!(
@@ -404,14 +460,14 @@ mod tests {
             let handle = TestHandle::new(&mut req);
 
             let result = handle.ask(Statement::CreateQuery(req.query)).unwrap();
-            let StatementResponse::CreatedQuery(created) = result else {
+            let StatementResult::CreatedQuery(created, _) = result else {
                 panic!("expected CreatedQuery");
             };
 
             let drop_req = DropQuery::all()
                 .with_filters(GetQuery::all().with_id(created.id));
             let result = handle.ask(Statement::DropQuery(drop_req)).unwrap();
-            let StatementResponse::DroppedQueries(dropped) = result else {
+            let StatementResult::DroppedQueries(dropped) = result else {
                 panic!("expected DroppedQueries");
             };
             assert_eq!(dropped.len(), 1);
@@ -423,27 +479,29 @@ mod tests {
             let handle = TestHandle::new(&mut req);
 
             let result = handle.ask(Statement::CreateQuery(req.query)).unwrap();
-            let StatementResponse::CreatedQuery(created) = result else {
+            let StatementResult::CreatedQuery(created, _) = result else {
                 panic!("expected CreatedQuery");
             };
 
-            let mut intent_rx = handle.query_sm.subscribe_intent();
-            let query_sm = handle.query_sm.clone();
+            let mut intent_rx = handle.intent_rx.clone();
+            let db = handle.db.clone();
+            let state_tx = handle.state_tx.clone();
             let query_id = created.id;
             handle.rt.spawn(async move {
+                // Wait for the drop intent (second intent after the create)
                 intent_rx.changed().await.unwrap();
-                let fragments = query_sm.get_fragments(query_id).await.unwrap();
-                query_sm.transition_to(query_id, &fragments, FragmentState::Stopped).await;
+                transition_fragments(&db, FragmentState::Stopped).await;
+                state_tx.send(()).expect("state channel closed");
             });
 
             let drop_req = DropQuery::all()
                 .with_filters(GetQuery::all().with_id(query_id))
                 .should_block();
             let result = handle.ask(Statement::DropQuery(drop_req)).unwrap();
-            let StatementResponse::DroppedQueries(dropped) = result else {
+            let StatementResult::DroppedQueries(dropped) = result else {
                 panic!("expected DroppedQueries");
             };
-            assert!(dropped.iter().all(|q| q.current_state.is_terminal()));
+            assert!(dropped.iter().all(|q| q.state.is_terminal()));
         }
     }
 }

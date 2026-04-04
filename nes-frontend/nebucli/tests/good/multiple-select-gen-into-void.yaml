@@ -80,23 +80,23 @@ query:
       VOID_SINK
 sinks:
   - name: VOID_SINK
-    host_addr: localhost:8080
+    host_addr: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     sink_type: Void
     config: { }
     parser_config: { }
 
-logical:
+logical_sources:
   - name: GENERATOR_SOURCE
     schema:
       - name: DOUBLE
         type: FLOAT64
 
-physical:
+physical_sources:
   - logical_source: GENERATOR_SOURCE
-    host_addr: localhost:8080
+    host_addr: worker-1:8080
     parser_config:
       type: CSV
       fieldDelimiter: ","
@@ -110,6 +110,6 @@ physical:
         NORMAL_DISTRIBUTION FLOAT64 0 1
 
 workers:
-  - host_addr: localhost:8080
-    data_addr: localhost:9090
+  - host_addr: worker-1:8080
+    data_addr: worker-1:9090
     max_operators: 10000

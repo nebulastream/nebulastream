@@ -79,12 +79,8 @@ LogicalPlan SinkBindingRule::apply(const LogicalPlan& queryPlan) const
                     return sinkOperator.value();
                 }
 
-                const auto sinkDescriptor = getSinkDescriptor(ctx, sinkOperator->get().getSinkName());
-                if (not sinkDescriptor.has_value())
-                {
-                    throw UnknownSinkName("{}", sinkOperator->get().getSinkName());
-                }
-                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor.value());
+                const auto sinkDescriptor = SinkCatalog::getSinkDescriptor(ctx, sinkOperator->get().getSinkName());
+                return sinkOperator.value()->withSinkDescriptor(sinkDescriptor);
             })
         | std::ranges::to<std::vector<LogicalOperator>>());
 }

@@ -12,5 +12,5 @@
     limitations under the License.
 */
 
-pub mod logical_source;
-pub mod physical_source;
+pub mod logical;
+pub mod physical;

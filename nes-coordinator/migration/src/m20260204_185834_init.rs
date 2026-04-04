@@ -14,14 +14,8 @@
 
 use crate::triggers::m20260204_185834_init as triggers;
 use crate::{assert_not_has_tables, drop_tables};
-use model::ConnectorKind;
-use model::query::StopMode;
-use model::query::fragment::FragmentState;
-use model::query::query_state::{DesiredQueryState, QueryState};
-use model::worker::{DesiredWorkerState, WorkerState};
 use sea_orm::DbBackend;
 use sea_orm_migration::prelude::{Index as MigrationIndex, Table as MigrationTable, *};
-use strum::IntoEnumIterator;
 
 #[derive(DeriveMigrationName)]
 pub struct Migration;
@@ -49,17 +43,9 @@ impl MigrationTrait for Migration {
                 ));
             }
             DbBackend::Sqlite => {
-                manager
-                    .get_connection()
-                    .execute_unprepared("PRAGMA foreign_keys = ON")
-                    .await
-                    .expect("failed to set foreign key enforcement");
-
-                manager
-                    .get_connection()
-                    .execute_unprepared("PRAGMA journal_mode = WAL")
-                    .await
-                    .expect("failed to set journal mode");
+                // Per-connection pragmas (foreign_keys, journal_mode, synchronous,
+                // busy_timeout) are set via SqliteConnectOptions in database.rs,
+                // which applies them to every connection in the pool.
             }
         }
 
@@ -110,19 +96,16 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Worker::CurrentState)
                             .string()
                             .not_null()
-                            .default(WorkerState::default().to_string()),
+                            .default("Pending"),
                     )
                     .col(
                         ColumnDef::new(Worker::DesiredState)
                             .string()
                             .not_null()
-                            .default(DesiredWorkerState::default().to_string())
+                            .default("Active")
                             .check(
-                                Expr::col(Worker::DesiredState).is_in(
-                                    DesiredWorkerState::iter()
-                                        .map(|s| s.to_string())
-                                        .collect::<Vec<_>>(),
-                                ),
+                                Expr::col(Worker::DesiredState)
+                                    .is_in(["Active", "Removed"]),
                             ),
                     )
                     .check(Expr::col(Worker::HostAddr).ne(Expr::col(Worker::DataAddr)))
@@ -166,13 +149,10 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(PhysicalSource::Kind)
                             .string()
                             .not_null()
-                            .default(ConnectorKind::Shared.to_string())
+                            .default("Shared")
                             .check(
-                                Expr::col(PhysicalSource::Kind).is_in(
-                                    ConnectorKind::iter()
-                                        .map(|k| k.to_string())
-                                        .collect::<Vec<_>>(),
-                                ),
+                                Expr::col(PhysicalSource::Kind)
+                                    .is_in(["Shared", "Inline", "Internal"]),
                             ),
                     )
                     .foreign_key(
@@ -213,13 +193,10 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Sink::Kind)
                             .string()
                             .not_null()
-                            .default(ConnectorKind::Shared.to_string())
+                            .default("Shared")
                             .check(
-                                Expr::col(Sink::Kind).is_in(
-                                    ConnectorKind::iter()
-                                        .map(|k| k.to_string())
-                                        .collect::<Vec<_>>(),
-                                ),
+                                Expr::col(Sink::Kind)
+                                    .is_in(["Shared", "Inline", "Internal"]),
                             ),
                     )
                     .foreign_key(
@@ -256,6 +233,20 @@ impl MigrationTrait for Migration {
                             .col(NetworkLink::SourceHostAddr)
                             .col(NetworkLink::TargetHostAddr),
                     )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(NetworkLink::Table, NetworkLink::SourceHostAddr)
+                            .to(Worker::Table, Worker::HostAddr)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Restrict),
+                    )
+                    .foreign_key(
+                        ForeignKey::create()
+                            .from(NetworkLink::Table, NetworkLink::TargetHostAddr)
+                            .to(Worker::Table, Worker::HostAddr)
+                            .on_delete(ForeignKeyAction::Cascade)
+                            .on_update(ForeignKeyAction::Restrict),
+                    )
                     .to_owned(),
             )
             .await?;
@@ -272,37 +263,15 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Query::Name).string().null())
-                    .col(ColumnDef::new(Query::Statement).string().not_null())
+                    .col(ColumnDef::new(Query::Sql).string().not_null())
                     .col(
-                        ColumnDef::new(Query::CurrentState)
+                        ColumnDef::new(Query::State)
                             .string()
                             .not_null()
-                            .default(QueryState::default().to_string()),
-                    )
-                    .col(
-                        ColumnDef::new(Query::DesiredState)
-                            .string()
-                            .not_null()
-                            .default(DesiredQueryState::default().to_string())
-                            .check(
-                                Expr::col(Query::DesiredState).is_in(
-                                    DesiredQueryState::iter()
-                                        .map(|s| s.to_string())
-                                        .collect::<Vec<_>>(),
-                                ),
-                            ),
+                            .default("Pending"),
                     )
                     .col(ColumnDef::new(Query::StartTimestamp).date_time().null())
                     .col(ColumnDef::new(Query::StopTimestamp).date_time().null())
-                    .col(
-                        ColumnDef::new(Query::StopMode).string().null().check(
-                            Expr::col(Query::StopMode)
-                                .is_null()
-                                .or(Expr::col(Query::StopMode).is_in(
-                                    StopMode::iter().map(|s| s.to_string()).collect::<Vec<_>>(),
-                                )),
-                        ),
-                    )
                     .col(ColumnDef::new(Query::Error).json().null())
                     .to_owned(),
             )
@@ -333,7 +302,21 @@ impl MigrationTrait for Migration {
                         ColumnDef::new(Fragment::CurrentState)
                             .string()
                             .not_null()
-                            .default(FragmentState::default().to_string()),
+                            .default("Pending"),
+                    )
+                    .col(
+                        ColumnDef::new(Fragment::DesiredState)
+                            .string()
+                            .not_null()
+                            .default("Completed"),
+                    )
+                    .col(
+                        ColumnDef::new(Fragment::StopMode).string().null().check(
+                            Expr::col(Fragment::StopMode)
+                                .is_null()
+                                .or(Expr::col(Fragment::StopMode)
+                                    .is_in(["Graceful", "Forceful"])),
+                        ),
                     )
                     .col(ColumnDef::new(Fragment::StartTimestamp).date_time().null())
                     .col(ColumnDef::new(Fragment::StopTimestamp).date_time().null())
@@ -494,7 +477,6 @@ enum Sink {
     Id,
     Name,
     HostAddr,
-    #[allow(clippy::enum_variant_names)]
     SinkType,
     Schema,
     Config,
@@ -529,6 +511,8 @@ enum Fragment {
     NumOperators,
     HasSource,
     CurrentState,
+    DesiredState,
+    StopMode,
     StartTimestamp,
     StopTimestamp,
     Error,
@@ -539,12 +523,10 @@ enum Query {
     Table,
     Id,
     Name,
-    Statement,
-    CurrentState,
-    DesiredState,
+    Sql,
+    State,
     StartTimestamp,
     StopTimestamp,
-    StopMode,
     Error,
 }
 

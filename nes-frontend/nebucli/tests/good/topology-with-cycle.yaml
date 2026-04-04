@@ -26,13 +26,13 @@ sinks:
     config: { }
     parser_config: { }
 
-logical:
+logical_sources:
   - name: stream
     schema:
       - name: value
         type: UINT64
 
-physical:
+physical_sources:
   - logical_source: stream
     host_addr: worker-a:8080
     parser_config:

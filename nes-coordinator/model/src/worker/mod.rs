@@ -12,24 +12,38 @@
     limitations under the License.
 */
 
+mod create;
+mod drop;
 pub mod endpoint;
+mod get;
 pub mod network_link;
+mod status;
 
-use std::collections::HashSet;
-use crate::source::physical_source;
-use crate::{IntoCondition, query, sink};
+pub use create::CreateWorker;
+pub(crate) use create::n_unique_workers;
+pub use drop::DropWorker;
+pub use get::GetWorker;
+pub use status::GetWorkerStatus;
+
+use crate::source::physical;
+use crate::{query, sink};
 use endpoint::NetworkAddr;
-use proptest::arbitrary::Arbitrary;
-use proptest::collection::vec;
-use proptest::strategy::BoxedStrategy;
-use sea_orm::ActiveValue::Set;
 use sea_orm::entity::prelude::*;
-use sea_orm::{Condition, NotSet};
 use serde::{Deserialize, Serialize};
 use strum::{Display, EnumIter};
 
 #[derive(
-    Debug, Clone, Copy, Default, PartialEq, Eq, Display, EnumIter, Serialize, DeriveActiveEnum,
+    Debug,
+    Clone,
+    Copy,
+    Default,
+    PartialEq,
+    Eq,
+    Display,
+    EnumIter,
+    Serialize,
+    Deserialize,
+    DeriveActiveEnum,
 )]
 #[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
 pub enum WorkerState {
@@ -76,7 +90,7 @@ pub struct Model {
 
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
-    #[sea_orm(has_many = "crate::source::physical_source::Entity")]
+    #[sea_orm(has_many = "crate::source::physical::Entity")]
     PhysicalSource,
     #[sea_orm(has_many = "crate::sink::Entity")]
     Sink,
@@ -84,7 +98,7 @@ pub enum Relation {
     Fragment,
 }
 
-impl Related<physical_source::Entity> for Entity {
+impl Related<physical::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::PhysicalSource.def()
     }
@@ -104,180 +118,154 @@ impl Related<query::fragment::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Debug, Clone, Deserialize)]
-pub struct CreateWorker {
-    pub host_addr: NetworkAddr,
-    pub data_addr: NetworkAddr,
-    pub max_operators: Option<i32>,
-    pub peers: Vec<NetworkAddr>,
-    pub config: serde_json::Value,
-    #[serde(default)]
-    pub if_not_exists: bool,
+impl Entity {
+    pub async fn actionable(conn: &impl ConnectionTrait) -> Result<Vec<Model>, DbErr> {
+        Entity::find()
+            .filter(
+                Column::DesiredState
+                    .eq(DesiredWorkerState::Active)
+                    .or(Expr::col(Column::CurrentState).ne(Expr::col(Column::DesiredState))),
+            )
+            .all(conn)
+            .await
+    }
 }
 
-impl From<CreateWorker> for ActiveModel {
-    fn from(req: CreateWorker) -> Self {
-        Self {
-            host_addr: Set(req.host_addr),
-            data_addr: Set(req.data_addr),
-            max_operators: Set(req.max_operators),
-            config: Set(req.config),
-            current_state: NotSet,
-            desired_state: NotSet,
+#[cfg(test)]
+mod tests {
+    use crate::Execute;
+    use crate::database::Database;
+    use crate::worker::{
+        self, CreateWorker, DesiredWorkerState, DropWorker, GetWorker, WorkerState,
+        n_unique_workers,
+    };
+    use sea_orm::prelude::Expr;
+    use sea_orm::{ActiveModelTrait, ActiveValue::Set, EntityTrait, QueryFilter};
+    use std::collections::HashSet;
+    use test_strategy::proptest;
+
+    #[proptest(async = "tokio")]
+    async fn create_and_get(req: CreateWorker) {
+        let db = Database::for_test().await;
+        let created = req.clone().execute(&db.conn).await.unwrap();
+        assert_eq!(created.host_addr, req.host_addr);
+        assert_eq!(created.data_addr, req.data_addr);
+        assert_eq!(created.max_operators, req.max_operators);
+        assert_eq!(created.current_state, WorkerState::Pending);
+        assert_eq!(created.desired_state, DesiredWorkerState::Active);
+
+        let workers = GetWorker::all()
+            .with_host_addr(req.host_addr.clone())
+            .execute(&db.conn)
+            .await
+            .unwrap();
+        assert_eq!(workers.len(), 1);
+        assert_eq!(workers[0].host_addr, req.host_addr);
+    }
+
+    #[proptest(async = "tokio")]
+    async fn drop_and_remove(req: CreateWorker) {
+        let db = Database::for_test().await;
+        req.clone().execute(&db.conn).await.unwrap();
+
+        let updated = DropWorker::new(req.host_addr)
+            .execute(&db.conn)
+            .await
+            .unwrap()
+            .expect("worker should exist");
+        assert_eq!(updated.desired_state, DesiredWorkerState::Removed);
+    }
+
+    #[proptest(async = "tokio")]
+    async fn host_addr_unique(req: CreateWorker) {
+        let db = Database::for_test().await;
+        req.clone().execute(&db.conn).await.unwrap();
+        assert!(req.execute(&db.conn).await.is_err());
+    }
+
+    #[proptest(async = "tokio")]
+    async fn host_addr_data_addr_must_differ(mut req: CreateWorker) {
+        let db = Database::for_test().await;
+        req.data_addr = req.host_addr.clone();
+        assert!(req.execute(&db.conn).await.is_err());
+    }
+
+    #[proptest(async = "tokio")]
+    async fn data_addr_unique(#[strategy(n_unique_workers(2))] mut workers: Vec<CreateWorker>) {
+        workers[1].data_addr = workers[0].data_addr.clone();
+        let db = Database::for_test().await;
+        workers[0].clone().execute(&db.conn).await.unwrap();
+        assert!(workers[1].clone().execute(&db.conn).await.is_err());
+    }
+
+    #[proptest(async = "tokio")]
+    async fn capacity_constraints(mut worker: CreateWorker) {
+        let db = Database::for_test().await;
+        let mut negative = worker.clone();
+        negative.max_operators = Some(-worker.max_operators.unwrap_or(1).max(1));
+        assert!(negative.execute(&db.conn).await.is_err());
+
+        worker.max_operators = Some(worker.max_operators.unwrap_or(0).max(0));
+        worker.execute(&db.conn).await.unwrap();
+    }
+
+    #[proptest(async = "tokio")]
+    async fn self_peer_rejected(mut req: CreateWorker) {
+        let db = Database::for_test().await;
+        req.peers = vec![req.host_addr.clone()];
+        assert!(req.execute(&db.conn).await.is_err());
+    }
+
+    #[proptest(async = "tokio")]
+    async fn duplicate_peer_rejected(
+        #[strategy(n_unique_workers(2))] mut workers: Vec<CreateWorker>,
+    ) {
+        let peer_addr = workers[1].host_addr.clone();
+        workers[0].peers = vec![peer_addr.clone(), peer_addr];
+        let db = Database::for_test().await;
+        workers[1].clone().execute(&db.conn).await.unwrap();
+        assert!(workers[0].clone().execute(&db.conn).await.is_err());
+    }
+
+    #[proptest(async = "tokio")]
+    async fn get_mismatch_correctness(
+        #[strategy(CreateWorker::topology_dag(2, 32))] workers: Vec<CreateWorker>,
+    ) {
+        let db = Database::for_test().await;
+        for w in &workers {
+            w.clone().execute(&db.conn).await.unwrap();
         }
-    }
-}
 
-#[derive(Debug, Clone, Default, Deserialize)]
-pub struct GetWorker {
-    pub host_addr: Option<NetworkAddr>,
-    pub desired_state: Option<DesiredWorkerState>,
-}
-
-impl GetWorker {
-    pub fn all() -> Self {
-        Self::default()
-    }
-
-    pub fn with_host_addr(mut self, host_addr: NetworkAddr) -> Self {
-        self.host_addr = Some(host_addr);
-        self
-    }
-
-    pub fn with_desired_state(mut self, state: DesiredWorkerState) -> Self {
-        self.desired_state = Some(state);
-        self
-    }
-}
-
-impl IntoCondition for GetWorker {
-    fn into_condition(self) -> Condition {
-        Condition::all()
-            .add_option(self.host_addr.map(|v| Column::HostAddr.eq(v)))
-            .add_option(self.desired_state.map(|v| Column::DesiredState.eq(v)))
-    }
-}
-
-#[derive(Clone, Debug, Deserialize)]
-pub struct DropWorker {
-    pub host_addr: NetworkAddr,
-}
-
-impl DropWorker {
-    pub fn new(host_addr: NetworkAddr) -> Self {
-        Self { host_addr }
-    }
-}
-
-impl Arbitrary for CreateWorker {
-    type Parameters = ();
-    fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        use proptest::prelude::*;
-        (
-            any::<NetworkAddr>(),
-            1024..65535u16,
-            prop_oneof![Just(None), (0..=1024i32).prop_map(Some)],
-        )
-            .prop_map(|(host_addr, data_port, max_operators)| {
-                let data_port = if data_port == host_addr.port {
-                    if data_port < 65534 {
-                        data_port + 1
-                    } else {
-                        data_port - 1
-                    }
-                } else {
-                    data_port
-                };
-                let data_addr = NetworkAddr::new(host_addr.host.clone(), data_port);
-                CreateWorker {
-                    host_addr,
-                    data_addr,
-                    max_operators,
-                    peers: vec![],
-                    config: Default::default(),
-                    if_not_exists: false,
-                }
-            })
-            .boxed()
-    }
-
-    type Strategy = BoxedStrategy<Self>;
-}
-
-/// Convert a flat edge index into an (i, j) pair where i < j,
-/// enumerating edges in the same order as nested loops: (0,1), (0,2), ..., (1,2), (1,3), ...
-fn flat_index_to_edge(n: usize, idx: usize) -> (usize, usize) {
-    let mut remaining = idx;
-    for i in 0..n {
-        let row_len = n - i - 1;
-        if remaining < row_len {
-            return (i, i + 1 + remaining);
+        // Mark every other worker as Active (matching desired_state)
+        let all = worker::Entity::find().all(&db.conn).await.unwrap();
+        for (i, w) in all.into_iter().enumerate() {
+            if i % 2 == 0 {
+                let mut active: worker::ActiveModel = w.into();
+                active.current_state = Set(WorkerState::Active);
+                active.update(&db.conn).await.unwrap();
+            }
         }
-        remaining -= row_len;
-    }
-    unreachable!()
-}
 
-pub fn n_unique_workers(n: usize) -> BoxedStrategy<Vec<CreateWorker>> {
-    use proptest::prelude::*;
-    vec(
-        prop_oneof![Just(None), (0..=1024i32).prop_map(Some)],
-        n,
-    )
-    .prop_map(|capacities| {
-        capacities
+        let mismatched: HashSet<_> = worker::Entity::find()
+            .filter(Expr::cust("current_state <> desired_state"))
+            .all(&db.conn)
+            .await
+            .unwrap()
             .into_iter()
-            .enumerate()
-            .map(|(i, max_operators)| {
-                let octet = (i + 2) as u8; // start at .2; .1 is reserved for the coordinator
-                let ip = format!("192.168.1.{octet}");
-                CreateWorker {
-                    host_addr: NetworkAddr::new(&ip, endpoint::DEFAULT_HOST_PORT),
-                    data_addr: NetworkAddr::new(&ip, endpoint::DEFAULT_DATA_PORT),
-                    max_operators,
-                    peers: vec![],
-                    config: Default::default(),
-                    if_not_exists: false,
-                }
-            })
-            .collect()
-    })
-    .boxed()
-}
+            .map(|w| w.host_addr)
+            .collect();
 
-impl CreateWorker {
-    pub fn topology_no_edges(min_nodes: u8, max_nodes: u8) -> BoxedStrategy<Vec<CreateWorker>> {
-        use proptest::prelude::*;
-        (min_nodes as usize..=max_nodes as usize)
-            .prop_flat_map(n_unique_workers)
-            .boxed()
-    }
-
-    pub fn topology_dag(min_nodes: u8, max_nodes: u8) -> BoxedStrategy<Vec<CreateWorker>> {
-        use proptest::prelude::*;
-        (min_nodes as usize..=max_nodes as usize)
-            .prop_flat_map(|n| {
-                let max_edges = n * (n - 1) / 2;
-                let num_edges = 0..=max_edges.min(2 * n);
-                (n_unique_workers(n), num_edges)
-            })
-            .prop_flat_map(|(workers, num_edges)| {
-                let n = workers.len();
-                let max_edges = n * (n - 1) / 2;
-                (Just(workers), vec(0..max_edges, num_edges))
-            })
-            .prop_map(|(mut workers, edge_indices)| {
-                let n = workers.len();
-                let mut seen = HashSet::new();
-                for idx in edge_indices {
-                    if seen.insert(idx) {
-                        let (i, j) = flat_index_to_edge(n, idx);
-                        let addr = workers[j].host_addr.clone();
-                        workers[i].peers.push(addr);
-                    }
-                }
-                workers
-            })
-            .boxed()
+        let all = worker::Entity::find().all(&db.conn).await.unwrap();
+        for w in &all {
+            let expect_mismatch = w.current_state != WorkerState::Active;
+            assert_eq!(
+                mismatched.contains(&w.host_addr),
+                expect_mismatch,
+                "Worker '{}': current={:?}, expected mismatch={}",
+                w.host_addr,
+                w.current_state,
+                expect_mismatch
+            );
+        }
     }
 }

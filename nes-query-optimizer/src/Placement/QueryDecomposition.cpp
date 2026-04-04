@@ -16,8 +16,6 @@
 
 #include <algorithm>
 #include <array>
-#include <optional>
-#include <ranges>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -71,13 +69,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     /// Look up connection (data-plane) addresses for the upstream and downstream nodes.
     /// Network sources/sinks use the data-plane address for actual data transfer,
     /// while the Host (gRPC address) is only used for management.
-    const auto downstreamWorker = getWorker(context.ctx, channel.downstreamNode);
-    INVARIANT(downstreamWorker.has_value(), "Downstream worker {} not found in catalog", channel.downstreamNode);
-    const auto upstreamWorker = getWorker(context.ctx, channel.upstreamNode);
-    INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
+    const auto downstreamWorker = WorkerCatalog::getWorker(context.ctx, channel.downstreamNode);
+    const auto upstreamWorker = WorkerCatalog::getWorker(context.ctx, channel.upstreamNode);
 
-    const auto& downstreamData = downstreamWorker->data;
-    const auto& upstreamData = upstreamWorker->data;
+    const auto& downstreamData = downstreamWorker.data;
+    const auto& upstreamData = upstreamWorker.data;
 
     auto sourceConfig = std::unordered_map<std::string, std::string>{
         {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"host", channel.downstreamNode.getRawValue()}};
@@ -110,14 +106,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
-    const auto networkSourceDescriptorOpt = createInlineSource(
+    const auto networkSourceDescriptor = SourceCatalog::createInlineSource(
         context.ctx, ConnectorKind::Internal, "Network", channel.upstreamOp.getOutputSchema(), {{"type", "Native"}}, sourceConfig);
-    INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
-    const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
     auto networkSinkDescriptor
-        = createInlineSink(context.ctx, ConnectorKind::Internal, channel.upstreamOp.getOutputSchema(), "Network", sinkConfig, {});
-    INVARIANT(networkSinkDescriptor.has_value(), "Invalid sink descriptor config for network sink");
+        = SinkCatalog::createInlineSink(context.ctx, ConnectorKind::Internal, channel.upstreamOp.getOutputSchema(), "Network", sinkConfig, {});
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
@@ -130,7 +123,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     return Bridge{
         SourceDescriptorLogicalOperator{networkSourceDescriptor}.withTraitSet(ts),
-        SinkLogicalOperator{networkSinkDescriptor.value()}.withTraitSet(ts).withInferredSchema({channel.upstreamOp.getOutputSchema()})};
+        SinkLogicalOperator{networkSinkDescriptor}.withTraitSet(ts).withInferredSchema({channel.upstreamOp.getOutputSchema()})};
 }
 
 LogicalOperator createNetworkChannel(

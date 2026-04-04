@@ -21,5 +21,5 @@ namespace NES
 struct PlannerContext;
 struct PlannedStatement;
 
-PlannedStatement plan_sql(const PlannerContext& catalog, rust::Str sql);
+PlannedStatement plan_sql(const PlannerContext& catalog, rust::Str sql, rust::Str optimizer_config);
 }

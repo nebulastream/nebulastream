@@ -37,7 +37,7 @@ sinks:
   - name: print_sink
     host_addr: worker-1:8080
     schema:
-      - name: GENERATOR_SOURCE$DOUBLE
+      - name: DOUBLE
         type: FLOAT64
     sink_type: Print
     config:
@@ -45,13 +45,13 @@ sinks:
       output_format: CSV
     parser_config: { }
 
-logical:
+logical_sources:
   - name: GENERATOR_SOURCE
     schema:
       - name: DOUBLE
         type: FLOAT64
 
-physical:
+physical_sources:
   - logical_source: GENERATOR_SOURCE
     host_addr: worker-2:8080
     parser_config:

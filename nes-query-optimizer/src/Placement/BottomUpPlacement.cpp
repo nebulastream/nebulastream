@@ -432,9 +432,8 @@ void BottomUpOperatorPlacer::apply(LogicalPlan& logicalPlan)
         | std::views::transform(
                               [&](const auto& nodeId) -> std::pair<NetworkTopology::NodeId, Capacity>
                               {
-                                  auto worker = getWorker(ctx, nodeId);
-                                  INVARIANT(worker.has_value(), "Worker {} not found in catalog", nodeId);
-                                  return {nodeId, worker->maxOperators};
+                                  auto worker = WorkerCatalog::getWorker(ctx, nodeId);
+                                  return {nodeId, worker.maxOperators};
                               })
         | std::ranges::to<std::unordered_map<NetworkTopology::NodeId, Capacity>>();
 

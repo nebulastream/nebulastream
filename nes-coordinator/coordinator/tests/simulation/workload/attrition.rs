@@ -13,15 +13,16 @@
 */
 
 #![cfg(madsim)]
-use crate::harness::TestHarness;
+use crate::harness::{COORDINATOR_NAME, TestHarness};
 use crate::workload::{FailureInjectorFactory, Workload, WorkloadFactory, parse_options};
 use async_trait::async_trait;
 use madsim::rand::{Rng, thread_rng};
 use madsim::runtime::Handle;
+use madsim::task::NodeId;
 use serde::Deserialize;
 use std::collections::HashMap;
 use std::ops::Range;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tracing::info;
 
 const DEFAULT_END_SECS: u64 = 30;
@@ -52,7 +53,6 @@ impl Default for AttritionConfig {
 
 pub struct AttritionWorkload {
     begin: Duration,
-    end: Duration,
     kill_rate: f64,
     restart_delay: Range<Duration>,
     kill_coordinator: bool,
@@ -62,14 +62,13 @@ impl AttritionWorkload {
     pub const NAME: &str = "Attrition";
 
     pub fn from_options(options: &HashMap<String, toml::Value>) -> Self {
-        let c: AttritionConfig = parse_options(options);
+        let cfg: AttritionConfig = parse_options(options);
         Self {
-            begin: Duration::from_secs(c.begin),
-            end: Duration::from_secs(c.end),
-            kill_rate: c.kill_rate,
-            restart_delay: Duration::from_secs(c.restart_delay_lo_secs)
-                ..Duration::from_secs(c.restart_delay_hi_secs),
-            kill_coordinator: c.kill_coordinator,
+            begin: Duration::from_secs(cfg.begin),
+            kill_rate: cfg.kill_rate,
+            restart_delay: Duration::from_secs(cfg.restart_delay_lo_secs)
+                ..Duration::from_secs(cfg.restart_delay_hi_secs),
+            kill_coordinator: cfg.kill_coordinator,
         }
     }
 
@@ -84,49 +83,52 @@ impl Workload for AttritionWorkload {
         Self::NAME
     }
 
-    async fn start(&self, harness: &TestHarness) {
+    async fn start(&mut self, harness: &TestHarness) {
         info!(
-            "{}: ({:?}..{:?}) kill_rate={:.0}% restart_delay={:?}..{:?}",
+            "{}: kill_at={:?} kill_rate={:.0}% restart_delay={:?}..{:?} kill_coordinator={:?}",
             self.name(),
             self.begin,
-            self.end,
             self.kill_rate * 100.0,
             self.restart_delay.start,
             self.restart_delay.end,
+            self.kill_coordinator
         );
 
         tokio::time::sleep(self.begin).await;
 
-        let mut node_names: Vec<String> = (0..harness.num_workers())
-            .map(|i| harness.worker_name(i))
-            .collect();
-        if self.kill_coordinator {
-            node_names.push(harness.coordinator_name().to_string());
-        }
-
         let mut rng = thread_rng();
-        let victims: Vec<String> = node_names
+        let all_nodes = if self.kill_coordinator {
+            harness.get_all_nodes()
+        } else {
+            harness.get_workers()
+        };
+        let victims: Vec<NodeId> = all_nodes
             .iter()
             .filter(|_| rng.gen_bool(self.kill_rate))
-            .cloned()
+            .copied()
             .collect();
 
-        if victims.is_empty() {
-            return;
+        // each victim gets its own random restart delay
+        let mut restarts: Vec<(NodeId, Duration)> = victims
+            .iter()
+            .map(|&id| (id, rng.gen_range(self.restart_delay.clone())))
+            .collect();
+        restarts.sort_by_key(|&(_, delay)| delay);
+
+        // all nodes are killed at the same instant
+        for &(id, _) in &restarts {
+            info!("{}: kill {id}", self.name());
+            harness.kill(&id);
         }
 
-        for name in &victims {
-            info!("attrition: kill {name}");
-            Handle::current().kill(name);
-        }
-
-        let restart_at = self.begin + rng.gen_range(self.restart_delay.clone());
-        let sleep_until = restart_at.min(self.end);
-        tokio::time::sleep(sleep_until - self.begin).await;
-
-        for name in &victims {
-            info!("attrition: restart {name}");
-            Handle::current().restart(name);
+        let mut elapsed = Duration::ZERO;
+        for &(id, delay) in &restarts {
+            if delay > elapsed {
+                tokio::time::sleep(delay - elapsed).await;
+                elapsed = delay;
+            }
+            info!("{}: restart {id} (after {delay:?})", self.name());
+            harness.restart(&id);
         }
     }
 }
@@ -134,7 +136,7 @@ impl Workload for AttritionWorkload {
 inventory::submit! {
     WorkloadFactory {
         name: AttritionWorkload::NAME,
-        create: |opts| Box::new(AttritionWorkload::from_options(opts)),
+        create: |opts, _model| Box::new(AttritionWorkload::from_options(opts)),
     }
 }
 

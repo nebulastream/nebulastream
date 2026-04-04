@@ -15,86 +15,73 @@
 #![cfg(madsim)]
 
 pub mod attrition;
-pub mod cluster;
 pub mod degradation;
-pub mod invariant;
 pub mod partition;
 pub mod query;
+pub mod stall;
+pub mod swizzle;
+pub mod worker;
 
-pub use invariant::{Invariant, InvariantContext, check_invariants};
+pub use crate::invariant::{Invariant, check_invariants};
 
-use crate::harness::arb;
-use async_trait::async_trait;
 use crate::harness::TestHarness;
-use madsim::rand::Rng;
-use proptest::prelude::*;
-use proptest::strategy::Union;
+use crate::model_state::{ModelState, Operation, Step};
+use async_trait::async_trait;
+use madsim::rand::seq::SliceRandom;
+use madsim::rand::{Rng, thread_rng};
+use model::statement::{Statement, StatementResult};
 use serde::de::DeserializeOwned;
+use std::cell::RefCell;
 use std::collections::HashMap;
-use std::fmt::Debug;
+use std::rc::Rc;
 use std::time::Duration;
-use tracing::info;
+use tracing::{debug, info, warn};
 
-const JITTER_FRACTION: u64 = 2;
-
-pub fn precompute_delays(num_ops: usize, duration: Duration) -> Vec<Duration> {
-    if num_ops == 0 {
-        return Vec::new();
-    }
-    let base_ms = duration.as_millis() as u64 / num_ops as u64;
-    let half = base_ms / JITTER_FRACTION;
-    let lo = base_ms.saturating_sub(half);
-    let hi = base_ms + half;
-    let mut rng = madsim::rand::thread_rng();
-    (0..num_ops)
-        .map(|_| Duration::from_millis(rng.gen_range(lo..=hi)))
-        .collect()
-}
-
-pub fn precompute_times(count: usize, start: Duration, span: Duration) -> Vec<Duration> {
-    if count == 0 {
-        return Vec::new();
-    }
-    let start_ms = start.as_millis() as u64;
-    let slot_ms = span.as_millis() as u64 / count as u64;
-    let mut rng = madsim::rand::thread_rng();
-    (0..count)
-        .map(|i| {
-            let slot_start = start_ms + (i as u64) * slot_ms;
-            Duration::from_millis(rng.gen_range(slot_start..=slot_start + slot_ms))
+pub fn gen_delays(num_ops: usize, lo: u64, hi: u64) -> Vec<Duration> {
+    debug_assert!(num_ops > 0 && hi >= lo);
+    let mut rng = thread_rng();
+    let lo_ms = lo * 1000;
+    let hi_ms = hi * 1000;
+    let mut timestamps: Vec<u64> = (0..num_ops).map(|_| rng.gen_range(lo_ms..=hi_ms)).collect();
+    timestamps.sort();
+    let mut prev = lo_ms;
+    let delays: Vec<Duration> = timestamps
+        .iter()
+        .map(|&t| {
+            let delay = Duration::from_millis(t - prev);
+            prev = t;
+            delay
         })
-        .collect()
+        .collect();
+
+    debug!(delays = %delays.iter().map(|d| format!("{}ms", d.as_millis())).collect::<Vec<_>>().join(", "));
+    delays
 }
 
-
-pub fn generate_weighted<Op: Clone + Debug>(strategies: Vec<(u32, BoxedStrategy<Op>)>) -> Op {
-    let strategy = Union::new_weighted(strategies);
-    arb(strategy)
+pub fn pick_weighted<T: Copy>(choices: &[(T, u32)]) -> T {
+    choices
+        .choose_weighted(&mut thread_rng(), |(_, w)| *w)
+        .unwrap()
+        .0
 }
 
 #[async_trait(?Send)]
 pub trait Workload {
     fn name(&self) -> &str;
 
-    fn min_workers(&self) -> u8 {
-        1
-    }
-
     async fn setup(&mut self, _harness: &TestHarness) {}
 
-    async fn start(&self, harness: &TestHarness);
+    async fn start(&mut self, harness: &TestHarness);
 
     async fn check(&self, _harness: &TestHarness) {}
 }
 
 pub struct WorkloadFactory {
     pub name: &'static str,
-    pub create: fn(&HashMap<String, toml::Value>) -> Box<dyn Workload>,
+    pub create: fn(&HashMap<String, toml::Value>, Rc<RefCell<ModelState>>) -> Box<dyn Workload>,
 }
 
-pub fn parse_options<T: DeserializeOwned + Default>(
-    options: &HashMap<String, toml::Value>,
-) -> T {
+pub fn parse_options<T: DeserializeOwned + Default>(options: &HashMap<String, toml::Value>) -> T {
     if options.is_empty() {
         return T::default();
     }
@@ -126,13 +113,42 @@ const BASE_INJECTION_PROBABILITY: f64 = 0.1;
 pub fn create_workload(
     name: &str,
     options: &HashMap<String, toml::Value>,
+    model: Rc<RefCell<ModelState>>,
 ) -> Box<dyn Workload> {
     for factory in inventory::iter::<WorkloadFactory> {
         if factory.name == name {
-            return (factory.create)(options);
+            return (factory.create)(options, model);
         }
     }
     panic!("unknown workload: {name}");
+}
+
+/// Drive the resolve/observe loop for an operation, including all prerequisites.
+pub async fn execute(op: Operation, model: &Rc<RefCell<ModelState>>, harness: &TestHarness) {
+    loop {
+        let step = model.borrow().resolve(op);
+        let (stmt, is_ready) = match step {
+            Ok(Step::Prerequisite(s)) => (s, false),
+            Ok(Step::Ready(s)) => (s, true),
+            Err(e) => {
+                warn!("operation not possible: {e:?}");
+                return;
+            }
+        };
+        let rsp = send_stmt(harness, stmt).await;
+        model.borrow_mut().observe(rsp);
+        if is_ready {
+            return;
+        }
+    }
+}
+
+async fn send_stmt(harness: &TestHarness, stmt: Statement) -> StatementResult {
+    match stmt {
+        Statement::CreateWorker(req) => harness.create_worker(req).await.unwrap(),
+        Statement::DropWorker(req) => harness.drop_worker(req).await.unwrap(),
+        other => harness.send(other).await.unwrap(),
+    }
 }
 
 pub fn inject_failure_workloads(workloads: &mut Vec<Box<dyn Workload>>) {
@@ -141,9 +157,7 @@ pub fn inject_failure_workloads(workloads: &mut Vec<Box<dyn Workload>>) {
         let mut count = 0;
         while count < MAX_FAILURE_INJECTIONS_PER_TYPE
             && (factory.should_inject)(count)
-            && rng.gen_bool(
-                (BASE_INJECTION_PROBABILITY / (1.0 + count as f64)).clamp(0.0, 1.0),
-            )
+            && rng.gen_bool((BASE_INJECTION_PROBABILITY / (1.0 + count as f64)).clamp(0.0, 1.0))
         {
             let w = (factory.create)();
             info!("auto-injecting failure workload: {}", w.name());

@@ -26,6 +26,28 @@ namespace NES
 
 WorkerBridge::~WorkerBridge() = default;
 
+BridgeResult make_result(const Exception& ex)
+{
+    return BridgeResult{
+        static_cast<uint16_t>(ex.code()),
+        rust::String(std::string(ex.what())),
+        rust::String(ex.trace().to_string())
+    };
+}
+
+BridgeResult ok()
+{
+    return BridgeResult{0, rust::String(), rust::String()};
+}
+
+uint64_t to_ms(const std::optional<std::chrono::system_clock::time_point>& opt)
+{
+    if (!opt)
+        return 0;
+    return static_cast<uint64_t>(
+        std::chrono::duration_cast<std::chrono::milliseconds>(opt->time_since_epoch()).count());
+}
+
 std::unique_ptr<WorkerBridge> start_worker(const rust::Str configJson)
 {
     SingleNodeWorkerConfiguration config;
@@ -41,41 +63,54 @@ std::unique_ptr<WorkerBridge> start_worker(const rust::Str configJson)
     return bridge;
 }
 
-void register_query(WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment)
+BridgeResult register_query(WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment)
 {
     SerializableQueryPlan proto;
     proto.ParseFromArray(serializedFragment.data(), static_cast<int>(serializedFragment.size()));
     auto plan = QueryPlanSerializationUtil::deserializeQueryPlan(proto);
-    if (const auto result = bridge.worker->registerQuery(std::move(plan)); !result)
+    if (auto result = bridge.worker->registerQuery(std::move(plan)); !result)
     {
-        throw std::runtime_error(result.error().what());
+        return make_result(result.error());
     }
+    return ok();
 }
 
-void start_query(WorkerBridge& bridge, int64_t id)
+BridgeResult start_query(WorkerBridge& bridge, int64_t id)
 {
-    if (const auto result = bridge.worker->startQuery(QueryId{id}); !result)
+    if (auto result = bridge.worker->startQuery(QueryId{id}); !result)
     {
-        throw std::runtime_error(result.error().what());
+        return make_result(result.error());
     }
+    return ok();
 }
 
-void stop_query(WorkerBridge& bridge, int64_t id, uint8_t mode)
+BridgeResult stop_query(WorkerBridge& bridge, int64_t id, uint8_t mode)
 {
-    if (const auto result = bridge.worker->stopQuery(QueryId{id}, static_cast<QueryTerminationType>(mode)); !result)
+    if (auto result = bridge.worker->stopQuery(QueryId{id}, static_cast<QueryTerminationType>(mode)); !result)
     {
-        throw std::runtime_error(result.error().what());
+        return make_result(result.error());
     }
+    return ok();
 }
 
-int32_t query_status(WorkerBridge& bridge, int64_t id)
+BridgeQueryStatus query_status(WorkerBridge& bridge, int64_t id)
 {
-    const auto result = bridge.worker->getQueryStatus(QueryId{id});
+    auto result = bridge.worker->getQueryStatus(QueryId{id});
     if (!result)
     {
-        throw std::runtime_error(result.error().what());
+        return BridgeQueryStatus{make_result(result.error()), 0, 0, 0, ok()};
     }
-    return static_cast<int32_t>(result->state);
+    const auto& snapshot = *result;
+    auto query_error = snapshot.metrics.error
+        ? make_result(*snapshot.metrics.error)
+        : ok();
+    return BridgeQueryStatus{
+        ok(),
+        static_cast<int32_t>(snapshot.state),
+        to_ms(snapshot.metrics.start),
+        to_ms(snapshot.metrics.stop),
+        std::move(query_error)
+    };
 }
 
 }

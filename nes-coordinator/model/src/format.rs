@@ -14,9 +14,9 @@
 
 use crate::query;
 use crate::query::fragment;
-use crate::request::StatementResponse;
+use crate::statement::StatementResult;
 use crate::sink;
-use crate::source::{logical_source, physical_source};
+use crate::source::{logical, physical};
 use crate::worker;
 use sea_orm::Iden;
 use std::fmt;
@@ -102,8 +102,8 @@ fn opt_ts(v: &Option<chrono::DateTime<chrono::Local>>) -> String {
     }
 }
 
-fn logical_source_table(sources: &[logical_source::Model]) -> Table {
-    use logical_source::Column::*;
+fn logical_table(sources: &[logical::Model]) -> Table {
+    use logical::Column::*;
     let mut t = Table::new([Name, Schema]);
     for source in sources {
         t.row(vec![source.name.clone(), json_str(&source.schema)]);
@@ -111,8 +111,8 @@ fn logical_source_table(sources: &[logical_source::Model]) -> Table {
     t
 }
 
-fn physical_source_table(sources: &[physical_source::Model]) -> Table {
-    use physical_source::Column::*;
+fn physical_table(sources: &[physical::Model]) -> Table {
+    use physical::Column::*;
     let mut t = Table::new([Id, LogicalSource, HostAddr, SourceType, SourceConfig, ParserConfig, Kind]);
     for source in sources {
         t.row(vec![
@@ -147,16 +147,14 @@ fn sink_table(sinks: &[sink::Model]) -> Table {
 
 fn query_table(queries: &[query::Model]) -> Table {
     use query::Column::*;
-    let mut t = Table::new([Id, Name, CurrentState, DesiredState, StartTimestamp, StopTimestamp, StopMode, Error]);
+    let mut t = Table::new([Id, Name, State, StartTimestamp, StopTimestamp, Error]);
     for query in queries {
         t.row(vec![
             query.id.to_string(),
             query.name.clone().unwrap_or_default(),
-            query.current_state.to_string(),
-            query.desired_state.to_string(),
+            query.state.to_string(),
             opt_ts(&query.start_timestamp),
             opt_ts(&query.stop_timestamp),
-            opt(&query.stop_mode),
             opt(&query.error),
         ]);
     }
@@ -181,7 +179,7 @@ fn worker_table(workers: &[worker::Model]) -> Table {
 
 fn fragment_table(fragments: &[fragment::Model]) -> Table {
     use fragment::Column::*;
-    let mut t = Table::new([Id, QueryId, HostAddr, NumOperators, HasSource, CurrentState, StartTimestamp, StopTimestamp, Error]);
+    let mut t = Table::new([Id, QueryId, HostAddr, NumOperators, HasSource, CurrentState, DesiredState, StartTimestamp, StopTimestamp, Error]);
     for fragment in fragments {
         t.row(vec![
             fragment.id.to_string(),
@@ -190,6 +188,7 @@ fn fragment_table(fragments: &[fragment::Model]) -> Table {
             fragment.num_operators.to_string(),
             fragment.has_source.to_string(),
             fragment.current_state.to_string(),
+            fragment.desired_state.to_string(),
             opt_ts(&fragment.start_timestamp),
             opt_ts(&fragment.stop_timestamp),
             opt(&fragment.error),
@@ -198,44 +197,47 @@ fn fragment_table(fragments: &[fragment::Model]) -> Table {
     t
 }
 
-impl fmt::Display for StatementResponse {
+impl fmt::Display for StatementResult {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Self::CreatedLogicalSource(m) => write!(f, "{}", logical_source_table(&[m.clone()])),
+            Self::CreatedLogicalSource(m) => write!(f, "{}", logical_table(&[m.clone()])),
             Self::CreatedPhysicalSource(m) => {
-                write!(f, "{}", physical_source_table(&[m.clone()]))
+                write!(f, "{}", physical_table(&[m.clone()]))
             }
             Self::CreatedSink(m) => write!(f, "{}", sink_table(&[m.clone()])),
-            Self::CreatedQuery(m) => write!(f, "{}", query_table(&[m.clone()])),
+            Self::CreatedQuery(m, fragments) => {
+                writeln!(f, "{}", query_table(&[m.clone()]))?;
+                write!(f, "{}", fragment_table(fragments))
+            }
             Self::CreatedWorker(m) => write!(f, "{}", worker_table(&[m.clone()])),
-            Self::DroppedLogicalSources(v) => write!(f, "{}", logical_source_table(v)),
-            Self::DroppedPhysicalSources(v) => write!(f, "{}", physical_source_table(v)),
+            Self::DroppedLogicalSources(v) => write!(f, "{}", logical_table(v)),
+            Self::DroppedPhysicalSources(v) => write!(f, "{}", physical_table(v)),
             Self::DroppedSinks(v) => write!(f, "{}", sink_table(v)),
             Self::DroppedQueries(v) => write!(f, "{}", query_table(v)),
             Self::DroppedWorker(opt) => match opt {
                 Some(m) => write!(f, "{}", worker_table(&[m.clone()])),
                 None => write!(f, "(no matching worker)"),
             },
-            Self::LogicalSource(v) => write!(f, "{}", logical_source_table(v)),
-            Self::PhysicalSources(v) => write!(f, "{}", physical_source_table(v)),
+            Self::LogicalSource(v) => write!(f, "{}", logical_table(v)),
+            Self::PhysicalSources(v) => write!(f, "{}", physical_table(v)),
             Self::Sinks(v) => write!(f, "{}", sink_table(v)),
             Self::ExplainedQuery(s) => write!(f, "{s}"),
             Self::Queries(v) => {
-                let queries: Vec<_> = v.iter().map(|(q, _)| q.clone()).collect();
+                let mut queries: Vec<_> = v.iter().map(|(q, _)| q.clone()).collect();
+                queries.sort_by_key(|q| q.id);
                 write!(f, "{}", query_table(&queries))?;
-                for (q, fragments) in v {
-                    if !fragments.is_empty() {
-                        write!(
-                            f,
-                            "\nFragments for query {}:\n{}",
-                            q.id,
-                            fragment_table(fragments)
-                        )?;
-                    }
+                let mut fragments: Vec<_> = v.iter().flat_map(|(_, fs)| fs.clone()).collect();
+                fragments.sort_by_key(|f| (f.query_id, f.id));
+                if !fragments.is_empty() {
+                    write!(f, "\n{}", fragment_table(&fragments))?;
                 }
                 Ok(())
             }
             Self::Workers(v) => write!(f, "{}", worker_table(v)),
+            Self::WorkerStatus(w, fragments) => {
+                writeln!(f, "{}", worker_table(&[w.clone()]))?;
+                write!(f, "{}", fragment_table(fragments))
+            }
         }
     }
 }

@@ -12,13 +12,11 @@
     limitations under the License.
 */
 
-use proptest_derive::Arbitrary;
 use sea_orm::{DeriveActiveEnum, EnumIter};
 use serde::{Deserialize, Serialize};
-use strum::{Display, EnumString};
+use strum::Display;
 
 #[derive(
-    Arbitrary,
     Clone,
     Copy,
     Debug,
@@ -29,7 +27,6 @@ use strum::{Display, EnumString};
     PartialOrd,
     Ord,
     EnumIter,
-    EnumString,
     DeriveActiveEnum,
     Serialize,
     Deserialize,
@@ -44,28 +41,6 @@ pub enum QueryState {
     Completed,
     Stopped,
     Failed,
-}
-
-#[derive(
-    Arbitrary,
-    Clone,
-    Copy,
-    Debug,
-    Default,
-    Display,
-    PartialEq,
-    Eq,
-    EnumIter,
-    DeriveActiveEnum,
-    Serialize,
-    Deserialize,
-)]
-#[sea_orm(rs_type = "String", db_type = "Text", rename_all = "PascalCase")]
-#[strum(serialize_all = "PascalCase")]
-pub enum DesiredQueryState {
-    #[default]
-    Completed,
-    Stopped,
 }
 
 impl QueryState {

@@ -69,11 +69,13 @@ sinks:
   - name: sink
     host_addr: worker-1:8080
     schema:
-      - name: streamstream2stream3stream4stream5stream6stream7stream8$START
+      - name: timestamptimestamptimestamptimestamptimestamptimestamptimestamptimestamp$start
         type: UINT64
-      - name: streamstream2stream3stream4stream5stream6stream7stream8$END
+        nullable: false
+      - name: timestamptimestamptimestamptimestamptimestamptimestamptimestamptimestamp$end
         type: UINT64
-      - name: stream$id
+        nullable: false
+      - name: id
         type: UINT64
     sink_type: File
     config:
@@ -81,7 +83,7 @@ sinks:
       output_format: CSV
     parser_config: { }
 
-logical:
+logical_sources:
   - name: stream
     schema:
       - name: timestamp
@@ -131,7 +133,7 @@ logical:
       - name: id2
         type: UINT64
 
-physical:
+physical_sources:
   - logical_source: stream
     host_addr: worker-2:8080
     parser_config:

@@ -1,19 +1,19 @@
 CREATE TRIGGER IF NOT EXISTS validate_query_state_transition
-    BEFORE UPDATE OF current_state
+    BEFORE UPDATE OF state
     ON query
-    WHEN NEW.current_state != OLD.current_state
+    WHEN NEW.state != OLD.state
 BEGIN
     SELECT CASE
-        WHEN OLD.current_state = 'Pending' AND NEW.current_state NOT IN ('Registered', 'Stopped', 'Failed') THEN
+        WHEN OLD.state = 'Pending' AND NEW.state NOT IN ('Registered', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid state transition: Pending must transition to one of (Registered, Stopped, Failed)')
 
-        WHEN OLD.current_state = 'Registered' AND NEW.current_state NOT IN ('Pending', 'Running', 'Stopped', 'Failed') THEN
+        WHEN OLD.state = 'Registered' AND NEW.state NOT IN ('Pending', 'Running', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid state transition: Registered must transition to one of (Pending, Running, Stopped, Failed)')
 
-        WHEN OLD.current_state = 'Running' AND NEW.current_state NOT IN ('Pending', 'Stopped', 'Completed', 'Failed') THEN
+        WHEN OLD.state = 'Running' AND NEW.state NOT IN ('Pending', 'Stopped', 'Completed', 'Failed') THEN
             RAISE(ABORT, 'Invalid state transition: Running must transition to one of (Pending, Stopped, Completed, Failed)')
 
-        WHEN OLD.current_state IN ('Completed', 'Stopped', 'Failed') THEN
+        WHEN OLD.state IN ('Completed', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid state transition: Cannot transition from a terminal state')
     END;
 END;
@@ -27,11 +27,8 @@ BEGIN
         WHEN OLD.current_state = 'Pending' AND NEW.current_state NOT IN ('Registered', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid fragment state transition: Pending must transition to one of (Registered, Stopped, Failed)')
 
-        WHEN OLD.current_state = 'Registered' AND NEW.current_state NOT IN ('Pending', 'Started', 'Stopped', 'Failed') THEN
-            RAISE(ABORT, 'Invalid fragment state transition: Registered must transition to one of (Pending, Started, Stopped, Failed)')
-
-        WHEN OLD.current_state = 'Started' AND NEW.current_state NOT IN ('Pending', 'Running', 'Stopped', 'Failed') THEN
-            RAISE(ABORT, 'Invalid fragment state transition: Started must transition to one of (Pending, Running, Stopped, Failed)')
+        WHEN OLD.current_state = 'Registered' AND NEW.current_state NOT IN ('Pending', 'Running', 'Stopped', 'Failed') THEN
+            RAISE(ABORT, 'Invalid fragment state transition: Registered must transition to one of (Pending, Running, Stopped, Failed)')
 
         WHEN OLD.current_state = 'Running' AND NEW.current_state NOT IN ('Pending', 'Completed', 'Stopped', 'Failed') THEN
             RAISE(ABORT, 'Invalid fragment state transition: Running must transition to one of (Pending, Completed, Stopped, Failed)')
@@ -65,7 +62,7 @@ CREATE TRIGGER IF NOT EXISTS derive_query_state_on_fragment_update
     AFTER UPDATE OF current_state ON fragment
 BEGIN
     UPDATE query
-    SET current_state = COALESCE(
+    SET state = COALESCE(
         (SELECT CASE
             WHEN EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state = 'Failed')
                 THEN 'Failed'
@@ -75,19 +72,19 @@ BEGIN
                 THEN 'Completed'
             WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Completed', 'Stopped'))
                 THEN 'Stopped'
-            WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Running', 'Started', 'Completed'))
+            WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Running', 'Completed'))
                 THEN 'Running'
-            WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Registered', 'Started', 'Running', 'Completed'))
+            WHEN NOT EXISTS (SELECT 1 FROM fragment WHERE query_id = NEW.query_id AND current_state NOT IN ('Registered', 'Running', 'Completed'))
                 THEN 'Registered'
             ELSE NULL
         END),
-        (SELECT current_state FROM query WHERE id = NEW.query_id)
+        (SELECT state FROM query WHERE id = NEW.query_id)
     )
     WHERE id = NEW.query_id;
 
     UPDATE query SET
         start_timestamp = CASE
-            WHEN (SELECT current_state FROM query WHERE id = NEW.query_id)
+            WHEN (SELECT state FROM query WHERE id = NEW.query_id)
                  IN ('Running', 'Completed', 'Stopped', 'Failed')
             THEN COALESCE(
                 (SELECT MIN(start_timestamp) FROM fragment WHERE query_id = NEW.query_id),
@@ -96,7 +93,7 @@ BEGIN
             ELSE (SELECT start_timestamp FROM query WHERE id = NEW.query_id)
         END,
         stop_timestamp = CASE
-            WHEN (SELECT current_state FROM query WHERE id = NEW.query_id)
+            WHEN (SELECT state FROM query WHERE id = NEW.query_id)
                  IN ('Completed', 'Stopped', 'Failed')
             THEN COALESCE(
                 (SELECT MAX(stop_timestamp) FROM fragment WHERE query_id = NEW.query_id),
@@ -119,16 +116,7 @@ BEGIN
             WHERE f.query_id = NEW.query_id AND f.error IS NOT NULL
         )
     WHERE id = NEW.query_id
-    AND (SELECT current_state FROM query WHERE id = NEW.query_id) = 'Failed';
-END;
-
-CREATE TRIGGER IF NOT EXISTS validate_fragment_worker_exists
-    BEFORE INSERT ON fragment
-BEGIN
-    SELECT CASE
-        WHEN NOT EXISTS (SELECT 1 FROM worker WHERE host_addr = NEW.host_addr) THEN
-            RAISE(ABORT, 'Fragment references non-existent worker')
-    END;
+    AND (SELECT state FROM query WHERE id = NEW.query_id) = 'Failed';
 END;
 
 CREATE TRIGGER IF NOT EXISTS prevent_worker_drop_with_active_fragments
@@ -152,6 +140,34 @@ BEGIN
     WHERE kind != 'Shared'
       AND id = OLD.source_id
       AND NOT EXISTS (SELECT 1 FROM query_source WHERE source_id = OLD.source_id);
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_physical_source_drop_with_active_queries
+    BEFORE DELETE ON physical_source
+BEGIN
+    SELECT CASE
+        WHEN EXISTS (
+            SELECT 1 FROM query_source qs
+            JOIN query q ON q.id = qs.query_id
+            WHERE qs.source_id = OLD.id
+            AND q.state NOT IN ('Completed', 'Stopped', 'Failed')
+        ) THEN
+            RAISE(ABORT, 'Cannot drop physical source: non-terminal queries still reference it')
+    END;
+END;
+
+CREATE TRIGGER IF NOT EXISTS prevent_sink_drop_with_active_queries
+    BEFORE DELETE ON sink
+BEGIN
+    SELECT CASE
+        WHEN EXISTS (
+            SELECT 1 FROM query_sink qs
+            JOIN query q ON q.id = qs.query_id
+            WHERE qs.sink_id = OLD.id
+            AND q.state NOT IN ('Completed', 'Stopped', 'Failed')
+        ) THEN
+            RAISE(ABORT, 'Cannot drop sink: non-terminal queries still reference it')
+    END;
 END;
 
 CREATE TRIGGER IF NOT EXISTS cleanup_orphaned_sink

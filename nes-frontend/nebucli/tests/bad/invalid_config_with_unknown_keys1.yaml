@@ -29,7 +29,7 @@ sinks:
     parser_config: { }
 
 idontexist: { }
-logical:
+logical_sources:
   - name: stream
     schema:
       - name: timestamp
@@ -37,7 +37,7 @@ logical:
       - name: id
         type: UINT64
 
-physical:
+physical_sources:
   - logical_source: stream
     host_addr: "worker-1:8080"
     parser_config:

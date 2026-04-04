@@ -16,13 +16,11 @@
 use crate::harness::TestHarness;
 use crate::workload::{FailureInjectorFactory, Workload, WorkloadFactory, parse_options};
 use async_trait::async_trait;
-use madsim::net::NetSim;
 use madsim::rand::{Rng, thread_rng};
-use madsim::runtime::Handle;
+use madsim::task::NodeId;
 use serde::Deserialize;
 use std::collections::HashMap;
-use std::iter::once;
-use std::time::Duration;
+use std::time::{Duration, Instant};
 use tracing::info;
 
 const DEFAULT_END_SECS: u64 = 30;
@@ -75,11 +73,7 @@ impl Workload for PartitionWorkload {
         Self::NAME
     }
 
-    fn min_workers(&self) -> u8 {
-        2
-    }
-
-    async fn start(&self, harness: &TestHarness) {
+    async fn start(&mut self, harness: &TestHarness) {
         info!(
             "{}: ({:?}..{:?}) rate={:.0}%",
             self.name(),
@@ -88,49 +82,29 @@ impl Workload for PartitionWorkload {
             self.partition_rate * 100.0,
         );
 
-        let all_names: Vec<String> = once("coordinator".to_string())
-            .chain((0..harness.num_workers()).map(|i| harness.worker_name(i)))
-            .collect();
+        tokio::time::sleep(self.begin).await;
 
-        let min_nodes_for_partition: usize = 2;
-        if all_names.len() < min_nodes_for_partition {
-            return;
-        }
-
-        let net = NetSim::current();
-        let rt = Handle::current();
-
+        let all_nodes = harness.get_all_nodes();
         let mut rng = thread_rng();
-        let mut clogged = Vec::new();
-        for (i, src_name) in all_names.iter().enumerate() {
-            for dst_name in &all_names[i + 1..] {
-                if !rng.gen_bool(self.partition_rate) {
-                    continue;
+        let mut clogged: Vec<(NodeId, NodeId)> = Vec::new();
+        for (i, &src) in all_nodes.iter().enumerate() {
+            for &dst in &all_nodes[i + 1..] {
+                if rng.gen_bool(self.partition_rate) {
+                    clogged.push((src, dst));
                 }
-                let (src_id, dst_id) = match (rt.get_node(src_name), rt.get_node(dst_name)) {
-                    (Some(s), Some(d)) => (s.id(), d.id()),
-                    _ => continue,
-                };
-                clogged.push((src_name.clone(), dst_name.clone(), src_id, dst_id));
             }
         }
-
-        if clogged.is_empty() {
-            return;
-        }
-
-        tokio::time::sleep(self.begin).await;
-        for (src_name, dst_name, src_id, dst_id) in &clogged {
-            info!("partition: clog {src_name} <-> {dst_name}");
-            net.clog_link(*src_id, *dst_id);
-            net.clog_link(*dst_id, *src_id);
+        for &(src, dst) in &clogged {
+            info!("partition: clog {src} <-> {dst}");
+            harness.clog_link(src, dst);
+            harness.clog_link(dst, src);
         }
 
         tokio::time::sleep(self.end - self.begin).await;
-        for (src_name, dst_name, src_id, dst_id) in &clogged {
-            net.unclog_link(*src_id, *dst_id);
-            net.unclog_link(*dst_id, *src_id);
-            info!("partition: heal {src_name} <-> {dst_name}");
+        for &(src, dst) in &clogged {
+            harness.unclog_link(src, dst);
+            harness.unclog_link(dst, src);
+            info!("partition: heal {src} <-> {dst}");
         }
     }
 }
@@ -138,7 +112,7 @@ impl Workload for PartitionWorkload {
 inventory::submit! {
     WorkloadFactory {
         name: PartitionWorkload::NAME,
-        create: |opts| Box::new(PartitionWorkload::from_options(opts)),
+        create: |opts, _model| Box::new(PartitionWorkload::from_options(opts)),
     }
 }
 

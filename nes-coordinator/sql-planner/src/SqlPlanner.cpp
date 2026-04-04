@@ -25,7 +25,7 @@ SqlPlanner::SqlPlanner(
     QueryOptimizerConfiguration optimizerConfig)
     : binder([](auto* queryCtx) { return AntlrSQLQueryParser::bindLogicalQueryPlan(queryCtx); })
     , analyzer(ctx)
-    , optimizer(ctx, getTopology(ctx), std::move(optimizerConfig))
+    , optimizer(ctx, WorkerCatalog::getTopology(ctx), std::move(optimizerConfig))
 {
 }
 

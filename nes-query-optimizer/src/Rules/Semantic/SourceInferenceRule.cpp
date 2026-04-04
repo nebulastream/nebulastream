@@ -73,12 +73,7 @@ LogicalPlan SourceInferenceRule::apply(LogicalPlan queryPlan) const
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
         auto schema = Schema();
-        auto logicalSourceOpt = getLogicalSource(ctx, source->getLogicalSourceName());
-        if (not logicalSourceOpt.has_value())
-        {
-            throw UnknownSourceName("Logical source not registered. Source Name: {}", source->getLogicalSourceName());
-        }
-        const auto& logicalSource = logicalSourceOpt.value();
+        const auto logicalSource = SourceCatalog::getLogicalSource(ctx, source->getLogicalSourceName());
         schema.appendFieldsFromOtherSchema(*logicalSource.getSchema());
         auto qualifierName = source->getLogicalSourceName() + Schema::ATTRIBUTE_NAME_SEPARATOR;
         /// perform attribute name resolution

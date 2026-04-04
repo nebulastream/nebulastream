@@ -12,64 +12,33 @@
     limitations under the License.
 */
 
-use crate::query;
-use crate::query::fragment;
-use crate::query::{CreateQuery, DropQuery, GetQuery};
-use crate::sink;
-use crate::sink::{CreateSink, DropSink, GetSink};
-use crate::source::logical_source::{
-    self, CreateLogicalSource, DropLogicalSource, GetLogicalSource,
-};
-use crate::source::physical_source::{
-    self, CreatePhysicalSource, DropPhysicalSource, GetPhysicalSource,
-};
-use crate::worker;
-use crate::worker::{CreateWorker, DropWorker, GetWorker};
+use crate::query::query_state::QueryState;
+use crate::statement::{Statement, StatementResult};
+use anyhow::Result;
 use std::fmt::Debug;
 use tokio::sync::oneshot;
 
-#[derive(Clone, Debug, serde::Deserialize)]
-#[serde(tag = "tag")]
-pub enum Statement {
-    CreateWorker(CreateWorker),
-    GetWorker(GetWorker),
-    DropWorker(DropWorker),
-    CreateQuery(CreateQuery),
-    ExplainQuery(String),
-    GetQuery(GetQuery),
-    DropQuery(DropQuery),
-    CreateLogicalSource(CreateLogicalSource),
-    GetLogicalSource(GetLogicalSource),
-    DropLogicalSource(DropLogicalSource),
-    CreatePhysicalSource(CreatePhysicalSource),
-    GetPhysicalSource(GetPhysicalSource),
-    DropPhysicalSource(DropPhysicalSource),
-    CreateSink(CreateSink),
-    GetSink(GetSink),
-    DropSink(DropSink),
-}
-
-pub struct RequestInput {
+pub struct Payload {
     pub input: StatementInput,
-    pub block_until: query::query_state::QueryState,
+    pub block_until: QueryState,
 }
 
-impl RequestInput {
+impl Payload {
     pub fn sql(sql: String) -> Self {
         Self {
             input: StatementInput::Sql(sql),
-            block_until: query::query_state::QueryState::default(),
+            block_until: QueryState::default(),
         }
     }
 
     pub fn structured(statement: Statement) -> Self {
         Self {
             input: StatementInput::Structured(statement),
-            block_until: query::query_state::QueryState::default(),
+            block_until: QueryState::default(),
         }
     }
 
-    pub fn block_until(mut self, state: query::query_state::QueryState) -> Self {
+    pub fn block_until(mut self, state: QueryState) -> Self {
         self.block_until = state;
         self
     }
@@ -80,14 +49,14 @@ pub enum StatementInput {
     Structured(Statement),
 }
 
-impl Debug for RequestInput {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+impl Debug for Payload {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         write!(f, "{:?}", self.input)
     }
 }
 
 impl Debug for StatementInput {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
         match self {
             Self::Sql(sql) => write!(f, "Sql({sql:?})"),
             Self::Structured(stmt) => write!(f, "{stmt:?}"),
@@ -96,53 +65,33 @@ impl Debug for StatementInput {
 }
 
 pub struct Request {
-    pub input: RequestInput,
-    pub reply_to: oneshot::Sender<anyhow::Result<StatementResponse>>,
+    pub payload: Payload,
+    pub reply_to: oneshot::Sender<Result<StatementResult>>,
 }
 
 impl Debug for Request {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "Request{:?}", self.input)
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::result::Result<(), std::fmt::Error> {
+        write!(f, "Request{:?}", self.payload)
     }
 }
 
 impl Request {
     pub fn new(
         statement: Statement,
-    ) -> (oneshot::Receiver<anyhow::Result<StatementResponse>>, Self) {
-        Self::from(RequestInput::structured(statement))
+    ) -> (oneshot::Receiver<Result<StatementResult>>, Self) {
+        Self::from(Payload::structured(statement))
     }
 
     pub fn from(
-        input: RequestInput,
-    ) -> (oneshot::Receiver<anyhow::Result<StatementResponse>>, Self) {
+        payload: Payload,
+    ) -> (oneshot::Receiver<Result<StatementResult>>, Self) {
         let (tx, rx) = oneshot::channel();
         (
             rx,
             Self {
-                input,
+                payload,
                 reply_to: tx,
             },
         )
     }
-}
-
-#[derive(Clone, Debug, serde::Serialize)]
-pub enum StatementResponse {
-    CreatedLogicalSource(logical_source::Model),
-    CreatedPhysicalSource(physical_source::Model),
-    CreatedSink(sink::Model),
-    CreatedQuery(query::Model),
-    CreatedWorker(worker::Model),
-    DroppedLogicalSources(Vec<logical_source::Model>),
-    DroppedPhysicalSources(Vec<physical_source::Model>),
-    DroppedSinks(Vec<sink::Model>),
-    DroppedQueries(Vec<query::Model>),
-    DroppedWorker(Option<worker::Model>),
-    LogicalSource(Vec<logical_source::Model>),
-    PhysicalSources(Vec<physical_source::Model>),
-    Sinks(Vec<sink::Model>),
-    ExplainedQuery(String),
-    Queries(Vec<(query::Model, Vec<fragment::Model>)>),
-    Workers(Vec<worker::Model>),
 }

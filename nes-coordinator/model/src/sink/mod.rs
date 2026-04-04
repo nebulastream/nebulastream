@@ -12,15 +12,22 @@
     limitations under the License.
 */
 
-use crate::ConnectorKind;
+mod create;
+mod drop;
+mod get;
+
+pub use create::{CreateInlineSink, CreateSink};
+pub use drop::DropSink;
+pub use get::GetSink;
+
+use crate::identifier::SinkId;
 use crate::worker::CreateWorker;
 use crate::worker::endpoint::NetworkAddr;
+use crate::{ConnectorKind, worker};
 use proptest::arbitrary::{Arbitrary, any};
 use proptest::strategy::{BoxedStrategy, Strategy};
 use proptest_derive::Arbitrary;
-use sea_orm::ActiveValue::NotSet;
 use sea_orm::entity::prelude::*;
-use sea_orm::{Condition, Set};
 use serde::{Deserialize, Serialize};
 use strum::Display;
 
@@ -28,7 +35,7 @@ use strum::Display;
 #[sea_orm(table_name = "sink")]
 pub struct Model {
     #[sea_orm(primary_key)]
-    pub id: i64,
+    pub id: SinkId,
     #[sea_orm(unique)]
     pub name: Option<String>,
     pub host_addr: Option<NetworkAddr>,
@@ -52,7 +59,7 @@ pub enum Relation {
     Worker,
 }
 
-impl Related<crate::worker::Entity> for Entity {
+impl Related<worker::Entity> for Entity {
     fn to() -> RelationDef {
         Relation::Worker.def()
     }
@@ -60,107 +67,77 @@ impl Related<crate::worker::Entity> for Entity {
 
 impl ActiveModelBehavior for ActiveModel {}
 
-#[derive(Clone, Debug, serde::Deserialize)]
-pub struct CreateSink {
-    pub name: String,
-    pub host_addr: NetworkAddr,
-    pub sink_type: SinkType,
-    pub schema: Json,
-    #[serde(default)]
-    pub config: serde_json::Value,
-    #[serde(default)]
-    pub if_not_exists: bool,
-}
+#[cfg(test)]
+mod tests {
+    use crate::Execute;
+    use crate::database::Database;
+    use crate::sink::{DropSink, GetSink, SinkWithRefs};
+    use test_strategy::proptest;
 
-impl From<CreateSink> for ActiveModel {
-    fn from(req: CreateSink) -> Self {
-        Self {
-            id: NotSet,
-            name: Set(Some(req.name)),
-            host_addr: Set(Some(req.host_addr)),
-            sink_type: Set(req.sink_type),
-            schema: Set(req.schema),
-            config: Set(req.config),
-            kind: Set(ConnectorKind::Shared),
-        }
-    }
-}
+    #[proptest(async = "tokio")]
+    async fn create_and_get(req: SinkWithRefs) {
+        let db = Database::for_test().await;
+        req.worker.execute(&db.conn).await.unwrap();
+        let created = req.sink.clone().execute(&db.conn).await.unwrap();
+        assert_eq!(created.name, Some(req.sink.name.clone()));
+        assert_eq!(created.sink_type, req.sink.sink_type);
 
-#[derive(Clone, Debug)]
-pub struct CreateInlineSink {
-    pub sink_type: SinkType,
-    pub schema: Json,
-    pub config: serde_json::Value,
-    pub host_addr: Option<NetworkAddr>,
-    pub internal: bool,
-}
-
-impl From<CreateInlineSink> for ActiveModel {
-    fn from(req: CreateInlineSink) -> Self {
-        Self {
-            id: NotSet,
-            name: Set(None),
-            host_addr: Set(req.host_addr),
-            sink_type: Set(req.sink_type),
-            schema: Set(req.schema),
-            config: Set(req.config),
-            kind: Set(if req.internal {
-                ConnectorKind::Internal
-            } else {
-                ConnectorKind::Inline
-            }),
-        }
-    }
-}
-
-#[derive(Clone, Debug, Default, serde::Deserialize)]
-pub struct GetSink {
-    pub id: Option<i64>,
-    pub name: Option<String>,
-    pub kind: Option<ConnectorKind>,
-}
-
-impl GetSink {
-    pub fn all() -> Self {
-        Self::default()
+        let sinks = GetSink::all()
+            .with_name(req.sink.name)
+            .execute(&db.conn)
+            .await
+            .unwrap();
+        assert_eq!(sinks.len(), 1);
+        assert_eq!(sinks[0].id, created.id);
     }
 
-    pub fn with_id(mut self, id: i64) -> Self {
-        self.id = Some(id);
-        self
+    #[proptest(async = "tokio")]
+    async fn drop_sink(req: SinkWithRefs) {
+        let db = Database::for_test().await;
+        req.worker.execute(&db.conn).await.unwrap();
+        req.sink.clone().execute(&db.conn).await.unwrap();
+
+        let dropped = (DropSink { name: Some(req.sink.name.clone()), id: None })
+            .execute(&db.conn)
+            .await
+            .unwrap();
+        assert_eq!(dropped.len(), 1);
+
+        let remaining = GetSink::all()
+            .with_name(req.sink.name)
+            .execute(&db.conn)
+            .await
+            .unwrap();
+        assert!(remaining.is_empty());
     }
 
-    pub fn with_name(mut self, name: String) -> Self {
-        self.name = Some(name);
-        self
+    #[proptest(async = "tokio")]
+    async fn name_unique(req: SinkWithRefs) {
+        let db = Database::for_test().await;
+        req.worker.execute(&db.conn).await.unwrap();
+        req.sink.clone().execute(&db.conn).await.unwrap();
+        assert!(req.sink.execute(&db.conn).await.is_err());
     }
 
-    pub fn with_kind(mut self, kind: ConnectorKind) -> Self {
-        self.kind = Some(kind);
-        self
+    #[proptest(async = "tokio")]
+    async fn worker_ref_required(req: SinkWithRefs) {
+        let db = Database::for_test().await;
+        assert!(req.sink.clone().execute(&db.conn).await.is_err());
+
+        req.worker.execute(&db.conn).await.unwrap();
+        req.sink.execute(&db.conn).await.unwrap();
     }
-}
 
-impl crate::IntoCondition for GetSink {
-    fn into_condition(self) -> Condition {
-        Condition::all()
-            .add_option(self.id.map(|v| Column::Id.eq(v)))
-            .add_option(self.name.map(|v| Column::Name.eq(v)))
-            .add_option(self.kind.map(|v| Column::Kind.eq(v)))
-    }
-}
-
-#[derive(Clone, Debug, serde::Deserialize)]
-pub struct DropSink {
-    pub name: Option<String>,
-    pub id: Option<i64>,
-}
-
-impl crate::IntoCondition for DropSink {
-    fn into_condition(self) -> Condition {
-        Condition::all()
-            .add_option(self.name.map(|v| Column::Name.eq(v)))
-            .add_option(self.id.map(|v| Column::Id.eq(v)))
+    #[proptest(async = "tokio")]
+    async fn create_drop_create(req: SinkWithRefs) {
+        let db = Database::for_test().await;
+        req.worker.execute(&db.conn).await.unwrap();
+        req.sink.clone().execute(&db.conn).await.unwrap();
+        (DropSink { name: Some(req.sink.name.clone()), id: None })
+            .execute(&db.conn)
+            .await
+            .unwrap();
+        req.sink.execute(&db.conn).await.unwrap();
     }
 }
 
@@ -182,23 +159,20 @@ pub enum SinkType {
     File,
     Print,
     Void,
+    Network,
 }
 
 #[derive(Debug, Clone)]
-pub struct SinkWithRefs {
-    pub worker: CreateWorker,
-    pub sink: CreateSink,
+pub(crate) struct SinkWithRefs {
+    pub(crate) worker: CreateWorker,
+    pub(crate) sink: CreateSink,
 }
 
 impl Arbitrary for SinkWithRefs {
     type Parameters = ();
 
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
-        (
-            "[a-zA-Z]{1,10}",
-            any::<CreateWorker>(),
-            any::<SinkType>(),
-        )
+        ("[a-zA-Z]{1,10}", any::<CreateWorker>(), any::<SinkType>())
             .prop_map(|(name, worker, sink_type)| {
                 let sink = CreateSink {
                     name,

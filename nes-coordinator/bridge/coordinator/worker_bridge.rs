@@ -1,9 +1,9 @@
-use std::sync::{Arc, Mutex};
-use anyhow::anyhow;
-use controller::worker::embedded::{EmbeddedWorker, EmbeddedWorkerError, EmbeddedWorkerFactory};
-use model::query::fragment::FragmentState;
-use model::query::StopMode;
 use crate::ffi;
+use anyhow::anyhow;
+use controller::embedded::{EmbeddedWorker, EmbeddedWorkerFactory};
+use controller::fragment::FragmentStatus;
+use model::query::fragment::{FragmentError, StopMode};
+use std::sync::{Arc, Mutex};
 
 pub(crate) struct BridgeWorkerFactory;
 
@@ -13,13 +13,12 @@ impl EmbeddedWorkerFactory for BridgeWorkerFactory {
     }
 }
 
-
 /// In-process worker backed by a C++ `SingleNodeWorker` via cxx FFI.
 pub struct EmbeddedWorkerRef {
     bridge: Mutex<cxx::UniquePtr<ffi::WorkerBridge>>,
 }
 
-// Safety: SingleNodeWorker is internally synchronized (used from gRPC thread pool).
+// Safety: SingleNodeWorker is internally synchronized.
 // The Mutex serializes access to the UniquePtr from the Rust side.
 unsafe impl Send for EmbeddedWorkerRef {}
 unsafe impl Sync for EmbeddedWorkerRef {}
@@ -33,33 +32,51 @@ impl EmbeddedWorkerRef {
     }
 }
 
-fn cxx_err(e: cxx::Exception) -> EmbeddedWorkerError {
-    EmbeddedWorkerError {
-        code: 0,
-        msg: e.to_string(),
-        trace: String::new(),
+fn check(result: ffi::BridgeResult) -> Result<(), FragmentError> {
+    if result.code == 0 {
+        Ok(())
+    } else {
+        Err(FragmentError::Internal {
+            code: result.code,
+            msg: result.msg,
+            trace: result.trace,
+        })
     }
 }
 
+fn to_error(r: ffi::BridgeResult) -> Option<FragmentError> {
+    (r.code != 0).then(|| FragmentError::Internal {
+        code: r.code,
+        msg: r.msg,
+        trace: r.trace,
+    })
+}
+
 impl EmbeddedWorker for EmbeddedWorkerRef {
-    fn register_fragment(&self, plan: Vec<u8>) -> anyhow::Result<(), EmbeddedWorkerError> {
+    fn register_fragment(&self, plan: Vec<u8>) -> Result<(), FragmentError> {
         let mut bridge = self.bridge.lock().unwrap();
-        ffi::register_query(bridge.pin_mut(), &plan).map_err(cxx_err)
+        check(ffi::register_query(bridge.pin_mut(), &plan))
     }
 
-    fn start_fragment(&self, id: i64) -> anyhow::Result<(), EmbeddedWorkerError> {
+    fn start_fragment(&self, id: i64) -> Result<(), FragmentError> {
         let mut bridge = self.bridge.lock().unwrap();
-        ffi::start_query(bridge.pin_mut(), id).map_err(cxx_err)
+        check(ffi::start_query(bridge.pin_mut(), id))
     }
 
-    fn stop_fragment(&self, id: i64, mode: StopMode) -> anyhow::Result<(), EmbeddedWorkerError> {
+    fn stop_fragment(&self, id: i64, mode: StopMode) -> Result<(), FragmentError> {
         let mut bridge = self.bridge.lock().unwrap();
-        ffi::stop_query(bridge.pin_mut(), id, mode as u8).map_err(cxx_err)
+        check(ffi::stop_query(bridge.pin_mut(), id, mode as u8))
     }
 
-    fn get_fragment_status(&self, id: i64) -> anyhow::Result<FragmentState, EmbeddedWorkerError> {
+    fn get_fragment_status(&self, id: i64) -> Result<FragmentStatus, FragmentError> {
         let mut bridge = self.bridge.lock().unwrap();
-        let state = ffi::query_status(bridge.pin_mut(), id).map_err(cxx_err)?;
-        Ok(state.into())
+        let status = ffi::query_status(bridge.pin_mut(), id);
+        check(status.result)?;
+        Ok(FragmentStatus {
+            state: status.state.into(),
+            start_timestamp: (status.start_ms != 0).then_some(status.start_ms),
+            stop_timestamp: (status.stop_ms != 0).then_some(status.stop_ms),
+            error: to_error(status.query_error),
+        })
     }
 }

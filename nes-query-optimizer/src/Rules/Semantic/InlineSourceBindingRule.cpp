@@ -71,13 +71,7 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         const auto parserConfig = inlineSource.value()->getParserConfig();
         const auto sourceConfig = inlineSource.value()->getSourceConfig();
 
-        const auto descriptorOpt = createInlineSource(ctx, ConnectorKind::Inline, type, schema, parserConfig, sourceConfig);
-
-        if (!descriptorOpt.has_value())
-        {
-            throw InvalidConfigParameter("Could not create an inline source descriptor because of invalid config parameters");
-        }
-        const auto& descriptor = descriptorOpt.value();
+        const auto descriptor = SourceCatalog::createInlineSource(ctx, ConnectorKind::Inline, type, schema, parserConfig, sourceConfig);
         const SourceDescriptorLogicalOperator sourceDescriptorLogicalOperator{descriptor};
         return sourceDescriptorLogicalOperator.withChildren(newChildren);
     }

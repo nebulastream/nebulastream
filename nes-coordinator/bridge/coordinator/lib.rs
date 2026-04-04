@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-mod worker_bridge;
 mod planner_bridge;
+mod worker_bridge;
+
 use anyhow::{Result, anyhow};
-use catalog::database::StateBackend;
-use controller::worker::embedded::EmbeddedWorkerFactory;
-use model::request::{Request, RequestInput, StatementResponse};
+use controller::embedded::EmbeddedWorkerFactory;
+use model::database::StateBackend;
+use model::request::{Payload, Request};
 use model::sink::GetSink;
-use model::source::logical_source::GetLogicalSource;
-use model::source::physical_source::GetPhysicalSource;
+use model::source::logical::GetLogicalSource;
+use model::source::physical::GetPhysicalSource;
+use model::statement::StatementResult;
 use model::worker::GetWorker;
 use model::worker::endpoint::NetworkAddr;
 use planner_bridge::FfiSqlPlanner;
@@ -74,7 +76,7 @@ pub mod ffi {
     }
 
     #[namespace = "NES"]
-    struct PlannedQueryFragment {
+    struct PlannedFragment {
         host_addr: String,
         plan: Vec<u8>,
         num_operators: i32,
@@ -84,7 +86,7 @@ pub mod ffi {
     #[namespace = "NES"]
     struct PlannedStatement {
         json: String,
-        fragments: Vec<PlannedQueryFragment>,
+        fragments: Vec<PlannedFragment>,
         source_ids: Vec<i64>,
         sink_ids: Vec<i64>,
     }
@@ -93,7 +95,27 @@ pub mod ffi {
     unsafe extern "C++" {
         include!("SqlPlannerBridge.hpp");
 
-        fn plan_sql(ctx: &PlannerContext, sql: &str) -> Result<PlannedStatement>;
+        fn plan_sql(
+            ctx: &PlannerContext,
+            sql: &str,
+            optimizer_config: &str,
+        ) -> Result<PlannedStatement>;
+    }
+
+    #[namespace = "NES"]
+    struct BridgeResult {
+        code: u16,
+        msg: String,
+        trace: String,
+    }
+
+    #[namespace = "NES"]
+    struct BridgeQueryStatus {
+        result: BridgeResult,
+        state: i32,
+        start_ms: u64,
+        stop_ms: u64,
+        query_error: BridgeResult,
     }
 
     #[namespace = "NES"]
@@ -102,27 +124,29 @@ pub mod ffi {
 
         type WorkerBridge;
         fn start_worker(config_json: &str) -> Result<UniquePtr<WorkerBridge>>;
-        fn register_query(bridge: Pin<&mut WorkerBridge>, serialized_fragment: &[u8])
-        -> Result<()>;
-        fn start_query(bridge: Pin<&mut WorkerBridge>, id: i64) -> Result<()>;
-        fn stop_query(bridge: Pin<&mut WorkerBridge>, id: i64, mode: u8) -> Result<()>;
-        fn query_status(bridge: Pin<&mut WorkerBridge>, id: i64) -> Result<i32>;
+        fn register_query(
+            bridge: Pin<&mut WorkerBridge>,
+            serialized_fragment: &[u8],
+        ) -> BridgeResult;
+        fn start_query(bridge: Pin<&mut WorkerBridge>, id: i64) -> BridgeResult;
+        fn stop_query(bridge: Pin<&mut WorkerBridge>, id: i64, mode: u8) -> BridgeResult;
+        fn query_status(bridge: Pin<&mut WorkerBridge>, id: i64) -> BridgeQueryStatus;
         fn call_enable_memcom();
     }
 
     #[namespace = "NES"]
     extern "Rust" {
         type PlannerContext;
-        fn get_logical_source(txn: &PlannerContext, name: &str) -> Result<LogicalSource>;
+        fn get_logical_source(ctx: &PlannerContext, name: &str) -> Result<LogicalSource>;
         fn get_source_descriptors(
-            txn: &PlannerContext,
+            ctx: &PlannerContext,
             logical_source_name: &str,
         ) -> Result<Vec<SourceDescriptor>>;
-        fn get_sink_descriptor(txn: &PlannerContext, name: &str) -> Result<SinkDescriptor>;
-        fn get_worker(txn: &PlannerContext, host_addr: &str) -> Result<Worker>;
-        fn get_topology(txn: &PlannerContext) -> Result<Topology>;
+        fn get_sink_descriptor(ctx: &PlannerContext, name: &str) -> Result<SinkDescriptor>;
+        fn get_worker(ctx: &PlannerContext, host_addr: &str) -> Result<Worker>;
+        fn get_topology(ctx: &PlannerContext) -> Result<Topology>;
         fn create_inline_source(
-            txn: &PlannerContext,
+            ctx: &PlannerContext,
             internal: bool,
             source_type: &str,
             schema_json: &str,
@@ -131,7 +155,7 @@ pub mod ffi {
             host_addr: &str,
         ) -> Result<i64>;
         fn create_inline_sink(
-            txn: &PlannerContext,
+            ctx: &PlannerContext,
             internal: bool,
             sink_type: &str,
             schema_json: &str,
@@ -155,7 +179,7 @@ impl PlannerContext {
         self.txn
     }
 
-    fn execute_blocking<E: catalog::Execute>(&self, req: E) -> Result<E::Response> {
+    fn execute_blocking<E: model::Execute>(&self, req: E) -> Result<E::Response> {
         self.handle.block_on(req.execute(&self.txn))
     }
 }
@@ -184,13 +208,13 @@ fn get_source_descriptors(
     ctx: &PlannerContext,
     logical_source_name: &str,
 ) -> Result<Vec<ffi::SourceDescriptor>> {
-    let result: Result<Vec<_>> = ctx.execute_blocking(
+    ctx.execute_blocking(
         GetPhysicalSource::all().with_logical_source(logical_source_name.to_string()),
     )?
     .into_iter()
     .map(|s| {
         Ok(ffi::SourceDescriptor {
-            id: s.id,
+            id: *s.id,
             logical_source_name: s.logical_source.unwrap_or_default(),
             host_addr: s
                 .host_addr
@@ -201,8 +225,7 @@ fn get_source_descriptors(
             parser_config_json: serde_json::to_string(&s.parser_config)?,
         })
     })
-    .collect();
-    result
+    .collect()
 }
 
 fn get_sink_descriptor(ctx: &PlannerContext, name: &str) -> Result<ffi::SinkDescriptor> {
@@ -212,7 +235,7 @@ fn get_sink_descriptor(ctx: &PlannerContext, name: &str) -> Result<ffi::SinkDesc
         .next()
         .ok_or_else(|| anyhow!("sink '{name}' not found"))?;
     Ok(ffi::SinkDescriptor {
-        id: sink.id,
+        id: *sink.id,
         name: sink.name.unwrap_or_default(),
         host_addr: sink
             .host_addr
@@ -267,7 +290,7 @@ fn create_inline_source(
     parser_config_json: &str,
     host_addr: &str,
 ) -> Result<i64> {
-    use model::source::physical_source::CreateInlineSource;
+    use model::source::physical::CreateInlineSource;
     let source = ctx.execute_blocking(CreateInlineSource {
         source_type: serde_json::from_value(serde_json::Value::String(source_type.to_string()))
             .map_err(|_| anyhow!("unknown source type '{source_type}'"))?,
@@ -276,7 +299,7 @@ fn create_inline_source(
         host_addr: parse_host_addr(host_addr)?,
         internal,
     })?;
-    Ok(source.id)
+    Ok(*source.id)
 }
 
 fn create_inline_sink(
@@ -296,7 +319,7 @@ fn create_inline_sink(
         host_addr: parse_host_addr(host_addr)?,
         internal,
     })?;
-    Ok(sink.id)
+    Ok(*sink.id)
 }
 
 pub struct CoordinatorHandle {
@@ -305,7 +328,7 @@ pub struct CoordinatorHandle {
 }
 
 impl CoordinatorHandle {
-    pub fn send(&self, input: RequestInput) -> Result<StatementResponse> {
+    pub fn send(&self, input: Payload) -> Result<StatementResult> {
         let (rx, req) = Request::from(input);
         self.sender
             .send(req)
@@ -314,7 +337,11 @@ impl CoordinatorHandle {
     }
 }
 
-pub fn start_coordinator(db_path: &str, mode: ffi::WorkerMode) -> CoordinatorHandle {
+pub fn start_coordinator(
+    db_path: &str,
+    mode: ffi::WorkerMode,
+    optimizer_config: &str,
+) -> CoordinatorHandle {
     let runtime = tokio::runtime::Builder::new_multi_thread()
         .enable_time()
         .enable_io()
@@ -323,6 +350,7 @@ pub fn start_coordinator(db_path: &str, mode: ffi::WorkerMode) -> CoordinatorHan
 
     let planner: Arc<dyn coordinator::SqlPlanner> = Arc::new(FfiSqlPlanner {
         rt_handle: runtime.handle().clone(),
+        optimizer_config: optimizer_config.to_string(),
     });
 
     let factory: Option<Arc<dyn EmbeddedWorkerFactory>> = match mode {

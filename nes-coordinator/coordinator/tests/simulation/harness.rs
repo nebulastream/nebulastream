@@ -13,81 +13,64 @@
 */
 
 #![cfg(madsim)]
-use crate::spec::NetworkConfig;
+
+use crate::config::NetworkConfig;
 use crate::worker::{HealthServer, HealthServiceImpl, SingleNodeWorker, WorkerRpcServiceServer};
 use anyhow::Result;
-use model::request::{Request, Statement, StatementResponse};
-use coordinator::start_for_sim;
+use controller::remote::WorkerRpcServiceClient;
+use controller::remote::worker_rpc_service::{WorkerStatusRequest, WorkerStatusResponse};
+use futures_util::future::join_all;
 use madsim::net::NetSim;
-use madsim::runtime::Handle;
-use model::worker;
+use madsim::runtime::{Handle, NodeHandle};
+use madsim::task::{NodeId, ToNodeId};
+use model::database::{Database, StateBackend};
+use model::identifier::FragmentId;
+use model::request::Request;
+use model::statement::{Statement, StatementResult};
 use model::worker::endpoint::NetworkAddr;
-use model::query;
-use model::query::fragment;
-use model::query::{CreateQuery, DropQuery, GetQuery};
-use model::worker::{CreateWorker, DropWorker, GetWorker, WorkerState};
+use model::worker::{CreateWorker, DropWorker};
 use proptest::strategy::{Strategy, ValueTree};
 use proptest::test_runner::{RngAlgorithm, TestRng, TestRunner};
-use std::sync::Arc;
-use std::time::Duration;
-use tokio_retry::Retry;
-use tokio_retry::strategy::{ExponentialBackoff, jitter};
-use tonic::transport::Server;
+use std::cell::{Cell, RefCell};
 use std::collections::{HashMap, HashSet};
+use std::time::Duration;
+use tokio::sync::oneshot;
 use tonic::transport::Endpoint;
-use tracing::{debug, info};
+use tonic::transport::Server;
+use tracing::debug;
 
-use controller::worker::worker_task::worker_rpc_service;
-use worker_rpc_service::worker_rpc_service_client::WorkerRpcServiceClient;
-
-const COORDINATOR_NAME: &str = "coordinator";
+pub(crate) const COORDINATOR_NAME: &str = "coordinator";
 const COORDINATOR_IP: &str = "192.168.1.1";
-const DEFAULT_SEND_LATENCY_LO: Duration = Duration::from_millis(1);
-const DEFAULT_SEND_LATENCY_HI: Duration = Duration::from_millis(100);
-
-pub const POLL_INTERVAL: Duration = Duration::from_secs(1);
-const SEND_TIMEOUT: Duration = Duration::from_secs(30);
-const WORKER_REGISTRATION_TIMEOUT: Duration = Duration::from_secs(30);
-const COORDINATOR_READY_TIMEOUT: Duration = Duration::from_secs(30);
-const COORDINATOR_READY_POLL: Duration = Duration::from_millis(100);
-const CHACHA_SEED_BYTES: usize = 32;
-const SEED_CHUNK_SIZE: usize = 8;
 
 thread_local! {
-    static RUNNER: std::cell::RefCell<TestRunner> = std::cell::RefCell::new({
-        let seed = Handle::current().seed();
-        let seed_bytes = seed.to_le_bytes();
-        let mut full_seed = [0u8; CHACHA_SEED_BYTES];
-        for (i, chunk) in full_seed.chunks_exact_mut(SEED_CHUNK_SIZE).enumerate() {
-            chunk.copy_from_slice(&seed_bytes);
-            chunk[0] = chunk[0].wrapping_add(i as u8);
-        }
-        let rng = TestRng::from_seed(RngAlgorithm::ChaCha, &full_seed);
-        TestRunner::new_with_rng(Default::default(), rng)
-    });
+    static NEXT_WORKER_OCTET: Cell<u8> = const { Cell::new(2) }; // .1 is the coordinator
 }
 
-pub fn arb<S: Strategy>(strategy: S) -> S::Value {
-    RUNNER.with(|r| strategy.new_tree(&mut r.borrow_mut()).unwrap().current())
+pub fn next_worker_ip() -> String {
+    NEXT_WORKER_OCTET.with(|cell| {
+        let octet = cell.get();
+        cell.set(octet.checked_add(1).expect("ran out of worker IPs"));
+        format!("192.168.1.{octet}")
+    })
+}
+const DEFAULT_SEND_LATENCY_LO: Duration = Duration::from_millis(1);
+const DEFAULT_SEND_LATENCY_HI: Duration = Duration::from_millis(100);
+const SEND_TIMEOUT: Duration = Duration::from_secs(30);
+
+struct Coordinator {
+    sender: flume::Sender<Request>,
+    handle: NodeHandle,
 }
 
 pub struct TestHarness {
-    workers: Vec<CreateWorker>,
-    coordinator_sender: Arc<std::sync::Mutex<Option<flume::Sender<Request>>>>,
+    coordinator: Coordinator,
+    workers: RefCell<HashMap<NetworkAddr, NodeId>>,
     test_dir: std::path::PathBuf,
 }
 
 impl TestHarness {
-    pub async fn start(
-        workers: &[CreateWorker],
-        network: Option<NetworkConfig>,
-    ) -> Result<Self> {
-        let _ = tracing_subscriber::fmt()
-            .with_env_filter(tracing_subscriber::EnvFilter::from_default_env())
-            .with_timer(tracing_subscriber::fmt::time::uptime())
-            .with_target(false)
-            .try_init();
-
+    pub async fn start(network: Option<NetworkConfig>) -> Self {
+        // Set network conditions for simulation run
         NetSim::current().update_config(|cfg| {
             if let Some(ref net) = network {
                 let lo = net
@@ -106,273 +89,177 @@ impl TestHarness {
             }
         });
 
+        // prepare state directory for the DB
         let seed = Handle::current().seed();
         let test_dir = std::env::temp_dir().join(format!("{COORDINATOR_NAME}-{seed}"));
         let _ = std::fs::remove_dir_all(&test_dir);
         std::fs::create_dir_all(&test_dir).expect("failed to create test directory");
-        let db_path = test_dir.join("state.db");
-        let db_path = db_path.to_str().expect("non-UTF-8 temp path").to_string();
-
-        let handle = Handle::current();
-        Self::start_workers(&handle, workers);
-        let sender = Self::start_coordinator(&handle, &db_path).await;
-        info!("started {} workers + coordinator", workers.len());
-
-        let harness = Self {
-            workers: workers.to_vec(),
-            coordinator_sender: sender,
+        Self {
+            coordinator: Self::start_coordinator(
+                test_dir
+                    .join("state.db")
+                    .to_str()
+                    .expect("non-UTF-8 temp path"),
+            )
+            .await,
+            workers: Default::default(),
             test_dir,
-        };
-        harness.register_workers().await;
-        Ok(harness)
-    }
-
-    pub fn workers(&self) -> &[CreateWorker] {
-        &self.workers
-    }
-
-    pub fn num_workers(&self) -> usize {
-        self.workers.len()
-    }
-
-    pub fn worker_name(&self, index: usize) -> String {
-        format!("worker-{}", index + 1)
-    }
-
-    pub fn worker_host(&self, index: usize) -> NetworkAddr {
-        self.workers[index].host_addr.clone()
-    }
-
-    pub fn worker_config(&self, index: usize) -> CreateWorker {
-        self.workers[index].clone()
-    }
-
-    pub fn coordinator_name(&self) -> &str {
-        COORDINATOR_NAME
-    }
-
-    async fn wait_for_coordinator(&self) -> flume::Sender<Request> {
-        let deadline = tokio::time::Instant::now() + COORDINATOR_READY_TIMEOUT;
-        loop {
-            {
-                let mut guard = self.coordinator_sender.lock().unwrap();
-                if let Some(ref sender) = *guard {
-                    if !sender.is_disconnected() {
-                        return sender.clone();
-                    }
-                    *guard = None;
-                }
-            }
-            assert!(
-                tokio::time::Instant::now() < deadline,
-                "coordinator not available within {COORDINATOR_READY_TIMEOUT:?}"
-            );
-            tokio::time::sleep(COORDINATOR_READY_POLL).await;
         }
     }
 
-    async fn send(&self, statement: Statement) -> anyhow::Result<StatementResponse> {
-        let sender = self.wait_for_coordinator().await;
+    pub async fn send(&self, statement: Statement) -> Result<StatementResult> {
         let (rx, req) = Request::new(statement);
-        sender.send_async(req).await.unwrap();
+        self.coordinator.sender.send_async(req).await?;
         tokio::time::timeout(SEND_TIMEOUT, rx)
             .await
-            .expect("coordinator did not respond within timeout")
-            .expect("coordinator dropped the request")
+            .expect("did not respond within timeout")
+            .expect("dropped the request")
     }
 
-    pub async fn create_worker(&self, worker: &CreateWorker) -> anyhow::Result<worker::Model> {
-        match self.send(Statement::CreateWorker(worker.clone())).await? {
-            StatementResponse::CreatedWorker(m) => Ok(m),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
+    async fn start_coordinator(db_path: &str) -> Coordinator {
+        let (sender, receiver) = flume::bounded(16);
 
-    pub async fn get_workers(&self) -> anyhow::Result<Vec<worker::Model>> {
-        match self.send(Statement::GetWorker(GetWorker::all())).await? {
-            StatementResponse::Workers(v) => Ok(v),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
-
-    pub async fn drop_worker(&self, host: NetworkAddr) -> anyhow::Result<Option<worker::Model>> {
-        match self.send(Statement::DropWorker(DropWorker::new(host))).await? {
-            StatementResponse::DroppedWorker(m) => Ok(m),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
-
-    pub async fn create_query(&self, query: CreateQuery) -> anyhow::Result<query::Model> {
-        match self.send(Statement::CreateQuery(query)).await? {
-            StatementResponse::CreatedQuery(m) => Ok(m),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
-
-    pub async fn drop_queries(&self, drop_query: DropQuery) -> anyhow::Result<Vec<query::Model>> {
-        match self.send(Statement::DropQuery(drop_query)).await? {
-            StatementResponse::DroppedQueries(v) => Ok(v),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
-
-    pub async fn get_queries(&self, filter: GetQuery) -> anyhow::Result<Vec<(query::Model, Vec<fragment::Model>)>> {
-        match self.send(Statement::GetQuery(filter)).await? {
-            StatementResponse::Queries(v) => Ok(v),
-            other => anyhow::bail!("unexpected response: {other:?}"),
-        }
-    }
-
-    async fn start_coordinator(
-        net: &Handle,
-        db_path: &str,
-    ) -> Arc<std::sync::Mutex<Option<flume::Sender<Request>>>> {
-        let shared_sender: Arc<std::sync::Mutex<Option<flume::Sender<Request>>>> =
-            Arc::new(std::sync::Mutex::new(None));
-
-        let (ready_tx, ready_rx) = flume::bounded(1);
-
-        net.create_node()
+        let handle = Handle::current()
+            .create_node()
             .name(COORDINATOR_NAME)
             .ip(COORDINATOR_IP.parse().unwrap())
             .init({
-                let shared = shared_sender.clone();
-                let ready_tx = ready_tx.clone();
+                let receiver = receiver.clone();
                 let db_path = db_path.to_string();
                 move || {
-                    let shared = shared.clone();
-                    let ready_tx = ready_tx.clone();
+                    let receiver = receiver.clone();
                     let db_path = db_path.clone();
                     async move {
-                        let sender = start_for_sim(&db_path).await;
-                        *shared.lock().unwrap() = Some(sender);
-                        let _ = ready_tx.send_async(()).await;
-                        std::future::pending::<()>().await;
+                        let db = Database::with(StateBackend::sqlite(&db_path))
+                            .await
+                            .expect("failed to create database");
+                        db.migrate()
+                            .await
+                            .expect("failed to run database migrations");
+                        coordinator::run(db, None, None, receiver).await;
                     }
                 }
             })
             .build();
 
-        ready_rx
-            .recv_async()
-            .await
-            .expect("failed to receive coordinator ready signal");
-        shared_sender
+        Coordinator { sender, handle }
     }
 
-    fn start_workers(net: &Handle, workers: &[CreateWorker]) {
-        workers.iter().enumerate().for_each(|(i, worker)| {
-            let idx = i + 1;
-            let ip = worker.host_addr.host.clone();
-            net.create_node()
-                .name(format!("worker-{idx}"))
-                .ip(ip.parse().unwrap())
-                .init(move || async move {
-                    debug!("worker-{idx} starting");
-                    let worker = SingleNodeWorker::new();
+    pub async fn create_worker(&self, req: CreateWorker) -> Result<StatementResult> {
+        debug!("{:?} starting", req.host_addr);
 
-                    Server::builder()
-                        .add_service(WorkerRpcServiceServer::new(worker))
-                        .add_service(HealthServer::new(HealthServiceImpl))
-                        .serve("0.0.0.0:8080".parse().unwrap())
-                        .await
-                        .expect("worker could not be started");
-                })
-                .build();
-        });
-    }
-
-    async fn register_workers(&self) {
-        let strategy = ExponentialBackoff::from_millis(50).factor(10).map(jitter).take(10);
-        for worker in &self.workers {
-            Retry::spawn(strategy.clone(), || async {
-                self.create_worker(worker).await
+        let id = Handle::current()
+            .create_node()
+            .name(req.host_addr.to_string())
+            .ip(req.host_addr.host.parse()?)
+            .init(move || async move {
+                Server::builder()
+                    .add_service(WorkerRpcServiceServer::new(SingleNodeWorker::new()))
+                    .add_service(HealthServer::new(HealthServiceImpl))
+                    .serve("0.0.0.0:8080".parse().unwrap())
+                    .await
+                    .expect("worker could not be started");
             })
-            .await
-            .expect("worker registration failed after retries");
-        }
+            .build()
+            .id();
 
-        let num_workers = self.workers.len();
-        let deadline = tokio::time::Instant::now() + WORKER_REGISTRATION_TIMEOUT;
-        loop {
-            let workers = self.get_workers().await.unwrap();
-            let active_count = workers
-                .iter()
-                .filter(|w| w.current_state == WorkerState::Active)
-                .count();
+        self.workers.borrow_mut().insert(req.host_addr.clone(), id);
 
-            if active_count == num_workers {
-                info!("all {num_workers} workers active");
-                return;
-            }
-
-            assert!(
-                tokio::time::Instant::now() < deadline,
-                "workers did not become Active within {WORKER_REGISTRATION_TIMEOUT:?} ({active_count}/{num_workers} active)"
-            );
-
-            info!("waiting for workers to become active ({active_count}/{num_workers})");
-            tokio::time::sleep(POLL_INTERVAL).await;
-        }
+        self.send(Statement::CreateWorker(req)).await
     }
 
-    pub fn restart_worker(&self, index: usize) {
-        let name = self.worker_name(index);
-        Handle::current().restart(&name);
+    pub async fn drop_worker(&self, req: DropWorker) -> Result<StatementResult> {
+        debug!("{:?} stopping", req.host_addr);
+
+        let result = self.send(Statement::DropWorker(req.clone())).await;
+
+        Handle::current().send_ctrl_c(self.workers.borrow().get(&req.host_addr).unwrap());
+        self.workers.borrow_mut().remove(&req.host_addr);
+
+        result
     }
 
-    pub async fn active_fragments_by_worker(
+    pub fn kill(&self, id: impl ToNodeId) {
+        Handle::current().kill(id);
+    }
+
+    pub fn restart(&self, id: impl ToNodeId) {
+        Handle::current().restart(id);
+    }
+
+    pub fn pause(&self, id: impl ToNodeId) {
+        Handle::current().pause(id);
+    }
+
+    pub fn resume(&self, id: impl ToNodeId) {
+        Handle::current().resume(id);
+    }
+
+    pub fn clog_link(&self, src: NodeId, dst: NodeId) {
+        NetSim::current().clog_link(src, dst);
+    }
+
+    pub fn unclog_link(&self, src: NodeId, dst: NodeId) {
+        NetSim::current().unclog_link(src, dst);
+    }
+
+    pub fn clog_node(&self, id: NodeId) {
+        NetSim::current().clog_node(id);
+    }
+
+    pub fn unclog_node(&self, id: NodeId) {
+        NetSim::current().unclog_node(id);
+    }
+
+    pub fn get_workers(&self) -> Vec<NodeId> {
+        self.workers.borrow().values().copied().collect()
+    }
+
+    pub fn get_all_nodes(&self) -> Vec<NodeId> {
+        let mut nodes = vec![self.coordinator.handle.id()];
+        nodes.extend(self.get_workers());
+        nodes
+    }
+
+    pub async fn worker_status(
         &self,
-    ) -> HashMap<NetworkAddr, HashSet<u64>> {
-        let workers = self.get_workers().await.unwrap();
+        workers: &[NetworkAddr],
+    ) -> (Vec<FragmentId>, Vec<FragmentId>) {
+        let (tx, rx): (
+            Vec<oneshot::Sender<WorkerStatusResponse>>,
+            Vec<oneshot::Receiver<WorkerStatusResponse>>,
+        ) = (0..workers.len()).map(|_| oneshot::channel()).unzip();
 
-        let (tx, rx) = flume::bounded(1);
-        let addrs: Vec<NetworkAddr> = workers
-            .into_iter()
-            .filter(|w| w.current_state == WorkerState::Active)
-            .map(|w| w.host_addr)
-            .collect();
-
-        let coordinator_node = Handle::current()
-            .get_node(COORDINATOR_NAME)
-            .expect("coordinator node not found");
-        coordinator_node.spawn(async move {
-            let mut result = HashMap::new();
-            for addr in &addrs {
-                let endpoint = match Endpoint::from_shared(format!("http://{}", addr)) {
-                    Ok(e) => e,
-                    Err(_) => continue,
-                };
-                let channel = match endpoint.connect().await {
-                    Ok(c) => c,
-                    Err(e) => {
-                        info!("failed to connect to worker {addr}: {e}");
-                        continue;
-                    }
-                };
+        for (addr, tx) in workers.iter().cloned().zip(tx) {
+            self.coordinator.handle.spawn(async move {
+                let endpoint = Endpoint::from_shared(format!("http://{}", addr)).unwrap();
+                let channel = endpoint.connect().await.unwrap();
                 let mut client = WorkerRpcServiceClient::new(channel);
-                let req = tonic::Request::new(worker_rpc_service::WorkerStatusRequest {
+                let req = tonic::Request::new(WorkerStatusRequest {
                     after_unix_timestamp_in_milli_seconds: 0,
                 });
-                match client.request_status(req).await {
-                    Ok(resp) => {
-                        let ids: HashSet<u64> = resp
-                            .into_inner()
-                            .active_queries
-                            .iter()
-                            .filter_map(|aq| aq.query_id.as_ref().map(|q| q.id as u64))
-                            .collect();
-                        result.insert(addr.clone(), ids);
-                    }
-                    Err(e) => {
-                        info!("failed to get status from worker {addr}: {e}");
-                    }
-                }
-            }
-            let _ = tx.send_async(result).await;
-        });
+                let rsp = client.request_status(req).await.unwrap().into_inner();
+                tx.send(rsp).unwrap();
+            });
+        }
 
-        rx.recv_async().await.unwrap_or_default()
+        let responses = join_all(rx.into_iter().map(|rx| async { rx.await.unwrap() })).await;
+
+        let mut active = Vec::new();
+        let mut terminated = Vec::new();
+        for rsp in responses {
+            active.extend(
+                rsp.active_queries
+                    .into_iter()
+                    .filter_map(|q| q.query_id.map(|id| FragmentId::new(id.id))),
+            );
+            terminated.extend(
+                rsp.terminated_queries
+                    .into_iter()
+                    .filter_map(|q| q.query_id.map(|id| FragmentId::new(id.id))),
+            );
+        }
+        (active, terminated)
     }
 }
 

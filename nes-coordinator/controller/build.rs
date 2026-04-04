@@ -23,5 +23,5 @@ fn main() {
             ],
             &["../../grpc"],
         )
-        .unwrap();
+        .expect("failed to compile proto files");
 }

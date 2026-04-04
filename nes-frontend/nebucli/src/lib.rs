@@ -14,7 +14,12 @@
 mod start;
 
 use clap::{Parser, Subcommand};
-use model::request::RequestInput;
+use coordinator_bridge::ffi::WorkerMode;
+use model::identifier::QueryId;
+use model::query::fragment::StopMode;
+use model::query::{DropQuery, GetQuery};
+use model::request::Payload;
+use model::statement::{Statement, StatementResult};
 
 #[derive(Parser)]
 #[command(name = "nebucli")]
@@ -35,6 +40,9 @@ struct Cli {
 enum Command {
     /// Submit queries from setup file or CLI args
     Start {
+        /// Block until all queries reach a terminal state
+        #[arg(long, short)]
+        wait: bool,
         #[arg(trailing_var_arg = true)]
         queries: Vec<String>,
     },
@@ -67,8 +75,11 @@ pub fn run() -> anyhow::Result<()> {
     let cli = Cli::parse();
 
     if cli.debug {
+        let file_appender = tracing_appender::rolling::never(".", "nes-cli.log");
         tracing_subscriber::fmt()
-            .with_max_level(tracing::Level::INFO)
+            .with_max_level(tracing::Level::DEBUG)
+            .with_ansi(false)
+            .with_writer(file_appender)
             .init();
     }
 
@@ -78,43 +89,70 @@ pub fn run() -> anyhow::Result<()> {
         std::fs::create_dir_all(parent)?;
     }
 
-    let handle =
-        coordinator_bridge::start_coordinator(&db, coordinator_bridge::ffi::WorkerMode::Remote);
+    let setup = match cli.command {
+        Command::Start { .. } | Command::Dump { .. } => {
+            Some(start::load_setup_file(cli.setup.as_deref())?)
+        }
+        _ => None,
+    };
+
+    let optimizer_config = setup
+        .as_ref()
+        .map(|s| s.optimizer_config_json())
+        .unwrap_or_default();
+    let handle = coordinator_bridge::start_coordinator(&db, WorkerMode::Remote, &optimizer_config);
 
     match cli.command {
-        Command::Start { queries } => {
-            start::run(&handle, cli.setup.as_deref(), &queries)?;
+        Command::Start { wait, queries } => {
+            start::run(&handle, setup.unwrap(), &queries, wait)?;
         }
         Command::Stop { query_ids, force } => {
-            use model::query::{DropQuery, GetQuery, StopMode};
-            use model::request::Statement;
-            let mode = if force { StopMode::Forceful } else { StopMode::Graceful };
+            let mode = if force {
+                StopMode::Forceful
+            } else {
+                StopMode::Graceful
+            };
             for id in query_ids {
                 let stmt = Statement::DropQuery(
                     DropQuery::all()
                         .with_stop_mode(mode)
-                        .with_filters(GetQuery::all().with_id(id))
+                        .with_filters(GetQuery::all().with_id(QueryId::new(id)))
                         .should_block(),
                 );
-                let result = handle.send(RequestInput::structured(stmt))?;
-                println!("{result}");
+                if let Err(e) = handle.send(Payload::structured(stmt)) {
+                    println!("{e}");
+                }
             }
         }
         Command::Status { query_ids } => {
-            use model::query::GetQuery;
-            use model::request::Statement;
             let req = if query_ids.is_empty() {
-                GetQuery::all()
+                GetQuery::all().with_fragments().wait_for_poll()
             } else {
-                GetQuery::all().with_ids(query_ids)
+                GetQuery::all()
+                    .with_ids(query_ids.into_iter().map(QueryId::new).collect())
+                    .with_fragments()
+                    .wait_for_poll()
             };
-            let result = handle.send(RequestInput::structured(Statement::GetQuery(req)))?;
-            println!("{result}");
+            let result = handle.send(Payload::structured(Statement::GetQuery(req)))?;
+            if let StatementResult::Queries(queries) = result {
+                let output: Vec<_> = queries
+                    .into_iter()
+                    .map(|(q, fragments)| {
+                        let mut val = serde_json::to_value(&q).unwrap();
+                        val.as_object_mut().unwrap().insert(
+                            "fragments".to_string(),
+                            serde_json::to_value(&fragments).unwrap(),
+                        );
+                        val
+                    })
+                    .collect();
+                println!("{}", serde_json::to_string_pretty(&output)?);
+            }
         }
         Command::Dump { queries } => {
-            start::load_setup(&handle, cli.setup.as_deref())?;
+            start::send_setup(&handle, setup.unwrap())?;
             for query in &queries {
-                let result = handle.send(RequestInput::sql(format!("EXPLAIN {query}")))?;
+                let result = handle.send(Payload::sql(format!("EXPLAIN {query}")))?;
                 println!("{result}");
             }
         }

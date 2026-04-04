@@ -14,7 +14,6 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_set>
@@ -26,62 +25,61 @@
 #include <Sources/LogicalSource.hpp>
 #include <Sources/SourceDescriptor.hpp>
 
-namespace NES
-{
+namespace NES {
+    struct PlannerContext;
 
-struct PlannerContext;
+    enum class ConnectorKind : bool {
+        Inline = false,
+        Internal = true,
+    };
 
-enum class ConnectorKind : bool
-{
-    Inline = false,
-    Internal = true,
-};
+    namespace CapacityKind {
+        struct Unlimited {
+        };
 
-namespace CapacityKind
-{
-struct Unlimited
-{
-};
+        struct Limited {
+            size_t value;
+        };
+    }
 
-struct Limited
-{
-    size_t value;
-};
-}
+    using Capacity = std::variant<CapacityKind::Unlimited, CapacityKind::Limited>;
 
-using Capacity = std::variant<CapacityKind::Unlimited, CapacityKind::Limited>;
+    struct WorkerInfo {
+        Host host;
+        std::string data;
+        Capacity maxOperators;
+    };
 
-struct WorkerInfo
-{
-    Host host;
-    std::string data;
-    Capacity maxOperators;
-};
+    namespace SourceCatalog {
+        LogicalSource getLogicalSource(const PlannerContext &ctx, std::string_view name);
 
-std::optional<LogicalSource> getLogicalSource(const PlannerContext& ctx, std::string_view name);
+        std::unordered_set<SourceDescriptor> getSourceDescriptors(
+            const PlannerContext &ctx, std::string_view logicalSourceName);
 
-std::optional<std::unordered_set<SourceDescriptor>> getSourceDescriptors(const PlannerContext& ctx, std::string_view logicalSourceName);
+        SourceDescriptor createInlineSource(
+            const PlannerContext &ctx,
+            ConnectorKind kind,
+            const std::string &sourceType,
+            const Schema &schema,
+            std::unordered_map<std::string, std::string> parserConfigMap,
+            std::unordered_map<std::string, std::string> sourceConfigMap);
+    }
 
-std::optional<SinkDescriptor> getSinkDescriptor(const PlannerContext& ctx, std::string_view name);
+    namespace SinkCatalog {
+        SinkDescriptor getSinkDescriptor(const PlannerContext &ctx, std::string_view sinkName);
 
-std::optional<WorkerInfo> getWorker(const PlannerContext& ctx, const Host& host);
+        SinkDescriptor createInlineSink(
+            const PlannerContext &ctx,
+            ConnectorKind kind,
+            const Schema &schema,
+            std::string_view sinkType,
+            std::unordered_map<std::string, std::string> config,
+            const std::unordered_map<std::string, std::string> &formatConfig);
+    }
 
-NetworkTopology getTopology(const PlannerContext& ctx);
+    namespace WorkerCatalog {
+        WorkerInfo getWorker(const PlannerContext &ctx, const Host &host);
 
-std::optional<SourceDescriptor> createInlineSource(
-    const PlannerContext& ctx,
-    ConnectorKind kind,
-    const std::string& sourceType,
-    const Schema& schema,
-    std::unordered_map<std::string, std::string> parserConfigMap,
-    std::unordered_map<std::string, std::string> sourceConfigMap);
-
-std::optional<SinkDescriptor> createInlineSink(
-    const PlannerContext& ctx,
-    ConnectorKind kind,
-    const Schema& schema,
-    std::string_view sinkType,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig);
-
+        NetworkTopology getTopology(const PlannerContext &ctx);
+    }
 }

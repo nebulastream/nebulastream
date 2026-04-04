@@ -129,8 +129,6 @@ impl TryFromU64 for NetworkAddr {
 
 impl Arbitrary for NetworkAddr {
     type Parameters = ();
-    type Strategy = BoxedStrategy<Self>;
-
     fn arbitrary_with(_: Self::Parameters) -> Self::Strategy {
         use proptest::prelude::*;
         let host = prop_oneof![
@@ -143,4 +141,6 @@ impl Arbitrary for NetworkAddr {
             .prop_map(|(host, port)| NetworkAddr::new(host, port))
             .boxed()
     }
+
+    type Strategy = BoxedStrategy<Self>;
 }

@@ -1,37 +1,105 @@
 [[test]]
-title = "attrition"
-timeout = 600
+title = "kill_query_window"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  # Build up a pool of workers
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 20
+  end = 5
+  create_weight = 1
+  drop_weight = 0
+
+  # Queries accumulate throughout the test
+  [[test.workload]]
+  name = "Query"
+  num_ops = 20
+  begin = 5
+  end = 40
+  create_weight = 1
+  drop_weight = 0
+
+  # Kill about a third of the workers in the same time window
+  [[test.workload]]
+  name = "Attrition"
+  begin = 5
+  kill_rate = 0.5
+  restart_delay_lo_secs = 2
+  restart_delay_hi_secs = 40
+
+[[test]]
+title = "escalating_kill_waves"
+timeout = 90
 buggify = false
 run_failure_workloads = false
 
   [[test.workload]]
-  name = "Query"
-  num_queries = 15
-  end = 100
+  name = "Worker"
+  num_ops = 22
+  end = 15
+  create_weight = 4
+  drop_weight = 1
 
+  [[test.workload]]
+  name = "Query"
+  num_ops = 28
+  begin = 5
+  end = 65
+  create_weight = 2
+  drop_weight = 1
+
+  # Wave 1: moderate
   [[test.workload]]
   name = "Attrition"
   begin = 10
-  end = 25
-  kill_rate = 0.5
-  restart_delay_lo_secs = 1
-  restart_delay_hi_secs = 10
-  kill_coordinator = true
-
-  [[test.workload]]
-  name = "Attrition"
-  begin = 30
-  end = 50
-  kill_rate = 0.8
+  kill_rate = 0.4
   restart_delay_lo_secs = 1
   restart_delay_hi_secs = 5
-  kill_coordinator = true
 
+  # Wave 2: aggressive, right after recovery
   [[test.workload]]
   name = "Attrition"
-  begin = 80
-  end = 95
-  kill_rate = 0.9
+  begin = 25
+  kill_rate = 0.6
   restart_delay_lo_secs = 1
-  restart_delay_hi_secs = 15
-  kill_coordinator = true
+  restart_delay_hi_secs = 3
+
+  # Wave 3: kill almost everything
+  [[test.workload]]
+  name = "Attrition"
+  begin = 45
+  kill_rate = 0.85
+  restart_delay_lo_secs = 2
+  restart_delay_hi_secs = 10
+
+[[test]]
+title = "kills_during_deploy"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  # Few workers, many queries — every worker carries many fragments
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 3
+  end = 5
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 17
+  begin = 3
+  end = 42
+  create_weight = 5
+  drop_weight = 1
+
+  # Kills overlap with active query placement
+  [[test.workload]]
+  name = "Attrition"
+  begin = 5
+  kill_rate = 0.5
+  restart_delay_lo_secs = 3
+  restart_delay_hi_secs = 10

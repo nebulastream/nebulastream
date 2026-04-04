@@ -1,16 +1,95 @@
 [[test]]
-title = "partition"
-timeout = 600
+title = "sparse_link_failures"
+timeout = 60
 buggify = false
 run_failure_workloads = false
 
   [[test.workload]]
+  name = "Worker"
+  num_ops = 11
+  end = 11
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
   name = "Query"
-  num_queries = 1
-  begin = 44
+  num_ops = 7
+  begin = 4
+  end = 32
+  create_weight = 3
+  drop_weight = 1
+
+  # About 30% of links broken — intermittent message loss between peers
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 12
+  end = 22
+  partition_rate = 0.3
+
+[[test]]
+title = "majority_links_broken"
+timeout = 60
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 14
+  end = 12
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 19
+  begin = 6
+  end = 42
+  create_weight = 1
+  drop_weight = 1
+
+  # 60% of links broken — most of the graph is split
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 10
+  end = 25
+  partition_rate = 0.6
+
+[[test]]
+title = "three_partition_windows"
+timeout = 90
+buggify = false
+run_failure_workloads = false
+
+  [[test.workload]]
+  name = "Worker"
+  num_ops = 6
+  end = 7
+  create_weight = 1
+  drop_weight = 0
+
+  [[test.workload]]
+  name = "Query"
+  num_ops = 22
+  begin = 4
+  end = 55
+  create_weight = 3
+  drop_weight = 2
+
+  # Three partition windows — heal, break, heal
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 10
+  end = 18
+  partition_rate = 0.4
 
   [[test.workload]]
   name = "NetworkPartition"
-  begin = 42
-  end = 50
-  partition_rate = 0.25
+  begin = 22
+  end = 30
+  partition_rate = 0.55
+
+  [[test.workload]]
+  name = "NetworkPartition"
+  begin = 35
+  end = 42
+  partition_rate = 0.3

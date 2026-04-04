@@ -27,10 +27,13 @@ struct WorkerBridge
     ~WorkerBridge();
 };
 
+struct BridgeResult;
+struct BridgeQueryStatus;
+
 std::unique_ptr<WorkerBridge> start_worker(rust::Str configJson);
-void register_query(WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment);
-void start_query(WorkerBridge& bridge, int64_t id);
-void stop_query(WorkerBridge& bridge, int64_t id, uint8_t mode);
-int32_t query_status(WorkerBridge& bridge, int64_t id);
+BridgeResult register_query(WorkerBridge& bridge, rust::Slice<const uint8_t> serializedFragment);
+BridgeResult start_query(WorkerBridge& bridge, int64_t id);
+BridgeResult stop_query(WorkerBridge& bridge, int64_t id, uint8_t mode);
+BridgeQueryStatus query_status(WorkerBridge& bridge, int64_t id);
 void call_enable_memcom();
 }

@@ -24,8 +24,8 @@ use tracing::info;
 
 const DEFAULT_END_SECS: u64 = 30;
 const DEFAULT_LATENCY_LO_MS: u64 = 50;
-const DEFAULT_LATENCY_HI_MS: u64 = 500;
-const DEFAULT_LOSS_RATE: f64 = 0.1;
+const DEFAULT_LATENCY_HI_MS: u64 = 1000;
+const DEFAULT_LOSS_RATE: f64 = 0.05;
 const RESTORE_LATENCY_LO_MS: u64 = 1;
 const RESTORE_LATENCY_HI_MS: u64 = 100;
 
@@ -84,7 +84,7 @@ impl Workload for DegradationWorkload {
         Self::NAME
     }
 
-    async fn start(&self, _harness: &TestHarness) {
+    async fn start(&mut self, _harness: &TestHarness) {
         info!(
             "{}: ({:?}..{:?}) latency={:?}..{:?} loss={:.0}%",
             self.name(),
@@ -98,7 +98,7 @@ impl Workload for DegradationWorkload {
         let net = NetSim::current();
 
         tokio::time::sleep(self.begin).await;
-        info!("degradation: increasing latency and loss");
+        info!("degradation: increasing latency and packet loss");
         net.update_config(|cfg| {
             cfg.send_latency = self.latency_lo..self.latency_hi;
             cfg.packet_loss_rate = self.loss_rate;
@@ -117,7 +117,7 @@ impl Workload for DegradationWorkload {
 inventory::submit! {
     WorkloadFactory {
         name: DegradationWorkload::NAME,
-        create: |opts| Box::new(DegradationWorkload::from_options(opts)),
+        create: |opts, _model| Box::new(DegradationWorkload::from_options(opts)),
     }
 }
 

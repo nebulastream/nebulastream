@@ -15,212 +15,178 @@
 #include <PlannerContext.hpp>
 
 #include <string>
+
 #include <DataTypes/Schema.hpp>
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Reflection.hpp>
+#include <ErrorHandling.hpp>
+
 #include <coordinator/lib.h>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <rust/cxx.h>
 
-#include <ErrorHandling.hpp>
-
-namespace NES
-{
-
-namespace
-{
-Schema schemaFromJson(const std::string& json)
-{
-    auto result = rfl::json::read<detail::ReflectedSchema>(json);
-    if (!result)
-    {
-        throw CannotDeserialize("Failed to deserialize Schema from JSON: {}", result.error().what());
-    }
-    return unreflect<Schema>(reflect(*result));
-}
-
-std::unordered_map<std::string, std::string> configFromJson(const std::string& json)
-{
-    auto result = rfl::json::read<std::unordered_map<std::string, std::string>>(json);
-    if (!result)
-    {
-        throw CannotDeserialize("Failed to deserialize config from JSON: {}", result.error().what());
-    }
-    return *result;
-}
-}
-
-std::optional<LogicalSource> getLogicalSource(const PlannerContext& ctx, std::string_view name)
-{
-    try
-    {
-        auto ffi = get_logical_source(ctx, rust::Str(name.data(), name.size()));
-        auto schema = schemaFromJson(std::string(ffi.schema_json));
-        return LogicalSource{std::string(ffi.name), schema};
-    }
-    catch (const rust::Error&)
-    {
-        return std::nullopt;
-    }
-}
-
-std::optional<std::unordered_set<SourceDescriptor>> getSourceDescriptors(const PlannerContext& ctx, std::string_view logicalSourceName)
-{
-    try
-    {
-        auto ffiSources = get_source_descriptors(ctx, rust::Str(logicalSourceName.data(), logicalSourceName.size()));
-        if (ffiSources.empty())
-        {
-            return std::nullopt;
+namespace NES {
+    namespace {
+        Schema schemaFromJson(const std::string &json) {
+            auto result = rfl::json::read<detail::ReflectedSchema>(json);
+            if (!result) {
+                throw CannotDeserialize("Failed to deserialize Schema from JSON: {}", result.error().what());
+            }
+            return unreflect<Schema>(reflect(*result));
         }
 
-        std::unordered_set<SourceDescriptor> result;
-        for (const auto& ffi : ffiSources)
-        {
-            auto logicalSource = getLogicalSource(ctx, std::string_view(ffi.logical_source_name));
-            if (!logicalSource)
-            {
-                continue;
+        std::unordered_map<std::string, std::string> configFromJson(const std::string &json) {
+            auto result = rfl::json::read<std::unordered_map<std::string, std::string> >(json);
+            if (!result) {
+                throw CannotDeserialize("Failed to deserialize config from JSON: {}", result.error().what());
+            }
+            return *result;
+        }
+    }
+
+    namespace SourceCatalog {
+        LogicalSource getLogicalSource(const PlannerContext &ctx, const std::string_view name) {
+            const auto [source_name, schema_json] = get_logical_source(ctx, rust::Str{name.data(), name.size()});
+            const auto schema = schemaFromJson(std::string{schema_json});
+            return LogicalSource{std::string{source_name}, schema};
+        }
+
+        std::unordered_set<SourceDescriptor> getSourceDescriptors(
+            const PlannerContext &ctx, const std::string_view logicalSourceName) {
+            const auto sources =
+                    get_source_descriptors(ctx, rust::Str{logicalSourceName.data(), logicalSourceName.size()});
+            const auto logicalSource = SourceCatalog::getLogicalSource(ctx, logicalSourceName);
+
+            std::unordered_set<SourceDescriptor> result;
+            for (const auto &source: sources) {
+                const auto parserConfig = ParserConfig::create(configFromJson(std::string{source.parser_config_json}));
+                auto sourceConfig = configFromJson(std::string{source.source_config_json});
+                auto descriptorConfig = SourceValidationProvider::provide(
+                    std::string{source.source_type}, std::move(sourceConfig));
+                if (!descriptorConfig) {
+                    throw InvalidConfigParameter("source type \"{}\"", std::string{source.source_type});
+                }
+
+                result.emplace(
+                    PhysicalSourceId{static_cast<PhysicalSourceId::Underlying>(source.id)},
+                    logicalSource,
+                    std::string{source.source_type},
+                    Host{std::string{source.host_addr}},
+                    *descriptorConfig,
+                    parserConfig);
+            }
+            return result;
+        }
+
+        SourceDescriptor createInlineSource(
+            const PlannerContext &ctx,
+            const ConnectorKind kind,
+            const std::string &sourceType,
+            const Schema &schema,
+            std::unordered_map<std::string, std::string> parserConfigMap,
+            std::unordered_map<std::string, std::string> sourceConfigMap) {
+            Host host{""};
+            if (auto it = sourceConfigMap.find("host"); it != sourceConfigMap.end()) {
+                host = Host{it->second};
+                sourceConfigMap.erase(it);
             }
 
-            auto parserConfig = ParserConfig::create(configFromJson(std::string(ffi.parser_config_json)));
-            auto sourceConfig = configFromJson(std::string(ffi.source_config_json));
-            auto descriptorConfig = SourceValidationProvider::provide(std::string(ffi.source_type), std::move(sourceConfig));
-            if (!descriptorConfig)
-            {
-                continue;
+            auto schemaJson = rfl::json::write(reflect(schema));
+            auto sourceConfigJson = rfl::json::write(sourceConfigMap);
+            auto parserConfigJson = rfl::json::write(parserConfigMap);
+
+            auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
+            if (!descriptorConfig) {
+                throw InvalidConfigParameter("source type \"{}\"", sourceType);
             }
 
-            result.emplace(
-                PhysicalSourceId{static_cast<PhysicalSourceId::Underlying>(ffi.id)},
-                *logicalSource,
-                std::string(ffi.source_type),
-                Host(std::string(ffi.host_addr)),
-                *descriptorConfig,
-                parserConfig);
+            auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
+            auto id = PhysicalSourceId{
+                static_cast<uint64_t>(
+                    create_inline_source(ctx, static_cast<bool>(kind), sourceType, schemaJson, sourceConfigJson,
+                                         parserConfigJson, host.getRawValue()))
+            };
+            return SourceDescriptor{
+                id, LogicalSource{id.toString(), schema}, sourceType, host, std::move(*descriptorConfig), parserConfig
+            };
         }
-        return result;
     }
-    catch (const rust::Error&)
-    {
-        return std::nullopt;
-    }
-}
 
-std::optional<SinkDescriptor> getSinkDescriptor(const PlannerContext& ctx, std::string_view name)
-{
-    try
-    {
-        auto ffi = get_sink_descriptor(ctx, rust::Str(name.data(), name.size()));
-        auto schema = schemaFromJson(std::string(ffi.schema_json));
-        auto config = configFromJson(std::string(ffi.config_json));
-        auto descriptorConfig = SinkDescriptor::validateAndFormatConfig(std::string(ffi.sink_type), std::move(config));
-        if (!descriptorConfig)
-        {
-            return std::nullopt;
+    namespace SinkCatalog {
+        SinkDescriptor getSinkDescriptor(const PlannerContext &ctx, const std::string_view sinkName) {
+            const auto [id, name, host_addr, sink_type, schema_json, config_json] = get_sink_descriptor(
+                ctx, rust::Str{sinkName.data(), sinkName.size()});
+            const auto schema = schemaFromJson(std::string{schema_json});
+            auto config = configFromJson(std::string{config_json});
+            const auto descriptorConfig = SinkDescriptor::validateAndFormatConfig(
+                std::string{sink_type}, std::move(config));
+            if (!descriptorConfig) {
+                throw InvalidConfigParameter("sink type \"{}\"", std::string{sink_type});
+            }
+            return SinkDescriptor{
+                SinkId{static_cast<uint64_t>(id)},
+                std::string{name},
+                schema,
+                std::string{sink_type},
+                Host{std::string{host_addr}},
+                {},
+                *descriptorConfig
+            };
         }
-        return SinkDescriptor{
-            SinkId{static_cast<uint64_t>(ffi.id)},
-            std::string(ffi.name),
-            schema,
-            std::string(ffi.sink_type),
-            Host(std::string(ffi.host_addr)),
-            {},
-            *descriptorConfig};
-    }
-    catch (const rust::Error&)
-    {
-        return std::nullopt;
-    }
-}
 
-std::optional<WorkerInfo> getWorker(const PlannerContext& ctx, const Host& host)
-{
-    try
-    {
-        auto ffi = get_worker(ctx, rust::Str(host.getRawValue().data(), host.getRawValue().size()));
-        Capacity cap = ffi.max_operators < 0
-            ? Capacity{CapacityKind::Unlimited{}}
-            : Capacity{CapacityKind::Limited{static_cast<size_t>(ffi.max_operators)}};
-        return WorkerInfo{
-            .host = Host(std::string(ffi.host_addr)),
-            .data = std::string(ffi.data_addr),
-            .maxOperators = cap};
-    }
-    catch (const rust::Error&)
-    {
-        return std::nullopt;
-    }
-}
+        SinkDescriptor createInlineSink(
+            const PlannerContext &ctx,
+            const ConnectorKind kind,
+            const Schema &schema,
+            const std::string_view sinkType,
+            std::unordered_map<std::string, std::string> config,
+            const std::unordered_map<std::string, std::string> &formatConfig) {
+            Host host{""};
+            if (const auto it = config.find("host"); it != config.end()) {
+                host = Host{it->second};
+                config.erase(it);
+            }
 
-NetworkTopology getTopology(const PlannerContext& ctx)
-{
-    auto ffi = get_topology(ctx);
-    std::vector<Host> nodes;
-    for (const auto& n : ffi.nodes) { nodes.emplace_back(std::string(n)); }
-    std::vector<std::pair<Host, Host>> edges;
-    for (const auto& l : ffi.links) { edges.emplace_back(Host(std::string(l.src_addr)), Host(std::string(l.dst_addr))); }
-    return NetworkTopology::fromEdges(nodes, edges);
-}
+            const auto schemaJson = rfl::json::write(reflect(schema));
+            const auto configJson = rfl::json::write(config);
 
-std::optional<SourceDescriptor> createInlineSource(
-    const PlannerContext& ctx,
-    const ConnectorKind kind,
-    const std::string& sourceType,
-    const Schema& schema,
-    std::unordered_map<std::string, std::string> parserConfigMap,
-    std::unordered_map<std::string, std::string> sourceConfigMap)
-{
-    Host host{""};
-    if (auto it = sourceConfigMap.find("host"); it != sourceConfigMap.end())
-    {
-        host = Host(it->second);
-        sourceConfigMap.erase(it);
+            auto descriptorConfig = SinkDescriptor::validateAndFormatConfig(std::string{sinkType}, std::move(config));
+            if (!descriptorConfig) {
+                throw InvalidConfigParameter("sink type \"{}\"", std::string{sinkType});
+            }
+            const auto id = static_cast<uint64_t>(
+                create_inline_sink(ctx, static_cast<bool>(kind), std::string{sinkType}, schemaJson, configJson,
+                                   host.getRawValue()));
+            return SinkDescriptor{
+                SinkId{id}, "", schema, std::string{sinkType}, host, formatConfig, std::move(*descriptorConfig)
+            };
+        }
     }
 
-    auto schemaJson = rfl::json::write(reflect(schema));
-    auto sourceConfigJson = rfl::json::write(sourceConfigMap);
-    auto parserConfigJson = rfl::json::write(parserConfigMap);
+    namespace WorkerCatalog {
+        WorkerInfo getWorker(const PlannerContext &ctx, const Host &host) {
+            const auto [host_addr, data_addr, max_operators] = get_worker(
+                ctx, rust::Str{host.getRawValue().data(), host.getRawValue().size()});
+            const Capacity cap = max_operators < 0
+                                     ? Capacity{CapacityKind::Unlimited{}}
+                                     : Capacity{CapacityKind::Limited{static_cast<size_t>(max_operators)}};
+            return WorkerInfo{
+                .host = Host{std::string{host_addr}},
+                .data = std::string{data_addr},
+                .maxOperators = cap
+            };
+        }
 
-    auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
-    if (!descriptorConfig)
-    {
-        return std::nullopt;
+        NetworkTopology getTopology(const PlannerContext &ctx) {
+            const auto [hosts, links] = get_topology(ctx);
+            std::vector<Host> nodes;
+            for (const auto &host: hosts) { nodes.emplace_back(std::string{host}); }
+            std::vector<std::pair<Host, Host> > edges;
+            for (const auto &[src_addr, dst_addr]: links) {
+                edges.emplace_back(Host{std::string{src_addr}}, Host{std::string{dst_addr}});
+            }
+            return NetworkTopology::fromEdges(nodes, edges);
+        }
     }
-
-    auto parserConfig = ParserConfig::create(std::move(parserConfigMap));
-    auto id = PhysicalSourceId{static_cast<uint64_t>(
-        create_inline_source(ctx, static_cast<bool>(kind), sourceType, schemaJson, sourceConfigJson, parserConfigJson, host.getRawValue()))};
-    return SourceDescriptor{id, LogicalSource{id.toString(), schema}, sourceType, host, std::move(*descriptorConfig), parserConfig};
-}
-
-std::optional<SinkDescriptor> createInlineSink(
-    const PlannerContext& ctx,
-    const ConnectorKind kind,
-    const Schema& schema,
-    const std::string_view sinkType,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig)
-{
-    Host host{""};
-    if (const auto it = config.find("host"); it != config.end())
-    {
-        host = Host(it->second);
-        config.erase(it);
-    }
-
-    auto schemaJson = rfl::json::write(reflect(schema));
-    auto configJson = rfl::json::write(config);
-
-    auto descriptorConfig = SinkDescriptor::validateAndFormatConfig(std::string{sinkType}, std::move(config));
-    if (!descriptorConfig)
-    {
-        return std::nullopt;
-    }
-    auto id = static_cast<uint64_t>(
-        create_inline_sink(ctx, static_cast<bool>(kind), std::string(sinkType), schemaJson, configJson, host.getRawValue()));
-    return SinkDescriptor{SinkId{id}, "", schema, std::string(sinkType), host, formatConfig, std::move(*descriptorConfig)};
-}
-
 }

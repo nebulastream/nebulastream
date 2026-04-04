@@ -13,10 +13,11 @@
 */
 use anyhow::{Context, Result, bail};
 use coordinator_bridge::CoordinatorHandle;
-use model::request::{RequestInput, Statement};
+use model::request::Payload;
 use model::sink::CreateSink;
-use model::source::logical_source::CreateLogicalSource;
-use model::source::physical_source::CreatePhysicalSource;
+use model::source::logical::CreateLogicalSource;
+use model::source::physical::CreatePhysicalSource;
+use model::statement::Statement;
 use model::worker::CreateWorker;
 use model::worker::endpoint::NetworkAddr;
 use serde::Deserialize;
@@ -33,6 +34,8 @@ pub struct Setup {
     #[serde(default)]
     physical_sources: Vec<CreatePhysicalSource>,
     workers: Vec<Worker>,
+    #[serde(default)]
+    optimizer: serde_yaml::Value,
 }
 
 /// YAML-friendly schema field. Converted to the C++ JSON format
@@ -46,12 +49,24 @@ struct SchemaField {
     nullable: bool,
 }
 
-fn ret_true() -> bool { true }
+fn ret_true() -> bool {
+    true
+}
+
+/// Normalize an identifier to uppercase, matching the C++ SQL parser behavior
+/// for unquoted identifiers. Backtick-quoted identifiers preserve their casing.
+fn bind_identifier(name: &str) -> String {
+    if name.starts_with('`') && name.ends_with('`') && name.len() > 2 {
+        name[1..name.len() - 1].to_string()
+    } else {
+        name.to_uppercase()
+    }
+}
 
 fn convert_schema(fields: Vec<SchemaField>) -> serde_json::Value {
     let fields: Vec<_> = fields
         .into_iter()
-        .map(|f| serde_json::json!({"name": f.name, "type": [f.data_type, f.nullable]}))
+        .map(|f| serde_json::json!({"name": bind_identifier(&f.name), "type": [f.data_type, f.nullable]}))
         .collect();
     serde_json::json!({ "fields": fields })
 }
@@ -140,7 +155,11 @@ fn flatten_recursive(
         serde_yaml::Value::Mapping(m) => {
             for (k, v) in m {
                 let key = k.as_str().unwrap_or_default();
-                let full = if prefix.is_empty() { key.to_string() } else { format!("{prefix}.{key}") };
+                let full = if prefix.is_empty() {
+                    key.to_string()
+                } else {
+                    format!("{prefix}.{key}")
+                };
                 flatten_recursive(v, &full, out);
             }
         }
@@ -158,6 +177,16 @@ fn flatten_recursive(
 }
 
 impl Setup {
+    /// Returns the optimizer config as a flattened dot-separated JSON string
+    /// suitable for C++ `BaseConfiguration::overwriteConfigWithCommandLineInput()`.
+    pub fn optimizer_config_json(&self) -> String {
+        if self.optimizer.is_null() {
+            return String::new();
+        }
+        let flat = flatten_cfg(&self.optimizer);
+        serde_json::to_string(&flat).unwrap_or_default()
+    }
+
     fn into_statements(self) -> Result<(Vec<Statement>, Vec<String>)> {
         let mut stmts = Vec::new();
 
@@ -177,13 +206,14 @@ impl Setup {
 
         for logical_source in self.logical_sources {
             stmts.push(Statement::CreateLogicalSource(CreateLogicalSource {
-                name: logical_source.name,
+                name: bind_identifier(&logical_source.name),
                 schema: convert_schema(logical_source.schema),
                 if_not_exists: true,
             }));
         }
 
         for mut physical_source in self.physical_sources {
+            physical_source.logical_source = bind_identifier(&physical_source.logical_source);
             physical_source.source_config = stringify_values(physical_source.source_config);
             physical_source.parser_config = stringify_values(physical_source.parser_config);
             physical_source.if_not_exists = true;
@@ -192,7 +222,7 @@ impl Setup {
 
         for sink in self.sinks {
             stmts.push(Statement::CreateSink(CreateSink {
-                name: sink.name,
+                name: bind_identifier(&sink.name),
                 host_addr: sink.host_addr,
                 sink_type: sink.sink_type,
                 schema: convert_schema(sink.schema),
@@ -205,8 +235,8 @@ impl Setup {
     }
 }
 
-fn load_setup_file(flag: Option<&str>) -> Result<Setup> {
-    let yaml = if let Some(path) = flag {
+pub fn load_setup_file(path: Option<&str>) -> Result<Setup> {
+    let yaml = if let Some(path) = path {
         if path == "-" {
             let mut buf = String::new();
             std::io::stdin().read_to_string(&mut buf)?;
@@ -229,96 +259,63 @@ fn load_setup_file(flag: Option<&str>) -> Result<Setup> {
     serde_yaml::from_str(&yaml).context("failed to parse setup file")
 }
 
-pub fn load_setup(handle: &CoordinatorHandle, flag: Option<&str>) -> Result<()> {
-    let setup = load_setup_file(flag)?;
+pub fn send_setup(handle: &CoordinatorHandle, setup: Setup) -> Result<()> {
     let (statements, _) = setup.into_statements()?;
     for stmt in statements {
-        println!("{:?}", handle.send(RequestInput::structured(stmt))?);
+        handle.send(Payload::structured(stmt))?;
     }
     Ok(())
 }
 
-pub fn run(handle: &CoordinatorHandle, path: Option<&str>, cli_queries: &[String]) -> Result<()> {
+pub fn run(
+    handle: &CoordinatorHandle,
+    setup: Setup,
+    cli_queries: &[String],
+    wait: bool,
+) -> Result<()> {
     use model::query::query_state::QueryState;
 
-    let setup = load_setup_file(path)?;
     let (statements, file_queries) = setup.into_statements()?;
 
     for stmt in statements {
-        println!("{}", handle.send(RequestInput::structured(stmt))?);
+        handle.send(Payload::structured(stmt))?;
     }
 
-    let queries: &[String] = if cli_queries.is_empty() { &file_queries } else { cli_queries };
+    let queries: &[String] = if cli_queries.is_empty() {
+        &file_queries
+    } else {
+        cli_queries
+    };
 
     if queries.is_empty() {
         bail!("no queries provided (pass as arguments or include in setup file)");
     }
 
-    let results: Vec<_> = std::thread::scope(|scope| {
+    let target = if wait {
+        QueryState::Completed
+    } else {
+        QueryState::Running
+    };
+
+    let errors: Vec<_> = std::thread::scope(|scope| {
         queries
             .iter()
             .map(|query| {
-                scope.spawn(|| {
-                    handle.send(RequestInput::sql(query.clone()).block_until(QueryState::Running))
-                })
+                scope.spawn(|| handle.send(Payload::sql(query.clone()).block_until(target)))
             })
             .collect::<Vec<_>>()
             .into_iter()
             .map(|h| h.join().expect("query thread panicked"))
+            .filter_map(|rsp| rsp.err())
             .collect()
     });
 
-    for result in results {
-        println!("{}", result?);
-    }
-
-    Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use model::sink::SinkType;
-    use model::source::physical_source::SourceType;
-    use std::path::PathBuf;
-
-    fn test_yaml_dir() -> PathBuf {
-        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests/good")
-    }
-
-    fn parse_and_convert(filename: &str) -> (Vec<Statement>, Vec<String>) {
-        let path = test_yaml_dir().join(filename);
-        let yaml = std::fs::read_to_string(&path)
-            .unwrap_or_else(|e| panic!("cannot read {}: {e}", path.display()));
-        let setup: Setup = serde_yaml::from_str(&yaml)
-            .unwrap_or_else(|e| panic!("cannot parse {}: {e}", path.display()));
-        setup.into_statements().unwrap()
-    }
-
-    #[test]
-    fn parse_select_gen_into_void() {
-        let (stmts, queries) = parse_and_convert("select-gen-into-void.yaml");
-        assert_eq!(queries.len(), 1);
-        assert!(queries[0].contains("GENERATOR_SOURCE"));
-
-        // 1 worker + 1 logical + 1 physical + 1 sink = 4 statements
-        assert_eq!(stmts.len(), 4);
-        assert!(matches!(&stmts[0], Statement::CreateWorker(w) if w.host_addr.to_string() == "localhost:8080"));
-        assert!(matches!(&stmts[1], Statement::CreateLogicalSource(s) if s.name == "GENERATOR_SOURCE"));
-        assert!(matches!(&stmts[2], Statement::CreatePhysicalSource(s) if s.source_type == SourceType::Generator));
-        assert!(matches!(&stmts[3], Statement::CreateSink(s) if s.sink_type == SinkType::Void));
-    }
-
-    #[test]
-    fn parse_all_good_yamls() {
-        for entry in std::fs::read_dir(test_yaml_dir()).unwrap() {
-            let path = entry.unwrap().path();
-            if path.extension().is_some_and(|e| e == "yaml") {
-                let filename = path.file_name().unwrap().to_str().unwrap();
-                let (stmts, _) = parse_and_convert(filename);
-                assert!(!stmts.is_empty(), "{filename} produced no statements");
-            }
+    if errors.is_empty() {
+        Ok(())
+    } else {
+        for err in &errors {
+            eprintln!("{err}");
         }
+        bail!("{} query/queries failed", errors.len())
     }
 }

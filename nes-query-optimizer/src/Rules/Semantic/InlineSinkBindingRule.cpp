@@ -68,14 +68,8 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
             const auto config = sink.value()->getSinkConfig();
             const auto formatConfig = sink.value()->getFormatConfig();
 
-            const auto sinkDescriptor = createInlineSink(ctx, ConnectorKind::Inline, schema, type, config, formatConfig);
-
-            if (!sinkDescriptor.has_value())
-            {
-                throw InvalidConfigParameter("Failed to create inline sink descriptor");
-            }
-
-            SinkLogicalOperator sinkOperator{sinkDescriptor.value()};
+            const auto sinkDescriptor = SinkCatalog::createInlineSink(ctx, ConnectorKind::Inline, schema, type, config, formatConfig);
+            SinkLogicalOperator sinkOperator{sinkDescriptor};
             sinkOperator = sinkOperator.withChildren(sink.value().getChildren());
             newRootOperators.emplace_back(sinkOperator);
         }

@@ -27,15 +27,19 @@ pub struct Model {
 #[derive(Copy, Clone, Debug, EnumIter, DeriveRelation)]
 pub enum Relation {
     #[sea_orm(
-        belongs_to = "super::Entity",
+        belongs_to = "crate::worker::Entity",
         from = "Column::SourceHostAddr",
-        to = "super::Column::HostAddr"
+        to = "crate::worker::Column::HostAddr",
+        on_update = "Restrict",
+        on_delete = "Cascade"
     )]
     SourceWorker,
     #[sea_orm(
-        belongs_to = "super::Entity",
+        belongs_to = "crate::worker::Entity",
         from = "Column::TargetHostAddr",
-        to = "super::Column::HostAddr"
+        to = "crate::worker::Column::HostAddr",
+        on_update = "Restrict",
+        on_delete = "Cascade"
     )]
     TargetWorker,
 }

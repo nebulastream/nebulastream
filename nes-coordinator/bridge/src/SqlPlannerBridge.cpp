@@ -19,6 +19,7 @@
 #include <Util/Reflection.hpp>
 #include <coordinator/lib.h>
 #include <rfl/TaggedUnion.hpp>
+#include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <SqlPlanner.hpp>
 
@@ -225,16 +226,22 @@ namespace NES {
         }
     }
 
-    PlannedStatement plan_sql(const PlannerContext &catalog, rust::Str sql) {
+    PlannedStatement plan_sql(const PlannerContext &catalog, rust::Str sql, rust::Str optimizerConfig) {
         auto sqlStr = std::string(sql.data(), sql.size());
-        auto executed = SqlPlanner{catalog, QueryOptimizerConfiguration{}}.execute(sqlStr);
+        auto config = QueryOptimizerConfiguration{};
+        if (!optimizerConfig.empty()) {
+            if (auto parsed = rfl::json::read<std::unordered_map<std::string, std::string>>(std::string{optimizerConfig})) {
+                config.overwriteConfigWithCommandLineInput(*parsed);
+            }
+        }
+        auto executed = SqlPlanner{catalog, std::move(config)}.execute(sqlStr);
         if (!executed) {
             throw std::runtime_error(executed.error().what());
         }
 
         auto json = rfl::json::write(convert(*executed, sqlStr));
 
-        rust::Vec<PlannedQueryFragment> serialized;
+        rust::Vec<PlannedFragment> serialized;
         rust::Vec<int64_t> sourceIds;
         rust::Vec<int64_t> sinkIds;
         if (auto *result = std::get_if<QueryPlanResult>(&*executed)) {
@@ -267,7 +274,7 @@ namespace NES {
                     }
 
                     serialized.push_back(
-                        PlannedQueryFragment{
+                        PlannedFragment{
                             .host_addr = rust::String(host.getRawValue()),
                             .plan = std::move(planBytes),
                             .num_operators = numOps - numSinks - numSources,
