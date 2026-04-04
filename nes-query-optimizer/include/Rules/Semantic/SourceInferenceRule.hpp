@@ -20,17 +20,19 @@
 #include <typeindex>
 #include <typeinfo>
 #include <utility>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sources/SourceCatalog.hpp>
 
 namespace NES
 {
 
+struct PlannerContext;
+
 class SourceInferenceRule
 {
 public:
-    explicit SourceInferenceRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
+    explicit SourceInferenceRule(const PlannerContext& ctx) : ctx{ctx} {}
 
     static constexpr std::string_view NAME = "SourceInferenceRule";
 
@@ -45,7 +47,7 @@ public:
     bool operator==(const SourceInferenceRule& other) const;
 
 private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
+    const PlannerContext& ctx;
 };
 
 static_assert(RuleConcept<SourceInferenceRule, LogicalPlan>);

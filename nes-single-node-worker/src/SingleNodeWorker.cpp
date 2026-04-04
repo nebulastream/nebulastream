@@ -75,11 +75,11 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
 
-    if (!configuration.dataAddress.getValue().empty())
+    if (!configuration.dataAddr.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
         initNetworkServices(
-            configuration.dataAddress.getValue(),
+            configuration.dataAddr.getValue(),
             host,
             NetworkOptions{
                 .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
@@ -95,20 +95,7 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
 {
     CPPTRACE_TRY
     {
-        /// Check if the plan already has a local query ID, generate one if needed
-        /// but preserve the distributed query ID if present
-        if (plan.getQueryId().getLocalQueryId() == INVALID_LOCAL_QUERY_ID)
-        {
-            auto localId = LocalQueryId(generateUUID());
-            if (plan.getQueryId().isDistributed())
-            {
-                plan.setQueryId(QueryId::create(localId, plan.getQueryId().getDistributedQueryId()));
-            }
-            else
-            {
-                plan.setQueryId(QueryId::createLocal(localId));
-            }
-        }
+        INVARIANT(plan.getQueryId() != INVALID_QUERY_ID, "Plan must have a valid QueryId");
 
         const LogContext context("queryId", plan.getQueryId());
 

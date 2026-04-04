@@ -18,7 +18,7 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

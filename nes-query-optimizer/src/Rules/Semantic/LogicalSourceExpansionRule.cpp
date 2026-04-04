@@ -31,6 +31,8 @@
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
+#include "PlannerContext.hpp"
+
 namespace NES
 {
 
@@ -58,20 +60,20 @@ std::set<std::type_index> LogicalSourceExpansionRule::requiredBy() const
 
 bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
     for (const auto& sourceOp : getOperatorByType<SourceNameLogicalOperator>(queryPlan))
     {
-        const auto logicalSourceOpt = sourceCatalog->getLogicalSource(sourceOp->getLogicalSourceName());
+        const auto logicalSourceOpt = getLogicalSource(ctx, sourceOp->getLogicalSourceName());
         if (not logicalSourceOpt.has_value())
         {
             throw UnknownSourceName("{}", sourceOp->getLogicalSourceName());
         }
         const auto& logicalSource = logicalSourceOpt.value();
-        const auto entriesOpt = sourceCatalog->getPhysicalSources(logicalSource);
+        const auto entriesOpt = getSourceDescriptors(ctx, sourceOp->getLogicalSourceName());
 
         if (not entriesOpt.has_value())
         {

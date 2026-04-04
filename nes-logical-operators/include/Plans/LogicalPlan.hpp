@@ -27,7 +27,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/PlanRenderer.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

@@ -30,8 +30,9 @@
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
-#include <Sinks/SinkCatalog.hpp>
-#include <Sources/SourceCatalog.hpp>
+#include <Sinks/SinkDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Sources/SourceValidationProvider.hpp>
 #include <PhysicalOperator.hpp>
 #include <PhysicalPlan.hpp>
 #include <PhysicalPlanBuilder.hpp>
@@ -44,9 +45,10 @@ namespace NES
 namespace
 {
 
-QueryId randomQueryId()
+QueryId nextQueryId()
 {
-    return QueryId::createLocal(LocalQueryId(generateUUID()));
+    static std::atomic<int64_t> counter{1};
+    return QueryId{counter.fetch_add(1)};
 }
 
 using PipelineLocation = PhysicalOperatorWrapper::PipelineLocation;
@@ -70,11 +72,13 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource("File", schema, Host("localhost"), {{"type", "CSV"}}, {{"file_path", "/dev/null"}});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sourceOp = SourcePhysicalOperator(
-            std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)
-            OriginId(nextOriginId++));
+        auto descriptorConfig = SourceValidationProvider::provide("File", {{"file_path", "/dev/null"}});
+        EXPECT_TRUE(descriptorConfig.has_value());
+        auto parserConfig = ParserConfig::create({{"type", "CSV"}});
+        auto physicalId = PhysicalSourceId{nextOriginId};
+        LogicalSource logicalSource{physicalId.toString(), schema};
+        SourceDescriptor descriptor{physicalId, logicalSource, "File", Host("localhost"), std::move(descriptorConfig.value()), parserConfig};
+        auto sourceOp = SourcePhysicalOperator(std::move(descriptor), OriginId(nextOriginId++));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sourceOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::SCAN);
     }
@@ -83,9 +87,10 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSinkWrapper() const
     {
         auto schema = createSchema();
-        auto descriptor = sinkCatalog.getInlineSink(schema, "Print", Host("localhost"), {{"output_format", "CSV"}}, {});
-        EXPECT_TRUE(descriptor.has_value());
-        auto sinkOp = SinkPhysicalOperator(descriptor.value()); /// NOLINT(bugprone-unchecked-optional-access)
+        auto descriptorConfig = SinkDescriptor::validateAndFormatConfig("Print", {{"output_format", "CSV"}});
+        EXPECT_TRUE(descriptorConfig.has_value());
+        SinkDescriptor descriptor{nextSinkId++, "print-sink", schema, "Print", Host{"localhost"}, {}, std::move(descriptorConfig.value())};
+        auto sinkOp = SinkPhysicalOperator(std::move(descriptor));
         return std::make_shared<PhysicalOperatorWrapper>(
             PhysicalOperator{sinkOp}, schema, schema, MemoryLayoutType::ROW_LAYOUT, MemoryLayoutType::ROW_LAYOUT, PipelineLocation::EMIT);
     }
@@ -156,9 +161,8 @@ public:
         return visited.size();
     }
 
-    SourceCatalog sourceCatalog;
-    SinkCatalog sinkCatalog;
     uint64_t nextOriginId = 1;
+    mutable uint64_t nextSinkId = 1;
 };
 
 /// Sink -> Source. After finalize(), verify source is root with sink as descendant.
@@ -170,7 +174,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, LinearChainFlip)
     /// Build sink->source graph: sink is root, source is child.
     sink->addChild(source);
 
-    auto builder = PhysicalPlanBuilder(QueryId::createLocal(LocalQueryId(generateUUID())));
+    auto builder = PhysicalPlanBuilder(nextQueryId());
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -200,7 +204,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, DiamondShapeFlip)
     unionOp->addChild(source2);
     sink->addChild(unionOp);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(nextQueryId());
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -238,7 +242,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, MultiOperatorChainFlip)
     union1->addChild(union2);
     sink->addChild(union1);
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(nextQueryId());
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 
@@ -277,7 +281,7 @@ TEST_F(PhysicalPlanBuilderFlipTest, EdgeCountPreserved)
 
     const size_t expectedEdges = 3;
 
-    auto builder = PhysicalPlanBuilder(randomQueryId());
+    auto builder = PhysicalPlanBuilder(nextQueryId());
     builder.addSinkRoot(sink);
     auto plan = std::move(builder).finalize();
 

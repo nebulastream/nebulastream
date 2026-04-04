@@ -1,0 +1,20 @@
+[package]
+name = "coordinator_bridge"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+path = "coordinator/lib.rs"
+crate-type = ["lib", "staticlib"]
+
+[dependencies]
+coordinator = { path = "../coordinator" }
+controller = { path = "../controller" }
+model = { path = "../model" }
+catalog = { path = "../catalog" }
+sea-orm.workspace = true
+cxx = "=1.0.194"
+flume.workspace = true
+serde_json.workspace = true
+anyhow.workspace = true
+tokio.workspace = true

@@ -18,8 +18,8 @@
 #include <typeindex>
 #include <typeinfo>
 #include <vector>
+#include <PlannerContext.hpp>
 
-#include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/Sources/InlineSourceLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
@@ -53,7 +53,7 @@ std::set<std::type_index> InlineSourceBindingRule::requiredBy() const
 
 bool InlineSourceBindingRule::operator==(const InlineSourceBindingRule& other) const
 {
-    return sourceCatalog == other.sourceCatalog;
+    return &ctx == &other.ctx;
 }
 
 LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const LogicalOperator& current) const
@@ -69,19 +69,9 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
         const auto type = inlineSource.value()->getSourceType();
         const auto schema = inlineSource.value()->getSchema();
         const auto parserConfig = inlineSource.value()->getParserConfig();
-        auto sourceConfig = inlineSource.value()->getSourceConfig();
+        const auto sourceConfig = inlineSource.value()->getSourceConfig();
 
-        /// "host" is not part of the source config — it determines placement, not source behavior.
-        /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find("host");
-        if (hostIt == sourceConfig.end())
-        {
-            throw InvalidConfigParameter("`host`");
-        }
-        auto host = Host(hostIt->second);
-        sourceConfig.erase(hostIt);
-
-        const auto descriptorOpt = sourceCatalog->getInlineSource(type, schema, host, parserConfig, sourceConfig);
+        const auto descriptorOpt = createInlineSource(ctx, ConnectorKind::Inline, type, schema, parserConfig, sourceConfig);
 
         if (!descriptorOpt.has_value())
         {

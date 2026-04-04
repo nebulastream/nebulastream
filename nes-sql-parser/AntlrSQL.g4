@@ -82,7 +82,7 @@ nullableDefinition: NOT NULLTOKEN;
 
 fromQuery: AS query;
 
-dropStatement: DROP dropSubject WHERE dropFilter;
+dropStatement: DROP dropSubject WHERE dropFilter optionsClause?;
 dropSubject: dropQuery | dropSource | dropSink | dropWorker;
 dropQuery: QUERY;
 dropSource: dropLogicalSourceSubject | dropPhysicalSourceSubject;
@@ -93,12 +93,12 @@ dropSink: SINK;
 
 dropFilter: attr=strictIdentifier EQ value=constant;
 
-showStatement: SHOW showSubject (WHERE showFilter)? (FORMAT showFormat)?;
-showFormat: TEXT | JSON;
+showStatement: SHOW showSubject (WHERE showFilter)?;
 showSubject: QUERIES #showQueriesSubject
     | LOGICAL SOURCES #showLogicalSourcesSubject
     | PHYSICAL SOURCES (FOR logicalSourceName=strictIdentifier)? #showPhysicalSourcesSubject
-    | SINKS #showSinksSubject;
+    | SINKS #showSinksSubject
+    | WORKERS #showWorkersSubject;
 
 showFilter: attr=strictIdentifier EQ value=constant;
 
@@ -495,8 +495,6 @@ OFFSET: 'OFFSET' | 'offset';
 CSV_FORMAT : 'CSV_FORMAT';
 AT_MOST_ONCE : 'AT_MOST_ONCE';
 AT_LEAST_ONCE : 'AT_LEAST_ONCE';
-JSON: 'JSON';
-TEXT: 'TEXT';
 EXPLAIN: 'EXPLAIN' | 'explain';
 
 ///--NebulaSQL-KEYWORD-LIST-END
@@ -567,6 +565,7 @@ WS
 SINKS: 'SINKS';
 SOURCES: 'SOURCES' | 'sources';
 QUERIES: 'QUERIES' | 'queries';
+WORKERS: 'WORKERS';
 
 
 DATA_TYPE: INTEGER_SIGNED_TYPE | INTEGER_UNSIGNED_TYPE | FLOATING_POINT_TYPE | CHAR_TYPE | VARSIZED_TYPE | BOOLEAN_TYPE;
@@ -588,7 +587,6 @@ UNSIGNED_TYPE_QUALIFIER: 'UNSIGNED ';
 
 
 SHOW : 'SHOW';
-FORMAT : 'FORMAT';
 CREATE : 'CREATE';
 SOURCE : 'SOURCE';
 LOGICAL: 'LOGICAL';

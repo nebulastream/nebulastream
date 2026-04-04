@@ -59,7 +59,7 @@
 #include <MemoryTestUtils.hpp>
 #include <QueryEngine.hpp>
 #include <QueryEngineStatisticListener.hpp>
-#include <QueryId.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryStatus.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
