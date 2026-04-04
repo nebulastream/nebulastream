@@ -105,11 +105,6 @@ VariableSizedData::VariableSizedData(const nautilus::val<int8_t*>& reference, co
 {
 }
 
-VariableSizedData& VariableSizedData::operator=(const VariableSizedData& other) noexcept
-    : size(size), content(detail::RegularContent(reference, size))
-{
-}
-
 VariableSizedData::VariableSizedData(const VariableSizedData& first, const VariableSizedData& second, ArenaRef& arena)
     : size(first.getSize() + second.getSize())
     , content(detail::CompoundContent(&arena, first.getContent(), first.getSize(), second.getContent(), second.getSize()))
