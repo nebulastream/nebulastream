@@ -26,13 +26,14 @@
 #include <select.hpp>
 #include <val_arith.hpp>
 #include <val_bool.hpp>
-#include "Nautilus/DataTypes/LazyValueRepresentation.hpp"
+#include <Nautilus/DataTypes/LazyValueRepresentation.hpp>
+#include <Util/InlineTagMacro.hpp>
 
 namespace NES
 {
 
 template <typename T>
-NAUTILUS_INLINE static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
+NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantEq(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
     const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
     /// Will be skipped by compiler by preparing the ascii chars of the constant in memory
@@ -41,7 +42,7 @@ NAUTILUS_INLINE static bool constantEq(const int8_t* lazyPtr, const uint64_t laz
 }
 
 template <typename T>
-NAUTILUS_INLINE static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
+NAUTILUS_TAGGED_INLINE(lazy_overload) static bool constantLt(const int8_t* lazyPtr, const uint64_t lazySize, const T rhs)
 {
     const std::string_view lhsString{reinterpret_cast<const char*>(lazyPtr), lazySize};
     const bool lhsNegative = lhsString[0] == '-';
