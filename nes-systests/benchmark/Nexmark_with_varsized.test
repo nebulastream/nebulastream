@@ -5,7 +5,7 @@
 
 
 # Source definition. We have removed some columns that are not needed in our queries
-CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL);
+CREATE LOGICAL SOURCE bid(timestamp UINT64 NOT NULL, auctionId INT32 NOT NULL, bidder INT32 NOT NULL, price FLOAT64 NOT NULL, padded VARSIZED NOT NULL);
 
 #CREATE PHYSICAL SOURCE FOR bid TYPE File;
 CREATE PHYSICAL SOURCE FOR bid TYPE File SET("LOCKING" AS INPUT_FORMATTER.`SEQUENCE_SHREDDER_MODE`);
@@ -14,7 +14,8 @@ CREATE PHYSICAL SOURCE FOR bid TYPE File SET("LOCKING" AS INPUT_FORMATTER.`SEQUE
 #CREATE PHYSICAL SOURCE FOR bid TYPE BlockingFile SET("SequentialCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
 #CREATE PHYSICAL SOURCE FOR bid TYPE BlockingFile SET("SequentialUncompiledCSV" AS INPUT_FORMATTER.`TYPE`);
 #CREATE PHYSICAL SOURCE FOR bid TYPE BlockingFile SET("UncompiledCSV" AS INPUT_FORMATTER.`TYPE`, "SEQUENTIAL" AS INPUT_FORMATTER.`THREADING_MODE`);
-ATTACH FILE large/nexmark/bid_6GB.csv
+#ATTACH FILE large/nexmark/bid_6GB.csv
+ATTACH FILE /home/rudi/Documents/uni/phd/piparse/nebulastream/bid_pad_2k.csv
 
 CREATE LOGICAL SOURCE auction(timestamp UINT64 NOT NULL, id INT32 NOT NULL, initialbid INT32 NOT NULL, reserve INT32 NOT NULL, expires UINT64 NOT NULL, seller INT32 NOT NULL, category INT32 NOT NULL);
 CREATE PHYSICAL SOURCE FOR auction TYPE File;
@@ -46,8 +47,8 @@ CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
 SELECT timestamp FROM bid INTO bidCheckSumProjection;
 ----
 183991721 127905527607
-CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
 
+CREATE SINK bidCheckSumProjection(bid.timestamp UINT64 NOT NULL) TYPE Checksum;
 SELECT timestamp FROM bid INTO bidCheckSumProjection;
 ----
 183991721 127905527607
