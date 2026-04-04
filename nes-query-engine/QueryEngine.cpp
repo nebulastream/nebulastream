@@ -739,11 +739,10 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
-void ThreadPool::addThread(const Host& host)
+void ThreadPool::addThread(const Host&)
 {
     pool.emplace_back(
         fmt::format("WorkerThread-{}", numberOfThreads_),
-        host,
         [this, id = numberOfThreads_++](const std::stop_token& stopToken)
         {
             WorkerThread::id = WorkerThreadId(WorkerThreadId::INITIAL + id);

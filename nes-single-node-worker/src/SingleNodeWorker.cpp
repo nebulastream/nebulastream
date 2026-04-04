@@ -21,6 +21,7 @@
 #include <optional>
 #include <sstream>
 #include <string>
+#include <typeindex>
 #include <utility>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
@@ -44,6 +45,7 @@
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <Thread.hpp>
 #include <WorkerStatus.hpp>
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
@@ -56,8 +58,10 @@ SingleNodeWorker::SingleNodeWorker(SingleNodeWorker&& other) noexcept = default;
 SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept = default;
 
 SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configuration, const Host& host)
-    : listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
+    : workerNodeId(host), listener(std::make_shared<CompositeStatisticListener>()), configuration(configuration)
 {
+    Thread::WorkerNodeId = workerNodeId;
+    detail::threadInitHooks[std::type_index(typeid(Host))] = [this]() { Thread::WorkerNodeId = workerNodeId; };
     {
         std::stringstream configStr;
         ConfigValuePrinter printer(configStr);

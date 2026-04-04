@@ -76,7 +76,7 @@ int main(const int argc, const char* argv[])
             return 0;
         }
         {
-            NES::Thread::initializeThread(NES::Host(configuration->dataAddress.getValue()), "main");
+            NES::setCurrentThreadName("main");
             NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
 
             grpc::ServerBuilder builder;

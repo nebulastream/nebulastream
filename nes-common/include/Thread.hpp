@@ -13,27 +13,44 @@
 */
 
 #pragma once
+#include <functional>
 #include <string>
 #include <thread>
+#include <typeindex>
+#include <unordered_map>
 
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
-#include <spdlog/spdlog.h>
-#include <ErrorHandling.hpp>
 
 namespace NES
 {
+
+/// Set the current thread's name (for logging and debugging).
+/// Use this for main threads that aren't created via NES::Thread.
+void setCurrentThreadName(std::string name);
+
 namespace detail
 {
-///POSIX limits the thread name to 16 bytes which includes null termination:
-///https://man7.org/linux/man-pages/man3/pthread_setname_np.3.html
-constexpr size_t PTHREAD_NAME_LENGTH = 15;
+/// Thread-local hook map shared with WorkerLocalSingleton.
+/// Captured by NES::Thread at construction and replayed on child threads.
+/// Keyed by type_index so each WorkerLocalSingleton<T> gets exactly one slot.
+/// Non-singleton users can also write to this map with a custom key.
+extern thread_local std::unordered_map<std::type_index, std::function<void()>> threadInitHooks;
+
+/// Set to true by NES::Thread on child threads.
+extern thread_local bool isNESThread;
+
+/// Internal — apply a captured hook snapshot on a new thread.
+void applyThreadInitHooks(std::unordered_map<std::type_index, std::function<void()>> hooks);
+
+/// Internal — set the pthread name (truncated to 15 chars).
+void setPthreadName(std::string_view name);
 }
 
-/// `NES::Thread` is a wrapper around `std::jthread`. The main purpose is that it is a standardized way
-/// to add additional information to a thread. Currently, it contains:
-/// 1. ThreadName which is used during debugging and is attached to logs.
-/// 2. It holds the Host. Which can be automatically inherited to threads created within this thread.
+/// `NES::Thread` is a wrapper around `std::jthread`. It provides:
+/// 1. ThreadName — set per thread, used during debugging and attached to logs.
+/// 2. Thread init hooks — a type-indexed map of callbacks that propagate to child threads.
+///    WorkerLocalSingleton<T> uses this to propagate worker-scoped instances.
 class Thread
 {
     std::jthread thread;
@@ -44,15 +61,22 @@ public:
     Thread() = default;
 
     template <typename FN, typename... Args>
-    Thread(std::string name, Host worker_id, FN&& fn, Args&&... args)
+    Thread(std::string name, FN&& fn, Args&&... args)
     {
-        /// The complexity of this function is caused by the combination of different ways a std::jthread can be created.
-        /// 1. It can accept an addtional std::stop_token
-        /// 2. The first parameter has to be the this ptr if the function is a member function
+        auto parentHooks = detail::threadInitHooks;
+
         thread = std::jthread(
-            []<typename FN2, typename... Args2>(std::stop_token token, Host worker_id, std::string name, FN2&& fn, Args2&&... args)
+            []<typename FN2, typename... Args2>(
+                std::stop_token token,
+                std::string name,
+                std::unordered_map<std::type_index, std::function<void()>> parentHooks,
+                FN2&& fn,
+                Args2&&... args)
             {
-                initializeThread(std::move(worker_id), std::move(name));
+                detail::applyThreadInitHooks(std::move(parentHooks));
+                detail::isNESThread = true;
+                ThreadName = name;
+                detail::setPthreadName(name);
                 if constexpr (std::is_member_function_pointer_v<FN2>)
                 {
                     [&token]<typename MemFN, typename ThisArg, typename... Args3>(MemFN memberFunction, ThisArg&& thisArg, Args3&&... args)
@@ -89,15 +113,10 @@ public:
                         "Function must be callable with arguments");
                 }
             },
-            worker_id,
             std::move(name),
+            std::move(parentHooks),
             std::forward<FN>(fn),
             std::forward<Args>(args)...);
-    }
-
-    template <typename FN, typename... Args>
-    Thread(std::string name, FN fn, Args&&... args) : Thread(std::move(name), Thread::WorkerNodeId, fn, std::forward<Args>(args)...)
-    {
     }
 
     static const std::string& getThisThreadName() { return ThreadName; }
@@ -109,22 +128,5 @@ public:
     [[nodiscard]] bool joinable() const { return thread.joinable(); }
 
     bool requestStop() { return thread.request_stop(); }
-
-    static void initializeThread(Host worker_id, std::string name)
-    {
-        WorkerNodeId = std::move(worker_id);
-        ThreadName = std::move(name);
-        setThreadName(ThreadName);
-    }
-
-    ///Sets the currents thread's name.
-    ///threadName has to be non-empty and will be truncated to PTHREAD_NAME_LENGTH character
-    static void setThreadName(const std::string_view threadName)
-    {
-        PRECONDITION(!threadName.empty(), "Thread name cannot be empty");
-        std::array<char, detail::PTHREAD_NAME_LENGTH + 1> truncatedStringName{};
-        std::copy_n(threadName.begin(), std::min(detail::PTHREAD_NAME_LENGTH, threadName.size()), truncatedStringName.begin());
-        pthread_setname_np(pthread_self(), truncatedStringName.data());
-    }
 };
 }

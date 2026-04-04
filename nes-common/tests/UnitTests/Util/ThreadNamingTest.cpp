@@ -13,7 +13,6 @@
 */
 
 #include <array>
-#include <cstring>
 #include <string_view>
 #include <pthread.h>
 #include <Util/Logger/LogLevel.hpp>
@@ -37,20 +36,24 @@ public:
 
 TEST_F(ThreadNamingTest, testThreadNaming)
 {
-    Thread::setThreadName("NES-0");
+    setCurrentThreadName("NES-0");
 
-    std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
+    std::array<char, 16> pthreadName{};
     pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
 
     EXPECT_EQ(std::string_view(pthreadName.data()), "NES-0");
+    EXPECT_EQ(Thread::getThisThreadName(), "NES-0");
 }
 
 TEST_F(ThreadNamingTest, testThreadNamingWithTruncation)
 {
-    Thread::setThreadName("NES_LONG-123456789");
-    std::array<char, detail::PTHREAD_NAME_LENGTH + 1> pthreadName{};
+    setCurrentThreadName("NES_LONG-123456789");
+
+    std::array<char, 16> pthreadName{};
     pthread_getname_np(pthread_self(), pthreadName.data(), pthreadName.size());
 
+    /// pthread name is truncated to 15 chars, but ThreadName keeps the full name.
     EXPECT_EQ(std::string_view(pthreadName.data()), "NES_LONG-123456");
+    EXPECT_EQ(Thread::getThisThreadName(), "NES_LONG-123456789");
 }
 }

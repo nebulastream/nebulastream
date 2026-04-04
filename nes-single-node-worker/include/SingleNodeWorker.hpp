@@ -40,6 +40,7 @@ namespace NES
 /// The Class itself is NonCopyable, but Movable, it owns the QueryCompiler and the NodeEngine.
 class SingleNodeWorker
 {
+    Host workerNodeId;
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;
