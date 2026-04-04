@@ -162,6 +162,7 @@ public:
         size_t numberOfThreads;
         size_t sizeOfRawBuffers;
         bool isCompiled;
+        std::unordered_map<std::string, std::string> indexerConfig;
     };
 
     struct SetupResult
@@ -289,12 +290,13 @@ public:
                 = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
-
-            const auto parserConfiguration
-                = InputFormatterValidationProvider::provide(testConfig.formatterType, {{"tuple_delimiter", "\n"}, {"field_delimiter", "|"}})
-                      .value();
+            const auto validatedIndexerConf = InputFormatterValidationProvider::provide(testConfig.formatterType, testConfig.indexerConfig);
+            if (not validatedIndexerConf.has_value())
+            {
+                throw InvalidConfigParameter("Invalid indexer config");
+            }
             auto testStage = InputFormatterTestUtil::createInputFormatter(
-                parserConfiguration,
+                validatedIndexerConf.value(),
                 setupResult.schema,
                 setupResult.memoryLayoutType,
                 setupResult.sizeOfFormattedBuffers,
@@ -339,7 +341,8 @@ TEST_F(SmallFilesTest, testTwoIntegerColumnsJSON)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "JSON"}, {"tuple_delimiter", "\n"}}});
 }
 
 TEST_F(SmallFilesTest, testBimboDataJSON)
@@ -353,7 +356,8 @@ TEST_F(SmallFilesTest, testBimboDataJSON)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "JSON"}, {"tuple_delimiter", "\n"}}});
 }
 
 TEST_F(SmallFilesTest, testFoodDataJSON)
@@ -367,7 +371,8 @@ TEST_F(SmallFilesTest, testFoodDataJSON)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "JSON"}, {"tuple_delimiter", "\n"}}});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
@@ -381,7 +386,8 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryJSON)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "JSON"}, {"tuple_delimiter", "\n"}}});
 }
 
 TEST_F(SmallFilesTest, testTwoIntegerColumns)
@@ -395,7 +401,8 @@ TEST_F(SmallFilesTest, testTwoIntegerColumns)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 16,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}}});
 }
 
 TEST_F(SmallFilesTest, testBimboData)
@@ -409,7 +416,8 @@ TEST_F(SmallFilesTest, testBimboData)
             .numberOfIterations = 1,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 2,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}}});
 }
 
 TEST_F(SmallFilesTest, testFoodData)
@@ -423,7 +431,8 @@ TEST_F(SmallFilesTest, testFoodData)
             .numberOfIterations = 10,
             .numberOfThreads = 8,
             .sizeOfRawBuffers = 2,
-            .isCompiled = true});
+            .isCompiled = true,
+            .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}}});
 }
 
 TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
@@ -436,7 +445,8 @@ TEST_F(SmallFilesTest, testSpaceCraftTelemetryData)
          .numberOfIterations = 10,
          .numberOfThreads = 8,
          .sizeOfRawBuffers = 2,
-         .isCompiled = true});
+         .isCompiled = true,
+         .indexerConfig = {{"type", "CSV"}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}}});
 }
 
 }
