@@ -85,18 +85,24 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(downstreamWorker.has_value(), "Downstream worker {} not found in catalog", channel.downstreamNode);
     const auto upstreamWorker = context.workerCatalog->getWorker(channel.upstreamNode);
     INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
+    const std::string& tranmissionCodec = upstreamWorker.value().config.workerConfiguration.network.transmissionCodec.getValue();
 
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"codec", "ZSTD"}};
+    auto sourceConfig = std::unordered_map<std::string, std::string>{
+        {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"codec", tranmissionCodec}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}, {"codec", "ZSTD"}};
+        {"channel", channel.id.getRawValue()},
+        {"bind", upstreamData},
+        {"data_endpoint", downstreamData},
+        {"output_format", "NATIVE"},
+        {"codec", tranmissionCodec}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
@@ -116,7 +122,11 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
 
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        "Network", channel.upstreamOp.getOutputSchema(), Host(channel.downstreamNode.getRawValue()), {{InputFormatterDescriptor::getTypeString(), "Native"}}, sourceConfig);
+        "Network",
+        channel.upstreamOp.getOutputSchema(),
+        Host(channel.downstreamNode.getRawValue()),
+        {{InputFormatterDescriptor::getTypeString(), "Native"}},
+        sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 

@@ -67,10 +67,13 @@ public:
     UIntOption receiverIOThreads
         = {"receiver_io_threads", "1", "Number of IO threads for the receiver network runtime. 0 means use the number of available cores."};
 
+    StringOption transmissionCodec
+        = {"transmission_codec", "None", "Codec used to encode the buffers before transmitting them to the receiving node"};
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads};
+        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads, &transmissionCodec};
     }
 };
 }
