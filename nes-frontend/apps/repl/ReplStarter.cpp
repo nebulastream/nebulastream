@@ -71,7 +71,7 @@
 /// If repl is executed with an embedded worker, this switch prevents actual port allocation and routes all inter-worker communication
 /// via an in-memory channel.
 
-extern void enable_memcom();
+extern void enable_memcom() noexcept;
 
 namespace
 {

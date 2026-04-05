@@ -47,14 +47,11 @@
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
 #include <GoogleEventTracePrinter.hpp>
-#include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <Thread.hpp>
 #include <WorkerStatus.hpp>
-
-extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
 namespace NES
 {
@@ -86,16 +83,12 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
         listener->addListener(googleTracePrinter);
     }
 
-    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
-    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
-    registerSystemQueries(host);
-
     if (!configuration.dataAddress.getValue().empty())
     {
         const auto& networkConfig = configuration.workerConfiguration.network;
-        initNetworkServices(
+        networkRuntime = std::make_unique<NetworkRuntime>(
             configuration.dataAddress.getValue(),
-            host,
+            host.getRawValue(),
             NetworkOptions{
                 .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
                 .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
@@ -104,6 +97,10 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
             });
     }
+
+    nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
+    compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    registerSystemQueries(host);
 }
 
 void SingleNodeWorker::registerSystemQueries(const Host& host)

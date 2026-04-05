@@ -16,12 +16,10 @@ use nes_network::protocol::{ConnectionIdentifier, ThisConnectionIdentifier, Tupl
 use nes_network::receiver::{ReceiverChannel, ReceiverChannelResult};
 use nes_network::sender::{SenderChannel, TrySendDataResult};
 use nes_network::*;
-use std::collections::HashMap;
 use std::error::Error;
 use std::pin::Pin;
 use std::str::FromStr;
-use std::sync::{Arc, Mutex};
-use tracing::warn;
+use std::sync::Mutex;
 
 #[cxx::bridge]
 pub mod ffi {
@@ -79,14 +77,12 @@ pub mod ffi {
             connection_addr: String,
             worker_id: String,
             options: &NetworkServiceOptions,
-        ) -> Result<()>;
-        fn receiver_instance(connection_addr: String) -> Result<Box<ReceiverNetworkService>>;
+        ) -> Result<Box<ReceiverNetworkService>>;
         fn init_sender_service(
             connection_addr: String,
             worker_id: String,
             options: &NetworkServiceOptions,
-        ) -> Result<()>;
-        fn sender_instance(connection_addr: String) -> Result<Box<SenderNetworkService>>;
+        ) -> Result<Box<SenderNetworkService>>;
 
         fn register_receiver_channel(
             server: &mut ReceiverNetworkService,
@@ -121,31 +117,23 @@ pub mod ffi {
 
 #[derive(Clone)]
 enum ReceiverService {
-    MemCom(Arc<receiver::NetworkService<channel::MemCom>>),
-    Tcp(Arc<receiver::NetworkService<channel::TcpCommunication>>),
+    MemCom(std::sync::Arc<receiver::NetworkService<channel::MemCom>>),
+    Tcp(std::sync::Arc<receiver::NetworkService<channel::TcpCommunication>>),
 }
 #[derive(Clone)]
 enum SenderService {
-    MemCom(Arc<sender::NetworkService<channel::MemCom>>),
-    Tcp(Arc<sender::NetworkService<channel::TcpCommunication>>),
-}
-#[derive(Default)]
-struct Services {
-    receivers: HashMap<ThisConnectionIdentifier, (ReceiverService, usize)>,
-    senders: HashMap<ThisConnectionIdentifier, (SenderService, sender::SenderConfig)>,
+    MemCom(std::sync::Arc<sender::NetworkService<channel::MemCom>>),
+    Tcp(std::sync::Arc<sender::NetworkService<channel::TcpCommunication>>),
 }
 
 static USE_MEMCOM: Mutex<bool> = Mutex::new(false);
 fn enable_memcom() {
     let mut use_memcom = USE_MEMCOM.lock().unwrap();
     if *use_memcom {
-        warn!("Memcom is already enabled");
+        tracing::warn!("Memcom is already enabled");
     }
     *use_memcom = true;
 }
-/// Lazy singleton types, initialized on first use in a thread-safe way
-static SERVICES: std::sync::LazyLock<Mutex<Services>> =
-    std::sync::LazyLock::new(|| Mutex::default());
 
 pub struct ReceiverNetworkService {
     handle: ReceiverService,
@@ -182,152 +170,84 @@ fn init_sender_service(
     this_connection_addr: String,
     worker_id: String,
     options: &ffi::NetworkServiceOptions,
-) -> Result<(), String> {
+) -> Result<Box<SenderNetworkService>, String> {
     let this_connection = ThisConnectionIdentifier::from_str(this_connection_addr.as_str())
         .map_err(|e| e.to_string())?;
-    let mut services = SERVICES.lock().unwrap();
 
     let config = sender::SenderConfig {
         sender_queue_size: options.sender_queue_size as usize,
         max_pending_acks: options.max_pending_acks as usize,
     };
 
-    // Validate: TCP mode allows only one service per process
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder
+        .thread_name("net-sender")
+        .on_thread_start(move || ffi::identifyThread("net-sender", &worker_id))
+        .enable_io()
+        .enable_time();
+    if options.sender_io_threads > 0 {
+        builder.worker_threads(options.sender_io_threads as usize);
+    }
+    let runtime = builder.build().expect("Failed to create tokio runtime");
     let use_memcom = *USE_MEMCOM.lock().unwrap();
-    if !use_memcom && !services.senders.is_empty() {
-        return Err("TCP mode allows only one sender service per process".to_string());
-    }
+    let handle = if use_memcom {
+        SenderService::MemCom(sender::NetworkService::start(
+            runtime,
+            this_connection,
+            channel::MemCom::new(),
+        ))
+    } else {
+        SenderService::Tcp(sender::NetworkService::start(
+            runtime,
+            this_connection,
+            channel::TcpCommunication::new(),
+        ))
+    };
 
-    let old = services.senders.insert(this_connection.clone(), {
-        let mut builder = tokio::runtime::Builder::new_multi_thread();
-        builder
-            .thread_name("net-sender")
-            .on_thread_start(move || ffi::identifyThread("net-sender", &worker_id))
-            .enable_io()
-            .enable_time();
-        if options.sender_io_threads > 0 {
-            builder.worker_threads(options.sender_io_threads as usize);
-        }
-        let runtime = builder.build().expect("Failed to create tokio runtime");
-        let service = if *USE_MEMCOM.lock().unwrap() {
-            SenderService::MemCom(sender::NetworkService::start(
-                runtime,
-                this_connection.clone(),
-                channel::MemCom::new(),
-            ))
-        } else {
-            SenderService::Tcp(sender::NetworkService::start(
-                runtime,
-                this_connection.clone(),
-                channel::TcpCommunication::new(),
-            ))
-        };
-        (service, config)
-    });
-
-    if let Some((old_service, _)) = old {
-        warn!("Recreating sender service for {this_connection}, shutting down old service");
-        // Properly shutdown the old service to avoid resource leaks
-        let shutdown_result = match old_service {
-            SenderService::MemCom(service) => service.shutdown(),
-            SenderService::Tcp(service) => service.shutdown(),
-        };
-        if let Err(e) = shutdown_result {
-            warn!("Failed to shutdown old sender service: {e}");
-        }
-    }
-
-    Ok(())
+    Ok(Box::new(SenderNetworkService {
+        handle,
+        default_config: config,
+    }))
 }
 
 fn init_receiver_service(
     connection_addr: String,
     worker_id: String,
     options: &ffi::NetworkServiceOptions,
-) -> Result<(), String> {
+) -> Result<Box<ReceiverNetworkService>, String> {
     let this_connection =
         ThisConnectionIdentifier::from_str(connection_addr.as_str()).map_err(|e| e.to_string())?;
-    let mut services = SERVICES.lock().unwrap();
 
     let data_queue_size = options.receiver_queue_size as usize;
 
-    // Validate: TCP mode allows only one service per process
+    let mut builder = tokio::runtime::Builder::new_multi_thread();
+    builder
+        .thread_name("net-receiver")
+        .on_thread_start(move || ffi::identifyThread("net-receiver", &worker_id))
+        .enable_io()
+        .enable_time();
+    if options.receiver_io_threads > 0 {
+        builder.worker_threads(options.receiver_io_threads as usize);
+    }
+    let runtime = builder.build().expect("Failed to create tokio runtime");
     let use_memcom = *USE_MEMCOM.lock().unwrap();
-    if !use_memcom && !services.receivers.is_empty() {
-        return Err("TCP mode allows only one receiver service per process".to_string());
-    }
+    let handle = if use_memcom {
+        ReceiverService::MemCom(receiver::NetworkService::start(
+            runtime,
+            this_connection,
+            channel::MemCom::new(),
+        ))
+    } else {
+        ReceiverService::Tcp(receiver::NetworkService::start(
+            runtime,
+            this_connection,
+            channel::TcpCommunication::new(),
+        ))
+    };
 
-    let old = services.receivers.insert(this_connection.clone(), {
-        let mut builder = tokio::runtime::Builder::new_multi_thread();
-        builder
-            .thread_name("net-receiver")
-            .on_thread_start(move || ffi::identifyThread("net-receiver", &worker_id))
-            .enable_io()
-            .enable_time();
-        if options.receiver_io_threads > 0 {
-            builder.worker_threads(options.receiver_io_threads as usize);
-        }
-        let runtime = builder.build().expect("Failed to create tokio runtime");
-        let service = if *USE_MEMCOM.lock().unwrap() {
-            ReceiverService::MemCom(receiver::NetworkService::start(
-                runtime,
-                this_connection.clone(),
-                channel::MemCom::new(),
-            ))
-        } else {
-            ReceiverService::Tcp(receiver::NetworkService::start(
-                runtime,
-                this_connection.clone(),
-                channel::TcpCommunication::new(),
-            ))
-        };
-        (service, data_queue_size)
-    });
-
-    if let Some((old_service, _)) = old {
-        warn!("Recreating receiver service for {this_connection}, shutting down old service");
-        // Properly shutdown the old service to avoid resource leaks
-        let shutdown_result = match old_service {
-            ReceiverService::MemCom(service) => service.shutdown(),
-            ReceiverService::Tcp(service) => service.shutdown(),
-        };
-        if let Err(e) = shutdown_result {
-            warn!("Failed to shutdown old receiver service: {e}");
-        }
-    }
-
-    Ok(())
-}
-
-fn receiver_instance(
-    connection_identifier: String,
-) -> Result<Box<ReceiverNetworkService>, Box<dyn Error>> {
-    let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
-        .map_err(|e| e.to_string())?;
-    let services = SERVICES.lock().unwrap();
-    let (service, default_data_queue_size) = services
-        .receivers
-        .get(&this_connection)
-        .ok_or("Receiver server has not been initialized yet.")?;
     Ok(Box::new(ReceiverNetworkService {
-        handle: service.clone(),
-        default_data_queue_size: *default_data_queue_size,
-    }))
-}
-
-fn sender_instance(
-    connection_identifier: String,
-) -> Result<Box<SenderNetworkService>, Box<dyn Error>> {
-    let this_connection = ThisConnectionIdentifier::from_str(connection_identifier.as_str())
-        .map_err(|e| e.to_string())?;
-    let services = SERVICES.lock().unwrap();
-    let (service, default_config) = services
-        .senders
-        .get(&this_connection)
-        .ok_or("Sender server has not been initialized yet.")?;
-    Ok(Box::new(SenderNetworkService {
-        handle: service.clone(),
-        default_config: default_config.clone(),
+        handle,
+        default_data_queue_size: data_queue_size,
     }))
 }
 

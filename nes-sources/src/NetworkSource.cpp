@@ -31,6 +31,7 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
+#include <NetworkRuntime.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceValidationRegistry.hpp>
 
@@ -40,7 +41,6 @@ namespace NES
 NetworkSource::NetworkSource(const SourceDescriptor& sourceDescriptor)
     : channelId(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::CHANNEL))
     , receiverQueueSize(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::RECEIVER_QUEUE_SIZE))
-    , receiverServer(receiver_instance(sourceDescriptor.getFromConfig(ConfigParametersNetworkSource::BIND)))
 {
 }
 
@@ -52,12 +52,7 @@ std::ostream& NetworkSource::toString(std::ostream& str) const
 void NetworkSource::open(std::shared_ptr<AbstractBufferProvider> provider)
 {
     this->bufferProvider = std::move(provider);
-    const NetworkServiceOptions options{
-        .sender_queue_size = 0,
-        .max_pending_acks = 0,
-        .receiver_queue_size = static_cast<uint32_t>(receiverQueueSize),
-    };
-    this->channel = register_receiver_channel(*receiverServer, rust::String(channelId), options);
+    this->channel = NetworkRuntime::instance().registerReceiverChannel(channelId, receiverQueueSize);
     NES_DEBUG("Receiver channel registered: {}", channelId);
 }
 

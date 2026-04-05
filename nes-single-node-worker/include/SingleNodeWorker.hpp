@@ -27,6 +27,7 @@
 #include <Util/Tracing/EventStore.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
+#include <NetworkRuntime.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
@@ -43,6 +44,7 @@ class SingleNodeWorker
 {
     Host workerNodeId;
     std::unique_ptr<EventStore> eventStore;
+    std::unique_ptr<NetworkRuntime> networkRuntime;
     SharedPtr<CompositeStatisticListener> listener;
     SharedPtr<NodeEngine> nodeEngine;
     UniquePtr<QueryCompilation::QueryCompiler> compiler;

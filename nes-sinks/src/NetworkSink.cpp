@@ -40,6 +40,7 @@
 #include <rust/cxx.h>
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
+#include <NetworkRuntime.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
@@ -130,7 +131,6 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
           sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_LOWER_THRESHOLD))
     , channelId(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::CHANNEL))
     , connectionAddr(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::DATA_ENDPOINT))
-    , thisConnection(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BIND))
     , senderQueueSize(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::SENDER_QUEUE_SIZE))
     , maxPendingAcks(sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::MAX_PENDING_ACKS))
 {
@@ -138,13 +138,7 @@ NetworkSink::NetworkSink(BackpressureController backpressureController, const Si
 
 void NetworkSink::start(PipelineExecutionContext&)
 {
-    this->server = sender_instance(thisConnection);
-    const NetworkServiceOptions options{
-        .sender_queue_size = static_cast<uint32_t>(senderQueueSize),
-        .max_pending_acks = static_cast<uint32_t>(maxPendingAcks),
-        .receiver_queue_size = 0,
-    };
-    this->channel = register_sender_channel(*server.value(), connectionAddr, rust::String(channelId), options);
+    this->channel = NetworkRuntime::instance().registerSenderChannel(connectionAddr, channelId, senderQueueSize, maxPendingAcks);
     NES_DEBUG("Sender channel registered: {}", channelId);
 }
 

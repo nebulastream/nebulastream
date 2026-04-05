@@ -68,7 +68,6 @@ private:
     std::string channelId;
     size_t receiverQueueSize;
     std::optional<rust::Box<ReceiverDataChannel>> channel;
-    rust::Box<ReceiverNetworkService> receiverServer;
     std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
 

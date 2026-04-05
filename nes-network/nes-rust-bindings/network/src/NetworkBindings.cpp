@@ -23,24 +23,7 @@
 #include <network/lib.h>
 #include <rust/cxx.h>
 #include <ErrorHandling.hpp>
-#include <NetworkOptions.hpp>
 #include <Thread.hpp>
-
-void initNetworkServices( /// NOLINT(misc-use-internal-linkage)
-    const std::string& connectionAddr,
-    const NES::Host& host,
-    const NES::NetworkOptions& options)
-{
-    const NetworkServiceOptions cxxOptions{
-        .sender_queue_size = options.senderQueueSize,
-        .max_pending_acks = options.maxPendingAcks,
-        .receiver_queue_size = options.receiverQueueSize,
-        .sender_io_threads = options.senderIOThreads,
-        .receiver_io_threads = options.receiverIOThreads,
-    };
-    init_receiver_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
-    init_sender_service(rust::String(connectionAddr), rust::String(host.getRawValue()), cxxOptions);
-}
 
 void TupleBufferBuilder::setMetadata(const SerializedTupleBufferHeader& metaData)
 {

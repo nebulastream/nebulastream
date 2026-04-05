@@ -27,6 +27,7 @@ target_include_directories(nes-single-node-worker-lib PUBLIC include)
 target_link_libraries(nes-single-node-worker-lib
         PUBLIC
         nes-grpc
+        nes-network-bindings
         nes-query-compiler
         nes-query-optimizer
         nes-sql-parser

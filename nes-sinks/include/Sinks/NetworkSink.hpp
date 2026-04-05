@@ -92,11 +92,9 @@ private:
     size_t tupleSize;
     folly::Synchronized<std::vector<TupleBuffer>> bufferBacklog;
     BackpressureHandler backpressureHandler;
-    std::optional<rust::Box<SenderNetworkService>> server;
     std::optional<rust::Box<SenderDataChannel>> channel;
     std::string channelId;
     std::string connectionAddr;
-    std::string thisConnection;
     size_t senderQueueSize;
     size_t maxPendingAcks;
     std::atomic_bool closed;
