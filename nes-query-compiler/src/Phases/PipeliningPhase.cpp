@@ -108,6 +108,12 @@ PhysicalOperator createScanOperator(
     if (prevPipeline.isSourcePipeline())
     {
         const auto inputFormatterConfig = prevPipeline.getRootOperator().get<SourcePhysicalOperator>().getDescriptor().getParserConfig();
+        if (toUpperCase(inputFormatterConfig.parserType) == "ARROW")
+        {
+            auto arrowBufRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(
+                configuredBufferSize, inputSchema.value(), "Arrow", {});
+            return ScanPhysicalOperator(arrowBufRef, inputSchema->getFieldNames());
+        }
         if (toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return ScanPhysicalOperator(

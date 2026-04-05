@@ -40,7 +40,8 @@
 namespace
 {
 NES::ScanPhysicalOperator
-createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::Schema& inputSchema)
+createScanOperator(const NES::LogicalOperator& projectionOp, const size_t bufferSize, const NES::Schema& inputSchema,
+                   const size_t operatorBufferSize)
 {
     const auto sourceOperators
         = projectionOp.getChildren()
@@ -59,6 +60,14 @@ createScanOperator(const NES::LogicalOperator& projectionOp, const size_t buffer
     if (sourceOperators.size() == 1)
     {
         const auto inputFormatterConfig = sourceOperators.front().getParserConfig();
+        if (NES::toUpperCase(inputFormatterConfig.parserType) == "ARROW")
+        {
+            /// Arrow layout must use the actual TupleBuffer size (operatorBufferSize), not the paged-vector
+            /// pageSize, because ArrowFileSource::open() computes its layout from bufferProvider->getBufferSize().
+            auto arrowBufRef = NES::LowerSchemaProvider::lowerSchemaWithOutputFormat(
+                operatorBufferSize, inputSchema, "Arrow", {});
+            return NES::ScanPhysicalOperator(arrowBufRef, inputSchema.getFieldNames());
+        }
         if (NES::toUpperCase(inputFormatterConfig.parserType) != "NATIVE")
         {
             return NES::ScanPhysicalOperator(
@@ -83,7 +92,7 @@ LoweringRuleResultSubgraph LowerToPhysicalProjection::apply(LogicalOperator proj
     const auto memoryLayoutTypeTrait = projectionLogicalOperator.getTraitSet().tryGet<MemoryLayoutTypeTrait>();
     PRECONDITION(memoryLayoutTypeTrait.has_value(), "Expected a memory layout type trait");
     const auto memoryLayoutType = memoryLayoutTypeTrait.value()->memoryLayout;
-    auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema);
+    auto scan = createScanOperator(projectionLogicalOperator, bufferSize, inputSchema, conf.operatorBufferSize.getValue());
     auto scanWrapper = std::make_shared<PhysicalOperatorWrapper>(
         scan,
         outputSchema,

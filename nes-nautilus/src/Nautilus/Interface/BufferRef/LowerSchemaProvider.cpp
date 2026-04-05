@@ -23,6 +23,7 @@
 #include <vector>
 
 #include <DataTypes/Schema.hpp>
+#include <Nautilus/Interface/BufferRef/ArrowBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/ColumnTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/OutputFormatterBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
@@ -43,6 +44,123 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     const std::string& outputFormatterType,
     const std::unordered_map<std::string, std::string>& config)
 {
+    /// Validate config through the plugin registry regardless of format type
+    auto descriptorConfigOpt = OutputFormatterValidationProvider::provide(outputFormatterType, config);
+    INVARIANT(descriptorConfigOpt.has_value(), "Parameter config for output format of type {} could not be validated", outputFormatterType);
+
+    /// Arrow format uses ArrowBufferRef (columnar Arrow-compatible layout) instead of OutputFormatterBufferRef
+    if (outputFormatterType == "Arrow")
+    {
+        const auto numFields = schema.getNumberOfFields();
+
+        /// Compute capacity: each record needs sum(fieldSizes) data bytes + numFields/8 bitmap bits.
+        /// Arrow layout stores values without inline null bytes — nullable fields use the bitmap instead.
+        /// VARSIZED fields store int32 offsets in the main buffer (4 bytes per record); actual string data lives in child buffers.
+        /// BOOLEAN data is bit-packed (like the validity bitmap), so it contributes 1/8 byte per record
+        /// rather than the 1 byte that getSizeInBytesWithoutNull() would return.
+        const uint64_t dataSizePerRecord = std::accumulate(
+            schema.begin(),
+            schema.end(),
+            uint64_t{0},
+            [](uint64_t acc, const Schema::Field& f)
+            {
+                if (f.dataType.type == DataType::Type::BOOLEAN)
+                {
+                    return acc; /// handled as bitmap overhead below
+                }
+                return acc + (f.dataType.type == DataType::Type::VARSIZED ? sizeof(int32_t) : f.dataType.getSizeInBytesWithoutNull());
+            });
+
+        const uint64_t numBoolColumns = std::count_if(
+            schema.begin(), schema.end(), [](const Schema::Field& f) { return f.dataType.type == DataType::Type::BOOLEAN; });
+        INVARIANT(dataSizePerRecord > 0 || numBoolColumns > 0, "Data size per record must be larger than 0B");
+
+        /// Each column has a validity bitmap (1 bit/record). BOOLEAN data columns also use 1 bit/record.
+        const double bitmapOverheadPerRecord = static_cast<double>(numFields + numBoolColumns) / 8.0;
+        uint64_t capacity = static_cast<uint64_t>(
+            static_cast<double>(bufferSize) / (static_cast<double>(dataSizePerRecord) + bitmapOverheadPerRecord));
+        INVARIANT(capacity > 0, "Arrow buffer capacity must be > 0 for bufferSize={}", bufferSize);
+
+        /// Pre-compute per-column offsets: [bitmap0][bitmap1]...[data0][data1]...
+        constexpr auto align8 = [](uint64_t v) -> uint64_t { return (v + 7) & ~uint64_t{7}; };
+
+        /// The initial capacity estimate ignores 8-byte alignment padding on each column region.
+        /// Shrink capacity until the aligned layout fits within the buffer.
+        auto computeAlignedSize = [&](uint64_t cap) -> uint64_t
+        {
+            uint64_t size = numFields * align8((cap + 7) / 8); /// validity bitmaps
+            for (const auto& field : schema)
+            {
+                if (field.dataType.type == DataType::Type::BOOLEAN)
+                {
+                    size += align8((cap + 7) / 8); /// BOOLEAN data is bit-packed
+                }
+                else if (field.dataType.type == DataType::Type::VARSIZED)
+                {
+                    size += align8(static_cast<uint64_t>(cap + 1) * sizeof(int32_t));
+                }
+                else
+                {
+                    size += align8(cap * field.dataType.getSizeInBytesWithoutNull());
+                }
+            }
+            return size;
+        };
+        while (computeAlignedSize(capacity) > bufferSize && capacity > 1)
+        {
+            --capacity;
+        }
+
+        const uint64_t bitmapBytesPerColumn = align8((capacity + 7) / 8);
+
+        std::vector<ArrowBufferRef::Field> fields;
+        fields.reserve(numFields);
+        uint64_t offset = 0;
+
+        /// First pass: bitmap offsets
+        std::vector<uint64_t> bitmapOffsets;
+        bitmapOffsets.reserve(numFields);
+        for (uint64_t i = 0; i < numFields; ++i)
+        {
+            bitmapOffsets.push_back(offset);
+            offset += bitmapBytesPerColumn;
+        }
+
+        /// Second pass: data offsets
+        uint64_t fieldIdx = 0;
+        uint32_t nextChildSlot = 0;
+        for (const auto& field : schema)
+        {
+            if (field.dataType.type == DataType::Type::BOOLEAN)
+            {
+                /// BOOLEAN: data is bit-packed (1 bit per record), same layout as a validity bitmap.
+                /// dataTypeSize is 0 — BOOLEAN uses bit-addressed read/write, not calculateArrowFieldAddress.
+                fields.emplace_back(field.name, field.dataType, 0, bitmapOffsets[fieldIdx], offset,
+                                    ArrowBufferRef::Field::NO_CHILD_BUFFER);
+                offset += align8((capacity + 7) / 8);
+            }
+            else if (field.dataType.type == DataType::Type::VARSIZED)
+            {
+                /// VARSIZED: store int32 offsets array (cap+1 entries for sentinel) in main buffer
+                constexpr uint32_t offsetEntrySize = sizeof(int32_t);
+                const uint32_t childSlot = nextChildSlot++;
+                fields.emplace_back(field.name, field.dataType, offsetEntrySize, bitmapOffsets[fieldIdx], offset, childSlot);
+                offset += align8(static_cast<uint64_t>(capacity + 1) * offsetEntrySize);
+            }
+            else
+            {
+                const uint32_t fieldSize = field.dataType.getSizeInBytesWithoutNull();
+                fields.emplace_back(field.name, field.dataType, fieldSize, bitmapOffsets[fieldIdx], offset,
+                                    ArrowBufferRef::Field::NO_CHILD_BUFFER);
+                offset += align8(capacity * fieldSize);
+            }
+            ++fieldIdx;
+        }
+
+        return std::make_shared<ArrowBufferRef>(ArrowBufferRef{std::move(fields), nextChildSlot, capacity, bufferSize, dataSizePerRecord});
+    }
+
+    /// For all other formats, use the OutputFormatterBufferRef path
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
     fields.reserve(schema.getNumberOfFields());
@@ -53,9 +171,6 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
         fieldNames.emplace_back(field.name);
     }
 
-    /// Create the output formatter descriptor
-    auto descriptorConfigOpt = OutputFormatterValidationProvider::provide(outputFormatterType, config);
-    INVARIANT(descriptorConfigOpt.has_value(), "Parameter config for output format of type {} could not be validated", outputFormatterType);
     const OutputFormatterDescriptor descriptor(descriptorConfigOpt.value());
 
     /// Create a output formatter instance by calling the registry

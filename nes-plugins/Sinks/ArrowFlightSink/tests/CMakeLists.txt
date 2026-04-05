@@ -10,22 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_library(nes-nautilus-test-util STATIC
-        src/NautilusTestUtils.cpp
-        src/PagedVectorTestUtils.cpp
-        src/ChainedHashMapTestUtils.cpp
-        src/ChainedHashMapCustomValueTestUtils.cpp
-        src/TestTupleBuffer.cpp
-)
+find_package(Arrow REQUIRED)
+find_package(ArrowFlight REQUIRED)
 
-target_include_directories(nes-nautilus-test-util PUBLIC
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+add_nes_unit_test(arrow-flight-sink-test "ArrowFlightSinkTest.cpp")
+target_link_libraries(arrow-flight-sink-test
+        nes-nautilus-test-util
+        nes-runtime
+        arrow_flight_sink_plugin
+        Arrow::arrow_static
+        ArrowFlight::arrow_flight_static
 )
-
-target_link_libraries(nes-nautilus-test-util PUBLIC
-        nes-memory
-        nes-grpc
-        nes-nautilus
-        nes-test-util
-        ${GTEST_LIBRARIES}
-)
+target_include_directories(arrow-flight-sink-test PRIVATE ${PROJECT_SOURCE_DIR}/nes-plugins/Sinks/ArrowFlightSink)

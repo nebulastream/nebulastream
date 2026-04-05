@@ -32,3 +32,8 @@ if(ALL_HASHMAP_TESTS)
     target_compile_definitions(chained-hashmap-unit-tests PRIVATE ALL_HASHMAP_TESTS)
     target_compile_definitions(chained-hashmap-unit-tests-custom-value PRIVATE ALL_HASHMAP_TESTS)
 endif()
+
+find_package(Arrow REQUIRED)
+
+add_nes_unit_test(arrow-buffer-ref-test "UnitTests/ArrowBufferRefTest.cpp")
+target_link_libraries(arrow-buffer-ref-test nes-nautilus-test-util nes-runtime Arrow::arrow_static)

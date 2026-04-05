@@ -60,6 +60,20 @@ if (ENABLE_BATS_TESTS)
     )
 
     add_test(
+            NAME arrow-roundtrip-repl-test
+            COMMAND
+            env NES_REPL=$<TARGET_FILE:nes-repl-embedded>
+            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/arrow_roundtrip.bats
+    )
+
+    add_test(
+            NAME pyarrow-interop-repl-test
+            COMMAND
+            env NES_REPL=$<TARGET_FILE:nes-repl-embedded>
+            ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/repl/tests/sql-file-tests/pyarrow_interop.bats
+    )
+
+    add_test(
             NAME offline-cli-test
             COMMAND
             env NES_CLI=$<TARGET_FILE:nes-cli>

@@ -27,6 +27,13 @@
   "dependencies": [
     "antlr4",
     "argparse",
+    {
+      "name": "arrow",
+      "default-features": false,
+      "features": [
+        "flight"
+      ]
+    },
     "boost-asio",
     "cpptrace",
     "fmt",

@@ -15,11 +15,13 @@
 #include <InputFormatterTupleBufferRefProvider.hpp>
 
 #include <memory>
+#include <string>
 #include <utility>
 
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <Util/Strings.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatIndexerRegistry.hpp>
 #include <ScanPhysicalOperator.hpp>
@@ -40,6 +42,13 @@ provideInputFormatterTupleBufferRef(ParserConfig formatScanConfig, std::shared_p
 
 bool contains(const std::string& parserType)
 {
+    /// ARROW parser type is valid but does not use an InputFormatter — the source directly
+    /// produces TupleBuffers in ArrowBufferRef layout, and PipeliningPhase creates an
+    /// ArrowBufferRef-based scan operator for it.
+    if (toUpperCase(parserType) == "ARROW")
+    {
+        return true;
+    }
     return InputFormatIndexerRegistry::instance().contains(parserType);
 }
 }

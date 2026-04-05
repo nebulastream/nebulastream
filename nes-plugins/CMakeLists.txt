@@ -26,6 +26,10 @@ activate_optional_plugin("Sinks/VoidSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 activate_optional_plugin("Functions/RustAnswer" ON)
+activate_optional_plugin("OutputFormatters/ArrowOutputFormatter" ON)
+activate_optional_plugin("Sinks/ArrowFlightSink" ON)
+activate_optional_plugin("Sinks/ArrowFileSink" ON)
+activate_optional_plugin("Sources/ArrowFileSource" ON)
 
 if (NES_ENABLES_TESTS)
   # ChecksumSink depends on Checksum.cpp from systest which is only added when tests are enabled.

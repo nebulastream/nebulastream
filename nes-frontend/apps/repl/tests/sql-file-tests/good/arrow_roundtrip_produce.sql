@@ -1,0 +1,24 @@
+-- Step 1: Generate data and write to Arrow IPC file.
+-- ARROW_FILE_PATH is substituted by the test harness.
+-- Includes nullable columns and multiple numeric types to exercise Arrow bitmap and type handling.
+CREATE LOGICAL SOURCE sensor(
+    id UINT64 NOT NULL,
+    value INT32 NOT NULL,
+    ratio FLOAT64 NOT NULL,
+    small_val INT8,
+    medium_val UINT16);
+CREATE PHYSICAL SOURCE FOR sensor TYPE Generator SET(
+       'ALL' AS `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' AS PARSER.`TYPE`,
+       3000 AS `SOURCE`.MAX_RUNTIME_MS,
+       'emit_rate 10000' AS `SOURCE`.GENERATOR_RATE_CONFIG,
+       42 AS `SOURCE`.SEED,
+       'SEQUENCE UINT64 0 100000000 1, SEQUENCE INT32 0 100000000 1, SEQUENCE FLOAT64 0.0 100000000.0 0.5, SEQUENCE INT8 0 100 1, SEQUENCE UINT16 0 60000 1' AS `SOURCE`.GENERATOR_SCHEMA);
+CREATE SINK arrow_out(
+    SENSOR.ID UINT64 NOT NULL,
+    SENSOR.VALUE INT32 NOT NULL,
+    SENSOR.RATIO FLOAT64 NOT NULL,
+    SENSOR.SMALL_VAL INT8,
+    SENSOR.MEDIUM_VAL UINT16) TYPE ArrowFile SET(
+       'ARROW_FILE_PATH' AS `SINK`.FILE_PATH);
+SELECT ID, VALUE, RATIO, SMALL_VAL, MEDIUM_VAL FROM SENSOR INTO ARROW_OUT SET ('arrow-roundtrip-produce' AS `QUERY`.`ID`);
