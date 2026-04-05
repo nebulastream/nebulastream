@@ -17,9 +17,7 @@ pub mod sink_handle;
 pub mod source;
 
 pub use backpressure::BackpressureState;
-pub use bridge::{BridgeMessage, EmitFnPtr, register_emit, unregister_emit};
-#[cfg(not(test))]
-pub use bridge::BridgeHandle;
+pub use bridge::{BridgeMessage, EmitCallback, EmitFnPtr};
 pub use buffer::{BufferProviderHandle, TupleBufferHandle};
 pub use buffer_iterator::BufferIterator;
 pub use error::{SourceError, SourceResult};

@@ -15,7 +15,7 @@ use tokio_util::sync::CancellationToken;
 use tracing::{error, info};
 
 use crate::backpressure;
-use crate::bridge;
+use crate::bridge::{self, EmitCallback};
 use crate::buffer::BufferProviderHandle;
 use crate::context::SourceContext;
 use crate::error::SourceResult;
@@ -54,13 +54,13 @@ pub type ErrorFnPtr = unsafe extern "C" fn(ctx: *mut c_void, source_id: u64, mes
 /// Spawn a source as a Tokio task with lifecycle management.
 ///
 /// # Lifecycle
-/// 1. Registers per-source emit callback in EMIT_REGISTRY (before spawning)
-/// 2. Registers backpressure state for this source
-/// 3. Spawns the source's `run()` as a Tokio task
-/// 4. Spawns a monitoring task that:
+/// 1. Registers backpressure state for this source
+/// 2. Spawns the source's `run()` as a Tokio task (emit callback is carried
+///    in every BridgeMessage — no global registry)
+/// 3. Spawns a monitoring task that:
 ///    - Awaits source completion
 ///    - Calls error_fn on error/panic
-///    - Unregisters backpressure state and emit callback on exit
+///    - Unregisters backpressure state on exit
 ///
 /// # Arguments
 /// - `source_id`: unique identifier for this source instance
@@ -85,11 +85,6 @@ pub fn spawn_source(
     error_fn: ErrorFnPtr,
     error_ctx: *mut c_void,
 ) -> Box<SourceTaskHandle> {
-    // CRITICAL: Register emit callback BEFORE spawning the source task.
-    // This ensures the bridge thread can dispatch messages for this source
-    // as soon as they arrive.
-    bridge::register_emit(source_id, emit_fn, emit_ctx);
-
     // Register backpressure state for this source
     let bp_state = backpressure::register_source(source_id);
 
@@ -99,8 +94,12 @@ pub fn spawn_source(
     // Create cancellation token for cooperative shutdown
     let cancel_token = CancellationToken::new();
 
-    // Get the shared bridge channel sender (no emit callback args)
+    // Get the shared bridge channel sender
     let sender = bridge::ensure_bridge().clone();
+
+    // Bundle emit callback — carried in every BridgeMessage so the bridge
+    // thread can invoke it directly without a global registry lookup.
+    let callback = EmitCallback { emit_fn, emit_ctx };
 
     // Construct SourceContext with all fields
     let ctx = SourceContext::new(
@@ -110,6 +109,7 @@ pub fn spawn_source(
         bp_state,
         semaphore,
         source_id,
+        callback,
     );
 
     // Spawn source task on the Tokio runtime.
@@ -187,7 +187,6 @@ async fn monitoring_task(
             }
             // Error path: no EOS was sent, so cleanup here.
             backpressure::unregister_source(source_id);
-            bridge::unregister_emit(source_id);
         }
         Err(join_error) => {
             error!(source_id = source_id, "Source task panicked");
@@ -198,7 +197,6 @@ async fn monitoring_task(
             }
             // Panic path: no EOS was sent, so cleanup here.
             backpressure::unregister_source(source_id);
-            bridge::unregister_emit(source_id);
         }
     }
     info!(source_id = source_id, "Source monitoring task: complete");
@@ -208,7 +206,6 @@ async fn monitoring_task(
 mod tests {
     use super::*;
     use crate::backpressure::BackpressureState;
-    use crate::bridge::EMIT_REGISTRY;
     use crate::error::SourceError;
     use std::sync::{Arc, Mutex};
 
@@ -311,16 +308,6 @@ mod tests {
         log.lock().unwrap().push(source_id);
     }
 
-    /// Mock emit callback for EMIT_REGISTRY tests.
-    unsafe extern "C" fn mock_emit_fn(
-        _ctx: *mut c_void,
-        _origin_id: u64,
-        _buffer: *mut nes_buffer_bindings::ffi::TupleBuffer,
-        _semaphore_ptr: usize,
-    ) -> u8 {
-        0
-    }
-
     // ---- Compile-time checks ----
 
     #[test]
@@ -406,52 +393,6 @@ mod tests {
         let calls = error_log.lock().unwrap();
         assert_eq!(calls.len(), 1);
         assert_eq!(calls[0], source_id);
-    }
-
-    #[tokio::test]
-    async fn spawn_source_registers_emit_in_registry() {
-        let source_id = 20003u64;
-
-        // Ensure not registered
-        EMIT_REGISTRY.remove(&source_id);
-        assert!(!EMIT_REGISTRY.contains_key(&source_id));
-
-        // Register emit callback (simulating what production spawn_source does
-        // BEFORE spawning the source task)
-        bridge::register_emit(source_id, mock_emit_fn, std::ptr::null_mut());
-
-        // Verify it's registered
-        assert!(EMIT_REGISTRY.contains_key(&source_id));
-
-        // Cleanup
-        bridge::unregister_emit(source_id);
-    }
-
-    #[tokio::test]
-    async fn monitoring_task_unregisters_emit_on_error() {
-        // For EndOfStream, cleanup (unregister emit) happens in the bridge thread
-        // after processing the EOS message. For Error/Panic, the monitoring task
-        // handles cleanup directly. This test verifies the error path.
-        let error_log: Arc<Mutex<Vec<u64>>> = Arc::new(Mutex::new(Vec::new()));
-        let error_ctx = &error_log as *const _ as *mut c_void;
-        let source_id = 20004u64;
-
-        // Register emit callback before spawn (as production spawn_source would)
-        bridge::register_emit(source_id, mock_emit_fn, std::ptr::null_mut());
-        assert!(EMIT_REGISTRY.contains_key(&source_id));
-
-        let _handle = spawn_test_source(
-            source_id,
-            TestErrorSource,
-            mock_error_callback,
-            error_ctx,
-        );
-
-        // Give monitoring task time to run cleanup
-        tokio::time::sleep(std::time::Duration::from_millis(200)).await;
-
-        // Monitoring task should have unregistered the emit callback (error path)
-        assert!(!EMIT_REGISTRY.contains_key(&source_id));
     }
 
     #[tokio::test]
