@@ -31,6 +31,7 @@ use tracing::{error, info};
 /// configuration in the future; for now these are fixed.
 const DEFAULT_HOST: &str = "0.0.0.0";
 const DEFAULT_PORT: u16 = 1883;
+const DEFAULT_WS_PORT: u16 = 9001;
 const DEFAULT_MAX_CONNECTIONS: usize = 100;
 const DEFAULT_MAX_PAYLOAD_SIZE: usize = 262144;
 
@@ -260,6 +261,26 @@ fn start_broker() -> Result<(BrokerHandle, watch::Receiver<Option<String>>, std:
         },
     });
 
+    let ws_addr = format!("{DEFAULT_HOST}:{DEFAULT_WS_PORT}")
+        .parse()
+        .map_err(|e| format!("invalid ws listen address: {e}"))?;
+
+    let mut ws = HashMap::new();
+    ws.insert("1".to_string(), ServerSettings {
+        name: "nes-mqtt-ws".to_string(),
+        listen: ws_addr,
+        tls: None,
+        next_connection_delay_ms: 1,
+        connections: ConnectionSettings {
+            connection_timeout_ms: 60000,
+            max_payload_size: DEFAULT_MAX_PAYLOAD_SIZE,
+            max_inflight_count: 100,
+            auth: None,
+            external_auth: None,
+            dynamic_filters: true,
+        },
+    });
+
     let rumqttd_config = Config {
         id: 0,
         router: RouterConfig {
@@ -273,7 +294,7 @@ fn start_broker() -> Result<(BrokerHandle, watch::Receiver<Option<String>>, std:
         },
         v4: Some(v4),
         v5: None,
-        ws: None,
+        ws: Some(ws),
         cluster: None,
         console: None,
         bridge: None,
