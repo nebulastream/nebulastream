@@ -31,6 +31,7 @@
 #include <vector>
 
 #include <Configurations/Descriptor.hpp>
+#include <ErrorHandling.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/TokioSource.hpp>
 #include <TokioSourceImpl.hpp>
@@ -176,7 +177,11 @@ NES::SourceValidationRegistryReturnType NES::Register##PluginName##SourceValidat
     /* Validate source-specific params via Rust registry. */ \
     auto [keys, values] = NES::stringMapToStringVectors(sourceConfig.config); \
     rust::Vec<rust::String> outKeys, outValues, outTypes; \
-    ::validate_source_config(std::string(#PluginName), keys, values, outKeys, outValues, outTypes); \
+    try { \
+        ::validate_source_config(std::string(#PluginName), keys, values, outKeys, outValues, outTypes); \
+    } catch (const std::exception& e) { \
+        throw NES::InvalidConfigParameter("Invalid {} source configuration: {}", #PluginName, e.what()); \
+    } \
     auto result = NES::reconstructTypedConfig(outKeys, outValues, outTypes); \
     /* Merge standard params into result. */ \
     result.merge(baseParams); \
