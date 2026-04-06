@@ -14,9 +14,27 @@ on:
         default: 'main'
 
 jobs:
+  sanitize:
+    name: Sanitize branch name
+    runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.sanitize.outputs.tag }}
+    steps:
+      - name: Sanitize branch name for Docker tag
+        id: sanitize
+        shell: bash
+        run: |
+          BRANCH_NAME="${{ inputs.branch }}"
+          # Docker tags allow only [a-zA-Z0-9._-] and max 128 chars.
+          # Replace all invalid characters (e.g. '/') with '-', strip leading '.' or '-'.
+          SANITIZED=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | sed 's/^[.-]*//' | cut -c1-128)
+          echo "Sanitized branch name: '$BRANCH_NAME' -> '$SANITIZED'"
+          echo "tag=$SANITIZED" >> "$GITHUB_OUTPUT"
+
   create_image:
+    needs: sanitize
     uses: ./.github/workflows/create_release_image.yml
     secrets: inherit
     with:
       head_sha: ${{ inputs.branch }}
-      dockerhub-tag: ${{ inputs.branch }}
+      dockerhub-tag: ${{ needs.sanitize.outputs.tag }}
