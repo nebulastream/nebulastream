@@ -256,6 +256,9 @@ crate-type = [\"staticlib\"]
 # Opt out of root workspace — umbrella crates are standalone.
 [workspace]
 
+[patch.crates-io]
+rumqttd = { path = \"${CMAKE_SOURCE_DIR}/third-party/rumqttd\" }
+
 [dependencies]
 cxx = \"=${NES_CXX_VERSION}\"
 ${dep_lines}")

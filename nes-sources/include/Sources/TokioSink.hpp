@@ -160,4 +160,7 @@ struct SinkSchemaField
 /// Create a SpawnFn for a file sink that writes to the given path with schema header.
 TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath, std::vector<SinkSchemaField> schema);
 
+/// Create a SpawnFn for an MQTT sink that publishes to the given topic via the shared broker.
+TokioSink::SpawnFn makeMqttSinkSpawnFn(std::string mqttTopic);
+
 } // namespace NES

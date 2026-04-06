@@ -1,0 +1,14 @@
+[package]
+name = "nes_tokio_mqtt_sink"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+bytes = "1"
+nes_mqtt_broker = { path = "../nes-mqtt-broker" }
+nes_source_runtime = { path = "../../nes-sources/rust/nes-source-runtime" }
+tokio = { version = "1.40.0", features = ["sync"] }
+tracing = "0.1"

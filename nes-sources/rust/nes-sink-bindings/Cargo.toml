@@ -11,3 +11,4 @@ cxx = "1.0"
 async-channel = "2.3.1"
 nes_buffer_bindings = { path = "../nes-buffer-bindings" }
 nes_source_runtime = { path = "../nes-source-runtime" }
+nes_tokio_mqtt_sink = { path = "../../../nes-plugins/tokio-mqtt-sink" }

@@ -50,6 +50,14 @@ pub mod ffi_sink {
             error_fn_ptr: usize,
             error_ctx_ptr: usize,
         ) -> Result<Box<SinkHandle>>;
+
+        fn spawn_mqtt_sink(
+            sink_id: u64,
+            mqtt_topic: &str,
+            channel_capacity: u32,
+            error_fn_ptr: usize,
+            error_ctx_ptr: usize,
+        ) -> Result<Box<SinkHandle>>;
     }
 }
 
@@ -127,6 +135,28 @@ fn spawn_file_sink(
         ))
         .collect();
     let sink = nes_source_runtime::AsyncFileSink::new(std::path::PathBuf::from(file_path), schema_fields);
+    let inner = nes_source_runtime::sink::spawn_sink(
+        sink_id, sink, channel_capacity as usize, error_fn, error_ctx,
+    );
+    Ok(Box::new(SinkHandle { inner: *inner }))
+}
+
+fn spawn_mqtt_sink(
+    sink_id: u64,
+    mqtt_topic: &str,
+    channel_capacity: u32,
+    error_fn_ptr: usize,
+    error_ctx_ptr: usize,
+) -> Result<Box<SinkHandle>, String> {
+    let error_fn: nes_source_runtime::sink::ErrorFnPtr = unsafe {
+        std::mem::transmute::<usize, nes_source_runtime::sink::ErrorFnPtr>(error_fn_ptr)
+    };
+    let error_ctx = error_ctx_ptr as *mut std::ffi::c_void;
+
+    let config = std::collections::HashMap::from([
+        ("mqtt_topic".to_string(), mqtt_topic.to_string()),
+    ]);
+    let sink = nes_tokio_mqtt_sink::create_mqtt_sink(&config)?;
     let inner = nes_source_runtime::sink::spawn_sink(
         sink_id, sink, channel_capacity as usize, error_fn, error_ctx,
     );

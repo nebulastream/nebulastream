@@ -348,4 +348,16 @@ TokioSink::SpawnFn makeFileSinkSpawnFn(std::string filePath, std::vector<SinkSch
     };
 }
 
+TokioSink::SpawnFn makeMqttSinkSpawnFn(std::string mqttTopic)
+{
+    return [mqttTopic = std::move(mqttTopic)](
+        uint64_t sinkId, uint32_t channelCapacity,
+        uintptr_t errorFnPtr, uintptr_t errorCtxPtr)
+        -> std::unique_ptr<TokioSink::RustSinkHandleImpl>
+    {
+        auto boxedHandle = ::spawn_mqtt_sink(sinkId, mqttTopic, channelCapacity, errorFnPtr, errorCtxPtr);
+        return std::make_unique<TokioSink::RustSinkHandleImpl>(std::move(boxedHandle));
+    };
+}
+
 } // namespace NES

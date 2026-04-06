@@ -12,4 +12,10 @@ members = [
     "nes-network/nes-rust-bindings/network",
     "nes-network/nes-rust-bindings/spdlog",
     "nes-plugins/Functions/RustAnswer/rust",
+    "nes-plugins/nes-mqtt-broker",
+    "nes-plugins/tokio-mqtt-source",
+    "nes-plugins/tokio-mqtt-sink",
 ]
+
+[patch.crates-io]
+rumqttd = { path = "third-party/rumqttd" }
