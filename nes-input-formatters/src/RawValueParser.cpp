@@ -175,6 +175,7 @@ void parseLazyValueIntoRecord(
                                 fieldAddress + nautilus::val<uint32_t>(1), fieldSize - nautilus::val<uint32_t>(2));
                         }
                     }
+                    std::unreachable();
                 case DataType::Type::BOOLEAN:
                     return parseIntoNautilusRecord<bool>(fieldAddress, fieldSize);
                 case DataType::Type::VARSIZED:
@@ -189,6 +190,7 @@ void parseLazyValueIntoRecord(
                             return VariableSizedData(fieldAddressWithoutOpeningQuote, fieldSizeWithoutClosingQuote);
                         }
                     }
+                    std::unreachable();
                 case DataType::Type::UNDEFINED:
                     throw NotImplemented("Cannot parse undefined type.");
             }

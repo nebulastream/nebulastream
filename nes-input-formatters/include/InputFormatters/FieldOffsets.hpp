@@ -96,17 +96,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
                 continue;
             }
 
-            // std::cout << "field: " << fieldName << std::endl;
-            // for (auto &field : requiredFields)
-            // {
-            //     std::cout << "required field: " << field << std::endl;
-            // }
-            if (!requiredFields.empty() and not includesField(requiredFields, fieldName))
-            {
-                const VarVal stub = VarVal(nautilus::val<int>(42));
-                record.write(fieldName, stub);
-                continue;
-            }
+            (void)requiredFields;
 
             const auto numPriorFields = recordIndex * nautilus::static_val(metaData.getNumberOfFields() + 1);
             const auto recordOffsetAddress = indexBufferPtr + (numPriorFields + i);
