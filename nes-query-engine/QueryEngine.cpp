@@ -371,6 +371,17 @@ public:
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
     }
 
+    void emitPipelineStopFromExternalThread(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
+    {
+        auto [complete, failure, success] = std::move(callback).take();
+        auto wrappedCallback = TaskCallback{
+            std::move(complete),
+            std::move(success),
+            TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
+        };
+        taskQueue.addAdmissionTaskBlocking({}, StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
+    }
+
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
     {
         PRECONDITION(ThreadPool::WorkerThread::id == INVALID<WorkerThreadId>, "This should only be called from a non-worker thread");

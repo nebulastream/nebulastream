@@ -53,26 +53,29 @@ void RunningQueryPlanNode::RunningQueryPlanNodeDeleter::operator()(RunningQueryP
     ENGINE_LOG_DEBUG("Node {} will be deleted", node->id);
     if (ptr->requiresTermination)
     {
-        emitter.emitPipelineStop(
-            queryId,
-            std::move(node),
-            TaskCallback{
-                TaskCallback::OnComplete(
-                    [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
+        auto callback = TaskCallback{
+            TaskCallback::OnComplete(
+                [ptr, &emitter = this->emitter, queryId = this->queryId]() mutable
+                {
+                    ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
+                    ptr->requiresTermination = false;
+                    for (auto& successor : ptr->successors)
                     {
-                        ENGINE_LOG_DEBUG("Pipeline {}-{} was stopped", queryId, ptr->id);
-                        ptr->requiresTermination = false;
-                        for (auto& successor : ptr->successors)
-                        {
-                            emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
-                        }
-                    }),
-                TaskCallback::OnFailure(
-                    [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
-                    {
-                        ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
-                        ptr->requiresTermination = false;
-                    })});
+                        emitter.emitPendingPipelineStop(queryId, std::move(successor), TaskCallback{});
+                    }
+                }),
+            TaskCallback::OnFailure(
+                [ENGINE_IF_LOG_DEBUG(queryId = queryId, ) ptr](Exception)
+                {
+                    ENGINE_LOG_DEBUG("Failed to stop {}-{}", queryId, ptr->id);
+                    ptr->requiresTermination = false;
+                })};
+
+        // The deleter may fire on any thread (worker thread during normal shutdown,
+        // or the Rust bridge thread when EmitCallback drops its last EmitContext ref).
+        // Use emitPipelineStopFromExternalThread which routes through the admission
+        // queue — safe to call from any thread context.
+        emitter.emitPipelineStopFromExternalThread(queryId, std::move(node), std::move(callback));
     }
     else
     {
