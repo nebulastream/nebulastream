@@ -15,6 +15,8 @@
 #pragma once
 
 #include <expected>
+#include <memory>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 #include <QueryManager/QueryManager.hpp>
@@ -22,6 +24,7 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <GrpcSystemStatsReader.hpp>
 
 namespace NES::Systest
 {
@@ -30,17 +33,42 @@ namespace NES::Systest
 class QuerySubmitter
 {
 public:
-    explicit QuerySubmitter(std::unique_ptr<QueryManager> queryManager);
+    /// @param statsReader optional stats reader for compilation/ingestion stats
+    /// @param eventDrivenTermination if true, use the stats reader for query termination detection (embedded mode only)
+    explicit QuerySubmitter(
+        std::unique_ptr<QueryManager> queryManager,
+        std::shared_ptr<GrpcSystemStatsReader> statsReader = nullptr,
+        bool eventDrivenTermination = false);
     std::expected<DistributedQueryId, Exception> registerQuery(const DistributedLogicalPlan& plan);
     void startQuery(const DistributedQueryId& query);
     void stopQuery(const DistributedQueryId& query);
     DistributedQueryStatusSnapshot waitForQueryTermination(const DistributedQueryId& query);
 
-    /// Blocks until atleast one query has finished (or potentially failed)
+    /// Blocks until at least one query has finished (or potentially failed)
     std::vector<DistributedQueryStatusSnapshot> finishedQueries();
 
+    /// Get aggregated compilation stats for a distributed query.
+    /// Returns zero stats if no socket reader or no compilation events.
+    CompilationStats getCompilationStats(const DistributedQueryId& query) const;
+
+    /// Get buffer ingestion stats for a distributed query.
+    /// Aggregates across all local sub-queries. Returns zero if no socket reader.
+    IngestionStats getIngestionStats(const DistributedQueryId& query) const;
+
 private:
+    /// Polling-based fallback when no socket reader is available.
+    std::vector<DistributedQueryStatusSnapshot> finishedQueriesByPolling();
+
+    /// Socket-event-driven implementation.
+    std::vector<DistributedQueryStatusSnapshot> finishedQueriesBySocket();
+
     UniquePtr<QueryManager> queryManager;
+    std::shared_ptr<GrpcSystemStatsReader> statsReader;
+    bool useEventDrivenTermination = false;
     std::unordered_set<DistributedQueryId> ids;
+
+    /// Reverse map: LocalQueryId UUID string → DistributedQueryId.
+    /// Built during registerQuery/startQuery from the QueryManager's internal state.
+    std::unordered_map<std::string, DistributedQueryId> localToDistributed;
 };
 }

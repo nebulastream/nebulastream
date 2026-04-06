@@ -17,6 +17,7 @@
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <SystemStatsBroadcaster.hpp>
 
 namespace NES
 {
@@ -37,9 +38,15 @@ public:
 
     grpc::Status RequestStatus(grpc::ServerContext* context, const WorkerStatusRequest* request, WorkerStatusResponse* response) override;
 
-    explicit GRPCServer(SingleNodeWorker&& delegate) : delegate(std::move(delegate)) { }
+    grpc::Status StreamSystemStats(
+        grpc::ServerContext* context, const SystemStatsRequest* request, grpc::ServerWriter<SystemStatEvent>* writer) override;
+
+    GRPCServer(SystemStatsBroadcaster* broadcaster, SingleNodeWorker&& delegate) : broadcaster(broadcaster), delegate(std::move(delegate))
+    {
+    }
 
 private:
+    SystemStatsBroadcaster* broadcaster;
     SingleNodeWorker delegate;
 };
 }

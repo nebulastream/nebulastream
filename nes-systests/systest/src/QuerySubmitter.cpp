@@ -26,17 +26,21 @@
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <GrpcSystemStatsReader.hpp>
 
 namespace NES::Systest
 {
 
-QuerySubmitter::QuerySubmitter(std::unique_ptr<QueryManager> queryManager) : queryManager(std::move(queryManager))
+QuerySubmitter::QuerySubmitter(
+    std::unique_ptr<QueryManager> queryManager, std::shared_ptr<GrpcSystemStatsReader> statsReader, bool eventDrivenTermination)
+    : queryManager(std::move(queryManager)), statsReader(std::move(statsReader)), useEventDrivenTermination(eventDrivenTermination)
 {
 }
 
@@ -63,7 +67,21 @@ std::expected<DistributedQueryId, Exception> QuerySubmitter::registerQuery(const
 
     if (serializationErrorsPerWorker.empty())
     {
-        return queryManager->registerQuery(plan);
+        auto result = queryManager->registerQuery(plan);
+        if (result.has_value())
+        {
+            /// Build reverse mapping: LocalQueryId → DistributedQueryId
+            /// so the socket reader can map events back.
+            auto queryResult = queryManager->getQuery(*result);
+            if (queryResult.has_value())
+            {
+                for (const auto& [host, localQueryId] : queryResult->iterate())
+                {
+                    localToDistributed.insert_or_assign(localQueryId.getLocalQueryId().getRawValue(), *result);
+                }
+            }
+        }
+        return result;
     }
 
     const auto exception = CannotSerialize("Encountered serialization errors: {}", serializationErrorsPerWorker);
@@ -109,6 +127,56 @@ DistributedQueryStatusSnapshot QuerySubmitter::waitForQueryTermination(const Dis
 
 std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
 {
+    if (statsReader && useEventDrivenTermination)
+    {
+        return finishedQueriesBySocket();
+    }
+    return finishedQueriesByPolling();
+}
+
+CompilationStats QuerySubmitter::getCompilationStats(const DistributedQueryId& query) const
+{
+    if (!statsReader)
+    {
+        return {};
+    }
+
+    CompilationStats aggregated;
+    for (const auto& [localId, distId] : localToDistributed)
+    {
+        if (distId == query)
+        {
+            auto stats = statsReader->getCompilationStats(localId);
+            aggregated.totalCompileTimeNs += stats.totalCompileTimeNs;
+            aggregated.pipelineCount += stats.pipelineCount;
+        }
+    }
+    return aggregated;
+}
+
+IngestionStats QuerySubmitter::getIngestionStats(const DistributedQueryId& query) const
+{
+    if (!statsReader)
+    {
+        return {};
+    }
+
+    IngestionStats aggregated;
+    for (const auto& [localId, distId] : localToDistributed)
+    {
+        if (distId == query)
+        {
+            auto stats = statsReader->getIngestionStats(localId);
+            aggregated.totalTuples += stats.totalTuples;
+            aggregated.totalBuffers += stats.totalBuffers;
+            aggregated.windowCount += stats.windowCount;
+        }
+    }
+    return aggregated;
+}
+
+std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueriesByPolling()
+{
     while (true)
     {
         std::vector<std::pair<NES::DistributedQueryId, DistributedQueryStatusSnapshot>> results;
@@ -141,4 +209,71 @@ std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueries()
         return results | std::views::values | std::ranges::to<std::vector>();
     }
 }
+
+std::vector<DistributedQueryStatusSnapshot> QuerySubmitter::finishedQueriesBySocket()
+{
+    while (true)
+    {
+        auto events = statsReader->waitForTerminalEvents();
+        if (events.empty())
+        {
+            /// Reader was stopped — fall back to polling for any remaining queries
+            return finishedQueriesByPolling();
+        }
+
+        /// Map socket events to DistributedQueryIds and fetch full status snapshots.
+        /// Deduplicate: in multi-node topologies, each local sub-query emits its own event,
+        /// but we only report each DistributedQueryId once.
+        std::unordered_map<DistributedQueryId, DistributedQueryStatusSnapshot> resultMap;
+        for (const auto& event : events)
+        {
+            auto it = localToDistributed.find(event.queryId);
+            if (it == localToDistributed.end())
+            {
+                /// Event for a query we don't track (e.g., a system query) — skip
+                continue;
+            }
+
+            const auto& distributedId = it->second;
+            if (!ids.contains(distributedId) || resultMap.contains(distributedId))
+            {
+                continue;
+            }
+
+            /// Fetch the full status snapshot via the QueryManager (single call, not polling)
+            auto queryStatus = queryManager->status(distributedId);
+            if (!queryStatus.has_value())
+            {
+                NES_WARNING(
+                    "Could not get status for query {} after socket event: {}",
+                    distributedId,
+                    fmt::join(queryStatus.error() | std::views::transform([](const auto& e) { return e.what(); }), ", "));
+                continue;
+            }
+
+            /// Only report if truly terminal (the query might have multiple local sub-queries)
+            if (queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Stopped
+                || queryStatus->getGlobalQueryStatus() == DistributedQueryStatus::Failed)
+            {
+                resultMap.emplace(distributedId, std::move(*queryStatus));
+            }
+        }
+
+        std::vector<std::pair<DistributedQueryId, DistributedQueryStatusSnapshot>> results(resultMap.begin(), resultMap.end());
+
+        if (results.empty())
+        {
+            /// Events were for non-tracked queries, keep waiting
+            continue;
+        }
+
+        for (auto& id : results | std::views::keys)
+        {
+            ids.erase(id);
+        }
+
+        return results | std::views::values | std::ranges::to<std::vector>();
+    }
+}
+
 }

@@ -110,9 +110,9 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
     const SemanticAnalyzer analyzer{sourceCatalog, sinkCatalog};
     const RuleBasedOptimizer optimizer{{}};
     const auto hostStr = host.getRawValue();
-    /// Sanitize host for use in file paths (replace : with _).
-    auto fileHostStr = hostStr;
-    std::replace(fileHostStr.begin(), fileHostStr.end(), ':', '_');
+    /// Sanitize host for use in socket/file paths (replace : with _).
+    auto sanitizedHostStr = hostStr;
+    std::replace(sanitizedHostStr.begin(), sanitizedHostStr.end(), ':', '_');
 
     auto startSystemQuery = [&](const std::string& name, std::string sql)
     {
@@ -137,7 +137,7 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
         }
     };
 
-    /// pipeline_compiled → raw events to CSV
+    /// pipeline_compiled → raw events to unix socket
     startSystemQuery(
         "pipeline_compiled",
         fmt::format(
@@ -150,12 +150,12 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
             'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
             SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, pipeline_id UINT64 NOT NULL, compile_time_ns UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
             'native' AS PARSER.`TYPE`)
-        INTO File('/tmp/nebulastream-docker-toolchain/nes_pipeline_compilation_times_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+        INTO GrpcStream('pipeline_compiled' AS `SINK`.STAT_TYPE, '{0}' AS `SINK`.`HOST`, 'CSV' AS `SINK`.OUTPUT_FORMAT)
     )",
             hostStr,
-            fileHostStr));
+            sanitizedHostStr));
 
-    /// query_status → raw events to CSV
+    /// query_status → raw events to unix socket
     startSystemQuery(
         "query_status",
         fmt::format(
@@ -168,10 +168,10 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
             'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
             SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, status VARSIZED NOT NULL) AS `SOURCE`.`SCHEMA`,
             'native' AS PARSER.`TYPE`)
-        INTO File('/tmp/nebulastream-docker-toolchain/nes_query_status_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+        INTO GrpcStream('query_status' AS `SINK`.STAT_TYPE, '{0}' AS `SINK`.`HOST`, 'CSV' AS `SINK`.OUTPUT_FORMAT)
     )",
             hostStr,
-            fileHostStr));
+            sanitizedHostStr));
 
     /// unpooled_buffer_alloc → COUNT and AVG over 1-second tumbling window
     startSystemQuery(
@@ -187,17 +187,17 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
             SCHEMA(timestamp_ms UINT64 NOT NULL, alloc_size UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
             'native' AS PARSER.`TYPE`)
         WINDOW TUMBLING(timestamp_ms, SIZE 1 SEC)
-        INTO File('/tmp/nebulastream-docker-toolchain/nes_unpooled_buffer_alloc_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+        INTO GrpcStream('unpooled_buffer_alloc' AS `SINK`.STAT_TYPE, '{0}' AS `SINK`.`HOST`, 'CSV' AS `SINK`.OUTPUT_FORMAT)
     )",
             hostStr,
-            fileHostStr));
+            sanitizedHostStr));
 
-    /// buffer_ingestion → AVG throughput (tuples) over 1-second sliding window, 500ms advance
+    /// buffer_ingestion → per-query throughput over 1-second tumbling window, keyed by query ID
     startSystemQuery(
         "buffer_ingestion",
         fmt::format(
             R"(
-        SELECT start, end, AVG(num_tuples) AS avg_tuples, SUM(num_tuples) AS total_tuples, COUNT(num_tuples) AS ingestion_count
+        SELECT ToUuid(query_id_hi, query_id_lo) AS query_id, start, end, SUM(num_tuples) AS total_tuples, COUNT(num_tuples) AS ingestion_count
         FROM Event(
             'buffer_ingestion' AS `SOURCE`.EVENT_NAME,
             '{0}' AS `SOURCE`.`HOST`,
@@ -205,11 +205,12 @@ void SingleNodeWorker::registerSystemQueries(const Host& host)
             'true' AS `SOURCE`.INCLUDE_TIMESTAMP,
             SCHEMA(timestamp_ms UINT64 NOT NULL, query_id_hi UINT64 NOT NULL, query_id_lo UINT64 NOT NULL, origin_id UINT64 NOT NULL, num_tuples UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`,
             'native' AS PARSER.`TYPE`)
-        WINDOW SLIDING(timestamp_ms, SIZE 1 SEC, ADVANCE BY 500 MS)
-        INTO File('/tmp/nebulastream-docker-toolchain/nes_buffer_ingestion_{1}.csv' AS `SINK`.FILE_PATH, '{0}' AS `SINK`.`HOST`, 'true' AS `SINK`.APPEND, 'CSV' AS `SINK`.OUTPUT_FORMAT)
+        WINDOW TUMBLING(timestamp_ms, SIZE 1 SEC)
+        GROUP BY query_id_hi, query_id_lo
+        INTO GrpcStream('buffer_ingestion' AS `SINK`.STAT_TYPE, '{0}' AS `SINK`.`HOST`, 'CSV' AS `SINK`.OUTPUT_FORMAT)
     )",
             hostStr,
-            fileHostStr));
+            sanitizedHostStr));
 }
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept

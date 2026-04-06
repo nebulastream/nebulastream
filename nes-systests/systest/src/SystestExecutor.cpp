@@ -331,7 +331,15 @@ SystestExecutorResult SystestExecutor::executeSystests()
             progressTracker.setTotalQueries(queries.size());
             const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
                 ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                          { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                                                          {
+                                                              auto msg = fmt::format(" in {}", runningQuery.getElapsedTime());
+                                                              auto compTime = runningQuery.getCompilationTime();
+                                                              if (!compTime.empty())
+                                                              {
+                                                                  msg += " (" + compTime + ")";
+                                                              }
+                                                              return msg;
+                                                          }}
                 : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
             auto failed
                 = runQueriesAtRemoteWorker(queries, numberConcurrentQueries, config.clusterConfig, progressTracker, performanceMessage);
@@ -403,7 +411,15 @@ SystestExecutorResult SystestExecutor::executeSystests()
                     }
                     const Systest::QueryPerformanceMessageBuilder performanceMessage = config.showQueryPerformance.getValue()
                         ? Systest::QueryPerformanceMessageBuilder{[](Systest::RunningQuery& runningQuery)
-                                                                  { return fmt::format(" in {}", runningQuery.getElapsedTime()); }}
+                                                                  {
+                                                                      auto msg = fmt::format(" in {}", runningQuery.getElapsedTime());
+                                                                      auto compTime = runningQuery.getCompilationTime();
+                                                                      if (!compTime.empty())
+                                                                      {
+                                                                          msg += " (" + compTime + ")";
+                                                                      }
+                                                                      return msg;
+                                                                  }}
                         : Systest::QueryPerformanceMessageBuilder{Systest::discardPerformanceMessage};
                     auto failed = runQueriesAtLocalWorker(
                         queriesForConfig, numberConcurrentQueries, config.clusterConfig, configCopy, progressTracker, performanceMessage);

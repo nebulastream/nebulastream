@@ -10,16 +10,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-systest-lib
-        SystestExecutor.cpp
-        SystestParser.cpp
-        SystestRunner.cpp
-        SystestProgressTracker.cpp
-        SystestState.cpp
-        SystestResultCheck.cpp
-        SystestConfiguration.cpp
-        QuerySubmitter.cpp
-        SystemSocketReader.cpp
-        GrpcSystemStatsReader.cpp
-        SystestBinder.cpp
+include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
+add_plugin_as_library(GrpcStream Sink nes-sinks-registry grpc_stream_sink_plugin GrpcStreamSink.cpp)
+add_plugin_as_library(GrpcStream SinkValidation nes-sinks-registry grpc_stream_sink_validation_plugin GrpcStreamSink.cpp)
+
+target_include_directories(grpc_stream_sink_plugin
+        PUBLIC include
+        PRIVATE .
+)
+target_include_directories(grpc_stream_sink_validation_plugin
+        PUBLIC include
+        PRIVATE .
 )

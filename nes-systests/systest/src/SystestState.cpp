@@ -424,7 +424,34 @@ std::string RunningQuery::getThroughput() const
         }
         return fmt::format("{:.3f} {}", throughput, units[unitIndex]);
     };
-    return fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+    auto result = fmt::format("{}B/s / {}Tup/s", formatUnits(bytesPerSecond), formatUnits(tuplesPerSecond));
+
+    if (tuplesIngested.has_value() && tuplesIngested.value() > 0)
+    {
+        const std::chrono::duration<double> duration = stop.value() - running.value();
+        const double ingestedPerSecond = static_cast<double>(tuplesIngested.value()) / duration.count();
+        result += fmt::format(" / ingested: {}Tup/s", formatUnits(ingestedPerSecond));
+        if (buffersIngested.has_value())
+        {
+            result += fmt::format(" ({} bufs)", buffersIngested.value());
+        }
+    }
+
+    return result;
+}
+
+std::string RunningQuery::getCompilationTime() const
+{
+    if (!compilationTimeNs.has_value() || compilationTimeNs.value() == 0)
+    {
+        return "";
+    }
+    const double ms = static_cast<double>(compilationTimeNs.value()) / 1'000'000.0;
+    if (compiledPipelines.has_value() && compiledPipelines.value() > 0)
+    {
+        return fmt::format("compile: {:.1f}ms ({} pipelines)", ms, compiledPipelines.value());
+    }
+    return fmt::format("compile: {:.1f}ms", ms);
 }
 
 std::string TestFile::getLogFilePath() const

@@ -27,6 +27,7 @@
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystemStatsBroadcaster.hpp>
 #include <Thread.hpp>
 
 namespace
@@ -77,7 +78,9 @@ int main(const int argc, const char* argv[])
         }
         {
             NES::setCurrentThreadName("main");
-            NES::GRPCServer workerService{NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
+            NES::SystemStatsBroadcaster broadcaster;
+            NES::GRPCServer workerService{
+                &broadcaster, NES::SingleNodeWorker(*configuration, NES::Host(configuration->dataAddress.getValue()))};
 
             grpc::ServerBuilder builder;
             builder.SetMaxMessageSize(-1);

@@ -137,6 +137,202 @@ assert_json_contains() {
   grep "invalid query syntax" nes-repl.log
 }
 
+@test "unix socket sink lifecycle" {
+  run $NES_REPL -f JSON <tests/sql-file-tests/good/unix_socket_sink.sql
+  [ "$status" -eq 0 ]
+  [ ${#lines[@]} -eq 8 ]
+
+  # Line 0: CREATE LOGICAL SOURCE
+  assert_json_equal '[{"schema":[[{"name":"ENDLESS$TS","type":"UINT64"}]],"source_name":"ENDLESS"}]' "${lines[0]}"
+
+  # Line 2: CREATE SINK — verify it's a UnixSocket sink with the right config
+  echo "${lines[2]}" | jq -e '.[0].sink_type == "UnixSocket"'
+  echo "${lines[2]}" | jq -e '.[0].sink_name == "SOCKETSINK"'
+
+  # Line 3: SHOW QUERIES — initially empty
+  assert_json_equal '[]' "${lines[3]}"
+
+  # Line 4: SELECT — query submitted
+  QUERY_ID=$(echo ${lines[4]} | jq -r '.[0].query_id')
+  [ "$QUERY_ID" = "a1041672-d4c9-40ac-a2b7-6b11342764b4" ]
+
+  # Line 5: SHOW QUERIES WHERE — query is running
+  echo "${lines[5]}" | jq -e '(. | length) == 2'
+  echo "${lines[5]}" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
+
+  # Line 6: DROP QUERY
+  assert_json_equal "[{\"query_id\":\"${QUERY_ID}\"}]" "${lines[6]}"
+
+  # Line 7: SHOW QUERIES — empty after drop
+  assert_json_contains "[]" "${lines[7]}"
+}
+
+@test "unix socket sink data flow" {
+  SOCK_PATH="$TMP_DIR/nes-data-flow.sock"
+  SOCKET_OUTPUT="$TMP_DIR/socket_output.txt"
+
+  # Generate SQL with the test-specific socket path
+  cat > "$TMP_DIR/socket_e2e.sql" <<EOSQL
+CREATE LOGICAL SOURCE endless(ts UINT64);
+CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+       'ALL' as \`SOURCE\`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as PARSER.\`TYPE\`,
+       10000000 AS \`SOURCE\`.MAX_RUNTIME_MS,
+       'emit_rate 10' AS \`SOURCE\`.GENERATOR_RATE_CONFIG,
+       1 AS \`SOURCE\`.SEED,
+       'SEQUENCE UINT64 0 10000000 1' AS \`SOURCE\`.GENERATOR_SCHEMA);
+CREATE SINK socketSink(ENDLESS.TS UINT64) TYPE UnixSocket SET('$SOCK_PATH' as \`SINK\`.SOCKET_PATH, 'CSV' as \`SINK\`.OUTPUT_FORMAT);
+SELECT TS FROM ENDLESS INTO SOCKETSINK SET ('b2041672-d4c9-40ac-a2b7-6b11342764b4' AS \`QUERY\`.\`ID\`);
+SHOW QUERIES WHERE id = 'b2041672-d4c9-40ac-a2b7-6b11342764b4';
+EOSQL
+
+  # Start a background Python reader that waits for the socket and reads data
+  python3 -c "
+import socket, time, os, sys
+sock_path = '$SOCK_PATH'
+out_path = '$SOCKET_OUTPUT'
+for _ in range(80):
+    if os.path.exists(sock_path):
+        break
+    time.sleep(0.1)
+else:
+    sys.exit(1)
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.settimeout(5)
+s.connect(sock_path)
+data = b''
+try:
+    while True:
+        chunk = s.recv(4096)
+        if not chunk:
+            break
+        data += chunk
+except socket.timeout:
+    pass
+s.close()
+with open(out_path, 'wb') as f:
+    f.write(data)
+" &
+  READER_PID=$!
+
+  # Feed the SQL but keep stdin open long enough for the reader to get data.
+  # After the SQL, sleep a bit then send DROP to terminate the query cleanly.
+  (
+    cat "$TMP_DIR/socket_e2e.sql"
+    sleep 4
+    echo "DROP QUERY WHERE id = 'b2041672-d4c9-40ac-a2b7-6b11342764b4';"
+  ) | $NES_REPL -f JSON > /dev/null 2>&1
+  REPL_STATUS=$?
+
+  wait $READER_PID 2>/dev/null || true
+
+  [ "$REPL_STATUS" -eq 0 ]
+  # Verify the socket output file has data (schema header + tuples)
+  [ -s "$SOCKET_OUTPUT" ]
+}
+
+@test "unix socket sink no reader attached" {
+  # Verify the query runs and drops cleanly even when nobody connects to the socket.
+  SOCK_PATH="$TMP_DIR/nes-no-reader.sock"
+
+  cat > "$TMP_DIR/socket_no_reader.sql" <<EOSQL
+CREATE LOGICAL SOURCE endless(ts UINT64);
+CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+       'ALL' as \`SOURCE\`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as PARSER.\`TYPE\`,
+       10000000 AS \`SOURCE\`.MAX_RUNTIME_MS,
+       'emit_rate 10' AS \`SOURCE\`.GENERATOR_RATE_CONFIG,
+       1 AS \`SOURCE\`.SEED,
+       'SEQUENCE UINT64 0 10000000 1' AS \`SOURCE\`.GENERATOR_SCHEMA);
+CREATE SINK socketSink(ENDLESS.TS UINT64) TYPE UnixSocket SET('$SOCK_PATH' as \`SINK\`.SOCKET_PATH, 'CSV' as \`SINK\`.OUTPUT_FORMAT);
+SELECT TS FROM ENDLESS INTO SOCKETSINK SET ('c1041672-d4c9-40ac-a2b7-6b11342764b4' AS \`QUERY\`.\`ID\`);
+SHOW QUERIES WHERE id = 'c1041672-d4c9-40ac-a2b7-6b11342764b4';
+EOSQL
+
+  # Run query for 3 seconds with no reader, then drop it
+  (
+    cat "$TMP_DIR/socket_no_reader.sql"
+    sleep 3
+    echo "DROP QUERY WHERE id = 'c1041672-d4c9-40ac-a2b7-6b11342764b4';"
+  ) | $NES_REPL -f JSON > "$TMP_DIR/no_reader_out.txt" 2>&1
+  REPL_STATUS=$?
+
+  [ "$REPL_STATUS" -eq 0 ]
+  # The socket should have been cleaned up after the query dropped
+  [ ! -S "$SOCK_PATH" ]
+}
+
+@test "unix socket sink reader disconnects midway" {
+  # Verify the query keeps running after a reader connects and then disconnects.
+  SOCK_PATH="$TMP_DIR/nes-reader-disconnect.sock"
+  SOCKET_OUTPUT="$TMP_DIR/socket_disconnect_output.txt"
+
+  cat > "$TMP_DIR/socket_disconnect.sql" <<EOSQL
+CREATE LOGICAL SOURCE endless(ts UINT64);
+CREATE PHYSICAL SOURCE FOR endless TYPE Generator SET(
+       'ALL' as \`SOURCE\`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
+       'CSV' as PARSER.\`TYPE\`,
+       10000000 AS \`SOURCE\`.MAX_RUNTIME_MS,
+       'emit_rate 10' AS \`SOURCE\`.GENERATOR_RATE_CONFIG,
+       1 AS \`SOURCE\`.SEED,
+       'SEQUENCE UINT64 0 10000000 1' AS \`SOURCE\`.GENERATOR_SCHEMA);
+CREATE SINK socketSink(ENDLESS.TS UINT64) TYPE UnixSocket SET('$SOCK_PATH' as \`SINK\`.SOCKET_PATH, 'CSV' as \`SINK\`.OUTPUT_FORMAT);
+SELECT TS FROM ENDLESS INTO SOCKETSINK SET ('d1141672-d4c9-40ac-a2b7-6b11342764b4' AS \`QUERY\`.\`ID\`);
+SHOW QUERIES WHERE id = 'd1141672-d4c9-40ac-a2b7-6b11342764b4';
+EOSQL
+
+  # Reader that connects, reads briefly, then disconnects
+  python3 -c "
+import socket, time, os, sys
+sock_path = '$SOCK_PATH'
+out_path = '$SOCKET_OUTPUT'
+for _ in range(80):
+    if os.path.exists(sock_path):
+        break
+    time.sleep(0.1)
+else:
+    sys.exit(1)
+s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+s.settimeout(2)
+s.connect(sock_path)
+data = b''
+try:
+    while True:
+        chunk = s.recv(4096)
+        if not chunk:
+            break
+        data += chunk
+        if len(data) > 100:
+            break  # Got some data, disconnect early
+except socket.timeout:
+    pass
+s.close()
+with open(out_path, 'wb') as f:
+    f.write(data)
+" &
+  READER_PID=$!
+
+  # Feed SQL, let query run past the reader disconnect, then verify query is still running before drop
+  (
+    cat "$TMP_DIR/socket_disconnect.sql"
+    sleep 5
+    echo "SHOW QUERIES WHERE id = 'd1141672-d4c9-40ac-a2b7-6b11342764b4';"
+    sleep 1
+    echo "DROP QUERY WHERE id = 'd1141672-d4c9-40ac-a2b7-6b11342764b4';"
+  ) | $NES_REPL -f JSON > "$TMP_DIR/disconnect_out.txt" 2>&1
+  REPL_STATUS=$?
+
+  wait $READER_PID 2>/dev/null || true
+
+  [ "$REPL_STATUS" -eq 0 ]
+  # Reader got some data before disconnecting
+  [ -s "$SOCKET_OUTPUT" ]
+  # Query was still running after the reader disconnected (second SHOW QUERIES output)
+  # The output has: source, phys_source, sink, query_id, show_running, show_still_running, drop
+  LAST_SHOW=$(tail -2 "$TMP_DIR/disconnect_out.txt" | head -1)
+  echo "$LAST_SHOW" | jq -e '.[].query_status | test("^Running|Registered|Started$")'
+}
+
 @test "Fail on invalid optimizer config name" {
   run $NES_REPL --optimizer test_invalid_config_name=INVALID
   [ "$status" -ne 0 ]

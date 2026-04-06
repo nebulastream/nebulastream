@@ -50,8 +50,10 @@
 #include <nlohmann/json.hpp> ///NOLINT(misc-include-cleaner)
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
+#include <GrpcSystemStatsReader.hpp>
 #include <QuerySubmitter.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
+#include <SystemStatsBroadcaster.hpp>
 #include <SystestConfiguration.hpp>
 #include <SystestResultCheck.hpp>
 #include <SystestState.hpp>
@@ -326,6 +328,22 @@ std::vector<RunningQuery> runQueries(
             /// Update the query summary
             runningQuery->queryStatus = queryStatus;
 
+            /// Attach compilation stats from the socket reader
+            auto compStats = querySubmitter.getCompilationStats(queryStatus.queryId);
+            if (compStats.pipelineCount > 0)
+            {
+                runningQuery->compilationTimeNs = compStats.totalCompileTimeNs;
+                runningQuery->compiledPipelines = compStats.pipelineCount;
+            }
+
+            /// Attach buffer ingestion stats from the socket reader
+            auto ingestion = querySubmitter.getIngestionStats(queryStatus.queryId);
+            if (ingestion.totalTuples > 0)
+            {
+                runningQuery->tuplesIngested = ingestion.totalTuples;
+                runningQuery->buffersIngested = ingestion.totalBuffers;
+            }
+
             /// For differential queries, check if both queries in the pair have finished
             if (runningQuery->differentialQueryPair.has_value())
             {
@@ -421,12 +439,23 @@ std::vector<RunningQuery> serializeExecutionResults(const std::vector<RunningQue
             failedQueries.emplace_back(queryRan);
         }
         const auto executionTimeInSeconds = queryRan.getElapsedTime().count();
-        resultJson.push_back({
+        auto entry = nlohmann::json{
             {"query name", queryRan.systestQuery.testName},
             {"time", executionTimeInSeconds},
             {"bytesPerSecond", static_cast<double>(queryRan.bytesProcessed.value_or(NAN)) / executionTimeInSeconds},
             {"tuplesPerSecond", static_cast<double>(queryRan.tuplesProcessed.value_or(NAN)) / executionTimeInSeconds},
-        });
+        };
+        if (queryRan.tuplesIngested.has_value())
+        {
+            entry["tuplesIngestedPerSecond"] = static_cast<double>(queryRan.tuplesIngested.value()) / executionTimeInSeconds;
+            entry["tuplesIngested"] = queryRan.tuplesIngested.value();
+        }
+        if (queryRan.compilationTimeNs.has_value())
+        {
+            entry["compilationTimeMs"] = static_cast<double>(queryRan.compilationTimeNs.value()) / 1'000'000.0;
+            entry["compiledPipelines"] = queryRan.compiledPipelines.value_or(0);
+        }
+        resultJson.push_back(std::move(entry));
     }
     return failedQueries;
 }
@@ -441,8 +470,15 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    auto worker = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
-    QuerySubmitter submitter(std::move(worker));
+    /// Create the broadcaster before the worker so system queries can access it
+    SystemStatsBroadcaster broadcaster;
+
+    auto qm = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
+
+    /// Subscribe directly to the broadcaster (in-process)
+    auto statsReader = std::make_shared<GrpcSystemStatsReader>(&broadcaster);
+
+    QuerySubmitter submitter(std::move(qm), statsReader, /*eventDrivenTermination=*/true);
     std::vector<std::shared_ptr<RunningQuery>> ranQueries;
     progressTracker.reset();
     progressTracker.setTotalQueries(queries.size());
@@ -483,7 +519,23 @@ std::vector<RunningQuery> runQueriesAndBenchmark(
 
         runningQueryPtr->queryStatus = summary;
 
-        /// Getting the size and no. tuples of all input files to pass this information to currentRunningQuery.bytesProcessed
+        /// Compilation stats from the pipeline_compilation_times socket
+        auto compStats = submitter.getCompilationStats(queryId);
+        if (compStats.pipelineCount > 0)
+        {
+            runningQueryPtr->compilationTimeNs = compStats.totalCompileTimeNs;
+            runningQueryPtr->compiledPipelines = compStats.pipelineCount;
+        }
+
+        /// Buffer ingestion stats from the buffer_ingestion socket (keyed by query ID)
+        auto ingestion = submitter.getIngestionStats(queryId);
+        if (ingestion.totalTuples > 0)
+        {
+            runningQueryPtr->tuplesIngested = ingestion.totalTuples;
+            runningQueryPtr->buffersIngested = ingestion.totalBuffers;
+        }
+
+        /// File-based input size stats (for input throughput comparison)
         size_t bytesProcessed = 0;
         size_t tuplesProcessed = 0;
         for (const auto& [sourcePath, sourceOccurrencesInQuery] :
@@ -580,7 +632,15 @@ std::vector<RunningQuery> runQueriesAtLocalWorker(
 {
     auto catalog = std::make_shared<WorkerCatalog>(clusterConfig.workers);
 
-    QuerySubmitter submitter(std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration)));
+    /// Create the broadcaster before the worker so system queries can access it
+    SystemStatsBroadcaster broadcaster;
+
+    auto qm = std::make_unique<QueryManager>(std::move(catalog), createEmbeddedBackend(configuration));
+
+    /// Subscribe directly to the broadcaster (in-process, no gRPC needed)
+    auto statsReader = std::make_shared<GrpcSystemStatsReader>(&broadcaster);
+
+    QuerySubmitter submitter(std::move(qm), std::move(statsReader), /*eventDrivenTermination=*/true);
     return runQueries(queries, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 
@@ -611,8 +671,17 @@ std::vector<RunningQuery> runQueriesAtRemoteWorker(
 
     progressTracker.setTotalQueries(queriesWithoutConfigurationOverrides.size());
 
+    /// Connect to remote workers via gRPC streaming for event-driven stats
+    std::vector<std::string> grpcAddresses;
+    grpcAddresses.reserve(clusterConfig.workers.size());
+    for (const auto& worker : clusterConfig.workers)
+    {
+        grpcAddresses.push_back(worker.host.getRawValue());
+    }
+    auto statsReader = std::make_shared<GrpcSystemStatsReader>(grpcAddresses);
+
     auto remoteQueryManager = std::make_unique<QueryManager>(std::move(catalog), createGRPCBackend());
-    QuerySubmitter submitter(std::move(remoteQueryManager));
+    QuerySubmitter submitter(std::move(remoteQueryManager), std::move(statsReader));
     return runQueries(queriesWithoutConfigurationOverrides, numConcurrentQueries, submitter, progressTracker, queryPerformanceMessage);
 }
 

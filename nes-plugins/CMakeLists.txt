@@ -20,6 +20,8 @@ activate_optional_plugin("Sources/TCPSource" ON)
 activate_optional_plugin("Sources/GeneratorSource" ON)
 activate_optional_plugin("Sources/EventSource" ON)
 activate_optional_plugin("Sinks/VoidSink" ON)
+activate_optional_plugin("Sinks/UnixSocketSink" ON)
+activate_optional_plugin("Sinks/GrpcStreamSink" ON)
 activate_optional_plugin("InputFormatters/JSONInputFormatter" ON)
 activate_optional_plugin("OutputFormatters/JSONOutputFormatter" ON)
 

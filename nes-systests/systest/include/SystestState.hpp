@@ -211,11 +211,17 @@ struct RunningQuery
     std::optional<DistributedQueryStatusSnapshot> queryStatus;
     std::optional<uint64_t> bytesProcessed{0};
     std::optional<uint64_t> tuplesProcessed{0};
+    std::optional<uint64_t> compilationTimeNs;
+    std::optional<uint64_t> compiledPipelines;
+    /// Actual tuples ingested by the engine (from buffer_ingestion socket).
+    std::optional<uint64_t> tuplesIngested;
+    std::optional<uint64_t> buffersIngested;
     bool passed = false;
     std::optional<DistributedException> exception;
 
     std::chrono::duration<double> getElapsedTime() const;
     [[nodiscard]] std::string getThroughput() const;
+    [[nodiscard]] std::string getCompilationTime() const;
 };
 
 struct TestFile

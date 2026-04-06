@@ -27,8 +27,10 @@
 #include <google/protobuf/empty.pb.h>
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
+#include <grpcpp/support/sync_stream.h>
 #include <ErrorHandling.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <SystemStatsBroadcaster.hpp>
 #include <WorkerStatus.hpp>
 
 namespace NES
@@ -215,6 +217,34 @@ grpc::Status GRPCServer::RequestStatus(grpc::ServerContext* context, const Worke
         return handleError(e, context);
     }
     return {grpc::INTERNAL, "unknown exception"};
+}
+
+grpc::Status
+GRPCServer::StreamSystemStats(grpc::ServerContext* context, const SystemStatsRequest*, grpc::ServerWriter<SystemStatEvent>* writer)
+{
+    if (!broadcaster)
+    {
+        return {grpc::UNAVAILABLE, "System stats broadcaster not available"};
+    }
+
+    auto subscriber = broadcaster->subscribe();
+    NES_INFO("System stats stream client connected");
+
+    while (!context->IsCancelled())
+    {
+        SystemStatEvent event;
+        if (subscriber->tryPopUntil(std::chrono::steady_clock::now() + std::chrono::milliseconds(500), event))
+        {
+            if (!writer->Write(event))
+            {
+                break; // client disconnected
+            }
+        }
+    }
+
+    broadcaster->unsubscribe(subscriber);
+    NES_INFO("System stats stream client disconnected");
+    return grpc::Status::OK;
 }
 
 }

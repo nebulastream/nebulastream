@@ -25,6 +25,9 @@ service WorkerRPCService {
 
   rpc RequestQueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
   rpc RequestStatus (WorkerStatusRequest) returns (WorkerStatusResponse) {}
+
+  /// Server-side streaming of system query stats (compilation times, query status, ingestion, etc.)
+  rpc StreamSystemStats (SystemStatsRequest) returns (stream SystemStatEvent) {}
 }
 
 message RegisterQueryRequest {
@@ -98,4 +101,47 @@ message WorkerStatusResponse {
   uint64 until_unix_timestamp_in_milli_seconds = 4;
   repeated ActiveQuery active_queries = 1;
   repeated TerminatedQuery terminated_queries = 2;
+}
+
+/// System stats streaming messages
+
+message SystemStatsRequest {
+  /// Empty — subscribes to all stat types. Could add filtering later.
+}
+
+message PipelineCompilationStat {
+  uint64 timestamp_ms = 1;
+  string query_id = 2;
+  uint64 pipeline_id = 3;
+  uint64 compile_time_ns = 4;
+}
+
+message QueryStatusStat {
+  uint64 timestamp_ms = 1;
+  string query_id = 2;
+  string status = 3;
+}
+
+message UnpooledBufferAllocStat {
+  uint64 window_start_ms = 1;
+  uint64 window_end_ms = 2;
+  uint64 alloc_count = 3;
+  double avg_alloc_size = 4;
+}
+
+message BufferIngestionStat {
+  string query_id = 1;
+  uint64 window_start_ms = 2;
+  uint64 window_end_ms = 3;
+  uint64 total_tuples = 4;
+  uint64 ingestion_count = 5;
+}
+
+message SystemStatEvent {
+  oneof event {
+    PipelineCompilationStat pipeline_compiled = 1;
+    QueryStatusStat query_status = 2;
+    UnpooledBufferAllocStat unpooled_buffer_alloc = 3;
+    BufferIngestionStat buffer_ingestion = 4;
+  }
 }
