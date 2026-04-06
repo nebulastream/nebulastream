@@ -134,6 +134,13 @@ nautilus.
 
 Nautilus is not currently on vcpkg.
 
+### libuuid
+
+The vcpkg libuuid port uses an unmaintained standalone fork from SourceForge (v1.0.3, circa 2013) rather than the
+upstream [util-linux](https://github.com/util-linux/util-linux) source. Our custom port patches a signed left-shift
+undefined behavior in `randutils.c` that was fixed upstream in 2020
+([util-linux@3534b2c7](https://github.com/util-linux/util-linux/commit/3534b2c7c7)).
+
 ### Scope Guard
 
 [Scope Guard](https://github.com/Neargye/scope_guard) is not currently on vcpkg.
