@@ -163,6 +163,92 @@ struct QueryConfig
 
 namespace
 {
+thread_local std::vector<std::string> yamlPath;
+
+struct YamlPathGuard
+{
+    explicit YamlPathGuard(std::string segment) { yamlPath.push_back(std::move(segment)); }
+    ~YamlPathGuard() { yamlPath.pop_back(); }
+    YamlPathGuard(const YamlPathGuard&) = delete;
+    YamlPathGuard& operator=(const YamlPathGuard&) = delete;
+};
+
+std::string currentYamlPath()
+{
+    std::string result;
+    for (const auto& segment : yamlPath)
+    {
+        if (!result.empty() && segment[0] != '[')
+        {
+            result += '.';
+        }
+        result += segment;
+    }
+    return result.empty() ? "<root>" : result;
+}
+
+std::string formatMark(const YAML::Mark& mark)
+{
+    if (mark.is_null())
+    {
+        return "";
+    }
+    return fmt::format(" (line {})", mark.line + 1);
+}
+
+template <typename T>
+T getValue(const YAML::Node& node, const std::string& key)
+{
+    YamlPathGuard guard(key);
+    if (!node[key])
+    {
+        throw NES::InvalidConfigParameter("Missing required key '{}' at {}{}", key, currentYamlPath(), formatMark(node.Mark()));
+    }
+    return node[key].as<T>();
+}
+
+template <typename T>
+std::vector<T> getList(const YAML::Node& node, const std::string& key)
+{
+    YamlPathGuard guard(key);
+    if (!node[key])
+    {
+        throw NES::InvalidConfigParameter("Missing required key '{}' at {}{}", key, currentYamlPath(), formatMark(node.Mark()));
+    }
+    if (!node[key].IsSequence())
+    {
+        throw NES::InvalidConfigParameter("Expected a list at {}{}", currentYamlPath(), formatMark(node[key].Mark()));
+    }
+    std::vector<T> result;
+    for (std::size_t i = 0; i < node[key].size(); ++i)
+    {
+        YamlPathGuard indexGuard("[" + std::to_string(i) + "]");
+        result.push_back(node[key][i].as<T>());
+    }
+    return result;
+}
+
+template <typename T>
+T getOrDefault(const YAML::Node& node, const std::string& key, T defaultValue = T{})
+{
+    if (!node[key])
+    {
+        return defaultValue;
+    }
+    YamlPathGuard guard(key);
+    return node[key].as<T>();
+}
+
+template <typename T>
+std::vector<T> getListOrDefault(const YAML::Node& node, const std::string& key)
+{
+    if (!node[key])
+    {
+        return {};
+    }
+    return getList<T>(node, key);
+}
+
 /// Validates that a YAML map node contains only the expected keys. Throws InvalidConfigParameter if an unknown key is found.
 void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Node& node)
 {
@@ -175,10 +261,11 @@ void acceptKeys(std::initializer_list<std::string_view> allowed, const YAML::Nod
         const auto key = entry.first.as<std::string>();
         if (std::ranges::find(allowed, key) == allowed.end())
         {
-            throw NES::InvalidConfigParameter("Unknown key '{}'. Expected one of: {}", key, fmt::join(allowed, ", "));
+            throw NES::InvalidConfigParameter("Unknown key '{}' at {}{}. Expected one of: {}", key, currentYamlPath(), formatMark(entry.first.Mark()), fmt::join(allowed, ", "));
         }
     }
 }
+
 }
 
 namespace YAML
@@ -189,8 +276,8 @@ struct convert<NES::CLI::SchemaField>
     static bool decode(const Node& node, NES::CLI::SchemaField& rhs)
     {
         acceptKeys({"name", "type"}, node);
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
-        rhs.type = stringToFieldType(node["type"].as<std::string>());
+        rhs.name = bindIdentifierName(getValue<std::string>(node, "name"));
+        rhs.type = stringToFieldType(getValue<std::string>(node, "type"));
         return true;
     }
 };
@@ -201,12 +288,12 @@ struct convert<NES::CLI::Sink>
     static bool decode(const Node& node, NES::CLI::Sink& rhs)
     {
         acceptKeys({"name", "type", "schema", "host", "config", "parser_config"}, node);
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
-        rhs.type = node["type"].as<std::string>();
-        rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
-        rhs.host = node["host"].as<std::string>();
-        rhs.config = node["config"].as<std::unordered_map<std::string, std::string>>();
-        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.name = bindIdentifierName(getValue<std::string>(node, "name"));
+        rhs.type = getValue<std::string>(node, "type");
+        rhs.schema = getList<NES::CLI::SchemaField>(node, "schema");
+        rhs.host = getValue<std::string>(node, "host");
+        rhs.config = getOrDefault<std::unordered_map<std::string, std::string>>(node, "config");
+        rhs.parserConfig = getOrDefault<std::unordered_map<std::string, std::string>>(node, "parser_config");
         return true;
     }
 };
@@ -217,8 +304,8 @@ struct convert<NES::CLI::LogicalSource>
     static bool decode(const Node& node, NES::CLI::LogicalSource& rhs)
     {
         acceptKeys({"name", "schema"}, node);
-        rhs.name = bindIdentifierName(node["name"].as<std::string>());
-        rhs.schema = node["schema"].as<std::vector<NES::CLI::SchemaField>>();
+        rhs.name = bindIdentifierName(getValue<std::string>(node, "name"));
+        rhs.schema = getList<NES::CLI::SchemaField>(node, "schema");
         return true;
     }
 };
@@ -229,11 +316,11 @@ struct convert<NES::CLI::PhysicalSource>
     static bool decode(const Node& node, NES::CLI::PhysicalSource& rhs)
     {
         acceptKeys({"logical", "type", "host", "parser_config", "source_config"}, node);
-        rhs.logical = bindIdentifierName(node["logical"].as<std::string>());
-        rhs.type = node["type"].as<std::string>();
-        rhs.host = node["host"].as<std::string>();
-        rhs.parserConfig = node["parser_config"].as<std::unordered_map<std::string, std::string>>();
-        rhs.sourceConfig = node["source_config"].as<std::unordered_map<std::string, std::string>>();
+        rhs.logical = bindIdentifierName(getValue<std::string>(node, "logical"));
+        rhs.type = getValue<std::string>(node, "type");
+        rhs.host = getValue<std::string>(node, "host");
+        rhs.parserConfig = getValue<std::unordered_map<std::string, std::string>>(node, "parser_config");
+        rhs.sourceConfig = getOrDefault<std::unordered_map<std::string, std::string>>(node, "source_config");
         return true;
     }
 };
@@ -244,16 +331,10 @@ struct convert<NES::CLI::WorkerConfig>
     static bool decode(const Node& node, NES::CLI::WorkerConfig& rhs)
     {
         acceptKeys({"host", "data_address", "max_operators", "downstream", "config"}, node);
-        if (node["max_operators"].IsDefined())
-        {
-            rhs.maxOperators = node["max_operators"].as<size_t>();
-        }
-        if (node["downstream"].IsDefined())
-        {
-            rhs.downstream = node["downstream"].as<std::vector<std::string>>();
-        }
-        rhs.host = node["host"].as<std::string>();
-        rhs.dataAddress = node["data_address"].IsDefined() ? node["data_address"].as<std::string>() : "";
+        rhs.maxOperators = getOrDefault<size_t>(node, "max_operators", 0);
+        rhs.downstream = getOrDefault<std::vector<std::string>>(node, "downstream");
+        rhs.host = getValue<std::string>(node, "host");
+        rhs.dataAddress = getOrDefault<std::string>(node, "data_address");
         return true;
     }
 };
@@ -264,9 +345,9 @@ struct convert<NES::CLI::QueryConfig>
     static bool decode(const Node& node, NES::CLI::QueryConfig& rhs)
     {
         acceptKeys({"query", "sinks", "logical", "physical", "optimizer", "workers"}, node);
-        rhs.sinks = node["sinks"].as<std::vector<NES::CLI::Sink>>();
-        rhs.logical = node["logical"].as<std::vector<NES::CLI::LogicalSource>>();
-        rhs.physical = node["physical"].as<std::vector<NES::CLI::PhysicalSource>>();
+        rhs.sinks = getListOrDefault<NES::CLI::Sink>(node, "sinks");
+        rhs.logical = getList<NES::CLI::LogicalSource>(node, "logical");
+        rhs.physical = getListOrDefault<NES::CLI::PhysicalSource>(node, "physical");
 
         if (node["optimizer"].IsDefined())
         {
@@ -284,7 +365,7 @@ struct convert<NES::CLI::QueryConfig>
                 rhs.query.emplace_back(node["query"].as<std::string>());
             }
         }
-        rhs.workers = node["workers"].as<std::vector<NES::CLI::WorkerConfig>>();
+        rhs.workers = getList<NES::CLI::WorkerConfig>(node, "workers");
         return true;
     }
 };

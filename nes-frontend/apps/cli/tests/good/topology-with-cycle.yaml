@@ -23,8 +23,6 @@ sinks:
       - name: stream$value
         type: UINT64
     type: Void
-    config: { }
-    parser_config: { }
 
 logical:
   - name: stream

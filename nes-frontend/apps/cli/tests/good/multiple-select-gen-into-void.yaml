@@ -85,8 +85,6 @@ sinks:
       - name: GENERATOR_SOURCE$DOUBLE
         type: FLOAT64
     type: Void
-    config: { }
-    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
