@@ -99,7 +99,7 @@ pub fn spawn_source(
 
     // Bundle emit callback — carried in every BridgeMessage so the bridge
     // thread can invoke it directly without a global registry lookup.
-    let callback = EmitCallback { emit_fn, emit_ctx };
+    let callback = EmitCallback { emit_fn, emit_ctx_handle: emit_ctx };
 
     // Construct SourceContext with all fields
     let ctx = SourceContext::new(

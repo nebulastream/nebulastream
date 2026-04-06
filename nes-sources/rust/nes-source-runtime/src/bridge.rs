@@ -22,7 +22,7 @@ use crate::buffer::TupleBufferHandle;
 /// C-style emit function pointer type for FFI callbacks.
 ///
 /// Matches the C++ `extern "C"` emit function signature:
-/// - `ctx`: opaque pointer to EmitContext (owned by C++ TokioSource)
+/// - `ctx`: raw EmitContext* (obtained via emit_context_get from the shared_ptr handle)
 /// - `origin_id`: identifies which source produced this buffer
 /// - `buffer`: raw pointer to the TupleBuffer (bridge transfers ownership via retain)
 /// - `semaphore_ptr`: Arc<Semaphore> raw pointer for inflight tracking
@@ -31,19 +31,47 @@ use crate::buffer::TupleBufferHandle;
 pub type EmitFnPtr =
     unsafe extern "C" fn(ctx: *mut std::ffi::c_void, origin_id: u64, buffer: *mut nes_buffer_bindings::ffi::TupleBuffer, semaphore_ptr: usize) -> u8;
 
-/// Per-source emit callback info carried in each BridgeMessage.
-///
-/// The emit_ctx pointer is guaranteed valid for the source's lifetime by C++
-/// (EmitContext is owned by TokioSource which outlives the Rust source task).
-#[derive(Clone, Copy)]
-pub struct EmitCallback {
-    pub(crate) emit_fn: EmitFnPtr,
-    pub(crate) emit_ctx: *mut std::ffi::c_void,
+// C FFI functions for shared_ptr<EmitContext> lifecycle management.
+unsafe extern "C" {
+    fn emit_context_clone(handle: *mut std::ffi::c_void) -> *mut std::ffi::c_void;
+    fn emit_context_drop(handle: *mut std::ffi::c_void);
+    fn emit_context_get(handle: *mut std::ffi::c_void) -> *mut std::ffi::c_void;
 }
 
-// SAFETY: The emit_ctx pointer is guaranteed valid for the source's lifetime
-// by the C++ TokioSource. EmitCallback is only invoked from the bridge thread
-// (single reader) after being sent through the channel.
+/// Per-source emit callback info carried in each BridgeMessage.
+///
+/// Holds an opaque handle to a C++ shared_ptr<EmitContext>. Cloning increments
+/// the shared_ptr refcount; dropping decrements it. The EmitContext is freed
+/// when the last handle is dropped — no use-after-free on query restart.
+pub struct EmitCallback {
+    pub(crate) emit_fn: EmitFnPtr,
+    /// Opaque handle to a heap-allocated shared_ptr<EmitContext>.
+    /// Managed via emit_context_clone / emit_context_drop / emit_context_get.
+    pub(crate) emit_ctx_handle: *mut std::ffi::c_void,
+}
+
+impl Clone for EmitCallback {
+    fn clone(&self) -> Self {
+        let cloned_handle = unsafe { emit_context_clone(self.emit_ctx_handle) };
+        Self {
+            emit_fn: self.emit_fn,
+            emit_ctx_handle: cloned_handle,
+        }
+    }
+}
+
+impl Drop for EmitCallback {
+    fn drop(&mut self) {
+        unsafe { emit_context_drop(self.emit_ctx_handle) };
+    }
+}
+
+// SAFETY: EmitCallback is Send because:
+// - emit_fn is a function pointer (inherently Send)
+// - emit_ctx_handle is a pointer to a heap-allocated shared_ptr<EmitContext>.
+//   The shared_ptr is thread-safe (atomic refcount). The EmitContext is only
+//   accessed from the bridge thread (single reader) after being sent through
+//   the channel.
 unsafe impl Send for EmitCallback {}
 unsafe impl Sync for EmitCallback {}
 
@@ -123,11 +151,13 @@ pub fn ensure_bridge() -> &'static async_channel::Sender<BridgeMessage> {
 
 /// Dispatch a single message by invoking the callback directly.
 ///
-/// The callback is carried in the message itself — no registry lookup needed.
-fn dispatch_message(callback: EmitCallback, origin_id: u64, buffer_ptr: *mut nes_buffer_bindings::ffi::TupleBuffer, semaphore_ptr: usize) {
+/// Extracts the raw EmitContext* from the shared_ptr handle before calling
+/// the C++ emit function.
+fn dispatch_message(callback: &EmitCallback, origin_id: u64, buffer_ptr: *mut nes_buffer_bindings::ffi::TupleBuffer, semaphore_ptr: usize) {
+    let raw_ctx = unsafe { emit_context_get(callback.emit_ctx_handle) };
     unsafe {
         (callback.emit_fn)(
-            callback.emit_ctx,
+            raw_ctx,
             origin_id,
             buffer_ptr,
             semaphore_ptr,
@@ -146,17 +176,20 @@ fn dispatch_message(callback: EmitCallback, origin_id: u64, buffer_ptr: *mut nes
 pub(crate) fn bridge_loop(receiver: async_channel::Receiver<BridgeMessage>) {
     while let Ok(msg) = receiver.recv_blocking() {
         match msg {
-            BridgeMessage::Data { callback, origin_id, mut buffer, semaphore_ptr } => {
+            BridgeMessage::Data { ref callback, origin_id, mut buffer, semaphore_ptr } => {
                 let buffer_ptr = buffer.as_raw_ptr();
                 dispatch_message(callback, origin_id, buffer_ptr, semaphore_ptr);
                 // buffer is dropped here, releasing C++ refcount via release().
+                // callback is dropped here, releasing the shared_ptr<EmitContext> ref.
             }
-            BridgeMessage::Eos { callback, origin_id } => {
+            BridgeMessage::Eos { ref callback, origin_id } => {
                 // Dispatch EOS to C++ (bridge_emit with null buffer, no semaphore).
                 dispatch_message(callback, origin_id, std::ptr::null_mut(), 0);
                 // Cleanup backpressure state.
                 crate::backpressure::unregister_source(origin_id);
                 tracing::info!(origin_id = origin_id, "Bridge: EOS processed, cleanup complete");
+                // callback is dropped here, releasing the shared_ptr<EmitContext> ref.
+                // If this was the last reference, EmitContext is freed.
             }
         }
     }
@@ -169,9 +202,6 @@ mod tests {
     use super::*;
 
     // ---- Compile-time type checks ----
-    //
-    // These tests verify that key types satisfy their required trait bounds.
-    // If any bound is broken by a refactor, these tests fail at compile time.
 
     #[test]
     fn emit_callback_is_send_and_sync() {
@@ -180,8 +210,8 @@ mod tests {
     }
 
     #[test]
-    fn emit_callback_is_copy() {
-        fn assert_copy<T: Copy>() {}
-        assert_copy::<EmitCallback>();
+    fn emit_callback_is_clone() {
+        fn assert_clone<T: Clone>() {}
+        assert_clone::<EmitCallback>();
     }
 }

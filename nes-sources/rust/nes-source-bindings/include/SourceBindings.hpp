@@ -25,7 +25,11 @@ namespace NES {
 
 /// Context passed to bridge_emit as the opaque void* context pointer.
 /// Holds the EmitFunction and a stop_source for generating stop tokens.
-/// Owned by TokioSource; lifetime must exceed the Rust source task.
+///
+/// Ref-counted via shared_ptr: TokioSource holds one shared_ptr, and each
+/// BridgeMessage on the Rust side holds another (via emit_context_clone /
+/// emit_context_drop). The context is freed when the last reference is
+/// released — no use-after-free on query restart.
 struct EmitContext {
     SourceReturnType::EmitFunction emitFunction;
     std::stop_source stopSource;
@@ -42,7 +46,7 @@ extern "C" {
     /// semaphore_ptr: Arc<Semaphore> raw pointer for inflight tracking (0 for EOS).
     /// Returns 0 (SUCCESS) or 1 (STOP_REQUESTED).
     uint8_t bridge_emit(
-        void* context,        // EmitContext*
+        void* context,        // EmitContext*  (raw ptr from shared_ptr::get())
         uint64_t origin_id,
         void* buffer_ptr,     // TupleBuffer* (nullptr for EOS)
         uintptr_t semaphore_ptr  // Arc<Semaphore> raw pointer (0 for EOS)
@@ -54,4 +58,20 @@ extern "C" {
         uint64_t source_id,
         const char* message
     );
+
+    /// Clone a shared_ptr<EmitContext> handle.
+    /// Takes an opaque pointer to a heap-allocated shared_ptr<EmitContext>,
+    /// creates a new heap-allocated copy (incrementing refcount), returns it.
+    /// Called by Rust when creating EmitCallback copies for BridgeMessages.
+    void* emit_context_clone(void* shared_ptr_handle);
+
+    /// Drop a shared_ptr<EmitContext> handle.
+    /// Destroys the heap-allocated shared_ptr (decrementing refcount).
+    /// When refcount reaches 0, the EmitContext is freed.
+    /// Called by Rust when a BridgeMessage is processed or dropped.
+    void emit_context_drop(void* shared_ptr_handle);
+
+    /// Get the raw EmitContext* from a shared_ptr handle.
+    /// Used by the bridge thread to pass the raw pointer to bridge_emit.
+    void* emit_context_get(void* shared_ptr_handle);
 }

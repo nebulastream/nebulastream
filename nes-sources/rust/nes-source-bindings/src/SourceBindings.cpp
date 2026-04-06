@@ -49,8 +49,6 @@ uint8_t bridge_emit(
             NES::SourceReturnType::EoS{},
             ctx->stopSource.get_token()
         );
-        // Release the emitFunction to drop captured shared_ptr refs to pipeline nodes.
-        ctx->emitFunction = {};
         ctx->eosProcessed.store(true, std::memory_order_release);
         return 0;
     }
@@ -98,4 +96,24 @@ void on_source_error_callback(
     auto* ctx = static_cast<NES::ErrorContext*>(context);
     NES_ERROR("TokioSource {} (ctx sourceId={}): source error: {}",
               source_id, ctx->sourceId, message);
+}
+
+void* emit_context_clone(void* shared_ptr_handle)
+{
+    auto* original = static_cast<std::shared_ptr<NES::EmitContext>*>(shared_ptr_handle);
+    return new std::shared_ptr<NES::EmitContext>(*original);
+}
+
+void emit_context_drop(void* shared_ptr_handle)
+{
+    auto* sp = static_cast<std::shared_ptr<NES::EmitContext>*>(shared_ptr_handle);
+    // Safe to call from any thread: TokioSource::stop() clears emitFunction
+    // on the worker thread before any non-worker thread can drop the last ref.
+    delete sp;
+}
+
+void* emit_context_get(void* shared_ptr_handle)
+{
+    auto* sp = static_cast<std::shared_ptr<NES::EmitContext>*>(shared_ptr_handle);
+    return sp->get();
 }

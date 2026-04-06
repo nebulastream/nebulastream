@@ -67,13 +67,20 @@ bool TokioSource::start(SourceReturnType::EmitFunction&& emitFunction)
 
     try
     {
-        // Create EmitContext: holds the emit function and a stop_source for stop tokens
-        emitContext = std::unique_ptr<EmitContext>(new EmitContext{
+        // Create EmitContext: holds the emit function and a stop_source for stop tokens.
+        // Ref-counted via shared_ptr so the bridge thread keeps it alive until all
+        // queued BridgeMessages (including the final EOS) have been processed.
+        emitContext = std::shared_ptr<EmitContext>(new EmitContext{
             std::move(emitFunction),
             std::stop_source{},
             1,
             {}
         });
+
+        // Heap-allocate a shared_ptr copy to pass as an opaque handle to Rust.
+        // Rust will clone/drop this handle via emit_context_clone/emit_context_drop.
+        // This reference keeps EmitContext alive for the Rust source task + bridge.
+        auto* emitCtxHandle = new std::shared_ptr<EmitContext>(emitContext);
 
         // Create ErrorContext: holds source_id for error callback logging
         errorContext = std::make_unique<ErrorContext>(ErrorContext{
@@ -86,7 +93,7 @@ bool TokioSource::start(SourceReturnType::EmitFunction&& emitFunction)
             reinterpret_cast<uintptr_t>(bufferProvider.get()),
             inflightLimit,
             reinterpret_cast<uintptr_t>(bridge_emit),
-            reinterpret_cast<uintptr_t>(emitContext.get()),
+            reinterpret_cast<uintptr_t>(emitCtxHandle),
             reinterpret_cast<uintptr_t>(on_source_error_callback),
             reinterpret_cast<uintptr_t>(errorContext.get())
         );

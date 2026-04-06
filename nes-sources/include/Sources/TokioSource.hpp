@@ -96,7 +96,7 @@ private:
 
     std::unique_ptr<RustHandleImpl> rustHandle;
 
-    std::unique_ptr<EmitContext> emitContext;
+    std::shared_ptr<EmitContext> emitContext;
     std::unique_ptr<ErrorContext> errorContext;
     bool started{false};
     bool stopped{false};

@@ -181,7 +181,7 @@ impl SourceContext {
         // Step 3: Send message through bridge channel
         self.sender
             .send(BridgeMessage::Data {
-                callback: self.callback,
+                callback: self.callback.clone(),
                 origin_id: self.origin_id,
                 buffer,
                 semaphore_ptr,
@@ -199,7 +199,7 @@ impl SourceContext {
     pub(crate) async fn emit_eos(&self) {
         let _ = self.sender
             .send(BridgeMessage::Eos {
-                callback: self.callback,
+                callback: self.callback.clone(),
                 origin_id: self.origin_id,
             })
             .await;
