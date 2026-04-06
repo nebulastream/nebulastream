@@ -315,3 +315,103 @@ TOPEOF
   grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
 }
 
+@test "nebucli dump with nullable schema fields" {
+  run $NES_CLI -t tests/good/nullable-fields.yaml dump
+  [ "$status" -eq 0 ]
+  # Verify the plan was actually produced (nullable fields were parsed without error)
+  echo "$output" | grep -q "Decomposed Plans"
+}
+
+@test "nullable: true and false parsed correctly in schema" {
+  # Create a topology inline with nullable fields and verify dump succeeds
+  cat > nullable-inline.yaml << 'TOPEOF'
+query: |
+  SELECT * FROM SRC INTO VOID_SINK
+sinks:
+  - name: VOID_SINK
+    host: worker-1:8080
+    schema:
+      - name: SRC$A
+        type: INT64
+        nullable: true
+      - name: SRC$B
+        type: INT64
+    type: Void
+    config: { }
+    parser_config: { }
+logical:
+  - name: SRC
+    schema:
+      - name: A
+        type: INT64
+        nullable: true
+      - name: B
+        type: INT64
+physical:
+  - logical: SRC
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE INT64 0 100 1
+        SEQUENCE INT64 0 100 1
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+TOPEOF
+
+  run $NES_CLI -t nullable-inline.yaml dump
+  [ "$status" -eq 0 ]
+  echo "$output" | grep -q "Decomposed Plans"
+}
+
+@test "nullable: invalid value is rejected" {
+  cat > nullable-invalid.yaml << 'TOPEOF'
+query: |
+  SELECT * FROM SRC INTO VOID_SINK
+sinks:
+  - name: VOID_SINK
+    host: worker-1:8080
+    schema:
+      - name: SRC$A
+        type: INT64
+        nullable: notabool
+    type: Void
+    config: { }
+    parser_config: { }
+logical:
+  - name: SRC
+    schema:
+      - name: A
+        type: INT64
+        nullable: notabool
+physical:
+  - logical: SRC
+    host: worker-1:8080
+    parser_config:
+      type: CSV
+      fieldDelimiter: ","
+    type: Generator
+    source_config:
+      generator_rate_type: FIXED
+      generator_rate_config: emit_rate 10
+      stop_generator_when_sequence_finishes: ONE
+      seed: 1
+      generator_schema: |
+        SEQUENCE INT64 0 100 1
+workers:
+  - host: worker-1:8080
+    data_address: worker-1:9090
+TOPEOF
+
+  run $NES_CLI -d -t nullable-invalid.yaml dump
+  [ "$status" -eq 1 ]
+}
+
