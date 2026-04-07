@@ -258,13 +258,13 @@ DOCKER_SYSTEST() {
 }
 
 @test "two node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml "50mbit"
   run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node-with-interpreter.yaml --remote
   [ "$status" -eq 0 ]
 }
 
 @test "8 node systest" {
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/8-node.yaml "50mbit"
   run DOCKER_SYSTEST -e large tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/8-node.yaml --remote
   [ "$status" -eq 0 ]
 }
@@ -273,12 +273,13 @@ DOCKER_SYSTEST() {
   if [ "$ENABLE_LARGE_TESTS" != "ON" ]; then
     skip "Large tests disabled (ENABLE_LARGE_TESTS=$ENABLE_LARGE_TESTS)"
   fi
-  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml
+  setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node-more-capacity.yaml "50mbit"
   run DOCKER_SYSTEST -g large -e tcp --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote
   [ "$status" -eq 0 ]
+}
 
 @test "Codecs with bandwidth" {
-    setup_distributed $NES_DIR/nes-systests/configs/topologies/my-topo.yaml "50mbit"
-    run DOCKER_SYSTEST -g Codecs --clusterConfig nes-systests/configs/topologies/my-topo.yaml --remote -- --worker.number_of_buffers_in_global_buffer_manager=30000
+    setup_distributed $NES_DIR/nes-systests/configs/topologies/two-node.yaml "50mbit"
+    run DOCKER_SYSTEST -g Codecs --clusterConfig $NES_DIR/nes-systests/configs/topologies/two-node.yaml --remote -- --worker.number_of_buffers_in_global_buffer_manager=30000
     [ "$status" -eq 0 ]
 }

@@ -23,7 +23,7 @@ workers:
         query_engine:
           number_of_worker_threads: 1
         network:
-          transmission_codec: "LZ4"
+          transmission_codec: "None"
 
 allow_source_placement:
   - "source-node:8080"

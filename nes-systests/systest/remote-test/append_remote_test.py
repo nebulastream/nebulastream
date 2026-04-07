@@ -18,7 +18,7 @@ with open(args.remote_test_path, 'a') as f:
     test_string = textwrap.dedent(f"""
         @test "{args.test_name}" {{
             setup_distributed $NES_DIR/{args.topology_path} "{args.bandwidth}"
-            run DOCKER_SYSTEST --clusterConfig {args.topology_path} --remote {args.systest_config}
+            run DOCKER_SYSTEST --clusterConfig $NES_DIR/{args.topology_path} --remote {args.systest_config}
             [ "$status" -eq 0 ]
         }}
     """)

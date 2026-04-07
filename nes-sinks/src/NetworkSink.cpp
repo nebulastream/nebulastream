@@ -207,9 +207,12 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
             /// States if the ith child is encoded
             std::vector<uint8_t> encodedChildren{};
             std::vector<uint64_t> childBufferSizes{};
+            /// Holds encoded child data so it stays alive until send_buffer copies it.
+            std::vector<std::vector<char>> encodedChildStorage;
             children.reserve(currentBuffer->getNumberOfChildBuffers());
             encodedChildren.reserve(currentBuffer->getNumberOfChildBuffers());
             childBufferSizes.reserve(currentBuffer->getNumberOfChildBuffers());
+            encodedChildStorage.reserve(currentBuffer->getNumberOfChildBuffers());
             for (size_t childIdx = 0; childIdx < currentBuffer->getNumberOfChildBuffers(); ++childIdx)
             {
                 /// Encode the child
@@ -232,12 +235,10 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 else
                 {
                     encodedChildren.emplace_back(1);
-                    /// Copy the vector bytes into the child buffer. We need to do that because the vector contents need to persist until we call send_buffer
-                    /// Otherwise, once the scope of the current for iteration is exited, the vector seizes to exist.
-                    std::memcpy(childBuffer.getAvailableMemoryArea<>().data(), encodedChild.data(), encodingResult.compressedSize);
-                    /// The span of the childbuffer that we transmit only holds the encoded bytes
+                    /// Store the encoded vector so it outlives the loop iteration
+                    encodedChildStorage.emplace_back(std::move(encodedChild));
                     const std::span encodedChildSpan(
-                        childBuffer.getAvailableMemoryArea<const uint8_t>().data(), encodingResult.compressedSize);
+                        reinterpret_cast<const uint8_t*>(encodedChildStorage.back().data()), encodingResult.compressedSize);
                     children.emplace_back(encodedChildSpan);
                 }
                 childBufferSizes.emplace_back(childBuffer.getNumberOfTuples());
@@ -291,10 +292,10 @@ void NetworkSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionConte
                 currentBuffer->getAvailableMemoryArea<const uint8_t>().data(), currentBuffer->getNumberOfTuples() * tupleSize);
             /// Set data and send over the network
             /// Since not any children were encoded, we create a vector purely out of 0's
-            const std::vector<uint8_t> encodedChildren(inputBuffer.getNumberOfChildBuffers(), 0);
+            const std::vector<uint8_t> encodedChildren(currentBuffer->getNumberOfChildBuffers(), 0);
             /// We do not need the childBufferSizes for non-encoded children but need to pass them anyway. However, the vector does not hold the actual
             /// child buffer sizes here.
-            const std::vector<uint64_t> childBufferSizes(inputBuffer.getNumberOfChildBuffers(), 0);
+            const std::vector<uint64_t> childBufferSizes(currentBuffer->getNumberOfChildBuffers(), 0);
             sendResult = send_buffer(
                 *channel.value(),
                 metadata,

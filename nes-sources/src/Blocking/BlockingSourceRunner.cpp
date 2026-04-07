@@ -224,7 +224,7 @@ SourceImplementationTermination dataBlockingSourceRunnerRoutine(
             }
             else
             {
-                emit(std::move(*emptyBuffer), true);
+                emit(std::move(*emptyBuffer), requiresMetadata);
             }
         }
         else
