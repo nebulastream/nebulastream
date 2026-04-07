@@ -170,26 +170,31 @@ std::vector<RunningQuery> runQueries(
     std::optional<K8sJSONSubmitter> jsonSubmitter;
     if (k8sEnabled) {
         jsonSubmitter.emplace(K8sJSONSubmitter::createForMinikube("default"));
-        /// Write all source data files to the PVC once, before running any queries.
+
+        static constexpr size_t BASE64_POD_SIZE_LIMIT = 512 * 1024;
+        static const std::string pvcName = "source-data-pvc";
+
         std::unordered_map<std::string, std::string> allSourceFiles;
+
         for (const auto& query : queries) {
             if (query.planInfoOrException) {
-                for (const auto& [desc, fileAndCount] :
-                    query.planInfoOrException->sourcesToFilePathsAndCounts) {
+                for (const auto& [desc, fileAndCount] : query.planInfoOrException->sourcesToFilePathsAndCounts) {
                     const auto& path = fileAndCount.first.getRawValue();
                     std::string filename = path.filename().string();
                     if (!allSourceFiles.contains(filename)) {
                         std::ifstream ifs(path);
                         std::ostringstream oss;
                         oss << ifs.rdbuf();
-                        allSourceFiles[filename] = oss.str();
+                        std::string contents = oss.str();
+                        if (contents.size() <= BASE64_POD_SIZE_LIMIT) {
+                            allSourceFiles[filename] = std::move(contents);
+                        }
                     }
                 }
             }
         }
 
         if (!allSourceFiles.empty()) {
-            static const std::string pvcName = "source-data-pvc";
             jsonSubmitter->ensurePVCExists(pvcName);
             jsonSubmitter->writeSourceDataToPVC(pvcName, allSourceFiles);
             std::cerr << "[K8s] Waiting 5s for PVC data to be available in worker pods...\n";

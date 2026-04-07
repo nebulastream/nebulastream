@@ -47,6 +47,11 @@ public:
     void writeSourceDataToPVC(const std::string& pvcName,
                               const std::unordered_map<std::string, std::string>& fileData);
 
+    void writeSourceDataToPVCViaServer(const std::string& pvcName,
+                                                      const std::unordered_map<std::string, std::string>& fileData);
+
+    void deleteService(const std::string& serviceName);
+
     /// Fetch stdout logs from a worker pod identified by label selector
     std::string fetchPodLogs(const std::string& labelSelector);
 

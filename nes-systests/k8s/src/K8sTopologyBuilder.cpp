@@ -86,6 +86,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
             nlohmann::json f;
             f["name"] = fld.name;
             f["type"] = magic_enum::enum_name(fld.dataType.type);
+            f["nullable"] = fld.dataType.nullable;
             schemaNode.push_back(f);
         }
         sink["schema"] = schemaNode;

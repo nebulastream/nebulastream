@@ -409,6 +409,10 @@ void K8sJSONSubmitter::ensurePVCExists(const std::string& pvcName, const std::st
               << "' (" << storageSize << ").\n";
 }
 
+/// TODO: When systest runs inside the cluster, replace this entire mechanism
+/// with a direct filesystem write to the shared PVC mount path.
+/// The file server pod + NodePort approach exists solely because systest
+/// currently runs outside the cluster and cannot mount the PVC directly.
 void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
                                              const std::unordered_map<std::string, std::string>& fileData)
 {
@@ -417,42 +421,63 @@ void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
         return;
     }
 
-    static constexpr const char* MOUNT_PATH = "/data";
+    static constexpr const char* SERVER_POD_NAME = "pvc-file-server";
+    static constexpr int SERVER_PORT = 8080;
     static constexpr int POLL_INTERVAL_SEC = 2;
-    static constexpr int TIMEOUT_SEC = 30;
+    static constexpr int TIMEOUT_SEC = 60;
 
-    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Writing " << fileData.size()
-              << " file(s) to PVC '" << pvcName << "'...\n";
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Starting file server pod...\n";
 
-    /// Build shell script that base64-decodes each file onto the PVC mount.
-    std::string script = "set -e\nmkdir -p " + std::string(MOUNT_PATH) + "\n";
-    for (const auto& [filename, contents] : fileData) {
-        std::string encoded = base64Encode(contents);
-        script += "echo '" + encoded + "' | base64 -d > "
-               + MOUNT_PATH + "/" + filename + "\n";
+    /// Delete any leftover server pod/service from a previous run
+    deletePod(SERVER_POD_NAME);
+    deleteService("pvc-file-server-svc");
+
+    /// Wait for the old pod to be fully gone
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Waiting for old pod to terminate...\n";
+    for (int elapsed = 0; elapsed < 30; elapsed += POLL_INTERVAL_SEC) {
+        std::this_thread::sleep_for(std::chrono::seconds(POLL_INTERVAL_SEC));
+        std::string checkUrl = std::string(client->basePath)
+            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + SERVER_POD_NAME;
+        auto [code, body] = curlRequest("GET", checkUrl);
+        if (code != 200) {
+            std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Old pod gone (HTTP "
+                      << code << ").\n";
+            break;
+        }
+        std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Pod still exists, waiting...\n";
     }
-    script += "echo '[writer-pod] All files written successfully.'\n";
 
-    /// Unique pod name
-    auto now = std::chrono::steady_clock::now().time_since_epoch().count();
-    std::string podName = "source-writer-" + std::to_string(now);
-
-    /// Build the Pod JSON
+    /// Create file server pod
     nlohmann::json pod;
     pod["apiVersion"] = "v1";
     pod["kind"] = "Pod";
-    pod["metadata"]["name"] = podName;
+    pod["metadata"]["name"] = SERVER_POD_NAME;
     pod["metadata"]["namespace"] = kubeNamespace;
-    pod["metadata"]["labels"]["app"] = "source-writer";
+    pod["metadata"]["labels"]["app"] = SERVER_POD_NAME;
 
     nlohmann::json container;
-    container["name"] = "writer";
-    container["image"] = "busybox:1.36";
+    container["name"] = "file-server";
+    container["image"] = "python:3.11-alpine";
     container["imagePullPolicy"] = "IfNotPresent";
     container["command"] = nlohmann::json::array({"/bin/sh", "-c"});
-    container["args"] = nlohmann::json::array({script});
+    container["args"] = nlohmann::json::array({
+        "mkdir -p /data && python3 -c \""
+        "import http.server, os\n"
+        "class H(http.server.BaseHTTPRequestHandler):\n"
+        "    def do_PUT(self):\n"
+        "        path='/data/'+self.path.lstrip('/')\n"
+        "        os.makedirs(os.path.dirname(path),exist_ok=True)\n"
+        "        l=int(self.headers.get('Content-Length',0))\n"
+        "        open(path,'wb').write(self.rfile.read(l))\n"
+        "        self.send_response(200);self.end_headers()\n"
+        "    def log_message(self,*a):pass\n"
+        "http.server.HTTPServer(('',8080),H).serve_forever()\""
+    });
     container["volumeMounts"] = nlohmann::json::array({
-        {{"name", "source-data"}, {"mountPath", MOUNT_PATH}}
+        {{"name", "source-data"}, {"mountPath", "/data"}}
+    });
+    container["ports"] = nlohmann::json::array({
+        {{"containerPort", SERVER_PORT}}
     });
 
     pod["spec"]["containers"] = nlohmann::json::array({container});
@@ -463,61 +488,145 @@ void K8sJSONSubmitter::writeSourceDataToPVC(const std::string& pvcName,
          {"persistentVolumeClaim", {{"claimName", pvcName}}}}
     });
 
-    /// Create the writer pod
-    std::string createUrl = std::string(client->basePath)
+    std::string podsUrl = std::string(client->basePath)
         + "/api/v1/namespaces/" + kubeNamespace + "/pods";
-
-    auto [createCode, createBody] = curlRequest("POST", createUrl, pod.dump());
-
+    auto [createCode, createBody] = curlRequest("POST", podsUrl, pod.dump());
     if (createCode < 200 || createCode >= 300) {
-        throw std::runtime_error("Failed to create writer pod '" + podName
-            + "'. HTTP " + std::to_string(createCode)
-            + ". Response: " + createBody.substr(0, 500));
+        throw std::runtime_error("Failed to create file server pod. HTTP "
+            + std::to_string(createCode) + ". Response: " + createBody.substr(0, 500));
     }
 
-    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Created writer pod '"
-              << podName << "', waiting for completion...\n";
+    /// Create NodePort service
+    nlohmann::json svc;
+    svc["apiVersion"] = "v1";
+    svc["kind"] = "Service";
+    svc["metadata"]["name"] = "pvc-file-server-svc";
+    svc["metadata"]["namespace"] = kubeNamespace;
+    svc["spec"]["type"] = "NodePort";
+    svc["spec"]["selector"] = {{"app", SERVER_POD_NAME}};
+    svc["spec"]["ports"] = nlohmann::json::array({
+        {{"port", SERVER_PORT}, {"targetPort", SERVER_PORT}, {"protocol", "TCP"}}
+    });
 
-    /// Poll until Succeeded / Failed / Timeout
-    const int maxAttempts = TIMEOUT_SEC / POLL_INTERVAL_SEC;
-    for (int attempt = 0; attempt < maxAttempts; ++attempt) {
+    std::string svcUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/services";
+    auto [svcCode, svcBody] = curlRequest("POST", svcUrl, svc.dump());
+    if (svcCode < 200 || svcCode >= 300) {
+        deletePod(SERVER_POD_NAME);
+        throw std::runtime_error("Failed to create file server service. HTTP "
+            + std::to_string(svcCode) + ". Response: " + svcBody.substr(0, 500));
+    }
+
+    auto svcJson = nlohmann::json::parse(svcBody, nullptr, false);
+    int nodePort = svcJson["spec"]["ports"][0]["nodePort"].get<int>();
+
+    /// Extract node IP from basePath
+    std::string nodeIP = basePath;
+    const auto schemeEnd = nodeIP.find("://");
+    if (schemeEnd != std::string::npos) nodeIP = nodeIP.substr(schemeEnd + 3);
+    const auto portSep = nodeIP.find(':');
+    if (portSep != std::string::npos) nodeIP = nodeIP.substr(0, portSep);
+
+    /// Wait for pod to be Running
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Waiting for file server pod...\n";
+    for (int elapsed = 0; elapsed < TIMEOUT_SEC; elapsed += POLL_INTERVAL_SEC) {
         std::this_thread::sleep_for(std::chrono::seconds(POLL_INTERVAL_SEC));
 
         std::string readUrl = std::string(client->basePath)
-            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + podName;
+            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + SERVER_POD_NAME;
+        auto [code, body] = curlRequest("GET", readUrl);
+        if (code < 200 || code >= 300) continue;
 
-        auto [readCode, readBody] = curlRequest("GET", readUrl);
-        if (readCode < 200 || readCode >= 300) {
-            continue; // transient failure
-        }
-
-        auto podJson = nlohmann::json::parse(readBody, nullptr, false);
+        auto podJson = nlohmann::json::parse(body, nullptr, false);
         if (podJson.is_discarded()) continue;
 
         std::string phase;
-        if (podJson.contains("status") && podJson["status"].contains("phase")) {
+        if (podJson.contains("status") && podJson["status"].contains("phase"))
             phase = podJson["status"]["phase"].get<std::string>();
-        }
-
-        if (phase == "Succeeded") {
-            std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Writer pod completed successfully.\n";
-            deletePod(podName);
-            return;
-        }
-        if (phase == "Failed") {
-            std::string logs = fetchPodLogs("source-writer");
-            deletePod(podName);
-            throw std::runtime_error("Writer pod '" + podName + "' failed.\nLogs:\n" + logs);
-        }
 
         std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Pod phase: "
-                  << (phase.empty() ? "Pending" : phase)
-                  << " (attempt " << (attempt + 1) << "/" << maxAttempts << ")\n";
+                  << (phase.empty() ? "Pending" : phase) << "\n";
+
+        if (phase == "Running") break;
+        if (phase == "Failed") {
+            deletePod(SERVER_POD_NAME);
+            deleteService("pvc-file-server-svc");
+            throw std::runtime_error("File server pod failed to start.");
+        }
     }
 
-    deletePod(podName);
-    throw std::runtime_error("Timed out waiting for writer pod '" + podName
-        + "' after " + std::to_string(TIMEOUT_SEC) + "s.");
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Uploading "
+              << fileData.size() << " file(s) to " << nodeIP << ":" << nodePort << "\n";
+
+    for (const auto& [filename, contents] : fileData) {
+        std::string uploadUrl = "http://" + nodeIP + ":" + std::to_string(nodePort) + "/" + filename;
+        std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Uploading '"
+                  << filename << "' (" << contents.size() << " bytes)...\n";
+
+        CURL* curl = curl_easy_init();
+        if (!curl) {
+            deletePod(SERVER_POD_NAME);
+            deleteService("pvc-file-server-svc");
+            throw std::runtime_error("Failed to init curl for file upload");
+        }
+
+        curl_easy_setopt(curl, CURLOPT_URL, uploadUrl.c_str());
+        curl_easy_setopt(curl, CURLOPT_CUSTOMREQUEST, "PUT");
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, contents.c_str());
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, static_cast<long>(contents.size()));
+        curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 10L);
+        curl_easy_setopt(curl, CURLOPT_TIMEOUT, 300L);
+
+        struct curl_slist* headers = nullptr;
+        headers = curl_slist_append(headers,
+            ("Content-Length: " + std::to_string(contents.size())).c_str());
+        curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+
+        std::string response;
+        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION,
+            +[](char* ptr, size_t size, size_t nmemb, void* userdata) -> size_t {
+                static_cast<std::string*>(userdata)->append(ptr, size * nmemb);
+                return size * nmemb;
+            });
+        curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response);
+
+        CURLcode res = curl_easy_perform(curl);
+        long httpCode = 0;
+        curl_easy_getinfo(curl, CURLINFO_RESPONSE_CODE, &httpCode);
+        curl_slist_free_all(headers);
+        curl_easy_cleanup(curl);
+
+        if (res != CURLE_OK) {
+            deletePod(SERVER_POD_NAME);
+            deleteService("pvc-file-server-svc");
+            throw std::runtime_error("curl upload failed for '" + filename + "': "
+                + std::string(curl_easy_strerror(res)));
+        }
+        if (httpCode < 200 || httpCode >= 300) {
+            deletePod(SERVER_POD_NAME);
+            deleteService("pvc-file-server-svc");
+            throw std::runtime_error("Upload of '" + filename + "' failed. HTTP "
+                + std::to_string(httpCode) + ". Response: " + response.substr(0, 200));
+        }
+        std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] Uploaded '" << filename << "' OK.\n";
+    }
+
+    deletePod(SERVER_POD_NAME);
+    deleteService("pvc-file-server-svc");
+    std::cerr << "[K8sJSONSubmitter::writeSourceDataToPVC] All files uploaded successfully.\n";
+}
+
+void K8sJSONSubmitter::deleteService(const std::string& serviceName)
+{
+    std::string url = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/services/" + serviceName;
+    try {
+        auto [code, body] = curlRequest("DELETE", url);
+        std::cerr << "[K8sJSONSubmitter::deleteService] Deleted service '" << serviceName
+                  << "' (HTTP " << code << ")\n";
+    } catch (const std::exception& e) {
+        std::cerr << "[K8sJSONSubmitter::deleteService] Warning: " << e.what() << "\n";
+    }
 }
 
 std::string K8sJSONSubmitter::fetchPodLogs(const std::string& labelSelector)

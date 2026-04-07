@@ -207,69 +207,6 @@ public:
             .config = {}};
     }
 
-    CreateWorkerStatement bindCreateWorkerStatement(AntlrSQLParser::CreateWorkerDefinitionContext* workerDefAST) const
-    {
-        auto configs = (workerDefAST->optionsClause() != nullptr)
-            ? bindConfigOptionsWithDuplicates(workerDefAST->optionsClause()->options->namedConfigExpression())
-            : ConfigMultiMap{};
-
-        auto capacity = [&] -> std::optional<size_t>
-        {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "CAPACITY"; });
-            if (it != configs.end())
-            {
-                auto* literalOpt = std::get_if<Literal>(&it->second);
-                if (literalOpt && std::holds_alternative<uint64_t>(*literalOpt))
-                {
-                    return static_cast<size_t>(std::get<uint64_t>(*literalOpt));
-                }
-                throw InvalidQuerySyntax("Capacity must be an unsigned integer literal");
-            }
-            return std::nullopt;
-        }();
-
-        auto data = [&] -> std::string
-        {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA"; });
-            if (it != configs.end())
-            {
-                const Literal* literalOpt = std::get_if<Literal>(&it->second);
-                if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
-                {
-                    return URI(std::get<std::string>(*literalOpt)).toString();
-                }
-                throw InvalidQuerySyntax("DATA must be a string literal");
-            }
-            return {};
-        }();
-
-        auto downStreams = [&] -> std::vector<std::string>
-        {
-            return configs
-                | std::views::filter([](const auto& option) { return option.first.size() == 1 && option.first[0] == "DOWNSTREAM"; })
-                | std::views::values
-                | std::views::transform(
-                       [](const auto& value)
-                       {
-                           const Literal* literalOpt = std::get_if<Literal>(&value);
-                           if (literalOpt && std::holds_alternative<std::string>(*literalOpt))
-                           {
-                               return URI(std::get<std::string>(*literalOpt)).toString();
-                           }
-                           throw InvalidQuerySyntax("DOWNSTREAM must be a string literal");
-                       })
-                | std::ranges::to<std::vector<std::string>>();
-        }();
-
-
-        return CreateWorkerStatement{
-            .host = URI(bindStringLiteral(workerDefAST->hostaddr)).toString(),
-            .data = std::move(data),
-            .capacity = capacity,
-            .downstream = downStreams,
-            .config = {}};
-    }
-
     CreateSinkStatement bindCreateSinkStatement(AntlrSQLParser::CreateSinkDefinitionContext* sinkDefAST) const
     {
         const auto sinkName = bindIdentifier(sinkDefAST->sinkName->strictIdentifier());
