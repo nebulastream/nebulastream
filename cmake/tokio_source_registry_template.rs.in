@@ -47,10 +47,15 @@ unsafe fn decode_config(ptr: *const u8, len: usize) -> HashMap<String, String> {
         return HashMap::new();
     }
     let data = unsafe { std::slice::from_raw_parts(ptr, len) };
-    // Split on NUL bytes, collect into key-value pairs
+    // Split on NUL bytes, collect into key-value pairs.
+    // Note: empty values are allowed (e.g. default ""), so we must NOT filter
+    // out empty segments. Only skip empty *keys* (from trailing NUL).
     let mut map = HashMap::new();
-    let mut parts = data.split(|&b| b == NUL).filter(|s| !s.is_empty());
+    let mut parts = data.split(|&b| b == NUL);
     while let Some(key_bytes) = parts.next() {
+        if key_bytes.is_empty() {
+            continue;
+        }
         if let Some(val_bytes) = parts.next() {
             let key = String::from_utf8_lossy(key_bytes).into_owned();
             let val = String::from_utf8_lossy(val_bytes).into_owned();

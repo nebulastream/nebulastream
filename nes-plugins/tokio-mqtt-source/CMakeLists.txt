@@ -26,4 +26,17 @@ if (ENABLE_BATS_TESTS AND NES_ENABLES_TESTS)
             ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/tests/mqtt_source.bats
     )
     set_tests_properties(mqtt-source-embedded-test PROPERTIES LABELS "Systest;MQTT")
+
+    if (ENABLE_DOCKER_TESTS)
+        add_test(
+                NAME mqtt-source-distributed-test
+                COMMAND
+                env NES_CLI=$<TARGET_FILE:nes-cli>
+                env NEBULASTREAM=$<TARGET_FILE:nes-single-node-worker>
+                env NES_TEST_TMP_DIR=${CMAKE_BINARY_DIR}/test-tmp
+                env NES_RUNTIME_BASE_IMAGE=${NES_RUNTIME_BASE_IMAGE}
+                ${BATS} --verbose-run --timing ${CMAKE_CURRENT_SOURCE_DIR}/tests/distributed.bats
+        )
+        set_tests_properties(mqtt-source-distributed-test PROPERTIES LABELS "DockerCompose;MQTT" FIXTURES_REQUIRED RuntimeBaseImage)
+    endif ()
 endif ()

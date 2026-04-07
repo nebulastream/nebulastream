@@ -12,6 +12,8 @@ use std::collections::HashMap;
 
 use bytes::Bytes;
 
+use tracing::{debug, trace};
+
 use nes_source_runtime::config::{ConfigParam, ParamType};
 use nes_source_runtime::sink_context::SinkMessage;
 use nes_source_runtime::sink_error::SinkError;
@@ -61,14 +63,28 @@ impl AsyncSink for MqttSink {
                                 payload.extend_from_slice(segment);
                             }
                             if !payload.is_empty() {
+                                debug!(
+                                    payload_len = payload.len(),
+                                    topic = %self.topic,
+                                    "MQTT sink publishing data"
+                                );
+                                trace!(
+                                    payload = %String::from_utf8_lossy(&payload),
+                                    "MQTT sink payload"
+                                );
                                 handle.link_tx.as_mut().unwrap().async_publish(
                                     topic.clone(),
                                     Bytes::from(payload),
                                 ).await.map_err(|e| SinkError::new(format!("publish failed: {e}")))?;
                             }
                         }
-                        SinkMessage::Flush => {} // MQTT has no flush concept
-                        SinkMessage::Close => return Ok(()),
+                        SinkMessage::Flush => {
+                            debug!("MQTT sink received Flush");
+                        }
+                        SinkMessage::Close => {
+                            debug!("MQTT sink received Close");
+                            return Ok(());
+                        }
                     }
                 }
             }
