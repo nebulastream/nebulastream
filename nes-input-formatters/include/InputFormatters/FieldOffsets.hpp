@@ -107,7 +107,7 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto sizeOfDelimiter = (i + 1 == metaData.getNumberOfFields()) ? 0 : metaData.getFieldDelimitingBytes().size();
             const auto fieldSize = fieldOffsetEnd - fieldOffsetStart - sizeOfDelimiter;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
+            parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
         }
         return record;
     }
@@ -142,16 +142,11 @@ class FieldOffsets final : public FieldIndexFunction<FieldOffsets<NumOffsetsPerF
             const auto fieldOffsetStart = readValueFromMemRef<FieldIndex>(recordOffsetAddress);
             const auto fieldOffsetEnd = readValueFromMemRef<FieldIndex>(recordOffsetEndAddress);
 
+            (void)requiredFields;
+
             auto fieldSize = fieldOffsetEnd - fieldOffsetStart;
             const auto fieldAddress = recordBufferPtr + fieldOffsetStart;
-            if (not includesField(requiredFields, fieldName))
-            {
-                parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
-            }
-            else
-            {
-                parseRawValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
-            }
+            parseLazyValueIntoRecord(fieldDataType.type, record, fieldAddress, fieldSize, fieldName, metaData.getQuotationType());
         }
         return record;
     }
