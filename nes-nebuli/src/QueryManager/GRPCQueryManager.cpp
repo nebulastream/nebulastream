@@ -144,7 +144,7 @@ std::expected<LocalQueryStatus, Exception> GRPCQueryManager::status(const QueryI
         if (responseMetrics.has_stopunixtimeinms())
         {
             const std::chrono::system_clock::time_point stopTimePoint{std::chrono::milliseconds{responseMetrics.stopunixtimeinms()}};
-            queryStatus.metrics.running = stopTimePoint;
+            queryStatus.metrics.stop = stopTimePoint;
         }
 
         if (responseMetrics.has_error())
