@@ -971,6 +971,8 @@ bool isValidFieldValue(const std::string& token, const std::string& fieldType)
 {
     if (token.empty()) return false;
 
+    if (token == "NULL") return true;
+
     if (fieldType == "UINT64" || fieldType == "UINT32"
         || fieldType == "UINT16" || fieldType == "UINT8") {
         return allDigits(token);
@@ -1045,32 +1047,29 @@ void K8sJSONSubmitter::writeResultFile(const SystestQuery& query, const std::str
         }
 
         /// Validate that each token matches its field type
-        bool looksLikeData = true;
-        for (size_t i = 0; i < tokens.size(); ++i) {
-            const std::string& tok = tokens[i];
-            if (tok.empty()) {
-                looksLikeData = false;
-                break;
-            }
+         bool looksLikeData = true;
+         for (size_t i = 0; i < tokens.size(); ++i) {
+             const std::string& tok = tokens[i];
 
-            /// Check type validity if schema information is available
-            if (query.planInfoOrException && i < expectedFieldCount) {
-                auto fieldType = std::string(magic_enum::enum_name(
-                    query.planInfoOrException->sinkOutputSchema.getFieldAt(i).dataType.type));
-                if (!isValidFieldValue(tok, fieldType)) {
-                    looksLikeData = false;
-                    break;
-                }
-            } else {
-                /// No schema: just check that token contains at least one digit
-                bool hasDigit = std::any_of(tok.begin(), tok.end(),
-                    [](unsigned char c) { return std::isdigit(c); });
-                if (!hasDigit) {
-                    looksLikeData = false;
-                    break;
-                }
-            }
-        }
+             /// Check type validity if schema information is available
+             if (query.planInfoOrException && i < expectedFieldCount) {
+                 auto fieldType = std::string(magic_enum::enum_name(
+                     query.planInfoOrException->sinkOutputSchema.getFieldAt(i).dataType.type));
+                 if (!isValidFieldValue(tok, fieldType)) {
+                     looksLikeData = false;
+                     break;
+                 }
+             } else if (!tok.empty()) {
+                 /// No schema: just check that token contains at least one digit or is NULL
+                 bool hasDigit = std::any_of(tok.begin(), tok.end(),
+                     [](unsigned char c) { return std::isdigit(c); });
+                 bool isNull = (tok == "NULL");
+                 if (!hasDigit && !isNull) {
+                     looksLikeData = false;
+                     break;
+                 }
+             }
+         }
 
         if (!looksLikeData) {
             skippedLines++;
