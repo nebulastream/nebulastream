@@ -29,6 +29,12 @@
 #include <nlohmann/json.hpp>
 #include <nlohmann/json_fwd.hpp>
 
+namespace NES
+{
+struct QueryMetrics;
+struct LocalQueryStatus;
+}
+
 namespace nlohmann
 {
 /// For some reason, serializing the enum wrapper does not work with the to_json functions in our namespace
