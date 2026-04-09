@@ -14,6 +14,7 @@
 
 #include <JsonOutputFormatter.hpp>
 
+#include <chrono>
 #include <map>
 #include <ranges>
 #include <string>
@@ -24,6 +25,7 @@
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp> /// NOLINT(misc-include-cleaner)
+#include <Listeners/QueryLog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <google/protobuf/message_lite.h>
 #include <magic_enum/magic_enum.hpp>
@@ -71,6 +73,38 @@ void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& co
         jsonEntries.push_back(nlohmann::json{{key, jsonValue}});
     }
     jsonOutput = jsonEntries;
+}
+
+void to_json(nlohmann::json& jsonOutput, const QueryMetrics& metrics)
+{
+    auto formatTimestamp = [](const std::optional<std::chrono::system_clock::time_point>& timePoint) -> nlohmann::json {
+        if (!timePoint.has_value()) {
+            return nullptr;
+        }
+        return std::chrono::duration_cast<std::chrono::milliseconds>(timePoint->time_since_epoch()).count();
+    };
+
+    jsonOutput = nlohmann::json{
+        {"start_time_ms", formatTimestamp(metrics.start)},
+        {"running_time_ms", formatTimestamp(metrics.running)},
+        {"stop_time_ms", formatTimestamp(metrics.stop)}
+    };
+
+    if (metrics.error.has_value()) {
+        jsonOutput["error"] = nlohmann::json{
+            {"message", metrics.error->what()},
+            {"code", metrics.error->code()}
+        };
+    }
+}
+
+void to_json(nlohmann::json& jsonOutput, const LocalQueryStatus& status)
+{
+    jsonOutput = nlohmann::json{
+        {"query_id", status.queryId.getRawValue()},
+        {"state", magic_enum::enum_name(status.state)},
+        {"metrics", status.metrics}
+    };
 }
 
 }

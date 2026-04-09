@@ -54,8 +54,10 @@
 #include <grpcpp/create_channel.h>
 #include <grpcpp/security/credentials.h>
 #include <magic_enum/magic_enum.hpp>
+#include <nlohmann/json.hpp>
 #include <yaml-cpp/yaml.h>
 #include <ErrorHandling.hpp>
+#include <JsonOutputFormatter.hpp>
 #include <LegacyOptimizer.hpp>
 #include <Repl.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
@@ -113,13 +115,17 @@ int main(int argc, char** argv)
         dump.add_argument("-o", "--output").default_value("-").help("Write the DecomposedQueryPlan to file. Use - for stdout");
         dump.add_argument("-i", "--input").default_value("-").help("Read the query description. Use - for stdin which is the default");
 
+        ArgumentParser status("status");
+        status.add_argument("queryId").nargs(0, 1).scan<'i', size_t>().help("Optional query ID to get status for. If not provided, returns all queries.");
+
         program.add_subparser(registerQuery);
         program.add_subparser(startQuery);
         program.add_subparser(stopQuery);
         program.add_subparser(unregisterQuery);
         program.add_subparser(dump);
+        program.add_subparser(status);
 
-        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump};
+        std::vector<std::reference_wrapper<ArgumentParser>> subcommands{registerQuery, startQuery, stopQuery, unregisterQuery, dump, status};
 
         program.parse_args(argc, argv);
 
@@ -253,6 +259,41 @@ int main(int argc, char** argv)
             return 0;
         }
 
+        // Handle status command
+        if (program.is_subcommand_used("status"))
+        {
+            auto grpcQueryManager = std::dynamic_pointer_cast<NES::GRPCQueryManager>(queryManager);
+            if (!grpcQueryManager)
+            {
+                std::cerr << "Status command requires connection to a server (use -s option)\n";
+                return 1;
+            }
+
+            auto& statusParser = program.at<ArgumentParser>("status");
+            nlohmann::json outputJson;
+
+            if (statusParser.is_used("queryId"))
+            {
+                auto queryId = NES::QueryId{statusParser.get<size_t>("queryId")};
+                auto statusResult = queryManager->status(queryId);
+                if (!statusResult.has_value())
+                {
+                    std::cerr << fmt::format("Failed to get status for query {}: {}\n", queryId.getRawValue(), statusResult.error().what());
+                    return 1;
+                }
+                outputJson = statusResult.value();
+            }
+            else
+            {
+                // Get all queries - we need to call the gRPC RequestQueryLog directly
+                // Since QueryManager doesn't have a "get all queries" method, we'll use the gRPC stub directly
+                std::cerr << "Getting all queries status is not yet implemented. Please specify a query ID.\n";
+                return 1;
+            }
+
+            std::cout << outputJson.dump(2) << '\n';
+            return 0;
+        }
 
         const std::string command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<argparse::ArgumentParser>(command).get("-i");

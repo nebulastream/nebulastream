@@ -71,8 +71,8 @@ constexpr std::array<std::string_view, 4> sinkDescriptorOutputColumns{"sink_name
 using QueryIdOutputRowType = std::tuple<QueryId>;
 constexpr std::array<std::string_view, 1> queryIdOutputColumns{"query_id"};
 
-using QueryStatusOutputRowType = std::tuple<QueryId, std::string>;
-constexpr std::array<std::string_view, 2> queryStatusOutputColumns{"query_id", "query_status"};
+using QueryStatusOutputRowType = std::tuple<QueryId, std::string, std::string, std::string, std::string>;
+constexpr std::array<std::string_view, 5> queryStatusOutputColumns{"query_id", "state", "start_time_ms", "running_time_ms", "stop_time_ms"};
 
 /// NOLINTBEGIN(readability-convert-member-functions-to-static)
 template <>
@@ -244,7 +244,21 @@ struct StatementOutputAssembler<ShowQueriesStatementResult>
         output.reserve(result.queries.size());
         for (const auto& [id, query] : result.queries)
         {
-            output.emplace_back(id, magic_enum::enum_name(query.state));
+            auto formatTimestamp = [](const std::optional<std::chrono::system_clock::time_point>& timePoint) -> std::string {
+                if (!timePoint.has_value()) {
+                    return "";
+                }
+                auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(timePoint->time_since_epoch()).count();
+                return std::to_string(ms);
+            };
+
+            output.emplace_back(
+                id,
+                std::string(magic_enum::enum_name(query.state)),
+                formatTimestamp(query.metrics.start),
+                formatTimestamp(query.metrics.running),
+                formatTimestamp(query.metrics.stop)
+            );
         }
         return std::make_pair(queryStatusOutputColumns, output);
     }

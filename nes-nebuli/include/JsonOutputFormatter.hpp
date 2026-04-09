@@ -55,6 +55,10 @@ void to_json(nlohmann::json& jsonOutput, const google::protobuf::MessageLite& wi
 
 void to_json(nlohmann::json& jsonOutput, const NES::DescriptorConfig::Config& config);
 
+void to_json(nlohmann::json& jsonOutput, const QueryMetrics& metrics);
+
+void to_json(nlohmann::json& jsonOutput, const LocalQueryStatus& status);
+
 }
 
 namespace nlohmann
