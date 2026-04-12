@@ -231,7 +231,8 @@ private:
             const auto offsetOfLastTupleDelimiter = tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfLastTuple();
             tlIndexPhaseResult.hasValidOffsetOfTrailingSpanningTuple = offsetOfLastTupleDelimiter != std::numeric_limits<FieldIndex>::max();
 
-            tlIndexPhaseResult.hasTupleDelimiter = offsetOfFirstTupleDelimiter < tupleBuffer.getBufferSize();
+            tlIndexPhaseResult.hasTupleDelimiter
+                = offsetOfFirstTupleDelimiter < tupleBuffer.getBufferSize();
             return {
                 .offsetOfFirstTupleDelimiter = offsetOfFirstTupleDelimiter,
                 .offsetOfLastTupleDelimiter = offsetOfLastTupleDelimiter,
@@ -248,11 +249,15 @@ private:
 
         static void finalizeTrailingIndexPhase() { tlIndexPhaseResult.numTuplesWithoutTrailing += 1; }
 
-        static void constructAndIndexTrailingSpanningTuple(
+        static bool constructAndIndexTrailingSpanningTuple(
             const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
         {
             const auto sizeOfTrailingSpanningTuple
                 = calculateSizeOfSpanningTuple(stagedBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
+            if (sizeOfTrailingSpanningTuple <= inputFormatter.indexerMetaData.getTupleDelimitingBytes().size()*2)
+            {
+                return false;
+            }
             allocateForTrailingSpanningTuple(arenaRef, sizeOfTrailingSpanningTuple);
             const auto trailingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, stagedBuffers.size());
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
@@ -263,6 +268,7 @@ private:
                     std::bit_cast<const char*>(tlIndexPhaseResult.trailingSpanningTuple.data()),
                     tlIndexPhaseResult.trailingSpanningTuple.size()},
                 inputFormatter.indexerMetaData);
+            return true;
         }
 
         static void constructAndIndexLeadingSpanningTuple(
@@ -270,7 +276,10 @@ private:
         {
             const auto sizeOfLeadingSpanningTuple = calculateSizeOfSpanningTuple(
                 leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
-
+            if (sizeOfLeadingSpanningTuple <= inputFormatter.indexerMetaData.getTupleDelimitingBytes().size()*2)
+            {
+                return;
+            }
             allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
                 leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
@@ -332,9 +341,13 @@ private:
         {
             return false;
         }
-        IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
-        IndexPhaseResultBuilder::finalizeTrailingIndexPhase();
-        return true;
+        if (IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef))
+        {
+            IndexPhaseResultBuilder::finalizeTrailingIndexPhase();
+            return true;
+        }
+        NES_DEBUG("last offset: {}, first offset: {}", offsetOfLastTupleDelimiter, tlIndexPhaseResult.rawBufferFIF.getByteOffsetOfFirstTuple())
+        return false;
     }
 
     static IndexPhaseResult*
