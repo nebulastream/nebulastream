@@ -1,0 +1,64 @@
+query: |
+  SELECT
+  VARSIZED("manufacturing-anomaly") AS event,
+  VARSIZED("engine_wiring") AS component_type,
+  id AS component_id,
+  anomaly_score AS confidence,
+  timestamp AS timestamp
+  FROM MODEL_INFERENCE(engine_wiring_pca, (SELECT id, timestamp, AUTOVI_PREPROCESS_IMAGE(FROM_BASE64(data)) AS pixels FROM ENGINE_WIRING))
+  WHERE anomaly_score < FLOAT32(0.8)
+  INTO KAFKA_SINK;
+models:
+  - name: engine_wiring_pca
+    path: auto-model/engine_wiring_pca.onnx
+    input:
+      - name: pixels
+        type: VARSIZED
+    output:
+      - name: anomaly_score
+        type: FLOAT32
+sinks:
+  - name: KAFKA_SINK
+    type: KAFKA
+    schema:
+      - name: event
+        type: VARSIZED
+      - name: component_type
+        type: VARSIZED
+      - name: component_id
+        type: VARSIZED
+      - name: confidence
+        type: FLOAT32
+      - name: timestamp
+        type: UINT64
+    config:
+      brokers: 'broker:29092'
+      topic: process-intelligence
+      output_format: JSON
+    parser_config: {}
+logical:
+  - name: ENGINE_WIRING
+    schema:
+      - name: ID
+        type: VARSIZED
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: DATA
+        type: VARSIZED
+physical:
+  - logical: ENGINE_WIRING
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: source-engine-wiring
+      socket_port: 8080
+      socket_buffer_size: 65536
+      flush_interval_ms: 100
+      connect_timeout_seconds: 60

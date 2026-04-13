@@ -35,23 +35,31 @@ services:
     working_dir: /tmp/nebulastream
     volumes:
       - ./:/tmp/nebulastream/
-    depends_on:
-      - nes-worker
-      - source
-  source:
+  source-pipe-staple:
     build:
       context: datagen
       dockerfile: docker/Dockerfile
     image: datagen:local
-    container_name: source
     restart: unless-stopped
     environment:
-      DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/config/config.yaml}
+      DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-pipe-staple.yaml}
     ports:
-      - "8080:8080"
-      - "8081:8081"
-      - "8082:8082"
+      - "7080:8080"
+      - "7081:8081"
+      - "7082:8082"
     volumes:
-      - ./datagen/config.yaml:/app/config/config.yaml:ro
-      - ./datagen/config.mqtt.yaml:/app/config/config.mqtt.yaml:ro
-      - ./datagen/data:/app/data:ro
+      - ./demo/:/app/demo:ro
+  source-engine-wiring:
+    build:
+      context: datagen
+      dockerfile: docker/Dockerfile
+    image: datagen:local
+    restart: unless-stopped
+    environment:
+      DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-engine-wiring.yaml}
+    ports:
+      - "9080:8080"
+      - "9081:8081"
+      - "9082:8082"
+    volumes:
+      - ./demo/:/app/demo:ro
