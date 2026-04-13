@@ -18,6 +18,7 @@ add_source_files(nes-physical-operators
         )
 
 add_plugin(Concat PhysicalFunction nes-physical-operators ConcatPhysicalFunction.cpp)
+add_plugin(AUTOVI_PREPROCESS_IMAGE PhysicalFunction nes-physical-operators AutoViPreprocessImagePhysicalFunction.cpp)
 add_plugin(FROM_BASE64 PhysicalFunction nes-physical-operators FromBase64PhysicalFunction.cpp)
 add_plugin(TO_BASE64 PhysicalFunction nes-physical-operators ToBase64PhysicalFunction.cpp)
 add_plugin(Cast PhysicalFunction nes-physical-operators CastFieldPhysicalFunction.cpp)

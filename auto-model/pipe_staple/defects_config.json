@@ -1,0 +1,8 @@
+[
+    {
+        "defect_name": "missing",
+        "pixel_value": 255,
+        "saturation_threshold": 0.7,
+        "relative_saturation": true
+    }
+]

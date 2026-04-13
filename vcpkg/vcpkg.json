@@ -46,6 +46,7 @@
     "magic-enum",
     "nameof",
     "nautilus",
+    "libpng",
     "nlohmann-json",
     "reflectcpp",
     "replxx",

@@ -21,6 +21,7 @@ add_source_files(nes-logical-operators
 add_plugin(ConstantValue LogicalFunction nes-logical-operators ConstantValueLogicalFunction.cpp)
 add_plugin(FieldAccess LogicalFunction nes-logical-operators FieldAccessLogicalFunction.cpp)
 add_plugin(Concat LogicalFunction nes-logical-operators ConcatLogicalFunction.cpp)
+add_plugin(AUTOVI_PREPROCESS_IMAGE LogicalFunction nes-logical-operators AutoViPreprocessImageLogicalFunction.cpp)
 add_plugin(FROM_BASE64 LogicalFunction nes-logical-operators FromBase64LogicalFunction.cpp)
 add_plugin(TO_BASE64 LogicalFunction nes-logical-operators ToBase64LogicalFunction.cpp)
 add_plugin(CastToType LogicalFunction nes-logical-operators CastToTypeLogicalFunction.cpp)

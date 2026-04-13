@@ -1,0 +1,19 @@
+# name: inference/InferModelAutoModelFromBase64PreprocessedImage.test
+# description: ML model inference with the real auto-model using FROM_BASE64 and AUTOVI_PREPROCESS_IMAGE on a PNG derived from pipe_staple/test/good/0000.png
+# groups: [Inference]
+
+CREATE LOGICAL SOURCE stream(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH FILE small/auto-model-pipe-staple-good-0000-64x64-png.base64
+
+CREATE MODEL auto_vi ('../../auto-model/pipe_staple_pca.onnx')
+INPUT (pixels VARSIZED)
+OUTPUT (anomaly_score FLOAT32);
+
+CREATE SINK result(ANOMALY_SCORE FLOAT32 NOT NULL) TYPE File;
+
+SELECT anomaly_score
+FROM MODEL_INFERENCE(auto_vi, (SELECT AUTOVI_PREPROCESS_IMAGE(FROM_BASE64(data)) AS pixels FROM stream))
+INTO result;
+----
+0.010313
