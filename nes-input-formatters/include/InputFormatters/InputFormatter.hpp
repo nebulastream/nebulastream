@@ -312,10 +312,11 @@ private:
         static void finalizeTrailingIndexPhase() { tlIndexPhaseResult.numTuplesWithoutTrailing += 1; }
 
         static void constructAndIndexTrailingSpanningTuple(
-            const std::vector<StagedBuffer>& stagedBuffers, const InputFormatter& inputFormatter, Arena& arenaRef)
+            const std::vector<StagedBuffer>& stagedBuffers,
+            const InputFormatter& inputFormatter,
+            Arena& arenaRef,
+            const size_t sizeOfTrailingSpanningTuple)
         {
-            const auto sizeOfTrailingSpanningTuple
-                = calculateSizeOfSpanningTuple(stagedBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
             allocateForTrailingSpanningTuple(arenaRef, sizeOfTrailingSpanningTuple);
             const auto trailingSpanningTupleBuffers = std::span(stagedBuffers).subspan(0, stagedBuffers.size());
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
@@ -333,7 +334,10 @@ private:
         {
             const auto sizeOfLeadingSpanningTuple = calculateSizeOfSpanningTuple(
                 leadingSpanningTupleBuffers, inputFormatter.indexerMetaData.getTupleDelimitingBytes().size());
-
+            if (sizeOfLeadingSpanningTuple <= inputFormatter.indexerMetaData.getTupleDelimitingBytes().size() * 2)
+            {
+                return;
+            }
             allocateForLeadingSpanningTuple(arenaRef, sizeOfLeadingSpanningTuple);
             processSpanningTuple<typename FormatterType::IndexerMetaData>(
                 leadingSpanningTupleBuffers, tlIndexPhaseResult.leadingSpanningTuple, inputFormatter.indexerMetaData);
@@ -343,6 +347,20 @@ private:
                     std::bit_cast<const char*>(tlIndexPhaseResult.leadingSpanningTuple.data()),
                     tlIndexPhaseResult.leadingSpanningTuple.size()},
                 inputFormatter.indexerMetaData);
+        }
+
+        static size_t
+        calculateSizeOfSpanningTuple(const std::span<const StagedBuffer> spanningTupleBuffers, const size_t sizeOfTupleDelimitingBytes)
+        {
+            size_t sizeOfSpanningTuple = 0;
+            sizeOfSpanningTuple += (2 * sizeOfTupleDelimitingBytes);
+            sizeOfSpanningTuple += spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimitingBytes).size();
+            for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
+            {
+                sizeOfSpanningTuple += spanningTupleBuffers[i].getSizeOfBufferInBytes();
+            }
+            sizeOfSpanningTuple += spanningTupleBuffers.back().getLeadingBytes().size();
+            return sizeOfSpanningTuple;
         }
 
         /// Sequential mode: assembles a leading spanning tuple from accumulated buffers + leading bytes of the current buffer.
@@ -405,20 +423,6 @@ private:
             auto byteSpan = arenaRef.allocateMemory(sizeOfTrailingSpanningTuple);
             tlIndexPhaseResult.trailingSpanningTuple = std::span<char>(std::bit_cast<char*>(byteSpan.data()), byteSpan.size());
         }
-
-        static size_t
-        calculateSizeOfSpanningTuple(const std::span<const StagedBuffer> spanningTupleBuffers, const size_t sizeOfTupleDelimitingBytes)
-        {
-            size_t sizeOfSpanningTuple = 0;
-            sizeOfSpanningTuple += (2 * sizeOfTupleDelimitingBytes);
-            sizeOfSpanningTuple += spanningTupleBuffers.front().getTrailingBytes(sizeOfTupleDelimitingBytes).size();
-            for (size_t i = 1; i < spanningTupleBuffers.size() - 1; ++i)
-            {
-                sizeOfSpanningTuple += spanningTupleBuffers[i].getSizeOfBufferInBytes();
-            }
-            sizeOfSpanningTuple += spanningTupleBuffers.back().getLeadingBytes().size();
-            return sizeOfSpanningTuple;
-        }
     };
 
     static IndexPhaseResult* getIndexPhaseResultProxy() { return &tlIndexPhaseResult; }
@@ -474,7 +478,15 @@ private:
         {
             return false;
         }
-        IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef);
+        const auto sizeOfTrailingSpanningTuple = IndexPhaseResultBuilder::calculateSizeOfSpanningTuple(
+            stagedBuffers.getSpanningBuffers(), inputFormatter->indexerMetaData.getTupleDelimitingBytes().size());
+        /// If the spanning tuple consists only of delimiters, it is empty and we can skip processing it
+        if (sizeOfTrailingSpanningTuple <= inputFormatter->indexerMetaData.getTupleDelimitingBytes().size() * 2)
+        {
+            return false;
+        }
+        IndexPhaseResultBuilder::constructAndIndexTrailingSpanningTuple(
+            stagedBuffers.getSpanningBuffers(), *inputFormatter, *arenaRef, sizeOfTrailingSpanningTuple);
         IndexPhaseResultBuilder::finalizeTrailingIndexPhase();
         return true;
     }
