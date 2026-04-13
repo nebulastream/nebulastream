@@ -75,7 +75,7 @@ LogicalOperator InlineSourceBindingRule::bindInlineSourceLogicalOperators(const 
 
         /// "host" is not part of the source config — it determines placement, not source behavior.
         /// It is stored in the config map only because InlineSourceLogicalOperator lacks a dedicated host field.
-        auto hostIt = sourceConfig.find("host");
+        auto hostIt = sourceConfig.find(Identifier::parse("host"));
         if (hostIt == sourceConfig.end())
         {
             throw InvalidConfigParameter("`host`");

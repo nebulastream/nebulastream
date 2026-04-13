@@ -168,7 +168,7 @@ void addOutputFormattingEmit(
     const PhysicalOperatorWrapper& wrappedOp,
     const uint64_t configuredBufferSize,
     const std::string& outputFormat,
-    const std::unordered_map<std::string, std::string>& config)
+    const std::unordered_map<Identifier, std::string>& config)
 {
     PRECONDITION(pipeline->isOperatorPipeline(), "Only add emit physical operator to operator pipelines");
     const auto& schema = wrappedOp.getOutputSchema();

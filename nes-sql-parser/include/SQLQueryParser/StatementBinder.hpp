@@ -78,7 +78,7 @@ struct CreateSinkStatement
     Schema<UnqualifiedUnboundField, Ordered> schema;
     std::optional<Host> host;
     std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::unordered_map<Identifier, std::string> formatConfig;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,

@@ -42,9 +42,9 @@ class LowerSchemaProvider
 public:
     static std::shared_ptr<TupleBufferRef> lowerSchemaWithOutputFormat(
         uint64_t bufferSize,
-        const Schema& schema,
+        const Schema<QualifiedUnboundField, Ordered>& schema,
         const std::string& outputFormatterType,
-        const std::unordered_map<std::string, std::string>& config);
+        const std::unordered_map<Identifier, std::string>& config);
 
     static std::shared_ptr<TupleBufferRef>
     lowerSchema(uint64_t bufferSize, const Schema<QualifiedUnboundField, Ordered>& schema, MemoryLayoutType layoutType);

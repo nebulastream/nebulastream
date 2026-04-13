@@ -38,7 +38,7 @@ public:
         const Identifier& sinkType,
        Host host,
         std::unordered_map<Identifier, std::string> config,
-        const std::unordered_map<std::string, std::string>& formatConfig);
+        const std::unordered_map<Identifier, std::string>& formatConfig);
 
     std::optional<SinkDescriptor> getSinkDescriptor(const Identifier& sinkName) const;
 
@@ -47,7 +47,7 @@ public:
         const Identifier& sinkType,
        Host host,
         std::unordered_map<Identifier, std::string> config,
-        const std::unordered_map<std::string, std::string>& formatConfig) const;
+        const std::unordered_map<Identifier, std::string>& formatConfig) const;
 
     bool removeSinkDescriptor(const Identifier& sinkName);
     bool removeSinkDescriptor(const SinkDescriptor& sinkDescriptor);

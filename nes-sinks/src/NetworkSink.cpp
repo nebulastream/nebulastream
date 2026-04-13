@@ -34,10 +34,12 @@
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Overloaded.hpp>
 #include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <network/lib.h>
 #include <rust/cxx.h>
+
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
@@ -124,7 +126,7 @@ bool BackpressureHandler::empty() const
 
 NetworkSink::NetworkSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
     : Sink(std::move(backpressureController))
-    , tupleSize(sinkDescriptor.getSchema()->getSizeOfSchemaInBytes())
+    , tupleSize(std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())->getSizeInBytes())
     , backpressureHandler(
           sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_UPPER_THRESHOLD),
           sinkDescriptor.getFromConfig(ConfigParametersNetworkSink::BACKPRESSURE_LOWER_THRESHOLD))

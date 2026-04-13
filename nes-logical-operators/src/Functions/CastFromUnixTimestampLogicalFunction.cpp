@@ -23,7 +23,6 @@
 
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/DataTypeProvider.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Serialization/LogicalFunctionReflection.hpp>
 #include <Util/PlanRenderer.hpp>
@@ -57,7 +56,7 @@ CastFromUnixTimestampLogicalFunction CastFromUnixTimestampLogicalFunction::withD
     return copy;
 }
 
-LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema& schema) const
+LogicalFunction CastFromUnixTimestampLogicalFunction::withInferredDataType(const Schema<Field, Unordered>& schema) const
 {
     const auto newChildren = getChildren() | std::views::transform([&schema](auto& child) { return child.withInferredDataType(schema); })
         | std::ranges::to<std::vector>();

@@ -193,7 +193,7 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
     }();
 
     if (const auto created = sinkCatalog->addSinkDescriptor(
-            toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig))
+            statement.name, statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig))
     {
         return CreateSinkStatementResult{created.value()};
     }

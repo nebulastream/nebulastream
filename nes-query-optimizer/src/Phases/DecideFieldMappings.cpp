@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <../../private/Phases/DecideFieldMappings.hpp>
+#include <../../include/Rules/Static/DecideFieldMappings.hpp>
 
 #include <cstdint>
 #include <optional>

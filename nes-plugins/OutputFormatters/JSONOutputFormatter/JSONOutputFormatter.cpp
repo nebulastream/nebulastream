@@ -193,8 +193,9 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     nautilus::val<uint64_t> written{0};
     nautilus::val<uint64_t> currentRemainingSize = remainingSize;
 
+    const auto canonicalFieldName = fmt::format("{}", fieldNames.at(fieldIndex));
     /// The identifier of the current field, which should be prepended to the value
-    const nautilus::val<const char*> fieldName{fieldNames.at(fieldIndex).c_str()};
+    const nautilus::val<const char*> fieldName{canonicalFieldName.c_str()};
     /// Write the pre-value content
     const nautilus::val<uint64_t> amountWritten = nautilus::invoke(
         writePreValueContents,

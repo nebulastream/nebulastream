@@ -193,7 +193,7 @@ LogicalPlan LogicalPlanBuilder::addInlineSink(
     Identifier type,
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> schema,
     std::unordered_map<Identifier, std::string> sinkConfig,
-   std::unordered_map<std::string, std::string> formatConfig,
+   std::unordered_map<Identifier, std::string> formatConfig,
     const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(

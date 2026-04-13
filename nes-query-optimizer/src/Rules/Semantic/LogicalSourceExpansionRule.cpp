@@ -29,7 +29,6 @@
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Sources/SourceCatalog.hpp>
-#include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <ErrorHandling.hpp>
 
@@ -49,7 +48,7 @@ std::string_view LogicalSourceExpansionRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> LogicalSourceExpansionRule::dependsOn() const
 {
-    return {typeid(SourceInferenceRule)};
+    return {};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
@@ -63,8 +62,6 @@ bool LogicalSourceExpansionRule::operator==(const LogicalSourceExpansionRule& ot
     return sourceCatalog == other.sourceCatalog;
 }
 
-LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
-{
 LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCatalog& sourceCatalog)
 {
     auto children = visiting.getChildren()
@@ -107,11 +104,10 @@ LogicalOperator applyRecursive(const LogicalOperator& visiting, const SourceCata
     }
     return visiting->withChildren(children | std::ranges::to<std::vector>());
 }
-}
 
-void LogicalSourceExpansionRule::apply(LogicalPlan& queryPlan) const
+LogicalPlan LogicalSourceExpansionRule::apply(LogicalPlan queryPlan) const
 {
     PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
-    queryPlan = LogicalPlan{applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)};
+    return queryPlan.withRootOperators({applyRecursive(queryPlan.getRootOperators().at(0), *sourceCatalog)});
 }
 }

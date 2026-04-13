@@ -24,6 +24,10 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/UnionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Rules/Static/DecideFieldOrder.hpp>
+#include <Rules/Static/DecideJoinTypesRule.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -48,7 +52,7 @@ std::set<std::type_index> RedundantUnionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantUnionRemovalRule::requiredBy() const
 {
-    return {};
+    return {typeid(DecideFieldMappings), typeid(DecideFieldOrder)};
 }
 
 bool RedundantUnionRemovalRule::operator==(const RedundantUnionRemovalRule&) const

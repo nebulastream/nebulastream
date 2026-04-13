@@ -42,7 +42,7 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     const Identifier& sinkType,
    Host host,
     std::unordered_map<Identifier, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig)
+    const std::unordered_map<Identifier, std::string>& formatConfig)
 {
     if (std::ranges::all_of(fmt::format("{}", sinkName), [](const char character) { return std::isdigit(character); }))
     {
@@ -82,7 +82,7 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     const Identifier& sinkType,
    Host host,
     std::unordered_map<Identifier, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig) const
+    const std::unordered_map<Identifier, std::string>& formatConfig) const
 {
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType.asCanonicalString(), std::move(config));
 

@@ -52,7 +52,7 @@ FileSink::FileSink(BackpressureController backpressureController, const SinkDesc
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersFile::FILE_PATH))
     , isAppend(sinkDescriptor.getFromConfig(ConfigParametersFile::APPEND))
     , isOpen(false)
-    , schemaFormatter(SchemaFormatter(sinkDescriptor.getSchema()))
+    , schemaFormatter(SchemaFormatter(std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(sinkDescriptor.getSchema())))
 {
 }
 

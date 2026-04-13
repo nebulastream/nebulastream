@@ -26,6 +26,9 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Rules/Static/DecideFieldOrder.hpp>
+#include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <Schema/Binder.hpp>
 #include <ErrorHandling.hpp>
 
@@ -51,7 +54,7 @@ std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
 {
-    return {};
+    return {typeid(DecideFieldMappings), typeid(DecideFieldOrder)};
 }
 
 bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const

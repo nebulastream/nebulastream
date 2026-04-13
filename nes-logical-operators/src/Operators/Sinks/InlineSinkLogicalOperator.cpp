@@ -75,7 +75,7 @@ std::optional<Schema<UnqualifiedUnboundField, Ordered>> InlineSinkLogicalOperato
     return targetSchema;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getFormatConfig() const
+std::unordered_map<Identifier, std::string> InlineSinkLogicalOperator::getFormatConfig() const
 {
     return formatConfig;
 }

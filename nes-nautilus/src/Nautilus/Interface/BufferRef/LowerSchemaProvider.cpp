@@ -41,18 +41,18 @@ namespace NES
 
 std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat(
     const uint64_t bufferSize,
-    const Schema& schema,
+    const Schema<QualifiedUnboundField, Ordered>& schema,
     const std::string& outputFormatterType,
-    const std::unordered_map<std::string, std::string>& config)
+    const std::unordered_map<Identifier, std::string>& config)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;
-    fields.reserve(schema.getNumberOfFields());
-    fieldNames.reserve(schema.getNumberOfFields());
+    fields.reserve(std::ranges::size(schema));
+    fieldNames.reserve(std::ranges::size(schema));
     for (const auto& field : schema)
     {
-        fields.emplace_back(field.name, field.dataType);
-        fieldNames.emplace_back(field.name);
+        fields.emplace_back(field.getFullyQualifiedName(), field.getDataType());
+        fieldNames.emplace_back(field.getFullyQualifiedName());
     }
 
     /// Create the output formatter descriptor

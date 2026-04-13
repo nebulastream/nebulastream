@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <LegacyOptimizer/CalcTargetOrderPhase.hpp>
+#include <Rules/Semantic/CalcTargetOrderPhase.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -28,6 +28,9 @@
 #include <Operators/Reorderer.hpp>
 #include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/InlineSinkBindingRule.hpp>
+#include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
+#include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Schema/Binder.hpp>
 #include <Schema/Field.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -88,8 +91,33 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
 
 }
 
+const std::type_info& CalcTargetOrderPhase::getType()
+{
+    return typeid(CalcTargetOrderPhase);
+}
+
+std::string_view CalcTargetOrderPhase::getName()
+{
+    return NAME;
+};
+
+std::set<std::type_index> CalcTargetOrderPhase::dependsOn() const
+{
+    return {typeid(SinkBindingRule), typeid(InlineSinkBindingRule), typeid(LogicalSourceExpansionRule)};
+}
+
+std::set<std::type_index> CalcTargetOrderPhase::requiredBy() const
+{
+    return {};
+}
+
+bool CalcTargetOrderPhase::operator==(const CalcTargetOrderPhase&) const
+{
+    return true;
+}
+
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-void CalcTargetOrderPhase::apply(NES::LogicalPlan& plan) const
+LogicalPlan CalcTargetOrderPhase::apply(NES::LogicalPlan plan) const
 {
     auto hasOrder = [](const LogicalOperator& rootNode)
     {
@@ -110,7 +138,7 @@ void CalcTargetOrderPhase::apply(NES::LogicalPlan& plan) const
 
     if (std::ranges::all_of(plan.getRootOperators(), hasOrder))
     {
-        return;
+        return plan;
     }
 
     PRECONDITION(std::ranges::size(plan.getRootOperators()) == 1, "Can only infer target schema order for plans with exactly one root");
@@ -121,6 +149,6 @@ void CalcTargetOrderPhase::apply(NES::LogicalPlan& plan) const
     const auto oldDescriptor = std::get<InlineSinkDescriptor>(root->getSinkDescriptor()->getUnderlying());
     auto newInlineSinkDescriptor = SinkDescriptor{oldDescriptor.withSchemaOrder(newTargetSchema)};
     auto newSinkRoot = root->withSinkDescriptor(newInlineSinkDescriptor);
-    plan = plan.withRootOperators({newSinkRoot});
+    return plan.withRootOperators({newSinkRoot});
 }
 };

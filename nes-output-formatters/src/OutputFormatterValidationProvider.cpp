@@ -20,13 +20,17 @@
 #include <unordered_map>
 #include <utility>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
+
 #include <OutputFormatterValidationRegistry.hpp>
 
 namespace NES::OutputFormatterValidationProvider
 {
-std::optional<DescriptorConfig::Config>
-provide(const std::string_view outputFormat, std::unordered_map<std::string, std::string> stringConfig)
+std::optional<DescriptorConfig::Config> provide(const std::string_view outputFormat, std::unordered_map<Identifier, std::string> idConfig)
 {
+    auto stringConfig = idConfig
+        | std::views::transform([](const auto& pair) { return std::make_pair(pair.first.asCanonicalString(), pair.second); })
+        | std::ranges::to<std::unordered_map<std::string, std::string>>();
     auto outputFormatValidationArgs = OutputFormatterValidationRegistryArguments(std::move(stringConfig));
     return OutputFormatterValidationRegistry::instance().create(std::string{outputFormat}, std::move(outputFormatValidationArgs));
 }

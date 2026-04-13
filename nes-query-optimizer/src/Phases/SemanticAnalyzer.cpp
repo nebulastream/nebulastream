@@ -24,7 +24,6 @@
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
-#include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
 
 namespace NES
@@ -37,7 +36,6 @@ SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCa
     ruleManager.addRule(InlineSinkBindingRule{this->sinkCatalog});
     ruleManager.addRule(SinkBindingRule{this->sinkCatalog});
     ruleManager.addRule(InlineSourceBindingRule{this->sourceCatalog});
-    ruleManager.addRule(SourceInferenceRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(OriginIdInferenceRule{});

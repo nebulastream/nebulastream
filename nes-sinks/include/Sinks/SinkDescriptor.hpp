@@ -33,7 +33,6 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Identifiers/NESStrongTypeReflection.hpp> /// NOLINT(misc-include-cleaner)
 #include <Util/Logger/Formatter.hpp>
 #include <Util/ReflectionFwd.hpp>
 
@@ -45,13 +44,6 @@ class SinkCatalog;
 
 namespace NES
 {
-
-enum class InputFormat : uint8_t
-{
-    CSV,
-    JSON
-};
-
 class NamedSinkDescriptor final : public Descriptor
 {
     friend SinkCatalog;
@@ -68,18 +60,22 @@ public:
     [[nodiscard]] Host getHost() const;
     [[nodiscard]] std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> getSchema() const;
     [[nodiscard]] Identifier getSinkName() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit NamedSinkDescriptor(
         Identifier name,
         Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
         std::string_view sinkType,
+        Host host,
+        std::unordered_map<Identifier, std::string> formatConfig,
         DescriptorConfig::Config config);
 
     Identifier name;
     std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>> schema;
     std::string sinkType;
     Host host;
+    std::unordered_map<Identifier, std::string> formatConfig;
 
     friend Unreflector<NamedSinkDescriptor>;
 };
@@ -106,12 +102,16 @@ public:
         std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>
     getSchema() const;
     [[nodiscard]] uint64_t getSinkId() const;
+    [[nodiscard]] Host getHost() const;
+    [[nodiscard]] std::unordered_map<Identifier, std::string> getOutputFormatterConfig() const;
 
 private:
     explicit InlineSinkDescriptor(
         uint64_t sinkId,
         std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema,
         std::string_view sinkType,
+        Host host,
+        std::unordered_map<Identifier, std::string> formatConfig,
         DescriptorConfig::Config config);
 
     InlineSinkDescriptor withSchemaOrder(const Schema<UnqualifiedUnboundField, Ordered>& newSchema) const;
@@ -124,6 +124,7 @@ private:
         schema;
     std::string sinkType;
     Host host;
+    std::unordered_map<Identifier, std::string> formatConfig;
 
     friend Unreflector<InlineSinkDescriptor>;
 };
@@ -163,8 +164,8 @@ private:
 
 public:
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<EnumWrapper, InputFormat> OUTPUT_FORMAT{
-        "INPUT_FORMAT",
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "OUTPUT_FORMAT",
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
@@ -205,8 +206,8 @@ struct ReflectedInlineSinkDescriptor
     std::variant<std::monostate, Schema<UnqualifiedUnboundField, Unordered>, Schema<UnqualifiedUnboundField, Ordered>> schema;
     std::string sinkType;
     Host host;
-    Reflected config;
     Reflected formatConfig;
+    Reflected config;
 };
 
 struct ReflectedNamedSinkDescriptor
@@ -215,8 +216,8 @@ struct ReflectedNamedSinkDescriptor
     Schema<UnqualifiedUnboundField, Ordered> schema;
     std::string sinkType;
     Host host;
-    Reflected config;
     Reflected formatConfig;
+    Reflected config;
 };
 }
 

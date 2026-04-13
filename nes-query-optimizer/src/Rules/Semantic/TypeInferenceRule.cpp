@@ -20,7 +20,6 @@
 #include <typeinfo>
 #include <vector>
 
-#include <DataTypes/Schema.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>

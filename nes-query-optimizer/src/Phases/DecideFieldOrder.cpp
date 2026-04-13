@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Phases/DecideFieldOrder.hpp>
+#include <Rules/Static/DecideFieldOrder.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -108,6 +108,31 @@ LogicalOperator applyRecur(const LogicalOperator& visiting)
     return visiting.withTraitSet(std::move(traitSet)).withChildren(newChildren);
 }
 
+}
+
+const std::type_info& DecideFieldOrder::getType()
+{
+    return typeid(DecideFieldOrder);
+}
+
+std::string_view DecideFieldOrder::getName()
+{
+    return NAME;
+}
+
+std::set<std::type_index> DecideFieldOrder::dependsOn() const
+{
+    return {};
+}
+
+std::set<std::type_index> DecideFieldOrder::requiredBy() const
+{
+    return {};
+}
+
+bool DecideFieldOrder::operator==(const DecideFieldOrder&) const
+{
+    return true;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)

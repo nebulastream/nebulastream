@@ -18,9 +18,10 @@
 #include <string_view>
 #include <unordered_map>
 #include <Configurations/Descriptor.hpp>
+#include <Identifiers/Identifier.hpp>
 
 namespace NES::OutputFormatterValidationProvider
 {
 /// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view outputFormat, std::unordered_map<std::string, std::string> stringConfig);
+std::optional<DescriptorConfig::Config> provide(std::string_view outputFormat, std::unordered_map<Identifier, std::string> stringConfig);
 }

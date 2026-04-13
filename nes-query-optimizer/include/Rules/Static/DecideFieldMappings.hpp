@@ -36,6 +36,15 @@ public:
 
     LogicalPlan apply(const LogicalPlan& queryPlan);
 
+    static constexpr std::string_view NAME = "DecideFieldMappings";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    [[nodiscard]] LogicalPlan apply(const LogicalPlan& queryPlan) const;
+    bool operator==(const DecideFieldMappings& other) const;
+
 private:
     LogicalOperator apply(const LogicalOperator& logicalOperator);
 };

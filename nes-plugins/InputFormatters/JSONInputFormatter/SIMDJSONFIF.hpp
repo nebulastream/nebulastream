@@ -327,7 +327,7 @@ parseJsonFixedSizeIntoVarValProxy(const FieldIndex fieldIndex, SIMDJSONFIF* fiel
     else if constexpr (std::same_as<T, char>)
     {
         const auto parsedValue = SIMDJSONFIF::parseSIMDJsonValueOrThrow<std::string_view, Nullable>(
-            simdJsonResult.get_string(), simdJsonResult, "char", fieldName.asCanonicalString());
+            simdJsonResult.get_string(), simdJsonResult, "char", fieldName);
         if (not parsedValue.has_value())
         {
             result.isNull = true;

@@ -78,7 +78,7 @@ private:
     std::optional<Schema<UnqualifiedUnboundField, Ordered>> targetSchema;
     Identifier sinkType;
     std::unordered_map<Identifier, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::unordered_map<Identifier, std::string> formatConfig;
 
     friend Reflector<TypedLogicalOperator<InlineSinkLogicalOperator>>;
 };

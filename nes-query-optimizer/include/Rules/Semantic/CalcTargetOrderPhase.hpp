@@ -13,53 +13,23 @@
 */
 
 #pragma once
-<<<<<<<< HEAD:nes-query-optimizer/include/Rules/Semantic/SourceInferenceRule.hpp
-
-#include <memory>
-#include <set>
-#include <string_view>
-#include <typeindex>
-#include <typeinfo>
-#include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/Rule.hpp>
-#include <Sources/SourceCatalog.hpp>
-
-namespace NES
-{
-
-class SourceInferenceRule
-{
-public:
-    explicit SourceInferenceRule(std::shared_ptr<const SourceCatalog> sourceCatalog) : sourceCatalog(std::move(sourceCatalog)) { }
-
-    static constexpr std::string_view NAME = "SourceInferenceRule";
-
-    [[nodiscard]] static const std::type_info& getType();
-    [[nodiscard]] static std::string_view getName();
-    [[nodiscard]] std::set<std::type_index> dependsOn() const;
-    [[nodiscard]] std::set<std::type_index> requiredBy() const;
-
-    /// For each source, sets the schema by getting it from the source catalog and formatting the field names (adding a prefix qualifier name).
-    /// @throws LogicalSourceNotFoundInQueryDescription if inferring the data types into the query failed
-    [[nodiscard]] LogicalPlan apply(LogicalPlan queryPlan) const;
-    bool operator==(const SourceInferenceRule& other) const;
-
-private:
-    std::shared_ptr<const SourceCatalog> sourceCatalog;
-};
-
-static_assert(RuleConcept<SourceInferenceRule, LogicalPlan>);
-========
-#include <Plans/LogicalPlan.hpp>
 
 namespace NES
 {
 class CalcTargetOrderPhase
 {
 public:
-    void apply(NES::LogicalPlan& plan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    LogicalPlan apply(LogicalPlan plan) const; /// NOLINT(readability-convert-member-functions-to-static)
+    static constexpr std::string_view NAME = "CalcTargetOrderPhae";
+
+    [[nodiscard]] static const std::type_info& getType();
+    [[nodiscard]] static std::string_view getName();
+    [[nodiscard]] std::set<std::type_index> dependsOn() const;
+    [[nodiscard]] std::set<std::type_index> requiredBy() const;
+    bool operator==(const CalcTargetOrderPhase& other) const;
 };
 
->>>>>>>> a642d8d3be (feat(Optimizer): Redo inference, split schema, rebased):nes-query-optimizer/include/Rules/Semantic/CalcTargetOrderPhase.hpp
+static_assert(RuleConcept<CalcTargetOrderPhase, LogicalPlan>);
 }

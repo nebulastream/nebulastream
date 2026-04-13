@@ -18,6 +18,9 @@
 #include <utility>
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/RuleManager.hpp>
+#include <Rules/Semantic/TypeInferenceRule.hpp>
+#include <Rules/Static/DecideFieldMappings.hpp>
+#include <Rules/Static/DecideFieldOrder.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
@@ -35,6 +38,8 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(DecideMemoryLayoutRule{});
     ruleManager.addRule(RedundantUnionRemovalRule{});
     ruleManager.addRule(RedundantProjectionRemovalRule{});
+    ruleManager.addRule(DecideFieldMappings{});
+    ruleManager.addRule(DecideFieldOrder{});
 
     ruleSequence = ruleManager.getSequence();
 }
