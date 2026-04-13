@@ -186,6 +186,67 @@ TEST_F(SpecificSequenceTest, testMultiplePartiallyFilledBuffers)
            {.sequenceNumber = SequenceNumber(3), .rawBytes = ",129"}}});
 }
 
+/// Constructs an empty spanning tuple, since it starts with a '\n' (and the SequenceShredder contains a buffer '0' containing a '\n'
+TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 16,
+        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(12)}}}},
+        .rawBytesPerThread = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "\n{\"Field_0\":12}\n"}}});
+}
+
+/// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 2, this leads to an empty spanning tuple between the ending '}'-byte
+/// of buffer 2 and the starting '\n'-byte of buffer 3 (leading spanning tuple)
+TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
+        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults
+        = {WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}},
+        .rawBytesPerThread
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"}}});
+}
+
+/// SIMDJSON detects a complete tuple '{"Field_0":567}' in buffer 3, this leads to an empty spanning tuple between the ending '}'-byte
+/// of buffer 2 and the starting '\n'-byte of buffer 3 (trailing spanning tuple)
+TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
+{
+    using namespace InputFormatterTestUtil;
+    using enum TestDataTypes;
+    using TestTuple = std::tuple<int32_t>;
+    runTest<TestTuple>(TestConfig<TestTuple>{
+        .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
+        .sizeOfRawBuffers = 16,
+        .sizeOfFormattedBuffers = 20,
+        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .testSchema = {INT32},
+        .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
+        .expectedResults
+        = {WorkerThreadResults<TestTuple>{{{TestTuple(89)}}}, WorkerThreadResults<TestTuple>{{{TestTuple(1234), TestTuple(567)}}}},
+
+        .rawBytesPerThread
+        = {/* buffer 1 */ {.sequenceNumber = SequenceNumber(1), .rawBytes = "{\"Field_0\":1234}"},
+           /* buffer 3 */ {.sequenceNumber = SequenceNumber(3), .rawBytes = "\n{\"Field_0\":89}\n"},
+           /* buffer 2 */ {.sequenceNumber = SequenceNumber(2), .rawBytes = "\n{\"Field_0\":567}"}}});
+}
 }
 
 /// NOLINTEND(readability-magic-numbers)
