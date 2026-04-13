@@ -1,0 +1,19 @@
+# name: inference/InferModelUnderbodyScrewAutoModelFromBase64OriginalImage.test
+# description: ML model inference with the underbody_screw auto-model using FROM_BASE64 and AUTOVI_PREPROCESS_IMAGE on the original underbody_screw/test/good/0000.png payload
+# groups: [Inference]
+
+CREATE LOGICAL SOURCE stream(data VARSIZED NOT NULL);
+CREATE PHYSICAL SOURCE FOR stream TYPE File;
+ATTACH FILE small/auto-model-underbody-screw-good-0000-original-png.base64
+
+CREATE MODEL auto_vi ('../../auto-model/underbody_screw_pca.onnx')
+INPUT (pixels VARSIZED)
+OUTPUT (anomaly_score FLOAT32);
+
+CREATE SINK result(ANOMALY_SCORE FLOAT32 NOT NULL) TYPE File;
+
+SELECT anomaly_score
+FROM MODEL_INFERENCE(auto_vi, (SELECT AUTOVI_PREPROCESS_IMAGE(FROM_BASE64(data)) AS pixels FROM stream))
+INTO result;
+----
+0.128398
