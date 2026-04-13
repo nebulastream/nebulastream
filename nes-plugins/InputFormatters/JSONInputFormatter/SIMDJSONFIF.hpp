@@ -82,10 +82,10 @@ struct SIMDJSONMetaData
 
     {
         PRECONDITION(
-            config.fieldDelimiter.size() == 1,
-            "Delimiters must be of size '1 byte', but the field delimiter was {} (size {})",
-            config.fieldDelimiter,
-            config.fieldDelimiter.size());
+            config.tupleDelimiter.size() == 1,
+            "Delimiters must be of size '1 byte', but the tuple delimiter was {} (size {})",
+            config.tupleDelimiter,
+            config.tupleDelimiter.size());
 
         /// We expect the names in the json file to not be source qualified
         for (const auto& fieldName : tupleBufferRef.getAllFieldNames())
