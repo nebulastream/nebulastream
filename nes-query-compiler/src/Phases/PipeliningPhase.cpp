@@ -177,8 +177,7 @@ void buildPipelineRecursively(
                     currentPipeline,
                     pipelineMap,
                     PipelinePolicy::Continue,
-                    configuredBufferSize,
-                    mergePoints);
+                    configuredBufferSize);
                 return;
             }
         }
