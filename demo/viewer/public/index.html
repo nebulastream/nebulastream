@@ -169,13 +169,6 @@
       font-size: 18px;
     }
 
-    .screen-subtitle {
-      color: var(--muted);
-      font-size: 13px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      margin-top: 4px;
-    }
-
     .status-pill {
       display: inline-flex;
       align-items: center;
@@ -383,7 +376,6 @@
       <div class="screen-header">
         <div>
           <h2 class="screen-name">Connection</h2>
-          <div class="screen-subtitle">screen-id</div>
         </div>
         <div class="status-pill disconnected">
           <span class="dot"></span>
@@ -728,7 +720,6 @@
       screen.host = status.host || screen.host;
       screen.port = status.port || screen.port;
       screen.nameEl.textContent = `${screen.host || 'unknown'}:${screen.port || 'unknown'}`;
-      screen.subtitleEl.textContent = screen.screenId;
 
       const extra = status.connected && status.host && status.port
         ? `${status.host}:${status.port}`
@@ -759,7 +750,6 @@
         lastRenderAt: 0,
         attached: true,
         nameEl: root.querySelector('.screen-name'),
-        subtitleEl: root.querySelector('.screen-subtitle'),
         statusPill: root.querySelector('.status-pill'),
         statusText: root.querySelector('.status-text'),
         lastIdEl: root.querySelector('.last-id'),
@@ -778,7 +768,6 @@
       installResizeHandle(screen);
 
       screen.nameEl.textContent = `${screen.host}:${screen.port}`;
-      screen.subtitleEl.textContent = screenId;
 
       screens.set(screenId, screen);
       screensEl.appendChild(fragment);
