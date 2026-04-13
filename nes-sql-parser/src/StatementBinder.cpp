@@ -121,7 +121,7 @@ public:
 
         /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        if (auto it = sourceConfig.find(Identifier::parse("host")); it != sourceConfig.end())
         {
             host = Host(it->second);
             sourceConfig.erase(it);
@@ -139,7 +139,7 @@ public:
 
         auto capacity = [&] -> std::optional<size_t>
         {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "CAPACITY"; });
+            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("CAPACITY"); });
             if (it != configs.end())
             {
                 auto* literalOpt = std::get_if<Literal>(&it->second);
@@ -154,7 +154,7 @@ public:
 
         auto dataAddress = [&] -> std::string
         {
-            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && key.first[0] == "DATA"; });
+            auto it = std::ranges::find_if(configs, [](const auto& key) { return key.first.size() == 1 && *std::ranges::begin(key.first) == Identifier::parse("DATA"); });
             if (it != configs.end())
             {
                 const Literal* literalOpt = std::get_if<Literal>(&it->second);
@@ -170,7 +170,7 @@ public:
         auto downStreams = [&] -> std::vector<std::string>
         {
             return configs
-                | std::views::filter([](const auto& option) { return option.first.size() == 1 && option.first[0] == "DOWNSTREAM"; })
+                | std::views::filter([](const auto& option) { return option.first.size() == 1 && *std::ranges::begin(option.first) == Identifier::parse("DOWNSTREAM"); })
                 | std::views::values
                 | std::views::transform(
                        [](const auto& value)
@@ -216,18 +216,18 @@ public:
                                         { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
-        std::unordered_map<std::string, std::string> formatOptions{};
-        if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
+        std::unordered_map<Identifier, std::string> formatOptions{};
+        if (const auto formatConfigIter = configOptions.find(Identifier::parse("PARSER")); formatConfigIter != configOptions.end())
         {
             formatOptions
                 = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+                      [](auto& pair) { return std::make_pair(pair.first, literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<Identifier, std::string>>();
         }
         /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sinkOptions.find("host"); it != sinkOptions.end())
+        if (auto it = sinkOptions.find(Identifier::parse("host")); it != sinkOptions.end())
         {
             host = Host(it->second);
             sinkOptions.erase(it);

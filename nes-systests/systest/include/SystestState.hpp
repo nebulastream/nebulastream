@@ -33,7 +33,6 @@
 #include <utility>
 #include <variant>
 #include <vector>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>

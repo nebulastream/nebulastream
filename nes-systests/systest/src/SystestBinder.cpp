@@ -92,7 +92,7 @@ public:
         const Identifier& sinkType,
         const Identifier& sinkNameInFile,
         const Schema<UnqualifiedUnboundField, Ordered>& schema,
-        const std::unordered_map<std::string, std::string>& /*config*/)
+        const std::unordered_map<Identifier, std::string>& /*config*/)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
@@ -100,21 +100,21 @@ public:
                 Identifier assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
                 std::unordered_map<Identifier, std::string> config{{Identifier::parse("file_path"), std::move(filePath)}};
-                std::unordered_map<std::string, std::string> formatConfig{};
+                std::unordered_map<Identifier, std::string> formatConfig{};
                 if (sinkType == Identifier::parse("File"))
                 {
                     config[Identifier::parse("output_format")] = "CSV";
                 }
-                else if (toUpperCase(sinkType) == "CHECKSUM")
+                else if (sinkType == Identifier::parse("CHECKSUM"))
                 {
-                    formatConfig["quote_strings"] = "true";
+                    formatConfig[Identifier::parse("quote_strings")] = "true";
                 }
 
                 PRECONDITION(
                     not possibleSinkPlacements.empty(),
                     "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
                 std::string host = possibleSinkPlacements.at(0).getRawValue();
-                if (auto hostIt = config.find("host"); hostIt != config.end())
+                if (auto hostIt = config.find(Identifier::parse("host")); hostIt != config.end())
                 {
                     host = hostIt->second;
                 }
@@ -134,7 +134,7 @@ public:
         const std::optional<Schema<UnqualifiedUnboundField, Ordered>>& schema,
         const Identifier& sinkType,
         std::unordered_map<Identifier, std::string> config,
-        const std::unordered_map<std::string, std::string>& formatConfig)
+        const std::unordered_map<Identifier, std::string>& formatConfig)
     {
         PRECONDITION(
             not possibleSinkPlacements.empty(),
@@ -682,7 +682,7 @@ struct SystestBinder::Impl
             PRECONDITION(
                 not clusterConfiguration.allowSourcePlacement.empty(),
                 "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
+            sourceConfig.try_emplace(Identifier::parse("host"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {

@@ -119,10 +119,10 @@ ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser:
     ConfigMultiMap boundConfigOptions;
     for (auto* const configOption : configOptions)
     {
-        std::vector<std::string> path;
-        for (const auto& pathSegment : configOption->name->strictIdentifier())
+        auto pathExp = IdentifierList::tryParse(configOption->name->getText());
+        if (not pathExp.has_value())
         {
-            path.push_back(bindIdentifier(pathSegment));
+            throw std::move(pathExp).error();
         }
 
         std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>> value{};
@@ -134,7 +134,7 @@ ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser:
         {
             value = bindSchema(configOption->schema()->schemaDefinition());
         }
-        boundConfigOptions.emplace_back(std::move(path), value);
+        boundConfigOptions.emplace_back(std::move(pathExp).value(), value);
     }
     return boundConfigOptions;
 }
@@ -144,7 +144,7 @@ namespace
 /// Converts a config option entry to a lowercase string key-value pair.
 /// Returns std::nullopt for non-Literal values (e.g., Schema), which are handled by separate functions.
 std::optional<std::pair<Identifier, std::string>>
-configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>& entry)
+configOptionToValue(const std::pair<const Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>& entry)
 {
     if (!std::holds_alternative<Literal>(entry.second))
     {
@@ -163,7 +163,7 @@ std::unordered_map<Identifier, std::string> getParserConfig(const ConfigMap& con
     {
         parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
     return parserConfig;
 }
@@ -175,7 +175,7 @@ std::unordered_map<Identifier, std::string> getSourceConfig(const ConfigMap& con
     {
         sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
 
     return sourceOptions;
@@ -188,7 +188,7 @@ std::unordered_map<Identifier, std::string> getSinkConfig(const ConfigMap& confi
     {
         sinkOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<Identifier, std::string>>();
     }
 
     return sinkOptions;

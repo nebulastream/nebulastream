@@ -33,7 +33,7 @@ namespace NES
 using Literal = std::variant<std::string, int64_t, uint64_t, double, bool>;
 using ConfigMap
     = std::unordered_map<Identifier, std::unordered_map<Identifier, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
-using ConfigMultiMap = std::vector<std::pair<std::vector<std::string>, std::variant<Literal, Schema>>>;
+using ConfigMultiMap = std::vector<std::pair<IdentifierList, std::variant<Literal, Schema<UnqualifiedUnboundField, Ordered>>>>;
 
 Identifier bindIdentifier(AntlrSQLParser::StrictIdentifierContext* strictIdentifier);
 Identifier bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);

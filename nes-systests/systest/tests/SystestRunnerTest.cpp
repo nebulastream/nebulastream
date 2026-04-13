@@ -128,8 +128,10 @@ public:
                                                  Schema<UnqualifiedUnboundField, Ordered>{},
                                                  Identifier::parse("Print"),
                                                  Host("localhost"),
-                                                 {{Identifier::parse("output_format"), "CSV"}})
+                                                 {{Identifier::parse("output_format"), "CSV"}},
+                                                 {})
                                              .value();
+    SystestQueryId dummyQueryId = NES::INVALID<SystestQueryId>;
 };
 
 class MockQuerySubmissionBackend final : public QuerySubmissionBackend

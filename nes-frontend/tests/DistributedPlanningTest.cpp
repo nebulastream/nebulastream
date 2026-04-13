@@ -24,7 +24,6 @@
 #include <utility>
 #include <vector>
 #include <DataTypes/DataType.hpp>
-#include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
@@ -172,44 +171,44 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
     statements.reserve(workers.size());
     for (const auto& [host, dataAddress, capacity, downstream] : workers)
     {
-        statements.emplace_back(NES::CreateWorkerStatement{
-            .host = host, .dataAddress = dataAddress.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
+        statements.emplace_back(
+            NES::CreateWorkerStatement{
+                .host = host, .dataAddress = dataAddress.value_or(host), .capacity = capacity, .downstream = downstream, .config = {}});
     }
     for (const auto& [name, schemaFields] : logical)
     {
-        NES::Schema schema;
-        for (const auto& schemaField : schemaFields)
-        {
-            schema.addField(NES::toUpperCase(schemaField), NES::DataType::Type::UINT64);
-        }
+        auto schema = schemaFields
+            | std::views::transform(
+                          [](const auto& fieldName)
+                          { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
+            | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
-        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = NES::toUpperCase(name), .schema = schema});
+        statements.emplace_back(NES::CreateLogicalSourceStatement{.name = NES::Identifier::parse(name), .schema = std::move(schema)});
     }
 
     for (const auto& [logical, host] : physical)
     {
-        statements.emplace_back(NES::CreatePhysicalSourceStatement{
-            .attachedTo = NES::LogicalSourceName(NES::toUpperCase(logical)),
-            .sourceType = "File",
-            .host = NES::Host(host),
-            .sourceConfig = {{"file_path", "does_not_exist"}},
-            .parserConfig = {{"type", "CSV"}}});
+        statements.emplace_back(
+            NES::CreatePhysicalSourceStatement{
+                .attachedTo = NES::LogicalSourceName(NES::Identifier::parse(logical)),
+                .sourceType = NES::Identifier::parse("File"),
+                .host = NES::Host(host),
+                .sourceConfig = {{NES::Identifier::parse("file_path"), "does_not_exist"}},
+                .parserConfig = {{NES::Identifier::parse("type"), "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {
-        NES::Schema schema;
-        for (const auto& schemaField : schemaFields)
-        {
-            schema.addField(NES::toUpperCase(schemaField), NES::DataType::Type::UINT64);
-        }
+        auto schema = schemaFields | std::views::transform([](const auto& fieldName) { return NES::UnqualifiedUnboundField{NES::Identifier::parse(fieldName), NES::DataType::Type::UINT64}; })
+            | std::ranges::to<NES::Schema<NES::UnqualifiedUnboundField, NES::Ordered>>();
 
-        statements.emplace_back(NES::CreateSinkStatement{
-            .name = NES::toUpperCase(name),
-            .sinkType = "Void",
-            .schema = schema,
-            .host = NES::Host(host),
-            .sinkConfig = {},
-            .formatConfig = {}});
+        statements.emplace_back(
+            NES::CreateSinkStatement{
+                .name = NES::Identifier::parse(name),
+                .sinkType = NES::Identifier::parse("Void"),
+                .schema = std::move(schema),
+                .host = NES::Host(host),
+                .sinkConfig = {},
+                .formatConfig = {}});
     }
     statements.emplace_back(NES::ExplainQueryStatement{.plan = NES::AntlrSQLQueryParser::createLogicalQueryPlanFromSQLString(query)});
     return statements;
@@ -400,7 +399,7 @@ workers:
             .getSourceDescriptor()
             .getLogicalSource()
             .getLogicalSourceName(),
-        "STREAM0");
+        Identifier::parse("STREAM0"));
     EXPECT_EQ(sourceNode0Plan.getRootOperators().size(), 1);
     EXPECT_EQ(sourceNode0Plan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkDescriptor()->getSinkType(), "Network");
 
@@ -415,7 +414,7 @@ workers:
             .getSourceDescriptor()
             .getLogicalSource()
             .getLogicalSourceName(),
-        "STREAM1");
+        Identifier::parse("STREAM1"));
     EXPECT_EQ(sourceNode1Plan.getRootOperators().size(), 1);
     EXPECT_EQ(sourceNode1Plan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkDescriptor()->getSinkType(), "Network");
     EXPECT_EQ(getOperatorByType<SelectionLogicalOperator>(sourceNode1Plan).size(), 1);
@@ -428,7 +427,7 @@ workers:
     EXPECT_EQ(
         getLeafOperators(sinkNodePlan)[1].getAs<SourceDescriptorLogicalOperator>().get().getSourceDescriptor().getSourceType(), "Network");
     EXPECT_EQ(sinkNodePlan.getRootOperators().size(), 1);
-    EXPECT_EQ(sinkNodePlan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkName(), "SINK");
+    EXPECT_EQ(sinkNodePlan.getRootOperators().front().getAs<SinkLogicalOperator>().get().getSinkName(), Identifier::parse("SINK"));
     EXPECT_EQ(getOperatorByType<JoinLogicalOperator>(sinkNodePlan).size(), 1);
 }
 

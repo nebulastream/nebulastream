@@ -88,6 +88,16 @@ Identifier NamedSinkDescriptor::getSinkName() const
     return name;
 }
 
+Host NamedSinkDescriptor::getHost() const
+{
+    return host;
+}
+
+std::unordered_map<Identifier, std::string> NamedSinkDescriptor::getOutputFormatterConfig() const
+{
+    return formatConfig;
+}
+
 NamedSinkDescriptor::NamedSinkDescriptor(
     Identifier name,
     Schema<UnqualifiedUnboundField, Ordered> nameWithSchema,
@@ -152,6 +162,18 @@ bool operator==(const InlineSinkDescriptor& lhs, const InlineSinkDescriptor& rhs
     return lhs.sinkId == rhs.sinkId;
 }
 
+std::string InlineSinkDescriptor::getFormatType() const
+{
+    try
+    {
+        return getFromConfig(SinkDescriptor::OUTPUT_FORMAT);
+    }
+    catch (std::out_of_range& e)
+    {
+        return "Native";
+    }
+}
+
 std::string InlineSinkDescriptor::getSinkType() const
 {
     return sinkType;
@@ -169,6 +191,16 @@ InlineSinkDescriptor::getSchema() const
 uint64_t InlineSinkDescriptor::getSinkId() const
 {
     return sinkId;
+}
+
+Host InlineSinkDescriptor::getHost() const
+{
+    return host;
+}
+
+std::unordered_map<Identifier, std::string> InlineSinkDescriptor::getOutputFormatterConfig() const
+{
+    return formatConfig;
 }
 
 SinkDescriptor::SinkDescriptor(std::variant<NamedSinkDescriptor, InlineSinkDescriptor> underlying)
