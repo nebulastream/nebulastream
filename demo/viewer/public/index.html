@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TCP Video Viewer</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0b1020;
+      --panel: #131a2a;
+      --panel-2: #1b2437;
+      --text: #e8eefc;
+      --muted: #9ca9c8;
+      --good: #4ade80;
+      --bad: #f87171;
+      --warn: #fbbf24;
+      --border: #25304a;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #0a0f1d 0%, #0e1425 100%);
+      color: var(--text);
+    }
+
+    .page {
+      max-width: 1880px;
+      margin: 0 auto;
+      padding: 24px;
+      display: grid;
+      gap: 18px;
+    }
+
+    h1 {
+      margin: 0 0 8px;
+      font-size: 32px;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+
+    .connections-panel,
+    .screen-card {
+      background: rgba(19, 26, 42, 0.95);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      box-shadow: 0 12px 35px rgba(0, 0, 0, 0.28);
+    }
+
+    .connections-panel {
+      padding: 16px 18px;
+      display: grid;
+      gap: 14px;
+    }
+
+    .connections-bar {
+      display: grid;
+      grid-template-columns: minmax(220px, 1.2fr) minmax(320px, 1.4fr) minmax(260px, 1fr);
+      gap: 14px;
+      align-items: end;
+    }
+
+    .panel-title {
+      min-width: 0;
+    }
+
+    .panel-title h2 {
+      margin: 0 0 6px;
+      font-size: 18px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+    }
+
+    .add-row,
+    .manage-row {
+      display: grid;
+      gap: 10px;
+      align-items: end;
+    }
+
+    .add-row {
+      grid-template-columns: minmax(0, 1.3fr) 120px 140px;
+    }
+
+    .manage-row {
+      grid-template-columns: minmax(0, 1fr) repeat(3, minmax(88px, auto));
+    }
+
+    label {
+      display: grid;
+      gap: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    input,
+    select,
+    button {
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      background: var(--panel-2);
+      color: var(--text);
+      padding: 11px 13px;
+      font-size: 14px;
+      min-width: 0;
+    }
+
+    button {
+      cursor: pointer;
+      font-weight: 600;
+      transition: transform 0.12s ease, opacity 0.12s ease, border-color 0.12s ease;
+    }
+
+    button:hover { transform: translateY(-1px); border-color: #426095; }
+    button:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    .primary {
+      background: linear-gradient(180deg, #2563eb 0%, #1d4ed8 100%);
+      border-color: #2d5fe0;
+    }
+
+    .danger {
+      background: linear-gradient(180deg, #b91c1c 0%, #991b1b 100%);
+      border-color: #b42323;
+    }
+
+    .ghost {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .screens {
+      display: grid;
+      gap: 16px;
+    }
+
+    .screen-card {
+      position: relative;
+      padding: 14px;
+      display: grid;
+      grid-template-rows: auto minmax(220px, 1fr);
+      gap: 12px;
+      width: 100%;
+      height: 340px;
+      min-height: 240px;
+      overflow: hidden;
+    }
+
+    .screen-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .screen-header h2 {
+      margin: 0;
+      font-size: 18px;
+    }
+
+    .screen-subtitle {
+      color: var(--muted);
+      font-size: 13px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      margin-top: 4px;
+    }
+
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 13px;
+      font-weight: 700;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      white-space: nowrap;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--warn);
+      box-shadow: 0 0 12px rgba(251, 191, 36, 0.4);
+    }
+
+    .connected .dot {
+      background: var(--good);
+      box-shadow: 0 0 12px rgba(74, 222, 128, 0.4);
+    }
+
+    .disconnected .dot {
+      background: var(--bad);
+      box-shadow: 0 0 12px rgba(248, 113, 113, 0.4);
+    }
+
+    .screen-body {
+      display: grid;
+      grid-template-columns: minmax(0, 5.5fr) minmax(180px, 1fr);
+      gap: 12px;
+      min-height: 0;
+      height: 100%;
+    }
+
+    .viewer-panel,
+    .meta-panel {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      min-height: 0;
+    }
+
+    .viewer-panel {
+      padding: 10px;
+      display: flex;
+    }
+
+    canvas {
+      width: 100%;
+      height: 100%;
+      background: #050811;
+      border-radius: 12px;
+      border: 1px solid #1e2b45;
+      display: block;
+    }
+
+    .meta-panel {
+      padding: 12px;
+      display: grid;
+      grid-template-rows: 1fr 1fr;
+      gap: 10px;
+      align-content: stretch;
+    }
+
+    .meta-box {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    .meta-title {
+      color: var(--muted);
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+    }
+
+    .meta-value {
+      font-size: 16px;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
+    .resize-handle {
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 18px;
+      cursor: ns-resize;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select: none;
+      touch-action: none;
+      border-bottom-left-radius: 20px;
+      border-bottom-right-radius: 20px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(106, 166, 255, 0.08) 100%);
+    }
+
+    .resize-handle::before {
+      content: "";
+      width: 72px;
+      height: 4px;
+      border-radius: 999px;
+      background: rgba(156, 169, 200, 0.75);
+      box-shadow: 0 0 0 1px rgba(37, 48, 74, 0.8);
+    }
+
+    .screen-card.is-resizing {
+      user-select: none;
+    }
+
+    @media (max-width: 1180px) {
+      .connections-bar {
+        grid-template-columns: 1fr;
+      }
+
+      .add-row,
+      .manage-row {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .screen-card {
+        height: 420px;
+      }
+
+      .screen-body {
+        grid-template-columns: 1fr;
+        grid-template-rows: minmax(220px, 1fr) auto;
+      }
+
+      .meta-panel {
+        grid-template-columns: 1fr;
+        grid-template-rows: auto auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div>
+      <h1>TCP Video Viewer</h1>
+      <p class="subtitle">
+        Add TCP connections from the bar below. Each active connection is rendered as its own full-width feed panel.
+      </p>
+    </div>
+
+    <section class="connections-panel">
+      <div class="connections-bar">
+        <div class="panel-title">
+          <h2>Connections</h2>
+          <div class="hint">
+            Add with IP and port on the left. Manage existing connections from the dropdown on the right.
+          </div>
+        </div>
+
+        <div class="add-row">
+          <label>
+            TCP host / IP
+            <input id="hostInput" type="text" placeholder="127.0.0.1" value="127.0.0.1" />
+          </label>
+
+          <label>
+            TCP port
+            <input id="portInput" type="number" placeholder="9000" value="9000" />
+          </label>
+
+          <button id="addConnectionButton" class="primary">Add connection</button>
+        </div>
+
+        <div class="manage-row">
+          <label>
+            Existing connections
+            <select id="connectionSelect">
+              <option value="">No connections yet</option>
+            </select>
+          </label>
+
+          <button id="connectButton" class="primary">Connect</button>
+          <button id="disconnectButton" class="danger">Disconnect</button>
+          <button id="removeButton" class="ghost">Remove</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="screens" class="screens"></div>
+  </div>
+
+  <template id="screenTemplate">
+    <section class="screen-card">
+      <div class="screen-header">
+        <div>
+          <h2 class="screen-name">Connection</h2>
+          <div class="screen-subtitle">screen-id</div>
+        </div>
+        <div class="status-pill disconnected">
+          <span class="dot"></span>
+          <span class="status-text">Disconnected</span>
+        </div>
+      </div>
+
+      <div class="screen-body">
+        <section class="viewer-panel">
+          <canvas class="viewer-canvas" width="1280" height="720"></canvas>
+        </section>
+
+        <aside class="meta-panel">
+          <div class="meta-box">
+            <div class="meta-title">Last Frame ID</div>
+            <div class="meta-value last-id">—</div>
+          </div>
+
+          <div class="meta-box">
+            <div class="meta-title">Last Timestamp</div>
+            <div class="meta-value last-timestamp">—</div>
+          </div>
+        </aside>
+      </div>
+
+      <div class="resize-handle" aria-hidden="true"></div>
+    </section>
+  </template>
+
+  <script>
+    const TARGET_FPS = 25;
+    const MAX_QUEUE_SIZE = 120;
+
+    const screensEl = document.getElementById('screens');
+    const hostInput = document.getElementById('hostInput');
+    const portInput = document.getElementById('portInput');
+    const addConnectionButton = document.getElementById('addConnectionButton');
+    const connectionSelect = document.getElementById('connectionSelect');
+    const connectButton = document.getElementById('connectButton');
+    const disconnectButton = document.getElementById('disconnectButton');
+    const removeButton = document.getElementById('removeButton');
+    const screenTemplate = document.getElementById('screenTemplate');
+
+    const screens = new Map();
+    let eventSource = null;
+    let screenCounter = 0;
+
+    function nextScreenId() {
+      screenCounter += 1;
+      return `screen-${screenCounter}`;
+    }
+
+    function screenLabel(screen) {
+      const host = screen.host || 'no-host';
+      const port = screen.port || 'no-port';
+      return `${screen.screenId} • ${host}:${port}`;
+    }
+
+    function updateSelectOptions() {
+      const selected = connectionSelect.value;
+      connectionSelect.innerHTML = '';
+
+      if (screens.size === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No connections yet';
+        connectionSelect.appendChild(option);
+        connectionSelect.value = '';
+        return;
+      }
+
+      for (const screen of screens.values()) {
+        const option = document.createElement('option');
+        option.value = screen.screenId;
+        option.textContent = screenLabel(screen);
+        connectionSelect.appendChild(option);
+      }
+
+      if (selected && screens.has(selected)) {
+        connectionSelect.value = selected;
+      } else {
+        connectionSelect.value = Array.from(screens.keys())[0];
+      }
+    }
+
+    function updateStatus(screen, connected, extra = '') {
+      screen.statusPill.classList.toggle('connected', connected);
+      screen.statusPill.classList.toggle('disconnected', !connected);
+      screen.statusText.textContent = connected
+        ? `Connected${extra ? ` — ${extra}` : ''}`
+        : `Disconnected${extra ? ` — ${extra}` : ''}`;
+    }
+
+    function updateLastFrame(screen, frame) {
+      screen.lastIdEl.textContent = frame?.id ?? '—';
+      screen.lastTimestampEl.textContent = frame?.timestamp ?? '—';
+    }
+
+    function ensureEventStream() {
+      if (eventSource && eventSource.readyState !== EventSource.CLOSED) return;
+
+      eventSource = new EventSource('/events');
+
+      eventSource.addEventListener('error', () => {
+        for (const screen of screens.values()) {
+          updateStatus(screen, false, 'bridge offline');
+        }
+      });
+
+      eventSource.addEventListener('snapshot', (event) => {
+        const payload = JSON.parse(event.data);
+        hydrateScreens(payload.screens || []);
+      });
+
+      eventSource.addEventListener('status', (event) => {
+        const status = JSON.parse(event.data);
+        const screen = ensureScreen(status.screenId, status);
+        applyStatus(screen, status);
+      });
+
+      eventSource.addEventListener('warning', (event) => {
+        const payload = JSON.parse(event.data);
+        const screen = ensureScreen(payload.screenId);
+        updateStatus(screen, false, payload.message || 'warning');
+      });
+
+      eventSource.addEventListener('frame', (event) => {
+        const payload = JSON.parse(event.data);
+        const screen = ensureScreen(payload.screenId);
+        screen.queue.push(payload.frame);
+
+        if (screen.queue.length > MAX_QUEUE_SIZE) {
+          const overflow = screen.queue.length - MAX_QUEUE_SIZE;
+          screen.queue.splice(0, overflow);
+        }
+      });
+    }
+
+    async function postJson(url, body) {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body || {}),
+      });
+
+      const result = await response.json();
+      if (!response.ok || !result.ok) {
+        throw new Error(result.error || `Request failed: ${response.status}`);
+      }
+      return result;
+    }
+
+    function base64ToBytes(base64Value) {
+      const clean = String(base64Value || '')
+        .replace(/^data:[^;]+;base64,/, '')
+        .replace(/\s+/g, '');
+
+      const binary = atob(clean);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i += 1) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes;
+    }
+
+    function detectMime(bytes) {
+      if (bytes.length >= 8 &&
+          bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47 &&
+          bytes[4] === 0x0D && bytes[5] === 0x0A && bytes[6] === 0x1A && bytes[7] === 0x0A) {
+        return 'image/png';
+      }
+      if (bytes.length >= 3 && bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) {
+        return 'image/jpeg';
+      }
+      if (bytes.length >= 4 && bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) {
+        return 'image/gif';
+      }
+      if (bytes.length >= 12 &&
+          bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+          bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) {
+        return 'image/webp';
+      }
+      if (bytes.length >= 2 && bytes[0] === 0x42 && bytes[1] === 0x4D) {
+        return 'image/bmp';
+      }
+      return null;
+    }
+
+    function rawPixelsToImageData(bytes, width, height) {
+      const totalPixels = width * height;
+      const rgba = new Uint8ClampedArray(totalPixels * 4);
+
+      if (bytes.length === totalPixels) {
+        for (let i = 0; i < totalPixels; i += 1) {
+          const v = bytes[i];
+          const base = i * 4;
+          rgba[base] = v;
+          rgba[base + 1] = v;
+          rgba[base + 2] = v;
+          rgba[base + 3] = 255;
+        }
+        return new ImageData(rgba, width, height);
+      }
+
+      if (bytes.length === totalPixels * 3) {
+        for (let i = 0, p = 0; i < totalPixels; i += 1, p += 3) {
+          const base = i * 4;
+          rgba[base] = bytes[p];
+          rgba[base + 1] = bytes[p + 1];
+          rgba[base + 2] = bytes[p + 2];
+          rgba[base + 3] = 255;
+        }
+        return new ImageData(rgba, width, height);
+      }
+
+      if (bytes.length === totalPixels * 4) {
+        return new ImageData(new Uint8ClampedArray(bytes), width, height);
+      }
+
+      throw new Error(`Unsupported payload length ${bytes.length} for ${width}x${height}.`);
+    }
+
+    async function decodeFrame(frame) {
+      const width = Number(frame.width);
+      const height = Number(frame.height);
+      const bytes = base64ToBytes(frame.data);
+      const mime = detectMime(bytes);
+
+      if (mime) {
+        const bitmap = await createImageBitmap(new Blob([bytes], { type: mime }));
+        return { type: 'bitmap', image: bitmap, width: bitmap.width, height: bitmap.height };
+      }
+
+      const imageData = rawPixelsToImageData(bytes, width, height);
+      return { type: 'imageData', image: imageData, width, height };
+    }
+
+    function drawFit(screen, sourceWidth, sourceHeight, drawSource) {
+      const { ctx, canvas } = screen;
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#050811';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+      const scale = Math.min(canvas.width / sourceWidth, canvas.height / sourceHeight);
+      const drawWidth = Math.max(1, Math.round(sourceWidth * scale));
+      const drawHeight = Math.max(1, Math.round(sourceHeight * scale));
+      const x = Math.floor((canvas.width - drawWidth) / 2);
+      const y = Math.floor((canvas.height - drawHeight) / 2);
+      drawSource(x, y, drawWidth, drawHeight);
+    }
+
+    function resizeCanvasToDisplaySize(screen) {
+      const rect = screen.canvas.getBoundingClientRect();
+      const nextWidth = Math.max(1, Math.round(rect.width));
+      const nextHeight = Math.max(1, Math.round(rect.height));
+
+      if (screen.canvas.width === nextWidth && screen.canvas.height === nextHeight) {
+        return;
+      }
+
+      screen.canvas.width = nextWidth;
+      screen.canvas.height = nextHeight;
+      createPlaceholder(screen);
+    }
+
+    function installResizeHandle(screen) {
+      const minHeight = 240;
+      const handle = screen.resizeHandle;
+      let startY = 0;
+      let startHeight = 0;
+
+      function stopResize() {
+        screen.root.classList.remove('is-resizing');
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointercancel', onPointerUp);
+      }
+
+      function onPointerMove(event) {
+        const nextHeight = Math.max(minHeight, startHeight + (event.clientY - startY));
+        screen.root.style.height = `${nextHeight}px`;
+      }
+
+      function onPointerUp() {
+        stopResize();
+      }
+
+      handle.addEventListener('pointerdown', (event) => {
+        event.preventDefault();
+        startY = event.clientY;
+        startHeight = screen.root.getBoundingClientRect().height;
+        screen.root.classList.add('is-resizing');
+        handle.setPointerCapture?.(event.pointerId);
+        window.addEventListener('pointermove', onPointerMove);
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerUp);
+      });
+    }
+
+    async function renderNextFrame(screen) {
+      if (screen.isRendering || screen.queue.length === 0) return;
+      screen.isRendering = true;
+
+      try {
+        const frame = screen.queue.shift();
+        const decoded = await decodeFrame(frame);
+
+        if (decoded.type === 'bitmap') {
+          drawFit(screen, decoded.width, decoded.height, (x, y, w, h) => {
+            screen.ctx.drawImage(decoded.image, x, y, w, h);
+          });
+          decoded.image.close?.();
+        } else {
+          screen.stagingCanvas.width = decoded.width;
+          screen.stagingCanvas.height = decoded.height;
+          screen.stagingCtx.putImageData(decoded.image, 0, 0);
+          drawFit(screen, decoded.width, decoded.height, (x, y, w, h) => {
+            screen.ctx.drawImage(screen.stagingCanvas, x, y, w, h);
+          });
+        }
+
+        updateLastFrame(screen, frame);
+      } catch (error) {
+        updateStatus(screen, false, error.message);
+      } finally {
+        screen.isRendering = false;
+      }
+    }
+
+    function renderLoop(screen, now) {
+      if (!screen.attached) return;
+
+      const frameInterval = 1000 / TARGET_FPS;
+      if (now - screen.lastRenderAt >= frameInterval) {
+        screen.lastRenderAt = now;
+        renderNextFrame(screen);
+      }
+      requestAnimationFrame((nextNow) => renderLoop(screen, nextNow));
+    }
+
+    function applyStatus(screen, status) {
+      screen.host = status.host || screen.host;
+      screen.port = status.port || screen.port;
+      screen.nameEl.textContent = `${screen.host || 'unknown'}:${screen.port || 'unknown'}`;
+      screen.subtitleEl.textContent = screen.screenId;
+
+      const extra = status.connected && status.host && status.port
+        ? `${status.host}:${status.port}`
+        : (status.info || '');
+      updateStatus(screen, Boolean(status.connected), extra);
+      updateSelectOptions();
+    }
+
+    function createPlaceholder(screen) {
+      screen.ctx.fillStyle = '#050811';
+      screen.ctx.fillRect(0, 0, screen.canvas.width, screen.canvas.height);
+      screen.ctx.fillStyle = '#a6b5d6';
+      screen.ctx.font = '24px sans-serif';
+      screen.ctx.fillText('Waiting for frames...', 40, 60);
+    }
+
+    function createScreen(config = {}) {
+      const screenId = config.screenId || nextScreenId();
+      const fragment = screenTemplate.content.cloneNode(true);
+      const root = fragment.querySelector('.screen-card');
+      const screen = {
+        screenId,
+        root,
+        host: config.host || '127.0.0.1',
+        port: config.port || 9000,
+        queue: [],
+        isRendering: false,
+        lastRenderAt: 0,
+        attached: true,
+        nameEl: root.querySelector('.screen-name'),
+        subtitleEl: root.querySelector('.screen-subtitle'),
+        statusPill: root.querySelector('.status-pill'),
+        statusText: root.querySelector('.status-text'),
+        lastIdEl: root.querySelector('.last-id'),
+        lastTimestampEl: root.querySelector('.last-timestamp'),
+        canvas: root.querySelector('.viewer-canvas'),
+        resizeHandle: root.querySelector('.resize-handle'),
+      };
+
+      screen.ctx = screen.canvas.getContext('2d');
+      screen.stagingCanvas = document.createElement('canvas');
+      screen.stagingCtx = screen.stagingCanvas.getContext('2d');
+      screen.resizeObserver = new ResizeObserver(() => {
+        resizeCanvasToDisplaySize(screen);
+      });
+      screen.resizeObserver.observe(root.querySelector('.viewer-panel'));
+      installResizeHandle(screen);
+
+      screen.nameEl.textContent = `${screen.host}:${screen.port}`;
+      screen.subtitleEl.textContent = screenId;
+
+      screens.set(screenId, screen);
+      screensEl.appendChild(fragment);
+      resizeCanvasToDisplaySize(screen);
+      updateStatus(screen, false);
+      updateLastFrame(screen, null);
+      createPlaceholder(screen);
+      requestAnimationFrame((now) => renderLoop(screen, now));
+      return screen;
+    }
+
+    function ensureScreen(screenId, status = null) {
+      if (!screenId) return null;
+
+      let screen = screens.get(screenId);
+      if (!screen) {
+        screen = createScreen({
+          screenId,
+          host: status?.host,
+          port: status?.port,
+        });
+      }
+
+      const numericSuffix = Number(String(screenId).split('-').pop());
+      if (Number.isFinite(numericSuffix)) {
+        screenCounter = Math.max(screenCounter, numericSuffix);
+      }
+
+      if (status) {
+        applyStatus(screen, status);
+      }
+
+      return screen;
+    }
+
+    function hydrateScreens(statuses) {
+      for (const status of statuses) {
+        ensureScreen(status.screenId, status);
+      }
+      updateSelectOptions();
+    }
+
+    async function addConnection() {
+      const host = hostInput.value.trim();
+      const port = Number(portInput.value);
+      if (!host || !port) return;
+
+      const screen = createScreen({ host, port });
+      updateSelectOptions();
+      connectionSelect.value = screen.screenId;
+
+      ensureEventStream();
+
+      try {
+        await postJson('/api/connect', {
+          screenId: screen.screenId,
+          host,
+          port,
+        });
+      } catch (error) {
+        updateStatus(screen, false, error.message);
+      }
+    }
+
+    async function connectSelected() {
+      const screen = screens.get(connectionSelect.value);
+      if (!screen) return;
+
+      const host = screen.host;
+      const port = Number(screen.port);
+      if (!host || !port) return;
+      screen.nameEl.textContent = `${host}:${port}`;
+      updateSelectOptions();
+      ensureEventStream();
+
+      await postJson('/api/connect', {
+        screenId: screen.screenId,
+        host,
+        port,
+      });
+    }
+
+    async function disconnectSelected() {
+      const screen = screens.get(connectionSelect.value);
+      if (!screen) return;
+
+      await postJson('/api/disconnect', { screenId: screen.screenId });
+      screen.queue.length = 0;
+    }
+
+    async function removeSelected() {
+      const screen = screens.get(connectionSelect.value);
+      if (!screen) return;
+
+      try {
+        await postJson('/api/disconnect', { screenId: screen.screenId, remove: true });
+      } catch (error) {
+        // Keep removing the UI row even if the backend session was already gone.
+      }
+
+      screen.attached = false;
+      screen.resizeObserver.disconnect();
+      screen.root.remove();
+      screens.delete(screen.screenId);
+      updateSelectOptions();
+    }
+
+    addConnectionButton.addEventListener('click', async () => {
+      await addConnection();
+    });
+    connectButton.addEventListener('click', async () => {
+      try {
+        await connectSelected();
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    disconnectButton.addEventListener('click', async () => {
+      try {
+        await disconnectSelected();
+      } catch (error) {
+        console.error(error);
+      }
+    });
+    removeButton.addEventListener('click', async () => {
+      try {
+        await removeSelected();
+      } catch (error) {
+        console.error(error);
+      }
+    });
+
+    (async function init() {
+      ensureEventStream();
+
+      try {
+        const response = await fetch('/api/status');
+        const payload = await response.json();
+        hydrateScreens(payload.screens || []);
+      } catch (error) {
+        updateSelectOptions();
+      }
+    })();
+  </script>
+</body>
+</html>

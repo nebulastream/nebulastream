@@ -1,0 +1,12 @@
+{
+  "name": "tcp-video-viewer",
+  "version": "1.0.0",
+  "description": "Web page + TCP bridge that reads CSV frames from a TCP server and renders them as video.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
