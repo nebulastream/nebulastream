@@ -17,4 +17,4 @@ SELECT anomaly_score
 FROM MODEL_INFERENCE(auto_vi, (SELECT FROM_BASE64(data) AS pixels FROM stream))
 INTO result;
 ----
-0.050982
+1.000000

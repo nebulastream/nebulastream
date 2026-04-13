@@ -1,0 +1,14 @@
+[
+    {
+        "defect_name": "unclipped",
+        "pixel_value": 255,
+        "saturation_threshold": 0.5,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "operator",
+        "pixel_value": 254,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    }
+]

@@ -1,0 +1,26 @@
+[
+    {
+        "defect_name": "fastening",
+        "pixel_value": 255,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "blue_hoop",
+        "pixel_value": 254,
+        "saturation_threshold": 800,
+        "relative_saturation": false
+    },
+    {
+        "defect_name": "cardboard",
+        "pixel_value": 253,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    },
+    {
+        "defect_name": "obstruction",
+        "pixel_value": 252,
+        "saturation_threshold": 1.0,
+        "relative_saturation": true
+    }
+]
