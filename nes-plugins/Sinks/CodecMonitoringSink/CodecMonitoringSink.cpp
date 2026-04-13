@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include "CodecMonitoringSink.hpp"
+#include <CodecMonitoringSink.hpp>
 
 #include <cstddef>
 #include <filesystem>
