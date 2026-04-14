@@ -33,6 +33,12 @@ ZstdEncoder::~ZstdEncoder() = default;
 
 Encoder::EncodingResult ZstdEncoder::encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
 {
+    /// ZSTD does not support a "frameless" compression
+    return encodeBufferFramed(src, dst);
+}
+
+Encoder::EncodingResult ZstdEncoder::encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const
+{
     /// Get maximum size of compressed buffer and allocate the amount in the dst vector
     const size_t maxCompressedSize = ZSTD_compressBound(src.size_bytes());
     dst.resize(maxCompressedSize);
@@ -41,9 +47,9 @@ Encoder::EncodingResult ZstdEncoder::encodeBuffer(std::span<const std::byte> src
     if (ZSTD_isError(writtenBytes))
     {
         NES_ERROR("Error occurred during ZSTD Encoding operation: {}.", ZSTD_getErrorName(writtenBytes));
-        return EncodingResult(EncodeStatusType::ENCODING_ERROR, 0);
+        return EncodingResult{.status=EncodeStatusType::ENCODING_ERROR, .compressedSize=0};
     }
-    return EncodingResult(EncodeStatusType::SUCCESSFULLY_ENCODED, writtenBytes);
+    return EncodingResult{.status=EncodeStatusType::SUCCESSFULLY_ENCODED, .compressedSize=writtenBytes};
 }
 
 std::ostream& ZstdEncoder::toString(std::ostream& str) const

@@ -78,7 +78,7 @@ void PrintSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
     {
         const auto stringSpan = std::as_bytes(std::span(bufferAsString));
         std::vector<char> encodedData{};
-        auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+        auto encodingResult = encoder.value()->encodeBufferFramed(stringSpan, encodedData);
         PRECONDITION(encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
         bufferAsString = std::string(encodedData.data(), encodingResult.compressedSize);
     }

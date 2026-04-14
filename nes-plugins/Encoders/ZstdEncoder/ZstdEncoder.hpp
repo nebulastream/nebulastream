@@ -36,6 +36,7 @@ public:
     ZstdEncoder& operator=(ZstdEncoder&&) = delete;
 
     [[nodiscard]] EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
+    [[nodiscard]] EncodingResult encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const override;
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 };

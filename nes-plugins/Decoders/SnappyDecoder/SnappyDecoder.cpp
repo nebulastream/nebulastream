@@ -176,59 +176,15 @@ void SnappyDecoder::decodeAndEmit(
 
 Decoder::DecodingResult SnappyDecoder::decodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
 {
-    size_t currentSrcPosition = 0;
-    size_t currentDstPosition = 0;
-
-    /// Decompress src frame by frame. It is to be expected that src only contains full, valid frames
-    while (currentSrcPosition < src.size_bytes())
+    std::string decodedString;
+    if (!snappy::Uncompress(reinterpret_cast<const char*>(src.data()), src.size_bytes(), &decodedString))
     {
-        /// Check, if enough bytes to contain the header are available
-        if (src.size_bytes() - currentSrcPosition < 8)
-        {
-            NES_ERROR("Error during snappy buffer decoding: Src buffer contains incomplete frame.");
-            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
-        }
-
-        /// Currently, this is only used to decompress snappy buffers produced by this systems encodeBuffer method for snappy.
-        /// This method only produces compressed chunks. Therefore, the chunk identifier should always be 0.
-        /// We assume that this is the case to avoid a branch here and skip to the length.
-        uint32_t chunkLength = 0;
-        std::memcpy(&chunkLength, src.data() + currentSrcPosition + 1, 3);
-        /// Get checksum
-        uint32_t checksum = 0;
-        std::memcpy(&checksum, src.data() + currentSrcPosition + 4, 4);
-
-        /// Check if frame contains the whole payload
-        if (src.size_bytes() - (currentSrcPosition + 4) < chunkLength)
-        {
-            NES_ERROR("Error during snappy buffer decoding: Src buffer contains incomplete frame.");
-            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
-        }
-        std::string decompressedString;
-        /// Decompress buffer
-        if (!snappy::Uncompress(reinterpret_cast<const char*>(src.data() + currentSrcPosition + 8), chunkLength - 4, &decompressedString))
-        {
-            NES_ERROR("Decompression of snappy frame failed.");
-            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
-        }
-
-        /// Calculate checksum
-        const uint32_t unmaskedChecksum = crc32c::Crc32c(decompressedString);
-        const uint32_t maskedChecksum = ((unmaskedChecksum >> 15) | (unmaskedChecksum << 17)) + 0xa282ead8;
-        if (maskedChecksum != checksum)
-        {
-            NES_ERROR("Checksum of decompressed snappy data does not match frame checksum. Possible corruption of payload.");
-            return DecodingResult(DecodingResultStatus::DECODING_ERROR, 0);
-        }
-
-        /// Write the decompressed content into dst. Dst is assumed to have allocated enough memory
-        std::memcpy(dst.data() + currentDstPosition, decompressedString.c_str(), decompressedString.size());
-
-        /// Update positions
-        currentSrcPosition += chunkLength + 4;
-        currentDstPosition += decompressedString.size();
+        NES_ERROR("Error during Snappy Block Decoding Operaton");
+        return DecodingResult{.status = DecodingResultStatus::DECODING_ERROR, .decompressedSize = 0};
     }
-    return DecodingResult(DecodingResultStatus::SUCCESSFULLY_DECODED, currentDstPosition);
+    /// We assume that dst already holds enough memory to hold the decoded batch
+    std::memcpy(dst.data(), decodedString.c_str(), decodedString.size());
+    return DecodingResult{.status=DecodingResultStatus::SUCCESSFULLY_DECODED, .decompressedSize=decodedString.size()};
 }
 
 std::ostream& SnappyDecoder::toString(std::ostream& str) const

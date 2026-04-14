@@ -15,8 +15,10 @@
 #include <ZstdDecoder.hpp>
 
 #include <cstdio>
+#include <functional>
 #include <iostream>
 #include <memory>
+#include <optional>
 #include <ostream>
 #include <utility>
 #include <DecoderRegistry.hpp>
@@ -94,9 +96,9 @@ Decoder::DecodingResult ZstdDecoder::decodeBuffer(std::span<const std::byte> src
     const size_t decompressedBytes = ZSTD_decompress(dst.data(), dstSize, src.data(), srcSize);
     if (ZSTD_isError(decompressedBytes))
     {
-        return DecodingResult{DecodingResultStatus::DECODING_ERROR, 0};
+        return DecodingResult{.status=DecodingResultStatus::DECODING_ERROR, .decompressedSize=0};
     }
-    return DecodingResult{DecodingResultStatus::SUCCESSFULLY_DECODED, decompressedBytes};
+    return DecodingResult{.status=DecodingResultStatus::SUCCESSFULLY_DECODED, .decompressedSize=decompressedBytes};
 }
 
 std::ostream& ZstdDecoder::toString(std::ostream& str) const

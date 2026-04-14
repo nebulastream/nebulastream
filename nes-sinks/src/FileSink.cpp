@@ -118,7 +118,7 @@ void FileSink::start(PipelineExecutionContext&)
         {
             const auto stringSpan = std::as_bytes(std::span(schemaStr));
             std::vector<char> encodedData{};
-            auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+            auto encodingResult = encoder.value()->encodeBufferFramed(stringSpan, encodedData);
             PRECONDITION(
                 encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED,
                 "Error occured during encoding process of schema string.");

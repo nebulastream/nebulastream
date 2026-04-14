@@ -34,6 +34,19 @@ SnappyEncoder::~SnappyEncoder() = default;
 
 Encoder::EncodingResult SnappyEncoder::encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
 {
+    /// Allocate memory in dst for the encoded content
+    const size_t maxCompressedSize = snappy::MaxCompressedLength(src.size_bytes());
+    dst.resize(maxCompressedSize);
+
+    /// Encode the buffer
+    std::string compressedData;
+    const size_t compressedSize = snappy::Compress(reinterpret_cast<const char*>(src.data()), src.size_bytes(), &compressedData);
+    std::memcpy(dst.data(), compressedData.c_str(), compressedSize);
+    return EncodingResult{.status = EncodeStatusType::SUCCESSFULLY_ENCODED, .compressedSize = compressedSize};
+}
+
+Encoder::EncodingResult SnappyEncoder::encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const
+{
     size_t currentSrcPosition = 0;
     size_t currentDstPosition = 0;
     /// Pack the src buffer into frames until it is completely compressed
@@ -68,7 +81,7 @@ Encoder::EncodingResult SnappyEncoder::encodeBuffer(std::span<const std::byte> s
         currentSrcPosition += bytesToCompress;
         currentDstPosition += totalFrameLength;
     }
-    return EncodingResult(EncodeStatusType::SUCCESSFULLY_ENCODED, currentDstPosition);
+    return EncodingResult{.status = EncodeStatusType::SUCCESSFULLY_ENCODED, .compressedSize = currentDstPosition};
 }
 
 std::ostream& SnappyEncoder::toString(std::ostream& str) const

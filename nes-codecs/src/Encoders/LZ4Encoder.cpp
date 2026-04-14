@@ -14,14 +14,19 @@
 
 #include <LZ4Encoder.hpp>
 
+#include <cstddef>
 #include <cstdio>
 #include <functional>
 #include <memory>
 #include <ostream>
+#include <span>
 #include <utility>
+#include <vector>
 
 #include <Encoders/Encoder.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <EncoderRegistry.hpp>
+#include <lz4.h>
 #include <lz4frame.h>
 
 namespace NES
@@ -39,6 +44,23 @@ LZ4Encoder::~LZ4Encoder()
 Encoder::EncodingResult LZ4Encoder::encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const
 {
     /// First, we must allocate enough memory in the dst vector. LZ4 provides an upper bound for the compressed size that we can use.
+    const size_t worstCaseSize = LZ4_compressBound(src.size_bytes());
+    dst.resize(worstCaseSize);
+
+    /// Compress buffer and handle error
+    const size_t compressedSize
+        = LZ4_compress_default(reinterpret_cast<const char*>(src.data()), dst.data(), src.size_bytes(), worstCaseSize);
+    if (compressedSize == 0)
+    {
+        NES_ERROR("Error occurred during LZ4 Encoding operation");
+        return EncodingResult{.status = EncodeStatusType::ENCODING_ERROR, .compressedSize = 0};
+    }
+    return EncodingResult{.status = EncodeStatusType::SUCCESSFULLY_ENCODED, .compressedSize = compressedSize};
+}
+
+Encoder::EncodingResult LZ4Encoder::encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const
+{
+    /// First, we must allocate enough memory in the dst vector. LZ4 provides an upper bound for the compressed size that we can use.
     const size_t worstCaseSize = LZ4F_compressFrameBound(src.size_bytes(), &preferences);
     dst.resize(worstCaseSize);
 
@@ -47,10 +69,10 @@ Encoder::EncodingResult LZ4Encoder::encodeBuffer(std::span<const std::byte> src,
     const size_t compressedSize = LZ4F_compressFrame(dst.data(), worstCaseSize, src.data(), src.size_bytes(), &preferences);
     if (LZ4F_isError(compressedSize))
     {
-        NES_ERROR("Error occurred during LZ4 Encoding operation: {}", LZ4F_getErrorName(compressedSize));
-        return EncodingResult(EncodeStatusType::ENCODING_ERROR, 0);
+        NES_ERROR("Error occurred during LZ4 Framed Encoding operation: {}", LZ4F_getErrorName(compressedSize));
+        return EncodingResult{.status = EncodeStatusType::ENCODING_ERROR, .compressedSize = 0};
     }
-    return EncodingResult(EncodeStatusType::SUCCESSFULLY_ENCODED, compressedSize);
+    return EncodingResult{.status = EncodeStatusType::SUCCESSFULLY_ENCODED, .compressedSize = compressedSize};
 }
 
 std::ostream& LZ4Encoder::toString(std::ostream& str) const

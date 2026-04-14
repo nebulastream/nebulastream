@@ -25,8 +25,8 @@
 
 namespace NES
 {
-/// Encoder to encode a batch of data into the framing-LZ4 format
-/// Will create a full frame for every method call.
+/// Encoder to encode a batch of data into the framing-LZ4 format or to encode a buffer into a frameless LZ4 block
+/// Will create a full frame for every method call of the framed encoding method.
 
 class LZ4Encoder final : public Encoder
 {
@@ -40,6 +40,8 @@ public:
     LZ4Encoder& operator=(LZ4Encoder&&) = delete;
 
     [[nodiscard]] EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
+
+    [[nodiscard]] EncodingResult encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const override;
 
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;

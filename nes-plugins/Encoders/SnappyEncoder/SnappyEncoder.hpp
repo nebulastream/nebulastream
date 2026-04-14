@@ -21,7 +21,8 @@
 
 namespace NES
 {
-/// Transforms a batch of data into the snappy framing format. Might produce multiple frames, since only 65536 bytes can be compressed into one frame.
+/// Transforms a batch of data into the snappy framing format or the standard snappy block format.
+/// Might produce multiple frames, since only 65536 bytes can be compressed into one frame.
 class SnappyEncoder final : public Encoder
 {
 public:
@@ -34,6 +35,7 @@ public:
     SnappyEncoder& operator=(SnappyEncoder&&) = delete;
 
     [[nodiscard]] EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const override;
+    [[nodiscard]] EncodingResult encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const override;
 protected:
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 };

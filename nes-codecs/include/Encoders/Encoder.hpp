@@ -48,6 +48,10 @@ public:
     /// Function must at first resize the dst vector so that it may encapsulate all the encoded data.
     [[nodiscard]] virtual EncodingResult encodeBuffer(std::span<const std::byte> src, std::vector<char>& dst) const = 0;
 
+    /// For codecs, like compression codecs that support it, this method is used to encode the data via a 'framing format'
+    /// which provides additional context for incremental decoding. Useful when sending away encoded data via the sink
+    [[nodiscard]] virtual EncodingResult encodeBufferFramed(std::span<const std::byte> src, std::vector<char>& dst) const = 0;
+
     friend std::ostream& operator<<(std::ostream& out, const Encoder& encoder);
 
 protected:
