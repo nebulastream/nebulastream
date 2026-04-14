@@ -17,6 +17,9 @@
 #include <cstdint>
 #include <optional>
 #include <ranges>
+#include <set>
+#include <typeindex>
+#include <typeinfo>
 #include <unordered_map>
 #include <unordered_set>
 #include <utility>
@@ -173,5 +176,35 @@ LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan)
     PRECONDITION(std::ranges::size(queryPlan.getRootOperators()) == 1, "Currently only one root operator is supported");
     auto newRootOperator = apply(queryPlan.getRootOperators().at(0));
     return queryPlan.withRootOperators({newRootOperator});
+}
+
+LogicalPlan DecideFieldMappings::apply(const LogicalPlan& queryPlan) const
+{
+    return const_cast<DecideFieldMappings*>(this)->apply(queryPlan);
+}
+
+const std::type_info& DecideFieldMappings::getType()
+{
+    return typeid(DecideFieldMappings);
+}
+
+std::string_view DecideFieldMappings::getName()
+{
+    return NAME;
+}
+
+std::set<std::type_index> DecideFieldMappings::dependsOn() const
+{
+    return {};
+}
+
+std::set<std::type_index> DecideFieldMappings::requiredBy() const
+{
+    return {};
+}
+
+bool DecideFieldMappings::operator==(const DecideFieldMappings&) const
+{
+    return true;
 }
 }

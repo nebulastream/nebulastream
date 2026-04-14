@@ -45,9 +45,9 @@ public:
 
     template <std::ranges::input_range Range>
     requires std::is_same_v<std::ranges::range_value_t<Range>, Trait>
-    explicit TraitSet(Range traits)
+    explicit TraitSet(Range&& traits)
         : traitMap(
-              traits | std::views::transform([](const Trait& trait) { return std::make_pair(std::type_index{trait.getTypeInfo()}, trait); })
+              std::forward<Range>(traits) | std::views::transform([](const Trait& trait) { return std::make_pair(std::type_index{trait.getTypeInfo()}, trait); })
               | std::ranges::to<std::unordered_map<std::type_index, Trait>>())
     {
     }

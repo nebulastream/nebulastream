@@ -14,4 +14,7 @@ add_source_files(nes-query-optimizer
         DecideJoinTypesRule.cpp
         DecideMemoryLayoutRule.cpp
         RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp)
+        RedundantProjectionRemovalRule.cpp
+        DecideFieldMappings.cpp
+        DecideFieldOrder.cpp
+)

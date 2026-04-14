@@ -89,14 +89,18 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<Identifier, std::string>{{Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
+    auto sourceConfig = std::unordered_map<Identifier, std::string>{
+        {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace(Identifier::parse("receiver_queue_size"), std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
     auto sinkConfig = std::unordered_map<Identifier, std::string>{
-        {Identifier::parse("channel"), channel.id.getRawValue()}, {Identifier::parse("bind"), upstreamData}, {Identifier::parse("data_endpoint"), downstreamData}, {Identifier::parse("output_format"), "NATIVE"}};
+        {Identifier::parse("channel"), channel.id.getRawValue()},
+        {Identifier::parse("bind"), upstreamData},
+        {Identifier::parse("data_endpoint"), downstreamData},
+        {Identifier::parse("output_format"), "NATIVE"}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
@@ -108,16 +112,22 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_upper_threshold"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        sinkConfig.emplace(
+            Identifier::parse("backpressure_upper_threshold"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
     }
     if (context.config.backpressureLowerThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(Identifier::parse("backpressure_lower_threshold"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        sinkConfig.emplace(
+            Identifier::parse("backpressure_lower_threshold"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
     auto orderedUpstreamSchema = channel.upstreamOp->getTraitSet().get<FieldOrderingTrait>()->getOrderedFields();
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        Identifier::parse("Network"), orderedUpstreamSchema, Host(channel.downstreamNode.getRawValue()), {{Identifier::parse("type"), "Native"}}, sourceConfig);
+        Identifier::parse("Network"),
+        orderedUpstreamSchema,
+        Host(channel.downstreamNode.getRawValue()),
+        {{Identifier::parse("type"), "Native"}},
+        sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 
@@ -127,16 +137,22 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
-    TraitSet ts;
+    TraitSet ts = std::views::values(channel.upstreamOp.getTraitSet())
+        | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
 
-    USED_IN_DEBUG auto traitInserted = ts.tryInsert(outputOriginIds.get());
-    INVARIANT(traitInserted, "Failed to add output origin");
-    traitInserted = ts.tryInsert(memoryLayout.get());
-    INVARIANT(traitInserted, "Failed to add memory layout");
+    //
+    // USED_IN_DEBUG auto traitInserted = ts.tryInsert(outputOriginIds.get());
+    // INVARIANT(traitInserted, "Failed to add output origin");
+    // traitInserted = ts.tryInsert(memoryLayout.get());
+    // INVARIANT(traitInserted, "Failed to add memory layout");
+
+    auto bridgeSink = TypedLogicalOperator<SinkLogicalOperator>{networkSinkDescriptor.value()};
 
     return Bridge{
-        TypedLogicalOperator<SourceDescriptorLogicalOperator>{networkSourceDescriptor} -> withTraitSet(ts),
-        TypedLogicalOperator<SinkLogicalOperator>{networkSinkDescriptor.value()} -> withTraitSet(ts).withInferredSchema()};
+        TypedLogicalOperator<SourceDescriptorLogicalOperator>{networkSourceDescriptor}->withTraitSet(ts),
+        TypedLogicalOperator<SinkLogicalOperator>{networkSinkDescriptor.value(), channel.upstreamOp}
+            ->withTraitSet(ts)
+            .withInferredSchema()};
 }
 
 LogicalOperator createNetworkChannel(
