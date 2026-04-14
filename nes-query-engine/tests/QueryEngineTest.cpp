@@ -23,7 +23,6 @@
 #include <utility>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
@@ -35,6 +34,7 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryEngineTestingInfrastructure.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <TestSource.hpp>
 
 namespace NES::Testing

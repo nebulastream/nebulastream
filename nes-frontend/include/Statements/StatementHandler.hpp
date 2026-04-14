@@ -26,7 +26,6 @@
 #include <DataTypes/SchemaFwd.hpp>
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <QueryManager/QueryManager.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -38,6 +37,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryStatus.hpp>
 #include <WorkerCatalog.hpp>
 
 namespace NES

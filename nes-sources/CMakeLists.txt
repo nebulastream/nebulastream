@@ -27,11 +27,12 @@ add_library(nes-sources-validation ${NES_SOURCES_VALIDATION_SOURCE_FILES})
 add_library(nes-sources ${NES_SOURCES_SOURCE_FILES})
 
 target_link_libraries(nes-sources-validation
-        PUBLIC nes-common nes-configurations nes-data-types nes-input-formatter-provider)
+        PUBLIC nes-common nes-configurations nes-data-types)
 
 target_include_directories(nes-sources-validation
         PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/nes-input-formatters/include/InputFormatterProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>
         # FileSourceValidation.cpp / NetworkSourceValidation.cpp need the
         # config structs + source name constants, which live in private/.
@@ -39,7 +40,8 @@ target_include_directories(nes-sources-validation
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 target_link_libraries(nes-sources
-        PUBLIC nes-sources-validation nes-common nes-configurations nes-memory nes-executable nes-network-bindings)
+        PUBLIC nes-sources-validation nes-common nes-configurations nes-memory nes-executable nes-network-bindings
+        PRIVATE nes-input-formatter-provider nes-runtime)
 
 target_include_directories(nes-sources PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>

@@ -35,6 +35,7 @@
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>
 #include <OutputFormatters/OutputFormatterValidationProvider.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES

@@ -21,13 +21,13 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <SliceStore/Slice.hpp>
 #include <SliceStore/WindowSlicesStoreInterface.hpp>
 #include <Time/Timestamp.hpp>
 #include <Watermark/MultiOriginWatermarkProcessor.hpp>
 #include <PipelineExecutionContext.hpp>
+#include <QueryTerminationType.hpp>
 
 namespace NES
 {

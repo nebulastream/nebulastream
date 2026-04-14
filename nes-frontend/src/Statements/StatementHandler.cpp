@@ -29,7 +29,6 @@
 #include <Operators/LogicalOperatorFwd.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -47,6 +46,7 @@
 #include <ErrorHandling.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>

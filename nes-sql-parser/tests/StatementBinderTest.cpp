@@ -36,7 +36,6 @@
 #include <Plans/LogicalPlan.hpp>
 #include <SQLQueryParser/AntlrSQLQueryParser.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
-#include <Sinks/FileSink.hpp>
 #include <Sinks/FileSinkConfig.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sinks/SinkDescriptor.hpp>
@@ -51,7 +50,6 @@
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterValidationProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 
@@ -419,8 +417,8 @@ TEST_F(StatementBinderTest, BindCreateBindSource)
     const std::string createPhysicalSourceStatement
         = R"(CREATE PHYSICAL SOURCE FOR testSource TYPE File SET (0 as "SOURCE".MAX_INFLIGHT_BUFFERS, '/dev/null' AS "SOURCE".FILE_PATH, 'CSV' AS INPUT_FORMATTER."TYPE", '\n' AS INPUT_FORMATTER.TUPLE_DELIMITER, ',' AS INPUT_FORMATTER.FIELD_DELIMITER))";
     const auto statement2 = binder->parseAndBindSingle(createPhysicalSourceStatement);
-    const auto expectedParserConfig
-        = InputFormatterValidationProvider::provide("CSV", {{"TUPLE_DELIMITER", "\n"}, {"FIELD_DELIMITER", ","}}).value();
+    const DescriptorConfig::Config expectedParserConfig{
+        {"TYPE", std::string{"CSV"}}, {"TUPLE_DELIMITER", std::string{"\n"}}, {"FIELD_DELIMITER", std::string{","}}};
     std::unordered_map<Identifier, std::string> unvalidatedConfig{{Identifier::parse("file_path"), "/dev/null"}};
     const DescriptorConfig::Config descriptorConfig = SourceValidationProvider::provide("File", std::move(unvalidatedConfig)).value();
 

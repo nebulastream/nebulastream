@@ -35,7 +35,6 @@
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/AtomicState.hpp>
 #include <fmt/format.h>
@@ -50,6 +49,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 #include <TaskQueue.hpp>

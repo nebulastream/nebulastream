@@ -13,7 +13,12 @@
 function(add_nes_optimizer_test)
     add_nes_unit_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-query-optimizer nes-logical-operators nes-test-util nes-query-optimizer-test-utils-lib)
+    target_link_libraries(${TARGET_NAME}
+        nes-query-optimizer
+        nes-logical-operators
+        nes-test-util
+        nes-query-optimizer-test-utils-lib
+        nes-nautilus)
     target_include_directories(${TARGET_NAME} PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../private)
 endfunction()
 

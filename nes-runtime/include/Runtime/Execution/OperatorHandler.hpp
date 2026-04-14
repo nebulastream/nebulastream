@@ -16,7 +16,7 @@
 #include <atomic>
 #include <cstdint>
 #include <Identifiers/NESStrongType.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+#include <QueryTerminationType.hpp>
 
 namespace NES
 {

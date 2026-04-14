@@ -38,8 +38,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <InputFormatterDescriptor.hpp>
-#include <InputFormatterProvider.hpp>
-#include <InputFormatterValidationProvider.hpp>
 
 namespace NES
 {
@@ -93,15 +91,13 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     {
         return std::unexpected{InvalidConfigParameter("Source config does not contain input formatter type")};
     }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
+    const auto inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
+    DescriptorConfig::Config parserConfigObject;
+    for (auto& [key, value] : parserConfigStringMap)
     {
-        return std::unexpected{UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat)};
+        parserConfigObject.emplace(std::move(key), std::move(value));
     }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
+    const InputFormatterDescriptor formatDescriptor{inputFormat, std::move(parserConfigObject)};
 
     SourceDescriptor descriptor{
         id,
@@ -181,15 +177,13 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     {
         throw InvalidConfigParameter("Source config does not contain input formatter type");
     }
-    const std::string inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
-    const auto parserConfigObject = inputFormat == "NATIVE" ? DescriptorConfig::Config{}
-                                                            : InputFormatterValidationProvider::provide(inputFormat, parserConfigStringMap);
-    if (not parserConfigObject.has_value())
+    const auto inputFormat = parserConfigStringMap.at(InputFormatterDescriptor::getTypeString());
+    DescriptorConfig::Config parserConfigObject;
+    for (auto& [key, value] : parserConfigStringMap)
     {
-        throw UnknownSourceType(
-            "The input formatter type '{}' is not registered. If it is a plugin, make sure you activate it.", inputFormat);
+        parserConfigObject.emplace(std::move(key), std::move(value));
     }
-    const InputFormatterDescriptor formatDescriptor{inputFormat, parserConfigObject.value()};
+    const InputFormatterDescriptor formatDescriptor{inputFormat, std::move(parserConfigObject)};
 
 
     auto physicalId = PhysicalSourceId{nextPhysicalSourceId.fetch_add(1)};

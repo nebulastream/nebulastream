@@ -23,6 +23,8 @@ add_source_files(nes-physical-operators
         HashMapSlice.cpp
         SourceDescriptorPhysicalOperator.cpp
         SinkPhysicalOperator.cpp
+        Pipeline.cpp
+        CompiledQueryPlan.cpp
         WindowBasedOperatorHandler.cpp
         WindowBuildPhysicalOperator.cpp
         WindowProbePhysicalOperator.cpp)

@@ -11,6 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-sources-validation
+        ${PROJECT_SOURCE_DIR}/nes-input-formatters/src/InputFormatterDescriptor.cpp
         SourceDescriptor.cpp
         LogicalSource.cpp
         SourceCatalog.cpp

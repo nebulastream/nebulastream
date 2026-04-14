@@ -25,7 +25,8 @@ include(${PROJECT_SOURCE_DIR}/cmake/UnreflectionRegistrationUtil.cmake)
 add_library(nes-query-optimizer STATIC)
 set_target_properties(nes-query-optimizer PROPERTIES LINKER_LANGUAGE CXX)
 target_include_directories(nes-query-optimizer
-        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>)
+        PUBLIC $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+        PRIVATE $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/nes-input-formatters/include/InputFormatterProvider>)
 
 # Trait is unreflection-only — no factory registry on this side.
 create_unreflection_registry(Trait nes-query-optimizer
@@ -38,7 +39,7 @@ get_source(nes-query-optimizer NES_OPTIMIZER_SOURCE_FILES)
 target_sources(nes-query-optimizer PRIVATE ${NES_OPTIMIZER_SOURCE_FILES})
 
 find_package(highs CONFIG REQUIRED)
-target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE nes-input-formatter-provider highs::highs)
+target_link_libraries(nes-query-optimizer PUBLIC nes-configurations nes-logical-operators nes-single-node-worker-interface nes-distributed PRIVATE highs::highs)
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)

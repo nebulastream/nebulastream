@@ -33,7 +33,6 @@
 #include <DataTypes/UnboundField.hpp>
 #include <Identifiers/Identifier.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Statements/StatementHandler.hpp>
 #include <magic_enum/magic_enum.hpp>
