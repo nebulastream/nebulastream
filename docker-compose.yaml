@@ -49,6 +49,20 @@ services:
       - "7082:8082"
     volumes:
       - ./demo/:/app/demo:ro
+  source-underbody-screw:
+    build:
+      context: datagen
+      dockerfile: docker/Dockerfile
+    image: datagen:local
+    restart: unless-stopped
+    environment:
+      DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-underbody-screw.yaml}
+    ports:
+      - "8080:8080"
+      - "8081:8081"
+      - "8082:8082"
+    volumes:
+      - ./demo/:/app/demo:ro
   source-engine-wiring:
     build:
       context: datagen

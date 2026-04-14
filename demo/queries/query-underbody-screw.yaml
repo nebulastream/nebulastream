@@ -1,0 +1,64 @@
+query: |
+  SELECT
+  VARSIZED("manufacturing-anomaly") AS event,
+  VARSIZED("underbody_screw") AS component_type,
+  id AS component_id,
+  anomaly_score AS confidence,
+  timestamp AS timestamp
+  FROM MODEL_INFERENCE(underbody_screw_pca, (SELECT id, timestamp, AUTOVI_PREPROCESS_IMAGE(FROM_BASE64(data)) AS pixels FROM UNDERBODY_SCREW))
+  WHERE anomaly_score > FLOAT32(0.8)
+  INTO KAFKA_SINK;
+models:
+  - name: underbody_screw_pca
+    path: demo/models/underbody_screw_pca.onnx
+    input:
+      - name: pixels
+        type: VARSIZED
+    output:
+      - name: anomaly_score
+        type: FLOAT32
+sinks:
+  - name: KAFKA_SINK
+    type: KAFKA
+    schema:
+      - name: event
+        type: VARSIZED
+      - name: component_type
+        type: VARSIZED
+      - name: component_id
+        type: VARSIZED
+      - name: confidence
+        type: FLOAT32
+      - name: timestamp
+        type: UINT64
+    config:
+      brokers: 'broker:29092'
+      topic: process-intelligence
+      output_format: JSON
+    parser_config: {}
+logical:
+  - name: UNDERBODY_SCREW
+    schema:
+      - name: ID
+        type: VARSIZED
+      - name: TIMESTAMP
+        type: UINT64
+      - name: WIDTH
+        type: UINT64
+      - name: HEIGHT
+        type: UINT64
+      - name: DATA
+        type: VARSIZED
+physical:
+  - logical: UNDERBODY_SCREW
+    type: TCP
+    parser_config:
+      type: CSV
+      tuple_delimiter: "\n"
+      field_delimiter: ","
+    source_config:
+      socket_host: source-underbody-screw
+      socket_port: 8080
+      socket_buffer_size: 65536
+      flush_interval_ms: 100
+      connect_timeout_seconds: 60
