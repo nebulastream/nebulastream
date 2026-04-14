@@ -192,7 +192,7 @@ TEST_F(SpecificSequenceTest, simdJSONFirstObjectEndsAtBufferBoundary)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 16,
-        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .parserConfig = {{"type","JSON"}, {"tuple_delimiter","\n"}, {"fieldDelimter", ""}},
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults = {WorkerThreadResults<TestTuple>{{{TestTuple(12)}}}},
@@ -210,7 +210,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryLeading)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .parserConfig = {{"type","JSON"}, {"tuple_delimiter","\n"}, {"field_delimiter", ""}},
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
@@ -232,7 +232,7 @@ TEST_F(SpecificSequenceTest, simdJSONObjectEndsAtBufferBoundaryTrailing)
         .numRequiredBuffers = 3, /// 2 buffer for raw data, 1 buffer for results
         .sizeOfRawBuffers = 16,
         .sizeOfFormattedBuffers = 20,
-        .parserConfig = {.parserType = "JSON", .tupleDelimiter = "\n", .fieldDelimiter = ""},
+        .parserConfig = {{"type","JSON"}, {"tuple_delimiter","\n"}, {"fieldDelimter", ""}},
         .testSchema = {INT32},
         .memoryLayoutType = MemoryLayoutType::ROW_LAYOUT,
         .expectedResults
