@@ -20,9 +20,11 @@
 #include <optional>
 #include <ostream>
 #include <string>
+#include <Util/UppercaseString.hpp>
 #include <unordered_map>
 #include <utility>
 #include <variant>
+#include <Util/UppercaseString.hpp>
 
 
 #include <Configurations/Enums/EnumWrapper.hpp>
@@ -63,7 +65,7 @@ class DescriptorConfig
 {
 public:
     using ConfigType = std::variant<int32_t, uint32_t, int64_t, uint64_t, bool, char, float, double, std::string, EnumWrapper>;
-    using Config = std::unordered_map<std::string, ConfigType>;
+    using Config = std::unordered_map<UppercaseString, ConfigType>;
 
     /// Tag struct that tags a config key with a type.
     /// The tagged type allows to determine the correct variant of a config paramater, without supplying it as a template parameter.
@@ -73,23 +75,23 @@ public:
     {
         using Type = T;
         using EnumType = U;
-        using ValidateFunc = std::function<std::optional<T>(const std::unordered_map<std::string, std::string>& config)>;
+        using ValidateFunc = std::function<std::optional<T>(const std::unordered_map<UppercaseString, std::string>& config)>;
 
-        ConfigParameter(std::string name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
-            : name(std::move(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
+        ConfigParameter(std::string_view name, std::optional<T> defaultValue, ValidateFunc&& validateFunc)
+            : name(std::string(name)), validateFunc(std::move(validateFunc)), defaultValue(std::move(defaultValue))
         {
             static_assert(
                 not(std::is_same_v<EnumWrapper, T> && std::is_same_v<void, U>),
                 "An EnumWrapper config parameter must define the enum type as a template parameter.");
         }
 
-        const std::string name;
+        const UppercaseString name;
         const ValidateFunc validateFunc;
         const std::optional<T> defaultValue;
 
-        operator const std::string&() const { return name; }
+        operator const UppercaseString&() const { return name; }
 
-        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
+        std::optional<ConfigType> validate(const std::unordered_map<UppercaseString, std::string>& config) const
         {
             return this->validateFunc(config);
         }
@@ -111,7 +113,7 @@ public:
         {
         }
 
-        std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const
+        std::optional<ConfigType> validate(const std::unordered_map<UppercaseString, std::string>& config) const
         {
             return configParameter->validate(config);
         }
@@ -122,7 +124,7 @@ public:
         struct ConfigParameterConcept
         {
             virtual ~ConfigParameterConcept() = default;
-            virtual std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const = 0;
+            virtual std::optional<ConfigType> validate(const std::unordered_map<UppercaseString, std::string>& config) const = 0;
             virtual std::optional<ConfigType> getDefaultValue() const = 0;
         };
 
@@ -132,7 +134,7 @@ public:
         {
             ConfigParameterModel(const T& configParameter) : configParameter(configParameter) { }
 
-            std::optional<ConfigType> validate(const std::unordered_map<std::string, std::string>& config) const override
+            std::optional<ConfigType> validate(const std::unordered_map<UppercaseString, std::string>& config) const override
             {
                 return configParameter.validate(config);
             }
@@ -152,7 +154,7 @@ public:
     /// @throws If a mandatory parameter was not provided, an optional parameter was invalid, or a not-supported parameter was encountered.
     template <typename SpecificConfiguration>
     requires DescriptorConfigurationConstraints::HasParameterMap<SpecificConfiguration>
-    static Config validateAndFormat(std::unordered_map<std::string, std::string> config, const std::string_view implementationName)
+    static Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config, const std::string_view implementationName)
     {
         auto validatedConfig = Config{};
 
@@ -222,7 +224,7 @@ private:
 public:
     template <typename ConfigParameter>
     static std::optional<typename ConfigParameter::Type>
-    tryGet(const ConfigParameter& configParameter, const std::unordered_map<std::string, std::string>& config)
+    tryGet(const ConfigParameter& configParameter, const std::unordered_map<UppercaseString, std::string>& config)
     {
         /// No specific validation and formatting function defined, using default formatter.
         if (config.contains(configParameter))
@@ -243,9 +245,9 @@ public:
     /// The map makes it possible that we can simply iterate over all config parameters to check if the user provided all mandatory
     /// parameters and whether the configuration is valid. Additionally, we can quickly check if there are unsupported parameters.
     template <typename... Args>
-    static std::unordered_map<std::string, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
+    static std::unordered_map<UppercaseString, ConfigParameterContainer> createConfigParameterContainerMap(Args&&... parameters)
     {
-        std::unordered_map<std::string, ConfigParameterContainer> configParameterMap{};
+        std::unordered_map<UppercaseString, ConfigParameterContainer> configParameterMap{};
         auto inserter = [&configParameterMap](auto param)
         {
             if constexpr (requires {
@@ -258,7 +260,7 @@ public:
             {
                 configParameterMap.emplace(param.name, std::forward<decltype(param)>(param));
             }
-            else if constexpr (std::is_same_v<decltype(param), std::unordered_map<std::string, ConfigParameterContainer>>)
+            else if constexpr (std::is_same_v<decltype(param), std::unordered_map<UppercaseString, ConfigParameterContainer>>)
             {
                 for (const auto& [key, value] : param)
                 {
@@ -322,7 +324,7 @@ struct Descriptor
     }
 
     template <typename ConfigParameterType>
-    std::optional<ConfigParameterType> tryGetFromConfig(const std::string& configParameter) const
+    std::optional<ConfigParameterType> tryGetFromConfig(const UppercaseString& configParameter) const
     {
         if (config.contains(configParameter) && std::holds_alternative<ConfigParameterType>(config.at(configParameter)))
         {
@@ -331,6 +333,13 @@ struct Descriptor
         }
         NES_DEBUG("Descriptor did not contain key: {}, with type: {}", configParameter, NAMEOF_TYPE(ConfigParameterType));
         return std::nullopt;
+    }
+
+    /// Overload accepting string literals directly (avoids two-step implicit conversion).
+    template <typename ConfigParameterType>
+    std::optional<ConfigParameterType> tryGetFromConfig(UppercaseString::UpperLiteral key) const
+    {
+        return tryGetFromConfig<ConfigParameterType>(UppercaseString(key));
     }
 
     [[nodiscard]] DescriptorConfig::Config getConfig() const { return config; }

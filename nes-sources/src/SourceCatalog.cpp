@@ -70,8 +70,8 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     const LogicalSource& logicalSource,
     const std::string_view sourceType,
     Host host,
-    std::unordered_map<std::string, std::string> descriptorConfig,
-    const std::unordered_map<std::string, std::string>& parserConfig)
+    std::unordered_map<UppercaseString, std::string> descriptorConfig,
+    const std::unordered_map<UppercaseString, std::string>& parserConfig)
 {
     const std::unique_lock lock(catalogMutex);
 
@@ -147,8 +147,8 @@ std::optional<SourceDescriptor> SourceCatalog::getInlineSource(
     const std::string& sourceType,
     const Schema& schema,
     Host host,
-    std::unordered_map<std::string, std::string> parserConfigMap,
-    std::unordered_map<std::string, std::string> sourceConfigMap) const
+    std::unordered_map<UppercaseString, std::string> parserConfigMap,
+    std::unordered_map<UppercaseString, std::string> sourceConfigMap) const
 {
     auto descriptorConfig = SourceValidationProvider::provide(sourceType, std::move(sourceConfigMap));
     if (!descriptorConfig.has_value())

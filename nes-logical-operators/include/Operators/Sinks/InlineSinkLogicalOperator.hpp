@@ -17,6 +17,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Util/UppercaseString.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -36,8 +37,8 @@ public:
     explicit InlineSinkLogicalOperator(
         std::string sinkType,
         const Schema& schema,
-        std::unordered_map<std::string, std::string> config,
-        std::unordered_map<std::string, std::string> formatConfig);
+        std::unordered_map<UppercaseString, std::string> config,
+        std::unordered_map<UppercaseString, std::string> formatConfig);
 
     [[nodiscard]] bool operator==(const InlineSinkLogicalOperator& rhs) const;
 
@@ -56,9 +57,9 @@ public:
     [[nodiscard]] InlineSinkLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
 
     [[nodiscard]] std::string getSinkType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSinkConfig() const;
+    [[nodiscard]] std::unordered_map<UppercaseString, std::string> getSinkConfig() const;
     [[nodiscard]] Schema getSchema() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getFormatConfig() const;
+    [[nodiscard]] std::unordered_map<UppercaseString, std::string> getFormatConfig() const;
 
 private:
     static constexpr std::string_view NAME = "InlineSink";
@@ -68,8 +69,8 @@ private:
 
     Schema schema;
     std::string sinkType;
-    std::unordered_map<std::string, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::unordered_map<UppercaseString, std::string> sinkConfig;
+    std::unordered_map<UppercaseString, std::string> formatConfig;
 };
 
 template <>

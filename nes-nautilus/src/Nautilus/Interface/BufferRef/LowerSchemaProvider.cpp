@@ -41,7 +41,7 @@ std::shared_ptr<TupleBufferRef> LowerSchemaProvider::lowerSchemaWithOutputFormat
     const uint64_t bufferSize,
     const Schema& schema,
     const std::string& outputFormatterType,
-    const std::unordered_map<std::string, std::string>& config)
+    const std::unordered_map<UppercaseString, std::string>& config)
 {
     std::vector<OutputFormatterBufferRef::Field> fields;
     std::vector<Record::RecordFieldIdentifier> fieldNames;

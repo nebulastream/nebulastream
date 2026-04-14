@@ -86,21 +86,21 @@ public:
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
         "output_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<bool> ADD_TIMESTAMP{
         "add_timestamp",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(ADD_TIMESTAMP, config); }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(OUTPUT_FORMAT, ADD_TIMESTAMP);
 
     static std::optional<DescriptorConfig::Config>
-    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs);
+    validateAndFormatConfig(std::string_view sinkType, std::unordered_map<UppercaseString, std::string> configPairs);
 
     friend struct SinkLogicalOperator;
 };

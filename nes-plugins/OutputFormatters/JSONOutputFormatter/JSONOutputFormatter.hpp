@@ -49,7 +49,7 @@ public:
         const RecordBuffer& recordBuffer,
         const nautilus::val<AbstractBufferProvider*>& bufferProvider) const override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
@@ -62,7 +62,7 @@ namespace NES::OutputFormatterConfig
 {
 struct ConfigParametersJSON
 {
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap();
 };
 }

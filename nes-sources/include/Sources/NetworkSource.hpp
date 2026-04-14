@@ -58,7 +58,7 @@ public:
 
     [[nodiscard]] bool addsMetadata() const override { return true; }
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -78,7 +78,7 @@ struct ConfigParametersNetworkSource
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
         "channel",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        [](const std::unordered_map<UppercaseString, std::string>& config) -> std::optional<std::string>
         {
             auto value = DescriptorConfig::tryGet(CHANNEL, config);
             if (value && !stringToUUID(*value))
@@ -92,7 +92,7 @@ struct ConfigParametersNetworkSource
     static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
         "bind",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<std::string>
+        [](const std::unordered_map<UppercaseString, std::string>& config) -> std::optional<std::string>
         {
             auto value = DescriptorConfig::tryGet(BIND, config);
             if (value && !EndpointValidation{}.isValid(*value))
@@ -109,7 +109,7 @@ struct ConfigParametersNetworkSource
     static inline const DescriptorConfig::ConfigParameter<size_t> RECEIVER_QUEUE_SIZE{
         "receiver_queue_size",
         size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<size_t>
+        [](const std::unordered_map<UppercaseString, std::string>& config) -> std::optional<size_t>
         {
             auto value = DescriptorConfig::tryGet(RECEIVER_QUEUE_SIZE, config);
             if (value && *value == 0)
@@ -120,7 +120,7 @@ struct ConfigParametersNetworkSource
             return value;
         }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, CHANNEL, BIND, RECEIVER_QUEUE_SIZE);
 };
 

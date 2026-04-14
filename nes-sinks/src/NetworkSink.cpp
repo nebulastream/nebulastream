@@ -240,7 +240,7 @@ std::ostream& NetworkSink::toString(std::ostream& str) const
     return str << fmt::format("NetworkSink(connectionId: {}, channelId: {})", connectionAddr, channelId);
 }
 
-DescriptorConfig::Config NetworkSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config NetworkSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSink>(std::move(config), name());
 }

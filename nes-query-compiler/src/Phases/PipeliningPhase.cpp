@@ -165,7 +165,9 @@ void addOutputFormattingEmit(
     const auto& schema = wrappedOp.getOutputSchema();
     INVARIANT(schema.has_value(), "Wrapped operator has no output schema");
 
-    const auto bufferRef = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat, config);
+    const std::unordered_map<UppercaseString, std::string> uppercaseConfig(config.begin(), config.end());
+    const auto bufferRef
+        = LowerSchemaProvider::lowerSchemaWithOutputFormat(configuredBufferSize, schema.value(), outputFormat, uppercaseConfig);
 
     /// Create an operator handler for the emit
     const OperatorHandlerId operatorHandlerIndex = getNextOperatorHandlerId();

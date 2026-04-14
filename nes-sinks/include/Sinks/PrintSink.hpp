@@ -50,7 +50,7 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -65,14 +65,14 @@ struct ConfigParametersPrint
     static inline const DescriptorConfig::ConfigParameter<uint32_t> INGESTION{
         "ingestion",
         0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(INGESTION, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
         "output_format",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(OUTPUT_FORMAT, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(INGESTION, OUTPUT_FORMAT);
 };
 

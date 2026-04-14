@@ -104,7 +104,7 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
     }
 }
 
-DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
 }

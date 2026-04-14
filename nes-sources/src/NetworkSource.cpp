@@ -88,7 +88,7 @@ void NetworkSource::close()
     NES_DEBUG("Receiver channel closed: {}", channelId);
 }
 
-DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config NetworkSource::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersNetworkSource>(std::move(config), name());
 }

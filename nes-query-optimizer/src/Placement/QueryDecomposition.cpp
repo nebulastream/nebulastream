@@ -88,34 +88,42 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
-    auto sourceConfig = std::unordered_map<std::string, std::string>{{"channel", channel.id.getRawValue()}, {"bind", downstreamData}};
+    auto sourceConfig = std::unordered_map<UppercaseString, std::string>{
+        {UppercaseString("CHANNEL"), channel.id.getRawValue()}, {UppercaseString("BIND"), downstreamData}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
-        sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
+        sourceConfig.emplace(UppercaseString("RECEIVER_QUEUE_SIZE"), std::to_string(context.config.receiverQueueSize.getValue()));
     }
 
-    auto sinkConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", upstreamData}, {"data_endpoint", downstreamData}, {"output_format", "NATIVE"}};
+    auto sinkConfig = std::unordered_map<UppercaseString, std::string>{
+        {UppercaseString("CHANNEL"), channel.id.getRawValue()},
+        {UppercaseString("BIND"), upstreamData},
+        {UppercaseString("DATA_ENDPOINT"), downstreamData},
+        {UppercaseString("OUTPUT_FORMAT"), "NATIVE"}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {
-        sinkConfig.emplace("max_pending_acks", std::to_string(context.config.maxPendingAcks.getValue()));
+        sinkConfig.emplace(UppercaseString("MAX_PENDING_ACKS"), std::to_string(context.config.maxPendingAcks.getValue()));
     }
     if (context.config.senderQueueSize.isExplicitlySet())
     {
-        sinkConfig.emplace("sender_queue_size", std::to_string(context.config.senderQueueSize.getValue()));
+        sinkConfig.emplace(UppercaseString("SENDER_QUEUE_SIZE"), std::to_string(context.config.senderQueueSize.getValue()));
     }
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace("backpressure_upper_threshold", std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        sinkConfig.emplace(UppercaseString("BACKPRESSURE_UPPER_THRESHOLD"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
     }
     if (context.config.backpressureLowerThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace("backpressure_lower_threshold", std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        sinkConfig.emplace(UppercaseString("BACKPRESSURE_LOWER_THRESHOLD"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(
-        "Network", channel.upstreamOp.getOutputSchema(), Host(channel.downstreamNode.getRawValue()), {{"type", "Native"}}, sourceConfig);
+        "Network",
+        channel.upstreamOp.getOutputSchema(),
+        Host(channel.downstreamNode.getRawValue()),
+        {{UppercaseString("TYPE"), "Native"}},
+        sourceConfig);
     INVARIANT(networkSourceDescriptorOpt.has_value(), "Failed to add physical source for network channel");
     const auto& networkSourceDescriptor = networkSourceDescriptorOpt.value();
 

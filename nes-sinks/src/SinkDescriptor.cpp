@@ -106,7 +106,7 @@ Host SinkDescriptor::getHost() const
 }
 
 std::optional<DescriptorConfig::Config>
-SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<std::string, std::string> configPairs)
+SinkDescriptor::validateAndFormatConfig(const std::string_view sinkType, std::unordered_map<UppercaseString, std::string> configPairs)
 {
     auto sinkValidationRegistryArguments = SinkValidationRegistryArguments{std::move(configPairs)};
     return SinkValidationRegistry::instance().create(std::string{sinkType}, std::move(sinkValidationRegistryArguments));

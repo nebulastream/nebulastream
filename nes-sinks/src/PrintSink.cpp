@@ -81,7 +81,7 @@ std::ostream& PrintSink::toString(std::ostream& str) const
     return str;
 }
 
-DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
 }

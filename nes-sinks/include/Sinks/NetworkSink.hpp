@@ -83,7 +83,7 @@ public:
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec) override;
     void stop(PipelineExecutionContext& pec) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -108,43 +108,43 @@ struct ConfigParametersNetworkSink
     static inline const DescriptorConfig::ConfigParameter<std::string> DATA_ENDPOINT{
         "data_endpoint",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(DATA_ENDPOINT, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> BIND{
         "bind",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(BIND, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> CHANNEL{
         "channel",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(CHANNEL, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_UPPER_THRESHOLD{
         "backpressure_upper_threshold",
         1000,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         { return DescriptorConfig::tryGet(BACKPRESSURE_UPPER_THRESHOLD, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<size_t> BACKPRESSURE_LOWER_THRESHOLD{
         "backpressure_lower_threshold",
         200,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         { return DescriptorConfig::tryGet(BACKPRESSURE_LOWER_THRESHOLD, config); }};
 
     /// Per-channel sender queue size override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> SENDER_QUEUE_SIZE{
         "sender_queue_size",
         size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(SENDER_QUEUE_SIZE, config); }};
 
     /// Per-channel max pending acks override. 0 means use the worker-level default.
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_PENDING_ACKS{
         "max_pending_acks",
         size_t{0},
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(MAX_PENDING_ACKS, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SinkDescriptor::parameterMap,
             DATA_ENDPOINT,

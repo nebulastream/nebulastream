@@ -47,7 +47,7 @@ public:
     void start(PipelineExecutionContext&) override;
     void stop(PipelineExecutionContext&) override;
     void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
@@ -63,15 +63,15 @@ struct ConfigParametersChecksum
 {
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
-        "output_format", "CSV", [](const std::unordered_map<std::string, std::string>&) { return std::optional("CSV"); }};
+        "output_format", "CSV", [](const std::unordered_map<UppercaseString, std::string>&) { return std::optional("CSV"); }};
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
 };
 

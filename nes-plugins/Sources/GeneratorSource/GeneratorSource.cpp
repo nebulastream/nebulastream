@@ -193,7 +193,7 @@ std::ostream& GeneratorSource::toString(std::ostream& str) const
     return str;
 }
 
-DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config GeneratorSource::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersGenerator>(std::move(config), NAME);
 }

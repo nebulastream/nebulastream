@@ -17,6 +17,7 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
+#include <Util/UppercaseString.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -37,8 +38,8 @@ public:
     explicit InlineSourceLogicalOperator(
         std::string type,
         const Schema& schema,
-        std::unordered_map<std::string, std::string> sourceConfig,
-        std::unordered_map<std::string, std::string> parserConfig);
+        std::unordered_map<UppercaseString, std::string> sourceConfig,
+        std::unordered_map<UppercaseString, std::string> parserConfig);
 
     [[nodiscard]] bool operator==(const InlineSourceLogicalOperator& rhs) const;
 
@@ -57,8 +58,8 @@ public:
     [[nodiscard]] InlineSourceLogicalOperator withInferredSchema(const std::vector<Schema>& inputSchemas) const;
 
     [[nodiscard]] std::string getSourceType() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getSourceConfig() const;
-    [[nodiscard]] std::unordered_map<std::string, std::string> getParserConfig() const;
+    [[nodiscard]] std::unordered_map<UppercaseString, std::string> getSourceConfig() const;
+    [[nodiscard]] std::unordered_map<UppercaseString, std::string> getParserConfig() const;
     [[nodiscard]] Schema getSchema() const;
 
 private:
@@ -70,8 +71,8 @@ private:
     Schema schema;
 
     std::string sourceType;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<UppercaseString, std::string> sourceConfig;
+    std::unordered_map<UppercaseString, std::string> parserConfig;
 };
 
 template <>

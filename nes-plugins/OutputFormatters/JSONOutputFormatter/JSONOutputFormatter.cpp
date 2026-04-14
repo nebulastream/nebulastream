@@ -241,7 +241,7 @@ nautilus::val<uint64_t> JSONOutputFormatter::writeFormattedValue(
     return written;
 }
 
-DescriptorConfig::Config JSONOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config JSONOutputFormatter::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersJSON>(std::move(config), "JSON");
 }

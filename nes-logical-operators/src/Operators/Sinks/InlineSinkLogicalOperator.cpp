@@ -43,7 +43,7 @@ std::string InlineSinkLogicalOperator::getSinkType() const
     return sinkType;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getSinkConfig() const
+std::unordered_map<UppercaseString, std::string> InlineSinkLogicalOperator::getSinkConfig() const
 {
     return sinkConfig;
 }
@@ -53,7 +53,7 @@ Schema InlineSinkLogicalOperator::getSchema() const
     return schema;
 }
 
-std::unordered_map<std::string, std::string> InlineSinkLogicalOperator::getFormatConfig() const
+std::unordered_map<UppercaseString, std::string> InlineSinkLogicalOperator::getFormatConfig() const
 {
     return formatConfig;
 }
@@ -115,8 +115,8 @@ std::vector<LogicalOperator> InlineSinkLogicalOperator::getChildren() const
 InlineSinkLogicalOperator::InlineSinkLogicalOperator(
     std::string type,
     const Schema& schema,
-    std::unordered_map<std::string, std::string> config,
-    std::unordered_map<std::string, std::string> formatConfig)
+    std::unordered_map<UppercaseString, std::string> config,
+    std::unordered_map<UppercaseString, std::string> formatConfig)
     : schema(schema), sinkType(std::move(type)), sinkConfig(std::move(config)), formatConfig(std::move(formatConfig))
 {
 }

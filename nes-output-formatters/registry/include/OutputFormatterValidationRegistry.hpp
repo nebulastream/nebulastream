@@ -27,7 +27,7 @@ using OutputFormatterValidationRegistryReturnType = DescriptorConfig::Config;
 
 struct OutputFormatterValidationRegistryArguments
 {
-    std::unordered_map<std::string, std::string> config;
+    std::unordered_map<UppercaseString, std::string> config;
 };
 
 class OutputFormatterValidationRegistry final : public BaseRegistry<

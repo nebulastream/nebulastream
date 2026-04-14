@@ -45,12 +45,12 @@ std::string InlineSourceLogicalOperator::getSourceType() const
     return sourceType;
 }
 
-std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getSourceConfig() const
+std::unordered_map<UppercaseString, std::string> InlineSourceLogicalOperator::getSourceConfig() const
 {
     return sourceConfig;
 }
 
-std::unordered_map<std::string, std::string> InlineSourceLogicalOperator::getParserConfig() const
+std::unordered_map<UppercaseString, std::string> InlineSourceLogicalOperator::getParserConfig() const
 {
     return parserConfig;
 }
@@ -117,8 +117,8 @@ std::vector<LogicalOperator> InlineSourceLogicalOperator::getChildren() const
 InlineSourceLogicalOperator::InlineSourceLogicalOperator(
     std::string type,
     const Schema& schema,
-    std::unordered_map<std::string, std::string> sourceConfig,
-    std::unordered_map<std::string, std::string> parserConfig)
+    std::unordered_map<UppercaseString, std::string> sourceConfig,
+    std::unordered_map<UppercaseString, std::string> parserConfig)
     : schema(schema), sourceType(std::move(type)), sourceConfig(std::move(sourceConfig)), parserConfig(std::move(parserConfig))
 {
 }

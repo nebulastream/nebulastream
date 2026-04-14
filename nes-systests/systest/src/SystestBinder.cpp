@@ -89,29 +89,29 @@ public:
         const std::string& sinkType,
         const std::string_view sinkNameInFile,
         const Schema& schema,
-        const std::unordered_map<std::string, std::string>& /*config*/)
+        const std::unordered_map<UppercaseString, std::string>& /*config*/)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
             [this, schema, sinkType](
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
-                std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
-                std::unordered_map<std::string, std::string> formatConfig{};
+                std::unordered_map<UppercaseString, std::string> config{{UppercaseString("FILE_PATH"), std::move(filePath)}};
+                std::unordered_map<UppercaseString, std::string> formatConfig{};
                 if (sinkType == "File")
                 {
-                    config["output_format"] = "CSV";
+                    config[UppercaseString("OUTPUT_FORMAT")] = "CSV";
                 }
                 else if (toUpperCase(sinkType) == "CHECKSUM")
                 {
-                    formatConfig["quote_strings"] = "true";
+                    formatConfig[UppercaseString("QUOTE_STRINGS")] = "true";
                 }
 
                 PRECONDITION(
                     not possibleSinkPlacements.empty(),
                     "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
                 std::string host = possibleSinkPlacements.at(0).getRawValue();
-                if (auto hostIt = config.find("host"); hostIt != config.end())
+                if (auto hostIt = config.find("HOST"); hostIt != config.end())
                 {
                     host = hostIt->second;
                 }
@@ -130,8 +130,8 @@ public:
     std::optional<SinkDescriptor> getInlineSink(
         const Schema& schema,
         std::string_view sinkType,
-        std::unordered_map<std::string, std::string> config,
-        const std::unordered_map<std::string, std::string>& formatConfig)
+        std::unordered_map<UppercaseString, std::string> config,
+        const std::unordered_map<UppercaseString, std::string>& formatConfig)
     {
         PRECONDITION(
             not possibleSinkPlacements.empty(),
@@ -221,8 +221,7 @@ public:
             getOperatorByType<SourceDescriptorLogicalOperator>(this->optimizedPlan->getGlobalPlan()),
             [&sourceNamesToFilepathAndCountForQuery](const auto& logicalSourceOperator)
             {
-                if (const auto path
-                    = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>(std::string{"file_path"});
+                if (const auto path = logicalSourceOperator->getSourceDescriptor().template tryGetFromConfig<std::string>("FILE_PATH");
                     path.has_value())
                 {
                     if (auto entry = sourceNamesToFilepathAndCountForQuery.extract(logicalSourceOperator->getSourceDescriptor());
@@ -577,7 +576,7 @@ struct SystestBinder::Impl
             .parserConfig = statement.parserConfig,
             .sourceConfig = statement.sourceConfig};
 
-        std::unordered_map<std::string, std::string> defaultParserConfig{{"type", "CSV"}};
+        std::unordered_map<UppercaseString, std::string> defaultParserConfig{{UppercaseString("TYPE"), "CSV"}};
         physicalSourceConfig.parserConfig.merge(defaultParserConfig);
 
         if (testData.has_value())
@@ -661,21 +660,22 @@ struct SystestBinder::Impl
             auto sourceConfig = inlineSource.value()->getSourceConfig();
             auto parserConfig = inlineSource.value()->getParserConfig();
 
-            parserConfig.try_emplace("type", "CSV");
+            parserConfig.try_emplace(UppercaseString("TYPE"), "CSV");
 
             /// By default, all relative paths are relative to the testDataDir.
-            if (sourceConfig.contains("file_path") && !sourceConfig.at("file_path").starts_with("/"))
+            if (sourceConfig.contains(UppercaseString("FILE_PATH"))
+                && !sourceConfig.at(UppercaseString("FILE_PATH")).starts_with("/"))
             {
-                auto filePath = inlineSource.value()->getSourceConfig().at("file_path");
+                auto filePath = inlineSource.value()->getSourceConfig().at(UppercaseString("FILE_PATH"));
                 filePath = testDataDir / filePath;
-                sourceConfig.erase("file_path");
-                sourceConfig.emplace("file_path", filePath);
+                sourceConfig.erase(UppercaseString("FILE_PATH"));
+                sourceConfig.emplace(UppercaseString("FILE_PATH"), filePath);
             }
 
             PRECONDITION(
                 not clusterConfiguration.allowSourcePlacement.empty(),
                 "Topology must list at least one worker in allow_source_placement to assign a default inline source host");
-            sourceConfig.try_emplace("host", clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
+            sourceConfig.try_emplace(UppercaseString("HOST"), clusterConfiguration.allowSourcePlacement.at(0).getRawValue());
 
             if (sourceConfig != inlineSource.value()->getSourceConfig() || parserConfig != inlineSource.value()->getParserConfig())
             {
@@ -710,16 +710,16 @@ struct SystestBinder::Impl
         auto sinkConfig = sinkOperator->getSinkConfig();
         auto formatConfig = sinkOperator->getFormatConfig();
         auto schema = sinkOperator->getSchema();
-        sinkConfig.erase("file_path");
-        sinkConfig.emplace("file_path", resultFile);
+        sinkConfig.erase(UppercaseString("FILE_PATH"));
+        sinkConfig.emplace(UppercaseString("FILE_PATH"), resultFile);
 
-        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
+        if (not(sinkConfig.contains(UppercaseString("OUTPUT_FORMAT"))) and sinkOperator->getSinkType() != "CHECKSUM")
         {
-            sinkConfig.emplace("output_format", "CSV");
+            sinkConfig.emplace(UppercaseString("OUTPUT_FORMAT"), "CSV");
         }
         if (toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
         {
-            formatConfig["quote_strings"] = "true";
+            formatConfig[UppercaseString("QUOTE_STRINGS")] = "true";
         }
 
         auto sinkDescriptor = sltSinkProvider.getInlineSink(schema, sinkOperator->getSinkType(), sinkConfig, formatConfig);

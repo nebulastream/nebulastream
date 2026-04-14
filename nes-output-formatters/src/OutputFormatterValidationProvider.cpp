@@ -25,7 +25,7 @@
 namespace NES::OutputFormatterValidationProvider
 {
 std::optional<DescriptorConfig::Config>
-provide(const std::string_view outputFormat, std::unordered_map<std::string, std::string> stringConfig)
+provide(const std::string_view outputFormat, std::unordered_map<UppercaseString, std::string> stringConfig)
 {
     auto outputFormatValidationArgs = OutputFormatterValidationRegistryArguments(std::move(stringConfig));
     return OutputFormatterValidationRegistry::instance().create(std::string{outputFormat}, std::move(outputFormatValidationArgs));

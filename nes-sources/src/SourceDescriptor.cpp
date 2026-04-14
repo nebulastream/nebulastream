@@ -36,10 +36,10 @@
 namespace NES
 {
 
-ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> configMap)
+ParserConfig ParserConfig::create(std::unordered_map<UppercaseString, std::string> configMap)
 {
     ParserConfig created{};
-    if (const auto parserType = configMap.find("type"); parserType != configMap.end())
+    if (const auto parserType = configMap.find("TYPE"); parserType != configMap.end())
     {
         created.parserType = parserType->second;
     }
@@ -47,7 +47,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = configMap.find("tuple_delimiter"); tupleDelimiter != configMap.end())
+    if (const auto tupleDelimiter = configMap.find("TUPLE_DELIMITER"); tupleDelimiter != configMap.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         auto unescapedDelimiter = unescapeSpecialCharacters(tupleDelimiter->second);
@@ -62,7 +62,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
         NES_DEBUG("Parser configuration did not contain: tuple_delimiter, using default: \\n");
         created.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = configMap.find("field_delimiter"); fieldDelimiter != configMap.end())
+    if (const auto fieldDelimiter = configMap.find("FIELD_DELIMITER"); fieldDelimiter != configMap.end())
     {
         auto unescapedDelimiter = unescapeSpecialCharacters(fieldDelimiter->second);
         created.fieldDelimiter = unescapedDelimiter;
@@ -72,7 +72,7 @@ ParserConfig ParserConfig::create(std::unordered_map<std::string, std::string> c
         NES_DEBUG("Parser configuration did not contain: field_delimiter, using default: ,");
         created.fieldDelimiter = ",";
     }
-    if (const auto commaCheck = configMap.find("allow_commas_in_strings"); commaCheck != configMap.end())
+    if (const auto commaCheck = configMap.find("ALLOW_COMMAS_IN_STRINGS"); commaCheck != configMap.end())
     {
         const auto commaCheckParsed = from_chars<bool>(commaCheck->second);
         if (not commaCheckParsed)

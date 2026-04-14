@@ -50,7 +50,7 @@ struct ParserConfig
     bool allowCommasInStrings{};
     friend bool operator==(const ParserConfig& lhs, const ParserConfig& rhs) = default;
     friend std::ostream& operator<<(std::ostream& os, const ParserConfig& obj);
-    static ParserConfig create(std::unordered_map<std::string, std::string> configMap);
+    static ParserConfig create(std::unordered_map<UppercaseString, std::string> configMap);
 };
 
 class SourceDescriptor final : public Descriptor
@@ -108,11 +108,12 @@ public:
     static inline const DescriptorConfig::ConfigParameter<size_t> MAX_INFLIGHT_BUFFERS{
         "max_inflight_buffers",
         INVALID_MAX_INFLIGHT_BUFFERS,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config)
+        { return DescriptorConfig::tryGet(MAX_INFLIGHT_BUFFERS, config); }};
 
 
     /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(MAX_INFLIGHT_BUFFERS);
 };
 

@@ -56,11 +56,13 @@ protected:
               {
                   const auto dummySchema = Schema{};
                   const auto logicalSource = sourceCatalog.addLogicalSource("Source", dummySchema).value();
-                  const std::unordered_map<std::string, std::string> dummyParserConfig
-                      = {{"type", "CSV"}, {"tupelDelemiter", "\n"}, {"fieldDelemiter", ","}};
+                  const std::unordered_map<UppercaseString, std::string> dummyParserConfig
+                      = {{UppercaseString("TYPE"), "CSV"},
+                         {UppercaseString("TUPLE_DELIMITER"), "\n"},
+                         {UppercaseString("FIELD_DELIMITER"), ","}};
                   auto dummySourceDescriptor
                       = sourceCatalog
-                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{"file_path", "/dev/null"}}, dummyParserConfig)
+                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, dummyParserConfig)
                             .value();
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())

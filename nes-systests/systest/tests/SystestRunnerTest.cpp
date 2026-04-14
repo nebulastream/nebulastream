@@ -117,7 +117,7 @@ public:
     static void TearDownTestSuite() { NES_DEBUG("Tear down SystestRunnerTest test class."); }
 
     SinkDescriptor dummySinkDescriptor
-        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", Host("localhost"), {{"output_format", "CSV"}}, {}).value();
+        = SinkCatalog{}.addSinkDescriptor("dummySink", Schema{}, "Print", Host("localhost"), {{UppercaseString("OUTPUT_FORMAT"), "CSV"}}, {}).value();
     SystestQueryId dummyQueryId = NES::INVALID<NES::Systest::SystestQueryId>;
 };
 
@@ -183,9 +183,9 @@ TEST_F(SystestRunnerTest, RuntimeFailureWithUnexpectedCode)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> parserConfig{{UppercaseString("TYPE"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
@@ -218,9 +218,9 @@ TEST_F(SystestRunnerTest, MissingExpectedRuntimeError)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> parserConfig{{UppercaseString("TYPE"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
@@ -249,9 +249,9 @@ TEST_F(SystestRunnerTest, SequentialExecutionThrowOnNonExistentDependency)
     auto [submitter, mockBackend] = createQuerySubmitter();
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> parserConfig{{UppercaseString("TYPE"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};
@@ -305,9 +305,9 @@ TEST_F(SystestRunnerTest, SequentialExecutionOrderTest)
 
     SourceCatalog sourceCatalog;
     auto testLogicalSource = sourceCatalog.addLogicalSource("testSource", Schema{});
-    const std::unordered_map<std::string, std::string> parserConfig{{"type", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> parserConfig{{UppercaseString("TYPE"), "CSV"}};
     auto testPhysicalSource
-        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{"file_path", "/dev/null"}}, parserConfig);
+        = sourceCatalog.addPhysicalSource(testLogicalSource.value(), "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, parserConfig);
     auto sourceOperator = SourceDescriptorLogicalOperator{testPhysicalSource.value()};
     const LogicalPlan plan{INVALID_QUERY_ID, {SinkLogicalOperator{dummySinkDescriptor}.withChildren({sourceOperator})}};
     const DistributedLogicalPlan distributedPlan{{{Host("localhost:8080"), std::vector{plan}}}, plan};

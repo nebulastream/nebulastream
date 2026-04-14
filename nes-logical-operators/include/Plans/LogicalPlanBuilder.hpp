@@ -18,6 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
+#include <Util/UppercaseString.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -42,8 +43,8 @@ public:
     static LogicalPlan createLogicalPlan(
         std::string inlineSourceType,
         const Schema& schema,
-        std::unordered_map<std::string, std::string> sourceConfig,
-        std::unordered_map<std::string, std::string> parserConfig);
+        std::unordered_map<UppercaseString, std::string> sourceConfig,
+        std::unordered_map<UppercaseString, std::string> parserConfig);
 
     /// @brief this call projects out the attributes in the parameter list
     /// @param functions list of attributes
@@ -88,8 +89,8 @@ public:
     static LogicalPlan addInlineSink(
         std::string type,
         const Schema& schema,
-        std::unordered_map<std::string, std::string> sinkConfig,
-        std::unordered_map<std::string, std::string> formatConfig,
+        std::unordered_map<UppercaseString, std::string> sinkConfig,
+        std::unordered_map<UppercaseString, std::string> formatConfig,
         const LogicalPlan& queryPlan);
 
     /// Checks in case a window is contained in the query.

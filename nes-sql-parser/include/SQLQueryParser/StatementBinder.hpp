@@ -26,6 +26,7 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
+#include <Util/UppercaseString.hpp>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -63,8 +64,8 @@ struct CreatePhysicalSourceStatement
     LogicalSourceName attachedTo;
     std::string sourceType;
     std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sourceConfig;
-    std::unordered_map<std::string, std::string> parserConfig;
+    std::unordered_map<UppercaseString, std::string> sourceConfig;
+    std::unordered_map<UppercaseString, std::string> parserConfig;
     friend std::ostream& operator<<(std::ostream& os, const CreatePhysicalSourceStatement& obj);
 };
 
@@ -74,8 +75,8 @@ struct CreateSinkStatement
     std::string sinkType;
     Schema schema;
     std::optional<Host> host;
-    std::unordered_map<std::string, std::string> sinkConfig;
-    std::unordered_map<std::string, std::string> formatConfig;
+    std::unordered_map<UppercaseString, std::string> sinkConfig;
+    std::unordered_map<UppercaseString, std::string> formatConfig;
 };
 
 /// ShowLogicalSourcesStatement only contains a name not bound to a logical statement,

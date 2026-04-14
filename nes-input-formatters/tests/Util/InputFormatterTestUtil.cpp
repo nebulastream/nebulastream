@@ -137,10 +137,10 @@ SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& re
     };
 }
 
-ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig)
+ParserConfig validateAndFormatParserConfig(const std::unordered_map<UppercaseString, std::string>& parserConfig)
 {
     auto validParserConfig = ParserConfig{};
-    if (const auto parserType = parserConfig.find("type"); parserType != parserConfig.end())
+    if (const auto parserType = parserConfig.find("TYPE"); parserType != parserConfig.end())
     {
         validParserConfig.parserType = parserType->second;
     }
@@ -148,7 +148,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
     {
         throw InvalidConfigParameter("Parser configuration must contain: type");
     }
-    if (const auto tupleDelimiter = parserConfig.find("tuple_delimiter"); tupleDelimiter != parserConfig.end())
+    if (const auto tupleDelimiter = parserConfig.find("TUPLE_DELIMITER"); tupleDelimiter != parserConfig.end())
     {
         /// TODO #651: Add full support for tuple delimiters that are larger than one byte.
         PRECONDITION(tupleDelimiter->second.size() == 1, "We currently do not support tuple delimiters larger than one byte.");
@@ -159,7 +159,7 @@ ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string,
         NES_DEBUG("Parser configuration did not contain: tupleDelimiter, using default: \\n");
         validParserConfig.tupleDelimiter = '\n';
     }
-    if (const auto fieldDelimiter = parserConfig.find("field_delimiter"); fieldDelimiter != parserConfig.end())
+    if (const auto fieldDelimiter = parserConfig.find("FIELD_DELIMITER"); fieldDelimiter != parserConfig.end())
     {
         validParserConfig.fieldDelimiter = fieldDelimiter->second;
     }
@@ -178,12 +178,13 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     std::shared_ptr<BufferManager> sourceBufferPool,
     const size_t numberOfRequiredSourceBuffers)
 {
-    std::unordered_map<std::string, std::string> fileSourceConfiguration{
-        {"file_path", filePath}, {"max_inflight_buffers", std::to_string(numberOfRequiredSourceBuffers)}};
+    std::unordered_map<UppercaseString, std::string> fileSourceConfiguration{
+        {UppercaseString("FILE_PATH"), filePath},
+        {UppercaseString("MAX_INFLIGHT_BUFFERS"), std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(
-        logicalSource.value(), "File", Host("localhost"), std::move(fileSourceConfiguration), {{"type", "CSV"}});
+        logicalSource.value(), "File", Host("localhost"), std::move(fileSourceConfiguration), {{UppercaseString("TYPE"), "CSV"}});
     INVARIANT(sourceDescriptor.has_value(), "Test File Source couldn't be created");
     auto [backpressureController, backpressureListener] = createBackpressureChannel();
     const SourceProvider sourceProvider(numberOfRequiredSourceBuffers, std::move(sourceBufferPool));
@@ -202,7 +203,7 @@ void waitForSource(const std::vector<TupleBuffer>& resultBuffers, const size_t n
 }
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const std::unordered_map<std::string, std::string>& parserConfiguration,
+    const std::unordered_map<UppercaseString, std::string>& parserConfiguration,
     const Schema& schema,
     const MemoryLayoutType memoryLayoutType,
     const size_t sizeOfFormattedBuffers,

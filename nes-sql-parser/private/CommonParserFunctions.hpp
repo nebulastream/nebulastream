@@ -24,6 +24,7 @@
 #include <AntlrSQLParser.h>
 #include <DataTypes/DataType.hpp>
 #include <DataTypes/Schema.hpp>
+#include <Util/UppercaseString.hpp>
 
 namespace NES
 {
@@ -36,9 +37,9 @@ std::string bindIdentifier(AntlrSQLParser::IdentifierContext* identifier);
 
 ConfigMultiMap bindConfigOptionsWithDuplicates(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
 ConfigMap bindConfigOptions(const std::vector<AntlrSQLParser::NamedConfigExpressionContext*>& configOptions);
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions);
-std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions);
-std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions);
+std::unordered_map<UppercaseString, std::string> getParserConfig(const ConfigMap& configOptions);
+std::unordered_map<UppercaseString, std::string> getSourceConfig(const ConfigMap& configOptions);
+std::unordered_map<UppercaseString, std::string> getSinkConfig(const ConfigMap& configOptions);
 std::optional<Schema> getSourceSchema(ConfigMap configOptions);
 std::optional<Schema> getSinkSchema(ConfigMap configOptions);
 

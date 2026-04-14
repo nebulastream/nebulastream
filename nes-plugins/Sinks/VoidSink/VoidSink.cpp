@@ -47,7 +47,7 @@ void VoidSink::execute([[maybe_unused]] const TupleBuffer& inputTupleBuffer, Pip
     PRECONDITION(inputTupleBuffer, "Invalid input buffer in VoidSink.");
 }
 
-DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config VoidSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersVoid>(std::move(config), NAME);
 }

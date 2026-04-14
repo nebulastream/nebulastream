@@ -22,5 +22,6 @@
 namespace NES::OutputFormatterValidationProvider
 {
 /// Call the validation function for the set of config arguments and return a Config Object, if all required arguments are present.
-std::optional<DescriptorConfig::Config> provide(std::string_view outputFormat, std::unordered_map<std::string, std::string> stringConfig);
+std::optional<DescriptorConfig::Config>
+provide(std::string_view outputFormat, std::unordered_map<UppercaseString, std::string> stringConfig);
 }

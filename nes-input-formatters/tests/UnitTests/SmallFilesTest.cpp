@@ -288,8 +288,10 @@ public:
                 = BufferManager::create(setupResult.sizeOfFormattedBuffers, setupResult.numberOfRequiredFormattedBuffers);
 
             /// Create compiled pipeline stage containing InputFormatter and EmitOperator(emits formatted buffers into 'resultBuffers')
-            const std::unordered_map<std::string, std::string> parserConfiguration{
-                {"type", testConfig.formatterType}, {"tuple_delimiter", "\n"}, {"field_delimiter", "|"}};
+            const std::unordered_map<UppercaseString, std::string> parserConfiguration{
+                {UppercaseString{"TYPE"}, testConfig.formatterType},
+                {UppercaseString{"TUPLE_DELIMITER"}, "\n"},
+                {UppercaseString{"FIELD_DELIMITER"}, "|"}};
             auto testStage = InputFormatterTestUtil::createInputFormatter(
                 parserConfiguration,
                 setupResult.schema,

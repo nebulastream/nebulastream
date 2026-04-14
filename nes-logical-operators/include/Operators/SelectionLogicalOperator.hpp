@@ -62,10 +62,10 @@ public:
         static inline const DescriptorConfig::ConfigParameter<std::string> SELECTION_FUNCTION_NAME{
             "selectionFunctionName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config)
+            [](const std::unordered_map<UppercaseString, std::string>& config)
             { return DescriptorConfig::tryGet(SELECTION_FUNCTION_NAME, config); }};
 
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(SELECTION_FUNCTION_NAME);
     };
 

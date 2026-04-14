@@ -192,8 +192,8 @@ std::vector<NES::Statement> loadStatements(const NES::Test::QueryConfig& topolog
             .attachedTo = NES::LogicalSourceName(NES::toUpperCase(logical)),
             .sourceType = "File",
             .host = NES::Host(host),
-            .sourceConfig = {{"file_path", "does_not_exist"}},
-            .parserConfig = {{"type", "CSV"}}});
+            .sourceConfig = {{NES::UppercaseString("FILE_PATH"), "does_not_exist"}},
+            .parserConfig = {{NES::UppercaseString("TYPE"), "CSV"}}});
     }
     for (const auto& [name, schemaFields, host] : sinks)
     {

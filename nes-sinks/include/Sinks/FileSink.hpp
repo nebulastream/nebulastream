@@ -50,7 +50,7 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
 protected:
     std::ostream& toString(std::ostream& str) const override;
@@ -70,14 +70,14 @@ struct ConfigParametersFile
     static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
         "file_path",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
         "append",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);
 };
 

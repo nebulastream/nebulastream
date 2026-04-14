@@ -134,7 +134,8 @@ TEST_F(StatementBinderTest, InlineSinkQuery)
 
     ASSERT_EQ("FILE", inlineSinkOperator->getSinkType());
 
-    const std::unordered_map<std::string, std::string> expectedSinkConfig = {{"file_path", "out.csv"}, {"output_format", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> expectedSinkConfig
+        = {{UppercaseString("FILE_PATH"), "out.csv"}, {UppercaseString("OUTPUT_FORMAT"), "CSV"}};
     ASSERT_EQ(expectedSinkConfig, inlineSinkOperator->getSinkConfig());
 
     Schema schema;
@@ -164,10 +165,10 @@ TEST_F(StatementBinderTest, InlineSourceQuery)
 
     ASSERT_EQ("FILE", inlineSourceOperator->getSourceType());
 
-    const std::unordered_map<std::string, std::string> expectedSourceConfig = {{"file_path", "input.csv"}};
+    const std::unordered_map<UppercaseString, std::string> expectedSourceConfig = {{UppercaseString("FILE_PATH"), "input.csv"}};
     ASSERT_EQ(expectedSourceConfig, inlineSourceOperator->getSourceConfig());
 
-    const std::unordered_map<std::string, std::string> expectedParserConfig = {{"type", "CSV"}};
+    const std::unordered_map<UppercaseString, std::string> expectedParserConfig = {{UppercaseString("TYPE"), "CSV"}};
     ASSERT_EQ(expectedParserConfig, inlineSourceOperator->getParserConfig());
 
     Schema schema;
@@ -446,7 +447,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(filteredPhysicalSourcesStatementResult.has_value());
     ASSERT_EQ(filteredPhysicalSourcesStatementResult.value().sources.size(), 1);
     ASSERT_EQ(
-        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("file_path").value(), "/dev/random");
+        filteredPhysicalSourcesStatementResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(), "/dev/random");
 
     const auto physicalSourceForLogicalSourceStatementExp = binder->parseAndBindSingle(physicalSourceForLogicalSourceStatementString);
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementExp.has_value());
@@ -480,7 +481,7 @@ TEST_F(StatementBinderTest, ShowPhysicalSources)
     ASSERT_TRUE(physicalSourceForLogicalSourceStatementFilteredResult.has_value());
     ASSERT_EQ(physicalSourceForLogicalSourceStatementFilteredResult.value().sources.size(), 1);
     ASSERT_EQ(
-        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("file_path").value(),
+        physicalSourceForLogicalSourceStatementFilteredResult.value().sources.at(0).tryGetFromConfig<std::string>("FILE_PATH").value(),
         "/dev/ones");
 }
 

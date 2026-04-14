@@ -31,7 +31,7 @@
 namespace NES
 {
 
-static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "file_path";
+static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "FILE_PATH";
 
 class FileSource final : public Source
 {
@@ -54,7 +54,7 @@ public:
     void close() override;
 
     /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
@@ -69,9 +69,9 @@ struct ConfigParametersCSV
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
         std::string(SYSTEST_FILE_PATH_PARAMETER),
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
 

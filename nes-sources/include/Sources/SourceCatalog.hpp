@@ -61,8 +61,8 @@ public:
         const LogicalSource& logicalSource,
         std::string_view sourceType,
         Host host,
-        std::unordered_map<std::string, std::string> descriptorConfig,
-        const std::unordered_map<std::string, std::string>& parserConfig);
+        std::unordered_map<UppercaseString, std::string> descriptorConfig,
+        const std::unordered_map<UppercaseString, std::string>& parserConfig);
 
     /// @brief removes a physical source
     /// @return true if there is a source descriptor with that id registered and it was removed
@@ -79,8 +79,8 @@ public:
         const std::string& sourceType,
         const Schema& schema,
         Host host,
-        std::unordered_map<std::string, std::string> parserConfigMap,
-        std::unordered_map<std::string, std::string> sourceConfigMap) const;
+        std::unordered_map<UppercaseString, std::string> parserConfigMap,
+        std::unordered_map<UppercaseString, std::string> sourceConfigMap) const;
 
     /// @brief retrieves physical sources for a logical source
     /// @returns nullopt if the logical source is not registered anymore, else the set of source descriptors associated with it

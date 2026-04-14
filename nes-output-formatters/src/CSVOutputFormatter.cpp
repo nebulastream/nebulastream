@@ -204,7 +204,7 @@ std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format)
                format.tupleDelimiter);
 }
 
-DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config CSVOutputFormatter::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<OutputFormatterConfig::ConfigParametersCSV>(std::move(config), "CSV");
 }

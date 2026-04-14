@@ -151,7 +151,7 @@ Schema createSchema(const std::vector<TestDataTypes>& testDataTypes, const std::
 /// Creates an emit function that places buffers into 'resultBuffers' when there is data.
 SourceReturnType::EmitFunction getEmitFunction(ThreadSafeVector<TupleBuffer>& resultBuffers);
 
-ParserConfig validateAndFormatParserConfig(const std::unordered_map<std::string, std::string>& parserConfig);
+ParserConfig validateAndFormatParserConfig(const std::unordered_map<UppercaseString, std::string>& parserConfig);
 
 std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSource(
     SourceCatalog& sourceCatalog,
@@ -174,7 +174,7 @@ std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
     bool isCompiled);
 
 std::shared_ptr<CompiledExecutablePipelineStage> createInputFormatter(
-    const std::unordered_map<std::string, std::string>& parserConfiguration,
+    const std::unordered_map<UppercaseString, std::string>& parserConfiguration,
     const Schema& schema,
     MemoryLayoutType memoryLayoutType,
     size_t sizeOfFormattedBuffers,

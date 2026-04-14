@@ -67,9 +67,9 @@ struct SinkLogicalOperator final
         static inline const DescriptorConfig::ConfigParameter<std::string> SINK_NAME{
             "SinkName",
             std::nullopt,
-            [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SINK_NAME, config); }};
+            [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(SINK_NAME, config); }};
 
-        static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+        static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
             = DescriptorConfig::createConfigParameterContainerMap(SINK_NAME);
     };
 

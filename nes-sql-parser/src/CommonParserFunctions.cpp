@@ -124,7 +124,7 @@ namespace
 {
 /// Converts a config option entry to a lowercase string key-value pair.
 /// Returns std::nullopt for non-Literal values (e.g., Schema), which are handled by separate functions.
-std::optional<std::pair<std::string, std::string>>
+std::optional<std::pair<UppercaseString, std::string>>
 configOptionToValue(const std::pair<const std::string, std::variant<Literal, Schema>>& entry)
 {
     if (!std::holds_alternative<Literal>(entry.second))
@@ -132,44 +132,44 @@ configOptionToValue(const std::pair<const std::string, std::variant<Literal, Sch
         return std::nullopt;
     }
     const auto value = literalToString(std::get<Literal>(entry.second));
-    return std::make_pair(toLowerCase(entry.first), value);
+    return std::make_pair(UppercaseString(entry.first), value);
 }
 } /// namespace
 
-std::unordered_map<std::string, std::string> getParserConfig(const ConfigMap& configOptions)
+std::unordered_map<UppercaseString, std::string> getParserConfig(const ConfigMap& configOptions)
 {
-    auto parserConfig = std::unordered_map<std::string, std::string>{};
+    auto parserConfig = std::unordered_map<UppercaseString, std::string>{};
 
     if (const auto parserConfigIter = configOptions.find("PARSER"); parserConfigIter != configOptions.end())
     {
         parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
     return parserConfig;
 }
 
-std::unordered_map<std::string, std::string> getSourceConfig(const ConfigMap& configOptions)
+std::unordered_map<UppercaseString, std::string> getSourceConfig(const ConfigMap& configOptions)
 {
-    std::unordered_map<std::string, std::string> sourceOptions{};
+    std::unordered_map<UppercaseString, std::string> sourceOptions{};
     if (const auto sourceConfigIter = configOptions.find("SOURCE"); sourceConfigIter != configOptions.end())
     {
         sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
 
     return sourceOptions;
 }
 
-std::unordered_map<std::string, std::string> getSinkConfig(const ConfigMap& configOptions)
+std::unordered_map<UppercaseString, std::string> getSinkConfig(const ConfigMap& configOptions)
 {
-    std::unordered_map<std::string, std::string> sinkOptions{};
+    std::unordered_map<UppercaseString, std::string> sinkOptions{};
     if (const auto sourceConfigIter = configOptions.find("SINK"); sourceConfigIter != configOptions.end())
     {
         sinkOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<std::string, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
 
     return sinkOptions;

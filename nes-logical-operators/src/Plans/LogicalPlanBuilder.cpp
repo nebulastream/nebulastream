@@ -61,8 +61,8 @@ LogicalPlan LogicalPlanBuilder::createLogicalPlan(std::string logicalSourceName)
 LogicalPlan LogicalPlanBuilder::createLogicalPlan(
     std::string inlineSourceType,
     const Schema& schema,
-    std::unordered_map<std::string, std::string> sourceConfig,
-    std::unordered_map<std::string, std::string> parserConfig)
+    std::unordered_map<UppercaseString, std::string> sourceConfig,
+    std::unordered_map<UppercaseString, std::string> parserConfig)
 {
     return LogicalPlan(
         INVALID_QUERY_ID,
@@ -186,8 +186,8 @@ LogicalPlan LogicalPlanBuilder::addSink(std::string sinkName, const LogicalPlan&
 LogicalPlan LogicalPlanBuilder::addInlineSink(
     std::string type,
     const Schema& schema,
-    std::unordered_map<std::string, std::string> sinkConfig,
-    std::unordered_map<std::string, std::string> formatConfig,
+    std::unordered_map<UppercaseString, std::string> sinkConfig,
+    std::unordered_map<UppercaseString, std::string> formatConfig,
     const LogicalPlan& queryPlan)
 {
     return promoteOperatorToRoot(

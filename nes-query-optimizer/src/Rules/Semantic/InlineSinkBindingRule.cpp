@@ -70,7 +70,7 @@ LogicalPlan InlineSinkBindingRule::apply(const LogicalPlan& queryPlan) const
 
             /// "host" is not part of the sink config — it determines placement, not sink behavior.
             /// It is stored in the config map only because InlineSinkLogicalOperator lacks a dedicated host field.
-            auto hostIt = config.find("host");
+            auto hostIt = config.find("HOST");
             if (hostIt == config.end())
             {
                 throw InvalidConfigParameter("'host'");

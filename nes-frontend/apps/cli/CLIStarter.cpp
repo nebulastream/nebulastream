@@ -416,14 +416,24 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         statements.emplace_back(NES::CreateLogicalSourceStatement{.name = name, .schema = schema});
     }
 
+    auto toUpperMap = [](const std::unordered_map<std::string, std::string>& src)
+    {
+        std::unordered_map<NES::UppercaseString, std::string> dst;
+        dst.reserve(src.size());
+        for (const auto& [k, v] : src)
+        {
+            dst.emplace(NES::UppercaseString(k), v);
+        }
+        return dst;
+    };
     for (const auto& [logical, type, host, parserConfig, sourceConfig] : physical)
     {
         statements.emplace_back(NES::CreatePhysicalSourceStatement{
             .attachedTo = NES::LogicalSourceName(logical),
             .sourceType = type,
             .host = NES::Host(host),
-            .sourceConfig = sourceConfig,
-            .parserConfig = parserConfig});
+            .sourceConfig = toUpperMap(sourceConfig),
+            .parserConfig = toUpperMap(parserConfig)});
     }
     for (const auto& [name, schemaFields, type, host, config, parserConfig] : sinks)
     {
@@ -434,7 +444,12 @@ std::vector<NES::Statement> loadStatements(const NES::CLI::QueryConfig& topology
         }
 
         statements.emplace_back(NES::CreateSinkStatement{
-            .name = name, .sinkType = type, .schema = schema, .host = NES::Host(host), .sinkConfig = config, .formatConfig = parserConfig});
+            .name = name,
+            .sinkType = type,
+            .schema = schema,
+            .host = NES::Host(host),
+            .sinkConfig = toUpperMap(config),
+            .formatConfig = toUpperMap(parserConfig)});
     }
     return statements;
 }

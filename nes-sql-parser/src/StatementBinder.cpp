@@ -41,6 +41,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Overloaded.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 #include <ANTLRInputStream.h>
 #include <AntlrSQLLexer.h>
@@ -134,7 +135,7 @@ public:
 
         /// "host" determines worker placement, not source behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sourceConfig.find("host"); it != sourceConfig.end())
+        if (auto it = sourceConfig.find("HOST"); it != sourceConfig.end())
         {
             host = Host(it->second);
             sourceConfig.erase(it);
@@ -219,27 +220,27 @@ public:
             }
             return ConfigMap{};
         }();
-        std::unordered_map<std::string, std::string> sinkOptions{};
+        std::unordered_map<UppercaseString, std::string> sinkOptions{};
         if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
         {
             sinkOptions
                 = sinkConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+                      [](auto& pair) { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
         }
-        std::unordered_map<std::string, std::string> formatOptions{};
+        std::unordered_map<UppercaseString, std::string> formatOptions{};
         if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
         {
             formatOptions
                 = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                      [](auto& pair) { return std::make_pair(toLowerCase(pair.first), literalToString(std::get<Literal>(pair.second))); })
-                | std::ranges::to<std::unordered_map<std::string, std::string>>();
+                      [](auto& pair) { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
         }
         /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.
         std::optional<Host> host;
-        if (auto it = sinkOptions.find("host"); it != sinkOptions.end())
+        if (auto it = sinkOptions.find("HOST"); it != sinkOptions.end())
         {
             host = Host(it->second);
             sinkOptions.erase(it);

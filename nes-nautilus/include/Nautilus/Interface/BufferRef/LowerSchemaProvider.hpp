@@ -21,6 +21,7 @@
 
 #include <DataTypes/Schema.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
+#include <Util/UppercaseString.hpp>
 
 namespace NES
 {
@@ -42,7 +43,7 @@ public:
         uint64_t bufferSize,
         const Schema& schema,
         const std::string& outputFormatterType,
-        const std::unordered_map<std::string, std::string>& config);
+        const std::unordered_map<UppercaseString, std::string>& config);
 
     static std::shared_ptr<TupleBufferRef> lowerSchema(uint64_t bufferSize, const Schema& schema, MemoryLayoutType layoutType);
 };

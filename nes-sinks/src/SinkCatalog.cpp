@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cctype>
+#include <memory>
 #include <optional>
 #include <ranges>
 #include <string>
@@ -36,8 +37,8 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
     const Schema& schema,
     const std::string_view sinkType,
     Host host,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig)
+    std::unordered_map<UppercaseString, std::string> config,
+    const std::unordered_map<UppercaseString, std::string>& formatConfig)
 {
     if (std::ranges::all_of(sinkName, [](const char character) { return std::isdigit(character); }))
     {
@@ -52,8 +53,15 @@ std::optional<SinkDescriptor> SinkCatalog::addSinkDescriptor(
         return std::nullopt;
     }
 
+    std::unordered_map<std::string, std::string> formatConfigStr;
+    formatConfigStr.reserve(formatConfig.size());
+    for (const auto& [k, v] : formatConfig)
+    {
+        formatConfigStr.emplace(k.getString(), v);
+    }
     const auto lockedSinks = sinks.wlock();
-    auto sinkDescriptor = SinkDescriptor{sinkName, schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
+    auto sinkDescriptor
+        = SinkDescriptor{sinkName, schema, sinkType, std::move(host), std::move(formatConfigStr), std::move(descriptorConfigOpt.value())};
 
     /// TODO #1504: duplicate sinks are not registered
     lockedSinks->emplace(toUpperCase(sinkName), sinkDescriptor);
@@ -75,8 +83,8 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
     const Schema& schema,
     std::string_view sinkType,
     Host host,
-    std::unordered_map<std::string, std::string> config,
-    const std::unordered_map<std::string, std::string>& formatConfig) const
+    std::unordered_map<UppercaseString, std::string> config,
+    const std::unordered_map<UppercaseString, std::string>& formatConfig) const
 {
     auto descriptorConfigOpt = SinkDescriptor::validateAndFormatConfig(sinkType, std::move(config));
 
@@ -87,8 +95,14 @@ std::optional<SinkDescriptor> SinkCatalog::getInlineSink(
         return std::nullopt;
     }
 
+    std::unordered_map<std::string, std::string> formatConfigStr;
+    formatConfigStr.reserve(formatConfig.size());
+    for (const auto& [k, v] : formatConfig)
+    {
+        formatConfigStr.emplace(k.getString(), v);
+    }
     auto sinkDescriptor = SinkDescriptor{
-        inlineSinkId.getRawValue(), schema, sinkType, std::move(host), formatConfig, std::move(descriptorConfigOpt.value())};
+        inlineSinkId.getRawValue(), schema, sinkType, std::move(host), std::move(formatConfigStr), std::move(descriptorConfigOpt.value())};
 
     return sinkDescriptor;
 }

@@ -126,7 +126,7 @@ void FileSink::stop(PipelineExecutionContext&)
     stream->close();
 }
 
-DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
+DescriptorConfig::Config FileSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
 {
     return DescriptorConfig::validateAndFormat<ConfigParametersFile>(std::move(config), NAME);
 }

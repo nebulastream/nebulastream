@@ -214,46 +214,47 @@ DescriptorConfig::Config Descriptor::unreflectConfig(const Reflected& rfl)
     for (const auto& [key, pair] : reflectedConfig.config)
     {
         const auto& [type, value] = pair;
+        UppercaseString upperKey(key);
 
         if (type == "int32_t")
         {
-            config[key] = unreflect<int32_t>(value);
+            config[upperKey] = unreflect<int32_t>(value);
         }
         else if (type == "uint32_t")
         {
-            config[key] = unreflect<uint32_t>(value);
+            config[upperKey] = unreflect<uint32_t>(value);
         }
         else if (type == "int64_t")
         {
-            config[key] = unreflect<int64_t>(value);
+            config[upperKey] = unreflect<int64_t>(value);
         }
         else if (type == "uint64_t")
         {
-            config[key] = unreflect<uint64_t>(value);
+            config[upperKey] = unreflect<uint64_t>(value);
         }
         else if (type == "bool")
         {
-            config[key] = unreflect<bool>(value);
+            config[upperKey] = unreflect<bool>(value);
         }
         else if (type == "char")
         {
-            config[key] = unreflect<char>(value);
+            config[upperKey] = unreflect<char>(value);
         }
         else if (type == "float")
         {
-            config[key] = unreflect<float>(value);
+            config[upperKey] = unreflect<float>(value);
         }
         else if (type == "double")
         {
-            config[key] = unreflect<double>(value);
+            config[upperKey] = unreflect<double>(value);
         }
         else if (type == "string")
         {
-            config[key] = unreflect<std::string>(value);
+            config[upperKey] = unreflect<std::string>(value);
         }
         else if (type == "EnumWrapper")
         {
-            config[key] = unreflect<EnumWrapper>(value);
+            config[upperKey] = unreflect<EnumWrapper>(value);
         }
         else
         {

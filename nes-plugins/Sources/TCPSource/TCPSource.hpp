@@ -45,11 +45,11 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<std::string> HOST{
         "socket_host",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(HOST, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> PORT{
         "socket_port",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             /// Mandatory (no default value)
             const auto portNumber = DescriptorConfig::tryGet(PORT, config);
@@ -67,7 +67,7 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<int32_t> DOMAIN{
         "socket_domain",
         AF_INET,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<UppercaseString, std::string>& config) -> std::optional<int>
         {
             /// User specified value, set if input is valid, throw if not.
             const auto& socketDomainString = config.at(DOMAIN);
@@ -85,7 +85,7 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<int32_t> TYPE{
         "socket_type",
         SOCK_STREAM,
-        [](const std::unordered_map<std::string, std::string>& config) -> std::optional<int>
+        [](const std::unordered_map<UppercaseString, std::string>& config) -> std::optional<int>
         {
             auto socketTypeString = config.at(TYPE);
             for (auto& character : socketTypeString)
@@ -121,26 +121,27 @@ struct ConfigParametersTCP
     static inline const DescriptorConfig::ConfigParameter<char> SEPARATOR{
         "tuple_delimiter",
         '\n',
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(SEPARATOR, config); }};
     static inline const DescriptorConfig::ConfigParameter<float> FLUSH_INTERVAL_MS{
         "flush_interval_ms",
         0,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_SIZE{
         "socket_buffer_size",
         1024,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config)
+        { return DescriptorConfig::tryGet(SOCKET_BUFFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{
         "bytes_sed_for_socket_buffer_size_transfer",
         0,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         { return DescriptorConfig::tryGet(SOCKET_BUFFER_TRANSFER_SIZE, config); }};
     static inline const DescriptorConfig::ConfigParameter<uint32_t> CONNECT_TIMEOUT{
         "connect_timeout_seconds",
         10,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(CONNECT_TIMEOUT, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
             HOST,
@@ -186,7 +187,7 @@ public:
     /// Close TCP connection.
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

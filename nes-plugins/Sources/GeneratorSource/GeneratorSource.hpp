@@ -65,7 +65,7 @@ public:
     void open(std::shared_ptr<AbstractBufferProvider> bufferProvider) override;
     void close() override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
 private:
     uint32_t seed;
@@ -89,14 +89,14 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorStop> SEQUENCE_STOPS_GENERATOR{
         "stop_generator_when_sequence_finishes",
         std::nullopt,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(SEQUENCE_STOPS_GENERATOR, config);
             if (not optToken.has_value() || not optToken.value().asEnum<GeneratorStop>().has_value())
             {
-                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
+                NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at(SEQUENCE_STOPS_GENERATOR.name))
                 throw InvalidConfigParameter(
-                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
+                    "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at(SEQUENCE_STOPS_GENERATOR.name));
             }
             switch (optToken.value().asEnum<GeneratorStop>().value())
             {
@@ -110,10 +110,9 @@ struct ConfigParametersGenerator
                     return std::optional(EnumWrapper(GeneratorStop::NONE));
                 }
                 default: {
-                    NES_ERROR(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"))
+                    NES_ERROR("Cannot validate stop_generator_when_sequence_finishes: {}!", config.at(SEQUENCE_STOPS_GENERATOR.name))
                     throw InvalidConfigParameter(
-                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at("stop_generator_when_sequence_finishes"));
+                        "Cannot validate stop_generator_when_sequence_finishes: {}!", config.at(SEQUENCE_STOPS_GENERATOR.name));
                 }
             }
         }};
@@ -121,12 +120,12 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<uint32_t> SEED{
         "seed",
         std::chrono::high_resolution_clock::now().time_since_epoch().count(),
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(SEED, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<EnumWrapper, GeneratorRate::Type> GENERATOR_RATE_TYPE{
         "generator_rate_type",
         EnumWrapper{GeneratorRate::Type::FIXED},
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_TYPE, config);
             if (not optToken.has_value() || not optToken.value().asEnum<GeneratorRate::Type>().has_value())
@@ -146,7 +145,7 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_RATE_CONFIG{
         "generator_rate_config",
         "emit_rate 1000",
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             const auto optToken = DescriptorConfig::tryGet(GENERATOR_RATE_CONFIG, config);
             if (not optToken.has_value())
@@ -164,7 +163,7 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<std::string> GENERATOR_SCHEMA{
         "generator_schema",
         {},
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             const std::string schema = DescriptorConfig::tryGet(GENERATOR_SCHEMA, config).value_or("");
             if (schema.empty())
@@ -202,7 +201,7 @@ struct ConfigParametersGenerator
     static inline const NES::DescriptorConfig::ConfigParameter<uint64_t> FLUSH_INTERVAL_MS{
         "flush_interval_ms",
         10,
-        [](const std::unordered_map<std::string, std::string>& config)
+        [](const std::unordered_map<UppercaseString, std::string>& config)
         {
             const auto value = DescriptorConfig::tryGet(FLUSH_INTERVAL_MS, config);
             return value;
@@ -212,9 +211,9 @@ struct ConfigParametersGenerator
     static inline const DescriptorConfig::ConfigParameter<int32_t> MAX_RUNTIME_MS{
         "max_runtime_ms",
         -1,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(MAX_RUNTIME_MS, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(
             SourceDescriptor::parameterMap,
             SEED,

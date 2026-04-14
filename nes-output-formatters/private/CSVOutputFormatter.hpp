@@ -55,7 +55,7 @@ public:
     std::ostream& toString(std::ostream& os) const override { return os << *this; }
 
     /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<std::string, std::string> config);
+    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
 
     friend std::ostream& operator<<(std::ostream& out, const CSVOutputFormatter& format);
 
@@ -73,19 +73,19 @@ struct ConfigParametersCSV
     static inline const DescriptorConfig::ConfigParameter<bool> QUOTE_STRINGS{
         "quote_strings",
         false,
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(QUOTE_STRINGS, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(QUOTE_STRINGS, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> FIELD_DELIMITER{
         "field_delimiter",
         ",",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FIELD_DELIMITER, config); }};
 
     static inline const DescriptorConfig::ConfigParameter<std::string> TUPLE_DELIMITER{
         "tuple_delimiter",
         "\n",
-        [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(TUPLE_DELIMITER, config); }};
 
-    static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
         = DescriptorConfig::createConfigParameterContainerMap(QUOTE_STRINGS, FIELD_DELIMITER, TUPLE_DELIMITER);
 };
 }
