@@ -138,7 +138,7 @@ void FileSink::execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionCon
     {
         const auto stringSpan = std::as_bytes(std::span(formattedBufferString));
         std::vector<char> encodedData{};
-        auto encodingResult = encoder.value()->encodeBuffer(stringSpan, encodedData);
+        auto encodingResult = encoder.value()->encodeBufferFramed(stringSpan, encodedData);
         PRECONDITION(
             encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
         formattedBufferString = std::string(encodedData.data(), encodingResult.compressedSize);

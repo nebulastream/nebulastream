@@ -22,14 +22,16 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
+#include <SinksParsing/Format.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Checksum.hpp>
 #include <PipelineExecutionContext.hpp>
-#include <SinksParsing/Format.hpp>
+#include <Encoders/Encoder.hpp>
 
 namespace NES
 {
@@ -42,7 +44,7 @@ class ChecksumSink : public Sink
 {
 public:
     static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    explicit ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder);
 
     /// Opens file and writes schema to file, if the file is empty.
     void start(PipelineExecutionContext&) override;
@@ -59,6 +61,7 @@ private:
     std::ofstream outputFileStream;
     Checksum checksum;
     std::unique_ptr<Format> format;
+    std::optional<std::unique_ptr<Encoder>> encoder;
 };
 
 struct ConfigParametersChecksum
@@ -79,7 +82,7 @@ struct ConfigParametersChecksum
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
     static inline std::unordered_map<std::string, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, LEGACY_OUTPUT_FORMAT, OUTPUT_FORMAT);
+        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::CODEC, FILE_PATH, LEGACY_OUTPUT_FORMAT, OUTPUT_FORMAT);
 };
 
 }

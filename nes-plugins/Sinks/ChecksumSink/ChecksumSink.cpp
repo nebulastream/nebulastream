@@ -32,6 +32,7 @@
 #include <SinksParsing/CSVFormat.hpp>
 #include <SinksParsing/NoneWithIteratorFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/Strings.hpp>
 #include <fmt/ostream.h>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
@@ -39,15 +40,16 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
-#include <Util/Strings.hpp>
 
 namespace NES
 {
 
-ChecksumSink::ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor)
+ChecksumSink::ChecksumSink(
+    BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor, std::optional<std::unique_ptr<Encoder>> encoder)
     : Sink(std::move(backpressureController))
     , isOpen(false)
     , outputFilePath(sinkDescriptor.getFromConfig(ConfigParametersChecksum::FILE_PATH))
+    , encoder(std::move(encoder))
 {
     const auto legacyOutputFormat = sinkDescriptor.getFromConfig(ConfigParametersChecksum::LEGACY_OUTPUT_FORMAT);
     if (legacyOutputFormat != "None")
@@ -104,6 +106,14 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
     PRECONDITION(inputBuffer, "Invalid input buffer in ChecksumSink.");
     const std::string inputBufferAsString = format->getFormattedBuffer(inputBuffer);
     checksum.add(inputBufferAsString);
+    if (encoder)
+    {
+        const auto stringSpan = std::as_bytes(std::span(inputBufferAsString));
+        std::vector<char> encodedData{};
+
+        auto encodingResult = encoder.value()->encodeBufferFramed(stringSpan, encodedData);
+        PRECONDITION(encodingResult.status == Encoder::EncodeStatusType::SUCCESSFULLY_ENCODED, "Error occured during encoding process.");
+    }
 }
 
 DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<std::string, std::string> config)
@@ -125,7 +135,10 @@ SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRe
 
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
 {
-    return std::make_unique<ChecksumSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);
+    return std::make_unique<ChecksumSink>(
+        std::move(sinkRegistryArguments.backpressureController),
+        sinkRegistryArguments.sinkDescriptor,
+        std::move(sinkRegistryArguments.encoder));
 }
 
 }
