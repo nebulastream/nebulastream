@@ -397,6 +397,7 @@ void handle_client_new(tcp::socket socket,
                    bool mqtt_enabled,
                    int interval_ms) {
     try {
+        (void)data_rate;
         configure_socket(socket); // disable Nagle; reduce jitter
         std::cout << "Client connected: " << socket.remote_endpoint() << "\n";
 
@@ -627,6 +628,7 @@ void handle_client_uniform_period(tcp::socket socket,
                                   bool mqtt_enabled)
 {
     try {
+        (void)chunk_size;
         configure_socket(socket);
         std::cout << "Client connected: " << socket.remote_endpoint() << "\n";
 
@@ -918,460 +920,445 @@ void handle_client_burst_period(tcp::socket socket,
 }
 
 
-// TCP server thread: accept connections and spawn handlers
+struct SharedClient {
+    explicit SharedClient(tcp::socket socket_in) : socket(std::move(socket_in)) {}
 
-void startTcpServer(const std::string& host,
-                    int port,
-                    const std::vector<SerializedRow>& dataset,
-                    int chunk_size,
-                    int data_rate_per_period,
-                    int period_ms,
-                    const std::string& pattern,
-                    double pattern_fraction,
-                    double pattern_distribution,
-                    AtomicBool& running,
-                    bool mqtt_enabled,
-                    // zipfian options (optional)
-                    int zipf_period_ms,
-                    double zipf_s,
-                    bool zipf_stochastic)
-{
+    tcp::socket socket;
+    std::mutex write_mutex;
+    std::atomic<bool> alive{true};
+};
+
+class SharedClientHub {
+public:
+    void add_client(tcp::socket socket) {
+        configure_socket(socket);
+        auto client = std::make_shared<SharedClient>(std::move(socket));
+
+        try {
+            std::cout << "Client connected: " << client->socket.remote_endpoint() << "\n";
+        } catch (const std::exception&) {
+            std::cout << "Client connected\n";
+        }
+
+        std::lock_guard<std::mutex> lock(mutex_);
+        clients_.push_back(std::move(client));
+    }
+
+    size_t client_count() {
+        cleanup_dead_clients();
+        std::lock_guard<std::mutex> lock(mutex_);
+        return clients_.size();
+    }
+
+    void broadcast(const std::string& payload) {
+        std::vector<std::shared_ptr<SharedClient>> snapshot;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            snapshot = clients_;
+        }
+
+        for (const auto& client : snapshot) {
+            if (!client->alive.load(std::memory_order_relaxed)) {
+                continue;
+            }
+
+            std::lock_guard<std::mutex> write_lock(client->write_mutex);
+            if (!client->alive.load(std::memory_order_relaxed)) {
+                continue;
+            }
+
+            try {
+                asio::write(client->socket, asio::buffer(payload));
+            } catch (const std::exception& e) {
+                client->alive.store(false, std::memory_order_relaxed);
+                std::cerr << "Dropping client after send failure: " << e.what() << "\n";
+                asio::error_code ignored_ec;
+                client->socket.close(ignored_ec);
+            }
+        }
+
+        cleanup_dead_clients();
+    }
+
+    void close_all() {
+        std::vector<std::shared_ptr<SharedClient>> snapshot;
+        {
+            std::lock_guard<std::mutex> lock(mutex_);
+            snapshot = clients_;
+            clients_.clear();
+        }
+
+        for (const auto& client : snapshot) {
+            client->alive.store(false, std::memory_order_relaxed);
+            std::lock_guard<std::mutex> write_lock(client->write_mutex);
+            asio::error_code ignored_ec;
+            client->socket.close(ignored_ec);
+        }
+    }
+
+private:
+    void cleanup_dead_clients() {
+        std::lock_guard<std::mutex> lock(mutex_);
+        clients_.erase(
+            std::remove_if(clients_.begin(), clients_.end(), [](const auto& client) {
+                return !client->alive.load(std::memory_order_relaxed);
+            }),
+            clients_.end());
+    }
+
+    std::mutex mutex_;
+    std::vector<std::shared_ptr<SharedClient>> clients_;
+};
+
+struct GeneratorSchedule {
+    int period_ms{1000};
+    int buckets{1};
+    int data_rate_per_period{0};
+    int chunk_size{1};
+    Pattern pattern{Pattern::Uniform};
+    double burst_fraction{0.9};
+    double burst_distribution{0.2};
+    double zipf_s{1.4};
+    bool zipf_stochastic{true};
+    std::vector<int> deterministic_buckets;
+    std::vector<double> zipf_mu;
+    int poisson_max_batch{1};
+    int zipf_max_batch{1};
+    std::chrono::nanoseconds tick{std::chrono::milliseconds(1000)};
+};
+
+GeneratorSchedule build_schedule(const Config& cfg) {
+    GeneratorSchedule schedule;
+    schedule.period_ms = std::max(1, static_cast<int>(cfg.period.count()));
+    schedule.data_rate_per_period = std::max(0, cfg.data_rate);
+    schedule.chunk_size = std::max(1, cfg.chunk_size);
+    schedule.pattern = cfg.pattern;
+    schedule.burst_fraction = cfg.pattern_params.fraction;
+    schedule.burst_distribution = cfg.pattern_params.distribution;
+    schedule.zipf_s = cfg.zipf.s;
+    schedule.zipf_stochastic = cfg.zipf.stochastic;
+    schedule.buckets = std::max(1, (schedule.data_rate_per_period + schedule.chunk_size - 1) / schedule.chunk_size);
+    schedule.tick = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::milliseconds(schedule.period_ms)) / schedule.buckets;
+
+    switch (schedule.pattern) {
+        case Pattern::Uniform:
+            schedule.deterministic_buckets = even_split(schedule.data_rate_per_period, schedule.buckets);
+            break;
+        case Pattern::Burst: {
+            const int total = std::max(0, schedule.data_rate_per_period);
+            const int burst_buckets = std::max(
+                1, static_cast<int>(std::ceil(clamp_double(schedule.burst_distribution, 0.0, 1.0) * schedule.buckets)));
+            const int burst_total = clamp_int(
+                static_cast<int>(std::llround(clamp_double(schedule.burst_fraction, 0.0, 1.0) * total)), 0, total);
+            const int rest_total = total - burst_total;
+
+            schedule.deterministic_buckets.assign(schedule.buckets, 0);
+            auto first = even_split(burst_total, burst_buckets);
+            for (int i = 0; i < burst_buckets; ++i) {
+                schedule.deterministic_buckets[i] = first[i];
+            }
+            if (burst_buckets < schedule.buckets) {
+                auto rest = even_split(rest_total, schedule.buckets - burst_buckets);
+                for (int i = 0; i < schedule.buckets - burst_buckets; ++i) {
+                    schedule.deterministic_buckets[burst_buckets + i] = rest[i];
+                }
+            }
+            break;
+        }
+        case Pattern::Poisson: {
+            const double lambda = std::max(0.0, static_cast<double>(schedule.data_rate_per_period) / schedule.buckets);
+            schedule.poisson_max_batch = std::max(1, static_cast<int>(std::ceil(lambda * 4.0)));
+            break;
+        }
+        case Pattern::Zipfian: {
+            schedule.zipf_mu.assign(schedule.buckets, 0.0);
+            std::vector<double> weights(schedule.buckets, 0.0);
+            double sumw = 0.0;
+            for (int i = 0; i < schedule.buckets; ++i) {
+                weights[i] = 1.0 / std::pow(static_cast<double>(i + 1), schedule.zipf_s);
+                sumw += weights[i];
+            }
+            if (sumw <= 0.0) {
+                sumw = 1.0;
+            }
+            for (int i = 0; i < schedule.buckets; ++i) {
+                schedule.zipf_mu[i] = std::max(
+                    0.0, static_cast<double>(schedule.data_rate_per_period) * (weights[i] / sumw));
+            }
+            schedule.zipf_max_batch = std::max(
+                1, static_cast<int>(std::ceil(schedule.zipf_mu.empty() ? 1.0 : schedule.zipf_mu.front() * 4.0)));
+            break;
+        }
+    }
+
+    return schedule;
+}
+
+int tuples_for_bucket(const GeneratorSchedule& schedule,
+                      int bucket,
+                      std::poisson_distribution<int>& poisson_dist) {
+    switch (schedule.pattern) {
+        case Pattern::Uniform:
+        case Pattern::Burst:
+            return schedule.deterministic_buckets[bucket];
+        case Pattern::Poisson: {
+            const double lambda = std::max(0.0, static_cast<double>(schedule.data_rate_per_period) / schedule.buckets);
+            std::poisson_distribution<int>::param_type param(lambda);
+            poisson_dist.param(param);
+            return std::min(poisson_dist(rng), schedule.poisson_max_batch);
+        }
+        case Pattern::Zipfian:
+            if (schedule.zipf_stochastic) {
+                std::poisson_distribution<int>::param_type param(schedule.zipf_mu[bucket]);
+                poisson_dist.param(param);
+                return std::min(poisson_dist(rng), schedule.zipf_max_batch);
+            }
+            return std::min(static_cast<int>(std::llround(schedule.zipf_mu[bucket])), schedule.zipf_max_batch);
+    }
+
+    return 0;
+}
+
+std::string build_shared_batch(const std::vector<SerializedRow>& dataset,
+                               size_t& idx,
+                               int tuples,
+                               int64_t timestamp_ms) {
+    Batch batch = build_batch_with_placeholders(dataset, idx, tuples);
+    fillTimestamps(batch.buf, batch.ts_pos, timestamp_ms);
+    return batch.buf;
+}
+
+void start_acceptor(const std::string& host,
+                    uint16_t port,
+                    SharedClientHub& hub,
+                    AtomicBool& running) {
     try {
-        auto io_context = std::make_shared<asio::io_context>();
-        tcp::acceptor acceptor(*io_context, tcp::endpoint(asio::ip::make_address(host), port));
+        asio::io_context io_context;
+        tcp::acceptor acceptor(io_context, tcp::endpoint(asio::ip::make_address(host), port));
         acceptor.non_blocking(true);
 
-        period_ms = std::max(1, period_ms);
-        const int cs = std::max(1, chunk_size);
-        const int tuples = std::max(0, data_rate_per_period);
-        const auto* dataset_ptr = &dataset;
-        auto* running_ptr = &running;
-        std::vector<std::thread> client_threads;
-
-        // Derive number of buckets per period from chunk_size.
-        // This controls pacing resolution without an explicit "interval" parameter.
-        const int buckets = std::max(1, (tuples + cs - 1) / cs);
-
-        std::cout << "TCP connection ready at " << host << ":" << port
-                  << " (pattern=" << pattern
-                  << ", data_rate=" << tuples << " tuples/period"
-                  << ", period=" << period_ms << "ms"
-                  << ", buckets=" << buckets << ")\n";
+        std::cout << "TCP connection ready at " << host << ":" << port << "\n";
 
         while (running.load(std::memory_order_relaxed)) {
-            tcp::socket sock(*io_context);
+            tcp::socket socket(io_context);
             asio::error_code ec;
-            acceptor.accept(sock, ec);
+            acceptor.accept(socket, ec);
+
+            if (!ec) {
+                hub.add_client(std::move(socket));
+                continue;
+            }
 
             if (ec == asio::error::would_block || ec == asio::error::try_again) {
                 std::this_thread::sleep_for(std::chrono::milliseconds(20));
                 continue;
             }
-            if (ec) {
-                std::cerr << "Accept error on port " << port << ": " << ec.message() << "\n";
-                std::this_thread::sleep_for(std::chrono::milliseconds(50));
-                continue;
-            }
 
-            if (pattern == "uniform") {
-                client_threads.emplace_back([socket = std::move(sock),
-                             dataset_ptr,
-                             tuples,
-                             cs,
-                             period_ms,
-                             buckets,
-                             running_ptr,
-                             mqtt_enabled,
-                             io_context]() mutable {
-                    handle_client_uniform_period(std::move(socket),
-                                                 *dataset_ptr,
-                                                 tuples,
-                                                 cs,
-                                                 period_ms,
-                                                 buckets,
-                                                 *running_ptr,
-                                                 mqtt_enabled);
-                });
-
-            } else if (pattern == "poisson") {
-                client_threads.emplace_back([socket = std::move(sock),
-                             dataset_ptr,
-                             tuples,
-                             period_ms,
-                             buckets,
-                             running_ptr,
-                             io_context]() mutable {
-                    handle_client_poisson_period(std::move(socket),
-                                                 *dataset_ptr,
-                                                 tuples,
-                                                 period_ms,
-                                                 buckets,
-                                                 *running_ptr);
-                });
-
-            } else if (pattern == "zipfian") {
-                // Enforce that the pattern period equals the global period.
-                if (zipf_period_ms != period_ms) {
-                    std::cerr << "Warning: zipf.period_ms (" << zipf_period_ms
-                              << ") differs from period (" << period_ms
-                              << "). Using period for zipfian scheduling.\n";
-                }
-                client_threads.emplace_back([socket = std::move(sock),
-                             dataset_ptr,
-                             tuples,
-                             period_ms,
-                             buckets,
-                             zipf_s,
-                             zipf_stochastic,
-                             running_ptr,
-                             io_context]() mutable {
-                    handle_client_zipfian_period(std::move(socket),
-                                                 *dataset_ptr,
-                                                 tuples,
-                                                 period_ms,
-                                                 buckets,
-                                                 zipf_s,
-                                                 zipf_stochastic,
-                                                 *running_ptr);
-                });
-
-            } else if (pattern == "burst") {
-                client_threads.emplace_back([socket = std::move(sock),
-                             dataset_ptr,
-                             tuples,
-                             period_ms,
-                             buckets,
-                             pattern_fraction,
-                             pattern_distribution,
-                             running_ptr,
-                             io_context]() mutable {
-                    handle_client_burst_period(std::move(socket),
-                                               *dataset_ptr,
-                                               tuples,
-                                               period_ms,
-                                               buckets,
-                                               pattern_fraction,
-                                               pattern_distribution,
-                                               *running_ptr);
-                });
-
-            } else {
-                std::cerr << "Unknown pattern: " << pattern << " (falling back to uniform)\n";
-                client_threads.emplace_back([socket = std::move(sock),
-                             dataset_ptr,
-                             tuples,
-                             cs,
-                             period_ms,
-                             buckets,
-                             running_ptr,
-                             mqtt_enabled,
-                             io_context]() mutable {
-                    handle_client_uniform_period(std::move(socket),
-                                                 *dataset_ptr,
-                                                 tuples,
-                                                 cs,
-                                                 period_ms,
-                                                 buckets,
-                                                 *running_ptr,
-                                                 mqtt_enabled);
-                });
-            }
-        }
-
-        for (auto& client_thread : client_threads) {
-            if (client_thread.joinable()) {
-                client_thread.join();
-            }
+            std::cerr << "Accept error on port " << port << ": " << ec.message() << "\n";
+            std::this_thread::sleep_for(std::chrono::milliseconds(50));
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error in TCP server: " << e.what() << "\n";
+        std::cerr << "Error in TCP server on port " << port << ": " << e.what() << "\n";
     }
 }
 
-
-// MQTT publisher thread: dequeue and publish messages one by one
 void mqtt_publisher(mosquitto* client,
                     AtomicBool& running,
                     const std::string& topic) {
-    while (running.load() || !mqtt_queue.empty()) {
+    while (true) {
         std::unique_lock<std::mutex> lock(queue_mutex);
-        queue_cv.wait(lock, []{
-            return !mqtt_queue.empty() || std::uncaught_exceptions() > 0;
+        queue_cv.wait(lock, [&] {
+            return !mqtt_queue.empty() || !running.load(std::memory_order_relaxed);
         });
-        while (!mqtt_queue.empty()) {
-            std::string msg = std::move(mqtt_queue.front());
-            mqtt_queue.pop();
-            lock.unlock();
 
-            int ret = mosquitto_publish(client,
-                                        nullptr,
-                                        topic.c_str(),
-                                        static_cast<int>(msg.size()),
-                                        msg.c_str(),
-                                        1,
-                                        false);
-            if (ret != MOSQ_ERR_SUCCESS) {
-                std::cerr << "MQTT publish error: " << mosquitto_strerror(ret) << "\n";
-            }
+        if (!running.load(std::memory_order_relaxed) && mqtt_queue.empty()) {
+            break;
+        }
 
-            lock.lock();
+        std::string msg = std::move(mqtt_queue.front());
+        mqtt_queue.pop();
+        lock.unlock();
+
+        const int ret = mosquitto_publish(client,
+                                          nullptr,
+                                          topic.c_str(),
+                                          static_cast<int>(msg.size()),
+                                          msg.c_str(),
+                                          1,
+                                          false);
+        if (ret != MOSQ_ERR_SUCCESS) {
+            std::cerr << "MQTT publish error: " << mosquitto_strerror(ret) << "\n";
         }
     }
 }
 
-// Read YAML configuration
+void run_shared_generator(const std::vector<SerializedRow>& dataset,
+                          const Config& cfg,
+                          SharedClientHub& hub,
+                          AtomicBool& running) {
+    if (dataset.empty()) {
+        return;
+    }
 
-// Read YAML configuration
-bool read_config(const std::string& cfg,
-                 std::string& host,
-                 int& period_ms,
-                 std::string& pattern_type,
-                 double& pattern_fraction,
-                 double& pattern_distribution,
-                 std::string& data_source_type,
-                 std::string& data_file,
-                 std::string& image_encoding,
-                 int& duration,
-                 int& data_rate_per_period,
-                 int& chunk_size,
-                 std::vector<int>& ports,
-                 bool& mqtt_enabled,
-                 std::string& mqtt_host,
-                 int& mqtt_port,
-                 std::string& mqtt_topic,
-                 // zipfian options (optional; used only when pattern_type=zipfian)
-                 int& zipf_period_ms,
-                 double& zipf_s,
-                 bool& zipf_stochastic)
-{
+    if (cfg.pattern == Pattern::Zipfian && cfg.zipf.period_ms != cfg.period.count()) {
+        std::cerr << "Warning: zipf.period_ms (" << cfg.zipf.period_ms
+                  << ") differs from period (" << cfg.period.count()
+                  << "). Using period for shared scheduling.\n";
+    }
+
+    const auto schedule = build_schedule(cfg);
+    std::poisson_distribution<int> poisson_dist;
+
+    bool active = false;
+    int bucket = 0;
+    size_t idx = 0;
+    int64_t period_start_ms = 0;
+    auto next = std::chrono::steady_clock::now();
+
+    while (running.load(std::memory_order_relaxed)) {
+        if (hub.client_count() == 0) {
+            active = false;
+            std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            continue;
+        }
+
+        if (!active) {
+            active = true;
+            bucket = 0;
+            period_start_ms = (now_nanos() / schedule.period_ms) * static_cast<int64_t>(schedule.period_ms);
+            next = std::chrono::steady_clock::now();
+        }
+
+        const int tuples = tuples_for_bucket(schedule, bucket, poisson_dist);
+        if (tuples > 0) {
+            const int64_t timestamp_ms =
+                period_start_ms + (static_cast<int64_t>(bucket) * schedule.period_ms) / schedule.buckets;
+            std::string payload = build_shared_batch(dataset, idx, tuples, timestamp_ms);
+            hub.broadcast(payload);
+
+            if (cfg.mqtt && cfg.mqtt->enabled) {
+                {
+                    std::lock_guard<std::mutex> lock(queue_mutex);
+                    mqtt_queue.emplace(payload);
+                }
+                queue_cv.notify_one();
+            }
+        }
+
+        bucket++;
+        if (bucket >= schedule.buckets) {
+            bucket = 0;
+            period_start_ms += static_cast<int64_t>(schedule.period_ms);
+        }
+
+        next += schedule.tick;
+        std::this_thread::sleep_until(next);
+    }
+}
+
+int main(int argc, char* argv[]) {
+    std::string config_path = "config.yaml";
+    if (argc > 1) {
+        config_path = argv[1];
+    }
+
+    Config cfg;
     try {
-        YAML::Node config = YAML::LoadFile(cfg);
-
-        // host
-        host = "0.0.0.0";
-        if (config["host"].IsDefined()) host = config["host"].as<std::string>();
-
-        // period (ms): NEW. We keep 'interval' only as a legacy alias.
-        period_ms = 1000;
-        if (config["period"].IsDefined()) {
-            period_ms = config["period"].as<int>();
-        } else if (config["interval"].IsDefined()) {
-            period_ms = config["interval"].as<int>();
-            std::cerr << "Warning: 'interval' is deprecated; rename it to 'period' (ms). "
-                      << "Using interval as period for now.\n";
-        }
-        period_ms = std::max(1, period_ms);
-
-        // core throughput controls
-        duration = config["duration"].IsDefined() ? config["duration"].as<int>() : 10;
-        data_rate_per_period = config["data_rate"].IsDefined() ? config["data_rate"].as<int>() : 1000;
-        chunk_size = config["chunk_size"].IsDefined() ? config["chunk_size"].as<int>() : 10;
-
-        data_rate_per_period = std::max(0, data_rate_per_period);
-        chunk_size = std::max(1, chunk_size);
-
-        // dataset
-        data_source_type = "csv";
-        image_encoding = "base64";
-        if (config["data_source"].IsDefined()) {
-            if (config["data_source"]["type"].IsDefined()) {
-                data_source_type = config["data_source"]["type"].as<std::string>();
-            }
-            if (config["data_source"]["file"].IsDefined()) {
-                data_file = config["data_source"]["file"].as<std::string>();
-            }
-            if (config["data_source"]["encoding"].IsDefined()) {
-                image_encoding = config["data_source"]["encoding"].as<std::string>();
-            }
-        }
-
-        // pattern (default uniform)
-        pattern_type = "uniform";
-        pattern_fraction = 0.9;      // defaults (relevant for burst only)
-        pattern_distribution = 0.2;  // defaults (relevant for burst only)
-
-        if (config["pattern"].IsDefined()) {
-            YAML::Node p = config["pattern"];
-
-            auto apply_kv = [&](const std::string& k, const YAML::Node& v) {
-                if (k == "type") {
-                    pattern_type = v.as<std::string>();
-                } else if (k == "fraction") {
-                    pattern_fraction = v.as<double>();
-                } else if (k == "distribution") {
-                    pattern_distribution = v.as<double>();
-                }
-            };
-
-            if (p.IsScalar()) {
-                pattern_type = p.as<std::string>();
-            } else if (p.IsMap()) {
-                for (auto it = p.begin(); it != p.end(); ++it) {
-                    apply_kv(it->first.as<std::string>(), it->second);
-                }
-            } else if (p.IsSequence()) {
-                // Your preferred style: list of small maps, e.g.
-                // pattern:
-                //   - type: burst
-                //   - fraction: 0.9
-                //   - distribution: 0.8
-                for (const auto& item : p) {
-                    if (!item.IsMap()) continue;
-                    for (auto it = item.begin(); it != item.end(); ++it) {
-                        apply_kv(it->first.as<std::string>(), it->second);
-                    }
-                }
-            }
-        }
-
-        // ports
-        ports.clear();
-        for (auto p : config["ports"]) {
-            ports.push_back(p.as<int>());
-        }
-
-        // MQTT section (optional)
-        mqtt_enabled = false;
-        if (config["mqtt"].IsDefined() && config["mqtt"]["enabled"].IsDefined()) {
-            mqtt_enabled = config["mqtt"]["enabled"].as<bool>();
-            if (mqtt_enabled) {
-                mqtt_host  = config["mqtt"]["host"].as<std::string>();
-                mqtt_port  = config["mqtt"]["port"].as<int>();
-                mqtt_topic = config["mqtt"]["topic"].as<std::string>();
-            }
-        }
-
-        // Zipf options (optional)
-        zipf_period_ms = period_ms; // keep aligned with global period by default
-        zipf_s = 1.4;
-        zipf_stochastic = true;
-        if (config["zipf"].IsDefined()) {
-            auto z = config["zipf"];
-            if (z["period_ms"].IsDefined())   zipf_period_ms = z["period_ms"].as<int>();
-            if (z["s"].IsDefined())           zipf_s         = z["s"].as<double>();
-            if (z["stochastic"].IsDefined())  zipf_stochastic = z["stochastic"].as<bool>();
-        }
-
-        return true;
+        cfg = load_config(config_path);
     } catch (const std::exception& e) {
         std::cerr << "Config read error: " << e.what() << "\n";
-        return false;
-    }
-}
-
-
-int main(int argc, char *argv[]) {
-    auto configPath = std::string("config.yaml");
-    if (argc > 1) {
-        configPath = argv[1];
-    }
-
-    std::string host, pattern, data_file, mqtt_host, mqtt_topic;
-    std::string data_source_type, image_encoding;
-    int period_ms = 1000, duration_s = 0, data_rate = 0, chunk_size = 0, mqtt_port = 0;
-    double pattern_fraction = 0.9, pattern_distribution = 0.2;
-    std::vector<int> ports;
-    bool mqtt_enabled = false;
-
-    int zipf_period_ms = 1000;
-    double zipf_s = 1.4;
-    bool zipf_stochastic = true;
-
-    if (!read_config(configPath,
-                     host, period_ms, pattern, pattern_fraction, pattern_distribution,
-                     data_source_type, data_file, image_encoding,
-                     duration_s, data_rate, chunk_size,
-                     ports,
-                     mqtt_enabled, mqtt_host, mqtt_port, mqtt_topic,
-                     zipf_period_ms, zipf_s, zipf_stochastic)) {
         return EXIT_FAILURE;
     }
 
-    std::cout << "Config: pattern=" << pattern
-              << " data_source=" << data_source_type
-              << " data_rate=" << data_rate << " tuples/period"
-              << " period=" << period_ms << "ms"
-              << " duration=" << duration_s << "s"
-              << " ports=" << ports.size()
-              << " fraction=" << pattern_fraction
-              << " distribution=" << pattern_distribution
+    std::cout << "Config: pattern=";
+    switch (cfg.pattern) {
+        case Pattern::Uniform: std::cout << "uniform"; break;
+        case Pattern::Poisson: std::cout << "poisson"; break;
+        case Pattern::Zipfian: std::cout << "zipfian"; break;
+        case Pattern::Burst: std::cout << "burst"; break;
+    }
+    std::cout << " data_source=" << cfg.dataset.type
+              << " data_rate=" << cfg.data_rate << " tuples/period"
+              << " period=" << cfg.period.count() << "ms"
+              << " duration=" << cfg.duration.count() << "s"
+              << " ports=" << cfg.ports.size()
               << "\n";
 
-    // Load dataset into memory once
     std::vector<SerializedRow> dataset;
     try {
-        if (data_source_type == "csv") {
-            dataset = read_csv(data_file);
-        } else if (data_source_type == "image_folder") {
-            dataset = read_image_folder(data_file, image_encoding);
+        if (cfg.dataset.type == "csv") {
+            dataset = read_csv(cfg.dataset.file.string());
+        } else if (cfg.dataset.type == "image_folder") {
+            dataset = read_image_folder(cfg.dataset.file, cfg.dataset.encoding);
         } else {
-            std::cerr << "Unsupported data_source.type: " << data_source_type << "\n";
+            std::cerr << "Unsupported data_source.type: " << cfg.dataset.type << "\n";
             return EXIT_FAILURE;
         }
     } catch (const std::exception& e) {
         std::cerr << "Failed to load dataset: " << e.what() << "\n";
         return EXIT_FAILURE;
     }
+
     if (dataset.empty()) {
-        std::cerr << "No data loaded from " << data_file << "\n";
+        std::cerr << "No data loaded from " << cfg.dataset.file << "\n";
         return EXIT_FAILURE;
     }
 
+    AtomicBool running(true);
+    SharedClientHub hub;
+
     mosquitto* mqtt_client = nullptr;
     std::thread mqtt_thread;
-    AtomicBool running(true);
-
-    if (mqtt_enabled) {
+    if (cfg.mqtt && cfg.mqtt->enabled) {
         mosquitto_lib_init();
         mqtt_client = mosquitto_new(nullptr, true, nullptr);
         if (!mqtt_client ||
-            mosquitto_connect(mqtt_client, mqtt_host.c_str(), mqtt_port, 60) != MOSQ_ERR_SUCCESS) {
+            mosquitto_connect(mqtt_client, cfg.mqtt->host.c_str(), cfg.mqtt->port, 60) != MOSQ_ERR_SUCCESS) {
             std::cerr << "MQTT init/connect error\n";
             return EXIT_FAILURE;
         }
         mosquitto_loop_start(mqtt_client);
-        mqtt_thread = std::thread(mqtt_publisher,
-                                  mqtt_client,
-                                  std::ref(running),
-                                  mqtt_topic);
+        mqtt_thread = std::thread(mqtt_publisher, mqtt_client, std::ref(running), cfg.mqtt->topic);
     }
 
-    std::vector<std::thread> tcp_threads;
-    tcp_threads.reserve(ports.size());
-    for (int port : ports) {
-        tcp_threads.emplace_back(startTcpServer,
-                                 host,
-                                 port,
+    std::vector<std::thread> acceptor_threads;
+    acceptor_threads.reserve(cfg.ports.size());
+    for (uint16_t port : cfg.ports) {
+        acceptor_threads.emplace_back(start_acceptor, cfg.host, port, std::ref(hub), std::ref(running));
+    }
+
+    std::thread generator_thread(run_shared_generator,
                                  std::cref(dataset),
-                                 chunk_size,
-                                 data_rate,
-                                 period_ms,
-                                 pattern,
-                                 pattern_fraction,
-                                 pattern_distribution,
-                                 std::ref(running),
-                                 mqtt_enabled,
-                                 zipf_period_ms,
-                                 zipf_s,
-                                 zipf_stochastic);
-    }
+                                 std::cref(cfg),
+                                 std::ref(hub),
+                                 std::ref(running));
 
-    std::this_thread::sleep_for(std::chrono::seconds(duration_s));
-    running.store(false);
+    std::this_thread::sleep_for(cfg.duration);
+    running.store(false, std::memory_order_relaxed);
     queue_cv.notify_all();
+    hub.close_all();
 
-    for (auto& t : tcp_threads) {
-        if (t.joinable()) t.join();
+    if (generator_thread.joinable()) {
+        generator_thread.join();
     }
 
-    if (mqtt_enabled) {
-        if (mqtt_thread.joinable()) mqtt_thread.join();
+    for (auto& thread : acceptor_threads) {
+        if (thread.joinable()) {
+            thread.join();
+        }
+    }
+
+    if (cfg.mqtt && cfg.mqtt->enabled) {
+        if (mqtt_thread.joinable()) {
+            mqtt_thread.join();
+        }
         mosquitto_loop_stop(mqtt_client, true);
         mosquitto_disconnect(mqtt_client);
         mosquitto_destroy(mqtt_client);
         mosquitto_lib_cleanup();
     }
 
-    std::cout << "exiting datagen...\n";
+    std::cout << "exiting datagen_shared...\n";
     return EXIT_SUCCESS;
 }

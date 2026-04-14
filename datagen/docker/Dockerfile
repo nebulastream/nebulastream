@@ -16,6 +16,7 @@ WORKDIR /src
 
 COPY CMakeLists.txt ./
 COPY datagen_batch_new.cpp ./
+COPY datagen_batch_shared.cpp ./
 COPY configLoader.cpp ./
 COPY configLoader.hpp ./
 COPY Util ./Util
@@ -23,7 +24,7 @@ COPY include ./include
 COPY asio-1.30.2 ./asio-1.30.2
 
 RUN cmake -S . -B /build -DCMAKE_BUILD_TYPE=Release \
-    && cmake --build /build --config Release -j"$(nproc)"
+    && cmake --build /build --config Release --target datagen datagen_shared -j"$(nproc)"
 
 FROM ubuntu:24.04
 
@@ -39,11 +40,13 @@ RUN apt-get update \
 WORKDIR /app
 
 COPY --from=builder /build/datagen /usr/local/bin/datagen
+COPY --from=builder /build/datagen_shared /usr/local/bin/datagen_shared
 COPY docker/entrypoint.sh /usr/local/bin/datagen-entrypoint
 
 RUN chmod +x /usr/local/bin/datagen-entrypoint \
     && mkdir -p /app/config /app/data
 
 ENV DATAGEN_CONFIG=/app/config/config.yaml
+ENV DATAGEN_BIN=/usr/local/bin/datagen
 
 ENTRYPOINT ["/usr/local/bin/datagen-entrypoint"]

@@ -10,10 +10,10 @@ services:
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/config/config.yaml}
+      DATAGEN_BIN: ${DATAGEN_BIN:-/usr/local/bin/datagen}
     ports:
-      - "8080:8080"
-      - "8081:8081"
-      - "8082:8082"
+      - "9090:9090"
+      - "9091:9091"
     volumes:
       - ./config.yaml:/app/config/config.yaml:ro
       - ./config.mqtt.yaml:/app/config/config.mqtt.yaml:ro

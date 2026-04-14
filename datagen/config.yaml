@@ -1,0 +1,37 @@
+data_rate: 1 # tuples per period
+period: 100 # period length in ms
+chunk_size: 10000 # max tuples per send
+
+pattern:
+  - type: uniform
+  - fraction: 0.5
+  - distribution: 0.5
+
+data_source:
+  #type: "csv"
+  #file: "data/smart_water/data.csv"
+  # For image folders use:
+  type: "image_folder"
+  file: "data/img"
+  encoding: "base64" # or "hex"
+
+duration: 66666
+host: "172.17.0.1"
+ports:
+#  - 8080
+  - 8081
+  - 8082
+  - 8083
+  - 8084
+
+mqtt:
+  enabled: false
+  host: 172.26.0.1
+  port: 1882
+  topic: "bid"
+
+# Zipf options (optional; used only when type=zipfian)
+zipf:
+  period_ms: 1000
+  s: 1.4
+  stochastic: true

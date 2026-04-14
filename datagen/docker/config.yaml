@@ -15,9 +15,9 @@ data_source:
 duration: 60000
 host: "0.0.0.0"
 ports:
-  - 8080
-  - 8081
-  - 8082
+  - 9090
+  - 9091
+#  - 8082
 
 mqtt:
   enabled: false

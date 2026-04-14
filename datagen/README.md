@@ -32,7 +32,27 @@ python3 patternTest_timeseries.py --host 127.0.0.1 --port 8080 --duration 10 --o
 ```
 
 ### Run
-Run the executable `datagen`, which reads the configuration from `config.yml`.
+Build the binaries with CMake:
+```bash
+cmake -S . -B build
+cmake --build build --target datagen datagen_shared
+```
+
+Two TCP implementations are available:
+
+- `datagen`: the existing behavior from [`datagen_batch_new.cpp`](/home/ttekdogan/Desktop/nes/benchmark-framework/datagen/datagen_batch_new.cpp). Each TCP connection generates and sends its own stream independently.
+- `datagen_shared`: the shared-stream behavior from [`datagen_batch_shared.cpp`](/home/ttekdogan/Desktop/nes/benchmark-framework/datagen/datagen_batch_shared.cpp). All TCP connections across all configured ports receive the exact same generated batches.
+
+Switching between them is only a matter of which executable you run with the same config file:
+```bash
+./build/datagen config.yaml
+```
+
+```bash
+./build/datagen_shared config.yaml
+```
+
+Use `datagen` if each client should have its own generator state. Use `datagen_shared` if one common generator should feed all connected clients in parallel with identical content.
 
 ### Docker Deployment
 The repository includes a self-contained Docker setup under [`docker/`](./docker).

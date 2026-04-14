@@ -2,9 +2,10 @@
 set -eu
 
 CONFIG_PATH="${DATAGEN_CONFIG:-/app/config/config.yaml}"
+BINARY_PATH="${DATAGEN_BIN:-/usr/local/bin/datagen}"
 
 if [ "$#" -gt 0 ]; then
-    exec /usr/local/bin/datagen "$@"
+    exec "$BINARY_PATH" "$@"
 fi
 
-exec /usr/local/bin/datagen "$CONFIG_PATH"
+exec "$BINARY_PATH" "$CONFIG_PATH"
