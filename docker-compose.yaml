@@ -39,7 +39,6 @@ services:
     build:
       context: datagen
       dockerfile: docker/Dockerfile
-    image: datagen:local
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-pipe-staple.yaml}
@@ -53,7 +52,6 @@ services:
     build:
       context: datagen
       dockerfile: docker/Dockerfile
-    image: datagen:local
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-underbody-screw.yaml}
@@ -67,7 +65,6 @@ services:
     build:
       context: datagen
       dockerfile: docker/Dockerfile
-    image: datagen:local
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-engine-wiring.yaml}
@@ -77,3 +74,9 @@ services:
       - "9082:8082"
     volumes:
       - ./demo/:/app/demo:ro
+  viewer:
+    build:
+      context: demo/viewer
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
