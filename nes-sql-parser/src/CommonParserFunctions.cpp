@@ -144,7 +144,8 @@ std::unordered_map<UppercaseString, std::string> getParserConfig(const ConfigMap
     {
         parserConfig = parserConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; })
+            | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
     return parserConfig;
 }
@@ -156,7 +157,8 @@ std::unordered_map<UppercaseString, std::string> getSourceConfig(const ConfigMap
     {
         sourceOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; })
+            | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
 
     return sourceOptions;
@@ -169,7 +171,8 @@ std::unordered_map<UppercaseString, std::string> getSinkConfig(const ConfigMap& 
     {
         sinkOptions = sourceConfigIter->second | std::views::transform(configOptionToValue)
             | std::views::filter([](const auto& opt) { return opt.has_value(); })
-            | std::views::transform([](const auto& opt) { return *opt; }) | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
+            | std::views::transform([](const auto& opt) { return *opt; })
+            | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
     }
 
     return sinkOptions;

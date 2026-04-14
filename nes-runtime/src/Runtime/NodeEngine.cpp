@@ -22,7 +22,6 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Util/AtomicState.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/Synchronized.h>
@@ -31,6 +30,7 @@
 #include <ExecutableQueryPlan.hpp>
 #include <QueryEngine.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 
 namespace NES
 {

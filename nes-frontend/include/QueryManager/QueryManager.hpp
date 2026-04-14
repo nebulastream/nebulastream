@@ -20,7 +20,6 @@
 #include <unordered_map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Util/Pointers.hpp>
 #include <absl/functional/any_invocable.h>

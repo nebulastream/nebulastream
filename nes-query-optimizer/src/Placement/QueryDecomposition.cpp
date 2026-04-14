@@ -111,11 +111,13 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     }
     if (context.config.backpressureUpperThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(UppercaseString("BACKPRESSURE_UPPER_THRESHOLD"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
+        sinkConfig.emplace(
+            UppercaseString("BACKPRESSURE_UPPER_THRESHOLD"), std::to_string(context.config.backpressureUpperThreshold.getValue()));
     }
     if (context.config.backpressureLowerThreshold.isExplicitlySet())
     {
-        sinkConfig.emplace(UppercaseString("BACKPRESSURE_LOWER_THRESHOLD"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
+        sinkConfig.emplace(
+            UppercaseString("BACKPRESSURE_LOWER_THRESHOLD"), std::to_string(context.config.backpressureLowerThreshold.getValue()));
     }
 
     const auto networkSourceDescriptorOpt = context.sourceCatalog->getInlineSource(

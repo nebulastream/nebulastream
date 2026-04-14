@@ -18,10 +18,10 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
+#include <QueryTerminationType.hpp>
 
 namespace NES
 {

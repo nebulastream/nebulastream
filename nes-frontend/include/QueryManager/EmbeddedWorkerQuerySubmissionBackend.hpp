@@ -18,7 +18,6 @@
 
 #include <chrono>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>

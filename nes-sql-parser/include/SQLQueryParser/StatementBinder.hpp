@@ -26,7 +26,6 @@
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <Util/UppercaseString.hpp>
 #include <AntlrSQLParser.h>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -36,6 +35,7 @@
 #include <Sources/SourceCatalog.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Formatter.hpp>
+#include <Util/UppercaseString.hpp>
 #include <fmt/base.h>
 #include <ErrorHandling.hpp>
 

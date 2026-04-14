@@ -28,6 +28,7 @@
 #include <Nautilus/Interface/BufferRef/RowTupleBufferRef.hpp>
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <OutputFormatters/OutputFormatter.hpp>
 #include <OutputFormatters/OutputFormatterDescriptor.hpp>
 #include <OutputFormatters/OutputFormatterProvider.hpp>

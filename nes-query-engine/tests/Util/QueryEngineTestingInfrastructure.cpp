@@ -36,7 +36,6 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -53,6 +52,7 @@
 #include <QueryEngineConfiguration.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <TestSource.hpp>
 
 namespace NES

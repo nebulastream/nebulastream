@@ -18,7 +18,6 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-#include <Util/UppercaseString.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
@@ -27,6 +26,7 @@
 #include <Operators/Windows/Aggregations/WindowAggregationLogicalFunction.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Util/UppercaseString.hpp>
 #include <WindowTypes/Types/WindowType.hpp>
 
 namespace NES

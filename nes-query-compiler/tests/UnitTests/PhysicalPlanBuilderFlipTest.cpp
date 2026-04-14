@@ -70,7 +70,8 @@ public:
     std::shared_ptr<PhysicalOperatorWrapper> makeSourceWrapper()
     {
         auto schema = createSchema();
-        auto descriptor = sourceCatalog.getInlineSource("File", schema, Host("localhost"), {{UppercaseString("TYPE"), "CSV"}}, {{UppercaseString("FILE_PATH"), "/dev/null"}});
+        auto descriptor = sourceCatalog.getInlineSource(
+            "File", schema, Host("localhost"), {{UppercaseString("TYPE"), "CSV"}}, {{UppercaseString("FILE_PATH"), "/dev/null"}});
         EXPECT_TRUE(descriptor.has_value());
         auto sourceOp = SourcePhysicalOperator(
             std::move(descriptor.value()), /// NOLINT(bugprone-unchecked-optional-access)

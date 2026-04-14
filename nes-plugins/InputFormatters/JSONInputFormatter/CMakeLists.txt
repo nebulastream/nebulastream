@@ -15,4 +15,4 @@ add_plugin_as_library(JSON InputFormatIndexer nes-input-formatters-registry json
 target_include_directories(json_input_format_indexer_plugin_library PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/)
 
 find_package(simdjson CONFIG REQUIRED)
-target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson)
+target_link_libraries(json_input_format_indexer_plugin_library PRIVATE simdjson::simdjson nes-input-formatter-provider)

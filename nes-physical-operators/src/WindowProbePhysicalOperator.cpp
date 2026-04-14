@@ -19,13 +19,13 @@
 #include <Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Time/Timestamp.hpp>
 #include <Windowing/WindowMetaData.hpp>
 #include <CompilationContext.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
 #include <PhysicalOperator.hpp>
+#include <QueryTerminationType.hpp>
 #include <WindowBasedOperatorHandler.hpp>
 #include <function.hpp>
 

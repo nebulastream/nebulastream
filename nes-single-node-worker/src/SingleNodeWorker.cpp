@@ -30,7 +30,6 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
@@ -43,6 +42,7 @@
 #include <NetworkOptions.hpp>
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 

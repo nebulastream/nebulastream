@@ -20,10 +20,10 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <folly/Synchronized.h>
+#include <QueryTerminationType.hpp>
 
 #ifndef NO_ASSERT
     #include <set>

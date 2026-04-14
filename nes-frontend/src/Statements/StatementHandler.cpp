@@ -26,7 +26,6 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/Execution/QueryStatus.hpp>
 #include <SQLQueryParser/StatementBinder.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <Sources/SourceCatalog.hpp>
@@ -40,6 +39,7 @@
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryOptimizer.hpp>
+#include <QueryStatus.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerCatalog.hpp>
 #include <WorkerConfig.hpp>

@@ -17,13 +17,13 @@
 #include <string_view>
 #include <unordered_map>
 #include <vector>
-#include <Util/UppercaseString.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
+#include <Util/UppercaseString.hpp>
 
 namespace NES
 {

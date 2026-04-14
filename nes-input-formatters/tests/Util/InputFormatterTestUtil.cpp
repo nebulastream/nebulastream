@@ -179,8 +179,7 @@ std::pair<BackpressureController, std::unique_ptr<SourceHandle>> createFileSourc
     const size_t numberOfRequiredSourceBuffers)
 {
     std::unordered_map<UppercaseString, std::string> fileSourceConfiguration{
-        {UppercaseString("FILE_PATH"), filePath},
-        {UppercaseString("MAX_INFLIGHT_BUFFERS"), std::to_string(numberOfRequiredSourceBuffers)}};
+        {UppercaseString("FILE_PATH"), filePath}, {UppercaseString("MAX_INFLIGHT_BUFFERS"), std::to_string(numberOfRequiredSourceBuffers)}};
     const auto logicalSource = sourceCatalog.addLogicalSource("TestSource", schema);
     INVARIANT(logicalSource.has_value(), "TestSource already existed");
     const auto sourceDescriptor = sourceCatalog.addPhysicalSource(

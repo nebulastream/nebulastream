@@ -20,7 +20,6 @@
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Plans/LogicalPlan.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Serialization/QueryPlanSerializationUtil.hpp>
 #include <cpptrace/basic.hpp>
 #include <cpptrace/from_current.hpp>
@@ -28,6 +27,7 @@
 #include <grpcpp/server_context.h>
 #include <grpcpp/support/status.h>
 #include <ErrorHandling.hpp>
+#include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 #include <WorkerStatus.hpp>
 

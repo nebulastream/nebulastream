@@ -74,10 +74,10 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
-    const auto physical1Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
-    const auto physical2Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+    const auto physical1Opt = sourceCatalog.addPhysicalSource(
+        *sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+    const auto physical2Opt = sourceCatalog.addPhysicalSource(
+        *sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -99,8 +99,8 @@ TEST_F(SourceCatalogTest, AddRemovePhysicalSources)
 
     ASSERT_TRUE(sourceCatalog.removePhysicalSource(physical1));
 
-    const auto physical3Opt
-        = sourceCatalog.addPhysicalSource(*sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+    const auto physical3Opt = sourceCatalog.addPhysicalSource(
+        *sourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
     ASSERT_TRUE(physical2Opt.has_value());
     const auto& physical3 = physical3Opt.value();
 
@@ -137,10 +137,10 @@ TEST_F(SourceCatalogTest, RemoveLogicalSource)
     const auto sourceOpt = sourceCatalog.addLogicalSource("testSource", schema);
     ASSERT_TRUE(sourceOpt.has_value());
     const auto& logicalSource = sourceOpt.value();
-    const auto physical1Opt
-        = sourceCatalog.addPhysicalSource(logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
-    const auto physical2Opt
-        = sourceCatalog.addPhysicalSource(logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+    const auto physical1Opt = sourceCatalog.addPhysicalSource(
+        logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+    const auto physical2Opt = sourceCatalog.addPhysicalSource(
+        logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
 
     ASSERT_TRUE(physical1Opt.has_value());
     ASSERT_TRUE(physical2Opt.has_value());
@@ -202,7 +202,11 @@ TEST_F(SourceCatalogTest, ConcurrentSourceCatalogModification)
             if (logicalSourceOpt.has_value())
             {
                 auto physicalSourceOpt = sourceCatalog.addPhysicalSource(
-                    *logicalSourceOpt, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, {{UppercaseString("TYPE"), "CSV"}});
+                    *logicalSourceOpt,
+                    "File",
+                    Host("localhost"),
+                    {{UppercaseString("FILE_PATH"), "/dev/null"}},
+                    {{UppercaseString("TYPE"), "CSV"}});
                 if (physicalSourceOpt.has_value())
                 {
                     successfulPhysicalAdds.fetch_add(1);

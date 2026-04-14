@@ -15,16 +15,23 @@
 #pragma once
 
 #include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
 #include <typeinfo>
-#include <Nautilus/Interface/BufferRef/LowerSchemaProvider.hpp>
 #include <Traits/Trait.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Reflection.hpp>
 
 namespace NES
 {
+
+/// Enum to identify the memory layout in which we want to represent the schema physically.
+enum class MemoryLayoutType : uint8_t
+{
+    ROW_LAYOUT = 0,
+    COLUMNAR_LAYOUT = 1
+};
 
 /// Struct that stores the memory layout type as traits. For now, we simply choose a row layout all the time
 struct MemoryLayoutTypeTrait final

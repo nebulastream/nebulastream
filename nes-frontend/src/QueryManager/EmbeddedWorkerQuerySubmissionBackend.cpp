@@ -17,13 +17,12 @@
 #include <chrono>
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
 

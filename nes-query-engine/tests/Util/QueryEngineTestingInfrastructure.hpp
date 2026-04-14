@@ -42,7 +42,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -61,6 +60,7 @@
 #include <QueryEngineStatisticListener.hpp>
 #include <QueryId.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 #include <RunningQueryPlan.hpp>
 #include <Task.hpp>
 #include <TestSource.hpp>

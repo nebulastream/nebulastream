@@ -663,8 +663,7 @@ struct SystestBinder::Impl
             parserConfig.try_emplace(UppercaseString("TYPE"), "CSV");
 
             /// By default, all relative paths are relative to the testDataDir.
-            if (sourceConfig.contains(UppercaseString("FILE_PATH"))
-                && !sourceConfig.at(UppercaseString("FILE_PATH")).starts_with("/"))
+            if (sourceConfig.contains(UppercaseString("FILE_PATH")) && !sourceConfig.at(UppercaseString("FILE_PATH")).starts_with("/"))
             {
                 auto filePath = inlineSource.value()->getSourceConfig().at(UppercaseString("FILE_PATH"));
                 filePath = testDataDir / filePath;

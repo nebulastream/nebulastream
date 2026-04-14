@@ -223,19 +223,21 @@ public:
         std::unordered_map<UppercaseString, std::string> sinkOptions{};
         if (const auto sinkConfigIter = configOptions.find("SINK"); sinkConfigIter != configOptions.end())
         {
-            sinkOptions
-                = sinkConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            sinkOptions = sinkConfigIter->second
+                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                      [](auto& pair) { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                              [](auto& pair)
+                              { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
         }
         std::unordered_map<UppercaseString, std::string> formatOptions{};
         if (const auto formatConfigIter = configOptions.find("PARSER"); formatConfigIter != configOptions.end())
         {
-            formatOptions
-                = formatConfigIter->second | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
+            formatOptions = formatConfigIter->second
+                | std::views::filter([](auto& pair) { return std::holds_alternative<Literal>(pair.second); })
                 | std::views::transform(
-                      [](auto& pair) { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
+                                [](auto& pair)
+                                { return std::make_pair(UppercaseString(pair.first), literalToString(std::get<Literal>(pair.second))); })
                 | std::ranges::to<std::unordered_map<UppercaseString, std::string>>();
         }
         /// "host" determines worker placement, not sink behavior — extract it from the config map into a dedicated field.

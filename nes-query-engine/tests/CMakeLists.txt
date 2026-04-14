@@ -13,7 +13,7 @@
 macro(add_query_engine_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
-    target_link_libraries(${TARGET_NAME} nes-sources-test-utils nes-memory-test-utils nes-query-engine nes-query-manager-test-utils-lib)
+    target_link_libraries(${TARGET_NAME} nes-sources-test-utils nes-memory-test-utils nes-query-engine nes-query-manager-test-utils-lib nes-runtime)
     target_include_directories(${TARGET_NAME} PRIVATE ..)
 endmacro()
 

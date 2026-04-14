@@ -25,9 +25,9 @@
 #include <magic_enum/magic_enum.hpp>
 
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/QueryTerminationType.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
+#include <QueryTerminationType.hpp>
 
 namespace NES
 {

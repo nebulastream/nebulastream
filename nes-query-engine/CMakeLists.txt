@@ -32,7 +32,7 @@ target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_${ENGINE_LO
 find_package(folly CONFIG REQUIRED)
 target_link_libraries(nes-query-engine
         PUBLIC nes-common nes-executable
-        PRIVATE folly::folly
+        PRIVATE folly::folly nes-runtime
 )
 
 add_tests_if_enabled(tests)

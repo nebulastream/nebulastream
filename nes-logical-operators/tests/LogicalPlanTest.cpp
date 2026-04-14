@@ -62,7 +62,8 @@ protected:
                          {UppercaseString("FIELD_DELIMITER"), ","}};
                   auto dummySourceDescriptor
                       = sourceCatalog
-                            .addPhysicalSource(logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, dummyParserConfig)
+                            .addPhysicalSource(
+                                logicalSource, "File", Host("localhost"), {{UppercaseString("FILE_PATH"), "/dev/null"}}, dummyParserConfig)
                             .value();
                   return LogicalOperator{SourceDescriptorLogicalOperator(std::move(dummySourceDescriptor))};
               }())
