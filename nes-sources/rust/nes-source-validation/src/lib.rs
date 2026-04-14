@@ -6,12 +6,12 @@ pub use nes_config_options::{
 };
 
 #[distributed_slice]
-pub static SINK_VALIDATOR: [ValidatorEntry];
+pub static SOURCE_VALIDATOR: [ValidatorEntry];
 
 pub fn validate(name: &str, options: &ConfigOptions) -> Result<ConfigOptions, Error> {
-    nes_config_options::validate(name, options, &SINK_VALIDATOR[..])
+    nes_config_options::validate(name, options, &SOURCE_VALIDATOR[..])
 }
 
 pub fn exists(name: &str) -> bool {
-    nes_config_options::exists(name, &SINK_VALIDATOR[..])
+    nes_config_options::exists(name, &SOURCE_VALIDATOR[..])
 }

@@ -30,7 +30,7 @@ size_t buffer_num_children(MemorySegment* segment);
 size_t buffer_number_of_tuples(MemorySegment* segment);
 }
 
-using BufferProviderHandle = NES::BufferManager;
+using BufferProviderHandle = NES::AbstractBufferProvider;
 struct OnBufferAvailable;
 
 NES::detail::MemorySegment* try_allocate(const std::shared_ptr<BufferProviderHandle>& handle);

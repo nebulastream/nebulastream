@@ -29,6 +29,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
 #include <SourceThread.hpp>
+#include <TokioSource.hpp>
 
 namespace NES
 {
@@ -60,6 +61,7 @@ bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
 {
     return std::visit(
         Overloaded{
+            [&](const std::unique_ptr<TokioSource>&) { return true; },
             [&](const std::unique_ptr<SourceThread>& st)
             {
                 // Wrap the emitFunction with a semaphore for inflight limiting.
@@ -68,9 +70,9 @@ bool SourceHandle::start(SourceReturnType::EmitFunction&& emitFunction) const
                 auto sem = std::make_shared<std::counting_semaphore<>>(
                     std::min(configuration.inflightBufferLimit, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
                 auto wrappedEmit = [sem, emitFn = std::move(emitFunction)](
-                    const OriginId sourceId,
-                    SourceReturnType::SourceReturnType event,
-                    const std::stop_token& stopToken) -> SourceReturnType::EmitResult
+                                       const OriginId sourceId,
+                                       SourceReturnType::SourceReturnType event,
+                                       const std::stop_token& stopToken) -> SourceReturnType::EmitResult
                 {
                     if (auto* data = std::get_if<SourceReturnType::Data>(&event))
                     {
@@ -106,6 +108,7 @@ OriginId SourceHandle::getSourceId() const
 {
     return std::visit(
         Overloaded{
+            [&](const std::unique_ptr<TokioSource>& st) { return st->getOriginId(); },
             [](const std::unique_ptr<SourceThread>& st) { return st->getOriginId(); },
         },
         impl_);
@@ -115,6 +118,7 @@ std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
 {
     return std::visit(
         Overloaded{
+            [&](const std::unique_ptr<TokioSource>& st) -> std::ostream& { return out << *st; },
             [&](const std::unique_ptr<SourceThread>& st) -> std::ostream& { return out << *st; },
         },
         sourceHandle.impl_);

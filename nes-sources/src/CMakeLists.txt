@@ -12,8 +12,6 @@
 
 add_source_files(nes-sources
         SourceThread.cpp
-#        TokioSource.cpp
-#        TokioSourceGenericFactory.cpp
         SourceDescriptor.cpp
         Source.cpp
         SourceHandle.cpp
@@ -34,3 +32,9 @@ add_plugin(File FileData nes-sources FileSource.cpp)
 
 add_plugin(Network Source nes-sources NetworkSource.cpp)
 add_plugin(Network SourceValidation nes-sources NetworkSource.cpp)
+
+add_plugin(Tokio Source nes-sources TokioSource.cpp)
+add_plugin(Tokio SourceValidation nes-sources TokioSource.cpp)
+
+# Tokio-based Rust sources — registered automatically at link time via linkme.
+add_source_files(nes-sources TokioSource.cpp)

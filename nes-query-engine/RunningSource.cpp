@@ -45,6 +45,59 @@ __itt_domain* sourceDomain = __itt_domain_create("engine.source");
 __itt_string_handle* queueWrite = __itt_string_handle_create("Blocking Write");
 __itt_string_handle* waitForInflightBuffers = __itt_string_handle_create("Wait for inflight buffers");
 
+SourceReturnType::AsyncEmitFunction asyncEmit(
+    QueryId queryId,
+    size_t numberOfInflightBuffers,
+    std::weak_ptr<RunningSource> source,
+    std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
+    QueryLifetimeController& controller,
+    WorkEmitter& emitter)
+{
+    return [&controller, successors = std::move(successors), source, &emitter, queryId](
+               const OriginId sourceId,
+               SourceReturnType::SourceReturnType event,
+               SourceReturnType::AsyncOperationCallback callback) -> SourceReturnType::AsyncEmitResult
+    {
+        return std::visit(
+            Overloaded{
+                [&](const SourceReturnType::Data& data) -> SourceReturnType::AsyncEmitResult
+                {
+                    INVARIANT(successors.size() == 1, "I dont know how to implement that");
+                    auto successor = successors.at(0);
+                    auto fastPath = emitter.emitWorkAsync(
+                        queryId,
+                        successor,
+                        data.buffer,
+                        TaskCallback{},
+                        [callback = std::move(callback)]()
+                        {
+                            callback(SourceReturnType::AsyncEmitCompletionResult::SUCCESS);
+                            return true;
+                        });
+                    if (fastPath)
+                    {
+                        return SourceReturnType::AsyncEmitResult::SUCCESS;
+                    }
+                    else
+                    {
+                        return SourceReturnType::AsyncEmitResult::CALLBACK_REGISTERED;
+                    }
+                },
+                [&](SourceReturnType::EoS)
+                {
+                    ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
+                    controller.initializeSourceStop(queryId, sourceId, source);
+                    return SourceReturnType::AsyncEmitResult::SUCCESS;
+                },
+                [&](SourceReturnType::Error error)
+                {
+                    controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));
+                    return SourceReturnType::AsyncEmitResult::SUCCESS;
+                }},
+            event);
+    };
+}
+
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
     size_t numberOfInflightBuffers,

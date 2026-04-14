@@ -54,7 +54,26 @@ enum class EmitResult : uint8_t
     STOP_REQUESTED,
 };
 
+enum class AsyncEmitCompletionResult : uint8_t
+{
+    /// Async Operation has been completed successfully
+    SUCCESS,
+};
+
+enum class AsyncEmitResult : uint8_t
+{
+    /// Async Operation succeeded without blocking
+    SUCCESS,
+    /// Async Operation blocked. The callback was registered and will be invoked once the operation is completed
+    CALLBACK_REGISTERED,
+    /// Async Operation blocked. The callback could not be registered. The operation has to be retried.
+    RETRY,
+};
+
 using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
+
+using AsyncOperationCallback = std::function<void(AsyncEmitCompletionResult)>;
+using AsyncEmitFunction = std::function<AsyncEmitResult(OriginId, SourceReturnType, AsyncOperationCallback)>;
 
 }

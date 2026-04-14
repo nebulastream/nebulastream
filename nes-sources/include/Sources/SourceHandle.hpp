@@ -31,6 +31,7 @@ namespace NES
 
 /// Hides SourceThread implementation.
 class SourceThread;
+class TokioSource;
 
 struct SourceRuntimeConfiguration
 {
@@ -77,7 +78,7 @@ private:
 
     /// Variant holding either a C++ SourceThread or a Rust TokioSource.
     /// All method dispatch uses std::visit with the Overloaded{} pattern.
-    std::variant<std::unique_ptr<SourceThread>> impl_;
+    std::variant<std::unique_ptr<SourceThread>, std::unique_ptr<TokioSource>> impl_;
 };
 
 }

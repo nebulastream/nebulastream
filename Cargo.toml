@@ -12,11 +12,16 @@ members = [
     "nes-network/network",
     "nes-network/nes-network-bindings/network",
     "nes-common/rust/spdlog-bindings",
+    "nes-common/rust/nes-config-options",
     "nes-plugins/Functions/RustAnswer/rust",
     "nes-sinks/rust/nes-sink-validation-bindings",
     "nes-sinks/rust/nes-sink-validation",
     "nes-sinks/rust/nes-sink-runtime-bindings",
     "nes-sinks/rust/nes-sink-runtime",
+    "nes-sources/rust/nes-source-validation-bindings",
+    "nes-sources/rust/nes-source-validation",
+    "nes-sources/rust/nes-source-runtime-bindings",
+    "nes-sources/rust/nes-source-runtime",
     "nes-plugins/Sinks/FileSink"
 ]
 
@@ -26,6 +31,7 @@ nes_io_runtime = { path = "nes-io-runtime/rust/nes-io-runtime" }
 nes_io_runtime_bindings = { path = "nes-io-runtime/rust/nes-io-runtime-bindings" }
 nes_buffer_bindings = { path = "nes-memory/rust/nes-buffer-bindings" }
 nes_buffer_runtime = { path = "nes-memory/rust/nes-buffer-runtime" }
+nes_config_options = { path = "nes-common/rust/nes-config-options" }
 nes_tokio_tcp_source = { path = "nes-plugins/tokio-tcp-source" }
 nes_tokio_file_sink = { path = "nes-plugins/tokio-file-sink" }
 nes_network = { path = "nes-network/network" }
@@ -34,6 +40,10 @@ nes_sink_validation_bindings = { path = "nes-sinks/rust/nes-sink-validation-bind
 nes_sink_validation = { path = "nes-sinks/rust/nes-sink-validation" }
 nes_sink_runtime_bindings = { path = "nes-sinks/rust/nes-sink-runtime-bindings" }
 nes_sink_runtime = { path = "nes-sinks/rust/nes-sink-runtime" }
+nes_source_validation_bindings = { path = "nes-sources/rust/nes-source-validation-bindings" }
+nes_source_validation = { path = "nes-sources/rust/nes-source-validation" }
+nes_source_runtime_bindings = { path = "nes-sources/rust/nes-source-runtime-bindings" }
+nes_source_runtime = { path = "nes-sources/rust/nes-source-runtime" }
 
 serde_json = "1.0.149"
 tokio = "1.51.1"

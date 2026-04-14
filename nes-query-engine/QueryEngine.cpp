@@ -317,6 +317,36 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread(const Host& host);
 
+    bool emitWorkAsync(
+        QueryId qid,
+        const std::shared_ptr<RunningQueryPlanNode>& target,
+        TupleBuffer buffer,
+        TaskCallback callback,
+        absl::AnyInvocable<bool()> completion) override
+    {
+        ENGINE_LOG_DEBUG("Emitting work asynchronously for {}-{}", target->id, target->queryId);
+
+        auto task = WorkTask(qid, target->id, target, std::move(buffer), std::move(callback));
+        if (taskQueue.addAdmissionTaskBlockingNonBlocking(std::move(task)))
+        {
+            return true;
+        }
+
+        WakerCallback wakerFunction = WakerCallback(
+            [&wakerFunction, task = std::move(task), &taskQueue = this->taskQueue, completion = std::move(completion)]() mutable
+            {
+                if (taskQueue.addAdmissionTaskBlockingNonBlocking(std::move(task)))
+                {
+                    completion();
+                    return true;
+                }
+                taskQueue.addWaker(std::move(wakerFunction));
+                return true;
+            });
+        taskQueue.addWaker(std::move(wakerFunction));
+        return false;
+    }
+
     bool emitWork(
         QueryId qid,
         const std::shared_ptr<RunningQueryPlanNode>& node,
@@ -376,17 +406,6 @@ public:
             TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
         };
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
-    }
-
-    void emitPipelineStopFromExternalThread(QueryId qid, std::unique_ptr<RunningQueryPlanNode> node, TaskCallback callback) override
-    {
-        auto [complete, failure, success] = std::move(callback).take();
-        auto wrappedCallback = TaskCallback{
-            std::move(complete),
-            std::move(success),
-            TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
-        };
-        taskQueue.addAdmissionTaskBlocking({}, StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
     }
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override

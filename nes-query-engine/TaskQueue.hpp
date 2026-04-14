@@ -20,6 +20,8 @@
 #include <semaphore>
 #include <stop_token>
 #include <utility>
+
+#include <absl/functional/any_invocable.h>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
@@ -28,6 +30,8 @@ namespace NES
 static __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
 static __itt_string_handle* blockingRead = __itt_string_handle_create("Blocking Read");
 static __itt_string_handle* blockingWrite = __itt_string_handle_create("Blocking Write");
+
+using WakerCallback = absl::AnyInvocable<bool()>;
 
 /// The TaskQueue is a central component within the QueryEngine. External components like sources or users of the system can add new tasks
 /// to an admission queue which is bounded and will backpressure sources if necessary. Internally, WorkerThreads communicate via a shared
@@ -39,6 +43,7 @@ class TaskQueue
 {
     folly::UMPMCQueue<TaskType, true> internal;
     folly::MPMCQueue<TaskType> admission;
+    folly::MPMCQueue<WakerCallback> waker;
 
     /// INVARIANT: internal.size() + admission.size() >= tasksAvailable
     std::counting_semaphore<> tasksAvailable{0};
@@ -62,11 +67,33 @@ class TaskQueue
         {
         }
 
+        WakerCallback wakerCallback;
+        while (waker.read(wakerCallback))
+        {
+            if (wakerCallback())
+            {
+                break;
+            }
+        }
+
         return task;
     }
 
 public:
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
+
+    /// NonBlocking Async Interface
+    template <typename T = TaskType>
+    bool addAdmissionTaskBlockingNonBlocking(T&& task)
+    {
+        if (admission.write(std::forward<T>(task)))
+        {
+            tasksAvailable.release();
+            return true;
+        }
+        return false;
+    }
+    bool addWaker(WakerCallback&& wakerCallback) { return waker.write(std::forward<WakerCallback>(wakerCallback)); }
 
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.

@@ -1,0 +1,12 @@
+[package]
+name = "nes_source_validation_bindings"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib", "staticlib"]
+
+[dependencies]
+cxx = "1.0"
+nes_source_validation.workspace = true
+serde_json.workspace = true

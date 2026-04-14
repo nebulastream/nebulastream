@@ -174,7 +174,6 @@ struct TestWorkEmitter : WorkEmitter
     MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
     MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
     MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback), (override));
-    MOCK_METHOD(void, emitPipelineStopFromExternalThread, (QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback), (override));
 };
 
 struct TestQueryLifetimeController : QueryLifetimeController

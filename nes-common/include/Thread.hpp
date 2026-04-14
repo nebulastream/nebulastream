@@ -114,7 +114,7 @@ public:
     {
         WorkerNodeId = std::move(worker_id);
         ThreadName = std::move(name);
-        if (WorkerNodeId.getRawValue() != WorkerId::INVALID)
+        if (WorkerNodeId.getRawValue() != Host::INVALID)
         {
             setThreadName(ThreadName, WorkerNodeId.getRawValue());
         }
