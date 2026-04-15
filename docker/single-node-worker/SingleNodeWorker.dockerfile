@@ -9,7 +9,7 @@ ADD . /home/ubuntu/src
 RUN --mount=type=cache,id=ccache,target=/ccache \
     export CCACHE_DIR=/ccache && \
     cd /home/ubuntu/src && \
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 --enable_event_trace=true && \
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 && \
     cmake --build build --target nes-single-node-worker -j && \
     mkdir /tmp/bin && \
     find build -name 'nes-single-node-worker' -type f -exec mv --target-directory=/tmp/bin {} +
