@@ -11,8 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-query-optimizer
-        DecideJoinTypesRule.cpp
-        DecideMemoryLayoutRule.cpp
-        RedundantUnionRemovalRule.cpp
-        RedundantProjectionRemovalRule.cpp
-        OriginIdInferenceRule.cpp)
+        FixedPlanStructureBarrier.cpp
+)

@@ -22,7 +22,6 @@
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
-#include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/SourceInferenceRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
@@ -40,7 +39,6 @@ SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCa
     ruleManager.addRule(SourceInferenceRule{this->sourceCatalog});
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(TypeInferenceRule{});
-    ruleManager.addRule(OriginIdInferenceRule{});
 
     this->ruleSequence = ruleManager.getSequence();
 }

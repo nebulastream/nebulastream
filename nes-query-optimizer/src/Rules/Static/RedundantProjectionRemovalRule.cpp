@@ -21,9 +21,11 @@
 #include <typeinfo>
 #include <utility>
 #include <vector>
+
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES
@@ -48,7 +50,7 @@ std::set<std::type_index> RedundantProjectionRemovalRule::dependsOn() const
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> RedundantProjectionRemovalRule::requiredBy() const
 {
-    return {};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemovalRule&) const

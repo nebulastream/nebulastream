@@ -16,8 +16,11 @@
 #include <Phases/RuleBasedOptimizer.hpp>
 
 #include <utility>
+
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/RuleManager.hpp>
+#include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
@@ -35,6 +38,8 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(DecideMemoryLayoutRule{});
     ruleManager.addRule(RedundantUnionRemovalRule{});
     ruleManager.addRule(RedundantProjectionRemovalRule{});
+    ruleManager.addRule(OriginIdInferenceRule{});
+    ruleManager.addRule(FixedPlanStructureBarrier{});
 
     ruleSequence = ruleManager.getSequence();
 }
