@@ -28,6 +28,7 @@
 namespace NES
 {
 class LowerSchemaProvider;
+struct NativeMetaData;
 }
 
 namespace NES
@@ -46,10 +47,13 @@ class RowTupleBufferRef final : public TupleBufferRef
     std::vector<Field> fields;
 
     /// Private constructor to prevent direct instantiation
+    /// const uint64_t capacity, const uint64_t bufferSize, const uint64_t tupleSize
+    RowTupleBufferRef() : TupleBufferRef(0, 0, 0) {};
     explicit RowTupleBufferRef(std::vector<Field> fields, uint64_t tupleSize, uint64_t bufferSize);
 
     /// Allow LowerSchemaProvider::lowerSchema() access to private constructor and Field
     friend class NES::LowerSchemaProvider;
+    friend struct NES::NativeMetaData;
 
 public:
     RowTupleBufferRef(const RowTupleBufferRef&) = default;
@@ -65,6 +69,13 @@ public:
         const std::vector<Record::RecordFieldIdentifier>& projections,
         const RecordBuffer& recordBuffer,
         nautilus::val<uint64_t>& recordIndex) const override;
+
+    Record readRecordWithOffset(
+        const std::vector<Record::RecordFieldIdentifier>& projections,
+        const nautilus::val<int8_t*>& bufferAddress,
+        const nautilus::val<uint64_t>& recordIndex,
+        const nautilus::val<uint32_t>& offset,
+        const std::vector<uint32_t>& maxStringLengths) const;
 
     WriteRecordResult writeRecord(
         nautilus::val<uint64_t>& recordIndex,
