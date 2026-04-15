@@ -59,6 +59,6 @@ physical:
     source_config:
       socket_host: source-underbody-screw
       socket_port: 8080
-      socket_buffer_size: 65536
-      flush_interval_ms: 100
+      socket_buffer_size: 1
+      flush_interval_ms: 1
       connect_timeout_seconds: 60

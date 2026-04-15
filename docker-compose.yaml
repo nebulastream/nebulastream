@@ -24,7 +24,7 @@ services:
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
   nes-worker:
     image: nebulastream/nes-development:local-celonis
-    command: ./cmake-build-debug/nes-single-node-worker/nes-single-node-worker
+    command: ./cmake-build-debug/nes-single-node-worker/nes-single-node-worker --worker.default_query_execution.operator_buffer_size=4096000 --worker.number_of_buffers_in_global_buffer_manager=5000
     working_dir: /tmp/nebulastream
     volumes:
       - ./:/tmp/nebulastream/
@@ -42,10 +42,7 @@ services:
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-pipe-staple.yaml}
-    ports:
-      - "7080:8080"
-      - "7081:8081"
-      - "7082:8082"
+      DATAGEN_BIN: ${DATAGEN_BIN:-/usr/local/bin/datagen_shared}
     volumes:
       - ./demo/:/app/demo:ro
   source-underbody-screw:
@@ -55,10 +52,7 @@ services:
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-underbody-screw.yaml}
-    ports:
-      - "8080:8080"
-      - "8081:8081"
-      - "8082:8082"
+      DATAGEN_BIN: ${DATAGEN_BIN:-/usr/local/bin/datagen_shared}
     volumes:
       - ./demo/:/app/demo:ro
   source-engine-wiring:
@@ -68,10 +62,7 @@ services:
     restart: unless-stopped
     environment:
       DATAGEN_CONFIG: ${DATAGEN_CONFIG:-/app/demo/config/datagen-engine-wiring.yaml}
-    ports:
-      - "9080:8080"
-      - "9081:8081"
-      - "9082:8082"
+      DATAGEN_BIN: ${DATAGEN_BIN:-/usr/local/bin/datagen_shared}
     volumes:
       - ./demo/:/app/demo:ro
   viewer:

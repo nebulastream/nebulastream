@@ -1,5 +1,5 @@
 data_rate: 1 # tuples per period
-period: 1000 # period length in ms
+period: 3000 # period length in ms
 chunk_size: 1000 # max tuples per send
 
 pattern:

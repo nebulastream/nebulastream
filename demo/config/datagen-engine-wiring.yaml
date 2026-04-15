@@ -1,19 +1,14 @@
-data_rate: 1 # tuples per period
-period: 1000 # period length in ms
-chunk_size: 1000 # max tuples per send
+data_rate: 1
+period: 10000
+chunk_size: 1000
 
 pattern:
   - type: uniform
-  #- fraction: 0.5
-  #- distribution: 0.5
 
 data_source:
-  #type: "csv"
-  #file: "data/nexmark/bid.csv"
-  # For image folders use:
   type: "image_folder"
   file: "demo/data/engine_wiring"
-  encoding: "base64" # or "hex"
+  encoding: "base64"
 
 duration: 6000
 host: "0.0.0.0"
@@ -28,7 +23,6 @@ mqtt:
   port: 1882
   topic: "bid"
 
-# Zipf options (optional; used only when type=zipfian)
 zipf:
   period_ms: 1000
   s: 1.4
