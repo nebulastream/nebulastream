@@ -23,6 +23,8 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
+
+#include <Encoders/EncoderAutoChoice.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Iterators/BFSIterator.hpp>
 #include <Operators/LogicalOperator.hpp>
@@ -85,13 +87,34 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
     INVARIANT(downstreamWorker.has_value(), "Downstream worker {} not found in catalog", channel.downstreamNode);
     const auto upstreamWorker = context.workerCatalog->getWorker(channel.upstreamNode);
     INVARIANT(upstreamWorker.has_value(), "Upstream worker {} not found in catalog", channel.upstreamNode);
-    const std::string& tranmissionCodec = upstreamWorker.value().config.workerConfiguration.network.transmissionCodec.getValue();
+    const std::string& transmissionCodec = upstreamWorker.value().config.workerConfiguration.network.transmissionCodec.getValue();
+    const double maxBandwidth = upstreamWorker.value().config.workerConfiguration.network.maxNetworkBandwidth.getValue();
+
+    /// Choose a compression codec. Either take codec in the specified in configuration or use the automated decision
+    std::string chosenCodec;
+    if (transmissionCodec == "Auto")
+    {
+        if (maxBandwidth > 0)
+        {
+            chosenCodec = EncoderAutoChoice::chooseCodec(
+                maxBandwidth / static_cast<double>(8),
+                upstreamWorker.value().config.workerConfiguration.queryEngine.numberOfWorkerThreads.getValue());
+        }
+        else
+        {
+            chosenCodec = "None";
+        }
+    }
+    else
+    {
+        chosenCodec = transmissionCodec;
+    }
 
     const auto& downstreamData = downstreamWorker->dataAddress;
     const auto& upstreamData = upstreamWorker->dataAddress;
 
     auto sourceConfig = std::unordered_map<std::string, std::string>{
-        {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"codec", tranmissionCodec}};
+        {"channel", channel.id.getRawValue()}, {"bind", downstreamData}, {"codec", chosenCodec}};
     if (context.config.receiverQueueSize.isExplicitlySet())
     {
         sourceConfig.emplace("receiver_queue_size", std::to_string(context.config.receiverQueueSize.getValue()));
@@ -102,7 +125,7 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         {"bind", upstreamData},
         {"data_endpoint", downstreamData},
         {"output_format", "NATIVE"},
-        {"codec", tranmissionCodec}};
+        {"codec", chosenCodec}};
 
     if (context.config.maxPendingAcks.isExplicitlySet())
     {

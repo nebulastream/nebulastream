@@ -24,6 +24,7 @@ workers:
           number_of_worker_threads: 1
         network:
           transmission_codec: "None"
+          max_network_bandwidth_mb: 0
 
 allow_source_placement:
   - "source-node:8080"

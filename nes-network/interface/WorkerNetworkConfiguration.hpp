@@ -70,10 +70,14 @@ public:
     StringOption transmissionCodec
         = {"transmission_codec", "None", "Codec used to encode the buffers before transmitting them to the receiving node"};
 
+    FloatOption maxNetworkBandwidth
+        = {"max_network_bandwidth_mb", "0", "Maximum network bandwidth in mb. This is extra context that can be provided to automate compression codec choice"};
+
+
 private:
     std::vector<BaseOption*> getOptions() override
     {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads, &transmissionCodec};
+        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads, &transmissionCodec, &maxNetworkBandwidth};
     }
 };
 }
