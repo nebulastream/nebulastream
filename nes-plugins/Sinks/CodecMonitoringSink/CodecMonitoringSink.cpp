@@ -214,7 +214,7 @@ void CodecMonitoringSink::execute(const TupleBuffer& inputBuffer, PipelineExecut
         const double timeInSeconds = elapsed.count();
 
         const double rate = childBuffer.getNumberOfTuples() / timeInSeconds;
-        const double ratio = static_cast<double>(childBuffer.getNumberOfTuples()) / encodingResult.compressedSize;
+        const double ratio = encodingResult.compressedSize / static_cast<double>(childBuffer.getNumberOfTuples());
         {
             const std::scoped_lock lock(mutex);
             childCompressionRatios.emplace_back(ratio);
@@ -236,7 +236,7 @@ void CodecMonitoringSink::execute(const TupleBuffer& inputBuffer, PipelineExecut
     const double timeInSeconds = elapsed.count();
 
     const double rate = inputBuffer.getNumberOfTuples() * tupleSize / timeInSeconds;
-    const double ratio = static_cast<double>(inputBuffer.getNumberOfTuples() * tupleSize) / encodingResult.compressedSize;
+    const double ratio = encodingResult.compressedSize / static_cast<double>(inputBuffer.getNumberOfTuples() * tupleSize);
     {
         const std::scoped_lock lock(mutex);
         compressionRatios.emplace_back(ratio);
