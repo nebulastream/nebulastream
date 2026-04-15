@@ -92,9 +92,9 @@ public:
 
     friend bool operator==(const TraitSet& lhs, const TraitSet& rhs);
 
-    [[nodiscard]] auto begin() const { return traitMap.cbegin(); }
+    [[nodiscard]] auto begin() const { return std::views::values(traitMap).begin(); }
 
-    [[nodiscard]] auto end() const { return traitMap.cend(); }
+    [[nodiscard]] auto end() const { return std::views::values(traitMap).end(); }
 
     [[nodiscard]] std::size_t size() const;
 

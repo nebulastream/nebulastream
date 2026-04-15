@@ -60,7 +60,7 @@ struct DecompositionContext
     SharedPtr<const SinkCatalog> sinkCatalog;
     SharedPtr<const WorkerCatalog> workerCatalog;
 
-    void addPlanToNode(LogicalOperator&& op, const NetworkTopology::NodeId& nodeId)
+    void addPlanToNode(LogicalOperator op, const NetworkTopology::NodeId& nodeId)
     {
         plansByNode[nodeId].emplace_back(INVALID_QUERY_ID, std::vector{std::move(op)});
     }
@@ -137,8 +137,13 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
 
     auto outputOriginIds = channel.upstreamOp.getTraitSet().get<OutputOriginIdsTrait>();
     auto memoryLayout = channel.upstreamOp.getTraitSet().get<MemoryLayoutTypeTrait>();
-    TraitSet ts = std::views::values(channel.upstreamOp.getTraitSet())
+    const auto ts = channel.upstreamOp.getTraitSet()
         | std::views::filter([](const auto& trait) { return trait.getTypeInfo() != typeid(PlacementTrait); }) | std::ranges::to<TraitSet>();
+    auto upstreamTs = ts;
+    auto downstreamTs = ts;
+
+    upstreamTs.insert(PlacementTrait{channel.upstreamNode});
+    downstreamTs.insert(PlacementTrait{channel.downstreamNode});
 
     //
     // USED_IN_DEBUG auto traitInserted = ts.tryInsert(outputOriginIds.get());
@@ -179,9 +184,9 @@ LogicalOperator createNetworkChannel(
         auto [networkSource, networkSink] = connect(
             context,
             NetworkChannel{
-                .id = ChannelId(generateUUID()), .upstreamOp = op, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
+                .id = ChannelId(generateUUID()), .upstreamOp = currentOp, .upstreamNode = upstreamNode, .downstreamNode = downstreamNode});
 
-        context.addPlanToNode(networkSink.withChildren({std::move(currentOp)}), upstreamNode);
+        context.addPlanToNode(std::move(networkSink), upstreamNode);
         currentOp = networkSource;
     }
 
@@ -245,8 +250,8 @@ DistributedLogicalPlan QueryDecomposer::decompose(const LogicalPlan& placedPlan,
         .sinkCatalog = copyPtr(sinkCatalog),
         .workerCatalog = copyPtr(workerCatalog)};
 
-    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front());
-    context.addPlanToNode(std::move(root), getPlacementFor(root));
+    auto root = decomposePlanRecursive(context, placedPlan.getRootOperators().front()).withInferredSchema();
+    context.addPlanToNode(root, getPlacementFor(root));
 
     for (const auto& [node, plans] : context.plansByNode)
     {

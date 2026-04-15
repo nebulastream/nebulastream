@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Rules/Semantic/CalcTargetOrderPhase.hpp>
+#include <Rules/Semantic/CalcTargetOrderRule.hpp>
 
 #include <algorithm>
 #include <memory>
@@ -91,33 +91,33 @@ Schema<Field, Ordered> applyRecursive(const LogicalOperator& visiting)
 
 }
 
-const std::type_info& CalcTargetOrderPhase::getType()
+const std::type_info& CalcTargetOrderRule::getType()
 {
-    return typeid(CalcTargetOrderPhase);
+    return typeid(CalcTargetOrderRule);
 }
 
-std::string_view CalcTargetOrderPhase::getName()
+std::string_view CalcTargetOrderRule::getName()
 {
     return NAME;
 };
 
-std::set<std::type_index> CalcTargetOrderPhase::dependsOn() const
+std::set<std::type_index> CalcTargetOrderRule::dependsOn() const
 {
     return {typeid(SinkBindingRule), typeid(InlineSinkBindingRule), typeid(LogicalSourceExpansionRule)};
 }
 
-std::set<std::type_index> CalcTargetOrderPhase::requiredBy() const
+std::set<std::type_index> CalcTargetOrderRule::requiredBy() const
 {
     return {};
 }
 
-bool CalcTargetOrderPhase::operator==(const CalcTargetOrderPhase&) const
+bool CalcTargetOrderRule::operator==(const CalcTargetOrderRule&) const
 {
     return true;
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
-LogicalPlan CalcTargetOrderPhase::apply(NES::LogicalPlan plan) const
+LogicalPlan CalcTargetOrderRule::apply(NES::LogicalPlan plan) const
 {
     auto hasOrder = [](const LogicalOperator& rootNode)
     {

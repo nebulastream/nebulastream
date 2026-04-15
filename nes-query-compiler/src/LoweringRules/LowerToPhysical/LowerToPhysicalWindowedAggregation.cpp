@@ -48,6 +48,7 @@
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/SchemaFactory.hpp>
@@ -88,7 +89,7 @@ getAggregationPhysicalFunctions(const WindowedAggregationLogicalOperator& logica
         auto physicalInputType = fieldAccessFunction->getDataType();
         auto physicalFinalType = descriptor.function->getAggregateType();
 
-        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(fieldAccessFunction);
+        auto aggregationInputFunction = QueryCompilation::FunctionProvider::lowerFunction(fieldAccessFunction, *logicalOperator.getChild().getTraitSet().get<FieldMappingTrait>());
         const auto resultFieldIdentifier = descriptor.name;
 
         const auto memoryLayoutTypeTrait = logicalOperator.getChild()->getTraitSet().tryGet<MemoryLayoutTypeTrait>();
@@ -171,7 +172,7 @@ LoweringRuleResultSubgraph LowerToPhysicalWindowedAggregation::apply(LogicalOper
     for (auto& nodeFunctionKey : boundGroupingKeys)
     {
         auto loweredFunctionType = nodeFunctionKey.getDataType();
-        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey));
+        keyFunctions.emplace_back(QueryCompilation::FunctionProvider::lowerFunction(nodeFunctionKey, *aggregation->getChild().getTraitSet().get<FieldMappingTrait>()));
         keySize += loweredFunctionType.getSizeInBytesWithNull();
     }
     const auto entrySize = sizeof(ChainedHashMapEntry) + keySize + valueSize;

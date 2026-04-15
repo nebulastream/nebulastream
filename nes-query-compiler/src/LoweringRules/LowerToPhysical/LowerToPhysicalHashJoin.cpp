@@ -61,6 +61,7 @@
 #include <Schema/Field.hpp>
 #include <SliceStore/DefaultTimeBasedSliceStore.hpp>
 #include <SliceStore/Slice.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
 #include <Traits/TraitSet.hpp>
@@ -76,8 +77,8 @@
 #include <LoweringRuleRegistry.hpp>
 #include <MapPhysicalOperator.hpp>
 #include <PhysicalOperator.hpp>
-#include <WindowBasedOperatorHandler.hpp>
 #include <QueryExecutionConfiguration.hpp>
+#include <WindowBasedOperatorHandler.hpp>
 
 namespace NES
 {
@@ -165,10 +166,12 @@ getJoinFieldExtensionsLeftRight(const LogicalOperator& leftChild, const LogicalO
             }
             else
             {
-                leftJoinNames.emplace_back(FieldNamesExtension{
-                    .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
-                rightJoinNames.emplace_back(FieldNamesExtension{
-                    .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
+                leftJoinNames.emplace_back(
+                    FieldNamesExtension{
+                        .oldField = leftField, .newField = QualifiedUnboundField{leftField.getLastName(), leftField.getDataType()}});
+                rightJoinNames.emplace_back(
+                    FieldNamesExtension{
+                        .oldField = rightField, .newField = QualifiedUnboundField{rightField.getLastName(), rightField.getDataType()}});
             }
         });
 
@@ -193,7 +196,8 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
         /// Creating a new physical function that reads from the old field and casts it to the new data type
         const FieldAccessLogicalFunction fieldAccessOldField(oldField);
         const CastToTypeLogicalFunction castToTypeFunction(newField.getDataType(), fieldAccessOldField);
-        const PhysicalFunction castedPhysicalFunction = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction);
+        const PhysicalFunction castedPhysicalFunction
+            = QueryCompilation::FunctionProvider::lowerFunction(castToTypeFunction, *inputOperator.getTraitSet().get<FieldMappingTrait>());
 
         /// Get a copy of the current input schema before adding to the inputSchemaOfMap the newly added field
         auto inputSchema = Schema<QualifiedUnboundField, Ordered>{currentFields};
@@ -201,12 +205,13 @@ std::pair<Schema<QualifiedUnboundField, Ordered>, std::vector<std::shared_ptr<Ph
         const Schema<QualifiedUnboundField, Ordered> outputSchema(currentFields);
 
         /// Create a new map operator with the cast as its function
-        mapPhysicalOperators.emplace_back(std::make_shared<PhysicalOperatorWrapper>(
-            MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
-            inputSchema,
-            outputSchema,
-            memoryLayoutType,
-            memoryLayoutType));
+        mapPhysicalOperators.emplace_back(
+            std::make_shared<PhysicalOperatorWrapper>(
+                MapPhysicalOperator(newField.getFullyQualifiedName(), castedPhysicalFunction),
+                inputSchema,
+                outputSchema,
+                memoryLayoutType,
+                memoryLayoutType));
     }
 
     return {Schema<QualifiedUnboundField, Ordered>{currentFields}, mapPhysicalOperators};
@@ -275,7 +280,12 @@ LoweringRuleResultSubgraph LowerToPhysicalHashJoin::apply(LogicalOperator logica
     const auto& [timeStampFieldLeft, timeStampFieldRight]
         = std::get<std::array<Windowing::BoundTimeCharacteristic, 2>>(joinTimeCharacteristicsVariant);
 
-    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
+    auto combinedFieldMappingVec = join->getChildren()
+        | std::views::transform([](const auto& child) { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
+        | std::views::join | std::ranges::to<std::unordered_map>();
+    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+
+    auto physicalJoinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     const auto inputOriginIds = join.getChildren()
         | std::views::transform(
                                     [](const auto& child)

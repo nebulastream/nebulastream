@@ -17,6 +17,7 @@
 
 #include <memory>
 #include <utility>
+
 #include <Plans/LogicalPlan.hpp>
 #include <Rules/RuleManager.hpp>
 #include <Rules/Semantic/InlineSinkBindingRule.hpp>
@@ -25,6 +26,7 @@
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Semantic/SinkBindingRule.hpp>
 #include <Rules/Semantic/TypeInferenceRule.hpp>
+#include "Rules/Semantic/CalcTargetOrderRule.hpp"
 
 namespace NES
 {
@@ -39,6 +41,7 @@ SemanticAnalyzer::SemanticAnalyzer(std::shared_ptr<const SourceCatalog> sourceCa
     ruleManager.addRule(LogicalSourceExpansionRule{this->sourceCatalog});
     ruleManager.addRule(TypeInferenceRule{});
     ruleManager.addRule(OriginIdInferenceRule{});
+    ruleManager.addRule(CalcTargetOrderRule{});
 
     this->ruleSequence = ruleManager.getSequence();
 }

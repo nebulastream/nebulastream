@@ -68,7 +68,7 @@ private:
 struct ConfigParametersCSV
 {
     static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        std::string{SYSTEST_FILE_PATH_PARAMETER.getOriginalString()},
+        std::string{SYSTEST_FILE_PATH_PARAMETER.asCanonicalString()},
         std::nullopt,
         [](const std::unordered_map<std::string, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
 

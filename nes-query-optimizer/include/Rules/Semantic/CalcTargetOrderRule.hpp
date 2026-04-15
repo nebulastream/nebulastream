@@ -18,7 +18,7 @@
 
 namespace NES
 {
-class CalcTargetOrderPhase
+class CalcTargetOrderRule
 {
 public:
     LogicalPlan apply(LogicalPlan plan) const; /// NOLINT(readability-convert-member-functions-to-static)
@@ -28,8 +28,8 @@ public:
     [[nodiscard]] static std::string_view getName();
     [[nodiscard]] std::set<std::type_index> dependsOn() const;
     [[nodiscard]] std::set<std::type_index> requiredBy() const;
-    bool operator==(const CalcTargetOrderPhase& other) const;
+    bool operator==(const CalcTargetOrderRule& other) const;
 };
 
-static_assert(RuleConcept<CalcTargetOrderPhase, LogicalPlan>);
+static_assert(RuleConcept<CalcTargetOrderRule, LogicalPlan>);
 }

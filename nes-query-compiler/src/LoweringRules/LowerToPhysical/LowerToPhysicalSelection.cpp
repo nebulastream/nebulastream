@@ -24,6 +24,7 @@
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/SelectionLogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <ErrorHandling.hpp>
 #include <LoweringRuleRegistry.hpp>
@@ -37,7 +38,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSelection::apply(LogicalOperator logic
 {
     const auto selection = logicalOperator.getAs<SelectionLogicalOperator>();
     const auto function = selection->getPredicate();
-    const auto func = QueryCompilation::FunctionProvider::lowerFunction(function);
+    const auto func = QueryCompilation::FunctionProvider::lowerFunction(function, *selection->getChild()->getTraitSet().get<FieldMappingTrait>());
     const auto traitSet = logicalOperator.getTraitSet();
 
     const auto memoryLayoutTypeTrait = traitSet.get<MemoryLayoutTypeTrait>();

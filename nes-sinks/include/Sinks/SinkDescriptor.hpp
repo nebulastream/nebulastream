@@ -85,7 +85,7 @@ class InlineSinkDescriptor final : public Descriptor
     friend SinkCatalog;
     friend OperatorSerializationUtil;
     friend struct SinkLogicalOperator;
-    friend class CalcTargetOrderPhase;
+    friend class CalcTargetOrderRule;
 
 public:
     ~InlineSinkDescriptor() = default;
@@ -134,7 +134,7 @@ class SinkDescriptor final : public Descriptor
     friend SinkCatalog;
     friend OperatorSerializationUtil;
     friend Unreflector<SinkDescriptor>;
-    friend class CalcTargetOrderPhase;
+    friend class CalcTargetOrderRule;
 
 public:
     ~SinkDescriptor() = default;

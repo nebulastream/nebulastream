@@ -17,5 +17,5 @@ add_source_files(nes-query-optimizer
         OriginIdInferenceRule.cpp
         TypeInferenceRule.cpp
         SinkBindingRule.cpp
-        CalcTargetOrderPhase.cpp
+        CalcTargetOrderRule.cpp
 )

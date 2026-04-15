@@ -53,7 +53,7 @@ LoweringRuleResultSubgraph LowerToPhysicalSource::apply(LogicalOperator logicalO
 
     for (const auto& [field, mappedTo] : outputFieldMapping->getUnderlying())
     {
-        PRECONDITION(field.getFullyQualifiedName() == mappedTo, "Field mapping is not allowed to rename source attributes");
+        PRECONDITION(field.getFullyQualifiedName() == mappedTo || source->getSourceDescriptor().getSourceType() == Identifier::parse("network").asCanonicalString(), "Field mapping is not allowed to rename source attributes");
     }
     const Schema<QualifiedUnboundField, Ordered> outputSchema
         = createSchemaFromTraits(outputFieldMapping->getUnderlying(), outputFieldOrdering->getOrderedFields());

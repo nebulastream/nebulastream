@@ -52,6 +52,7 @@ SerializableQueryPlan QueryPlanSerializationUtil::serializeQueryPlan(const Logic
     {
         *serializableQueryPlan.mutable_queryid() = serializeQueryId(queryPlan.getQueryId());
     }
+    auto testVector = BFSRange(rootOperator) | std::ranges::to<std::vector>();
     /// Serialize Query Plan operators
     std::set<OperatorId> alreadySerialized;
     for (auto itr : BFSRange(rootOperator))

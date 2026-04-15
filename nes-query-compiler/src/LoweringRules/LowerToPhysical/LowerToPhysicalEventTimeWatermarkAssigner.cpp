@@ -23,6 +23,7 @@
 #include <Operators/EventTimeWatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Util/SchemaFactory.hpp>
 #include <Watermark/EventTimeWatermarkAssignerPhysicalOperator.hpp>
 #include <Watermark/TimeFunction.hpp>
@@ -44,7 +45,7 @@ LoweringRuleResultSubgraph LowerToPhysicalEventTimeWatermarkAssigner::apply(Logi
     const Schema<QualifiedUnboundField, Ordered> outputSchema = createPhysicalOutputSchema(traitSet);
     const Schema<QualifiedUnboundField, Ordered> inputSchema = createPhysicalOutputSchema(assignerOp->getChild().getTraitSet());
 
-    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assignerOp->getOnField());
+    const auto physicalFunction = QueryCompilation::FunctionProvider::lowerFunction(assignerOp->getOnField(), *assignerOp->getChild()->getTraitSet().get<FieldMappingTrait>());
     auto physicalOperator = EventTimeWatermarkAssignerPhysicalOperator(EventTimeFunction(physicalFunction, assignerOp->getUnit()));
 
     const auto wrapper

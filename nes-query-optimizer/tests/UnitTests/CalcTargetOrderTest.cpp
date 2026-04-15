@@ -35,12 +35,12 @@
 #include <Functions/FieldAccessLogicalFunction.hpp>
 #include <Functions/LogicalFunction.hpp>
 #include <Identifiers/Identifier.hpp>
-#include <Rules/Semantic/CalcTargetOrderPhase.hpp>
 #include <Operators/LogicalOperator.hpp>
 #include <Operators/ProjectionLogicalOperator.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Operators/Windows/JoinLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Semantic/CalcTargetOrderRule.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <WindowTypes/Measures/TimeCharacteristic.hpp>
@@ -107,7 +107,7 @@ TEST_F(CalcTargetOrderTest, JustSource)
     }. withChildren({sourceOp});
 
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp->withInferredSchema()}};
-    CalcTargetOrderPhase{}.apply(plan);
+    CalcTargetOrderRule{}.apply(plan);
 
     auto targetSchema = std::get<std::shared_ptr<const Schema<UnqualifiedUnboundField, Ordered>>>(
         plan.getRootOperators()[0].getAs<SinkLogicalOperator>()->getSinkDescriptor()->getSchema());
@@ -144,7 +144,7 @@ TEST_F(CalcTargetOrderTest, JoinOverProjection)
     } -> withChildren({joinOp}).withInferredSchema();
 
     const LogicalPlan plan{QueryId::create(LocalQueryId{generateUUID()}, getNextDistributedQueryId()), {sinkOp}};
-    CalcTargetOrderPhase{}.apply(plan);
+    CalcTargetOrderRule{}.apply(plan);
 
     const Schema<UnqualifiedUnboundField, Ordered> expectedSchema{
         UnqualifiedUnboundField{Identifier::parse("attribute_a"), DataType::Type::UINT64},

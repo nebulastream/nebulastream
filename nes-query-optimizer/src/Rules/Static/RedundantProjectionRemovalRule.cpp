@@ -62,30 +62,42 @@ bool RedundantProjectionRemovalRule::operator==(const RedundantProjectionRemoval
     return true;
 }
 
+namespace
+{
+LogicalOperator recur(const LogicalOperator& op)
+{
+    auto newChildren = op.getChildren() | std::views::transform(recur) | std::ranges::to<std::vector>();
+
+    if (const auto projection = op.tryGetAs<ProjectionLogicalOperator>())
+    {
+        const auto trivial = [&]
+        {
+            INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
+            for (const auto& field : projection.value()->getProjections())
+            {
+                const auto& [as, function] = field;
+                if (!function.template tryGetAs<FieldAccessLogicalFunction>().has_value())
+                {
+                    return false;
+                }
+            }
+            return unbind(op.getChildren().front().getOutputSchema()) == unbind(op.getOutputSchema());
+        }();
+        if (trivial)
+        {
+            return newChildren.front();
+        }
+
+    }
+    return op.withChildren(std::move(newChildren));
+}
+}
+
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 LogicalPlan RedundantProjectionRemovalRule::apply(LogicalPlan queryPlan) const
 {
-    for (const auto& projectionOp : getOperatorByType<ProjectionLogicalOperator>(queryPlan)
-             | std::views::filter(
-                                        [](const auto& op)
-                                        {
-                                            INVARIANT(op.getChildren().size() == 1, "Projection operator must have exactly one child");
-                                            for (const auto& field : op->getProjections())
-                                            {
-                                                const auto& [as, function] = field;
-                                                if (!function.template tryGetAs<FieldAccessLogicalFunction>().has_value())
-                                                {
-                                                    return false;
-                                                }
-                                            }
-                                            return unbind(op.getChildren().front().getOutputSchema()) == unbind(op.getOutputSchema());
-                                        }))
-    {
-        auto child = projectionOp.getChildren().front();
-        auto replaceResult = replaceSubtree(queryPlan, projectionOp.getId(), child);
-        INVARIANT(replaceResult.has_value(), "Failed to replace projection with its child");
-        queryPlan = std::move(replaceResult.value());
-    }
+    PRECONDITION(queryPlan.getRootOperators().size() == 1, "Query plan must have exactly one root operator");
+    queryPlan = queryPlan.withRootOperators({recur(queryPlan.getRootOperators().front().withInferredSchema())});
     return queryPlan;
 }
 

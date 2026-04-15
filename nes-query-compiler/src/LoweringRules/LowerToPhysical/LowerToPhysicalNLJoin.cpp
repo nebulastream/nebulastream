@@ -52,6 +52,7 @@
 #include <SliceStore/Slice.hpp>
 #include <Traits/MemoryLayoutTypeTrait.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
+#include <Traits/FieldMappingTrait.hpp>
 #include <Traits/TraitSet.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -113,7 +114,12 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
               })
         | std::views::join | std::ranges::to<std::vector<OriginId>>();
 
-    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction);
+    auto combinedFieldMappingVec = join->getChildren()
+        | std::views::transform([](const auto& child) { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
+        | std::views::join | std::ranges::to<std::unordered_map>();
+    auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
+
+    auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
     auto leftBufferRef = LowerSchemaProvider::lowerSchema(pageSize, leftInputSchema, memoryLayoutType);
     auto rightBufferRef = LowerSchemaProvider::lowerSchema(pageSize, rightInputSchema, memoryLayoutType);
 
