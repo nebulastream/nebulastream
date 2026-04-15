@@ -30,6 +30,7 @@
 #include <Operators/OriginIdAssigner.hpp>
 #include <Operators/Sources/SourceDescriptorLogicalOperator.hpp>
 #include <Plans/LogicalPlan.hpp>
+#include <Rules/Barriers/FixedPlanStructureBarrier.hpp>
 #include <Rules/Semantic/InlineSourceBindingRule.hpp>
 #include <Rules/Semantic/LogicalSourceExpansionRule.hpp>
 #include <Traits/OutputOriginIdsTrait.hpp>
@@ -89,7 +90,7 @@ std::string_view OriginIdInferenceRule::getName()
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
 std::set<std::type_index> OriginIdInferenceRule::dependsOn() const
 {
-    return {typeid(InlineSourceBindingRule), typeid(LogicalSourceExpansionRule)};
+    return {typeid(FixedPlanStructureBarrier)};
 }
 
 /// NOLINTNEXTLINE(readability-convert-member-functions-to-static)
