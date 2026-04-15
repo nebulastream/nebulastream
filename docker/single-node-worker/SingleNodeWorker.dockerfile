@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 ARG TAG=latest
-ARG BUILD_TYPE=RelWithDebInfo
+ARG BUILD_TYPE=Benchmark
 ARG RUNTIME_TAG=${TAG}
 FROM nebulastream/nes-development:${TAG} AS build
 
@@ -9,7 +9,7 @@ ADD . /home/ubuntu/src
 RUN --mount=type=cache,id=ccache,target=/ccache \
     export CCACHE_DIR=/ccache && \
     cd /home/ubuntu/src && \
-    cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 && \
+    cmake -B build -S . -DCMAKE_BUILD_TYPE=${BUILD_TYPE} -DNES_ENABLES_TESTS=0 --enable_event_trace=true && \
     cmake --build build --target nes-single-node-worker -j && \
     mkdir /tmp/bin && \
     find build -name 'nes-single-node-worker' -type f -exec mv --target-directory=/tmp/bin {} +

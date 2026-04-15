@@ -335,7 +335,7 @@ TEST_F(TCPSinkSystest, InlineSinkWritesCSVPayloadToTcpSocket)
     config.clusterConfig = SystestClusterConfiguration{
         .workers = {WorkerConfig{
             .host = Host("localhost:8080"),
-            .data = "localhost:9090",
+            .dataAddress = "localhost:9090",
             .maxOperators = Capacity(CapacityKind::Limited{1000}),
             .downstream = {},
             .config = {}}},
@@ -373,7 +373,7 @@ TEST_F(TCPSinkSystest, InlineSinkWritesCSVPayloadToTcpSocket)
 
     submitter.startQuery(*registration);
     const auto queryStatus = submitter.waitForQueryTermination(*registration);
-    ASSERT_EQ(queryStatus.getGlobalQueryState(), DistributedQueryState::Stopped);
+    ASSERT_EQ(queryStatus.getGlobalQueryStatus(), DistributedQueryStatus::Stopped);
 
     const auto payload = listener.waitForPayload();
     const auto header = resultFileHeader(queries.front().planInfoOrException.value().sinkOutputSchema);
