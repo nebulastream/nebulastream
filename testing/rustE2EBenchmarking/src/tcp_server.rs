@@ -26,7 +26,7 @@ struct Args {
     iterations: usize,
 
     /// Data rate in MB/s
-    #[clap(short, long, default_value = "10000")]
+    #[clap(short, long, default_value = "100000")]
     rate: f64,
 
     /// Sending mode: uniform or burst
@@ -42,7 +42,7 @@ struct Args {
     port: u16,
 
     /// Chunk size in KB for sending data (affects granularity of rate limiting)
-    #[clap(long, default_value = "64")]
+    #[clap(long, default_value = "1000")]
     chunk_size_kb: usize,
 }
 
