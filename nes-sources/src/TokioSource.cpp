@@ -12,13 +12,16 @@
     limitations under the License.
 */
 
+#include "TokioSource.hpp"
+
+
+#include <Sources/SourceReturnType.hpp>
 #include <nes-source-runtime-bindings/lib.h>
 #include <rfl/json/Parser.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
+#include <IORuntime.hpp>
 #include <TokioSource.hpp>
-
-#include "IORuntime.hpp"
 
 /// Serialize a DescriptorConfig::Config as flat {"key":"value",...} JSON
 /// for the Rust FFI, which expects HashMap<String, String>.
@@ -32,6 +35,8 @@ static std::string configToFlatJson(const NES::DescriptorConfig::Config& config)
     return rfl::json::write(flat);
 }
 
+namespace NES
+{
 struct Context
 {
     std::optional<size_t> stopEpoch;
@@ -40,19 +45,28 @@ struct Context
     rust::Box<SourceHandle> handle;
 
     Context(
-        const NES::SourceDescriptor& descriptor,
-        std::shared_ptr<NES::AbstractBufferProvider> bufferProvider,
-        NES::SourceReturnType::EmitFunction emitFunction,
-        NES::OriginId originId)
+        const SourceDescriptor& descriptor,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        SourceReturnType::AsyncEmitFunction emitFunction,
+        OriginId originId)
         : epochCounter(0)
-        , context(std::make_shared<SourceContext>(
-              [originId, emit = std::move(emitFunction)](NES::TupleBuffer buffer)
-              {
-                  NES_INFO("Sink Failed: {}");
-                  emit(originId, NES::SourceReturnType::Data{std::move(buffer), {}}, {});
-              },
-              [](std::string_view error) { NES_ERROR("Sink Failed: {}", error); },
-              [] { NES_INFO("End of Stream"); }))
+        , context(
+              std::make_shared<SourceContext>(SourceContext{
+                  .onData = std::function(
+                      [originId, emit = std::move(emitFunction)](
+                          TupleBuffer buffer,
+                          rust::Fn<void(rust::Box<AsyncCompletionContext>, AsyncCompletionResult)> done,
+                          rust::Box<AsyncCompletionContext> completionContext)
+                      {
+                          NES_INFO("Sink Failed: {}");
+                          emit(
+                              originId,
+                              NES::SourceReturnType::Data{.buffer = std::move(buffer), .onComplete = {}},
+                              SourceReturnType::AsyncOperationCallback([done, completionContext](auto result)
+                                                                       { done(completionContext, result); }));
+                      }),
+                  .onError = std::function([](std::string_view error) { NES_ERROR("Sink Failed: {}", error); }),
+                  .onEoS = std::function([] { NES_INFO("End of Stream"); })}))
         , handle(create_handle(
               descriptor.getSourceType(),
               configToFlatJson(descriptor.getConfig()),
@@ -62,10 +76,9 @@ struct Context
     {
     }
 
-    ~Context() { NES_DEBUG("TokioSink::~Context()"); }
+    ~Context() { NES_DEBUG("TokioSource::~Context()"); }
 };
-
-;
+}
 
 NES::TokioSource::TokioSource(BackpressureListener listener, SourceDescriptor descriptor, OriginId originId)
     : context(nullptr), originId(originId), descriptor(descriptor), backpressureHandler(listener)
@@ -76,8 +89,11 @@ NES::TokioSource::~TokioSource()
 {
 }
 
-bool NES::TokioSource::start(SourceReturnType::EmitFunction&& emitFunction) const
+bool NES::TokioSource::start(
+    NES::SourceReturnType::AsyncEmitFunction&& emitFunction, std::shared_ptr<AbstractBufferProvider> buffer_provider) const
 {
+    std::make_unique<Context>(descriptor, buffer_provider, emitFunction, originId);
+    return true;
 }
 
 NES::OriginId NES::TokioSource::getOriginId()
@@ -87,12 +103,10 @@ NES::OriginId NES::TokioSource::getOriginId()
 
 void NES::TokioSource::stop() const
 {
+    ::stop(*context->handle);
 }
 
-std::ostream& NES::TokioSource::toString(std::ostream& os) const
+std::ostream& NES::operator<<(std::ostream& out, const TokioSource&)
 {
-}
-
-std::ostream& NES::operator<<(std::ostream& out, const TokioSource& source)
-{
+    return out << "TokioSource::toString()";
 }

@@ -47,7 +47,6 @@ __itt_string_handle* waitForInflightBuffers = __itt_string_handle_create("Wait f
 
 SourceReturnType::AsyncEmitFunction asyncEmit(
     QueryId queryId,
-    size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
@@ -202,7 +201,9 @@ std::shared_ptr<RunningSource> RunningSource::create(
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
-        runningSource->source->start(emitFunction(queryId, maxInflightBuffers, runningSource, std::move(successors), controller, emitter));
+        runningSource->source->start(
+            emitFunction(queryId, maxInflightBuffers, runningSource, successors, controller, emitter),
+            asyncEmit(queryId, runningSource, std::move(successors), controller, emitter));
     }
     return runningSource;
 }

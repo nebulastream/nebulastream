@@ -24,6 +24,7 @@
 #include <BackpressureChannel.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
+#include <SourceThreadHandle.hpp>
 #include <Configurations/Descriptor.hpp>
 
 namespace NES
@@ -51,7 +52,7 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
     auto sourceArguments = SourceRegistryArguments(sourceDescriptor);
     if (auto source = SourceRegistry::instance().create(sourceType, sourceArguments))
     {
-        return std::make_unique<SourceHandle>(
+        return std::make_unique<SourceThreadHandle>(
             std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), bufferPool, std::move(source.value()));
     }
     throw UnknownSourceType("unknown source descriptor type: {}", sourceType);

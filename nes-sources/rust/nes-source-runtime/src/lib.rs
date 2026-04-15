@@ -4,15 +4,20 @@ use nes_buffer_runtime::{BufferProvider, TupleBuffer};
 use nes_io_runtime;
 use nes_io_runtime::IORuntime;
 use nes_source_validation::ConfigOptions;
-use std::sync::{Arc, OnceLock};
-use std::thread::{JoinHandle, Thread};
+use std::pin::Pin;
+use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
-use tracing::info;
 
+type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 pub type Result<T> = core::result::Result<T, String>;
 pub type Controller = tokio::sync::mpsc::Sender<SourceCommand>;
-pub type BlockingEmit = Box<dyn Fn(SourceResult) + Send + Sync>;
+pub type EmitFunction = Box<dyn Fn(SourceResult) -> BoxFuture<Result<()>> + Send + Sync>;
+
+#[async_trait]
+pub trait AsyncEmitter {
+    async fn emit(&mut self, result: SourceResult) -> Result<()>;
+}
 pub enum SourceResult {
     Data(TupleBuffer),
     Error(String),
@@ -36,27 +41,17 @@ pub type SourceCreateFn = dyn Fn(&ConfigOptions) -> Box<dyn AsyncSource + Send> 
 #[distributed_slice]
 pub static SOURCE_CREATION_FUNCTIONS: [(&'static str, &'static SourceCreateFn)];
 
-fn bridge_thread(mut receiver: Receiver<SourceResult>, blocking_emit: Box<dyn Fn(SourceResult)>) {
-    info!("Starting bridge thread. Waiting for data from source.");
-    loop {
-        let Some(data) = receiver.blocking_recv() else {
-            break;
-        };
-        blocking_emit(data)
-    }
-    info!("Stopping bridge thread.");
-}
 async fn run_source(
     mut source: Box<dyn AsyncSource + Send>,
     mut commands: Receiver<SourceCommand>,
-    emitter: &Emitter,
+    emit: &mut impl AsyncEmitter,
     mut buffer_provider: BufferProvider,
 ) -> Result<()> {
     source.start().await?;
     'run: loop {
         select! {
             result = source.receive(&mut buffer_provider) => {
-                emitter.send(result?).await.expect("Bridge thread should remain alive");
+                emit.emit(result?).await.expect("Bridge thread should remain alive");
             }
             command = commands.recv() => {
                 let Some(command) = command else {
@@ -80,34 +75,21 @@ fn construct_source(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSource +
     unreachable!("the name and config should have been validated")
 }
 
-static BRIDGE_THREAD: std::sync::OnceLock<(JoinHandle<()>, Emitter)> = OnceLock::new();
-
 pub fn start_source(
     name: &str,
     config: &ConfigOptions,
     runtime: Arc<IORuntime>,
-    emit: BlockingEmit,
+    mut emit: impl AsyncEmitter + Send + 'static,
     buffer_provider: BufferProvider,
 ) -> Result<Controller> {
-    let emitter = BRIDGE_THREAD
-        .get_or_init(|| {
-            let (tx, rx) = tokio::sync::mpsc::channel(32);
-            let handle = std::thread::spawn(|| bridge_thread(rx, emit));
-            (handle, tx)
-        })
-        .1
-        .clone();
-
     let (controller, rx) = tokio::sync::mpsc::channel(16);
-
     let source = construct_source(name, config);
     runtime.runtime.spawn(async move {
-        match run_source(source, rx, &emitter, buffer_provider).await {
+        match run_source(source, rx, &mut emit, buffer_provider).await {
             Ok(()) => {}
-            Err(error_message) => emitter
-                .send(SourceResult::Error(error_message))
-                .await
-                .expect("Bridge thread should remain alive"),
+            Err(error_message) => {
+                let _ = emit.emit(SourceResult::Error(error_message)).await;
+            }
         }
     });
 

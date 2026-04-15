@@ -33,8 +33,6 @@
 namespace NES
 {
 
-using WakerCallback = absl::AnyInvocable<bool()>;
-
 /**
  * @brief The BufferManager is responsible for:
  * 1. Pooled Buffers: preallocated fixed-size buffers of memory that must be reference counted
@@ -144,7 +142,7 @@ public:
     */
     void recycleUnpooledBuffer(NES::detail::MemorySegment* segment, const AllocationThreadInfo&) override;
 
-    void notifyOnAvailableBuffer(WakerCallback wake);
+    void notifyOnAvailableBuffer(WakerCallback wake) override;
 
 private:
     std::vector<NES::detail::MemorySegment> allBuffers;

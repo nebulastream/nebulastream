@@ -171,6 +171,11 @@ struct TestWorkEmitter : WorkEmitter
         emitWork,
         (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TupleBuffer, TaskCallback, PipelineExecutionContext::ContinuationPolicy),
         (override));
+    MOCK_METHOD(
+        bool,
+        emitWorkAsync,
+        (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TupleBuffer, TaskCallback, absl::AnyInvocable<bool()>),
+        (override));
     MOCK_METHOD(void, emitPipelineStart, (QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback), (override));
     MOCK_METHOD(void, emitPendingPipelineStop, (QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback), (override));
     MOCK_METHOD(void, emitPipelineStop, (QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback), (override));
@@ -449,6 +454,11 @@ struct QueryPlanBuilder
         OriginId sourceId = INVALID<OriginId>;
     };
 
+    struct AsyncSourceDescriptor
+    {
+        OriginId sourceId = INVALID<OriginId>;
+    };
+
     struct PipelineDescriptor
     {
         PipelineId pipelineId = INVALID<PipelineId>;
@@ -459,11 +469,12 @@ struct QueryPlanBuilder
         PipelineId pipelineId = INVALID<PipelineId>;
     };
 
-    using QueryComponentDescriptor = std::variant<SourceDescriptor, SinkDescriptor, PipelineDescriptor>;
+    using QueryComponentDescriptor = std::variant<SourceDescriptor, AsyncSourceDescriptor, SinkDescriptor, PipelineDescriptor>;
 
     identifier_t addPipeline(const std::vector<identifier_t>& predecssors);
 
     identifier_t addSource();
+    identifier_t addAsyncSource();
 
     identifier_t addSink(const std::vector<identifier_t>& predecessors);
 

@@ -36,6 +36,8 @@
 namespace NES
 {
 
+struct Context;
+
 class TokioSource final
 {
 public:
@@ -49,13 +51,12 @@ public:
     TokioSource& operator=(TokioSource&&) = delete;
 
     OriginId getOriginId();
-    bool start(SourceReturnType::EmitFunction&& emitFunction) const;
+    bool start(SourceReturnType::AsyncEmitFunction&& emitFunction, std::shared_ptr<AbstractBufferProvider> buffer_provider) const;
     void stop() const;
 
     friend std::ostream& operator<<(std::ostream& out, const TokioSource& source);
 
 private:
-    struct Context;
     std::unique_ptr<Context> context;
     OriginId originId;
     SourceDescriptor descriptor;

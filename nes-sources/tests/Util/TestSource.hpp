@@ -31,6 +31,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Overloaded.hpp>
+#include <BackpressureChannel.hpp>
 #include <folly/MPMCQueue.h>
 #include <gtest/gtest.h>
 
@@ -113,5 +114,11 @@ private:
 
 std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
 getTestSource(BackpressureListener backpressureListener, OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
+
+/// Creates a SourceHandle that uses the AsyncEmitFunction (emitWorkAsync) path.
+/// The source runs its own thread, reads from TestSourceControl, and calls the async emit function.
+/// Backpressure (CALLBACK_REGISTERED) is handled by blocking on a semaphore until the waker fires.
+std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+getAsyncTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool);
 
 }

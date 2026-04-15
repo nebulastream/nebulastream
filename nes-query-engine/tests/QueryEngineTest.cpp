@@ -1378,4 +1378,158 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSourcesAndPipelineFailures)
     }
     test.stop();
 }
+
+/// Async source variant of singleQueryWithSystemShutdown.
+/// Verifies that data flows correctly through the query engine when the source uses the async emit path (emitWorkAsync).
+TEST_F(QueryEngineTest, asyncSourceWithSystemShutdown)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addAsyncSource();
+    auto sink = builder.addSink({builder.addPipeline({source})});
+    auto query = test.addNewQuery(std::move(builder));
+    auto id = query->queryId;
+
+    auto ctrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+
+    test.expectQueryStatusEvents(id, {QueryStatus::Started, QueryStatus::Running});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+        ASSERT_TRUE(test.waitForQepRunning(id, DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
+    }
+
+    auto buffers = sinkCtrl->takeBuffers();
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+    test.stop();
+
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    EXPECT_TRUE(ctrl->wasOpened());
+    EXPECT_TRUE(ctrl->wasClosed());
+}
+
+/// Async source: the query is stopped by the source reaching end of stream.
+TEST_F(QueryEngineTest, asyncSourceWithExternalStop)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addAsyncSource();
+    auto sink = builder.addSink({builder.addPipeline({source})});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto ctrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Stopped});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Graceful);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+
+        ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectData(std::vector(DEFAULT_BUFFER_SIZE, std::byte(0)), NUMBER_OF_TUPLES_PER_BUFFER);
+        ctrl->injectEoS();
+
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
+    }
+    ASSERT_TRUE(sinkCtrl->waitForStop());
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    EXPECT_TRUE(ctrl->wasOpened());
+    EXPECT_TRUE(ctrl->wasClosed());
+    ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    test.stop();
+
+    auto buffers = sinkCtrl->takeBuffers();
+    EXPECT_EQ(buffers.size(), 4);
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+/// Async source: the query is stopped by a source failure.
+TEST_F(QueryEngineTest, asyncSourceWithSourceFailure)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto source = builder.addAsyncSource();
+    auto sink = builder.addSink({builder.addPipeline({source})});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto ctrl = test.sourceControls[source];
+    auto sinkCtrl = test.sinkControls[sink];
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running, QueryStatus::Failed});
+    test.expectSourceTermination(test.queryId(0), source, QueryTerminationType::Failure);
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+
+        ASSERT_TRUE(ctrl->waitUntilOpened());
+
+        ctrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(1));
+        ctrl->injectError("Async Source Failed");
+        ASSERT_TRUE(test.waitForQepTermination(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+    }
+    test.stop();
+
+    ASSERT_TRUE(ctrl->waitUntilDestroyed());
+    EXPECT_TRUE(ctrl->wasOpened());
+    EXPECT_TRUE(ctrl->wasClosed());
+
+    auto buffers = sinkCtrl->takeBuffers();
+    EXPECT_GE(buffers.size(), 1);
+    EXPECT_TRUE(verifyIdentifier(buffers[0], 1));
+}
+
+/// Mixed query: one async source and one sync source feeding into the same pipeline.
+TEST_F(QueryEngineTest, mixedAsyncAndSyncSources)
+{
+    TestingHarness test;
+    auto builder = test.buildNewQuery();
+    auto asyncSrc = builder.addAsyncSource();
+    auto syncSrc = builder.addSource();
+    auto sink = builder.addSink({builder.addPipeline({asyncSrc, syncSrc})});
+    auto query = test.addNewQuery(std::move(builder));
+
+    auto asyncCtrl = test.sourceControls[asyncSrc];
+    auto syncCtrl = test.sourceControls[syncSrc];
+    auto sinkCtrl = test.sinkControls[sink];
+    test.expectQueryStatusEvents(test.queryId(0), {QueryStatus::Started, QueryStatus::Running});
+
+    test.start();
+    {
+        test.startQuery(std::move(query));
+
+        ASSERT_TRUE(asyncCtrl->waitUntilOpened());
+        ASSERT_TRUE(syncCtrl->waitUntilOpened());
+        ASSERT_TRUE(test.waitForQepRunning(test.queryId(0), DEFAULT_LONG_AWAIT_TIMEOUT));
+
+        asyncCtrl->injectData(identifiableData(1), NUMBER_OF_TUPLES_PER_BUFFER);
+        syncCtrl->injectData(identifiableData(2), NUMBER_OF_TUPLES_PER_BUFFER);
+        asyncCtrl->injectData(identifiableData(3), NUMBER_OF_TUPLES_PER_BUFFER);
+        syncCtrl->injectData(identifiableData(4), NUMBER_OF_TUPLES_PER_BUFFER);
+
+        ASSERT_TRUE(sinkCtrl->waitForNumberOfReceivedBuffersOrMore(4));
+    }
+    test.stop();
+
+    ASSERT_TRUE(asyncCtrl->waitUntilDestroyed());
+    ASSERT_TRUE(syncCtrl->waitUntilDestroyed());
+}
+
 }

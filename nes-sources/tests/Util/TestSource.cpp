@@ -23,6 +23,8 @@
 #include <memory>
 #include <optional>
 #include <ostream>
+#include <ranges>
+#include <semaphore>
 #include <stop_token>
 #include <string>
 #include <thread>
@@ -35,6 +37,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SourceThreadHandle.hpp>
 #include <Util/Overloaded.hpp>
 #include <gtest/gtest.h>
 #include <ErrorHandling.hpp>
@@ -235,7 +238,129 @@ NES::getTestSource(BackpressureListener backpressureListener, OriginId originId,
     auto testSource = std::make_unique<TestSource>(originId, ctrl);
     SourceRuntimeConfiguration runtimeConfig{DEFAULT_NUMBER_OF_LOCAL_BUFFERS};
 
-    auto sourceHandle = std::make_unique<SourceHandle>(
+    auto sourceHandle = std::make_unique<SourceThreadHandle>(
         std::move(backpressureListener), std::move(originId), std::move(runtimeConfig), std::move(bufferPool), std::move(testSource));
+    return {std::move(sourceHandle), ctrl};
+}
+
+/// A SourceHandle implementation for testing that exercises the async emit (emitWorkAsync) path.
+/// It runs its own thread that reads from TestSourceControl and calls the AsyncEmitFunction directly.
+class AsyncTestSourceHandle final : public NES::SourceHandle
+{
+public:
+    AsyncTestSourceHandle(OriginId originId, std::shared_ptr<TestSourceControl> control, std::shared_ptr<AbstractBufferProvider> bufferPool)
+        : configuration{DEFAULT_NUMBER_OF_LOCAL_BUFFERS}, originId(originId), control(std::move(control)), bufferPool(std::move(bufferPool))
+    {
+    }
+
+    ~AsyncTestSourceHandle() override
+    {
+        if (thread.joinable())
+        {
+            stopSource.request_stop();
+            thread.join();
+        }
+    }
+
+    bool start(SourceReturnType::EmitFunction&&, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override
+    {
+        asyncEmit = std::move(asyncEmitFunction);
+        control->open.set_value();
+        thread = std::jthread(
+            [this](std::stop_token stopToken)
+            {
+                while (!stopToken.stop_requested())
+                {
+                    TestSourceControl::ControlData controlData;
+                    if (!control->queue.tryReadUntil(std::chrono::high_resolution_clock::now() + std::chrono::milliseconds(1), controlData))
+                    {
+                        continue;
+                    }
+
+                    auto event = std::visit(
+                        Overloaded{
+                            [](const TestSourceControl::Error& error) -> std::optional<SourceReturnType::SourceReturnType>
+                            { return SourceReturnType::Error{Exception(error.error, 0)}; },
+                            [this](TestSourceControl::Data data) -> std::optional<SourceReturnType::SourceReturnType>
+                            {
+                                auto buffer = bufferPool->getBufferBlocking();
+                                buffer.setNumberOfTuples(data.numberOfTuples);
+                                std::ranges::copy(data.data, buffer.getAvailableMemoryArea().data());
+                                return SourceReturnType::Data{.buffer = std::move(buffer), .onComplete = {}};
+                            },
+                            [](TestSourceControl::EoS) -> std::optional<SourceReturnType::SourceReturnType>
+                            { return SourceReturnType::EoS{}; }},
+                        controlData);
+
+                    if (!event)
+                    {
+                        break;
+                    }
+
+                    auto done = std::make_shared<std::binary_semaphore>(0);
+                    auto result = asyncEmit(originId, std::move(*event), [done](auto) { done->release(); });
+                    if (result == SourceReturnType::AsyncEmitResult::CALLBACK_REGISTERED)
+                    {
+                        while (!done->try_acquire_for(std::chrono::milliseconds(100)))
+                        {
+                            if (stopToken.stop_requested())
+                            {
+                                break;
+                            }
+                        }
+                    }
+
+                    /// EoS and Error terminate the source
+                    if (std::holds_alternative<SourceReturnType::EoS>(*event) || std::holds_alternative<SourceReturnType::Error>(*event))
+                    {
+                        break;
+                    }
+                }
+                control->close.set_value();
+            });
+        return true;
+    }
+
+    void stop() override
+    {
+        if (thread.joinable())
+        {
+            stopSource.request_stop();
+            thread.join();
+        }
+    }
+
+    SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds) override
+    {
+        if (!thread.joinable())
+        {
+            return SourceReturnType::TryStopResult::NOT_RUNNING;
+        }
+        stopSource.request_stop();
+        thread.join();
+        return SourceReturnType::TryStopResult::SUCCESS;
+    }
+
+    OriginId getSourceId() const override { return originId; }
+    const SourceRuntimeConfiguration& getRuntimeConfiguration() const override { return configuration; }
+
+protected:
+    std::ostream& toString(std::ostream& os) const override { return os << "AsyncTestSource"; }
+
+private:
+    SourceRuntimeConfiguration configuration;
+    OriginId originId;
+    std::shared_ptr<TestSourceControl> control;
+    std::shared_ptr<AbstractBufferProvider> bufferPool;
+    SourceReturnType::AsyncEmitFunction asyncEmit;
+    std::stop_source stopSource;
+    std::jthread thread;
+};
+
+std::pair<std::unique_ptr<NES::SourceHandle>, std::shared_ptr<NES::TestSourceControl>>
+NES::getAsyncTestSource(OriginId originId, std::shared_ptr<AbstractBufferProvider> bufferPool)
+{
+    auto ctrl = std::make_shared<TestSourceControl>();
+    auto sourceHandle = std::make_unique<AsyncTestSourceHandle>(std::move(originId), ctrl, std::move(bufferPool));
     return {std::move(sourceHandle), ctrl};
 }

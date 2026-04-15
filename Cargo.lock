@@ -742,6 +742,7 @@ dependencies = [
 name = "nes_source_runtime_bindings"
 version = "0.1.0"
 dependencies = [
+ "async-trait",
  "cxx",
  "nes_buffer_bindings",
  "nes_buffer_runtime",

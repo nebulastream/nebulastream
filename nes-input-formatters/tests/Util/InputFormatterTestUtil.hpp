@@ -42,6 +42,7 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <BackpressureChannel.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/std/sstream.h>
 #include <ErrorHandling.hpp>

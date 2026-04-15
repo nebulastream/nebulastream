@@ -173,6 +173,14 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSource()
     return identifier;
 }
 
+QueryPlanBuilder::identifier_t QueryPlanBuilder::addAsyncSource()
+{
+    auto identifier = nextIdentifier++;
+    objects[identifier] = AsyncSourceDescriptor{OriginId(originIdCounter++)};
+    forwardRelations[identifier] = {};
+    return identifier;
+}
+
 QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<identifier_t>& predecessors)
 {
     auto identifier = nextIdentifier++;
@@ -189,8 +197,9 @@ QueryPlanBuilder::identifier_t QueryPlanBuilder::addSink(const std::vector<ident
 
 QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::shared_ptr<BufferManager> bm) &&
 {
-    auto isSource = std::ranges::views::filter([](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
-                                               { return std::holds_alternative<SourceDescriptor>(kv.second); });
+    auto isSource = std::ranges::views::filter(
+        [](const std::pair<identifier_t, QueryComponentDescriptor>& kv)
+        { return std::holds_alternative<SourceDescriptor>(kv.second) || std::holds_alternative<AsyncSourceDescriptor>(kv.second); });
     std::vector<std::pair<std::unique_ptr<SourceHandle>, std::vector<std::weak_ptr<ExecutablePipeline>>>> sources;
 
     std::vector<std::shared_ptr<ExecutablePipeline>> pipelines;
@@ -216,7 +225,12 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
                 [](SourceDescriptor) -> std::shared_ptr<ExecutablePipeline>
                 {
                     INVARIANT(false, "Source cannot be a successor");
-                    std::terminate(); /// Ensures termination if INVARIANT is a no-op in release mode.
+                    std::terminate();
+                },
+                [](AsyncSourceDescriptor) -> std::shared_ptr<ExecutablePipeline>
+                {
+                    INVARIANT(false, "Source cannot be a successor");
+                    std::terminate();
                 },
                 [&](SinkDescriptor descriptor) -> std::shared_ptr<ExecutablePipeline>
                 {
@@ -248,7 +262,15 @@ QueryPlanBuilder::TestPlanCtrl QueryPlanBuilder::build(QueryId queryId, std::sha
     {
         std::vector<std::weak_ptr<ExecutablePipeline>> successors;
         std::ranges::transform(forwardRelations.at(source.first), std::back_inserter(successors), getOrCreatePipeline);
-        auto [s, ctrl] = getTestSource(backpressureListener, std::get<SourceDescriptor>(source.second).sourceId, bm);
+        auto [s, ctrl] = std::visit(
+            Overloaded{
+                [&](SourceDescriptor desc) { return getTestSource(backpressureListener, desc.sourceId, bm); },
+                [&](AsyncSourceDescriptor desc) { return getAsyncTestSource(desc.sourceId, bm); },
+                [](auto) -> std::pair<std::unique_ptr<SourceHandle>, std::shared_ptr<TestSourceControl>>
+                {
+                    std::terminate();
+                }},
+            source.second);
         sourceIds.emplace(source.first, s->getSourceId());
         sources.emplace_back(std::move(s), std::move(successors));
         sourceCtrls[source.first] = ctrl;

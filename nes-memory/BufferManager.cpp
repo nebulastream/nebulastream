@@ -32,7 +32,6 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <absl/functional/any_invocable.h>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
 #include <TupleBufferImpl.hpp>

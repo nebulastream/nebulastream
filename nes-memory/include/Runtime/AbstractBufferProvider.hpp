@@ -18,6 +18,7 @@
 #include <optional>
 #include <vector>
 #include <Runtime/TupleBuffer.hpp>
+#include <absl/functional/any_invocable.h>
 
 /// This enum reflects the different types of buffer managers in the system
 /// global: overall buffer manager
@@ -25,6 +26,8 @@
 /// fixed: buffer manager that we use for sources
 namespace NES
 {
+using WakerCallback = absl::AnyInvocable<bool()>;
+
 enum class BufferManagerType : uint8_t
 {
     GLOBAL,
@@ -52,10 +55,11 @@ public:
 
     /// Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
+    virtual void notifyOnAvailableBuffer(WakerCallback wake) = 0;
 };
 
 /// Set a callback that is invoked whenever a buffer is returned to the pool.
 /// Used by the Rust source runtime to wake async tasks waiting for buffers.
-void setBufferRecycleNotification(void(*callback)());
+void setBufferRecycleNotification(void (*callback)());
 
 }
