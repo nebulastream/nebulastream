@@ -32,7 +32,7 @@ workers:
 
   - host: "intermediate-node-1:8080"
     data_address: "intermediate-node-1:9090"
-    max_operators: 10000
+    max_operators: 4
     downstream:
       - "sink-node:8080"
     config:
@@ -42,7 +42,7 @@ workers:
 
   - host: "intermediate-node-2:8080"
     data_address: "intermediate-node-2:9090"
-    max_operators: 10000
+    max_operators: 4
     downstream:
       - "sink-node:8080"
     config:
@@ -52,7 +52,7 @@ workers:
 
   - host: "source-node-1:8080"
     data_address: "source-node-1:9090"
-    max_operators: 10000
+    max_operators: 100
     downstream:
       - "intermediate-node-1:8080"
       - "intermediate-node-2:8080"
@@ -63,7 +63,7 @@ workers:
 
   - host: "source-node-2:8080"
     data_address: "source-node-2:9090"
-    max_operators: 10000
+    max_operators: 1
     downstream:
       - "intermediate-node-1:8080"
       - "intermediate-node-2:8080"
@@ -74,7 +74,7 @@ workers:
 
   - host: "source-node-3:8080"
     data_address: "source-node-3:9090"
-    max_operators: 10000
+    max_operators: 1
     downstream:
       - "intermediate-node-1:8080"
       - "intermediate-node-2:8080"
@@ -96,7 +96,7 @@ workers:
 
   - host: "source-node-5:8080"
     data_address: "source-node-5:9090"
-    max_operators: 10000
+    max_operators: 1
     downstream:
       - "intermediate-node-1:8080"
       - "intermediate-node-2:8080"
