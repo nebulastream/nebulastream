@@ -69,6 +69,50 @@ Record RowTupleBufferRef::readRecord(
     return record;
 }
 
+Record RowTupleBufferRef::readRecordWithOffset(
+    const std::vector<Record::RecordFieldIdentifier>& projections,
+    const nautilus::val<int8_t*>& bufferAddress,
+    const nautilus::val<uint64_t>& recordIndex,
+    const nautilus::val<uint32_t>& offset,
+    const std::vector<uint32_t>& maxStringLengths) const
+{
+    Record record;
+    // const auto bufferAddress = recordBuffer.getMemArea();
+    const auto recordOffset = bufferAddress + offset + (tupleSize * recordIndex);
+    nautilus::static_val<uint64_t> stringIndex = 0;
+    for (nautilus::static_val<uint64_t> i = 0; i < fields.size(); ++i)
+    {
+        /// if fields contain the fixed varsized length, fieldOffset should be correct
+        // Todo: however, type would trigger varsized read, which will not work
+        // -> simply check if type is varsized and if so, then do special read
+        const auto& [name, type, fieldOffset] = fields.at(i);
+        if (not includesField(projections, name))
+        {
+            continue;
+        }
+        auto fieldAddress = calculateFieldAddress(recordOffset, fieldOffset);
+        if (type.isType(DataType::Type::VARSIZED))
+        {
+            nautilus::val<uint32_t> stringLength = 0;
+            while (stringLength < maxStringLengths.at(stringIndex) and fieldAddress[stringLength] != '\0')
+            {
+                ++stringLength;
+            }
+            const VariableSizedData varSized{fieldAddress, stringLength};
+            const VarVal varVal{varSized, false, false};
+
+            ++stringIndex;
+            record.write(name, varVal);
+        }
+        else
+        {
+            auto value = VarVal::readVarValFromMemory(fieldAddress, type, false);
+            record.write(name, value);
+        }
+    }
+    return record;
+}
+
 TupleBufferRef::WriteRecordResult RowTupleBufferRef::writeRecord(
     nautilus::val<uint64_t>& recordIndex,
     const RecordBuffer& recordBuffer,
