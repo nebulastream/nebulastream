@@ -89,35 +89,38 @@ public:
         const std::string& sinkType,
         const std::string_view sinkNameInFile,
         const Schema& schema,
-        const std::unordered_map<std::string, std::string>& /*config*/)
+        const std::unordered_map<std::string, std::string>& config,
+        const std::unordered_map<std::string, std::string>& formatConfig)
     {
         auto [_, success] = sinkProviders.emplace(
             sinkNameInFile,
-            [this, schema, sinkType](
+            [this, schema, sinkType, config, formatConfig](
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
-                std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
-                std::unordered_map<std::string, std::string> formatConfig{};
+                auto actualConfig = config;
+                auto actualFormatConfig = formatConfig;
                 if (sinkType == "File")
                 {
-                    config["output_format"] = "CSV";
+                    actualConfig["file_path"] = std::move(filePath);
+                    actualConfig.try_emplace("output_format", "CSV");
                 }
                 else if (toUpperCase(sinkType) == "CHECKSUM")
                 {
-                    formatConfig["quote_strings"] = "true";
+                    actualFormatConfig["quote_strings"] = "true";
                 }
 
                 PRECONDITION(
                     not possibleSinkPlacements.empty(),
                     "Topology must list at least one worker in allow_sink_placement to assign a default sink host");
                 std::string host = possibleSinkPlacements.at(0).getRawValue();
-                if (auto hostIt = config.find("host"); hostIt != config.end())
+                if (auto hostIt = actualConfig.find("host"); hostIt != actualConfig.end())
                 {
                     host = hostIt->second;
+                    actualConfig.erase(hostIt);
                 }
 
                 const auto sink = sinkCatalog->addSinkDescriptor(
-                    std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(config), formatConfig);
+                    std::string{assignedSinkName}, schema, sinkType, Host(host), std::move(actualConfig), actualFormatConfig);
                 if (not sink.has_value())
                 {
                     return std::unexpected{SinkAlreadyExists("Failed to create file sink with assigned name {}", assignedSinkName)};
@@ -606,7 +609,7 @@ struct SystestBinder::Impl
         {
             schema.addField(field.name, field.dataType);
         }
-        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig);
+        sltSinkProvider.registerSink(statement.sinkType, statement.name, schema, statement.sinkConfig, statement.formatConfig);
     }
 
     void createCallback(
