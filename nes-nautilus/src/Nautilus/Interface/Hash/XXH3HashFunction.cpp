@@ -15,12 +15,9 @@
 
 #include <cstdint>
 #include <memory>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
-#include <ErrorHandling.hpp>
 #include <HashFunctionRegistry.hpp>
 
 namespace NES
@@ -202,6 +199,9 @@ inline uint64_t hashLen129to240(const uint8_t* input, uint64_t length, const uin
 
 } /// namespace XXH3Constants
 
+namespace
+{
+
 /// Computes XXH3-64 hash over a raw byte buffer.
 uint64_t xxh3HashBytes(void* data, uint64_t length)
 {
@@ -287,12 +287,14 @@ VarVal xxh3VarVal(const VarVal& input)
     combined = combined * nautilus::val<uint64_t>(UINT64_C(0x9FB21C651E98DF25));
     combined = combined ^ (combined >> nautilus::val<uint64_t>(28));
 
-    return VarVal(combined);
+    return {combined};
 }
+
+} /// anonymous namespace
 
 HashFunction::HashValue XXH3HashFunction::init() const
 {
-    return nautilus::val<uint64_t>(0);
+    return {nautilus::val<uint64_t>(0)};
 }
 
 std::unique_ptr<HashFunction> XXH3HashFunction::clone() const

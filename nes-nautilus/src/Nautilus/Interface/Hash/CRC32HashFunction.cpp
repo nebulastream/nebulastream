@@ -16,28 +16,38 @@
 #include <array>
 #include <cstdint>
 #include <memory>
-#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <nautilus/function.hpp>
-#include <nautilus/val.hpp>
-#include <ErrorHandling.hpp>
 #include <HashFunctionRegistry.hpp>
 
 namespace NES
 {
+namespace
+{
+
+/// Number of entries in the CRC32 lookup table (one per byte value).
+constexpr uint32_t CRC32_TABLE_SIZE = 256;
+/// Number of bits in a byte.
+constexpr uint32_t BITS_PER_BYTE = 8;
+/// CRC32 initial/final XOR mask.
+constexpr uint32_t CRC32_XOR_MASK = 0xFFFFFFFF;
+/// Byte mask for extracting the lowest 8 bits.
+constexpr uint64_t BYTE_MASK = 0xFF;
+/// Number of bytes in a 64-bit value.
+constexpr int BYTES_IN_UINT64 = 8;
 
 /// Generates the CRC32 lookup table at compile time using the standard polynomial 0xEDB88320.
-consteval std::array<uint32_t, 256> generateCRC32Table()
+consteval std::array<uint32_t, CRC32_TABLE_SIZE> generateCRC32Table()
 {
     constexpr uint32_t polynomial = 0xEDB88320;
-    std::array<uint32_t, 256> table{};
-    for (uint32_t i = 0; i < 256; ++i)
+    std::array<uint32_t, CRC32_TABLE_SIZE> table{};
+    for (uint32_t i = 0; i < CRC32_TABLE_SIZE; ++i)
     {
         uint32_t crc = i;
-        for (uint32_t j = 0; j < 8; ++j)
+        for (uint32_t j = 0; j < BITS_PER_BYTE; ++j)
         {
-            if (crc & 1)
+            if ((crc & 1) != 0)
             {
                 crc = (crc >> 1) ^ polynomial;
             }
@@ -53,54 +63,48 @@ consteval std::array<uint32_t, 256> generateCRC32Table()
 
 static constexpr auto crc32Table = generateCRC32Table();
 
-HashFunction::HashValue CRC32HashFunction::init() const
-{
-    return nautilus::val<uint64_t>(0);
-}
-
-std::unique_ptr<HashFunction> CRC32HashFunction::clone() const
-{
-    return std::make_unique<CRC32HashFunction>(*this);
-}
-
 /// Computes CRC32 over a raw byte buffer using the precomputed lookup table.
 uint64_t crc32Bytes(void* data, uint64_t length)
 {
     const auto* bytes = static_cast<const uint8_t*>(data);
-    uint32_t crc = 0xFFFFFFFF;
+    uint32_t crc = CRC32_XOR_MASK;
     for (uint64_t i = 0; i < length; ++i)
     {
-        crc = (crc >> 8) ^ crc32Table[(crc ^ bytes[i]) & 0xFF];
+        crc = (crc >> BITS_PER_BYTE) ^ crc32Table[(crc ^ bytes[i]) & BYTE_MASK];
     }
-    return static_cast<uint64_t>(crc ^ 0xFFFFFFFF);
+    return static_cast<uint64_t>(crc ^ CRC32_XOR_MASK);
 }
 
 /// Computes CRC32 for a single VarVal by treating its bytes as input.
 VarVal crc32VarVal(const VarVal& input)
 {
-    /// Convert the input to a uint64_t representation, then compute CRC32 over its bytes.
-    /// We process the 8 bytes of the uint64_t value through the CRC32 lookup table.
-    constexpr uint32_t initialCrc = 0xFFFFFFFF;
-    constexpr uint32_t finalXor = 0xFFFFFFFF;
-    constexpr auto byteCount = 8;
-    constexpr auto byteMask = 0xFF;
-    constexpr auto bitsPerByte = 8;
-
     auto value = input.getRawValueAs<nautilus::val<uint64_t>>();
 
     /// Process each byte of the 64-bit value through the CRC32 table.
     /// We unfold this to avoid a loop over nautilus values.
-    auto crc = nautilus::val<uint64_t>(initialCrc);
-    for (int i = 0; i < byteCount; ++i)
+    auto crc = nautilus::val<uint64_t>(CRC32_XOR_MASK);
+    for (int i = 0; i < BYTES_IN_UINT64; ++i)
     {
-        auto byte = (value >> nautilus::val<uint64_t>(i * bitsPerByte)) & nautilus::val<uint64_t>(byteMask);
-        auto tableIndex = (crc ^ byte) & nautilus::val<uint64_t>(byteMask);
+        auto byte = (value >> nautilus::val<uint64_t>(static_cast<uint64_t>(i) * BITS_PER_BYTE)) & nautilus::val<uint64_t>(BYTE_MASK);
+        auto tableIndex = (crc ^ byte) & nautilus::val<uint64_t>(BYTE_MASK);
         /// We invoke a helper to perform the table lookup at runtime.
-        crc = (crc >> nautilus::val<uint64_t>(bitsPerByte))
+        crc = (crc >> nautilus::val<uint64_t>(BITS_PER_BYTE))
             ^ nautilus::invoke(+[](uint64_t idx) -> uint64_t { return crc32Table[idx]; }, tableIndex);
     }
-    crc = crc ^ nautilus::val<uint64_t>(finalXor);
-    return VarVal(crc);
+    crc = crc ^ nautilus::val<uint64_t>(CRC32_XOR_MASK);
+    return {crc};
+}
+
+} /// anonymous namespace
+
+HashFunction::HashValue CRC32HashFunction::init() const
+{
+    return {nautilus::val<uint64_t>(0)};
+}
+
+std::unique_ptr<HashFunction> CRC32HashFunction::clone() const
+{
+    return std::make_unique<CRC32HashFunction>(*this);
 }
 
 HashFunction::HashValue CRC32HashFunction::calculate(HashValue& hash, const VarVal& value) const
