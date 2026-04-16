@@ -13,40 +13,25 @@ For better insight into the demo, we further provide a simple WebApp that can sh
 Everything is set up and connected using docker compose and works out of the box if you have docker installed.
 
 ## How to Run
+Requirement: Have docker installed
 
-### Start system
+1. Clone this repository
+2. Open terminal in the repository root folder.
+3. **Run once** to set up your local system: `bash ./demo/scripts/build.sh` (slow)
+4. **Run to start demo** `bash ./demo/script/start.sh` (quick)
+5. Navigate to http://localhost:8085 and select desired conntections.
+6. **Stop everything**: Cancel the running terminal with `CTRL+C`
 
-```bash 
-docker compose up --force-recreate 
-```
+## Configuration
 
+### Change speed of video stream
+To change the speed at which the images are being send, go to `./demo/config/datagen-*.yaml` and adapt the value `period`. 
+`period` defined how often an image is being sent in millisecond.
+Restart the system after you changed the period. 
 
-### Set up Kafka
-```bash
-## Initiate Topic 
-./demo/scripts/00_kafka-init-topic.sh
-### Show Kafka output  
-./demo/scripts/01_kafka-consume.sh
-```
-
-### Start NebulaStream Queries
-```bash
- ./demo/scripts/02_start_query.sh ./demo/queries/query-engine-wiring.yaml 
- ./demo/scripts/02_start_query.sh ./demo/queries/query-pipe-staple.yaml 
- ./demo/scripts/02_start_query.sh ./demo/queries/query-underbody-screw.yaml
-```
-
-### Start Browser Viewer
-
-1. Navigate browser to `localhost:8085`
-2. Enter the following three configurations to "Connections" and press "Add connection" each time. 
-
-    | Host                     | Port   |
-    | ---                      | ---    |
-    | source-engine-wiring   | 8081 |
-    | source-pipe-staple     | 8081 |
-    | source-underbody-screw | 8081 |
-3. Draw the three now visible screens to the wished size
+### Change Kafka Sink
+To change the kafka sink, go to `./demo/queries/query-engine-wiring.yaml` and adapt the values `brokers` and `topic`.
+You must restart the query to have the change reflected.
 
 
 ## References

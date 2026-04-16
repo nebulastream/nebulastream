@@ -3,7 +3,7 @@ query: |
   VARSIZED("manufacturing-anomaly") AS event,
   VARSIZED("underbody_screw") AS component_type,
   id AS component_id,
-  anomaly_score AS confidence,
+  anomaly_score,
   timestamp AS timestamp
   FROM MODEL_INFERENCE(underbody_screw_pca, (SELECT id, timestamp, AUTOVI_PREPROCESS_IMAGE(FROM_BASE64(data)) AS pixels FROM UNDERBODY_SCREW))
   WHERE anomaly_score > FLOAT32(0.8)
@@ -27,7 +27,7 @@ sinks:
         type: VARSIZED
       - name: component_id
         type: VARSIZED
-      - name: confidence
+      - name: anomaly_score
         type: FLOAT32
       - name: timestamp
         type: UINT64
