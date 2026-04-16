@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TCP Video Viewer</title>
+  <title>Sources</title>
   <style>
     :root {
       color-scheme: dark;
@@ -324,10 +324,7 @@
 <body>
   <div class="page">
     <div>
-      <h1>TCP Video Viewer</h1>
-      <p class="subtitle">
-        Add TCP connections from the bar below. Each active connection is rendered as its own full-width feed panel.
-      </p>
+      <h1>Sources</h1>
     </div>
 
     <section class="connections-panel">
@@ -340,14 +337,16 @@
         </div>
 
         <div class="add-row">
-          <label>
-            TCP host / IP
-            <input id="hostInput" type="text" placeholder="127.0.0.1" value="127.0.0.1" />
-          </label>
+
+          <select name="sources" id="sources">
+            <option value="source-pipe-staple">source-pipe-staple</option>
+            <option value="source-underbody-screw">source-underbody-screw</option>
+            <option value="source-engine-wiring">source-engine-wiring</option>
+          </select>
 
           <label>
             TCP port
-            <input id="portInput" type="number" placeholder="9000" value="9000" />
+            <input id="portInput" type="number" placeholder="8081" value="8081" />
           </label>
 
           <button id="addConnectionButton" class="primary">Add connection</button>
@@ -410,7 +409,7 @@
     const MAX_QUEUE_SIZE = 120;
 
     const screensEl = document.getElementById('screens');
-    const hostInput = document.getElementById('hostInput');
+    const sourcesInput = document.getElementById('sources')
     const portInput = document.getElementById('portInput');
     const addConnectionButton = document.getElementById('addConnectionButton');
     const connectionSelect = document.getElementById('connectionSelect');
@@ -811,7 +810,8 @@
     }
 
     async function addConnection() {
-      const host = hostInput.value.trim();
+
+      const host = sourcesInput.value.trim();
       const port = Number(portInput.value);
       if (!host || !port) return;
 
