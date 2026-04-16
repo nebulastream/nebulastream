@@ -116,7 +116,7 @@ LoweringRuleResultSubgraph LowerToPhysicalNLJoin::apply(LogicalOperator logicalO
 
     auto combinedFieldMappingVec = join->getChildren()
         | std::views::transform([](const auto& child) { return child.getTraitSet().template get<FieldMappingTrait>()->getUnderlying() | std::views::all; })
-        | std::views::join | std::ranges::to<std::unordered_map>();
+        | std::views::join | std::views::common | std::ranges::to<std::unordered_map>();
     auto combinedFieldMapping = FieldMappingTrait{std::move(combinedFieldMappingVec)};
 
     auto joinFunction = QueryCompilation::FunctionProvider::lowerFunction(logicalJoinFunction, combinedFieldMapping);
