@@ -1,5 +1,5 @@
 data_rate: 1
-period: 10000
+period: 300
 chunk_size: 1000
 
 pattern:
