@@ -791,7 +791,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
                             })
             | std::ranges::to<std::vector<QueryId>>();
 
-        for (auto queryId : queryIds)
+        for (const auto& queryId : queryIds)
         {
             ASSERT_TRUE(test.waitForQepRunning(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
@@ -799,7 +799,7 @@ TEST_F(QueryEngineTest, ManyQueriesWithTwoSources)
         ASSERT_TRUE(sinkCtrls[0]->waitForNumberOfReceivedBuffersOrMore(2));
         dataGenerator.stop();
 
-        for (auto queryId : queryIds)
+        for (const auto& queryId : queryIds)
         {
             ASSERT_TRUE(test.waitForQepTermination(queryId, DEFAULT_LONG_AWAIT_TIMEOUT));
         }
