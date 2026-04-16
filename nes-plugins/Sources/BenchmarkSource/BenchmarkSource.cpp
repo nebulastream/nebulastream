@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <cerrno>
+#include <cstddef>
 #include <cstdlib>
 #include <cstring>
 #include <format>
@@ -23,13 +24,17 @@
 #include <ios>
 #include <iterator>
 #include <memory>
+#include <ostream>
+#include <stop_token>
 #include <string>
 #include <unordered_map>
 #include <utility>
 #include <fcntl.h>
 #include <unistd.h>
 #include <Configurations/Descriptor.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -55,18 +60,21 @@ BenchmarkSource::~BenchmarkSource()
 
 void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
 {
+    // NOLINTNEXTLINE(concurrency-mt-unsafe)
     const auto realPath = std::unique_ptr<char, decltype(std::free)*>{realpath(this->filePath.c_str(), nullptr), std::free};
     if (!realPath)
     {
-        throw InvalidConfigParameter("Could not determine absolute pathname: {} - {}", this->filePath, std::strerror(errno));
+        throw InvalidConfigParameter(
+            "Could not determine absolute pathname: {} - {}", this->filePath, std::strerror(errno)); // NOLINT(concurrency-mt-unsafe)
     }
 
     if (mode == "mmap")
     {
-        mmapFd = ::open(realPath.get(), O_RDONLY);
+        mmapFd = ::open(realPath.get(), O_RDONLY); // NOLINT(cppcoreguidelines-pro-type-vararg)
         if (mmapFd < 0)
         {
-            throw InvalidConfigParameter("Could not open file for mmap: {} - {}", realPath.get(), std::strerror(errno));
+            throw InvalidConfigParameter(
+                "Could not open file for mmap: {} - {}", realPath.get(), std::strerror(errno)); // NOLINT(concurrency-mt-unsafe)
         }
 
         struct stat fileStat{};
@@ -74,7 +82,8 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
         {
             ::close(mmapFd);
             mmapFd = -1;
-            throw InvalidConfigParameter("Could not stat file: {} - {}", realPath.get(), std::strerror(errno));
+            throw InvalidConfigParameter(
+                "Could not stat file: {} - {}", realPath.get(), std::strerror(errno)); // NOLINT(concurrency-mt-unsafe)
         }
         fileSize = static_cast<size_t>(fileStat.st_size);
 
@@ -84,7 +93,8 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
             ::close(mmapFd);
             mmapFd = -1;
             mmapBase = nullptr;
-            throw InvalidConfigParameter("Could not mmap file: {} - {}", realPath.get(), std::strerror(errno));
+            throw InvalidConfigParameter(
+                "Could not mmap file: {} - {}", realPath.get(), std::strerror(errno)); // NOLINT(concurrency-mt-unsafe)
         }
 
         /// Advise the kernel that we will read sequentially
@@ -96,7 +106,8 @@ void BenchmarkSource::open(std::shared_ptr<AbstractBufferProvider>)
         std::ifstream inputFile(realPath.get(), std::ios::binary | std::ios::ate);
         if (!inputFile)
         {
-            throw InvalidConfigParameter("Could not open file: {} - {}", realPath.get(), std::strerror(errno));
+            throw InvalidConfigParameter(
+                "Could not open file: {} - {}", realPath.get(), std::strerror(errno)); // NOLINT(concurrency-mt-unsafe)
         }
 
         fileSize = static_cast<size_t>(inputFile.tellg());
@@ -170,6 +181,7 @@ SourceValidationRegistryReturnType RegisterBenchmarkSourceValidation(SourceValid
     return BenchmarkSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
+// NOLINTNEXTLINE(performance-unnecessary-value-param) - registry interface requires pass-by-value
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterBenchmarkSource(SourceRegistryArguments args)
 {
     return std::make_unique<BenchmarkSource>(args.sourceDescriptor);
