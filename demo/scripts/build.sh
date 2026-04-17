@@ -1,4 +1,2 @@
-./scripts/install-local-docker-environment.sh -l --libstdcxx --no-sanitizer --name process-intelligence -y
-
-docker run --workdir $(pwd) -v $(pwd):$(pwd) nebulastream/nes-development:local-process-intelligence cmake -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
-docker run --workdir $(pwd) -v $(pwd):$(pwd) nebulastream/nes-development:local-process-intelligence cmake --build cmake-build-debug -j
+docker run --workdir $(pwd) -v $(pwd):$(pwd) nebulastream/nes-development:3850dbc1e53af476089770c790db283f31364792fb73d9fa9213fe87f9a094c0-x64-libstdcxx-none cmake -B cmake-build-debug -DCMAKE_BUILD_TYPE=Debug
+docker run --workdir $(pwd) -v $(pwd):$(pwd) nebulastream/nes-development:3850dbc1e53af476089770c790db283f31364792fb73d9fa9213fe87f9a094c0-x64-libstdcxx-none cmake --build cmake-build-debug -j

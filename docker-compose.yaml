@@ -23,13 +23,13 @@ services:
       KAFKA_LOG_DIRS: /tmp/kraft-combined-logs
       CLUSTER_ID: MkU3OEVBNTcwNTJENDM2Qk
   nes-worker:
-    image: nebulastream/nes-development:local-process-intelligence
+    image: nebulastream/nes-development:3850dbc1e53af476089770c790db283f31364792fb73d9fa9213fe87f9a094c0-x64-libstdcxx-none
     command: ./cmake-build-debug/nes-single-node-worker/nes-single-node-worker --worker.default_query_execution.operator_buffer_size=4096000 --worker.number_of_buffers_in_global_buffer_manager=5000
     working_dir: /tmp/nebulastream
     volumes:
       - ./:/tmp/nebulastream/
   nes-cli:
-    image: nebulastream/nes-development:local-process-intelligence
+    image: nebulastream/nes-development:3850dbc1e53af476089770c790db283f31364792fb73d9fa9213fe87f9a094c0-x64-libstdcxx-none
     command: sleep infinity
 #    ./cmake-build-debug/nes-frontend/apps/nes-cli -d -s nes-worker:8080 -t query.yaml start
     working_dir: /tmp/nebulastream
