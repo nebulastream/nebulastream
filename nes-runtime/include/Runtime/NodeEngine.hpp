@@ -18,7 +18,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Listeners/SystemEventListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+
 #include <Sources/SourceProvider.hpp>
 #include <CompiledQueryPlan.hpp>
 #include <QueryEngine.hpp>
@@ -52,7 +52,7 @@ public:
     void startQuery(QueryId queryId);
     /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
     /// been called.
-    void stopQuery(QueryId queryId, QueryTerminationType terminationType);
+    void stopQuery(QueryId queryId);
 
     [[nodiscard]] std::shared_ptr<BufferManager> getBufferManager() { return bufferManager; }
 

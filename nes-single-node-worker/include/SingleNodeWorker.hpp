@@ -22,7 +22,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+
 #include <Util/Pointers.hpp>
 #include <CompositeStatisticListener.hpp>
 #include <ErrorHandling.hpp>
@@ -67,11 +67,9 @@ public:
     /// @param queryId identifies the registered query
     std::expected<void, Exception> startQuery(QueryId queryId) noexcept;
 
-    /// Stops the Query and moves it into the StoppedState. The exact semantics and guarantees depend on the chosen
-    ///  QueryTerminationType
+    /// Stops the Query and moves it into the StoppedState.
     /// @param queryId identifies the registered query
-    /// @param terminationType dictates what happens with in in-flight data
-    std::expected<void, Exception> stopQuery(QueryId queryId, QueryTerminationType terminationType) noexcept;
+    std::expected<void, Exception> stopQuery(QueryId queryId) noexcept;
 
     /// Summary structure for query.
     [[nodiscard]] std::expected<LocalQueryStatusSnapshot, Exception> getQueryStatus(QueryId queryId) const noexcept;

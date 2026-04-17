@@ -20,7 +20,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <QueryManager/QueryManager.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <QueryStatus.hpp>
@@ -62,7 +62,7 @@ std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::start(Query
 
 std::expected<void, Exception> EmbeddedWorkerQuerySubmissionBackend::stop(QueryId queryId)
 {
-    return worker.stopQuery(queryId, QueryTerminationType::Graceful);
+    return worker.stopQuery(queryId);
 }
 
 std::expected<LocalQueryStatusSnapshot, Exception> EmbeddedWorkerQuerySubmissionBackend::status(QueryId queryId) const
