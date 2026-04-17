@@ -263,6 +263,11 @@
       word-break: break-word;
     }
 
+    .meta-box.alert-frame-id {
+      background: rgba(255, 132, 132, 0.12);
+      border-color: rgba(255, 132, 132, 0.32);
+    }
+
     .resize-handle {
       position: absolute;
       left: 0;
@@ -469,7 +474,11 @@
     }
 
     function updateLastFrame(screen, frame) {
-      screen.lastIdEl.textContent = frame?.id ?? '—';
+      const frameId = frame?.id ?? '—';
+      const isAlertFrame = typeof frame?.id === 'string' && frame.id.endsWith('b');
+
+      screen.lastIdEl.textContent = frameId;
+      screen.lastIdBoxEl.classList.toggle('alert-frame-id', isAlertFrame);
       screen.lastTimestampEl.textContent = frame?.timestamp ?? '—';
     }
 
@@ -752,6 +761,7 @@
         statusPill: root.querySelector('.status-pill'),
         statusText: root.querySelector('.status-text'),
         lastIdEl: root.querySelector('.last-id'),
+        lastIdBoxEl: root.querySelector('.last-id').closest('.meta-box'),
         lastTimestampEl: root.querySelector('.last-timestamp'),
         canvas: root.querySelector('.viewer-canvas'),
         resizeHandle: root.querySelector('.resize-handle'),
