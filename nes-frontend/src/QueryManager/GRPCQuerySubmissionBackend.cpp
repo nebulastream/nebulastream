@@ -172,7 +172,6 @@ std::expected<void, Exception> GRPCQuerySubmissionBackend::stop(QueryId queryId)
     grpc::ClientContext context;
     StopQueryRequest request;
     *request.mutable_queryid() = QueryPlanSerializationUtil::serializeQueryId(queryId);
-    request.set_terminationtype(StopQueryRequest::Graceful);
     google::protobuf::Empty response;
 
     const auto status = stub->StopQuery(&context, request, &response);

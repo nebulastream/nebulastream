@@ -30,7 +30,7 @@
 #include <Listeners/QueryLog.hpp>
 #include <Plans/LogicalPlan.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryTerminationType.hpp>
+
 #include <Util/Logger/Logger.hpp>
 #include <Util/PlanRenderer.hpp>
 #include <Util/Pointers.hpp>
@@ -144,12 +144,12 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
     std::unreachable();
 }
 
-std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
+std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId) noexcept
 {
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
-        nodeEngine->stopQuery(queryId, type);
+        nodeEngine->stopQuery(queryId);
         return {};
     }
     CPPTRACE_CATCH(...)
