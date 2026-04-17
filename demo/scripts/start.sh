@@ -1,5 +1,5 @@
 
-docker compose up -d --force-recreate
+docker compose up -d --force-recreate --build
 
 bash ./demo/scripts/00_kafka-init-topic.sh
 
