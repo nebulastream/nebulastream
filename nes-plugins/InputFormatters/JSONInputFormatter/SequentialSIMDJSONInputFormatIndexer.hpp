@@ -31,6 +31,7 @@ class SequentialSIMDJSONInputFormatIndexer final : public InputFormatIndexer<Seq
 public:
     static constexpr std::string_view NAME = "SequentialJSON";
     static constexpr bool IsSequential = true;
+    static constexpr bool SpanningTupleMayContainMultipleRecords = false;
 
     using IndexerMetaData = SIMDJSONMetaData;
     using FieldIndexFunctionType = SIMDJSONFIF;

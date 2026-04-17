@@ -42,9 +42,9 @@
 #include <Concepts.hpp>
 #include <ErrorHandling.hpp>
 #include <ExecutionContext.hpp>
+#include <LockingSequenceShredder.hpp>
 #include <RawTupleBuffer.hpp>
 #include <SequenceShredder.hpp>
-#include <LockingSequenceShredder.hpp>
 #include <val.hpp>
 #include <val_arith.hpp>
 #include <val_concepts.hpp>
@@ -544,15 +544,30 @@ private:
     {
         if (*getMemberWithOffset<bool>(indexPhaseResult, offsetof(IndexPhaseResult, hasLeadingSpanningTupleBool)))
         {
-            auto leadingFIF = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-                indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleFIF));
-
-            /// Get leading field index function and a pointer to the spanning tuple 'record'
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTuple));
-
-            auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, leadingFIF, parserTypes);
-            executeChild(executionCtx, record);
+            auto rawFieldAccessFunction = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
+                indexPhaseResult, offsetof(IndexPhaseResult, leadingSpanningTupleFIF));
+            /// Formats whose tuple delimiter cannot reunite into extra record boundaries inside a
+            /// spanning tuple (CSV/JSON/Native with single-byte delims) opt out of the loop and
+            /// use the fast path: exactly one record per spanning tuple, no hasNext branch in the
+            /// traced pipeline.
+            if constexpr (FormatterType::SpanningTupleMayContainMultipleRecords)
+            {
+                nautilus::val<uint64_t> bufferRecordIdx = 0;
+                while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
+                {
+                    auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                        projections, spanningRecordPtr, bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, parserTypes);
+                    executeChild(executionCtx, record);
+                    ++bufferRecordIdx;
+                }
+            }
+            else
+            {
+                auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                    projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, rawFieldAccessFunction, parserTypes);
+                executeChild(executionCtx, record);
+            }
         }
     }
 
@@ -571,7 +586,7 @@ private:
             auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
                 projections, recordBuffer.getMemArea(), bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, parserTypes);
             executeChild(executionCtx, record);
-            bufferRecordIdx += 1;
+            ++bufferRecordIdx;
         }
     }
 
@@ -590,14 +605,27 @@ private:
 
         if (hasTrailingSpanningTuple)
         {
-            auto trailingFIF = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
-                indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleFIF));
-
             auto spanningRecordPtr = *getMemberPtrWithOffset<int8_t>(indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTuple));
-
-            auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
-                projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, trailingFIF, parserTypes);
-            executeChild(executionCtx, record);
+            auto rawFieldAccessFunction = getMemberWithOffset<typename FormatterType::FieldIndexFunctionType>(
+                indexPhaseResult, offsetof(IndexPhaseResult, trailingSpanningTupleFIF));
+            /// See parseLeadingRecord for the rationale behind this compile-time split.
+            if constexpr (FormatterType::SpanningTupleMayContainMultipleRecords)
+            {
+                nautilus::val<uint64_t> bufferRecordIdx = 0;
+                while (typename FormatterType::FieldIndexFunctionType{}.hasNext(bufferRecordIdx, rawFieldAccessFunction))
+                {
+                    auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                        projections, spanningRecordPtr, bufferRecordIdx, indexerMetaData, rawFieldAccessFunction, parserTypes);
+                    executeChild(executionCtx, record);
+                    ++bufferRecordIdx;
+                }
+            }
+            else
+            {
+                auto record = typename FormatterType::FieldIndexFunctionType{}.readSpanningRecord(
+                    projections, spanningRecordPtr, nautilus::val<uint64_t>(0), indexerMetaData, rawFieldAccessFunction, parserTypes);
+                executeChild(executionCtx, record);
+            }
         }
     }
 };

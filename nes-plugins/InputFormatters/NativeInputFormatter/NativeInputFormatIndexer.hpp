@@ -155,6 +155,7 @@ class NativeInputFormatIndexer final : public InputFormatIndexer<NativeInputForm
 public:
     static constexpr std::string_view NAME = "SystemNative";
     static constexpr bool IsSequential = false;
+    static constexpr bool SpanningTupleMayContainMultipleRecords = false;
 
     using IndexerMetaData = NativeMetaData;
     using FieldIndexFunctionType = NativeFIF;

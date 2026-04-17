@@ -29,6 +29,7 @@ class SequentialCSVInputFormatIndexer : public InputFormatIndexer<SequentialCSVI
 public:
     static constexpr std::string_view NAME = "SequentialCSV";
     static constexpr bool IsSequential = true;
+    static constexpr bool SpanningTupleMayContainMultipleRecords = false;
 
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;

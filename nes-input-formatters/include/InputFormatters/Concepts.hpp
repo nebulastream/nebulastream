@@ -59,7 +59,15 @@ class RawTupleBuffer;
 template <typename T>
 concept InputFormatIndexerType = IndexerMetaDataType<typename T::IndexerMetaData>
     && FieldIndexFunctionType<typename T::FieldIndexFunctionType>
-    && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool> && requires(const T& indexer) {
+    && std::same_as<std::remove_cv_t<decltype(T::IsSequential)>, bool>
+    /// Opts the format into the leading/trailing spanning-tuple loop. Should be 'true' only for
+    /// formats whose delimiter can straddle a buffer boundary and reunite inside the synthetic
+    /// spanning buffer, so that a single spanning tuple may contain multiple complete records
+    /// (e.g. HL7's 4-byte '\nMSH' delimiter). Formats with 1-byte tuple delimiters or delimiters
+    /// that cannot reunite into additional record boundaries can set this to 'false' and the
+    /// framework will use the old fast path that emits exactly one record per spanning tuple.
+    && std::same_as<std::remove_cv_t<decltype(T::SpanningTupleMayContainMultipleRecords)>, bool>
+    && requires(const T& indexer) {
            {
                indexer.indexRawBuffer(
                    std::declval<typename T::FieldIndexFunctionType&>(),

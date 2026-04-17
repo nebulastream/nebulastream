@@ -128,6 +128,7 @@ class CSVInputFormatIndexer : public InputFormatIndexer<CSVInputFormatIndexer>
 public:
     static constexpr std::string_view NAME = "CSV";
     static constexpr bool IsSequential = false;
+    static constexpr bool SpanningTupleMayContainMultipleRecords = false;
 
     using IndexerMetaData = CSVMetaData;
     using FieldIndexFunctionType = FieldOffsets<CSV_NUM_OFFSETS_PER_FIELD>;

@@ -31,6 +31,7 @@ class SIMDJSONInputFormatIndexer final : public InputFormatIndexer<SIMDJSONInput
 public:
     static constexpr std::string_view NAME = "JSON";
     static constexpr bool IsSequential = false;
+    static constexpr bool SpanningTupleMayContainMultipleRecords = false;
 
     using IndexerMetaData = SIMDJSONMetaData;
     using FieldIndexFunctionType = SIMDJSONFIF;
