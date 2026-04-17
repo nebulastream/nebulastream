@@ -191,12 +191,13 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
             hostPolicy);
     }();
 
-    if (const auto created = sinkCatalog->addSinkDescriptor(
-            toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig))
+    auto result = sinkCatalog->addSinkDescriptor(
+        toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig);
+    if (result.has_value())
     {
-        return CreateSinkStatementResult{created.value()};
+        return CreateSinkStatementResult{result.value()};
     }
-    return std::unexpected{SinkAlreadyExists(statement.name)};
+    return std::unexpected{std::move(result.error())};
 }
 
 std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operator()(const ShowSinksStatement& statement) const
