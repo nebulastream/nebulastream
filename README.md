@@ -1,5 +1,7 @@
 # Smart Manufacturing / Process Intelligence
 
+![Screenshot of demo showing the three video streams and the generated kafka events.](demo/demo.png)
+
 This repository contains a demo setup for [NebulaStream](https://nebula.stream/) showing a use-case for Smart Manufacturing. 
 
 Three video sources are modeled that show engine wiring, pipe clipping, and underbody screws from the [AutoVI dataset](https://auto-vi.utc.fr/index.html).
