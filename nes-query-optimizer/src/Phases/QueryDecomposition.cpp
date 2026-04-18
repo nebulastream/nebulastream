@@ -98,7 +98,9 @@ Bridge connect(const DecompositionContext& context, const NetworkChannel& channe
         {
             chosenCodec = EncoderAutoChoice::chooseCodec(
                 maxBandwidth / static_cast<double>(8),
-                upstreamWorker.value().config.workerConfiguration.queryEngine.numberOfWorkerThreads.getValue());
+                upstreamWorker.value().config.workerConfiguration.queryEngine.numberOfWorkerThreads.getValue(),
+                upstreamWorker.value().config.workerConfiguration.defaultQueryExecution.operatorBufferSize.getValue());
+            std::cout << "Chose compression codec: " << chosenCodec << std::endl;
         }
         else
         {

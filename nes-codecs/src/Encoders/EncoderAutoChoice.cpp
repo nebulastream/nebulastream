@@ -30,14 +30,29 @@ getLogicalThroughput(const double compressionRate, const uint64_t& numberOfThrea
     return std::min(compressionRateWithThreadsEst, bandwidth / compressionRatio);
 }
 
-std::string chooseCodec(const double& bandwidth, const uint64_t& numberOfWorkerThreads)
+uint64_t getClosestBufferSizeWithEstimate(const uint64_t& bufferSize)
 {
-    /// Todo: Intergrate buffer size
+    if (bufferSize <= 24576)
+    {
+        return 16384;
+    }
+    if (bufferSize <= 49152)
+    {
+        return 32768;
+    }
+    return 65536;
+}
+
+std::string chooseCodec(const double& bandwidth, const uint64_t& numberOfWorkerThreads, const uint64_t& bufferSize)
+{
     const double physicalThroughput = bandwidth;
-    const double snappyLogicalThroughput
-        = getLogicalThroughput(SNAPPY_RATE_ESTIMATE, numberOfWorkerThreads, bandwidth, SNAPPY_RATIO_ESTIMATE);
-    const double lz4LogicalThroughput = getLogicalThroughput(LZ4_RATE_ESTIMATE, numberOfWorkerThreads, bandwidth, LZ4_RATIO_ESTIMATE);
-    const double zstdLogicalThroughput = getLogicalThroughput(ZSTD_RATE_ESTIMATE, numberOfWorkerThreads, bandwidth, ZSTD_RATIO_ESTIMATE);
+    const uint64_t supportedBufferSize = getClosestBufferSizeWithEstimate(bufferSize);
+    const double snappyLogicalThroughput = getLogicalThroughput(
+        SNAPPY_RATE_ESTIMATE.at(supportedBufferSize), numberOfWorkerThreads, bandwidth, SNAPPY_RATIO_ESTIMATE.at(supportedBufferSize));
+    const double lz4LogicalThroughput = getLogicalThroughput(
+        LZ4_RATE_ESTIMATE.at(supportedBufferSize), numberOfWorkerThreads, bandwidth, LZ4_RATIO_ESTIMATE.at(supportedBufferSize));
+    const double zstdLogicalThroughput = getLogicalThroughput(
+        ZSTD_RATE_ESTIMATE.at(supportedBufferSize), numberOfWorkerThreads, bandwidth, ZSTD_RATIO_ESTIMATE.at(supportedBufferSize));
     const std::vector<double> throughputs{physicalThroughput, snappyLogicalThroughput, lz4LogicalThroughput, zstdLogicalThroughput};
 
     const double maxThroughput = *std::ranges::max_element(throughputs);
