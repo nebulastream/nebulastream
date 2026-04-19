@@ -89,6 +89,59 @@ VariableSizedData SIMDJSONFIF::parseStringIntoNautilusRecord(
     return varSizedString;
 }
 
+std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>> SIMDJSONFIF::extractRawFieldBytes(
+    const nautilus::val<FieldIndex>& fieldIdx,
+    const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
+    const nautilus::val<const SIMDJSONMetaData*>& metaData)
+{
+    const nautilus::val<VarSizedResult*> varSizedResult = nautilus::invoke(
+        +[](FieldIndex fieldIndex, SIMDJSONFIF* fieldIndexFunction, const SIMDJSONMetaData* metaData)
+        {
+            thread_local auto result = VarSizedResult{};
+            INVARIANT(
+                fieldIndex < metaData->getNumberOfFields(),
+                "fieldIndex {} is out or bounds for schema keys of size: {}",
+                fieldIndex,
+                metaData->getNumberOfFields());
+            auto currentDoc = *fieldIndexFunction->docStreamIterator;
+            const auto& fieldName = metaData->getFieldNameInJsonAt(fieldIndex);
+
+            auto simdJsonResult = accessSIMDJsonFieldOrThrow(currentDoc, fieldName);
+            /// raw_json() consumes the value and returns its exact raw text from the input buffer.
+            /// raw_json_token() does not consume the value, so its reported length can extend past the value
+            /// (it extends up to the start of the next token, which may include trailing whitespace).
+            auto rawJsonResult = simdJsonResult.raw_json();
+            if (not rawJsonResult.has_value())
+            {
+                throw FormattingError(
+                    "SimdJson could not extract raw json for field '{}' with error: {}",
+                    fieldName,
+                    magic_enum::enum_name(rawJsonResult.error()));
+            }
+            std::string_view rawToken = rawJsonResult.value();
+            /// raw_json() may include surrounding whitespace; trim both ends.
+            while (not rawToken.empty()
+                   && (rawToken.front() == ' ' || rawToken.front() == '\t' || rawToken.front() == '\n' || rawToken.front() == '\r'))
+            {
+                rawToken.remove_prefix(1);
+            }
+            while (not rawToken.empty()
+                   && (rawToken.back() == ' ' || rawToken.back() == '\t' || rawToken.back() == '\n' || rawToken.back() == '\r'))
+            {
+                rawToken.remove_suffix(1);
+            }
+            result = VarSizedResult{.varSizedPointer = rawToken.data(), .size = rawToken.size()};
+            return &result;
+        },
+        fieldIdx,
+        fieldIndexFunction,
+        metaData);
+
+    auto fieldAddress = *getMemberWithOffset<int8_t*>(varSizedResult, offsetof(VarSizedResult, varSizedPointer));
+    auto fieldSize = *getMemberWithOffset<uint64_t>(varSizedResult, offsetof(VarSizedResult, size));
+    return {fieldAddress, fieldSize};
+}
+
 void SIMDJSONFIF::writeValueToRecord(
     const DataType::Type physicalType,
     Record& record,
@@ -97,64 +150,27 @@ void SIMDJSONFIF::writeValueToRecord(
     const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
     const nautilus::val<const SIMDJSONMetaData*>& metaData) const
 {
-    switch (physicalType)
+    /// VARSIZED is eager zero-copy (mirrors parseLazyValueIntoRecord in RawValueParser).
+    if (physicalType == DataType::Type::VARSIZED)
     {
-        case DataType::Type::INT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int8_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::INT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int16_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::INT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int32_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::INT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<int64_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::UINT8: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint8_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::UINT16: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint16_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::UINT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint32_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::UINT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<uint64_t>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::FLOAT32: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<float>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::FLOAT64: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<double>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::CHAR: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<char>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::BOOLEAN: {
-            record.write(fieldName, parseNonStringValueIntoNautilusRecord<bool>(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::VARSIZED: {
-            record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData));
-            return;
-        }
-        case DataType::Type::UNDEFINED:
-            throw NotImplemented("Cannot parse undefined type.");
+        record.write(fieldName, parseStringIntoNautilusRecord(fieldIdx, fieldIndexFunction, metaData));
+        return;
     }
-    std::unreachable();
+    if (physicalType == DataType::Type::UNDEFINED)
+    {
+        throw NotImplemented("Cannot parse undefined type.");
+    }
+
+    /// For all scalar types: eagerly pull the raw JSON token bytes out of the current simdjson document
+    /// (safe because the iterator still points at this record and the underlying JSON buffer is pinned),
+    /// then defer the from_chars conversion via parseLazyValueIntoRecord. Fields that are never read by
+    /// downstream operators skip the conversion entirely.
+    /// raw_json_token returns the JSON token verbatim: `"foo"` for strings (incl. CHAR), bare `123`/`true`
+    /// for numbers/bools. That maps directly onto parseLazyValueIntoRecord's QuotationType contract.
+    const auto [fieldAddress, fieldSize] = extractRawFieldBytes(fieldIdx, fieldIndexFunction, metaData);
+    const QuotationType quotationType
+        = (physicalType == DataType::Type::CHAR) ? QuotationType::DOUBLE_QUOTE : QuotationType::NONE;
+    parseLazyValueIntoRecord(physicalType, record, fieldAddress, fieldSize, fieldName, quotationType);
 }
 
 /// Resets the indexes and pointers, calculates and sets the number of tuples in the current buffer, returns the total number of tuples.

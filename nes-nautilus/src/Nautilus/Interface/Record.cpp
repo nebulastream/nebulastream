@@ -157,7 +157,7 @@ nautilus::val<uint64_t> Record::getNumberOfFields() const
 
 bool Record::hasField(const RecordFieldIdentifier& fieldName) const
 {
-    return recordFields.contains(fieldName);
+    return recordFields.contains(fieldName) || lazyFields.contains(fieldName);
 }
 
 nautilus::val<bool> operator==(const Record& lhs, const Record& rhs)
