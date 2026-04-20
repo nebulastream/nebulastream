@@ -54,6 +54,7 @@ let
         ./patches/0001-disable-ubsan-function-call-check.patch
         ./patches/0002-increase-typed-value-ref-u16-to-u32.patch
         ./patches/0003-disable-cond-branch-weights.patch
+        ./patches/0004-restore-val-ptr-member-access.patch
       ];
 
       nativeBuildInputs = [
