@@ -91,11 +91,15 @@ public:
 
     inline LogLevel getCurrentLogLevel() const noexcept { return currentLogLevel; }
 
+    /// Returns true if the logger was configured to log to the console (stdout).
+    inline bool isConsoleLoggingEnabled() const noexcept { return consoleLoggingEnabled; }
+
     void changeLogLevel(LogLevel newLevel);
 
 private:
     std::shared_ptr<spdlog::logger> impl{nullptr};
     LogLevel currentLogLevel = LogLevel::LOG_INFO;
+    bool consoleLoggingEnabled = true;
     std::atomic<bool> isShutdown{false};
     std::unique_ptr<spdlog::details::periodic_worker> flusher{nullptr};
 };

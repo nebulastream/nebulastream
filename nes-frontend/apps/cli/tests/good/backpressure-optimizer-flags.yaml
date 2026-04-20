@@ -43,7 +43,6 @@ sinks:
     config:
       ingestion: 5000
       output_format: CSV
-    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE

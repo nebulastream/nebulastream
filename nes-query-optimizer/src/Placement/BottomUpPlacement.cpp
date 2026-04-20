@@ -36,6 +36,7 @@
 #include <Traits/PlacementTrait.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Overloaded.hpp>
+#include <Util/PlanRenderer.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
 #include <highs/interfaces/highs_c_api.h>
@@ -132,7 +133,8 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
     {
         if (auto placement = sourceOperator->getSourceDescriptor().getHost(); !topology.contains(placement))
         {
-            errors.emplace_back(fmt::format("Source '{}' was placed on non-existing worker '{}'", sourceOperator.getId(), placement));
+            errors.emplace_back(
+                fmt::format("{} was placed on non-existing worker '{}'", sourceOperator.explain(ExplainVerbosity::Short), placement));
         }
     }
 
@@ -144,7 +146,8 @@ void validatePlan(const NetworkTopology& topology, const LogicalPlan& plan)
         {
             if (auto placement = sinkDescriptorOpt->getHost(); !topology.contains(placement))
             {
-                errors.emplace_back(fmt::format("Sink '{}' was placed on non-existing worker '{}'", sinkOperator.getId(), placement));
+                errors.emplace_back(
+                    fmt::format("{} was placed on non-existing worker '{}'", sinkOperator.explain(ExplainVerbosity::Short), placement));
             }
         }
     }

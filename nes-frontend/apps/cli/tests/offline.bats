@@ -233,6 +233,12 @@ JSONEOF
   [ "$status" -eq 0 ]
 }
 
+@test "errors are printed to stderr when console logging is disabled" {
+  run $NES_CLI -t nonexistent.yaml dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"does not exist"* ]]
+}
+
 @test "topology validation: reject topology with cycle" {
   run $NES_CLI -d -t tests/good/topology-with-cycle.yaml dump
   [ "$status" -eq 1 ]
@@ -304,14 +310,182 @@ TOPEOF
 @test "yaml parser should reject unknown keys" {
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys1.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: query, sinks, logical, physical, optimizer, workers" nes-cli.log
+  grep "Unknown key 'idontexist'" nes-cli.log
+  grep "Expected one of: query, sinks, logical, physical, optimizer, workers" nes-cli.log
 
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys2.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: name, schema" nes-cli.log
+  grep "Unknown key 'idontexist'" nes-cli.log
+  grep "Expected one of: name, schema" nes-cli.log
 
   run $NES_CLI -d -t tests/bad/invalid_config_with_unknown_keys3.yaml dump
   [ "$status" -eq 1 ]
-  grep "invalid config parameter; Unknown key 'idontexist'. Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
+  grep "Unknown key 'idontexist'" nes-cli.log
+  grep "Expected one of: host, data_address, max_operators, downstream, config" nes-cli.log
+}
+
+# --- Error message quality tests ---
+# Each test starts from a valid base topology and introduces exactly one error.
+# The base topology is tests/good/select-gen-into-void.yaml.
+
+# Helper: apply a sed expression to the base topology and return the path to the modified file.
+bad_topology() {
+  local out="$TMP_DIR/bad_topology.yaml"
+  sed "$@" tests/good/select-gen-into-void.yaml > "$out"
+  echo "$out"
+}
+
+@test "error: unknown worker key reports key name and suggestions" {
+  # Rename 'data_address' to 'bogus_key' in the workers section
+  local f=$(bad_topology 's/data_address:/bogus_key:/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown key 'bogus_key'"* ]]
+  [[ "$output" == *"workers[0]"* ]]
+  [[ "$output" == *"Expected one of:"* ]]
+}
+
+@test "error: missing sink host reports path" {
+  # Delete the 'host:' line inside the sinks section (between 'sinks:' and the next top-level key)
+  sed '/^sinks:/,/^[a-z]/{/^    host:/d;}' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Missing required key 'host'"* ]]
+  [[ "$output" == *"sinks[0]"* ]]
+}
+
+@test "error: unknown physical source key reports key and suggestions" {
+  # Add an extra 'input_format: CSV' line after 'type: Generator' in the physical section
+  local f=$(bad_topology '/^physical:/,/^[a-z]/s/^    type: Generator/    type: Generator\n    input_format: CSV/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Unknown key 'input_format'"* ]]
+  [[ "$output" == *"physical[0]"* ]]
+  [[ "$output" == *"Expected one of:"* ]]
+}
+
+@test "error: missing parser_config reports path" {
+  # In the physical section, delete 'parser_config:' and its indented children
+  sed '/^physical:/,/^[a-z]/{/^    parser_config:/,/^    [a-z]/{/^    parser_config:/d;/^      /d;};}' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Missing required key 'parser_config'"* ]]
+  [[ "$output" == *"physical[0]"* ]]
+}
+
+@test "error: missing workers key reports path" {
+  # Delete everything from 'workers:' to end of file
+  sed '/^workers:/,$d' tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Missing required key 'workers'"* ]]
+}
+
+@test "error: null workers section reports type error" {
+  # Keep 'workers:' but delete all lines after it, leaving the value as null
+  sed '/^workers:/,$ { /^workers:/!d; }' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Expected a list at workers"* ]]
+}
+
+@test "error: wrong parser_config key reports missing type" {
+  # Rename 'type: CSV' to 'input_format: CSV' in parser_config
+  local f=$(bad_topology 's/type: CSV/input_format: CSV/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Parser configuration must contain: type"* ]]
+}
+
+@test "error: unregistered source type reports type name" {
+  # Change source type from 'Generator' to a non-existent type
+  local f=$(bad_topology 's/type: Generator/type: NonExistentSource/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"source type 'NonExistentSource' is not registered"* ]]
+}
+
+@test "error: unregistered sink type reports type name" {
+  # Change sink type from 'Void' to a non-existent type
+  local f=$(bad_topology 's/type: Void/type: NonExistentSink/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Invalid configuration for sink"* ]]
+  [[ "$output" == *"NonExistentSink"* ]]
+}
+
+@test "error: source on non-existing worker reports source name and host" {
+  # Change 'host:' only within the physical section to a non-existing worker
+  sed '/^physical:/,/^[a-z]/s/host: worker-1:8080/host: no-such-worker:8080/' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"SOURCE(GENERATOR_SOURCE)"* ]]
+  [[ "$output" == *"non-existing worker"* ]]
+  [[ "$output" == *"no-such-worker:8080"* ]]
+}
+
+@test "error: sink on non-existing worker reports sink name and host" {
+  # Change 'host:' only within the sinks section to a non-existing worker
+  sed '/^sinks:/,/^[a-z]/s/host: worker-1:8080/host: no-such-worker:8080/' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"SINK(VOID_SINK)"* ]]
+  [[ "$output" == *"non-existing worker"* ]]
+  [[ "$output" == *"no-such-worker:8080"* ]]
+}
+
+@test "error: unknown source name reports the name" {
+  # Change 'logical: GENERATOR_SOURCE' to a name that doesn't match any logical source
+  local f=$(bad_topology 's/logical: GENERATOR_SOURCE/logical: nonexistent_source/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"unknown source name"* ]]
+}
+
+@test "error: unknown sink name in query" {
+  # Change the sink name in the query (line 30) but keep the sink definition intact
+  sed '30s/VOID_SINK/NONEXISTENT_SINK/' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"unknown sink name"* ]]
+}
+
+@test "error: sink schema mismatch reports expected vs actual fields" {
+  # Rename the sink schema field to something that won't match the source output
+  local f=$(bad_topology 's/GENERATOR_SOURCE\$DOUBLE/WRONG\$FIELD/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"cannot infer schema"* ]]
+}
+
+@test "error: empty workers list causes placement failure" {
+  # Replace the workers section content with an empty list '[]'
+  sed '/^workers:/,$ { /^workers:/!d; }; s/^workers:.*/workers: []/' \
+    tests/good/select-gen-into-void.yaml > "$TMP_DIR/bad_topology.yaml"
+  run $NES_CLI -d -t "$TMP_DIR/bad_topology.yaml" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"non-existing worker"* ]]
+}
+
+@test "error: type mismatch in worker config reports path" {
+  # Change max_operators from a number to a string to trigger a type conversion error
+  local f=$(bad_topology 's/max_operators: 10000/max_operators: not_a_number/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"Invalid value"*"max_operators"* ]]
+}
+
+@test "error: all-digit sink name reports specific error" {
+  # Rename the sink to an all-digit name which is reserved
+  local f=$(bad_topology 's/name: VOID_SINK/name: 12345/')
+  run $NES_CLI -d -t "$f" dump
+  [ "$status" -eq 1 ]
+  [[ "$output" == *"only-digit names are reserved"* ]]
 }
 
