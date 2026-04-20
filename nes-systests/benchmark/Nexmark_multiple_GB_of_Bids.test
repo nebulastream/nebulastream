@@ -82,3 +82,9 @@ INNER JOIN
 ON auctionId = id WINDOW TUMBLING (timestamp, size 10 sec) INTO q8VariantCheckSum;
 ----
 182197843 1176742157900
+
+SELECT CONCAT(city, state) FROM person INTO
+----
+0 0
+
+SELECT auctionId FROM bid WHERE price + FLOAT64(1.0) == FLOAT64(221.0)

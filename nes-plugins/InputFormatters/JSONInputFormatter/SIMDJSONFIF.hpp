@@ -211,6 +211,16 @@ class SIMDJSONFIF final : public FieldIndexFunction<SIMDJSONFIF>
         const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
         const nautilus::val<SIMDJSONMetaData*>& metaData);
 
+    /// Eagerly extracts the raw JSON token bytes (pointer+size into the pinned padded JSON buffer) for a field.
+    /// Strings/chars come back with surrounding quotes; numbers/bools come back as the bare token.
+    /// Needed because simdjson's on-demand iterator advances at end of each applyReadSpanningRecord call,
+    /// so scalar parsing must be deferred via stable pointers into the input buffer, not via re-reading
+    /// the iterator. Mirrors the role of FieldOffsets' (fieldAddress, fieldSize) pair for CSV.
+    static std::pair<nautilus::val<int8_t*>, nautilus::val<uint64_t>> extractRawFieldBytes(
+        const nautilus::val<FieldIndex>& fieldIdx,
+        const nautilus::val<SIMDJSONFIF*>& fieldIndexFunction,
+        const nautilus::val<const SIMDJSONMetaData*>& metaData);
+
     void writeValueToRecord(
         DataType::Type physicalType,
         Record& record,
