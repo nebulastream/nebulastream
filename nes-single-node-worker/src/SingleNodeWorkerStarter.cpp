@@ -61,7 +61,7 @@ int main(const int argc, const char* argv[])
     CPPTRACE_TRY
     {
         NES::setupSignalHandlers();
-        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_NONE);
         if (std::signal(SIGINT, signalHandler) == SIG_ERR)
         {
             NES_ERROR("Failed to set SIGINT signal handler")
