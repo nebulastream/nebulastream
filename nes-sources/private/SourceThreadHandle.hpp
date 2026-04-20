@@ -20,6 +20,8 @@
 #include <Sources/SourceHandle.hpp>
 #include <BackpressureChannel.hpp>
 
+#include "QueryId.hpp"
+
 namespace NES
 {
 
@@ -38,7 +40,7 @@ public:
 
     ~SourceThreadHandle() override;
 
-    bool start(SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override;
+    bool start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override;
     void stop() override;
     [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) override;
     [[nodiscard]] OriginId getSourceId() const override;

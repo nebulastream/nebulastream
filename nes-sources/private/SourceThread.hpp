@@ -30,6 +30,7 @@
 #include <Util/Logger/Formatter.hpp>
 #include <magic_enum/magic_enum.hpp>
 #include <BackpressureChannel.hpp>
+#include <QueryId.hpp>
 #include <Thread.hpp>
 
 namespace NES
@@ -74,7 +75,7 @@ public:
     void close();
 
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
-    [[nodiscard]] bool start(SourceReturnType::EmitFunction&& emitFunction);
+    [[nodiscard]] bool start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction);
 
     /// Blocks the current thread until the source is terminated
     void stop();

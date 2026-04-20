@@ -23,6 +23,7 @@ pub fn init_io_runtime(
             .worker_threads(thread_count as usize)
             .thread_name("nes-io-rt")
             .on_thread_start(on_thread_start)
+            .max_blocking_threads(1)
             .enable_all()
             .build()
             .map(|runtime| Arc::new(IORuntime { runtime }))

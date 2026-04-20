@@ -17,6 +17,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <coro/coro.hpp>
 #include <ErrorHandling.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <QueryId.hpp>
@@ -27,12 +28,21 @@ namespace NES
 struct RunningQueryPlanNode;
 class RunningSource;
 
+enum class AsyncFunctionCallResult : uint8_t
+{
+    Completed,
+    CallbackRegistered,
+};
+using AsyncCompletionToken = absl::AnyInvocable<bool()>;
+
 class QueryLifetimeController
 {
 public:
     virtual ~QueryLifetimeController() = default;
     virtual void initializeSourceFailure(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
     virtual void initializeSourceStop(QueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
+    virtual coro::task<void> initializeSourceFailureAsync(QueryId, OriginId, std::weak_ptr<RunningSource>, Exception exception) = 0;
+    virtual coro::task<void> initializeSourceStopAsync(QueryId, OriginId, std::weak_ptr<RunningSource>) = 0;
 };
 
 class WorkEmitter
@@ -51,7 +61,7 @@ public:
         PipelineExecutionContext::ContinuationPolicy continuationPolicy)
         = 0;
 
-    virtual bool emitWorkAsync(QueryId, const std::shared_ptr<RunningQueryPlanNode>& target, TupleBuffer, TaskCallback, absl::AnyInvocable<bool()> completion) = 0;
+    virtual coro::task<void> emitWorkAsync(QueryId, std::shared_ptr<RunningQueryPlanNode> target, TupleBuffer, TaskCallback) = 0;
     virtual void emitPipelineStart(QueryId, const std::shared_ptr<RunningQueryPlanNode>&, TaskCallback) = 0;
     virtual void emitPendingPipelineStop(QueryId, std::shared_ptr<RunningQueryPlanNode>, TaskCallback) = 0;
     virtual void emitPipelineStop(QueryId, std::unique_ptr<RunningQueryPlanNode>, TaskCallback) = 0;

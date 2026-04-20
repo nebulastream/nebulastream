@@ -23,6 +23,8 @@
 #include <fmt/format.h>
 #include <fmt/ostream.h>
 
+#include "QueryId.hpp"
+
 namespace NES
 {
 
@@ -38,7 +40,7 @@ class SourceHandle
 public:
     virtual ~SourceHandle() = default;
 
-    virtual bool start(SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) = 0;
+    virtual bool start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) = 0;
     virtual void stop() = 0;
     [[nodiscard]] virtual SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) = 0;
     [[nodiscard]] virtual OriginId getSourceId() const = 0;

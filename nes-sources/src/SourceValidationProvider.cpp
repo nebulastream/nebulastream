@@ -19,9 +19,11 @@
 #include <string_view>
 #include <unordered_map>
 #include <utility>
+
 #include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>
+#include "nes-source-validation-bindings/lib.h"
 
 namespace NES::SourceValidationProvider
 {
@@ -29,8 +31,16 @@ namespace NES::SourceValidationProvider
 std::optional<DescriptorConfig::Config>
 provide(const std::string_view sourceType, std::unordered_map<UppercaseString, std::string> stringConfig)
 {
+    auto type = UppercaseString(std::string(sourceType));
     auto sourceValidationRegistryArguments = SourceValidationRegistryArguments(
-        std::unordered_map<UppercaseString, std::string>(std::make_move_iterator(stringConfig.begin()), std::make_move_iterator(stringConfig.end())));
+        UppercaseString(std::string(sourceType)),
+        std::unordered_map<UppercaseString, std::string>(
+            std::make_move_iterator(stringConfig.begin()), std::make_move_iterator(stringConfig.end())));
+    if (source_exists(type.c_str()))
+    {
+        return RegisterTokioSourceValidation(std::move(sourceValidationRegistryArguments));
+    }
+
     return SourceValidationRegistry::instance().create(std::string{sourceType}, std::move(sourceValidationRegistryArguments));
 }
 

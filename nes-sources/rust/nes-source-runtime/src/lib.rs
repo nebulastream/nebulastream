@@ -8,6 +8,7 @@ use std::pin::Pin;
 use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::{Receiver, Sender};
+use tracing::{Instrument, info};
 
 type BoxFuture<T> = Pin<Box<dyn Future<Output = T> + Send>>;
 pub type Result<T> = core::result::Result<T, String>;
@@ -16,11 +17,13 @@ pub type EmitFunction = Box<dyn Fn(SourceResult) -> BoxFuture<Result<()>> + Send
 
 #[async_trait]
 pub trait AsyncEmitter {
-    async fn emit(&mut self, result: SourceResult) -> Result<()>;
+    async fn eos(&mut self);
+    async fn error(&mut self, error_message: String);
+    async fn data(&mut self, result: TupleBuffer, size: usize) -> Result<()>;
 }
+
 pub enum SourceResult {
-    Data(TupleBuffer),
-    Error(String),
+    Data(TupleBuffer, usize),
     EoS,
 }
 
@@ -43,7 +46,7 @@ pub static SOURCE_CREATION_FUNCTIONS: [(&'static str, &'static SourceCreateFn)];
 
 async fn run_source(
     mut source: Box<dyn AsyncSource + Send>,
-    mut commands: Receiver<SourceCommand>,
+    commands: &mut Receiver<SourceCommand>,
     emit: &mut impl AsyncEmitter,
     mut buffer_provider: BufferProvider,
 ) -> Result<()> {
@@ -51,7 +54,16 @@ async fn run_source(
     'run: loop {
         select! {
             result = source.receive(&mut buffer_provider) => {
-                emit.emit(result?).await.expect("Bridge thread should remain alive");
+                match result? {
+                    SourceResult::Data(buffer, size) => {
+                        emit.data(buffer, size).await.expect("Bridge thread should remain alive");
+                    },
+                    SourceResult::EoS => {
+                        info!("EoS received, stopping source");
+                        emit.eos().await;
+                        break 'run;
+                    }
+                }
             }
             command = commands.recv() => {
                 let Some(command) = command else {
@@ -75,23 +87,29 @@ fn construct_source(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSource +
     unreachable!("the name and config should have been validated")
 }
 
-pub fn start_source(
+pub fn start_source<T: AsyncEmitter + Send + 'static>(
     name: &str,
     config: &ConfigOptions,
     runtime: Arc<IORuntime>,
-    mut emit: impl AsyncEmitter + Send + 'static,
+    mut emit: T,
     buffer_provider: BufferProvider,
-) -> Result<Controller> {
-    let (controller, rx) = tokio::sync::mpsc::channel(16);
+) -> Result<(Controller, tokio::sync::oneshot::Receiver<T>)> {
+    let (controller, mut rx) = tokio::sync::mpsc::channel(16);
+    let (stop_sender, stop_signal) = tokio::sync::oneshot::channel();
     let source = construct_source(name, config);
-    runtime.runtime.spawn(async move {
-        match run_source(source, rx, &mut emit, buffer_provider).await {
-            Ok(()) => {}
-            Err(error_message) => {
-                let _ = emit.emit(SourceResult::Error(error_message)).await;
+    runtime.runtime.spawn(
+        async move {
+            match run_source(source, &mut rx, &mut emit, buffer_provider).await {
+                Ok(()) => {}
+                Err(error_message) => {
+                    let _ = emit.error(error_message).await;
+                }
             }
+            let _ = stop_sender.send(emit);
+            rx.close();
         }
-    });
+        .in_current_span(),
+    );
 
-    Ok(controller)
+    Ok((controller, stop_signal))
 }

@@ -43,6 +43,8 @@
 #include <ErrorHandling.hpp>
 #include <MemoryTestUtils.hpp>
 
+#include "QueryId.hpp"
+
 namespace
 {
 constexpr std::chrono::milliseconds DEFAULT_AWAIT_TIME = std::chrono::milliseconds(10000);
@@ -262,7 +264,8 @@ public:
         }
     }
 
-    bool start(SourceReturnType::EmitFunction&&, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override
+    bool start(
+        NES::QueryId queryId, NES::SourceReturnType::EmitFunction&&, NES::SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override
     {
         asyncEmit = std::move(asyncEmitFunction);
         control->open.set_value();

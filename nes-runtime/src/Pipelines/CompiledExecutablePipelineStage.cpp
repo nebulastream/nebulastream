@@ -33,6 +33,8 @@
 #include <function.hpp>
 #include <options.hpp>
 
+#include "ittnotify.h"
+
 namespace NES
 {
 
@@ -54,6 +56,9 @@ void CompiledExecutablePipelineStage::execute(const TupleBuffer& inputTupleBuffe
     Arena arena(pipelineExecutionContext.getBufferManager());
     compiledPipelineFunction(std::addressof(pipelineExecutionContext), std::addressof(inputTupleBuffer), std::addressof(arena));
 }
+
+__itt_domain* compilationDomain = __itt_domain_create("engine.compilation");
+__itt_string_handle* compiling = __itt_string_handle_create("Compiling");
 
 nautilus::engine::CallableFunction<void, PipelineExecutionContext*, const TupleBuffer*, const Arena*>
 CompiledExecutablePipelineStage::compilePipeline() const
@@ -89,8 +94,12 @@ CompiledExecutablePipelineStage::compilePipeline() const
                 }
             }
         };
+
         /// NOLINTEND(performance-unnecessary-value-param)
-        return engine.registerFunction(compiledFunction);
+        __itt_task_begin(compilationDomain, __itt_null, __itt_null, compiling);
+        auto pipeline = engine.registerFunction(compiledFunction);
+        __itt_task_end(compilationDomain);
+        return pipeline;
     }
     CPPTRACE_CATCH(...)
     {

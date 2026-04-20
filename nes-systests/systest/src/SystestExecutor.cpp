@@ -293,6 +293,19 @@ SystestExecutorResult SystestExecutor::executeSystests()
                 .errorCode = ErrorCode::TestException};
         }
 
+        if (config.skipQueriesWithCustomConfig.getValue())
+        {
+            const auto before = queries.size();
+            std::erase_if(
+                queries,
+                [](const Systest::SystestQuery& query) { return !query.configurationOverride.overrideParameters.empty(); });
+            const auto skipped = before - queries.size();
+            if (skipped > 0)
+            {
+                std::cout << fmt::format("Skipped {} queries with custom configuration overrides.\n", skipped);
+            }
+        }
+
         if (!config.remoteWorker.getValue())
         {
             /// Enable in-memory communication between workers

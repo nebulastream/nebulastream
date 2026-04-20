@@ -1,21 +1,30 @@
 // nes_sink_runtime_bindings: CXX bridge for sink lifecycle management.
 
-use crate::ffi::{on_error, on_flush, WriteResult};
+use crate::ffi::{WriteResult, on_error, on_flush};
 use cxx::SharedPtr;
 pub use nes_buffer_bindings::*;
 use nes_buffer_runtime::TupleBuffer;
 use nes_io_runtime::get_runtime;
 use nes_sink_runtime::{SinkCommand, SinkContext};
-use nes_sink_validation::{validate, ConfigOptions};
+use nes_sink_validation::{ConfigOptions, validate};
 use std::sync::atomic::AtomicUsize;
 use std::sync::atomic::Ordering::SeqCst;
 use tokio::sync::mpsc::error::TrySendError;
+use tracing::{Level, span};
 
 #[cxx::bridge]
 pub mod ffi {
     enum WriteResult {
         Ok,
         Full,
+    }
+
+    struct QueryContext {
+        query_id: String,
+        distributed_query_id: String,
+        sink_id: usize,
+        sink_type: String,
+        sink_config: String,
     }
 
     unsafe extern "C++" {
@@ -30,8 +39,7 @@ pub mod ffi {
     extern "Rust" {
         type SinkHandle;
         fn create_handle(
-            name: String,
-            config_json: String,
+            query_context: QueryContext,
             runtime_idx: usize,
             context: SharedPtr<SinkContext>,
         ) -> Result<Box<SinkHandle>>;
@@ -48,27 +56,30 @@ struct SinkHandle {
     channel: nes_sink_runtime::Controller,
 }
 fn create_handle(
-    name: String,
-    config_json: String,
+    query_context: ffi::QueryContext,
     runtime_idx: usize,
     context: SharedPtr<ffi::SinkContext>,
 ) -> Result<Box<SinkHandle>, String> {
     let runtime = get_runtime(runtime_idx).expect("non existing runtime");
-    let config = serde_json::from_str::<ConfigOptions>(&config_json)
+    let config = serde_json::from_str::<ConfigOptions>(&query_context.sink_config)
         .expect("FFI serialization error. Could not convert config options to rust representation");
 
-    validate(&name, &config).map_err(|e| e.to_string())?;
+    validate(&query_context.sink_type, &config).map_err(|e| e.to_string())?;
     let c1 = context.clone();
     let c2 = context.clone();
-    let controller = nes_sink_runtime::start_sink(
-        &name,
-        &config,
-        runtime,
-        SinkContext {
-            on_error: Box::new(move |error| unsafe { on_error(c1.as_ref().unwrap(), error) }),
-            on_flush: Box::new(move |epoch| unsafe { on_flush(c2.as_ref().unwrap(), epoch) }),
-        },
-    )?;
+    let controller = {
+        let span = span!(Level::INFO, "Source",  distributed_query_id = %query_context.distributed_query_id, query_id = %query_context.query_id, sink_type = %query_context.sink_type, sink_id = %query_context.sink_id);
+        let entered_ = span.enter();
+        nes_sink_runtime::start_sink(
+            &query_context.sink_type,
+            &config,
+            runtime,
+            SinkContext {
+                on_error: Box::new(move |error| unsafe { on_error(c1.as_ref().unwrap(), error) }),
+                on_flush: Box::new(move |epoch| unsafe { on_flush(c2.as_ref().unwrap(), epoch) }),
+            },
+        )?
+    };
     Ok(Box::new(SinkHandle {
         channel: controller,
     }))

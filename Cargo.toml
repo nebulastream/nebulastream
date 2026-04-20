@@ -22,7 +22,10 @@ members = [
     "nes-sources/rust/nes-source-validation",
     "nes-sources/rust/nes-source-runtime-bindings",
     "nes-sources/rust/nes-source-runtime",
-    "nes-plugins/Sinks/FileSink"
+    "nes-plugins/Sinks/PrintSink",
+    "nes-plugins/Sinks/FileSink",
+    "nes-plugins/Sources/FileSource",
+    "nes-plugins/Sources/GeneratorSource"
 ]
 
 # Shared dependency declarations. Member crates use `dep.workspace = true`.
@@ -46,8 +49,9 @@ nes_source_runtime_bindings = { path = "nes-sources/rust/nes-source-runtime-bind
 nes_source_runtime = { path = "nes-sources/rust/nes-source-runtime" }
 
 serde_json = "1.0.149"
-tokio = "1.51.1"
+tokio = "1.52.0"
 async-trait = "0.1.89"
 cxx = "1.0.194"
 linkme = "0.3.35"
 tracing = "0.1.44"
+io-uring = "0.7.11"

@@ -99,6 +99,10 @@ SELECT * FROM generator10K INTO checksum_10K;
 ----
 10000 4032240
 
+SELECT * FROM generator10K INTO Print(1000 as `SINK`.INGESTION);
+----
+10000 4032240
+
 SELECT * FROM generator10KSinus INTO checksum_10K_Sinus;
 ----
 10000 4032240

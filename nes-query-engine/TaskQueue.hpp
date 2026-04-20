@@ -15,6 +15,7 @@
 #pragma once
 
 #include <chrono>
+#include <coroutine>
 #include <cstddef>
 #include <optional>
 #include <semaphore>
@@ -22,14 +23,32 @@
 #include <utility>
 
 #include <absl/functional/any_invocable.h>
+#include <coro/concepts/awaitable.hpp>
+#include <coro/task.hpp>
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
+
+#include "ittnotify.h"
 
 namespace NES
 {
 static __itt_domain* taskQueueDomain = __itt_domain_create("engine.taskqueue");
 static __itt_string_handle* blockingRead = __itt_string_handle_create("Blocking Read");
 static __itt_string_handle* blockingWrite = __itt_string_handle_create("Blocking Write");
+static __itt_counter queue_depth = __itt_counter_create("Depth", "engine.taskqueue");
+static std::atomic<size_t> queue_depth_value{0};
+#define decrease_count() \
+    do \
+    { \
+        auto depth = queue_depth_value.fetch_sub(1, std::memory_order_relaxed) - 1; \
+        __itt_counter_set_value(queue_depth, &depth); \
+    } while (false)
+#define increase_count() \
+    do \
+    { \
+        auto depth = queue_depth_value.fetch_add(1, std::memory_order_relaxed) + 1; \
+        __itt_counter_set_value(queue_depth, &depth); \
+    } while (false)
 
 using WakerCallback = absl::AnyInvocable<bool()>;
 
@@ -43,17 +62,18 @@ class TaskQueue
 {
     folly::UMPMCQueue<TaskType, true> internal;
     folly::MPMCQueue<TaskType> admission;
-    folly::MPMCQueue<WakerCallback> waker;
+    folly::UMPMCQueue<WakerCallback, false> waker;
 
     /// INVARIANT: internal.size() + admission.size() >= tasksAvailable
     std::counting_semaphore<> tasksAvailable{0};
 
     /// To provide cancellation, we only block for StopTokenCheckInterval.
     /// This parameter could be tuned to allow for more timely cancellation
-    static constexpr std::chrono::milliseconds StopTokenCheckInterval{100};
+    static constexpr std::chrono::milliseconds StopTokenCheckInterval{1};
 
     TaskType readElementAssumingItExists()
     {
+        decrease_count();
         TaskType task;
         /// The semaphore guarantees that there is at least one element in either one of the queues.
         if (internal.try_dequeue(task))
@@ -68,7 +88,7 @@ class TaskQueue
         }
 
         WakerCallback wakerCallback;
-        while (waker.read(wakerCallback))
+        while (waker.try_dequeue(wakerCallback))
         {
             if (wakerCallback())
             {
@@ -80,20 +100,44 @@ class TaskQueue
     }
 
 public:
+    struct SuspendUntilSignaled
+    {
+        TaskQueue& queue;
+
+        bool await_ready() noexcept { return false; }
+
+        void await_suspend(std::coroutine_handle<> h) noexcept
+        {
+            queue.waker.enqueue(
+                [h]()
+                {
+                    h.resume();
+                    return true;
+                });
+        }
+
+        void await_resume() noexcept { }
+    };
+
+    static_assert(coro::concepts::awaitable<SuspendUntilSignaled>);
+
     explicit TaskQueue(size_t admissionTaskQueueSize) : admission(admissionTaskQueueSize) { }
 
     /// NonBlocking Async Interface
     template <typename T = TaskType>
-    bool addAdmissionTaskBlockingNonBlocking(T&& task)
+    coro::task<> addAdmissionTaskAsync(T&& task)
     {
-        if (admission.write(std::forward<T>(task)))
+        while (true)
         {
-            tasksAvailable.release();
-            return true;
+            if (admission.write(std::forward<T>(task)))
+            {
+                increase_count();
+                tasksAvailable.release();
+                co_return;
+            }
+            co_await SuspendUntilSignaled{*this};
         }
-        return false;
     }
-    bool addWaker(WakerCallback&& wakerCallback) { return waker.write(std::forward<WakerCallback>(wakerCallback)); }
 
     /// By design the admission queue is bounded, which could lead to writes being blocked.
     /// The stop token allows cancellation. In case the writing was canceled, this method returns false.
@@ -108,25 +152,28 @@ public:
 
         if (admission.write(std::forward<T>(task)))
         {
+            increase_count();
             tasksAvailable.release();
-            return true;
-        }
+            return true; }
 
         /// blocking write
         __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingWrite);
+        SCOPE_EXIT
+        {
+            __itt_task_end(taskQueueDomain);
+        };
         while (!stoken.stop_requested())
         {
             /// The order of operation upholds the invariant
             /// NOLINTNEXTLINE(bugprone-use-after-move) no move happens if the write does not succeed. If a move happens, we return.
             if (admission.tryWriteUntil(std::chrono::steady_clock::now() + StopTokenCheckInterval, std::forward<T>(task)))
             {
-                __itt_task_end(taskQueueDomain);
                 /// tasksAvailable is only increased if write to admission queue was successful.
+                increase_count();
                 tasksAvailable.release();
                 return true;
             }
         }
-        __itt_task_end(taskQueueDomain);
         return false;
     }
 
@@ -136,6 +183,7 @@ public:
     {
         /// The order of operation upholds the invariant. internal is unbounded which makes this write always succeed (unless oom)
         internal.enqueue(std::forward<T>(task));
+        increase_count();
         tasksAvailable.release();
     }
 
@@ -146,6 +194,10 @@ public:
     std::optional<TaskType> getNextTaskBlocking(const std::stop_token& stoken)
     {
         __itt_task_begin(taskQueueDomain, __itt_null, __itt_null, blockingRead);
+        SCOPE_EXIT
+        {
+            __itt_task_end(taskQueueDomain);
+        };
         while (!tasksAvailable.try_acquire_for(StopTokenCheckInterval))
         {
             if (stoken.stop_requested())
@@ -153,8 +205,6 @@ public:
                 return std::nullopt;
             }
         }
-        __itt_task_end(taskQueueDomain);
-
         return readElementAssumingItExists();
     }
 

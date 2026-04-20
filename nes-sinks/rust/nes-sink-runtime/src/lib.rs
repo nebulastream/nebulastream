@@ -7,6 +7,7 @@ use nes_sink_validation::ConfigOptions;
 use std::sync::Arc;
 use tokio::select;
 use tokio::sync::mpsc::Receiver;
+use tracing::Instrument;
 
 pub type Result<T> = core::result::Result<T, String>;
 pub type Controller = tokio::sync::mpsc::Sender<SinkCommand>;
@@ -73,12 +74,15 @@ pub fn start_sink(
 ) -> Result<Controller> {
     let (controller, rx) = tokio::sync::mpsc::channel(16);
     let sink = construct_sink(name, config);
-    runtime.runtime.spawn(async move {
-        match run_sink(sink, rx, &context).await {
-            Ok(()) => {}
-            Err(error_message) => (context.on_error)(error_message),
+    runtime.runtime.spawn(
+        async move {
+            match run_sink(sink, rx, &context).await {
+                Ok(()) => {}
+                Err(error_message) => (context.on_error)(error_message),
+            }
         }
-    });
+        .in_current_span(),
+    );
 
     Ok(controller)
 }

@@ -50,11 +50,13 @@
 #include "Sinks/SinkDescriptor.hpp"
 #include "SinksParsing/SchemaFormatter.hpp"
 
+#include "QueryId.hpp"
 #include "SinkRegistry.hpp"
 #include "SinkValidationRegistry.hpp"
 
 namespace NES
 {
+class QueryId;
 
 // ---- SinkBackpressureHandler implementation ----
 
@@ -156,29 +158,35 @@ static DescriptorConfig::Config addHeader(DescriptorConfig::Config config, std::
     return config;
 }
 
-struct Context
+struct TokioSinkContext
 {
     std::optional<size_t> stopEpoch;
     std::atomic_size_t epochCounter;
     std::shared_ptr<SinkContext> context;
     rust::Box<SinkHandle> handle;
 
-    Context(const std::string& sinkType, const SinkDescriptor& descriptor)
+    TokioSinkContext(const QueryId& queryId, PipelineId pipelineId, const std::string& sinkType, const SinkDescriptor& descriptor)
         : epochCounter(0)
-        , context(
-              std::make_shared<SinkContext>(
-                  [](std::string_view error) { NES_ERROR("Sink Failed: {}", error); },
-                  [this](size_t epoch)
-                  {
-                      NES_INFO("Sink Flushed: {}", epoch);
-                      update_maximum(this->epochCounter, epoch);
-                  }))
+        , context(std::make_shared<SinkContext>(
+              [](std::string_view error) { NES_ERROR("Sink Failed: {}", error); },
+              [this](size_t epoch)
+              {
+                  NES_INFO("Sink Flushed: {}", epoch);
+                  update_maximum(this->epochCounter, epoch);
+              }))
         , handle(create_handle(
-              sinkType, configToFlatJson(addHeader(descriptor.getConfig(), descriptor.getSchema())), IORuntime::get().id(), context))
+              QueryContext{
+                  .query_id = queryId.getLocalQueryId().getRawValue(),
+                  .distributed_query_id = queryId.getDistributedQueryId().getRawValue(),
+                  .sink_id = pipelineId.getRawValue(),
+                  .sink_type = sinkType,
+                  .sink_config = configToFlatJson(addHeader(descriptor.getConfig(), descriptor.getSchema()))},
+              IORuntime::get().id(),
+              context))
     {
     }
 
-    ~Context() { NES_DEBUG("TokioSink::~Context()"); }
+    ~TokioSinkContext() { NES_DEBUG("TokioSink::~Context()"); }
 };
 
 TokioSink::TokioSink(BackpressureController backpressureController, SinkDescriptor descriptor, size_t upperThreshold, size_t lowerThreshold)
@@ -192,9 +200,9 @@ TokioSink::~TokioSink()
     // If stop was never called, Rust sink sees broken channel -> implicit close (Phase 4).
 }
 
-void TokioSink::start(PipelineExecutionContext& /*pec*/)
+void TokioSink::start(PipelineExecutionContext& pec)
 {
-    this->context = std::make_unique<Context>(descriptor.getSinkType(), descriptor);
+    this->context = std::make_unique<TokioSinkContext>(pec.getQueryId(), pec.getPipelineId(), descriptor.getSinkType(), descriptor);
 }
 
 void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
@@ -255,7 +263,8 @@ void TokioSink::stop(PipelineExecutionContext& pec)
     {
         NES_DEBUG("Repeating until flush ack");
         pec.repeatTask({}, BACKPRESSURE_RETRY_INTERVAL);
-    } else
+    }
+    else
     {
         NES_INFO("Sink Closed successfully");
     }

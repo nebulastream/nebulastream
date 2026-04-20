@@ -22,6 +22,7 @@
 #include <stop_token>
 #include <utility>
 #include <ittnotify.h>
+#include <absl/functional/any_invocable.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 
@@ -37,6 +38,7 @@ struct Channel
     };
 
     folly::Synchronized<State, std::mutex> stateMtx{OPEN};
+    folly::Synchronized<std::vector<absl::AnyInvocable<bool()>>> wakers;
     std::condition_variable_any change;
 };
 
@@ -50,6 +52,13 @@ BackpressureController::~BackpressureController()
     {
         *channel->stateMtx.lock() = Channel::DESTROYED;
         channel->change.notify_all();
+
+        auto wakers = channel->wakers.wlock();
+        for (auto& waker : *wakers)
+        {
+            waker();
+        }
+        wakers->clear();
     }
 }
 
@@ -62,15 +71,53 @@ bool BackpressureController::applyPressure()
 
 bool BackpressureController::releasePressure()
 {
-    const auto old = std::exchange(*channel->stateMtx.lock(), Channel::OPEN);
-    INVARIANT(old != Channel::DESTROYED, "The Backpressure Controller is still alive thus the channel should not have been destroyed");
-    if (old == Channel::CLOSED)
+    std::vector<absl::AnyInvocable<bool()>> toFire;
+    bool wasClosed;
     {
-        /// The Backpressure Controller was opened, wake up all waiting BackpressureListeners
-        channel->change.notify_all();
-        return true;
+        auto state = channel->stateMtx.lock();
+        const auto old = std::exchange(*state, Channel::OPEN);
+        INVARIANT(old != Channel::DESTROYED, "...");
+        wasClosed = (old == Channel::CLOSED);
+        if (wasClosed)
+        {
+            // Move wakers out under the state lock so no one can register
+            // into a stale OPEN->CLOSED window.
+            toFire = std::exchange(*channel->wakers.wlock(), {});
+        }
     }
-    return false;
+    if (wasClosed)
+    {
+        channel->change.notify_all();
+        for (auto& w : toFire)
+            w(); // fire outside the lock
+    }
+    return wasClosed;
+}
+
+bool BackpressureReleased::await_ready() noexcept
+{
+    return *channel->stateMtx.lock() == Channel::OPEN;
+}
+
+bool BackpressureReleased::await_suspend(std::coroutine_handle<> h) noexcept
+{
+    auto state = channel->stateMtx.lock();
+    if (*state == Channel::OPEN)
+    {
+        return false;
+    }
+
+    fmt::println(stderr, "Backpressure Detected");
+    // Still closed; register waker while holding state lock so release()
+    // cannot miss us.
+    channel->wakers.wlock()->emplace_back(
+        [h]
+        {
+            fmt::println(stderr, "Backpressure Released");
+            h.resume();
+            return true;
+        });
+    return true;
 }
 
 __itt_domain* backpressure = __itt_domain_create("engine.task");
@@ -100,6 +147,11 @@ void BackpressureListener::wait(const std::stop_token& stopToken) const
     __itt_task_end(backpressure);
 
     INVARIANT(!destroyed, "Backpressure Controller was destroyed before the BackpressureListener");
+}
+
+coro::task<void> BackpressureListener::waitAsync()
+{
+    co_await BackpressureReleased{channel};
 }
 
 std::pair<BackpressureController, BackpressureListener> createBackpressureChannel()

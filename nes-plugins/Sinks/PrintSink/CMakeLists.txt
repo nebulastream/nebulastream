@@ -10,4 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-target_link_rust_lib(nes-sources generator_source)
+target_link_rust_lib(nes-sinks print_sink)

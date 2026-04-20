@@ -16,3 +16,4 @@ serde_json.workspace = true
 nes_source_validation.workspace = true
 nes_source_runtime.workspace = true
 async-trait.workspace = true
+tracing.workspace = true

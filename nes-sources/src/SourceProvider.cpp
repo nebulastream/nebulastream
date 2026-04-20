@@ -17,6 +17,8 @@
 #include <memory>
 #include <string>
 #include <utility>
+
+#include <Configurations/Descriptor.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/SourceDescriptor.hpp>
@@ -25,7 +27,9 @@
 #include <ErrorHandling.hpp>
 #include <SourceRegistry.hpp>
 #include <SourceThreadHandle.hpp>
-#include <Configurations/Descriptor.hpp>
+#include "nes-source-validation-bindings/lib.h"
+
+#include "TokioSource.hpp"
 
 namespace NES
 {
@@ -40,12 +44,13 @@ SourceProvider::lower(OriginId originId, BackpressureListener backpressureListen
 {
     const auto& sourceType = sourceDescriptor.getSourceType();
 
-    /// The source-specific configuration of maxInflightBuffers takes priority.
-    /// If not specified (0), we take the NodeEngine-wide configuration.
-    const auto maxInflightBuffers = (sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS) > 0)
-        ? sourceDescriptor.getFromConfig(SourceDescriptor::MAX_INFLIGHT_BUFFERS)
-        : defaultMaxInflightBuffers;
-    SourceRuntimeConfiguration runtimeConfig{maxInflightBuffers};
+    SourceRuntimeConfiguration runtimeConfig{64};
+
+    if (source_exists(sourceType))
+    {
+        return std::make_unique<TokioSource>(
+            std::move(backpressureListener), sourceDescriptor, originId, bufferPool, std::move(runtimeConfig));
+    }
 
     // Fall through to standard SourceRegistry — C++ sources wrapped in SourceThread.
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.

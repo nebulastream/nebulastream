@@ -17,6 +17,7 @@
 #include <memory>
 #include <stop_token>
 #include <utility>
+#include <coro/concepts/executor.hpp>
 
 struct Channel;
 class BackpressureListener;
@@ -53,6 +54,18 @@ public:
     bool releasePressure();
 };
 
+struct BackpressureReleased
+{
+    std::shared_ptr<Channel> channel;
+
+    bool await_ready() noexcept;
+    bool await_suspend(std::coroutine_handle<> h) noexcept;
+
+    void await_resume() noexcept { }
+};
+
+static_assert(coro::concepts::awaitable<BackpressureReleased>);
+
 /// Listener of the backpressure channel is the Ingestion type that is used by sources.
 /// Before initiating a read of a new buffer, the source can if backpressure has been requested by a sink with a call to `wait`.
 /// This will cause the thread to block on the call if backpressure has been applied, until pressure is released by a sink, in which case
@@ -66,4 +79,5 @@ class BackpressureListener
 
 public:
     void wait(const std::stop_token& stopToken) const;
+    coro::task<void> waitAsync();
 };

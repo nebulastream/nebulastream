@@ -1,6 +1,6 @@
+#include <nes-io-runtime-bindings/lib.h>
 #include <IORuntime.hpp>
 #include <IORuntimeBindings.hpp>
-#include <nes-io-runtime-bindings/lib.h>
 #include <Thread.hpp>
 
 namespace NES
@@ -14,7 +14,7 @@ IORuntime& IORuntime::get()
 
 IORuntime::IORuntime()
 {
-    auto context = std::make_shared<ThreadInitializationContext>(ThreadInitializationContext{.runtimeIdx = 0, .workerId = NES::Thread::getThisWorkerNodeId()});
+    auto context = std::make_shared<ThreadInitializationContext>(0, NES::Thread::getThisWorkerNodeId());
     runtimeIdx = init_io_runtime(2, context);
     context->runtimeIdx = runtimeIdx;
 }

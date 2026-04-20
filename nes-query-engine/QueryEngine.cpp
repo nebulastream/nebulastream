@@ -31,6 +31,7 @@
 #include <variant>
 #include <vector>
 #include <ittnotify.h>
+
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
@@ -55,6 +56,7 @@
 #include <Task.hpp>
 #include <TaskQueue.hpp>
 #include <Thread.hpp>
+#include "Util/Overloaded.hpp"
 
 namespace NES
 {
@@ -63,10 +65,35 @@ namespace
 {
 __itt_domain* taskExecutionDomain = __itt_domain_create("engine.task");
 __itt_string_handle* executeTask = __itt_string_handle_create("Execute Task");
+__itt_string_handle* stopPipelineTaskDesc = __itt_string_handle_create("Stop Pipeline Task");
+__itt_string_handle* stopPendingPipelineTaskDesc = __itt_string_handle_create("Stop Pending Task");
+__itt_string_handle* startSourceTaskDesc = __itt_string_handle_create("Start Source Task");
+__itt_string_handle* stopSourceTaskDesc = __itt_string_handle_create("Stop Source Task");
 __itt_string_handle* pipeline_id = __itt_string_handle_create("Pipeline Id");
 __itt_string_handle* local_query_id_low = __itt_string_handle_create("Local-QueryId (low)");
+__itt_string_handle* doingStuff = __itt_string_handle_create("Doing stuff");
 __itt_string_handle* local_query_id_high = __itt_string_handle_create("Local-QueryId (high)");
 __itt_string_handle* global_query_id = __itt_string_handle_create("Global Query Id");
+__itt_string_handle* stop_event_marker = __itt_string_handle_create("Stop");
+
+__itt_string_handle* task_format = __itt_string_handle_create("Task: ([%d%d]-[%d])");
+
+[[maybe_unused]] std::array<uint64_t, 2> serialize_uuid(const QueryId& id)
+{
+    return std::bit_cast<std::array<uint64_t, 2>>(id.getLocalQueryId().view());
+};
+
+#define TASK(name, queryId, pipelineId) \
+    __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, name); \
+    do \
+    { \
+        auto uuid_split = serialize_uuid(queryId); \
+        __itt_formatted_metadata_add(taskExecutionDomain, task_format, uuid_split[0], uuid_split[1], (pipelineId).getRawValue()); \
+    } while (false); \
+    SCOPE_EXIT \
+    { \
+        __itt_task_end(taskExecutionDomain); \
+    };
 
 /// Graceful pipeline shutdown can only happen if no task depends on the pipeline anymore.
 /// It could happen that tasks are waiting within the admission queue and do not get a chance to execute as long as the
@@ -216,6 +243,7 @@ struct DefaultPEC final : PipelineExecutionContext
     size_t numberOfThreads;
     WorkerThreadId threadId;
     PipelineId pipelineId;
+    const QueryId& queryId;
     /// We want to ensure that the address of the TupleBuffer is always the same. If we would simply store the object directly in the vector,
     /// the address might change as the vector might be resized and thus, the object have a different address.
     std::vector<std::unique_ptr<TupleBuffer>> pinnedBuffers;
@@ -228,6 +256,7 @@ struct DefaultPEC final : PipelineExecutionContext
         size_t numberOfThreads,
         WorkerThreadId threadId,
         PipelineId pipelineId,
+        const QueryId& queryId,
         std::shared_ptr<AbstractBufferProvider> bm,
         std::function<bool(const TupleBuffer& tb, ContinuationPolicy)> handler,
         std::function<void(const TupleBuffer& tb, std::chrono::milliseconds)> repeatHandler)
@@ -237,6 +266,7 @@ struct DefaultPEC final : PipelineExecutionContext
         , numberOfThreads(numberOfThreads)
         , threadId(threadId)
         , pipelineId(pipelineId)
+        , queryId(queryId)
     {
     }
 
@@ -305,6 +335,8 @@ struct DefaultPEC final : PipelineExecutionContext
         PRECONDITION(!wasRepeated, "A task should terminate after repeating");
         operatorHandlers = std::addressof(handlers);
     }
+
+    [[nodiscard]] const QueryId& getQueryId() const override { return queryId; }
 };
 
 /// Lifetime of the ThreadPool:
@@ -317,34 +349,23 @@ class ThreadPool : public WorkEmitter, public QueryLifetimeController
 public:
     void addThread(const Host& host);
 
-    bool emitWorkAsync(
-        QueryId qid,
-        const std::shared_ptr<RunningQueryPlanNode>& target,
-        TupleBuffer buffer,
-        TaskCallback callback,
-        absl::AnyInvocable<bool()> completion) override
+    coro::task<void>
+    emitWorkAsync(QueryId qid, std::shared_ptr<RunningQueryPlanNode> target, TupleBuffer buffer, TaskCallback callback) override
     {
-        ENGINE_LOG_DEBUG("Emitting work asynchronously for {}-{}", target->id, target->queryId);
+        ENGINE_LOG_DEBUG("Emitting work asynchronously for {}-{}", target->id, qid);
 
-        auto task = WorkTask(qid, target->id, target, std::move(buffer), std::move(callback));
-        if (taskQueue.addAdmissionTaskBlockingNonBlocking(std::move(task)))
-        {
-            return true;
-        }
+        [[maybe_unused]] auto updatedCount = target->pendingTasks.fetch_add(1) + 1;
+        ENGINE_LOG_DEBUG("Increasing number of pending tasks on pipeline {}-{} to {}", qid, target->id, updatedCount);
+        auto [complete, failure, success] = std::move(callback).take();
+        /// Create a new callback that wraps the reference count reducer
+        auto wrappedCallback = TaskCallback{
+            TaskCallback::OnComplete(injectReferenceCountReducer(ENGINE_IF_LOG_DEBUG(qid, ) target, std::move(complete.callback))),
+            std::move(success),
+            TaskCallback::OnFailure(injectQueryFailure(target, std::move(failure.callback))),
+        };
 
-        WakerCallback wakerFunction = WakerCallback(
-            [&wakerFunction, task = std::move(task), &taskQueue = this->taskQueue, completion = std::move(completion)]() mutable
-            {
-                if (taskQueue.addAdmissionTaskBlockingNonBlocking(std::move(task)))
-                {
-                    completion();
-                    return true;
-                }
-                taskQueue.addWaker(std::move(wakerFunction));
-                return true;
-            });
-        taskQueue.addWaker(std::move(wakerFunction));
-        return false;
+        auto task = WorkTask(qid, target->id, target, std::move(buffer), std::move(wrappedCallback));
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
     }
 
     bool emitWork(
@@ -406,6 +427,31 @@ public:
             TaskCallback::OnFailure(injectQueryFailureUnsafe(*node, std::move(failure.callback))),
         };
         addInternalTask(StopPipelineTask(qid, std::move(node), std::move(wrappedCallback)));
+    }
+
+    coro::task<void>
+    initializeSourceFailureAsync(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
+    {
+        auto task = FailSourceTask{
+            id,
+            std::move(source),
+            std::move(exception),
+            TaskCallback{TaskCallback::OnSuccess(
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Failure, std::chrono::system_clock::now()); })}};
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
+    }
+
+    coro::task<void> initializeSourceStopAsync(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source) override
+    {
+        auto task = StopSourceTask{
+            id,
+            std::move(source),
+            0,
+            TaskCallback{TaskCallback::OnSuccess(
+                [id, sourceId, listener = listener]
+                { listener->logSourceTermination(id, sourceId, QueryTerminationType::Graceful, std::chrono::system_clock::now()); })}};
+        co_await taskQueue.addAdmissionTaskAsync(std::move(task));
     }
 
     void initializeSourceFailure(QueryId id, OriginId sourceId, std::weak_ptr<RunningSource> source, Exception exception) override
@@ -488,7 +534,7 @@ private:
     void addInternalTask(Task&& task)
     {
         PRECONDITION(ThreadPool::WorkerThread::id != INVALID<WorkerThreadId>, "This should only be called from a worker thread");
-        taskQueue.addInternalTaskNonBlocking(std::move(task)); /// NOLINT no move will happen if tryWriteUntil has failed
+        taskQueue.addInternalTaskNonBlocking(std::move(task));
     }
 
     /// Order of destruction matters: TaskQueue has to outlive the pool
@@ -529,6 +575,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            task.queryId,
             pool.bufferProvider,
             [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy continuationPolicy)
             {
@@ -559,17 +606,10 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
 
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
-        static __itt_string_handle* key_number = __itt_string_handle_create("Test_Number");
-        static __itt_string_handle* key_string = __itt_string_handle_create("Test_String");
-        __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, executeTask);
-        // Test A: Integer (Simplest possible case)
-        uint64_t my_number = 42;
-        const char* my_string = "Hello VTune";
-        __itt_metadata_add_with_scope(taskExecutionDomain, __itt_scope_task, key_number, __itt_metadata_u64, 1, &my_number);
-        __itt_metadata_str_add_with_scope(
-            taskExecutionDomain, __itt_scope_task, key_string, my_string, 0); // 0 length = auto-detect null terminator
-        pipeline->stage->execute(task.buf, pec);
-        __itt_task_end(taskExecutionDomain);
+
+        {
+            pipeline->stage->execute(task.buf, pec);
+        }
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }
@@ -596,6 +636,7 @@ bool ThreadPool::WorkerThread::operator()(StartPipelineTask& startPipeline) cons
             pool.numberOfThreads(),
             WorkerThread::id,
             pipeline->id,
+            startPipeline.queryId,
             pool.bufferProvider,
             [](const TupleBuffer&, PipelineExecutionContext::ContinuationPolicy)
             {
@@ -674,6 +715,7 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
         pool.numberOfThreads(),
         WorkerThread::id,
         stopPipelineTask.pipeline->id,
+        stopPipelineTask.queryId,
         pool.bufferProvider,
         [&](const TupleBuffer& tupleBuffer, PipelineExecutionContext::ContinuationPolicy policy)
         {
@@ -706,10 +748,15 @@ bool ThreadPool::WorkerThread::operator()(StopPipelineTask& stopPipelineTask) co
             }
         });
 
+
     ENGINE_LOG_DEBUG("Stopping Pipeline {}-{}", stopPipelineTask.queryId, stopPipelineTask.pipeline->id);
     auto pipelineId = stopPipelineTask.pipeline->id;
     auto queryId = stopPipelineTask.queryId;
-    stopPipelineTask.pipeline->stage->stop(pec);
+
+    {
+        stopPipelineTask.pipeline->stage->stop(pec);
+    }
+
     pool.statistic->onEvent(PipelineStop{WorkerThread::id, queryId, pipelineId});
     return true;
 }
@@ -786,6 +833,74 @@ bool ThreadPool::WorkerThread::operator()(FailSourceTask& failSource) const
     return false;
 }
 
+// using Task = std::variant<
+//     WorkTask,
+//     StopQueryTask,
+//     StartQueryTask,
+//     FailSourceTask,
+//     StopSourceTask,
+//     PendingPipelineStopTask,
+//     StopPipelineTask,
+//     StartPipelineTask>;
+__itt_string_handle* taskLabel(const Task& task)
+{
+    return std::visit(
+        Overloaded{
+            [](const WorkTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Work");
+                return operation_format;
+            },
+            [](const StopQueryTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Stop Query");
+                return operation_format;
+            },
+            [](const StartQueryTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Start Query");
+                return operation_format;
+            },
+            [](const FailSourceTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Fail Source");
+                return operation_format;
+            },
+            [](const StopSourceTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Stop Source");
+                return operation_format;
+            },
+            [](const PendingPipelineStopTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Pending Pipeline Stop");
+                return operation_format;
+            },
+            [](const StopPipelineTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Stop Pipeline");
+                return operation_format;
+            },
+            [](const StartPipelineTask&)
+            {
+                static __itt_string_handle* operation_format = __itt_string_handle_create("Start Pipeline");
+                return operation_format;
+            },
+        },
+        task);
+}
+
+void addProfilingMetadataToTask(const Task& task)
+{
+    std::visit(
+        Overloaded{[](auto&)
+                   {
+                       static __itt_string_handle* operation_format = __itt_string_handle_create("Operation: [%s] on file %s");
+                       __itt_formatted_metadata_add(taskExecutionDomain, operation_format, "data_transform", "afile.txt");
+                   }},
+        task);
+}
+
 void ThreadPool::addThread(const Host& host)
 {
     pool.emplace_back(
@@ -799,6 +914,12 @@ void ThreadPool::addThread(const Host& host)
             {
                 if (auto task = taskQueue.getNextTaskBlocking(stopToken))
                 {
+                    __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, taskLabel(*task));
+                    addProfilingMetadataToTask(*task);
+                    SCOPE_EXIT
+                    {
+                        __itt_task_end(taskExecutionDomain);
+                    };
                     handleTask(worker, std::move(*task));
                 }
             }
@@ -808,6 +929,12 @@ void ThreadPool::addThread(const Host& host)
             const WorkerThread terminatingWorker{*this, true};
             while (auto task = taskQueue.getNextTaskNonBlocking())
             {
+                __itt_task_begin(taskExecutionDomain, __itt_null, __itt_null, taskLabel(*task));
+                addProfilingMetadataToTask(*task);
+                SCOPE_EXIT
+                {
+                    __itt_task_end(taskExecutionDomain);
+                };
                 handleTask(terminatingWorker, std::move(*task));
             }
         });

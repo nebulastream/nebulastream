@@ -1,0 +1,25 @@
+query:
+  SELECT * FROM generatorDefault INTO Print("500ms" as `SINK`.INGESTION, "localhost:8080" as `SINK`.HOST, "CSV" as `SINK`.OUTPUT_FORMAT);
+
+sinks: [ ]
+
+logical:
+  - name: generatorDefault
+    schema:
+      - name: id
+        type: UINT64
+      - name: field2
+        type: UINT64
+
+physical:
+  - logical: generatorDefault
+    host: localhost:8080
+    type: Generator
+    parser_config:
+      type: "CSV"
+    source_config:
+      generator_schema: 'SEQUENCE UINT64 0 10 1, SEQUENCE UINT64 0 5 1'
+
+workers:
+  - host: localhost:8080
+    data_address: localhost:9090

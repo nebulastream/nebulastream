@@ -29,9 +29,12 @@ endif()
 # Add definition to the target
 target_compile_definitions(nes-query-engine PRIVATE ENGINE_LOG_LEVEL_${ENGINE_LOG_LEVEL})
 
+find_package(PkgConfig)
+pkg_check_modules(libcoro REQUIRED IMPORTED_TARGET GLOBAL libcoro)
+
 find_package(folly CONFIG REQUIRED)
 target_link_libraries(nes-query-engine
-        PUBLIC nes-common nes-executable
+        PUBLIC nes-common nes-executable PkgConfig::libcoro
         PRIVATE folly::folly nes-runtime
 )
 

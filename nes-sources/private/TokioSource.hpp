@@ -32,17 +32,25 @@
 #include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <BackpressureChannel.hpp>
+#include "Sources/SourceHandle.hpp"
+
+#include "QueryId.hpp"
 
 namespace NES
 {
 
-struct Context;
+struct TokioSourceContext;
 
-class TokioSource final
+class TokioSource : public SourceHandle
 {
 public:
-    TokioSource(BackpressureListener listener, SourceDescriptor descriptor, OriginId originId);
-    ~TokioSource();
+    TokioSource(
+        BackpressureListener listener,
+        SourceDescriptor descriptor,
+        OriginId originId,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        SourceRuntimeConfiguration runtimeConfiguration);
+    ~TokioSource() override;
 
     // Non-copyable, non-movable
     TokioSource(const TokioSource&) = delete;
@@ -50,17 +58,23 @@ public:
     TokioSource(TokioSource&&) = delete;
     TokioSource& operator=(TokioSource&&) = delete;
 
-    OriginId getOriginId();
-    bool start(SourceReturnType::AsyncEmitFunction&& emitFunction, std::shared_ptr<AbstractBufferProvider> buffer_provider) const;
-    void stop() const;
-
     friend std::ostream& operator<<(std::ostream& out, const TokioSource& source);
+    bool start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&& asyncEmitFunction) override;
+    void stop() override;
+    [[nodiscard]] SourceReturnType::TryStopResult tryStop(std::chrono::milliseconds timeout) override;
+    [[nodiscard]] OriginId getSourceId() const override;
+    [[nodiscard]] const SourceRuntimeConfiguration& getRuntimeConfiguration() const override;
+
+protected:
+    std::ostream& toString(std::ostream& os) const override;
 
 private:
-    std::unique_ptr<Context> context;
+    std::unique_ptr<TokioSourceContext> context;
     OriginId originId;
     SourceDescriptor descriptor;
     BackpressureListener backpressureHandler;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    SourceRuntimeConfiguration runtimeConfiguration;
 };
 
 } // namespace NES

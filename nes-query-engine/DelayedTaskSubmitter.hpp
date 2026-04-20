@@ -70,6 +70,7 @@ public:
     template <typename Rep, typename Period>
     void submitTaskIn(Task task, std::chrono::duration<Rep, Period> delay)
     {
+        NES_INFO("Task was delayed");
         auto deadline = ClockType::now() + delay;
 
         auto taskQueue = taskQueueMtx.lock();

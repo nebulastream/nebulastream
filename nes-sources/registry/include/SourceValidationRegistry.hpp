@@ -26,6 +26,7 @@ using SourceValidationRegistryReturnType = DescriptorConfig::Config;
 
 struct SourceValidationRegistryArguments
 {
+    UppercaseString sourceType;
     std::unordered_map<UppercaseString, std::string> config;
 };
 

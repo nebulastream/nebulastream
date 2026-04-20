@@ -34,6 +34,7 @@
 #include <cpptrace/from_current.hpp>
 #include <fmt/format.h>
 #include <ErrorHandling.hpp>
+#include <QueryId.hpp>
 #include <Thread.hpp>
 #include <scope_guard.hpp>
 
@@ -137,6 +138,7 @@ SourceImplementationTermination dataSourceThreadRoutine(
 
 void dataSourceThread(
     const std::stop_token& stopToken,
+    QueryId queryId,
     BackpressureListener backpressureListener,
     std::promise<SourceImplementationTermination> result,
     Source* source,
@@ -145,6 +147,9 @@ void dataSourceThread(
     ///NOLINTNEXTLINE(performance-unnecessary-value-param) `jthread` does not allow references
     std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
+    LogContext queryIdLogContext("QueryId", queryId);
+    LogContext sourceIdLogContext("SourceId", originId);
+
     size_t sequenceNumberGenerator = SequenceNumber::INITIAL;
     const EmitFn dataEmit = [&](TupleBuffer&& buffer, bool shouldAddMetadata)
     {
@@ -173,7 +178,7 @@ void dataSourceThread(
 }
 }
 
-bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
+auto SourceThread::start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction) -> bool
 {
     INVARIANT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
     if (started.exchange(true))
@@ -188,6 +193,7 @@ bool SourceThread::start(SourceReturnType::EmitFunction&& emitFunction)
     Thread sourceThread(
         fmt::format("DataSrc-{}", originId),
         dataSourceThread,
+        queryId,
         backpressureListener,
         std::move(terminationPromise),
         sourceImplementation.get(),

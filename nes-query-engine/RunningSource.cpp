@@ -30,11 +30,13 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Sources/SourceReturnType.hpp>
 #include <Util/Overloaded.hpp>
+#include <oneapi/tbb/profiling.h>
 #include <EngineLogger.hpp>
 #include <ErrorHandling.hpp>
 #include <Interfaces.hpp>
 #include <PipelineExecutionContext.hpp>
 #include <RunningQueryPlan.hpp>
+#include <scope_guard.hpp>
 
 namespace NES
 {
@@ -45,6 +47,15 @@ __itt_domain* sourceDomain = __itt_domain_create("engine.source");
 __itt_string_handle* queueWrite = __itt_string_handle_create("Blocking Write");
 __itt_string_handle* waitForInflightBuffers = __itt_string_handle_create("Wait for inflight buffers");
 
+__itt_string_handle* asyncWriteTask = __itt_string_handle_create("Blocked Async Write");
+__itt_string_handle* asyncWriteCallbackTask = __itt_string_handle_create("Blocked Async Write Completed");
+
+[[maybe_unused]] __itt_id makeTaskId()
+{
+    thread_local uint64_t counter = 0;
+    return __itt_id_make(reinterpret_cast<void*>(pthread_self()), counter++);
+}
+
 SourceReturnType::AsyncEmitFunction asyncEmit(
     QueryId queryId,
     std::weak_ptr<RunningSource> source,
@@ -52,62 +63,42 @@ SourceReturnType::AsyncEmitFunction asyncEmit(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
+    INVARIANT(successors.size() == 1, "I dont know how to implement that");
+
     return [&controller, successors = std::move(successors), source, &emitter, queryId](
-               const OriginId sourceId,
-               SourceReturnType::SourceReturnType event,
-               SourceReturnType::AsyncOperationCallback callback) -> SourceReturnType::AsyncEmitResult
+               const OriginId sourceId, SourceReturnType::SourceReturnType event) -> coro::task<void>
     {
-        return std::visit(
+        __itt_task_begin(sourceDomain, __itt_null, __itt_null, asyncWriteTask);
+        SCOPE_EXIT
+        {
+            __itt_task_end(sourceDomain);
+        };
+        co_await std::visit(
             Overloaded{
-                [&](const SourceReturnType::Data& data) -> SourceReturnType::AsyncEmitResult
+                [&](SourceReturnType::Data data)
                 {
-                    INVARIANT(successors.size() == 1, "I dont know how to implement that");
                     auto successor = successors.at(0);
-                    auto fastPath = emitter.emitWorkAsync(
+                    return emitter.emitWorkAsync(
                         queryId,
-                        successor,
-                        data.buffer,
-                        TaskCallback{},
-                        [callback = std::move(callback)]()
-                        {
-                            callback(SourceReturnType::AsyncEmitCompletionResult::SUCCESS);
-                            return true;
-                        });
-                    if (fastPath)
-                    {
-                        return SourceReturnType::AsyncEmitResult::SUCCESS;
-                    }
-                    else
-                    {
-                        return SourceReturnType::AsyncEmitResult::CALLBACK_REGISTERED;
-                    }
+                        std::move(successor),
+                        std::move(data.buffer),
+                        TaskCallback{TaskCallback::OnComplete([onComplete = std::move(data.onComplete)] { onComplete(); })});
                 },
-                [&](SourceReturnType::EoS)
-                {
-                    ENGINE_LOG_DEBUG("Source with OriginId {} reached end of stream for query {}", sourceId, queryId);
-                    controller.initializeSourceStop(queryId, sourceId, source);
-                    return SourceReturnType::AsyncEmitResult::SUCCESS;
-                },
+                [&](SourceReturnType::EoS) { return controller.initializeSourceStopAsync(queryId, sourceId, source); },
                 [&](SourceReturnType::Error error)
-                {
-                    controller.initializeSourceFailure(queryId, sourceId, source, std::move(error.ex));
-                    return SourceReturnType::AsyncEmitResult::SUCCESS;
-                }},
-            event);
+                { return controller.initializeSourceFailureAsync(queryId, sourceId, source, std::move(error.ex)); }},
+            std::move(event));
     };
 }
 
 SourceReturnType::EmitFunction emitFunction(
     QueryId queryId,
-    size_t numberOfInflightBuffers,
     std::weak_ptr<RunningSource> source,
     std::vector<std::shared_ptr<RunningQueryPlanNode>> successors,
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    auto availableBuffer = std::make_shared<std::counting_semaphore<>>(
-        std::min(numberOfInflightBuffers, static_cast<size_t>(std::numeric_limits<int32_t>::max())));
-    return [&controller, successors = std::move(successors), source, &emitter, queryId, availableBuffer = std::move(availableBuffer)](
+    return [&controller, successors = std::move(successors), source, &emitter, queryId](
                const OriginId sourceId,
                SourceReturnType::SourceReturnType event,
                const std::stop_token& stopToken) -> SourceReturnType::EmitResult
@@ -119,15 +110,6 @@ SourceReturnType::EmitFunction emitFunction(
                     for (const auto& successor : successors)
                     {
                         {
-                            /// release the semaphore in case the source wants to terminate
-                            const std::stop_callback callback(stopToken, [&]() { availableBuffer->release(); });
-                            if (!availableBuffer->try_acquire())
-                            {
-                                __itt_task_begin(sourceDomain, __itt_null, __itt_null, waitForInflightBuffers);
-                                availableBuffer->acquire();
-                                __itt_task_end(sourceDomain);
-                            }
-
                             if (stopToken.stop_requested())
                             {
                                 return SourceReturnType::EmitResult::STOP_REQUESTED;
@@ -139,7 +121,7 @@ SourceReturnType::EmitFunction emitFunction(
                             queryId,
                             successor,
                             data.buffer,
-                            TaskCallback{TaskCallback::OnComplete([availableBuffer] { availableBuffer->release(); })},
+                            TaskCallback{TaskCallback::OnComplete([callback = std::move(data.onComplete)] { callback(); })},
                             PipelineExecutionContext::ContinuationPolicy::NEVER))
                         {
                             if (stopToken.stop_requested())
@@ -195,14 +177,14 @@ std::shared_ptr<RunningSource> RunningSource::create(
     QueryLifetimeController& controller,
     WorkEmitter& emitter)
 {
-    const auto maxInflightBuffers = source->getRuntimeConfiguration().inflightBufferLimit;
     auto runningSource = std::shared_ptr<RunningSource>(
         new RunningSource(successors, std::move(source), std::move(onSourceStopped), std::move(onSourceFailure)));
     ENGINE_LOG_DEBUG("Starting Running Source");
     {
         const std::scoped_lock lock(runningSource->mutex);
         runningSource->source->start(
-            emitFunction(queryId, maxInflightBuffers, runningSource, successors, controller, emitter),
+            std::move(queryId),
+            emitFunction(queryId, runningSource, successors, controller, emitter),
             asyncEmit(queryId, runningSource, std::move(successors), controller, emitter));
     }
     return runningSource;

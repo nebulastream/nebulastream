@@ -19,6 +19,9 @@
 #include <variant>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <absl/functional/any_invocable.h>
+#include <coro/task.hpp>
+
 #include <ErrorHandling.hpp>
 
 namespace NES::SourceReturnType
@@ -72,8 +75,6 @@ enum class AsyncEmitResult : uint8_t
 
 using SourceReturnType = std::variant<Error, Data, EoS>;
 using EmitFunction = std::function<EmitResult(OriginId, SourceReturnType, const std::stop_token&)>;
-
-using AsyncOperationCallback = std::function<void(AsyncEmitCompletionResult)>;
-using AsyncEmitFunction = std::function<AsyncEmitResult(OriginId, SourceReturnType, AsyncOperationCallback)>;
+using AsyncEmitFunction = std::function<coro::task<void>(OriginId, SourceReturnType)>;
 
 }

@@ -22,6 +22,7 @@
 #include <sstream>
 #include <string>
 #include <utility>
+#include <ittnotify.h>
 #include <unistd.h>
 #include <Configurations/ConfigValuePrinter.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -43,8 +44,19 @@
 #include <QueryCompiler.hpp>
 #include <QueryStatus.hpp>
 #include <QueryTerminationType.hpp>
+
+#include "../../nes-io-runtime/include/IORuntime.hpp"
+
 #include <SingleNodeWorkerConfiguration.hpp>
 #include <WorkerStatus.hpp>
+
+namespace
+{
+__itt_domain* workerDomain = __itt_domain_create("worker");
+__itt_string_handle* ittRegisterQuery = __itt_string_handle_create("Register");
+__itt_string_handle* ittStartQuery = __itt_string_handle_create("Start");
+__itt_string_handle* ittStopQuery = __itt_string_handle_create("Stop");
+}
 
 extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
 
@@ -74,6 +86,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
     nodeEngine = NodeEngineBuilder(configuration.workerConfiguration, copyPtr(listener)).build(host);
     compiler = std::make_unique<QueryCompilation::QueryCompiler>(configuration.workerConfiguration.defaultQueryExecution);
+    Thread thread("node-init", host, []() { NES_INFO("Using IORuntime: {}", IORuntime::get().id()); });
 
     if (!configuration.dataAddress.getValue().empty())
     {
@@ -93,6 +106,7 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
 
 std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan plan) noexcept
 {
+    __itt_task_begin(workerDomain, __itt_null, __itt_null, ittRegisterQuery);
     CPPTRACE_TRY
     {
         /// Check if the plan already has a local query ID, generate one if needed
@@ -120,10 +134,12 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
         auto result = compiler->compileQuery(std::move(request));
         INVARIANT(result, "expected successful query compilation or exception, but got nothing");
         nodeEngine->registerCompiledQueryPlan(plan.getQueryId(), std::move(result));
+        __itt_task_end(workerDomain);
         return plan.getQueryId();
     }
     CPPTRACE_CATCH(...)
     {
+        __itt_task_end(workerDomain);
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
@@ -131,14 +147,17 @@ std::expected<QueryId, Exception> SingleNodeWorker::registerQuery(LogicalPlan pl
 
 std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noexcept
 {
+    __itt_task_begin(workerDomain, __itt_null, __itt_null, ittStartQuery);
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->startQuery(queryId);
+        __itt_task_end(workerDomain);
         return {};
     }
     CPPTRACE_CATCH(...)
     {
+        __itt_task_end(workerDomain);
         return std::unexpected(wrapExternalException());
     }
     std::unreachable();
@@ -146,14 +165,17 @@ std::expected<void, Exception> SingleNodeWorker::startQuery(QueryId queryId) noe
 
 std::expected<void, Exception> SingleNodeWorker::stopQuery(QueryId queryId, QueryTerminationType type) noexcept
 {
+    __itt_task_begin(workerDomain, __itt_null, __itt_null, ittStopQuery);
     CPPTRACE_TRY
     {
         PRECONDITION(queryId != INVALID_QUERY_ID, "QueryId must be not invalid!");
         nodeEngine->stopQuery(queryId, type);
+        __itt_task_end(workerDomain);
         return {};
     }
     CPPTRACE_CATCH(...)
     {
+        __itt_task_end(workerDomain);
         return std::unexpected{wrapExternalException()};
     }
     std::unreachable();

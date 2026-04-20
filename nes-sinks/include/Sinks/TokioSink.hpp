@@ -77,7 +77,7 @@ public:
     std::optional<TupleBuffer> popFront();
 };
 
-struct Context;
+struct TokioSinkContext;
 
 /// C++ sink operator that bridges pipeline execution to a Rust AsyncSink via CXX FFI.
 ///
@@ -98,8 +98,8 @@ public:
     TokioSink(
         BackpressureController backpressureController,
         SinkDescriptor descriptor,
-        size_t upperThreshold = 1,
-        size_t lowerThreshold = 0);
+        size_t upperThreshold = 20,
+        size_t lowerThreshold = 10);
     ~TokioSink() override;
 
     // Non-copyable, non-movable
@@ -117,7 +117,7 @@ protected:
 
 private:
     SinkDescriptor descriptor;
-    std::unique_ptr<Context> context;
+    std::unique_ptr<TokioSinkContext> context;
     SinkBackpressureHandler backpressureHandler;
     std::atomic<bool> stopInitiated{false};
     uint64_t sinkId{0}; /// Assigned in start() from pipeline context

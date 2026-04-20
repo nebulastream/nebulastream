@@ -225,6 +225,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                 sources = std::move(sources)]() mutable
         {
             {
+                LogContext context("queryId", queryId);
                 auto lock = runningPlan.internal.lock();
                 auto& internal = *lock;
 
@@ -240,6 +241,7 @@ std::pair<std::unique_ptr<RunningQueryPlan>, CallbackRef> RunningQueryPlan::star
                             std::move(successors),
                             [&emitter, queryId](std::vector<std::shared_ptr<RunningQueryPlanNode>>&& successors)
                             {
+                                LogContext context("queryId", queryId);
                                 /// On source unregistration all successor pipelines are soft stopped.
                                 ENGINE_LOG_INFO("Source unregistered, emitting pending pipeline stops");
                                 for (auto& successor : successors)

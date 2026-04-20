@@ -29,6 +29,8 @@
 #include <BackpressureChannel.hpp>
 #include <SourceThread.hpp>
 
+#include "QueryId.hpp"
+
 namespace NES
 {
 
@@ -46,7 +48,7 @@ SourceThreadHandle::SourceThreadHandle(
 
 SourceThreadHandle::~SourceThreadHandle() = default;
 
-bool SourceThreadHandle::start(SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&&)
+bool SourceThreadHandle::start(QueryId queryId, SourceReturnType::EmitFunction&& emitFunction, SourceReturnType::AsyncEmitFunction&&)
 {
     // Wrap the emitFunction with a semaphore for inflight limiting.
     // The semaphore is acquired before each data emit (blocking the source thread)
@@ -72,7 +74,7 @@ bool SourceThreadHandle::start(SourceReturnType::EmitFunction&& emitFunction, So
         }
         return emitFn(sourceId, std::move(event), stopToken);
     };
-    return impl->start(std::move(wrappedEmit));
+    return impl->start(queryId, std::move(wrappedEmit));
 }
 
 void SourceThreadHandle::stop()

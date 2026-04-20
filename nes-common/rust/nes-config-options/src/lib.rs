@@ -60,13 +60,22 @@ impl ConfigDefinition {
             validation: &|_: &ConfigValue| Ok(()),
         }
     }
+    pub const fn with_default_and_validator(
+        name: &'static str,
+        default: ConfigOptionsType,
+        validation: &'static (impl Fn(&ConfigValue) -> Result<(), Error> + Sync + Send),
+    ) -> Self {
+        ConfigDefinition {
+            name,
+            type_discriminant: default.tag(),
+            default_value: Some(default),
+            validation,
+        }
+    }
 }
 
 pub type ConfigOptions = HashMap<String, String>;
 pub type Error = Box<dyn std::error::Error + Send + Sync>;
-
-/// An entry registered in a validator slice: `(type_name, config_schema)`.
-pub type ValidatorEntry = (&'static str, &'static [ConfigDefinition]);
 
 /// Parse a string value into a [`ConfigValue`] according to the expected type.
 fn parse_value(raw: &str, expected: &ConfigOptionsTypeTag) -> Result<ConfigValue, String> {
@@ -87,66 +96,56 @@ fn upper_case_config_options(options: &ConfigOptions) -> ConfigOptions {
     upper_case
 }
 
-/// Validate `options` against the schema registered under `name` in `validators`.
-/// Typically invoked by thin domain-specific wrappers (sink/source) that pass their
-/// own `distributed_slice`.
+/// Validate `options` against one or more `ConfigDefinition` schemas.
+///
+/// Each inner slice is processed in order; missing required options produce errors,
+/// options with defaults are filled in, and unknown keys in `options` are ignored.
+/// Callers typically pass a global schema followed by a domain-specific one, e.g.
+/// `validate(opts, &[GLOBAL, SPECIFIC])`.
 pub fn validate(
-    name: &str,
     options: &ConfigOptions,
-    validators: &[ValidatorEntry],
+    schemas: &[&[ConfigDefinition]],
 ) -> Result<ConfigOptions, Error> {
     let options = upper_case_config_options(options);
-    for (registered_name, registered_config_def) in validators {
-        if name.to_uppercase() == *registered_name.to_uppercase() {
-            let mut sanitized_options = ConfigOptions::default();
-            let mut errors = vec![];
-            for x in *registered_config_def {
-                if let Some(raw) = options.get(&x.name.to_uppercase()) {
-                    let parsed = match parse_value(raw, &x.type_discriminant) {
-                        Ok(v) => v,
-                        Err(e) => {
-                            errors.push(format!(
-                                "Validation of Config Option `{}` failed: {e}",
-                                x.name
-                            ));
-                            continue;
-                        }
-                    };
-
-                    if let Err(e) = (x.validation)(&parsed) {
+    let mut sanitized_options = ConfigOptions::default();
+    let mut errors = vec![];
+    for schema in schemas {
+        for x in *schema {
+            if let Some(raw) = options.get(&x.name.to_uppercase()) {
+                let parsed = match parse_value(raw, &x.type_discriminant) {
+                    Ok(v) => v,
+                    Err(e) => {
                         errors.push(format!(
-                            "Validation of Config Option `{}` failed: {}",
-                            x.name, e
+                            "Validation of Config Option `{}` failed: {e}",
+                            x.name
                         ));
                         continue;
                     }
+                };
 
-                    sanitized_options.insert(x.name.to_owned(), raw.clone());
-                } else {
-                    let Some(ref default_value) = x.default_value else {
-                        errors.push(format!("Required Config Option `{}` is missing.", x.name));
-                        continue;
-                    };
-
-                    sanitized_options.insert(x.name.to_owned(), default_value.default_string());
+                if let Err(e) = (x.validation)(&parsed) {
+                    errors.push(format!(
+                        "Validation of Config Option `{}` failed: {}",
+                        x.name, e
+                    ));
+                    continue;
                 }
-            }
 
-            if errors.is_empty() {
-                return Ok(sanitized_options);
+                sanitized_options.insert(x.name.to_owned(), raw.clone());
+            } else {
+                let Some(ref default_value) = x.default_value else {
+                    errors.push(format!("Required Config Option `{}` is missing.", x.name));
+                    continue;
+                };
+
+                sanitized_options.insert(x.name.to_owned(), default_value.default_string());
             }
-            return Err(errors.join("\n").into());
         }
     }
 
-    Err(format!("{} not found", name).into())
-}
-
-pub fn exists(name: &str, validators: &[ValidatorEntry]) -> bool {
-    for (registered_name, _) in validators {
-        if *registered_name.to_uppercase() == name.to_uppercase() {
-            return true;
-        }
+    if errors.is_empty() {
+        Ok(sanitized_options)
+    } else {
+        Err(errors.join("\n").into())
     }
-    false
 }
