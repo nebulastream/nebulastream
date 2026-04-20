@@ -23,6 +23,7 @@
 #include <Rules/Semantic/OriginIdInferenceRule.hpp>
 #include <Rules/Static/DecideJoinTypesRule.hpp>
 #include <Rules/Static/DecideMemoryLayoutRule.hpp>
+#include <Rules/Static/PredicatePushdownRule.hpp>
 #include <Rules/Static/RedundantProjectionRemovalRule.hpp>
 #include <Rules/Static/RedundantUnionRemovalRule.hpp>
 #include <QueryOptimizerConfiguration.hpp>
@@ -40,6 +41,7 @@ RuleBasedOptimizer::RuleBasedOptimizer(QueryOptimizerConfiguration defaultQueryO
     ruleManager.addRule(RedundantProjectionRemovalRule{});
     ruleManager.addRule(OriginIdInferenceRule{});
     ruleManager.addRule(FixedPlanStructureBarrier{});
+    ruleManager.addRule(PredicatePushdownRule{});
 
     ruleSequence = ruleManager.getSequence();
 }
