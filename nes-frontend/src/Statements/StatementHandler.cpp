@@ -85,12 +85,13 @@ SourceStatementHandler::operator()(const CreatePhysicalSourceStatement& statemen
             hostPolicy);
     }();
 
-    if (const auto created
-        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, statement.sourceConfig, statement.parserConfig))
+    auto created
+        = sourceCatalog->addPhysicalSource(*logicalSource, statement.sourceType, host, statement.sourceConfig, statement.parserConfig);
+    if (created)
     {
         return CreatePhysicalSourceStatementResult{created.value()};
     }
-    return std::unexpected{InvalidConfigParameter("Invalid configuration: {}", statement)};
+    return std::unexpected{created.error()};
 }
 
 std::expected<ShowLogicalSourcesStatementResult, Exception>
@@ -191,12 +192,13 @@ std::expected<CreateSinkStatementResult, Exception> SinkStatementHandler::operat
             hostPolicy);
     }();
 
-    if (const auto created = sinkCatalog->addSinkDescriptor(
-            toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig))
+    auto created = sinkCatalog->addSinkDescriptor(
+        toUpperCase(statement.name), statement.schema, statement.sinkType, host, statement.sinkConfig, statement.formatConfig);
+    if (created)
     {
         return CreateSinkStatementResult{created.value()};
     }
-    return std::unexpected{SinkAlreadyExists(statement.name)};
+    return std::unexpected{created.error()};
 }
 
 std::expected<ShowSinksStatementResult, Exception> SinkStatementHandler::operator()(const ShowSinksStatement& statement) const

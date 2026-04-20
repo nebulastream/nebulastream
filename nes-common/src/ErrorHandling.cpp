@@ -142,15 +142,29 @@ void tryLogCurrentException()
     }
     catch (const Exception& e)
     {
-        NES_ERROR("{}", formatLogMessage(e))
+        auto msg = formatLogMessage(e);
+        NES_ERROR("{}", msg)
+        if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
+        {
+            fmt::print(stderr, "{}\n", msg);
+        }
     }
     catch (const std::exception& e)
     {
-        NES_ERROR("{}", formatLogMessage(e));
+        auto msg = formatLogMessage(e);
+        NES_ERROR("{}", msg);
+        if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
+        {
+            fmt::print(stderr, "{}\n", msg);
+        }
     }
     catch (...) /// NOLINT(no-raw-catch-all)
     {
         NES_ERROR("failed to process with unknown error\n")
+        if (auto logger = Logger::getInstance(); logger && !logger->isConsoleLoggingEnabled())
+        {
+            fmt::print(stderr, "failed to process with unknown error\n");
+        }
     }
 }
 

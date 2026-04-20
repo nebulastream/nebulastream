@@ -30,7 +30,6 @@ sinks:
     type: Print
     config:
       output_format: CSV
-    parser_config: { }
 
 logical:
   - name: GENERATOR_SOURCE
