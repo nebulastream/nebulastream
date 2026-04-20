@@ -1,0 +1,20 @@
+[package]
+name = "generator_source"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_buffer_bindings.workspace = true
+nes_buffer_runtime.workspace = true
+tracing = "0.1"
+linkme = "0.3"
+nes_source_validation.workspace = true
+nes_source_runtime.workspace = true
+nes_io_runtime.workspace = true
+tokio = { features = ["time", "macros"], workspace = true }
+async-trait = { workspace = true }
+rand = "0.8"
+rand_distr = "0.4"

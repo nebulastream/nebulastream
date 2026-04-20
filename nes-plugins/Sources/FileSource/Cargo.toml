@@ -1,0 +1,15 @@
+[package]
+name = "file_source"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_buffer_runtime.workspace = true
+linkme.workspace = true
+nes_source_validation.workspace = true
+nes_source_runtime.workspace = true
+tokio = { features = ["io-util", "macros"], workspace = true }
+async-trait = { workspace = true }
