@@ -14,29 +14,41 @@
 
 #pragma once
 
-#include <Concepts.hpp>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <string_view>
+#include <vector>
+
+#include <RawBufferIndex.hpp>
+
+#include <RawValueParser.hpp>
 
 namespace NES
 {
 
-/// Implements format-specific (CSV, JSON, Protobuf, etc.) indexing of raw buffers.
+/// Implements format-specific (CSV, JSON, XML, etc.) indexing of raw buffers.
 /// The InputFormatIndexerTask uses the InputFormatIndexer to determine byte offsets of all fields of a given tuple and all tuples of a given buffer.
 /// The offsets allow the InputFormatIndexerTask to parse only the fields that it needs to for the particular query.
 /// @Note All InputFormatIndexer implementations must be thread-safe. NebulaStream's query engine concurrently executes InputFormatIndexerTasks.
 ///       Thus, the InputFormatIndexerTask calls the interface functions of the InputFormatIndexer concurrently.
-template <typename T>
 class InputFormatIndexer
 {
-    friend T;
+public:
+    explicit InputFormatIndexer() = default;
+    virtual ~InputFormatIndexer() = default;
 
-private:
-    /// We can't constrain 'T' using the InputFormatIndexerType concept, since it is not satisfied when the 'InputFormatIndexer' is initiated.
-    /// Thus, we delay asserting the constraints of the concept by applying it in the constructor.
-    InputFormatIndexer()
-    {
-        /// Assert that the InputFormatIndexer implementation adheres to the InputFormatIndexerType concept, which imposes an interface on
-        /// all InputFormatIndexers.
-        static_assert(InputFormatIndexerType<T>);
-    }
+    [[nodiscard]] virtual std::unique_ptr<RawBufferIndex> indexRawBuffer(std::string_view rawBuffer) const = 0;
+
+    [[nodiscard]] virtual std::string_view getTupleDelimitingBytes() const = 0;
+    [[nodiscard]] virtual std::string_view getFieldDelimitingBytes() const = 0;
+    [[nodiscard]] virtual QuotationType getQuotationType() const = 0;
+    [[nodiscard]] virtual const std::vector<std::string>& getNullValues() const = 0;
+
+    friend std::ostream& operator<<(std::ostream& out, const InputFormatIndexer& indexer);
+
+protected:
+    /// Implemented by children of InputFormatIndexer. Called by '<<'. Allows to use '<<' on abstract InputFormatIndexer.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 }

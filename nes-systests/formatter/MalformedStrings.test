@@ -1,6 +1,6 @@
 # name: formatter/MalformedStrings.test
 # description: testing malformed strings, e.g., 3_14 instead of 3.14
-# groups: [Formatter]
+# groups: [Formatter, JSON]
 
 CREATE LOGICAL SOURCE csvStreamFloating(id UINT64 NOT NULL, value FLOAT64, isMalformedString BOOLEAN, metadata VARSIZED);
 CREATE PHYSICAL SOURCE FOR csvStreamFloating TYPE File;

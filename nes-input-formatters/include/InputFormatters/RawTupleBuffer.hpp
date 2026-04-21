@@ -21,37 +21,24 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Concepts.hpp>
 #include <ErrorHandling.hpp>
-#include <PipelineExecutionContext.hpp>
 
 namespace NES
 {
+
 using FieldIndex = uint32_t;
 using SequenceNumberType = SequenceNumber::Underlying;
 
-/// Takes a tuple buffer containing raw, unformatted data and wraps it into an object that fulfills the following purposes:
-/// 1. The RawTupleBuffer allows its users to operate on string_views, instead of handling raw pointers (which a TupleBuffer would require)
-/// 2. It exposes only those functions of the TupleBuffer that are required for formatting
-/// 3. It selectively exposes the reduced set of functions, to prohibit setting, e.g., the SequenceNumber in InputFormatIndexer
-/// 4. It exposes functions with more descriptive names, e.g., `getNumberOfBytes()` instead of `getNumberOfTuples`
-/// 5. The type (RawTupleBuffer) makes it clear that we are dealing with raw data and not with (formatted) tuples
-
-template <InputFormatIndexerType FormatterType>
-class InputFormatter;
-
+/// Wraps a TupleBuffer that contains raw, unformatted data. Exposes a string_view over the payload for indexers/parsers while keeping
+/// the underlying TupleBuffer reachable only to classes that legitimately need it (e.g. SpanningTupleBufferState).
 class RawTupleBuffer
 {
-    template <InputFormatIndexerType FormatterType>
-    friend class InputFormatter;
-
 public:
     RawTupleBuffer() = default;
     ~RawTupleBuffer() = default;
     explicit RawTupleBuffer(TupleBuffer rawTupleBuffer)
         : rawBuffer(std::move(rawTupleBuffer))
         , bufferView(rawBuffer.getAvailableMemoryArea<char>().data(), rawBuffer.getNumberOfTuples()) { };
-
 
     RawTupleBuffer(RawTupleBuffer&& other) noexcept = default;
     RawTupleBuffer& operator=(RawTupleBuffer&& other) noexcept = default;
@@ -60,38 +47,15 @@ public:
 
     [[nodiscard]] size_t getNumberOfBytes() const noexcept { return rawBuffer.getNumberOfTuples(); }
 
-    [[nodiscard]] size_t getBufferSize() const noexcept { return rawBuffer.getBufferSize(); }
-
     [[nodiscard]] SequenceNumber getSequenceNumber() const noexcept { return rawBuffer.getSequenceNumber(); }
-
-    [[nodiscard]] ChunkNumber getChunkNumber() const noexcept { return rawBuffer.getChunkNumber(); }
-
-    [[nodiscard]] OriginId getOriginId() const noexcept { return rawBuffer.getOriginId(); }
 
     [[nodiscard]] std::string_view getBufferView() const noexcept { return bufferView; }
 
-    [[nodiscard]] uint64_t getNumberOfTuples() const noexcept { return rawBuffer.getNumberOfTuples(); }
-
-    void setNumberOfTuples(const uint64_t numberOfTuples) const noexcept { rawBuffer.setNumberOfTuples(numberOfTuples); }
-
-    /// Allows to emit the underlying buffer without exposing it to the outside
-    void emit(PipelineExecutionContext& pec, const PipelineExecutionContext::ContinuationPolicy continuationPolicy) const
-    {
-        pec.emitBuffer(rawBuffer, continuationPolicy);
-    }
-
-    void repeat(PipelineExecutionContext& pec) const { pec.repeatTask(rawBuffer, std::chrono::milliseconds{0}); }
-
     [[nodiscard]] const TupleBuffer& getRawBuffer() const noexcept { return rawBuffer; }
-
-    void setSpanningTuple(const std::string_view spanningTuple) { this->bufferView = spanningTuple; }
 
 private:
     TupleBuffer rawBuffer;
     std::string_view bufferView;
-
-    /// Used by InputFormatter to pass an arena-allocated spanning tuple to an InputFormatIndexer
-    explicit RawTupleBuffer(const char* rawDataPtr, const size_t sizeOfSpanningTuple) : bufferView(rawDataPtr, sizeOfSpanningTuple) { };
 };
 
 /// A staged buffer represents a raw buffer that the input formatter cannot process independently, because it contains spanning tuples.
@@ -142,9 +106,6 @@ public:
     [[nodiscard]] size_t getSizeOfBufferInBytes() const { return this->sizeOfBufferInBytes; }
 
     [[nodiscard]] const RawTupleBuffer& getRawTupleBuffer() const { return rawBuffer; }
-
-    void setSpanningTuple(const std::string_view spanningTuple) { rawBuffer.setSpanningTuple(spanningTuple); }
-
 
 protected:
     RawTupleBuffer rawBuffer;

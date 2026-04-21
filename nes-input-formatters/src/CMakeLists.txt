@@ -11,11 +11,13 @@
 # limitations under the License.
 
 add_source_files(nes-input-formatters
+        InputFormatIndexer.cpp
         SequenceShredder.cpp
         SpanningTupleBuffer.cpp
         SpanningTupleBufferState.cpp
         RawValueParser.cpp
-        InputFormatterTupleBufferRef.cpp
+        InputFormatter.cpp
+        FieldOffsetRawBufferIndex.cpp
 )
 
 # Register plugins

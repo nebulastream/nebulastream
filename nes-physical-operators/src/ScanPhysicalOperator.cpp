@@ -26,7 +26,7 @@
 #include <Nautilus/Interface/RecordBuffer.hpp>
 #include <Util/StdInt.hpp>
 #include <ExecutionContext.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
+#include <InputFormatter.hpp>
 #include <PhysicalOperator.hpp>
 #include <val.hpp>
 
@@ -37,13 +37,13 @@ ScanPhysicalOperator::ScanPhysicalOperator(
     std::shared_ptr<TupleBufferRef> bufferRef, std::vector<Record::RecordFieldIdentifier> projections)
     : bufferRef(std::move(bufferRef))
     , projections(std::move(projections))
-    , isRawScan(std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef) != nullptr)
+    , isRawScan(std::dynamic_pointer_cast<InputFormatter>(this->bufferRef) != nullptr)
 {
 }
 
 void ScanPhysicalOperator::rawScan(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatterTupleBufferRef>(this->bufferRef);
+    auto inputFormatterBufferRef = std::dynamic_pointer_cast<InputFormatter>(this->bufferRef);
 
     if (not inputFormatterBufferRef->indexBuffer(recordBuffer, executionCtx.pipelineMemoryProvider.arena))
     {

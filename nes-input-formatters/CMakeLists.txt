@@ -30,8 +30,8 @@ target_include_directories(nes-input-formatters PUBLIC
         PRIVATE $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/private>)
 
 # 'Public' provider library, only exposing the provider and the TupleBufferRef
-add_library(nes-input-formatter-provider src/InputFormatterTupleBufferRefProvider.cpp)
-target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters nes-input-formatters-registry)
+add_library(nes-input-formatter-provider src/InputFormatterProvider.cpp)
+target_link_libraries(nes-input-formatter-provider PUBLIC nes-memory nes-executable PRIVATE nes-input-formatters-registry nes-input-formatters)
 target_include_directories(nes-input-formatter-provider PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/InputFormatterProvider>
         $<INSTALL_INTERFACE:include/nebulastream/>

@@ -33,7 +33,7 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
+#include <InputFormatterProvider.hpp>
 
 namespace NES
 {

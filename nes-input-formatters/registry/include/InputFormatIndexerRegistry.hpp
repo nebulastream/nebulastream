@@ -24,18 +24,17 @@
 #include <Nautilus/Interface/BufferRef/TupleBufferRef.hpp>
 #include <Sources/SourceDescriptor.hpp>
 #include <Util/Registry.hpp>
-#include <Concepts.hpp>
+#include <InputFormatIndexer.hpp>
 #include <InputFormatter.hpp>
-#include <InputFormatterTupleBufferRef.hpp>
 
 namespace NES
 {
 
 
-using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatterTupleBufferRef>;
+using InputFormatIndexerRegistryReturnType = std::unique_ptr<InputFormatter>;
 
-/// Allows specific InputFormatter to construct templated Formatter using the 'createInputFormatterWithIndexer()' method.
-/// Calls constructor of specific InputFormatter and exposes public members to it.
+/// Argument bundle handed to `InputFormatIndexerRegistry`-resolved factories. Owns the `ParserConfig` + memory provider and
+/// hands a `unique_ptr<InputFormatIndexer>` to `createInputFormatterWithIndexer()` to assemble a concrete `InputFormatter`.
 struct InputFormatIndexerRegistryArguments
 {
     InputFormatIndexerRegistryArguments(ParserConfig config, std::shared_ptr<TupleBufferRef> memoryProvider)
@@ -43,15 +42,14 @@ struct InputFormatIndexerRegistryArguments
     {
     }
 
-    const ParserConfig& getInputFormatterConfig() { return inputFormatIndexerConfig; }
+    [[nodiscard]] const ParserConfig& getInputFormatterConfig() const { return inputFormatIndexerConfig; }
+
+    [[nodiscard]] const TupleBufferRef& getInputMemoryProvider() const { return *memoryProvider; }
 
     /// Instantiates an InputFormatter with a specific input format indexer
-    template <InputFormatIndexerType IndexerType>
-    InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(IndexerType inputFormatIndexer)
+    InputFormatIndexerRegistryReturnType createInputFormatterWithIndexer(std::unique_ptr<InputFormatIndexer> inputFormatIndexer)
     {
-        auto inputFormatter
-            = InputFormatter<IndexerType>(std::move(inputFormatIndexer), std::move(memoryProvider), inputFormatIndexerConfig);
-        return std::make_unique<InputFormatterTupleBufferRef>(std::move(inputFormatter));
+        return std::make_unique<InputFormatter>(std::move(inputFormatIndexer), memoryProvider, inputFormatIndexerConfig);
     }
 
 private:

@@ -64,7 +64,6 @@
 #include <DistributedLogicalPlan.hpp>
 #include <DistributedQuery.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
 #include <ModelCatalog.hpp>
 #include <QueryId.hpp>
 #include <QueryOptimizer.hpp>
