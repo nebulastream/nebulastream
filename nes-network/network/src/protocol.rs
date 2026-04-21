@@ -13,6 +13,7 @@
 */
 
 use crate::channel::Channel;
+use bytes::Bytes;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Debug, Display, Formatter};
 use std::net::SocketAddr;
@@ -124,8 +125,11 @@ pub struct TupleBuffer {
     pub chunk_number: u64,
     pub number_of_tuples: u64,
     pub last_chunk: bool,
-    pub data: Vec<u8>,
-    pub child_buffers: Vec<Vec<u8>>,
+    /// Zero-copy on the sender side: the plugin constructs this directly from a
+    /// retain-counted `nes_buffer_runtime::TupleBuffer` via `Bytes::from_owner`.
+    /// On the receiver side this is allocated by serde during decode.
+    pub data: Bytes,
+    pub child_buffers: Vec<Bytes>,
 }
 
 impl TupleBuffer {

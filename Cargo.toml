@@ -24,8 +24,10 @@ members = [
     "nes-sources/rust/nes-source-runtime",
     "nes-plugins/Sinks/PrintSink",
     "nes-plugins/Sinks/FileSink",
+    "nes-plugins/Sinks/NetworkSink",
     "nes-plugins/Sources/FileSource",
-    "nes-plugins/Sources/GeneratorSource"
+    "nes-plugins/Sources/GeneratorSource",
+    "nes-plugins/Sources/NetworkSource"
 ]
 
 # Shared dependency declarations. Member crates use `dep.workspace = true`.

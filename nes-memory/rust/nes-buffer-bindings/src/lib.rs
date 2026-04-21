@@ -24,6 +24,29 @@ pub mod ffi {
         unsafe fn buffer_num_children(handle: *mut MemorySegment) -> usize;
         #[namespace = "NES::detail"]
         unsafe fn buffer_number_of_tuples(handle: *mut MemorySegment) -> usize;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_sequence_number(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_origin_id(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_chunk_number(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_watermark(handle: *mut MemorySegment) -> u64;
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_last_chunk(handle: *mut MemorySegment) -> bool;
+
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_number_of_tuples(handle: *mut MemorySegment, n: usize);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_sequence_number(handle: *mut MemorySegment, seq: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_origin_id(handle: *mut MemorySegment, origin: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_chunk_number(handle: *mut MemorySegment, chunk: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_watermark(handle: *mut MemorySegment, watermark: u64);
+        #[namespace = "NES::detail"]
+        unsafe fn buffer_set_last_chunk(handle: *mut MemorySegment, last_chunk: bool);
     }
 
     extern "Rust" {
@@ -34,6 +57,10 @@ pub mod ffi {
         include!("BufferBindings.hpp");
         type BufferProviderHandle;
         fn try_allocate(handle: &SharedPtr<BufferProviderHandle>) -> *mut MemorySegment;
+        fn try_allocate_unpooled(
+            handle: &SharedPtr<BufferProviderHandle>,
+            size: usize,
+        ) -> *mut MemorySegment;
         unsafe fn wake_on_buffer_available(
             handle: &SharedPtr<BufferProviderHandle>,
             done: fn(Box<OnBufferAvailable>) -> bool,

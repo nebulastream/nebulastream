@@ -165,6 +165,7 @@ fn source_create_handle(
         let entered_ = span.enter();
         nes_source_runtime::start_source(
             &query_context.source_type,
+            query_context.source_id as u64,
             &config,
             runtime,
             Emitter { context },

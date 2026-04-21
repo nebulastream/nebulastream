@@ -607,9 +607,7 @@ bool ThreadPool::WorkerThread::operator()(WorkTask& task) const
         );
         pool.statistic->onEvent(TaskExecutionStart{WorkerThread::id, task.queryId, pipeline->id, taskId, task.buf.getNumberOfTuples()});
 
-        {
-            pipeline->stage->execute(task.buf, pec);
-        }
+        pipeline->stage->execute(task.buf, pec);
         pool.statistic->onEvent(TaskExecutionComplete{WorkerThread::id, task.queryId, pipeline->id, taskId});
         return true;
     }

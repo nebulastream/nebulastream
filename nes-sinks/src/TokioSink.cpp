@@ -155,6 +155,7 @@ static std::string configToFlatJson(const DescriptorConfig::Config& config)
 static DescriptorConfig::Config addHeader(DescriptorConfig::Config config, std::shared_ptr<const Schema> schema)
 {
     config.insert_or_assign(UppercaseString("HEADER"), SchemaFormatter(schema).getFormattedSchema());
+    config.insert_or_assign(UppercaseString("TUPLE_SIZE"), std::to_string(schema->getSizeOfSchemaInBytes()));
     return config;
 }
 
@@ -162,13 +163,18 @@ struct TokioSinkContext
 {
     std::optional<size_t> stopEpoch;
     std::atomic_size_t epochCounter;
+    folly::Synchronized<std::optional<std::string>> asyncError;
     std::shared_ptr<SinkContext> context;
     rust::Box<SinkHandle> handle;
 
     TokioSinkContext(const QueryId& queryId, PipelineId pipelineId, const std::string& sinkType, const SinkDescriptor& descriptor)
         : epochCounter(0)
         , context(std::make_shared<SinkContext>(
-              [](std::string_view error) { NES_ERROR("Sink Failed: {}", error); },
+              [this](std::string_view error)
+              {
+                  NES_ERROR("Sink Failed: {}", error);
+                  this->asyncError.wlock()->emplace(error);
+              },
               [this](size_t epoch)
               {
                   NES_INFO("Sink Flushed: {}", epoch);
@@ -184,6 +190,15 @@ struct TokioSinkContext
               IORuntime::get().id(),
               context))
     {
+    }
+
+    /// Throws CannotOpenSink if the async sink task reported an error via on_error.
+    void throwIfAsyncError() const
+    {
+        if (auto err = *asyncError.rlock())
+        {
+            throw CannotOpenSink("TokioSink failed: {}", *err);
+        }
     }
 
     ~TokioSinkContext() { NES_DEBUG("TokioSink::~Context()"); }
@@ -207,6 +222,7 @@ void TokioSink::start(PipelineExecutionContext& pec)
 
 void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext& pec)
 {
+    context->throwIfAsyncError();
     auto currentBuffer = std::optional(inputBuffer);
     while (currentBuffer)
     {
@@ -228,6 +244,7 @@ void TokioSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionContext
 
 void TokioSink::stop(PipelineExecutionContext& pec)
 {
+    context->throwIfAsyncError();
     auto currentBuffer = backpressureHandler.popFront();
     while (currentBuffer)
     {

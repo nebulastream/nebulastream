@@ -58,7 +58,8 @@ __itt_string_handle* ittStartQuery = __itt_string_handle_create("Start");
 __itt_string_handle* ittStopQuery = __itt_string_handle_create("Stop");
 }
 
-extern void initNetworkServices(const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options);
+extern void initNetworkServices(
+    const std::string& connectionAddr, const NES::Host& host, const NES::NetworkOptions& options, std::size_t ioRuntimeIdx);
 
 namespace NES
 {
@@ -98,9 +99,8 @@ SingleNodeWorker::SingleNodeWorker(const SingleNodeWorkerConfiguration& configur
                 .senderQueueSize = static_cast<uint32_t>(networkConfig.senderQueueSize.getValue()),
                 .maxPendingAcks = static_cast<uint32_t>(networkConfig.maxPendingAcks.getValue()),
                 .receiverQueueSize = static_cast<uint32_t>(networkConfig.receiverQueueSize.getValue()),
-                .senderIOThreads = static_cast<uint32_t>(networkConfig.senderIOThreads.getValue()),
-                .receiverIOThreads = static_cast<uint32_t>(networkConfig.receiverIOThreads.getValue()),
-            });
+            },
+            IORuntime::get().id());
     }
 }
 

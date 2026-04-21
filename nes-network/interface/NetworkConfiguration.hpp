@@ -59,18 +59,7 @@ public:
            "Default size of the receiver data queue per network channel. May be overridden per NetworkSource.",
            {std::make_shared<NumberValidation>()}};
 
-    /// Number of IO threads for the sender tokio runtime. 0 means use the number of available cores.
-    UIntOption senderIOThreads
-        = {"sender_io_threads", "1", "Number of IO threads for the sender network runtime. 0 means use the number of available cores."};
-
-    /// Number of IO threads for the receiver tokio runtime. 0 means use the number of available cores.
-    UIntOption receiverIOThreads
-        = {"receiver_io_threads", "1", "Number of IO threads for the receiver network runtime. 0 means use the number of available cores."};
-
 private:
-    std::vector<BaseOption*> getOptions() override
-    {
-        return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize, &senderIOThreads, &receiverIOThreads};
-    }
+    std::vector<BaseOption*> getOptions() override { return {&senderQueueSize, &maxPendingAcks, &receiverQueueSize}; }
 };
 }

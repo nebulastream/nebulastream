@@ -10,19 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-[package]
-name = "network_bindings"
-version = "0.1.0"
-edition = "2024"
-
-[lib]
-path = "lib.rs"
-
-[dependencies]
-# Generate C++ bindings
-cxx = "1.0"
-
-tokio = { version = "1.40.0", features = ["rt-multi-thread", "sync", "time"] }
-nes_network.workspace = true
-nes_io_runtime.workspace = true
-tracing = "0.1.41"
+target_link_rust_lib(nes-sources network_source)

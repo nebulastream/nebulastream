@@ -34,6 +34,14 @@ pub trait AsyncSource {
     async fn start(&mut self) -> Result<()>;
     async fn receive(&mut self, provider: &mut BufferProvider) -> Result<SourceResult>;
     async fn stop(&mut self) -> Result<()>;
+
+    /// If true, the source populates all buffer metadata
+    /// (sequence_number, origin_id, chunk_number, watermark, last_chunk, number_of_tuples)
+    /// itself; the runtime does not overwrite them. Used by sources that preserve
+    /// wire-level metadata end-to-end (e.g. NetworkSource). Defaults to false.
+    fn adds_metadata(&self) -> bool {
+        false
+    }
 }
 
 pub enum SourceCommand {
@@ -46,16 +54,27 @@ pub static SOURCE_CREATION_FUNCTIONS: [(&'static str, &'static SourceCreateFn)];
 
 async fn run_source(
     mut source: Box<dyn AsyncSource + Send>,
+    origin_id: u64,
     commands: &mut Receiver<SourceCommand>,
     emit: &mut impl AsyncEmitter,
     mut buffer_provider: BufferProvider,
 ) -> Result<()> {
     source.start().await?;
+    let adds_metadata = source.adds_metadata();
+    let mut sequence_number: u64 = 1; // INITIAL sequence number (matches DataHandler behavior)
     'run: loop {
         select! {
             result = source.receive(&mut buffer_provider) => {
                 match result? {
-                    SourceResult::Data(buffer, size) => {
+                    SourceResult::Data(mut buffer, size) => {
+                        if !adds_metadata {
+                            buffer.set_origin_id(origin_id);
+                            buffer.set_sequence_number(sequence_number);
+                            sequence_number += 1;
+                            buffer.set_chunk_number(1); // INITIAL_CHUNK_NUMBER
+                            buffer.set_last_chunk(true);
+                            buffer.set_number_of_tuples(size);
+                        }
                         emit.data(buffer, size).await.expect("Bridge thread should remain alive");
                     },
                     SourceResult::EoS => {
@@ -89,6 +108,7 @@ fn construct_source(name: &str, config: &ConfigOptions) -> Box<dyn AsyncSource +
 
 pub fn start_source<T: AsyncEmitter + Send + 'static>(
     name: &str,
+    origin_id: u64,
     config: &ConfigOptions,
     runtime: Arc<IORuntime>,
     mut emit: T,
@@ -99,7 +119,7 @@ pub fn start_source<T: AsyncEmitter + Send + 'static>(
     let source = construct_source(name, config);
     runtime.runtime.spawn(
         async move {
-            match run_source(source, &mut rx, &mut emit, buffer_provider).await {
+            match run_source(source, origin_id, &mut rx, &mut emit, buffer_provider).await {
                 Ok(()) => {}
                 Err(error_message) => {
                     let _ = emit.error(error_message).await;

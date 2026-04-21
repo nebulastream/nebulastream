@@ -142,7 +142,6 @@ struct DetachedTask
 struct DataHandler final : DataEmitter
 {
     OriginId originId;
-    SequenceNumber::Underlying sequenceNumber = SequenceNumber::INITIAL;
     SourceReturnType::AsyncEmitFunction emitFunction;
     std::shared_ptr<AsyncSemaphore> semaphore = std::make_shared<AsyncSemaphore>(4);
     BackpressureListener backpressureListener;
@@ -175,14 +174,12 @@ struct DataHandler final : DataEmitter
         return AsyncFunctionResult::CallbackRegistered;
     }
 
-    AsyncFunctionResult onData(TupleBuffer buffer, size_t size, AsyncCompletionToken token) override
+    AsyncFunctionResult onData(TupleBuffer buffer, size_t /*size*/, AsyncCompletionToken token) override
     {
-        buffer.setOriginId(originId);
-        buffer.setSequenceNumber(SequenceNumber(sequenceNumber++));
-        buffer.setChunkNumber(INITIAL_CHUNK_NUMBER);
-        buffer.setLastChunk(true);
-        buffer.setNumberOfTuples(size);
-
+        /// Metadata (origin_id, sequence_number, chunk_number, last_chunk, number_of_tuples)
+        /// is populated in Rust `run_source` before the buffer is handed to us, so we do
+        /// not touch it here. This preserves wire-level metadata for sources like NetworkSource
+        /// that set their own.
         return runAsync(
             emitFunction(
                 originId,

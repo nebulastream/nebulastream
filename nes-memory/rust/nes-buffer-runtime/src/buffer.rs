@@ -56,6 +56,45 @@ impl TupleBuffer {
         unsafe { ffi::buffer_num_children(self.handle) }
     }
 
+    pub fn get_sequence_number(&self) -> u64 {
+        unsafe { ffi::buffer_sequence_number(self.handle) }
+    }
+
+    pub fn get_origin_id(&self) -> u64 {
+        unsafe { ffi::buffer_origin_id(self.handle) }
+    }
+
+    pub fn get_chunk_number(&self) -> u64 {
+        unsafe { ffi::buffer_chunk_number(self.handle) }
+    }
+
+    pub fn get_watermark(&self) -> u64 {
+        unsafe { ffi::buffer_watermark(self.handle) }
+    }
+
+    pub fn is_last_chunk(&self) -> bool {
+        unsafe { ffi::buffer_last_chunk(self.handle) }
+    }
+
+    pub fn set_number_of_tuples(&mut self, n: usize) {
+        unsafe { ffi::buffer_set_number_of_tuples(self.handle, n) }
+    }
+    pub fn set_sequence_number(&mut self, seq: u64) {
+        unsafe { ffi::buffer_set_sequence_number(self.handle, seq) }
+    }
+    pub fn set_origin_id(&mut self, origin: u64) {
+        unsafe { ffi::buffer_set_origin_id(self.handle, origin) }
+    }
+    pub fn set_chunk_number(&mut self, chunk: u64) {
+        unsafe { ffi::buffer_set_chunk_number(self.handle, chunk) }
+    }
+    pub fn set_watermark(&mut self, watermark: u64) {
+        unsafe { ffi::buffer_set_watermark(self.handle, watermark) }
+    }
+    pub fn set_last_chunk(&mut self, last_chunk: bool) {
+        unsafe { ffi::buffer_set_last_chunk(self.handle, last_chunk) }
+    }
+
     pub fn leak(self) -> *mut MemorySegment {
         let handle = self.handle;
         mem::forget(self);

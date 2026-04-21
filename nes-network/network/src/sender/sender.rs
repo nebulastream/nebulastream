@@ -17,14 +17,10 @@ use crate::channel::Communication;
 use crate::protocol::*;
 use crate::sender::channel::{ChannelCommand, ChannelCommandQueue};
 use std::marker::PhantomData;
-use std::sync::{Arc, Mutex};
-use std::time::Duration;
-use tokio::runtime::Runtime;
+use std::sync::Arc;
+use tokio::runtime::Handle;
 use tokio::sync::oneshot;
 use tracing::{Instrument, debug, info_span};
-
-/// Timeout for graceful tokio runtime shutdown
-const RUNTIME_SHUTDOWN_TIMEOUT: Duration = Duration::from_secs(1);
 
 /// Configuration for sender-side network channels.
 #[derive(Clone, Debug)]
@@ -48,99 +44,31 @@ impl Default for SenderConfig {
 ///
 /// `SenderChannel` represents an active data channel to a specific `ReceiverChannel`.
 /// Each channel maintains its own dedicated network connection with independent
-/// backpressure and flow control. It provides non-blocking send operations and
-/// explicit flush control with acknowledgment-based reliability.
-///
-/// # Backpressure Handling
-///
-/// The channel has a bounded internal queue. When the queue is full, `try_send_data`
-/// returns `TrySendDataResult::Full`, allowing the caller to apply backpressure or
-/// buffer data locally.
-///
-/// # Example
-///
-/// ```ignore
-/// let channel = network_service.register_channel(
-///     connection_id,
-///     channel_id,
-/// )?;
-///
-/// match channel.try_send_data(buffer) {
-///     TrySendDataResult::Ok => {},
-///     TrySendDataResult::Full(buffer) => {
-///         // Apply backpressure
-///     },
-///     TrySendDataResult::Closed(buffer) => {
-///         // Channel was closed
-///     },
-/// }
-///
-/// // Ensure all data is sent and acknowledged
-/// channel.flush()?;
-/// ```
+/// backpressure and flow control. Send and flush operations are async and apply
+/// backpressure by parking the caller when the internal queue is full.
 pub struct SenderChannel {
     queue: ChannelCommandQueue,
 }
-
-/// Result of a non-blocking send operation on a `SenderChannel`.
-pub enum TrySendDataResult {
-    /// The buffer was successfully queued for sending.
-    Ok,
-    /// The channel's internal queue is full. The buffer is returned to the caller.
-    Full(TupleBuffer),
-    /// The channel is closed. The buffer is returned to the caller.
-    Closed(TupleBuffer),
-}
 impl SenderChannel {
-    /// Attempts to send a tuple buffer through this channel without blocking.
+    /// Sends a tuple buffer through this channel, awaiting queue capacity.
     ///
-    /// This method will immediately return with one of three results:
-    /// - `Ok`: The buffer was successfully queued for sending
-    /// - `Full(buffer)`: The internal queue is full, buffer returned to caller
-    /// - `Closed(buffer)`: The channel is closed, buffer returned to caller
-    ///
-    /// # Backpressure
-    ///
-    /// When `Full` is returned, the caller should apply backpressure to avoid
-    /// unbounded memory growth. The buffer is returned so it can be retried later
-    /// or handled appropriately.
-    pub fn try_send_data(&self, buffer: TupleBuffer) -> TrySendDataResult {
-        let result = self.queue.try_send(ChannelCommand::Data(buffer));
-        match result {
-            Ok(()) => TrySendDataResult::Ok,
-            // Cannot send more data, return the buffer back to the caller for retry
-            Err(async_channel::TrySendError::Full(ChannelCommand::Data(buffer))) => {
-                TrySendDataResult::Full(buffer)
-            }
-            // Channel was closed (e.g., receiver disconnected, network service shutdown, or explicit close).
-            // The buffer is returned so the caller can handle it appropriately.
-            Err(async_channel::TrySendError::Closed(ChannelCommand::Data(buffer))) => {
-                TrySendDataResult::Closed(buffer)
-            }
-            _ => unreachable!(),
+    /// Returns `Err(buffer)` if the channel has been closed.
+    pub async fn send_data(&self, buffer: TupleBuffer) -> std::result::Result<(), TupleBuffer> {
+        match self.queue.send(ChannelCommand::Data(buffer)).await {
+            Ok(()) => Ok(()),
+            Err(async_channel::SendError(ChannelCommand::Data(buffer))) => Err(buffer),
+            Err(_) => unreachable!(),
         }
     }
-    /// Flushes the network writer and checks if all data has been acknowledged.
-    ///
-    /// This blocking operation flushes the underlying network stream to ensure
-    /// buffered data is sent, then checks the state of the channel queues.
-    ///
-    /// # Returns
-    ///
-    /// - `Ok(true)`: All data has been sent and acknowledged (both pending and in-flight queues are empty)
-    /// - `Ok(false)`: Flush completed but data is still pending or awaiting acknowledgment
-    /// - `Err(_)`: The network service or channel was closed
-    ///
-    /// # Blocking
-    ///
-    /// This method blocks the calling thread. Do not call from async contexts without proper handling.
-    pub fn flush(&self) -> Result<bool> {
+
+    /// Flushes the network writer and waits for all pending data to be acknowledged.
+    pub async fn flush_async(&self) -> Result<bool> {
         let (tx, rx) = oneshot::channel();
         self.queue
-            .send_blocking(ChannelCommand::Flush(tx))
+            .send(ChannelCommand::Flush(tx))
+            .await
             .map_err(|_| "Network Service Closed")?;
-        rx.blocking_recv()
-            .map_err(|_| "Network Service Closed".into())
+        rx.await.map_err(|_| "Network Service Closed".into())
     }
 
     /// Closes this channel and propagates the close signal to the `ReceiverChannel`.
@@ -257,47 +185,18 @@ pub type Error = Box<dyn std::error::Error + Send + Sync>;
 /// - Handler sends `Close` message to receiver
 /// - Handler terminates with `ClosedBySoftware` status
 ///
-/// # Example
-///
-/// ```ignore
-/// let runtime = Runtime::new()?;
-/// let service = NetworkService::start(
-///     runtime,
-///     "localhost:8080".parse()?,
-///     TcpCommunication::default(),
-/// );
-///
-/// let channel = service.register_channel(
-///     "localhost:9090".parse()?,
-///     "my-channel".to_string(),
-/// )?;
-///
-/// channel.try_send_data(buffer)?;
-/// service.shutdown()?;
-/// ```
 pub struct NetworkService<C: Communication> {
-    runtime: Mutex<Option<Runtime>>,
     controller: NetworkServiceController,
     communication: PhantomData<C>,
 }
 impl<C: Communication + 'static> NetworkService<C> {
-    /// Starts the network service with the provided runtime and configuration.
+    /// Starts the network service on the provided tokio runtime.
     ///
-    /// This method takes ownership of the Tokio runtime and spawns the main
-    /// network dispatcher task. The service runs in the background, handling
-    /// connection establishment, channel registration, and data transmission.
-    ///
-    /// # Parameters
-    ///
-    /// - `runtime`: The Tokio runtime that will execute all async networking tasks
-    /// - `this_connection`: The identifier for this service instance
-    /// - `communication`: The communication layer (e.g., TCP, in-memory) to use
-    /// # Returns
-    ///
-    /// An `Arc<NetworkService>` that can be shared across threads and used to
-    /// register channels.
+    /// Spawns the main network dispatcher task on `runtime`. The service does
+    /// not own the runtime; lifetime of spawned tasks is bounded by the runtime
+    /// and by cascading cancellation when this service's controller is closed.
     pub fn start(
-        runtime: Runtime,
+        runtime: &Handle,
         this_connection: ThisConnectionIdentifier,
         communication: C,
     ) -> Arc<NetworkService<C>> {
@@ -318,7 +217,6 @@ impl<C: Communication + 'static> NetworkService<C> {
         );
 
         Arc::new(NetworkService {
-            runtime: Mutex::new(Some(runtime)),
             controller,
             communication: Default::default(),
         })
@@ -349,57 +247,35 @@ impl<C: Communication + 'static> NetworkService<C> {
     /// # Errors
     ///
     /// Returns an error if the network service has been shut down.
-    pub fn register_channel(
+    pub async fn register_channel(
         self: &Arc<NetworkService<C>>,
         connection: ConnectionIdentifier,
         channel: ChannelIdentifier,
         channel_config: SenderConfig,
     ) -> Result<SenderChannel> {
-        // Use a Rust oneshot channel (internal communication primitive) to receive
-        // the data channel handle from the network service
         let (tx, rx) = oneshot::channel();
-        let Ok(_) = self
-            .controller
-            .send_blocking(NetworkServiceControlCommand::RegisterChannel(
+        self.controller
+            .send(NetworkServiceControlCommand::RegisterChannel(
                 connection,
                 channel,
                 tx,
                 channel_config,
             ))
-        else {
-            return Err("Network Service Closed".into());
-        };
+            .await
+            .map_err(|_| "Network Service Closed")?;
 
-        // Receive the internal queue handle for the data channel
-        let internal = rx.blocking_recv().map_err(|_| "Network Service Closed")?;
+        let internal = rx.await.map_err(|_| "Network Service Closed")?;
         Ok(SenderChannel { queue: internal })
     }
 
     /// Shuts down the network service and all active channels.
     ///
-    /// This method initiates graceful shutdown of the service by stopping the
-    /// runtime. All spawned tasks (connection handlers, channel handlers) will
-    /// be terminated. The method will wait up to 1 second for tasks to complete
-    /// before forcefully shutting down.
-    ///
-    /// # Blocking
-    ///
-    /// This method blocks the calling thread for up to 1 second during shutdown.
-    ///
-    /// # Errors
-    ///
-    /// Returns an error if the service was already shut down.
+    /// Closes the control queue; the dispatcher task observes the close, drops
+    /// all connection handlers, and the layered cancellation described above
+    /// cascades through to every channel handler. The shared tokio runtime is
+    /// owned elsewhere and is unaffected.
     pub fn shutdown(self: Arc<NetworkService<C>>) -> Result<()> {
-        let runtime = self
-            .runtime
-            .lock()
-            .expect("BUG: Nothing should panic while holding the lock")
-            .take()
-            .ok_or("Networking Service was stopped")?;
-        // Shutdown the runtime with a 1-second timeout. All spawned tasks (connection handlers,
-        // channel handlers) are given up to 1 second to complete gracefully. After the timeout,
-        // any remaining tasks are forcibly dropped/aborted.
-        runtime.shutdown_timeout(RUNTIME_SHUTDOWN_TIMEOUT);
+        self.controller.close();
         Ok(())
     }
 }

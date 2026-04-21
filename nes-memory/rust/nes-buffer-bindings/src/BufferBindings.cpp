@@ -65,6 +65,61 @@ size_t buffer_number_of_tuples(MemorySegment* segment)
 {
     return segment->controlBlock->getNumberOfTuples();
 }
+
+uint64_t buffer_sequence_number(MemorySegment* segment)
+{
+    return segment->controlBlock->getSequenceNumber().getRawValue();
+}
+
+uint64_t buffer_origin_id(MemorySegment* segment)
+{
+    return segment->controlBlock->getOriginId().getRawValue();
+}
+
+uint64_t buffer_chunk_number(MemorySegment* segment)
+{
+    return segment->controlBlock->getChunkNumber().getRawValue();
+}
+
+uint64_t buffer_watermark(MemorySegment* segment)
+{
+    return segment->controlBlock->getWatermark().getRawValue();
+}
+
+bool buffer_last_chunk(MemorySegment* segment)
+{
+    return segment->controlBlock->isLastChunk();
+}
+
+void buffer_set_number_of_tuples(MemorySegment* segment, std::size_t n)
+{
+    segment->controlBlock->setNumberOfTuples(n);
+}
+
+void buffer_set_sequence_number(MemorySegment* segment, std::uint64_t seq)
+{
+    segment->controlBlock->setSequenceNumber(NES::SequenceNumber(seq));
+}
+
+void buffer_set_origin_id(MemorySegment* segment, std::uint64_t origin)
+{
+    segment->controlBlock->setOriginId(NES::OriginId(origin));
+}
+
+void buffer_set_chunk_number(MemorySegment* segment, std::uint64_t chunk)
+{
+    segment->controlBlock->setChunkNumber(NES::ChunkNumber(chunk));
+}
+
+void buffer_set_watermark(MemorySegment* segment, std::uint64_t watermark)
+{
+    segment->controlBlock->setWatermark(NES::Timestamp(watermark));
+}
+
+void buffer_set_last_chunk(MemorySegment* segment, bool last_chunk)
+{
+    segment->controlBlock->setLastChunk(last_chunk);
+}
 }
 
 NES::detail::MemorySegment* try_allocate(const std::shared_ptr<BufferProviderHandle>& handle)
@@ -74,6 +129,17 @@ NES::detail::MemorySegment* try_allocate(const std::shared_ptr<BufferProviderHan
         /// a little hack to keep the buffer alive: we increment the reference count once so if the ref count is reduced because the buffer
         /// is destroyed before rust can increase the ref count again, the buffer is not recycled: This requires that the rust side
         /// decrements the ref count
+        buffer->retain();
+        return NES::toRust(*buffer);
+    }
+    return nullptr;
+}
+
+NES::detail::MemorySegment* try_allocate_unpooled(const std::shared_ptr<BufferProviderHandle>& handle, std::size_t size)
+{
+    if (auto buffer = handle->getUnpooledBuffer(size))
+    {
+        /// Same retain/release dance as try_allocate: Rust side takes ownership via from_raw().
         buffer->retain();
         return NES::toRust(*buffer);
     }

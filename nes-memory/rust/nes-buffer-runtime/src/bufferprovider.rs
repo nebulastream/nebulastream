@@ -55,4 +55,14 @@ impl BufferProvider {
         }
         Some(Self::wrap_allocated_buffer(maybe_segment))
     }
+
+    /// Allocate an unpooled buffer of at least `size` bytes. Returns `None` if
+    /// the allocation fails.
+    pub fn try_allocate_unpooled(&self, size: usize) -> Option<TupleBuffer> {
+        let maybe_segment = ffi::try_allocate_unpooled(&self.handle, size);
+        if maybe_segment.is_null() {
+            return None;
+        }
+        Some(Self::wrap_allocated_buffer(maybe_segment))
+    }
 }

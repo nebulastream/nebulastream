@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Arc, LazyLock, Mutex};
-use tokio::runtime::Runtime;
+use tokio::runtime::{Handle, Runtime};
 
 static IO_RUNTIMES: LazyLock<Mutex<(usize, HashMap<usize, Arc<IORuntime>>)>> =
     LazyLock::new(|| Default::default());
@@ -43,4 +43,8 @@ pub fn shutdown_runtime(runtime_idx: usize) {
 pub fn get_runtime(idx: usize) -> Option<Arc<IORuntime>> {
     let guard = IO_RUNTIMES.lock().unwrap();
     guard.1.get(&idx).cloned()
+}
+
+pub fn get_handle(idx: usize) -> Option<Handle> {
+    get_runtime(idx).map(|rt| rt.runtime.handle().clone())
 }

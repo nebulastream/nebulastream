@@ -1,0 +1,16 @@
+[package]
+name = "network_source"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+nes_buffer_runtime.workspace = true
+nes_network.workspace = true
+nes_source_runtime.workspace = true
+nes_source_validation.workspace = true
+async-trait.workspace = true
+linkme.workspace = true
+tracing = "0.1"

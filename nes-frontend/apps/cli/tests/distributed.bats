@@ -543,7 +543,7 @@ EOF
   done
 
   grep "Backpressure" worker-2/singleNodeWorker.log
-  grep "NetworkSink was closed by other side" worker-2/singleNodeWorker.log
+  grep "NetworkSink was closed by the downstream receiver" worker-2/singleNodeWorker.log
   grep "TaskCallback::callOnFailure" worker-2/singleNodeWorker.log
 
   run DOCKER_NES_CLI status $query_id

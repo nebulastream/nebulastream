@@ -54,6 +54,9 @@ name = "bytes"
 version = "1.11.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1e748733b7cbc798e1434b6ac524f0c1ff2ab456fe201501e6497c8417a4fc33"
+dependencies = [
+ "serde",
+]
 
 [[package]]
 name = "cc"
@@ -743,6 +746,7 @@ name = "nes_network"
 version = "0.1.0"
 dependencies = [
  "async-channel",
+ "bytes",
  "futures",
  "ittapi",
  "pin-project",
@@ -869,8 +873,37 @@ name = "network_bindings"
 version = "0.1.0"
 dependencies = [
  "cxx",
+ "nes_io_runtime",
  "nes_network",
  "tokio",
+ "tracing",
+]
+
+[[package]]
+name = "network_sink"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "bytes",
+ "linkme",
+ "nes_buffer_bindings",
+ "nes_buffer_runtime",
+ "nes_network",
+ "nes_sink_runtime",
+ "nes_sink_validation",
+ "tracing",
+]
+
+[[package]]
+name = "network_source"
+version = "0.1.0"
+dependencies = [
+ "async-trait",
+ "linkme",
+ "nes_buffer_runtime",
+ "nes_network",
+ "nes_source_runtime",
+ "nes_source_validation",
  "tracing",
 ]
 
