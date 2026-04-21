@@ -5,7 +5,8 @@ use nes_source_runtime::{
     AsyncSource, Result, SOURCE_CREATION_FUNCTIONS, SourceCreateFn, SourceResult,
 };
 use nes_source_validation::{
-    ConfigDefinition, ConfigOptions, ConfigOptionsType, ConfigOptionsTypeTag, SOURCE_VALIDATOR,
+    ConfigDefinition, ConfigOptions, ConfigOptionsType, ConfigOptionsTypeTag, ConfigValue, Error,
+    SOURCE_VALIDATOR,
 };
 use rand::rngs::StdRng;
 use rand::{Rng, SeedableRng};
@@ -21,8 +22,30 @@ const GENERATOR_SCHEMA: &str = "GENERATOR_SCHEMA";
 const GENERATOR_RATE_TYPE: &str = "GENERATOR_RATE_TYPE";
 const GENERATOR_RATE_CONFIG: &str = "GENERATOR_RATE_CONFIG";
 const STOP_WHEN_SEQUENCE_FINISHES: &str = "STOP_GENERATOR_WHEN_SEQUENCE_FINISHES";
-const MAX_RUNTIME_MS: &str = "MAX_RUNTIME_MS";
+const MAX_RUNTIME: &str = "MAX_RUNTIME";
 const FLUSH_INTERVAL_MS: &str = "FLUSH_INTERVAL_MS";
+const FAIL_AFTER: &str = "FAIL_AFTER";
+
+fn validate_optional_duration(value: &ConfigValue) -> std::result::Result<(), Error> {
+    let ConfigValue::Text(s) = value else {
+        return Err("Expected a string".into());
+    };
+    if s.is_empty() {
+        return Ok(());
+    }
+    duration_str::parse(s)?;
+    Ok(())
+}
+
+fn parse_optional_duration(s: &str) -> std::result::Result<Option<Duration>, String> {
+    if s.is_empty() {
+        Ok(None)
+    } else {
+        duration_str::parse(s)
+            .map(Some)
+            .map_err(|e| format!("Invalid duration {s}: {e}"))
+    }
+}
 
 #[distributed_slice(SOURCE_VALIDATOR)]
 static GENERATOR_VALIDATOR: (&str, &[ConfigDefinition]) = (
@@ -42,8 +65,17 @@ static GENERATOR_VALIDATOR: (&str, &[ConfigDefinition]) = (
             STOP_WHEN_SEQUENCE_FINISHES,
             ConfigOptionsType::Text("NONE"),
         ),
-        ConfigDefinition::with_default(MAX_RUNTIME_MS, ConfigOptionsType::Number(-1)),
+        ConfigDefinition::with_default_and_check(
+            MAX_RUNTIME,
+            ConfigOptionsType::Text(""),
+            &validate_optional_duration,
+        ),
         ConfigDefinition::with_default(FLUSH_INTERVAL_MS, ConfigOptionsType::Number(10)),
+        ConfigDefinition::with_default_and_check(
+            FAIL_AFTER,
+            ConfigOptionsType::Text(""),
+            &validate_optional_duration,
+        ),
     ],
 );
 
@@ -512,6 +544,7 @@ struct GeneratorSource {
     rate: Box<dyn Rate>,
     flush_interval: Duration,
     max_runtime: Option<Duration>,
+    fail_after: Option<Duration>,
     start_time: Option<Instant>,
     interval_start: Option<SystemTime>,
     orphan_tuples: String,
@@ -521,6 +554,9 @@ struct GeneratorSource {
 #[async_trait]
 impl AsyncSource for GeneratorSource {
     async fn start(&mut self) -> Result<()> {
+        if self.fail_after == Some(Duration::ZERO) {
+            return Err("GeneratorSource configured to fail at start".into());
+        }
         self.start_time = Some(Instant::now());
         self.interval_start = Some(SystemTime::now());
         info!("Opening GeneratorSource");
@@ -529,6 +565,15 @@ impl AsyncSource for GeneratorSource {
 
     async fn receive(&mut self, provider: &mut BufferProvider) -> Result<SourceResult> {
         let start_time = self.start_time.unwrap();
+
+        if let Some(fail_after) = self.fail_after {
+            if start_time.elapsed() >= fail_after {
+                return Err(format!(
+                    "GeneratorSource configured to fail after {:?}",
+                    fail_after
+                ));
+            }
+        }
 
         if let Some(max_rt) = self.max_runtime {
             if start_time.elapsed() >= max_rt {
@@ -642,31 +687,24 @@ impl TryFrom<&ConfigOptions> for GeneratorSource {
         let rate_type = config.get(GENERATOR_RATE_TYPE).unwrap();
         let rate_config = config.get(GENERATOR_RATE_CONFIG).unwrap();
         let stop_str = config.get(STOP_WHEN_SEQUENCE_FINISHES).unwrap();
-        let max_runtime_ms: i64 = config
-            .get(MAX_RUNTIME_MS)
-            .unwrap()
-            .parse()
-            .map_err(|_| "Invalid max_runtime_ms")?;
+        let max_runtime = parse_optional_duration(config.get(MAX_RUNTIME).unwrap())?;
         let flush_interval_ms: u64 = config
             .get(FLUSH_INTERVAL_MS)
             .unwrap()
             .parse()
             .map_err(|_| "Invalid flush_interval_ms")?;
+        let fail_after = parse_optional_duration(config.get(FAIL_AFTER).unwrap())?;
 
         let stop_behavior = parse_generator_stop(stop_str)?;
         let generator = Generator::new(seed, stop_behavior, schema)?;
         let rate = create_rate(rate_type, rate_config)?;
-        let max_runtime = if max_runtime_ms >= 0 {
-            Some(Duration::from_millis(max_runtime_ms as u64))
-        } else {
-            None
-        };
 
         Ok(GeneratorSource {
             generator,
             rate,
             flush_interval: Duration::from_millis(flush_interval_ms),
             max_runtime,
+            fail_after,
             start_time: None,
             interval_start: None,
             orphan_tuples: String::new(),

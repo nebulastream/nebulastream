@@ -23,7 +23,7 @@ fn validate_ingestion(value: &ConfigValue) -> core::result::Result<(), Error> {
 static PRINT_SINK_VALIDATOR: (&'static str, &'static [ConfigDefinition]) = (
     SINK_NAME,
     &[
-        ConfigDefinition::with_default_and_validator(
+        ConfigDefinition::with_default_and_check(
             INGESTION_OPTION,
             ConfigOptionsType::Text("0s"),
             &validate_ingestion,

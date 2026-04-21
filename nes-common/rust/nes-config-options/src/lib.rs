@@ -36,11 +36,40 @@ pub enum ConfigValue {
     Number(isize),
 }
 
+impl ConfigValue {
+    fn to_config_string(&self) -> String {
+        match self {
+            ConfigValue::Text(text) => text.clone(),
+            ConfigValue::Number(n) => n.to_string(),
+        }
+    }
+}
+
+/// Result of validating a single parsed config value.
+///
+/// The canonical model is [`Validator::Transform`]: a validator receives the
+/// parsed value and returns the value to persist, letting it reject, accept,
+/// or normalize. [`Validator::Check`] is a shortcut for the common case of
+/// only wanting to reject/accept without touching the value.
+pub enum Validator {
+    Check(&'static (dyn Fn(&ConfigValue) -> Result<(), Error> + Sync + Send)),
+    Transform(&'static (dyn Fn(ConfigValue) -> Result<ConfigValue, Error> + Sync + Send)),
+}
+
+impl Validator {
+    fn apply(&self, value: ConfigValue) -> Result<ConfigValue, Error> {
+        match self {
+            Validator::Check(f) => f(&value).map(|()| value),
+            Validator::Transform(f) => f(value),
+        }
+    }
+}
+
 pub struct ConfigDefinition {
     name: &'static str,
     type_discriminant: ConfigOptionsTypeTag,
     default_value: Option<ConfigOptionsType>,
-    validation: &'static (dyn Fn(&ConfigValue) -> Result<(), Error> + Sync + Send),
+    validation: Validator,
 }
 
 impl ConfigDefinition {
@@ -49,7 +78,7 @@ impl ConfigDefinition {
             name,
             type_discriminant: tag,
             default_value: None,
-            validation: &|_: &ConfigValue| Ok(()),
+            validation: Validator::Transform(&|v: ConfigValue| Ok(v)),
         }
     }
     pub const fn with_default(name: &'static str, default: ConfigOptionsType) -> Self {
@@ -57,19 +86,33 @@ impl ConfigDefinition {
             name,
             type_discriminant: default.tag(),
             default_value: Some(default),
-            validation: &|_: &ConfigValue| Ok(()),
+            validation: Validator::Transform(&|v: ConfigValue| Ok(v)),
         }
     }
     pub const fn with_default_and_validator(
         name: &'static str,
         default: ConfigOptionsType,
-        validation: &'static (impl Fn(&ConfigValue) -> Result<(), Error> + Sync + Send),
+        validation: &'static (impl Fn(ConfigValue) -> Result<ConfigValue, Error> + Sync + Send),
     ) -> Self {
         ConfigDefinition {
             name,
             type_discriminant: default.tag(),
             default_value: Some(default),
-            validation,
+            validation: Validator::Transform(validation),
+        }
+    }
+    /// Shortcut for validators that only reject/accept and don't need to
+    /// transform the stored value.
+    pub const fn with_default_and_check(
+        name: &'static str,
+        default: ConfigOptionsType,
+        check: &'static (impl Fn(&ConfigValue) -> Result<(), Error> + Sync + Send),
+    ) -> Self {
+        ConfigDefinition {
+            name,
+            type_discriminant: default.tag(),
+            default_value: Some(default),
+            validation: Validator::Check(check),
         }
     }
 }
@@ -123,15 +166,18 @@ pub fn validate(
                     }
                 };
 
-                if let Err(e) = (x.validation)(&parsed) {
-                    errors.push(format!(
-                        "Validation of Config Option `{}` failed: {}",
-                        x.name, e
-                    ));
-                    continue;
-                }
+                let validated = match x.validation.apply(parsed) {
+                    Ok(v) => v,
+                    Err(e) => {
+                        errors.push(format!(
+                            "Validation of Config Option `{}` failed: {}",
+                            x.name, e
+                        ));
+                        continue;
+                    }
+                };
 
-                sanitized_options.insert(x.name.to_owned(), raw.clone());
+                sanitized_options.insert(x.name.to_owned(), validated.to_config_string());
             } else {
                 let Some(ref default_value) = x.default_value else {
                     errors.push(format!("Required Config Option `{}` is missing.", x.name));

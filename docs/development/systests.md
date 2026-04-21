@@ -73,7 +73,7 @@ CREATE PHYSICAL SOURCE FOR input TYPE Generator SET(
        'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES,
        1 AS `SOURCE`.SEED,
 # Avoid using timeouts for the generator sources, it can cause flakey tests. 
-#      1000000 AS `SOURCE`.MAX_RUNTIME_MS,
+#      '1000s' AS `SOURCE`.MAX_RUNTIME,
 # Instead rely on self-terminating sequences
        'SEQUENCE UINT64 0 100 1, SEQUENCE FLOAT64 0 200 1' AS `SOURCE`.GENERATOR_SCHEMA
 );
