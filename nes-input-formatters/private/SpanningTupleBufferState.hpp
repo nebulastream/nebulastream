@@ -47,7 +47,7 @@ class SpanningTupleBufferEntry;
 /// (Planned) Some of the (currently) 28 unused bits will be used to model uncertainty. If a delimiter is larger than a byte a thread may
 ///           be uncertain whether the first/last few bytes of its buffer form a valid tuple delimiter. Additionally, it may be impossible
 ///           for a thread to determine if its buffer starts in an escape sequence or not. We can model these additional pieces of
-///           information as states using the remaning bits and (potentially) perform state transitions as (atomic) bitwise operations.
+///           information as states using the remaining bits and (potentially) perform state transitions as (atomic) bitwise operations.
 class AtomicState
 {
     friend SpanningTupleBufferEntry;
