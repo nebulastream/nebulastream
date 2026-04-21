@@ -47,11 +47,185 @@ fn parse_optional_duration(s: &str) -> std::result::Result<Option<Duration>, Str
     }
 }
 
+/// Splits a generator schema into field entries.
+///
+/// Fields are separated by `,` or `\n`, but `WORDLIST ["w1","w2"]` entries
+/// embed JSON arrays whose string contents may themselves contain commas.
+/// This splitter therefore tracks bracket depth and JSON-string state so
+/// separators inside `[...]` or `"..."` don't prematurely split a field.
+fn split_schema_fields(schema: &str) -> std::result::Result<Vec<String>, Error> {
+    let mut fields = Vec::new();
+    let mut current = String::new();
+    let mut bracket_depth: i32 = 0;
+    let mut in_string = false;
+    let mut escape_next = false;
+    for c in schema.chars() {
+        if in_string {
+            current.push(c);
+            if escape_next {
+                escape_next = false;
+            } else if c == '\\' {
+                escape_next = true;
+            } else if c == '"' {
+                in_string = false;
+            }
+            continue;
+        }
+        match c {
+            '"' => {
+                current.push(c);
+                in_string = true;
+            }
+            '[' => {
+                current.push(c);
+                bracket_depth += 1;
+            }
+            ']' => {
+                if bracket_depth == 0 {
+                    return Err("Unmatched ']' in generator schema".into());
+                }
+                bracket_depth -= 1;
+                current.push(c);
+            }
+            ',' | '\n' if bracket_depth == 0 => {
+                let trimmed = current.trim();
+                if !trimmed.is_empty() {
+                    fields.push(trimmed.to_string());
+                }
+                current.clear();
+            }
+            _ => current.push(c),
+        }
+    }
+    if in_string {
+        return Err("Unterminated string in generator schema".into());
+    }
+    if bracket_depth != 0 {
+        return Err("Unbalanced '[' in generator schema".into());
+    }
+    let trimmed = current.trim();
+    if !trimmed.is_empty() {
+        fields.push(trimmed.to_string());
+    }
+    Ok(fields)
+}
+
+fn split_keyword_and_rest(line: &str) -> (&str, &str) {
+    let mut iter = line.splitn(2, char::is_whitespace);
+    let keyword = iter.next().unwrap_or(line);
+    let rest = iter.next().unwrap_or("").trim();
+    (keyword, rest)
+}
+
+fn validate_generator_schema(value: ConfigValue) -> std::result::Result<ConfigValue, Error> {
+    let ConfigValue::Text(schema) = value else {
+        return Err("Expected a text value for generator schema".into());
+    };
+    if schema.is_empty() {
+        return Err("Generator schema cannot be empty".into());
+    }
+    let fields = split_schema_fields(&schema)?;
+    if fields.is_empty() {
+        return Err("Generator schema produced no fields".into());
+    }
+    let mut rewritten = Vec::with_capacity(fields.len());
+    for line in &fields {
+        rewritten.push(validate_generator_field(line)?);
+    }
+    Ok(ConfigValue::Text(rewritten.join(",")))
+}
+
+fn validate_generator_field(line: &str) -> std::result::Result<String, Error> {
+    let (keyword, rest) = split_keyword_and_rest(line);
+    match keyword.to_uppercase().as_str() {
+        "SEQUENCE" => {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            SequenceField::parse(&parts)?;
+            Ok(line.to_string())
+        }
+        "NORMAL_DISTRIBUTION" => {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            NormalDistributionField::parse(&parts)?;
+            Ok(line.to_string())
+        }
+        "RANDOMSTR" => {
+            let parts: Vec<&str> = line.split_whitespace().collect();
+            RandomStrField::parse(&parts)?;
+            Ok(line.to_string())
+        }
+        "WORDLIST_PATH" => {
+            if rest.is_empty() {
+                return Err("WORDLIST_PATH requires a file path".into());
+            }
+            match load_wordlist_from_file(rest) {
+                Ok(words) => Ok(encode_wordlist(&words)),
+                Err(e) => {
+                    // Keep the unresolved line so a downstream validator
+                    // (e.g. the worker) has a chance to load the file.
+                    warn!(
+                        "WORDLIST_PATH {rest} could not be resolved at this \
+                         validation stage ({e}); keeping unresolved"
+                    );
+                    Ok(line.to_string())
+                }
+            }
+        }
+        "WORDLIST" => {
+            let words = parse_wordlist_json(rest)?;
+            Ok(encode_wordlist(&words))
+        }
+        other => Err(format!("Unknown field type: {other}").into()),
+    }
+}
+
+fn load_wordlist_from_file(path: &str) -> std::result::Result<Vec<String>, String> {
+    let content = std::fs::read_to_string(path)
+        .map_err(|e| format!("cannot read wordlist {path}: {e}"))?;
+    let words: Vec<String> = content
+        .lines()
+        .filter(|l| !l.is_empty())
+        .map(String::from)
+        .collect();
+    if words.is_empty() {
+        return Err(format!("wordlist file {path} contains no words"));
+    }
+    Ok(words)
+}
+
+fn parse_wordlist_json(rest: &str) -> std::result::Result<Vec<String>, Error> {
+    if rest.is_empty() {
+        return Err("WORDLIST requires a JSON array of words".into());
+    }
+    let words: Vec<String> = serde_json::from_str(rest)
+        .map_err(|e| format!("Invalid WORDLIST JSON array `{rest}`: {e}"))?;
+    if words.is_empty() {
+        return Err("WORDLIST must contain at least one word".into());
+    }
+    for (i, w) in words.iter().enumerate() {
+        if w.is_empty() {
+            return Err(format!("WORDLIST entry #{i} is empty").into());
+        }
+    }
+    Ok(words)
+}
+
+/// Canonical form of a resolved wordlist: `WORDLIST ["w1","w2",...]`. This is
+/// round-trip stable — running the validator again on the output produces the
+/// same string, so validation is idempotent.
+fn encode_wordlist(words: &[String]) -> String {
+    let json = serde_json::to_string(words).expect("serializing Vec<String> as JSON cannot fail");
+    format!("WORDLIST {json}")
+}
+
 #[distributed_slice(SOURCE_VALIDATOR)]
 static GENERATOR_VALIDATOR: (&str, &[ConfigDefinition]) = (
     SOURCE_NAME,
     &[
-        ConfigDefinition::with_type(GENERATOR_SCHEMA, ConfigOptionsTypeTag::Text),
+        ConfigDefinition::with_type_and_validator(
+            GENERATOR_SCHEMA,
+            ConfigOptionsTypeTag::Text,
+            &validate_generator_schema,
+        ),
         ConfigDefinition::with_default(SEED, ConfigOptionsType::Number(0)),
         ConfigDefinition::with_default(
             GENERATOR_RATE_TYPE,
@@ -258,19 +432,14 @@ struct WordListField {
 }
 
 impl WordListField {
-    fn parse(parts: &[&str]) -> std::result::Result<Self, String> {
-        if parts.len() != 2 {
-            return Err(format!(
-                "WORDLIST requires 2 parameters (WORDLIST path), got {}",
-                parts.len()
-            ));
+    fn parse_inline(rest: &str) -> std::result::Result<Self, String> {
+        if rest.is_empty() {
+            return Err("WORDLIST requires a JSON array of words".into());
         }
-        let path = parts[1];
-        let content =
-            std::fs::read_to_string(path).map_err(|e| format!("Cannot read wordlist {path}: {e}"))?;
-        let words: Vec<String> = content.lines().filter(|l| !l.is_empty()).map(String::from).collect();
+        let words: Vec<String> = serde_json::from_str(rest)
+            .map_err(|e| format!("Invalid WORDLIST JSON array `{rest}`: {e}"))?;
         if words.is_empty() {
-            return Err(format!("Wordlist file {path} contains no words"));
+            return Err("WORDLIST must contain at least one word".into());
         }
         Ok(WordListField { words })
     }
@@ -383,11 +552,8 @@ impl Generator {
         if schema.is_empty() {
             return Err("Generator schema cannot be empty".into());
         }
-        for line in schema.split([',', '\n']) {
-            let line = line.trim();
-            if line.is_empty() {
-                continue;
-            }
+        let fields = split_schema_fields(schema).map_err(|e| e.to_string())?;
+        for line in &fields {
             self.parse_field(line)?;
         }
         if self.fields.is_empty() {
@@ -397,17 +563,28 @@ impl Generator {
     }
 
     fn parse_field(&mut self, line: &str) -> std::result::Result<(), String> {
-        let parts: Vec<&str> = line.split_whitespace().collect();
-        if parts.is_empty() {
-            return Err("Empty field line".into());
-        }
-        let field = match parts[0].to_uppercase().as_str() {
-            "SEQUENCE" => GeneratorField::Sequence(SequenceField::parse(&parts)?),
+        let (keyword, rest) = split_keyword_and_rest(line);
+        let field = match keyword.to_uppercase().as_str() {
+            "SEQUENCE" => {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                GeneratorField::Sequence(SequenceField::parse(&parts)?)
+            }
             "NORMAL_DISTRIBUTION" => {
+                let parts: Vec<&str> = line.split_whitespace().collect();
                 GeneratorField::NormalDistribution(NormalDistributionField::parse(&parts)?)
             }
-            "WORDLIST" => GeneratorField::WordList(WordListField::parse(&parts)?),
-            "RANDOMSTR" => GeneratorField::RandomStr(RandomStrField::parse(&parts)?),
+            "RANDOMSTR" => {
+                let parts: Vec<&str> = line.split_whitespace().collect();
+                GeneratorField::RandomStr(RandomStrField::parse(&parts)?)
+            }
+            "WORDLIST" => GeneratorField::WordList(WordListField::parse_inline(rest)?),
+            "WORDLIST_PATH" => {
+                return Err(format!(
+                    "WORDLIST_PATH {rest} reached the source unresolved; \
+                     no validator was able to load the file"
+                ));
+            }
+            "" => return Err("Empty field line".into()),
             other => return Err(format!("Unknown field type: {other}")),
         };
         if field.is_stoppable() {

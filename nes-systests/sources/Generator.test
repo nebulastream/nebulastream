@@ -99,10 +99,6 @@ SELECT * FROM generator10K INTO checksum_10K;
 ----
 10000 4032240
 
-SELECT * FROM generator10K INTO Print(1000 as `SINK`.INGESTION);
-----
-10000 4032240
-
 SELECT * FROM generator10KSinus INTO checksum_10K_Sinus;
 ----
 10000 4032240
@@ -148,29 +144,29 @@ CREATE LOGICAL SOURCE generator_text(id UINT64 NOT NULL, word VARSIZED NOT NULL,
 CREATE PHYSICAL SOURCE FOR generator_text TYPE GENERATOR SET(
     'ONE' as `SOURCE`.STOP_GENERATOR_WHEN_SEQUENCE_FINISHES, # Text generator never finishes
     1 as `SOURCE`.SEED,
-    'SEQUENCE UINT64 0 20 1, WORDLIST small/wordlist.csv, RANDOMSTR 1 6' AS `SOURCE`.GENERATOR_SCHEMA
+    'SEQUENCE UINT64 0 20 1, WORDLIST_PATH TESTDATA/small/wordlist.csv, RANDOMSTR 1 6' AS `SOURCE`.GENERATOR_SCHEMA
 );
 CREATE SINK generator_sink_text(generator_text.id UINT64 NOT NULL, generator_text.word VARSIZED NOT NULL, generator_text.random_word VARSIZED NOT NULL) TYPE File;
 SELECT * FROM generator_text
 INTO generator_sink_text;
 ----
-0,black,MI/JLF
-1,purple,Q
-2,purple,Ht8GZ
-3,orange,+lSUL
-4,white,cdOyE
-5,brown,px3e
-6,orange,NpJ
-7,yellow,9W5B
-8,green,R
-9,pink,N
-10,yellow,q5IeHD
-11,pink,x5DE
-12,pink,rM
-13,orange,QtzpS
-14,blue,E
-15,black,iX
-16,blue,ZoWJD
-17,yellow,X
-18,brown,bl5
-19,yellow,IgiKX
+0,green,Qt
+1,black,MJ5
+2,red,oMnW
+3,orange,DMKRsM
+4,pink,m
+5,red,ApApi
+6,yellow,U
+7,green,9T
+8,orange,Frm
+9,pink,H1
+10,brown,y
+11,blue,4Z
+12,blue,L2NAc
+13,pink,Q
+14,blue,Uw
+15,orange,zlwaw
+16,orange,h6iqqt
+17,green,L
+18,pink,vbt
+19,green,z

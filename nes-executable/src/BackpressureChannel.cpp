@@ -50,15 +50,26 @@ BackpressureController::~BackpressureController()
 {
     if (channel)
     {
-        *channel->stateMtx.lock() = Channel::DESTROYED;
-        channel->change.notify_all();
-
-        auto wakers = channel->wakers.wlock();
-        for (auto& waker : *wakers)
+        std::vector<absl::AnyInvocable<bool()>> toFire;
+        bool wasClosed;
         {
-            waker();
+            auto state = channel->stateMtx.lock();
+            const auto old = std::exchange(*state, Channel::DESTROYED);
+            INVARIANT(old != Channel::DESTROYED, "...");
+            wasClosed = (old == Channel::CLOSED);
+            if (wasClosed)
+            {
+                // Move wakers out under the state lock so no one can register
+                // into a stale OPEN->CLOSED window.
+                toFire = std::exchange(*channel->wakers.wlock(), {});
+            }
         }
-        wakers->clear();
+        if (wasClosed)
+        {
+            channel->change.notify_all();
+            for (auto& w : toFire)
+                w(); // fire outside the lock
+        }
     }
 }
 

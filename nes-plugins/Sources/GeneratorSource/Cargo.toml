@@ -19,3 +19,4 @@ async-trait = { workspace = true }
 rand = "0.8"
 rand_distr = "0.4"
 duration-str = "0.21.0"
+serde_json.workspace = true

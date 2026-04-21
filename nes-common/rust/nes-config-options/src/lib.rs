@@ -81,6 +81,18 @@ impl ConfigDefinition {
             validation: Validator::Transform(&|v: ConfigValue| Ok(v)),
         }
     }
+    pub const fn with_type_and_validator(
+        name: &'static str,
+        tag: ConfigOptionsTypeTag,
+        validation: &'static (impl Fn(ConfigValue) -> Result<ConfigValue, Error> + Sync + Send),
+    ) -> Self {
+        ConfigDefinition {
+            name,
+            type_discriminant: tag,
+            default_value: None,
+            validation: Validator::Transform(validation),
+        }
+    }
     pub const fn with_default(name: &'static str, default: ConfigOptionsType) -> Self {
         ConfigDefinition {
             name,
