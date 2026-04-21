@@ -870,6 +870,123 @@ void K8sJSONSubmitter::deleteCustomObject(const std::string& kind, const std::st
               << " (HTTP " << client->response_code << ")\n";
 }
 
+std::string K8sJSONSubmitter::fetchCSVFromPVC(const std::string& pvcName)
+{
+    std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Attempting to fetch CSV data from PVC '" << pvcName << "'...\n";
+
+    static constexpr const char* READER_POD_NAME = "pvc-csv-reader";
+    static constexpr int POLL_INTERVAL_SEC = 2;
+    static constexpr int TIMEOUT_SEC = 60;
+    static constexpr const char* CSV_FILE_PATH = "sink-output.csv";
+    static constexpr const char* MOUNT_PATH = "/sink-output";
+
+    /// Delete any leftover reader pod
+    try {
+        deletePod(READER_POD_NAME);
+    } catch (const std::exception&) {
+        // Ignore errors during cleanup
+    }
+
+    /// Wait for the old pod to be fully gone
+    std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Waiting for old reader pod to terminate...\n";
+    for (int elapsed = 0; elapsed < 30; elapsed += POLL_INTERVAL_SEC) {
+        std::this_thread::sleep_for(std::chrono::seconds(POLL_INTERVAL_SEC));
+        std::string checkUrl = std::string(client->basePath)
+            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + READER_POD_NAME;
+        auto [code, body] = curlRequest("GET", checkUrl);
+        if (code != 200) {
+            std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Old pod gone.\n";
+            break;
+        }
+    }
+
+    /// Create a reader pod that will cat the CSV file from the PVC
+    nlohmann::json pod;
+    pod["apiVersion"] = "v1";
+    pod["kind"] = "Pod";
+    pod["metadata"]["name"] = READER_POD_NAME;
+    pod["metadata"]["namespace"] = kubeNamespace;
+    pod["metadata"]["labels"]["app"] = READER_POD_NAME;
+
+    nlohmann::json container;
+    container["name"] = "csv-reader";
+    container["image"] = "busybox:latest";
+    container["imagePullPolicy"] = "IfNotPresent";
+    container["command"] = nlohmann::json::array({"/bin/sh", "-c"});
+    container["args"] = nlohmann::json::array({
+        std::string("cat ") + MOUNT_PATH + "/" + CSV_FILE_PATH + " 2>/dev/null || true"
+    });
+    container["volumeMounts"] = nlohmann::json::array({
+        {{"name", "sink-volume"}, {"mountPath", MOUNT_PATH}}
+    });
+
+    pod["spec"]["containers"] = nlohmann::json::array({container});
+    pod["spec"]["restartPolicy"] = "Never";
+    pod["spec"]["terminationGracePeriodSeconds"] = 3;
+    pod["spec"]["volumes"] = nlohmann::json::array({
+        {{"name", "sink-volume"},
+         {"persistentVolumeClaim", {{"claimName", pvcName}}}}
+    });
+
+    std::string podsUrl = std::string(client->basePath)
+        + "/api/v1/namespaces/" + kubeNamespace + "/pods";
+    auto [createCode, createBody] = curlRequest("POST", podsUrl, pod.dump());
+    if (createCode < 200 || createCode >= 300) {
+        throw std::runtime_error("Failed to create CSV reader pod. HTTP "
+            + std::to_string(createCode) + ". Response: " + createBody.substr(0, 500));
+    }
+
+    /// Wait for pod to complete
+    std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Waiting for reader pod to complete...\n";
+    for (int elapsed = 0; elapsed < TIMEOUT_SEC; elapsed += POLL_INTERVAL_SEC) {
+        std::this_thread::sleep_for(std::chrono::seconds(POLL_INTERVAL_SEC));
+
+        std::string readUrl = std::string(client->basePath)
+            + "/api/v1/namespaces/" + kubeNamespace + "/pods/" + READER_POD_NAME;
+        auto [code, body] = curlRequest("GET", readUrl);
+        if (code < 200 || code >= 300) continue;
+
+        auto podJson = nlohmann::json::parse(body, nullptr, false);
+        if (podJson.is_discarded()) continue;
+
+        std::string phase;
+        if (podJson.contains("status") && podJson["status"].contains("phase"))
+            phase = podJson["status"]["phase"].get<std::string>();
+
+        std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Pod phase: "
+                  << (phase.empty() ? "Pending" : phase) << "\n";
+
+        if (phase == "Succeeded" || phase == "Failed") {
+            break;
+        }
+    }
+
+    /// Fetch logs from the reader pod
+    std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Fetching CSV data from reader pod...\n";
+    std::string csvData;
+    try {
+        csvData = fetchPodLogs("app=" + std::string(READER_POD_NAME));
+    } catch (const std::exception& e) {
+        std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Warning: Failed to fetch CSV logs: " << e.what() << "\n";
+    }
+
+    /// Cleanup
+    try {
+        deletePod(READER_POD_NAME);
+    } catch (const std::exception&) {
+        // Ignore cleanup errors
+    }
+
+    /// Skip the first line (schema header) and return the rest
+    size_t firstNewline = csvData.find('\n');
+    if (firstNewline != std::string::npos) {
+        csvData = csvData.substr(firstNewline + 1);
+    }
+
+    std::cerr << "[K8sJSONSubmitter::fetchCSVFromPVC] Retrieved " << csvData.size() << " bytes of CSV data\n";
+    return csvData;
+}
+
 namespace {
 /// Trim leading/trailing whitespace from a string
 std::string trimWhitespaces(std::string s)
@@ -986,7 +1103,7 @@ bool isValidFieldValue(const std::string& token, const std::string& fieldType)
 }
 }
 
-void K8sJSONSubmitter::writeResultFile(const SystestQuery& query, const std::string& podLogs)
+bool K8sJSONSubmitter::writeResultFile(const SystestQuery& query, const std::string& podLogs)
 {
     /// Construct the schema header line in the format expected by loadQueryResult()
     std::ostringstream schemaLine;
@@ -1088,6 +1205,9 @@ void K8sJSONSubmitter::writeResultFile(const SystestQuery& query, const std::str
     ofs.close();
     std::cerr << "[K8sJSONSubmitter::writeResultFile] Wrote " << dataLines << " data lines ("
               << skippedLines << " skipped) to " << resultPath << "\n";
+
+    /// Return true if any data lines were extracted, false otherwise
+    return dataLines > 0;
 }
 
 }

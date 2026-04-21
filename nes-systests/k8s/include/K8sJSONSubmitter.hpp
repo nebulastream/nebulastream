@@ -63,7 +63,11 @@ public:
     void deleteCustomObject(const std::string& kind, const std::string& name);
 
     /// Write query result from K8s pod logs to the local result file path
-    static void writeResultFile(const SystestQuery& query, const std::string& podLogs);
+    /// Returns true if any data lines were successfully extracted, false otherwise
+    static bool writeResultFile(const SystestQuery& query, const std::string& podLogs);
+
+    /// Fetch CSV data from PVC (fallback when pod logs are empty)
+    std::string fetchCSVFromPVC(const std::string& pvcName);
 
     static K8sJSONSubmitter createForMinikube(std::string kubeNamespace = "default");
 

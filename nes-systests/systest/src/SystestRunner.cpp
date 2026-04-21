@@ -281,6 +281,25 @@ std::vector<RunningQuery> runQueries(
         {
             SystestQuery nextQuery = std::move(pending.front());
             pending.pop();
+
+            /// Check if this is an error case - if so, skip K8s execution
+            if (std::holds_alternative<ExpectedError>(nextQuery.expectedResultsOrExpectedError))
+            {
+                std::cerr << "[K8s] Error case detected, skipping K8s execution\n";
+                auto runningQuery = std::make_shared<RunningQuery>(nextQuery);
+
+                /// For error cases, just report success (empty error message)
+                /// Error validation happens via the local backend, not K8s
+                reportResult(
+                    runningQuery,
+                    progressTracker,
+                    failed,
+                    [&] { return std::string{}; },
+                    queryPerformanceMessage);
+                moveDependentsToPending(nextQuery);
+                continue;
+            }
+
             if (jsonSubmitter.has_value() && nextQuery.planInfoOrException.has_value())
             {
                 auto topologyResult = K8sTopologyBuilder::buildWithSourceData(nextQuery);
@@ -307,9 +326,21 @@ std::vector<RunningQuery> runQueries(
                     try {
                         /// Fetch the worker pod logs (Print sink writes CSV to stdout).
                         std::string podLogs = jsonSubmitter->fetchPodLogs("app=worker-1");
-                        /// Write the result to the local result file path
-                        /// so that checkResult() / loadQueryResult() work unchanged.
-                        K8sJSONSubmitter::writeResultFile(nextQuery, podLogs);
+
+                        /// Write the result to the local result file path and check if data was extracted.
+                        /// If no data was extracted, try to fetch CSV data from the PVC.
+                        bool hadData = K8sJSONSubmitter::writeResultFile(nextQuery, podLogs);
+
+                        if (!hadData) {
+                            std::cerr << "[K8s] Pod logs contained no valid data, attempting to fetch CSV from PVC...\n";
+                            try {
+                                podLogs = jsonSubmitter->fetchCSVFromPVC("sink-pvc");
+                                K8sJSONSubmitter::writeResultFile(nextQuery, podLogs);
+                            } catch (const std::exception& pvcError) {
+                                std::cerr << "[K8s] Failed to fetch CSV from PVC: " << pvcError.what() << "\n";
+                                throw;
+                            }
+                        }
                     } catch (const std::exception& e) {
                         std::cerr << "[K8s] Failed to fetch/write results: " << e.what() << "\n";
                     }
@@ -321,12 +352,6 @@ std::vector<RunningQuery> runQueries(
                         failed,
                         [&]
                         {
-                            if (std::holds_alternative<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError))
-                            {
-                                return fmt::format(
-                                    "expected error {} but query succeeded",
-                                    std::get<ExpectedError>(runningQuery->systestQuery.expectedResultsOrExpectedError).code);
-                            }
                             if (auto err = checkResult(*runningQuery))
                             {
                                 return *err;

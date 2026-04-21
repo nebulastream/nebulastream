@@ -20,6 +20,8 @@
 #include <Util/Strings.hpp>
 #include "SystestState.hpp"
 #include "NameUtils.hpp"
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/LogicalPlan.hpp>
 
 namespace NES::Systest
 {
@@ -46,6 +48,33 @@ std::string extractSinkName(const std::string& queryDefinition)
         return match[1].str();
     }
     return "unknown-sink";
+}
+
+/// Extract the sink type from the query plan.
+/// Returns the sink type (e.g., "File", "Print", "Checksum") if available, otherwise returns empty string.
+/// TODO: also return other configs?
+std::string extractSinkTypeFromPlan(const SystestQuery& q)
+{
+    if (!q.planInfoOrException) {
+        return {};
+    }
+
+    try {
+        const auto& plan = q.planInfoOrException->queryPlan.getGlobalPlan();
+        auto sinkOps = NES::getOperatorByType<NES::SinkLogicalOperator>(plan);
+
+        if (!sinkOps.empty()) {
+            // Get the first sink operator
+            auto sinkDescriptor = sinkOps[0]->getSinkDescriptor();
+            if (sinkDescriptor) {
+                return sinkDescriptor->getSinkType();
+            }
+        }
+    } catch (...) {
+        // If anything goes wrong, fall back to empty string
+    }
+
+    return {};
 }
 }
 
@@ -77,7 +106,16 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
     nlohmann::json sink;
     sink["name"] = extractSinkName(q.queryDefinition);
     sink["host"] = "worker-1";
-    sink["type"] = "Print";
+
+    /// Determine sink type from the query plan
+    std::string sinkType = extractSinkTypeFromPlan(q);
+    std::cerr << "Sink type: " << sinkType << std::endl;
+    sink["type"] = sinkType;
+
+    // Configure sink-specific settings
+    sink["config"]["file_path"] = "/sink-output/sink-output.csv";
+    sink["config"]["output_format"] = "CSV";
+
     if (q.planInfoOrException)
     {
         nlohmann::json schemaNode = nlohmann::json::array();
@@ -91,9 +129,7 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
         }
         sink["schema"] = schemaNode;
     }
-    sink["type"] = "Print";
     sink["parser_config"] = nlohmann::json::object();
-    sink["config"]["output_format"] = "CSV";
     sinks.push_back(sink);
     spec["sinks"] = sinks;
 
@@ -156,11 +192,16 @@ TopologyBuildResult K8sTopologyBuilder::buildWithSourceData(const SystestQuery& 
             /// Pod-local path where the operator should mount the source data PVC (PersistentVolumeClaim)
             std::string filename = sif.getRawValue().filename().string();
             ps["source_config"]["file_path"] = "/data/" + filename;
+            std::string logicalName = desc.getLogicalSource().getLogicalSourceName();
+            std::cerr << "Configuring source: " << logicalName << " -> file_path=/data/" << filename << std::endl;
 
             /// Systest will read these into the operator-managed PVC after the topology is reconciled
             std::string contents = readFileContents(sif.getRawValue());
+            std::cerr << "Source file " << filename << " has " << contents.size() << " bytes" << std::endl;
             if (!contents.empty()) {
                 sourceFileData[filename] = std::move(contents);
+            } else {
+                std::cerr << "WARNING: Source file " << filename << " is empty!" << std::endl;
             }
 
             physicalSources.push_back(ps);
