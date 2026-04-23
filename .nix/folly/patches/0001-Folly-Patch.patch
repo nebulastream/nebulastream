@@ -2014,7 +2014,7 @@ diff --git a/CMakeLists.txt b/CMakeLists.txt
 index fc9f56350..fc93f0c6f 100644
 --- a/CMakeLists.txt
 +++ b/CMakeLists.txt
-@@ -1,1001 +1,254 @@
+@@ -1,1001 +1,257 @@
 -# Copyright (c) Facebook, Inc. and its affiliates.
 -#
 -# Licensed under the Apache License, Version 2.0 (the "License");
@@ -2458,6 +2458,9 @@ index fc9f56350..fc93f0c6f 100644
 +        folly/portability/SysMembarrier.cpp
 +        folly/memory/MallctlHelper.cpp
 +        folly/memory/detail/MallocImpl.cpp
++
++        # Required for folly::Hash (SpookyHashV2)
++        folly/hash/SpookyHashV2.cpp
 +)
 +
 +target_compile_features(folly PRIVATE cxx_std_20)
