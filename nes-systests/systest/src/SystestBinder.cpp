@@ -96,14 +96,16 @@ public:
             [this, schema, sinkType](
                 const std::string_view assignedSinkName, std::filesystem::path filePath) -> std::expected<SinkDescriptor, Exception>
             {
-                std::unordered_map<std::string, std::string> config{{"file_path", std::move(filePath)}};
+                std::unordered_map<std::string, std::string> config{};
                 std::unordered_map<std::string, std::string> formatConfig{};
                 if (sinkType == "File")
                 {
+                    config["file_path"] = std::move(filePath);
                     config["output_format"] = "CSV";
                 }
                 else if (toUpperCase(sinkType) == "CHECKSUM")
                 {
+                    config["file_path"] = std::move(filePath);
                     formatConfig["quote_strings"] = "true";
                 }
 
@@ -711,9 +713,13 @@ struct SystestBinder::Impl
         auto formatConfig = sinkOperator->getFormatConfig();
         auto schema = sinkOperator->getSchema();
         sinkConfig.erase("file_path");
-        sinkConfig.emplace("file_path", resultFile);
-
-        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM")
+        /// Only inject a file_path for a file sink or checksum sink
+        if (toUpperCase(sinkOperator->getSinkType()) == "FILE" or toUpperCase(sinkOperator->getSinkType()) == "CHECKSUM")
+        {
+            sinkConfig.emplace("file_path", resultFile);
+        }
+        if (not(sinkConfig.contains("output_format")) and sinkOperator->getSinkType() != "CHECKSUM"
+            and sinkOperator->getSinkType() != "VOID")
         {
             sinkConfig.emplace("output_format", "CSV");
         }

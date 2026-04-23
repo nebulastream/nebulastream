@@ -1,0 +1,21 @@
+# name: sinks/VoidSink.test
+# description: Void sink discards all tuples; no result file is produced and the systest harness must skip the output check.
+# groups: [Sources]
+
+SELECT ID, VALUE, TIMESTAMP
+FROM File(
+	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+	'CSV' AS PARSER.`TYPE`,
+	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO Void();
+----
+
+CREATE SINK discard(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) TYPE Void;
+
+SELECT ID, VALUE, TIMESTAMP
+FROM File(
+	'small/stream8.csv' AS `SOURCE`.FILE_PATH,
+	'CSV' AS PARSER.`TYPE`,
+	SCHEMA(id UINT64 NOT NULL, value UINT64 NOT NULL, timestamp UINT64 NOT NULL) AS `SOURCE`.`SCHEMA`)
+INTO discard;
+----
