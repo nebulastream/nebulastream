@@ -36,6 +36,7 @@
 #include <DataTypes/DataTypeProvider.hpp>
 #include <DataTypes/Schema.hpp>
 #include <Identifiers/NESStrongType.hpp>
+#include <Operators/Sinks/SinkLogicalOperator.hpp>
 #include <Util/Logger/Formatter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Ranges.hpp>
@@ -753,6 +754,26 @@ namespace NES
 {
 std::optional<std::string> checkResult(const Systest::RunningQuery& runningQuery)
 {
+    /// Void sinks discard all tuples and produce no result file, so there is nothing to check.
+    if (runningQuery.systestQuery.planInfoOrException.has_value())
+    {
+        const auto sinkOperators
+            = getOperatorByType<SinkLogicalOperator>(runningQuery.systestQuery.planInfoOrException.value().queryPlan.getGlobalPlan());
+        if (not sinkOperators.empty())
+        {
+            if (const auto sinkOp = sinkOperators.at(0).tryGetAs<SinkLogicalOperator>(); sinkOp.has_value()
+                and sinkOp.value()->getSinkDescriptor().has_value()
+                and toUpperCase(sinkOp.value()->getSinkDescriptor().value().getSinkType()) == "VOID")
+            {
+                NES_INFO(
+                    "Skipping result check for {}:{} because it writes to a Void sink.",
+                    runningQuery.systestQuery.testName,
+                    runningQuery.systestQuery.queryIdInFile);
+                return std::nullopt;
+            }
+        }
+    }
+
     static constexpr std::string_view SchemaMismatchMessage = "\n\n"
                                                               "Schema Mismatch\n"
                                                               "---------------";
