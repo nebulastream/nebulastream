@@ -87,29 +87,29 @@ PhysicalFunction FunctionProvider::lowerConstantFunction(const ConstantValueLogi
     switch (constantFunction.getDataType().type)
     {
         case DataType::Type::UINT8:
-            return ConstantUInt8ValueFunction(parseConstantValue<int8_t>(stringValue));
+            return ConstantUInt8ValueFunction(parseConstantValue<int8_t>(stringValue), stringValue, DataType::Type::UINT8);
         case DataType::Type::UINT16:
-            return ConstantUInt16ValueFunction(parseConstantValue<int16_t>(stringValue));
+            return ConstantUInt16ValueFunction(parseConstantValue<int16_t>(stringValue), stringValue, DataType::Type::UINT16);
         case DataType::Type::UINT32:
-            return ConstantUInt32ValueFunction(parseConstantValue<uint32_t>(stringValue));
+            return ConstantUInt32ValueFunction(parseConstantValue<uint32_t>(stringValue), stringValue, DataType::Type::UINT32);
         case DataType::Type::UINT64:
-            return ConstantUInt64ValueFunction(parseConstantValue<uint64_t>(stringValue));
+            return ConstantUInt64ValueFunction(parseConstantValue<uint64_t>(stringValue), stringValue, DataType::Type::UINT64);
         case DataType::Type::INT8:
-            return ConstantInt8ValueFunction(parseConstantValue<int8_t>(stringValue));
+            return ConstantInt8ValueFunction(parseConstantValue<int8_t>(stringValue), stringValue, DataType::Type::INT8);
         case DataType::Type::INT16:
-            return ConstantInt16ValueFunction(parseConstantValue<int16_t>(stringValue));
+            return ConstantInt16ValueFunction(parseConstantValue<int16_t>(stringValue), stringValue, DataType::Type::INT16);
         case DataType::Type::INT32:
-            return ConstantInt32ValueFunction(parseConstantValue<int32_t>(stringValue));
+            return ConstantInt32ValueFunction(parseConstantValue<int32_t>(stringValue), stringValue, DataType::Type::INT32);
         case DataType::Type::INT64:
-            return ConstantInt64ValueFunction(parseConstantValue<int64_t>(stringValue));
+            return ConstantInt64ValueFunction(parseConstantValue<int64_t>(stringValue), stringValue, DataType::Type::INT64);
         case DataType::Type::FLOAT32:
-            return ConstantFloatValueFunction(parseConstantValue<float>(stringValue));
+            return ConstantFloatValueFunction(parseConstantValue<float>(stringValue), stringValue, DataType::Type::FLOAT32);
         case DataType::Type::FLOAT64:
-            return ConstantDoubleValueFunction(parseConstantValue<double>(stringValue));
+            return ConstantDoubleValueFunction(parseConstantValue<double>(stringValue), stringValue, DataType::Type::FLOAT64);
         case DataType::Type::BOOLEAN:
-            return ConstantBooleanValueFunction(parseConstantValue<bool>(stringValue));
+            return ConstantBooleanValueFunction(parseConstantValue<bool>(stringValue), stringValue, DataType::Type::BOOLEAN);
         case DataType::Type::CHAR:
-            return ConstantCharValueFunction(parseConstantValue<char>(stringValue));
+            return ConstantCharValueFunction(parseConstantValue<char>(stringValue), stringValue, DataType::Type::CHAR);
         case DataType::Type::VARSIZED: {
             return ConstantValueVariableSizePhysicalFunction(std::bit_cast<const int8_t*>(stringValue.c_str()), stringValue.size());
         };

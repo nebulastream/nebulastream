@@ -14,9 +14,13 @@
 
 #pragma once
 
+#include <bit>
 #include <cstdint>
+#include <functional>
+#include <string>
 #include <type_traits>
 #include <Functions/PhysicalFunction.hpp>
+#include <Nautilus/DataTypes/RawValue.hpp>
 #include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Arena.hpp>
@@ -32,10 +36,29 @@ class ConstantValuePhysicalFunction final
 public:
     explicit ConstantValuePhysicalFunction(T value) : value(value) { }
 
-    VarVal execute(const Record&, ArenaRef&) const { return VarVal(value); }
+    ConstantValuePhysicalFunction(T value, std::string rawValue, DataType::Type type)
+        : value(value), rawValue(std::move(rawValue)), type(type)
+    {
+    }
+
+    VarVal execute(const Record&, ArenaRef&) const
+    {
+        if (rawValue.empty())
+        {
+            return VarVal(value);
+        }
+
+        return VarVal(RawValue{
+            nautilus::val<int8_t*>(const_cast<int8_t*>(std::bit_cast<const int8_t*>(rawValue.data()))),
+            nautilus::val<uint64_t>(rawValue.size()),
+            type,
+            std::function<VarVal()>([value = this->value]() { return VarVal(value); })});
+    }
 
 private:
     const T value;
+    std::string rawValue;
+    DataType::Type type = DataType::Type::UNDEFINED;
 };
 
 using ConstantCharValueFunction = ConstantValuePhysicalFunction<char>;
