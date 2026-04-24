@@ -20,6 +20,8 @@
 #include <unordered_map>
 #include <utility>
 
+#include <rust/cxx.h>
+
 #include <Configurations/Descriptor.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceValidationRegistry.hpp>

@@ -10,4 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-target_link_rust_lib(nes-sinks file_sink)
+target_link_rust_lib(nes-sinks-validation file_sink
+        NO_DEFAULT_FEATURES FEATURES validation)
+target_link_rust_lib(nes-sinks file_sink
+        NO_DEFAULT_FEATURES FEATURES runtime)

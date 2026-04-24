@@ -18,14 +18,12 @@
 #include <absl/functional/any_invocable.h>
 #include <coro/semaphore.hpp>
 #include <nes-source-runtime-bindings/lib.h>
-#include <nes-source-validation-bindings/lib.h>
 #include <rfl/json/Parser.hpp>
 #include <rfl/json/read.hpp>
 #include <rfl/json/write.hpp>
 #include <IORuntime.hpp>
 #include <QueryId.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 /// Serialize a DescriptorConfig::Config as flat {"key":"value",...} JSON
 /// for the Rust FFI, which expects HashMap<String, String>.
@@ -291,21 +289,3 @@ NES::SourceReturnType::TryStopResult NES::TokioSource::tryStop(std::chrono::mill
     }
 }
 
-NES::SourceValidationRegistryReturnType NES::RegisterTokioSourceValidation(NES::SourceValidationRegistryArguments args)
-{
-    std::unordered_map<std::string, std::string> flat;
-    for (auto& [key, value] : args.config)
-    {
-        flat[key.getString()] = std::move(value);
-    }
-    auto result = source_validate(rust::string(args.sourceType), rfl::json::write(flat));
-    auto validatedConfig
-        = rfl::json::read<std::unordered_map<std::string, std::string>>(std::string_view(result.begin(), result.end())).value();
-
-    DescriptorConfig::Config config;
-    for (auto& [key, value] : validatedConfig)
-    {
-        config.emplace(UppercaseString(std::move(key)), DescriptorConfig::ConfigType{std::move(value)});
-    }
-    return config;
-}

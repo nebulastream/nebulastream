@@ -12,20 +12,28 @@
 
 add_subdirectory(SinksParsing)
 
-add_source_files(nes-sinks
+add_source_files(nes-sinks-validation
         SinkDescriptor.cpp
-        Sink.cpp
-        SinkProvider.cpp
         SinkCatalog.cpp
 )
 
-# Register plugins
-add_plugin(File Sink nes-sinks FileSink.cpp)
-add_plugin(File SinkValidation nes-sinks FileSink.cpp)
-add_plugin(Print Sink nes-sinks PrintSink.cpp)
-add_plugin(Print SinkValidation nes-sinks PrintSink.cpp)
-add_plugin(Tokio Sink nes-sinks TokioSink.cpp)
-add_plugin(Tokio SinkValidation nes-sinks TokioSink.cpp)
+add_source_files(nes-sinks
+        Sink.cpp
+        SinkProvider.cpp
+)
 
-# Tokio-based Rust sinks — registered automatically at link time via linkme.
+# Register plugins — runtime side (Sink factory)
+add_plugin(File Sink nes-sinks FileSink.cpp)
+add_plugin(Print Sink nes-sinks PrintSink.cpp)
+add_plugin(Tokio Sink nes-sinks TokioSink.cpp)
+
+# Register plugins — validation side. Compile the dedicated validation TUs
+# into nes-sinks-validation so its registrar resolves Register*SinkValidation
+# without pulling runtime symbols.
+add_plugin(File SinkValidation nes-sinks-validation FileSinkValidation.cpp)
+add_plugin(Print SinkValidation nes-sinks-validation PrintSinkValidation.cpp)
+add_plugin(Tokio SinkValidation nes-sinks-validation TokioSinkValidation.cpp)
+
+# TokioSink C++ class (runtime). Tokio-backed sinks register their
+# SinkValidation in TokioSinkValidation.cpp above.
 add_source_files(nes-sinks TokioSink.cpp)

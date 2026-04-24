@@ -26,6 +26,7 @@
 
 #include <Configurations/Descriptor.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sinks/FileSinkConfig.hpp>
 #include <Sinks/Sink.hpp>
 #include <Sinks/SinkDescriptor.hpp>
 #include <SinksParsing/SchemaFormatter.hpp>
@@ -37,7 +38,7 @@ namespace NES
 class FileSink final : public Sink
 {
 public:
-    static constexpr std::string_view NAME = "File";
+    static constexpr std::string_view NAME = FileSinkName::NAME;
     explicit FileSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
     ~FileSink() override = default;
 
@@ -50,8 +51,6 @@ public:
     void execute(const TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext) override;
     void stop(PipelineExecutionContext& pipelineExecutionContext) override;
 
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
-
 protected:
     std::ostream& toString(std::ostream& str) const override;
 
@@ -62,23 +61,6 @@ private:
     bool isOpen;
     folly::Synchronized<std::ofstream> outputFileStream;
     SchemaFormatter schemaFormatter;
-};
-
-struct ConfigParametersFile
-{
-    /// NOLINTNEXTLINE(cert-err58-cpp)
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
-        "file_path",
-        std::nullopt,
-        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
-
-    static inline const DescriptorConfig::ConfigParameter<bool> APPEND{
-        "append",
-        false,
-        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(APPEND, config); }};
-
-    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SinkDescriptor::parameterMap, FILE_PATH, APPEND);
 };
 
 }

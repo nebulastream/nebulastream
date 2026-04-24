@@ -271,11 +271,6 @@ bool TCPSource::fillBuffer(TupleBuffer& tupleBuffer, size_t& numReceivedBytes)
     return numReceivedBytes == 0 and readWasValid;
 }
 
-DescriptorConfig::Config TCPSource::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersTCP>(std::move(config), name());
-}
-
 void TCPSource::close()
 {
     NES_DEBUG("Trying to close connection.");
@@ -284,11 +279,6 @@ void TCPSource::close()
         ::close(sockfd);
         NES_TRACE("Connection closed.");
     }
-}
-
-SourceValidationRegistryReturnType RegisterTCPSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return TCPSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterTCPSource(SourceRegistryArguments sourceRegistryArguments)

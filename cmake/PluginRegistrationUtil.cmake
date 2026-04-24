@@ -119,10 +119,21 @@ endfunction()
 
 # Provide the names of all registries that the component creates as ARGS
 # Registries are typically located in the 'registry' directory of the component, e.g., 'nes-sources/registry'
+#
+# By default the component name is derived from the current CMakeLists directory
+# name. Pass `COMPONENT <name>` to use an explicit name — needed when a single
+# directory produces multiple libraries (e.g. nes-sources has a runtime lib
+# `nes-sources` and a validation lib `nes-sources-validation`, each owning a
+# disjoint set of registries).
 function(create_registries_for_component)
-    get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
+    cmake_parse_arguments(ARG "" "COMPONENT" "" ${ARGN})
+    if (ARG_COMPONENT)
+        set(COMPONENT_NAME "${ARG_COMPONENT}")
+    else ()
+        get_filename_component(COMPONENT_NAME "${CMAKE_CURRENT_LIST_DIR}" NAME)
+    endif ()
     set(registries_library ${COMPONENT_NAME}-registry)
     create_plugin_registry_library(${registries_library} ${COMPONENT_NAME})
     target_link_libraries(${COMPONENT_NAME} PRIVATE ${registries_library})
-    generate_plugin_registrars(${COMPONENT_NAME} ${ARGN})
+    generate_plugin_registrars(${COMPONENT_NAME} ${ARG_UNPARSED_ARGUMENTS})
 endfunction()

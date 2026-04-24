@@ -10,27 +10,33 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_source_files(nes-sources-validation
+        SourceDescriptor.cpp
+        LogicalSource.cpp
+        SourceCatalog.cpp
+        SourceValidationProvider.cpp
+)
+
 add_source_files(nes-sources
         SourceThread.cpp
-        SourceDescriptor.cpp
         Source.cpp
         SourceThreadHandle.cpp
         SourceProvider.cpp
         SourceDataProvider.cpp
-        SourceValidationProvider.cpp
-        LogicalSource.cpp
-        SourceCatalog.cpp
 )
 
-# Register plugins
+# Register plugins — runtime side (source class + systest adaptors)
 add_plugin(File Source nes-sources FileSource.cpp)
-add_plugin(File SourceValidation nes-sources FileSource.cpp)
-
-# Systest adaptors
 add_plugin(File InlineData nes-sources FileSource.cpp)
 add_plugin(File FileData nes-sources FileSource.cpp)
 
-add_plugin(Tokio SourceValidation nes-sources TokioSource.cpp)
+# Register plugins — validation side. These TUs hold the Register*SourceValidation
+# function and must compile into nes-sources-validation so the validation library's
+# registrar can resolve them without pulling in any runtime symbols.
+add_plugin(File SourceValidation nes-sources-validation FileSourceValidation.cpp)
+add_plugin(Tokio SourceValidation nes-sources-validation TokioSourceValidation.cpp)
 
-# Tokio-based Rust sources — registered automatically at link time via linkme.
+# Tokio source C++ class (runtime side). Tokio-backed sources register their
+# SourceValidation in TokioSourceValidation.cpp above; the runtime class below
+# is instantiated by the runtime source provider for all tokio-backed plugins.
 add_source_files(nes-sources TokioSource.cpp)

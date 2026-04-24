@@ -36,7 +36,6 @@
 #include <rust/cxx.h>
 // CXX-generated header for ffi_sink module
 #include <nes-sink-runtime-bindings/lib.h>
-#include <nes-sink-validation-bindings/lib.h>
 #include <IORuntime.hpp>
 // SinkBindings provides ErrorContext, on_sink_error_callback
 #include "Sinks/TokioSink.hpp"
@@ -52,7 +51,6 @@
 
 #include "QueryId.hpp"
 #include "SinkRegistry.hpp"
-#include "SinkValidationRegistry.hpp"
 
 namespace NES
 {
@@ -358,25 +356,6 @@ void TokioSink::stop(PipelineExecutionContext& pec)
 std::ostream& TokioSink::toString(std::ostream& os) const
 {
     return os << "TokioSink{sinkId=" << sinkId << "}";
-}
-
-SinkValidationRegistryReturnType RegisterTokioSinkValidation(SinkValidationRegistryArguments args)
-{
-    std::unordered_map<std::string, std::string> flat;
-    for (auto& [key, value] : args.config)
-    {
-        flat[key.getString()] = std::move(value);
-    }
-    auto result = validate(args.sinkType, rfl::json::write(flat));
-    auto validatedConfig
-        = rfl::json::read<std::unordered_map<std::string, std::string>>(std::string_view(result.begin(), result.end())).value();
-
-    DescriptorConfig::Config config;
-    for (auto& [key, value] : validatedConfig)
-    {
-        config.emplace(UppercaseString(std::move(key)), DescriptorConfig::ConfigType{std::move(value)});
-    }
-    return config;
 }
 
 SinkRegistryReturnType RegisterTokioSink(SinkRegistryArguments sinkRegistryArguments)

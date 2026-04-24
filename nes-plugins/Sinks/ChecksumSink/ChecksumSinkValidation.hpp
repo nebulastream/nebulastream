@@ -33,30 +33,20 @@
 namespace NES
 {
 
-/// A sink that counts the number of tuples and accumulates a checksum, which is written to file once the query is stopped.
-/// Example output of the sink:
-/// S$Count:UINT64:NOT_NULLABLE,S$Checksum:UINT64:NOT_NULLABLE
-/// 1042, 12390478290
-class ChecksumSink : public Sink
+struct ConfigParametersChecksum
 {
-public:
-    static constexpr std::string_view NAME = "Checksum";
-    explicit ChecksumSink(BackpressureController backpressureController, const SinkDescriptor& sinkDescriptor);
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> OUTPUT_FORMAT{
+        "output_format", "CSV", [](const std::unordered_map<UppercaseString, std::string>&) { return std::optional("CSV"); }};
 
-    /// Opens file and writes schema to file, if the file is empty.
-    void start(PipelineExecutionContext&) override;
-    void stop(PipelineExecutionContext&) override;
-    void execute(const TupleBuffer& inputBuffer, PipelineExecutionContext&) override;
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
+    /// NOLINTNEXTLINE(cert-err58-cpp)
+    static inline const DescriptorConfig::ConfigParameter<std::string> FILE_PATH{
+        "file_path",
+        std::nullopt,
+        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILE_PATH, config); }};
 
-protected:
-    std::ostream& toString(std::ostream& os) const override { return os << "ChecksumSink"; }
-
-private:
-    bool isOpen;
-    std::string outputFilePath;
-    std::ofstream outputFileStream;
-    Checksum checksum;
+    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
+        = DescriptorConfig::createConfigParameterContainerMap(FILE_PATH, OUTPUT_FORMAT);
 };
 
 }

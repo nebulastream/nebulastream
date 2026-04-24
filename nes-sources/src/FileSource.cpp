@@ -37,7 +37,6 @@
 #include <FileDataRegistry.hpp>
 #include <InlineDataRegistry.hpp>
 #include <SourceRegistry.hpp>
-#include <SourceValidationRegistry.hpp>
 
 namespace NES
 {
@@ -74,20 +73,10 @@ Source::FillTupleBufferResult FileSource::fillTupleBuffer(TupleBuffer& tupleBuff
     return FillTupleBufferResult::withBytes(numBytesRead);
 }
 
-DescriptorConfig::Config FileSource::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersCSV>(std::move(config), NAME);
-}
-
 std::ostream& FileSource::toString(std::ostream& str) const
 {
     str << std::format("\nFileSource(filepath: {}, totalNumBytesRead: {})", this->filePath, this->totalNumBytesRead.load());
     return str;
-}
-
-SourceValidationRegistryReturnType RegisterFileSourceValidation(SourceValidationRegistryArguments sourceConfig)
-{
-    return FileSource::validateAndFormat(std::move(sourceConfig.config));
 }
 
 SourceRegistryReturnType SourceGeneratedRegistrar::RegisterFileSource(SourceRegistryArguments sourceRegistryArguments)

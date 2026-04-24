@@ -10,4 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-target_link_rust_lib(nes-sources network_source)
+target_link_rust_lib(nes-sources-validation network_source
+        NO_DEFAULT_FEATURES FEATURES validation)
+target_link_rust_lib(nes-sources network_source
+        NO_DEFAULT_FEATURES FEATURES runtime)

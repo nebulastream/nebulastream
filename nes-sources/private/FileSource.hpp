@@ -18,25 +18,22 @@
 #include <cstddef>
 #include <fstream>
 #include <memory>
-#include <optional>
 #include <stop_token>
 #include <string>
 #include <string_view>
-#include <unordered_map>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/SourceDescriptor.hpp>
+#include <FileSourceConfig.hpp>
 
 namespace NES
 {
 
-static constexpr std::string_view SYSTEST_FILE_PATH_PARAMETER = "FILE_PATH";
-
 class FileSource final : public Source
 {
 public:
-    static constexpr std::string_view NAME = "File";
+    static constexpr std::string_view NAME = FileSourceName::NAME;
 
     explicit FileSource(const SourceDescriptor& sourceDescriptor);
     ~FileSource() override = default;
@@ -53,26 +50,12 @@ public:
     /// Close file socket.
     void close() override;
 
-    /// validates and formats a string to string configuration
-    static DescriptorConfig::Config validateAndFormat(std::unordered_map<UppercaseString, std::string> config);
-
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::ifstream inputFile;
     std::string filePath;
     std::atomic<size_t> totalNumBytesRead;
-};
-
-struct ConfigParametersCSV
-{
-    static inline const DescriptorConfig::ConfigParameter<std::string> FILEPATH{
-        std::string(SYSTEST_FILE_PATH_PARAMETER),
-        std::nullopt,
-        [](const std::unordered_map<UppercaseString, std::string>& config) { return DescriptorConfig::tryGet(FILEPATH, config); }};
-
-    static inline std::unordered_map<UppercaseString, DescriptorConfig::ConfigParameterContainer> parameterMap
-        = DescriptorConfig::createConfigParameterContainerMap(SourceDescriptor::parameterMap, FILEPATH);
 };
 
 }

@@ -6,11 +6,23 @@ edition = "2024"
 [lib]
 crate-type = ["rlib"]
 
+[features]
+default = ["runtime"]
+validation = []
+runtime = [
+    "validation",
+    "dep:async-trait",
+    "dep:nes_buffer_runtime",
+    "dep:nes_network",
+    "dep:nes_source_runtime",
+]
+
 [dependencies]
-nes_buffer_runtime.workspace = true
-nes_network.workspace = true
-nes_source_runtime.workspace = true
 nes_source_validation.workspace = true
-async-trait.workspace = true
 linkme.workspace = true
 tracing = "0.1"
+
+nes_buffer_runtime = { workspace = true, optional = true }
+nes_network = { workspace = true, optional = true }
+nes_source_runtime = { workspace = true, optional = true }
+async-trait = { workspace = true, optional = true }

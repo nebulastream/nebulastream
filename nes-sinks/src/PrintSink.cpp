@@ -81,16 +81,6 @@ std::ostream& PrintSink::toString(std::ostream& str) const
     return str;
 }
 
-DescriptorConfig::Config PrintSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersPrint>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterPrintSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return PrintSink::validateAndFormat(std::move(sinkConfig.config));
-}
-
 SinkRegistryReturnType RegisterPrintSink(SinkRegistryArguments sinkRegistryArguments)
 {
     return std::make_unique<PrintSink>(std::move(sinkRegistryArguments.backpressureController), sinkRegistryArguments.sinkDescriptor);

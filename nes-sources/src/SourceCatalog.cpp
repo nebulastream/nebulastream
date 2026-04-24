@@ -33,7 +33,6 @@
 #include <Sources/SourceValidationProvider.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
-#include <InputFormatterTupleBufferRefProvider.hpp>
 
 namespace NES
 {
@@ -90,10 +89,10 @@ std::expected<SourceDescriptor, Exception> SourceCatalog::addPhysicalSource(
     }
 
     auto parserConfigObject = ParserConfig::create(parserConfig);
-    if (not contains(parserConfigObject.parserType))
-    {
-        return std::unexpected{InvalidConfigParameter("Invalid parser type {}", parserConfigObject.parserType)};
-    }
+    // Parser-type registration lookup deliberately omitted here: that's a
+    // runtime-registry concern and belongs in the input-formatter provider,
+    // not the catalog. SourceProvider::lower() / the input-formatter provider
+    // report an invalid parser type when the source is actually materialised.
 
     SourceDescriptor descriptor{id, logicalSource, sourceType, std::move(host), std::move(descriptorConfigOpt.value()), parserConfigObject};
     idsToPhysicalSources.emplace(id, descriptor);

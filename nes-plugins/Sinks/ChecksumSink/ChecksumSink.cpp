@@ -37,6 +37,7 @@
 #include <PipelineExecutionContext.hpp>
 #include <SinkRegistry.hpp>
 #include <SinkValidationRegistry.hpp>
+#include <ChecksumSinkValidation.hpp>
 
 namespace NES
 {
@@ -102,16 +103,6 @@ void ChecksumSink::execute(const TupleBuffer& inputBuffer, PipelineExecutionCont
         /// Get the next buffer
         element = iterator.getNextElement();
     }
-}
-
-DescriptorConfig::Config ChecksumSink::validateAndFormat(std::unordered_map<UppercaseString, std::string> config)
-{
-    return DescriptorConfig::validateAndFormat<ConfigParametersChecksum>(std::move(config), NAME);
-}
-
-SinkValidationRegistryReturnType RegisterChecksumSinkValidation(SinkValidationRegistryArguments sinkConfig)
-{
-    return ChecksumSink::validateAndFormat(std::move(sinkConfig.config));
 }
 
 SinkRegistryReturnType RegisterChecksumSink(SinkRegistryArguments sinkRegistryArguments)
