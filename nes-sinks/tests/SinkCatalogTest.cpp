@@ -18,6 +18,7 @@
 #include <unordered_map>
 
 #include <DataTypes/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/SinkCatalog.hpp>
 #include <ErrorHandling.hpp>
 
@@ -36,7 +37,7 @@ protected:
 TEST_F(SinkCatalogTest, addValidSinkDescriptor)
 {
     auto result
-        = sinkCatalog.addSinkDescriptor("mySink", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
+        = sinkCatalog.addSinkDescriptor("mySink", schema, "File", Host("localhost"), {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(result.value().getSinkName(), "mySink");
 }
@@ -45,7 +46,7 @@ TEST_F(SinkCatalogTest, addValidSinkDescriptor)
 TEST_F(SinkCatalogTest, rejectDigitOnlySinkName)
 {
     auto result
-        = sinkCatalog.addSinkDescriptor("123", schema, "File", {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
+        = sinkCatalog.addSinkDescriptor("123", schema, "File", Host("localhost"), {{"file_path", "/tmp/test.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code(), ErrorCode::InvalidConfigParameter);
 }
@@ -53,7 +54,7 @@ TEST_F(SinkCatalogTest, rejectDigitOnlySinkName)
 /// An unknown sink type should fail validation and return an error.
 TEST_F(SinkCatalogTest, rejectUnknownSinkType)
 {
-    auto result = sinkCatalog.addSinkDescriptor("mySink", schema, "NonExistentSinkType", {}, formatConfig);
+    auto result = sinkCatalog.addSinkDescriptor("mySink", schema, "NonExistentSinkType", Host("localhost"), {}, formatConfig);
     ASSERT_FALSE(result.has_value());
     EXPECT_EQ(result.error().code(), ErrorCode::InvalidConfigParameter);
 }
@@ -62,11 +63,11 @@ TEST_F(SinkCatalogTest, rejectUnknownSinkType)
 TEST_F(SinkCatalogTest, duplicateSinkNameOverwrites)
 {
     auto result1 = sinkCatalog.addSinkDescriptor(
-        "mySink", schema, "File", {{"file_path", "/tmp/test1.csv"}, {"output_format", "CSV"}}, formatConfig);
+        "mySink", schema, "File", Host("localhost"), {{"file_path", "/tmp/test1.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_TRUE(result1.has_value());
 
     auto result2 = sinkCatalog.addSinkDescriptor(
-        "mySink", schema, "File", {{"file_path", "/tmp/test2.csv"}, {"output_format", "CSV"}}, formatConfig);
+        "mySink", schema, "File", Host("localhost"), {{"file_path", "/tmp/test2.csv"}, {"output_format", "CSV"}}, formatConfig);
     ASSERT_TRUE(result2.has_value());
 
     auto descriptor = sinkCatalog.getSinkDescriptor("MYSINK");
